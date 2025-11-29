@@ -356,29 +356,6 @@ class BlockService(
         )
     }
 
-    // -------- BLOCK HYDRATION --------
-    /**
-     * Hydrates (resolves entity references for) multiple blocks in a single batched operation.
-     *
-     * This method is optimized for performance by:
-     * 1. Loading all requested blocks in a single query
-     * 2. Grouping entity references by type for batch fetching
-     * 3. Using resolvers to fetch all entities of each type in parallel
-     *
-     * @param blockIds The list of block UUIDs to hydrate.
-     * @param organisationId The organisation context for authorization and filtering.
-     * @return A map from block ID to its hydration result. Blocks that aren't entity reference blocks are skipped.
-     */
-    fun hydrateBlocks(blockIds: List<UUID>, organisationId: UUID): Map<UUID, BlockHydrationResult> {
-        if (blockIds.isEmpty()) return emptyMap()
-
-        // Load all blocks in a single query
-        getBlocks(blockIds.toSet()).run {
-            // Hydrate Block References
-            return blockReferenceService.hydrateBlockReferences(this, organisationId)
-        }
-    }
-
     /**
      * Deletes the specified block from the system, will also recursively delete all embedded child blocks.
      */
