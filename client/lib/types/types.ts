@@ -1247,6 +1247,7 @@ export interface components {
             /** Format: uuid */
             updatedBy?: string;
         };
+        /** @description Reference to another block tree */
         BlockTreeReference: WithRequired<components["schemas"]["ReferencePayload"], "type"> & {
             reference: components["schemas"]["Reference"];
         };
@@ -1277,6 +1278,7 @@ export interface components {
             appendTo?: string;
             scroll?: boolean;
         };
+        /** @description Reference to one or more of an organisation's entities (e.g. teams, projects, clients) */
         EntityReference: WithRequired<components["schemas"]["ReferencePayload"], "type"> & {
             reference: components["schemas"]["Reference"][];
         };
@@ -1473,8 +1475,17 @@ export interface components {
             success: boolean;
             environment: components["schemas"]["BlockEnvironment"];
         };
+        EntityReferenceRequest: {
+            type: components["schemas"]["EntityType"];
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            index?: number;
+        };
         HydrateBlocksRequest: {
-            blockIds: string[];
+            references: {
+                [key: string]: components["schemas"]["EntityReferenceRequest"][];
+            };
             /** Format: uuid */
             organisationId: string;
         };

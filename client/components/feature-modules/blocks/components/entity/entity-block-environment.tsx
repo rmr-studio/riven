@@ -12,6 +12,7 @@ import {
     useBlockEnvironment,
 } from "../../context/block-environment-provider";
 import { BlockFocusProvider } from "../../context/block-focus-provider";
+import { BlockHydrationProvider } from "../../context/block-hydration-provider";
 import { RenderElementProvider } from "../../context/block-renderer-provider";
 import { GridContainerProvider } from "../../context/grid-container-provider";
 import { GridProvider } from "../../context/grid-provider";
@@ -149,19 +150,21 @@ export const EntityBlockEnvironment: FC<EntityBlockEnvironmentProps> = ({
                 <LayoutHistoryProvider>
                     <LayoutChangeProvider>
                         <TrackedEnvironmentProvider>
-                            <BlockFocusProvider>
-                                <BlockEditProvider>
-                                    <EditModeIndicator />
-                                    <KeyboardNavigationHandler />
-                                    {(showDefaultToolbar || renderToolbar) && toolbar}
-                                    <BlockEnvironmentGridSync />
-                                    <WidgetEnvironmentSync />
-                                    <GridContainerProvider>
-                                        <RenderElementProvider wrapElement={wrapElement} />
-                                    </GridContainerProvider>
-                                    <BlockEditDrawer />
-                                </BlockEditProvider>
-                            </BlockFocusProvider>
+                            <BlockHydrationProvider>
+                                <BlockFocusProvider>
+                                    <BlockEditProvider>
+                                        <EditModeIndicator />
+                                        <KeyboardNavigationHandler />
+                                        {(showDefaultToolbar || renderToolbar) && toolbar}
+                                        <BlockEnvironmentGridSync />
+                                        <WidgetEnvironmentSync />
+                                        <GridContainerProvider>
+                                            <RenderElementProvider wrapElement={wrapElement} />
+                                        </GridContainerProvider>
+                                        <BlockEditDrawer />
+                                    </BlockEditProvider>
+                                </BlockFocusProvider>
+                            </BlockHydrationProvider>
                         </TrackedEnvironmentProvider>
                     </LayoutChangeProvider>
                 </LayoutHistoryProvider>

@@ -1,8 +1,11 @@
+import { useBlockHydration } from "@/components/feature-modules/blocks/hooks/use-block-hydration";
 import {
     isEntityReferenceMetadata,
     ReferenceNode,
 } from "@/components/feature-modules/blocks/interface/block.interface";
+import { Button } from "@/components/ui/button";
 import { EntityType } from "@/lib/types/types";
+import { RefreshCw } from "lucide-react";
 import { FC, useMemo } from "react";
 import { useBlockEnvironment } from "../../../../context/block-environment-provider";
 import { useTrackedEnvironment } from "../../../../context/tracked-environment-provider";
@@ -29,6 +32,13 @@ export const EntityReference: FC<Props> = ({ node }) => {
     const { id, type } = block;
 
     const itemCount = items.length;
+    const {
+        data: hydrationResult,
+        isLoading,
+        error,
+        refetch,
+        isRefetching,
+    } = useBlockHydration(id);
 
     // Get entity reference toolbar actions and modal
     // Use listType if set, otherwise default to CLIENT
@@ -52,6 +62,20 @@ export const EntityReference: FC<Props> = ({ node }) => {
         [id, removeTrackedBlock]
     );
 
+    // Retry button for error state
+    const retryButton = error ? (
+        <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isRefetching}
+            className="absolute top-2 right-2"
+        >
+            <RefreshCw className={`size-3.5 mr-2 ${isRefetching ? "animate-spin" : ""}`} />
+            Retry
+        </Button>
+    ) : null;
+
     const title = getTitle(node);
 
     // Determine content based on item count
@@ -63,7 +87,8 @@ export const EntityReference: FC<Props> = ({ node }) => {
     }
     // Case 2: Singleton rendering (1 item)
     else if (itemCount === 1) {
-        content = <EntityView blockId={id} item={items[0]} />;
+        const item = items[0];
+        content = <EntityView blockId={id} item={item} />;
     }
     // Case 3: List rendering (2+ items)
     else {
@@ -78,8 +103,10 @@ export const EntityReference: FC<Props> = ({ node }) => {
                 description={type.description}
                 quickActions={quickActions}
                 allowInsert={false}
+                allowEdit={false}
                 onDelete={() => removeTrackedBlock(id)}
                 customActions={customActions}
+                customControls={retryButton}
             >
                 {content}
             </PanelWrapper>

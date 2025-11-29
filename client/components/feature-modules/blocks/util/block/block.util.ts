@@ -116,11 +116,11 @@ export const getTitle = (node: BlockNode): string => {
 export const getAllowedChildTypes = (node: BlockNode): string[] => {
     if (isList(node)) {
         if (isReferenceNode(node) && isEntityReferenceMetadata(node.block.payload)) {
-            return node.block.payload.allowedTypes || [];
+            return node.block.payload.listConfig?.listType || [];
         }
 
         if (isContentNode(node) && isContentMetadata(node.block.payload)) {
-            return node.block.payload.listConfig?.allowedTypes || [];
+            return node.block.payload.listConfig?.listType || [];
         }
     }
 

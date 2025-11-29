@@ -15,6 +15,7 @@ import {
     Block,
     BlockContentMetadata,
     BlockDisplay,
+    BlockListConfiguration,
     BlockMeta,
     BlockReferenceMetadata,
     BlockReferencePayload,
@@ -40,7 +41,7 @@ export const createContentMetadata = (
     data?: Record<string, unknown>,
     overrides?: Partial<BlockMeta>,
     deletable: boolean = true,
-    listConfig?: import("../../../interface/block.interface").BlockListConfiguration
+    listConfig?: BlockListConfiguration
 ): BlockContentMetadata => ({
     type: BlockMetadataType.CONTENT,
     deletable,
@@ -53,10 +54,8 @@ export const createContentMetadata = (
  * Creates BlockListConfiguration for list blocks.
  * Used when creating blocks that manage lists of child blocks.
  */
-export const createListConfiguration = (
-    allowedTypes?: string[]
-): import("../../../interface/block.interface").BlockListConfiguration => ({
-    allowedTypes,
+export const createListConfiguration = (listType?: string[]): BlockListConfiguration => ({
+    listType,
     allowDuplicates: false,
     display: {
         itemSpacing: 8,

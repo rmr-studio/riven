@@ -1,8 +1,14 @@
 /**
- * Hook for creating toolbar actions for reference blocks
+ * Hook for creating toolbar actions for entity reference blocks
  *
  * This hook provides the "Select Entities" toolbar action for reference blocks,
- * allowing users to select entities to reference from a modal dialog.
+ * allowing users to manage entity references from a unified modal dialog.
+ *
+ * Features:
+ * - Shows all available entities with their current selection state
+ * - Users can toggle entities on/off (add/remove references)
+ * - Automatically invalidates hydration cache when selection changes
+ * - Supports single and multi-select modes
  */
 
 import { EntityType } from "@/lib/types/types";
@@ -32,25 +38,28 @@ export interface UseReferenceBlockToolbarResult {
 }
 
 /**
- * Hook to create toolbar actions for reference blocks.
+ * Hook to create toolbar actions for entity reference blocks.
  *
  * Provides:
- * - "Select Entities" button in toolbar
- * - Entity selector modal
- * - Auto-updates block metadata when entities are selected
- * - Invalidates hydration cache to trigger re-fetch
+ * - "Select Entities" button in toolbar with count badge
+ * - Entity selector modal showing all available entities
+ * - Toggle interface - check/uncheck entities to add/remove references
+ * - Auto-updates block metadata when selection changes
+ * - Invalidates hydration cache to trigger re-fetch of entity data
  *
  * @example
- * const { customActions, modal } = useReferenceBlockToolbar({
+ * const { customActions, modal } = UseEntityReferenceToolbar({
  *   blockId: "block-uuid",
- *   entityType: "CLIENT",
+ *   entityType: EntityType.CLIENT,
  *   currentItems: block.payload.items || [],
  *   multiSelect: true,
  * });
  *
  * return (
  *   <>
- *     <PanelToolbar customActions={customActions} {...otherProps} />
+ *     <PanelWrapper customActions={customActions} {...otherProps}>
+ *       {content}
+ *     </PanelWrapper>
  *     {modal}
  *   </>
  * );
@@ -101,7 +110,11 @@ export function UseEntityReferenceToolbar({
         });
 
         // Invalidate hydration cache to trigger re-fetch with new entities
-        queryClient.invalidateQueries({ queryKey: ["block-hydration", blockId] });
+        // Note: Invalidate at organisation level to catch the specific block
+        queryClient.invalidateQueries({
+            queryKey: ["block-hydration", organisationId],
+            exact: false,
+        });
 
         setEntitySelectorOpen(false);
     };
@@ -117,7 +130,7 @@ export function UseEntityReferenceToolbar({
         },
     ];
 
-    // Create modal
+    // Create modal with all entities shown (allows toggling selection on/off)
     const modal = (
         <EntitySelectorModal
             open={entitySelectorOpen}
@@ -126,8 +139,8 @@ export function UseEntityReferenceToolbar({
             entityType={entityType}
             organisationId={organisationId}
             multiSelect={multiSelect}
-            excludeIds={currentItems.map((item) => item.id)}
             initialSelection={currentItems}
+            showAllEntities={true}
         />
     );
 

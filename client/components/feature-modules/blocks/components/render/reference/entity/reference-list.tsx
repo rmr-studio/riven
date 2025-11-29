@@ -1,8 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
-import { FC, useCallback } from "react";
+import { FC, useCallback, useMemo } from "react";
 import { useBlockEnvironment } from "../../../../context/block-environment-provider";
 import { useTrackedEnvironment } from "../../../../context/tracked-environment-provider";
 import { useBlockHydration } from "../../../../hooks/use-block-hydration";
@@ -11,7 +9,7 @@ import {
     isEntityReferenceMetadata,
     ReferenceItem,
 } from "../../../../interface/block.interface";
-import { ListPanel } from "../../list/list.container";
+import { PanelWrapper } from "../../../panel/panel-wrapper";
 import { EntityReferenceItem } from "./reference-item";
 
 interface EntityReferenceListProps {
@@ -26,15 +24,9 @@ interface EntityReferenceListProps {
  * Used when an entity reference block contains 2 or more entities.
  */
 export const EntityReferenceList: FC<EntityReferenceListProps> = ({ blockId, items }) => {
-    const { organisationId, getBlock } = useBlockEnvironment();
+    const { getBlock } = useBlockEnvironment();
     const { updateTrackedBlock } = useTrackedEnvironment();
-    const {
-        data: hydrationResult,
-        isLoading,
-        error,
-        refetch,
-        isRefetching,
-    } = useBlockHydration(blockId, organisationId);
+    const { data: hydrationResult, isLoading, error } = useBlockHydration(blockId);
 
     // Handle entity removal
     const handleRemoveEntity = useCallback(
@@ -65,31 +57,38 @@ export const EntityReferenceList: FC<EntityReferenceListProps> = ({ blockId, ite
         [blockId, getBlock, updateTrackedBlock]
     );
 
-    // Retry button for error state
-    const retryButton = error ? (
-        <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refetch()}
-            disabled={isRefetching}
-            className="absolute top-2 right-2"
-        >
-            <RefreshCw className={`size-3.5 mr-2 ${isRefetching ? "animate-spin" : ""}`} />
-            Retry
-        </Button>
-    ) : null;
-
     const references = hydrationResult?.references || [];
 
     return (
-        <ListPanel blockId={blockId} listControls={retryButton}>
-            <div className="space-y-3">
-                {items.map((item) => {
-                    const reference = references.find((ref) => ref.entityId === item.id);
+        <div className="space-y-3">
+            {items.map((item) => {
+                const reference = references.find((ref) => ref.entityId === item.id);
+                const onRemove = () => {
+                    handleRemoveEntity(item.id);
+                };
+                // Quick actions for this entity
+                const quickActions = useMemo(
+                    () => [
+                        {
+                            id: "remove",
+                            label: "Remove entity",
+                            shortcut: "⌘⌫",
+                            onSelect: onRemove,
+                        },
+                    ],
+                    [onRemove]
+                );
 
-                    return (
+                return (
+                    <PanelWrapper
+                        key={item.id}
+                        id={item.id}
+                        quickActions={quickActions}
+                        allowEdit={false}
+                        allowInsert={false}
+                        onDelete={onRemove}
+                    >
                         <EntityReferenceItem
-                            key={item.id}
                             id={item.id}
                             item={item}
                             reference={reference}
@@ -98,9 +97,9 @@ export const EntityReferenceList: FC<EntityReferenceListProps> = ({ blockId, ite
                             variant="list"
                             onRemove={() => handleRemoveEntity(item.id)}
                         />
-                    );
-                })}
-            </div>
-        </ListPanel>
+                    </PanelWrapper>
+                );
+            })}
+        </div>
     );
 };
