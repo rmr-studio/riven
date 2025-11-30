@@ -6,7 +6,7 @@ plugins {
     kotlin("plugin.jpa") version "2.1.21"
 }
 
-group = "okuri"
+group = "riven"
 version = "0.0.1-SNAPSHOT"
 
 java {
