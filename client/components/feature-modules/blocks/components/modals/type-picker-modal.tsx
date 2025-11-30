@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { EntityType } from "@/lib/types/types";
 import { Building, FileText, FolderKanban, Receipt, UserCircle, Users } from "lucide-react";
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 
 /**
  * Configuration for a type option in the picker
@@ -109,6 +109,13 @@ export const TypePickerModal: FC<TypePickerModalProps> = ({
         setSelectedTypes([]);
     };
 
+    // Reset state when modal closes
+    useEffect(() => {
+        if (!open) {
+            setSelectedTypes([]);
+        }
+    }, [open]);
+
     // Single select mode renders as button grid
     if (!multiSelect) {
         return (
@@ -152,12 +159,14 @@ export const TypePickerModal: FC<TypePickerModalProps> = ({
                     <DialogDescription>{description}</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-3 py-4 max-h-[400px] overflow-y-auto">
-                    {options.map(({ value, label, description, icon: Icon }) => (
+                    {options.map(({ value, label, description, icon: Icon }, index) => (
                         <label
                             key={value}
                             className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-accent/50 transition-colors"
+                            htmlFor={`type-option-${index}`}
                         >
                             <Checkbox
+                                id={`type-option-${index}`}
                                 checked={selectedTypes.includes(value)}
                                 onCheckedChange={() => handleToggle(value)}
                             />

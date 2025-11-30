@@ -19,7 +19,7 @@ interface Props {
 export const EntityView: FC<Props> = ({ blockId, item }) => {
     const { organisationId, getBlock } = useBlockEnvironment();
     const { updateTrackedBlock } = useTrackedEnvironment();
-    const { data: hydrationResult, isLoading, error } = useBlockHydration(blockId, organisationId);
+    const { data: hydrationResult, isLoading, error } = useBlockHydration(blockId);
 
     const reference = hydrationResult?.references?.[0];
 

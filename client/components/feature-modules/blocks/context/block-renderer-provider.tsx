@@ -81,7 +81,7 @@ export const RenderElementProvider: FC<ProviderProps> = ({ onUnknownType, wrapEl
         // Content Block List (existing)
         // Entity Reference - Smart rendering based on item count
         if (isReferenceNode(node) && isEntityReferenceMetadata(node.block.payload)) {
-            return <EntityReference node={node} />;
+            return <EntityReference node={node} payload={node.block.payload} />;
         }
         if (isContentNode(node) && isContentMetadata(node.block.payload)) {
             const config = node.block.payload.listConfig;

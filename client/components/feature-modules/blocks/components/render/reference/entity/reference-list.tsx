@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useCallback, useMemo } from "react";
+import { FC, useCallback } from "react";
 import { useBlockEnvironment } from "../../../../context/block-environment-provider";
 import { useTrackedEnvironment } from "../../../../context/tracked-environment-provider";
 import { useBlockHydration } from "../../../../hooks/use-block-hydration";
@@ -67,17 +67,15 @@ export const EntityReferenceList: FC<EntityReferenceListProps> = ({ blockId, ite
                     handleRemoveEntity(item.id);
                 };
                 // Quick actions for this entity
-                const quickActions = useMemo(
-                    () => [
-                        {
-                            id: "remove",
-                            label: "Remove entity",
-                            shortcut: "⌘⌫",
-                            onSelect: onRemove,
-                        },
-                    ],
-                    [onRemove]
-                );
+                // Quick actions for this entity
+                const quickActions = [
+                    {
+                        id: "remove",
+                        label: "Remove entity",
+                        shortcut: "⌘⌫",
+                        onSelect: onRemove,
+                    },
+                ];
 
                 return (
                     <PanelWrapper

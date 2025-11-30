@@ -1,13 +1,12 @@
 import { useBlockHydration } from "@/components/feature-modules/blocks/hooks/use-block-hydration";
 import {
-    isEntityReferenceMetadata,
+    EntityReferenceMetadata,
     ReferenceNode,
 } from "@/components/feature-modules/blocks/interface/block.interface";
 import { Button } from "@/components/ui/button";
 import { EntityType } from "@/lib/types/types";
 import { RefreshCw } from "lucide-react";
 import { FC, useMemo } from "react";
-import { useBlockEnvironment } from "../../../../context/block-environment-provider";
 import { useTrackedEnvironment } from "../../../../context/tracked-environment-provider";
 import { UseEntityReferenceToolbar } from "../../../../hooks/use-entity-references";
 import { getTitle } from "../../../../util/block/block.util";
@@ -18,27 +17,18 @@ import { EntityView } from "./reference-view";
 
 interface Props {
     node: ReferenceNode;
+    payload: EntityReferenceMetadata;
 }
 
-export const EntityReference: FC<Props> = ({ node }) => {
+export const EntityReference: FC<Props> = ({ node, payload }) => {
     const { removeTrackedBlock } = useTrackedEnvironment();
-    const { organisationId } = useBlockEnvironment();
 
-    // We have already verified payload status. Just need to narrow the type here aswell.
-    if (!isEntityReferenceMetadata(node.block.payload)) return null;
-
-    const { items, listType } = node.block.payload;
+    const { items, listType } = payload;
     const { block } = node;
     const { id, type } = block;
 
     const itemCount = items.length;
-    const {
-        data: hydrationResult,
-        isLoading,
-        error,
-        refetch,
-        isRefetching,
-    } = useBlockHydration(id);
+    const { error, refetch, isRefetching } = useBlockHydration(id);
 
     // Get entity reference toolbar actions and modal
     // Use listType if set, otherwise default to CLIENT

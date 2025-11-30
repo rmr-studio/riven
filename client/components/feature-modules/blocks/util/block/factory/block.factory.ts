@@ -24,10 +24,13 @@ import {
     BlockType,
     BlockTypeNesting,
     ContentNode,
+    EntityReference,
     EntityReferenceMetadata,
     Metadata,
     Reference,
     Referenceable,
+    ReferenceNode,
+    ReferencePayload,
     ReferenceWarning,
 } from "../../../interface/block.interface";
 
@@ -198,22 +201,15 @@ export const createReferenceNode = ({
     type: BlockType;
     name?: string;
     id?: string;
-    payload:
-        | import("../../../interface/block.interface").EntityReferenceMetadata
-        | import("../../../interface/block.interface").BlockReferenceMetadata;
+    payload: EntityReferenceMetadata | BlockReferenceMetadata;
     deletable?: boolean;
-}): import("../../../interface/block.interface").ReferenceNode => {
+}): ReferenceNode => {
     // Create empty reference payload based on metadata type
-    const reference =
+
+    const reference: ReferencePayload =
         payload.type === BlockMetadataType.ENTITY_REFERENCE
-            ? {
-                  type: ReferenceType.ENTITY as const,
-                  reference: [] as Reference[],
-              }
-            : {
-                  type: ReferenceType.BLOCK as const,
-                  reference: {} as Reference,
-              };
+            ? createBlankEntityReference()
+            : createBlankBlockTreeReference();
 
     return {
         type: NodeType.REFERENCE,
@@ -228,6 +224,16 @@ export const createReferenceNode = ({
         warnings: [],
     };
 };
+
+const createBlankEntityReference = (): EntityReference => ({
+    type: ReferenceType.ENTITY,
+    reference: [],
+});
+
+const createBlankBlockTreeReference = (): BlockReferencePayload => ({
+    type: ReferenceType.BLOCK,
+    reference: undefined,
+});
 
 export const createBlockReference = ({ block }: { block: BlockTree }): BlockReferencePayload => {
     const reference = createReference({

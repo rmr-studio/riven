@@ -22,19 +22,19 @@ import {
     TrackedEnvironmentProvider,
     useTrackedEnvironment,
 } from "../../context/tracked-environment-provider";
+import { useBlockTypes } from "../../hooks/use-block-types";
 import { useEntityLayout } from "../../hooks/use-entity-layout";
 import { BlockEnvironmentGridSync } from "../../hooks/use-environment-grid-sync";
-import { useBlockTypes } from "../../hooks/use-block-types";
 import { BlockType } from "../../interface/block.interface";
 import { WrapElementProvider } from "../../interface/render.interface";
 import { createBlockInstanceFromType } from "../../util/block/factory/instance.factory";
 import { blockTypesToOptions } from "../../util/type-picker-options";
 import { DEFAULT_WIDGET_OPTIONS } from "../demo/block-demo";
 import { BlockEditDrawer, EditModeIndicator } from "../forms";
+import { ENTITY_TYPE_OPTIONS, TypePickerModal } from "../modals/type-picker-modal";
 import { KeyboardNavigationHandler } from "../navigation/keyboard-navigation-handler";
 import { WidgetEnvironmentSync } from "../sync/widget.sync";
 import { AddBlockDialog } from "./add-block-dialog";
-import { TypePickerModal, ENTITY_TYPE_OPTIONS } from "../modals/type-picker-modal";
 
 /**
  * Props for EntityBlockEnvironment component.
@@ -245,9 +245,17 @@ const EntityToolbar: FC<EntityToolbarProps> = ({ organisationId, entityType }) =
 
         if (selectedBlockType.key === "entity_reference") {
             // Entity reference: selectedTypes[0] is the EntityType
-            const entityType = selectedTypes?.[0] as EntityType | undefined;
+            const selectedValue = selectedTypes?.[0];
+            const entityType =
+                selectedValue && Object.values(EntityType).includes(selectedValue as EntityType)
+                    ? (selectedValue as EntityType)
+                    : undefined;
+            if (!entityType) return; // Required field, bail if invalid
             createAndAddBlock(selectedBlockType, { entityType });
-        } else if (selectedBlockType.key === "block_list" || selectedBlockType.key === "content_block_list") {
+        } else if (
+            selectedBlockType.key === "block_list" ||
+            selectedBlockType.key === "content_block_list"
+        ) {
             // Block list: selectedTypes is the array of allowed block type keys (or null for all)
             createAndAddBlock(selectedBlockType, { allowedTypes: selectedTypes });
         }
@@ -273,6 +281,14 @@ const EntityToolbar: FC<EntityToolbarProps> = ({ organisationId, entityType }) =
         // Close dialogs
         setDialogOpen(false);
         setTypePickerOpen(false);
+    };
+
+    const handleTypeModalOpenChange = (open: boolean) => {
+        setTypePickerOpen(open);
+        if (!open) {
+            setSelectedBlockType(null);
+            setPickerConfig(null);
+        }
     };
 
     const hasBlocks = environment.trees.length > 0;
@@ -319,7 +335,7 @@ const EntityToolbar: FC<EntityToolbarProps> = ({ organisationId, entityType }) =
             {pickerConfig && (
                 <TypePickerModal
                     open={typePickerOpen}
-                    onOpenChange={setTypePickerOpen}
+                    onOpenChange={handleTypeModalOpenChange}
                     title={pickerConfig.title}
                     description={pickerConfig.description}
                     options={pickerConfig.options}

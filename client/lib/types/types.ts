@@ -1249,7 +1249,7 @@ export interface components {
         };
         /** @description Reference to another block tree */
         BlockTreeReference: WithRequired<components["schemas"]["ReferencePayload"], "type"> & {
-            reference: components["schemas"]["Reference"];
+            reference?: components["schemas"]["Reference"];
         };
         BreakpointConfig: {
             /** Format: int32 */
@@ -1280,7 +1280,7 @@ export interface components {
         };
         /** @description Reference to one or more of an organisation's entities (e.g. teams, projects, clients) */
         EntityReference: WithRequired<components["schemas"]["ReferencePayload"], "type"> & {
-            reference: components["schemas"]["Reference"][];
+            reference?: components["schemas"]["Reference"][];
         };
         EntityReferenceMetadata: components["schemas"]["ReferenceMetadata"] & {
             presentation: components["schemas"]["Presentation"];

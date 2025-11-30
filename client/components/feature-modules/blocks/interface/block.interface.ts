@@ -49,6 +49,7 @@ export type WidgetRenderStructure = components["schemas"]["RenderContent"];
 /* -------------------------------------------------------------------------- */
 
 export type BlockTreeReference = components["schemas"]["BlockTreeReference"];
+export type EntityReference = components["schemas"]["EntityReference"];
 export type ReferenceItem = components["schemas"]["ReferenceItem"];
 export type EntityReferenceHydrationRequest = components["schemas"]["EntityReferenceRequest"];
 export type HydrateBlockRequest = components["schemas"]["HydrateBlocksRequest"];
