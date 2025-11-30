@@ -1,3 +1,4 @@
+import { GridStackOptions } from "gridstack";
 import {
     BlockNode,
     ContentNode,
@@ -52,6 +53,35 @@ import { isList } from "../list/list.util";
 
 export const allowChildren = (node: BlockNode): boolean => {
     return !!node.block.type.nesting;
+};
+
+export const DEFAULT_WIDGET_OPTIONS: GridStackOptions = {
+    sizeToContent: true,
+    resizable: {
+        handles: "se, sw", // Only corner handles for cleaner appearance
+    },
+    draggable: {
+        cancel: ".no-drag",
+        pause: 5,
+    },
+    column: 23,
+    columnOpts: {
+        breakpoints: [
+            //md
+            {
+                w: 1024,
+                c: 12,
+            },
+            //sm
+            {
+                w: 768,
+                c: 1,
+            },
+        ],
+    },
+    cellHeight: 25,
+    animate: true,
+    acceptWidgets: true,
 };
 
 export const insertChild = (

@@ -4,56 +4,85 @@ import {
     CommandGroup,
     CommandInput,
     CommandItem,
-    CommandList,
 } from "@/components/ui/command";
-import { SearchIcon } from "lucide-react";
-import { FC, RefObject } from "react";
-import { SlashMenuItem } from "../../../interface/panel.interface";
+import { EntityType } from "@/lib/types/types";
+import { FC, Fragment, RefObject } from "react";
+import { useBlockTypes } from "../../../hooks/use-block-types";
+import { BlockType } from "../../../interface/block.interface";
+import { BlockTypeSelectorList } from "../../shared/block-type-selector-list";
 
 interface PanelQuickInsertProps {
     searchRef: RefObject<HTMLInputElement | null>;
-    items: SlashMenuItem[];
-    onSelectItem: (item: SlashMenuItem) => void;
+    /** Organisation ID for fetching block types */
+    organisationId: string;
+    /** Entity type for contextual filtering */
+    entityType?: EntityType;
+    /** Optional filter: only show these block type keys (for block list restrictions) */
+    allowedTypes?: string[] | null;
+    /** Callback when a block type is selected */
+    onSelectBlockType: (blockType: BlockType) => void;
+    /** Callback to show all options (opens full dialog) */
     onShowAllOptions: () => void;
+    /** Callback to open quick actions menu */
     onOpenQuickActions: () => void;
 }
 
+/**
+ * PanelQuickInsert - Quick insert menu for adding blocks from toolbar.
+ *
+ * Features:
+ * - Search and select block types
+ * - Filtered by block list restrictions (allowedTypes)
+ * - Categorized display (Layout, Content, Reference, Custom)
+ * - Shortcuts to full dialog and quick actions
+ *
+ * @example
+ * <Popover>
+ *   <PopoverContent>
+ *     <PanelQuickInsert
+ *       searchRef={searchRef}
+ *       organisationId={organisationId}
+ *       allowedTypes={["note", "task", "text_block"]}
+ *       onSelectBlockType={handleInsert}
+ *       onShowAllOptions={openFullDialog}
+ *       onOpenQuickActions={openQuickActions}
+ *     />
+ *   </PopoverContent>
+ * </Popover>
+ */
 const PanelQuickInsert: FC<PanelQuickInsertProps> = ({
     searchRef,
-    items,
-    onSelectItem,
+    organisationId,
+    entityType,
+    allowedTypes = null,
+    onSelectBlockType,
     onShowAllOptions,
     onOpenQuickActions,
 }) => {
+    const { data: blockTypes, isLoading, error } = useBlockTypes(organisationId, entityType);
+
     return (
         <Command>
             <CommandInput ref={searchRef} placeholder="Search blocks..." />
-            <CommandList>
-                <CommandEmpty>No matches found.</CommandEmpty>
-                <CommandGroup heading="Shortcuts">
-                    <CommandItem onSelect={onShowAllOptions}>See all options…</CommandItem>
-                    <CommandItem onSelect={onOpenQuickActions}>Open quick actions</CommandItem>
-                </CommandGroup>
-                <CommandGroup heading="Blocks">
-                    {items.map((item) => (
-                        <CommandItem
-                            key={item.id}
-                            onSelect={() => onSelectItem(item)}
-                            className="gap-2"
-                        >
-                            {item.icon ?? <SearchIcon className="size-4" />}
-                            <div className="flex flex-col items-start">
-                                <span>{item.label}</span>
-                                {item.description ? (
-                                    <span className="text-xs text-muted-foreground">
-                                        {item.description}
-                                    </span>
-                                ) : null}
-                            </div>
-                        </CommandItem>
-                    ))}
-                </CommandGroup>
-            </CommandList>
+            {/* Shortcuts section */}
+            <CommandGroup heading="Shortcuts">
+                <CommandItem onSelect={onShowAllOptions}>See all options…</CommandItem>
+                <CommandItem onSelect={onOpenQuickActions}>Open quick actions</CommandItem>
+            </CommandGroup>
+
+            {/* Block type list with optional filtering */}
+            <BlockTypeSelectorList
+                blockTypes={blockTypes}
+                isLoading={isLoading}
+                error={error}
+                allowedTypes={allowedTypes}
+                onSelect={onSelectBlockType}
+                emptyMessage={
+                    allowedTypes && allowedTypes.length > 0
+                        ? "No allowed block types for this list."
+                        : "No block types available."
+                }
+            />
         </Command>
     );
 };

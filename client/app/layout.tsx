@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import { Toaster } from "sonner";
 
+import "@/components/feature-modules/blocks/styles/gridstack-custom.css";
 import "gridstack/dist/gridstack.css";
 import "./globals.css";
 

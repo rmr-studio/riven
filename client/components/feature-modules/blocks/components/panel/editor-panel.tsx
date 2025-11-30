@@ -2,13 +2,13 @@ import { ReactNode, useCallback } from "react";
 import { BlockNode } from "../../interface/block.interface";
 import { SlashMenuItem } from "../../interface/panel.interface";
 import { WrapElementProvider } from "../../interface/render.interface";
-import { getAllowedChildTypes, getTitle } from "../../util/block/block.util";
+import { getTitle } from "../../util/block/block.util";
 import {
     createLayoutContainerNode,
     createNoteNode,
     createProjectBlockNode,
 } from "../../util/block/factory/mock.factory";
-import { PanelWrapper, defaultSlashItems } from "./panel-wrapper";
+import { PanelWrapper } from "./panel-wrapper";
 
 interface EditorPanelCallackProps {
     getBlock: (id: string) => BlockNode | undefined;
@@ -53,21 +53,13 @@ export const editorPanel = ({
 
             const title = getTitle(node);
 
-            // Todo: Implement Loading Slash items from Organisation generated block types + System Items
-            const restrictedChildTypes = getAllowedChildTypes(node);
-            const availableItems = restrictedChildTypes
-                ? defaultSlashItems.filter((item) => restrictedChildTypes.includes(item.id))
-                : defaultSlashItems;
-
             return (
                 <PanelWrapper
                     id={id}
                     title={title}
                     description={type.description}
-                    slashItems={availableItems}
                     quickActions={quickActions}
                     allowInsert={!!type.nesting}
-                    onInsert={handleInsert}
                     onDelete={handleDelete}
                 >
                     {children}

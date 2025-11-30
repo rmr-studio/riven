@@ -1,20 +1,21 @@
 "use client";
-import { blockElements } from "@/components/feature-modules/blocks/util/block/block.registry";
 import { ChildNodeProps, ClassNameProps } from "@/lib/interfaces/interface";
+import { EntityType } from "@/lib/types/types";
 import { cn } from "@/lib/util/utils";
 import { AnimatePresence } from "framer-motion";
-import { TypeIcon } from "lucide-react";
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useBlockEdit } from "../../context/block-edit-provider";
 import { useBlockEnvironment } from "../../context/block-environment-provider";
 import { useRenderElement } from "../../context/block-renderer-provider";
+import { useTrackedEnvironment } from "../../context/tracked-environment-provider";
 import { useLayoutChange } from "../../context/layout-change-provider";
 import { useFocusSurface } from "../../hooks/use-focus-surface";
-import { isContentNode } from "../../interface/block.interface";
-import { QuickActionItem, SlashMenuItem } from "../../interface/panel.interface";
+import { BlockType, isContentMetadata, isContentNode } from "../../interface/block.interface";
+import { QuickActionItem } from "../../interface/panel.interface";
+import { createBlockInstanceFromType } from "../../util/block/factory/instance.factory";
 import { BlockForm } from "../forms/block-form";
-import InsertBlockModal from "../modals/insert-block-modal";
 import QuickActionModal from "../modals/quick-action-modal";
+import { TypePickerModal, ENTITY_TYPE_OPTIONS } from "../modals/type-picker-modal";
 import PanelActionContextMenu from "./action/panel-action-menu";
 import { PanelWrapperProvider } from "./context/panel-wrapper-provider";
 import { usePanelEditMode } from "./hooks/use-panel-edit-mode";
@@ -30,24 +31,14 @@ interface Props extends ChildNodeProps, ClassNameProps {
     description?: string;
     display?: React.ReactNode;
     form?: React.ReactNode;
-    slashItems?: SlashMenuItem[];
     quickActions?: QuickActionItem[];
     onTitleChange?: (value: string) => void;
     allowInsert?: boolean;
     allowEdit?: boolean;
-    onInsert?: (item: SlashMenuItem) => void;
-    onInsertSibling?: (item: SlashMenuItem) => void;
     onDelete?: () => void;
     customControls?: React.ReactNode;
     customActions?: CustomToolbarAction[];
 }
-
-export const defaultSlashItems: SlashMenuItem[] = Object.values(blockElements).map((meta) => ({
-    id: meta.type,
-    label: meta.name ?? meta.type,
-    description: meta.description,
-    icon: <TypeIcon className="size-4" />,
-}));
 
 export const PanelWrapper: FC<Props> = ({
     id,
@@ -55,11 +46,8 @@ export const PanelWrapper: FC<Props> = ({
     titlePlaceholder = "Untitled block",
     description,
     children,
-    slashItems,
     quickActions = [],
     onTitleChange,
-    onInsert,
-    onInsertSibling,
     onDelete,
     className,
     allowInsert = false,
@@ -68,7 +56,6 @@ export const PanelWrapper: FC<Props> = ({
     customActions = [],
 }) => {
     const [isHovered, setIsHovered] = useState(false);
-    const [isSlashOpen, setSlashOpen] = useState(false);
     const [isQuickOpen, setQuickOpen] = useState(false);
     const [isInlineMenuOpen, setInlineMenuOpen] = useState(false);
     const [isDetailsOpen, setDetailsOpen] = useState(false);
@@ -79,9 +66,14 @@ export const PanelWrapper: FC<Props> = ({
     const inlineSearchRef = useRef<HTMLInputElement | null>(null);
     const surfaceRef = useRef<HTMLDivElement | null>(null);
 
+    // Type picker state for blocks that need additional configuration
+    const [typePickerOpen, setTypePickerOpen] = useState(false);
+    const [selectedBlockType, setSelectedBlockType] = useState<BlockType | null>(null);
+
     // Block edit state
     const { openDrawer, drawerState, startEdit, saveAndExit } = useBlockEdit();
-    const { getBlock, getChildren } = useBlockEnvironment();
+    const { getBlock, getChildren, organisationId, entityType: envEntityType } = useBlockEnvironment();
+    const { addTrackedBlock } = useTrackedEnvironment();
     const { suppressEditModeTracking } = useLayoutChange();
     const block = getBlock(id);
     const hasChildren = getChildren(id).length > 0;
@@ -120,6 +112,16 @@ export const PanelWrapper: FC<Props> = ({
 
     const hasMenuActions = menuActions.length > 0;
 
+    // Extract allowed block types from block metadata (for block list restrictions)
+    const allowedTypes = useMemo(() => {
+        if (!block || !isContentNode(block)) return null;
+        const payload = block.block.payload;
+        if (isContentMetadata(payload) && payload.listConfig?.listType) {
+            return payload.listConfig.listType;
+        }
+        return null;
+    }, [block]);
+
     // Calculate toolbar button indices using hook (single source of truth)
     const toolbarIndices = usePanelToolbarIndices({
         allowInsert,
@@ -141,19 +143,17 @@ export const PanelWrapper: FC<Props> = ({
         elementRef: surfaceRef,
         focusParentOnDelete: true,
     });
-    const items = slashItems ?? defaultSlashItems;
 
     const shouldHighlight =
         isSelected ||
         isQuickOpen ||
-        (allowInsert && (isInlineMenuOpen || isSlashOpen)) ||
+        (allowInsert && isInlineMenuOpen) ||
         isHovered;
 
     // Close all menus when panel loses selection
     useEffect(() => {
         if (!isSelected) {
             setToolbarFocusIndex(-1);
-            setSlashOpen(false);
             setQuickOpen(false);
             setInlineMenuOpen(false);
             setDetailsOpen(false);
@@ -194,7 +194,6 @@ export const PanelWrapper: FC<Props> = ({
     // Overlay lock management extracted to hook
     usePanelOverlayLock({
         id,
-        isSlashOpen,
         isQuickOpen,
         isInlineMenuOpen,
         isDetailsOpen,
@@ -245,34 +244,63 @@ export const PanelWrapper: FC<Props> = ({
         if (draftTitle !== title) onTitleChange?.(draftTitle);
     }, [draftTitle, onTitleChange, title]);
 
-    const handleOpenInsertModal = useCallback(() => {
-        if (!allowInsert) return;
-        setInlineMenuOpen(false);
-        setSlashOpen(true);
-        focusSelf();
-    }, [allowInsert, focusSelf, setInlineMenuOpen, setSlashOpen]);
-
-    const handleSelect = useCallback(
-        (item: SlashMenuItem) => {
+    /**
+     * Handle block type selection from quick insert menu.
+     * Some block types require additional configuration (entity_reference, block_list).
+     */
+    const handleBlockTypeSelect = useCallback(
+        (blockType: BlockType) => {
             if (!allowInsert) return;
+
+            // Close the inline menu
             setInlineMenuOpen(false);
-            setSlashOpen(false);
-            item.onSelect?.();
-            if (insertContext === "nested" && onInsert) {
-                onInsert(item);
+
+            // Check if block type requires additional configuration
+            if (blockType.key === "entity_reference") {
+                // Entity reference needs entity type selection
+                setSelectedBlockType(blockType);
+                setTypePickerOpen(true);
                 return;
             }
-            if (insertContext === "sibling" && onInsertSibling) {
-                onInsertSibling(item);
-                return;
-            }
-            if (onInsert) {
-                onInsert(item);
-            } else if (onInsertSibling) {
-                onInsertSibling(item);
-            }
+
+            // Create and insert block directly
+            const newBlock = createBlockInstanceFromType(blockType, organisationId, {
+                name: blockType.name,
+            });
+
+            addTrackedBlock(newBlock, id);
         },
-        [allowInsert, insertContext, onInsert, onInsertSibling, setInlineMenuOpen, setSlashOpen]
+        [allowInsert, organisationId, id, addTrackedBlock]
+    );
+
+    /**
+     * Handle type selection from TypePickerModal (for entity_reference blocks).
+     */
+    const handleTypeSelect = useCallback(
+        (selectedTypes: string[] | null) => {
+            if (!selectedBlockType) return;
+
+            if (selectedBlockType.key === "entity_reference") {
+                const selectedValue = selectedTypes?.[0];
+                const entityType =
+                    selectedValue && Object.values(EntityType).includes(selectedValue as EntityType)
+                        ? (selectedValue as EntityType)
+                        : undefined;
+
+                if (!entityType) return; // Required field
+
+                const newBlock = createBlockInstanceFromType(selectedBlockType, organisationId, {
+                    name: selectedBlockType.name,
+                    entityType,
+                });
+
+                addTrackedBlock(newBlock, id);
+            }
+
+            setSelectedBlockType(null);
+            setTypePickerOpen(false);
+        },
+        [selectedBlockType, organisationId, id, addTrackedBlock]
     );
 
     const handleQuickSelect = useCallback(
@@ -345,8 +373,6 @@ export const PanelWrapper: FC<Props> = ({
     const contextValue = useMemo(
         () => ({
             id,
-            isSlashOpen,
-            setSlashOpen,
             isQuickOpen,
             setQuickOpen,
             isInlineMenuOpen,
@@ -359,8 +385,6 @@ export const PanelWrapper: FC<Props> = ({
             setDraftTitle,
             onTitleChange,
             titlePlaceholder,
-            insertContext,
-            setInsertContext,
             toolbarFocusIndex,
             setToolbarFocusIndex,
             allowInsert,
@@ -372,7 +396,6 @@ export const PanelWrapper: FC<Props> = ({
         }),
         [
             id,
-            isSlashOpen,
             isQuickOpen,
             isInlineMenuOpen,
             isDetailsOpen,
@@ -380,7 +403,6 @@ export const PanelWrapper: FC<Props> = ({
             draftTitle,
             onTitleChange,
             titlePlaceholder,
-            insertContext,
             toolbarFocusIndex,
             allowInsert,
             hasMenuActions,
@@ -467,9 +489,10 @@ export const PanelWrapper: FC<Props> = ({
                                     allowInsert ? handleInlineMenuOpenChange : undefined
                                 }
                                 inlineSearchRef={allowInsert ? inlineSearchRef : undefined}
-                                items={allowInsert ? items : undefined}
-                                onSelectItem={allowInsert ? handleSelect : undefined}
-                                onShowAllOptions={allowInsert ? handleOpenInsertModal : undefined}
+                                organisationId={organisationId}
+                                entityType={envEntityType}
+                                allowedTypes={allowedTypes}
+                                onSelectBlockType={allowInsert ? handleBlockTypeSelect : undefined}
                                 onOpenQuickActionsFromInline={
                                     allowInsert ? handleQuickInsertOpenQuickActions : undefined
                                 }
@@ -499,24 +522,29 @@ export const PanelWrapper: FC<Props> = ({
                     ) : (
                         children
                     )}
-                    {allowInsert && (
-                        <InsertBlockModal
-                            open={isSlashOpen}
-                            onOpenChange={setSlashOpen}
-                            onSelect={handleSelect}
-                            items={items}
-                        />
-                    )}
                 </div>
             </PanelActionContextMenu>
+
             <QuickActionModal
                 open={isQuickOpen}
                 setOpen={setQuickOpen}
-                onInsert={allowInsert ? handleOpenInsertModal : undefined}
                 onActionSelect={handleQuickSelect}
                 actions={quickActions}
-                allowInsert={allowInsert}
             />
+
+            {/* Type picker modal for blocks that need additional configuration */}
+            {selectedBlockType && (
+                <TypePickerModal
+                    open={typePickerOpen}
+                    onOpenChange={setTypePickerOpen}
+                    title="Select Entity Type"
+                    description="Choose which type of entities this block will reference"
+                    options={ENTITY_TYPE_OPTIONS}
+                    multiSelect={false}
+                    required={true}
+                    onSelect={handleTypeSelect}
+                />
+            )}
         </PanelWrapperProvider>
     );
 };
