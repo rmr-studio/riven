@@ -1,0 +1,23 @@
+package riven.core.models.company
+
+import riven.core.entity.util.AuditableModel
+import riven.core.models.common.Address
+import java.time.ZonedDateTime
+import java.util.*
+
+data class Company(
+    val id: UUID,
+    val organisationId: UUID,
+    val name: String,
+    val address: Address? = null,
+    val phone: String? = null,
+    val email: String? = null,
+    val website: String? = null,
+    val businessNumber: String? = null,
+    val logoUrl: String? = null,
+    val archived: Boolean = false,
+    override val createdAt: ZonedDateTime? = null,
+    override val updatedAt: ZonedDateTime? = null,
+    override val createdBy: UUID? = null,
+    override val updatedBy: UUID? = null,
+) : AuditableModel()

@@ -1,5 +1,5 @@
 -- ===========================================================================
--- Okuri System Block Types - Database Seeding Script
+-- riven System Block Types - Database Seeding Script
 -- ===========================================================================
 -- This script populates the block_types table with system-defined block types
 -- that are available across all organizations.

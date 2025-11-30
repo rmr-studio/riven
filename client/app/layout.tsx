@@ -11,17 +11,17 @@ import "gridstack/dist/gridstack.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-    title: "Okuri | The Next-Gen Client & Invoice Management Platform",
+    title: "Riven | The Next-Gen Client & Invoice Management Platform",
     description:
-        "Okuri is the next step in managing your invoices, clients and reports. Designed for all types of businesses, big, small or solo. Okuri is the perfect tool to help you manage your administration seamlessly.",
+        "Riven is the next step in managing your invoices, clients and reports. Designed for all types of businesses, big, small or solo. Riven is the perfect tool to help you manage your administration seamlessly.",
     openGraph: {
         locale: "en_AU",
         type: "website",
-        url: "https://okuri.app",
-        title: "Okuri | The Next-Gen Client & Invoice Management Platform",
+        url: "https://riven.software",
+        title: "Riven | The Next-Gen Client & Invoice Management Platform",
         description:
-            "Okuri is the next step in managing your invoices, clients and reports. Designed for all types of businesses, big, small or solo. Okuri is the perfect tool to help you manage your administration seamlessly.",
-        siteName: "Okuri",
+            "Riven is the next step in managing your invoices, clients and reports. Designed for all types of businesses, big, small or solo. Riven is the perfect tool to help you manage your administration seamlessly.",
+        siteName: "Riven",
     },
 };
 
