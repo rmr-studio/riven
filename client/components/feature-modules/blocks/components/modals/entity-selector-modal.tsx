@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/command";
 import { EntityType } from "@/lib/types/types";
 import { AlertCircle, Loader2, RefreshCw, Users } from "lucide-react";
-import { FC, useMemo, useState } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import { useEntitySelector } from "../../hooks/use-entity-selector";
 import { ReferenceItem } from "../../interface/block.interface";
 
@@ -86,6 +86,16 @@ export const EntitySelectorModal: FC<EntitySelectorModalProps> = ({
     const [selectedIds, setSelectedIds] = useState<Set<string>>(
         new Set(initialSelection.map((item) => item.id))
     );
+
+    /**
+     * Reset selection to match block's actual state when modal opens.
+     * This ensures uncommitted changes are discarded when user closes without confirming.
+     */
+    useEffect(() => {
+        if (open) {
+            setSelectedIds(new Set(initialSelection.map((item) => item.id)));
+        }
+    }, [open, initialSelection]);
 
     const {
         data: rawEntities,

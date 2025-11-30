@@ -20,8 +20,6 @@ export interface PanelWrapperContextValue {
     id: string;
 
     // Menu/modal state
-    isSlashOpen: boolean;
-    setSlashOpen: (open: boolean) => void;
     isQuickOpen: boolean;
     setQuickOpen: (open: boolean) => void;
     isInlineMenuOpen: boolean;
@@ -36,10 +34,6 @@ export interface PanelWrapperContextValue {
     setDraftTitle: (title: string) => void;
     onTitleChange?: (value: string) => void;
     titlePlaceholder: string;
-
-    // Insert context
-    insertContext: "nested" | "sibling";
-    setInsertContext: (context: "nested" | "sibling") => void;
 
     // Toolbar state
     toolbarFocusIndex: number;

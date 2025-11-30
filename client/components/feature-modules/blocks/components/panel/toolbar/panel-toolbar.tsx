@@ -10,6 +10,7 @@
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { EntityType } from "@/lib/types/types";
 import { cn } from "@/lib/util/utils";
 import { Check, CommandIcon, Edit3, InfoIcon, PlusIcon, X } from "lucide-react";
 import { FC, RefObject, ReactNode } from "react";
@@ -17,7 +18,8 @@ import { FC, RefObject, ReactNode } from "react";
 import { motion } from "framer-motion";
 import { usePanelWrapperContext } from "../context/panel-wrapper-provider";
 import { usePanelToolbarIndices } from "../hooks/use-panel-toolbar-indices";
-import { QuickActionItem, SlashMenuItem } from "../../../interface/panel.interface";
+import { BlockType } from "../../../interface/block.interface";
+import { QuickActionItem } from "../../../interface/panel.interface";
 import PanelActions from "./panel-actions";
 import PanelDetails from "./panel-details";
 import PanelQuickInsert from "./panel-quick-insert";
@@ -40,9 +42,10 @@ interface PanelToolbarProps {
     onInlineInsertClick?: () => void;
     onInlineMenuOpenChange?: (open: boolean) => void;
     inlineSearchRef?: RefObject<HTMLInputElement | null>;
-    items?: SlashMenuItem[];
-    onSelectItem?: (item: SlashMenuItem) => void;
-    onShowAllOptions?: () => void;
+    organisationId: string;
+    entityType?: EntityType;
+    allowedTypes?: string[] | null;
+    onSelectBlockType?: (blockType: BlockType) => void;
     onOpenQuickActionsFromInline?: () => void;
     onTitleBlur: () => void;
     badge?: string;
@@ -64,9 +67,10 @@ const PanelToolbar: FC<PanelToolbarProps> = ({
     onInlineInsertClick,
     onInlineMenuOpenChange,
     inlineSearchRef,
-    items,
-    onSelectItem,
-    onShowAllOptions,
+    organisationId,
+    entityType,
+    allowedTypes,
+    onSelectBlockType,
     onOpenQuickActionsFromInline,
     onTitleBlur,
     badge,
@@ -150,9 +154,7 @@ const PanelToolbar: FC<PanelToolbarProps> = ({
             onInlineInsertClick &&
             onInlineMenuOpenChange &&
             inlineSearchRef &&
-            items &&
-            onSelectItem &&
-            onShowAllOptions &&
+            onSelectBlockType &&
             onOpenQuickActionsFromInline ? (
                 <Popover open={isInlineMenuOpen} onOpenChange={onInlineMenuOpenChange}>
                     <Tooltip>
@@ -174,9 +176,13 @@ const PanelToolbar: FC<PanelToolbarProps> = ({
                     <PopoverContent className="w-80 p-0" align="start">
                         <PanelQuickInsert
                             searchRef={inlineSearchRef}
-                            items={items}
-                            onSelectItem={onSelectItem}
-                            onShowAllOptions={onShowAllOptions}
+                            organisationId={organisationId}
+                            entityType={entityType}
+                            allowedTypes={allowedTypes}
+                            onSelectBlockType={onSelectBlockType}
+                            onShowAllOptions={() => {
+                                /* TODO: Open full dialog */
+                            }}
                             onOpenQuickActions={onOpenQuickActionsFromInline}
                         />
                     </PopoverContent>

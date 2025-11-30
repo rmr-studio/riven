@@ -3,9 +3,9 @@ import { FC, useCallback, useMemo } from "react";
 import { useBlockEnvironment } from "../../../context/block-environment-provider";
 import { useTrackedEnvironment } from "../../../context/tracked-environment-provider";
 import { SlashMenuItem } from "../../../interface/panel.interface";
-import { getAllowedChildTypes, getTitle } from "../../../util/block/block.util";
+import { getTitle } from "../../../util/block/block.util";
 import { createNodeFromSlashItem } from "../../panel/editor-panel";
-import { defaultSlashItems, PanelWrapper } from "../../panel/panel-wrapper";
+import { PanelWrapper } from "../../panel/panel-wrapper";
 
 interface Props extends ChildNodeProps {
     blockId: string;
@@ -60,26 +60,14 @@ export const ListPanel: FC<Props> = ({ blockId, children, listControls }) => {
 
     const title = useMemo(() => getTitle(node), [node]);
 
-    // Todo: Implement Loading Slash items from Organisation generated block types + System Items
-    const restrictedChildTypes = useMemo(() => getAllowedChildTypes(node), [node]);
-    const availableItems = useMemo(
-        () =>
-            !!restrictedChildTypes.length
-                ? defaultSlashItems.filter((item) => restrictedChildTypes.includes(item.id))
-                : defaultSlashItems,
-        [restrictedChildTypes]
-    );
-
     return (
         <PanelWrapper
             className="p-4"
             id={blockId}
             title={title}
             description={type.description}
-            slashItems={availableItems}
             quickActions={quickActions}
             allowInsert={!!type.nesting}
-            onInsert={handleInsert}
             onDelete={handleDelete}
             customControls={listControls}
         >

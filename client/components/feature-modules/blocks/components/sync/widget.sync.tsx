@@ -10,12 +10,11 @@ import {
     Widget,
     WidgetRenderStructure,
 } from "../../interface/block.interface";
-import { getDefaultDimensions } from "../../util/block/block.util";
+import { DEFAULT_WIDGET_OPTIONS, getDefaultDimensions } from "../../util/block/block.util";
 import { findNodeById, getTreeId } from "../../util/environment/environment.util";
 import { isList } from "../../util/list/list.util";
 import { hasWildcardSlots } from "../../util/render/binding.resolver";
 import { parseContent } from "../../util/render/render.util";
-import { DEFAULT_WIDGET_OPTIONS } from "../demo/block-demo";
 
 /**
  * Recursively extracts all widget configurations from a layout, including nested subgrids.

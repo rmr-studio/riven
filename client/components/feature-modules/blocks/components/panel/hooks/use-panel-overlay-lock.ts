@@ -3,7 +3,6 @@ import { useBlockFocus } from "../../../context/block-focus-provider";
 
 export interface UsePanelOverlayLockOptions {
     id: string;
-    isSlashOpen: boolean;
     isQuickOpen: boolean;
     isInlineMenuOpen: boolean;
     isDetailsOpen: boolean;
@@ -27,7 +26,6 @@ export interface UsePanelOverlayLockOptions {
 export function usePanelOverlayLock(options: UsePanelOverlayLockOptions): void {
     const {
         id,
-        isSlashOpen,
         isQuickOpen,
         isInlineMenuOpen,
         isDetailsOpen,
@@ -42,12 +40,7 @@ export function usePanelOverlayLock(options: UsePanelOverlayLockOptions): void {
     useEffect(() => {
         // Determine if lock should be active (any menu/modal is open)
         const shouldLock =
-            isSlashOpen ||
-            isQuickOpen ||
-            isInlineMenuOpen ||
-            isDetailsOpen ||
-            isActionsOpen ||
-            drawerStateIsOpen;
+            isQuickOpen || isInlineMenuOpen || isDetailsOpen || isActionsOpen || drawerStateIsOpen;
 
         // Acquire or release overlay lock based on menu state
         if (!shouldLock && overlayLockRef.current) {
@@ -75,7 +68,6 @@ export function usePanelOverlayLock(options: UsePanelOverlayLockOptions): void {
         acquireLock,
         isInlineMenuOpen,
         isQuickOpen,
-        isSlashOpen,
         isDetailsOpen,
         isActionsOpen,
         drawerStateIsOpen,

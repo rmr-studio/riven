@@ -70,7 +70,7 @@ export const RenderElementProvider: FC<ProviderProps> = ({ onUnknownType, wrapEl
 
     const renderReference = (node: ReferenceNode): ReactNode => {
         if (isEntityReferenceMetadata(node.block.payload)) {
-            return <EntityReference node={node} />;
+            return <EntityReference node={node} payload={node.block.payload} />;
         }
 
         // Add other reference types here in the future

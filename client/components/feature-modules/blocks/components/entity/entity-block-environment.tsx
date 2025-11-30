@@ -29,7 +29,6 @@ import { BlockType } from "../../interface/block.interface";
 import { WrapElementProvider } from "../../interface/render.interface";
 import { createBlockInstanceFromType } from "../../util/block/factory/instance.factory";
 import { blockTypesToOptions } from "../../util/type-picker-options";
-import { DEFAULT_WIDGET_OPTIONS } from "../demo/block-demo";
 import { BlockEditDrawer, EditModeIndicator } from "../forms";
 import { ENTITY_TYPE_OPTIONS, TypePickerModal } from "../modals/type-picker-modal";
 import { KeyboardNavigationHandler } from "../navigation/keyboard-navigation-handler";
@@ -88,7 +87,7 @@ export const EntityBlockEnvironment: FC<EntityBlockEnvironmentProps> = ({
     const { environment, isLoading, error } = useEntityLayout(organisationId, entityId, entityType);
 
     const gridOptions = useMemo(() => {
-        return environment?.layout?.layout ?? DEFAULT_WIDGET_OPTIONS;
+        return environment?.layout?.layout
     }, [environment]);
 
     // Loading state
