@@ -21,7 +21,7 @@ sealed interface ReferencePayload {
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class EntityReference(
     override val type: ReferenceType = ReferenceType.ENTITY,
-    val reference: List<Reference>
+    val reference: List<Reference>? = null
 ) : ReferencePayload
 
 @Schema(
@@ -31,5 +31,5 @@ data class EntityReference(
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class BlockTreeReference(
     override val type: ReferenceType = ReferenceType.BLOCK,
-    val reference: Reference
+    val reference: Reference? = null
 ) : ReferencePayload

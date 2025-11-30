@@ -15,7 +15,7 @@ import java.util.*
  * @param organisationId The organisation context for authorization and filtering.
  */
 data class HydrateBlocksRequest(
-    @field:NotEmpty(message = "blockIds must not be empty")
+    @field:NotEmpty(message = "block references must not be empty")
     val references: Map<UUID, List<EntityReferenceRequest>>,
     @field:NotNull(message = "organisationId is required")
     var organisationId: UUID
