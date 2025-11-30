@@ -9,13 +9,14 @@ import okuri.core.enums.core.EntityType
 import okuri.core.models.block.Reference
 import okuri.core.models.block.metadata.BlockReferenceMetadata
 import okuri.core.models.block.metadata.EntityReferenceMetadata
+import okuri.core.models.block.metadata.ReferenceItem
+import okuri.core.models.block.request.EntityReferenceRequest
+import okuri.core.models.block.request.HydrateBlocksRequest
 import okuri.core.models.block.response.internal.BlockHydrationResult
 import okuri.core.repository.block.BlockReferenceRepository
 import okuri.core.service.block.resolvers.ReferenceResolver
 import org.springframework.stereotype.Service
 import java.util.*
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 /**
  * Service for managing block links.
@@ -115,45 +116,55 @@ class BlockReferenceService(
         }
     }
 
-    fun hydrateBlockReferences(blocks: Map<UUID, BlockEntity>, organisationId: UUID): Map<UUID, BlockHydrationResult> {
-        // 2. Filter to only entity reference blocks and collect all entity IDs by type
-        val referencesByType = mutableMapOf<EntityType, MutableSet<UUID>>()
-        val blockMetadata = mutableMapOf<UUID, EntityReferenceMetadata>()
+    /**
+     * Hydrates (resolves entity references for) multiple blocks in a single batched operation.
+     *
+     * This method is optimized for performance by:
+     * 1. Grouping entity references by type for batch fetching
+     * 2. Using resolvers to fetch all entities of each type in parallel
+     *
+     * @param references The map of block IDs to their list of reference items to hydrate.
+     * @param organisationId The organisation context for authorization and filtering.
+     * @return A map from block ID to its hydration result. Blocks that aren't entity reference blocks are skipped.
+     */
+    fun hydrateBlockReferences(
+        references: Map<UUID, List<EntityReferenceRequest>>,
+        organisationId: UUID
+    ): Map<UUID, BlockHydrationResult> {
 
-        blocks.forEach { (blockId, block) ->
-            val payload = block.payload
-            if (payload is EntityReferenceMetadata) {
-                blockMetadata[blockId] = payload
-                payload.items.forEach { item ->
-                    referencesByType
-                        .getOrPut(item.type) { mutableSetOf() }
-                        .add(item.id)
-                }
+        // Separate each entity type into groups for batch fetching capabilities
+        val referencesByType = mutableMapOf<EntityType, MutableSet<UUID>>()
+        references.forEach { (blockId, references) ->
+            references.forEach { item ->
+                referencesByType
+                    .getOrPut(item.type) { mutableSetOf() }
+                    .add(item.id)
             }
         }
-        // 3. Batch fetch all entities by type using resolvers
+
+        // Batch fetch all entities by type using resolvers
         val resolvedEntities = referencesByType.mapValues { (entityType, ids) ->
             resolverByType[entityType]?.fetch(ids, organisationId) ?: emptyMap()
         }
 
         // 4. Build hydration results for each block
-        return blockMetadata.mapValues { (blockId, meta) ->
+        return references.mapValues { (blockId, references) ->
             try {
-                val references = meta.items.mapIndexed { idx, item ->
-                    val entity = resolvedEntities[item.type]?.get(item.id)
+                val entityReference = references.map { reference ->
+                    val entity = resolvedEntities[reference.type]?.get(reference.id)
                     Reference(
                         id = null, // Not using persisted reference rows for hydration
-                        entityType = item.type,
-                        entityId = item.id,
+                        entityType = reference.type,
+                        entityId = reference.id,
                         entity = entity,
-                        orderIndex = idx,
+                        orderIndex = reference.index,
                         warning = if (entity == null) BlockReferenceWarning.MISSING else null
                     )
                 }
 
                 BlockHydrationResult(
                     blockId = blockId,
-                    references = references,
+                    references = entityReference,
                     error = null
                 )
             } catch (e: Exception) {

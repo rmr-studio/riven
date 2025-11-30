@@ -2,36 +2,7 @@ import { fromError, isResponseError } from "@/lib/util/error/error.util";
 import { handleError, validateSession, validateUuid } from "@/lib/util/service/service.util";
 import { api } from "@/lib/util/utils";
 import { Session } from "@supabase/supabase-js";
-import { Reference } from "../interface/block.interface";
-
-/**
- * Request to hydrate (resolve entity references for) one or more blocks.
- *
- * TODO: Replace with auto-generated type when OpenAPI schema is updated
- */
-export interface HydrateBlocksRequest {
-    blockIds: string[];
-    organisationId: string;
-}
-
-/**
- * Result of hydrating a single block's entity references.
- *
- * TODO: Replace with auto-generated type when OpenAPI schema is updated
- */
-export interface BlockHydrationResult {
-    blockId: string;
-    references: Reference[];
-    error?: string;
-}
-
-/**
- * Response containing hydration results for multiple blocks.
- * Map from block ID to its hydration result.
- *
- * TODO: Replace with auto-generated type when OpenAPI schema is updated
- */
-export type HydrateBlocksResponse = Record<string, BlockHydrationResult>;
+import { EntityReferenceHydrationRequest, HydrateBlockRequest, HydrateBlockResponse } from "../interface/block.interface";
 
 /**
  * Block Service - HTTP API Integration for Block operations
@@ -44,7 +15,7 @@ export class BlockService {
      * Only blocks with entity reference metadata will be hydrated; other blocks are skipped.
      *
      * @param session - User session for authentication
-     * @param blockIds - Array of block UUIDs to hydrate
+     * @param entities - Record of block UUIDs to hydrate with their entity reference requests
      * @param organisationId - Organisation context for authorization
      * @returns Promise<HydrateBlocksResponse> - Map of block ID to hydration result
      *
@@ -68,12 +39,12 @@ export class BlockService {
      */
     static async hydrateBlocks(
         session: Session | null,
-        blockIds: string[],
+        entities: Record<string, EntityReferenceHydrationRequest[]>,
         organisationId: string
-    ): Promise<HydrateBlocksResponse> {
+    ): Promise<HydrateBlockResponse> {
         try {
             // Validate inputs
-            if (!blockIds || blockIds.length === 0) {
+            if (!entities || Object.keys(entities).length === 0) {
                 throw fromError({
                     message: "At least one block ID is required",
                     status: 400,
@@ -83,11 +54,11 @@ export class BlockService {
 
             validateSession(session);
             validateUuid(organisationId);
-            blockIds.forEach(validateUuid);
+            Object.keys(entities).forEach(validateUuid);
 
             const url = api();
-            const request: HydrateBlocksRequest = {
-                blockIds,
+            const request: HydrateBlockRequest = {
+                references: entities,
                 organisationId,
             };
 

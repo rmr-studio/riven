@@ -25,8 +25,10 @@ interface EntitySelectorModalProps {
     entityType: EntityType;
     organisationId: string;
     multiSelect?: boolean; // Allow selecting multiple entities
-    excludeIds?: string[]; // Entity IDs to exclude (already selected)
+    excludeIds?: string[]; // Entity IDs to exclude from list (for backwards compatibility)
     initialSelection?: ReferenceItem[]; // Pre-selected items
+    /** Show all entities including currently selected ones (allows toggle on/off) */
+    showAllEntities?: boolean;
 }
 
 const ENTITY_ICONS = {
@@ -40,10 +42,13 @@ const ENTITY_ICONS = {
  * - Search/filter entities by name
  * - Single or multi-select mode
  * - Shows entity type icons and secondary info
- * - Excludes already-selected entities (duplicate prevention)
+ * - Two modes:
+ *   - showAllEntities={true}: Show all entities with checkboxes (allows toggle on/off)
+ *   - showAllEntities={false}: Exclude already-selected entities (default)
  * - Supports CLIENT entity type (extensible to others)
  *
  * @example
+ * // Unified view - toggle entities on/off
  * <EntitySelectorModal
  *   open={isOpen}
  *   onOpenChange={setIsOpen}
@@ -51,6 +56,20 @@ const ENTITY_ICONS = {
  *   entityType="CLIENT"
  *   organisationId={orgId}
  *   multiSelect={true}
+ *   showAllEntities={true}
+ *   initialSelection={currentItems}
+ * />
+ *
+ * @example
+ * // Classic mode - only show unselected entities
+ * <EntitySelectorModal
+ *   open={isOpen}
+ *   onOpenChange={setIsOpen}
+ *   onSelect={(items) => console.log("Selected:", items)}
+ *   entityType="CLIENT"
+ *   organisationId={orgId}
+ *   multiSelect={true}
+ *   excludeIds={selectedIds}
  * />
  */
 export const EntitySelectorModal: FC<EntitySelectorModalProps> = ({
@@ -62,6 +81,7 @@ export const EntitySelectorModal: FC<EntitySelectorModalProps> = ({
     multiSelect = false,
     excludeIds = [],
     initialSelection = [],
+    showAllEntities = false,
 }) => {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(
         new Set(initialSelection.map((item) => item.id))
@@ -77,7 +97,8 @@ export const EntitySelectorModal: FC<EntitySelectorModalProps> = ({
     } = useEntitySelector({
         entityType,
         organisationId,
-        excludeIds,
+        // Only exclude IDs if showAllEntities is false
+        excludeIds: showAllEntities ? [] : excludeIds,
         enabled: open,
     });
 
@@ -174,7 +195,7 @@ export const EntitySelectorModal: FC<EntitySelectorModalProps> = ({
                                 No {formattedEntityType.toLowerCase()}s found.
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">
-                                {excludeIds.length > 0
+                                {!showAllEntities && excludeIds.length > 0
                                     ? "All available items are already selected."
                                     : `No ${formattedEntityType.toLowerCase()}s available in this organisation.`}
                             </p>

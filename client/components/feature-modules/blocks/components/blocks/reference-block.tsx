@@ -56,10 +56,8 @@ type Props = z.infer<typeof schema>;
  * />
  */
 const Block: FC<Props> = ({ blockId, items = [], title }) => {
-    const { organisationId } = useBlockEnvironment();
-
     // Hydrate block to get resolved entity data
-    const { data: hydrationResult, isLoading, error } = useBlockHydration(blockId, organisationId);
+    const { data: hydrationResult, isLoading, error } = useBlockHydration(blockId);
 
     // Loading state
     if (isLoading) {

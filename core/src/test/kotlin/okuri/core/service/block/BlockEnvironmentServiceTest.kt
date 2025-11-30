@@ -54,6 +54,9 @@ class BlockEnvironmentServiceTest {
     private lateinit var blockService: BlockService
 
     @MockitoBean
+    private lateinit var blockReferenceService: BlockReferenceService
+
+    @MockitoBean
     private lateinit var blockTreeLayoutService: BlockTreeLayoutService
 
     @MockitoBean

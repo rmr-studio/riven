@@ -12,6 +12,7 @@ import {
     useBlockEnvironment,
 } from "../../context/block-environment-provider";
 import { BlockFocusProvider } from "../../context/block-focus-provider";
+import { BlockHydrationProvider } from "../../context/block-hydration-provider";
 import { RenderElementProvider } from "../../context/block-renderer-provider";
 import { GridContainerProvider } from "../../context/grid-container-provider";
 import { GridProvider } from "../../context/grid-provider";
@@ -21,13 +22,16 @@ import {
     TrackedEnvironmentProvider,
     useTrackedEnvironment,
 } from "../../context/tracked-environment-provider";
+import { useBlockTypes } from "../../hooks/use-block-types";
 import { useEntityLayout } from "../../hooks/use-entity-layout";
 import { BlockEnvironmentGridSync } from "../../hooks/use-environment-grid-sync";
 import { BlockType } from "../../interface/block.interface";
 import { WrapElementProvider } from "../../interface/render.interface";
 import { createBlockInstanceFromType } from "../../util/block/factory/instance.factory";
+import { blockTypesToOptions } from "../../util/type-picker-options";
 import { DEFAULT_WIDGET_OPTIONS } from "../demo/block-demo";
 import { BlockEditDrawer, EditModeIndicator } from "../forms";
+import { ENTITY_TYPE_OPTIONS, TypePickerModal } from "../modals/type-picker-modal";
 import { KeyboardNavigationHandler } from "../navigation/keyboard-navigation-handler";
 import { WidgetEnvironmentSync } from "../sync/widget.sync";
 import { AddBlockDialog } from "./add-block-dialog";
@@ -146,19 +150,21 @@ export const EntityBlockEnvironment: FC<EntityBlockEnvironmentProps> = ({
                 <LayoutHistoryProvider>
                     <LayoutChangeProvider>
                         <TrackedEnvironmentProvider>
-                            <BlockFocusProvider>
-                                <BlockEditProvider>
-                                    <EditModeIndicator />
-                                    <KeyboardNavigationHandler />
-                                    {(showDefaultToolbar || renderToolbar) && toolbar}
-                                    <BlockEnvironmentGridSync />
-                                    <WidgetEnvironmentSync />
-                                    <GridContainerProvider>
-                                        <RenderElementProvider wrapElement={wrapElement} />
-                                    </GridContainerProvider>
-                                    <BlockEditDrawer />
-                                </BlockEditProvider>
-                            </BlockFocusProvider>
+                            <BlockHydrationProvider>
+                                <BlockFocusProvider>
+                                    <BlockEditProvider>
+                                        <EditModeIndicator />
+                                        <KeyboardNavigationHandler />
+                                        {(showDefaultToolbar || renderToolbar) && toolbar}
+                                        <BlockEnvironmentGridSync />
+                                        <WidgetEnvironmentSync />
+                                        <GridContainerProvider>
+                                            <RenderElementProvider wrapElement={wrapElement} />
+                                        </GridContainerProvider>
+                                        <BlockEditDrawer />
+                                    </BlockEditProvider>
+                                </BlockFocusProvider>
+                            </BlockHydrationProvider>
                         </TrackedEnvironmentProvider>
                     </LayoutChangeProvider>
                 </LayoutHistoryProvider>
@@ -183,20 +189,106 @@ interface EntityToolbarProps {
 
 const EntityToolbar: FC<EntityToolbarProps> = ({ organisationId, entityType }) => {
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [typePickerOpen, setTypePickerOpen] = useState(false);
+    const [selectedBlockType, setSelectedBlockType] = useState<BlockType | null>(null);
+    const [pickerConfig, setPickerConfig] = useState<{
+        title: string;
+        description: string;
+        multiSelect: boolean;
+        required: boolean;
+        options: import("../modals/type-picker-modal").TypeOption[];
+    } | null>(null);
+
     const { addTrackedBlock } = useTrackedEnvironment();
     const { environment } = useBlockEnvironment();
+    const { data: availableBlockTypes } = useBlockTypes(organisationId, entityType);
 
     const handleBlockTypeSelect = (blockType: BlockType) => {
+        // Check if this block type requires type selection
+        if (blockType.key === "entity_reference") {
+            // Entity reference: single select entity type (required)
+            setSelectedBlockType(blockType);
+            setPickerConfig({
+                title: "Select Entity Type",
+                description: "Choose which type of entities this block will reference",
+                multiSelect: false,
+                required: true,
+                options: ENTITY_TYPE_OPTIONS,
+            });
+            setTypePickerOpen(true);
+            setDialogOpen(false);
+        } else if (blockType.key === "block_list" || blockType.key === "content_block_list") {
+            // Block list: multi-select block types (optional)
+            // Convert available block types to options
+            const blockTypeOptions = availableBlockTypes
+                ? blockTypesToOptions(availableBlockTypes)
+                : [];
+
+            setSelectedBlockType(blockType);
+            setPickerConfig({
+                title: "Select Allowed Block Types",
+                description: "Choose which block types can be added to this list (or allow all)",
+                multiSelect: true,
+                required: false,
+                options: blockTypeOptions,
+            });
+            setTypePickerOpen(true);
+            setDialogOpen(false);
+        } else {
+            // Regular block: create immediately
+            createAndAddBlock(blockType);
+        }
+    };
+
+    const handleTypeSelect = (selectedTypes: string[] | null) => {
+        if (!selectedBlockType) return;
+
+        if (selectedBlockType.key === "entity_reference") {
+            // Entity reference: selectedTypes[0] is the EntityType
+            const selectedValue = selectedTypes?.[0];
+            const entityType =
+                selectedValue && Object.values(EntityType).includes(selectedValue as EntityType)
+                    ? (selectedValue as EntityType)
+                    : undefined;
+            if (!entityType) return; // Required field, bail if invalid
+            createAndAddBlock(selectedBlockType, { entityType });
+        } else if (
+            selectedBlockType.key === "block_list" ||
+            selectedBlockType.key === "content_block_list"
+        ) {
+            // Block list: selectedTypes is the array of allowed block type keys (or null for all)
+            createAndAddBlock(selectedBlockType, { allowedTypes: selectedTypes });
+        }
+
+        setSelectedBlockType(null);
+        setPickerConfig(null);
+    };
+
+    const createAndAddBlock = (
+        blockType: BlockType,
+        options?: { entityType?: EntityType; allowedTypes?: string[] | null }
+    ) => {
         // Create a new block instance from the selected type
         const newBlock = createBlockInstanceFromType(blockType, organisationId, {
             name: blockType.name,
+            entityType: options?.entityType,
+            allowedTypes: options?.allowedTypes,
         });
 
         // Add the block to the environment
         addTrackedBlock(newBlock);
 
-        // Close the dialog
+        // Close dialogs
         setDialogOpen(false);
+        setTypePickerOpen(false);
+    };
+
+    const handleTypeModalOpenChange = (open: boolean) => {
+        setTypePickerOpen(open);
+        if (!open) {
+            setSelectedBlockType(null);
+            setPickerConfig(null);
+        }
     };
 
     const hasBlocks = environment.trees.length > 0;
@@ -238,6 +330,20 @@ const EntityToolbar: FC<EntityToolbarProps> = ({ organisationId, entityType }) =
                 entityType={entityType}
                 onBlockTypeSelect={handleBlockTypeSelect}
             />
+
+            {/* Type Picker Modal */}
+            {pickerConfig && (
+                <TypePickerModal
+                    open={typePickerOpen}
+                    onOpenChange={handleTypeModalOpenChange}
+                    title={pickerConfig.title}
+                    description={pickerConfig.description}
+                    options={pickerConfig.options}
+                    multiSelect={pickerConfig.multiSelect}
+                    required={pickerConfig.required}
+                    onSelect={handleTypeSelect}
+                />
+            )}
         </div>
     );
 };

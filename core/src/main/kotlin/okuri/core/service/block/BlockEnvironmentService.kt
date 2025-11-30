@@ -36,6 +36,7 @@ import java.util.*
 class BlockEnvironmentService(
     private val blockService: BlockService,
     private val blockTreeLayoutService: BlockTreeLayoutService,
+    private val blockReferenceService: BlockReferenceService,
     private val blockChildrenService: BlockChildrenService,
     private val authTokenService: AuthTokenService,
     private val activityService: ActivityService,
@@ -274,8 +275,8 @@ class BlockEnvironmentService(
 
     @PreAuthorize("@organisationSecurity.hasOrg(#request.organisationId)")
     fun hydrateEnvironment(request: HydrateBlocksRequest): Map<UUID, BlockHydrationResult> {
-        val (blockIds, organisationId) = request
-        return blockService.hydrateBlocks(blockIds, organisationId)
+        val (references, organisationId) = request
+        return blockReferenceService.hydrateBlockReferences(references, organisationId)
     }
 
     /**

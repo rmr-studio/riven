@@ -1200,7 +1200,7 @@ export interface components {
             trees: components["schemas"]["BlockTree"][];
         };
         BlockListConfiguration: {
-            allowedTypes?: string[];
+            listType?: string[];
             allowDuplicates: boolean;
             display: components["schemas"]["ListDisplayConfig"];
             config: components["schemas"]["ListConfig"];
@@ -1247,8 +1247,9 @@ export interface components {
             /** Format: uuid */
             updatedBy?: string;
         };
+        /** @description Reference to another block tree */
         BlockTreeReference: WithRequired<components["schemas"]["ReferencePayload"], "type"> & {
-            reference: components["schemas"]["Reference"];
+            reference?: components["schemas"]["Reference"];
         };
         BreakpointConfig: {
             /** Format: int32 */
@@ -1277,14 +1278,15 @@ export interface components {
             appendTo?: string;
             scroll?: boolean;
         };
+        /** @description Reference to one or more of an organisation's entities (e.g. teams, projects, clients) */
         EntityReference: WithRequired<components["schemas"]["ReferencePayload"], "type"> & {
-            reference: components["schemas"]["Reference"][];
+            reference?: components["schemas"]["Reference"][];
         };
         EntityReferenceMetadata: components["schemas"]["ReferenceMetadata"] & {
             presentation: components["schemas"]["Presentation"];
             items: components["schemas"]["ReferenceItem"][];
             projection: components["schemas"]["Projection"];
-            allowedTypes?: components["schemas"]["EntityType"][];
+            listType?: components["schemas"]["EntityType"];
             display: components["schemas"]["ListDisplayConfig"];
             config: components["schemas"]["ListConfig"];
             allowDuplicates: boolean;
@@ -1311,8 +1313,8 @@ export interface components {
         ListFilterLogicType: ListFilterLogicType;
         Metadata: {
             type: components["schemas"]["BlockMetadataType"];
-            deletable: boolean;
             meta: components["schemas"]["BlockMeta"];
+            deletable: boolean;
         };
         Node: {
             warnings: string[];
@@ -1473,8 +1475,17 @@ export interface components {
             success: boolean;
             environment: components["schemas"]["BlockEnvironment"];
         };
+        EntityReferenceRequest: {
+            type: components["schemas"]["EntityType"];
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            index?: number;
+        };
         HydrateBlocksRequest: {
-            blockIds: string[];
+            references: {
+                [key: string]: components["schemas"]["EntityReferenceRequest"][];
+            };
             /** Format: uuid */
             organisationId: string;
         };

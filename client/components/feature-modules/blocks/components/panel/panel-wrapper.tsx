@@ -7,9 +7,8 @@ import { TypeIcon } from "lucide-react";
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useBlockEdit } from "../../context/block-edit-provider";
 import { useBlockEnvironment } from "../../context/block-environment-provider";
-import { useBlockFocus } from "../../context/block-focus-provider";
-import { useLayoutChange } from "../../context/layout-change-provider";
 import { useRenderElement } from "../../context/block-renderer-provider";
+import { useLayoutChange } from "../../context/layout-change-provider";
 import { useFocusSurface } from "../../hooks/use-focus-surface";
 import { isContentNode } from "../../interface/block.interface";
 import { QuickActionItem, SlashMenuItem } from "../../interface/panel.interface";
@@ -35,6 +34,7 @@ interface Props extends ChildNodeProps, ClassNameProps {
     quickActions?: QuickActionItem[];
     onTitleChange?: (value: string) => void;
     allowInsert?: boolean;
+    allowEdit?: boolean;
     onInsert?: (item: SlashMenuItem) => void;
     onInsertSibling?: (item: SlashMenuItem) => void;
     onDelete?: () => void;
@@ -54,16 +54,16 @@ export const PanelWrapper: FC<Props> = ({
     title,
     titlePlaceholder = "Untitled block",
     description,
-    form,
     children,
     slashItems,
-    quickActions,
+    quickActions = [],
     onTitleChange,
     onInsert,
     onInsertSibling,
     onDelete,
     className,
     allowInsert = false,
+    allowEdit = true,
     customControls,
     customActions = [],
 }) => {
@@ -78,10 +78,9 @@ export const PanelWrapper: FC<Props> = ({
     const [toolbarFocusIndex, setToolbarFocusIndex] = useState<number>(-1); // -1 = no toolbar focus
     const inlineSearchRef = useRef<HTMLInputElement | null>(null);
     const surfaceRef = useRef<HTMLDivElement | null>(null);
-    const actions = quickActions ?? [];
 
     // Block edit state
-    const { openDrawer, isEditing, drawerState, startEdit, saveAndExit } = useBlockEdit();
+    const { openDrawer, drawerState, startEdit, saveAndExit } = useBlockEdit();
     const { getBlock, getChildren } = useBlockEnvironment();
     const { suppressEditModeTracking } = useLayoutChange();
     const block = getBlock(id);
@@ -106,9 +105,9 @@ export const PanelWrapper: FC<Props> = ({
         });
 
     const menuActions = useMemo(() => {
-        if (onDelete && !actions.some((action) => action.id === "delete")) {
+        if (onDelete && !quickActions.some((action) => action.id === "delete")) {
             return [
-                ...actions,
+                ...quickActions,
                 {
                     id: "__delete",
                     label: "Delete block",
@@ -116,8 +115,8 @@ export const PanelWrapper: FC<Props> = ({
                 },
             ];
         }
-        return actions;
-    }, [actions, onDelete]);
+        return quickActions;
+    }, [quickActions, onDelete]);
 
     const hasMenuActions = menuActions.length > 0;
 
@@ -219,7 +218,7 @@ export const PanelWrapper: FC<Props> = ({
         id,
         isSelected,
         allowInsert,
-        actionsLength: actions.length,
+        actionsLength: quickActions.length,
         toolbarFocusIndex,
         setToolbarFocusIndex,
         setInlineMenuOpen,
@@ -479,9 +478,9 @@ export const PanelWrapper: FC<Props> = ({
                                 onMenuAction={handleMenuAction}
                                 onDetailsOpenChange={handleDetailsOpenChange}
                                 onActionsOpenChange={handleActionsOpenChange}
-                                onEditClick={handleEditClick}
-                                onSaveEditClick={handleSaveEditClick}
-                                onDiscardEditClick={handleDiscardEditClick}
+                                onEditClick={allowEdit ? handleEditClick : undefined}
+                                onSaveEditClick={allowEdit ? handleSaveEditClick : undefined}
+                                onDiscardEditClick={allowEdit ? handleDiscardEditClick : undefined}
                                 customActions={customActions}
                             />
                         )}
@@ -515,7 +514,7 @@ export const PanelWrapper: FC<Props> = ({
                 setOpen={setQuickOpen}
                 onInsert={allowInsert ? handleOpenInsertModal : undefined}
                 onActionSelect={handleQuickSelect}
-                actions={actions}
+                actions={quickActions}
                 allowInsert={allowInsert}
             />
         </PanelWrapperProvider>

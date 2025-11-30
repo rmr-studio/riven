@@ -1,25 +1,59 @@
-import { useAuth } from "@/components/provider/auth-context";
-import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import { BlockHydrationResult, BlockService } from "../service/block.service";
+import { useMemo } from "react";
+import { useBlockHydrationContext } from "../context/block-hydration-provider";
+import { BlockHydrationResult } from "../interface/block.interface";
 
 /**
- * Hook to hydrate (resolve entity references for) a single block.
+ * Result type for useBlockHydration hook.
+ * Mirrors React Query's UseQueryResult interface for consistency.
+ */
+export interface UseBlockHydrationResult {
+    /**
+     * Hydration result for the block with resolved entity references.
+     * Undefined if not yet hydrated or if block doesn't exist.
+     */
+    data: BlockHydrationResult | undefined;
+
+    /**
+     * Whether the hydration request is currently loading.
+     * True during initial fetch, false once data or error is available.
+     */
+    isLoading: boolean;
+
+    /**
+     * Error from the hydration request.
+     * Network errors and auth errors appear here.
+     * Individual entity errors are in data.error field.
+     */
+    error: Error | null;
+
+    /**
+     * Refetch hydration data for all blocks.
+     * Note: This refetches ALL blocks in the environment, not just this one.
+     */
+    refetch: () => void;
+
+    /**
+     * Whether a refetch is currently in progress.
+     */
+    isRefetching: boolean;
+}
+
+/**
+ * Hook to access hydration data for a single block.
  *
- * Uses React Query for caching and state management.
- * Automatically handles authentication and loading states.
+ * This hook reads from the BlockHydrationProvider context, which batches
+ * all entity reference requests into a single HTTP call for performance.
  *
- * This hook implements progressive loading - blocks are hydrated on-demand
- * rather than all at once during initial page load.
+ * The hook automatically reactively updates when:
+ * - The block's entity references change
+ * - New blocks are added to the environment
+ * - Blocks are removed from the environment
  *
- * @param blockId - UUID of the block to hydrate
- * @param organisationId - Organisation context for authorization
- * @returns Hydration result with resolved entity references, loading state, and error
+ * @param blockId - UUID of the block to get hydration data for
+ * @returns Hydration result with loading state, data, and error
  *
  * @example
- * const { data: hydrationResult, isLoading, error } = useBlockHydration(
- *   "block-uuid",
- *   "org-uuid"
- * );
+ * const { data: hydrationResult, isLoading, error } = useBlockHydration("block-uuid");
  *
  * if (isLoading) return <Skeleton />;
  * if (error) return <Alert>Failed to load</Alert>;
@@ -27,39 +61,21 @@ import { BlockHydrationResult, BlockService } from "../service/block.service";
  * const references = hydrationResult?.references || [];
  * return <div>{references.map(ref => ...)}</div>;
  */
-export const useBlockHydration = (
-    blockId: string | undefined,
-    organisationId: string | undefined
-): UseQueryResult<BlockHydrationResult, Error> => {
-    const { session, loading: authLoading } = useAuth();
+export const useBlockHydration = (blockId: string | undefined): UseBlockHydrationResult => {
+    const { getBlockHydration, isLoading, error, refetch, isRefetching } =
+        useBlockHydrationContext();
 
-    return useQuery<BlockHydrationResult, Error>({
-        queryKey: ["block-hydration", blockId, organisationId],
-        queryFn: async () => {
-            if (!blockId || !organisationId) {
-                throw new Error("Block ID and Organisation ID are required");
-            }
+    // Get hydration data for this specific block
+    const data = useMemo(() => {
+        if (!blockId) return undefined;
+        return getBlockHydration(blockId);
+    }, [blockId, getBlockHydration]);
 
-            const results = await BlockService.hydrateBlocks(
-                session,
-                [blockId],
-                organisationId
-            );
-
-            // Extract result for this specific block
-            const result = results[blockId];
-            if (!result) {
-                throw new Error(`No hydration result found for block ${blockId}`);
-            }
-
-            if (result.error) {
-                throw new Error(result.error);
-            }
-
-            return result;
-        },
-        enabled: !!blockId && !!organisationId && !!session && !authLoading,
-        staleTime: 5 * 60 * 1000, // 5 minutes - entity data doesn't change frequently
-        refetchOnWindowFocus: false, // Don't refetch on window focus (entity data is stable)
-    });
+    return {
+        data,
+        isLoading,
+        error,
+        refetch,
+        isRefetching,
+    };
 };
