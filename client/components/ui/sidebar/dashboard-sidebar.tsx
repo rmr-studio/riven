@@ -5,6 +5,7 @@ import { useOrganisationStore } from "@/components/provider/OrganisationContext"
 import { SidebarGroupProps } from "@/lib/interfaces/interface";
 import {
     BanknoteArrowUp,
+    Blocks,
     BookTextIcon,
     Building2,
     CalendarHeart,
@@ -86,6 +87,15 @@ export const DashboardSidebar = () => {
                           url: `/dashboard/organisation/${selectedOrganisation.id}/members`,
                           isActive: pathName.startsWith(
                               `/dashboard/organisation/${selectedOrganisation.id}/members`
+                          ),
+                      },
+                      {
+                          icon: Blocks,
+                          hidden: false,
+                          title: "Organisation Blocks",
+                          url: `/dashboard/organisation/${selectedOrganisation.id}/blocks`,
+                          isActive: pathName.startsWith(
+                              `/dashboard/organisation/${selectedOrganisation.id}/blocks`
                           ),
                       },
                       {

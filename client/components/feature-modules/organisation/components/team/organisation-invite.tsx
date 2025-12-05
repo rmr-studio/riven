@@ -22,7 +22,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { useOrganisationRole } from "@/hooks/useOrganisationRole";
+import { useOrganisationRole } from "../../hooks/use-organisation-role";
 
 // Validation schema
 const inviteSchema = z.object({

@@ -1,9 +1,9 @@
 import { useAuth } from "@/components/provider/auth-context";
 import { AuthenticatedQueryResult } from "@/lib/interfaces/interface";
+import { EntityType } from "@/lib/types/types";
 import { useQuery } from "@tanstack/react-query";
 import { BlockType } from "../interface/block.interface";
 import { BlockTypeService } from "../service/block-type.service";
-import { EntityType } from "@/lib/types/types";
 
 /**
  * React Query hook to fetch available block types for an organization.
@@ -36,7 +36,7 @@ import { EntityType } from "@/lib/types/types";
  * ```
  */
 export function useBlockTypes(
-    organisationId: string,
+    organisationId: string | undefined,
     entityType?: EntityType,
     includeSystem: boolean = true
 ): AuthenticatedQueryResult<BlockType[]> {
@@ -44,6 +44,10 @@ export function useBlockTypes(
     const query = useQuery({
         queryKey: ["blockTypes", organisationId, includeSystem],
         queryFn: async () => {
+            // Query is only enabled if organisationId is defined. So this should not happen. But :p
+            if (!organisationId) {
+                throw new Error("Organisation ID is required to fetch block types");
+            }
             const types = await BlockTypeService.getBlockTypes(session, organisationId);
 
             // Filter out archived types

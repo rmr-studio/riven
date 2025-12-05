@@ -19,7 +19,7 @@ import { LayoutContainerBlock } from "../../components/primitive/block.container
 import { ListBlock } from "../../components/primitive/block.list";
 import { TextBlock } from "../../components/primitive/block.text";
 import { ReferenceBlock } from "../../components/blocks/reference-block";
-import { ComponentType } from "../../interface/block.interface";
+import { ComponentType } from "../../components/builder/types/builder.types";
 
 export interface RenderElementMetadata<T extends ZodTypeAny> {
     type: string;

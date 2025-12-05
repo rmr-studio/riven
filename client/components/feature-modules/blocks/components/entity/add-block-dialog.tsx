@@ -1,9 +1,11 @@
 import { CommandDialog, CommandInput } from "@/components/ui/command";
 import { EntityType } from "@/lib/types/types";
-import { FC } from "react";
+import { FC, useMemo, useState } from "react";
 import { useBlockTypes } from "../../hooks/use-block-types";
 import { BlockType } from "../../interface/block.interface";
 import { BlockTypeSelectorList } from "../shared/block-type-selector-list";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Building2, Globe, LayoutGrid } from "lucide-react";
 
 /**
  * Props for the AddBlockDialog component
@@ -64,6 +66,22 @@ export const AddBlockDialog: FC<AddBlockDialogProps> = ({
     onBlockTypeSelect,
 }) => {
     const { data: blockTypes, isLoading, error } = useBlockTypes(organisationId, entityType);
+    const [filter, setFilter] = useState<"all" | "system" | "custom">("all");
+
+    // Filter block types based on selected filter
+    const filteredBlockTypes = useMemo(() => {
+        if (!blockTypes) return undefined;
+
+        switch (filter) {
+            case "system":
+                return blockTypes.filter((type) => type.system);
+            case "custom":
+                return blockTypes.filter((type) => !type.system);
+            case "all":
+            default:
+                return blockTypes;
+        }
+    }, [blockTypes, filter]);
 
     const handleSelect = (blockType: BlockType) => {
         onBlockTypeSelect(blockType);
@@ -73,8 +91,34 @@ export const AddBlockDialog: FC<AddBlockDialogProps> = ({
     return (
         <CommandDialog open={open} onOpenChange={onOpenChange}>
             <CommandInput placeholder="Search block types..." />
+
+            {/* Filter toggle */}
+            <div className="border-b px-4 py-3">
+                <ToggleGroup
+                    type="single"
+                    value={filter}
+                    onValueChange={(value) => {
+                        if (value) setFilter(value as "all" | "system" | "custom");
+                    }}
+                    className="justify-start"
+                >
+                    <ToggleGroupItem value="all" aria-label="Show all blocks" className="gap-2">
+                        <LayoutGrid className="size-4" />
+                        All Blocks
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="system" aria-label="Show system blocks" className="gap-2">
+                        <Globe className="size-4" />
+                        System
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="custom" aria-label="Show custom blocks" className="gap-2">
+                        <Building2 className="size-4" />
+                        Custom
+                    </ToggleGroupItem>
+                </ToggleGroup>
+            </div>
+
             <BlockTypeSelectorList
-                blockTypes={blockTypes}
+                blockTypes={filteredBlockTypes}
                 isLoading={isLoading}
                 error={error}
                 onSelect={handleSelect}
