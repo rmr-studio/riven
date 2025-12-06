@@ -28,7 +28,7 @@ import React, { useCallback, useMemo, useState } from "react";
 
 // 👇 All custom cell components are imported from your new file
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useOrganisationRole } from "@/hooks/useOrganisationRole";
+import { useOrganisationRole } from "../../hooks/use-organisation-role";
 import { DateCell, MemberActionsCell, MemberCell, RoleCell } from "./table";
 
 interface Props {

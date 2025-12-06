@@ -2,21 +2,16 @@
 
 import { useAuth } from "@/components/provider/auth-context";
 import { useOrganisationStore } from "@/components/provider/OrganisationContext";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import List01 from "@/components/feature-modules/organisation/components/list01";
-import List02 from "@/components/feature-modules/organisation/components/list02";
-import List03 from "@/components/feature-modules/organisation/components/list03";
-import { useOrganisation } from "@/hooks/useOrganisation";
-import { useOrganisationRole } from "@/hooks/useOrganisationRole";
+import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-group";
+import { EntityType } from "@/lib/types/types";
 import { isResponseError } from "@/lib/util/error/error.util";
-import { Calendar, CreditCard, Edit, Trash2, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { EntityBlockEnvironment } from "../../blocks/components/entity/entity-block-environment";
+import { useOrganisation } from "../hooks/use-organisation";
 
 export const OrganisationDashboard = () => {
     const { data: organisation, isPending, error, isLoadingAuth } = useOrganisation();
-    const { hasRole } = useOrganisationRole();
 
     const { session } = useAuth();
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -55,71 +50,27 @@ export const OrganisationDashboard = () => {
 
     if (!organisation) return;
 
-    return (
-        <div className="space-y-4 m-12">
-            <section>
-                <Card className="bg-transparent">
-                    <CardHeader>
-                        <CardTitle>Quick Actions</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex justify-between space-x-4">
-                        <div className="bg-muted h-48 w-full rounded-lg" />
-                        <div className="bg-muted h-48 w-full rounded-lg" />
-                        <div className="bg-muted h-48 w-full rounded-lg" />
-                        <div className="bg-muted h-48 w-full rounded-lg" />
-                        {hasRole("ADMIN") && (
-                            <div className="h-48 min-w-32 rounded-lg">
-                                <Button
-                                    onClick={onEdit}
-                                    className="justify-center flex flex-grow border-edit cursor-pointer w-full mb-2"
-                                    variant="outline"
-                                >
-                                    <Edit className="w-4 h-4 mr-2" />
-                                    Edit
-                                </Button>
-                                {hasRole("OWNER") && (
-                                    <Button
-                                        onClick={() => setShowDeleteModal(true)}
-                                        className="justify-center flex flex-grow border-destructive cursor-pointer w-full h-fit"
-                                        variant="outline"
-                                    >
-                                        <Trash2 className="w-4 h-4 mr-2" />
-                                        Delete
-                                    </Button>
-                                )}
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </section>
-            <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white dark:bg-[#0F0F12] rounded-xl p-6 flex flex-col border border-gray-200 dark:border-[#1F1F23]">
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 text-left flex items-center gap-2 ">
-                        <Wallet className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-50" />
-                        Accounts
-                    </h2>
-                    <div className="flex-1">
-                        <List01 className="h-full" />
-                    </div>
-                </div>
-                <div className="bg-white dark:bg-[#0F0F12] rounded-xl p-6 flex flex-col border border-gray-200 dark:border-[#1F1F23]">
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 text-left flex items-center gap-2">
-                        <CreditCard className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-50" />
-                        Recent Transactions
-                    </h2>
-                    <div className="flex-1">
-                        <List02 className="h-full" />
-                    </div>
-                </div>
-            </section>
+    const trail: BreadCrumbTrail[] = [
+        { label: "Home", href: "/dashboard" },
+        { label: "Organisations", href: "/dashboard/organisation" },
+        {
+            label: organisation.name || "Organisation",
+            href: `/dashboard/organisation/${organisation.id}/clients`,
+        },
+    ];
 
-            <section className="bg-white dark:bg-[#0F0F12] rounded-xl p-6 flex flex-col items-start justify-start border border-gray-200 dark:border-[#1F1F23]">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 text-left flex items-center gap-2">
-                    <Calendar className="w-3.5 h-3.5 text-zinc-900 dark:text-zinc-50" />
-                    Upcoming Events
-                </h2>
-                <List03 />
-            </section>
+    return (
+        <div className="py-6 px-12">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-8">
+                <BreadCrumbGroup items={trail} />
+            </div>
+            <EntityBlockEnvironment
+                entityId={organisation.id}
+                entityType={EntityType.ORGANISATION}
+                organisationId={organisation.id}
+                showDefaultToolbar={true}
+            />
         </div>
     );
 };
