@@ -227,8 +227,14 @@ export const BlockManager: FC = () => {
             )}
 
             {/* Builder Dialog */}
-            <Dialog open={isBuilderOpen} onOpenChange={setIsBuilderOpen} modal={false}>
-                <DialogContent className="min-w-[70dvw]  h-[90vh] p-0">
+            <Dialog open={isBuilderOpen} onOpenChange={setIsBuilderOpen}>
+                <DialogContent
+                    className="min-w-[70dvw] h-[90vh] p-0"
+                    onInteractOutside={(e) => {
+                        // Prevent closing when clicking on dropdown menus or other portaled content
+                        e.preventDefault();
+                    }}
+                >
                     <DialogTitle className="sr-only">
                         {editingBlockType ? "Edit Block Type" : "Create Block Type"}
                     </DialogTitle>

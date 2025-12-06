@@ -6,61 +6,24 @@ import { ArrowLeft, ArrowRight, Save } from "lucide-react";
 import React from "react";
 import { useBuilder } from "./builder-provider";
 import { StepIndicator } from "./step-indicator";
+import { BasicInfoPanel } from "./steps/basic-info-panel";
+import { FormConfigPanel } from "./steps/form-config-panel";
+import { NestingConfigPanel } from "./steps/nesting-config-panel";
+import { PreviewSavePanel } from "./steps/preview-save-panel";
+import { RenderDesignerPanel } from "./steps/render-designer-panel";
+import { SchemaDesignerPanel } from "./steps/schema-designer-panel";
 import { BuilderStep } from "./types/builder.types";
-
-// Placeholder components for each step (will be implemented later)
-const BasicInfoPanel = () => (
-    <div className="p-6">
-        <h2 className="text-lg font-semibold mb-4">Basic Information</h2>
-        <p className="text-muted-foreground">Step 1: Basic Info panel will be implemented here</p>
-    </div>
-);
-
-const SchemaDesigner = () => (
-    <div className="p-6">
-        <h2 className="text-lg font-semibold mb-4">Schema Designer</h2>
-        <p className="text-muted-foreground">Step 2: Schema Designer will be implemented here</p>
-    </div>
-);
-
-const FormConfigPanel = () => (
-    <div className="p-6">
-        <h2 className="text-lg font-semibold mb-4">Form Configuration</h2>
-        <p className="text-muted-foreground">Step 3: Form Configuration will be implemented here</p>
-    </div>
-);
-
-const RenderDesigner = () => (
-    <div className="p-6">
-        <h2 className="text-lg font-semibold mb-4">Render Designer</h2>
-        <p className="text-muted-foreground">Step 4: Render Designer will be implemented here</p>
-    </div>
-);
-
-const NestingConfig = () => (
-    <div className="p-6">
-        <h2 className="text-lg font-semibold mb-4">Nesting Rules</h2>
-        <p className="text-muted-foreground">Step 5: Nesting Rules will be implemented here</p>
-    </div>
-);
-
-const PreviewPanel = () => (
-    <div className="p-6">
-        <h2 className="text-lg font-semibold mb-4">Preview & Save</h2>
-        <p className="text-muted-foreground">Step 6: Preview & Save will be implemented here</p>
-    </div>
-);
 
 /**
  * Maps step enum to component
  */
 const STEP_COMPONENTS: Record<BuilderStep, React.FC> = {
     [BuilderStep.BASIC_INFO]: BasicInfoPanel,
-    [BuilderStep.SCHEMA_DESIGNER]: SchemaDesigner,
+    [BuilderStep.SCHEMA_DESIGNER]: SchemaDesignerPanel,
     [BuilderStep.FORM_CONFIG]: FormConfigPanel,
-    [BuilderStep.RENDER_DESIGNER]: RenderDesigner,
-    [BuilderStep.NESTING_RULES]: NestingConfig,
-    [BuilderStep.PREVIEW_SAVE]: PreviewPanel,
+    [BuilderStep.RENDER_DESIGNER]: RenderDesignerPanel,
+    [BuilderStep.NESTING_RULES]: NestingConfigPanel,
+    [BuilderStep.PREVIEW_SAVE]: PreviewSavePanel,
 };
 
 interface BuilderWizardProps {
@@ -190,12 +153,12 @@ export const BuilderWizard: React.FC<BuilderWizardProps> = ({ className }) => {
 
 BuilderWizard.displayName = "BuilderWizard";
 
-// Export placeholder components for later implementation
+// Export step components
 export {
     BasicInfoPanel,
     FormConfigPanel,
-    NestingConfig,
-    PreviewPanel,
-    RenderDesigner,
-    SchemaDesigner,
+    NestingConfigPanel,
+    PreviewSavePanel,
+    RenderDesignerPanel,
+    SchemaDesignerPanel,
 };
