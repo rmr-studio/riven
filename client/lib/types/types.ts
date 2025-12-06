@@ -1189,7 +1189,7 @@ export interface components {
             /** Format: uuid */
             updatedBy?: string;
         };
-        BlockContentMetadata: WithRequired<components["schemas"]["Metadata"], "deletable" | "meta" | "type"> & {
+        BlockContentMetadata: WithRequired<components["schemas"]["Metadata"], "deletable" | "meta" | "readonly" | "type"> & {
             data: {
                 [key: string]: unknown;
             };
@@ -1313,8 +1313,9 @@ export interface components {
         ListFilterLogicType: ListFilterLogicType;
         Metadata: {
             type: components["schemas"]["BlockMetadataType"];
-            meta: components["schemas"]["BlockMeta"];
+            readonly: boolean;
             deletable: boolean;
+            meta: components["schemas"]["BlockMeta"];
         };
         Node: {
             warnings: string[];
@@ -1362,7 +1363,7 @@ export interface components {
             labelOverride?: string;
             badge?: string;
         };
-        ReferenceMetadata: WithRequired<components["schemas"]["Metadata"], "deletable" | "meta" | "type"> & {
+        ReferenceMetadata: WithRequired<components["schemas"]["Metadata"], "deletable" | "meta" | "readonly" | "type"> & {
             path: string;
             fetchPolicy: components["schemas"]["BlockReferenceFetchPolicy"];
         };

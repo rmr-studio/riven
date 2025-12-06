@@ -27,6 +27,7 @@ import {
 
 export interface UseReferenceBlockToolbarProps {
     blockId: string;
+    readonly?: boolean;
     entityType: EntityType;
     currentItems?: ReferenceItem[]; // Currently selected items
     multiSelect?: boolean;
@@ -69,24 +70,36 @@ export function UseEntityReferenceToolbar({
     entityType,
     currentItems = [],
     multiSelect = true,
+    readonly = false,
 }: UseReferenceBlockToolbarProps): UseReferenceBlockToolbarResult {
     const [entitySelectorOpen, setEntitySelectorOpen] = useState(false);
     const { getBlock, organisationId } = useBlockEnvironment();
     const { updateTrackedBlock } = useTrackedEnvironment();
     const queryClient = useQueryClient();
 
+    if (readonly) {
+        return {
+            customActions: [],
+            modal: null,
+        };
+    }
+
     // Handle entity selection
     const handleEntitySelect = (items: ReferenceItem[]) => {
         const block = getBlock(blockId);
         if (!block) return;
+
         const { payload } = block.block;
+        if (payload.readonly) {
+            return;
+        }
 
         // Ensure block is an entity reference
         if (!isEntityReferenceMetadata(payload)) return;
 
         // Validate entity types if listType is set
         if (payload.listType) {
-            const invalidItems = items.filter(item => item.type !== payload.listType);
+            const invalidItems = items.filter((item) => item.type !== payload.listType);
             if (invalidItems.length > 0) {
                 console.error(
                     `Cannot add entities of type ${invalidItems[0].type} to a ${payload.listType} reference block`

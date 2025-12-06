@@ -29,7 +29,6 @@ export const EntityReference: FC<Props> = ({ node, payload }) => {
 
     const itemCount = items.length;
     const { error, refetch, isRefetching } = useBlockHydration(id);
-
     // Get entity reference toolbar actions and modal
     // Use listType if set, otherwise default to CLIENT
     const { customActions, modal } = UseEntityReferenceToolbar({
@@ -37,20 +36,21 @@ export const EntityReference: FC<Props> = ({ node, payload }) => {
         entityType: listType || EntityType.CLIENT,
         currentItems: items || [],
         multiSelect: true,
+        readonly: payload.readonly,
     });
 
     // Quick actions for the block
-    const quickActions = useMemo(
-        () => [
+    const quickActions = useMemo(() => {
+        if (!payload.deletable) return [];
+        return [
             {
                 id: "delete",
                 label: "Delete block",
                 shortcut: "⌘⌫",
                 onSelect: () => removeTrackedBlock(id),
             },
-        ],
-        [id, removeTrackedBlock]
-    );
+        ];
+    }, [id, removeTrackedBlock]);
 
     // Retry button for error state
     const retryButton = error ? (
@@ -94,6 +94,7 @@ export const EntityReference: FC<Props> = ({ node, payload }) => {
                 quickActions={quickActions}
                 allowInsert={false}
                 allowEdit={false}
+                allowDelete={payload.deletable}
                 onDelete={() => removeTrackedBlock(id)}
                 customActions={customActions}
                 customControls={retryButton}
