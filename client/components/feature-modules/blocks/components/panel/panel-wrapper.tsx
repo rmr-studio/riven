@@ -104,7 +104,7 @@ export const PanelWrapper: FC<Props> = ({
         });
 
     const menuActions = useMemo(() => {
-        if (onDelete && !quickActions.some((action) => action.id === "delete")) {
+        if (allowDelete && onDelete && !quickActions.some((action) => action.id === "delete")) {
             return [
                 ...quickActions,
                 {
