@@ -15,6 +15,7 @@ import riven.core.util.ServiceUtil.findOrThrow
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
+import riven.core.enums.block.node.SystemBlockTypes
 import java.util.*
 
 /**
@@ -70,7 +71,7 @@ class BlockTypeService(
 
         // Ensure a user is only updating a non-system organisation block type
         val orgId = requireNotNull(existing.organisationId) { "Cannot update system block type" }
-        
+
         // Assert that they have access to said organisation
         if (!organisationSecurity.hasOrg(orgId)) {
             throw AccessDeniedException("Unauthorized to update block type for organisation $orgId")
@@ -150,6 +151,12 @@ class BlockTypeService(
                 "archiveStatus" to status
             ),
         )
+    }
+
+    fun getSystemBlockType(type: SystemBlockTypes): BlockTypeEntity {
+        return findOrThrow {
+            blockTypeRepository.findByKey(type.key)
+        }
     }
 
     /**

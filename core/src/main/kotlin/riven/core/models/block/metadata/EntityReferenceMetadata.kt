@@ -21,6 +21,7 @@ data class EntityReferenceMetadata(
     val items: List<ReferenceItem>,
     val projection: Projection = Projection(),
     override val deletable: Boolean = true,
+    override val readonly: Boolean = false,
     override val listType: EntityType? = null,
     override val display: ListDisplayConfig = ListDisplayConfig(),
     override val config: ListConfig = ListConfig(),

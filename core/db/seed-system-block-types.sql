@@ -303,130 +303,6 @@ VALUES ('e3202dc4-5087-46c5-8b0c-28caad84c573'::uuid,
         NOW(),
         NOW());
 
--- Content Block List Block Type
-INSERT INTO block_types (id,
-                         key,
-                         source_id,
-                         display_name,
-                         description,
-                         organisation_id,
-                         system,
-                         version,
-                         strictness,
-                         schema,
-                         archived,
-                         nesting,
-                         display_structure,
-                         created_at,
-                         updated_at)
-VALUES ('4655c164-18cb-4a38-ab5e-04c43acafa42'::uuid,
-        'content_block_list',
-        NULL,
-        'Content Block List',
-        'Ordered list of content blocks with configurable ordering.',
-        NULL,
-        true,
-        1,
-        'SOFT',
-        '{
-          "name": "ContentBlockList",
-          "type": "OBJECT",
-          "required": true,
-          "properties": {
-            "title": {
-              "name": "Title",
-              "type": "STRING",
-              "required": false
-            },
-            "description": {
-              "name": "Description",
-              "type": "STRING",
-              "required": false
-            }
-          }
-        }'::jsonb,
-        false,
-        '{
-          "max": null,
-          "allowedTypes": [
-            "project_task"
-          ]
-        }'::jsonb,
-        '{
-          "form": {
-            "fields": {
-              "data.title": {
-                "type": "TEXT_INPUT",
-                "label": "List Title",
-                "placeholder": "Enter list title"
-              },
-              "data.description": {
-                "type": "TEXT_AREA",
-                "label": "Description",
-                "placeholder": "Describe this list"
-              }
-            }
-          },
-          "render": {
-            "version": 1,
-            "layoutGrid": {
-              "layout": {
-                "x": 0,
-                "y": 0,
-                "width": 12,
-                "height": 4,
-                "locked": false
-              },
-              "items": [
-                {
-                  "id": "contentList",
-                  "rect": {
-                    "x": 0,
-                    "y": 0,
-                    "width": 12,
-                    "height": 8,
-                    "locked": false
-                  }
-                }
-              ]
-            },
-            "components": {
-              "contentList": {
-                "id": "contentList",
-                "type": "LAYOUT_CONTAINER",
-                "props": {
-                  "variant": "list",
-                  "padded": false
-                },
-                "bindings": [
-                  {
-                    "prop": "title",
-                    "source": {
-                      "type": "DataPath",
-                      "path": "$.data/title"
-                    }
-                  },
-                  {
-                    "prop": "description",
-                    "source": {
-                      "type": "DataPath",
-                      "path": "$.data/description"
-                    }
-                  }
-                ],
-                "slots": {
-                  "items": [
-                    "*"
-                  ]
-                },
-                "fetchPolicy": "LAZY"
-              }
-            }
-          }
-        }'::jsonb,
-        NOW(),
-        NOW());
-
 -- Block Reference Block Type
 INSERT INTO block_types (id,
                          key,
@@ -535,10 +411,10 @@ INSERT INTO block_types (id,
                          created_at,
                          updated_at)
 VALUES ('b5df1b11-a9d5-423a-b23a-ce21a89a0b6a'::uuid,
-        'entity_reference_list',
+        'entity_reference',
         NULL,
-        'Entity Reference List',
-        'References a list of external entities.',
+        'Embedded External Entity Reference',
+        'Embeds and showcases external entities from within your organisation.',
         NULL,
         true,
         1,

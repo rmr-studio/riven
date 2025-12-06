@@ -2,10 +2,10 @@ package riven.core.entity.block
 
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
+import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
 import riven.core.models.block.Block
 import riven.core.models.block.metadata.Metadata
-import org.hibernate.annotations.Type
 import java.util.*
 
 @Entity
@@ -54,3 +54,4 @@ data class BlockEntity(
 
 
 }
+

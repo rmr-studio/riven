@@ -1,8 +1,12 @@
 package riven.core.service.block
 
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.block.BlockTreeLayoutEntity
+import riven.core.entity.block.BlockTypeEntity
 import riven.core.enums.block.layout.RenderType
 import riven.core.enums.block.node.NodeType
+import riven.core.enums.block.node.SystemBlockTypes
 import riven.core.enums.core.EntityType
 import riven.core.models.block.layout.RenderContent
 import riven.core.models.block.layout.TreeLayout
@@ -11,10 +15,11 @@ import riven.core.models.block.layout.options.BreakpointConfig
 import riven.core.models.block.layout.options.ColumnOptions
 import riven.core.models.block.layout.options.DraggableOptions
 import riven.core.models.block.layout.options.ResizableOptions
+import riven.core.models.block.metadata.EntityReferenceMetadata
+import riven.core.models.block.metadata.ReferenceItem
+import riven.core.models.block.request.CreateBlockRequest
 import riven.core.models.block.tree.BlockTreeLayout
 import riven.core.repository.block.BlockTreeLayoutRepository
-import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
 /**
@@ -24,6 +29,8 @@ import java.util.*
 @Service
 class DefaultBlockEnvironmentService(
     private val blockTreeLayoutRepository: BlockTreeLayoutRepository,
+    private val blockService: BlockService,
+    private val blockTypeService: BlockTypeService
 ) {
 
     /**
@@ -44,7 +51,7 @@ class DefaultBlockEnvironmentService(
         entityType: EntityType,
         organisationId: UUID
     ): BlockTreeLayout {
-        val defaultLayout = buildDefaultLayoutForEntityType(entityId, entityType)
+        val defaultLayout = buildDefaultLayoutForEntityType(organisationId, entityId, entityType)
 
         // Persist layout entity
         val layoutEntity = BlockTreeLayoutEntity(
@@ -66,11 +73,12 @@ class DefaultBlockEnvironmentService(
      * TODO: Add entity-specific layout templates
      */
     private fun buildDefaultLayoutForEntityType(
+        organisationId: UUID,
         entityId: UUID,
         entityType: EntityType
     ): TreeLayout {
         return when (entityType) {
-            EntityType.CLIENT -> buildDefaultClientLayout(entityId)
+            EntityType.CLIENT -> buildDefaultClientLayout(organisationId, entityId)
             EntityType.ORGANISATION -> buildDefaultOrganisationLayout(entityId)
             EntityType.PROJECT -> buildDefaultProjectLayout(entityId)
             EntityType.INVOICE -> buildDefaultInvoiceLayout(entityId)
@@ -85,12 +93,14 @@ class DefaultBlockEnvironmentService(
      * - Reference block at top (full width)
      * - Empty space for user-added blocks
      */
-    private fun buildDefaultClientLayout(entityId: UUID): TreeLayout {
+    private fun buildDefaultClientLayout(organisationId: UUID, entityId: UUID): TreeLayout {
         val widgets = mutableListOf<Widget>()
 
         // TODO: Create actual reference block and add to widgets
         // For now, return empty layout with proper grid configuration
-        // widgets.add(createReferenceBlockWidget(entityId, EntityType.CLIENT))
+        createEntityReferenceWidget(organisationId, entityId, EntityType.CLIENT).also {
+            widgets.add(it)
+        }
 
         return TreeLayout(
             resizable = ResizableOptions(handles = "se, sw"),
@@ -105,7 +115,7 @@ class DefaultBlockEnvironmentService(
             ),
             animate = true,
             acceptWidgets = true,
-            children = if (widgets.isEmpty()) null else widgets
+            children = widgets.ifEmpty { null }
         )
     }
 
@@ -159,42 +169,49 @@ class DefaultBlockEnvironmentService(
      * TODO: Implement actual block creation
      * TODO: Store deletable=false metadata
      */
-    private fun createReferenceBlockWidget(
+    private fun createEntityReferenceWidget(
+        organisationId: UUID,
         entityId: UUID,
         entityType: EntityType
     ): Widget {
-        // Generate a deterministic ID for the reference block
-        val referenceBlockId = "ref-${entityType}-$entityId"
-
-        return Widget(
-            id = referenceBlockId,
-            x = 0,
-            y = 0,
-            w = 12,
-            h = 6,
-            locked = false,
-            content = RenderContent(
-                id = referenceBlockId,
-                key = "reference",
-                renderType = RenderType.COMPONENT,
-                blockType = NodeType.REFERENCE
+        val type: BlockTypeEntity = blockTypeService.getSystemBlockType(SystemBlockTypes.ENTITY_REFERENCE)
+        val payload = EntityReferenceMetadata(
+            deletable = false,
+            readonly = true,
+            items = listOf(
+                ReferenceItem(
+                    type = entityType,
+                    id = entityId
+                )
             )
         )
+        val name = "${entityType.name} Overview"
+        return blockService.createBlock(
+            organisationId,
+            CreateBlockRequest(
+                type = type.toModel(),
+                payload = payload,
+                name = name,
+                parentId = null,
+                index = null
+            )
+        ).let {
+            val id = requireNotNull(it.id)
+            Widget(
+                id = id.toString(),
+                x = 0,
+                y = 0,
+                w = 12,
+                h = 6,
+                locked = false,
+                content = RenderContent(
+                    id = id.toString(),
+                    key = "reference",
+                    renderType = RenderType.COMPONENT,
+                    blockType = NodeType.REFERENCE
+                )
+            )
+        }
     }
 
-    /**
-     * Creates starter blocks for an entity.
-     * Starter blocks help users get started with common block types.
-     *
-     * TODO: Implement based on user requirements
-     * TODO: Add entity-specific starter blocks
-     */
-    private fun createStarterBlocks(
-        entityId: UUID,
-        entityType: EntityType,
-        organisationId: UUID
-    ): List<Widget> {
-        // Placeholder for future implementation
-        return emptyList()
-    }
 }

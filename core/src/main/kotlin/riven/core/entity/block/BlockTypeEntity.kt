@@ -2,6 +2,7 @@ package riven.core.entity.block
 
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
+import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
 import riven.core.enums.block.structure.BlockValidationScope
 import riven.core.models.block.BlockType
@@ -9,7 +10,6 @@ import riven.core.models.block.display.BlockDisplay
 import riven.core.models.block.display.BlockTypeNesting
 import riven.core.models.block.request.CreateBlockTypeRequest
 import riven.core.models.block.validation.BlockSchema
-import org.hibernate.annotations.Type
 import java.util.*
 
 /**
@@ -127,6 +127,24 @@ data class BlockTypeEntity(
                 strictness = request.mode,
                 schema = request.schema,
                 displayStructure = request.display,
+            )
+        }
+
+        fun fromModel(model: BlockType): BlockTypeEntity {
+            return BlockTypeEntity(
+                id = model.id,
+                key = model.key,
+                sourceId = model.sourceId,
+                displayName = model.name,
+                description = model.description,
+                organisationId = model.organisationId,
+                system = model.system,
+                version = model.version,
+                strictness = model.strictness,
+                schema = model.schema,
+                archived = model.archived,
+                nesting = model.nesting,
+                displayStructure = model.display,
             )
         }
     }
