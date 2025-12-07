@@ -1,20 +1,17 @@
 "use client";
 
-import { useAuth } from "@/components/provider/auth-context";
 import { useOrganisationStore } from "@/components/provider/OrganisationContext";
 import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-group";
 import { EntityType } from "@/lib/types/types";
 import { isResponseError } from "@/lib/util/error/error.util";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { EntityBlockEnvironment } from "../../blocks/components/entity/entity-block-environment";
 import { useOrganisation } from "../hooks/use-organisation";
 
 export const OrganisationDashboard = () => {
     const { data: organisation, isPending, error, isLoadingAuth } = useOrganisation();
 
-    const { session } = useAuth();
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const router = useRouter();
     const selectedOrganisationId = useOrganisationStore((store) => store.selectedOrganisationId);
     const setSelectedOrganisation = useOrganisationStore((store) => store.setSelectedOrganisation);
@@ -43,11 +40,6 @@ export const OrganisationDashboard = () => {
         return <div>Loading...</div>;
     }
 
-    const onEdit = () => {
-        if (!organisation?.id) return;
-        router.push(`/dashboard/organisation/${organisation.id}/edit`);
-    };
-
     if (!organisation) return;
 
     const trail: BreadCrumbTrail[] = [
@@ -55,7 +47,7 @@ export const OrganisationDashboard = () => {
         { label: "Organisations", href: "/dashboard/organisation" },
         {
             label: organisation.name || "Organisation",
-            href: `/dashboard/organisation/${organisation.id}/clients`,
+            href: `/dashboard/organisation/${organisation.id}`,
         },
     ];
 

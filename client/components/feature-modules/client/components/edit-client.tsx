@@ -41,18 +41,18 @@ const EditClient: FC = () => {
                 (!orgError || isResponseError(orgError))
             ) {
                 // If no specific error, redirect to general clients page
-                router.push("/dashboard/organisations");
+                router.push("/dashboard/organisation");
                 return;
             }
 
             if (orgError && isResponseError(orgError)) {
-                router.push(`/dashboard/organisations?error=${orgError.error}`);
+                router.push(`/dashboard/organisation?error=${orgError.error}`);
                 return;
             }
 
             if (clientError && isResponseError(clientError)) {
                 if (!organisation) {
-                    router.push("/dashboard/organisations");
+                    router.push("/dashboard/organisation");
                     return;
                 }
 
@@ -122,7 +122,7 @@ const EditClient: FC = () => {
 
     const trail: BreadCrumbTrail[] = [
         { label: "Home", href: "/dashboard" },
-        { label: "Organisations", href: "/dashboard/organisations", truncate: true },
+        { label: "Organisations", href: "/dashboard/organisation", truncate: true },
         {
             label: organisation?.name || "Organisation",
             href: `/dashboard/organisation/${organisation?.id}/clients`,

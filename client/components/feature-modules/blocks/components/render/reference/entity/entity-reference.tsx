@@ -50,7 +50,7 @@ export const EntityReference: FC<Props> = ({ node, payload }) => {
                 onSelect: () => removeTrackedBlock(id),
             },
         ];
-    }, [id, removeTrackedBlock]);
+    }, [id, removeTrackedBlock, payload.deletable]);
 
     // Retry button for error state
     const retryButton = error ? (
