@@ -1,10 +1,10 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
-import { useOrganisation } from "@/hooks/useOrganisation";
 import { isResponseError } from "@/lib/util/error/error.util";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useOrganisation } from "../../hooks/use-organisation";
 import { InviteTable } from "./invite-table";
 import { MemberTable } from "./member-table";
 import InviteMemberForm from "./organisation-invite";

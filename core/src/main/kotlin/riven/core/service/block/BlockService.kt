@@ -1,16 +1,17 @@
 package riven.core.service.block
 
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.block.BlockChildEntity
 import riven.core.entity.block.BlockEntity
 import riven.core.entity.block.BlockTypeEntity
-import riven.core.enums.block.structure.BlockReferenceFetchPolicy
 import riven.core.enums.block.structure.isStrict
 import riven.core.enums.core.EntityType
 import riven.core.enums.util.OperationType
 import riven.core.models.block.Block
-import riven.core.models.block.Reference
 import riven.core.models.block.metadata.*
-import riven.core.models.block.response.internal.BlockHydrationResult
+import riven.core.models.block.request.CreateBlockRequest
 import riven.core.models.block.tree.*
 import riven.core.models.common.json.JsonObject
 import riven.core.repository.block.BlockRepository
@@ -18,9 +19,6 @@ import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.schema.SchemaService
 import riven.core.service.schema.SchemaValidationException
-import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
 /**
@@ -31,103 +29,92 @@ class BlockService(
     private val blockRepository: BlockRepository,
     private val blockTypeService: BlockTypeService,
     private val blockChildrenService: BlockChildrenService,
-    private val blockReferenceService: BlockReferenceService,
     private val schemaService: SchemaService,
     private val authTokenService: AuthTokenService,
     private val activityService: ActivityService
 ) {
     // ---------- CREATE ----------
-    // TODO: Uncomment when CreateBlockRequest is defined
-    /*
-    @PreAuthorize("@organisationSecurity.hasOrg(#request.organisationId)")
+    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
     @Transactional
-    fun createBlock(request: CreateBlockRequest): Block {
-        // If we are creating a child. Ensure parent exists, and appropriate metadata has been supplied
-        request.parentId?.run {
-            requireNotNull(request.orderIndex) { "Order index must be provided when creating a child block" }
-            requireNotNull(request.parentNesting) { "Parent nesting must be provided when creating a child block" }
-        }
-
-        val type: BlockTypeEntity = resolveType(request)
-        require(!type.archived) { "BlockType '${type.key}' is archived" }
+    fun createBlock(organisationId: UUID, request: CreateBlockRequest): BlockEntity {
+        val (type, payload, name, parentId, index) = request
+        require(!type.archived) { "BlockType '${type.archived}' is archived" }
 
         // 1) Validate ONLY content blocks
-        val validatedMetadata: Metadata = request.payload.let {
-            when (it) {
+        val validatedMetadata: Metadata =
+            when (payload) {
                 is BlockContentMetadata -> {
-                    val errs = schemaService.validate(type.schema, it, type.strictness)
+                    val errs = schemaService.validate(type.schema, payload, type.strictness)
                     if (type.strictness.isStrict() && errs.isNotEmpty()) {
                         throw SchemaValidationException(errs)
                     }
 
-                    it.meta.apply {
+                    payload.meta.apply {
                         this.lastValidatedVersion = type.version
                         this.validationErrors = errs
                     }
 
-                    it
-
+                    payload
                 }
 
                 is ReferenceMetadata -> {
-                    it.meta.apply {
+                    payload.meta.apply {
                         this.lastValidatedVersion = type.version
                     }
-                    it
+                    payload
                 }
             }
-        }
 
-        // 2) Persist
-        val entity = BlockEntity(
+        return BlockEntity(
             id = null,
-            organisationId = request.organisationId,
-            type = type,
-            name = request.name,
+            organisationId = organisationId,
+            type = BlockTypeEntity.fromModel(type),
+            name = name,
             payload = validatedMetadata,
             archived = false
-        )
-
-        blockRepository.save(entity).run {
-            requireNotNull(this.id) { "Block '$id' not found" }
-
-            // If a parent ID is supplied. This would indicate we are creating a child block
-            request.parentId?.let {
-                blockRepository.findById(it).orElseThrow()
-                blockChildrenService.addChild(
-                    child = this,
-                    parentId = it,
-                    // Parent Metadata was previously validated for not null at the start of this method
-                    index = request.orderIndex!!,
-                    nesting = request.parentNesting!!
-                )
-            }
-
-
-            // Extract and store references for Reference Blocks
-            when (validatedMetadata) {
-                is ReferenceMetadata -> dispatchReferenceUpsert(this, validatedMetadata)
-                else -> Unit
-            }
-
-            // 5) Activity
+        ).run {
+            blockRepository.save(this)
+        }.also {
+            requireNotNull(it.id) { "Block '${it.id}' not found" }
             activityService.logActivity(
                 activity = riven.core.enums.activity.Activity.BLOCK,
                 operation = OperationType.CREATE,
                 userId = authTokenService.getUserId(),
-                organisationId = this.organisationId,
+                organisationId = organisationId,
                 entityType = EntityType.BLOCK,
-                entityId = this.id,
+                entityId = it.id,
                 details = mapOf(
-                    "blockId" to this.id.toString(),
+                    "blockId" to it.id.toString(),
                     "typeKey" to type.key
                 )
             )
 
-            return this.toModel()
+            // If a parent ID is supplied. This would indicate we are creating a child block
+            parentId?.let { parentId ->
+                getBlock(parentId).also { parent ->
+                    require(parent.payload is BlockContentMetadata) {
+                        "Parent block '${parent.id}' is not a content block and cannot have children"
+                    }
+
+                    // This will make a DB call to fetch the type of the parent block.
+                    // I wonder if i need this given we have frontend validation...
+
+                    val nesting = requireNotNull(parent.type.nesting) {
+                        "Parent block type '${parent.type.key}' does not support nesting of child blocks"
+                    }
+
+                    // Validate and add block as a child of provided parent
+                    blockChildrenService.addChild(
+                        child = it,
+                        parentId = parentId,
+                        index = index,
+                        nesting = nesting
+                    )
+                }
+            }
         }
     }
-    */
+
 
     // ---------- UPDATE ----------
     @PreAuthorize("@organisationSecurity.hasOrg(#block.organisationId)")
@@ -191,11 +178,6 @@ class BlockService(
 
         val saved = blockRepository.save(updated)
 
-        // Upsert links if reference block
-        if (updatedMetadata is ReferenceMetadata) {
-            dispatchReferenceUpsert(saved, updatedMetadata)
-        }
-
         activityService.logActivity(
             activity = riven.core.enums.activity.Activity.BLOCK,
             operation = OperationType.UPDATE,
@@ -243,34 +225,19 @@ class BlockService(
 
         return when (val meta = block.payload) {
             is BlockReferenceMetadata -> {
-                val (ref, edge) = blockReferenceService.findBlockLink(block.id, meta)
-                val blockRef: Reference = meta.fetchPolicy.let {
-                    if (it == BlockReferenceFetchPolicy.LAZY || edge == null) return@let ref
-
-                    // Build block tree for EAGER fetch
-                    val tree = getBlockTree(ref.entityId)
-                    ref.copy(
-                        entity = tree,
-                        warning = null,
-                    )
-                }
-
                 visited.remove(block.id)
                 ReferenceNode(
                     block = block,
-                    reference = BlockTreeReference(
-                        reference = blockRef
-                    )
+                    reference = BlockTreeReference()
                 )
             }
 
             is EntityReferenceMetadata -> {
-                val entities = blockReferenceService.findListReferences(block.id, meta, block.organisationId)
                 visited.remove(block.id)
                 ReferenceNode(
                     block = block,
                     reference = EntityReference(
-                        reference = entities
+
                     )
                 )
             }
@@ -311,19 +278,6 @@ class BlockService(
         }
     */
 
-    private fun dispatchReferenceUpsert(saved: BlockEntity, meta: ReferenceMetadata) {
-        meta.let {
-            when (it) {
-                is BlockReferenceMetadata -> {
-                    blockReferenceService.upsertBlockLinkFor(saved, it)
-                }
-
-                is EntityReferenceMetadata -> {
-                    blockReferenceService.upsertLinksFor(saved, it)
-                }
-            }
-        }
-    }
 
     // ---------- ARCHIVE ----------
     @PreAuthorize("@organisationSecurity.hasOrg(#block.organisationId)")
@@ -355,17 +309,6 @@ class BlockService(
             )
         )
     }
-
-    /**
-     * Deletes the specified block from the system, will also recursively delete all embedded child blocks.
-     */
-    @PreAuthorize("@organisationSecurity.hasOrg(#tree.root.block.organisationId)")
-    @Transactional
-    fun deleteBlock(tree: BlockTree) {
-        TODO()
-    }
-
-    // ---------- BATCH OPERATIONS ----------
 
     /**
      * Batch save blocks - used for efficient bulk operations.

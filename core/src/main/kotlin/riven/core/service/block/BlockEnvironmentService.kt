@@ -2,6 +2,8 @@ package riven.core.service.block
 
 import io.github.oshai.kotlinlogging.KLogger
 import jakarta.transaction.Transactional
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.stereotype.Service
 import riven.core.entity.activity.ActivityLogEntity
 import riven.core.entity.block.BlockEntity
 import riven.core.enums.activity.Activity
@@ -27,16 +29,13 @@ import riven.core.models.block.response.internal.BlockHydrationResult
 import riven.core.models.block.tree.*
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
-import org.springframework.security.access.prepost.PostAuthorize
-import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
 class BlockEnvironmentService(
     private val blockService: BlockService,
     private val blockTreeLayoutService: BlockTreeLayoutService,
-    private val blockReferenceService: BlockReferenceService,
+    private val blockReferenceService: BlockReferenceHydrationService,
     private val blockChildrenService: BlockChildrenService,
     private val authTokenService: AuthTokenService,
     private val activityService: ActivityService,
@@ -239,7 +238,7 @@ class BlockEnvironmentService(
      * @param entityType The type of entity (e.g., CLIENT, ORGANISATION)
      * @return BlockEnvironment with layout, trees, and entity data
      */
-    @PostAuthorize("@organisationSecurity.hasOrg(#organisationId)")
+    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
     fun loadBlockEnvironment(
         entityId: UUID,
         entityType: EntityType,

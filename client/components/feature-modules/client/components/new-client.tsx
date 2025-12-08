@@ -88,7 +88,7 @@ const NewClient = () => {
 
     const trail: BreadCrumbTrail[] = [
         { label: "Home", href: "/dashboard" },
-        { label: "Organisations", href: "/dashboard/organisations", truncate: true },
+        { label: "Organisations", href: "/dashboard/organisation", truncate: true },
         {
             label: organisation?.name || "Organisation",
             href: `/dashboard/organisation/${organisation?.id}/clients`,

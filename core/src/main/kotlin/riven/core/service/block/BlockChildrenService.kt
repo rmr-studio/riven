@@ -59,7 +59,7 @@ class BlockChildrenService(
     fun addChild(
         child: BlockEntity,
         parentId: UUID,
-        index: Int,
+        index: Int? = null,
         nesting: BlockTypeNesting
     ): BlockChildEntity {
         val childId = requireNotNull(child.id)
@@ -73,16 +73,18 @@ class BlockChildrenService(
         }
 
         val siblings = edgeRepository.findByParentIdOrderByOrderIndexAsc(parentId)
-        val insertAt = index.coerceIn(0, siblings.size)
-
-        // Shift down indexes >= insertAt
-        siblings.asReversed().forEach { s ->
-            val currentIndex = s.orderIndex ?: 0
-            if (currentIndex >= insertAt) {
-                edgeRepository.save(s.copy(orderIndex = currentIndex + 1))
+        val insertAt = index?.let {
+            index.coerceIn(0, siblings.size)
+        }?.also {
+            // Shift down indexes >= insertAt
+            siblings.asReversed().forEach { s ->
+                val currentIndex = s.orderIndex ?: 0
+                if (currentIndex >= it) {
+                    edgeRepository.save(s.copy(orderIndex = currentIndex + 1))
+                }
             }
         }
-
+        
         val created = edgeRepository.save(
             BlockChildEntity(
                 id = null,

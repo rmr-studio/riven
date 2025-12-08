@@ -72,7 +72,7 @@ const NewOrganisation = () => {
 
     const trail: BreadCrumbTrail[] = [
         { label: "Home", href: "/dashboard" },
-        { label: "Organisations", href: "/dashboard/organisations" },
+        { label: "Organisations", href: "/dashboard/organisation" },
         { label: "New", href: "#", active: true },
     ];
 

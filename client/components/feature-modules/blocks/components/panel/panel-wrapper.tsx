@@ -7,15 +7,15 @@ import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from "re
 import { useBlockEdit } from "../../context/block-edit-provider";
 import { useBlockEnvironment } from "../../context/block-environment-provider";
 import { useRenderElement } from "../../context/block-renderer-provider";
-import { useTrackedEnvironment } from "../../context/tracked-environment-provider";
 import { useLayoutChange } from "../../context/layout-change-provider";
+import { useTrackedEnvironment } from "../../context/tracked-environment-provider";
 import { useFocusSurface } from "../../hooks/use-focus-surface";
 import { BlockType, isContentMetadata, isContentNode } from "../../interface/block.interface";
 import { QuickActionItem } from "../../interface/panel.interface";
 import { createBlockInstanceFromType } from "../../util/block/factory/instance.factory";
 import { BlockForm } from "../forms/block-form";
 import QuickActionModal from "../modals/quick-action-modal";
-import { TypePickerModal, ENTITY_TYPE_OPTIONS } from "../modals/type-picker-modal";
+import { ENTITY_TYPE_OPTIONS, TypePickerModal } from "../modals/type-picker-modal";
 import PanelActionContextMenu from "./action/panel-action-menu";
 import { PanelWrapperProvider } from "./context/panel-wrapper-provider";
 import { usePanelEditMode } from "./hooks/use-panel-edit-mode";
@@ -35,6 +35,7 @@ interface Props extends ChildNodeProps, ClassNameProps {
     onTitleChange?: (value: string) => void;
     allowInsert?: boolean;
     allowEdit?: boolean;
+    allowDelete?: boolean;
     onDelete?: () => void;
     customControls?: React.ReactNode;
     customActions?: CustomToolbarAction[];
@@ -52,6 +53,7 @@ export const PanelWrapper: FC<Props> = ({
     className,
     allowInsert = false,
     allowEdit = true,
+    allowDelete = true,
     customControls,
     customActions = [],
 }) => {
@@ -72,7 +74,12 @@ export const PanelWrapper: FC<Props> = ({
 
     // Block edit state
     const { openDrawer, drawerState, startEdit, saveAndExit } = useBlockEdit();
-    const { getBlock, getChildren, organisationId, entityType: envEntityType } = useBlockEnvironment();
+    const {
+        getBlock,
+        getChildren,
+        organisationId,
+        entityType: envEntityType,
+    } = useBlockEnvironment();
     const { addTrackedBlock } = useTrackedEnvironment();
     const { suppressEditModeTracking } = useLayoutChange();
     const block = getBlock(id);
@@ -97,7 +104,7 @@ export const PanelWrapper: FC<Props> = ({
         });
 
     const menuActions = useMemo(() => {
-        if (onDelete && !quickActions.some((action) => action.id === "delete")) {
+        if (allowDelete && onDelete && !quickActions.some((action) => action.id === "delete")) {
             return [
                 ...quickActions,
                 {
@@ -145,10 +152,7 @@ export const PanelWrapper: FC<Props> = ({
     });
 
     const shouldHighlight =
-        isSelected ||
-        isQuickOpen ||
-        (allowInsert && isInlineMenuOpen) ||
-        isHovered;
+        isSelected || isQuickOpen || (allowInsert && isInlineMenuOpen) || isHovered;
 
     // Close all menus when panel loses selection
     useEffect(() => {

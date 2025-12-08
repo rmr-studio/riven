@@ -245,24 +245,6 @@ CREATE POLICY "blocks_write_by_org" ON public.blocks
                                     FROM public.organisation_members
                                     WHERE user_id = auth.uid()));
 
--- Mapping a block to other blocks or entities (client, line item, etc)
-CREATE TABLE public.block_references
-(
-    "id"          uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "block_id"    uuid    NOT NULL REFERENCES blocks (id) ON DELETE CASCADE,
-    "entity_type" text    NOT NULL, -- e.g. "line_item", "client", "invoice", "block"
-    "entity_id"   uuid    NOT NULL, -- id of the referenced entity
-    "path"        text    NULL,     -- JSON path within the block where this reference is used.
-    "order_index" integer NULL,
-    UNIQUE (block_id, entity_type, entity_id, path)
-);
-
-
-CREATE INDEX IF NOT EXISTS idx_blocks_references_block ON block_references (block_id);
-CREATE INDEX IF NOT EXISTS idx_block_references_entity ON block_references (entity_type, entity_id);;
-CREATE INDEX IF NOT EXISTS idx_block_references_path_order ON block_references (path, order_index);
-
-
 CREATE TABLE public.block_children
 (
     "id"          uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -281,30 +263,6 @@ alter table public.block_children
 
 alter table public.block_children
     add constraint uq_parent_order_index unique (parent_id, order_index);
-
-
--- RLS scoped by parent block's organisation
-ALTER TABLE public.block_references
-    ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "block_refs_select_by_org" ON public.block_references
-    FOR SELECT TO authenticated
-    USING (EXISTS (SELECT 1
-                   FROM public.blocks b
-                   WHERE b.id = block_id
-                     AND b.organisation_id IN
-                         (SELECT organisation_id FROM public.organisation_members WHERE user_id = auth.uid())));
-CREATE POLICY "block_refs_write_by_org" ON public.block_references
-    FOR ALL TO authenticated
-    USING (EXISTS (SELECT 1
-                   FROM public.blocks b
-                   WHERE b.id = block_id
-                     AND b.organisation_id IN
-                         (SELECT organisation_id FROM public.organisation_members WHERE user_id = auth.uid())))
-    WITH CHECK (EXISTS (SELECT 1
-                        FROM public.blocks b
-                        WHERE b.id = block_id
-                          AND b.organisation_id IN
-                              (SELECT organisation_id FROM public.organisation_members WHERE user_id = auth.uid())));
 
 drop table if exists public.block_tree_layouts cascade;
 create table public.block_tree_layouts

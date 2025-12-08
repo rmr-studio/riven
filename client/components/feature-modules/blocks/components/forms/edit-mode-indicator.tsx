@@ -175,8 +175,8 @@ export const EditModeIndicator: FC = () => {
                     className={cn(
                         "fixed top-4 left-1/2 -translate-x-1/2 z-50",
                         "flex items-center gap-3 px-4 py-2.5 rounded-lg shadow-lg",
-                        "bg-primary text-primary-foreground",
-                        "border border-primary-foreground/20"
+                        "bg-primary dark:bg-card text-primary-foreground",
+                        "shadow border border-primary dark:border-primary/30"
                     )}
                 >
                     {/* Status indicators */}
@@ -195,7 +195,9 @@ export const EditModeIndicator: FC = () => {
                         {hasLayoutChanges && (
                             <>
                                 <Layout className="h-4 w-4" />
-                                <span className="font-medium">Layout modified</span>
+                                <span className="font-medium text-neutral-200">
+                                    Layout modified
+                                </span>
                             </>
                         )}
                         {hasLayoutChanges && hasContentChanges && (
@@ -204,14 +206,16 @@ export const EditModeIndicator: FC = () => {
                         {hasContentChanges && (
                             <>
                                 <FileEdit className="h-4 w-4" />
-                                <span className="font-medium">Content modified</span>
+                                <span className="font-medium text-neutral-200">
+                                    Content modified
+                                </span>
                             </>
                         )}
                     </div>
 
                     {(hasDataChanges || hasLayoutChanges || hasContentChanges) && (
                         <>
-                            <div className="h-4 w-px bg-primary-foreground/30" />
+                            <div className="h-4 w-px bg-neutral-400" />
                             <div className="flex items-center gap-2">
                                 <AlertCircle className="h-3.5 w-3.5 text-edit" />
                                 <span className="text-sm text-edit">Unsaved changes</span>
@@ -219,14 +223,15 @@ export const EditModeIndicator: FC = () => {
                         </>
                     )}
 
-                    <div className="h-4 w-px bg-primary-foreground/30" />
+                    <div className="h-4 w-px bg-neutral-400" />
 
                     {/* Action buttons */}
                     <div className="flex items-center gap-2">
                         <Button
                             size="sm"
-                            variant="secondary"
                             onClick={handleSaveAll}
+                            variant={"outline"}
+                            className="text-primary"
                             disabled={
                                 isSaving || saveStatus === "saving" || saveStatus === "conflict"
                             }

@@ -15,6 +15,7 @@ data class BlockContentMetadata(
     override val type: BlockMetadataType = BlockMetadataType.CONTENT,
     override val meta: BlockMeta = BlockMeta(),
     override val deletable: Boolean = true,
+    override val readonly: Boolean = false,
     val listConfig: BlockListConfiguration? = null
 ) : Metadata
 
