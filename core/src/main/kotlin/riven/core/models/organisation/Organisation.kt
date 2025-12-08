@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.core.EntityType
 import riven.core.enums.organisation.OrganisationPlan
-import riven.core.models.block.Referenceable
 import riven.core.models.common.Address
 import java.time.ZonedDateTime
 import java.util.*

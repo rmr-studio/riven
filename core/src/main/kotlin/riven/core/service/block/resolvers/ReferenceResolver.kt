@@ -1,7 +1,6 @@
 package riven.core.service.block.resolvers
 
 import riven.core.enums.core.EntityType
-import riven.core.models.block.Referenceable
 import java.util.*
 
 interface ReferenceResolver {

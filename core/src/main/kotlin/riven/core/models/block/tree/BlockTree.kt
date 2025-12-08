@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping
 import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.core.EntityType
-import riven.core.models.block.Referenceable
 
 
 @JsonDeserialize(using = JsonDeserializer.None::class)

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import riven.core.enums.core.EntityType
-import riven.core.models.block.Referenceable
 import riven.core.models.block.tree.BlockTree
 import riven.core.models.client.Client
 import riven.core.models.organisation.Organisation
