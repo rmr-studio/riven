@@ -16,7 +16,6 @@ data class EntityRelationship(
     val sourceEntity: Entity? = null, // Can be hydrated if needed
     val targetEntityId: UUID,
     val targetEntity: Entity? = null,
-    val bidirectional: Boolean,
     override val createdAt: ZonedDateTime? = null,
     override val updatedAt: ZonedDateTime? = null,
     override val createdBy: UUID? = null,

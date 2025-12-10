@@ -1,5 +1,7 @@
 package riven.core.models.entity
 
+import riven.core.enums.entity.EntityRelationshipCardinality
+
 /**
  * Defines a relationship requirement for a RELATIONSHIP entity type.
  *
@@ -16,9 +18,13 @@ data class EntityRelationshipDefinition(
     val name: String,
     val key: String,
     val required: Boolean,
+    val cardinality: EntityRelationshipCardinality,
     val minOccurs: Int? = null,
     val maxOccurs: Int? = null,
     val entityTypeKeys: List<String>?,
     val allowPolymorphic: Boolean = false,
-    val bidirectional: Boolean = false
+    val bidirectional: Boolean = false,
+
+    // For bidirectional relationships, the name of the inverse relationship
+    val inverseName: String? = null
 )

@@ -37,14 +37,12 @@ data class EntityRelationshipEntity(
 
     @Column(name = "key", nullable = false)
     val key: String,
-    
+
     // Human representation of the Relationship ( "<x> is friend of <y>" -> "is friend of" )
     @Column(name = "label", nullable = true)
     val label: String? = null,
 
-    @Column(name = "bidirectional", nullable = false)
-    val bidirectional: Boolean = false
-) : AuditableEntity() {
+    ) : AuditableEntity() {
 
     /**
      * Convert this entity to a domain model.
@@ -58,7 +56,6 @@ data class EntityRelationshipEntity(
             label = this.label,
             sourceEntityId = this.sourceId,
             targetEntityId = this.targetId,
-            bidirectional = this.bidirectional,
             createdAt = if (audit) this.createdAt else null,
             updatedAt = if (audit) this.updatedAt else null,
             createdBy = if (audit) this.createdBy else null,

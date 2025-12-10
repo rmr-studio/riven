@@ -3,11 +3,13 @@ package riven.core.service.entity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import riven.core.entity.entity.EntityRelationshipEntity
 import riven.core.enums.activity.Activity
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
 import riven.core.models.entity.Entity
 import riven.core.models.entity.EntityRelationship
+import riven.core.models.entity.EntityRelationshipDefinition
 import riven.core.models.entity.EntityType
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityRepository
@@ -40,7 +42,7 @@ class EntityRelationshipService(
         targetEntityId: UUID,
         key: String,
         bidirectional: Boolean = false,
-    ): EntityRelationship {
+    ): List<EntityRelationshipEntity> {
 
 
         // Find Entity Relationship definition
@@ -53,44 +55,56 @@ class EntityRelationshipService(
             it.toModel(audit = false) to it.type.toModel()
         }
 
-        validateRelationship(source, target.second, key).also {
+        val relDef = validateRelationship(source, target.second, key).also {
             // Run inverse validation if relationship should be bidirectional
-            if (bidirectional) {
-                validateRelationship(target, source.second, key)
-            }
+            if (!bidirectional) return@also
+            validateRelationship(target, source.second, key)
         }
 
         // TODO: CREATE RELATIONSHIP
-        activityService.logActivity(
-            activity = Activity.ENTITY_RELATIONSHIP,
-            operation = OperationType.DELETE,
-            userId = authTokenService.getUserId(),
+        val sourceRelationship = EntityRelationshipEntity(
             organisationId = organisationId,
-            entityId = sourceEntityId,
-            entityType = ApplicationEntityType.ENTITY,
-            details = mapOf(
-                "key" to key,
-                "sourceEntityId" to sourceEntityId.toString(),
-                "targetEntityId" to sourceEntityId.toString()
+            sourceId = sourceEntityId,
+            targetId = targetEntityId,
+            key = key,
+            label = relDef.name
+        )
+
+        // Create inverse relationship if bidirectional
+        val inverseRelationship = if (bidirectional) {
+            EntityRelationshipEntity(
+                organisationId = organisationId,
+                sourceId = targetEntityId,
+                targetId = sourceEntityId,
+                key = key,
+                label = relDef.inverseName ?: relDef.name
             )
-        ).also {
-            // Log inverse relationship creation
-            if (bidirectional) {
+        } else null
+
+        // Save relationships
+        return if (inverseRelationship != null) {
+            entityRelationshipRepository.saveAll(listOf(sourceRelationship, inverseRelationship))
+        } else {
+            listOf(entityRelationshipRepository.save(sourceRelationship))
+        }.also {
+            // Log activity for each relationship created
+            it.forEach { relationship ->
                 activityService.logActivity(
                     activity = Activity.ENTITY_RELATIONSHIP,
-                    operation = OperationType.DELETE,
+                    operation = OperationType.CREATE,
                     userId = authTokenService.getUserId(),
-                    organisationId = organisationId,
-                    entityId = targetEntityId,
+                    organisationId = relationship.organisationId,
+                    entityId = relationship.id!!,
                     entityType = ApplicationEntityType.ENTITY,
                     details = mapOf(
-                        "key" to key,
-                        "sourceEntityId" to targetEntityId.toString(),
-                        "targetEntityId" to sourceEntityId.toString()
+                        "key" to relationship.key,
+                        "sourceEntityId" to relationship.sourceId.toString(),
+                        "targetEntityId" to relationship.targetId.toString()
                     )
                 )
             }
         }
+
 
     }
 
@@ -99,7 +113,7 @@ class EntityRelationshipService(
         source: Pair<Entity, EntityType>,
         target: EntityType,
         key: String
-    ) {
+    ): EntityRelationshipDefinition {
         // Validation suitability to create relationship based on entity type
         val (sourceEntity, sourceType) = source
 
@@ -134,6 +148,8 @@ class EntityRelationshipService(
                         }
                     }
                 }
+
+                return relationshipDef
             }
         }
     }

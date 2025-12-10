@@ -373,16 +373,15 @@ CREATE INDEX idx_entities_payload_gin ON entities USING GIN (payload jsonb_path_
 CREATE TABLE IF NOT EXISTS public.entity_relationships
 (
     "id"               UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
-    "organisation_id"  UUID    NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
-    "source_entity_id" UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
-    "target_entity_id" UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
-    "key"              UUID    NOT NULL,
+    "organisation_id"  UUID NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
+    "source_entity_id" UUID NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
+    "target_entity_id" UUID NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
+    "key"              UUID NOT NULL,
     "label"            TEXT,
-    "bidirectional"    BOOLEAN NOT NULL         DEFAULT FALSE,
     "created_at"       TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "updated_at"       TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "created_by"       UUID    REFERENCES users (id) ON DELETE SET NULL,
-    "updated_by"       UUID    REFERENCES users (id) ON DELETE SET NULL,
+    "created_by"       UUID REFERENCES users (id) ON DELETE SET NULL,
+    "updated_by"       UUID REFERENCES users (id) ON DELETE SET NULL,
 
     -- Prevent duplicate relationships
     UNIQUE (source_entity_id, target_entity_id, key)
