@@ -1,12 +1,12 @@
 package riven.core.service.block
 
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.block.BlockTreeLayoutEntity
-import riven.core.enums.core.EntityType
+import riven.core.enums.core.ApplicationEntityType
 import riven.core.models.block.layout.TreeLayout
 import riven.core.repository.block.BlockTreeLayoutRepository
 import riven.core.util.ServiceUtil.findOrThrow
-import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
 /**
@@ -32,9 +32,9 @@ class BlockTreeLayoutService(
 
     fun fetchLayoutForEntity(
         id: UUID,
-        type: EntityType
+        type: ApplicationEntityType
     ): BlockTreeLayoutEntity {
-        
+
         return findOrThrow { layoutRepository.findByEntityIdAndEntityType(id, type) }
     }
 

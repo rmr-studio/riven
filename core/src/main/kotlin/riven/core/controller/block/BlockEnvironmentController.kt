@@ -5,7 +5,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import riven.core.enums.core.EntityType
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.*
 import riven.core.models.block.BlockEnvironment
 import riven.core.models.request.block.HydrateBlocksRequest
 import riven.core.models.request.block.OverwriteEnvironmentRequest
@@ -14,9 +16,6 @@ import riven.core.models.response.block.OverwriteEnvironmentResponse
 import riven.core.models.response.block.SaveEnvironmentResponse
 import riven.core.models.response.block.internal.BlockHydrationResult
 import riven.core.service.block.BlockEnvironmentService
-import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
 import java.util.*
 
 @RestController
@@ -76,7 +75,6 @@ class BlockEnvironmentController(
     )
     fun getBlockEnvironment(
         @PathVariable organisationId: UUID,
-        @PathVariable type: EntityType,
         @PathVariable entityId: UUID,
     ): ResponseEntity<BlockEnvironment> {
         val environment = environmentService.loadBlockEnvironment(entityId, type, organisationId)

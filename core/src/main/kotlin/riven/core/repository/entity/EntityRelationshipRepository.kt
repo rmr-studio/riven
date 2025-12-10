@@ -13,29 +13,25 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
     /**
      * Find all relationships where the given entity is the source.
      */
-    fun findBySourceEntityId(sourceEntityId: UUID): List<EntityRelationshipEntity>
+    fun findBySourceId(id: UUID): List<EntityRelationshipEntity>
 
     /**
      * Find all relationships where the given entity is the target.
      */
-    fun findByTargetEntityId(targetEntityId: UUID): List<EntityRelationshipEntity>
+    fun findByTargetId(id: UUID): List<EntityRelationshipEntity>
+
+    fun findBySourceIdAndKey(sourceId: UUID, key: String): Optional<EntityRelationshipEntity>
+
+    fun countBySourceIdAndKey(sourceId: UUID, key: String): Long
 
     /**
      * Find all relationships involving the given entity (as source or target).
      */
-    @Query("""
+    @Query(
+        """
         SELECT r FROM EntityRelationshipEntity r
-        WHERE r.sourceEntity.id = :entityId OR r.targetEntity.id = :entityId
-    """)
+        WHERE r.sourceId = :entityId OR r.targetId = :entityId
+    """
+    )
     fun findAllRelationshipsForEntity(entityId: UUID): List<EntityRelationshipEntity>
-
-    /**
-     * Find all relationships managed by a relationship entity.
-     */
-    fun findByRelationshipEntityId(relationshipEntityId: UUID): List<EntityRelationshipEntity>
-
-    /**
-     * Count relationships managed by a relationship entity.
-     */
-    fun countByRelationshipEntityId(relationshipEntityId: UUID): Int
 }

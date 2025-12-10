@@ -3,7 +3,7 @@ package riven.core.models.block
 import riven.core.enums.common.ValidationScope
 import riven.core.models.block.display.BlockDisplay
 import riven.core.models.block.display.BlockTypeNesting
-import riven.core.models.block.validation.BlockSchema
+import riven.core.models.common.validation.Schema
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -21,7 +21,7 @@ data class BlockType(
     val archived: Boolean,
     val strictness: ValidationScope,
     val system: Boolean,
-    val schema: BlockSchema,
+    val schema: Schema,
     val display: BlockDisplay,
     val createdAt: ZonedDateTime?,
     val updatedAt: ZonedDateTime?,

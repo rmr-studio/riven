@@ -1,14 +1,14 @@
 package riven.core.exceptions
 
 import io.github.oshai.kotlinlogging.KLogger
-import riven.core.configuration.properties.ApplicationConfigurationProperties
-import riven.core.models.response.common.ErrorResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.authorization.AuthorizationDeniedException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
+import riven.core.configuration.properties.ApplicationConfigurationProperties
+import riven.core.models.response.common.ErrorResponse
 
 @ControllerAdvice
 class ExceptionHandler(private val logger: KLogger, private val config: ApplicationConfigurationProperties) {
@@ -20,6 +20,30 @@ class ExceptionHandler(private val logger: KLogger, private val config: Applicat
             statusCode = HttpStatus.FORBIDDEN,
             error = "ACCESS DENIED",
             message = ex.message ?: "Access denied",
+            stackTrace = config.includeStackTrace.takeIf { it }?.let { ex.stackTraceToString() }
+        ).also { logger.error { it } }.let {
+            ResponseEntity(it, it.statusCode)
+        }
+    }
+
+    @ExceptionHandler(InvalidRelationshipException::class)
+    fun handleInvalidRelationshipException(ex: InvalidRelationshipException): ResponseEntity<ErrorResponse> {
+        return ErrorResponse(
+            statusCode = HttpStatus.BAD_REQUEST,
+            error = "INVALID RELATIONSHIP",
+            message = ex.message ?: "Invalid relationship",
+            stackTrace = config.includeStackTrace.takeIf { it }?.let { ex.stackTraceToString() }
+        ).also { logger.error { it } }.let {
+            ResponseEntity(it, it.statusCode)
+        }
+    }
+
+    @ExceptionHandler(SchemaValidationException::class)
+    fun handleSchemaValidationException(ex: SchemaValidationException): ResponseEntity<ErrorResponse> {
+        return ErrorResponse(
+            statusCode = HttpStatus.BAD_REQUEST,
+            error = "SCHEMA VALIDATION FAILED",
+            message = "Schema validation failed: ${ex.reasons.joinToString("; ")}",
             stackTrace = config.includeStackTrace.takeIf { it }?.let { ex.stackTraceToString() }
         ).also { logger.error { it } }.let {
             ResponseEntity(it, it.statusCode)

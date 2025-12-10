@@ -1,12 +1,14 @@
 package riven.core.service.entity
 
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import riven.core.entity.entity.EntityRelationshipEntity
 import riven.core.enums.activity.Activity
-import riven.core.enums.core.EntityType
+import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
+import riven.core.models.entity.Entity
 import riven.core.models.entity.EntityRelationship
+import riven.core.models.entity.EntityType
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityRepository
 import riven.core.service.activity.ActivityService
@@ -30,55 +32,109 @@ class EntityRelationshipService(
     /**
      * Create a relationship between two entities.
      */
+    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
     @Transactional
     fun createRelationship(
         organisationId: UUID,
         sourceEntityId: UUID,
         targetEntityId: UUID,
-        relationshipType: String,
-        relationshipLabel: String? = null,
-        relationshipEntityId: UUID? = null,
-        metadata: Map<String, Any> = emptyMap(),
-        bidirectional: Boolean = false
+        key: String,
+        bidirectional: Boolean = false,
     ): EntityRelationship {
-        val userId = authTokenService.getUserId()
-        val sourceEntity = findOrThrow { entityRepository.findById(sourceEntityId) }
-        val targetEntity = findOrThrow { entityRepository.findById(targetEntityId) }
 
-        val relationshipEntity = relationshipEntityId?.let {
-            findOrThrow { entityRepository.findById(it) }
+
+        // Find Entity Relationship definition
+        val source: Pair<Entity, EntityType> = findOrThrow { entityRepository.findById(sourceEntityId) }.let {
+            // Run JPA lazy loading for type
+            it.toModel(audit = false) to it.type.toModel()
+        }
+        val target: Pair<Entity, EntityType> = findOrThrow { entityRepository.findById(targetEntityId) }.let {
+            // Run JPA lazy loading for type
+            it.toModel(audit = false) to it.type.toModel()
         }
 
-        val relationship = EntityRelationshipEntity(
+        validateRelationship(source, target.second, key).also {
+            // Run inverse validation if relationship should be bidirectional
+            if (bidirectional) {
+                validateRelationship(target, source.second, key)
+            }
+        }
+
+        // TODO: CREATE RELATIONSHIP
+        activityService.logActivity(
+            activity = Activity.ENTITY_RELATIONSHIP,
+            operation = OperationType.DELETE,
+            userId = authTokenService.getUserId(),
             organisationId = organisationId,
-            sourceEntity = sourceEntity,
-            targetEntity = targetEntity,
-            relationshipEntity = relationshipEntity,
-            relationshipType = relationshipType,
-            relationshipLabel = relationshipLabel,
-            metadata = metadata,
-            bidirectional = bidirectional
-        )
-
-        return entityRelationshipRepository.save(relationship).run {
-            // If relationship entity exists, validate it has required relationships
-            relationshipEntityId?.let { entityService.validateRelationshipEntityConstraints(it) }
-
-            activityService.logActivity(
-                activity = Activity.ENTITY_RELATIONSHIP,
-                operation = OperationType.CREATE,
-                userId = userId,
-                organisationId = organisationId,
-                entityId = this.id,
-                entityType = EntityType.DYNAMIC_ENTITY,
-                details = mapOf(
-                    "relationshipType" to relationshipType,
-                    "sourceEntityId" to sourceEntityId.toString(),
-                    "targetEntityId" to targetEntityId.toString(),
-                    "bidirectional" to bidirectional
-                )
+            entityId = sourceEntityId,
+            entityType = ApplicationEntityType.ENTITY,
+            details = mapOf(
+                "key" to key,
+                "sourceEntityId" to sourceEntityId.toString(),
+                "targetEntityId" to sourceEntityId.toString()
             )
-            this.toModel()
+        ).also {
+            // Log inverse relationship creation
+            if (bidirectional) {
+                activityService.logActivity(
+                    activity = Activity.ENTITY_RELATIONSHIP,
+                    operation = OperationType.DELETE,
+                    userId = authTokenService.getUserId(),
+                    organisationId = organisationId,
+                    entityId = targetEntityId,
+                    entityType = ApplicationEntityType.ENTITY,
+                    details = mapOf(
+                        "key" to key,
+                        "sourceEntityId" to targetEntityId.toString(),
+                        "targetEntityId" to sourceEntityId.toString()
+                    )
+                )
+            }
+        }
+
+    }
+
+    @Throws(IllegalArgumentException::class)
+    private fun validateRelationship(
+        source: Pair<Entity, EntityType>,
+        target: EntityType,
+        key: String
+    ) {
+        // Validation suitability to create relationship based on entity type
+        val (sourceEntity, sourceType) = source
+
+        sourceType.relationships.let {
+            requireNotNull(it) {
+                "Source entity type '${sourceType.key}' does not currently define any relationships"
+            }
+
+            it.find { relDef -> relDef.key == key }.let { relationshipDef ->
+                requireNotNull(relationshipDef) {
+                    "Source entity type '${sourceType.key}' does not define relationship with key '$key'"
+                }
+
+                if (relationshipDef.maxOccurs != null) {
+                    entityRelationshipRepository.countBySourceIdAndKey(
+                        sourceEntity.id,
+                        key
+                    ).run {
+                        require(this < relationshipDef.maxOccurs) {
+                            "Source entity '${sourceEntity.id}' has reached maximum occurrences (${
+                                relationshipDef.maxOccurs
+                            }) for relationship '${relationshipDef.key}'"
+                        }
+                    }
+                }
+
+                // Validate target entity type matches definition
+                if (!relationshipDef.allowPolymorphic) {
+                    relationshipDef.entityTypeKeys?.let { allowedTypes ->
+                        require(allowedTypes.contains(target.key)) {
+                            "Target entity type '${target.key}' is not allowed for relationship '${relationshipDef.key}'"
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -87,7 +143,16 @@ class EntityRelationshipService(
      */
     @Transactional
     fun deleteRelationship(id: UUID) {
-        val userId = authTokenService.getUserId()
+        /**
+         * TODO: If a entity relationship is defined as required. We would need to ensure that this
+         * deletion does not remove the last validation relationship an entity has.
+         * Would need to return a conflicting response. The following options would be possible:
+         * 1. Prevent deletion if it would violate required relationship constraints.
+         * 2. Cascade delete or archive related entities to maintain integrity.
+         * 3. Provide a mechanism to reassign relationships before deletion.
+         * */
+
+
         val existing = findOrThrow { entityRelationshipRepository.findById(id) }
 
         entityRelationshipRepository.deleteById(id)
@@ -95,14 +160,14 @@ class EntityRelationshipService(
         activityService.logActivity(
             activity = Activity.ENTITY_RELATIONSHIP,
             operation = OperationType.DELETE,
-            userId = userId,
+            userId = authTokenService.getUserId(),
             organisationId = existing.organisationId,
             entityId = id,
-            entityType = EntityType.DYNAMIC_ENTITY,
+            entityType = ApplicationEntityType.ENTITY,
             details = mapOf(
-                "relationshipType" to existing.relationshipType,
-                "sourceEntityId" to existing.sourceEntity.id.toString(),
-                "targetEntityId" to existing.targetEntity.id.toString()
+                "key" to existing.key,
+                "sourceEntityId" to existing.sourceId.toString(),
+                "targetEntityId" to existing.targetId.toString()
             )
         )
     }
@@ -121,7 +186,7 @@ class EntityRelationshipService(
      */
     fun getOutgoingRelationships(entityId: UUID): List<EntityRelationship> {
         return findManyResults {
-            entityRelationshipRepository.findBySourceEntityId(entityId)
+            entityRelationshipRepository.findBySourceId(entityId)
         }.map { it.toModel() }
     }
 
@@ -130,16 +195,7 @@ class EntityRelationshipService(
      */
     fun getIncomingRelationships(entityId: UUID): List<EntityRelationship> {
         return findManyResults {
-            entityRelationshipRepository.findByTargetEntityId(entityId)
-        }.map { it.toModel() }
-    }
-
-    /**
-     * Get all relationships managed by a relationship entity.
-     */
-    fun getRelationshipsForRelationshipEntity(relationshipEntityId: UUID): List<EntityRelationship> {
-        return findManyResults {
-            entityRelationshipRepository.findByRelationshipEntityId(relationshipEntityId)
+            entityRelationshipRepository.findByTargetId(entityId)
         }.map { it.toModel() }
     }
 }

@@ -9,12 +9,11 @@ import riven.core.enums.activity.Activity
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.entity.EntityCategory
 import riven.core.enums.util.OperationType
+import riven.core.exceptions.SchemaValidationException
 import riven.core.models.entity.Entity
-import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
-import riven.core.service.schema.SchemaValidationException
 import riven.core.util.ServiceUtil.findManyResults
 import riven.core.util.ServiceUtil.findOrThrow
 import java.util.*

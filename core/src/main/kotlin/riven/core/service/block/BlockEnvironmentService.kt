@@ -9,11 +9,10 @@ import riven.core.entity.block.BlockEntity
 import riven.core.enums.activity.Activity
 import riven.core.enums.block.node.BlockReferenceWarning
 import riven.core.enums.block.request.BlockOperationType
-import riven.core.enums.core.EntityType
+import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
 import riven.core.exceptions.NotFoundException
 import riven.core.models.block.BlockEnvironment
-import riven.core.models.block.Reference
 import riven.core.models.block.layout.TreeLayout
 import riven.core.models.block.layout.Widget
 import riven.core.models.block.metadata.BlockReferenceMetadata
@@ -176,7 +175,7 @@ class BlockEnvironmentService(
                 BlockOperationType.REMOVE_BLOCK -> OperationType.DELETE
                 else -> OperationType.UPDATE
             },
-            entityType = EntityType.BLOCK,
+            entityType = ApplicationEntityType.BLOCK,
             entityId = operationData.blockId,
             timestamp = operation.timestamp,
             details = when (operationData) {
@@ -241,20 +240,20 @@ class BlockEnvironmentService(
     @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
     fun loadBlockEnvironment(
         entityId: UUID,
-        entityType: EntityType,
+        type: ApplicationEntityType,
         organisationId: UUID
     ): BlockEnvironment {
         // 1. Try to load existing layout, or create default if it doesn't exist
         val layoutEntity = try {
-            blockTreeLayoutService.fetchLayoutForEntity(entityId, entityType)
+            blockTreeLayoutService.fetchLayoutForEntity(entityId, type)
         } catch (e: NotFoundException) {
             defaultEnvironmentService.createDefaultEnvironmentForEntity(
                 entityId = entityId,
-                entityType = entityType,
+                entityType = type,
                 organisationId = organisationId
             )
             // Fetch the newly created layout
-            blockTreeLayoutService.fetchLayoutForEntity(entityId, entityType)
+            blockTreeLayoutService.fetchLayoutForEntity(entityId, type)
         }
 
         require(layoutEntity.organisationId == organisationId) {
@@ -353,9 +352,8 @@ class BlockEnvironmentService(
                 ReferenceNode(
                     block = block,
                     reference = BlockTreeReference(
-                        reference = Reference(
-                            entityId = block.id,
-                            entityType = EntityType.BLOCK,
+                        reference = ReferenceItem<BlockTree>(
+                            id = block.id,
                             entity = null,
                             warning = BlockReferenceWarning.UNSUPPORTED
                         )

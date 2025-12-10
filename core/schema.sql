@@ -264,23 +264,22 @@ alter table public.block_children
 alter table public.block_children
     add constraint uq_parent_order_index unique (parent_id, order_index);
 
-drop table if exists public.block_tree_layouts cascade;
+
 create table public.block_tree_layouts
 (
     id              uuid primary key         default uuid_generate_v4(),
-    organisation_id uuid        not null references organisations (id) on delete cascade,
-    layout          jsonb       not null,
-    entity_id       uuid        not null UNIQUE, -- id of client, line item, etc,
-    entity_type     varchar(50) not null,        -- e.g. "CLIENT", "COMPANY", "LINE_ITEM"
-    version         integer     not null     default 1,
+    organisation_id uuid    not null references organisations (id) on delete cascade,
+    layout          jsonb   not null,
+    entity_id       uuid    not null UNIQUE, -- id of client, line item, etc,
+    version         integer not null         default 1,
     created_at      timestamp with time zone default current_timestamp,
     updated_at      timestamp with time zone default current_timestamp,
-    "created_by"    uuid        references public.users (id) ON DELETE SET NULL,
-    "updated_by"    uuid        references public.users (id) ON DELETE SET NULL
+    "created_by"    uuid    references public.users (id) ON DELETE SET NULL,
+    "updated_by"    uuid    references public.users (id) ON DELETE SET NULL
 );
 
 create index if not exists idx_block_tree_layouts_entity_id_entity_type
-    on public.block_tree_layouts (entity_id, entity_type);
+    on public.block_tree_layouts (entity_id);
 
 create index if not exists idx_block_tree_layouts_organisation_id
     on public.block_tree_layouts (organisation_id);
@@ -392,6 +391,7 @@ CREATE TABLE IF NOT EXISTS public.entity_relationships
 -- Indexes for entity_relationships
 CREATE INDEX idx_entity_relationships_source ON entity_relationships (source_entity_id);
 CREATE INDEX idx_entity_relationships_target ON entity_relationships (target_entity_id);
+CREATE INDEX idx_entity_relationships_source_key ON entity_relationships (source_entity_id, key);
 CREATE INDEX idx_entity_relationships_organisation ON entity_relationships (organisation_id);
 
 -- =====================================================

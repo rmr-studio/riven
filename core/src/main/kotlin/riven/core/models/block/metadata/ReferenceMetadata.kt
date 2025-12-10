@@ -2,7 +2,6 @@ package riven.core.models.block.metadata
 
 import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.block.structure.BlockReferenceFetchPolicy
-import riven.core.enums.core.EntityType
 import java.util.*
 
 
@@ -13,7 +12,6 @@ sealed interface ReferenceMetadata : Metadata {
 }
 
 data class ReferenceItem(
-    val type: EntityType,               // CLIENT | COMPANY | BLOCK | ...
     val id: UUID,
     val labelOverride: String? = null,
     val badge: String? = null,
