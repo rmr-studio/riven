@@ -6,7 +6,7 @@ import riven.core.enums.activity.Activity
 import riven.core.enums.core.EntityType
 import riven.core.enums.util.OperationType
 import riven.core.models.block.BlockType
-import riven.core.models.block.request.CreateBlockTypeRequest
+import riven.core.models.request.block.CreateBlockTypeRequest
 import riven.core.repository.block.BlockTypeRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService

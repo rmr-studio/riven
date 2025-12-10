@@ -1,4 +1,4 @@
-package riven.core.models.block.request
+package riven.core.models.request.block
 
 import riven.core.models.block.BlockEnvironment
 import java.util.*

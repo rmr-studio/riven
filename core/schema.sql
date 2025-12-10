@@ -308,47 +308,45 @@ create index if not exists idx_activity_logs_user_id
 
 CREATE TABLE IF NOT EXISTS public.entity_types
 (
-    "id"                  UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
-    "key"                 TEXT    NOT NULL,
-    "display_name"        TEXT    NOT NULL,
-    "description"         TEXT,
-    "organisation_id"     UUID REFERENCES organisations (id) ON DELETE CASCADE,
-    "system"              BOOLEAN NOT NULL         DEFAULT FALSE,
-    "entity_category"     TEXT    NOT NULL CHECK (entity_category IN ('STANDARD', 'RELATIONSHIP')),
-    "schema"              JSONB   NOT NULL,
-    "display_config"      JSONB   NOT NULL,
-    "relationship_config" JSONB,
-    "version"             INTEGER NOT NULL         DEFAULT 1,
-    "archived"            BOOLEAN NOT NULL         DEFAULT FALSE,
-    "created_at"          TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "updated_at"          TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "created_by"          UUID,
-    "updated_by"          UUID,
+    "id"                UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
+    "key"               TEXT    NOT NULL,
+    "type"              TEXT    NOT NULL CHECK (type IN ('STANDARD', 'RELATIONSHIP')),
+    "organisation_id"   UUID REFERENCES organisations (id) ON DELETE CASCADE,
+    "identifier_key"    TEXT    NOT NULL,
+    "display_name"      TEXT    NOT NULL,
+    "description"       TEXT,
+    "protected"         BOOLEAN NOT NULL         DEFAULT FALSE,
+    "schema"            JSONB   NOT NULL,
+    "display_structure" JSONB   NOT NULL,
+    "column_order"      JSONB,
+    "relationships"     JSONB,
+    "version"           INTEGER NOT NULL         DEFAULT 1,
+    "archived"          BOOLEAN NOT NULL         DEFAULT FALSE,
+    "created_at"        TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updated_at"        TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "created_by"        UUID,
+    "updated_by"        UUID,
 
     -- Single row per entity type (mutable pattern)
     UNIQUE (organisation_id, key),
 
     -- Relationship entities must have relationship_config
     CHECK (
-        (entity_category = 'RELATIONSHIP' AND relationship_config IS NOT NULL) OR
-        (entity_category = 'STANDARD' AND relationship_config IS NULL)
-        ),
-
-    -- System types have no org_id, user types must have org_id
-    CHECK (
-        (system = TRUE AND organisation_id IS NULL) OR
-        (system = FALSE AND organisation_id IS NOT NULL)
+        (type = 'RELATIONSHIP' AND relationships IS NOT NULL) OR
+        (type = 'STANDARD' AND relationships IS NULL)
         )
 );
+
 
 -- Indexes for entity_types
 CREATE INDEX idx_entity_types_organisation_id ON entity_types (organisation_id);
 CREATE INDEX idx_entity_types_key ON entity_types (key);
-CREATE INDEX idx_entity_types_category ON entity_types (entity_category);
+CREATE INDEX idx_entity_types_category ON entity_types (type);
 
 -- =====================================================
 -- 2. ENTITIES TABLE
 -- =====================================================
+
 CREATE TABLE IF NOT EXISTS public.entities
 (
     "id"              UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
@@ -375,30 +373,26 @@ CREATE INDEX idx_entities_payload_gin ON entities USING GIN (payload jsonb_path_
 -- =====================================================
 CREATE TABLE IF NOT EXISTS public.entity_relationships
 (
-    "id"                     UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
-    "organisation_id"        UUID    NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
-    "source_entity_id"       UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
-    "target_entity_id"       UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
-    "relationship_entity_id" UUID REFERENCES entities (id) ON DELETE CASCADE,
-    "relationship_type"      TEXT    NOT NULL,
-    "relationship_label"     TEXT,
-    "metadata"               JSONB   NOT NULL         DEFAULT '{}'::jsonb,
-    "bidirectional"          BOOLEAN NOT NULL         DEFAULT FALSE,
-    "created_at"             TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "updated_at"             TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "created_by"             UUID    REFERENCES users (id) ON DELETE SET NULL,
-    "updated_by"             UUID    REFERENCES users (id) ON DELETE SET NULL,
+    "id"               UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
+    "organisation_id"  UUID    NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
+    "source_entity_id" UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
+    "target_entity_id" UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
+    "key"              UUID    NOT NULL,
+    "label"            TEXT,
+    "bidirectional"    BOOLEAN NOT NULL         DEFAULT FALSE,
+    "created_at"       TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updated_at"       TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "created_by"       UUID    REFERENCES users (id) ON DELETE SET NULL,
+    "updated_by"       UUID    REFERENCES users (id) ON DELETE SET NULL,
 
     -- Prevent duplicate relationships
-    UNIQUE (source_entity_id, target_entity_id, relationship_type)
+    UNIQUE (source_entity_id, target_entity_id, key)
 );
 
 -- Indexes for entity_relationships
 CREATE INDEX idx_entity_relationships_source ON entity_relationships (source_entity_id);
 CREATE INDEX idx_entity_relationships_target ON entity_relationships (target_entity_id);
-CREATE INDEX idx_entity_relationships_relationship_entity ON entity_relationships (relationship_entity_id);
 CREATE INDEX idx_entity_relationships_organisation ON entity_relationships (organisation_id);
-CREATE INDEX idx_entity_relationships_type ON entity_relationships (relationship_type);
 
 -- =====================================================
 -- 4. ROW LEVEL SECURITY (RLS) POLICIES

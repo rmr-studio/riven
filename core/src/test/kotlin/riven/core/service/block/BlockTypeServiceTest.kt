@@ -1,16 +1,6 @@
 package riven.core.service.block
 
 import io.github.oshai.kotlinlogging.KLogger
-import riven.core.configuration.auth.OrganisationSecurity
-import riven.core.entity.block.BlockTypeEntity
-import riven.core.enums.block.structure.BlockValidationScope
-import riven.core.enums.organisation.OrganisationRoles
-import riven.core.repository.block.BlockTypeRepository
-import riven.core.service.activity.ActivityService
-import riven.core.service.auth.AuthTokenService
-import riven.core.service.util.OrganisationRole
-import riven.core.service.util.WithUserPersona
-import riven.core.service.util.factory.block.BlockFactory
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.*
@@ -20,6 +10,17 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.test.context.bean.override.mockito.MockitoBean
+import riven.core.configuration.auth.OrganisationSecurity
+import riven.core.entity.block.BlockTypeEntity
+import riven.core.enums.common.ValidationScope
+import riven.core.enums.organisation.OrganisationRoles
+import riven.core.models.request.block.CreateBlockTypeRequest
+import riven.core.repository.block.BlockTypeRepository
+import riven.core.service.activity.ActivityService
+import riven.core.service.auth.AuthTokenService
+import riven.core.service.util.OrganisationRole
+import riven.core.service.util.WithUserPersona
+import riven.core.service.util.factory.block.BlockFactory
 import java.util.*
 
 @WithUserPersona(
@@ -66,17 +67,17 @@ class BlockTypeServiceTest {
             orgId = orgId,
             key = "invoice_header",
             version = 1,
-            strictness = BlockValidationScope.SOFT
+            strictness = ValidationScope.SOFT
         )
 
         whenever(blockTypeRepository.save(any<BlockTypeEntity>())).thenReturn(type)
 
-        val req = riven.core.models.block.request.CreateBlockTypeRequest(
+        val req = CreateBlockTypeRequest(
             key = "invoice_header",
             name = "Invoice Header",
             description = "desc",
             organisationId = orgId,
-            mode = BlockValidationScope.SOFT,
+            mode = ValidationScope.SOFT,
             schema = BlockFactory.generateSchema(),
             display = BlockFactory.generateDisplay()
         )
@@ -100,7 +101,7 @@ class BlockTypeServiceTest {
         assertEquals("invoice_header", persisted.key)
         assertEquals("Invoice Header", persisted.displayName)
         assertEquals(orgId, persisted.organisationId)
-        assertEquals(BlockValidationScope.SOFT, persisted.strictness)
+        assertEquals(ValidationScope.SOFT, persisted.strictness)
     }
 
     // ------------------------------------------------------------------
@@ -115,7 +116,7 @@ class BlockTypeServiceTest {
             orgId = orgId,
             key = "invoice_header",
             version = 3,
-            strictness = BlockValidationScope.SOFT
+            strictness = ValidationScope.SOFT
         )
 
         whenever(blockTypeRepository.findById(type.id!!)).thenReturn(Optional.of(type))
@@ -128,7 +129,7 @@ class BlockTypeServiceTest {
         val inputModel = type.toModel().copy(
             name = "Invoice Header v4",
             description = "new desc",
-            strictness = BlockValidationScope.STRICT, // change strictness
+            strictness = ValidationScope.STRICT, // change strictness
             display = BlockFactory.generateDisplay(),
             // schema change too
             schema = BlockFactory.generateSchema().copy(description = "changed")
@@ -145,7 +146,7 @@ class BlockTypeServiceTest {
         assertEquals(type.organisationId, saved.organisationId)
         assertEquals(4, saved.version) // existing.version + 1
         assertEquals("Invoice Header v4", saved.displayName)
-        assertEquals(BlockValidationScope.STRICT, saved.strictness)
+        assertEquals(ValidationScope.STRICT, saved.strictness)
         assertFalse(saved.archived)
 
         verify(activityService).logActivity(
@@ -171,7 +172,7 @@ class BlockTypeServiceTest {
             orgId = orgId,
             key = "invoice_header",
             version = 3,
-            strictness = BlockValidationScope.SOFT
+            strictness = ValidationScope.SOFT
         )
 
         whenever(blockTypeRepository.findById(type.id!!)).thenReturn(Optional.of(type))
@@ -202,7 +203,7 @@ class BlockTypeServiceTest {
             orgId = orgId,
             key = "invoice_header",
             version = 3,
-            strictness = BlockValidationScope.SOFT,
+            strictness = ValidationScope.SOFT,
             archived = true
         )
 
@@ -234,7 +235,7 @@ class BlockTypeServiceTest {
             orgId = orgId,
             key = "invoice_header",
             version = 3,
-            strictness = BlockValidationScope.SOFT,
+            strictness = ValidationScope.SOFT,
             archived = true
         )
 

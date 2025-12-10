@@ -2,7 +2,7 @@ package riven.core.exceptions
 
 import io.github.oshai.kotlinlogging.KLogger
 import riven.core.configuration.properties.ApplicationConfigurationProperties
-import riven.core.models.response.ErrorResponse
+import riven.core.models.response.common.ErrorResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.AccessDeniedException

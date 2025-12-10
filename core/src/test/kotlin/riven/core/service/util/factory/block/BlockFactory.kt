@@ -5,7 +5,7 @@ import riven.core.entity.block.BlockEntity
 import riven.core.entity.block.BlockTreeLayoutEntity
 import riven.core.entity.block.BlockTypeEntity
 import riven.core.enums.block.node.NodeType
-import riven.core.enums.block.structure.BlockValidationScope
+import riven.core.enums.common.ValidationScope
 import riven.core.enums.core.ComponentType
 import riven.core.enums.core.EntityType
 import riven.core.models.block.Block
@@ -18,14 +18,14 @@ import riven.core.models.block.layout.TreeLayout
 import riven.core.models.block.metadata.BlockContentMetadata
 import riven.core.models.block.metadata.BlockMeta
 import riven.core.models.block.operation.*
-import riven.core.models.block.request.SaveEnvironmentRequest
-import riven.core.models.block.request.StructuralOperationRequest
 import riven.core.models.block.tree.ContentNode
 import riven.core.models.block.tree.Node
 import riven.core.models.block.validation.BlockFormStructure
 import riven.core.models.block.validation.BlockSchema
 import riven.core.models.common.grid.GridRect
 import riven.core.models.common.grid.LayoutGrid
+import riven.core.models.request.block.SaveEnvironmentRequest
+import riven.core.models.request.block.StructuralOperationRequest
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -44,7 +44,7 @@ object BlockFactory {
         orgId: UUID,
         key: String = "contact_card",
         version: Int = 1,
-        strictness: BlockValidationScope = BlockValidationScope.SOFT,
+        strictness: ValidationScope = ValidationScope.SOFT,
         schema: BlockSchema = BlockSchema(name = "Contact"),
         archived: Boolean = false,
         nesting: BlockTypeNesting = BlockTypeNesting(

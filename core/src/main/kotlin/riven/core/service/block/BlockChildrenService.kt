@@ -8,8 +8,8 @@ import riven.core.models.block.metadata.BlockContentMetadata
 import riven.core.models.block.operation.AddBlockOperation
 import riven.core.models.block.operation.MoveBlockOperation
 import riven.core.models.block.operation.ReorderBlockOperation
-import riven.core.models.block.response.internal.CascadeRemovalResult
-import riven.core.models.block.response.internal.MovePreparationResult
+import riven.core.models.response.block.internal.CascadeRemovalResult
+import riven.core.models.response.block.internal.MovePreparationResult
 import riven.core.repository.block.BlockChildrenRepository
 import riven.core.repository.block.BlockRepository
 import org.springframework.stereotype.Service

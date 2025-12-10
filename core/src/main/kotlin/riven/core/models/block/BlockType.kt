@@ -1,6 +1,6 @@
 package riven.core.models.block
 
-import riven.core.enums.block.structure.BlockValidationScope
+import riven.core.enums.common.ValidationScope
 import riven.core.models.block.display.BlockDisplay
 import riven.core.models.block.display.BlockTypeNesting
 import riven.core.models.block.validation.BlockSchema
@@ -19,7 +19,7 @@ data class BlockType(
     val description: String?,
     val organisationId: UUID?,
     val archived: Boolean,
-    val strictness: BlockValidationScope,
+    val strictness: ValidationScope,
     val system: Boolean,
     val schema: BlockSchema,
     val display: BlockDisplay,

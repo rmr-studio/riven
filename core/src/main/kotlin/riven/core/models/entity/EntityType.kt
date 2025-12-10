@@ -17,14 +17,29 @@ data class EntityType(
     val key: String,
     val version: Int,
     val name: String,
+    /**
+     * Each organisation will have a handful of system-generated default entity types to handle
+     * core/common use cases, which cannot be deleted.
+     * They should allow for modification of schema and other properties, but not deletion.
+     * */
+    val protected: Boolean,
+
+    /**
+     * A unique identifier key for the entity type. This will be taken from one
+     * of the attributes within the schema (default to ID).
+     * The attribute used as the identifier key must be set to unique within the schema.
+     */
+    val identifierKey: String = "name",
     val description: String?,
     val organisationId: UUID?,
-    val system: Boolean,
-    val entityCategory: EntityCategory,
+    val type: EntityCategory,
+    // Schema will always be created with a unique, non-nullable 'name' attribute
     val schema: Schema,
     val displayConfig: EntityDisplayConfig,
-    val relationships: List<EntityRelationshipDefinition>,
+    val relationships: List<EntityRelationshipDefinition>? = null,
     val archived: Boolean,
+    // The order in which the attributes should be displayed in the UI
+    val order: List<String>? = null,
     override val createdAt: ZonedDateTime?,
     override val updatedAt: ZonedDateTime?,
     override val createdBy: UUID?,

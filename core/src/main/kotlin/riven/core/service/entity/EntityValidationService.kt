@@ -2,14 +2,14 @@ package riven.core.service.entity
 
 import org.springframework.stereotype.Service
 import riven.core.entity.entity.EntityEntity
+import riven.core.entity.entity.EntityRelationshipEntity
 import riven.core.entity.entity.EntityTypeEntity
-import riven.core.enums.block.structure.BlockValidationScope
-import riven.core.enums.core.DataType
-import riven.core.models.block.metadata.BlockContentMetadata
-import riven.core.models.block.validation.BlockSchema
-import riven.core.models.entity.RelationshipDefinition
+import riven.core.enums.common.ValidationScope
+import riven.core.models.common.validation.Schema
+import riven.core.models.entity.EntityRelationshipDefinition
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.service.schema.SchemaService
+import java.util.*
 
 /**
  * Service for validating entities and detecting breaking schema changes.
@@ -27,16 +27,10 @@ class EntityValidationService(
         entity: EntityEntity,
         entityType: EntityTypeEntity
     ): List<String> {
-        // Convert Map<String, Any> payload to BlockContentMetadata format
-        val metadata = BlockContentMetadata(
-            data = entity.payload,
-            meta = BlockContentMetadata.Meta()
-        )
-
         return schemaService.validate(
             schema = entityType.schema,
-            payload = metadata,
-            scope = entityType.strictness
+            payload = entity.payload,
+            scope = ValidationScope.STRICT
         )
     }
 
@@ -45,16 +39,17 @@ class EntityValidationService(
      * Ensures RELATIONSHIP entities have all required relationships with correct types.
      */
     fun validateRelationshipEntity(
-        entityId: java.util.UUID,
-        relationshipConfig: riven.core.models.entity.EntityRelationshipConfig
+        entityId: UUID,
+        relationships: List<EntityRelationshipDefinition>
     ): List<String> {
         val errors = mutableListOf<String>()
-        val relationships = entityRelationshipRepository.findByRelationshipEntityId(entityId)
+        val relatedEntities: List<EntityRelationshipEntity> =
+            entityRelationshipRepository.findByRelationshipEntityId(entityId)
 
         // Validate each defined relationship
-        relationshipConfig.relationships.forEach { definition ->
-            val matchingRels = relationships.filter { rel ->
-                rel.relationshipType == definition.role
+        relationships.forEach { definition ->
+            val matchingRels = relatedEntities.filter { rel ->
+                rel.relationshipType == defin
             }
 
             // Check required relationships are present
@@ -86,8 +81,8 @@ class EntityValidationService(
      * Returns a list of changes with breaking flag.
      */
     fun detectSchemaBreakingChanges(
-        oldSchema: BlockSchema,
-        newSchema: BlockSchema
+        oldSchema: Schema,
+        newSchema: Schema
     ): List<SchemaChange> {
         val changes = mutableListOf<SchemaChange>()
 
@@ -156,23 +151,18 @@ class EntityValidationService(
      */
     fun validateExistingEntitiesAgainstNewSchema(
         entities: List<EntityEntity>,
-        newSchema: BlockSchema,
-        strictness: BlockValidationScope
+        newSchema: Schema,
     ): ValidationSummary {
         var validCount = 0
         var invalidCount = 0
         val sampleErrors = mutableListOf<EntityValidationError>()
 
         entities.forEach { entity ->
-            val metadata = BlockContentMetadata(
-                data = entity.payload,
-                meta = BlockContentMetadata.Meta()
-            )
 
             val errors = schemaService.validate(
                 schema = newSchema,
-                payload = metadata,
-                scope = strictness
+                payload = entity.payload,
+                scope = ValidationScope.STRICT
             )
 
             if (errors.isEmpty()) {
@@ -236,7 +226,7 @@ data class ValidationSummary(
  * Validation error for a specific entity.
  */
 data class EntityValidationError(
-    val entityId: java.util.UUID,
+    val entityId: UUID,
     val entityName: String?,
     val errors: List<String>
 )

@@ -9,13 +9,13 @@ import java.util.*
  */
 data class EntityRelationship(
     val id: UUID,
+    val key: String,
+    val label: String? = null,
     val organisationId: UUID,
-    val sourceEntity: Entity,
-    val targetEntity: Entity,
-    val relationshipEntity: Entity? = null,
-    val relationshipType: String,
-    val relationshipLabel: String?,
-    val metadata: Map<String, Any>,
+    val sourceEntityId: UUID,
+    val sourceEntity: Entity? = null, // Can be hydrated if needed
+    val targetEntityId: UUID,
+    val targetEntity: Entity? = null,
     val bidirectional: Boolean,
     override val createdAt: ZonedDateTime? = null,
     override val updatedAt: ZonedDateTime? = null,

@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import riven.core.models.block.BlockType
-import riven.core.models.block.request.CreateBlockTypeRequest
+import riven.core.models.request.block.CreateBlockTypeRequest
 import riven.core.service.block.BlockTypeService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity

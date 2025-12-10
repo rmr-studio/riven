@@ -1,6 +1,6 @@
-package riven.core.models.block.request
+package riven.core.models.request.block
 
-import riven.core.enums.block.structure.BlockValidationScope
+import riven.core.enums.common.ValidationScope
 import riven.core.models.block.display.BlockDisplay
 import riven.core.models.block.validation.BlockSchema
 import java.util.*
@@ -13,7 +13,7 @@ data class CreateBlockTypeRequest(
     // An optional description of the block type.
     val description: String?,
     // The validation mode for the block type.
-    val mode: BlockValidationScope = BlockValidationScope.SOFT,
+    val mode: ValidationScope = ValidationScope.SOFT,
     // The schema defining the structure of the block's data.
     val schema: BlockSchema,
     // The display configuration for rendering the block.

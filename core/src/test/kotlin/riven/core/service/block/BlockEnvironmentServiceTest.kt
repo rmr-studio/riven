@@ -1,17 +1,6 @@
 package riven.core.service.block
 
 import io.github.oshai.kotlinlogging.KLogger
-import riven.core.configuration.auth.OrganisationSecurity
-import riven.core.entity.block.BlockEntity
-import riven.core.enums.block.structure.BlockValidationScope
-import riven.core.enums.organisation.OrganisationRoles
-import riven.core.models.block.response.internal.CascadeRemovalResult
-import riven.core.models.block.response.internal.MovePreparationResult
-import riven.core.service.activity.ActivityService
-import riven.core.service.auth.AuthTokenService
-import riven.core.service.util.OrganisationRole
-import riven.core.service.util.WithUserPersona
-import riven.core.service.util.factory.block.BlockFactory
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.*
@@ -21,6 +10,17 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.test.context.bean.override.mockito.MockitoBean
+import riven.core.configuration.auth.OrganisationSecurity
+import riven.core.entity.block.BlockEntity
+import riven.core.enums.common.ValidationScope
+import riven.core.enums.organisation.OrganisationRoles
+import riven.core.models.response.block.internal.CascadeRemovalResult
+import riven.core.models.response.block.internal.MovePreparationResult
+import riven.core.service.activity.ActivityService
+import riven.core.service.auth.AuthTokenService
+import riven.core.service.util.OrganisationRole
+import riven.core.service.util.WithUserPersona
+import riven.core.service.util.factory.block.BlockFactory
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -81,7 +81,7 @@ class BlockEnvironmentServiceTest {
         orgId = orgId,
         key = "test_block",
         version = 1,
-        strictness = BlockValidationScope.SOFT
+        strictness = ValidationScope.SOFT
     ).toModel()
 
     // ------------------------------------------------------------------

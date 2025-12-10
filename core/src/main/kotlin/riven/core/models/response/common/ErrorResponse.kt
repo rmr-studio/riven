@@ -1,4 +1,4 @@
-package riven.core.models.response
+package riven.core.models.response.common
 
 import org.springframework.http.HttpStatus
 

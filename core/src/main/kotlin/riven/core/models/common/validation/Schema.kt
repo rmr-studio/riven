@@ -35,7 +35,10 @@ data class Schema(
     val format: DataFormat? = null,
     val required: Boolean = false,
     val properties: Map<String, Schema>? = null,
-    val items: Schema? = null
+    val items: Schema? = null,
+    val unique: Boolean = false,
+    // Indicates whether this schema is protected from deletion or modification
+    val protected: Boolean = false
 ) {
     fun toJsonSchema(
         allowAdditionalProperties: Boolean

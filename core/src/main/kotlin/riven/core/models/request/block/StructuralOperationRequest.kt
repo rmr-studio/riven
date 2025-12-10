@@ -1,4 +1,4 @@
-package riven.core.models.block.request
+package riven.core.models.request.block
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping
@@ -27,6 +27,6 @@ data class StructuralOperationRequest(
             DiscriminatorMapping(value = "REORDER_BLOCK", schema = ReorderBlockOperation::class)
         ]
     )
-    @JsonProperty("data")
+    @param:JsonProperty("data")
     val data: BlockOperation
 )

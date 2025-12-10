@@ -6,14 +6,14 @@ import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.block.BlockChildEntity
 import riven.core.entity.block.BlockEntity
 import riven.core.entity.block.BlockTypeEntity
-import riven.core.enums.block.structure.isStrict
-import riven.core.enums.core.EntityType
+import riven.core.enums.common.isStrict
+import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
 import riven.core.models.block.Block
 import riven.core.models.block.metadata.*
-import riven.core.models.block.request.CreateBlockRequest
 import riven.core.models.block.tree.*
 import riven.core.models.common.json.JsonObject
+import riven.core.models.request.block.CreateBlockRequest
 import riven.core.repository.block.BlockRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
@@ -81,7 +81,7 @@ class BlockService(
                 operation = OperationType.CREATE,
                 userId = authTokenService.getUserId(),
                 organisationId = organisationId,
-                entityType = EntityType.BLOCK,
+                entityType = ApplicationEntityType.BLOCK,
                 entityId = it.id,
                 details = mapOf(
                     "blockId" to it.id.toString(),
@@ -183,7 +183,7 @@ class BlockService(
             operation = OperationType.UPDATE,
             userId = authTokenService.getUserId(),
             organisationId = saved.organisationId,
-            entityType = EntityType.BLOCK,
+            entityType = ApplicationEntityType.BLOCK,
             entityId = saved.id,
             details = mapOf(
                 "blockId" to saved.id.toString(),
@@ -301,7 +301,7 @@ class BlockService(
             operation = if (status) OperationType.ARCHIVE else OperationType.RESTORE,
             userId = authTokenService.getUserId(),
             organisationId = updated.organisationId,
-            entityType = EntityType.BLOCK,
+            entityType = ApplicationEntityType.BLOCK,
             entityId = updated.id,
             details = mapOf(
                 "blockId" to updated.id.toString(),

@@ -2,9 +2,10 @@ package riven.core.service.entity
 
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
-import riven.core.configuration.auth.OrganisationSecurity
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.activity.Activity
+import riven.core.enums.common.ValidationScope
+import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
 import riven.core.models.entity.EntityType
 import riven.core.repository.entity.EntityRepository
@@ -15,7 +16,6 @@ import riven.core.service.schema.SchemaValidationException
 import riven.core.util.ServiceUtil.findManyResults
 import riven.core.util.ServiceUtil.findOrThrow
 import java.util.*
-import riven.core.enums.core.EntityType as EntityTypeEnum
 
 /**
  * Service for managing entity types.
@@ -30,7 +30,6 @@ class EntityTypeService(
     private val entityValidationService: EntityValidationService,
     private val authTokenService: AuthTokenService,
     private val activityService: ActivityService,
-    private val organisationSecurity: OrganisationSecurity
 ) {
 
     /**
@@ -47,7 +46,7 @@ class EntityTypeService(
                 userId = userId,
                 organisationId = requireNotNull(this.organisationId) { "Cannot create system entity type" },
                 entityId = this.id,
-                entityType = EntityTypeEnum.DYNAMIC_ENTITY_TYPE,
+                entityType = ApplicationEntityType.ENTITY_TYPE,
                 details = mapOf(
                     "type" to this.key,
                     "version" to this.version,
@@ -81,8 +80,7 @@ class EntityTypeService(
             updates.schema
         )
 
-        // If there are breaking changes and strictness is STRICT, validate existing entities
-        if (breakingChanges.any { it.breaking } && existing.strictness == riven.core.enums.block.structure.BlockValidationScope.STRICT) {
+        if (breakingChanges.any { it.breaking } && existing.strictness == ValidationScope.STRICT) {
             val existingEntities = entityRepository.findByOrganisationIdAndTypeId(orgId, id)
             val validationSummary = entityValidationService.validateExistingEntitiesAgainstNewSchema(
                 existingEntities,
@@ -108,7 +106,7 @@ class EntityTypeService(
             description = updates.description
             schema = updates.schema
             displayConfig = updates.displayConfig
-            relationshipConfig = updates.relationshipConfig
+            relationshipConfig = updates.relationships
             strictness = updates.strictness
             version = existing.version + 1  // Increment for change tracking
         }.let {
@@ -185,7 +183,11 @@ class EntityTypeService(
         // Try organization-scoped first
         if (organisationId != null) {
             entityTypeRepository.findByOrganisationIdAndKey(organisationId, key)
-                .ifPresent { return it }
+                .let {
+                    if (it.isPresent) {
+                        return it.get()
+                    }
+                }
         }
 
         // Fall back to system type
@@ -202,14 +204,3 @@ class EntityTypeService(
     }
 }
 
-/**
- * Request object for updating an entity type.
- */
-data class EntityTypeUpdateRequest(
-    val name: String,
-    val description: String?,
-    val schema: riven.core.models.block.validation.BlockSchema,
-    val displayConfig: riven.core.models.entity.EntityDisplayConfig,
-    val relationshipConfig: riven.core.models.entity.EntityRelationshipConfig?,
-    val strictness: riven.core.enums.block.structure.BlockValidationScope
-)

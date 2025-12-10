@@ -1,14 +1,14 @@
 package riven.core.service.activity
 
 import io.github.oshai.kotlinlogging.KLogger
+import org.springframework.stereotype.Service
 import riven.core.entity.activity.ActivityLogEntity
 import riven.core.enums.activity.Activity
-import riven.core.enums.core.EntityType
+import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
 import riven.core.models.activity.ActivityLog
 import riven.core.models.common.json.JsonObject
 import riven.core.repository.activity.ActivityLogRepository
-import org.springframework.stereotype.Service
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -22,7 +22,7 @@ class ActivityService(
         operation: OperationType,
         userId: UUID,
         organisationId: UUID,
-        entityType: EntityType,
+        entityType: ApplicationEntityType,
         entityId: UUID? = null,
         timestamp: ZonedDateTime = ZonedDateTime.now(),
         details: JsonObject
@@ -58,7 +58,7 @@ class ActivityService(
         operation: OperationType,
         userId: UUID,
         organisationId: UUID,
-        entityType: EntityType,
+        entityType: ApplicationEntityType,
         entityId: UUID? = null,
         details: JsonObject,
         timestamp: ZonedDateTime = ZonedDateTime.now(),

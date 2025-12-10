@@ -4,11 +4,10 @@ import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
-import riven.core.enums.block.structure.BlockValidationScope
 import riven.core.enums.entity.EntityCategory
-import riven.core.models.block.validation.BlockSchema
+import riven.core.models.common.validation.Schema
 import riven.core.models.entity.EntityDisplayConfig
-import riven.core.models.entity.EntityRelationshipConfig
+import riven.core.models.entity.EntityRelationshipDefinition
 import riven.core.models.entity.EntityType
 import java.util.*
 
@@ -42,37 +41,40 @@ data class EntityTypeEntity(
     @Column(name = "display_name", nullable = false)
     var displayName: String,
 
+    @Column(name = "key", nullable = false)
+    val identifierKey: String = "name",
+
     @Column(name = "description", nullable = true)
     var description: String? = null,
 
     @Column(name = "organisation_id", columnDefinition = "uuid")
     val organisationId: UUID? = null,
 
-    @Column(name = "system", nullable = false)
-    val system: Boolean = false,
+    @Column(name = "protected", nullable = false)
+    val protected: Boolean = false,
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "entity_category", nullable = false)
-    val entityCategory: EntityCategory,
+    @Column(name = "type", nullable = false)
+    val type: EntityCategory,
 
     @Column(name = "version", nullable = false, columnDefinition = "integer default 1")
     var version: Int = 1,
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "strictness", nullable = false, columnDefinition = "text default 'SOFT'")
-    var strictness: BlockValidationScope = BlockValidationScope.SOFT,
-
     @Type(JsonBinaryType::class)
     @Column(name = "schema", columnDefinition = "jsonb", nullable = false)
-    var schema: BlockSchema,
+    var schema: Schema,
 
     @Type(JsonBinaryType::class)
-    @Column(name = "display_config", columnDefinition = "jsonb", nullable = false)
-    var displayConfig: EntityDisplayConfig,
+    @Column(name = "display_structure", columnDefinition = "jsonb", nullable = false)
+    var display: EntityDisplayConfig,
 
     @Type(JsonBinaryType::class)
-    @Column(name = "relationship_config", columnDefinition = "jsonb", nullable = true)
-    var relationshipConfig: EntityRelationshipConfig? = null,
+    @Column(name = "relationships", columnDefinition = "jsonb", nullable = true)
+    var relationships: List<EntityRelationshipDefinition>? = null,
+
+    @Type(JsonBinaryType::class)
+    @Column(name = "column_order", columnDefinition = "jsonb", nullable = true)
+    var order: List<String>? = null,
 
     @Column(name = "archived", nullable = false, columnDefinition = "boolean default false")
     var archived: Boolean = false
@@ -88,14 +90,15 @@ data class EntityTypeEntity(
             key = this.key,
             version = this.version,
             name = this.displayName,
+            identifierKey = this.identifierKey,
             description = this.description,
             organisationId = this.organisationId,
-            system = this.system,
-            entityCategory = this.entityCategory,
+            protected = this.protected,
+            type = this.type,
             schema = this.schema,
-            strictness = this.strictness,
-            displayConfig = this.displayConfig,
-            relationshipConfig = this.relationshipConfig,
+            displayConfig = this.display,
+            relationships = this.relationships,
+            order = this.order,
             archived = this.archived,
             createdAt = this.createdAt,
             updatedAt = this.updatedAt,

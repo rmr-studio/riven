@@ -1,4 +1,4 @@
-package riven.core.models.block.response.internal
+package riven.core.models.response.block.internal
 
 import riven.core.entity.block.BlockChildEntity
 import java.util.*

@@ -1,6 +1,6 @@
-package riven.core.models.block.response.internal
+package riven.core.models.response.block.internal
 
-import riven.core.models.block.Reference
+import riven.core.models.block.tree.ReferencePayload
 import java.util.*
 
 /**
@@ -12,7 +12,7 @@ import java.util.*
  */
 data class BlockHydrationResult(
     val blockId: UUID,
-    val references: List<Reference>,
+    val references: List<ReferencePayload>,
     val error: String? = null
 )
 

@@ -17,7 +17,7 @@ import riven.core.models.block.layout.options.DraggableOptions
 import riven.core.models.block.layout.options.ResizableOptions
 import riven.core.models.block.metadata.EntityReferenceMetadata
 import riven.core.models.block.metadata.ReferenceItem
-import riven.core.models.block.request.CreateBlockRequest
+import riven.core.models.request.block.CreateBlockRequest
 import riven.core.models.block.tree.BlockTreeLayout
 import riven.core.repository.block.BlockTreeLayoutRepository
 import java.util.*

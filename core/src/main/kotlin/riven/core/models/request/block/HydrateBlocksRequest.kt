@@ -1,8 +1,8 @@
-package riven.core.models.block.request
+package riven.core.models.request.block
 
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
-import riven.core.enums.core.EntityType
+import riven.core.enums.block.node.ReferenceType
 import java.util.*
 
 /**
@@ -22,8 +22,8 @@ data class HydrateBlocksRequest(
 )
 
 data class EntityReferenceRequest(
-    val type: EntityType,
     val id: UUID,
+    val type: ReferenceType,
     val index: Int? = null
 )
 

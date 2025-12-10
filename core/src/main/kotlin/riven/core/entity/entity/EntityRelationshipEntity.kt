@@ -1,8 +1,6 @@
 package riven.core.entity.entity
 
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
-import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
 import riven.core.models.entity.EntityRelationship
 import java.util.*
@@ -14,12 +12,11 @@ import java.util.*
 @Table(
     name = "entity_relationships",
     uniqueConstraints = [
-        UniqueConstraint(columnNames = ["source_entity_id", "target_entity_id", "relationship_type"])
+        UniqueConstraint(columnNames = ["source_entity_id", "target_entity_id", "key"])
     ],
     indexes = [
         Index(name = "idx_entity_relationships_source", columnList = "source_entity_id"),
         Index(name = "idx_entity_relationships_target", columnList = "target_entity_id"),
-        Index(name = "idx_entity_relationships_relationship_entity", columnList = "relationship_entity_id"),
         Index(name = "idx_entity_relationships_organisation", columnList = "organisation_id")
     ]
 )
@@ -32,27 +29,18 @@ data class EntityRelationshipEntity(
     @Column(name = "organisation_id", nullable = false)
     val organisationId: UUID,
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "source_entity_id", nullable = false)
-    val sourceEntity: EntityEntity,
+    @Column(name = "source_entity_id", nullable = false)
+    val sourceId: UUID,
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "target_entity_id", nullable = false)
-    val targetEntity: EntityEntity,
+    @Column(name = "target_entity_id", nullable = false)
+    val targetId: UUID,
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "relationship_entity_id", nullable = true)
-    val relationshipEntity: EntityEntity? = null,
-
-    @Column(name = "relationship_type", nullable = false)
-    val relationshipType: String,
-
-    @Column(name = "relationship_label", nullable = true)
-    val relationshipLabel: String? = null,
-
-    @Type(JsonBinaryType::class)
-    @Column(name = "metadata", columnDefinition = "jsonb", nullable = false)
-    val metadata: Map<String, Any> = emptyMap(),
+    @Column(name = "key", nullable = false)
+    val key: String,
+    
+    // Human representation of the Relationship ( "<x> is friend of <y>" -> "is friend of" )
+    @Column(name = "label", nullable = true)
+    val label: String? = null,
 
     @Column(name = "bidirectional", nullable = false)
     val bidirectional: Boolean = false
@@ -66,12 +54,10 @@ data class EntityRelationshipEntity(
         return EntityRelationship(
             id = id,
             organisationId = this.organisationId,
-            sourceEntity = this.sourceEntity.toModel(audit),
-            targetEntity = this.targetEntity.toModel(audit),
-            relationshipEntity = this.relationshipEntity?.toModel(audit),
-            relationshipType = this.relationshipType,
-            relationshipLabel = this.relationshipLabel,
-            metadata = this.metadata,
+            key = this.key,
+            label = this.label,
+            sourceEntityId = this.sourceId,
+            targetEntityId = this.targetId,
             bidirectional = this.bidirectional,
             createdAt = if (audit) this.createdAt else null,
             updatedAt = if (audit) this.updatedAt else null,

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.entity.EntityEntity
 import riven.core.enums.activity.Activity
+import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.entity.EntityCategory
 import riven.core.enums.util.OperationType
 import riven.core.models.entity.Entity
@@ -17,7 +18,6 @@ import riven.core.service.schema.SchemaValidationException
 import riven.core.util.ServiceUtil.findManyResults
 import riven.core.util.ServiceUtil.findOrThrow
 import java.util.*
-import riven.core.enums.core.EntityType as EntityTypeEnum
 
 /**
  * Service for managing entity instances.
@@ -25,12 +25,19 @@ import riven.core.enums.core.EntityType as EntityTypeEnum
 @Service
 class EntityService(
     private val entityRepository: EntityRepository,
-    private val entityRelationshipRepository: EntityRelationshipRepository,
     private val entityTypeService: EntityTypeService,
     private val entityValidationService: EntityValidationService,
     private val authTokenService: AuthTokenService,
     private val activityService: ActivityService
 ) {
+
+    fun getEntity(id: UUID): EntityEntity {
+        return findOrThrow { entityRepository.findById(id) }
+    }
+
+    fun getEntitiesByIds(ids: Set<UUID>): List<EntityEntity> {
+        return findManyResults { entityRepository.findAllById(ids) }
+    }
 
     /**
      * Create a new entity with validation.
@@ -55,9 +62,10 @@ class EntityService(
         )
 
         // Validate payload against schema
-        val errors = entityValidationService.validateEntity(entity, entityType)
-        if (entityType.strictness == riven.core.enums.block.structure.BlockValidationScope.STRICT && errors.isNotEmpty()) {
-            throw SchemaValidationException(errors)
+        entityValidationService.validateEntity(entity, entityType).run {
+            if (isNotEmpty()) {
+                throw SchemaValidationException(this)
+            }
         }
 
         return entityRepository.save(entity).run {
@@ -67,7 +75,7 @@ class EntityService(
                 userId = userId,
                 organisationId = organisationId,
                 entityId = this.id,
-                entityType = EntityTypeEnum.DYNAMIC_ENTITY,
+                entityType = ApplicationEntityType.ENTITY,
                 details = mapOf(
                     "type" to entityType.key,
                     "name" to (name ?: ""),
@@ -97,10 +105,12 @@ class EntityService(
         }
 
         // Validate against current schema
-        val errors = entityValidationService.validateEntity(existing, existing.type)
-        if (existing.type.strictness == riven.core.enums.block.structure.BlockValidationScope.STRICT && errors.isNotEmpty()) {
-            throw SchemaValidationException(errors)
+        entityValidationService.validateEntity(existing, existing.type).run {
+            if (isNotEmpty()) {
+                throw SchemaValidationException(this)
+            }
         }
+
 
         return entityRepository.save(existing).run {
             activityService.logActivity(
@@ -109,7 +119,7 @@ class EntityService(
                 userId = userId,
                 organisationId = existing.organisationId,
                 entityId = this.id,
-                entityType = EntityTypeEnum.DYNAMIC_ENTITY,
+                entityType = ApplicationEntityType.ENTITY,
                 details = mapOf(
                     "type" to existing.type.key,
                     "name" to (name ?: "")
@@ -136,7 +146,7 @@ class EntityService(
             userId = userId,
             organisationId = existing.organisationId,
             entityId = id,
-            entityType = EntityTypeEnum.DYNAMIC_ENTITY,
+            entityType = ApplicationEntityType.ENTITY,
             details = mapOf(
                 "type" to existing.type.key,
                 "name" to (existing.name ?: "")
@@ -164,7 +174,7 @@ class EntityService(
                 userId = userId,
                 organisationId = existing.organisationId,
                 entityId = this.id,
-                entityType = EntityTypeEnum.DYNAMIC_ENTITY,
+                entityType = ApplicationEntityType.ENTITY,
                 details = mapOf(
                     "type" to existing.type.key,
                     "archived" to archive
@@ -212,14 +222,15 @@ class EntityService(
         val entity = findOrThrow { entityRepository.findById(entityId) }
 
         if (entity.type.entityCategory == EntityCategory.RELATIONSHIP) {
-            val config = requireNotNull(entity.type.relationshipConfig) {
-                "Relationship entity must have relationshipConfig"
-            }
-
-            val errors = entityValidationService.validateRelationshipEntity(entityId, config)
-
-            if (errors.isNotEmpty()) {
-                throw IllegalStateException(errors.joinToString("; "))
+            entity.type.relationships.run {
+                requireNotNull(this)
+                // Relationship Entities should always have at-least 2 relationships
+                assert(this.size >= 2)
+                entityValidationService.validateRelationshipEntity(entityId, this).also { errors ->
+                    if (errors.isNotEmpty()) {
+                        throw IllegalStateException(errors.joinToString("; "))
+                    }
+                }
             }
         }
     }
