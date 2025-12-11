@@ -14,10 +14,11 @@ import jakarta.persistence.Entity as JPAEntity
 @JPAEntity
 @Table(
     name = "entities",
+    uniqueConstraints = [
+        UniqueConstraint(name = "uq_entity_org_key", columnNames = ["organisation_id", "key"])
+    ],
     indexes = [
-        Index(name = "idx_entities_organisation_id", columnList = "organisation_id"),
         Index(name = "idx_entities_type_id", columnList = "type_id"),
-        Index(name = "idx_entities_archived", columnList = "archived")
     ]
 )
 data class EntityEntity(
@@ -28,6 +29,9 @@ data class EntityEntity(
 
     @Column(name = "organisation_id", nullable = false)
     val organisationId: UUID,
+
+    @Column(name = "key", nullable = false)
+    var key: String,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "type_id", nullable = false)

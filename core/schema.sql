@@ -360,6 +360,8 @@ CREATE TABLE IF NOT EXISTS public.entities
 CREATE TABLE IF NOT EXISTS public.archived_entities
 (
     "id"              UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
+    -- Duplicate key from entity_type for faster lookups without needing separate query
+    "key"             TEXT    NOT NULL,
     "organisation_id" UUID    NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
     "archived_at"     TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "type_id"         UUID    NOT NULL REFERENCES entity_types (id) ON DELETE RESTRICT,
@@ -369,12 +371,13 @@ CREATE TABLE IF NOT EXISTS public.archived_entities
     "created_at"      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "updated_at"      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "created_by"      UUID    REFERENCES users (id) ON DELETE SET NULL,
-    "updated_by"      UUID    REFERENCES users (id) ON DELETE SET NULL
+    "updated_by"      UUID    REFERENCES users (id) ON DELETE SET NULL,
+
+    -- Creates unique index for faster lookups
+    UNIQUE (organisation_id, key)
 );
 
 -- Indexes for entities
-CREATE INDEX idx_entities_organisation_id ON entities (organisation_id);
-CREATE INDEX idx_entities_type_organisation ON entities (type_id, organisation_id);
 CREATE INDEX idx_entities_type_id ON entities (type_id);
 CREATE INDEX idx_entities_payload_gin ON entities USING GIN (payload jsonb_path_ops);
 

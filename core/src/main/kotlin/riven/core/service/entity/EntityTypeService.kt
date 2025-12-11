@@ -162,14 +162,8 @@ class EntityTypeService(
         }.map { it.toModel() }
     }
 
-    fun getByKey(key: String, organisationId: UUID): EntityTypeEntity? {
-        return entityTypeRepository.findByOrganisationIdAndKey(organisationId, key)
-            .let {
-                if (it.isPresent) {
-                    return it.get()
-                }
-                null
-            }
+    fun getByKey(key: String, organisationId: UUID): EntityTypeEntity {
+        return findOrThrow { entityTypeRepository.findByOrganisationIdAndKey(organisationId, key) }
     }
 
     /**

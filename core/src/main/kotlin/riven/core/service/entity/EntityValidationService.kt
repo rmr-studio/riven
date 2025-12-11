@@ -42,38 +42,39 @@ class EntityValidationService(
         entityId: UUID,
         relationships: List<EntityRelationshipDefinition>
     ): List<String> {
-        val errors = mutableListOf<String>()
-        val relatedEntities: List<EntityRelationshipEntity> =
-            entityRelationshipRepository.findByRelationshipEntityId(entityId)
-
-        // Validate each defined relationship
-        relationships.forEach { definition ->
-            val matchingRels = relatedEntities.filter { rel ->
-                rel.relationshipType == defin
-            }
-
-            // Check required relationships are present
-            if (definition.required && matchingRels.isEmpty()) {
-                errors.add(
-                    "Relationship entity missing required '${definition.role}' relationship"
-                )
-            }
-
-            // Validate entity type matches requirement (for both required and optional)
-            matchingRels.forEach { rel ->
-                if (!definition.allowPolymorphic && definition.entityTypeKeys != null) {
-                    val targetType = rel.targetEntity.type.key
-                    if (targetType !in definition.entityTypeKeys) {
-                        errors.add(
-                            "Relationship '${definition.role}' requires entity type to be one of " +
-                                    "${definition.entityTypeKeys}, but found '$targetType'"
-                        )
-                    }
-                }
-            }
-        }
-
-        return errors
+        TODO()
+//        val errors = mutableListOf<String>()
+//        val relatedEntities: List<EntityRelationshipEntity> =
+//            entityRelationshipRepository.findByRelationshipEntityId(entityId)
+//
+//        // Validate each defined relationship
+//        relationships.forEach { definition ->
+//            val matchingRels = relatedEntities.filter { rel ->
+//                rel.relationshipType == defin
+//            }
+//
+//            // Check required relationships are present
+//            if (definition.required && matchingRels.isEmpty()) {
+//                errors.add(
+//                    "Relationship entity missing required '${definition.role}' relationship"
+//                )
+//            }
+//
+//            // Validate entity type matches requirement (for both required and optional)
+//            matchingRels.forEach { rel ->
+//                if (!definition.allowPolymorphic && definition.entityTypeKeys != null) {
+//                    val targetType = rel.targetEntity.type.key
+//                    if (targetType !in definition.entityTypeKeys) {
+//                        errors.add(
+//                            "Relationship '${definition.role}' requires entity type to be one of " +
+//                                    "${definition.entityTypeKeys}, but found '$targetType'"
+//                        )
+//                    }
+//                }
+//            }
+//        }
+//
+//        return errors
     }
 
     /**

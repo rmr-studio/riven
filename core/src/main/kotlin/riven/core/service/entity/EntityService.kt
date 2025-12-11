@@ -55,6 +55,7 @@ class EntityService(
         val entity = EntityEntity(
             organisationId = organisationId,
             type = entityType,
+            key = typeKey,
             typeVersion = entityType.version,
             name = name,
             payload = payload
