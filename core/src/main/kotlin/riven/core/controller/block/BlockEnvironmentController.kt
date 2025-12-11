@@ -8,6 +8,7 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import riven.core.enums.core.ApplicationEntityType
 import riven.core.models.block.BlockEnvironment
 import riven.core.models.request.block.HydrateBlocksRequest
 import riven.core.models.request.block.OverwriteEnvironmentRequest
@@ -75,6 +76,7 @@ class BlockEnvironmentController(
     )
     fun getBlockEnvironment(
         @PathVariable organisationId: UUID,
+        @PathVariable type: ApplicationEntityType,
         @PathVariable entityId: UUID,
     ): ResponseEntity<BlockEnvironment> {
         val environment = environmentService.loadBlockEnvironment(entityId, type, organisationId)

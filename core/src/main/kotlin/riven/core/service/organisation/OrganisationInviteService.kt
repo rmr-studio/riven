@@ -1,9 +1,13 @@
 package riven.core.service.organisation
 
+import org.springframework.security.access.AccessDeniedException
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.organisation.OrganisationInviteEntity
 import riven.core.entity.organisation.toModel
 import riven.core.enums.activity.Activity
-import riven.core.enums.core.EntityType
+import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.organisation.OrganisationInviteStatus
 import riven.core.enums.organisation.OrganisationRoles
 import riven.core.enums.util.OperationType
@@ -15,10 +19,6 @@ import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
 import riven.core.util.ServiceUtil.findManyResults
 import riven.core.util.ServiceUtil.findOrThrow
-import org.springframework.security.access.AccessDeniedException
-import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
 
@@ -88,7 +88,7 @@ class OrganisationInviteService(
                     operation = OperationType.CREATE,
                     userId = authTokenService.getUserId(),
                     organisationId = organisationId,
-                    entityType = EntityType.ORGANISATION,
+                    entityType = ApplicationEntityType.ORGANISATION,
                     entityId = this.id,
                     details = mapOf(
                         "inviteId" to this.id.toString(),

@@ -1,9 +1,13 @@
 package riven.core.service.block
 
+import org.springframework.security.access.AccessDeniedException
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.stereotype.Service
 import riven.core.configuration.auth.OrganisationSecurity
 import riven.core.entity.block.BlockTypeEntity
 import riven.core.enums.activity.Activity
-import riven.core.enums.core.EntityType
+import riven.core.enums.block.node.SystemBlockTypes
+import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
 import riven.core.models.block.BlockType
 import riven.core.models.request.block.CreateBlockTypeRequest
@@ -12,10 +16,6 @@ import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
 import riven.core.util.ServiceUtil.findManyResults
 import riven.core.util.ServiceUtil.findOrThrow
-import org.springframework.security.access.AccessDeniedException
-import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Service
-import riven.core.enums.block.node.SystemBlockTypes
 import java.util.*
 
 /**
@@ -45,7 +45,7 @@ class BlockTypeService(
                     userId = userId,
                     organisationId = request.organisationId,
                     entityId = this.id,
-                    entityType = EntityType.BLOCK_TYPE,
+                    entityType = ApplicationEntityType.BLOCK_TYPE,
                     details = mapOf(
                         "type" to this.key,
                         "version" to this.version
@@ -103,7 +103,7 @@ class BlockTypeService(
                 userId = userId,
                 organisationId = orgId,
                 entityId = this.id,
-                entityType = EntityType.BLOCK_TYPE,
+                entityType = ApplicationEntityType.BLOCK_TYPE,
                 details = mapOf(
                     "type" to this.key,
                     "version" to this.version,
@@ -145,7 +145,7 @@ class BlockTypeService(
             userId = userId,
             organisationId = orgId,
             entityId = existing.id,
-            entityType = EntityType.BLOCK_TYPE,
+            entityType = ApplicationEntityType.BLOCK_TYPE,
             details = mapOf(
                 "type" to existing.key,
                 "archiveStatus" to status

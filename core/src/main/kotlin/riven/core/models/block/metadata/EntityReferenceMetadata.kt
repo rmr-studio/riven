@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import riven.core.enums.block.structure.BlockMetadataType
 import riven.core.enums.block.structure.BlockReferenceFetchPolicy
-import riven.core.enums.core.EntityType
+import riven.core.models.entity.Entity
 
 /**
  * Metadata when a block is referencing a list of external entities
@@ -22,9 +22,9 @@ data class EntityReferenceMetadata(
     val projection: Projection = Projection(),
     override val deletable: Boolean = true,
     override val readonly: Boolean = false,
-    override val listType: EntityType? = null,
+    override val listType: Entity? = null,
     override val display: ListDisplayConfig = ListDisplayConfig(),
     override val config: ListConfig = ListConfig(),
     override val allowDuplicates: Boolean = false,          // <— optional guard
     override val meta: BlockMeta = BlockMeta()
-) : ReferenceMetadata, ListMetadata<EntityType>
+) : ReferenceMetadata, ListMetadata<Entity>

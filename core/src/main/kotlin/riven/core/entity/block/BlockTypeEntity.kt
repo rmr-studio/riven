@@ -8,7 +8,7 @@ import riven.core.enums.common.ValidationScope
 import riven.core.models.block.BlockType
 import riven.core.models.block.display.BlockDisplay
 import riven.core.models.block.display.BlockTypeNesting
-import riven.core.models.block.validation.BlockSchema
+import riven.core.models.common.validation.Schema
 import riven.core.models.request.block.CreateBlockTypeRequest
 import java.util.*
 
@@ -63,7 +63,7 @@ data class BlockTypeEntity(
 
     @Column(name = "schema", columnDefinition = "jsonb", nullable = false)
     @Type(JsonBinaryType::class)
-    val schema: BlockSchema,
+    val schema: Schema,
 
     @Column(name = "archived", nullable = false, columnDefinition = "boolean default false")
     var archived: Boolean = false,
