@@ -78,7 +78,7 @@ class EntityService(
                 details = mapOf(
                     "type" to entityType.key,
                     "name" to (name ?: ""),
-                    "category" to entityType.entityCategory.name
+                    "category" to entityType.type.name
                 )
             )
             this.toModel()
@@ -155,32 +155,12 @@ class EntityService(
 
     /**
      * Archive or restore an entity.
+     * An archival operation will move the entity to a separate archival table, and a restoration will bring it back.
      */
     @Transactional
     @PreAuthorize("@organisationSecurity.hasOrg(#id)")
     fun archiveEntity(id: UUID, archive: Boolean): Entity {
-        val userId = authTokenService.getUserId()
-        val existing = findOrThrow { entityRepository.findById(id) }
-
-        if (existing.archived == archive) return existing.toModel()
-
-        existing.archived = archive
-
-        return entityRepository.save(existing).run {
-            activityService.logActivity(
-                activity = Activity.ENTITY,
-                operation = if (archive) OperationType.ARCHIVE else OperationType.RESTORE,
-                userId = userId,
-                organisationId = existing.organisationId,
-                entityId = this.id,
-                entityType = ApplicationEntityType.ENTITY,
-                details = mapOf(
-                    "type" to existing.type.key,
-                    "archived" to archive
-                )
-            )
-            this.toModel()
-        }
+        TODO()
     }
 
     /**
@@ -220,7 +200,7 @@ class EntityService(
     fun validateRelationshipEntityConstraints(entityId: UUID) {
         val entity = findOrThrow { entityRepository.findById(entityId) }
 
-        if (entity.type.entityCategory == EntityCategory.RELATIONSHIP) {
+        if (entity.type.type == EntityCategory.RELATIONSHIP) {
             entity.type.relationships.run {
                 requireNotNull(this)
                 // Relationship Entities should always have at-least 2 relationships

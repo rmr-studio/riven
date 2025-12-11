@@ -327,6 +327,7 @@ CREATE TABLE IF NOT EXISTS public.entity_types
     "updated_by"        UUID,
 
     -- Single row per entity type (mutable pattern)
+    -- Also creates an index on organisation_id + key for faster lookups
     UNIQUE (organisation_id, key),
 
     -- Relationship entities must have relationship_config
@@ -336,11 +337,6 @@ CREATE TABLE IF NOT EXISTS public.entity_types
         )
 );
 
-
--- Indexes for entity_types
-CREATE INDEX idx_entity_types_organisation_id ON entity_types (organisation_id);
-CREATE INDEX idx_entity_types_key ON entity_types (key);
-CREATE INDEX idx_entity_types_category ON entity_types (type);
 
 -- =====================================================
 -- 2. ENTITIES TABLE
@@ -354,7 +350,22 @@ CREATE TABLE IF NOT EXISTS public.entities
     "type_version"    INTEGER NOT NULL,
     "name"            TEXT,
     "payload"         JSONB   NOT NULL         DEFAULT '{}'::jsonb,
-    "archived"        BOOLEAN NOT NULL         DEFAULT FALSE,
+    "created_at"      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updated_at"      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "created_by"      UUID    REFERENCES users (id) ON DELETE SET NULL,
+    "updated_by"      UUID    REFERENCES users (id) ON DELETE SET NULL
+);
+
+-- Archived Entities Table => Soft Delete Pattern, also to help reduce query latency on main entities table
+CREATE TABLE IF NOT EXISTS public.archived_entities
+(
+    "id"              UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
+    "organisation_id" UUID    NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
+    "archived_at"     TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "type_id"         UUID    NOT NULL REFERENCES entity_types (id) ON DELETE RESTRICT,
+    "type_version"    INTEGER NOT NULL,
+    "name"            TEXT,
+    "payload"         JSONB   NOT NULL         DEFAULT '{}'::jsonb,
     "created_at"      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "updated_at"      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "created_by"      UUID    REFERENCES users (id) ON DELETE SET NULL,
@@ -363,9 +374,12 @@ CREATE TABLE IF NOT EXISTS public.entities
 
 -- Indexes for entities
 CREATE INDEX idx_entities_organisation_id ON entities (organisation_id);
+CREATE INDEX idx_entities_type_organisation ON entities (type_id, organisation_id);
 CREATE INDEX idx_entities_type_id ON entities (type_id);
-CREATE INDEX idx_entities_archived ON entities (archived);
 CREATE INDEX idx_entities_payload_gin ON entities USING GIN (payload jsonb_path_ops);
+
+CREATE INDEX idx_archived_entities_organisation_id ON archived_entities (organisation_id);
+CREATE INDEX idx_archived_entities_type_id ON archived_entities (type_id);
 
 -- =====================================================
 -- 3. ENTITY_RELATIONSHIPS TABLE

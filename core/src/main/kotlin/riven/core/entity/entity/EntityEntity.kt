@@ -42,9 +42,6 @@ data class EntityEntity(
     @Type(JsonBinaryType::class)
     @Column(name = "payload", columnDefinition = "jsonb", nullable = false)
     var payload: Map<String, Any>,
-
-    @Column(name = "archived", columnDefinition = "boolean default false")
-    var archived: Boolean = false
 ) : AuditableEntity() {
 
     /**
@@ -59,7 +56,6 @@ data class EntityEntity(
             typeVersion = this.typeVersion,
             name = this.name,
             payload = this.payload,
-            archived = this.archived,
             createdAt = if (audit) this.createdAt else null,
             updatedAt = if (audit) this.updatedAt else null,
             createdBy = if (audit) this.createdBy else null,

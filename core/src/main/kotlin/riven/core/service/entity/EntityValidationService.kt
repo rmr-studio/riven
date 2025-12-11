@@ -6,7 +6,7 @@ import riven.core.entity.entity.EntityRelationshipEntity
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.common.ValidationScope
 import riven.core.models.common.validation.Schema
-import riven.core.models.entity.EntityRelationshipDefinition
+import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.service.schema.SchemaService
 import java.util.*

@@ -5,11 +5,9 @@ import riven.core.models.common.json.JsonObject
 import java.time.ZonedDateTime
 import java.util.*
 
-/**
- * Domain model for an entity instance.
- */
-data class Entity(
+data class ArchivedEntity(
     val id: UUID,
+    val archivedAt: ZonedDateTime,
     val organisationId: UUID,
     val entityType: EntityType,
     val typeVersion: Int,

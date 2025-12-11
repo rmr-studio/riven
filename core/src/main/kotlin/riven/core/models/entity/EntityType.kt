@@ -3,6 +3,7 @@ package riven.core.models.entity
 import riven.core.entity.util.AuditableModel
 import riven.core.enums.entity.EntityCategory
 import riven.core.models.common.validation.Schema
+import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import java.time.ZonedDateTime
 import java.util.*
 

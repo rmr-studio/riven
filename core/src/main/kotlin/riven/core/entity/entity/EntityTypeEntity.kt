@@ -6,9 +6,9 @@ import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
 import riven.core.enums.entity.EntityCategory
 import riven.core.models.common.validation.Schema
-import riven.core.models.entity.EntityDisplayConfig
-import riven.core.models.entity.EntityRelationshipDefinition
 import riven.core.models.entity.EntityType
+import riven.core.models.entity.configuration.EntityConfig
+import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import java.util.*
 
 /**
@@ -23,11 +23,6 @@ import java.util.*
     uniqueConstraints = [
         UniqueConstraint(columnNames = ["organisation_id", "key"])
     ],
-    indexes = [
-        Index(name = "idx_entity_types_organisation_id", columnList = "organisation_id"),
-        Index(name = "idx_entity_types_key", columnList = "key"),
-        Index(name = "idx_entity_types_category", columnList = "entity_category")
-    ]
 )
 data class EntityTypeEntity(
     @Id
@@ -66,7 +61,7 @@ data class EntityTypeEntity(
 
     @Type(JsonBinaryType::class)
     @Column(name = "display_structure", columnDefinition = "jsonb", nullable = false)
-    var display: EntityDisplayConfig,
+    var display: EntityConfig,
 
     @Type(JsonBinaryType::class)
     @Column(name = "relationships", columnDefinition = "jsonb", nullable = true)

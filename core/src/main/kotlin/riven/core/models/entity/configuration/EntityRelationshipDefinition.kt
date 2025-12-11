@@ -1,4 +1,4 @@
-package riven.core.models.entity
+package riven.core.models.entity.configuration
 
 import riven.core.enums.entity.EntityRelationshipCardinality
 

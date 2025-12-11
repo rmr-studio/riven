@@ -9,8 +9,8 @@ import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
 import riven.core.models.entity.Entity
 import riven.core.models.entity.EntityRelationship
-import riven.core.models.entity.EntityRelationshipDefinition
 import riven.core.models.entity.EntityType
+import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityRepository
 import riven.core.service.activity.ActivityService

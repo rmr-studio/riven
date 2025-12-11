@@ -4,9 +4,9 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.activity.Activity
-import riven.core.enums.common.ValidationScope
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
+import riven.core.exceptions.SchemaValidationException
 import riven.core.models.entity.EntityType
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
@@ -49,7 +49,7 @@ class EntityTypeService(
                 details = mapOf(
                     "type" to this.key,
                     "version" to this.version,
-                    "category" to this.entityCategory.name
+                    "category" to this.type.name
                 )
             )
             this.toModel()
@@ -62,13 +62,12 @@ class EntityTypeService(
      * Unlike BlockTypeService which creates new versions, this updates the existing row.
      * Breaking changes are detected and validated against existing entities.
      */
-    @PreAuthorize("@organisationSecurity.hasOrg(#id)")
+    @PreAuthorize("@organisationSecurity.hasOrg(#type.organisationId)")
     fun updateEntityType(
-        id: UUID,
-        updates: EntityTypeUpdateRequest
+        type: EntityType
     ): EntityType {
         val userId = authTokenService.getUserId()
-        val existing = findOrThrow { entityTypeRepository.findById(id) }
+        val existing: EntityTypeEntity = findOrThrow { entityTypeRepository.findById(type.id) }
 
         // Ensure this is not a system type
         val orgId = requireNotNull(existing.organisationId) { "Cannot update system entity type" }
@@ -76,15 +75,14 @@ class EntityTypeService(
         // Detect breaking changes
         val breakingChanges = entityValidationService.detectSchemaBreakingChanges(
             existing.schema,
-            updates.schema
+            type.schema
         )
 
-        if (breakingChanges.any { it.breaking } && existing.strictness == ValidationScope.STRICT) {
-            val existingEntities = entityRepository.findByOrganisationIdAndTypeId(orgId, id)
+        if (breakingChanges.any { it.breaking }) {
+            val existingEntities = entityRepository.findByOrganisationIdAndTypeId(orgId, type.id)
             val validationSummary = entityValidationService.validateExistingEntitiesAgainstNewSchema(
                 existingEntities,
-                updates.schema,
-                updates.strictness
+                type.schema,
             )
 
             if (validationSummary.invalidCount > 0) {
@@ -101,12 +99,11 @@ class EntityTypeService(
 
         // Update in place (NOT create new row)
         existing.apply {
-            displayName = updates.name
-            description = updates.description
-            schema = updates.schema
-            displayConfig = updates.displayConfig
-            relationshipConfig = updates.relationships
-            strictness = updates.strictness
+            displayName = type.name
+            description = type.description
+            schema = type.schema
+            display = type.displayConfig
+            relationships = type.relationships
             version = existing.version + 1  // Increment for change tracking
         }.let {
             entityTypeRepository.save(it).run {
@@ -116,7 +113,7 @@ class EntityTypeService(
                     userId = userId,
                     organisationId = orgId,
                     entityId = this.id,
-                    entityType = EntityTypeEnum.DYNAMIC_ENTITY_TYPE,
+                    entityType = ApplicationEntityType.ENTITY_TYPE,
                     details = mapOf(
                         "type" to this.key,
                         "version" to this.version,
@@ -148,7 +145,7 @@ class EntityTypeService(
             userId = userId,
             organisationId = orgId,
             entityId = existing.id,
-            entityType = EntityTypeEnum.DYNAMIC_ENTITY_TYPE,
+            entityType = ApplicationEntityType.ENTITY_TYPE,
             details = mapOf(
                 "type" to existing.key,
                 "archiveStatus" to status
@@ -159,40 +156,20 @@ class EntityTypeService(
     /**
      * Get all entity types for an organization (including system types).
      */
-    fun getEntityTypes(organisationId: UUID, includeSystem: Boolean = true): List<EntityType> {
+    fun getOrganisationEntityTypes(organisationId: UUID): List<EntityType> {
         return findManyResults {
-            if (includeSystem) {
-                entityTypeRepository.findByOrganisationIdOrSystem(organisationId)
-            } else {
-                entityTypeRepository.findByOrganisationIdAndKey(
-                    organisationId,
-                    ""
-                )  // This won't work - need to add method
-                // For now, filter manually
-                entityTypeRepository.findByOrganisationIdOrSystem(organisationId)
-                    .filter { !it.system }
-            }
+            entityTypeRepository.findByOrganisationId(organisationId)
         }.map { it.toModel() }
     }
 
-    /**
-     * Get entity type by key (organization-scoped or system).
-     */
-    fun getByKey(key: String, organisationId: UUID?): EntityTypeEntity {
-        // Try organization-scoped first
-        if (organisationId != null) {
-            entityTypeRepository.findByOrganisationIdAndKey(organisationId, key)
-                .let {
-                    if (it.isPresent) {
-                        return it.get()
-                    }
+    fun getByKey(key: String, organisationId: UUID): EntityTypeEntity? {
+        return entityTypeRepository.findByOrganisationIdAndKey(organisationId, key)
+            .let {
+                if (it.isPresent) {
+                    return it.get()
                 }
-        }
-
-        // Fall back to system type
-        return findOrThrow {
-            entityTypeRepository.findBySystemTrueAndKey(key)
-        }
+                null
+            }
     }
 
     /**
