@@ -158,12 +158,14 @@ class EntityTypeService(
     /**
      * Get all entity types for an organization (including system types).
      */
+    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
     fun getOrganisationEntityTypes(organisationId: UUID): List<EntityType> {
         return findManyResults {
             entityTypeRepository.findByOrganisationId(organisationId)
         }.map { it.toModel() }
     }
 
+    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
     fun getByKey(key: String, organisationId: UUID): EntityTypeEntity {
         return findOrThrow { entityTypeRepository.findByOrganisationIdAndKey(organisationId, key) }
     }

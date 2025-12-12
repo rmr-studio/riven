@@ -42,8 +42,12 @@ data class EntityType(
     val archived: Boolean,
     // The order in which the attributes should be displayed in the UI
     val order: List<String>? = null,
+    val entitiesCount: Long? = null,
     override val createdAt: ZonedDateTime?,
     override val updatedAt: ZonedDateTime?,
     override val createdBy: UUID?,
     override val updatedBy: UUID?
-) : AuditableModel()
+) : AuditableModel() {
+    val attributes: Pair<Int, Int>
+        get() = Pair(schema.properties?.size ?: 0, relationships?.size ?: 0)
+}
