@@ -56,7 +56,6 @@ class DefaultBlockEnvironmentService(
         // Persist layout entity
         val layoutEntity = BlockTreeLayoutEntity(
             entityId = entityId,
-            entityType = entityType,
             organisationId = organisationId,
             layout = defaultLayout,
             version = 1

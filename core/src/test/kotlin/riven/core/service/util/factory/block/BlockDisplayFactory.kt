@@ -2,13 +2,13 @@ package riven.core.service.util.factory.block
 
 import riven.core.enums.core.ComponentType
 import riven.core.models.block.display.*
-import riven.core.models.block.validation.BlockFormStructure
 import riven.core.models.common.Condition
 import riven.core.models.common.Op
 import riven.core.models.common.Operand
 import riven.core.models.common.grid.GridRect
 import riven.core.models.common.grid.LayoutGrid
 import riven.core.models.common.grid.LayoutGridItem
+import riven.core.models.common.structure.FormStructure
 import riven.core.models.common.theme.ThemeTokens
 
 /**
@@ -42,7 +42,7 @@ object BlockDisplayFactory {
      */
     fun display(render: BlockRenderStructure): BlockDisplay =
         BlockDisplay(
-            form = BlockFormStructure(fields = emptyMap()),
+            form = FormStructure(fields = emptyMap()),
             render = render
         )
 

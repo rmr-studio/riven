@@ -4,7 +4,6 @@ import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
-import riven.core.enums.core.ApplicationEntityType
 import riven.core.models.block.layout.TreeLayout
 import riven.core.models.block.tree.BlockTreeLayout
 import java.util.*
@@ -49,10 +48,6 @@ data class BlockTreeLayoutEntity(
      */
     @Column(name = "entity_id", nullable = false, columnDefinition = "uuid")
     val entityId: UUID,
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "entity_type", nullable = false)
-    val entityType: ApplicationEntityType,
 
     @Column(name = "organisation_id", nullable = false, columnDefinition = "uuid")
     val organisationId: UUID,

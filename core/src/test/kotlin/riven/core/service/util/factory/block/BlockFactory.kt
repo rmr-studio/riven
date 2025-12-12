@@ -7,7 +7,6 @@ import riven.core.entity.block.BlockTypeEntity
 import riven.core.enums.block.node.NodeType
 import riven.core.enums.common.ValidationScope
 import riven.core.enums.core.ComponentType
-import riven.core.enums.core.EntityType
 import riven.core.models.block.Block
 import riven.core.models.block.BlockType
 import riven.core.models.block.display.BlockComponentNode
@@ -20,10 +19,10 @@ import riven.core.models.block.metadata.BlockMeta
 import riven.core.models.block.operation.*
 import riven.core.models.block.tree.ContentNode
 import riven.core.models.block.tree.Node
-import riven.core.models.block.validation.BlockFormStructure
-import riven.core.models.block.validation.BlockSchema
 import riven.core.models.common.grid.GridRect
 import riven.core.models.common.grid.LayoutGrid
+import riven.core.models.common.structure.FormStructure
+import riven.core.models.common.validation.Schema
 import riven.core.models.request.block.SaveEnvironmentRequest
 import riven.core.models.request.block.StructuralOperationRequest
 import java.time.ZonedDateTime
@@ -45,7 +44,7 @@ object BlockFactory {
         key: String = "contact_card",
         version: Int = 1,
         strictness: ValidationScope = ValidationScope.SOFT,
-        schema: BlockSchema = BlockSchema(name = "Contact"),
+        schema: Schema = Schema(name = "Contact"),
         archived: Boolean = false,
         nesting: BlockTypeNesting = BlockTypeNesting(
             max = null,
@@ -63,7 +62,7 @@ object BlockFactory {
         schema = schema,
         archived = archived,
         displayStructure = BlockDisplay(
-            form = BlockFormStructure(emptyMap()),
+            form = FormStructure(emptyMap()),
             render = BlockRenderStructure(
                 version = 1,
                 layoutGrid = LayoutGrid(
@@ -102,7 +101,7 @@ object BlockFactory {
      *
      * @return A BlockSchema whose name is "root".
      */
-    fun generateSchema(): BlockSchema = BlockSchema(name = "root")
+    fun generateSchema(): Schema = Schema(name = "root")
 
     /**
      * Creates a default BlockDisplay with an empty form structure and a text render.
@@ -240,14 +239,12 @@ object BlockFactory {
     fun createTreeLayoutEntity(
         id: UUID? = UUID.randomUUID(),
         entityId: UUID = UUID.randomUUID(),
-        entityType: EntityType = EntityType.BLOCK,
         organisationId: UUID,
         version: Int = 1,
         layout: TreeLayout = TreeLayout()
     ): BlockTreeLayoutEntity = BlockTreeLayoutEntity(
         id = id,
         entityId = entityId,
-        entityType = entityType,
         organisationId = organisationId,
         version = version,
         layout = layout
