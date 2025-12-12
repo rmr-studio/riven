@@ -25,15 +25,8 @@ import java.util.*
 @Entity
 @Table(
     name = "block_tree_layouts",
-    uniqueConstraints = [
-        // Ensure only one layout per scope combination
-        UniqueConstraint(
-            name = "uq_block_tree_layouts_entity",
-            columnNames = ["entity_id"]
-        )
-    ],
     indexes = [
-        Index(name = "idx_block_tree_layouts_entity_id_entity_type", columnList = "entity_id, entity_type"),
+        Index(name = "idx_block_tree_layouts_entity_id", columnList = "entity_id"),
         Index(name = "idx_block_tree_layouts_organisation_id", columnList = "organisation_id"),
     ]
 )

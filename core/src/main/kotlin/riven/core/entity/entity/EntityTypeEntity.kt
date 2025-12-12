@@ -30,13 +30,13 @@ data class EntityTypeEntity(
     @Column(name = "id", nullable = false, columnDefinition = "uuid")
     val id: UUID? = null,
 
-    @Column(name = "key", nullable = false)
+    @Column(name = "key", nullable = false, updatable = false)
     val key: String,
 
     @Column(name = "display_name", nullable = false)
     var displayName: String,
 
-    @Column(name = "key", nullable = false)
+    @Column(name = "identifier_key", nullable = false)
     val identifierKey: String = "name",
 
     @Column(name = "description", nullable = true)
