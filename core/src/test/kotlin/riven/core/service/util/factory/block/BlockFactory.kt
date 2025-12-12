@@ -106,7 +106,7 @@ object BlockFactory {
     /**
      * Creates a default BlockDisplay with an empty form structure and a text render.
      *
-     * @return A BlockDisplay whose form is an empty BlockFormStructure and whose render is a BlockRenderStructure using `ComponentType.TEXT` with no properties.
+     * @return A BlockDisplay whose form is an empty FormStructure and whose render is a BlockRenderStructure using `ComponentType.TEXT` with no properties.
      */
     fun generateDisplay(): BlockDisplay = BlockDisplayFactory.display(
         render = BlockDisplayFactory.contactWithAccountSummary()

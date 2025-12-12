@@ -65,6 +65,7 @@ data class Schema(
                     }
                     buildMap {
                         put("type", "object")
+                        schema.description?.let { put("description", it) }
                         put("properties", props)
                         put("additionalProperties", allowAP)
                         if (requiredKeys.isNotEmpty()) put("required", requiredKeys)

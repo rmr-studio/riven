@@ -1,9 +1,13 @@
 package riven.core.service.block
 
+import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Service
 import riven.core.enums.block.node.BlockReferenceWarning
 import riven.core.enums.block.node.ReferenceType
-import riven.core.models.block.tree.*
+import riven.core.models.block.tree.BlockTreeReference
+import riven.core.models.block.tree.EntityReference
+import riven.core.models.block.tree.ReferenceItem
+import riven.core.models.block.tree.ReferencePayload
 import riven.core.models.request.block.EntityReferenceRequest
 import riven.core.models.response.block.internal.BlockHydrationResult
 import riven.core.service.entity.EntityService
@@ -20,7 +24,8 @@ import java.util.*
 @Service
 class BlockReferenceHydrationService(
     private val entityService: EntityService,
-    private val blockService: BlockService
+    private val blockService: BlockService,
+    private val logger: KLogger
 ) {
 
 
@@ -92,12 +97,14 @@ class BlockReferenceHydrationService(
                         }
                         EntityReference(reference = items)
                     }
+
                     blockRefs.isNotEmpty() && entityRefs.isEmpty() -> {
                         // Block references only (should only have one)
                         val ref = blockRefs.first()
-                        val blockTree = if (ref.id in blocksById) {
+                        // blocksById confirms existence; fetch full tree
+                        val blockTree = blocksById[ref.id]?.let {
                             blockService.getBlockTree(ref.id)
-                        } else null
+                        }
 
                         BlockTreeReference(
                             reference = ReferenceItem(
@@ -109,8 +116,12 @@ class BlockReferenceHydrationService(
                             )
                         )
                     }
+
                     else -> {
                         // Mixed or empty - shouldn't happen, default to empty EntityReference
+                        if (entityRefs.isNotEmpty()) {
+                            logger.warn { "Block $blockId has mixed entity and block references" }
+                        }
                         EntityReference(reference = emptyList())
                     }
                 }

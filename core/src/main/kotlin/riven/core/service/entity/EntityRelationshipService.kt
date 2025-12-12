@@ -43,8 +43,6 @@ class EntityRelationshipService(
         key: String,
         bidirectional: Boolean = false,
     ): List<EntityRelationshipEntity> {
-
-
         // Find Entity Relationship definition
         val source: Pair<Entity, EntityType> = findOrThrow { entityRepository.findById(sourceEntityId) }.let {
             // Run JPA lazy loading for type

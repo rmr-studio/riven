@@ -15,7 +15,6 @@ class ExceptionHandler(private val logger: KLogger, private val config: Applicat
 
     @ExceptionHandler(AccessDeniedException::class)
     fun handleAccessDeniedException(ex: AccessDeniedException): ResponseEntity<ErrorResponse> {
-        logger.warn { "Access denied: ${ex.message}" }
         return ErrorResponse(
             statusCode = HttpStatus.FORBIDDEN,
             error = "ACCESS DENIED",
@@ -52,7 +51,6 @@ class ExceptionHandler(private val logger: KLogger, private val config: Applicat
 
     @ExceptionHandler(AuthorizationDeniedException::class)
     fun handleAuthorizationDenied(ex: AuthorizationDeniedException): ResponseEntity<ErrorResponse> {
-        logger.warn { "Access denied: ${ex.message}" }
         return ErrorResponse(
             statusCode = HttpStatus.FORBIDDEN,
             error = "AUTHORIZATION DENIED",

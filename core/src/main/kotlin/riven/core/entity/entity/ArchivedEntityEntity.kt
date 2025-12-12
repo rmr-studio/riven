@@ -12,7 +12,6 @@ import java.util.*
     indexes = [
         Index(name = "idx_archived_entities_organisation_id", columnList = "organisation_id"),
         Index(name = "idx_archived_entities_type_id", columnList = "type_id"),
-
     ]
 )
 data class ArchivedEntityEntity(
@@ -27,9 +26,8 @@ data class ArchivedEntityEntity(
     @Column(name = "archived_at", nullable = false)
     val archivedAt: ZonedDateTime,
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "type_id", nullable = false)
-    val type: EntityTypeEntity,
+    @Column(name = "type_id", nullable = false)
+    val typeId: UUID,
 
     @Column(name = "type_version", nullable = false)
     var typeVersion: Int,

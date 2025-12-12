@@ -10,6 +10,7 @@ import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.entity.EntityCategory
 import riven.core.enums.util.OperationType
 import riven.core.exceptions.SchemaValidationException
+import riven.core.models.common.json.JsonObject
 import riven.core.models.entity.Entity
 import riven.core.repository.entity.EntityRepository
 import riven.core.service.activity.ActivityService
@@ -90,14 +91,14 @@ class EntityService(
      * Update an existing entity.
      */
     @Transactional
-    @PreAuthorize("@organisationSecurity.hasOrg(#id)")
+    @PostAuthorize("@organisationSecurity.hasOrg(#returnObject.organisationId)")
     fun updateEntity(
         id: UUID,
         name: String?,
-        payload: Map<String, Any>
+        payload: JsonObject
     ): Entity {
         val userId = authTokenService.getUserId()
-        val existing = findOrThrow { entityRepository.findById(id) }
+        val existing: EntityEntity = findOrThrow { entityRepository.findById(id) }
 
         existing.apply {
             this.name = name
@@ -205,7 +206,9 @@ class EntityService(
             entity.type.relationships.run {
                 requireNotNull(this)
                 // Relationship Entities should always have at-least 2 relationships
-                assert(this.size >= 2)
+                require(this.size >= 2) {
+                    "Relationship entity type '${entity.type.key}' must define at least two relationships"
+                }
                 entityValidationService.validateRelationshipEntity(entityId, this).also { errors ->
                     if (errors.isNotEmpty()) {
                         throw IllegalStateException(errors.joinToString("; "))

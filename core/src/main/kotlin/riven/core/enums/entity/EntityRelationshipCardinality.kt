@@ -1,5 +1,8 @@
 package riven.core.enums.entity
 
+/**
+ * Defines the cardinality of relationships between entities.
+ */
 enum class EntityRelationshipCardinality {
     ONE_TO_ONE,
     ONE_TO_MANY,

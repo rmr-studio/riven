@@ -4,6 +4,7 @@ import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
+import riven.core.models.common.json.JsonObject
 import riven.core.models.entity.Entity
 import java.util.*
 import jakarta.persistence.Entity as JPAEntity
@@ -45,7 +46,7 @@ data class EntityEntity(
 
     @Type(JsonBinaryType::class)
     @Column(name = "payload", columnDefinition = "jsonb", nullable = false)
-    var payload: Map<String, Any>,
+    var payload: JsonObject,
 ) : AuditableEntity() {
 
     /**

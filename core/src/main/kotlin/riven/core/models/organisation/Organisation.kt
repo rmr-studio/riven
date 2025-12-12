@@ -8,7 +8,7 @@ import riven.core.models.common.Address
 import java.time.ZonedDateTime
 import java.util.*
 
-@Schema(requiredProperties = ["type", "id", "name"])
+@Schema(requiredProperties = ["id", "name"])
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class Organisation(
 

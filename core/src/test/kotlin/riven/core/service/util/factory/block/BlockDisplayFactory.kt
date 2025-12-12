@@ -37,7 +37,7 @@ object BlockDisplayFactory {
     ) = ThemeTokens(variant = variant, colorRole = colorRole, tone = tone)
 
     /**
-     * Wrap a render structure with an empty BlockFormStructure.
+     * Wrap a render structure with an empty FormStructure.
      * Useful when you need a full BlockDisplay in tests.
      */
     fun display(render: BlockRenderStructure): BlockDisplay =
