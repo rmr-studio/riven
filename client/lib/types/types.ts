@@ -681,6 +681,20 @@ export interface components {
             items?: components["schemas"]["Schema"];
             unique: boolean;
             protected: boolean;
+            options?: components["schemas"]["SchemaOptions"];
+        };
+        SchemaOptions: {
+            default?: Record<string, never>;
+            regex?: string;
+            enum?: (string | number | boolean)[];
+            /** Format: int32 */
+            minLength?: number;
+            /** Format: int32 */
+            maxLength?: number;
+            /** Format: double */
+            minimum?: number;
+            /** Format: double */
+            maximum?: number;
         };
         ThemeTokens: {
             variant?: string;
@@ -903,7 +917,6 @@ export interface components {
             schema: components["schemas"]["Schema"];
             displayConfig: components["schemas"]["EntityConfig"];
             relationships?: components["schemas"]["EntityRelationshipDefinition"][];
-            archived: boolean;
             order?: string[];
             /** Format: int64 */
             entitiesCount?: number;
@@ -939,9 +952,9 @@ export interface components {
         ListFilterLogicType: ListFilterLogicType;
         Metadata: {
             type: components["schemas"]["BlockMetadataType"];
+            meta: components["schemas"]["BlockMeta"];
             readonly: boolean;
             deletable: boolean;
-            meta: components["schemas"]["BlockMeta"];
         };
         Node: {
             warnings: string[];

@@ -34,6 +34,21 @@ export const toTitleCase = (value: string | null | undefined): string => {
         .join(" ");
 };
 
+/**
+ * Converts a string to key case (lowercase with underscores)
+ * @param value - The input string
+ * @returns
+ */
+export const toKeyCase = (value: string | null | undefined): string => {
+    if (!value) return "";
+
+    return value
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_") // Replace non-alphanumeric characters with underscores
+        .replace(/^_+|_+$/g, ""); // Remove leading/trailing underscores
+};
+
 export const isUUID = (value: string): boolean => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(value);
