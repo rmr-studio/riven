@@ -39,7 +39,6 @@ data class EntityType(
     val schema: Schema,
     val displayConfig: EntityConfig,
     val relationships: List<EntityRelationshipDefinition>? = null,
-    val archived: Boolean,
     // The order in which the attributes should be displayed in the UI
     val order: List<String>? = null,
     val entitiesCount: Long? = null,

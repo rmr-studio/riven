@@ -94,7 +94,6 @@ data class EntityTypeEntity(
             displayConfig = this.display,
             relationships = this.relationships,
             order = this.order,
-            archived = this.archived,
             createdAt = this.createdAt,
             updatedAt = this.updatedAt,
             createdBy = this.createdBy,
