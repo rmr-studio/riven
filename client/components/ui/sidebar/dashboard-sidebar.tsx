@@ -10,7 +10,9 @@ import {
     CogIcon,
     Ellipsis,
     GitGraph,
+    Plus,
     PlusCircle,
+    SquareDashedMousePointer,
     TrendingUpDown,
     Workflow,
 } from "lucide-react";
@@ -106,11 +108,23 @@ export const DashboardSidebar = () => {
                                   <DropdownMenuItem
                                       onClick={() =>
                                           router.push(
+                                              `/dashboard/organisation/${selectedOrganisation.id}/entity`
+                                          )
+                                      }
+                                  >
+                                      <SquareDashedMousePointer />
+                                      <span className="ml-2 text-xs text-content">
+                                          View All Entities
+                                      </span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                      onClick={() =>
+                                          router.push(
                                               `/dashboard/organisation/${selectedOrganisation.id}/entity/new`
                                           )
                                       }
                                   >
-                                      <PlusCircle />
+                                      <Plus />
                                       <span className="ml-2 text-xs text-content">New Entity</span>
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
@@ -121,6 +135,7 @@ export const DashboardSidebar = () => {
                                       }
                                   >
                                       <Workflow />
+
                                       <span className="ml-2 text-xs text-content">
                                           View Entity Environment
                                       </span>

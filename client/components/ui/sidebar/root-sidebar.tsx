@@ -70,30 +70,32 @@ const SidebarGroupRenderer: React.FC<GroupRendererProps> = ({
             <SidebarGroup className="p-0">
                 {group.title && (
                     <SidebarGroupLabel asChild>
-                        <CollapsibleTrigger
-                            className={cn(
-                                "relative duration-200 flex items-center justify-between w-full transition-all rounded-xs",
-                                group.collapsible &&
-                                    "hover:bg-muted hover:text-primary cursor-pointer"
-                            )}
-                        >
-                            <span className="text-primary/60">{group.title}</span>
-                            <div className="flex items-center gap-1">
-                                {group.actions && (
-                                    <div
-                                        className="flex items-center"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        {group.actions}
-                                    </div>
+                        <CollapsibleTrigger asChild>
+                            <div
+                                className={cn(
+                                    "relative duration-200 flex items-center justify-between w-full transition-all rounded-xs",
+                                    group.collapsible &&
+                                        "hover:bg-muted hover:text-primary cursor-pointer"
                                 )}
-                                {group.collapsible && (
-                                    <ChevronDown
-                                        className={`transition-transform duration-200 size-4 ${
-                                            isOpen ? "" : "-rotate-90"
-                                        }`}
-                                    />
-                                )}
+                            >
+                                <span className="text-primary/60">{group.title}</span>
+                                <div className="flex items-center gap-1">
+                                    {group.actions && (
+                                        <div
+                                            className="flex items-center"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            {group.actions}
+                                        </div>
+                                    )}
+                                    {group.collapsible && (
+                                        <ChevronDown
+                                            className={`transition-transform duration-200 size-4 ${
+                                                isOpen ? "" : "-rotate-90"
+                                            }`}
+                                        />
+                                    )}
+                                </div>
                             </div>
                         </CollapsibleTrigger>
                     </SidebarGroupLabel>
@@ -121,7 +123,7 @@ const SidebarGroupRenderer: React.FC<GroupRendererProps> = ({
                                                         <SidebarMenuButton
                                                             asChild
                                                             isActive={item.isActive}
-                                                            className="text-muted-foreground rounded-xs"
+                                                            className="text-muted-foreground r"
                                                         >
                                                             <Link href={item.url} className="flex">
                                                                 <item.icon className="size-3" />
