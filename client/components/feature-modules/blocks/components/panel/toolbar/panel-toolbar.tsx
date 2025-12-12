@@ -10,16 +10,15 @@
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { EntityType } from "@/lib/types/types";
 import { cn } from "@/lib/util/utils";
 import { Check, CommandIcon, Edit3, InfoIcon, PlusIcon, X } from "lucide-react";
-import { FC, RefObject, ReactNode } from "react";
+import { FC, ReactNode, RefObject } from "react";
 
 import { motion } from "framer-motion";
-import { usePanelWrapperContext } from "../context/panel-wrapper-provider";
-import { usePanelToolbarIndices } from "../hooks/use-panel-toolbar-indices";
 import { BlockType } from "../../../interface/block.interface";
 import { QuickActionItem } from "../../../interface/panel.interface";
+import { usePanelWrapperContext } from "../context/panel-wrapper-provider";
+import { usePanelToolbarIndices } from "../hooks/use-panel-toolbar-indices";
 import PanelActions from "./panel-actions";
 import PanelDetails from "./panel-details";
 import PanelQuickInsert from "./panel-quick-insert";
@@ -43,7 +42,6 @@ interface PanelToolbarProps {
     onInlineMenuOpenChange?: (open: boolean) => void;
     inlineSearchRef?: RefObject<HTMLInputElement | null>;
     organisationId: string;
-    entityType?: EntityType;
     allowedTypes?: string[] | null;
     onSelectBlockType?: (blockType: BlockType) => void;
     onOpenQuickActionsFromInline?: () => void;
@@ -68,7 +66,6 @@ const PanelToolbar: FC<PanelToolbarProps> = ({
     onInlineMenuOpenChange,
     inlineSearchRef,
     organisationId,
-    entityType,
     allowedTypes,
     onSelectBlockType,
     onOpenQuickActionsFromInline,
@@ -177,7 +174,7 @@ const PanelToolbar: FC<PanelToolbarProps> = ({
                         <PanelQuickInsert
                             searchRef={inlineSearchRef}
                             organisationId={organisationId}
-                            entityType={entityType}
+                            // entityType={entityType}
                             allowedTypes={allowedTypes}
                             onSelectBlockType={onSelectBlockType}
                             onShowAllOptions={() => {

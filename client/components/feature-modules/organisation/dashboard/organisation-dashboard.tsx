@@ -2,11 +2,9 @@
 
 import { useOrganisationStore } from "@/components/provider/OrganisationContext";
 import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-group";
-import { EntityType } from "@/lib/types/types";
 import { isResponseError } from "@/lib/util/error/error.util";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { EntityBlockEnvironment } from "../../blocks/components/entity/entity-block-environment";
 import { useOrganisation } from "../hooks/use-organisation";
 
 export const OrganisationDashboard = () => {
@@ -57,12 +55,6 @@ export const OrganisationDashboard = () => {
             <div className="flex items-center justify-between mb-8">
                 <BreadCrumbGroup items={trail} />
             </div>
-            <EntityBlockEnvironment
-                entityId={organisation.id}
-                entityType={EntityType.ORGANISATION}
-                organisationId={organisation.id}
-                showDefaultToolbar={true}
-            />
         </div>
     );
 };

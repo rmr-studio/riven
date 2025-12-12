@@ -60,110 +60,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/item/{lineItemId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get a line item by ID
-         * @description Retrieves a specific line item by its ID, if the user has access.
-         */
-        get: operations["getLineItemById"];
-        /**
-         * Update an existing line item
-         * @description Updates a line item with the specified ID, if the user has access.
-         */
-        put: operations["updateLineItem"];
-        post?: never;
-        /**
-         * Delete a line item by ID
-         * @description Deletes a line item with the specified ID, if the user has access.
-         */
-        delete: operations["deleteLineItemById"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/invoices/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get an invoice by ID
-         * @description Retrieves a specific invoice by its ID, if the user has access.
-         */
-        get: operations["getInvoiceById"];
-        /**
-         * Update an existing invoice
-         * @description Updates an invoice with the specified ID, if the user has access.
-         */
-        put: operations["updateInvoice"];
-        post?: never;
-        /**
-         * Delete an invoice
-         * @description Deletes an invoice with the specified ID, if the user has access and the invoice is not paid or cancelled.
-         */
-        delete: operations["deleteInvoice"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/client/{clientId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get a client by ID
-         * @description Retrieves a specific client by its ID, if the user has access.
-         */
-        get: operations["getClientById"];
-        /**
-         * Update an existing client
-         * @description Updates a client with the specified ID, if the user has access.
-         */
-        put: operations["updateClient"];
-        post?: never;
-        /**
-         * Delete a client by ID
-         * @description Deletes a client with the specified ID, if the user has access.
-         */
-        delete: operations["deleteClientById"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/client/{clientId}/archive/{status}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Updates the archival status of a client
-         * @description Archives or unarchives a client based on the provided status, if the user has access.
-         */
-        put: operations["updateArchiveStatusByClientId"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/block/schema/{blockTypeId}": {
         parameters: {
             query?: never;
@@ -246,90 +142,6 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["acceptInvite"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/item/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create a new line item
-         * @description Creates a new line item based on the provided request data.
-         */
-        post: operations["createLineItem"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/invoices/{id}/cancel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Cancel an invoice
-         * @description Cancels an invoice with the specified ID, if the user has access and the invoice is not paid or already cancelled.
-         */
-        post: operations["cancelInvoice"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/invoices/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get all invoices for them provided organisation
-         * @description Retrieves a list of invoices associated with the provided organisation
-         */
-        get: operations["getUserInvoices"];
-        put?: never;
-        /**
-         * Create a new invoice
-         * @description Creates a new invoice based on the provided request data.
-         */
-        post: operations["createInvoice"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/client/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create a new client
-         * @description Creates a new client based on the provided request data.
-         */
-        post: operations["createClient"];
         delete?: never;
         options?: never;
         head?: never;
@@ -488,86 +300,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/item/organisation/{organisationId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get all line items for an organisation
-         * @description Retrieves a list of line items associated with a given organisation.
-         */
-        get: operations["getLineItemsForOrganisation"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/invoices/{id}/document": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Generate invoice document
-         * @description Generates a PDF document for the invoice with the specified ID, if the user has access.
-         */
-        get: operations["generateInvoiceDocument"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/invoices/client": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get invoices for a specific client
-         * @description Retrieves a list of invoices for the specified client, if the user has access.
-         */
-        get: operations["getClientInvoices"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/client/organisation/{organisationId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get all clients for the organisation
-         * @description Retrieves a list of clients for a given organisation. Given the user is authenticated, and belongs to that specified organisation
-         */
-        get: operations["getOrganisationClients"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/block/schema/organisation/{organisationId}": {
         parameters: {
             query?: never;
@@ -671,11 +403,6 @@ export interface components {
             postalCode: string;
             country: string;
         };
-        /**
-         * @description Enumeration of possible entity types within the system.
-         * @enum {string}
-         */
-        EntityType: EntityType;
         MembershipDetails: {
             organisation?: components["schemas"]["Organisation"];
             role: components["schemas"]["OrganisationRoles"];
@@ -683,7 +410,6 @@ export interface components {
             memberSince: string;
         };
         Organisation: {
-            type: components["schemas"]["EntityType"];
             /** Format: uuid */
             id: string;
             name: string;
@@ -758,177 +484,6 @@ export interface components {
             name: string;
             avatarUrl?: string;
         };
-        LineItem: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            /** Format: uuid */
-            organisationId: string;
-            description?: string;
-            type: components["schemas"]["LineItemType"];
-            chargeRate: number;
-        };
-        /** @enum {string} */
-        LineItemType: LineItemType;
-        Billable: {
-            /** Format: date-time */
-            date: string;
-            description: string;
-            lineItem: components["schemas"]["LineItem"];
-            billableType: components["schemas"]["BillableType"];
-            quantity: number;
-        };
-        /** @enum {string} */
-        BillableType: BillableType;
-        Client: {
-            type: components["schemas"]["EntityType"];
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            organisationId: string;
-            name: string;
-            contact: components["schemas"]["Contact"];
-            clientType?: components["schemas"]["ClientType"];
-            company?: components["schemas"]["Company"];
-            role?: string;
-            archived: boolean;
-            /** Format: date-time */
-            createdAt?: string;
-            /** Format: date-time */
-            updatedAt?: string;
-            /** Format: uuid */
-            createdBy?: string;
-            /** Format: uuid */
-            updatedBy?: string;
-        };
-        /** @enum {string} */
-        ClientType: ClientType;
-        Company: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            organisationId: string;
-            name: string;
-            address?: components["schemas"]["Address"];
-            phone?: string;
-            email?: string;
-            website?: string;
-            businessNumber?: string;
-            logoUrl?: string;
-            archived: boolean;
-            /** Format: date-time */
-            createdAt?: string;
-            /** Format: date-time */
-            updatedAt?: string;
-            /** Format: uuid */
-            createdBy?: string;
-            /** Format: uuid */
-            updatedBy?: string;
-        };
-        Contact: {
-            email: string;
-            phone?: string;
-            address?: components["schemas"]["Address"];
-            additionalContacts?: {
-                [key: string]: string;
-            };
-        };
-        Invoice: {
-            /** Format: uuid */
-            id: string;
-            organisation: components["schemas"]["Organisation"];
-            client: components["schemas"]["Client"];
-            template?: components["schemas"]["TemplateInvoiceTemplateFieldStructure"];
-            reportTemplate?: components["schemas"]["TemplateReportTemplateFieldStructure"];
-            invoiceNumber: string;
-            items: components["schemas"]["Billable"][];
-            amount: number;
-            currency: {
-                currencyCode?: string;
-                /** Format: int32 */
-                numericCode?: number;
-                numericCodeAsString?: string;
-                displayName?: string;
-                symbol?: string;
-                /** Format: int32 */
-                defaultFractionDigits?: number;
-            };
-            status: components["schemas"]["InvoiceStatus"];
-            dates: components["schemas"]["InvoiceDates"];
-            customFields: {
-                [key: string]: Record<string, never>;
-            };
-        };
-        InvoiceDates: {
-            /** Format: date-time */
-            startDate?: string;
-            /** Format: date-time */
-            endDate?: string;
-            /** Format: date-time */
-            issueDate: string;
-            /** Format: date-time */
-            dueDate?: string;
-            /** Format: date-time */
-            invoiceCreatedAt?: string;
-            /** Format: date-time */
-            invoiceUpdatedAt?: string;
-        };
-        InvoiceFieldType: string;
-        /** @enum {string} */
-        InvoiceStatus: InvoiceStatus;
-        InvoiceTemplateFieldStructure: {
-            name: string;
-            description?: string;
-            type: components["schemas"]["InvoiceFieldType"];
-            required: boolean;
-            children: components["schemas"]["InvoiceTemplateFieldStructure"][];
-        };
-        ReportFieldType: string;
-        ReportTemplateFieldStructure: {
-            name: string;
-            description?: string;
-            type: components["schemas"]["ReportFieldType"];
-            required: boolean;
-            children: components["schemas"]["ReportTemplateFieldStructure"][];
-        };
-        TemplateInvoiceTemplateFieldStructure: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            userId?: string;
-            name: string;
-            description?: string;
-            type: components["schemas"]["TemplateType"];
-            structure: {
-                [key: string]: components["schemas"]["InvoiceTemplateFieldStructure"];
-            };
-            isDefault: boolean;
-            isPremade: boolean;
-            /** Format: date-time */
-            createdAt?: string;
-            /** Format: date-time */
-            updatedAt?: string;
-        };
-        TemplateReportTemplateFieldStructure: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            userId?: string;
-            name: string;
-            description?: string;
-            type: components["schemas"]["TemplateType"];
-            structure: {
-                [key: string]: components["schemas"]["ReportTemplateFieldStructure"];
-            };
-            isDefault: boolean;
-            isPremade: boolean;
-            /** Format: date-time */
-            createdAt?: string;
-            /** Format: date-time */
-            updatedAt?: string;
-        };
-        /** @enum {string} */
-        TemplateType: TemplateType;
         BindingSource: {
             type: string;
         };
@@ -956,16 +511,11 @@ export interface components {
             fetchPolicy: components["schemas"]["BlockFetchPolicy"];
         };
         BlockDisplay: {
-            form: components["schemas"]["BlockFormStructure"];
+            form: components["schemas"]["FormStructure"];
             render: components["schemas"]["BlockRenderStructure"];
         };
         /** @enum {string} */
         BlockFetchPolicy: BlockFetchPolicy;
-        BlockFormStructure: {
-            fields: {
-                [key: string]: components["schemas"]["FormWidgetConfig"];
-            };
-        };
         /** @enum {string} */
         BlockFormWidgetType: BlockFormWidgetType;
         BlockRenderStructure: {
@@ -976,17 +526,6 @@ export interface components {
                 [key: string]: components["schemas"]["BlockComponentNode"];
             };
             theme?: components["schemas"]["ThemeTokens"];
-        };
-        BlockSchema: {
-            name: string;
-            description?: string;
-            type: components["schemas"]["DataType"];
-            format?: components["schemas"]["DataFormat"];
-            required: boolean;
-            properties?: {
-                [key: string]: components["schemas"]["BlockSchema"];
-            };
-            items?: components["schemas"]["BlockSchema"];
         };
         BlockType: {
             /** Format: uuid */
@@ -1002,9 +541,9 @@ export interface components {
             /** Format: uuid */
             organisationId?: string;
             archived: boolean;
-            strictness: components["schemas"]["BlockValidationScope"];
+            strictness: components["schemas"]["ValidationScope"];
             system: boolean;
-            schema: components["schemas"]["BlockSchema"];
+            schema: components["schemas"]["Schema"];
             display: components["schemas"]["BlockDisplay"];
             /** Format: date-time */
             createdAt?: string;
@@ -1020,8 +559,6 @@ export interface components {
             max?: number;
             allowedTypes: string[];
         };
-        /** @enum {string} */
-        BlockValidationScope: BlockValidationScope;
         /** @enum {string} */
         ComponentType: ComponentType;
         Computed: {
@@ -1044,6 +581,11 @@ export interface components {
         });
         /** @enum {string} */
         DataType: DataType;
+        FormStructure: {
+            fields: {
+                [key: string]: components["schemas"]["FormWidgetConfig"];
+            };
+        };
         FormWidgetConfig: {
             type: components["schemas"]["BlockFormWidgetType"];
             label: string;
@@ -1087,11 +629,26 @@ export interface components {
         } & (Omit<components["schemas"]["Operand"], "kind"> & {
             path: string;
         });
+        Schema: {
+            name: string;
+            description?: string;
+            type: components["schemas"]["DataType"];
+            format?: components["schemas"]["DataFormat"];
+            required: boolean;
+            properties?: {
+                [key: string]: components["schemas"]["Schema"];
+            };
+            items?: components["schemas"]["Schema"];
+            unique: boolean;
+            protected: boolean;
+        };
         ThemeTokens: {
             variant?: string;
             colorRole?: string;
             tone?: string;
         };
+        /** @enum {string} */
+        ValidationScope: ValidationScope;
         Value: {
             kind: "Value";
         } & (Omit<components["schemas"]["Operand"], "kind"> & {
@@ -1111,61 +668,12 @@ export interface components {
                 [key: string]: Record<string, never>;
             };
         };
-        LineItemCreationRequest: {
-            name: string;
-            /** Format: uuid */
-            organisationId: string;
-            description?: string;
-            chargeRate: number;
-        };
-        InvoiceCreationRequest: {
-            /** Format: uuid */
-            clientId: string;
-            /** Format: uuid */
-            organisationId: string;
-            template: components["schemas"]["TemplateInvoiceTemplateFieldStructure"];
-            reportTemplate?: components["schemas"]["TemplateReportTemplateFieldStructure"];
-            invoiceNumber: string;
-            items: components["schemas"]["Billable"][];
-            amount: number;
-            currency: {
-                currencyCode?: string;
-                /** Format: int32 */
-                numericCode?: number;
-                numericCodeAsString?: string;
-                displayName?: string;
-                symbol?: string;
-                /** Format: int32 */
-                defaultFractionDigits?: number;
-            };
-            status: components["schemas"]["InvoiceStatus"];
-            /** Format: date-time */
-            startDate?: string;
-            /** Format: date-time */
-            endDate?: string;
-            /** Format: date-time */
-            dueDate?: string;
-            /** Format: date-time */
-            issueDate: string;
-            customFields: {
-                [key: string]: Record<string, never>;
-            };
-        };
-        ClientCreationRequest: {
-            name: string;
-            /** Format: uuid */
-            organisationId: string;
-            /** Format: uuid */
-            companyId?: string;
-            companyRole?: string;
-            contact: components["schemas"]["Contact"];
-        };
         CreateBlockTypeRequest: {
             key: string;
             name: string;
             description?: string;
-            mode: components["schemas"]["BlockValidationScope"];
-            schema: components["schemas"]["BlockSchema"];
+            mode: components["schemas"]["ValidationScope"];
+            schema: components["schemas"]["Schema"];
             display: components["schemas"]["BlockDisplay"];
             /** Format: uuid */
             organisationId: string;
@@ -1227,7 +735,6 @@ export interface components {
         /** @enum {string} */
         BlockReferenceWarning: BlockReferenceWarning;
         BlockTree: {
-            type: components["schemas"]["EntityType"];
             root: components["schemas"]["ContentNode"] | components["schemas"]["ReferenceNode"];
         };
         BlockTreeLayout: {
@@ -1249,7 +756,7 @@ export interface components {
         };
         /** @description Reference to another block tree */
         BlockTreeReference: WithRequired<components["schemas"]["ReferencePayload"], "type"> & {
-            reference?: components["schemas"]["Reference"];
+            reference?: components["schemas"]["ReferenceItemBlockTree"];
         };
         BreakpointConfig: {
             /** Format: int32 */
@@ -1278,18 +785,94 @@ export interface components {
             appendTo?: string;
             scroll?: boolean;
         };
+        Entity: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            organisationId: string;
+            entityType: components["schemas"]["EntityType"];
+            /** Format: int32 */
+            typeVersion: number;
+            name?: string;
+            payload: {
+                [key: string]: Record<string, never>;
+            };
+            validationErrors?: string[];
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            /** Format: uuid */
+            createdBy?: string;
+            /** Format: uuid */
+            updatedBy?: string;
+        };
+        /** @enum {string} */
+        EntityCategory: EntityCategory;
+        EntityConfig: {
+            form: components["schemas"]["FormStructure"];
+            summary: components["schemas"]["EntityDisplayConfig"];
+        };
+        EntityDisplayConfig: {
+            titleField?: string;
+            descriptionField?: string;
+            iconField?: string;
+        };
         /** @description Reference to one or more of an organisation's entities (e.g. teams, projects, clients) */
         EntityReference: WithRequired<components["schemas"]["ReferencePayload"], "type"> & {
-            reference?: components["schemas"]["Reference"][];
+            reference?: components["schemas"]["ReferenceItemEntity"][];
         };
         EntityReferenceMetadata: components["schemas"]["ReferenceMetadata"] & {
             presentation: components["schemas"]["Presentation"];
             items: components["schemas"]["ReferenceItem"][];
             projection: components["schemas"]["Projection"];
-            listType?: components["schemas"]["EntityType"];
+            listType?: components["schemas"]["Entity"];
             display: components["schemas"]["ListDisplayConfig"];
             config: components["schemas"]["ListConfig"];
             allowDuplicates: boolean;
+        };
+        /** @enum {string} */
+        EntityRelationshipCardinality: EntityRelationshipCardinality;
+        EntityRelationshipDefinition: {
+            name: string;
+            key: string;
+            cardinality: components["schemas"]["EntityRelationshipCardinality"];
+            /** Format: int32 */
+            minOccurs?: number;
+            /** Format: int32 */
+            maxOccurs?: number;
+            entityTypeKeys?: string[];
+            allowPolymorphic: boolean;
+            bidirectional: boolean;
+            inverseName?: string;
+            required: boolean;
+        };
+        EntityType: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            /** Format: int32 */
+            version: number;
+            name: string;
+            protected: boolean;
+            identifierKey: string;
+            description?: string;
+            /** Format: uuid */
+            organisationId?: string;
+            type: components["schemas"]["EntityCategory"];
+            schema: components["schemas"]["Schema"];
+            displayConfig: components["schemas"]["EntityConfig"];
+            relationships?: components["schemas"]["EntityRelationshipDefinition"][];
+            archived: boolean;
+            order?: string[];
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            /** Format: uuid */
+            createdBy?: string;
+            /** Format: uuid */
+            updatedBy?: string;
         };
         FilterSpec: {
             expr: {
@@ -1313,9 +896,9 @@ export interface components {
         ListFilterLogicType: ListFilterLogicType;
         Metadata: {
             type: components["schemas"]["BlockMetadataType"];
+            meta: components["schemas"]["BlockMeta"];
             readonly: boolean;
             deletable: boolean;
-            meta: components["schemas"]["BlockMeta"];
         };
         Node: {
             warnings: string[];
@@ -1344,24 +927,29 @@ export interface components {
             /** Format: uuid */
             templateId?: string;
         };
-        Reference: {
-            /** Format: uuid */
-            id?: string;
-            entityType: components["schemas"]["EntityType"];
-            /** Format: uuid */
-            entityId: string;
-            path?: string;
-            /** Format: int32 */
-            orderIndex?: number;
-            entity?: components["schemas"]["Referenceable"];
-            warning?: components["schemas"]["BlockReferenceWarning"];
-        };
         ReferenceItem: {
-            type: components["schemas"]["EntityType"];
             /** Format: uuid */
             id: string;
             labelOverride?: string;
             badge?: string;
+        };
+        ReferenceItemBlockTree: {
+            /** Format: uuid */
+            id: string;
+            path?: string;
+            /** Format: int32 */
+            orderIndex?: number;
+            entity?: components["schemas"]["BlockTree"];
+            warning?: components["schemas"]["BlockReferenceWarning"];
+        };
+        ReferenceItemEntity: {
+            /** Format: uuid */
+            id: string;
+            path?: string;
+            /** Format: int32 */
+            orderIndex?: number;
+            entity?: components["schemas"]["Entity"];
+            warning?: components["schemas"]["BlockReferenceWarning"];
         };
         ReferenceMetadata: WithRequired<components["schemas"]["Metadata"], "deletable" | "meta" | "readonly" | "type"> & {
             path: string;
@@ -1370,15 +958,14 @@ export interface components {
         /** @description Reference node containing a block with entity or block tree references */
         ReferenceNode: WithRequired<components["schemas"]["Node"], "block" | "type" | "warnings"> & {
             reference: components["schemas"]["EntityReference"] | components["schemas"]["BlockTreeReference"];
+        } & {
+            reference: components["schemas"]["ReferencePayload"];
         };
         ReferencePayload: {
             type: components["schemas"]["ReferenceType"];
         };
         /** @enum {string} */
         ReferenceType: ReferenceType;
-        Referenceable: {
-            type: components["schemas"]["EntityType"];
-        };
         RenderContent: {
             id: string;
             key: string;
@@ -1477,9 +1064,9 @@ export interface components {
             environment: components["schemas"]["BlockEnvironment"];
         };
         EntityReferenceRequest: {
-            type: components["schemas"]["EntityType"];
             /** Format: uuid */
             id: string;
+            type: components["schemas"]["ReferenceType"];
             /** Format: int32 */
             index?: number;
         };
@@ -1493,7 +1080,7 @@ export interface components {
         BlockHydrationResult: {
             /** Format: uuid */
             blockId: string;
-            references: components["schemas"]["Reference"][];
+            references: unknown[];
             error?: string;
         };
         AddBlockOperation: WithRequired<components["schemas"]["BlockOperation"], "blockId" | "type"> & {
@@ -1570,6 +1157,11 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /**
+         * @description Enumeration of possible entity types within the system.
+         * @enum {string}
+         */
+        ApplicationEntityType: ApplicationEntityType;
     };
     responses: never;
     parameters: never;
@@ -1752,499 +1344,6 @@ export interface operations {
             };
         };
     };
-    getLineItemById: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                lineItemId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Line item retrieved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["LineItem"];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["LineItem"];
-                };
-            };
-            /** @description Line item not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["LineItem"];
-                };
-            };
-        };
-    };
-    updateLineItem: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                lineItemId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LineItem"];
-            };
-        };
-        responses: {
-            /** @description Line item updated successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["LineItem"];
-                };
-            };
-            /** @description Invalid request data */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["LineItem"];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["LineItem"];
-                };
-            };
-            /** @description User does not own the line item */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["LineItem"];
-                };
-            };
-            /** @description Line item not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["LineItem"];
-                };
-            };
-        };
-    };
-    deleteLineItemById: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                lineItemId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Line item deleted successfully */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description User does not own the line item */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Line item not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    getInvoiceById: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Invoice retrieved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"];
-                };
-            };
-            /** @description User does not own the invoice */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"];
-                };
-            };
-            /** @description Invoice not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"];
-                };
-            };
-        };
-    };
-    updateInvoice: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["Invoice"];
-            };
-        };
-        responses: {
-            /** @description Invoice updated successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"];
-                };
-            };
-            /** @description Invalid request data */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"];
-                };
-            };
-            /** @description User does not own the invoice */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"];
-                };
-            };
-            /** @description Invoice not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"];
-                };
-            };
-        };
-    };
-    deleteInvoice: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["Invoice"];
-            };
-        };
-        responses: {
-            /** @description Invoice deleted successfully */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Cannot delete a paid or cancelled invoice */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description User does not own the invoice */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Invoice not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    getClientById: {
-        parameters: {
-            query?: {
-                includeMetadata?: boolean;
-            };
-            header?: never;
-            path: {
-                clientId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Client retrieved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Client"];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Client"];
-                };
-            };
-            /** @description Client not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Client"];
-                };
-            };
-        };
-    };
-    updateClient: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                clientId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["Client"];
-            };
-        };
-        responses: {
-            /** @description Client updated successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Client"];
-                };
-            };
-            /** @description Invalid request data */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Client"];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Client"];
-                };
-            };
-            /** @description User does not own the client */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Client"];
-                };
-            };
-            /** @description Client not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Client"];
-                };
-            };
-        };
-    };
-    deleteClientById: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                clientId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Client deleted successfully */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description User does not own the client */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Client not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    updateArchiveStatusByClientId: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                clientId: string;
-                status: boolean;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Client archival status updated successfully */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description User does not own the client */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Client not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
     updateBlockType: {
         parameters: {
             query?: never;
@@ -2386,225 +1485,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-        };
-    };
-    createLineItem: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LineItemCreationRequest"];
-            };
-        };
-        responses: {
-            /** @description Line item created successfully */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["LineItem"];
-                };
-            };
-            /** @description Invalid request data */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["LineItem"];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["LineItem"];
-                };
-            };
-        };
-    };
-    cancelInvoice: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["Invoice"];
-            };
-        };
-        responses: {
-            /** @description Invoice cancelled successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"];
-                };
-            };
-            /** @description Cannot cancel a paid or already cancelled invoice */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"];
-                };
-            };
-            /** @description User does not own the invoice */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"];
-                };
-            };
-            /** @description Invoice not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"];
-                };
-            };
-        };
-    };
-    getUserInvoices: {
-        parameters: {
-            query: {
-                organisationId: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description List of invoices retrieved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"][];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"][];
-                };
-            };
-        };
-    };
-    createInvoice: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["InvoiceCreationRequest"];
-            };
-        };
-        responses: {
-            /** @description Invoice created successfully */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"];
-                };
-            };
-            /** @description Invalid request data */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"];
-                };
-            };
-        };
-    };
-    createClient: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ClientCreationRequest"];
-            };
-        };
-        responses: {
-            /** @description Client created successfully */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Client"];
-                };
-            };
-            /** @description Invalid request data */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Client"];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Client"];
-                };
             };
         };
     };
@@ -2978,168 +1858,6 @@ export interface operations {
             };
         };
     };
-    getLineItemsForOrganisation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                organisationId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description List of line items retrieved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["LineItem"][];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["LineItem"][];
-                };
-            };
-        };
-    };
-    generateInvoiceDocument: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Document generated successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": string;
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": string;
-                };
-            };
-            /** @description User does not own the invoice */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": string;
-                };
-            };
-            /** @description Invoice not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": string;
-                };
-            };
-        };
-    };
-    getClientInvoices: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["Client"];
-            };
-        };
-        responses: {
-            /** @description List of invoices retrieved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"][];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"][];
-                };
-            };
-            /** @description User does not have access to the client */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Invoice"][];
-                };
-            };
-        };
-    };
-    getOrganisationClients: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                organisationId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description List of clients retrieved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Client"][];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Client"][];
-                };
-            };
-            /** @description No clients found for the organisation */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Client"][];
-                };
-            };
-        };
-    };
     getBlockTypes: {
         parameters: {
             query?: never;
@@ -3226,7 +1944,7 @@ export interface operations {
             header?: never;
             path: {
                 organisationId: string;
-                type: components["schemas"]["EntityType"];
+                type: components["schemas"]["ApplicationEntityType"];
                 entityId: string;
             };
             cookie?: never;
@@ -3317,21 +2035,6 @@ export interface operations {
         };
     };
 }
-export enum EntityType {
-    LINE_ITEM = "LINE_ITEM",
-    CLIENT = "CLIENT",
-    COMPANY = "COMPANY",
-    INVOICE = "INVOICE",
-    BLOCK_TREE = "BLOCK_TREE",
-    REPORT = "REPORT",
-    DOCUMENT = "DOCUMENT",
-    PROJECT = "PROJECT",
-    ORGANISATION = "ORGANISATION",
-    TASK = "TASK",
-    BLOCK_TYPE = "BLOCK_TYPE",
-    BLOCK = "BLOCK",
-    USER = "USER"
-}
 export enum OrganisationInviteStatus {
     PENDING = "PENDING",
     ACCEPTED = "ACCEPTED",
@@ -3348,44 +2051,6 @@ export enum OrganisationRoles {
     OWNER = "OWNER",
     ADMIN = "ADMIN",
     MEMBER = "MEMBER"
-}
-export enum LineItemType {
-    SERVICE = "SERVICE",
-    PRODUCT = "PRODUCT",
-    FEE = "FEE",
-    DISCOUNT = "DISCOUNT"
-}
-export enum BillableType {
-    HOURS = "HOURS",
-    DISTANCE = "DISTANCE",
-    QUANTITY = "QUANTITY",
-    FIXED = "FIXED"
-}
-export enum ClientType {
-    PROSPECT = "PROSPECT",
-    CUSTOMER = "CUSTOMER",
-    SUBSCRIBER = "SUBSCRIBER",
-    SERVICE = "SERVICE",
-    ENTERPRISE = "ENTERPRISE",
-    PARTNER = "PARTNER",
-    VENDOR = "VENDOR",
-    DORMANT = "DORMANT",
-    TRIAL = "TRIAL",
-    CHURNED = "CHURNED",
-    INFLUENCER = "INFLUENCER",
-    OTHER = "OTHER"
-}
-export enum InvoiceStatus {
-    PENDING = "PENDING",
-    PAID = "PAID",
-    OVERDUE = "OVERDUE",
-    OUTDATED = "OUTDATED",
-    CANCELLED = "CANCELLED"
-}
-export enum TemplateType {
-    CLIENT = "CLIENT",
-    INVOICE = "INVOICE",
-    REPORT = "REPORT"
 }
 export enum BlockFetchPolicy {
     INHERIT = "INHERIT",
@@ -3406,11 +2071,6 @@ export enum BlockFormWidgetType {
     FILE_UPLOAD = "FILE_UPLOAD",
     SLIDER = "SLIDER",
     TOGGLE_SWITCH = "TOGGLE_SWITCH"
-}
-export enum BlockValidationScope {
-    SOFT = "SOFT",
-    STRICT = "STRICT",
-    NONE = "NONE"
 }
 export enum ComponentType {
     LAYOUT_CONTAINER = "LAYOUT_CONTAINER",
@@ -3455,6 +2115,11 @@ export enum Op {
     EMPTY = "EMPTY",
     NOT_EMPTY = "NOT_EMPTY"
 }
+export enum ValidationScope {
+    SOFT = "SOFT",
+    STRICT = "STRICT",
+    NONE = "NONE"
+}
 type WithRequired<T, K extends keyof T> = T & {
     [P in K]-?: T[P];
 };
@@ -3477,6 +2142,16 @@ export enum BlockReferenceWarning {
     UNSUPPORTED = "UNSUPPORTED",
     CIRCULAR = "CIRCULAR",
     DEPTH_EXCEEDED = "DEPTH_EXCEEDED"
+}
+export enum EntityCategory {
+    STANDARD = "STANDARD",
+    RELATIONSHIP = "RELATIONSHIP"
+}
+export enum EntityRelationshipCardinality {
+    ONE_TO_ONE = "ONE_TO_ONE",
+    ONE_TO_MANY = "ONE_TO_MANY",
+    MANY_TO_ONE = "MANY_TO_ONE",
+    MANY_TO_MANY = "MANY_TO_MANY"
 }
 export enum ListFilterLogicType {
     AND = "AND",
@@ -3513,4 +2188,12 @@ export enum BlockOperationType {
     MOVE_BLOCK = "MOVE_BLOCK",
     UPDATE_BLOCK = "UPDATE_BLOCK",
     REORDER_BLOCK = "REORDER_BLOCK"
+}
+export enum ApplicationEntityType {
+    ORGANISATION = "ORGANISATION",
+    BLOCK_TYPE = "BLOCK_TYPE",
+    BLOCK = "BLOCK",
+    USER = "USER",
+    ENTITY = "ENTITY",
+    ENTITY_TYPE = "ENTITY_TYPE"
 }

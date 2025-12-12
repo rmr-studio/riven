@@ -3,22 +3,27 @@ import { Organisation } from "@/components/feature-modules/organisation/interfac
 import { useProfile } from "@/components/feature-modules/user/hooks/useProfile";
 import { useOrganisationStore } from "@/components/provider/OrganisationContext";
 import { SidebarGroupProps } from "@/lib/interfaces/interface";
+import { DropdownMenuGroup } from "@radix-ui/react-dropdown-menu";
 import {
-    BanknoteArrowUp,
-    BookTextIcon,
     Building2,
     CalendarHeart,
     CogIcon,
-    Contact,
-    LayoutTemplate,
+    Ellipsis,
+    GitGraph,
     PlusCircle,
     TrendingUpDown,
-    Users,
+    Workflow,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "../button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "../dropdown-menu";
 import { Skeleton } from "../skeleton";
 import { AppSidebar } from "./root-sidebar";
 import { Action, OptionSwitcher } from "./switcher";
@@ -70,6 +75,7 @@ export const DashboardSidebar = () => {
     const sidebarContent: SidebarGroupProps[] = selectedOrganisation
         ? [
               {
+                  title: "Overview",
                   items: [
                       {
                           icon: Building2,
@@ -79,48 +85,96 @@ export const DashboardSidebar = () => {
                           isActive:
                               pathName === `/dashboard/organisation/${selectedOrganisation.id}`,
                       },
+                  ],
+              },
+              {
+                  title: "Entities",
+                  collapsible: true,
+                  actions: (
+                      <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                              <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 hover:bg-accent"
+                              >
+                                  <Ellipsis className="size-4" />
+                              </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="center">
+                              <DropdownMenuGroup>
+                                  <DropdownMenuItem
+                                      onClick={() =>
+                                          router.push(
+                                              `/dashboard/organisation/${selectedOrganisation.id}/entity/new`
+                                          )
+                                      }
+                                  >
+                                      <PlusCircle />
+                                      <span className="ml-2 text-xs text-content">New Entity</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                      onClick={() =>
+                                          router.push(
+                                              `/dashboard/organisation/${selectedOrganisation.id}/entity/environment`
+                                          )
+                                      }
+                                  >
+                                      <Workflow />
+                                      <span className="ml-2 text-xs text-content">
+                                          View Entity Environment
+                                      </span>
+                                  </DropdownMenuItem>
+                              </DropdownMenuGroup>
+                          </DropdownMenuContent>
+                      </DropdownMenu>
+                  ),
+                  items: [],
+              },
+              {
+                  title: "Workflow",
+                  collapsible: true,
+                  items: [
                       {
-                          icon: Users,
+                          icon: GitGraph,
                           hidden: false,
-                          title: "Team",
+                          title: "Workflows",
                           url: `/dashboard/organisation/${selectedOrganisation.id}/members`,
                           isActive: pathName.startsWith(
                               `/dashboard/organisation/${selectedOrganisation.id}/members`
                           ),
                       },
                       {
-                          icon: Contact,
+                          icon: Workflow,
                           hidden: false,
-                          title: "Clients",
-                          url: `/dashboard/organisation/${selectedOrganisation.id}/clients`,
-                          isActive: pathName === `/dashboard/${selectedOrganisation.id}/clients`,
+                          title: "Automations",
+                          url: `/dashboard/organisation/${selectedOrganisation.id}/members`,
+                          isActive: pathName.startsWith(
+                              `/dashboard/organisation/${selectedOrganisation.id}/members`
+                          ),
                       },
+                  ],
+                  subgroups: [
                       {
-                          icon: BookTextIcon,
-                          hidden: false,
-                          title: "Invoices",
-                          url: `/dashboard/organisation/${selectedOrganisation.id}/invoice/`,
-                          isActive: pathName === `/dashboard/${selectedOrganisation.id}/invoice`,
-                      },
-
-                      {
-                          icon: LayoutTemplate,
-                          hidden: false,
                           title: "Templates",
-                          url: `/dashboard/templates`,
-                          isActive: pathName.startsWith("/dashboard/templates"),
-                      },
-
-                      {
-                          icon: BanknoteArrowUp,
-                          hidden: false,
-                          title: "Billables",
-                          url: `/dashboard/organisation/${selectedOrganisation.id}/billable`,
-                          isActive: pathName.startsWith(`/dashboard/billable`),
+                          collapsible: true,
+                          items: [
+                              {
+                                  icon: Workflow,
+                                  hidden: false,
+                                  title: "Default Templates",
+                                  url: `/dashboard/organisation/${selectedOrganisation.id}/templates`,
+                                  isActive: pathName.startsWith(
+                                      `/dashboard/organisation/${selectedOrganisation.id}/templates`
+                                  ),
+                              },
+                          ],
                       },
                   ],
               },
               {
+                  title: "Billing",
+                  collapsible: true,
                   items: [
                       {
                           icon: TrendingUpDown,
@@ -139,6 +193,8 @@ export const DashboardSidebar = () => {
                   ],
               },
               {
+                  title: "Settings",
+                  collapsible: true,
                   items: [
                       {
                           icon: CogIcon,
