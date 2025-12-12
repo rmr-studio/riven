@@ -29,12 +29,20 @@ import {
     SortingState,
     useReactTable,
 } from "@tanstack/react-table";
-import { Filter, GripVertical, Search, X } from "lucide-react";
+import { Filter, GripVertical, MoreVertical, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -84,6 +92,20 @@ export interface FilterConfig<T> {
     onFiltersChange?: (filters: Record<string, any>) => void;
 }
 
+export interface RowAction<TData> {
+    label: string;
+    icon?: React.ComponentType<{ className?: string }>;
+    onClick: (row: TData) => void;
+    variant?: "default" | "destructive";
+    separator?: boolean; // Show separator after this item
+}
+
+export interface RowActionsConfig<TData> {
+    enabled: boolean;
+    actions: RowAction<TData>[];
+    menuLabel?: string;
+}
+
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
@@ -97,6 +119,7 @@ interface DataTableProps<TData, TValue> {
     emptyMessage?: string;
     search?: SearchConfig<TData>;
     filter?: FilterConfig<TData>;
+    rowActions?: RowActionsConfig<TData>;
 }
 
 interface DraggableRowProps<TData> {
@@ -104,9 +127,16 @@ interface DraggableRowProps<TData> {
     enableDragDrop: boolean;
     onRowClick?: (row: Row<TData>) => void;
     isMounted: boolean;
+    rowActions?: RowActionsConfig<TData>;
 }
 
-function DraggableRow<TData>({ row, enableDragDrop, onRowClick, isMounted }: DraggableRowProps<TData>) {
+function DraggableRow<TData>({
+    row,
+    enableDragDrop,
+    onRowClick,
+    isMounted,
+    rowActions,
+}: DraggableRowProps<TData>) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: row.id,
         disabled: !enableDragDrop || !isMounted,
@@ -144,6 +174,49 @@ function DraggableRow<TData>({ row, enableDragDrop, onRowClick, isMounted }: Dra
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </TableCell>
             ))}
+            {rowActions?.enabled && (
+                <TableCell className="w-[50px] p-2">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <span className="sr-only">Open menu</span>
+                                <MoreVertical className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            {rowActions.menuLabel && (
+                                <>
+                                    <DropdownMenuLabel>{rowActions.menuLabel}</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                </>
+                            )}
+                            {rowActions.actions.map((action, index) => (
+                                <div key={index}>
+                                    <DropdownMenuItem
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            action.onClick(row.original);
+                                        }}
+                                        className={cn(
+                                            action.variant === "destructive" &&
+                                                "text-destructive focus:text-destructive"
+                                        )}
+                                    >
+                                        {action.icon && <action.icon className="mr-2 h-4 w-4" />}
+                                        {action.label}
+                                    </DropdownMenuItem>
+                                    {action.separator && <DropdownMenuSeparator />}
+                                </div>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </TableCell>
+            )}
         </TableRow>
     );
 }
@@ -161,6 +234,7 @@ export function DataTable<TData, TValue>({
     emptyMessage = "No results.",
     search,
     filter,
+    rowActions,
 }: DataTableProps<TData, TValue>) {
     const [tableData, setTableData] = useState<TData[]>(data);
     const [sorting, setSorting] = useState<SortingState>([]);
@@ -560,6 +634,11 @@ export function DataTable<TData, TValue>({
                                           )}
                                 </TableHead>
                             ))}
+                            {rowActions?.enabled && (
+                                <TableHead className="w-[50px]">
+                                    <span className="sr-only">Actions</span>
+                                </TableHead>
+                            )}
                         </TableRow>
                     ))}
                 </TableHeader>
@@ -574,12 +653,17 @@ export function DataTable<TData, TValue>({
                                     enableDragDrop={enableDragDrop}
                                     onRowClick={onRowClick}
                                     isMounted={isMounted}
+                                    rowActions={rowActions}
                                 />
                             ))
                     ) : (
                         <TableRow>
                             <TableCell
-                                colSpan={columns.length + (enableDragDrop ? 1 : 0)}
+                                colSpan={
+                                    columns.length +
+                                    (enableDragDrop ? 1 : 0) +
+                                    (rowActions?.enabled ? 1 : 0)
+                                }
                                 className="h-24 text-center text-muted-foreground"
                             >
                                 {emptyMessage}

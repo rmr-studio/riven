@@ -300,6 +300,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/entity/schema/organisation/{organisationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get all entity types for an organisation
+         * @description Retrieves all entity types associated with the specified organisation.
+         */
+        get: operations["getEntityTypesForOrganisation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entity/schema/organisation/{organisationId}/key/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an entity type by key for an organisation
+         * @description Retrieves a specific entity type by its key associated with the specified organisation.
+         */
+        get: operations["getEntityTypeByKeyForOrganisation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/block/schema/organisation/{organisationId}": {
         parameters: {
             query?: never;
@@ -865,6 +905,8 @@ export interface components {
             relationships?: components["schemas"]["EntityRelationshipDefinition"][];
             archived: boolean;
             order?: string[];
+            /** Format: int64 */
+            entitiesCount?: number;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */
@@ -873,6 +915,7 @@ export interface components {
             createdBy?: string;
             /** Format: uuid */
             updatedBy?: string;
+            attributes: components["schemas"]["PairIntegerInteger"];
         };
         FilterSpec: {
             expr: {
@@ -896,9 +939,9 @@ export interface components {
         ListFilterLogicType: ListFilterLogicType;
         Metadata: {
             type: components["schemas"]["BlockMetadataType"];
-            meta: components["schemas"]["BlockMeta"];
             readonly: boolean;
             deletable: boolean;
+            meta: components["schemas"]["BlockMeta"];
         };
         Node: {
             warnings: string[];
@@ -919,6 +962,12 @@ export interface components {
         PagingSpec: {
             /** Format: int32 */
             pageSize: number;
+        };
+        PairIntegerInteger: {
+            /** Format: int32 */
+            first: number;
+            /** Format: int32 */
+            second: number;
         };
         /** @enum {string} */
         Presentation: Presentation;
@@ -1854,6 +1903,87 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["OrganisationInvite"][];
+                };
+            };
+        };
+    };
+    getEntityTypesForOrganisation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organisationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Entity types retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"][];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"][];
+                };
+            };
+            /** @description Organisation not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"][];
+                };
+            };
+        };
+    };
+    getEntityTypeByKeyForOrganisation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organisationId: string;
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Entity type retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"];
+                };
+            };
+            /** @description Entity type not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"];
                 };
             };
         };

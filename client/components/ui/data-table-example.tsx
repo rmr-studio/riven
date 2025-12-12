@@ -157,6 +157,49 @@ export function DataTableExample() {
     );
 }
 
+// Usage with row actions
+export function DataTableWithActions() {
+    const handleEdit = (row: AttributeRow) => {
+        console.log("Edit:", row);
+    };
+
+    const handleDelete = (row: AttributeRow) => {
+        console.log("Delete:", row);
+    };
+
+    const handleDuplicate = (row: AttributeRow) => {
+        console.log("Duplicate:", row);
+    };
+
+    return (
+        <DataTable
+            columns={columns}
+            data={exampleData}
+            getRowId={(row) => row.id}
+            rowActions={{
+                enabled: true,
+                menuLabel: "Actions",
+                actions: [
+                    {
+                        label: "Edit",
+                        onClick: handleEdit,
+                    },
+                    {
+                        label: "Duplicate",
+                        onClick: handleDuplicate,
+                        separator: true,
+                    },
+                    {
+                        label: "Delete",
+                        onClick: handleDelete,
+                        variant: "destructive",
+                    },
+                ],
+            }}
+        />
+    );
+}
+
 // Usage with all features enabled
 export function DataTableFullFeatures() {
     const handleReorder = (newData: AttributeRow[]) => {

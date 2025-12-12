@@ -114,7 +114,7 @@ export const DashboardSidebar = () => {
                                   >
                                       <SquareDashedMousePointer />
                                       <span className="ml-2 text-xs text-content">
-                                          View All Entities
+                                          View All Entities Types
                                       </span>
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
