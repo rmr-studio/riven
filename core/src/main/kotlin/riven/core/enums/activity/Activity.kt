@@ -19,6 +19,9 @@ enum class Activity {
     BLOCK_OPERATION,
     COMPANY,
     REPORT,
-    TEMPLATE
+    TEMPLATE,
+    ENTITY_TYPE,
+    ENTITY,
+    ENTITY_RELATIONSHIP
 }
 

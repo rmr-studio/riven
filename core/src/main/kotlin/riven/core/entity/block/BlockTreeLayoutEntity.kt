@@ -2,11 +2,10 @@ package riven.core.entity.block
 
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
+import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
-import riven.core.enums.core.EntityType
 import riven.core.models.block.layout.TreeLayout
 import riven.core.models.block.tree.BlockTreeLayout
-import org.hibernate.annotations.Type
 import java.util.*
 
 
@@ -26,15 +25,8 @@ import java.util.*
 @Entity
 @Table(
     name = "block_tree_layouts",
-    uniqueConstraints = [
-        // Ensure only one layout per scope combination
-        UniqueConstraint(
-            name = "uq_block_tree_layouts_entity",
-            columnNames = ["entity_id"]
-        )
-    ],
     indexes = [
-        Index(name = "idx_block_tree_layouts_entity_id_entity_type", columnList = "entity_id, entity_type"),
+        Index(name = "idx_block_tree_layouts_entity_id", columnList = "entity_id"),
         Index(name = "idx_block_tree_layouts_organisation_id", columnList = "organisation_id"),
     ]
 )
@@ -49,10 +41,6 @@ data class BlockTreeLayoutEntity(
      */
     @Column(name = "entity_id", nullable = false, columnDefinition = "uuid")
     val entityId: UUID,
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "entity_type", nullable = false)
-    val entityType: EntityType,
 
     @Column(name = "organisation_id", nullable = false, columnDefinition = "uuid")
     val organisationId: UUID,

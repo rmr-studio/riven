@@ -2,12 +2,12 @@ package riven.core.entity.activity
 
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
+import org.hibernate.annotations.Type
 import riven.core.enums.activity.Activity
-import riven.core.enums.core.EntityType
+import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
 import riven.core.models.activity.ActivityLog
 import riven.core.models.common.json.JsonObject
-import org.hibernate.annotations.Type
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -41,7 +41,7 @@ data class ActivityLogEntity(
 
     @Enumerated(EnumType.STRING)
     @Column(name = "entity_type", nullable = false)
-    val entityType: EntityType,
+    val entityType: ApplicationEntityType,
 
     @Column(name = "entity_id", columnDefinition = "uuid")
     val entityId: UUID? = null,

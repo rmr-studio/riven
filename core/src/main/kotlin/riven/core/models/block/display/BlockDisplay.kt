@@ -1,6 +1,6 @@
 package riven.core.models.block.display
 
-import riven.core.models.block.validation.BlockFormStructure
+import riven.core.models.common.structure.FormStructure
 
 /**
  * Defines the UI structure of:
@@ -28,6 +28,6 @@ import riven.core.models.block.validation.BlockFormStructure
  *      ]
  */
 data class BlockDisplay(
-    val form: BlockFormStructure,
+    val form: FormStructure,
     val render: BlockRenderStructure
 )

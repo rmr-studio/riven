@@ -1,7 +1,7 @@
 package riven.core.models.activity
 
 import riven.core.enums.activity.Activity
-import riven.core.enums.core.EntityType
+import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
 import riven.core.models.common.json.JsonObject
 import java.time.ZonedDateTime
@@ -13,7 +13,7 @@ data class ActivityLog(
     val organisationId: UUID,
     val activity: Activity,
     val operation: OperationType,
-    val entityType: EntityType,
+    val entityType: ApplicationEntityType,
     val entityId: UUID? = null,
     val timestamp: ZonedDateTime,
     val details: JsonObject,

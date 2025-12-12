@@ -4,20 +4,19 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.networknt.schema.JsonSchemaFactory
 import com.networknt.schema.SpecVersion
-import riven.core.enums.block.structure.BlockValidationScope
+import org.springframework.stereotype.Service
+import riven.core.enums.common.ValidationScope
 import riven.core.enums.core.DataFormat
 import riven.core.enums.core.DataType
-import riven.core.models.block.metadata.BlockContentMetadata
-import riven.core.models.block.validation.BlockSchema
-import riven.core.models.block.validation.toJsonSchema
-import org.springframework.stereotype.Service
+import riven.core.exceptions.SchemaValidationException
+import riven.core.models.common.json.JsonObject
+import riven.core.models.common.json.JsonValue
+import riven.core.models.common.validation.Schema
 import java.net.URI
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.format.DateTimeParseException
 
-class SchemaValidationException(val reasons: List<String>) :
-    RuntimeException("Schema validation failed: ${reasons.joinToString("; ")}")
 
 // Add near the top-level class
 private const val MAX_ERRORS = 200
@@ -38,17 +37,17 @@ class SchemaService(
      * @return A list of validation error messages; empty if no validation issues were found.
      */
     fun validate(
-        schema: BlockSchema,
-        payload: BlockContentMetadata,
-        scope: BlockValidationScope = BlockValidationScope.STRICT,
+        schema: Schema,
+        payload: JsonObject,
+        scope: ValidationScope = ValidationScope.STRICT,
         path: String = "$"
     ): List<String> {
-        if (scope == BlockValidationScope.NONE) return emptyList()
+        if (scope == ValidationScope.NONE) return emptyList()
 
         val errors = mutableListOf<String>()
 
         // Step 1: JSON Schema (structural)
-        val schemaMap = schema.toJsonSchema(allowAdditionalProperties = scope == BlockValidationScope.SOFT)
+        val schemaMap = schema.toJsonSchema(allowAdditionalProperties = scope == ValidationScope.SOFT)
         val schemaNode: JsonNode = objectMapper.valueToTree(schemaMap)
         val payloadNode: JsonNode = objectMapper.valueToTree(payload)
         val jsonSchema = schemaFactory.getSchema(schemaNode)
@@ -69,12 +68,12 @@ class SchemaService(
      * @throws SchemaValidationException if `scope` is `STRICT` and validation produced one or more errors; the exception's `reasons` list contains the error messages.
      */
     fun validateOrThrow(
-        schema: BlockSchema,
-        payload: BlockContentMetadata,
-        scope: BlockValidationScope
+        schema: Schema,
+        payload: JsonObject,
+        scope: ValidationScope
     ) {
         val errs = validate(schema, payload, scope)
-        if (scope == BlockValidationScope.STRICT && errs.isNotEmpty()) {
+        if (scope == ValidationScope.STRICT && errs.isNotEmpty()) {
             throw SchemaValidationException(errs)
         }
     }
@@ -95,10 +94,10 @@ class SchemaService(
      * @return The same mutable list passed as `acc`, containing any validation error messages collected for this subtree.
      */
     private fun validateRecursive(
-        schema: BlockSchema,
+        schema: Schema,
         payload: Any?,
         path: String,
-        scope: BlockValidationScope,
+        scope: ValidationScope,
         acc: MutableList<String> = mutableListOf()
     ): List<String> {
 
@@ -142,7 +141,7 @@ class SchemaService(
                 if (listPayload == null) {
                     acc += "Invalid type at $path: expected array, got ${payload::class.simpleName}"
                     // SOFT guardrail: if this *looks like* a single item of the array, validate it once
-                    if (scope == BlockValidationScope.SOFT && schema.items != null &&
+                    if (scope == ValidationScope.SOFT && schema.items != null &&
                         looksLikeSingleItem(schema.items, payload)
                     ) {
                         validateRecursive(schema.items, payload, "$path[0?] (soft single-item check)", scope, acc)
@@ -197,7 +196,7 @@ class SchemaService(
      * @param payload The value to test against the item schema's type.
      * @return `true` if the payload's runtime type corresponds to `itemSchema.type`, `false` otherwise.
      */
-    private fun looksLikeSingleItem(itemSchema: BlockSchema, payload: Any?): Boolean {
+    private fun looksLikeSingleItem(itemSchema: Schema, payload: JsonValue?): Boolean {
         return when (itemSchema.type) {
             DataType.OBJECT -> payload is Map<*, *>
             DataType.ARRAY -> payload is List<*>          // unlikely, but keep symmetrical
@@ -218,7 +217,7 @@ class SchemaService(
      * @param path The JSON path used in returned error messages when validation fails.
      * @return An error message describing the format violation (including `path`), or `null` if the value is valid.
      */
-    private fun validateStringFormat(schema: BlockSchema, value: String, path: String): String? {
+    private fun validateStringFormat(schema: Schema, value: String, path: String): String? {
         return when (schema.format) {
             DataFormat.EMAIL ->
                 if (!value.matches(Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+\$"))) "Invalid email format at $path" else null
@@ -272,7 +271,7 @@ class SchemaService(
      * @param path The JSON-like path to the value, used for error messages.
      * @return An error message describing the format violation, or `null` if the value satisfies the schema.
      */
-    private fun validateNumberFormat(schema: BlockSchema, value: Double, path: String): String? {
+    private fun validateNumberFormat(schema: Schema, value: Double, path: String): String? {
         return when (schema.format) {
             DataFormat.PERCENTAGE -> {
                 // Numeric variants must be in [0, 1]

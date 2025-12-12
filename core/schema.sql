@@ -264,94 +264,26 @@ alter table public.block_children
 alter table public.block_children
     add constraint uq_parent_order_index unique (parent_id, order_index);
 
-drop table if exists public.block_tree_layouts cascade;
+
 create table public.block_tree_layouts
 (
     id              uuid primary key         default uuid_generate_v4(),
-    organisation_id uuid        not null references organisations (id) on delete cascade,
-    layout          jsonb       not null,
-    entity_id       uuid        not null UNIQUE, -- id of client, line item, etc,
-    entity_type     varchar(50) not null,        -- e.g. "CLIENT", "COMPANY", "LINE_ITEM"
-    version         integer     not null     default 1,
+    organisation_id uuid    not null references organisations (id) on delete cascade,
+    layout          jsonb   not null,
+    version         integer not null         default 1, -- id of client, line item, etc,
+    entity_id       uuid    not null references public.entities (id) on delete cascade,
     created_at      timestamp with time zone default current_timestamp,
     updated_at      timestamp with time zone default current_timestamp,
-    "created_by"    uuid        references public.users (id) ON DELETE SET NULL,
-    "updated_by"    uuid        references public.users (id) ON DELETE SET NULL
+    "created_by"    uuid    references public.users (id) ON DELETE SET NULL,
+    "updated_by"    uuid    references public.users (id) ON DELETE SET NULL
 );
 
-create index if not exists idx_block_tree_layouts_entity_id_entity_type
-    on public.block_tree_layouts (entity_id, entity_type);
+create index if not exists idx_block_tree_layouts_entity_id
+    on public.block_tree_layouts (entity_id);
 
 create index if not exists idx_block_tree_layouts_organisation_id
     on public.block_tree_layouts (organisation_id);
 
-drop table if exists public.companies cascade;
-create table if not exists public.companies
-(
-    "id"              uuid primary key not null default uuid_generate_v4(),
-    "organisation_id" uuid             not null references public.organisations (id) on delete cascade,
-    "name"            varchar(100)     not null,
-    "address"         jsonb,
-    "phone"           varchar(15),
-    "email"           varchar(100),
-    "website"         varchar(100),
-    "business_number" varchar(50),
-    "logo_url"        text,
-    "archived"        boolean          not null default false,
-    "created_at"      timestamp with time zone  default current_timestamp,
-    "updated_at"      timestamp with time zone  default current_timestamp,
-    "created_by"      uuid,
-    "updated_by"      uuid
-);
-
--- Clients
-drop table if exists public.clients cascade;
-create table if not exists public.clients
-(
-    "id"              uuid primary key not null default uuid_generate_v4(),
-    "organisation_id" uuid             not null references public.organisations (id) on delete cascade,
-    "name"            varchar(50)      not null,
-    "archived"        boolean          not null default false,
-    "contact_details" jsonb            not null default '{}'::jsonb,
-    "company_id"      uuid             references public.companies (id) on delete set null,
-    "company_role"    varchar(50),
-    "type"            varchar(50),
-    "created_at"      timestamp with time zone  default current_timestamp,
-    "updated_at"      timestamp with time zone  default current_timestamp,
-    "created_by"      uuid,
-    "updated_by"      uuid
-);
-
-
-
-create index if not exists idx_company_organisation_id
-    on public.companies (organisation_id);
-
-ALTER TABLE public.clients
-    ADD CONSTRAINT uq_client_name_organisation UNIQUE (organisation_id, name);
-
-create index if not exists idx_client_organisation_id
-    on public.clients (organisation_id);
-
--- Line Items
-drop table if exists line_item;
-create table if not exists public.line_item
-(
-    "id"              uuid primary key not null default uuid_generate_v4(),
-    "organisation_id" uuid             not null references public.organisations (id) on delete cascade,
-    "name"            varchar(50)      not null,
-    "description"     text             not null,
-    "created_at"      timestamp with time zone  default current_timestamp,
-    "updated_at"      timestamp with time zone  default current_timestamp
-);
-
-ALTER TABLE public.line_item
-    ADD CONSTRAINT uq_line_item_name_organisation UNIQUE (organisation_id, name);
-
-create index if not exists idx_line_item_organisation_id
-    on public.line_item (organisation_id);
-
--- Logs
 create table if not exists "activity_logs"
 (
     "id"              uuid primary key         not null default uuid_generate_v4(),
@@ -373,40 +305,189 @@ create index if not exists idx_activity_logs_organisation_id
 create index if not exists idx_activity_logs_user_id
     on public.activity_logs (user_id);
 
-
--- Invoice
-
-create table if not exists "invoice"
+CREATE TABLE IF NOT EXISTS public.entity_types
 (
-    "id"                 uuid primary key         not null default uuid_generate_v4(),
-    "organisation_id"    uuid                     not null references public.organisations (id) on delete cascade,
-    "client_id"          uuid                     not null references public.clients (id) on delete cascade,
-    "invoice_number"     TEXT                     not null,
-    "billable_work"      jsonb                    not null,
-    "amount"             DECIMAL(19, 4)           not null default 0.00,
-    "custom_fields"      jsonb                    not null default '{}'::jsonb,
-    "currency"           varchar(3)               not null default 'AUD',
-    "status"             varchar(25)              not null default 'PENDING' CHECK (status IN ('DRAFT', 'PENDING', 'SENT', 'PAID', 'OVERDUE', 'VOID')),
-    "invoice_start_date" timestamp with time zone null,
-    "invoice_end_date"   timestamp with time zone null,
-    "invoice_issue_date" timestamp with time zone not null,
-    "invoice_due_date"   timestamp with time zone null,
-    "created_at"         timestamp with time zone          default current_timestamp,
-    "updated_at"         timestamp with time zone          default current_timestamp,
-    "created_by"         uuid,
-    "updated_by"         uuid
+    "id"                UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
+    "key"               TEXT    NOT NULL,
+    "type"              TEXT    NOT NULL CHECK (type IN ('STANDARD', 'RELATIONSHIP')),
+    "organisation_id"   UUID REFERENCES organisations (id) ON DELETE CASCADE,
+    "identifier_key"    TEXT    NOT NULL,
+    "display_name"      TEXT    NOT NULL,
+    "description"       TEXT,
+    "protected"         BOOLEAN NOT NULL         DEFAULT FALSE,
+    "schema"            JSONB   NOT NULL,
+    "display_structure" JSONB   NOT NULL,
+    "column_order"      JSONB,
+    "relationships"     JSONB,
+    "version"           INTEGER NOT NULL         DEFAULT 1,
+    "archived"          BOOLEAN NOT NULL         DEFAULT FALSE,
+    "created_at"        TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updated_at"        TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "created_by"        UUID,
+    "updated_by"        UUID,
+
+    -- Single row per entity type (mutable pattern)
+    -- Also creates an index on organisation_id + key for faster lookups
+    UNIQUE (organisation_id, key),
+
+    -- Relationship entities must have relationship_config
+    CHECK (
+        (type = 'RELATIONSHIP' AND relationships IS NOT NULL) OR
+        (type = 'STANDARD' AND relationships IS NULL)
+        )
 );
 
 
-create index if not exists idx_invoice_organisation_id
-    on public.invoice (organisation_id);
+-- =====================================================
+-- 2. ENTITIES TABLE
+-- =====================================================
 
+CREATE TABLE IF NOT EXISTS public.entities
+(
+    "id"              UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
+    "organisation_id" UUID    NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
+    "type_id"         UUID    NOT NULL REFERENCES entity_types (id) ON DELETE RESTRICT,
+    "type_version"    INTEGER NOT NULL,
+    "name"            TEXT,
+    "payload"         JSONB   NOT NULL         DEFAULT '{}'::jsonb,
+    "created_at"      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updated_at"      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "created_by"      UUID    REFERENCES users (id) ON DELETE SET NULL,
+    "updated_by"      UUID    REFERENCES users (id) ON DELETE SET NULL
+);
 
-create index if not exists idx_invoice_client_id
-    on public.invoice (client_id);
+-- Archived Entities Table => Soft Delete Pattern, also to help reduce query latency on main entities table
+CREATE TABLE IF NOT EXISTS public.archived_entities
+(
+    "id"              UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
+    -- Duplicate key from entity_type for faster lookups without needing separate query
+    "key"             TEXT    NOT NULL,
+    "organisation_id" UUID    NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
+    "archived_at"     TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "type_id"         UUID    NOT NULL REFERENCES entity_types (id) ON DELETE RESTRICT,
+    "type_version"    INTEGER NOT NULL,
+    "name"            TEXT,
+    "payload"         JSONB   NOT NULL         DEFAULT '{}'::jsonb,
+    "created_at"      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updated_at"      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "created_by"      UUID    REFERENCES users (id) ON DELETE SET NULL,
+    "updated_by"      UUID    REFERENCES users (id) ON DELETE SET NULL,
 
-ALTER TABLE public.invoice
-    ADD CONSTRAINT uq_invoice_number_organisation UNIQUE (organisation_id, invoice_number);
+    -- Creates unique index for faster lookups
+    UNIQUE (organisation_id, key)
+);
+
+-- Indexes for entities
+CREATE INDEX idx_entities_type_id ON entities (type_id);
+CREATE INDEX idx_entities_payload_gin ON entities USING GIN (payload jsonb_path_ops);
+
+CREATE INDEX idx_archived_entities_organisation_id ON archived_entities (organisation_id);
+CREATE INDEX idx_archived_entities_type_id ON archived_entities (type_id);
+
+-- =====================================================
+-- 3. ENTITY_RELATIONSHIPS TABLE
+-- =====================================================
+CREATE TABLE IF NOT EXISTS public.entity_relationships
+(
+    "id"               UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
+    "organisation_id"  UUID NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
+    "source_entity_id" UUID NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
+    "target_entity_id" UUID NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
+    "key"              TEXT NOT NULL,
+    "label"            TEXT,
+    "created_at"       TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updated_at"       TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "created_by"       UUID REFERENCES users (id) ON DELETE SET NULL,
+    "updated_by"       UUID REFERENCES users (id) ON DELETE SET NULL,
+
+    -- Prevent duplicate relationships
+    UNIQUE (source_entity_id, target_entity_id, key)
+);
+
+-- Indexes for entity_relationships
+CREATE INDEX idx_entity_relationships_source_key ON entity_relationships (source_entity_id, key);
+CREATE INDEX idx_entity_relationships_target ON entity_relationships (target_entity_id);
+CREATE INDEX idx_entity_relationships_organisation ON entity_relationships (organisation_id);
+
+-- =====================================================
+-- 4. ROW LEVEL SECURITY (RLS) POLICIES
+-- =====================================================
+
+-- entity_types RLS
+ALTER TABLE entity_types
+    ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "entity_types_select_by_org" ON entity_types
+    FOR SELECT TO authenticated
+    USING (
+    organisation_id IS NULL OR
+    organisation_id IN (SELECT organisation_id
+                        FROM organisation_members
+                        WHERE user_id = auth.uid())
+    );
+
+CREATE POLICY "entity_types_write_by_org" ON entity_types
+    FOR ALL TO authenticated
+    USING (
+    organisation_id IN (SELECT organisation_id
+                        FROM organisation_members
+                        WHERE user_id = auth.uid())
+    )
+    WITH CHECK (
+    organisation_id IN (SELECT organisation_id
+                        FROM organisation_members
+                        WHERE user_id = auth.uid())
+    );
+
+-- entities RLS
+ALTER TABLE entities
+    ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "entities_select_by_org" ON entities
+    FOR SELECT TO authenticated
+    USING (
+    organisation_id IN (SELECT organisation_id
+                        FROM organisation_members
+                        WHERE user_id = auth.uid())
+    );
+
+CREATE POLICY "entities_write_by_org" ON entities
+    FOR ALL TO authenticated
+    USING (
+    organisation_id IN (SELECT organisation_id
+                        FROM organisation_members
+                        WHERE user_id = auth.uid())
+    )
+    WITH CHECK (
+    organisation_id IN (SELECT organisation_id
+                        FROM organisation_members
+                        WHERE user_id = auth.uid())
+    );
+
+-- entity_relationships RLS
+ALTER TABLE entity_relationships
+    ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "entity_relationships_select_by_org" ON entity_relationships
+    FOR SELECT TO authenticated
+    USING (
+    organisation_id IN (SELECT organisation_id
+                        FROM organisation_members
+                        WHERE user_id = auth.uid())
+    );
+
+CREATE POLICY "entity_relationships_write_by_org" ON entity_relationships
+    FOR ALL TO authenticated
+    USING (
+    organisation_id IN (SELECT organisation_id
+                        FROM organisation_members
+                        WHERE user_id = auth.uid())
+    )
+    WITH CHECK (
+    organisation_id IN (SELECT organisation_id
+                        FROM organisation_members
+                        WHERE user_id = auth.uid())
+    );
 
 
 /* Add Organisation Roles to Supabase JWT */

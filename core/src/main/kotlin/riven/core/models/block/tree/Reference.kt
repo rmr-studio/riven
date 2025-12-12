@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.deserializer.ReferencePayloadDeserializer
+import riven.core.enums.block.node.BlockReferenceWarning
 import riven.core.enums.block.node.ReferenceType
-import riven.core.models.block.Reference
+import riven.core.models.entity.Entity
+import java.util.*
 
 
 @Schema(hidden = true)
@@ -21,7 +23,7 @@ sealed interface ReferencePayload {
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class EntityReference(
     override val type: ReferenceType = ReferenceType.ENTITY,
-    val reference: List<Reference>? = null
+    val reference: List<ReferenceItem<Entity>>? = null
 ) : ReferencePayload
 
 @Schema(
@@ -31,5 +33,14 @@ data class EntityReference(
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class BlockTreeReference(
     override val type: ReferenceType = ReferenceType.BLOCK,
-    val reference: Reference? = null
+    val reference: ReferenceItem<BlockTree>? = null
 ) : ReferencePayload
+
+
+data class ReferenceItem<T>(
+    val id: UUID,
+    val path: String? = null,
+    val orderIndex: Int? = null,
+    val entity: T? = null,
+    val warning: BlockReferenceWarning? = null
+)

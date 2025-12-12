@@ -6,19 +6,19 @@ import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.block.BlockChildEntity
 import riven.core.entity.block.BlockEntity
 import riven.core.entity.block.BlockTypeEntity
-import riven.core.enums.block.structure.isStrict
-import riven.core.enums.core.EntityType
+import riven.core.enums.common.ValidationScope
+import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
+import riven.core.exceptions.SchemaValidationException
 import riven.core.models.block.Block
 import riven.core.models.block.metadata.*
-import riven.core.models.block.request.CreateBlockRequest
 import riven.core.models.block.tree.*
 import riven.core.models.common.json.JsonObject
+import riven.core.models.request.block.CreateBlockRequest
 import riven.core.repository.block.BlockRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.schema.SchemaService
-import riven.core.service.schema.SchemaValidationException
 import java.util.*
 
 /**
@@ -44,8 +44,8 @@ class BlockService(
         val validatedMetadata: Metadata =
             when (payload) {
                 is BlockContentMetadata -> {
-                    val errs = schemaService.validate(type.schema, payload, type.strictness)
-                    if (type.strictness.isStrict() && errs.isNotEmpty()) {
+                    val errs = schemaService.validate(type.schema, payload.data, type.strictness)
+                    if (type.strictness == ValidationScope.STRICT && errs.isNotEmpty()) {
                         throw SchemaValidationException(errs)
                     }
 
@@ -81,7 +81,7 @@ class BlockService(
                 operation = OperationType.CREATE,
                 userId = authTokenService.getUserId(),
                 organisationId = organisationId,
-                entityType = EntityType.BLOCK,
+                entityType = ApplicationEntityType.BLOCK,
                 entityId = it.id,
                 details = mapOf(
                     "blockId" to it.id.toString(),
@@ -145,9 +145,9 @@ class BlockService(
                             this.data = updated
                         }
 
-                        val errs = schemaService.validate(existing.type.schema, it, existing.type.strictness)
+                        val errs = schemaService.validate(existing.type.schema, it.data, existing.type.strictness)
 
-                        if (existing.type.strictness.isStrict() && errs.isNotEmpty()) {
+                        if (existing.type.strictness == ValidationScope.STRICT && errs.isNotEmpty()) {
                             throw SchemaValidationException(errs)
                         }
 
@@ -183,7 +183,7 @@ class BlockService(
             operation = OperationType.UPDATE,
             userId = authTokenService.getUserId(),
             organisationId = saved.organisationId,
-            entityType = EntityType.BLOCK,
+            entityType = ApplicationEntityType.BLOCK,
             entityId = saved.id,
             details = mapOf(
                 "blockId" to saved.id.toString(),
@@ -223,7 +223,7 @@ class BlockService(
             return ContentNode(block = block, warnings = listOf("Cycle detected at ${block.id}"))
         }
 
-        return when (val meta = block.payload) {
+        return when (block.payload) {
             is BlockReferenceMetadata -> {
                 visited.remove(block.id)
                 ReferenceNode(
@@ -301,7 +301,7 @@ class BlockService(
             operation = if (status) OperationType.ARCHIVE else OperationType.RESTORE,
             userId = authTokenService.getUserId(),
             organisationId = updated.organisationId,
-            entityType = EntityType.BLOCK,
+            entityType = ApplicationEntityType.BLOCK,
             entityId = updated.id,
             details = mapOf(
                 "blockId" to updated.id.toString(),

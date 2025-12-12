@@ -7,7 +7,7 @@ import riven.core.entity.block.BlockTypeEntity
 import riven.core.enums.block.layout.RenderType
 import riven.core.enums.block.node.NodeType
 import riven.core.enums.block.node.SystemBlockTypes
-import riven.core.enums.core.EntityType
+import riven.core.enums.core.ApplicationEntityType
 import riven.core.models.block.layout.RenderContent
 import riven.core.models.block.layout.TreeLayout
 import riven.core.models.block.layout.Widget
@@ -17,8 +17,8 @@ import riven.core.models.block.layout.options.DraggableOptions
 import riven.core.models.block.layout.options.ResizableOptions
 import riven.core.models.block.metadata.EntityReferenceMetadata
 import riven.core.models.block.metadata.ReferenceItem
-import riven.core.models.block.request.CreateBlockRequest
 import riven.core.models.block.tree.BlockTreeLayout
+import riven.core.models.request.block.CreateBlockRequest
 import riven.core.repository.block.BlockTreeLayoutRepository
 import java.util.*
 
@@ -48,7 +48,7 @@ class DefaultBlockEnvironmentService(
     @Transactional
     fun createDefaultEnvironmentForEntity(
         entityId: UUID,
-        entityType: EntityType,
+        entityType: ApplicationEntityType,
         organisationId: UUID
     ): BlockTreeLayout {
         val defaultLayout = buildDefaultLayoutForEntityType(organisationId, entityId, entityType)
@@ -56,7 +56,6 @@ class DefaultBlockEnvironmentService(
         // Persist layout entity
         val layoutEntity = BlockTreeLayoutEntity(
             entityId = entityId,
-            entityType = entityType,
             organisationId = organisationId,
             layout = defaultLayout,
             version = 1
@@ -75,49 +74,17 @@ class DefaultBlockEnvironmentService(
     private fun buildDefaultLayoutForEntityType(
         organisationId: UUID,
         entityId: UUID,
-        entityType: EntityType
+        entityType: ApplicationEntityType
     ): TreeLayout {
         return when (entityType) {
-            EntityType.CLIENT -> buildDefaultClientLayout(organisationId, entityId)
-            EntityType.ORGANISATION -> buildDefaultOrganisationLayout(entityId)
-            EntityType.PROJECT -> buildDefaultProjectLayout(entityId)
-            EntityType.INVOICE -> buildDefaultInvoiceLayout(entityId)
+
+            ApplicationEntityType.ORGANISATION -> buildDefaultOrganisationLayout(entityId)
+            ApplicationEntityType.USER -> buildDefaultUserLayout(entityId)
+            ApplicationEntityType.ENTITY -> buildDefaultEntityLayout(entityId)
             else -> buildGenericDefaultLayout(entityId)
         }
     }
 
-    /**
-     * Builds default layout for CLIENT entities.
-     *
-     * Layout structure:
-     * - Reference block at top (full width)
-     * - Empty space for user-added blocks
-     */
-    private fun buildDefaultClientLayout(organisationId: UUID, entityId: UUID): TreeLayout {
-        val widgets = mutableListOf<Widget>()
-
-        // TODO: Create actual reference block and add to widgets
-        // For now, return empty layout with proper grid configuration
-        createEntityReferenceWidget(organisationId, entityId, EntityType.CLIENT).also {
-            widgets.add(it)
-        }
-
-        return TreeLayout(
-            resizable = ResizableOptions(handles = "se, sw"),
-            draggable = DraggableOptions(cancel = ".block-no-drag", pause = 5),
-            cellHeight = 25,
-            column = 23,
-            columnOpts = ColumnOptions(
-                breakpoints = listOf(
-                    BreakpointConfig(width = 1024, columns = 12),
-                    BreakpointConfig(width = 768, columns = 1)
-                )
-            ),
-            animate = true,
-            acceptWidgets = true,
-            children = widgets.ifEmpty { null }
-        )
-    }
 
     /**
      * Builds default layout for ORGANISATION entities.
@@ -128,16 +95,20 @@ class DefaultBlockEnvironmentService(
     }
 
     /**
-     * Builds default layout for PROJECT entities.
+     * Builds default layout for USER entities (ie. Members of an organisation).
+     * They would also have an associated Entity type. that may have direct relationship with
+     * other entities. So we would need to add reference blocks for those relationships as well.
      */
-    private fun buildDefaultProjectLayout(entityId: UUID): TreeLayout {
+    private fun buildDefaultUserLayout(entityId: UUID): TreeLayout {
         return buildGenericDefaultLayout(entityId)
     }
 
     /**
-     * Builds default layout for INVOICE entities.
+     * Builds default layout for all custom ENTITY entities.
+     * This would involve creating supporting entity reference blocks for each relationship
+     * The entity has with other entities.
      */
-    private fun buildDefaultInvoiceLayout(entityId: UUID): TreeLayout {
+    private fun buildDefaultEntityLayout(entityId: UUID): TreeLayout {
         return buildGenericDefaultLayout(entityId)
     }
 
@@ -166,13 +137,10 @@ class DefaultBlockEnvironmentService(
      * Creates a reference block widget for the layout.
      * Reference blocks display entity data and are marked as non-deletable.
      *
-     * TODO: Implement actual block creation
-     * TODO: Store deletable=false metadata
      */
     private fun createEntityReferenceWidget(
         organisationId: UUID,
         entityId: UUID,
-        entityType: EntityType
     ): Widget {
         val type: BlockTypeEntity = blockTypeService.getSystemBlockType(SystemBlockTypes.ENTITY_REFERENCE)
         val payload = EntityReferenceMetadata(
@@ -180,12 +148,11 @@ class DefaultBlockEnvironmentService(
             readonly = true,
             items = listOf(
                 ReferenceItem(
-                    type = entityType,
                     id = entityId
                 )
             )
         )
-        val name = "${entityType.name} Overview"
+        val name = "Entity Overview"
         return blockService.createBlock(
             organisationId,
             CreateBlockRequest(

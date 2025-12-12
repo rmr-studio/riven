@@ -1,12 +1,15 @@
 package riven.core.service.organisation
 
 import io.github.oshai.kotlinlogging.KLogger
-
+import org.springframework.security.access.AccessDeniedException
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.organisation.OrganisationEntity
 import riven.core.entity.organisation.OrganisationMemberEntity
 import riven.core.entity.organisation.toModel
 import riven.core.entity.user.toModel
-import riven.core.enums.core.EntityType
+import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.organisation.OrganisationRoles
 import riven.core.exceptions.NotFoundException
 import riven.core.models.organisation.Organisation
@@ -18,10 +21,6 @@ import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.user.UserService
 import riven.core.util.ServiceUtil.findOrThrow
-import org.springframework.security.access.AccessDeniedException
-import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
 @Service
@@ -93,7 +92,7 @@ class OrganisationService(
                         operation = riven.core.enums.util.OperationType.CREATE,
                         userId = userId,
                         organisationId = this.id,
-                        entityType = EntityType.ORGANISATION,
+                        entityType = ApplicationEntityType.ORGANISATION,
                         entityId = this.id,
                         details = mapOf(
                             "organisationId" to this.id.toString(),
@@ -160,7 +159,7 @@ class OrganisationService(
                         operation = riven.core.enums.util.OperationType.UPDATE,
                         userId = userId,
                         organisationId = requireNotNull(updatedEntity.id),
-                        entityType = EntityType.ORGANISATION,
+                        entityType = ApplicationEntityType.ORGANISATION,
                         entityId = updatedEntity.id,
                         details = mapOf(
                             "organisationId" to updatedEntity.id.toString(),
@@ -200,7 +199,7 @@ class OrganisationService(
                     operation = riven.core.enums.util.OperationType.DELETE,
                     userId = userId,
                     organisationId = organisationId,
-                    entityType = EntityType.ORGANISATION,
+                    entityType = ApplicationEntityType.ORGANISATION,
                     entityId = organisationId,
                     details = mapOf(
                         "organisationId" to organisationId.toString(),
@@ -264,7 +263,7 @@ class OrganisationService(
                     operation = riven.core.enums.util.OperationType.DELETE,
                     userId = userId,
                     organisationId = organisationId,
-                    entityType = EntityType.USER,
+                    entityType = ApplicationEntityType.USER,
                     entityId = member.user.id,
                     details = mapOf(
                         "userId" to member.user.id.toString(),
@@ -318,7 +317,7 @@ class OrganisationService(
                         operation = riven.core.enums.util.OperationType.UPDATE,
                         userId = userId,
                         organisationId = organisationId,
-                        entityType = EntityType.USER,
+                        entityType = ApplicationEntityType.USER,
                         entityId = member.user.id,
                         details = mapOf(
                             "userId" to member.user.id.toString(),
