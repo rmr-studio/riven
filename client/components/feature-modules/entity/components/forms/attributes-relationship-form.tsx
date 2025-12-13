@@ -16,14 +16,19 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { EntityRelationshipCardinality } from "@/lib/types/types";
-import {FC} from 'react';
+import { FC } from "react";
+import { UseFormReturn } from "react-hook-form";
 import { EntityType } from "../../interface/entity.interface";
+import { AttributeFormValues } from "./attribute-dialog";
 
 interface Props {
-    type: EntityType
+    type?: EntityType;
+    avaiableTypes?: EntityType[];
+    form: UseFormReturn<AttributeFormValues>;
+    isEditMode?: boolean;
 }
 
-export const RelationshipAttributeForm: FC<Props> = ({type}) => {
+export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form, isEditMode = false }) => {
     return (
         <>
             <div className="grid grid-cols-2 gap-4">
@@ -31,11 +36,11 @@ export const RelationshipAttributeForm: FC<Props> = ({type}) => {
                     <div className="flex items-center gap-2 p-3 rounded-lg border bg-card">
                         <div className="flex h-6 w-6 items-center justify-center rounded bg-primary/10">
                             <span className="text-xs font-semibold">
-                                {type?.name?.charAt(0) || "E"}
+                                {type?.name?.plural?.charAt(0) || "E"}
                             </span>
                         </div>
                         <span className="font-medium">
-                            {type?.name || "Current Entity"}
+                            {type?.name?.plural || "Current Entity"}
                         </span>
                     </div>
                     <FormField
@@ -111,13 +116,15 @@ export const RelationshipAttributeForm: FC<Props> = ({type}) => {
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                {entityTypes.map((et) => (
+                                {avaiableTypes?.map((et) => (
                                     <SelectItem key={et.key} value={et.key}>
                                         <div className="flex items-center gap-2">
                                             <div className="flex h-5 w-5 items-center justify-center rounded bg-primary/10">
-                                                <span className="text-xs">{et.name.charAt(0)}</span>
+                                                <span className="text-xs">
+                                                    {et.name.plural.charAt(0)}
+                                                </span>
                                             </div>
-                                            <span>{et.name}</span>
+                                            <span>{et.name.plural}</span>
                                         </div>
                                     </SelectItem>
                                 ))}
@@ -150,8 +157,18 @@ export const RelationshipAttributeForm: FC<Props> = ({type}) => {
                         <FormItem>
                             <FormLabel>Key</FormLabel>
                             <FormControl>
-                                <Input placeholder="relationship_key" {...field} />
+                                <Input
+                                    placeholder="relationship_key"
+                                    {...field}
+                                    disabled={isEditMode}
+                                    className={isEditMode ? "bg-muted cursor-not-allowed" : ""}
+                                />
                             </FormControl>
+                            <FormDescription className="text-xs">
+                                {isEditMode
+                                    ? "Key cannot be changed after creation"
+                                    : "Auto-generated from name"}
+                            </FormDescription>
                             <FormMessage />
                         </FormItem>
                     )}

@@ -8,25 +8,23 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { SchemaOptions } from "@/lib/interfaces/common.interface";
 import {
-    Form,
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { DataFormat, DataType, EntityRelationshipCardinality } from "@/lib/types/types";
+    DataFormat,
+    DataType,
+    EntityRelationshipCardinality,
+    OptionSortingType,
+} from "@/lib/types/types";
+import { toKeyCase } from "@/lib/util/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FC, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { AttributeTypeDropdown, attributeTypes } from "../../../../ui/attribute-type-dropdown";
 import { EntityType } from "../../interface/entity.interface";
+import { AttributeForm } from "./attribute-form";
+import { RelationshipAttributeForm } from "./attributes-relationship-form";
 
 interface AttributeDialogProps {
     open: boolean;
@@ -34,6 +32,7 @@ interface AttributeDialogProps {
     onSubmit: (attribute: AttributeFormData | RelationshipFormData) => void;
     entityTypes?: EntityType[];
     currentEntityType?: EntityType;
+    editingAttribute?: AttributeFormData | RelationshipFormData;
 }
 
 export interface AttributeFormData {
@@ -45,6 +44,8 @@ export interface AttributeFormData {
     dataFormat?: DataFormat;
     required: boolean;
     unique: boolean;
+    options?: SchemaOptions;
+    protected?: boolean;
 }
 
 export interface RelationshipFormData {
@@ -60,6 +61,7 @@ export interface RelationshipFormData {
     inverseName?: string;
     required: boolean;
     targetAttributeName: string | undefined;
+    protected?: boolean;
 }
 
 // Zod schema
@@ -79,9 +81,17 @@ const formSchema = z.object({
     bidirectional: z.boolean().optional(),
     inverseName: z.string().optional(),
     targetAttributeName: z.string().optional(),
+    // Schema options
+    enumValues: z.array(z.string()).optional(),
+    enumSorting: z.nativeEnum(OptionSortingType).optional(),
+    minimum: z.coerce.number().optional(),
+    maximum: z.coerce.number().optional(),
+    minLength: z.coerce.number().min(0).optional(),
+    maxLength: z.coerce.number().min(0).optional(),
+    regex: z.string().optional(),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+export type AttributeFormValues = z.infer<typeof formSchema>;
 
 export const AttributeDialog: FC<AttributeDialogProps> = ({
     open,
@@ -89,10 +99,12 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
     onSubmit,
     entityTypes = [],
     currentEntityType,
+    editingAttribute,
 }) => {
     const [typePopoverOpen, setTypePopoverOpen] = useState(false);
+    const isEditMode = !!editingAttribute;
 
-    const form = useForm<FormValues>({
+    const form = useForm<AttributeFormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             selectedType: DataType.STRING,
@@ -109,11 +121,114 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
             bidirectional: false,
             inverseName: "",
             targetAttributeName: undefined,
+            enumValues: [],
+            enumSorting: OptionSortingType.MANUAL,
+            minimum: undefined,
+            maximum: undefined,
+            minLength: undefined,
+            maxLength: undefined,
+            regex: undefined,
         },
     });
 
     const selectedType: string = form.watch("selectedType");
+    const name: string = form.watch("name");
     const isRelationship = selectedType === "RELATIONSHIP";
+
+    // Auto-update key based on name (only in create mode)
+    useEffect(() => {
+        if (!isEditMode && name) {
+            form.setValue("key", toKeyCase(name));
+        }
+    }, [name, form, isEditMode]);
+
+    // Pre-populate schema options for specific types
+    useEffect(() => {
+        if (!isEditMode) {
+            const selectedAttr = attributeTypes.find((attr) => attr.key === selectedType);
+            if (selectedAttr?.options) {
+                if (selectedAttr.options.minimum !== undefined) {
+                    form.setValue("minimum", selectedAttr.options.minimum);
+                }
+                if (selectedAttr.options.maximum !== undefined) {
+                    form.setValue("maximum", selectedAttr.options.maximum);
+                }
+            }
+        }
+    }, [selectedType, isEditMode, form]);
+
+    // Populate form when editing
+    useEffect(() => {
+        if (open && editingAttribute) {
+            if (editingAttribute.type === "relationship") {
+                form.reset({
+                    selectedType: "RELATIONSHIP",
+                    name: editingAttribute.name,
+                    key: editingAttribute.key,
+                    required: editingAttribute.required,
+                    unique: false,
+                    cardinality: editingAttribute.cardinality,
+                    minOccurs: editingAttribute.minOccurs,
+                    maxOccurs: editingAttribute.maxOccurs,
+                    entityTypeKeys: editingAttribute.entityTypeKeys,
+                    allowPolymorphic: editingAttribute.allowPolymorphic,
+                    bidirectional: editingAttribute.bidirectional,
+                    inverseName: editingAttribute.inverseName,
+                    targetAttributeName: editingAttribute.targetAttributeName,
+                });
+            } else {
+                // Find matching attribute type or use dataType directly
+                const matchingType = attributeTypes.find(
+                    (attr) =>
+                        attr.type === editingAttribute.dataType &&
+                        attr.format === editingAttribute.dataFormat
+                );
+                form.reset({
+                    selectedType: matchingType?.key || editingAttribute.dataType,
+                    name: editingAttribute.name,
+                    key: editingAttribute.key,
+                    description: editingAttribute.description,
+                    required: editingAttribute.required,
+                    unique: editingAttribute.unique,
+                    dataFormat: editingAttribute.dataFormat,
+                    enumValues: editingAttribute.options?.enum?.map(String) || [],
+                    enumSorting:
+                        (editingAttribute.options?.enumSorting as OptionSortingType) ||
+                        OptionSortingType.MANUAL,
+                    minimum: editingAttribute.options?.minimum,
+                    maximum: editingAttribute.options?.maximum,
+                    minLength: editingAttribute.options?.minLength,
+                    maxLength: editingAttribute.options?.maxLength,
+                    regex: editingAttribute.options?.regex,
+                });
+            }
+        } else if (open && !editingAttribute) {
+            // Reset to default values when creating new
+            form.reset({
+                selectedType: DataType.STRING,
+                name: "",
+                key: "",
+                description: "",
+                required: false,
+                unique: false,
+                cardinality: EntityRelationshipCardinality.ONE_TO_ONE,
+                minOccurs: undefined,
+                maxOccurs: undefined,
+                entityTypeKeys: [],
+                allowPolymorphic: false,
+                bidirectional: false,
+                inverseName: "",
+                targetAttributeName: undefined,
+                enumValues: [],
+                enumSorting: OptionSortingType.MANUAL,
+                minimum: undefined,
+                maximum: undefined,
+                minLength: undefined,
+                maxLength: undefined,
+                regex: undefined,
+            });
+        }
+    }, [open, editingAttribute, form]);
 
     // Reset form when dialog closes
     useEffect(() => {
@@ -122,12 +237,12 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
         }
     }, [open, form]);
 
-    const handleFormSubmit = (values: FormValues) => {
+    const handleFormSubmit = (values: AttributeFormValues) => {
         if (values.selectedType === "RELATIONSHIP") {
             const data: RelationshipFormData = {
                 type: "relationship",
                 name: values.name,
-                key: values.key || values.name.toLowerCase().replace(/\s+/g, "_"),
+                key: values.key,
                 cardinality: values.cardinality || EntityRelationshipCardinality.ONE_TO_ONE,
                 minOccurs: values.minOccurs,
                 maxOccurs: values.maxOccurs,
@@ -141,29 +256,55 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
             onSubmit(data);
         } else {
             const selectedAttr = attributeTypes.find((attr) => attr.key === values.selectedType);
+
+            // Build schema options
+            const options: SchemaOptions = {};
+            if (values.enumValues && values.enumValues.length > 0) {
+                options.enum = values.enumValues;
+            }
+            if (values.enumSorting) {
+                options.enumSorting = values.enumSorting;
+            }
+            if (values.minimum !== undefined && values.minimum !== null) {
+                options.minimum = values.minimum;
+            }
+            if (values.maximum !== undefined && values.maximum !== null) {
+                options.maximum = values.maximum;
+            }
+            if (values.minLength !== undefined && values.minLength !== null) {
+                options.minLength = values.minLength;
+            }
+            if (values.maxLength !== undefined && values.maxLength !== null) {
+                options.maxLength = values.maxLength;
+            }
+            if (values.regex) {
+                options.regex = values.regex;
+            }
+
             const data: AttributeFormData = {
                 type: "attribute",
                 name: values.name,
-                key: values.key || values.name.toLowerCase().replace(/\s+/g, "_"),
+                key: values.key,
                 description: values.description,
                 dataType: selectedAttr?.type || (values.selectedType as DataType),
                 dataFormat: selectedAttr?.format || values.dataFormat,
                 required: values.required || false,
                 unique: values.unique || false,
+                options: Object.keys(options).length > 0 ? options : undefined,
             };
             onSubmit(data);
         }
-        form.reset();
-        onOpenChange(false);
     };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="w-full min-w-5xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Create attribute</DialogTitle>
+                    <DialogTitle>{isEditMode ? "Edit attribute" : "Create attribute"}</DialogTitle>
                     <DialogDescription>
-                        Add a new attribute or relationship to your entity type
+                        {isEditMode
+                            ? "Update the attribute or relationship"
+                            : "Add a new attribute or relationship to your entity type"}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -187,89 +328,15 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
                             )}
                         />
 
-                        {!isRelationship && (
-                            <>
-                                <FormField
-                                    control={form.control}
-                                    name="name"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Name</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    placeholder="Enter attribute name"
-                                                    {...field}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="description"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Description (optional)</FormLabel>
-                                            <FormControl>
-                                                <Textarea
-                                                    placeholder="Add a description for this attribute"
-                                                    rows={3}
-                                                    {...field}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <div className="space-y-4">
-                                    <FormField
-                                        control={form.control}
-                                        name="required"
-                                        render={({ field }) => (
-                                            <>
-                                                <FormItem className="flex items-center justify-between space-y-0 mb-1">
-                                                    <FormLabel>Required</FormLabel>
-                                                    <FormControl>
-                                                        <Switch
-                                                            checked={field.value}
-                                                            onCheckedChange={field.onChange}
-                                                        />
-                                                    </FormControl>
-                                                </FormItem>
-                                                <FormDescription className="text-xs italic">
-                                                    Required attributes must have a value for each
-                                                    record
-                                                </FormDescription>
-                                            </>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="unique"
-                                        render={({ field }) => (
-                                            <>
-                                                <FormItem className="flex items-center justify-between space-y-0 mb-1">
-                                                    <FormLabel>Unique</FormLabel>
-                                                    <FormControl>
-                                                        <Switch
-                                                            checked={field.value}
-                                                            onCheckedChange={field.onChange}
-                                                        />
-                                                    </FormControl>
-                                                </FormItem>
-                                                <FormDescription className="text-xs italic">
-                                                    Unique attributes enforce distinct values across
-                                                    all records. There can be only one record with a
-                                                    given value.
-                                                </FormDescription>
-                                            </>
-                                        )}
-                                    />
-                                </div>
-                            </>
+                        {!isRelationship ? (
+                            <AttributeForm form={form} isEditMode={isEditMode} />
+                        ) : (
+                            <RelationshipAttributeForm
+                                form={form}
+                                type={currentEntityType}
+                                avaiableTypes={entityTypes}
+                                isEditMode={isEditMode}
+                            />
                         )}
 
                         <div className="flex justify-end gap-2 pt-4 border-t">
@@ -280,7 +347,9 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
                             >
                                 Cancel
                             </Button>
-                            <Button type="submit">Create attribute</Button>
+                            <Button type="submit">
+                                {isEditMode ? "Update attribute" : "Create attribute"}
+                            </Button>
                         </div>
                     </form>
                 </Form>

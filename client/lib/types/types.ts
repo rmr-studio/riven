@@ -664,6 +664,8 @@ export interface components {
             label: string;
             value: string;
         };
+        /** @enum {string} */
+        OptionSortingType: OptionSortingType;
         Path: {
             kind: "Path";
         } & (Omit<components["schemas"]["Operand"], "kind"> & {
@@ -687,6 +689,7 @@ export interface components {
             default?: Record<string, never>;
             regex?: string;
             enum?: (string | number | boolean)[];
+            enumSorting?: components["schemas"]["OptionSortingType"];
             /** Format: int32 */
             minLength?: number;
             /** Format: int32 */
@@ -2261,6 +2264,11 @@ export enum Op {
     NOT_IN = "NOT_IN",
     EMPTY = "EMPTY",
     NOT_EMPTY = "NOT_EMPTY"
+}
+export enum OptionSortingType {
+    MANUAL = "MANUAL",
+    ALPHABETICAL = "ALPHABETICAL",
+    REVERSE_ALPHABETICAL = "REVERSE_ALPHABETICAL"
 }
 export enum ValidationScope {
     SOFT = "SOFT",

@@ -1,7 +1,6 @@
 import { Schema, SchemaOptions } from "@/lib/interfaces/common.interface";
 import { DataFormat, DataType } from "@/lib/types/types";
 import { cn } from "@/lib/util/utils";
-import { PopoverClose } from "@radix-ui/react-popover";
 import {
     AtSign,
     Calendar,
@@ -174,7 +173,14 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, attributeKey, open,
     };
 
     return (
-        <Popover>
+        <Popover
+            modal={false}
+            onOpenChange={(next) => {
+                if (open && next) return;
+                setOpen(next);
+            }}
+            open={open}
+        >
             <PopoverTrigger asChild>
                 <FormControl>
                     <Button
@@ -196,7 +202,12 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, attributeKey, open,
             <PopoverContent
                 className="w-[400px] p-0"
                 align="start"
+                portal={false}
                 onOpenAutoFocus={(e) => e.preventDefault()}
+                onEscapeKeyDown={(e) => {
+                    e.stopPropagation();
+                    setOpen(false);
+                }}
             >
                 <Command>
                     <CommandInput placeholder="Search attribute types..." />
@@ -211,18 +222,16 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, attributeKey, open,
                                     setOpen(false);
                                 }}
                             >
-                                <PopoverClose>
-                                    <Check
-                                        className={cn(
-                                            "mr-1 size-3.5",
-                                            attributeKey === "RELATIONSHIP"
-                                                ? "opacity-100"
-                                                : "opacity-0"
-                                        )}
-                                    />
-                                    <Link2 className="mr-1 size-3.5" />
-                                    Relationship
-                                </PopoverClose>
+                                <Check
+                                    className={cn(
+                                        "mr-1 size-3.5",
+                                        attributeKey === "RELATIONSHIP"
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                    )}
+                                />
+                                <Link2 className="mr-1 size-3.5" />
+                                Relationship
                             </CommandItem>
                         </CommandGroup>
                         {Object.entries(groupedAttributes).map(
@@ -243,18 +252,16 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, attributeKey, open,
                                                     setOpen(false);
                                                 }}
                                             >
-                                                <PopoverClose asChild>
-                                                    <Check
-                                                        className={cn(
-                                                            "mr-1 size-3.5",
-                                                            attributeKey === attr.key
-                                                                ? "opacity-100"
-                                                                : "opacity-0"
-                                                        )}
-                                                    />
-                                                    <attr.icon className="mr-1 size-3.5" />
-                                                    {attr.label}
-                                                </PopoverClose>
+                                                <Check
+                                                    className={cn(
+                                                        "mr-1 size-3.5",
+                                                        attributeKey === attr.key
+                                                            ? "opacity-100"
+                                                            : "opacity-0"
+                                                    )}
+                                                />
+                                                <attr.icon className="mr-1 size-3.5" />
+                                                {attr.label}
                                             </CommandItem>
                                         ))}
                                     </CommandGroup>

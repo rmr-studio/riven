@@ -59,6 +59,7 @@ interface AttributeRow {
     description?: string;
     dataFormat?: string;
     isRelationship?: boolean;
+    protected?: boolean;
 }
 
 interface RelationshipRow {
@@ -68,6 +69,7 @@ interface RelationshipRow {
     targetEntity: string;
     bidirectional: boolean;
     required: boolean;
+    protected?: boolean;
 }
 
 // Zod schema for entity type form
@@ -102,6 +104,9 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
     });
 
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [editingAttribute, setEditingAttribute] = useState<
+        AttributeFormData | RelationshipFormData | undefined
+    >(undefined);
     const [newAttributes, setNewAttributes] = useState<AttributeFormData[]>([]);
     const [newRelationships, setNewRelationships] = useState<RelationshipFormData[]>([]);
     const [keyManuallyEdited, setKeyManuallyEdited] = useState(mode === "edit");
@@ -117,12 +122,13 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
         if (mode === "create" && newAttributes.length === 0) {
             const defaultNameAttribute: AttributeFormData = {
                 type: "attribute",
-                name: "name",
+                name: "Name",
                 key: "name",
                 description: "The name of this entity",
                 dataType: DataType.STRING,
                 required: true,
                 unique: true,
+                protected: true,
             };
             setNewAttributes([defaultNameAttribute]);
         }
@@ -146,6 +152,7 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                   unique: schema.unique || false,
                   description: schema.description,
                   dataFormat: schema.format,
+                  protected: schema.protected || false,
               }))
             : [];
 
@@ -156,6 +163,7 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
             unique: attr.unique,
             description: attr.description,
             dataFormat: attr.dataFormat,
+            protected: attr.protected || false,
         }));
 
         return [...existingAttrs, ...newAttrs];
@@ -171,6 +179,7 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                   targetEntity: rel.entityTypeKeys?.join(", ") || "Any",
                   bidirectional: rel.bidirectional,
                   required: rel.required,
+                  protected: rel.protected || false,
               }))
             : [];
 
@@ -181,6 +190,7 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
             targetEntity: rel.entityTypeKeys.join(", ") || "Any",
             bidirectional: rel.bidirectional,
             required: rel.required,
+            protected: rel.protected || false,
         }));
 
         return [...existingRels, ...newRels];
@@ -322,440 +332,509 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
     };
 
     const handleAttributeSubmit = (data: AttributeFormData | RelationshipFormData) => {
-        if (data.type === "attribute") {
-            setNewAttributes((prev) => [...prev, data]);
+        if (editingAttribute) {
+            // Update existing attribute/relationship
+            if (data.type === "attribute") {
+                setNewAttributes((prev) =>
+                    prev.map((attr) => (attr.key === data.key ? data : attr))
+                );
+            } else {
+                setNewRelationships((prev) =>
+                    prev.map((rel) => (rel.key === data.key ? data : rel))
+                );
+            }
         } else {
-            setNewRelationships((prev) => [...prev, data]);
+            // Add new attribute/relationship
+            if (data.type === "attribute") {
+                setNewAttributes((prev) => [...prev, data]);
+            } else {
+                setNewRelationships((prev) => [...prev, data]);
+            }
         }
+
+        // Close dialog after state updates - this ensures proper cleanup
+
         setDialogOpen(false);
+        setEditingAttribute(undefined);
     };
 
     const handleDeleteAttribute = (name: string) => {
+        const attribute = newAttributes.find((attr) => attr.name === name);
+        if (attribute?.protected) {
+            // Show error or toast - attribute is protected
+            alert("This attribute is protected and cannot be deleted.");
+            return;
+        }
         setNewAttributes((prev) => prev.filter((attr) => attr.name !== name));
     };
 
     const handleDeleteRelationship = (key: string) => {
+        const relationship = newRelationships.find((rel) => rel.key === key);
+        if (relationship?.protected) {
+            // Show error or toast - relationship is protected
+            alert("This relationship is protected and cannot be deleted.");
+            return;
+        }
         setNewRelationships((prev) => prev.filter((rel) => rel.key !== key));
     };
 
+    const handleEditAttribute = (row: AttributeRow) => {
+        // Find the attribute in newAttributes
+        const attribute = newAttributes.find((attr) => attr.name === row.name);
+        if (attribute) {
+            setEditingAttribute(attribute);
+            setDialogOpen(true);
+        }
+    };
+
+    const handleEditRelationship = (row: RelationshipRow) => {
+        // Find the relationship in newRelationships
+        const relationship = newRelationships.find((rel) => rel.key === row.key);
+        if (relationship) {
+            setEditingAttribute(relationship);
+            setDialogOpen(true);
+        }
+    };
+
     return (
-        <Form {...form}>
-            <div className="space-y-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                            <Database className="h-6 w-6 text-primary" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-semibold">
-                                {pluralName ||
-                                    (mode === "create"
-                                        ? "New Entity Type"
-                                        : entityType?.name.plural || "Entity Type")}
-                            </h1>
-                            {mode === "edit" && entityType?.type && (
-                                <div className="flex items-center gap-2 mt-1">
-                                    <Badge variant="secondary">{entityType.type}</Badge>
-                                    <span className="text-sm text-muted-foreground">
-                                        Manage object attributes and other relevant settings
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Link href={`/dashboard/organisation/${organisationId}/entity`}>
-                            <Button variant="outline">Back</Button>
-                        </Link>
-                        <Button onClick={form.handleSubmit(handleSubmit)}>
-                            <Save className="h-4 w-4 mr-2" />
-                            Save
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Validation Errors */}
-                {form.formState.errors.root && (
-                    <Alert variant="destructive">
-                        <AlertDescription>{form.formState.errors.root.message}</AlertDescription>
-                    </Alert>
-                )}
-
-                {/* Tabs */}
-                <TabsStandard defaultValue="configuration" className="w-full">
-                    <TabsList className="w-full justify-start">
-                        <TabsTrigger value="configuration">Configuration</TabsTrigger>
-                        <TabsTrigger value="attributes">
-                            Attributes
-                            {(attributes.length > 0 || relationships.length > 0) && (
-                                <Badge variant="secondary" className="ml-2 h-5 px-1.5">
-                                    {attributes.length + relationships.length}
-                                </Badge>
-                            )}
-                        </TabsTrigger>
-                    </TabsList>
-
-                    {/* Configuration Tab */}
-                    <TabsContent value="configuration" className="space-y-6">
-                        <div className="rounded-lg border bg-card p-6">
-                            <h2 className="text-lg font-semibold mb-4">General</h2>
-
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-2 gap-6">
-                                    {/* Name */}
-                                    <FormField
-                                        control={form.control}
-                                        name="pluralName"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="font-semibold">
-                                                    Plural noun
-                                                </FormLabel>
-                                                <FormDescription className="text-xs italic">
-                                                    This will be used to label a collection of these
-                                                    entities
-                                                </FormDescription>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10">
-                                                        <Database className="h-4 w-4 text-primary" />
-                                                    </div>
-                                                    <FormControl>
-                                                        <Input
-                                                            placeholder="e.g., Companies"
-                                                            {...field}
-                                                        />
-                                                    </FormControl>
-                                                </div>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    {/* Plural Name */}
-                                    <FormField
-                                        control={form.control}
-                                        name="singularName"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="font-semibold">
-                                                    Singular noun
-                                                </FormLabel>
-                                                <FormDescription className="text-xs italic">
-                                                    How we should label a single entity of this type
-                                                </FormDescription>
-                                                <div className="flex items-center gap-2">
-                                                    <FormControl>
-                                                        <Input
-                                                            placeholder="e.g., Company"
-                                                            {...field}
-                                                        />
-                                                    </FormControl>
-                                                </div>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-
-                                {/* Key / Slug */}
-                                <FormField
-                                    control={form.control}
-                                    name="key"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Identifier / Slug</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    placeholder="e.g., companies"
-                                                    disabled={mode === "edit"}
-                                                    {...field}
-                                                    onChange={(e) => {
-                                                        field.onChange(e);
-                                                        if (mode === "create") {
-                                                            setKeyManuallyEdited(true);
-                                                        }
-                                                    }}
-                                                />
-                                            </FormControl>
-                                            <FormDescription className="text-xs italic">
-                                                A unique key used to identify and link this
-                                                particular entity type. This cannot be changed
-                                                later.
-                                                {mode === "create" && !keyManuallyEdited && (
-                                                    <span className="block mt-1 text-muted-foreground">
-                                                        Auto-generated from plural noun. Edit to
-                                                        customize.
-                                                    </span>
-                                                )}
-                                            </FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                {/* Identifier Key */}
-                                <FormField
-                                    control={form.control}
-                                    name="identifierKey"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Identifier Key</FormLabel>
-                                            <Select
-                                                onValueChange={field.onChange}
-                                                value={field.value}
-                                            >
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select a unique identifier" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {attributes
-                                                        .filter((attr) => attr.unique)
-                                                        .map((attr) => (
-                                                            <SelectItem
-                                                                key={attr.name}
-                                                                value={attr.name}
-                                                            >
-                                                                {attr.name}
-                                                            </SelectItem>
-                                                        ))}
-                                                    {attributes.filter((attr) => attr.unique)
-                                                        .length === 0 && (
-                                                        <SelectItem value="name" disabled>
-                                                            No unique attributes available
-                                                        </SelectItem>
-                                                    )}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormDescription>
-                                                This attribute will be used as the display name for
-                                                entities. Must be a unique attribute.
-                                            </FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                {/* Description */}
-                                <FormField
-                                    control={form.control}
-                                    name="description"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Description</FormLabel>
-                                            <FormControl>
-                                                <Textarea
-                                                    placeholder="Describe what this entity type represents..."
-                                                    rows={3}
-                                                    {...field}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                {/* Type */}
-                                <FormField
-                                    control={form.control}
-                                    name="type"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Type</FormLabel>
-                                            <Select
-                                                onValueChange={field.onChange}
-                                                value={field.value}
-                                                disabled={mode === "edit"}
-                                            >
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="STANDARD">
-                                                        Standard
-                                                    </SelectItem>
-                                                    <SelectItem value="RELATIONSHIP">
-                                                        Relationship
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            {mode === "edit" && (
-                                                <FormDescription>
-                                                    Entity type cannot be changed after creation
-                                                </FormDescription>
-                                            )}
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+        <>
+            <Form {...form}>
+                <div className="space-y-6">
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                                <Database className="h-6 w-6 text-primary" />
                             </div>
-                        </div>
-                    </TabsContent>
-
-                    {/* Attributes Tab */}
-                    <TabsContent value="attributes" className="space-y-4">
-                        <div className="flex items-center justify-between">
                             <div>
-                                <h2 className="text-lg font-semibold">
-                                    Attributes & Relationships
-                                </h2>
-                                <p className="text-sm text-muted-foreground">
-                                    Manage the fields and relationships for this entity type
-                                </p>
+                                <h1 className="text-2xl font-semibold">
+                                    {pluralName ||
+                                        (mode === "create"
+                                            ? "New Entity Type"
+                                            : entityType?.name.plural || "Entity Type")}
+                                </h1>
+                                {mode === "edit" && entityType?.type && (
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <Badge variant="secondary">{entityType.type}</Badge>
+                                        <span className="text-sm text-muted-foreground">
+                                            Manage object attributes and other relevant settings
+                                        </span>
+                                    </div>
+                                )}
                             </div>
-                            <Button onClick={() => setDialogOpen(true)}>
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Attribute
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Link href={`/dashboard/organisation/${organisationId}/entity`}>
+                                <Button variant="outline">Back</Button>
+                            </Link>
+                            <Button onClick={form.handleSubmit(handleSubmit)}>
+                                <Save className="h-4 w-4 mr-2" />
+                                Save
                             </Button>
                         </div>
+                    </div>
 
-                        {/* Validation Requirements */}
-                        <div className="rounded-lg border bg-muted/50 p-4">
-                            <h3 className="text-sm font-semibold mb-3">Validation Requirements</h3>
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2 text-sm">
-                                    {newAttributes.some((attr) => attr.unique) ? (
-                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                    ) : (
-                                        <AlertCircle className="h-4 w-4 text-destructive" />
-                                    )}
-                                    <span
-                                        className={
-                                            newAttributes.some((attr) => attr.unique)
-                                                ? "text-green-600"
-                                                : "text-destructive"
-                                        }
-                                    >
-                                        At least one unique attribute
-                                    </span>
+                    {/* Validation Errors */}
+                    {form.formState.errors.root && (
+                        <Alert variant="destructive">
+                            <AlertDescription>
+                                {form.formState.errors.root.message}
+                            </AlertDescription>
+                        </Alert>
+                    )}
+
+                    {/* Tabs */}
+                    <TabsStandard defaultValue="configuration" className="w-full">
+                        <TabsList className="w-full justify-start">
+                            <TabsTrigger value="configuration">Configuration</TabsTrigger>
+                            <TabsTrigger value="attributes">
+                                Attributes
+                                {(attributes.length > 0 || relationships.length > 0) && (
+                                    <Badge variant="secondary" className="ml-2 h-5 px-1.5">
+                                        {attributes.length + relationships.length}
+                                    </Badge>
+                                )}
+                            </TabsTrigger>
+                        </TabsList>
+
+                        {/* Configuration Tab */}
+                        <TabsContent value="configuration" className="space-y-6">
+                            <div className="rounded-lg border bg-card p-6">
+                                <h2 className="text-lg font-semibold mb-4">General</h2>
+
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-2 gap-6">
+                                        {/* Name */}
+                                        <FormField
+                                            control={form.control}
+                                            name="pluralName"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="font-semibold">
+                                                        Plural noun
+                                                    </FormLabel>
+                                                    <FormDescription className="text-xs italic">
+                                                        This will be used to label a collection of
+                                                        these entities
+                                                    </FormDescription>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10">
+                                                            <Database className="h-4 w-4 text-primary" />
+                                                        </div>
+                                                        <FormControl>
+                                                            <Input
+                                                                placeholder="e.g., Companies"
+                                                                {...field}
+                                                            />
+                                                        </FormControl>
+                                                    </div>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        {/* Plural Name */}
+                                        <FormField
+                                            control={form.control}
+                                            name="singularName"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="font-semibold">
+                                                        Singular noun
+                                                    </FormLabel>
+                                                    <FormDescription className="text-xs italic">
+                                                        How we should label a single entity of this
+                                                        type
+                                                    </FormDescription>
+                                                    <div className="flex items-center gap-2">
+                                                        <FormControl>
+                                                            <Input
+                                                                placeholder="e.g., Company"
+                                                                {...field}
+                                                            />
+                                                        </FormControl>
+                                                    </div>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+
+                                    {/* Key / Slug */}
+                                    <FormField
+                                        control={form.control}
+                                        name="key"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Identifier / Slug</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="e.g., companies"
+                                                        disabled={mode === "edit"}
+                                                        {...field}
+                                                        onChange={(e) => {
+                                                            field.onChange(e);
+                                                            if (mode === "create") {
+                                                                setKeyManuallyEdited(true);
+                                                            }
+                                                        }}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription className="text-xs italic">
+                                                    A unique key used to identify and link this
+                                                    particular entity type. This cannot be changed
+                                                    later.
+                                                    {mode === "create" && !keyManuallyEdited && (
+                                                        <span className="block mt-1 text-muted-foreground">
+                                                            Auto-generated from plural noun. Edit to
+                                                            customize.
+                                                        </span>
+                                                    )}
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    {/* Identifier Key */}
+                                    <FormField
+                                        control={form.control}
+                                        name="identifierKey"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Identifier Key</FormLabel>
+                                                <Select
+                                                    onValueChange={field.onChange}
+                                                    value={field.value}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select a unique identifier" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {attributes
+                                                            .filter((attr) => attr.unique)
+                                                            .map((attr) => (
+                                                                <SelectItem
+                                                                    key={attr.name}
+                                                                    value={attr.name}
+                                                                >
+                                                                    {attr.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                        {attributes.filter((attr) => attr.unique)
+                                                            .length === 0 && (
+                                                            <SelectItem value="name" disabled>
+                                                                No unique attributes available
+                                                            </SelectItem>
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormDescription>
+                                                    This attribute will be used as the display name
+                                                    for entities. Must be a unique attribute.
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    {/* Description */}
+                                    <FormField
+                                        control={form.control}
+                                        name="description"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Description</FormLabel>
+                                                <FormControl>
+                                                    <Textarea
+                                                        placeholder="Describe what this entity type represents..."
+                                                        rows={3}
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    {/* Type */}
+                                    <FormField
+                                        control={form.control}
+                                        name="type"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Type</FormLabel>
+                                                <Select
+                                                    onValueChange={field.onChange}
+                                                    value={field.value}
+                                                    disabled={mode === "edit"}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="STANDARD">
+                                                            Standard
+                                                        </SelectItem>
+                                                        <SelectItem value="RELATIONSHIP">
+                                                            Relationship
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                {mode === "edit" && (
+                                                    <FormDescription>
+                                                        Entity type cannot be changed after creation
+                                                    </FormDescription>
+                                                )}
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
                                 </div>
-                                {form.watch("type") === "RELATIONSHIP" && (
+                            </div>
+                        </TabsContent>
+
+                        {/* Attributes Tab */}
+                        <TabsContent value="attributes" className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-lg font-semibold">
+                                        Attributes & Relationships
+                                    </h2>
+                                    <p className="text-sm text-muted-foreground">
+                                        Manage the fields and relationships for this entity type
+                                    </p>
+                                </div>
+                                <Button
+                                    onClick={() => {
+                                        setEditingAttribute(undefined);
+                                        setDialogOpen(true);
+                                    }}
+                                >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add Attribute
+                                </Button>
+                            </div>
+
+                            {/* Validation Requirements */}
+                            <div className="rounded-lg border bg-muted/50 p-4">
+                                <h3 className="text-sm font-semibold mb-3">
+                                    Validation Requirements
+                                </h3>
+                                <div className="space-y-2">
                                     <div className="flex items-center gap-2 text-sm">
-                                        {newRelationships.length >= 2 ? (
+                                        {newAttributes.some((attr) => attr.unique) ? (
                                             <CheckCircle2 className="h-4 w-4 text-green-600" />
                                         ) : (
                                             <AlertCircle className="h-4 w-4 text-destructive" />
                                         )}
                                         <span
                                             className={
-                                                newRelationships.length >= 2
+                                                newAttributes.some((attr) => attr.unique)
                                                     ? "text-green-600"
                                                     : "text-destructive"
                                             }
                                         >
-                                            Minimum 2 relationships ({newRelationships.length}/2)
+                                            At least one unique attribute
                                         </span>
                                     </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <DataTable
-                            columns={attributeColumns}
-                            data={attributes}
-                            enableSorting
-                            search={{
-                                enabled: true,
-                                searchableColumns: ["name"],
-                                placeholder: "Search attributes...",
-                            }}
-                            filter={{
-                                enabled: true,
-                                filters: [
-                                    {
-                                        column: "required",
-                                        type: "boolean",
-                                        label: "Required",
-                                    },
-                                    {
-                                        column: "unique",
-                                        type: "boolean",
-                                        label: "Unique",
-                                    },
-                                ],
-                            }}
-                            rowActions={{
-                                enabled: true,
-                                menuLabel: "Actions",
-                                actions: [
-                                    {
-                                        label: "Edit",
-                                        icon: Edit2,
-                                        onClick: (row) => {
-                                            console.log("Edit attribute:", row);
-                                        },
-                                    },
-                                    {
-                                        label: "Delete",
-                                        icon: Trash2,
-                                        onClick: (row) => {
-                                            handleDeleteAttribute(row.name);
-                                        },
-                                        variant: "destructive",
-                                    },
-                                ],
-                            }}
-                            emptyMessage="No attributes defined yet. Add your first attribute to get started."
-                            className="border rounded-md"
-                        />
-
-                        {/* Relationships Section */}
-                        {relationships.length > 0 && (
-                            <div className="mt-8 space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-md font-semibold">Relationships</h3>
+                                    {form.watch("type") === "RELATIONSHIP" && (
+                                        <div className="flex items-center gap-2 text-sm">
+                                            {newRelationships.length >= 2 ? (
+                                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                            ) : (
+                                                <AlertCircle className="h-4 w-4 text-destructive" />
+                                            )}
+                                            <span
+                                                className={
+                                                    newRelationships.length >= 2
+                                                        ? "text-green-600"
+                                                        : "text-destructive"
+                                                }
+                                            >
+                                                Minimum 2 relationships ({newRelationships.length}
+                                                /2)
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
-                                <DataTable
-                                    columns={relationshipColumns}
-                                    data={relationships}
-                                    enableSorting
-                                    search={{
-                                        enabled: true,
-                                        searchableColumns: ["name"],
-                                        placeholder: "Search relationships...",
-                                    }}
-                                    rowActions={{
-                                        enabled: true,
-                                        menuLabel: "Actions",
-                                        actions: [
-                                            {
-                                                label: "Edit",
-                                                icon: Edit2,
-                                                onClick: (row) => {
-                                                    console.log("Edit relationship:", row);
-                                                },
-                                            },
-                                            {
-                                                label: "Delete",
-                                                icon: Trash2,
-                                                onClick: (row) => {
-                                                    handleDeleteRelationship(row.key);
-                                                },
-                                                variant: "destructive",
-                                            },
-                                        ],
-                                    }}
-                                    emptyMessage="No relationships defined."
-                                    className="border rounded-md"
-                                />
                             </div>
-                        )}
-                    </TabsContent>
-                </TabsStandard>
 
-                {/* Attribute/Relationship Dialog */}
-                <AttributeDialog
-                    open={dialogOpen}
-                    onOpenChange={setDialogOpen}
-                    onSubmit={handleAttributeSubmit}
-                    entityTypes={entityTypes}
-                    currentEntityType={entityType}
-                />
-            </div>
-        </Form>
+                            <DataTable
+                                columns={attributeColumns}
+                                data={attributes}
+                                enableSorting
+                                search={{
+                                    enabled: true,
+                                    searchableColumns: ["name"],
+                                    placeholder: "Search attributes...",
+                                }}
+                                filter={{
+                                    enabled: true,
+                                    filters: [
+                                        {
+                                            column: "required",
+                                            type: "boolean",
+                                            label: "Required",
+                                        },
+                                        {
+                                            column: "unique",
+                                            type: "boolean",
+                                            label: "Unique",
+                                        },
+                                    ],
+                                }}
+                                rowActions={{
+                                    enabled: true,
+                                    menuLabel: "Actions",
+                                    actions: [
+                                        {
+                                            label: "Edit",
+                                            icon: Edit2,
+                                            onClick: (row) => {
+                                                handleEditAttribute(row);
+                                            },
+                                        },
+                                        {
+                                            label: "Delete",
+                                            icon: Trash2,
+                                            onClick: (row) => {
+                                                handleDeleteAttribute(row.name);
+                                            },
+                                            variant: "destructive",
+                                            disabled: (row) => row.protected || false,
+                                        },
+                                    ],
+                                }}
+                                emptyMessage="No attributes defined yet. Add your first attribute to get started."
+                                className="border rounded-md"
+                            />
+
+                            {/* Relationships Section */}
+                            {relationships.length > 0 && (
+                                <div className="mt-8 space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-md font-semibold">Relationships</h3>
+                                    </div>
+                                    <DataTable
+                                        columns={relationshipColumns}
+                                        data={relationships}
+                                        enableSorting
+                                        search={{
+                                            enabled: true,
+                                            searchableColumns: ["name"],
+                                            placeholder: "Search relationships...",
+                                        }}
+                                        rowActions={{
+                                            enabled: true,
+                                            menuLabel: "Actions",
+                                            actions: [
+                                                {
+                                                    label: "Edit",
+                                                    icon: Edit2,
+                                                    onClick: (row) => {
+                                                        handleEditRelationship(row);
+                                                    },
+                                                },
+                                                {
+                                                    label: "Delete",
+                                                    icon: Trash2,
+                                                    onClick: (row) => {
+                                                        handleDeleteRelationship(row.key);
+                                                    },
+                                                    variant: "destructive",
+                                                    disabled: (row) => row.protected || false,
+                                                },
+                                            ],
+                                        }}
+                                        emptyMessage="No relationships defined."
+                                        className="border rounded-md"
+                                    />
+                                </div>
+                            )}
+                        </TabsContent>
+                    </TabsStandard>
+
+                    {/* Attribute/Relationship Dialog */}
+                </div>
+            </Form>
+            <AttributeDialog
+                open={dialogOpen}
+                onOpenChange={(open) => {
+                    setDialogOpen(open);
+                    if (!open) {
+                        setEditingAttribute(undefined);
+                    }
+                }}
+                onSubmit={handleAttributeSubmit}
+                entityTypes={entityTypes}
+                currentEntityType={entityType}
+                editingAttribute={editingAttribute}
+            />
+        </>
     );
 };

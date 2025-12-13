@@ -54,24 +54,24 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import {
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/util/utils";
 
 export interface SearchConfig<T> {
     enabled: boolean;
-    searchableColumns: ((keyof T) extends string ? (keyof T) : never)[];
+    searchableColumns: (keyof T extends string ? keyof T : never)[];
     placeholder?: string;
     debounceMs?: number;
     onSearchChange?: (value: string) => void;
 }
 
-export type FilterType = "text" | "select" | "multi-select" | "date-range" | "number-range" | "boolean";
+export type FilterType =
+    | "text"
+    | "select"
+    | "multi-select"
+    | "date-range"
+    | "number-range"
+    | "boolean";
 
 export interface FilterOption {
     label: string;
@@ -79,7 +79,7 @@ export interface FilterOption {
 }
 
 export interface ColumnFilter<T> {
-    column: (keyof T) extends string ? (keyof T) : never;
+    column: keyof T extends string ? keyof T : never;
     type: FilterType;
     label: string;
     options?: FilterOption[]; // For select/multi-select
@@ -176,7 +176,7 @@ function DraggableRow<TData>({
             ))}
             {rowActions?.enabled && (
                 <TableCell className="w-[50px] p-2">
-                    <DropdownMenu>
+                    <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
                             <Button
                                 variant="ghost"
@@ -448,7 +448,9 @@ export function DataTable<TData, TValue>({
                     return (
                         <div className="relative">
                             <Input
-                                placeholder={columnFilter.placeholder ?? `Filter ${columnFilter.label}...`}
+                                placeholder={
+                                    columnFilter.placeholder ?? `Filter ${columnFilter.label}...`
+                                }
                                 value={currentValue ?? ""}
                                 onChange={(e) => handleFilterChange(columnId, e.target.value)}
                                 className="h-9"
@@ -477,7 +479,10 @@ export function DataTable<TData, TValue>({
                             </SelectTrigger>
                             <SelectContent>
                                 {columnFilter.options?.map((option) => (
-                                    <SelectItem key={String(option.value)} value={String(option.value)}>
+                                    <SelectItem
+                                        key={String(option.value)}
+                                        value={String(option.value)}
+                                    >
                                         {option.label}
                                     </SelectItem>
                                 ))}
@@ -492,7 +497,10 @@ export function DataTable<TData, TValue>({
                             {columnFilter.options?.map((option) => {
                                 const isChecked = selectedValues.includes(option.value);
                                 return (
-                                    <div key={String(option.value)} className="flex items-center gap-2">
+                                    <div
+                                        key={String(option.value)}
+                                        className="flex items-center gap-2"
+                                    >
                                         <Checkbox
                                             id={`${columnId}-${option.value}`}
                                             checked={isChecked}
@@ -500,7 +508,9 @@ export function DataTable<TData, TValue>({
                                             onCheckedChange={(checked) => {
                                                 const newValues = checked
                                                     ? [...selectedValues, option.value]
-                                                    : selectedValues.filter((v) => v !== option.value);
+                                                    : selectedValues.filter(
+                                                          (v) => v !== option.value
+                                                      );
                                                 handleFilterChange(columnId, newValues);
                                             }}
                                         />
@@ -552,7 +562,9 @@ export function DataTable<TData, TValue>({
                                 onChange={(e) =>
                                     handleFilterChange(columnId, {
                                         ...rangeValue,
-                                        min: e.target.value ? parseFloat(e.target.value) : undefined,
+                                        min: e.target.value
+                                            ? parseFloat(e.target.value)
+                                            : undefined,
                                     })
                                 }
                                 className="h-9"
@@ -565,7 +577,9 @@ export function DataTable<TData, TValue>({
                                 onChange={(e) =>
                                     handleFilterChange(columnId, {
                                         ...rangeValue,
-                                        max: e.target.value ? parseFloat(e.target.value) : undefined,
+                                        max: e.target.value
+                                            ? parseFloat(e.target.value)
+                                            : undefined,
                                     })
                                 }
                                 className="h-9"
@@ -613,9 +627,7 @@ export function DataTable<TData, TValue>({
                 enableDragDrop ? "overflow-visible" : "overflow-x-auto"
             )}
         >
-            <table
-                className={cn("w-full caption-bottom text-sm", className)}
-            >
+            <table className={cn("w-full caption-bottom text-sm", className)}>
                 <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id}>
@@ -749,7 +761,9 @@ export function DataTable<TData, TValue>({
                                 </div>
                                 <ScrollArea className="max-h-[400px]">
                                     <div className="p-4 space-y-4">
-                                        {filter.filters.map((columnFilter) => renderFilter(columnFilter))}
+                                        {filter.filters.map((columnFilter) =>
+                                            renderFilter(columnFilter)
+                                        )}
                                     </div>
                                 </ScrollArea>
                             </PopoverContent>
