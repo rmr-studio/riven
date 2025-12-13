@@ -1,4 +1,6 @@
 package riven.core.models.common.display
 
-class DisplayName {
-}
+data class DisplayName(
+    var singular: String,
+    var plural: String
+)

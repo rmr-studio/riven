@@ -5,6 +5,7 @@ import jakarta.persistence.*
 import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
 import riven.core.enums.entity.EntityCategory
+import riven.core.models.common.display.DisplayName
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.EntityType
 import riven.core.models.entity.configuration.EntityConfig
@@ -33,8 +34,18 @@ data class EntityTypeEntity(
     @Column(name = "key", nullable = false, updatable = false)
     val key: String,
 
-    @Column(name = "display_name", nullable = false)
-    var displayName: String,
+    @Embedded
+    @AttributeOverrides(
+        AttributeOverride(
+            name = "singular",
+            column = Column(name = "display_name_singular", nullable = false)
+        ),
+        AttributeOverride(
+            name = "plural",
+            column = Column(name = "display_name_plural", nullable = false)
+        )
+    )
+    val displayName: DisplayName,
 
     @Column(name = "identifier_key", nullable = false)
     val identifierKey: String = "name",

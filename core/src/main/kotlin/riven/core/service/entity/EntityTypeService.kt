@@ -101,7 +101,10 @@ class EntityTypeService(
 
         // Update in place (NOT create new row)
         existing.apply {
-            displayName = type.name
+            displayName.apply {
+                singular = type.name.singular
+                plural = type.name.plural
+            }
             description = type.description
             schema = type.schema
             display = type.displayConfig

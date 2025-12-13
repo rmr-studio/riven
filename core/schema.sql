@@ -245,7 +245,7 @@ CREATE POLICY "blocks_write_by_org" ON public.blocks
                                     FROM public.organisation_members
                                     WHERE user_id = auth.uid()));
 
-    
+
 CREATE TABLE public.block_children
 (
     "id"          uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -308,26 +308,27 @@ create index if not exists idx_activity_logs_user_id
 
 CREATE TABLE IF NOT EXISTS public.entity_types
 (
-    "id"                UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
-    "key"               TEXT    NOT NULL,
-    "type"              TEXT    NOT NULL CHECK (type IN ('STANDARD', 'RELATIONSHIP')),
-    "organisation_id"   UUID REFERENCES organisations (id) ON DELETE CASCADE,
-    "identifier_key"    TEXT    NOT NULL,
-    "display_name"      TEXT    NOT NULL,
-    "description"       TEXT,
-    "protected"         BOOLEAN NOT NULL         DEFAULT FALSE,
-    "schema"            JSONB   NOT NULL,
-    "display_structure" JSONB   NOT NULL,
-    "column_order"      JSONB,
+    "id"                    UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
+    "key"                   TEXT    NOT NULL,
+    "type"                  TEXT    NOT NULL CHECK (type IN ('STANDARD', 'RELATIONSHIP')),
+    "organisation_id"       UUID REFERENCES organisations (id) ON DELETE CASCADE,
+    "identifier_key"        TEXT    NOT NULL,
+    "display_name_singular" TEXT    NOT NULL,
+    "display_name_plural"   TEXT    NOT NULL,
+    "description"           TEXT,
+    "protected"             BOOLEAN NOT NULL         DEFAULT FALSE,
+    "schema"                JSONB   NOT NULL,
+    "display_structure"     JSONB   NOT NULL,
+    "column_order"          JSONB,
     -- Denormalized count of entities of this type for faster access
-    "count"             INTEGER NOT NULL         DEFAULT 0,
-    "relationships"     JSONB,
-    "version"           INTEGER NOT NULL         DEFAULT 1,
-    "archived"          BOOLEAN NOT NULL         DEFAULT FALSE,
-    "created_at"        TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "updated_at"        TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "created_by"        UUID,
-    "updated_by"        UUID,
+    "count"                 INTEGER NOT NULL         DEFAULT 0,
+    "relationships"         JSONB,
+    "version"               INTEGER NOT NULL         DEFAULT 1,
+    "archived"              BOOLEAN NOT NULL         DEFAULT FALSE,
+    "created_at"            TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updated_at"            TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "created_by"            UUID,
+    "updated_by"            UUID,
 
     -- Single row per entity type (mutable pattern)
     -- Also creates an index on organisation_id + key for faster lookups
