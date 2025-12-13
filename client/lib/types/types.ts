@@ -831,6 +831,10 @@ export interface components {
         ContentNode: WithRequired<components["schemas"]["Node"], "block" | "type" | "warnings"> & {
             children?: components["schemas"]["Node"][];
         };
+        DisplayName: {
+            singular: string;
+            plural: string;
+        };
         DraggableOptions: {
             cancel?: string;
             /** Format: int32 */
@@ -907,7 +911,7 @@ export interface components {
             key: string;
             /** Format: int32 */
             version: number;
-            name: string;
+            name: components["schemas"]["DisplayName"];
             protected: boolean;
             identifierKey: string;
             description?: string;

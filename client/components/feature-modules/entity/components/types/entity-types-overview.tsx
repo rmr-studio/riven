@@ -14,7 +14,7 @@ interface Props {
     organisationId: string;
 }
 
-export const EntityTypeOverview: FC<Props> = ({ organisationId }) => {
+export const EntityTypesOverview: FC<Props> = ({ organisationId }) => {
     const { data: types, isPending } = useEntityTypes(organisationId);
 
     const columns: ColumnDef<EntityType>[] = useMemo(
@@ -28,7 +28,7 @@ export const EntityTypeOverview: FC<Props> = ({ organisationId }) => {
                             <Database className="h-4 w-4 text-primary" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="font-medium">{row.original.name}</span>
+                            <span className="font-medium">{row.original.name.plural}</span>
                             {row.original.description && (
                                 <span className="text-xs text-muted-foreground">
                                     {row.original.description}

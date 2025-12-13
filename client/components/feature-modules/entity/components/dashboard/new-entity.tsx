@@ -5,9 +5,9 @@ import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-gro
 import { isResponseError } from "@/lib/util/error/error.util";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { EntityTypesOverview } from "../types/entity-types-overview";
+import { EntityTypeOverview } from "../forms/entity-type";
 
-const EntityTypesDashboard = () => {
+const NewEntityTypeDashboard = () => {
     const { data: organisation, isPending, error, isLoadingAuth } = useOrganisation();
     const router = useRouter();
 
@@ -42,6 +42,10 @@ const EntityTypesDashboard = () => {
             label: "Entities",
             href: `/dashboard/organisation/${organisation.id}/entity`,
         },
+        {
+            label: "New Entity Type",
+            href: `/dashboard/organisation/${organisation.id}/entity/new`,
+        },
     ];
 
     return (
@@ -51,10 +55,10 @@ const EntityTypesDashboard = () => {
                 <BreadCrumbGroup items={trail} />
             </header>
             <section>
-                <EntityTypesOverview organisationId={organisation.id} />
+                <EntityTypeOverview organisationId={organisation.id} mode="create" />
             </section>
         </div>
     );
 };
 
-export default EntityTypesDashboard;
+export default NewEntityTypeDashboard;

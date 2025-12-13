@@ -1,6 +1,6 @@
 "use client";
 
-import { EntityTypeForm } from "@/components/feature-modules/entity/components/forms/entity-type-form";
+import { EntityTypeForm } from "@/components/feature-modules/entity/components/forms/entity-type";
 import { useBlockTypeByKey } from "@/components/feature-modules/entity/hooks/use-entity-types";
 import { useParams } from "next/navigation";
 
@@ -29,11 +29,7 @@ const EntityTypeEditPage = () => {
 
     return (
         <div className="py-6 px-12">
-            <EntityTypeForm
-                organisationId={organisationId}
-                entityType={entityType}
-                mode="edit"
-            />
+            <EntityTypeForm organisationId={organisationId} entityType={entityType} mode="edit" />
         </div>
     );
 };

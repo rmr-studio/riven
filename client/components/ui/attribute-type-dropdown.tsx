@@ -36,7 +36,7 @@ import { FormControl } from "./form";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 
 interface Props {
-    value: AttributeKey;
+    key: string;
     onChange: (value: string) => void;
     open: boolean;
     setOpen: Dispatch<SetStateAction<boolean>>;
@@ -130,7 +130,7 @@ export const attributeTypes: AttributeSchemaType[] = [
     },
 ];
 
-export const AttributeTypeDropdown: FC<Props> = ({ onChange, value, open, setOpen }) => {
+export const AttributeTypeDropdown: FC<Props> = ({ onChange, key, open, setOpen }) => {
     const groupedAttributes = useMemo(() => {
         const groups: Partial<Record<DataType, AttributeSchemaType[]>> = {
             [DataType.STRING]: [],
@@ -150,12 +150,11 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, value, open, setOpe
     }, []);
 
     const selectedAttribute = useMemo(() => {
-        if (value === "RELATIONSHIP") {
+        if (key === "RELATIONSHIP") {
             return { label: "Relationship", icon: Link2 };
         }
-        return attributeTypes.find((attr) => attr.key === value) || attributeTypes[0];
-    }, [value]);
-
+        return attributeTypes.find((attr) => attr.key === key) || attributeTypes[0];
+    }, [key]);
     const getGroupName = (type: DataType): string => {
         switch (type) {
             case DataType.STRING:
@@ -207,7 +206,7 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, value, open, setOpe
                                 <Check
                                     className={cn(
                                         "mr-1 size-3.5",
-                                        value === "RELATIONSHIP" ? "opacity-100" : "opacity-0"
+                                        key === "RELATIONSHIP" ? "opacity-100" : "opacity-0"
                                     )}
                                 />
                                 <Link2 className="mr-1 size-3.5" />
@@ -235,7 +234,7 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, value, open, setOpe
                                                 <Check
                                                     className={cn(
                                                         "mr-1 size-3.5",
-                                                        value === attr.key
+                                                        key === attr.key
                                                             ? "opacity-100"
                                                             : "opacity-0"
                                                     )}
