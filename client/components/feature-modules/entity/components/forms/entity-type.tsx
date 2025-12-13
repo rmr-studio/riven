@@ -24,6 +24,7 @@ import {
 import { TabsContent, TabsList, TabsStandard, TabsTrigger } from "@/components/ui/tabs-standard";
 import { Textarea } from "@/components/ui/textarea";
 import { DataType } from "@/lib/types/types";
+import { toKeyCase } from "@/lib/util/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ColumnDef } from "@tanstack/react-table";
 import {
@@ -103,9 +104,13 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
     const [dialogOpen, setDialogOpen] = useState(false);
     const [newAttributes, setNewAttributes] = useState<AttributeFormData[]>([]);
     const [newRelationships, setNewRelationships] = useState<RelationshipFormData[]>([]);
+    const [keyManuallyEdited, setKeyManuallyEdited] = useState(mode === "edit");
 
     // Fetch all entity types for relationship creation
     const { data: entityTypes = [] } = useEntityTypes(organisationId);
+
+    // Watch the pluralName field for dynamic title and key generation
+    const pluralName = form.watch("pluralName");
 
     // Auto-generate default "name" attribute for new entity types
     useEffect(() => {
@@ -122,6 +127,14 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
             setNewAttributes([defaultNameAttribute]);
         }
     }, [mode, newAttributes.length]);
+
+    // Auto-generate key from pluralName in create mode
+    useEffect(() => {
+        if (mode === "create" && !keyManuallyEdited && pluralName) {
+            const generatedKey = toKeyCase(pluralName);
+            form.setValue("key", generatedKey, { shouldValidate: false });
+        }
+    }, [pluralName, mode, keyManuallyEdited, form]);
 
     // Extract attributes from schema and combine with new attributes
     const attributes: AttributeRow[] = useMemo(() => {
@@ -336,7 +349,10 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                         </div>
                         <div>
                             <h1 className="text-2xl font-semibold">
-                                {mode === "create" ? "New Entity Type" : entityType?.name.plural}
+                                {pluralName ||
+                                    (mode === "create"
+                                        ? "New Entity Type"
+                                        : entityType?.name.plural || "Entity Type")}
                             </h1>
                             {mode === "edit" && entityType?.type && (
                                 <div className="flex items-center gap-2 mt-1">
@@ -390,25 +406,28 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                                     {/* Name */}
                                     <FormField
                                         control={form.control}
-                                        name="singularName"
+                                        name="pluralName"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Singular noun</FormLabel>
+                                                <FormLabel className="font-semibold">
+                                                    Plural noun
+                                                </FormLabel>
+                                                <FormDescription className="text-xs italic">
+                                                    This will be used to label a collection of these
+                                                    entities
+                                                </FormDescription>
                                                 <div className="flex items-center gap-2">
                                                     <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10">
                                                         <Database className="h-4 w-4 text-primary" />
                                                     </div>
                                                     <FormControl>
                                                         <Input
-                                                            placeholder="e.g., Company"
+                                                            placeholder="e.g., Companies"
                                                             {...field}
                                                         />
                                                     </FormControl>
                                                 </div>
                                                 <FormMessage />
-                                                <FormDescription className="text-xs italic">
-                                                    How we should label a single entity of this type
-                                                </FormDescription>
                                             </FormItem>
                                         )}
                                     />
@@ -416,10 +435,15 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                                     {/* Plural Name */}
                                     <FormField
                                         control={form.control}
-                                        name="pluralName"
+                                        name="singularName"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Plural noun</FormLabel>
+                                                <FormLabel className="font-semibold">
+                                                    Singular noun
+                                                </FormLabel>
+                                                <FormDescription className="text-xs italic">
+                                                    How we should label a single entity of this type
+                                                </FormDescription>
                                                 <div className="flex items-center gap-2">
                                                     <FormControl>
                                                         <Input
@@ -429,10 +453,6 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                                                     </FormControl>
                                                 </div>
                                                 <FormMessage />
-                                                <FormDescription className="text-xs italic">
-                                                    How we should describe a collection of these
-                                                    entities.
-                                                </FormDescription>
                                             </FormItem>
                                         )}
                                     />
@@ -450,12 +470,24 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                                                     placeholder="e.g., companies"
                                                     disabled={mode === "edit"}
                                                     {...field}
+                                                    onChange={(e) => {
+                                                        field.onChange(e);
+                                                        if (mode === "create") {
+                                                            setKeyManuallyEdited(true);
+                                                        }
+                                                    }}
                                                 />
                                             </FormControl>
                                             <FormDescription className="text-xs italic">
                                                 A unique key used to identify and link this
                                                 particular entity type. This cannot be changed
                                                 later.
+                                                {mode === "create" && !keyManuallyEdited && (
+                                                    <span className="block mt-1 text-muted-foreground">
+                                                        Auto-generated from plural noun. Edit to
+                                                        customize.
+                                                    </span>
+                                                )}
                                             </FormDescription>
                                             <FormMessage />
                                         </FormItem>

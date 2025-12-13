@@ -178,7 +178,7 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
                                     <AttributeTypeDropdown
                                         open={typePopoverOpen}
                                         setOpen={setTypePopoverOpen}
-                                        key={selectedType}
+                                        attributeKey={selectedType}
                                         onChange={field.onChange}
                                     />
 

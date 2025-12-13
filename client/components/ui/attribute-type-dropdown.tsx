@@ -1,6 +1,7 @@
 import { Schema, SchemaOptions } from "@/lib/interfaces/common.interface";
 import { DataFormat, DataType } from "@/lib/types/types";
 import { cn } from "@/lib/util/utils";
+import { PopoverClose } from "@radix-ui/react-popover";
 import {
     AtSign,
     Calendar,
@@ -36,7 +37,7 @@ import { FormControl } from "./form";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 
 interface Props {
-    key: string;
+    attributeKey: string;
     onChange: (value: string) => void;
     open: boolean;
     setOpen: Dispatch<SetStateAction<boolean>>;
@@ -130,7 +131,7 @@ export const attributeTypes: AttributeSchemaType[] = [
     },
 ];
 
-export const AttributeTypeDropdown: FC<Props> = ({ onChange, key, open, setOpen }) => {
+export const AttributeTypeDropdown: FC<Props> = ({ onChange, attributeKey, open, setOpen }) => {
     const groupedAttributes = useMemo(() => {
         const groups: Partial<Record<DataType, AttributeSchemaType[]>> = {
             [DataType.STRING]: [],
@@ -150,11 +151,11 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, key, open, setOpen 
     }, []);
 
     const selectedAttribute = useMemo(() => {
-        if (key === "RELATIONSHIP") {
+        if (attributeKey === "RELATIONSHIP") {
             return { label: "Relationship", icon: Link2 };
         }
-        return attributeTypes.find((attr) => attr.key === key) || attributeTypes[0];
-    }, [key]);
+        return attributeTypes.find((attr) => attr.key === attributeKey) || attributeTypes[0];
+    }, [attributeKey]);
     const getGroupName = (type: DataType): string => {
         switch (type) {
             case DataType.STRING:
@@ -173,10 +174,17 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, key, open, setOpen 
     };
 
     return (
-        <Popover modal={true} open={open} onOpenChange={setOpen}>
+        <Popover>
             <PopoverTrigger asChild>
                 <FormControl>
-                    <Button variant="outline" role="combobox" className="w-full justify-between">
+                    <Button
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-between"
+                        onPointerDown={(e) => {
+                            if (open) e.preventDefault();
+                        }}
+                    >
                         <div className="flex items-center gap-2">
                             <selectedAttribute.icon className="h-4 w-4" />
                             <span>{selectedAttribute.label}</span>
@@ -203,14 +211,18 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, key, open, setOpen 
                                     setOpen(false);
                                 }}
                             >
-                                <Check
-                                    className={cn(
-                                        "mr-1 size-3.5",
-                                        key === "RELATIONSHIP" ? "opacity-100" : "opacity-0"
-                                    )}
-                                />
-                                <Link2 className="mr-1 size-3.5" />
-                                Relationship
+                                <PopoverClose>
+                                    <Check
+                                        className={cn(
+                                            "mr-1 size-3.5",
+                                            attributeKey === "RELATIONSHIP"
+                                                ? "opacity-100"
+                                                : "opacity-0"
+                                        )}
+                                    />
+                                    <Link2 className="mr-1 size-3.5" />
+                                    Relationship
+                                </PopoverClose>
                             </CommandItem>
                         </CommandGroup>
                         {Object.entries(groupedAttributes).map(
@@ -231,16 +243,18 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, key, open, setOpen 
                                                     setOpen(false);
                                                 }}
                                             >
-                                                <Check
-                                                    className={cn(
-                                                        "mr-1 size-3.5",
-                                                        key === attr.key
-                                                            ? "opacity-100"
-                                                            : "opacity-0"
-                                                    )}
-                                                />
-                                                <attr.icon className="mr-1 size-3.5" />
-                                                {attr.label}
+                                                <PopoverClose asChild>
+                                                    <Check
+                                                        className={cn(
+                                                            "mr-1 size-3.5",
+                                                            attributeKey === attr.key
+                                                                ? "opacity-100"
+                                                                : "opacity-0"
+                                                        )}
+                                                    />
+                                                    <attr.icon className="mr-1 size-3.5" />
+                                                    {attr.label}
+                                                </PopoverClose>
                                             </CommandItem>
                                         ))}
                                     </CommandGroup>
