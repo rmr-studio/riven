@@ -4,7 +4,6 @@ import riven.core.entity.util.AuditableModel
 import riven.core.enums.entity.EntityCategory
 import riven.core.models.common.display.DisplayName
 import riven.core.models.common.validation.Schema
-import riven.core.models.entity.configuration.EntityConfig
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import java.time.ZonedDateTime
 import java.util.*
@@ -38,11 +37,10 @@ data class EntityType(
     val type: EntityCategory,
     // Schema will always be created with a unique, non-nullable 'name' attribute
     val schema: Schema,
-    val displayConfig: EntityConfig,
     val relationships: List<EntityRelationshipDefinition>? = null,
     // The order in which the attributes should be displayed in the UI
-    val order: List<String>? = null,
-    val entitiesCount: Long? = null,
+    val order: List<String>,
+    val entitiesCount: Long = 0L,
     override val createdAt: ZonedDateTime?,
     override val updatedAt: ZonedDateTime?,
     override val createdBy: UUID?,

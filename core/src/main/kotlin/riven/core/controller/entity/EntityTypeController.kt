@@ -5,11 +5,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import riven.core.models.entity.EntityType
+import riven.core.models.request.entity.CreateEntityTypeRequest
 import riven.core.service.entity.EntityTypeService
 import java.util.*
 
@@ -51,5 +49,20 @@ class EntityTypeController(
     ): ResponseEntity<EntityType> {
         val entityType = entityTypeService.getByKey(key, organisationId)
         return ResponseEntity.ok(entityType.toModel())
+    }
+
+    @PostMapping("/")
+    @Operation(
+        summary = "Create a new entity type",
+        description = "Creates and publishes a new entity type for the specified organisation."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "201", description = "Entity type created successfully"),
+        ApiResponse(responseCode = "400", description = "Invalid request data"),
+        ApiResponse(responseCode = "401", description = "Unauthorized access")
+    )
+    fun createEntityType(@RequestBody request: CreateEntityTypeRequest): ResponseEntity<EntityType> {
+        val newEntityType = entityTypeService.publishEntityType(request)
+        return ResponseEntity.status(201).body(newEntityType)
     }
 }

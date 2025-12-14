@@ -1,6 +1,7 @@
 package riven.core.models.common.validation
 
 import io.swagger.v3.oas.annotations.media.ArraySchema
+import riven.core.enums.common.OptionSortingType
 import riven.core.enums.core.DataFormat
 import riven.core.enums.core.DataType
 import riven.core.models.common.json.JsonObject
@@ -56,6 +57,8 @@ data class Schema(
             )
         )
         val enum: List<JsonValue>? = null,
+        val enumSorting: OptionSortingType? = null,
+
         val minLength: Int? = null,
         val maxLength: Int? = null,
         val minimum: Double? = null,

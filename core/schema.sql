@@ -318,7 +318,6 @@ CREATE TABLE IF NOT EXISTS public.entity_types
     "description"           TEXT,
     "protected"             BOOLEAN NOT NULL         DEFAULT FALSE,
     "schema"                JSONB   NOT NULL,
-    "display_structure"     JSONB   NOT NULL,
     "column_order"          JSONB,
     -- Denormalized count of entities of this type for faster access
     "count"                 INTEGER NOT NULL         DEFAULT 0,
@@ -340,8 +339,6 @@ CREATE TABLE IF NOT EXISTS public.entity_types
         (type = 'STANDARD' AND relationships IS NULL)
         )
 );
-
-
 
 -- =====================================================
 -- 2. ENTITIES TABLE
