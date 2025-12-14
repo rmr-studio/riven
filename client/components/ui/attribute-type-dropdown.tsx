@@ -25,6 +25,17 @@ interface Props {
 export type AttributeKey = DataType | "RELATIONSHIP";
 
 export const AttributeTypeDropdown: FC<Props> = ({ onChange, attributeKey, open, setOpen }) => {
+    const commonAttributes: AttributeSchemaType[] = useMemo(() => {
+        return [
+            attributeTypes.TEXT,
+            attributeTypes.NUMBER,
+            attributeTypes.SELECT,
+            attributeTypes.MULTI_SELECT,
+            attributeTypes.CHECKBOX,
+            attributeTypes.DATETIME,
+        ];
+    }, []);
+
     const groupedAttributes = useMemo(() => {
         const groups: Partial<Record<DataType, AttributeSchemaType[]>> = {
             [DataType.STRING]: [],
@@ -122,6 +133,29 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, attributeKey, open,
                                 Relationship
                             </CommandItem>
                         </CommandGroup>
+                        <CommandGroup heading="Common Types">
+                            {commonAttributes.map((attr) => (
+                                <CommandItem
+                                    className="px-0 text-sm text-primary/80"
+                                    key={`common-${attr.key}`}
+                                    value={attr.key}
+                                    onSelect={() => {
+                                        onChange(attr.key);
+                                        setOpen(false);
+                                    }}
+                                >
+                                    <Check
+                                        className={cn(
+                                            "mr-1 size-3.5",
+                                            attributeKey === attr.key ? "opacity-100" : "opacity-0"
+                                        )}
+                                    />
+                                    <attr.icon className="mr-1 size-3.5" />
+                                    {attr.label}
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+
                         {Object.entries(groupedAttributes).map(
                             ([type, attrs]) =>
                                 attrs &&

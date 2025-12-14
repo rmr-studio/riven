@@ -31,7 +31,6 @@ export interface AttributeFormData {
     type: "attribute";
     key: SchemaType;
     name: string;
-    description?: string;
     dataType: DataType;
     dataFormat?: DataFormat;
     required: boolean;

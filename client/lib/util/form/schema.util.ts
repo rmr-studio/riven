@@ -56,7 +56,7 @@ export const attributeTypes: Record<SchemaType, AttributeSchemaType> = {
         icon: Calendar,
     },
     [SchemaType.DATETIME]: {
-        label: "DateTime",
+        label: "Date & Time",
         key: SchemaType.DATETIME,
         type: DataType.STRING,
         format: DataFormat.DATETIME,

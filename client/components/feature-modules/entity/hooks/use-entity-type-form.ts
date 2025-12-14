@@ -37,7 +37,7 @@ export interface UseEntityTypeFormReturn {
         newAttributes: AttributeFormData[],
         newRelationships: RelationshipFormData[],
         order: string[]
-    ) => void;
+    ) => Promise<void>;
 }
 
 export function useEntityTypeForm(
@@ -74,12 +74,12 @@ export function useEntityTypeForm(
         }
     }, [pluralName, mode, keyManuallyEdited, form]);
 
-    const handleSubmit = (
+    const handleSubmit = async (
         values: EntityTypeFormValues,
         attributeSchema: AttributeFormData[],
         relationships: RelationshipFormData[],
         order: string[]
-    ) => {
+    ): Promise<void> => {
         // Validation: At least one unique attribute must exist
         const hasUniqueAttribute = attributeSchema.some((attr) => attr.unique);
         if (!hasUniqueAttribute) {
@@ -134,7 +134,6 @@ export function useEntityTypeForm(
                         label: attr.name,
                         key: attr.key,
                         type: attr.dataType,
-                        description: attr.description,
                         format: attr.dataFormat,
                         required: attr.required,
                         unique: attr.unique,
@@ -150,6 +149,8 @@ export function useEntityTypeForm(
             relationships: relationships,
             order: order,
         };
+
+        await publishType(request);
     };
 
     const { mutateAsync: publishType } = useMutation({

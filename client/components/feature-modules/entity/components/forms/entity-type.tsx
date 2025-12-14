@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { TabsContent, TabsList, TabsStandard, TabsTrigger } from "@/components/ui/tabs-standard";
 import { Textarea } from "@/components/ui/textarea";
-import { DataType } from "@/lib/types/types";
+import { DataType, SchemaType } from "@/lib/types/types";
 import { ColumnDef } from "@tanstack/react-table";
 import {
     AlertCircle,
@@ -38,14 +38,14 @@ import {
 import Link from "next/link";
 import { FC, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { AttributeRow, useAttributeManagement } from "../../hooks/use-attribute-management";
+import { useAttributeManagement } from "../../hooks/use-attribute-management";
 import { EntityTypeFormValues, useEntityTypeForm } from "../../hooks/use-entity-type-form";
 import { useEntityTypes } from "../../hooks/use-entity-types";
 import type {
     AttributeFormData,
+    EntityType,
     RelationshipFormData,
-} from "../../interface/entity-type.interface";
-import type { EntityType } from "../../interface/entity.interface";
+} from "../../interface/entity.interface";
 import { AttributeDialog } from "./attribute-dialog";
 
 interface EntityTypeFormProps {
@@ -83,7 +83,6 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
     const identifierKey = form.watch("identifierKey");
     // Attribute management hook
     const {
-        newAttributes,
         attributes,
         attributeColumns,
         handleAttributeAdd,
@@ -105,15 +104,32 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
     // Watch the pluralName field for dynamic title
     const pluralName = form.watch("pluralName");
 
+    // Determine which tabs have validation errors
+    const tabErrors = useMemo(() => {
+        const errors = form.formState.errors;
+        const configurationFields = ["pluralName", "singularName", "key", "identifierKey", "description", "type"];
+
+        const hasConfigurationErrors = configurationFields.some(field =>
+            errors[field as keyof typeof errors]
+        );
+
+        // Check for root errors (like attribute/relationship validation)
+        const hasAttributeErrors = !!errors.root;
+
+        return {
+            configuration: hasConfigurationErrors,
+            attributes: hasAttributeErrors,
+        };
+    }, [form.formState.errors]);
+
     // Auto-generate default "name" attribute for new entity types
     useEffect(() => {
-        if (mode === "create" && newAttributes.length === 0 && !hasInitialized.current) {
+        if (mode === "create" && attributes.length === 0 && !hasInitialized.current) {
             hasInitialized.current = true;
             const defaultNameAttribute: AttributeFormData = {
                 type: "attribute",
                 name: "Name",
-                key: "name",
-                description: "The name of this entity",
+                key: SchemaType.TEXT,
                 dataType: DataType.STRING,
                 required: true,
                 unique: true,
@@ -123,7 +139,7 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
             // Set the default name attribute as the identifier key
             form.setValue("identifierKey", "Name");
         }
-    }, [mode, newAttributes.length, handleAttributeAdd, form]);
+    }, [mode, attributes.length, handleAttributeAdd, form]);
 
     // Extract relationships and combine with new relationships
     const relationships: RelationshipRow[] = useMemo(() => {
@@ -221,7 +237,30 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
     );
 
     const handleSubmit = (values: EntityTypeFormValues) => {
-        handleFormSubmit(values, newAttributes, newRelationships, order);
+        handleFormSubmit(values, attributes, newRelationships, order);
+    };
+
+    const handleInvalidSubmit = (errors: typeof form.formState.errors) => {
+        const errorMessages: string[] = [];
+
+        // Collect all error messages
+        Object.entries(errors).forEach(([field, error]) => {
+            if (error && typeof error === 'object' && 'message' in error) {
+                const fieldName = field.replace(/([A-Z])/g, ' $1').toLowerCase();
+                errorMessages.push(`${fieldName}: ${error.message}`);
+            }
+        });
+
+        // Show toast with all validation errors
+        toast.error("Validation errors", {
+            description: errorMessages.length > 0
+                ? errorMessages.join("\n")
+                : "Please check all required fields and try again.",
+        });
+    };
+
+    const handleSaveClick = () => {
+        form.handleSubmit(handleSubmit, handleInvalidSubmit)();
     };
 
     const handleAttributeSubmit = (data: AttributeFormData | RelationshipFormData) => {
@@ -262,9 +301,9 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
         setOrder((prev) => prev.filter((orderKey) => orderKey !== key));
     };
 
-    const handleEditAttribute = (row: AttributeRow) => {
-        // Find the attribute in newAttributes
-        const attribute = newAttributes.find((attr) => attr.name === row.name);
+    const handleEditAttribute = (row: AttributeFormData) => {
+        // Find the attribute in attributes
+        const attribute = attributes.find((attr) => attr.name === row.name);
         if (attribute) {
             setEditingAttribute(attribute);
             setDialogOpen(true);
@@ -284,19 +323,8 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
         // Get keys for reordered relationships
         const relationshipKeys = reorderedRelationships.map((rel) => rel.key);
 
-        // Create a map to get keys for attributes
-        const attrKeyMap = new Map<string, string>();
-        // For existing attributes from schema, the name is the key
-        if (entityType?.schema?.properties) {
-            Object.keys(entityType.schema.properties).forEach((key) => {
-                attrKeyMap.set(key, key);
-            });
-        }
-        // For new attributes, use the actual key field
-        newAttributes.forEach((attr) => attrKeyMap.set(attr.name, attr.key));
-
-        // Get attribute keys from current order
-        const attributeKeys = attributes.map((attr) => attrKeyMap.get(attr.name) || attr.name);
+        // Get attribute keys from current attributes
+        const attributeKeys = attributes.map((attr) => attr.key);
 
         // Combine: attributes first, then relationships
         const newOrder = [...attributeKeys, ...relationshipKeys];
@@ -334,7 +362,7 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                             <Link href={`/dashboard/organisation/${organisationId}/entity`}>
                                 <Button variant="outline">Back</Button>
                             </Link>
-                            <Button onClick={form.handleSubmit(handleSubmit)}>
+                            <Button onClick={handleSaveClick}>
                                 <Save className="h-4 w-4 mr-2" />
                                 Save
                             </Button>
@@ -353,14 +381,26 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                     {/* Tabs */}
                     <TabsStandard defaultValue="configuration" className="w-full">
                         <TabsList className="w-full justify-start">
-                            <TabsTrigger value="configuration">Configuration</TabsTrigger>
+                            <TabsTrigger value="configuration">
+                                <div className="flex items-center gap-2">
+                                    Configuration
+                                    {tabErrors.configuration && (
+                                        <AlertCircle className="h-4 w-4 text-destructive" />
+                                    )}
+                                </div>
+                            </TabsTrigger>
                             <TabsTrigger value="attributes">
-                                Attributes
-                                {(attributes.length > 0 || relationships.length > 0) && (
-                                    <Badge variant="secondary" className="ml-2 h-5 px-1.5">
-                                        {attributes.length + relationships.length}
-                                    </Badge>
-                                )}
+                                <div className="flex items-center gap-2">
+                                    Attributes
+                                    {tabErrors.attributes && (
+                                        <AlertCircle className="h-4 w-4 text-destructive" />
+                                    )}
+                                    {(attributes.length > 0 || relationships.length > 0) && (
+                                        <Badge variant="secondary" className="ml-2 h-5 px-1.5">
+                                            {attributes.length + relationships.length}
+                                        </Badge>
+                                    )}
+                                </div>
                             </TabsTrigger>
                         </TabsList>
 
@@ -597,14 +637,14 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                                 </h3>
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-2 text-sm">
-                                        {newAttributes.some((attr) => attr.unique) ? (
+                                        {attributes.some((attr) => attr.unique) ? (
                                             <CheckCircle2 className="h-4 w-4 text-green-600" />
                                         ) : (
                                             <AlertCircle className="h-4 w-4 text-destructive" />
                                         )}
                                         <span
                                             className={
-                                                newAttributes.some((attr) => attr.unique)
+                                                attributes.some((attr) => attr.unique)
                                                     ? "text-green-600"
                                                     : "text-destructive"
                                             }
@@ -640,12 +680,7 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                                 enableSorting
                                 enableDragDrop
                                 onReorder={handleAttributesReorder}
-                                getRowId={(row) => {
-                                    const foundAttr = newAttributes.find(
-                                        (a) => a.name === row.name
-                                    );
-                                    return foundAttr?.key || row.name;
-                                }}
+                                getRowId={(row) => row.key}
                                 search={{
                                     enabled: true,
                                     searchableColumns: ["name"],

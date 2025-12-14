@@ -1,31 +1,20 @@
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { attributeTypes } from "@/lib/util/form/schema.util";
 import { ColumnDef } from "@tanstack/react-table";
 import { Key, Lock } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { AttributeFormData } from "../interface/entity-type.interface";
-import { EntityType } from "../interface/entity.interface";
-
-export interface AttributeRow {
-    name: string;
-    type: string;
-    required: boolean;
-    unique: boolean;
-    description?: string;
-    dataFormat?: string;
-    protected?: boolean;
-}
+import { AttributeFormData, EntityType } from "../interface/entity.interface";
 
 export interface UseAttributeManagementReturn {
-    newAttributes: AttributeFormData[];
-    attributes: AttributeRow[];
-    attributeColumns: ColumnDef<AttributeRow>[];
+    attributes: AttributeFormData[];
+    attributeColumns: ColumnDef<AttributeFormData>[];
     handleAttributeAdd: (data: AttributeFormData) => void;
     handleAttributeEdit: (data: AttributeFormData) => void;
     handleAttributeDelete: (name: string) => void;
-    handleAttributesReorder: (reordered: AttributeRow[]) => void;
-    editAttribute: (row: AttributeRow) => AttributeFormData | undefined;
+    handleAttributesReorder: (reordered: AttributeFormData[]) => void;
+    editAttribute: (row: AttributeFormData) => AttributeFormData | undefined;
 }
 
 export function useAttributeManagement(
@@ -34,66 +23,59 @@ export function useAttributeManagement(
     order: string[] = [],
     onOrderChange?: (order: string[]) => void
 ): UseAttributeManagementReturn {
-    const [newAttributes, setNewAttributes] = useState<AttributeFormData[]>([]);
+    const [attributes, setAttributes] = useState<AttributeFormData[]>([]);
 
-    // Extract attributes from schema and combine with new attributes
-    const attributes: AttributeRow[] = useMemo(() => {
-        const existingAttrs: AttributeRow[] = entityType?.schema?.properties
-            ? Object.entries(entityType.schema.properties).map(([key, schema]) => ({
-                  name: key,
-                  type: schema.type || "string",
-                  required: schema.required || false,
-                  unique: schema.unique || false,
-                  description: schema.description,
-                  dataFormat: schema.format,
-                  protected: schema.protected || false,
-              }))
-            : [];
-
-        const newAttrs: AttributeRow[] = newAttributes.map((attr) => ({
-            name: attr.name,
-            type: attr.dataType,
-            required: attr.required,
-            unique: attr.unique,
-            description: attr.description,
-            dataFormat: attr.dataFormat,
-            protected: attr.protected || false,
-        }));
-
-        const allAttrs = [...existingAttrs, ...newAttrs];
-
-        // Create a map to get keys for attributes
-        const attrKeyMap = new Map<string, string>();
-        // For existing attributes, the name is the key
-        existingAttrs.forEach((attr) => attrKeyMap.set(attr.name, attr.name));
-        // For new attributes, use the actual key field
-        newAttributes.forEach((attr) => attrKeyMap.set(attr.name, attr.key));
-
-        // Sort based on order array if it exists
-        if (order.length > 0) {
-            return allAttrs.sort((a, b) => {
-                const aKey = attrKeyMap.get(a.name) || a.name;
-                const bKey = attrKeyMap.get(b.name) || b.name;
-                const aIndex = order.indexOf(aKey);
-                const bIndex = order.indexOf(bKey);
-
-                // If both are in order array, sort by their position
-                if (aIndex !== -1 && bIndex !== -1) {
-                    return aIndex - bIndex;
-                }
-                // If only one is in order array, prioritize it
-                if (aIndex !== -1) return -1;
-                if (bIndex !== -1) return 1;
-                // If neither is in order array, maintain current order
-                return 0;
-            });
+    // Initialize attributes from entity type schema on mount or when entityType changes
+    useEffect(() => {
+        if (entityType?.schema?.properties) {
+            const existingAttrs: AttributeFormData[] = Object.entries(
+                entityType.schema.properties
+            ).map(([key, schema]) => ({
+                type: "attribute" as const,
+                name: key,
+                key: key,
+                description: schema.description,
+                dataType: schema.type,
+                dataFormat: schema.format,
+                required: schema.required || false,
+                unique: schema.unique || false,
+                protected: schema.protected || false,
+                options: {
+                    enum: schema.enum,
+                    enumSorting: schema.enumSorting,
+                    minimum: schema.minimum,
+                    maximum: schema.maximum,
+                    minLength: schema.minLength,
+                    maxLength: schema.maxLength,
+                    regex: schema.regex,
+                },
+            }));
+            setAttributes(existingAttrs);
         }
+    }, [entityType]);
 
-        return allAttrs;
-    }, [entityType, newAttributes, order]);
+    // Sort attributes based on order array
+    const sortedAttributes = useMemo(() => {
+        if (order.length === 0) return attributes;
+
+        return [...attributes].sort((a, b) => {
+            const aIndex = order.indexOf(a.key);
+            const bIndex = order.indexOf(b.key);
+
+            // If both are in order array, sort by their position
+            if (aIndex !== -1 && bIndex !== -1) {
+                return aIndex - bIndex;
+            }
+            // If only one is in order array, prioritize it
+            if (aIndex !== -1) return -1;
+            if (bIndex !== -1) return 1;
+            // If neither is in order array, maintain current order
+            return 0;
+        });
+    }, [attributes, order]);
 
     // Attribute column definitions
-    const attributeColumns: ColumnDef<AttributeRow>[] = useMemo(() => {
+    const attributeColumns: ColumnDef<AttributeFormData>[] = useMemo(() => {
         return [
             {
                 accessorKey: "name",
@@ -127,11 +109,6 @@ export function useAttributeManagement(
                                 )}
                                 <div className="flex flex-col">
                                     <span className="font-medium">{row.original.name}</span>
-                                    {row.original.description && (
-                                        <span className="text-xs text-muted-foreground">
-                                            {row.original.description}
-                                        </span>
-                                    )}
                                 </div>
                             </div>
                         </TooltipProvider>
@@ -139,9 +116,17 @@ export function useAttributeManagement(
                 },
             },
             {
-                accessorKey: "type",
+                accessorKey: "key",
                 header: "Type",
-                cell: ({ row }) => <Badge variant="outline">{row.original.type}</Badge>,
+                cell: ({ row }) => {
+                    const attribute = attributeTypes[row.original.key];
+                    return (
+                        <Badge variant="outline">
+                            <attribute.icon className="mr-1" />
+                            <span>{row.original.key}</span>
+                        </Badge>
+                    );
+                },
             },
             {
                 accessorKey: "required",
@@ -166,15 +151,12 @@ export function useAttributeManagement(
 
     const handleAttributeAdd = (data: AttributeFormData) => {
         // Check for duplicate names/keys
-        if (
-            attributes.find((attr) => attr.name === data.name) ||
-            newAttributes.find((attr) => attr.name === data.name)
-        ) {
+        if (attributes.find((attr) => attr.name === data.name)) {
             toast.error("An attribute with this name already exists.");
             return;
         }
 
-        setNewAttributes((prev) => [...prev, data]);
+        setAttributes((prev) => [...prev, data]);
         // Add to order array
         if (onOrderChange) {
             const newOrder = [...order, data.key];
@@ -183,16 +165,16 @@ export function useAttributeManagement(
     };
 
     const handleAttributeEdit = (data: AttributeFormData) => {
-        setNewAttributes((prev) => prev.map((attr) => (attr.key === data.key ? data : attr)));
+        setAttributes((prev) => prev.map((attr) => (attr.key === data.key ? data : attr)));
     };
 
     const handleAttributeDelete = (name: string) => {
-        const attribute = newAttributes.find((attr) => attr.name === name);
+        const attribute = attributes.find((attr) => attr.name === name);
         if (attribute?.protected) {
             toast.error("This attribute is protected and cannot be deleted.");
             return;
         }
-        setNewAttributes((prev) => prev.filter((attr) => attr.name !== name));
+        setAttributes((prev) => prev.filter((attr) => attr.name !== name));
         // Remove from order array
         if (attribute && onOrderChange) {
             const newOrder = order.filter((key) => key !== attribute.key);
@@ -200,35 +182,21 @@ export function useAttributeManagement(
         }
     };
 
-    const handleAttributesReorder = (reorderedAttributes: AttributeRow[]) => {
+    const handleAttributesReorder = (reorderedAttributes: AttributeFormData[]) => {
         if (!onOrderChange) return;
 
-        // Create a map to get keys for attributes
-        const attrKeyMap = new Map<string, string>();
-        // For existing attributes from schema, the name is the key
-        if (entityType?.schema?.properties) {
-            Object.keys(entityType.schema.properties).forEach((key) => {
-                attrKeyMap.set(key, key);
-            });
-        }
-        // For new attributes, use the actual key field
-        newAttributes.forEach((attr) => attrKeyMap.set(attr.name, attr.key));
-
         // Get keys for reordered attributes
-        const attributeKeys = reorderedAttributes.map(
-            (attr) => attrKeyMap.get(attr.name) || attr.name
-        );
+        const attributeKeys = reorderedAttributes.map((attr) => attr.key);
 
         onOrderChange(attributeKeys);
     };
 
-    const editAttribute = (row: AttributeRow): AttributeFormData | undefined => {
-        return newAttributes.find((attr) => attr.name === row.name);
+    const editAttribute = (row: AttributeFormData): AttributeFormData | undefined => {
+        return attributes.find((attr) => attr.name === row.name);
     };
 
     return {
-        newAttributes,
-        attributes,
+        attributes: sortedAttributes,
         attributeColumns,
         handleAttributeAdd,
         handleAttributeEdit,

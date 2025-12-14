@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { FormDescription } from "@/components/ui/form";
+import { FormDescription, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -10,7 +10,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { OptionSortingType } from "@/lib/types/types";
 import {
     DndContext,
@@ -82,7 +81,6 @@ const SortableItem: FC<SortableItemProps> = ({ id, value, onRemove }) => {
 
 export const EnumOptionsEditor: FC<Props> = ({ form }) => {
     const [newEnumValue, setNewEnumValue] = useState("");
-    const [aiAutofill, setAiAutofill] = useState(false);
     const enumValues = form.watch("enumValues") || [];
     const enumSorting: OptionSortingType = form.watch("enumSorting") || OptionSortingType.MANUAL;
 
@@ -153,83 +151,97 @@ export const EnumOptionsEditor: FC<Props> = ({ form }) => {
     };
 
     return (
-        <div className="space-y-4">
-            <div className="border-t pt-4">
-                <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-medium">Options</h3>
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">AI autofill</span>
-                            <Switch checked={aiAutofill} onCheckedChange={setAiAutofill} disabled />
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">Sort</span>
-                            <Select value={enumSorting} onValueChange={handleSortChange}>
-                                <SelectTrigger className="w-[140px] h-8">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="MANUAL">Manual</SelectItem>
-                                    <SelectItem value="ALPHABETICAL">A → Z</SelectItem>
-                                    <SelectItem value="REVERSE_ALPHABETICAL">Z → A</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="space-y-2">
-                    <div className="flex gap-2">
-                        <Input
-                            placeholder="Add option value"
-                            value={newEnumValue}
-                            onChange={(e) => setNewEnumValue(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    handleAddEnumValue();
-                                }
-                            }}
-                        />
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            onClick={handleAddEnumValue}
-                        >
-                            <Plus className="h-4 w-4" />
-                        </Button>
-                    </div>
-
-                    {enumValues.length > 0 && (
-                        <DndContext
-                            sensors={sensors}
-                            collisionDetection={closestCenter}
-                            onDragEnd={handleDragEnd}
-                        >
-                            <SortableContext
-                                items={enumValues}
-                                strategy={verticalListSortingStrategy}
-                            >
-                                <div className="space-y-1">
-                                    {enumValues.map((value, index) => (
-                                        <SortableItem
-                                            key={value}
-                                            id={value}
-                                            value={value}
-                                            onRemove={() => handleRemoveEnumValue(index)}
-                                        />
-                                    ))}
+        <FormField
+            control={form.control}
+            name="enumValues"
+            render={() => (
+                <FormItem>
+                    <div className="space-y-4">
+                        <div className="border-t pt-4">
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-sm font-medium">Options</h3>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-2"></div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-muted-foreground">Sort</span>
+                                        <Select value={enumSorting} onValueChange={handleSortChange}>
+                                            <SelectTrigger className="w-[140px] h-8">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="MANUAL">Manual</SelectItem>
+                                                <SelectItem value="ALPHABETICAL">A → Z</SelectItem>
+                                                <SelectItem value="REVERSE_ALPHABETICAL">
+                                                    Z → A
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </div>
-                            </SortableContext>
-                        </DndContext>
-                    )}
+                            </div>
 
-                    <FormDescription className="text-xs">
-                        Define the available options for this select field. Drag to reorder.
-                    </FormDescription>
-                </div>
-            </div>
-        </div>
+                            <div className="space-y-2">
+                                <div className="flex gap-2">
+                                    <Input
+                                        placeholder="Add option value"
+                                        value={newEnumValue}
+                                        onChange={(e) => setNewEnumValue(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault();
+                                                handleAddEnumValue();
+                                            }
+                                        }}
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={handleAddEnumValue}
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                    </Button>
+                                </div>
+
+                                {enumValues.length > 0 && (
+                                    <DndContext
+                                        sensors={sensors}
+                                        collisionDetection={closestCenter}
+                                        onDragEnd={handleDragEnd}
+                                    >
+                                        <SortableContext
+                                            items={enumValues}
+                                            strategy={verticalListSortingStrategy}
+                                        >
+                                            <div className="space-y-1">
+                                                {enumValues.map((value, index) => (
+                                                    <SortableItem
+                                                        key={value}
+                                                        id={value}
+                                                        value={value}
+                                                        onRemove={() => handleRemoveEnumValue(index)}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </SortableContext>
+                                    </DndContext>
+                                )}
+
+                                <div className="space-y-1">
+                                    <FormDescription className="text-xs">
+                                        Define the available options for this select field. Drag to
+                                        reorder.{" "}
+                                        <span className="font-medium">
+                                            At least 2 options required ({enumValues.length}/2+)
+                                        </span>
+                                    </FormDescription>
+                                    <FormMessage />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </FormItem>
+            )}
+        />
     );
 };

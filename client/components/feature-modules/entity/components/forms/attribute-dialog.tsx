@@ -75,6 +75,19 @@ const formSchema = z
             message: "Key is required for relationships",
             path: ["key"], // Attach error to the key field
         }
+    )
+    .refine(
+        (data) => {
+            // If selectedType is select or multi-select, at least 2 enum values must be provided
+            if (data.selectedType === SchemaType.SELECT || data.selectedType === SchemaType.MULTI_SELECT) {
+                return data.enumValues && data.enumValues.length >= 2;
+            }
+            return true;
+        },
+        {
+            message: "At least 2 options are required for select and multi-select types",
+            path: ["enumValues"], // Attach error to the enumValues field
+        }
     );
 
 export type AttributeFormValues = z.infer<typeof formSchema>;
