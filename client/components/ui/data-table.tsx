@@ -10,6 +10,7 @@ import {
     useSensor,
     useSensors,
 } from "@dnd-kit/core";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import {
     arrayMove,
     SortableContext,
@@ -97,6 +98,7 @@ export interface RowAction<TData> {
     icon?: React.ComponentType<{ className?: string }>;
     onClick: (row: TData) => void;
     variant?: "default" | "destructive";
+    disabled?: (row: TData) => boolean;
     separator?: boolean; // Show separator after this item
 }
 
@@ -198,6 +200,9 @@ function DraggableRow<TData>({
                             {rowActions.actions.map((action, index) => (
                                 <div key={index}>
                                     <DropdownMenuItem
+                                        disabled={
+                                            action.disabled?.(row.original) ?? false
+                                        }
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             action.onClick(row.original);
@@ -437,6 +442,16 @@ export function DataTable<TData, TValue>({
         }).length;
     }, [activeFilters, enabledFilters]);
 
+    // Disable drag and drop when search or filters are active
+    const isDragDropEnabled = useMemo(() => {
+        if (!enableDragDrop) return false;
+        // Disable if there's an active search
+        if (globalFilter && globalFilter.length > 0) return false;
+        // Disable if there are active filters
+        if (activeFilterCount > 0) return false;
+        return true;
+    }, [enableDragDrop, globalFilter, activeFilterCount]);
+
     const renderFilter = (columnFilter: ColumnFilter<TData>) => {
         const columnId = String(columnFilter.column);
         const currentValue = activeFilters[columnId];
@@ -624,14 +639,14 @@ export function DataTable<TData, TValue>({
         <div
             className={cn(
                 "relative w-full",
-                enableDragDrop ? "overflow-visible" : "overflow-x-auto"
+                isDragDropEnabled ? "overflow-visible" : "overflow-x-auto"
             )}
         >
             <table className={cn("w-full caption-bottom text-sm", className)}>
                 <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id}>
-                            {enableDragDrop && (
+                            {isDragDropEnabled && (
                                 <TableHead className="w-[40px]">
                                     <span className="sr-only">Drag handle</span>
                                 </TableHead>
@@ -662,7 +677,7 @@ export function DataTable<TData, TValue>({
                                 <DraggableRow
                                     key={row.id}
                                     row={row}
-                                    enableDragDrop={enableDragDrop}
+                                    enableDragDrop={isDragDropEnabled}
                                     onRowClick={onRowClick}
                                     isMounted={isMounted}
                                     rowActions={rowActions}
@@ -673,7 +688,7 @@ export function DataTable<TData, TValue>({
                             <TableCell
                                 colSpan={
                                     columns.length +
-                                    (enableDragDrop ? 1 : 0) +
+                                    (isDragDropEnabled ? 1 : 0) +
                                     (rowActions?.enabled ? 1 : 0)
                                 }
                                 className="h-24 text-center text-muted-foreground"
@@ -687,8 +702,13 @@ export function DataTable<TData, TValue>({
         </div>
     );
 
-    const wrappedContent = enableDragDrop ? (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    const wrappedContent = isDragDropEnabled ? (
+        <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+            modifiers={[restrictToVerticalAxis]}
+        >
             <SortableContext items={rowIds} strategy={verticalListSortingStrategy}>
                 {tableContent}
             </SortableContext>

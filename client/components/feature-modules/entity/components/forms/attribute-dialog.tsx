@@ -22,6 +22,10 @@ import { FC, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { AttributeTypeDropdown, attributeTypes } from "../../../../ui/attribute-type-dropdown";
+import type {
+    AttributeFormData,
+    RelationshipFormData,
+} from "../../interface/entity-type.interface";
 import { EntityType } from "../../interface/entity.interface";
 import { AttributeForm } from "./attribute-form";
 import { RelationshipAttributeForm } from "./attributes-relationship-form";
@@ -33,35 +37,6 @@ interface AttributeDialogProps {
     entityTypes?: EntityType[];
     currentEntityType?: EntityType;
     editingAttribute?: AttributeFormData | RelationshipFormData;
-}
-
-export interface AttributeFormData {
-    type: "attribute";
-    name: string;
-    key: string;
-    description?: string;
-    dataType: DataType;
-    dataFormat?: DataFormat;
-    required: boolean;
-    unique: boolean;
-    options?: SchemaOptions;
-    protected?: boolean;
-}
-
-export interface RelationshipFormData {
-    type: "relationship";
-    name: string;
-    key: string;
-    cardinality: EntityRelationshipCardinality;
-    minOccurs?: number;
-    maxOccurs?: number;
-    entityTypeKeys: string[];
-    allowPolymorphic: boolean;
-    bidirectional: boolean;
-    inverseName?: string;
-    required: boolean;
-    targetAttributeName: string | undefined;
-    protected?: boolean;
 }
 
 // Zod schema

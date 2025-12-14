@@ -24,8 +24,6 @@ import {
 import { TabsContent, TabsList, TabsStandard, TabsTrigger } from "@/components/ui/tabs-standard";
 import { Textarea } from "@/components/ui/textarea";
 import { DataType } from "@/lib/types/types";
-import { toKeyCase } from "@/lib/util/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { ColumnDef } from "@tanstack/react-table";
 import {
     AlertCircle,
@@ -38,28 +36,22 @@ import {
     Trash2,
 } from "lucide-react";
 import Link from "next/link";
-import { FC, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { FC, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+import { AttributeRow, useAttributeManagement } from "../../hooks/use-attribute-management";
+import { EntityTypeFormValues, useEntityTypeForm } from "../../hooks/use-entity-type-form";
 import { useEntityTypes } from "../../hooks/use-entity-types";
-import { EntityType } from "../../interface/entity.interface";
-import { AttributeDialog, AttributeFormData, RelationshipFormData } from "./attribute-dialog";
+import type {
+    AttributeFormData,
+    RelationshipFormData,
+} from "../../interface/entity-type.interface";
+import type { EntityType } from "../../interface/entity.interface";
+import { AttributeDialog } from "./attribute-dialog";
 
 interface EntityTypeFormProps {
     entityType?: EntityType;
     organisationId: string;
     mode: "create" | "edit" | "view";
-}
-
-interface AttributeRow {
-    name: string;
-    type: string;
-    required: boolean;
-    unique: boolean;
-    description?: string;
-    dataFormat?: string;
-    isRelationship?: boolean;
-    protected?: boolean;
 }
 
 interface RelationshipRow {
@@ -72,54 +64,51 @@ interface RelationshipRow {
     protected?: boolean;
 }
 
-// Zod schema for entity type form
-const entityTypeFormSchema = z.object({
-    key: z.string().min(1, "Key is required"),
-    singularName: z.string().min(1, "Singular variant of the name is required"),
-    pluralName: z.string().min(1, "Plural variant of the name is required"),
-    identifierKey: z.string().optional(),
-    description: z.string().optional(),
-    type: z.enum(["STANDARD", "RELATIONSHIP"]),
-    icon: z.string().optional(),
-});
-
-type EntityTypeFormValues = z.infer<typeof entityTypeFormSchema>;
-
 export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
     entityType,
     organisationId,
     mode,
 }) => {
-    const form = useForm<EntityTypeFormValues>({
-        resolver: zodResolver(entityTypeFormSchema),
-        defaultValues: {
-            key: entityType?.key ?? "",
-            singularName: entityType?.name.singular ?? "",
-            pluralName: entityType?.name.plural ?? "",
-            identifierKey: entityType?.identifierKey ?? "",
-            description: entityType?.description ?? "",
-            type: entityType?.type ?? "STANDARD",
-            icon: "database",
-        },
-    });
+    const [order, setOrder] = useState<string[]>(entityType?.order || []);
+    const hasInitialized = useRef(false);
+
+    // Form management hook
+    const {
+        form,
+        keyManuallyEdited,
+        setKeyManuallyEdited,
+        handleSubmit: handleFormSubmit,
+    } = useEntityTypeForm(entityType, mode);
+
+    const identifierKey = form.watch("identifierKey");
+    // Attribute management hook
+    const {
+        newAttributes,
+        attributes,
+        attributeColumns,
+        handleAttributeAdd,
+        handleAttributeEdit,
+        handleAttributeDelete,
+        handleAttributesReorder,
+        editAttribute,
+    } = useAttributeManagement(entityType, identifierKey, order, setOrder);
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingAttribute, setEditingAttribute] = useState<
         AttributeFormData | RelationshipFormData | undefined
     >(undefined);
-    const [newAttributes, setNewAttributes] = useState<AttributeFormData[]>([]);
     const [newRelationships, setNewRelationships] = useState<RelationshipFormData[]>([]);
-    const [keyManuallyEdited, setKeyManuallyEdited] = useState(mode === "edit");
 
     // Fetch all entity types for relationship creation
     const { data: entityTypes = [] } = useEntityTypes(organisationId);
 
-    // Watch the pluralName field for dynamic title and key generation
+    // Watch the pluralName field for dynamic title
     const pluralName = form.watch("pluralName");
 
     // Auto-generate default "name" attribute for new entity types
     useEffect(() => {
-        if (mode === "create" && newAttributes.length === 0) {
+        if (mode === "create" && newAttributes.length === 0 && !hasInitialized.current) {
+            hasInitialized.current = true;
             const defaultNameAttribute: AttributeFormData = {
                 type: "attribute",
                 name: "Name",
@@ -130,44 +119,11 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                 unique: true,
                 protected: true,
             };
-            setNewAttributes([defaultNameAttribute]);
+            handleAttributeAdd(defaultNameAttribute);
+            // Set the default name attribute as the identifier key
+            form.setValue("identifierKey", "Name");
         }
-    }, [mode, newAttributes.length]);
-
-    // Auto-generate key from pluralName in create mode
-    useEffect(() => {
-        if (mode === "create" && !keyManuallyEdited && pluralName) {
-            const generatedKey = toKeyCase(pluralName);
-            form.setValue("key", generatedKey, { shouldValidate: false });
-        }
-    }, [pluralName, mode, keyManuallyEdited, form]);
-
-    // Extract attributes from schema and combine with new attributes
-    const attributes: AttributeRow[] = useMemo(() => {
-        const existingAttrs: AttributeRow[] = entityType?.schema?.properties
-            ? Object.entries(entityType.schema.properties).map(([name, schema]) => ({
-                  name,
-                  type: schema.type || "string",
-                  required: schema.required || false,
-                  unique: schema.unique || false,
-                  description: schema.description,
-                  dataFormat: schema.format,
-                  protected: schema.protected || false,
-              }))
-            : [];
-
-        const newAttrs: AttributeRow[] = newAttributes.map((attr) => ({
-            name: attr.name,
-            type: attr.dataType,
-            required: attr.required,
-            unique: attr.unique,
-            description: attr.description,
-            dataFormat: attr.dataFormat,
-            protected: attr.protected || false,
-        }));
-
-        return [...existingAttrs, ...newAttrs];
-    }, [entityType, newAttributes]);
+    }, [mode, newAttributes.length, handleAttributeAdd, form]);
 
     // Extract relationships and combine with new relationships
     const relationships: RelationshipRow[] = useMemo(() => {
@@ -179,7 +135,7 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                   targetEntity: rel.entityTypeKeys?.join(", ") || "Any",
                   bidirectional: rel.bidirectional,
                   required: rel.required,
-                  protected: rel.protected || false,
+                  protected: false,
               }))
             : [];
 
@@ -193,51 +149,28 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
             protected: rel.protected || false,
         }));
 
-        return [...existingRels, ...newRels];
-    }, [entityType, newRelationships]);
+        const allRels = [...existingRels, ...newRels];
 
-    const attributeColumns: ColumnDef<AttributeRow>[] = useMemo(
-        () => [
-            {
-                accessorKey: "name",
-                header: "Name",
-                cell: ({ row }) => (
-                    <div className="flex flex-col">
-                        <span className="font-medium">{row.original.name}</span>
-                        {row.original.description && (
-                            <span className="text-xs text-muted-foreground">
-                                {row.original.description}
-                            </span>
-                        )}
-                    </div>
-                ),
-            },
-            {
-                accessorKey: "type",
-                header: "Type",
-                cell: ({ row }) => <Badge variant="outline">{row.original.type}</Badge>,
-            },
-            {
-                accessorKey: "required",
-                header: "Required",
-                cell: ({ row }) => (
-                    <Badge variant={row.original.required ? "default" : "secondary"}>
-                        {row.original.required ? "Yes" : "No"}
-                    </Badge>
-                ),
-            },
-            {
-                accessorKey: "unique",
-                header: "Unique",
-                cell: ({ row }) => (
-                    <Badge variant={row.original.unique ? "default" : "secondary"}>
-                        {row.original.unique ? "Yes" : "No"}
-                    </Badge>
-                ),
-            },
-        ],
-        []
-    );
+        // Sort based on order array if it exists
+        if (order.length > 0) {
+            return allRels.sort((a, b) => {
+                const aIndex = order.indexOf(a.key);
+                const bIndex = order.indexOf(b.key);
+
+                // If both are in order array, sort by their position
+                if (aIndex !== -1 && bIndex !== -1) {
+                    return aIndex - bIndex;
+                }
+                // If only one is in order array, prioritize it
+                if (aIndex !== -1) return -1;
+                if (bIndex !== -1) return 1;
+                // If neither is in order array, maintain current order
+                return 0;
+            });
+        }
+
+        return allRels;
+    }, [entityType, newRelationships, order]);
 
     const relationshipColumns: ColumnDef<RelationshipRow>[] = useMemo(
         () => [
@@ -288,56 +221,14 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
     );
 
     const handleSubmit = (values: EntityTypeFormValues) => {
-        // Validation: At least one unique attribute must exist
-        const hasUniqueAttribute = newAttributes.some((attr) => attr.unique);
-        if (!hasUniqueAttribute) {
-            form.setError("root", {
-                type: "manual",
-                message: "At least one attribute must be marked as unique",
-            });
-            return;
-        }
-
-        // Validation: Identifier key must reference a unique attribute
-        if (values.identifierKey) {
-            const identifierAttribute = newAttributes.find(
-                (attr) => attr.name === values.identifierKey
-            );
-            if (identifierAttribute && !identifierAttribute.unique) {
-                form.setError("identifierKey", {
-                    type: "manual",
-                    message: "The identifier key must reference a unique attribute",
-                });
-                return;
-            }
-        }
-
-        // Validation: Relationship type entities must have at least 2 relationships
-        if (values.type === "RELATIONSHIP" && newRelationships.length < 2) {
-            form.setError("root", {
-                type: "manual",
-                message:
-                    "Entity types with 'Relationship' type must have at least 2 relationships defined",
-            });
-            return;
-        }
-
-        // Clear any previous errors
-        form.clearErrors();
-
-        // TODO: Implement save functionality
-        console.log("Form data:", values);
-        console.log("New attributes:", newAttributes);
-        console.log("New relationships:", newRelationships);
+        handleFormSubmit(values, newAttributes, newRelationships, order);
     };
 
     const handleAttributeSubmit = (data: AttributeFormData | RelationshipFormData) => {
         if (editingAttribute) {
             // Update existing attribute/relationship
             if (data.type === "attribute") {
-                setNewAttributes((prev) =>
-                    prev.map((attr) => (attr.key === data.key ? data : attr))
-                );
+                handleAttributeEdit(data);
             } else {
                 setNewRelationships((prev) =>
                     prev.map((rel) => (rel.key === data.key ? data : rel))
@@ -346,36 +237,29 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
         } else {
             // Add new attribute/relationship
             if (data.type === "attribute") {
-                setNewAttributes((prev) => [...prev, data]);
+                handleAttributeAdd(data);
             } else {
                 setNewRelationships((prev) => [...prev, data]);
+                // Add to order array
+                setOrder((prev) => [...prev, data.key]);
             }
         }
 
         // Close dialog after state updates - this ensures proper cleanup
-
         setDialogOpen(false);
         setEditingAttribute(undefined);
-    };
-
-    const handleDeleteAttribute = (name: string) => {
-        const attribute = newAttributes.find((attr) => attr.name === name);
-        if (attribute?.protected) {
-            // Show error or toast - attribute is protected
-            alert("This attribute is protected and cannot be deleted.");
-            return;
-        }
-        setNewAttributes((prev) => prev.filter((attr) => attr.name !== name));
     };
 
     const handleDeleteRelationship = (key: string) => {
         const relationship = newRelationships.find((rel) => rel.key === key);
         if (relationship?.protected) {
             // Show error or toast - relationship is protected
-            alert("This relationship is protected and cannot be deleted.");
+            toast.error("This relationship is protected and cannot be deleted.");
             return;
         }
         setNewRelationships((prev) => prev.filter((rel) => rel.key !== key));
+        // Remove from order array
+        setOrder((prev) => prev.filter((orderKey) => orderKey !== key));
     };
 
     const handleEditAttribute = (row: AttributeRow) => {
@@ -394,6 +278,29 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
             setEditingAttribute(relationship);
             setDialogOpen(true);
         }
+    };
+
+    const handleRelationshipsReorder = (reorderedRelationships: RelationshipRow[]) => {
+        // Get keys for reordered relationships
+        const relationshipKeys = reorderedRelationships.map((rel) => rel.key);
+
+        // Create a map to get keys for attributes
+        const attrKeyMap = new Map<string, string>();
+        // For existing attributes from schema, the name is the key
+        if (entityType?.schema?.properties) {
+            Object.keys(entityType.schema.properties).forEach((key) => {
+                attrKeyMap.set(key, key);
+            });
+        }
+        // For new attributes, use the actual key field
+        newAttributes.forEach((attr) => attrKeyMap.set(attr.name, attr.key));
+
+        // Get attribute keys from current order
+        const attributeKeys = attributes.map((attr) => attrKeyMap.get(attr.name) || attr.name);
+
+        // Combine: attributes first, then relationships
+        const newOrder = [...attributeKeys, ...relationshipKeys];
+        setOrder(newOrder);
     };
 
     return (
@@ -728,6 +635,14 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                                 columns={attributeColumns}
                                 data={attributes}
                                 enableSorting
+                                enableDragDrop
+                                onReorder={handleAttributesReorder}
+                                getRowId={(row) => {
+                                    const foundAttr = newAttributes.find(
+                                        (a) => a.name === row.name
+                                    );
+                                    return foundAttr?.key || row.name;
+                                }}
                                 search={{
                                     enabled: true,
                                     searchableColumns: ["name"],
@@ -763,10 +678,10 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                                             label: "Delete",
                                             icon: Trash2,
                                             onClick: (row) => {
-                                                handleDeleteAttribute(row.name);
+                                                handleAttributeDelete(row.name);
                                             },
                                             variant: "destructive",
-                                            disabled: (row) => row.protected || false,
+                                            disabled: (row) => row?.protected || false,
                                         },
                                     ],
                                 }}
@@ -784,6 +699,9 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                                         columns={relationshipColumns}
                                         data={relationships}
                                         enableSorting
+                                        enableDragDrop
+                                        onReorder={handleRelationshipsReorder}
+                                        getRowId={(row) => row.key}
                                         search={{
                                             enabled: true,
                                             searchableColumns: ["name"],
@@ -807,7 +725,7 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                                                         handleDeleteRelationship(row.key);
                                                     },
                                                     variant: "destructive",
-                                                    disabled: (row) => row.protected || false,
+                                                    disabled: (row) => row?.protected || false,
                                                 },
                                             ],
                                         }}
@@ -838,3 +756,6 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
         </>
     );
 };
+
+// Alias export for backwards compatibility
+export const EntityTypeForm = EntityTypeOverview;

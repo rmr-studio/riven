@@ -1,7 +1,7 @@
 "use client";
 
 import { EntityTypeForm } from "@/components/feature-modules/entity/components/forms/entity-type";
-import { useBlockTypeByKey } from "@/components/feature-modules/entity/hooks/use-entity-types";
+import { useEntityTypeByKey } from "@/components/feature-modules/entity/hooks/use-entity-types";
 import { useParams } from "next/navigation";
 
 const EntityTypeEditPage = () => {
@@ -9,7 +9,7 @@ const EntityTypeEditPage = () => {
     const organisationId = params.organisationId as string;
     const entityTypeId = params.entityTypeId as string;
 
-    const { data: entityType, isPending } = useBlockTypeByKey(entityTypeId, organisationId);
+    const { data: entityType, isPending } = useEntityTypeByKey(entityTypeId, organisationId);
 
     if (isPending) {
         return (

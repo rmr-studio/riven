@@ -148,6 +148,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/entity/schema/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a new entity type
+         * @description Creates and publishes a new entity type for the specified organisation.
+         */
+        post: operations["createEntityType"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/block/schema/": {
         parameters: {
             query?: never;
@@ -725,6 +745,74 @@ export interface components {
                 [key: string]: Record<string, never>;
             };
         };
+        CreateEntityTypeRequest: {
+            name: components["schemas"]["DisplayName"];
+            key: string;
+            /** Format: uuid */
+            organisationId: string;
+            identifier: string;
+            description?: string;
+            type: components["schemas"]["EntityCategory"];
+            schema: components["schemas"]["Schema"];
+            relationships?: components["schemas"]["EntityRelationshipDefinition"][];
+            order?: string[];
+        };
+        DisplayName: {
+            singular: string;
+            plural: string;
+        };
+        /** @enum {string} */
+        EntityCategory: EntityCategory;
+        /** @enum {string} */
+        EntityRelationshipCardinality: EntityRelationshipCardinality;
+        EntityRelationshipDefinition: {
+            name: string;
+            key: string;
+            cardinality: components["schemas"]["EntityRelationshipCardinality"];
+            /** Format: int32 */
+            minOccurs?: number;
+            /** Format: int32 */
+            maxOccurs?: number;
+            entityTypeKeys?: string[];
+            allowPolymorphic: boolean;
+            bidirectional: boolean;
+            inverseName?: string;
+            required: boolean;
+        };
+        EntityType: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            /** Format: int32 */
+            version: number;
+            name: components["schemas"]["DisplayName"];
+            protected: boolean;
+            identifierKey: string;
+            description?: string;
+            /** Format: uuid */
+            organisationId?: string;
+            type: components["schemas"]["EntityCategory"];
+            schema: components["schemas"]["Schema"];
+            relationships?: components["schemas"]["EntityRelationshipDefinition"][];
+            order: string[];
+            /** Format: int64 */
+            entitiesCount: number;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            /** Format: uuid */
+            createdBy?: string;
+            /** Format: uuid */
+            updatedBy?: string;
+            attributes: components["schemas"]["PairIntegerInteger"];
+        };
+        PairIntegerInteger: {
+            /** Format: int32 */
+            first: number;
+            /** Format: int32 */
+            second: number;
+        };
         CreateBlockTypeRequest: {
             key: string;
             name: string;
@@ -834,10 +922,6 @@ export interface components {
         ContentNode: WithRequired<components["schemas"]["Node"], "block" | "type" | "warnings"> & {
             children?: components["schemas"]["Node"][];
         };
-        DisplayName: {
-            singular: string;
-            plural: string;
-        };
         DraggableOptions: {
             cancel?: string;
             /** Format: int32 */
@@ -868,17 +952,6 @@ export interface components {
             /** Format: uuid */
             updatedBy?: string;
         };
-        /** @enum {string} */
-        EntityCategory: EntityCategory;
-        EntityConfig: {
-            form: components["schemas"]["FormStructure"];
-            summary: components["schemas"]["EntityDisplayConfig"];
-        };
-        EntityDisplayConfig: {
-            titleField?: string;
-            descriptionField?: string;
-            iconField?: string;
-        };
         /** @description Reference to one or more of an organisation's entities (e.g. teams, projects, clients) */
         EntityReference: WithRequired<components["schemas"]["ReferencePayload"], "type"> & {
             reference?: components["schemas"]["ReferenceItemEntity"][];
@@ -891,51 +964,6 @@ export interface components {
             display: components["schemas"]["ListDisplayConfig"];
             config: components["schemas"]["ListConfig"];
             allowDuplicates: boolean;
-        };
-        /** @enum {string} */
-        EntityRelationshipCardinality: EntityRelationshipCardinality;
-        EntityRelationshipDefinition: {
-            name: string;
-            key: string;
-            cardinality: components["schemas"]["EntityRelationshipCardinality"];
-            /** Format: int32 */
-            minOccurs?: number;
-            /** Format: int32 */
-            maxOccurs?: number;
-            entityTypeKeys?: string[];
-            allowPolymorphic: boolean;
-            bidirectional: boolean;
-            inverseName?: string;
-            required: boolean;
-        };
-        EntityType: {
-            /** Format: uuid */
-            id: string;
-            key: string;
-            /** Format: int32 */
-            version: number;
-            name: components["schemas"]["DisplayName"];
-            protected: boolean;
-            identifierKey: string;
-            description?: string;
-            /** Format: uuid */
-            organisationId?: string;
-            type: components["schemas"]["EntityCategory"];
-            schema: components["schemas"]["Schema"];
-            displayConfig: components["schemas"]["EntityConfig"];
-            relationships?: components["schemas"]["EntityRelationshipDefinition"][];
-            order?: string[];
-            /** Format: int64 */
-            entitiesCount?: number;
-            /** Format: date-time */
-            createdAt?: string;
-            /** Format: date-time */
-            updatedAt?: string;
-            /** Format: uuid */
-            createdBy?: string;
-            /** Format: uuid */
-            updatedBy?: string;
-            attributes: components["schemas"]["PairIntegerInteger"];
         };
         FilterSpec: {
             expr: {
@@ -982,12 +1010,6 @@ export interface components {
         PagingSpec: {
             /** Format: int32 */
             pageSize: number;
-        };
-        PairIntegerInteger: {
-            /** Format: int32 */
-            first: number;
-            /** Format: int32 */
-            second: number;
         };
         /** @enum {string} */
         Presentation: Presentation;
@@ -1554,6 +1576,48 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    createEntityType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEntityTypeRequest"];
+            };
+        };
+        responses: {
+            /** @description Entity type created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"];
+                };
+            };
+            /** @description Invalid request data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"];
+                };
             };
         };
     };
@@ -2275,6 +2339,16 @@ export enum ValidationScope {
     STRICT = "STRICT",
     NONE = "NONE"
 }
+export enum EntityCategory {
+    STANDARD = "STANDARD",
+    RELATIONSHIP = "RELATIONSHIP"
+}
+export enum EntityRelationshipCardinality {
+    ONE_TO_ONE = "ONE_TO_ONE",
+    ONE_TO_MANY = "ONE_TO_MANY",
+    MANY_TO_ONE = "MANY_TO_ONE",
+    MANY_TO_MANY = "MANY_TO_MANY"
+}
 type WithRequired<T, K extends keyof T> = T & {
     [P in K]-?: T[P];
 };
@@ -2297,16 +2371,6 @@ export enum BlockReferenceWarning {
     UNSUPPORTED = "UNSUPPORTED",
     CIRCULAR = "CIRCULAR",
     DEPTH_EXCEEDED = "DEPTH_EXCEEDED"
-}
-export enum EntityCategory {
-    STANDARD = "STANDARD",
-    RELATIONSHIP = "RELATIONSHIP"
-}
-export enum EntityRelationshipCardinality {
-    ONE_TO_ONE = "ONE_TO_ONE",
-    ONE_TO_MANY = "ONE_TO_MANY",
-    MANY_TO_ONE = "MANY_TO_ONE",
-    MANY_TO_MANY = "MANY_TO_MANY"
 }
 export enum ListFilterLogicType {
     AND = "AND",

@@ -23,7 +23,7 @@ export function useEntityTypes(organisationId?: string): AuthenticatedQueryResul
     };
 }
 
-export function useBlockTypeByKey(
+export function useEntityTypeByKey(
     key: string,
     organisationId: string
 ): AuthenticatedQueryResult<EntityType> {
