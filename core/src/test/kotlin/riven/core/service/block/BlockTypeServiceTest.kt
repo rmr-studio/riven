@@ -132,7 +132,7 @@ class BlockTypeServiceTest {
             strictness = ValidationScope.STRICT, // change strictness
             display = BlockFactory.generateDisplay(),
             // schema change too
-            schema = BlockFactory.generateSchema().copy(description = "changed")
+            schema = BlockFactory.generateSchema()
         )
 
         blockTypeService.updateBlockType(inputModel)

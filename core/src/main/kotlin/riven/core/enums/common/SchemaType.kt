@@ -1,4 +1,20 @@
 package riven.core.enums.common
 
-class SchemaType {
+enum class SchemaType {
+    TEXT,
+    OBJECT,
+    NUMBER,
+    CHECKBOX,
+    DATE,
+    DATETIME,
+    RATING,
+    PHONE,
+    EMAIL,
+    URL,
+    CURRENCY,
+    PERCENTAGE,
+    SELECT,
+    MULTI_SELECT,
+    FILE_ATTACHMENT,
+    LOCATION
 }

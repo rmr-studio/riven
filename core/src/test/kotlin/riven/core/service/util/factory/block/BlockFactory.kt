@@ -44,7 +44,7 @@ object BlockFactory {
         key: String = "contact_card",
         version: Int = 1,
         strictness: ValidationScope = ValidationScope.SOFT,
-        schema: Schema = Schema(name = "Contact"),
+        schema: Schema = Schema(),
         archived: Boolean = false,
         nesting: BlockTypeNesting = BlockTypeNesting(
             max = null,
@@ -101,7 +101,7 @@ object BlockFactory {
      *
      * @return A BlockSchema whose name is "root".
      */
-    fun generateSchema(): Schema = Schema(name = "root")
+    fun generateSchema(): Schema = Schema()
 
     /**
      * Creates a default BlockDisplay with an empty form structure and a text render.

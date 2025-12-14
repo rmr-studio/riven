@@ -2,10 +2,12 @@ package riven.core.models.common.validation
 
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import riven.core.enums.common.OptionSortingType
+import riven.core.enums.common.SchemaType
 import riven.core.enums.core.DataFormat
 import riven.core.enums.core.DataType
 import riven.core.models.common.json.JsonObject
 import riven.core.models.common.json.JsonValue
+import java.time.ZonedDateTime
 import io.swagger.v3.oas.annotations.media.Schema as JsonSchema
 
 /**
@@ -33,8 +35,9 @@ import io.swagger.v3.oas.annotations.media.Schema as JsonSchema
  * }
  */
 data class Schema(
-    val name: String,
-    val description: String? = null,
+    // This is a human-readable label for the schema
+    val label: String? = null,
+    val key: SchemaType,
     val type: DataType = DataType.OBJECT,
     val format: DataFormat? = null,
     val required: Boolean = false,
@@ -49,20 +52,14 @@ data class Schema(
     data class SchemaOptions(
         val default: JsonValue? = null,
         val regex: String? = null,
-        @field:ArraySchema(
-            arraySchema = JsonSchema(description = "List of allowed enumeration values"),
-            schema = JsonSchema(
-                description = "Allowed enumeration values for the field (string, number, or boolean)",
-                anyOf = [String::class, Number::class, Boolean::class]
-            )
-        )
-        val enum: List<JsonValue>? = null,
+        val enum: List<String>? = null,
         val enumSorting: OptionSortingType? = null,
-
         val minLength: Int? = null,
         val maxLength: Int? = null,
         val minimum: Double? = null,
-        val maximum: Double? = null
+        val maximum: Double? = null,
+        val minDate: ZonedDateTime? = null,
+        val maxDate: ZonedDateTime? = null
     )
 
     fun toJsonSchema(
@@ -90,7 +87,6 @@ data class Schema(
                     }
                     buildMap {
                         put("type", "object")
-                        schema.description?.let { put("description", it) }
                         put("properties", props)
                         put("additionalProperties", allowAP)
                         if (requiredKeys.isNotEmpty()) put("required", requiredKeys)
@@ -102,7 +98,6 @@ data class Schema(
                     buildMap {
                         put("type", "array")
                         put("items", items)
-                        schema.description?.let { put("description", it) }
                     }
                 }
 
@@ -129,7 +124,6 @@ data class Schema(
                     schema.options?.minLength?.let { base["minLength"] = it }
                     schema.options?.maxLength?.let { base["maxLength"] = it }
                     schema.options?.enum?.let { base["enum"] = it }
-                    schema.description?.let { base["description"] = it }
 
                     base
                 }
@@ -156,20 +150,17 @@ data class Schema(
                             schema.options?.minimum?.let { put("minimum", it) }
                             schema.options?.maximum?.let { put("maximum", it) }
                             schema.options?.enum?.let { put("enum", it) }
-                            schema.description?.let { put("description", it) }
                         }
                     }
                 }
 
                 DataType.BOOLEAN -> buildMap {
                     put("type", "boolean")
-                    schema.description?.let { put("description", it) }
                     schema.options?.enum?.let { put("enum", it) }
                 }
 
                 DataType.NULL -> buildMap {
                     put("type", "null")
-                    schema.description?.let { put("description", it) }
                 }
             }
         }
