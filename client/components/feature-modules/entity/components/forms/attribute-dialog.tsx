@@ -12,20 +12,17 @@ import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/
 import { SchemaOptions } from "@/lib/interfaces/common.interface";
 import {
     DataFormat,
-    DataType,
     EntityRelationshipCardinality,
     OptionSortingType,
+    SchemaType,
 } from "@/lib/types/types";
-import { toKeyCase } from "@/lib/util/utils";
+import { attributeTypes } from "@/lib/util/form/schema.util";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FC, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { AttributeTypeDropdown, attributeTypes } from "../../../../ui/attribute-type-dropdown";
-import type {
-    AttributeFormData,
-    RelationshipFormData,
-} from "../../interface/entity-type.interface";
+import { AttributeTypeDropdown } from "../../../../ui/attribute-type-dropdown";
+import type { AttributeFormData, RelationshipFormData } from "../../interface/entity.interface";
 import { EntityType } from "../../interface/entity.interface";
 import { AttributeForm } from "./attribute-form";
 import { RelationshipAttributeForm } from "./attributes-relationship-form";
@@ -40,31 +37,45 @@ interface AttributeDialogProps {
 }
 
 // Zod schema
-const formSchema = z.object({
-    selectedType: z.string(),
-    name: z.string().min(1, "Name is required"),
-    key: z.string().min(1, "Key is required"),
-    description: z.string().optional(),
-    dataFormat: z.nativeEnum(DataFormat).optional(),
-    required: z.boolean(),
-    unique: z.boolean(),
-    cardinality: z.nativeEnum(EntityRelationshipCardinality).optional(),
-    minOccurs: z.coerce.number().min(0).optional(),
-    maxOccurs: z.coerce.number().min(0).optional(),
-    entityTypeKeys: z.array(z.string()).optional(),
-    allowPolymorphic: z.boolean().optional(),
-    bidirectional: z.boolean().optional(),
-    inverseName: z.string().optional(),
-    targetAttributeName: z.string().optional(),
-    // Schema options
-    enumValues: z.array(z.string()).optional(),
-    enumSorting: z.nativeEnum(OptionSortingType).optional(),
-    minimum: z.coerce.number().optional(),
-    maximum: z.coerce.number().optional(),
-    minLength: z.coerce.number().min(0).optional(),
-    maxLength: z.coerce.number().min(0).optional(),
-    regex: z.string().optional(),
-});
+const formSchema = z
+    .object({
+        selectedType: z.nativeEnum(SchemaType).or(z.literal("RELATIONSHIP")),
+        name: z.string().min(1, "Name is required"),
+        // Key is only required for relationships.
+        key: z.string().optional(),
+        dataFormat: z.nativeEnum(DataFormat).optional(),
+        required: z.boolean(),
+        unique: z.boolean(),
+        cardinality: z.nativeEnum(EntityRelationshipCardinality).optional(),
+        minOccurs: z.coerce.number().min(0).optional(),
+        maxOccurs: z.coerce.number().min(0).optional(),
+        entityTypeKeys: z.array(z.string()).optional(),
+        allowPolymorphic: z.boolean().optional(),
+        bidirectional: z.boolean().optional(),
+        inverseName: z.string().optional(),
+        targetAttributeName: z.string().optional(),
+        // Schema options
+        enumValues: z.array(z.string()).optional(),
+        enumSorting: z.nativeEnum(OptionSortingType).optional(),
+        minimum: z.coerce.number().optional(),
+        maximum: z.coerce.number().optional(),
+        minLength: z.coerce.number().min(0).optional(),
+        maxLength: z.coerce.number().min(0).optional(),
+        regex: z.string().optional(),
+    })
+    .refine(
+        (data) => {
+            // If selectedType is RELATIONSHIP, key must be provided and non-empty
+            if (data.selectedType === "RELATIONSHIP") {
+                return data.key && data.key.trim().length > 0;
+            }
+            return true;
+        },
+        {
+            message: "Key is required for relationships",
+            path: ["key"], // Attach error to the key field
+        }
+    );
 
 export type AttributeFormValues = z.infer<typeof formSchema>;
 
@@ -82,10 +93,9 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
     const form = useForm<AttributeFormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            selectedType: DataType.STRING,
+            selectedType: SchemaType.TEXT,
             name: "",
             key: "",
-            description: "",
             required: false,
             unique: false,
             cardinality: EntityRelationshipCardinality.ONE_TO_ONE,
@@ -106,27 +116,22 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
         },
     });
 
-    const selectedType: string = form.watch("selectedType");
-    const name: string = form.watch("name");
+    const selectedType: SchemaType | "RELATIONSHIP" | "" = form.watch("selectedType");
     const isRelationship = selectedType === "RELATIONSHIP";
 
-    // Auto-update key based on name (only in create mode)
-    useEffect(() => {
-        if (!isEditMode && name) {
-            form.setValue("key", toKeyCase(name));
-        }
-    }, [name, form, isEditMode]);
-
-    // Pre-populate schema options for specific types
+    // Pre-populate schema options for specific types. Provided they have been provided default options.
     useEffect(() => {
         if (!isEditMode) {
-            const selectedAttr = attributeTypes.find((attr) => attr.key === selectedType);
-            if (selectedAttr?.options) {
-                if (selectedAttr.options.minimum !== undefined) {
-                    form.setValue("minimum", selectedAttr.options.minimum);
+            if (isRelationship) return;
+            const attribute = attributeTypes[selectedType];
+            if (!attribute) return;
+
+            if (attribute?.options) {
+                if (attribute.options.minimum !== undefined) {
+                    form.setValue("minimum", attribute.options.minimum);
                 }
-                if (selectedAttr.options.maximum !== undefined) {
-                    form.setValue("maximum", selectedAttr.options.maximum);
+                if (attribute.options.maximum !== undefined) {
+                    form.setValue("maximum", attribute.options.maximum);
                 }
             }
         }
@@ -139,7 +144,6 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
                 form.reset({
                     selectedType: "RELATIONSHIP",
                     name: editingAttribute.name,
-                    key: editingAttribute.key,
                     required: editingAttribute.required,
                     unique: false,
                     cardinality: editingAttribute.cardinality,
@@ -152,24 +156,17 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
                     targetAttributeName: editingAttribute.targetAttributeName,
                 });
             } else {
-                // Find matching attribute type or use dataType directly
-                const matchingType = attributeTypes.find(
-                    (attr) =>
-                        attr.type === editingAttribute.dataType &&
-                        attr.format === editingAttribute.dataFormat
-                );
+                const attribute = attributeTypes[editingAttribute.key];
+                if (!attribute) return;
+
                 form.reset({
-                    selectedType: matchingType?.key || editingAttribute.dataType,
+                    selectedType: attribute.key,
                     name: editingAttribute.name,
-                    key: editingAttribute.key,
-                    description: editingAttribute.description,
                     required: editingAttribute.required,
                     unique: editingAttribute.unique,
                     dataFormat: editingAttribute.dataFormat,
-                    enumValues: editingAttribute.options?.enum?.map(String) || [],
-                    enumSorting:
-                        (editingAttribute.options?.enumSorting as OptionSortingType) ||
-                        OptionSortingType.MANUAL,
+                    enumValues: editingAttribute.options?.enum,
+                    enumSorting: editingAttribute.options?.enumSorting,
                     minimum: editingAttribute.options?.minimum,
                     maximum: editingAttribute.options?.maximum,
                     minLength: editingAttribute.options?.minLength,
@@ -180,10 +177,8 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
         } else if (open && !editingAttribute) {
             // Reset to default values when creating new
             form.reset({
-                selectedType: DataType.STRING,
+                selectedType: SchemaType.TEXT,
                 name: "",
-                key: "",
-                description: "",
                 required: false,
                 unique: false,
                 cardinality: EntityRelationshipCardinality.ONE_TO_ONE,
@@ -214,6 +209,9 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
 
     const handleFormSubmit = (values: AttributeFormValues) => {
         if (values.selectedType === "RELATIONSHIP") {
+            // Validation: Key must be provided. But this should be handled by Zod already.
+            if (!values.key) return;
+
             const data: RelationshipFormData = {
                 type: "relationship",
                 name: values.name,
@@ -229,46 +227,34 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
                 targetAttributeName: values.targetAttributeName || "",
             };
             onSubmit(data);
-        } else {
-            const selectedAttr = attributeTypes.find((attr) => attr.key === values.selectedType);
-
-            // Build schema options
-            const options: SchemaOptions = {};
-            if (values.enumValues && values.enumValues.length > 0) {
-                options.enum = values.enumValues;
-            }
-            if (values.enumSorting) {
-                options.enumSorting = values.enumSorting;
-            }
-            if (values.minimum !== undefined && values.minimum !== null) {
-                options.minimum = values.minimum;
-            }
-            if (values.maximum !== undefined && values.maximum !== null) {
-                options.maximum = values.maximum;
-            }
-            if (values.minLength !== undefined && values.minLength !== null) {
-                options.minLength = values.minLength;
-            }
-            if (values.maxLength !== undefined && values.maxLength !== null) {
-                options.maxLength = values.maxLength;
-            }
-            if (values.regex) {
-                options.regex = values.regex;
-            }
-
-            const data: AttributeFormData = {
-                type: "attribute",
-                name: values.name,
-                key: values.key,
-                description: values.description,
-                dataType: selectedAttr?.type || (values.selectedType as DataType),
-                dataFormat: selectedAttr?.format || values.dataFormat,
-                required: values.required || false,
-                unique: values.unique || false,
-                options: Object.keys(options).length > 0 ? options : undefined,
-            };
-            onSubmit(data);
+            return;
         }
+
+        const attribute = attributeTypes[values.selectedType];
+        if (!attribute) return;
+
+        const options: SchemaOptions = {
+            enum: values.enumValues,
+            enumSorting: values.enumSorting,
+            minimum: values.minimum,
+            maximum: values.maximum,
+            minLength: values.minLength,
+            maxLength: values.maxLength,
+            regex: values.regex,
+        };
+
+        const data: AttributeFormData = {
+            type: "attribute",
+            name: values.name,
+            key: values.selectedType,
+            dataType: attribute.type,
+            dataFormat: attribute.format,
+            required: values.required || false,
+            unique: values.unique || false,
+            options,
+        };
+
+        onSubmit(data);
     };
 
     return (

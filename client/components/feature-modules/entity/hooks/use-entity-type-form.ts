@@ -1,5 +1,5 @@
 import { useAuth } from "@/components/provider/auth-context";
-import { DataType, EntityCategory } from "@/lib/types/types";
+import { DataType, EntityCategory, SchemaType } from "@/lib/types/types";
 import { toKeyCase } from "@/lib/util/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,8 +11,8 @@ import {
     AttributeFormData,
     CreateEntityTypeRequest,
     RelationshipFormData,
-} from "../interface/entity-type.interface";
-import { type EntityType } from "../interface/entity.interface";
+    type EntityType,
+} from "../interface/entity.interface";
 import { EntityTypeService } from "../service/entity-type.service";
 
 // Zod schema for entity type form
@@ -49,8 +49,8 @@ export function useEntityTypeForm(
         resolver: zodResolver(entityTypeFormSchema),
         defaultValues: {
             key: entityType?.key ?? "",
-            singularName: entityType?.name.singular ?? "",
-            pluralName: entityType?.name.plural ?? "",
+            singularName: entityType?.name?.singular ?? "",
+            pluralName: entityType?.name?.plural ?? "",
             identifierKey: entityType?.identifierKey ?? "name",
             description: entityType?.description ?? "",
             type: entityType?.type ?? EntityCategory.STANDARD,
@@ -128,10 +128,11 @@ export function useEntityTypeForm(
             description: values.description,
             type: values.type,
             schema: {
-                name: values.pluralName,
-                description: values.description,
+                key: SchemaType.OBJECT,
                 properties: attributeSchema.reduce((acc, attr) => {
-                    acc[attr.name] = {
+                    acc[toKeyCase(attr.name)] = {
+                        label: attr.name,
+                        key: attr.key,
                         type: attr.dataType,
                         description: attr.description,
                         format: attr.dataFormat,

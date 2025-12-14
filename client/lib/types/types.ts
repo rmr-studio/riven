@@ -692,8 +692,8 @@ export interface components {
             path: string;
         });
         Schema: {
-            name: string;
-            description?: string;
+            label?: string;
+            key: components["schemas"]["SchemaType"];
             type: components["schemas"]["DataType"];
             format?: components["schemas"]["DataFormat"];
             required: boolean;
@@ -708,7 +708,7 @@ export interface components {
         SchemaOptions: {
             default?: Record<string, never>;
             regex?: string;
-            enum?: (string | number | boolean)[];
+            enum?: string[];
             enumSorting?: components["schemas"]["OptionSortingType"];
             /** Format: int32 */
             minLength?: number;
@@ -719,6 +719,8 @@ export interface components {
             /** Format: double */
             maximum?: number;
         };
+        /** @enum {string} */
+        SchemaType: SchemaType;
         ThemeTokens: {
             variant?: string;
             colorRole?: string;
@@ -987,9 +989,9 @@ export interface components {
         ListFilterLogicType: ListFilterLogicType;
         Metadata: {
             type: components["schemas"]["BlockMetadataType"];
-            meta: components["schemas"]["BlockMeta"];
             readonly: boolean;
             deletable: boolean;
+            meta: components["schemas"]["BlockMeta"];
         };
         Node: {
             warnings: string[];
@@ -2333,6 +2335,24 @@ export enum OptionSortingType {
     MANUAL = "MANUAL",
     ALPHABETICAL = "ALPHABETICAL",
     REVERSE_ALPHABETICAL = "REVERSE_ALPHABETICAL"
+}
+export enum SchemaType {
+    TEXT = "TEXT",
+    OBJECT = "OBJECT",
+    NUMBER = "NUMBER",
+    CHECKBOX = "CHECKBOX",
+    DATE = "DATE",
+    DATETIME = "DATETIME",
+    RATING = "RATING",
+    PHONE = "PHONE",
+    EMAIL = "EMAIL",
+    URL = "URL",
+    CURRENCY = "CURRENCY",
+    PERCENTAGE = "PERCENTAGE",
+    SELECT = "SELECT",
+    MULTI_SELECT = "MULTI_SELECT",
+    FILE_ATTACHMENT = "FILE_ATTACHMENT",
+    LOCATION = "LOCATION"
 }
 export enum ValidationScope {
     SOFT = "SOFT",

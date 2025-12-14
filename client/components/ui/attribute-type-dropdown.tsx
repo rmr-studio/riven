@@ -1,27 +1,7 @@
-import { Schema, SchemaOptions } from "@/lib/interfaces/common.interface";
-import { DataFormat, DataType } from "@/lib/types/types";
+import { DataType } from "@/lib/types/types";
+import { AttributeSchemaType, attributeTypes } from "@/lib/util/form/schema.util";
 import { cn } from "@/lib/util/utils";
-import {
-    AtSign,
-    Calendar,
-    Check,
-    CheckSquare,
-    ChevronsUpDown,
-    Clock,
-    Code,
-    DollarSign,
-    Hash,
-    Link,
-    Link2,
-    List,
-    ListChecks,
-    MapPin,
-    Paperclip,
-    Percent,
-    Phone,
-    Stars,
-    Type,
-} from "lucide-react";
+import { Check, ChevronsUpDown, Link2 } from "lucide-react";
 import { Dispatch, FC, SetStateAction, useMemo } from "react";
 import { Button } from "./button";
 import {
@@ -44,92 +24,6 @@ interface Props {
 
 export type AttributeKey = DataType | "RELATIONSHIP";
 
-export interface AttributeSchemaType {
-    label: string;
-    key: string;
-    type: DataType;
-    format?: DataFormat;
-    options?: SchemaOptions;
-    icon: FC<React.SVGProps<SVGSVGElement>>;
-    schemaBuilder?: (schema: Schema, config: any) => Schema;
-}
-
-export const attributeTypes: AttributeSchemaType[] = [
-    { label: "Text", key: "text", type: DataType.STRING, icon: Type },
-    { label: "Number", key: "number", type: DataType.NUMBER, icon: Hash },
-    { label: "Checkbox", key: "checkbox", type: DataType.BOOLEAN, icon: CheckSquare },
-    {
-        label: "Date",
-        key: "date",
-        type: DataType.STRING,
-        format: DataFormat.DATE,
-        icon: Calendar,
-    },
-    {
-        label: "DateTime",
-        key: "datetime",
-        type: DataType.STRING,
-        format: DataFormat.DATETIME,
-        icon: Clock,
-    },
-    {
-        label: "Rating",
-        key: "rating",
-        type: DataType.NUMBER,
-        options: { minimum: 1, maximum: 5 },
-        icon: Stars,
-    },
-    {
-        label: "Phone",
-        key: "phone",
-        type: DataType.STRING,
-        format: DataFormat.PHONE,
-        icon: Phone,
-    },
-    {
-        label: "Email",
-        key: "email",
-        type: DataType.STRING,
-        format: DataFormat.EMAIL,
-        icon: AtSign,
-    },
-    { label: "URL", key: "url", type: DataType.STRING, format: DataFormat.URL, icon: Link },
-    {
-        label: "Currency",
-        key: "currency",
-        type: DataType.NUMBER,
-        format: DataFormat.CURRENCY,
-        icon: DollarSign,
-    },
-    {
-        label: "Percentage",
-        key: "percentage",
-        type: DataType.NUMBER,
-        format: DataFormat.PERCENTAGE,
-        icon: Percent,
-    },
-    {
-        label: "Select",
-        key: "select",
-        type: DataType.STRING,
-        icon: List,
-    },
-    {
-        label: "Multi-select",
-        type: DataType.ARRAY,
-        key: "multi_select",
-        icon: ListChecks,
-    },
-    { label: "File Attachments", key: "attachments", type: DataType.ARRAY, icon: Paperclip },
-    { label: "JSON Data", key: "json_data", type: DataType.OBJECT, icon: Code },
-    {
-        label: "Location",
-        key: "location",
-        type: DataType.OBJECT,
-        icon: MapPin,
-    },
-];
-
 export const AttributeTypeDropdown: FC<Props> = ({ onChange, attributeKey, open, setOpen }) => {
     const groupedAttributes = useMemo(() => {
         const groups: Partial<Record<DataType, AttributeSchemaType[]>> = {
@@ -140,7 +34,7 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, attributeKey, open,
             [DataType.ARRAY]: [],
         };
 
-        attributeTypes.forEach((attr) => {
+        Object.values(attributeTypes).forEach((attr) => {
             if (groups[attr.type]) {
                 groups[attr.type]!.push(attr);
             }
@@ -153,7 +47,10 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, attributeKey, open,
         if (attributeKey === "RELATIONSHIP") {
             return { label: "Relationship", icon: Link2 };
         }
-        return attributeTypes.find((attr) => attr.key === attributeKey) || attributeTypes[0];
+        return (
+            Object.values(attributeTypes).find((attr) => attr.key === attributeKey) ||
+            Object.values(attributeTypes)[0]
+        );
     }, [attributeKey]);
     const getGroupName = (type: DataType): string => {
         switch (type) {
@@ -173,23 +70,14 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, attributeKey, open,
     };
 
     return (
-        <Popover
-            modal={false}
-            onOpenChange={(next) => {
-                if (open && next) return;
-                setOpen(next);
-            }}
-            open={open}
-        >
-            <PopoverTrigger asChild>
-                <FormControl>
+        <Popover modal={true} onOpenChange={setOpen} open={open}>
+            <FormControl>
+                <PopoverTrigger asChild>
                     <Button
                         variant="outline"
                         role="combobox"
                         className="w-full justify-between"
-                        onPointerDown={(e) => {
-                            if (open) e.preventDefault();
-                        }}
+                        disabled={open}
                     >
                         <div className="flex items-center gap-2">
                             <selectedAttribute.icon className="h-4 w-4" />
@@ -197,12 +85,12 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, attributeKey, open,
                         </div>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
-                </FormControl>
-            </PopoverTrigger>
+                </PopoverTrigger>
+            </FormControl>
             <PopoverContent
                 className="w-[400px] p-0"
                 align="start"
-                portal={false}
+                portal={true}
                 onOpenAutoFocus={(e) => e.preventDefault()}
                 onEscapeKeyDown={(e) => {
                     e.stopPropagation();

@@ -78,7 +78,7 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
         keyManuallyEdited,
         setKeyManuallyEdited,
         handleSubmit: handleFormSubmit,
-    } = useEntityTypeForm(entityType, mode);
+    } = useEntityTypeForm(organisationId, entityType, mode);
 
     const identifierKey = form.watch("identifierKey");
     // Attribute management hook
@@ -490,8 +490,9 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                                                                     {attr.name}
                                                                 </SelectItem>
                                                             ))}
-                                                        {attributes.filter((attr) => attr.unique)
-                                                            .length === 0 && (
+                                                        {attributes.filter(
+                                                            (attr) => attr.unique && attr.required
+                                                        ).length === 0 && (
                                                             <SelectItem value="name" disabled>
                                                                 No unique attributes available
                                                             </SelectItem>
@@ -499,8 +500,10 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                                                     </SelectContent>
                                                 </Select>
                                                 <FormDescription>
-                                                    This attribute will be used as the display name
-                                                    for entities. Must be a unique attribute.
+                                                    This attribute will be used to uniquely identify
+                                                    an entity. This value must reference an
+                                                    attribute marked as "Unique", and must be a
+                                                    Required field.
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>

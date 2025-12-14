@@ -8,11 +8,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
+import { SchemaType } from "@/lib/types/types";
 import { FC } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { AttributeFormValues } from "./attribute-dialog";
-import { attributeTypes } from "@/components/ui/attribute-type-dropdown";
 import { EnumOptionsEditor } from "./enum-options-editor";
 
 interface Props {
@@ -21,13 +20,16 @@ interface Props {
 }
 
 export const AttributeForm: FC<Props> = ({ form, isEditMode = false }) => {
-    const selectedType = form.watch("selectedType");
+    const selectedType: SchemaType | "RELATIONSHIP" = form.watch("selectedType");
+    if (selectedType === "RELATIONSHIP") return null;
 
     // Determine what schema options to show based on the selected type
-    const selectedAttr = attributeTypes.find((attr) => attr.key === selectedType);
-    const isSelectType = selectedType === "select" || selectedType === "multi_select";
-    const isNumberType = selectedAttr?.type === "NUMBER";
-    const isStringType = selectedAttr?.type === "STRING";
+
+    const requireEnumOptions = [SchemaType.SELECT, SchemaType.MULTI_SELECT].includes(selectedType);
+    const requireNumericalValidation = selectedType == SchemaType.NUMBER;
+    const requireStringValidation = [SchemaType.TEXT, SchemaType.EMAIL, SchemaType.PHONE].includes(
+        selectedType
+    );
 
     return (
         <>
@@ -39,48 +41,6 @@ export const AttributeForm: FC<Props> = ({ form, isEditMode = false }) => {
                         <FormLabel>Name</FormLabel>
                         <FormControl>
                             <Input placeholder="Enter attribute name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-
-            <FormField
-                control={form.control}
-                name="key"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Key</FormLabel>
-                        <FormControl>
-                            <Input
-                                placeholder="attribute_key"
-                                {...field}
-                                disabled={isEditMode}
-                                className={isEditMode ? "bg-muted cursor-not-allowed" : ""}
-                            />
-                        </FormControl>
-                        <FormDescription className="text-xs">
-                            {isEditMode
-                                ? "Key cannot be changed after creation"
-                                : "Auto-generated from name"}
-                        </FormDescription>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-
-            <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Description (optional)</FormLabel>
-                        <FormControl>
-                            <Textarea
-                                placeholder="Add a description for this attribute"
-                                rows={3}
-                                {...field}
-                            />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -132,9 +92,9 @@ export const AttributeForm: FC<Props> = ({ form, isEditMode = false }) => {
             </div>
 
             {/* Schema Options */}
-            {isSelectType && <EnumOptionsEditor form={form} />}
+            {requireEnumOptions && <EnumOptionsEditor form={form} />}
 
-            {isNumberType && (
+            {requireNumericalValidation && (
                 <div className="border-t pt-4">
                     <h3 className="text-sm font-medium mb-3">Value Constraints</h3>
                     <div className="grid grid-cols-2 gap-4">
@@ -192,7 +152,7 @@ export const AttributeForm: FC<Props> = ({ form, isEditMode = false }) => {
                 </div>
             )}
 
-            {isStringType && (
+            {requireStringValidation && (
                 <div className="border-t pt-4">
                     <h3 className="text-sm font-medium mb-3">String Constraints</h3>
                     <div className="space-y-4">
