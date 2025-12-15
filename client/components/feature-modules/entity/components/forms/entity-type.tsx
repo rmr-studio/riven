@@ -173,6 +173,44 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
         }
     }, [mode, attributes.length, handleAttributeAdd, form]);
 
+    // Sync order array with all attributes and relationships
+    useEffect(() => {
+        // Create a map of existing order items for quick lookup
+        const orderMap = new Map(order.map((o) => [`${o.type}-${o.key}`, o]));
+        let needsUpdate = false;
+        const newOrder: EntityTypeOrderingKey[] = [...order];
+
+        // Add any attributes that aren't in the order array
+        attributes.forEach((attr) => {
+            const key = `${attr.type}-${attr.key}`;
+            if (!orderMap.has(key)) {
+                newOrder.push({ key: attr.key, type: attr.type });
+                needsUpdate = true;
+            }
+        });
+
+        // Add any relationships that aren't in the order array
+        relationships.forEach((rel) => {
+            const key = `${rel.type}-${rel.key}`;
+            if (!orderMap.has(key)) {
+                newOrder.push({ key: rel.key, type: rel.type });
+                needsUpdate = true;
+            }
+        });
+
+        // Remove any items from order that no longer exist in attributes or relationships
+        const allFieldKeys = new Set([
+            ...attributes.map((a) => `${a.type}-${a.key}`),
+            ...relationships.map((r) => `${r.type}-${r.key}`),
+        ]);
+
+        const filteredOrder = newOrder.filter((o) => allFieldKeys.has(`${o.type}-${o.key}`));
+
+        if (needsUpdate || filteredOrder.length !== newOrder.length) {
+            setOrder(filteredOrder);
+        }
+    }, [attributes, relationships, order]);
+
     // Combine attributes and relationships into a single array
     const allFields: EntityTypeFieldRow[] = useMemo(() => {
         // Convert attributes to EntityTypeFieldRow
@@ -213,8 +251,8 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
         // Sort based on order array if it exists
         if (order.length > 0) {
             return combined.sort((a, b) => {
-                const aOrderItem = order.find((o) => o.key === a.key);
-                const bOrderItem = order.find((o) => o.key === b.key);
+                const aOrderItem = order.find((o) => o.key === a.key && o.type === a.type);
+                const bOrderItem = order.find((o) => o.key === b.key && o.type === b.type);
                 const aIndex = aOrderItem ? order.indexOf(aOrderItem) : -1;
                 const bIndex = bOrderItem ? order.indexOf(bOrderItem) : -1;
 
@@ -379,6 +417,7 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
     };
 
     const handleFieldsReorder = (reorderedFields: EntityTypeFieldRow[]) => {
+        console.log(reorderedFields);
         // Create new order array from reordered fields
         const newOrder: EntityTypeOrderingKey[] = reorderedFields.map((field) => ({
             key: field.key,
@@ -734,37 +773,34 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                             <DataTable
                                 columns={fieldColumns}
                                 data={allFields}
-                                enableSorting
                                 enableDragDrop
                                 onReorder={handleFieldsReorder}
-                                getRowId={(row) => {
-                                    return `${row.type}-${row.key}`;
-                                }}
+                                getRowId={(row) => row.key}
                                 search={{
                                     enabled: true,
                                     searchableColumns: ["label"],
                                     placeholder: "Search fields...",
                                 }}
-                                // filter={{
-                                //     enabled: true,
-                                //     filters: [
-                                //         {
-                                //             column: "category",
-                                //             type: "select",
-                                //             label: "Type",
-                                //             options: [
-                                //                 {
-                                //                     label: "Attributes",
-                                //                     value: EntityCategory.STANDARD,
-                                //                 },
-                                //                 {
-                                //                     label: "Relationships",
-                                //                     value: EntityCategory.RELATIONSHIP,
-                                //                 },
-                                //             ],
-                                //         },
-                                //     ],
-                                // }}
+                                filter={{
+                                    enabled: true,
+                                    filters: [
+                                        {
+                                            column: "type",
+                                            type: "select",
+                                            label: "Type",
+                                            options: [
+                                                {
+                                                    label: "Attributes",
+                                                    value: EntityPropertyType.ATTRIBUTE,
+                                                },
+                                                {
+                                                    label: "Relationships",
+                                                    value: EntityPropertyType.RELATIONSHIP,
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                }}
                                 rowActions={{
                                     enabled: true,
                                     menuLabel: "Actions",

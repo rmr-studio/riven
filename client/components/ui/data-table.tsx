@@ -200,9 +200,7 @@ function DraggableRow<TData>({
                             {rowActions.actions.map((action, index) => (
                                 <div key={index}>
                                     <DropdownMenuItem
-                                        disabled={
-                                            action.disabled?.(row.original) ?? false
-                                        }
+                                        disabled={action.disabled?.(row.original) ?? false}
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             action.onClick(row.original);
@@ -367,10 +365,10 @@ export function DataTable<TData, TValue>({
         },
     });
 
-    const rowIds = useMemo(
-        () => table.getRowModel().rows.map((row) => row.id as UniqueIdentifier),
-        [table]
-    );
+    const rowIds = useMemo(() => {
+        console.log("table rows:", table.getRowModel().rows);
+        return table.getRowModel().rows.map((row) => row.id as UniqueIdentifier);
+    }, [table, tableData]);
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
