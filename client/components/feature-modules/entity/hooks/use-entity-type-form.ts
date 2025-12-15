@@ -3,6 +3,7 @@ import { DataType, EntityCategory, SchemaType } from "@/lib/types/types";
 import { toKeyCase } from "@/lib/util/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
@@ -44,8 +45,9 @@ export interface UseEntityTypeFormReturn {
 export function useEntityTypeForm(
     organisationId: string,
     entityType?: EntityType,
-    mode: "create" | "edit" | "view" = "create"
+    mode: "create" | "edit" = "create"
 ): UseEntityTypeFormReturn {
+    const router = useRouter();
     const form = useForm<EntityTypeFormValues>({
         resolver: zodResolver(entityTypeFormSchema),
         defaultValues: {
@@ -94,7 +96,7 @@ export function useEntityTypeForm(
         // Validation: Identifier key must reference a unique attribute
         if (values.identifierKey) {
             const identifierAttribute = attributeSchema.find(
-                (attr) => attr.name === values.identifierKey
+                (attr) => attr.key === values.identifierKey
             );
             if (identifierAttribute && !identifierAttribute.unique) {
                 form.setError("identifierKey", {
@@ -131,9 +133,9 @@ export function useEntityTypeForm(
             schema: {
                 key: SchemaType.OBJECT,
                 properties: attributeSchema.reduce((acc, attr) => {
-                    acc[toKeyCase(attr.name)] = {
-                        label: attr.name,
-                        key: attr.key,
+                    acc[attr.key] = {
+                        label: attr.label,
+                        key: attr.schemaKey,
                         type: attr.dataType,
                         format: attr.dataFormat,
                         required: attr.required,
@@ -147,7 +149,10 @@ export function useEntityTypeForm(
                 required: true,
                 unique: false,
             },
-            relationships: relationships,
+            relationships: relationships.map((rel) => ({
+                ...rel,
+                name: rel.label,
+            })),
             order: order,
         };
 
@@ -189,6 +194,10 @@ export function useEntityTypeForm(
                     return oldData.map((et) => (et.key === response.key ? response : et));
                 }
             });
+
+            if (mode === "create") {
+                router.push(`/organisation/${organisationId}/entity`);
+            }
 
             return response;
         },

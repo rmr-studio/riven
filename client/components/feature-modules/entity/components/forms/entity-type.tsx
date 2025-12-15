@@ -459,8 +459,12 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                                 <Button variant="outline">Back</Button>
                             </Link>
                             <Button onClick={handleSaveClick}>
-                                <Save className="h-4 w-4 mr-2" />
-                                Save
+                                {mode === "create" ? (
+                                    <Plus className="size-4 mr-1" />
+                                ) : (
+                                    <Save className="size-4 mr-1" />
+                                )}
+                                {mode === "create" ? "Create" : "Save Changes"}
                             </Button>
                         </div>
                     </div>
