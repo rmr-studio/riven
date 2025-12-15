@@ -12,18 +12,20 @@ import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/
 import { SchemaOptions } from "@/lib/interfaces/common.interface";
 import {
     DataFormat,
+    EntityPropertyType,
     EntityRelationshipCardinality,
     OptionSortingType,
     SchemaType,
 } from "@/lib/types/types";
 import { attributeTypes } from "@/lib/util/form/schema.util";
+import { toKeyCase } from "@/lib/util/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FC, useEffect, useState } from "react";
+import { FC, useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { AttributeTypeDropdown } from "../../../../ui/attribute-type-dropdown";
 import type { AttributeFormData, RelationshipFormData } from "../../interface/entity.interface";
-import { EntityType } from "../../interface/entity.interface";
+import { EntityType, isRelationshipType } from "../../interface/entity.interface";
 import { AttributeForm } from "./attribute-form";
 import { RelationshipAttributeForm } from "./attributes-relationship-form";
 
@@ -79,7 +81,10 @@ const formSchema = z
     .refine(
         (data) => {
             // If selectedType is select or multi-select, at least 2 enum values must be provided
-            if (data.selectedType === SchemaType.SELECT || data.selectedType === SchemaType.MULTI_SELECT) {
+            if (
+                data.selectedType === SchemaType.SELECT ||
+                data.selectedType === SchemaType.MULTI_SELECT
+            ) {
                 return data.enumValues && data.enumValues.length >= 2;
             }
             return true;
@@ -152,11 +157,13 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
 
     // Populate form when editing
     useEffect(() => {
-        if (open && editingAttribute) {
-            if (editingAttribute.type === "relationship") {
+        if (!open) return;
+
+        if (editingAttribute) {
+            if (isRelationshipType(editingAttribute)) {
                 form.reset({
                     selectedType: "RELATIONSHIP",
-                    name: editingAttribute.name,
+                    name: editingAttribute.label,
                     required: editingAttribute.required,
                     unique: false,
                     cardinality: editingAttribute.cardinality,
@@ -169,12 +176,12 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
                     targetAttributeName: editingAttribute.targetAttributeName,
                 });
             } else {
-                const attribute = attributeTypes[editingAttribute.key];
+                const attribute = attributeTypes[editingAttribute.schemaKey];
                 if (!attribute) return;
 
                 form.reset({
                     selectedType: attribute.key,
-                    name: editingAttribute.name,
+                    name: editingAttribute.label,
                     required: editingAttribute.required,
                     unique: editingAttribute.unique,
                     dataFormat: editingAttribute.dataFormat,
@@ -220,29 +227,25 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
         }
     }, [open, form]);
 
-    const handleFormSubmit = (values: AttributeFormValues) => {
-        if (values.selectedType === "RELATIONSHIP") {
-            // Validation: Key must be provided. But this should be handled by Zod already.
-            if (!values.key) return;
+    /**
+     * Handles form submission for both attributes and relationships.
+     * Validates and constructs the appropriate data object before invoking onSubmit.
+     * When handling an attribute update/edit. It is vital that the key is preserved.
+     */
+    const handleFormSubmit = useCallback(
+        (values: AttributeFormValues) => {
+            if (values.selectedType === "RELATIONSHIP")
+                return handleRelationshipSubmission(values, editingAttribute?.key);
+            return handleAttributeSubmission(values, editingAttribute?.key);
+        },
+        [onSubmit, editingAttribute]
+    );
 
-            const data: RelationshipFormData = {
-                type: "relationship",
-                name: values.name,
-                key: values.key,
-                cardinality: values.cardinality || EntityRelationshipCardinality.ONE_TO_ONE,
-                minOccurs: values.minOccurs,
-                maxOccurs: values.maxOccurs,
-                entityTypeKeys: values.entityTypeKeys || [],
-                allowPolymorphic: values.allowPolymorphic || false,
-                bidirectional: values.bidirectional || false,
-                inverseName: values.inverseName,
-                required: values.required || false,
-                targetAttributeName: values.targetAttributeName || "",
-            };
-            onSubmit(data);
-            return;
-        }
-
+    const handleAttributeSubmission = (
+        values: AttributeFormValues,
+        existingKey: string | undefined
+    ) => {
+        if (values.selectedType === "RELATIONSHIP") return;
         const attribute = attributeTypes[values.selectedType];
         if (!attribute) return;
 
@@ -257,9 +260,10 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
         };
 
         const data: AttributeFormData = {
-            type: "attribute",
-            name: values.name,
-            key: values.selectedType,
+            type: EntityPropertyType.ATTRIBUTE,
+            key: existingKey || toKeyCase(values.name),
+            label: values.name,
+            schemaKey: values.selectedType,
             dataType: attribute.type,
             dataFormat: attribute.format,
             required: values.required || false,
@@ -268,6 +272,30 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
         };
 
         onSubmit(data);
+    };
+    const handleRelationshipSubmission = (
+        values: AttributeFormValues,
+        existingKey: string | undefined
+    ) => {
+        // Validation: Key must be provided. But this should be handled by Zod already.
+        if (!values.key) return;
+
+        const data: RelationshipFormData = {
+            type: EntityPropertyType.RELATIONSHIP,
+            label: values.name,
+            key: existingKey || values.key,
+            cardinality: values.cardinality || EntityRelationshipCardinality.ONE_TO_ONE,
+            minOccurs: values.minOccurs,
+            maxOccurs: values.maxOccurs,
+            entityTypeKeys: values.entityTypeKeys || [],
+            allowPolymorphic: values.allowPolymorphic || false,
+            bidirectional: values.bidirectional || false,
+            inverseName: values.inverseName,
+            required: values.required || false,
+            targetAttributeName: values.targetAttributeName || "",
+        };
+        onSubmit(data);
+        return;
     };
 
     return (
