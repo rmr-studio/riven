@@ -718,6 +718,10 @@ export interface components {
             minimum?: number;
             /** Format: double */
             maximum?: number;
+            /** Format: date-time */
+            minDate?: string;
+            /** Format: date-time */
+            maxDate?: string;
         };
         /** @enum {string} */
         SchemaType: SchemaType;
@@ -757,7 +761,7 @@ export interface components {
             type: components["schemas"]["EntityCategory"];
             schema: components["schemas"]["Schema"];
             relationships?: components["schemas"]["EntityRelationshipDefinition"][];
-            order?: string[];
+            order?: components["schemas"]["EntityTypeOrderingKey"][];
         };
         DisplayName: {
             singular: string;
@@ -765,6 +769,8 @@ export interface components {
         };
         /** @enum {string} */
         EntityCategory: EntityCategory;
+        /** @enum {string} */
+        EntityPropertyType: EntityPropertyType;
         /** @enum {string} */
         EntityRelationshipCardinality: EntityRelationshipCardinality;
         EntityRelationshipDefinition: {
@@ -781,6 +787,10 @@ export interface components {
             inverseName?: string;
             required: boolean;
         };
+        EntityTypeOrderingKey: {
+            key: string;
+            type: components["schemas"]["EntityPropertyType"];
+        };
         EntityType: {
             /** Format: uuid */
             id: string;
@@ -796,7 +806,7 @@ export interface components {
             type: components["schemas"]["EntityCategory"];
             schema: components["schemas"]["Schema"];
             relationships?: components["schemas"]["EntityRelationshipDefinition"][];
-            order: string[];
+            order: components["schemas"]["EntityTypeOrderingKey"][];
             /** Format: int64 */
             entitiesCount: number;
             /** Format: date-time */
@@ -2361,6 +2371,10 @@ export enum ValidationScope {
 }
 export enum EntityCategory {
     STANDARD = "STANDARD",
+    RELATIONSHIP = "RELATIONSHIP"
+}
+export enum EntityPropertyType {
+    ATTRIBUTE = "ATTRIBUTE",
     RELATIONSHIP = "RELATIONSHIP"
 }
 export enum EntityRelationshipCardinality {

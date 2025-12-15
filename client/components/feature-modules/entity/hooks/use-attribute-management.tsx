@@ -1,11 +1,17 @@
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { EntityPropertyType } from "@/lib/types/types";
 import { attributeTypes } from "@/lib/util/form/schema.util";
+import { fromKeyCase, toKeyCase } from "@/lib/util/utils";
 import { ColumnDef } from "@tanstack/react-table";
 import { Key, Lock } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { AttributeFormData, EntityType } from "../interface/entity.interface";
+import {
+    AttributeFormData,
+    EntityType,
+    EntityTypeOrderingKey,
+} from "../interface/entity.interface";
 
 export interface UseAttributeManagementReturn {
     attributes: AttributeFormData[];
@@ -20,8 +26,8 @@ export interface UseAttributeManagementReturn {
 export function useAttributeManagement(
     entityType?: EntityType,
     identifierKey?: string,
-    order: string[] = [],
-    onOrderChange?: (order: string[]) => void
+    order: EntityTypeOrderingKey[] = [],
+    onOrderChange?: (order: EntityTypeOrderingKey[]) => void
 ): UseAttributeManagementReturn {
     const [attributes, setAttributes] = useState<AttributeFormData[]>([]);
 
@@ -31,23 +37,17 @@ export function useAttributeManagement(
             const existingAttrs: AttributeFormData[] = Object.entries(
                 entityType.schema.properties
             ).map(([key, schema]) => ({
-                type: "attribute" as const,
-                name: key,
+                type: EntityPropertyType.ATTRIBUTE,
                 key: key,
-                description: schema.description,
+                label: schema.label || fromKeyCase(key),
+                schemaKey: schema.key,
                 dataType: schema.type,
                 dataFormat: schema.format,
                 required: schema.required || false,
                 unique: schema.unique || false,
                 protected: schema.protected || false,
                 options: {
-                    enum: schema.enum,
-                    enumSorting: schema.enumSorting,
-                    minimum: schema.minimum,
-                    maximum: schema.maximum,
-                    minLength: schema.minLength,
-                    maxLength: schema.maxLength,
-                    regex: schema.regex,
+                    ...schema.options,
                 },
             }));
             setAttributes(existingAttrs);
@@ -59,8 +59,14 @@ export function useAttributeManagement(
         if (order.length === 0) return attributes;
 
         return [...attributes].sort((a, b) => {
-            const aIndex = order.indexOf(a.key);
-            const bIndex = order.indexOf(b.key);
+            const aOrderItem = order.find(
+                (o) => o.key === a.key && o.type === EntityPropertyType.ATTRIBUTE
+            );
+            const bOrderItem = order.find(
+                (o) => o.key === b.key && o.type === EntityPropertyType.ATTRIBUTE
+            );
+            const aIndex = aOrderItem ? order.indexOf(aOrderItem) : -1;
+            const bIndex = bOrderItem ? order.indexOf(bOrderItem) : -1;
 
             // If both are in order array, sort by their position
             if (aIndex !== -1 && bIndex !== -1) {
@@ -82,7 +88,7 @@ export function useAttributeManagement(
                 header: "Name",
                 cell: ({ row }) => {
                     const isProtected = row.original.protected;
-                    const isIdentifier = row.original.name === identifierKey;
+                    const isIdentifier = row.original.key === identifierKey;
 
                     return (
                         <TooltipProvider>
@@ -108,7 +114,7 @@ export function useAttributeManagement(
                                     </Tooltip>
                                 )}
                                 <div className="flex flex-col">
-                                    <span className="font-medium">{row.original.name}</span>
+                                    <span className="font-medium">{row.original.label}</span>
                                 </div>
                             </div>
                         </TooltipProvider>
@@ -119,11 +125,11 @@ export function useAttributeManagement(
                 accessorKey: "key",
                 header: "Type",
                 cell: ({ row }) => {
-                    const attribute = attributeTypes[row.original.key];
+                    const attribute = attributeTypes[row.original.schemaKey];
                     return (
                         <Badge variant="outline">
                             <attribute.icon className="mr-1" />
-                            <span>{row.original.key}</span>
+                            <span>{row.original.schemaKey}</span>
                         </Badge>
                     );
                 },
@@ -151,33 +157,48 @@ export function useAttributeManagement(
 
     const handleAttributeAdd = (data: AttributeFormData) => {
         // Check for duplicate names/keys
-        if (attributes.find((attr) => attr.name === data.name)) {
-            toast.error("An attribute with this name already exists.");
+        if (
+            attributes.find(
+                (attr) => attr.key === data.key || toKeyCase(attr.label) === toKeyCase(data.label)
+            )
+        ) {
+            toast.error("This attribute already exists.");
             return;
         }
 
         setAttributes((prev) => [...prev, data]);
         // Add to order array
         if (onOrderChange) {
-            const newOrder = [...order, data.key];
+            const newOrder: EntityTypeOrderingKey[] = [
+                ...order,
+                { key: data.key, type: EntityPropertyType.ATTRIBUTE },
+            ];
             onOrderChange(newOrder);
         }
     };
 
     const handleAttributeEdit = (data: AttributeFormData) => {
-        setAttributes((prev) => prev.map((attr) => (attr.key === data.key ? data : attr)));
+        setAttributes((prev) => {
+            const index = prev.findIndex((attr) => attr.key === data.key);
+            if (index === -1) return prev;
+            const updated = [...prev];
+            updated[index] = data;
+            return updated;
+        });
     };
 
-    const handleAttributeDelete = (name: string) => {
-        const attribute = attributes.find((attr) => attr.name === name);
+    const handleAttributeDelete = (key: string) => {
+        const attribute = attributes.find((attr) => toKeyCase(attr.key) === toKeyCase(key));
         if (attribute?.protected) {
             toast.error("This attribute is protected and cannot be deleted.");
             return;
         }
-        setAttributes((prev) => prev.filter((attr) => attr.name !== name));
+        setAttributes((prev) => prev.filter((attr) => toKeyCase(attr.key) !== toKeyCase(key)));
         // Remove from order array
         if (attribute && onOrderChange) {
-            const newOrder = order.filter((key) => key !== attribute.key);
+            const newOrder = order.filter(
+                (o) => !(o.key === attribute.key && o.type === EntityPropertyType.ATTRIBUTE)
+            );
             onOrderChange(newOrder);
         }
     };
@@ -186,13 +207,15 @@ export function useAttributeManagement(
         if (!onOrderChange) return;
 
         // Get keys for reordered attributes
-        const attributeKeys = reorderedAttributes.map((attr) => attr.key);
-
+        const attributeKeys: EntityTypeOrderingKey[] = reorderedAttributes.map((attr) => ({
+            key: attr.key,
+            type: EntityPropertyType.ATTRIBUTE,
+        }));
         onOrderChange(attributeKeys);
     };
 
     const editAttribute = (row: AttributeFormData): AttributeFormData | undefined => {
-        return attributes.find((attr) => attr.name === row.name);
+        return attributes.find((attr) => attr.key === row.key);
     };
 
     return {

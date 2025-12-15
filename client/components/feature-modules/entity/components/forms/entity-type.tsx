@@ -23,7 +23,12 @@ import {
 } from "@/components/ui/select";
 import { TabsContent, TabsList, TabsStandard, TabsTrigger } from "@/components/ui/tabs-standard";
 import { Textarea } from "@/components/ui/textarea";
-import { DataType, SchemaType } from "@/lib/types/types";
+import {
+    DataType,
+    EntityPropertyType,
+    EntityRelationshipCardinality,
+    SchemaType,
+} from "@/lib/types/types";
 import { ColumnDef } from "@tanstack/react-table";
 import {
     AlertCircle,
@@ -41,10 +46,14 @@ import { toast } from "sonner";
 import { useAttributeManagement } from "../../hooks/use-attribute-management";
 import { EntityTypeFormValues, useEntityTypeForm } from "../../hooks/use-entity-type-form";
 import { useEntityTypes } from "../../hooks/use-entity-types";
-import type {
-    AttributeFormData,
-    EntityType,
-    RelationshipFormData,
+import { useRelationshipManagement } from "../../hooks/use-relationship-management";
+import {
+    isAttributeType,
+    type AttributeFormData,
+    type EntityType,
+    type EntityTypeAttributeData,
+    type EntityTypeOrderingKey,
+    type RelationshipFormData,
 } from "../../interface/entity.interface";
 import { AttributeDialog } from "./attribute-dialog";
 
@@ -54,14 +63,20 @@ interface EntityTypeFormProps {
     mode: "create" | "edit" | "view";
 }
 
-interface RelationshipRow {
-    name: string;
-    key: string;
-    cardinality: string;
-    targetEntity: string;
-    bidirectional: boolean;
-    required: boolean;
-    protected?: boolean;
+// Common type for data table rows (both attributes and relationships)
+interface EntityTypeFieldRow extends EntityTypeAttributeData {
+    schemaType: SchemaType | "RELATIONSHIP";
+    additionalConstraints: string[];
+    // Attribute-specific fields (optional for relationships)
+    schemaKey?: SchemaType;
+    dataType?: DataType;
+    unique?: boolean;
+    // Relationship-specific fields (optional for attributes)
+    cardinality?: EntityRelationshipCardinality;
+    entityTypeKeys?: string[];
+    allowPolymorphic?: boolean;
+    bidirectional?: boolean;
+    targetAttributeName?: string | undefined;
 }
 
 export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
@@ -69,7 +84,7 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
     organisationId,
     mode,
 }) => {
-    const [order, setOrder] = useState<string[]>(entityType?.order || []);
+    const [order, setOrder] = useState<EntityTypeOrderingKey[]>(entityType?.order || []);
     const hasInitialized = useRef(false);
 
     // Form management hook
@@ -92,11 +107,20 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
         editAttribute,
     } = useAttributeManagement(entityType, identifierKey, order, setOrder);
 
+    // Relationship management hook
+    const {
+        relationships,
+        handleRelationshipAdd,
+        handleRelationshipEdit,
+        handleRelationshipDelete,
+        handleRelationshipsReorder,
+        editRelationship,
+    } = useRelationshipManagement(entityType, order, setOrder);
+
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingAttribute, setEditingAttribute] = useState<
         AttributeFormData | RelationshipFormData | undefined
     >(undefined);
-    const [newRelationships, setNewRelationships] = useState<RelationshipFormData[]>([]);
 
     // Fetch all entity types for relationship creation
     const { data: entityTypes = [] } = useEntityTypes(organisationId);
@@ -107,10 +131,17 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
     // Determine which tabs have validation errors
     const tabErrors = useMemo(() => {
         const errors = form.formState.errors;
-        const configurationFields = ["pluralName", "singularName", "key", "identifierKey", "description", "type"];
+        const configurationFields = [
+            "pluralName",
+            "singularName",
+            "key",
+            "identifierKey",
+            "description",
+            "type",
+        ];
 
-        const hasConfigurationErrors = configurationFields.some(field =>
-            errors[field as keyof typeof errors]
+        const hasConfigurationErrors = configurationFields.some(
+            (field) => errors[field as keyof typeof errors]
         );
 
         // Check for root errors (like attribute/relationship validation)
@@ -127,9 +158,10 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
         if (mode === "create" && attributes.length === 0 && !hasInitialized.current) {
             hasInitialized.current = true;
             const defaultNameAttribute: AttributeFormData = {
-                type: "attribute",
-                name: "Name",
-                key: SchemaType.TEXT,
+                type: EntityPropertyType.ATTRIBUTE,
+                key: "name",
+                label: "Name",
+                schemaKey: SchemaType.TEXT,
                 dataType: DataType.STRING,
                 required: true,
                 unique: true,
@@ -141,37 +173,50 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
         }
     }, [mode, attributes.length, handleAttributeAdd, form]);
 
-    // Extract relationships and combine with new relationships
-    const relationships: RelationshipRow[] = useMemo(() => {
-        const existingRels: RelationshipRow[] = entityType?.relationships
-            ? entityType.relationships.map((rel) => ({
-                  name: rel.name,
-                  key: rel.key,
-                  cardinality: rel.cardinality,
-                  targetEntity: rel.entityTypeKeys?.join(", ") || "Any",
-                  bidirectional: rel.bidirectional,
-                  required: rel.required,
-                  protected: false,
-              }))
-            : [];
-
-        const newRels: RelationshipRow[] = newRelationships.map((rel) => ({
-            name: rel.name,
-            key: rel.key,
-            cardinality: rel.cardinality,
-            targetEntity: rel.entityTypeKeys.join(", ") || "Any",
-            bidirectional: rel.bidirectional,
-            required: rel.required,
-            protected: rel.protected || false,
+    // Combine attributes and relationships into a single array
+    const allFields: EntityTypeFieldRow[] = useMemo(() => {
+        // Convert attributes to EntityTypeFieldRow
+        const attributeRows: EntityTypeFieldRow[] = attributes.map((attr) => ({
+            key: attr.key,
+            label: attr.label,
+            type: attr.type,
+            required: attr.required,
+            protected: attr.protected,
+            schemaType: attr.schemaKey,
+            // Attribute-specific fields
+            schemaKey: attr.schemaKey,
+            dataType: attr.dataType,
+            unique: attr.unique,
+            // Determine additional constraints from `schemaOptions`
+            additionalConstraints: [],
         }));
 
-        const allRels = [...existingRels, ...newRels];
+        // Convert relationships to EntityTypeFieldRow
+        const relationshipRows: EntityTypeFieldRow[] = relationships.map((rel) => ({
+            key: rel.key,
+            label: rel.label,
+            type: rel.type,
+            required: rel.required,
+            protected: rel.protected,
+            schemaType: "RELATIONSHIP" as const,
+            // Relationship-specific fields
+            cardinality: rel.cardinality,
+            entityTypeKeys: rel.entityTypeKeys,
+            allowPolymorphic: rel.allowPolymorphic,
+            bidirectional: rel.bidirectional,
+            targetAttributeName: rel.targetAttributeName,
+            additionalConstraints: [],
+        }));
+
+        const combined = [...attributeRows, ...relationshipRows];
 
         // Sort based on order array if it exists
         if (order.length > 0) {
-            return allRels.sort((a, b) => {
-                const aIndex = order.indexOf(a.key);
-                const bIndex = order.indexOf(b.key);
+            return combined.sort((a, b) => {
+                const aOrderItem = order.find((o) => o.key === a.key);
+                const bOrderItem = order.find((o) => o.key === b.key);
+                const aIndex = aOrderItem ? order.indexOf(aOrderItem) : -1;
+                const bIndex = bOrderItem ? order.indexOf(bOrderItem) : -1;
 
                 // If both are in order array, sort by their position
                 if (aIndex !== -1 && bIndex !== -1) {
@@ -185,59 +230,83 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
             });
         }
 
-        return allRels;
-    }, [entityType, newRelationships, order]);
+        return combined;
+    }, [attributes, relationships, order]);
 
-    const relationshipColumns: ColumnDef<RelationshipRow>[] = useMemo(
+    // Unified columns for both attributes and relationships
+    const fieldColumns: ColumnDef<EntityTypeFieldRow>[] = useMemo(
         () => [
             {
-                accessorKey: "name",
+                accessorKey: "label",
                 header: "Name",
-                cell: ({ row }) => (
-                    <div className="flex items-center gap-2">
-                        <Link2 className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{row.original.name}</span>
-                    </div>
-                ),
+                cell: ({ row }) => {
+                    const isRelationship = row.original.type === EntityPropertyType.RELATIONSHIP;
+                    return (
+                        <div className="flex items-center gap-2">
+                            {isRelationship ? (
+                                <Link2 className="h-4 w-4 text-muted-foreground" />
+                            ) : null}
+                            <span className="font-medium">{row.original.label}</span>
+                        </div>
+                    );
+                },
             },
             {
-                accessorKey: "cardinality",
-                header: "Cardinality",
-                cell: ({ row }) => (
-                    <Badge variant="outline">
-                        {row.original.cardinality.replace(/_/g, " ").toLowerCase()}
-                    </Badge>
-                ),
+                accessorKey: "rowType",
+                header: "Type",
+                cell: ({ row }) => {
+                    const isRelationship = row.original.type === EntityPropertyType.RELATIONSHIP;
+                    if (isRelationship) {
+                        const rel = row.original as RelationshipFormData;
+                        return (
+                            <div className="flex flex-col gap-1">
+                                <Badge variant="outline">
+                                    {rel.cardinality.replace(/_/g, " ")}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                    {rel.entityTypeKeys?.join(", ") || "Any"}
+                                </span>
+                            </div>
+                        );
+                    } else {
+                        const attr = row.original as AttributeFormData;
+                        return <Badge variant="outline">{attr.schemaKey}</Badge>;
+                    }
+                },
             },
             {
-                accessorKey: "targetEntity",
-                header: "Target Entity",
-                cell: ({ row }) => <span>{row.original.targetEntity}</span>,
-            },
-            {
-                accessorKey: "bidirectional",
-                header: "Bidirectional",
-                cell: ({ row }) => (
-                    <Badge variant={row.original.bidirectional ? "default" : "secondary"}>
-                        {row.original.bidirectional ? "Yes" : "No"}
-                    </Badge>
-                ),
-            },
-            {
-                accessorKey: "required",
-                header: "Required",
-                cell: ({ row }) => (
-                    <Badge variant={row.original.required ? "default" : "secondary"}>
-                        {row.original.required ? "Yes" : "No"}
-                    </Badge>
-                ),
+                id: "constraints",
+                header: "Constraints",
+                cell: ({ row }) => {
+                    const isRelationship = row.original.type === EntityPropertyType.RELATIONSHIP;
+                    const constraints: string[] = [];
+
+                    if (row.original.required) constraints.push("Required");
+                    if (!isRelationship && (row.original as AttributeFormData).unique)
+                        constraints.push("Unique");
+                    if (isRelationship && (row.original as RelationshipFormData).bidirectional)
+                        constraints.push("Bidirectional");
+
+                    return (
+                        <div className="flex gap-1 flex-wrap">
+                            {constraints.map((constraint) => (
+                                <Badge key={constraint} variant="secondary" className="text-xs">
+                                    {constraint}
+                                </Badge>
+                            ))}
+                            {constraints.length === 0 && (
+                                <span className="text-xs text-muted-foreground">None</span>
+                            )}
+                        </div>
+                    );
+                },
             },
         ],
         []
     );
 
     const handleSubmit = (values: EntityTypeFormValues) => {
-        handleFormSubmit(values, attributes, newRelationships, order);
+        handleFormSubmit(values, attributes, relationships, order);
     };
 
     const handleInvalidSubmit = (errors: typeof form.formState.errors) => {
@@ -245,17 +314,18 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
 
         // Collect all error messages
         Object.entries(errors).forEach(([field, error]) => {
-            if (error && typeof error === 'object' && 'message' in error) {
-                const fieldName = field.replace(/([A-Z])/g, ' $1').toLowerCase();
+            if (error && typeof error === "object" && "message" in error) {
+                const fieldName = field.replace(/([A-Z])/g, " $1").toLowerCase();
                 errorMessages.push(`${fieldName}: ${error.message}`);
             }
         });
 
         // Show toast with all validation errors
         toast.error("Validation errors", {
-            description: errorMessages.length > 0
-                ? errorMessages.join("\n")
-                : "Please check all required fields and try again.",
+            description:
+                errorMessages.length > 0
+                    ? errorMessages.join("\n")
+                    : "Please check all required fields and try again.",
         });
     };
 
@@ -265,22 +335,17 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
 
     const handleAttributeSubmit = (data: AttributeFormData | RelationshipFormData) => {
         if (editingAttribute) {
-            // Update existing attribute/relationship
-            if (data.type === "attribute") {
+            if (isAttributeType(data)) {
                 handleAttributeEdit(data);
             } else {
-                setNewRelationships((prev) =>
-                    prev.map((rel) => (rel.key === data.key ? data : rel))
-                );
+                handleRelationshipEdit(data);
             }
         } else {
             // Add new attribute/relationship
-            if (data.type === "attribute") {
+            if (isAttributeType(data)) {
                 handleAttributeAdd(data);
             } else {
-                setNewRelationships((prev) => [...prev, data]);
-                // Add to order array
-                setOrder((prev) => [...prev, data.key]);
+                handleRelationshipAdd(data);
             }
         }
 
@@ -289,45 +354,37 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
         setEditingAttribute(undefined);
     };
 
-    const handleDeleteRelationship = (key: string) => {
-        const relationship = newRelationships.find((rel) => rel.key === key);
-        if (relationship?.protected) {
-            // Show error or toast - relationship is protected
-            toast.error("This relationship is protected and cannot be deleted.");
-            return;
-        }
-        setNewRelationships((prev) => prev.filter((rel) => rel.key !== key));
-        // Remove from order array
-        setOrder((prev) => prev.filter((orderKey) => orderKey !== key));
-    };
-
-    const handleEditAttribute = (row: AttributeFormData) => {
-        // Find the attribute in attributes
-        const attribute = attributes.find((attr) => attr.name === row.name);
-        if (attribute) {
-            setEditingAttribute(attribute);
-            setDialogOpen(true);
+    const handleDeleteField = (key: string, type: EntityPropertyType) => {
+        if (type === EntityPropertyType.RELATIONSHIP) {
+            handleRelationshipDelete(key);
+        } else {
+            handleAttributeDelete(key);
         }
     };
 
-    const handleEditRelationship = (row: RelationshipRow) => {
-        // Find the relationship in newRelationships
-        const relationship = newRelationships.find((rel) => rel.key === row.key);
-        if (relationship) {
-            setEditingAttribute(relationship);
-            setDialogOpen(true);
+    const handleEditField = (row: EntityTypeFieldRow) => {
+        if (row.type === EntityPropertyType.ATTRIBUTE) {
+            const attribute = attributes.find((attr) => attr.key === row.key);
+            if (attribute) {
+                setEditingAttribute(attribute);
+                setDialogOpen(true);
+            }
+        } else {
+            const relationship = relationships.find((rel) => rel.key === row.key);
+            if (relationship) {
+                setEditingAttribute(relationship);
+                setDialogOpen(true);
+            }
         }
     };
 
-    const handleRelationshipsReorder = (reorderedRelationships: RelationshipRow[]) => {
-        // Get keys for reordered relationships
-        const relationshipKeys = reorderedRelationships.map((rel) => rel.key);
+    const handleFieldsReorder = (reorderedFields: EntityTypeFieldRow[]) => {
+        // Create new order array from reordered fields
+        const newOrder: EntityTypeOrderingKey[] = reorderedFields.map((field) => ({
+            key: field.key,
+            type: field.type,
+        }));
 
-        // Get attribute keys from current attributes
-        const attributeKeys = attributes.map((attr) => attr.key);
-
-        // Combine: attributes first, then relationships
-        const newOrder = [...attributeKeys, ...relationshipKeys];
         setOrder(newOrder);
     };
 
@@ -395,9 +452,9 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                                     {tabErrors.attributes && (
                                         <AlertCircle className="h-4 w-4 text-destructive" />
                                     )}
-                                    {(attributes.length > 0 || relationships.length > 0) && (
+                                    {allFields.length > 0 && (
                                         <Badge variant="secondary" className="ml-2 h-5 px-1.5">
-                                            {attributes.length + relationships.length}
+                                            {allFields.length}
                                         </Badge>
                                     )}
                                 </div>
@@ -524,10 +581,10 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                                                             .filter((attr) => attr.unique)
                                                             .map((attr) => (
                                                                 <SelectItem
-                                                                    key={attr.name}
-                                                                    value={attr.name}
+                                                                    key={attr.label}
+                                                                    value={attr.label}
                                                                 >
-                                                                    {attr.name}
+                                                                    {attr.label}
                                                                 </SelectItem>
                                                             ))}
                                                         {attributes.filter(
@@ -654,19 +711,19 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                                     </div>
                                     {form.watch("type") === "RELATIONSHIP" && (
                                         <div className="flex items-center gap-2 text-sm">
-                                            {newRelationships.length >= 2 ? (
+                                            {relationships.length >= 2 ? (
                                                 <CheckCircle2 className="h-4 w-4 text-green-600" />
                                             ) : (
                                                 <AlertCircle className="h-4 w-4 text-destructive" />
                                             )}
                                             <span
                                                 className={
-                                                    newRelationships.length >= 2
+                                                    relationships.length >= 2
                                                         ? "text-green-600"
                                                         : "text-destructive"
                                                 }
                                             >
-                                                Minimum 2 relationships ({newRelationships.length}
+                                                Minimum 2 relationships ({relationships.length}
                                                 /2)
                                             </span>
                                         </div>
@@ -675,32 +732,39 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                             </div>
 
                             <DataTable
-                                columns={attributeColumns}
-                                data={attributes}
+                                columns={fieldColumns}
+                                data={allFields}
                                 enableSorting
                                 enableDragDrop
-                                onReorder={handleAttributesReorder}
-                                getRowId={(row) => row.key}
+                                onReorder={handleFieldsReorder}
+                                getRowId={(row) => {
+                                    return `${row.type}-${row.key}`;
+                                }}
                                 search={{
                                     enabled: true,
-                                    searchableColumns: ["name"],
-                                    placeholder: "Search attributes...",
+                                    searchableColumns: ["label"],
+                                    placeholder: "Search fields...",
                                 }}
-                                filter={{
-                                    enabled: true,
-                                    filters: [
-                                        {
-                                            column: "required",
-                                            type: "boolean",
-                                            label: "Required",
-                                        },
-                                        {
-                                            column: "unique",
-                                            type: "boolean",
-                                            label: "Unique",
-                                        },
-                                    ],
-                                }}
+                                // filter={{
+                                //     enabled: true,
+                                //     filters: [
+                                //         {
+                                //             column: "category",
+                                //             type: "select",
+                                //             label: "Type",
+                                //             options: [
+                                //                 {
+                                //                     label: "Attributes",
+                                //                     value: EntityCategory.STANDARD,
+                                //                 },
+                                //                 {
+                                //                     label: "Relationships",
+                                //                     value: EntityCategory.RELATIONSHIP,
+                                //                 },
+                                //             ],
+                                //         },
+                                //     ],
+                                // }}
                                 rowActions={{
                                     enabled: true,
                                     menuLabel: "Actions",
@@ -709,69 +773,23 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                                             label: "Edit",
                                             icon: Edit2,
                                             onClick: (row) => {
-                                                handleEditAttribute(row);
+                                                handleEditField(row);
                                             },
                                         },
                                         {
                                             label: "Delete",
                                             icon: Trash2,
                                             onClick: (row) => {
-                                                handleAttributeDelete(row.name);
+                                                handleDeleteField(row.key, row.type);
                                             },
                                             variant: "destructive",
                                             disabled: (row) => row?.protected || false,
                                         },
                                     ],
                                 }}
-                                emptyMessage="No attributes defined yet. Add your first attribute to get started."
+                                emptyMessage="No fields defined yet. Add your first attribute or relationship to get started."
                                 className="border rounded-md"
                             />
-
-                            {/* Relationships Section */}
-                            {relationships.length > 0 && (
-                                <div className="mt-8 space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-md font-semibold">Relationships</h3>
-                                    </div>
-                                    <DataTable
-                                        columns={relationshipColumns}
-                                        data={relationships}
-                                        enableSorting
-                                        enableDragDrop
-                                        onReorder={handleRelationshipsReorder}
-                                        getRowId={(row) => row.key}
-                                        search={{
-                                            enabled: true,
-                                            searchableColumns: ["name"],
-                                            placeholder: "Search relationships...",
-                                        }}
-                                        rowActions={{
-                                            enabled: true,
-                                            menuLabel: "Actions",
-                                            actions: [
-                                                {
-                                                    label: "Edit",
-                                                    icon: Edit2,
-                                                    onClick: (row) => {
-                                                        handleEditRelationship(row);
-                                                    },
-                                                },
-                                                {
-                                                    label: "Delete",
-                                                    icon: Trash2,
-                                                    onClick: (row) => {
-                                                        handleDeleteRelationship(row.key);
-                                                    },
-                                                    variant: "destructive",
-                                                    disabled: (row) => row?.protected || false,
-                                                },
-                                            ],
-                                        }}
-                                        emptyMessage="No relationships defined."
-                                        className="border rounded-md"
-                                    />
-                                </div>
-                            )}
                         </TabsContent>
                     </TabsStandard>
 

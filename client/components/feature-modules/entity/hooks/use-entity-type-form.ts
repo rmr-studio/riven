@@ -10,6 +10,7 @@ import { z } from "zod";
 import {
     AttributeFormData,
     CreateEntityTypeRequest,
+    EntityTypeOrderingKey,
     RelationshipFormData,
     type EntityType,
 } from "../interface/entity.interface";
@@ -36,7 +37,7 @@ export interface UseEntityTypeFormReturn {
         values: EntityTypeFormValues,
         newAttributes: AttributeFormData[],
         newRelationships: RelationshipFormData[],
-        order: string[]
+        order: EntityTypeOrderingKey[]
     ) => Promise<void>;
 }
 
@@ -78,7 +79,7 @@ export function useEntityTypeForm(
         values: EntityTypeFormValues,
         attributeSchema: AttributeFormData[],
         relationships: RelationshipFormData[],
-        order: string[]
+        order: EntityTypeOrderingKey[]
     ): Promise<void> => {
         // Validation: At least one unique attribute must exist
         const hasUniqueAttribute = attributeSchema.some((attr) => attr.unique);

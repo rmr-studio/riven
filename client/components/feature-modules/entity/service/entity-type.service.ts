@@ -2,7 +2,7 @@ import { fromError, isResponseError } from "@/lib/util/error/error.util";
 import { handleError, validateSession, validateUuid } from "@/lib/util/service/service.util";
 import { api } from "@/lib/util/utils";
 import { Session } from "@supabase/supabase-js";
-import { CreateEntityTypeRequest } from "../interface/entity-type.interface";
+import { CreateEntityTypeRequest } from "../interface/entity.interface";
 import { EntityType } from "../interface/entity.interface";
 
 export class EntityTypeService {
