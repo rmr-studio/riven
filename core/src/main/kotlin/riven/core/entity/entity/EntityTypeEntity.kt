@@ -9,6 +9,7 @@ import riven.core.models.common.display.DisplayName
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.EntityType
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
+import riven.core.models.entity.configuration.EntityTypeOrderingKey
 import java.util.*
 
 /**
@@ -33,18 +34,11 @@ data class EntityTypeEntity(
     @Column(name = "key", nullable = false, updatable = false)
     val key: String,
 
-    @Embedded
-    @AttributeOverrides(
-        AttributeOverride(
-            name = "singular",
-            column = Column(name = "display_name_singular", nullable = false)
-        ),
-        AttributeOverride(
-            name = "plural",
-            column = Column(name = "display_name_plural", nullable = false)
-        )
-    )
-    val displayName: DisplayName,
+    @Column(name = "display_name_singular", nullable = false)
+    var displayNameSingular: String,
+
+    @Column(name = "display_name_plural", nullable = false)
+    var displayNamePlural: String,
 
     @Column(name = "identifier_key", nullable = false)
     val identifierKey: String = "name",
@@ -75,7 +69,7 @@ data class EntityTypeEntity(
 
     @Type(JsonBinaryType::class)
     @Column(name = "column_order", columnDefinition = "jsonb", nullable = true)
-    var order: List<String>,
+    var order: List<EntityTypeOrderingKey>,
 
     // Number of entities of this type, calculated via trigger on entities table
     @Column(name = "count", nullable = false)
@@ -94,7 +88,7 @@ data class EntityTypeEntity(
             id = id,
             key = this.key,
             version = this.version,
-            name = this.displayName,
+            name = DisplayName(this.displayNameSingular, this.displayNamePlural),
             identifierKey = this.identifierKey,
             description = this.description,
             organisationId = this.organisationId,

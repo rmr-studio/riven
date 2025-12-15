@@ -5,6 +5,7 @@ import riven.core.enums.entity.EntityCategory
 import riven.core.models.common.display.DisplayName
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
+import riven.core.models.entity.configuration.EntityTypeOrderingKey
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -39,7 +40,7 @@ data class EntityType(
     val schema: Schema,
     val relationships: List<EntityRelationshipDefinition>? = null,
     // The order in which the attributes should be displayed in the UI
-    val order: List<String>,
+    val order: List<EntityTypeOrderingKey>,
     val entitiesCount: Long = 0L,
     override val createdAt: ZonedDateTime?,
     override val updatedAt: ZonedDateTime?,

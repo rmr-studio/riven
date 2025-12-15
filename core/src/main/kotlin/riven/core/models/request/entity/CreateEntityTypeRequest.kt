@@ -4,6 +4,7 @@ import riven.core.enums.entity.EntityCategory
 import riven.core.models.common.display.DisplayName
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
+import riven.core.models.entity.configuration.EntityTypeOrderingKey
 import java.util.*
 
 data class CreateEntityTypeRequest(
@@ -15,5 +16,5 @@ data class CreateEntityTypeRequest(
     val type: EntityCategory,
     val schema: Schema,
     val relationships: List<EntityRelationshipDefinition>? = null,
-    val order: List<String>? = null
+    val order: List<EntityTypeOrderingKey>? = null
 )

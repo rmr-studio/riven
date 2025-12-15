@@ -6,9 +6,11 @@ import org.springframework.stereotype.Service
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.activity.Activity
 import riven.core.enums.core.ApplicationEntityType
+import riven.core.enums.entity.EntityPropertyType
 import riven.core.enums.util.OperationType
 import riven.core.exceptions.SchemaValidationException
 import riven.core.models.entity.EntityType
+import riven.core.models.entity.configuration.EntityTypeOrderingKey
 import riven.core.models.request.entity.CreateEntityTypeRequest
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
@@ -41,7 +43,8 @@ class EntityTypeService(
     fun publishEntityType(request: CreateEntityTypeRequest): EntityType {
         authTokenService.getUserId().let { userId ->
             EntityTypeEntity(
-                displayName = request.name,
+                displayNameSingular = request.name.singular,
+                displayNamePlural = request.name.plural,
                 key = request.key,
                 organisationId = request.organisationId,
                 identifierKey = request.identifier,
@@ -52,8 +55,18 @@ class EntityTypeService(
                 schema = request.schema,
                 relationships = request.relationships,
                 order = request.order ?: listOf(
-                    *(request.schema.properties?.keys ?: listOf()).toTypedArray(),
-                    *(request.relationships ?: listOf()).map { it.key }.toTypedArray()
+                    *(request.schema.properties?.keys ?: listOf()).map { key ->
+                        EntityTypeOrderingKey(
+                            key,
+                            EntityPropertyType.ATTRIBUTE
+                        )
+                    }.toTypedArray(),
+                    *(request.relationships ?: listOf()).map {
+                        EntityTypeOrderingKey(
+                            it.key,
+                            EntityPropertyType.RELATIONSHIP
+                        )
+                    }.toTypedArray()
                 ),
             ).run {
                 entityTypeRepository.save(this)
@@ -121,10 +134,8 @@ class EntityTypeService(
 
         // Update in place (NOT create new row)
         existing.apply {
-            displayName.apply {
-                singular = type.name.singular
-                plural = type.name.plural
-            }
+            displayNameSingular = type.name.singular
+            displayNamePlural = type.name.plural
             description = type.description
             schema = type.schema
             relationships = type.relationships
