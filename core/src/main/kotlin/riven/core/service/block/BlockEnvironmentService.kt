@@ -245,7 +245,7 @@ class BlockEnvironmentService(
     ): BlockEnvironment {
         // 1. Try to load existing layout, or create default if it doesn't exist
         val layoutEntity = try {
-            blockTreeLayoutService.fetchLayoutForEntity(entityId, type)
+            blockTreeLayoutService.fetchLayoutForEntity(entityId)
         } catch (e: NotFoundException) {
             defaultEnvironmentService.createDefaultEnvironmentForEntity(
                 entityId = entityId,
@@ -253,7 +253,7 @@ class BlockEnvironmentService(
                 organisationId = organisationId
             )
             // Fetch the newly created layout
-            blockTreeLayoutService.fetchLayoutForEntity(entityId, type)
+            blockTreeLayoutService.fetchLayoutForEntity(entityId)
         }
 
         require(layoutEntity.organisationId == organisationId) {

@@ -2,9 +2,10 @@ package riven.core.models.entity
 
 import riven.core.entity.util.AuditableModel
 import riven.core.enums.entity.EntityCategory
+import riven.core.models.common.display.DisplayName
 import riven.core.models.common.validation.Schema
-import riven.core.models.entity.configuration.EntityConfig
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
+import riven.core.models.entity.configuration.EntityTypeOrderingKey
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -18,7 +19,7 @@ data class EntityType(
     val id: UUID,
     val key: String,
     val version: Int,
-    val name: String,
+    val name: DisplayName,
     /**
      * Each organisation will have a handful of system-generated default entity types to handle
      * core/common use cases, which cannot be deleted.
@@ -37,13 +38,15 @@ data class EntityType(
     val type: EntityCategory,
     // Schema will always be created with a unique, non-nullable 'name' attribute
     val schema: Schema,
-    val displayConfig: EntityConfig,
     val relationships: List<EntityRelationshipDefinition>? = null,
-    val archived: Boolean,
     // The order in which the attributes should be displayed in the UI
-    val order: List<String>? = null,
+    val order: List<EntityTypeOrderingKey>,
+    val entitiesCount: Long = 0L,
     override val createdAt: ZonedDateTime?,
     override val updatedAt: ZonedDateTime?,
     override val createdBy: UUID?,
     override val updatedBy: UUID?
-) : AuditableModel()
+) : AuditableModel() {
+    val attributes: Pair<Int, Int>
+        get() = Pair(schema.properties?.size ?: 0, relationships?.size ?: 0)
+}

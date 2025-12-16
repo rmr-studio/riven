@@ -5,10 +5,11 @@ import jakarta.persistence.*
 import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
 import riven.core.enums.entity.EntityCategory
+import riven.core.models.common.display.DisplayName
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.EntityType
-import riven.core.models.entity.configuration.EntityConfig
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
+import riven.core.models.entity.configuration.EntityTypeOrderingKey
 import java.util.*
 
 /**
@@ -33,8 +34,11 @@ data class EntityTypeEntity(
     @Column(name = "key", nullable = false, updatable = false)
     val key: String,
 
-    @Column(name = "display_name", nullable = false)
-    var displayName: String,
+    @Column(name = "display_name_singular", nullable = false)
+    var displayNameSingular: String,
+
+    @Column(name = "display_name_plural", nullable = false)
+    var displayNamePlural: String,
 
     @Column(name = "identifier_key", nullable = false)
     val identifierKey: String = "name",
@@ -60,16 +64,16 @@ data class EntityTypeEntity(
     var schema: Schema,
 
     @Type(JsonBinaryType::class)
-    @Column(name = "display_structure", columnDefinition = "jsonb", nullable = false)
-    var display: EntityConfig,
-
-    @Type(JsonBinaryType::class)
     @Column(name = "relationships", columnDefinition = "jsonb", nullable = true)
     var relationships: List<EntityRelationshipDefinition>? = null,
 
     @Type(JsonBinaryType::class)
     @Column(name = "column_order", columnDefinition = "jsonb", nullable = true)
-    var order: List<String>? = null,
+    var order: List<EntityTypeOrderingKey>,
+
+    // Number of entities of this type, calculated via trigger on entities table
+    @Column(name = "count", nullable = false)
+    var entitiesCount: Long = 0L,
 
     @Column(name = "archived", nullable = false, columnDefinition = "boolean default false")
     var archived: Boolean = false
@@ -84,17 +88,15 @@ data class EntityTypeEntity(
             id = id,
             key = this.key,
             version = this.version,
-            name = this.displayName,
+            name = DisplayName(this.displayNameSingular, this.displayNamePlural),
             identifierKey = this.identifierKey,
             description = this.description,
             organisationId = this.organisationId,
             protected = this.protected,
             type = this.type,
             schema = this.schema,
-            displayConfig = this.display,
             relationships = this.relationships,
             order = this.order,
-            archived = this.archived,
             createdAt = this.createdAt,
             updatedAt = this.updatedAt,
             createdBy = this.createdBy,

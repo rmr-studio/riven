@@ -3,7 +3,6 @@ import { AuthenticatedQueryResult } from "@/lib/interfaces/interface";
 import { useQuery } from "@tanstack/react-query";
 import { BlockType } from "../interface/block.interface";
 import { BlockTypeService } from "../service/block-type.service";
-import { EntityType } from "@/lib/types/types";
 
 /**
  * React Query hook to fetch available block types for an organization.
@@ -37,7 +36,6 @@ import { EntityType } from "@/lib/types/types";
  */
 export function useBlockTypes(
     organisationId: string,
-    entityType?: EntityType,
     includeSystem: boolean = true
 ): AuthenticatedQueryResult<BlockType[]> {
     const { session, loading } = useAuth();

@@ -245,6 +245,7 @@ CREATE POLICY "blocks_write_by_org" ON public.blocks
                                     FROM public.organisation_members
                                     WHERE user_id = auth.uid()));
 
+
 CREATE TABLE public.block_children
 (
     "id"          uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -307,24 +308,26 @@ create index if not exists idx_activity_logs_user_id
 
 CREATE TABLE IF NOT EXISTS public.entity_types
 (
-    "id"                UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
-    "key"               TEXT    NOT NULL,
-    "type"              TEXT    NOT NULL CHECK (type IN ('STANDARD', 'RELATIONSHIP')),
-    "organisation_id"   UUID REFERENCES organisations (id) ON DELETE CASCADE,
-    "identifier_key"    TEXT    NOT NULL,
-    "display_name"      TEXT    NOT NULL,
-    "description"       TEXT,
-    "protected"         BOOLEAN NOT NULL         DEFAULT FALSE,
-    "schema"            JSONB   NOT NULL,
-    "display_structure" JSONB   NOT NULL,
-    "column_order"      JSONB,
-    "relationships"     JSONB,
-    "version"           INTEGER NOT NULL         DEFAULT 1,
-    "archived"          BOOLEAN NOT NULL         DEFAULT FALSE,
-    "created_at"        TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "updated_at"        TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "created_by"        UUID,
-    "updated_by"        UUID,
+    "id"                    UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
+    "key"                   TEXT    NOT NULL,
+    "type"                  TEXT    NOT NULL CHECK (type IN ('STANDARD', 'RELATIONSHIP')),
+    "organisation_id"       UUID REFERENCES organisations (id) ON DELETE CASCADE,
+    "identifier_key"        TEXT    NOT NULL,
+    "display_name_singular" TEXT    NOT NULL,
+    "display_name_plural"   TEXT    NOT NULL,
+    "description"           TEXT,
+    "protected"             BOOLEAN NOT NULL         DEFAULT FALSE,
+    "schema"                JSONB   NOT NULL,
+    "column_order"          JSONB,
+    -- Denormalized count of entities of this type for faster access
+    "count"                 INTEGER NOT NULL         DEFAULT 0,
+    "relationships"         JSONB,
+    "version"               INTEGER NOT NULL         DEFAULT 1,
+    "archived"              BOOLEAN NOT NULL         DEFAULT FALSE,
+    "created_at"            TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updated_at"            TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "created_by"            UUID,
+    "updated_by"            UUID,
 
     -- Single row per entity type (mutable pattern)
     -- Also creates an index on organisation_id + key for faster lookups
@@ -336,7 +339,6 @@ CREATE TABLE IF NOT EXISTS public.entity_types
         (type = 'STANDARD' AND relationships IS NULL)
         )
 );
-
 
 -- =====================================================
 -- 2. ENTITIES TABLE
@@ -380,6 +382,36 @@ CREATE TABLE IF NOT EXISTS public.archived_entities
 -- Indexes for entities
 CREATE INDEX idx_entities_type_id ON entities (type_id);
 CREATE INDEX idx_entities_payload_gin ON entities USING GIN (payload jsonb_path_ops);
+
+-- Function to update entity count in entity_types
+CREATE OR REPLACE FUNCTION public.update_entity_type_count()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+    IF (TG_OP = 'INSERT') THEN
+        -- Increment entity count on INSERT
+        UPDATE public.entity_types
+        SET count      = count + 1,
+            updated_at = now()
+        WHERE id = NEW.type_id;
+    ELSIF (TG_OP = 'DELETE') THEN
+        -- Decrement entity count on DELETE
+        UPDATE public.entity_types
+        SET count      = count - 1,
+            updated_at = now()
+        WHERE id = OLD.type_id;
+    END IF;
+
+    RETURN NULL; -- Triggers on INSERT/DELETE do not modify the rows
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger for INSERT and DELETE on entities
+CREATE OR REPLACE TRIGGER trg_update_entity_type_count
+    AFTER INSERT OR DELETE
+    ON public.entities
+    FOR EACH ROW
+EXECUTE FUNCTION public.update_entity_type_count();
 
 CREATE INDEX idx_archived_entities_organisation_id ON archived_entities (organisation_id);
 CREATE INDEX idx_archived_entities_type_id ON archived_entities (type_id);

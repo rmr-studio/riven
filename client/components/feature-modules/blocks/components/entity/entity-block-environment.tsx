@@ -3,7 +3,6 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EntityType } from "@/lib/types/types";
 import { AlertCircle, PlusIcon } from "lucide-react";
 import { FC, ReactNode, useMemo, useState } from "react";
 import { BlockEditProvider } from "../../context/block-edit-provider";

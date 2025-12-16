@@ -1,5 +1,4 @@
 import { CommandDialog, CommandInput } from "@/components/ui/command";
-import { EntityType } from "@/lib/types/types";
 import { FC } from "react";
 import { useBlockTypes } from "../../hooks/use-block-types";
 import { BlockType } from "../../interface/block.interface";
@@ -15,8 +14,6 @@ export interface AddBlockDialogProps {
     onOpenChange: (open: boolean) => void;
     /** Organization ID to fetch block types for */
     organisationId: string;
-    /** Optional entity type for contextual filtering */
-    entityType?: EntityType;
     /** Callback when a block type is selected */
     onBlockTypeSelect: (blockType: BlockType) => void;
 }
@@ -60,10 +57,9 @@ export const AddBlockDialog: FC<AddBlockDialogProps> = ({
     open,
     onOpenChange,
     organisationId,
-    entityType,
     onBlockTypeSelect,
 }) => {
-    const { data: blockTypes, isLoading, error } = useBlockTypes(organisationId, entityType);
+    const { data: blockTypes, isLoading, error } = useBlockTypes(organisationId);
 
     const handleSelect = (blockType: BlockType) => {
         onBlockTypeSelect(blockType);

@@ -6,9 +6,12 @@ import org.springframework.stereotype.Service
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.activity.Activity
 import riven.core.enums.core.ApplicationEntityType
+import riven.core.enums.entity.EntityPropertyType
 import riven.core.enums.util.OperationType
 import riven.core.exceptions.SchemaValidationException
 import riven.core.models.entity.EntityType
+import riven.core.models.entity.configuration.EntityTypeOrderingKey
+import riven.core.models.request.entity.CreateEntityTypeRequest
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
@@ -36,25 +39,55 @@ class EntityTypeService(
      * Create and publish a new entity type.
      */
     @Transactional
-    @PreAuthorize("@organisationSecurity.hasOrg(#entityType.organisationId)")
-    fun publishEntityType(entityType: EntityTypeEntity): EntityType {
-        val userId = authTokenService.getUserId()
-
-        return entityTypeRepository.save(entityType).run {
-            activityService.logActivity(
-                activity = Activity.ENTITY_TYPE,
-                operation = OperationType.CREATE,
-                userId = userId,
-                organisationId = requireNotNull(this.organisationId) { "Cannot create system entity type" },
-                entityId = this.id,
-                entityType = ApplicationEntityType.ENTITY_TYPE,
-                details = mapOf(
-                    "type" to this.key,
-                    "version" to this.version,
-                    "category" to this.type.name
+    @PreAuthorize("@organisationSecurity.hasOrg(#request.organisationId)")
+    fun publishEntityType(request: CreateEntityTypeRequest): EntityType {
+        authTokenService.getUserId().let { userId ->
+            EntityTypeEntity(
+                displayNameSingular = request.name.singular,
+                displayNamePlural = request.name.plural,
+                key = request.key,
+                organisationId = request.organisationId,
+                identifierKey = request.identifier,
+                description = request.description,
+                // Protected Entity Types cannot be modified or deleted by users. This will usually occur during an automatic setup process.
+                protected = false,
+                type = request.type,
+                schema = request.schema,
+                relationships = request.relationships,
+                order = request.order ?: listOf(
+                    *(request.schema.properties?.keys ?: listOf()).map { key ->
+                        EntityTypeOrderingKey(
+                            key,
+                            EntityPropertyType.ATTRIBUTE
+                        )
+                    }.toTypedArray(),
+                    *(request.relationships ?: listOf()).map {
+                        EntityTypeOrderingKey(
+                            it.key,
+                            EntityPropertyType.RELATIONSHIP
+                        )
+                    }.toTypedArray()
+                ),
+            ).run {
+                entityTypeRepository.save(this)
+            }.also {
+                requireNotNull(it.id)
+                activityService.logActivity(
+                    activity = Activity.ENTITY_TYPE,
+                    operation = OperationType.CREATE,
+                    userId = userId,
+                    organisationId = requireNotNull(it.organisationId) { "Cannot create system entity type" },
+                    entityId = it.id,
+                    entityType = ApplicationEntityType.ENTITY_TYPE,
+                    details = mapOf(
+                        "type" to it.key,
+                        "version" to 1,
+                        "category" to it.type.name
+                    )
                 )
-            )
-            this.toModel()
+            }.let {
+                return it.toModel()
+            }
         }
     }
 
@@ -101,10 +134,10 @@ class EntityTypeService(
 
         // Update in place (NOT create new row)
         existing.apply {
-            displayName = type.name
+            displayNameSingular = type.name.singular
+            displayNamePlural = type.name.plural
             description = type.description
             schema = type.schema
-            display = type.displayConfig
             relationships = type.relationships
             version = existing.version + 1  // Increment for change tracking
         }.let {
@@ -158,12 +191,14 @@ class EntityTypeService(
     /**
      * Get all entity types for an organization (including system types).
      */
+    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
     fun getOrganisationEntityTypes(organisationId: UUID): List<EntityType> {
         return findManyResults {
             entityTypeRepository.findByOrganisationId(organisationId)
         }.map { it.toModel() }
     }
 
+    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
     fun getByKey(key: String, organisationId: UUID): EntityTypeEntity {
         return findOrThrow { entityTypeRepository.findByOrganisationIdAndKey(organisationId, key) }
     }

@@ -42,6 +42,9 @@ export interface FormFieldProps<T> {
 }
 
 export interface SidebarGroupProps {
+    title?: string;
+    collapsible?: boolean;
+    actions?: React.ReactNode;
     items: Array<{
         icon: Icon;
         title: string;
@@ -49,6 +52,7 @@ export interface SidebarGroupProps {
         hidden?: boolean;
         isActive?: boolean;
     }>;
+    subgroups?: Array<SidebarGroupProps>;
 }
 
 export type AuthenticatedQueryResult<TData, TError = Error> = UseQueryResult<TData, TError> & {

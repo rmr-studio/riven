@@ -163,6 +163,7 @@ class SchemaService(
                     return acc
                 }
                 validateStringFormat(schema, payload, path)?.let { acc += it }
+                validateStringConstraints(schema, payload, path)?.let { acc += it }
             }
 
             DataType.NUMBER -> {
@@ -171,11 +172,14 @@ class SchemaService(
                     return acc
                 }
                 validateNumberFormat(schema, payload.toDouble(), path)?.let { acc += it }
+                validateNumberConstraints(schema, payload.toDouble(), path)?.let { acc += it }
             }
 
             DataType.BOOLEAN -> {
                 if (payload !is Boolean) {
                     acc += "Invalid type at $path: expected boolean, got ${payload::class.simpleName}"
+                } else {
+                    validateBooleanConstraints(schema, payload, path)?.let { acc += it }
                 }
             }
 
@@ -280,5 +284,109 @@ class SchemaService(
 
             else -> null
         }
+    }
+
+    /**
+     * Validates a string value against the schema's constraint options (minLength, maxLength, regex, enum).
+     *
+     * @param schema The schema containing the constraint options.
+     * @param value The string value to validate.
+     * @param path The JSON path used in error messages.
+     * @return An error message if validation fails, or null if valid.
+     */
+    private fun validateStringConstraints(schema: Schema, value: String, path: String): String? {
+        schema.options?.minLength?.let {
+            if (value.length < it) {
+                return "String at $path is too short: ${value.length} < $it"
+            }
+        }
+
+        schema.options?.maxLength?.let {
+            if (value.length > it) {
+                return "String at $path is too long: ${value.length} > $it"
+            }
+        }
+
+        schema.options?.regex?.let {
+            if (!value.matches(Regex(it))) {
+                return "String at $path does not match required pattern: $it"
+            }
+        }
+
+        schema.options?.enum?.let { allowedValues ->
+            val stringValues = allowedValues.mapNotNull {
+                when (it) {
+                    is String -> it
+                    else -> it.toString()
+                }
+            }
+            if (value !in stringValues) {
+                return "Value at $path must be one of: ${stringValues.joinToString(", ")}"
+            }
+        }
+
+        return null
+    }
+
+    /**
+     * Validates a numeric value against the schema's constraint options (minimum, maximum, enum).
+     *
+     * @param schema The schema containing the constraint options.
+     * @param value The numeric value to validate.
+     * @param path The JSON path used in error messages.
+     * @return An error message if validation fails, or null if valid.
+     */
+    private fun validateNumberConstraints(schema: Schema, value: Double, path: String): String? {
+        schema.options?.minimum?.let {
+            if (value < it) {
+                return "Number at $path is below minimum: $value < $it"
+            }
+        }
+
+        schema.options?.maximum?.let {
+            if (value > it) {
+                return "Number at $path exceeds maximum: $value > $it"
+            }
+        }
+
+        schema.options?.enum?.let { allowedValues ->
+            val numericValues = allowedValues.mapNotNull {
+                when (it) {
+                    is Number -> it.toDouble()
+                    is String -> it.toDoubleOrNull()
+                    else -> null
+                }
+            }
+            if (value !in numericValues) {
+                return "Value at $path must be one of: ${numericValues.joinToString(", ")}"
+            }
+        }
+
+        return null
+    }
+
+    /**
+     * Validates a boolean value against the schema's constraint options (enum).
+     *
+     * @param schema The schema containing the constraint options.
+     * @param value The boolean value to validate.
+     * @param path The JSON path used in error messages.
+     * @return An error message if validation fails, or null if valid.
+     */
+    private fun validateBooleanConstraints(schema: Schema, value: Boolean, path: String): String? {
+        schema.options?.enum?.let { allowedValues ->
+            val booleanValues = allowedValues.mapNotNull {
+                when (it) {
+                    is Boolean -> it
+                    is String -> it.toBooleanStrictOrNull()
+                    else -> null
+                }
+            }
+            if (value !in booleanValues) {
+                return "Value at $path must be one of: ${booleanValues.joinToString(", ")}"
+            }
+        }
+
+        return null
     }
 }

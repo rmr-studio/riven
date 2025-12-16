@@ -1,4 +1,3 @@
-import { ClientFieldType } from "@/components/feature-modules/client/interface/client.interface";
 import { z } from "zod";
 
 export const MIN_DATE = new Date("1900-01-01");
@@ -29,31 +28,4 @@ export const isDate = (value: unknown): value is Date => {
 
 export const isValidDate = (date: Date): boolean => {
     return date >= MIN_DATE && date <= getCurrentDate();
-};
-
-export const isValidTypeRestriction = (
-    type: ClientFieldType,
-    restriction: string | undefined
-): boolean => {
-    if (!restriction) return false;
-    const validRestrictions = TypeRestrictionMap[type] || [];
-    return validRestrictions.includes(restriction as ClientFieldRestriction);
-};
-
-export type NumberFieldRestriction = "INTEGER" | "FLOAT" | "POSITIVE" | "NEGATIVE";
-export type StringFieldRestriction = "EMAIL" | "PHONE" | "URL";
-export type DateFieldRestriction = "PAST" | "FUTURE" | "TODAY";
-export type ClientFieldRestriction =
-    | NumberFieldRestriction
-    | StringFieldRestriction
-    | DateFieldRestriction;
-
-export const TypeRestrictionMap: Record<ClientFieldType, ClientFieldRestriction[]> = {
-    TEXT: ["EMAIL", "PHONE", "URL"],
-    NUMBER: ["INTEGER", "FLOAT", "POSITIVE", "NEGATIVE"],
-    DATE: ["PAST", "FUTURE", "TODAY"],
-    BOOLEAN: [],
-    SELECT: [],
-    MULTISELECT: [],
-    OBJECT: [],
 };

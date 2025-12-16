@@ -1,8 +1,14 @@
 package riven.core.models.common.validation
 
+import io.swagger.v3.oas.annotations.media.ArraySchema
+import riven.core.enums.common.OptionSortingType
+import riven.core.enums.common.SchemaType
 import riven.core.enums.core.DataFormat
 import riven.core.enums.core.DataType
 import riven.core.models.common.json.JsonObject
+import riven.core.models.common.json.JsonValue
+import java.time.ZonedDateTime
+import io.swagger.v3.oas.annotations.media.Schema as JsonSchema
 
 /**
  * The Schema defines the structure and data storage requirements for a given object.
@@ -29,8 +35,9 @@ import riven.core.models.common.json.JsonObject
  * }
  */
 data class Schema(
-    val name: String,
-    val description: String? = null,
+    // This is a human-readable label for the schema
+    val label: String? = null,
+    val key: SchemaType,
     val type: DataType = DataType.OBJECT,
     val format: DataFormat? = null,
     val required: Boolean = false,
@@ -38,8 +45,23 @@ data class Schema(
     val items: Schema? = null,
     val unique: Boolean = false,
     // Indicates whether this schema is protected from deletion or modification
-    val protected: Boolean = false
+    val protected: Boolean = false,
+    val options: SchemaOptions? = null
+
 ) {
+    data class SchemaOptions(
+        val default: JsonValue? = null,
+        val regex: String? = null,
+        val enum: List<String>? = null,
+        val enumSorting: OptionSortingType? = null,
+        val minLength: Int? = null,
+        val maxLength: Int? = null,
+        val minimum: Double? = null,
+        val maximum: Double? = null,
+        val minDate: ZonedDateTime? = null,
+        val maxDate: ZonedDateTime? = null
+    )
+
     fun toJsonSchema(
         allowAdditionalProperties: Boolean
     ): JsonObject {
@@ -65,7 +87,6 @@ data class Schema(
                     }
                     buildMap {
                         put("type", "object")
-                        schema.description?.let { put("description", it) }
                         put("properties", props)
                         put("additionalProperties", allowAP)
                         if (requiredKeys.isNotEmpty()) put("required", requiredKeys)
@@ -74,10 +95,10 @@ data class Schema(
 
                 DataType.ARRAY -> {
                     val items = schema.items?.let { toJs(it, allowAP) } ?: emptyMap<String, Any>()
-                    mapOf(
-                        "type" to "array",
-                        "items" to items
-                    )
+                    buildMap {
+                        put("type", "array")
+                        put("items", items)
+                    }
                 }
 
                 DataType.STRING -> {
@@ -97,6 +118,13 @@ data class Schema(
                         DataFormat.URL -> base["format"] = "uri"
                         else -> {}
                     }
+
+                    // Apply SchemaOptions for strings
+                    schema.options?.regex?.let { base["pattern"] = it }
+                    schema.options?.minLength?.let { base["minLength"] = it }
+                    schema.options?.maxLength?.let { base["maxLength"] = it }
+                    schema.options?.enum?.let { base["enum"] = it }
+
                     base
                 }
 
@@ -117,12 +145,23 @@ data class Schema(
                             )
                         )
                     } else {
-                        mapOf("type" to "number")
+                        buildMap {
+                            put("type", "number")
+                            schema.options?.minimum?.let { put("minimum", it) }
+                            schema.options?.maximum?.let { put("maximum", it) }
+                            schema.options?.enum?.let { put("enum", it) }
+                        }
                     }
                 }
 
-                DataType.BOOLEAN -> mapOf("type" to "boolean")
-                DataType.NULL -> mapOf("type" to "null")
+                DataType.BOOLEAN -> buildMap {
+                    put("type", "boolean")
+                    schema.options?.enum?.let { put("enum", it) }
+                }
+
+                DataType.NULL -> buildMap {
+                    put("type", "null")
+                }
             }
         }
 

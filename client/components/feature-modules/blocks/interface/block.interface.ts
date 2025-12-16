@@ -6,9 +6,7 @@ import { BlockMetadataType, components, NodeType, operations } from "@/lib/types
 
 export type Block = components["schemas"]["Block"];
 export type BlockType = components["schemas"]["BlockType"];
-export type BlockSchema = components["schemas"]["BlockSchema"];
 export type BlockDisplay = components["schemas"]["BlockDisplay"];
-export type BlockFormStructure = components["schemas"]["BlockFormStructure"];
 export type BlockRenderStructure = components["schemas"]["BlockRenderStructure"];
 export type BlockBinding = components["schemas"]["BlockBinding"];
 export type BlockComponentNode = components["schemas"]["BlockComponentNode"];
@@ -27,22 +25,17 @@ export type BlockTree = components["schemas"]["BlockTree"];
 export type TreeLayout = components["schemas"]["TreeLayout"];
 export type Widget = components["schemas"]["Widget"];
 
-export type Referenceable = components["schemas"]["Referenceable"];
-
 export type ContentNode = components["schemas"]["ContentNode"];
 export type ReferenceNode = components["schemas"]["ReferenceNode"];
 
 export type EntityReferencePayload = components["schemas"]["EntityReference"];
 export type BlockReferencePayload = components["schemas"]["BlockTreeReference"];
-export type Reference = components["schemas"]["Reference"];
-export type ReferenceWarning = components["schemas"]["Reference"]["warning"];
 
 export type ReferencePayload = EntityReferencePayload | BlockReferencePayload;
 export type Metadata = BlockContentMetadata | BlockReferenceMetadata | EntityReferenceMetadata;
 export type Node = components["schemas"]["Node"];
 export type BlockNode = ContentNode | ReferenceNode;
 export type WidgetRenderStructure = components["schemas"]["RenderContent"];
-
 
 /* -------------------------------------------------------------------------- */
 /*                           Reference Type Helpers                           */
