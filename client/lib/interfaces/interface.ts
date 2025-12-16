@@ -51,6 +51,7 @@ export interface SidebarGroupProps {
         url: string;
         hidden?: boolean;
         isActive?: boolean;
+        skeleton?: boolean;
     }>;
     subgroups?: Array<SidebarGroupProps>;
 }

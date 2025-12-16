@@ -20,6 +20,7 @@ import { FC } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { EntityType } from "../../interface/entity.interface";
 import { AttributeFormValues } from "./attribute-dialog";
+import { CardinalitySelector } from "./cardinality-selector";
 
 interface Props {
     type?: EntityType;
@@ -29,76 +30,55 @@ interface Props {
 }
 
 export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form, isEditMode = false }) => {
+    const selectedEntityTypeKeys = form.watch("entityTypeKeys");
+    const targetEntity = avaiableTypes?.find((et) => et.key === selectedEntityTypeKeys?.[0]);
+
     return (
         <>
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <div className="flex items-center gap-2 p-3 rounded-lg border bg-card">
-                        <div className="flex h-6 w-6 items-center justify-center rounded bg-primary/10">
-                            <span className="text-xs font-semibold">
-                                {type?.name?.plural?.charAt(0) || "E"}
-                            </span>
-                        </div>
-                        <span className="font-medium">
-                            {type?.name?.plural || "Current Entity"}
+            <div className="space-y-2">
+                <div className="flex items-center gap-2 p-3 rounded-lg border bg-card">
+                    <div className="flex h-6 w-6 items-center justify-center rounded bg-primary/10">
+                        <span className="text-xs font-semibold">
+                            {type?.name?.plural?.charAt(0) || "E"}
                         </span>
                     </div>
-                    <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Associated attribute name</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="E.g. Person" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    <span className="font-medium">
+                        {type?.name?.plural || "Current Entity"}
+                    </span>
                 </div>
-
-                <div className="flex items-center justify-center pt-8">
-                    <FormField
-                        control={form.control}
-                        name="cardinality"
-                        render={({ field }) => (
-                            <FormItem>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger className="w-[200px]">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem
-                                            value={EntityRelationshipCardinality.ONE_TO_ONE}
-                                        >
-                                            One to one
-                                        </SelectItem>
-                                        <SelectItem
-                                            value={EntityRelationshipCardinality.ONE_TO_MANY}
-                                        >
-                                            One to many
-                                        </SelectItem>
-                                        <SelectItem
-                                            value={EntityRelationshipCardinality.MANY_TO_ONE}
-                                        >
-                                            Many to one
-                                        </SelectItem>
-                                        <SelectItem
-                                            value={EntityRelationshipCardinality.MANY_TO_MANY}
-                                        >
-                                            Many to many
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
+                <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Associated attribute name</FormLabel>
+                            <FormControl>
+                                <Input placeholder="E.g. Person" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
             </div>
+
+            <FormField
+                control={form.control}
+                name="cardinality"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormControl>
+                            <CardinalitySelector
+                                value={field.value}
+                                onValueChange={field.onChange}
+                                sourceEntity={type}
+                                targetEntity={targetEntity}
+                                className="w-[200px]"
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
 
             <FormField
                 control={form.control}

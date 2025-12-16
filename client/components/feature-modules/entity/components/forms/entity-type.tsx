@@ -60,7 +60,7 @@ import { AttributeDialog } from "./attribute-dialog";
 interface EntityTypeFormProps {
     entityType?: EntityType;
     organisationId: string;
-    mode: "create" | "edit" | "view";
+    mode: "create" | "edit" 
 }
 
 // Common type for data table rows (both attributes and relationships)
