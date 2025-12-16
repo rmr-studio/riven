@@ -1,10 +1,3 @@
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { EntityRelationshipCardinality } from "@/lib/types/types";
 import { ReactFlow, Node, Edge, Background } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -287,60 +280,85 @@ export const CardinalitySelector: FC<CardinalitySelectorProps> = ({
 }) => {
     const [hoveredOption, setHoveredOption] = useState<EntityRelationshipCardinality | null>(null);
 
-    const sourceLabel = sourceEntity?.name?.plural || "Company";
-    const targetLabel = targetEntity?.name?.plural || "Deal";
+    const sourceLabel = sourceEntity?.name?.plural || "Source";
+    const targetLabel = targetEntity?.name?.plural || "Target";
 
-    const hoveredData = hoveredOption ? createNodes(hoveredOption, sourceLabel, targetLabel) : null;
+    // Show diagram for hovered option, or fall back to selected value
+    const displayOption = hoveredOption || value;
+    const displayData = displayOption ? createNodes(displayOption, sourceLabel, targetLabel) : null;
+    const displayInfo = cardinalityOptions.find((o) => o.value === displayOption);
 
     return (
-        <div className="space-y-4">
-            <Select onValueChange={onValueChange} value={value}>
-                <SelectTrigger className={className}>
-                    <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                    {cardinalityOptions.map((option) => (
-                        <SelectItem
-                            key={option.value}
-                            value={option.value}
-                            onMouseEnter={() => setHoveredOption(option.value)}
-                            onMouseLeave={() => setHoveredOption(null)}
-                        >
-                            {option.label}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+        <div className={className}>
+            <div className="rounded-lg border bg-card overflow-hidden">
+                <div className="grid grid-cols-[200px_1fr]">
+                    {/* Left side - Options */}
+                    <div className="border-r bg-muted/30">
+                        {cardinalityOptions.map((option, index) => {
+                            const isSelected = value === option.value;
+                            const isHovered = hoveredOption === option.value;
 
-            {hoveredOption && hoveredData && (
-                <div className="rounded-lg border bg-card p-4">
-                    <div className="mb-2">
-                        <h4 className="font-medium text-sm">
-                            {cardinalityOptions.find((o) => o.value === hoveredOption)?.label}
-                        </h4>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            {cardinalityOptions.find((o) => o.value === hoveredOption)?.description}
-                        </p>
+                            return (
+                                <button
+                                    key={option.value}
+                                    type="button"
+                                    onClick={() => onValueChange(option.value)}
+                                    onMouseEnter={() => setHoveredOption(option.value)}
+                                    onMouseLeave={() => setHoveredOption(null)}
+                                    className={`
+                                        w-full px-4 py-3 text-left transition-colors
+                                        ${index !== 0 ? "border-t" : ""}
+                                        ${
+                                            isSelected
+                                                ? "bg-primary/10 border-l-2 border-l-primary"
+                                                : "border-l-2 border-l-transparent"
+                                        }
+                                        ${isHovered && !isSelected ? "bg-muted" : ""}
+                                        hover:bg-muted
+                                    `}
+                                >
+                                    <div className="font-medium text-sm">{option.label}</div>
+                                </button>
+                            );
+                        })}
                     </div>
-                    <div className="h-[150px] border rounded bg-background">
-                        <ReactFlow
-                            nodes={hoveredData.nodes}
-                            edges={hoveredData.edges}
-                            fitView
-                            nodesDraggable={false}
-                            nodesConnectable={false}
-                            elementsSelectable={false}
-                            zoomOnScroll={false}
-                            panOnScroll={false}
-                            panOnDrag={false}
-                            zoomOnDoubleClick={false}
-                            preventScrolling={false}
-                        >
-                            <Background />
-                        </ReactFlow>
+
+                    {/* Right side - Diagram */}
+                    <div className="p-4 bg-background">
+                        {displayData && displayInfo ? (
+                            <>
+                                <div className="mb-3">
+                                    <h4 className="font-semibold text-sm">{displayInfo.label}</h4>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        {displayInfo.description}
+                                    </p>
+                                </div>
+                                <div className="h-[180px] border rounded bg-card">
+                                    <ReactFlow
+                                        nodes={displayData.nodes}
+                                        edges={displayData.edges}
+                                        fitView
+                                        nodesDraggable={false}
+                                        nodesConnectable={false}
+                                        elementsSelectable={false}
+                                        zoomOnScroll={false}
+                                        panOnScroll={false}
+                                        panOnDrag={false}
+                                        zoomOnDoubleClick={false}
+                                        preventScrolling={false}
+                                    >
+                                        <Background />
+                                    </ReactFlow>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                                Select a cardinality type
+                            </div>
+                        )}
                     </div>
                 </div>
-            )}
+            </div>
         </div>
     );
 };

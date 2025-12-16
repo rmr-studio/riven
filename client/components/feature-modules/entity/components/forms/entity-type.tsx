@@ -60,7 +60,7 @@ import { AttributeDialog } from "./attribute-dialog";
 interface EntityTypeFormProps {
     entityType?: EntityType;
     organisationId: string;
-    mode: "create" | "edit" 
+    mode: "create" | "edit";
 }
 
 // Common type for data table rows (both attributes and relationships)
@@ -848,6 +848,8 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                 entityTypes={entityTypes}
                 currentEntityType={entityType}
                 editingAttribute={editingAttribute}
+                currentAttributes={attributes}
+                currentRelationships={relationships}
             />
         </>
     );

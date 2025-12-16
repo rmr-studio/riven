@@ -7,51 +7,105 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { EntityRelationshipCardinality } from "@/lib/types/types";
-import { FC } from "react";
+import { cn, toKeyCase } from "@/lib/util/utils";
+import { FC, useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { EntityType } from "../../interface/entity.interface";
+import { EntityType, RelationshipFormData } from "../../interface/entity.interface";
 import { AttributeFormValues } from "./attribute-dialog";
 import { CardinalitySelector } from "./cardinality-selector";
+import { EntityTypeMultiSelect } from "./entity-type-multi-select";
+
+/**
+ * Generates a unique relationship key based on source entity type and relationship name
+ * Format: {sourceEntityKey}_{relationshipNameSlug}
+ * If key exists, appends _2, _3, etc.
+ */
+const generateUniqueKey = (
+    sourceEntityKey: string,
+    relationshipName: string,
+    existingRelationships: RelationshipFormData[],
+    currentKey?: string
+): string => {
+    if (!relationshipName.trim()) return "";
+
+    const baseKey = `${sourceEntityKey}_${toKeyCase(relationshipName)}`;
+    const existingKeys = existingRelationships
+        .map((r) => r.key)
+        .filter((key) => key !== currentKey); // Exclude current key when editing
+
+    // If base key doesn't exist, use it
+    if (!existingKeys.includes(baseKey)) {
+        return baseKey;
+    }
+
+    // Find next available index
+    let index = 2;
+    let candidateKey = `${baseKey}_${index}`;
+    while (existingKeys.includes(candidateKey)) {
+        index++;
+        candidateKey = `${baseKey}_${index}`;
+    }
+
+    return candidateKey;
+};
 
 interface Props {
+    relationships: RelationshipFormData[];
     type?: EntityType;
     avaiableTypes?: EntityType[];
     form: UseFormReturn<AttributeFormValues>;
     isEditMode?: boolean;
 }
 
-export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form, isEditMode = false }) => {
+export const RelationshipAttributeForm: FC<Props> = ({
+    relationships = [],
+    type,
+    avaiableTypes,
+    form,
+    isEditMode = false,
+}) => {
     const selectedEntityTypeKeys = form.watch("entityTypeKeys");
+    const bidirectional = form.watch("bidirectional");
+    const required = form.watch("required");
+    const allowPolymorphic = form.watch("allowPolymorphic");
+    const relationshipName = form.watch("name");
+    const currentKey = form.watch("key");
     const targetEntity = avaiableTypes?.find((et) => et.key === selectedEntityTypeKeys?.[0]);
+
+    // Auto-generate key based on source entity type and relationship name
+    useEffect(() => {
+        // Only auto-generate in create mode
+        if (isEditMode) return;
+
+        // Only generate if we have a source entity type and relationship name
+        if (!type?.key || !relationshipName) {
+            form.setValue("key", "");
+            return;
+        }
+
+        const generatedKey = generateUniqueKey(
+            type.key,
+            relationshipName,
+            relationships,
+            currentKey
+        );
+
+        // Only update if the generated key is different from current
+        if (generatedKey !== currentKey) {
+            form.setValue("key", generatedKey);
+        }
+    }, [relationshipName, type?.key, relationships, isEditMode, form, currentKey]);
 
     return (
         <>
             <div className="space-y-2">
-                <div className="flex items-center gap-2 p-3 rounded-lg border bg-card">
-                    <div className="flex h-6 w-6 items-center justify-center rounded bg-primary/10">
-                        <span className="text-xs font-semibold">
-                            {type?.name?.plural?.charAt(0) || "E"}
-                        </span>
-                    </div>
-                    <span className="font-medium">
-                        {type?.name?.plural || "Current Entity"}
-                    </span>
-                </div>
                 <FormField
                     control={form.control}
                     name="name"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Associated attribute name</FormLabel>
+                            <FormLabel>Relationship Name</FormLabel>
                             <FormControl>
                                 <Input placeholder="E.g. Person" {...field} />
                             </FormControl>
@@ -66,189 +120,139 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form
                 name="cardinality"
                 render={({ field }) => (
                     <FormItem>
+                        <FormLabel>Relationship Cardinality</FormLabel>
                         <FormControl>
                             <CardinalitySelector
                                 value={field.value}
                                 onValueChange={field.onChange}
                                 sourceEntity={type}
                                 targetEntity={targetEntity}
-                                className="w-[200px]"
+                                className="w-full"
                             />
                         </FormControl>
+                        <FormDescription className="text-xs">
+                            Select how entities relate to each other
+                        </FormDescription>
                         <FormMessage />
                     </FormItem>
                 )}
             />
 
-            <FormField
-                control={form.control}
-                name="entityTypeKeys"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Target Entity Type</FormLabel>
-                        <Select
-                            onValueChange={(value) => field.onChange([value])}
-                            value={field.value?.[0]}
-                        >
-                            <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select entity type" />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {avaiableTypes?.map((et) => (
-                                    <SelectItem key={et.key} value={et.key}>
-                                        <div className="flex items-center gap-2">
-                                            <div className="flex h-5 w-5 items-center justify-center rounded bg-primary/10">
-                                                <span className="text-xs">
-                                                    {et.name.plural.charAt(0)}
-                                                </span>
-                                            </div>
-                                            <span>{et.name.plural}</span>
-                                        </div>
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
+            <FormItem>
+                <FormLabel>Target Entity Types</FormLabel>
+                <FormControl>
+                    <EntityTypeMultiSelect
+                        availableTypes={avaiableTypes}
+                        selectedKeys={selectedEntityTypeKeys || []}
+                        allowPolymorphic={allowPolymorphic || false}
+                        onSelectionChange={(keys, allowPoly) => {
+                            form.setValue("entityTypeKeys", keys);
+                            form.setValue("allowPolymorphic", allowPoly);
+                        }}
+                    />
+                </FormControl>
+                <FormDescription className="text-xs">
+                    Select one or more entity types, or allow all entities
+                </FormDescription>
+                <FormMessage />
+            </FormItem>
 
-            <FormField
-                control={form.control}
-                name="targetAttributeName"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Associated attribute name (other side)</FormLabel>
-                        <FormControl>
-                            <Input placeholder="E.g. Company" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
+            <div className="rounded-lg border p-4 space-y-4">
                 <FormField
                     control={form.control}
-                    name="key"
+                    name="bidirectional"
+                    render={({ field }) => (
+                        <FormItem className="flex items-center justify-between space-y-0">
+                            <div className="space-y-1">
+                                <FormLabel>Bidirectional Relationship</FormLabel>
+                                <FormDescription>
+                                    Add this relationship to the target entity as well
+                                </FormDescription>
+                            </div>
+                            <FormControl>
+                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                        </FormItem>
+                    )}
+                />
+
+                <FormField
+                    control={form.control}
+                    name="targetAttributeName"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Key</FormLabel>
+                            <FormLabel className={cn(!bidirectional && "text-primary/60")}>
+                                Associated Attribute Name (Target Side)
+                            </FormLabel>
                             <FormControl>
                                 <Input
-                                    placeholder="relationship_key"
+                                    disabled={!bidirectional}
+                                    placeholder="E.g. Company"
                                     {...field}
-                                    disabled={isEditMode}
-                                    className={isEditMode ? "bg-muted cursor-not-allowed" : ""}
                                 />
                             </FormControl>
                             <FormDescription className="text-xs">
-                                {isEditMode
-                                    ? "Key cannot be changed after creation"
-                                    : "Auto-generated from name"}
+                                The name of this relationship on the target entity
                             </FormDescription>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-                <FormField
-                    control={form.control}
-                    name="inverseName"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Inverse Label (Optional)</FormLabel>
-                            <FormControl>
-                                <Input placeholder="Inverse relationship name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
+            <div className="rounded-lg border p-4 space-y-4">
                 <FormField
                     control={form.control}
-                    name="minOccurs"
+                    name="required"
                     render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Min Occurrences</FormLabel>
-                            <FormControl>
-                                <Input type="number" min={0} placeholder="0" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="maxOccurs"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Max Occurrences</FormLabel>
-                            <FormControl>
-                                <Input type="number" min={0} placeholder="Unlimited" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
-
-            <FormField
-                control={form.control}
-                name="bidirectional"
-                render={({ field }) => (
-                    <FormItem className="rounded-lg border p-3">
-                        <div className="flex items-center justify-between space-y-0">
-                            <div className="space-y-1">
-                                <FormLabel>Bidirectional</FormLabel>
-                                <FormDescription>
-                                    Add this relationship to the other entity
-                                </FormDescription>
-                            </div>
+                        <FormItem className="flex items-center justify-between space-y-0">
+                            <FormLabel>Required</FormLabel>
                             <FormControl>
                                 <Switch checked={field.value} onCheckedChange={field.onChange} />
                             </FormControl>
-                        </div>
-                    </FormItem>
-                )}
-            />
+                        </FormItem>
+                    )}
+                />
 
-            <FormField
-                control={form.control}
-                name="allowPolymorphic"
-                render={({ field }) => (
-                    <FormItem className="rounded-lg border p-3">
-                        <div className="flex items-center justify-between space-y-0">
-                            <div className="space-y-1">
-                                <FormLabel>Allow any entity type</FormLabel>
-                                <FormDescription>
-                                    Enable polymorphic relationships across all entity types
-                                </FormDescription>
-                            </div>
-                            <FormControl>
-                                <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                        </div>
-                    </FormItem>
-                )}
-            />
-
-            <FormField
-                control={form.control}
-                name="required"
-                render={({ field }) => (
-                    <FormItem className="flex items-center justify-between space-y-0">
-                        <FormLabel>Required</FormLabel>
-                        <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} />
-                        </FormControl>
-                    </FormItem>
-                )}
-            />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="minOccurs"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Min Occurrences</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        disabled={!required}
+                                        type="number"
+                                        min={0}
+                                        placeholder="0"
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="maxOccurs"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Max Occurrences</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="number"
+                                        min={0}
+                                        placeholder="Unlimited"
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+            </div>
         </>
     );
 };

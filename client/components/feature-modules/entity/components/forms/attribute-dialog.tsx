@@ -35,6 +35,8 @@ interface AttributeDialogProps {
     onSubmit: (attribute: AttributeFormData | RelationshipFormData) => void;
     entityTypes?: EntityType[];
     currentEntityType?: EntityType;
+    currentAttributes?: AttributeFormData[];
+    currentRelationships?: RelationshipFormData[];
     editingAttribute?: AttributeFormData | RelationshipFormData;
 }
 
@@ -102,6 +104,8 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
     onOpenChange,
     onSubmit,
     entityTypes = [],
+    currentAttributes = [],
+    currentRelationships = [],
     currentEntityType,
     editingAttribute,
 }) => {
@@ -334,6 +338,7 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
                             <AttributeForm form={form} isEditMode={isEditMode} />
                         ) : (
                             <RelationshipAttributeForm
+                                relationships={currentRelationships}
                                 form={form}
                                 type={currentEntityType}
                                 avaiableTypes={entityTypes}

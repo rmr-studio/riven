@@ -22,7 +22,7 @@ export const EntityTypeOverviewDashboard = () => {
 
     useEffect(() => {
         // Query has finished, organisation has not been found. Redirect back to organisation view with associated error
-        if (!isPending && !isLoadingAuth && !entityType) {
+        if (!isPending && !entityType) {
             if (!error || !isResponseError(error)) {
                 router.push("/dashboard/organisation/");
                 return;
@@ -31,7 +31,7 @@ export const EntityTypeOverviewDashboard = () => {
             // Query has returned an ID we can use to route to a valid error message
             const responseError = error;
             router.push(
-                `/dashboard/organisation/${organisationId}/entities?error=${responseError.error}`
+                `/dashboard/organisation/${organisationId}/entity?error=${responseError.error}`
             );
         }
     }, [isPending, isLoadingAuth, entityType, error, router]);
