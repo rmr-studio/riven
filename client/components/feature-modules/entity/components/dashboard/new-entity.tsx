@@ -5,7 +5,7 @@ import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-gro
 import { isResponseError } from "@/lib/util/error/error.util";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { EntityTypeOverview } from "../forms/entity-type";
+import { EntityTypeOverview } from "../types/entity-type";
 
 const NewEntityTypeDashboard = () => {
     const { data: organisation, isPending, error, isLoadingAuth } = useOrganisation();

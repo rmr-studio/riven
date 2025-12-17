@@ -26,8 +26,8 @@ import { z } from "zod";
 import { AttributeTypeDropdown } from "../../../../ui/attribute-type-dropdown";
 import type { AttributeFormData, RelationshipFormData } from "../../interface/entity.interface";
 import { EntityType, isRelationshipType } from "../../interface/entity.interface";
-import { AttributeForm } from "./attribute-form";
-import { RelationshipAttributeForm } from "./attributes-relationship-form";
+import { AttributeForm } from "../forms/attribute-form";
+import { RelationshipAttributeForm } from "../forms/attributes-relationship-form";
 
 interface AttributeDialogProps {
     open: boolean;
@@ -38,6 +38,7 @@ interface AttributeDialogProps {
     currentAttributes?: AttributeFormData[];
     currentRelationships?: RelationshipFormData[];
     editingAttribute?: AttributeFormData | RelationshipFormData;
+    identifierKey?: string;
 }
 
 // Zod schema
@@ -45,8 +46,6 @@ const formSchema = z
     .object({
         selectedType: z.nativeEnum(SchemaType).or(z.literal("RELATIONSHIP")),
         name: z.string().min(1, "Name is required"),
-        // Key is only required for relationships.
-        key: z.string().optional(),
         dataFormat: z.nativeEnum(DataFormat).optional(),
         required: z.boolean(),
         unique: z.boolean(),
@@ -56,6 +55,7 @@ const formSchema = z
         entityTypeKeys: z.array(z.string()).optional(),
         allowPolymorphic: z.boolean().optional(),
         bidirectional: z.boolean().optional(),
+        bidirectionalEntityTypeKeys: z.array(z.string()).optional(),
         inverseName: z.string().optional(),
         targetAttributeName: z.string().optional(),
         // Schema options
@@ -67,19 +67,6 @@ const formSchema = z
         maxLength: z.coerce.number().min(0).optional(),
         regex: z.string().optional(),
     })
-    .refine(
-        (data) => {
-            // If selectedType is RELATIONSHIP, key must be provided and non-empty
-            if (data.selectedType === "RELATIONSHIP") {
-                return data.key && data.key.trim().length > 0;
-            }
-            return true;
-        },
-        {
-            message: "Key is required for relationships",
-            path: ["key"], // Attach error to the key field
-        }
-    )
     .refine(
         (data) => {
             // If selectedType is select or multi-select, at least 2 enum values must be provided
@@ -108,16 +95,23 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
     currentRelationships = [],
     currentEntityType,
     editingAttribute,
+    identifierKey,
 }) => {
     const [typePopoverOpen, setTypePopoverOpen] = useState(false);
     const isEditMode = !!editingAttribute;
+
+    // Check if the editing attribute is the identifier key
+    const isIdentifierAttribute =
+        isEditMode &&
+        editingAttribute &&
+        !isRelationshipType(editingAttribute) &&
+        editingAttribute.label === identifierKey;
 
     const form = useForm<AttributeFormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             selectedType: SchemaType.TEXT,
             name: "",
-            key: "",
             required: false,
             unique: false,
             cardinality: EntityRelationshipCardinality.ONE_TO_ONE,
@@ -126,8 +120,9 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
             entityTypeKeys: [],
             allowPolymorphic: false,
             bidirectional: false,
+            bidirectionalEntityTypeKeys: [],
             inverseName: "",
-            targetAttributeName: undefined,
+            targetAttributeName: "",
             enumValues: [],
             enumSorting: OptionSortingType.MANUAL,
             minimum: undefined,
@@ -159,6 +154,8 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
         }
     }, [selectedType, isEditMode, form]);
 
+    console.log(form.formState.errors);
+
     // Populate form when editing
     useEffect(() => {
         if (!open) return;
@@ -176,8 +173,9 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
                     entityTypeKeys: editingAttribute.entityTypeKeys,
                     allowPolymorphic: editingAttribute.allowPolymorphic,
                     bidirectional: editingAttribute.bidirectional,
+                    bidirectionalEntityTypeKeys: editingAttribute.bidirectionalEntityTypeKeys || [],
                     inverseName: editingAttribute.inverseName,
-                    targetAttributeName: editingAttribute.targetAttributeName,
+                    targetAttributeName: editingAttribute.targetAttributeName || "",
                 });
             } else {
                 const attribute = attributeTypes[editingAttribute.schemaKey];
@@ -211,8 +209,9 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
                 entityTypeKeys: [],
                 allowPolymorphic: false,
                 bidirectional: false,
+                bidirectionalEntityTypeKeys: [],
                 inverseName: "",
-                targetAttributeName: undefined,
+                targetAttributeName: "",
                 enumValues: [],
                 enumSorting: OptionSortingType.MANUAL,
                 minimum: undefined,
@@ -277,23 +276,43 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
 
         onSubmit(data);
     };
+
+    const createKey = (values: AttributeFormValues): string => {
+        const baseKey = `${toKeyCase(values.name)}`;
+        const existingKeys = currentRelationships.map((r) => r.key);
+
+        // Check for any key conflicts
+        if (!existingKeys.includes(baseKey)) return baseKey;
+
+        // Find next available index
+        let index = 2;
+        let candidateKey = `${baseKey}_${index}`;
+        while (existingKeys.includes(candidateKey)) {
+            index++;
+            candidateKey = `${baseKey}_${index}`;
+        }
+
+        return candidateKey;
+    };
+
     const handleRelationshipSubmission = (
         values: AttributeFormValues,
         existingKey: string | undefined
     ) => {
-        // Validation: Key must be provided. But this should be handled by Zod already.
-        if (!values.key) return;
+        // If creating new relationship (no existingKey) and key is empty, generate it
+        const key = existingKey || createKey(values);
 
         const data: RelationshipFormData = {
             type: EntityPropertyType.RELATIONSHIP,
             label: values.name,
-            key: existingKey || values.key,
+            key: key,
             cardinality: values.cardinality || EntityRelationshipCardinality.ONE_TO_ONE,
             minOccurs: values.minOccurs,
             maxOccurs: values.maxOccurs,
             entityTypeKeys: values.entityTypeKeys || [],
             allowPolymorphic: values.allowPolymorphic || false,
             bidirectional: values.bidirectional || false,
+            bidirectionalEntityTypeKeys: values.bidirectionalEntityTypeKeys || [],
             inverseName: values.inverseName,
             required: values.required || false,
             targetAttributeName: values.targetAttributeName || "",
@@ -304,7 +323,7 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="w-full min-w-5xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-full min-w-11/12 lg:min-w-5xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{isEditMode ? "Edit attribute" : "Create attribute"}</DialogTitle>
                     <DialogDescription>
@@ -335,7 +354,11 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
                         />
 
                         {!isRelationship ? (
-                            <AttributeForm form={form} isEditMode={isEditMode} />
+                            <AttributeForm
+                                form={form}
+                                isEditMode={isEditMode}
+                                isIdentifierAttribute={isIdentifierAttribute}
+                            />
                         ) : (
                             <RelationshipAttributeForm
                                 relationships={currentRelationships}

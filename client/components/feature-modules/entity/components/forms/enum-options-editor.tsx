@@ -30,7 +30,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, X } from "lucide-react";
 import { FC, useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { AttributeFormValues } from "./attribute-dialog";
+import { AttributeFormValues } from "../types/entity-type-attribute-dialog";
 
 interface Props {
     form: UseFormReturn<AttributeFormValues>;
@@ -164,7 +164,10 @@ export const EnumOptionsEditor: FC<Props> = ({ form }) => {
                                     <div className="flex items-center gap-2"></div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-xs text-muted-foreground">Sort</span>
-                                        <Select value={enumSorting} onValueChange={handleSortChange}>
+                                        <Select
+                                            value={enumSorting}
+                                            onValueChange={handleSortChange}
+                                        >
                                             <SelectTrigger className="w-[140px] h-8">
                                                 <SelectValue />
                                             </SelectTrigger>
@@ -219,7 +222,9 @@ export const EnumOptionsEditor: FC<Props> = ({ form }) => {
                                                         key={value}
                                                         id={value}
                                                         value={value}
-                                                        onRemove={() => handleRemoveEnumValue(index)}
+                                                        onRemove={() =>
+                                                            handleRemoveEnumValue(index)
+                                                        }
                                                     />
                                                 ))}
                                             </div>

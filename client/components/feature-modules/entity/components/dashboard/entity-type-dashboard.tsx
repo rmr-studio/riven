@@ -6,7 +6,7 @@ import { isResponseError } from "@/lib/util/error/error.util";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useEntityTypeByKey } from "../../hooks/use-entity-types";
-import { EntityTypeForm } from "../forms/entity-type";
+import { EntityTypeOverview } from "../types/entity-type";
 
 export const EntityTypeOverviewDashboard = () => {
     const { data: organisation } = useOrganisation();
@@ -70,7 +70,7 @@ export const EntityTypeOverviewDashboard = () => {
                 <BreadCrumbGroup items={trail} />
             </header>
             <section>
-                <EntityTypeForm
+                <EntityTypeOverview
                     organisationId={organisationId}
                     entityType={entityType}
                     mode="edit"

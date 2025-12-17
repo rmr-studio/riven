@@ -4,25 +4,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
-import {
-    Form,
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { TabsContent, TabsList, TabsStandard, TabsTrigger } from "@/components/ui/tabs-standard";
-import { Textarea } from "@/components/ui/textarea";
+import { Form } from "@/components/ui/form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     DataType,
     EntityPropertyType,
@@ -41,7 +24,7 @@ import {
     Trash2,
 } from "lucide-react";
 import Link from "next/link";
-import { FC, useEffect, useMemo, useRef, useState } from "react";
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAttributeManagement } from "../../hooks/use-attribute-management";
 import { EntityTypeFormValues, useEntityTypeForm } from "../../hooks/use-entity-type-form";
@@ -55,9 +38,10 @@ import {
     type EntityTypeOrderingKey,
     type RelationshipFormData,
 } from "../../interface/entity.interface";
-import { AttributeDialog } from "./attribute-dialog";
+import { ConfigurationForm } from "../forms/entity-type-configuration-form";
+import { AttributeDialog } from "./entity-type-attribute-dialog";
 
-interface EntityTypeFormProps {
+interface EntityTypeOverviewProps {
     entityType?: EntityType;
     organisationId: string;
     mode: "create" | "edit";
@@ -79,7 +63,7 @@ interface EntityTypeFieldRow extends EntityTypeAttributeData {
     targetAttributeName?: string | undefined;
 }
 
-export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
+export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
     entityType,
     organisationId,
     mode,
@@ -88,13 +72,12 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
     const hasInitialized = useRef(false);
 
     // Form management hook
-    const {
-        form,
-        keyManuallyEdited,
-        setKeyManuallyEdited,
-        handleSubmit: handleFormSubmit,
-    } = useEntityTypeForm(organisationId, entityType, mode);
-
+    const { handleSubmit: handleFormSubmit } = useEntityTypeForm(organisationId, entityType, mode);
+    const { form, keyManuallyEdited, setKeyManuallyEdited } = useEntityTypeForm(
+        organisationId,
+        entityType,
+        mode
+    );
     const identifierKey = form.watch("identifierKey");
     // Attribute management hook
     const {
@@ -172,6 +155,29 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
             form.setValue("identifierKey", "Name");
         }
     }, [mode, attributes.length, handleAttributeAdd, form]);
+
+    // Check for relationship suggestions from overlap detection
+    useEffect(() => {
+        const suggestionData = sessionStorage.getItem("relationship-suggestion");
+        if (suggestionData) {
+            try {
+                const suggestion = JSON.parse(suggestionData);
+
+                // Only use if recent (within 5 minutes)
+                if (Date.now() - suggestion.timestamp < 5 * 60 * 1000) {
+                    toast.info(
+                        `Suggestion: Consider adding ${suggestion.sourceEntityKey} to the bidirectional list of the "${suggestion.relationshipKey}" relationship`,
+                        { duration: 10000 }
+                    );
+                }
+            } catch (e) {
+                console.error("Failed to parse relationship suggestion", e);
+            } finally {
+                // Clear the suggestion
+                sessionStorage.removeItem("relationship-suggestion");
+            }
+        }
+    }, []);
 
     // Sync order array with all attributes and relationships
     useEffect(() => {
@@ -343,10 +349,6 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
         []
     );
 
-    const handleSubmit = (values: EntityTypeFormValues) => {
-        handleFormSubmit(values, attributes, relationships, order);
-    };
-
     const handleInvalidSubmit = (errors: typeof form.formState.errors) => {
         const errorMessages: string[] = [];
 
@@ -367,8 +369,15 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
         });
     };
 
+    const submit = useCallback(
+        (values: EntityTypeFormValues) => {
+            handleFormSubmit(values, attributes, relationships, order);
+        },
+        [attributes, relationships, order]
+    );
+
     const handleSaveClick = () => {
-        form.handleSubmit(handleSubmit, handleInvalidSubmit)();
+        form.handleSubmit(submit, handleInvalidSubmit)();
     };
 
     const handleAttributeSubmit = (data: AttributeFormData | RelationshipFormData) => {
@@ -479,8 +488,8 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                     )}
 
                     {/* Tabs */}
-                    <TabsStandard defaultValue="configuration" className="w-full">
-                        <TabsList className="w-full justify-start">
+                    <Tabs defaultValue="configuration" className="w-full">
+                        <TabsList className="justify-start w-1/3">
                             <TabsTrigger value="configuration">
                                 <div className="flex items-center gap-2">
                                     Configuration
@@ -496,7 +505,7 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                                         <AlertCircle className="h-4 w-4 text-destructive" />
                                     )}
                                     {allFields.length > 0 && (
-                                        <Badge variant="secondary" className="ml-2 h-5 px-1.5">
+                                        <Badge className="h-4 w-5 border border-border ">
                                             {allFields.length}
                                         </Badge>
                                     )}
@@ -506,206 +515,15 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
 
                         {/* Configuration Tab */}
                         <TabsContent value="configuration" className="space-y-6">
-                            <div className="rounded-lg border bg-card p-6">
-                                <h2 className="text-lg font-semibold mb-4">General</h2>
-
-                                <div className="space-y-6">
-                                    <div className="grid grid-cols-2 gap-6">
-                                        {/* Name */}
-                                        <FormField
-                                            control={form.control}
-                                            name="pluralName"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="font-semibold">
-                                                        Plural noun
-                                                    </FormLabel>
-                                                    <FormDescription className="text-xs italic">
-                                                        This will be used to label a collection of
-                                                        these entities
-                                                    </FormDescription>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10">
-                                                            <Database className="h-4 w-4 text-primary" />
-                                                        </div>
-                                                        <FormControl>
-                                                            <Input
-                                                                placeholder="e.g., Companies"
-                                                                {...field}
-                                                            />
-                                                        </FormControl>
-                                                    </div>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        {/* Plural Name */}
-                                        <FormField
-                                            control={form.control}
-                                            name="singularName"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="font-semibold">
-                                                        Singular noun
-                                                    </FormLabel>
-                                                    <FormDescription className="text-xs italic">
-                                                        How we should label a single entity of this
-                                                        type
-                                                    </FormDescription>
-                                                    <div className="flex items-center gap-2">
-                                                        <FormControl>
-                                                            <Input
-                                                                placeholder="e.g., Company"
-                                                                {...field}
-                                                            />
-                                                        </FormControl>
-                                                    </div>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-
-                                    {/* Key / Slug */}
-                                    <FormField
-                                        control={form.control}
-                                        name="key"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Identifier / Slug</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        placeholder="e.g., companies"
-                                                        disabled={mode === "edit"}
-                                                        {...field}
-                                                        onChange={(e) => {
-                                                            field.onChange(e);
-                                                            if (mode === "create") {
-                                                                setKeyManuallyEdited(true);
-                                                            }
-                                                        }}
-                                                    />
-                                                </FormControl>
-                                                <FormDescription className="text-xs italic">
-                                                    A unique key used to identify and link this
-                                                    particular entity type. This cannot be changed
-                                                    later.
-                                                    {mode === "create" && !keyManuallyEdited && (
-                                                        <span className="block mt-1 text-muted-foreground">
-                                                            Auto-generated from plural noun. Edit to
-                                                            customize.
-                                                        </span>
-                                                    )}
-                                                </FormDescription>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    {/* Identifier Key */}
-                                    <FormField
-                                        control={form.control}
-                                        name="identifierKey"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Identifier Key</FormLabel>
-                                                <Select
-                                                    onValueChange={field.onChange}
-                                                    value={field.value}
-                                                >
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select a unique identifier" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {attributes
-                                                            .filter((attr) => attr.unique)
-                                                            .map((attr) => (
-                                                                <SelectItem
-                                                                    key={attr.label}
-                                                                    value={attr.label}
-                                                                >
-                                                                    {attr.label}
-                                                                </SelectItem>
-                                                            ))}
-                                                        {attributes.filter(
-                                                            (attr) => attr.unique && attr.required
-                                                        ).length === 0 && (
-                                                            <SelectItem value="name" disabled>
-                                                                No unique attributes available
-                                                            </SelectItem>
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormDescription>
-                                                    This attribute will be used to uniquely identify
-                                                    an entity. This value must reference an
-                                                    attribute marked as "Unique", and must be a
-                                                    Required field.
-                                                </FormDescription>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    {/* Description */}
-                                    <FormField
-                                        control={form.control}
-                                        name="description"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Description</FormLabel>
-                                                <FormControl>
-                                                    <Textarea
-                                                        placeholder="Describe what this entity type represents..."
-                                                        rows={3}
-                                                        {...field}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    {/* Type */}
-                                    <FormField
-                                        control={form.control}
-                                        name="type"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Type</FormLabel>
-                                                <Select
-                                                    onValueChange={field.onChange}
-                                                    value={field.value}
-                                                    disabled={mode === "edit"}
-                                                >
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value="STANDARD">
-                                                            Standard
-                                                        </SelectItem>
-                                                        <SelectItem value="RELATIONSHIP">
-                                                            Relationship
-                                                        </SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                {mode === "edit" && (
-                                                    <FormDescription>
-                                                        Entity type cannot be changed after creation
-                                                    </FormDescription>
-                                                )}
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            </div>
+                            <ConfigurationForm
+                                form={form}
+                                keyManuallyEdited={keyManuallyEdited}
+                                setKeyManuallyEdited={setKeyManuallyEdited}
+                                availableIdentifiers={attributes.filter(
+                                    (attr) => attr.unique && attr.required
+                                )}
+                                mode={mode}
+                            />
                         </TabsContent>
 
                         {/* Attributes Tab */}
@@ -831,7 +649,7 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                                 className="border rounded-md"
                             />
                         </TabsContent>
-                    </TabsStandard>
+                    </Tabs>
 
                     {/* Attribute/Relationship Dialog */}
                 </div>
@@ -850,10 +668,8 @@ export const EntityTypeOverview: FC<EntityTypeFormProps> = ({
                 editingAttribute={editingAttribute}
                 currentAttributes={attributes}
                 currentRelationships={relationships}
+                identifierKey={identifierKey}
             />
         </>
     );
 };
-
-// Alias export for backwards compatibility
-export const EntityTypeForm = EntityTypeOverview;

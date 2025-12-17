@@ -11,15 +11,20 @@ import { Switch } from "@/components/ui/switch";
 import { SchemaType } from "@/lib/types/types";
 import { FC } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { AttributeFormValues } from "./attribute-dialog";
+import { AttributeFormValues } from "../types/entity-type-attribute-dialog";
 import { EnumOptionsEditor } from "./enum-options-editor";
 
 interface Props {
     form: UseFormReturn<AttributeFormValues>;
     isEditMode?: boolean;
+    isIdentifierAttribute?: boolean;
 }
 
-export const AttributeForm: FC<Props> = ({ form, isEditMode = false }) => {
+export const AttributeForm: FC<Props> = ({
+    form,
+    isEditMode = false,
+    isIdentifierAttribute = false,
+}) => {
     const selectedType: SchemaType | "RELATIONSHIP" = form.watch("selectedType");
     if (selectedType === "RELATIONSHIP") return null;
 
@@ -59,11 +64,14 @@ export const AttributeForm: FC<Props> = ({ form, isEditMode = false }) => {
                                     <Switch
                                         checked={field.value}
                                         onCheckedChange={field.onChange}
+                                        disabled={isIdentifierAttribute}
                                     />
                                 </FormControl>
                             </FormItem>
                             <FormDescription className="text-xs italic">
-                                Required attributes must have a value for each record
+                                {isIdentifierAttribute
+                                    ? "This attribute is the identifier key and must be required"
+                                    : "Required attributes must have a value for each record"}
                             </FormDescription>
                         </>
                     )}
@@ -79,12 +87,14 @@ export const AttributeForm: FC<Props> = ({ form, isEditMode = false }) => {
                                     <Switch
                                         checked={field.value}
                                         onCheckedChange={field.onChange}
+                                        disabled={isIdentifierAttribute}
                                     />
                                 </FormControl>
                             </FormItem>
                             <FormDescription className="text-xs italic">
-                                Unique attributes enforce distinct values across all records. There
-                                can be only one record with a given value.
+                                {isIdentifierAttribute
+                                    ? "This attribute is the identifier key and must be unique"
+                                    : "Unique attributes enforce distinct values across all records. There can be only one record with a given value."}
                             </FormDescription>
                         </>
                     )}

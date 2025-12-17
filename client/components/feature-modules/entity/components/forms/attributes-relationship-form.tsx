@@ -8,47 +8,15 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { cn, toKeyCase } from "@/lib/util/utils";
-import { FC, useEffect } from "react";
+import { cn } from "@/lib/util/utils";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { EntityType, RelationshipFormData } from "../../interface/entity.interface";
-import { AttributeFormValues } from "./attribute-dialog";
+import { useRelationshipOverlapDetection } from "../../hooks/use-relationship-overlap-detection";
+import { AttributeFormValues } from "../types/entity-type-attribute-dialog";
 import { CardinalitySelector } from "./cardinality-selector";
 import { EntityTypeMultiSelect } from "./entity-type-multi-select";
-
-/**
- * Generates a unique relationship key based on source entity type and relationship name
- * Format: {sourceEntityKey}_{relationshipNameSlug}
- * If key exists, appends _2, _3, etc.
- */
-const generateUniqueKey = (
-    sourceEntityKey: string,
-    relationshipName: string,
-    existingRelationships: RelationshipFormData[],
-    currentKey?: string
-): string => {
-    if (!relationshipName.trim()) return "";
-
-    const baseKey = `${sourceEntityKey}_${toKeyCase(relationshipName)}`;
-    const existingKeys = existingRelationships
-        .map((r) => r.key)
-        .filter((key) => key !== currentKey); // Exclude current key when editing
-
-    // If base key doesn't exist, use it
-    if (!existingKeys.includes(baseKey)) {
-        return baseKey;
-    }
-
-    // Find next available index
-    let index = 2;
-    let candidateKey = `${baseKey}_${index}`;
-    while (existingKeys.includes(candidateKey)) {
-        index++;
-        candidateKey = `${baseKey}_${index}`;
-    }
-
-    return candidateKey;
-};
+import { RelationshipOverlapAlert } from "./relationship-overlap-alert";
 
 interface Props {
     relationships: RelationshipFormData[];
@@ -67,38 +35,107 @@ export const RelationshipAttributeForm: FC<Props> = ({
 }) => {
     const selectedEntityTypeKeys = form.watch("entityTypeKeys");
     const bidirectional = form.watch("bidirectional");
-    const required = form.watch("required");
     const allowPolymorphic = form.watch("allowPolymorphic");
-    const relationshipName = form.watch("name");
-    const currentKey = form.watch("key");
+    const bidirectionalEntityTypeKeys = form.watch("bidirectionalEntityTypeKeys");
     const targetEntity = avaiableTypes?.find((et) => et.key === selectedEntityTypeKeys?.[0]);
 
-    // Auto-generate key based on source entity type and relationship name
+    // Overlap detection state and logic
+    const [dismissedOverlaps, setDismissedOverlaps] = useState<Set<string>>(new Set());
+
+    // Detect overlaps when target entity selection changes
+    const overlapDetection = useRelationshipOverlapDetection(
+        type?.key,
+        selectedEntityTypeKeys,
+        allowPolymorphic,
+        avaiableTypes
+    );
+
+    // Filter out dismissed overlaps
+    const activeOverlaps = useMemo(() => {
+        return overlapDetection.overlaps.filter((overlap) => {
+            const overlapId = `${overlap.targetEntityKey}-${overlap.existingRelationship.key}`;
+            return !dismissedOverlaps.has(overlapId);
+        });
+    }, [overlapDetection.overlaps, dismissedOverlaps]);
+
+    // Handler for dismissing an overlap alert
+    const handleDismissOverlap = useCallback(
+        (index: number) => {
+            const overlap = activeOverlaps[index];
+            const overlapId = `${overlap.targetEntityKey}-${overlap.existingRelationship.key}`;
+            setDismissedOverlaps((prev) => new Set([...prev, overlapId]));
+        },
+        [activeOverlaps]
+    );
+
+    // Handler for navigating to target entity to edit relationship
+    const handleNavigateToTarget = useCallback(
+        (targetEntityKey: string, relationshipKey: string) => {
+            // Store suggestion in sessionStorage for target entity editor
+            sessionStorage.setItem(
+                "relationship-suggestion",
+                JSON.stringify({
+                    sourceEntityKey: type?.key,
+                    relationshipKey,
+                    action: "add-to-bidirectional",
+                    timestamp: Date.now(),
+                })
+            );
+
+            // Navigate to target entity editor
+            const organisationId = window.location.pathname.split("/")[2];
+            window.location.href = `/organisation/${organisationId}/entity/type/${targetEntityKey}`;
+        },
+        [type?.key]
+    );
+
+    // Clean up bidirectionalEntityTypeKeys when bidirectional is disabled or entity selection changes
     useEffect(() => {
-        // Only auto-generate in create mode
-        if (isEditMode) return;
+        if (!bidirectional) {
+            // Clear bidirectional entity types when bidirectional is turned off
+            if (bidirectionalEntityTypeKeys && bidirectionalEntityTypeKeys.length > 0) {
+                form.setValue("bidirectionalEntityTypeKeys", []);
+            }
+        } else {
+            // When entity types change, filter out any bidirectional selections that are no longer valid
+            if (bidirectionalEntityTypeKeys && bidirectionalEntityTypeKeys.length > 0) {
+                const validKeys = allowPolymorphic
+                    ? bidirectionalEntityTypeKeys // All selections valid if polymorphic
+                    : bidirectionalEntityTypeKeys.filter((key) =>
+                          selectedEntityTypeKeys?.includes(key)
+                      );
 
-        // Only generate if we have a source entity type and relationship name
-        if (!type?.key || !relationshipName) {
-            form.setValue("key", "");
-            return;
+                // Only update if there's a difference
+                if (validKeys.length !== bidirectionalEntityTypeKeys.length) {
+                    form.setValue("bidirectionalEntityTypeKeys", validKeys);
+                }
+            }
         }
+    }, [
+        bidirectional,
+        selectedEntityTypeKeys,
+        allowPolymorphic,
+        bidirectionalEntityTypeKeys,
+        form,
+    ]);
 
-        const generatedKey = generateUniqueKey(
-            type.key,
-            relationshipName,
-            relationships,
-            currentKey
-        );
-
-        // Only update if the generated key is different from current
-        if (generatedKey !== currentKey) {
-            form.setValue("key", generatedKey);
-        }
-    }, [relationshipName, type?.key, relationships, isEditMode, form, currentKey]);
+    // Reset dismissed overlaps when target entity selection changes
+    useEffect(() => {
+        setDismissedOverlaps(new Set());
+    }, [selectedEntityTypeKeys]);
 
     return (
         <>
+            {/* Overlap Alert Banner */}
+            {activeOverlaps.length > 0 && (
+                <RelationshipOverlapAlert
+                    overlaps={activeOverlaps}
+                    sourceEntityKey={type?.key || ""}
+                    onDismiss={handleDismissOverlap}
+                    onNavigateToTarget={handleNavigateToTarget}
+                />
+            )}
+
             <div className="space-y-2">
                 <FormField
                     control={form.control}
@@ -127,7 +164,7 @@ export const RelationshipAttributeForm: FC<Props> = ({
                                 onValueChange={field.onChange}
                                 sourceEntity={type}
                                 targetEntity={targetEntity}
-                                className="w-full"
+                                className="w-full min-h-72"
                             />
                         </FormControl>
                         <FormDescription className="text-xs">
@@ -137,8 +174,7 @@ export const RelationshipAttributeForm: FC<Props> = ({
                     </FormItem>
                 )}
             />
-
-            <FormItem>
+            <FormItem className="w-full">
                 <FormLabel>Target Entity Types</FormLabel>
                 <FormControl>
                     <EntityTypeMultiSelect
@@ -198,13 +234,39 @@ export const RelationshipAttributeForm: FC<Props> = ({
                         </FormItem>
                     )}
                 />
+
+                {bidirectional && (allowPolymorphic || (selectedEntityTypeKeys && selectedEntityTypeKeys.length > 1)) && (
+                    <FormItem>
+                        <FormLabel>Bidirectional Entity Types</FormLabel>
+                        <FormControl>
+                            <EntityTypeMultiSelect
+                                availableTypes={
+                                    allowPolymorphic
+                                        ? avaiableTypes
+                                        : avaiableTypes?.filter((et) =>
+                                              selectedEntityTypeKeys?.includes(et.key)
+                                          )
+                                }
+                                selectedKeys={form.watch("bidirectionalEntityTypeKeys") || []}
+                                allowPolymorphic={false}
+                                onSelectionChange={(keys) => {
+                                    form.setValue("bidirectionalEntityTypeKeys", keys);
+                                }}
+                            />
+                        </FormControl>
+                        <FormDescription className="text-xs">
+                            Select which entity types should receive the bidirectional relationship
+                        </FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                )}
             </div>
-            <div className="rounded-lg border p-4 space-y-4">
+            <div className="w-full flex justify-end">
                 <FormField
                     control={form.control}
                     name="required"
                     render={({ field }) => (
-                        <FormItem className="flex items-center justify-between space-y-0">
+                        <FormItem className="flex items-center justify-between space-y-0 w-1/3 rounded-lg border p-4">
                             <FormLabel>Required</FormLabel>
                             <FormControl>
                                 <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -212,46 +274,6 @@ export const RelationshipAttributeForm: FC<Props> = ({
                         </FormItem>
                     )}
                 />
-
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="minOccurs"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Min Occurrences</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        disabled={!required}
-                                        type="number"
-                                        min={0}
-                                        placeholder="0"
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="maxOccurs"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Max Occurrences</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        min={0}
-                                        placeholder="Unlimited"
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
             </div>
         </>
     );
