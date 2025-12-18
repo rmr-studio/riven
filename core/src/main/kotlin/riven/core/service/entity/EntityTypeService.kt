@@ -10,6 +10,7 @@ import riven.core.enums.entity.EntityPropertyType
 import riven.core.enums.util.OperationType
 import riven.core.exceptions.SchemaValidationException
 import riven.core.models.entity.EntityType
+import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.configuration.EntityTypeOrderingKey
 import riven.core.models.request.entity.CreateEntityTypeRequest
 import riven.core.repository.entity.EntityRepository
@@ -31,6 +32,7 @@ class EntityTypeService(
     private val entityTypeRepository: EntityTypeRepository,
     private val entityRepository: EntityRepository,
     private val entityValidationService: EntityValidationService,
+    private val entityRelationshipService: EntityRelationshipService,
     private val authTokenService: AuthTokenService,
     private val activityService: ActivityService,
 ) {
@@ -72,6 +74,7 @@ class EntityTypeService(
                 entityTypeRepository.save(this)
             }.also {
                 requireNotNull(it.id)
+                entityRelationshipService.syncRelationships(it)
                 activityService.logActivity(
                     activity = Activity.ENTITY_TYPE,
                     operation = OperationType.CREATE,
@@ -113,6 +116,11 @@ class EntityTypeService(
             type.schema
         )
 
+        val prevSnapshot: List<EntityRelationshipDefinition>? = existing.relationships.let {
+            if (it == null) return@let null
+            it.map { rel -> rel.copy() }
+        }
+
         if (breakingChanges.any { it.breaking }) {
             val existingEntities = entityRepository.findByOrganisationIdAndTypeId(orgId, type.id)
             val validationSummary = entityValidationService.validateExistingEntitiesAgainstNewSchema(
@@ -140,8 +148,9 @@ class EntityTypeService(
             schema = type.schema
             relationships = type.relationships
             version = existing.version + 1  // Increment for change tracking
-        }.let {
-            entityTypeRepository.save(it).run {
+        }.run {
+            entityTypeRepository.save(this).also { type ->
+                entityRelationshipService.syncRelationships(type, prevSnapshot)
                 activityService.logActivity(
                     activity = Activity.ENTITY_TYPE,
                     operation = OperationType.UPDATE,
@@ -209,5 +218,62 @@ class EntityTypeService(
     fun getById(id: UUID): EntityTypeEntity {
         return findOrThrow { entityTypeRepository.findById(id) }
     }
+
+    /**
+     * Detects bidirectional relationships that were removed or made unidirectional.
+     * Returns map of relationship key to list of target entity type keys that need cleanup.
+     */
+    private fun detectRemovedBidirectionalRelationships(
+        oldRelationships: List<EntityRelationshipDefinition>?,
+        newRelationships: List<EntityRelationshipDefinition>?
+    ): Map<String, List<String>> {
+        val removed = mutableMapOf<String, List<String>>()
+
+        oldRelationships?.forEach { oldRel ->
+            if (!oldRel.bidirectional || oldRel.bidirectionalEntityTypeKeys.isNullOrEmpty()) {
+                return@forEach  // Skip non-bidirectional
+            }
+
+            val newRel = newRelationships?.find { it.key == oldRel.key }
+
+            when {
+                // Relationship completely removed (handled by detectCompletelyRemovedRelationships)
+                newRel == null -> {
+                    // Don't add to removed here; it will be handled separately
+                }
+                // Made unidirectional
+                !newRel.bidirectional -> {
+                    removed[oldRel.key] = oldRel.bidirectionalEntityTypeKeys
+                }
+                // Target entity types changed (removed some)
+                else -> {
+                    val removedTargets = oldRel.bidirectionalEntityTypeKeys -
+                            (newRel.bidirectionalEntityTypeKeys ?: emptyList()).toSet()
+                    if (removedTargets.isNotEmpty()) {
+                        removed[oldRel.key] = removedTargets.toList()
+                    }
+                }
+            }
+        }
+
+        return removed
+    }
+
+    /**
+     * Detects relationships that were completely removed from the entity type definition.
+     * Returns list of relationship keys that need instance cleanup.
+     */
+    private fun detectCompletelyRemovedRelationships(
+        oldRelationships: List<EntityRelationshipDefinition>?,
+        newRelationships: List<EntityRelationshipDefinition>?
+    ): List<String> {
+        val newKeys = newRelationships?.map { it.key }?.toSet() ?: emptySet()
+
+        return oldRelationships
+            ?.filter { oldRel -> !newKeys.contains(oldRel.key) }
+            ?.map { it.key }
+            ?: emptyList()
+    }
+
 }
 

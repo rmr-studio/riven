@@ -7,25 +7,31 @@ import riven.core.enums.entity.EntityRelationshipCardinality
  *
  * @property name Human-readable label for the relationship (e.g., "Candidate", "Job Posting", "Target Entity")
  * @property key Unique key identifier for the relationship (e.g., "posted", "applied_for")
- * @property minOccurs Minimum number of times this relationship must occur (e.g., 0 for optional, 1 for required)
- * @property maxOccurs Maximum number of times this relationship can occur (e.g., 1 for single, -1 for unlimited)
+ * @property required True if this relationship must exist and have defined values
  * @property entityTypeKeys List of allowed entity type keys (e.g., ["candidate", "job"]) or null for polymorphic
  * @property allowPolymorphic True if this relationship can link to any entity type (polymorphic slot)
  * @property bidirectional True if the relationship is bidirectional
+ *
+ * Relationships allow for:
+ *  1. Singular Entity Relationships
+ *    - Normal relationships => Restricted to one specific entity type
+ *  2. Polymorphic Entity Relationships
+ *    - Relationship open to any entity type
+ *  3. Strict Multi-Entity Type Relationships
+ *    - Restricted to specific entity types
+ *    - Example: Task.assignee → [Person, Team] (not polymorphic, just 2 specific types)
+ *
  */
 data class EntityRelationshipDefinition(
     val name: String,
     val key: String,
+    val required: Boolean,
     val cardinality: EntityRelationshipCardinality,
-    val minOccurs: Int? = null,
-    val maxOccurs: Int? = null,
     val entityTypeKeys: List<String>? = null,
     val allowPolymorphic: Boolean = false,
     val bidirectional: Boolean = false,
-
+    // For polymorphic/multi-entity relationships, we should be able to filter WHICH entity types have a bidirectional/inverse relationship
+    val bidirectionalEntityTypeKeys: List<String>? = null,
     // For bidirectional relationships, the name of the inverse relationship
     val inverseName: String? = null
-) {
-    val required: Boolean
-        get() = minOccurs != null && minOccurs > 0
-}
+)

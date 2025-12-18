@@ -65,4 +65,21 @@ class EntityTypeController(
         val newEntityType = entityTypeService.publishEntityType(request)
         return ResponseEntity.status(201).body(newEntityType)
     }
+
+    @PutMapping("/")
+    @Operation(
+        summary = "Updates an existing entity type",
+        description = "Updates the data for an already existing entity type for the specified organisation."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "201", description = "Entity type created successfully"),
+        ApiResponse(responseCode = "400", description = "Invalid request data"),
+        ApiResponse(responseCode = "401", description = "Unauthorized access")
+    )
+    fun createEntityType(@RequestBody type: EntityType): ResponseEntity<EntityType> {
+        val newEntityType = entityTypeService.updateEntityType(type)
+        return ResponseEntity.status(201).body(newEntityType)
+    }
+
+
 }

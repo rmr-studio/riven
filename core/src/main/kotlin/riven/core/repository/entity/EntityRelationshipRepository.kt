@@ -20,7 +20,17 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
      */
     fun findByTargetId(id: UUID): List<EntityRelationshipEntity>
 
-    fun findBySourceIdAndKey(sourceId: UUID, key: String): Optional<EntityRelationshipEntity>
+    fun findBySourceIdAndKey(sourceId: UUID, key: String): EntityRelationshipEntity?
+
+    /**
+     * Find all relationships with a specific key where the given entity is the source.
+     */
+    fun findAllBySourceIdAndKey(sourceId: UUID, key: String): List<EntityRelationshipEntity>
+
+    /**
+     * Find relationships with a specific source, target, and key.
+     */
+    fun findBySourceIdAndTargetIdAndKey(sourceId: UUID, targetId: UUID, key: String): List<EntityRelationshipEntity>
 
     fun countBySourceIdAndKey(sourceId: UUID, key: String): Long
 
