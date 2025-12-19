@@ -8,7 +8,7 @@ import java.time.ZonedDateTime
 import java.util.*
 
 
-data class ReferenceRelationshipBuilder(
+data class EntityTypeReferenceRelationshipBuilder(
     val origin: EntityRelationshipDefinition,
     val targetEntity: EntityType,
 ) {

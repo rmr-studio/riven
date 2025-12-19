@@ -15,6 +15,7 @@ import riven.core.models.entity.Entity
 import riven.core.repository.entity.EntityRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.entity.type.EntityTypeService
 import riven.core.util.ServiceUtil.findManyResults
 import riven.core.util.ServiceUtil.findOrThrow
 import java.util.*

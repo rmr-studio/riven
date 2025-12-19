@@ -103,6 +103,7 @@ object EntityFactory {
     fun createRelationshipDefinition(
         name: String = "Related Entity",
         key: String = "related_entity",
+        sourceKey: String,
         required: Boolean = false,
         cardinality: EntityRelationshipCardinality = EntityRelationshipCardinality.MANY_TO_ONE,
         entityTypeKeys: List<String>? = null,
@@ -120,7 +121,8 @@ object EntityFactory {
             allowPolymorphic = allowPolymorphic,
             bidirectional = bidirectional,
             bidirectionalEntityTypeKeys = bidirectionalEntityTypeKeys,
-            inverseName = inverseName
+            inverseName = inverseName,
+            sourceKey = sourceKey
         )
     }
 

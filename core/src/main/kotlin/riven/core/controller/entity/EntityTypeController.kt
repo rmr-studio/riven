@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import riven.core.models.entity.EntityType
 import riven.core.models.request.entity.CreateEntityTypeRequest
-import riven.core.service.entity.EntityTypeService
+import riven.core.service.entity.type.EntityTypeService
 import java.util.*
 
 @RestController

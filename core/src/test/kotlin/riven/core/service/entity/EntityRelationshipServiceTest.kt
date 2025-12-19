@@ -25,6 +25,7 @@ import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.entity.type.EntityRelationshipService
 import riven.core.service.util.OrganisationRole
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.factory.entity.EntityFactory
@@ -101,7 +102,8 @@ class EntityRelationshipServiceTest {
                     key = "employer",
                     cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
                     entityTypeKeys = listOf("company"),
-                    bidirectional = false
+                    bidirectional = false,
+                    sourceKey = "person"
                 )
             )
         )
@@ -133,7 +135,8 @@ class EntityRelationshipServiceTest {
                     entityTypeKeys = listOf("person"),
                     bidirectional = true,
                     bidirectionalEntityTypeKeys = listOf("person"),
-                    inverseName = "Friends with"
+                    inverseName = "Friends with",
+                    sourceKey = "person"
                 )
             )
         )
@@ -187,7 +190,8 @@ class EntityRelationshipServiceTest {
                     entityTypeKeys = listOf("person", "team"),
                     bidirectional = true,
                     bidirectionalEntityTypeKeys = null, // Default to all entityTypeKeys
-                    inverseName = "Assigned Tasks"
+                    inverseName = "Assigned Tasks",
+                    sourceKey = "tasks"
                 )
             )
         )
@@ -237,7 +241,8 @@ class EntityRelationshipServiceTest {
                     key = "owner",
                     cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
                     entityTypeKeys = listOf("person", "team"),
-                    bidirectional = false
+                    bidirectional = false,
+                    sourceKey = "owner"
                 )
             )
         )
@@ -285,7 +290,8 @@ class EntityRelationshipServiceTest {
                     entityTypeKeys = listOf("person", "team"),
                     bidirectional = true,
                     bidirectionalEntityTypeKeys = listOf("person"), // Only Person gets inverse
-                    inverseName = "Assigned Tasks"
+                    inverseName = "Assigned Tasks",
+                    sourceKey = "task"
                 )
             )
         )
@@ -327,7 +333,8 @@ class EntityRelationshipServiceTest {
                     key = "target",
                     cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
                     allowPolymorphic = true,
-                    bidirectional = false
+                    bidirectional = false,
+                    sourceKey = "comment"
                 )
             )
         )
@@ -353,7 +360,8 @@ class EntityRelationshipServiceTest {
                     key = "target",
                     cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
                     allowPolymorphic = true,
-                    bidirectional = true // This should be skipped
+                    bidirectional = true, // This should be skipped
+                    sourceKey = "comment"
                 )
             )
         )
@@ -390,7 +398,8 @@ class EntityRelationshipServiceTest {
                     entityTypeKeys = listOf("profile"),
                     bidirectional = true,
                     bidirectionalEntityTypeKeys = listOf("profile"),
-                    inverseName = "Person"
+                    inverseName = "Person",
+                    sourceKey = "person"
                 )
             )
         )
@@ -438,7 +447,8 @@ class EntityRelationshipServiceTest {
                     entityTypeKeys = listOf("person"),
                     bidirectional = true,
                     bidirectionalEntityTypeKeys = listOf("person"),
-                    inverseName = "Employer"
+                    inverseName = "Employer",
+                    sourceKey = "company"
                 )
             )
         )
@@ -486,7 +496,8 @@ class EntityRelationshipServiceTest {
                     entityTypeKeys = listOf("course"),
                     bidirectional = true,
                     bidirectionalEntityTypeKeys = listOf("course"),
-                    inverseName = "Students"
+                    inverseName = "Students",
+                    sourceKey = "student"
                 )
             )
         )
@@ -538,7 +549,8 @@ class EntityRelationshipServiceTest {
                 key = "employer",
                 cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
                 entityTypeKeys = listOf("company"),
-                bidirectional = false
+                bidirectional = false,
+                sourceKey = "company"
             )
         )
 
@@ -594,7 +606,8 @@ class EntityRelationshipServiceTest {
                 cardinality = EntityRelationshipCardinality.MANY_TO_MANY,
                 entityTypeKeys = listOf("person"),
                 bidirectional = true,
-                bidirectionalEntityTypeKeys = listOf("person")
+                bidirectionalEntityTypeKeys = listOf("person"),
+                sourceKey = "person"
             )
         )
 
@@ -633,7 +646,8 @@ class EntityRelationshipServiceTest {
             relationships = listOf(
                 EntityFactory.createRelationshipDefinition(
                     key = "employees",
-                    name = "Employees"
+                    name = "Employees",
+                    sourceKey = "company"
                 )
             )
         )
@@ -650,7 +664,8 @@ class EntityRelationshipServiceTest {
                     key = "employer",
                     cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
                     entityTypeKeys = listOf("company"),
-                    bidirectional = false // Changed from true to false
+                    bidirectional = false, // Changed from true to false
+                    sourceKey = "person"
                 )
             )
         )
@@ -663,7 +678,8 @@ class EntityRelationshipServiceTest {
                 entityTypeKeys = listOf("company"),
                 bidirectional = true,
                 bidirectionalEntityTypeKeys = listOf("company"),
-                inverseName = "Employees"
+                inverseName = "Employees",
+                sourceKey = "person"
             )
         )
 
@@ -700,11 +716,13 @@ class EntityRelationshipServiceTest {
             .thenReturn(listOf(forwardRel))
         Mockito.`when`(entityRepository.findById(company1.id!!))
             .thenReturn(Optional.of(company1))
-        Mockito.`when`(entityRelationshipRepository.findBySourceIdAndTargetIdAndKey(
-            company1.id!!,
-            person1.id!!,
-            "employer"
-        )).thenReturn(listOf(inverseRel))
+        Mockito.`when`(
+            entityRelationshipRepository.findBySourceIdAndTargetIdAndKey(
+                company1.id!!,
+                person1.id!!,
+                "employer"
+            )
+        ).thenReturn(listOf(inverseRel))
         Mockito.`when`(entityTypeRepository.save(any<EntityTypeEntity>()))
             .thenAnswer { it.arguments[0] }
 
@@ -744,7 +762,8 @@ class EntityRelationshipServiceTest {
             relationships = listOf(
                 EntityFactory.createRelationshipDefinition(
                     key = "assigned_tasks",
-                    name = "Assigned Tasks"
+                    name = "Assigned Tasks",
+                    sourceKey = "person"
                 )
             )
         )
@@ -763,7 +782,8 @@ class EntityRelationshipServiceTest {
                     entityTypeKeys = listOf("person", "team"),
                     bidirectional = true,
                     bidirectionalEntityTypeKeys = listOf("person"), // Removed "team"
-                    inverseName = "Assigned Tasks"
+                    inverseName = "Assigned Tasks",
+                    sourceKey = "task"
                 )
             )
         )
@@ -776,7 +796,8 @@ class EntityRelationshipServiceTest {
                 entityTypeKeys = listOf("person", "team"),
                 bidirectional = true,
                 bidirectionalEntityTypeKeys = listOf("person", "team"), // Both were bidirectional
-                inverseName = "Assigned Tasks"
+                inverseName = "Assigned Tasks",
+                sourceKey = "assignee"
             )
         )
 
@@ -815,11 +836,13 @@ class EntityRelationshipServiceTest {
             .thenReturn(listOf(forwardRel))
         Mockito.`when`(entityRepository.findById(team1.id!!))
             .thenReturn(Optional.of(team1))
-        Mockito.`when`(entityRelationshipRepository.findBySourceIdAndTargetIdAndKey(
-            team1.id!!,
-            task1.id!!,
-            "assignee"
-        )).thenReturn(listOf(inverseRel))
+        Mockito.`when`(
+            entityRelationshipRepository.findBySourceIdAndTargetIdAndKey(
+                team1.id!!,
+                task1.id!!,
+                "assignee"
+            )
+        ).thenReturn(listOf(inverseRel))
         Mockito.`when`(entityTypeRepository.save(any<EntityTypeEntity>()))
             .thenAnswer { it.arguments[0] }
 
@@ -863,7 +886,8 @@ class EntityRelationshipServiceTest {
                     key = "employer",
                     cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
                     entityTypeKeys = listOf("company"),
-                    bidirectional = false
+                    bidirectional = false,
+                    sourceKey = "company"
                 )
             )
         )
@@ -896,7 +920,8 @@ class EntityRelationshipServiceTest {
                     name = "Department",
                     key = "department",
                     entityTypeKeys = listOf("department"), // Does not exist
-                    bidirectional = false
+                    bidirectional = false,
+                    sourceKey = "person"
                 )
             )
         )
@@ -928,7 +953,8 @@ class EntityRelationshipServiceTest {
                     name = "Target",
                     key = "target",
                     allowPolymorphic = true,
-                    bidirectional = false
+                    bidirectional = false,
+                    sourceKey = "comment"
                 )
             )
         )
@@ -961,7 +987,8 @@ class EntityRelationshipServiceTest {
                     key = "assignee",
                     entityTypeKeys = listOf("person", "team"),
                     bidirectional = true,
-                    bidirectionalEntityTypeKeys = listOf("person", "team")
+                    bidirectionalEntityTypeKeys = listOf("person", "team"),
+                    sourceKey = "task"
                 )
             )
         )

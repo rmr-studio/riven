@@ -8,7 +8,7 @@ import riven.core.models.entity.relationship.EntityTypeRelationshipModification
 import java.util.UUID
 
 @Service
-class RelationshipDiffService {
+class EntityTypeRelationshipDiffService {
     fun calculate(
         previous: List<EntityRelationshipDefinition>,
         updated: List<EntityRelationshipDefinition>

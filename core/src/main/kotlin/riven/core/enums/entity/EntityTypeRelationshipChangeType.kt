@@ -1,4 +1,13 @@
 package riven.core.enums.entity
 
-class EntityTypeRelationshipChangeType {
+enum class EntityTypeRelationshipChangeType {
+    NAME_CHANGED,
+    CARDINALITY_CHANGED,
+    TARGET_TYPES_ADDED,
+    TARGET_TYPES_REMOVED,
+    BIDIRECTIONAL_ENABLED,
+    BIDIRECTIONAL_DISABLED,
+    BIDIRECTIONAL_TARGETS_CHANGED,
+    INVERSE_NAME_CHANGED,
+    REQUIRED_CHANGED
 }
