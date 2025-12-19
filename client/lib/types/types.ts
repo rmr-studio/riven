@@ -565,6 +565,7 @@ export interface components {
         EntityRelationshipDefinition: {
             name: string;
             key: string;
+            sourceKey: string;
             required: boolean;
             cardinality: components["schemas"]["EntityRelationshipCardinality"];
             entityTypeKeys?: string[];
@@ -1000,9 +1001,9 @@ export interface components {
         ListFilterLogicType: ListFilterLogicType;
         Metadata: {
             type: components["schemas"]["BlockMetadataType"];
+            meta: components["schemas"]["BlockMeta"];
             readonly: boolean;
             deletable: boolean;
-            meta: components["schemas"]["BlockMeta"];
         };
         Node: {
             warnings: string[];

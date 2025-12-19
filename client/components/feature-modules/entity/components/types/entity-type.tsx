@@ -6,25 +6,29 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Form } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
     DataType,
     EntityPropertyType,
     EntityRelationshipCardinality,
     SchemaType,
 } from "@/lib/types/types";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Row } from "@tanstack/react-table";
 import {
     AlertCircle,
     CheckCircle2,
     Database,
     Edit2,
+    Key,
     Link2,
+    ListTodo,
+    ListX,
     Plus,
     Save,
     Trash2,
 } from "lucide-react";
 import Link from "next/link";
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FC, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAttributeManagement } from "../../hooks/use-attribute-management";
 import { EntityTypeFormValues, useEntityTypeForm } from "../../hooks/use-entity-type-form";
@@ -152,7 +156,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
             };
             handleAttributeAdd(defaultNameAttribute);
             // Set the default name attribute as the identifier key
-            form.setValue("identifierKey", "Name");
+            form.setValue("identifierKey", "name");
         }
     }, [mode, attributes.length, handleAttributeAdd, form]);
 
@@ -248,7 +252,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
             entityTypeKeys: rel.entityTypeKeys,
             allowPolymorphic: rel.allowPolymorphic,
             bidirectional: rel.bidirectional,
-            targetAttributeName: rel.targetAttributeName,
+            targetAttributeName: rel.inverseName,
             additionalConstraints: [],
         }));
 
@@ -277,6 +281,59 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
         return combined;
     }, [attributes, relationships, order]);
 
+    const getIcon = (row: Row<EntityTypeFieldRow>): ReactNode | null => {
+        if (row.original.type === EntityPropertyType.RELATIONSHIP)
+            return (
+                <>
+                    <TooltipTrigger asChild>
+                        <Link2 className="size-4 mr-1 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent className=" text-xs font-mono italic">
+                        This attribute references a relationship to another entity type
+                    </TooltipContent>
+                </>
+            );
+
+        if (identifierKey === row.original.key)
+            return (
+                <>
+                    <TooltipTrigger asChild>
+                        <Key className="size-4 mr-1 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent className=" text-xs font-mono italic">
+                        This attribute represents the primary identifier for this entity
+                    </TooltipContent>
+                </>
+            );
+
+        if (!row.original.required && !row.original.unique) return <div className="w-4 mr-1"></div>;
+
+        return (
+            <div className="flex space-x-2">
+                {row.original.required && (
+                    <>
+                        <TooltipTrigger asChild>
+                            <ListTodo className="size-4 mr-1 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent className=" text-xs font-mono italic">
+                            This attribute is required and must have a value for each entity
+                        </TooltipContent>
+                    </>
+                )}
+                {row.original.unique && (
+                    <>
+                        <TooltipTrigger asChild>
+                            <ListX className="size-4 mr-1 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent className=" text-xs font-mono italic">
+                            This attribute must have a unique value for each entity
+                        </TooltipContent>
+                    </>
+                )}
+            </div>
+        );
+    };
+
     // Unified columns for both attributes and relationships
     const fieldColumns: ColumnDef<EntityTypeFieldRow>[] = useMemo(
         () => [
@@ -284,12 +341,11 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                 accessorKey: "label",
                 header: "Name",
                 cell: ({ row }) => {
-                    const isRelationship = row.original.type === EntityPropertyType.RELATIONSHIP;
                     return (
                         <div className="flex items-center gap-2">
-                            {isRelationship ? (
-                                <Link2 className="h-4 w-4 text-muted-foreground" />
-                            ) : null}
+                            <TooltipProvider>
+                                <Tooltip>{getIcon(row)}</Tooltip>
+                            </TooltipProvider>
                             <span className="font-medium">{row.original.label}</span>
                         </div>
                     );
@@ -426,7 +482,6 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
     };
 
     const handleFieldsReorder = (reorderedFields: EntityTypeFieldRow[]) => {
-        console.log(reorderedFields);
         // Create new order array from reordered fields
         const newOrder: EntityTypeOrderingKey[] = reorderedFields.map((field) => ({
             key: field.key,
@@ -494,7 +549,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                                 <div className="flex items-center gap-2">
                                     Configuration
                                     {tabErrors.configuration && (
-                                        <AlertCircle className="h-4 w-4 text-destructive" />
+                                        <AlertCircle className="size-4 mr-1 text-destructive" />
                                     )}
                                 </div>
                             </TabsTrigger>
@@ -502,7 +557,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                                 <div className="flex items-center gap-2">
                                     Attributes
                                     {tabErrors.attributes && (
-                                        <AlertCircle className="h-4 w-4 text-destructive" />
+                                        <AlertCircle className="size-4 mr-1 text-destructive" />
                                     )}
                                     {allFields.length > 0 && (
                                         <Badge className="h-4 w-5 border border-border ">
@@ -543,7 +598,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                                         setDialogOpen(true);
                                     }}
                                 >
-                                    <Plus className="h-4 w-4 mr-2" />
+                                    <Plus className="size-4 mr-1 mr-2" />
                                     Add Attribute
                                 </Button>
                             </div>
@@ -556,9 +611,9 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-2 text-sm">
                                         {attributes.some((attr) => attr.unique) ? (
-                                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                            <CheckCircle2 className="size-4 mr-1 text-green-600" />
                                         ) : (
-                                            <AlertCircle className="h-4 w-4 text-destructive" />
+                                            <AlertCircle className="size-4 mr-1 text-destructive" />
                                         )}
                                         <span
                                             className={
@@ -573,9 +628,9 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                                     {form.watch("type") === "RELATIONSHIP" && (
                                         <div className="flex items-center gap-2 text-sm">
                                             {relationships.length >= 2 ? (
-                                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                                <CheckCircle2 className="size-4 mr-1 text-green-600" />
                                             ) : (
-                                                <AlertCircle className="h-4 w-4 text-destructive" />
+                                                <AlertCircle className="size-4 mr-1 text-destructive" />
                                             )}
                                             <span
                                                 className={

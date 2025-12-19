@@ -125,7 +125,6 @@ export const EntityTypesOverview: FC<Props> = ({ organisationId }) => {
                     ],
                 }}
                 onRowClick={(row) => {
-                    console.log(row);
                     router.push(
                         `/dashboard/organisation/${organisationId}/entity/${row.original.key}`
                     );

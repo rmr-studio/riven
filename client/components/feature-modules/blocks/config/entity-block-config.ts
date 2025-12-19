@@ -57,7 +57,6 @@ export const ENTITY_BLOCK_CONFIG: Record<EntityType, EntityBlockConfig> = {
  *
  * @example
  * const config = getEntityBlockConfig(EntityType.client);
- * console.log(config.allowedBlockTypes); // ["reference", "note", ...]
  */
 export const getEntityBlockConfig = (entityType: EntityType): EntityBlockConfig => {
     return (

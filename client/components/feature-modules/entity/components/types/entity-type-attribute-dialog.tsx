@@ -50,14 +50,11 @@ const formSchema = z
         required: z.boolean(),
         unique: z.boolean(),
         cardinality: z.nativeEnum(EntityRelationshipCardinality).optional(),
-        minOccurs: z.coerce.number().min(0).optional(),
-        maxOccurs: z.coerce.number().min(0).optional(),
         entityTypeKeys: z.array(z.string()).optional(),
         allowPolymorphic: z.boolean().optional(),
         bidirectional: z.boolean().optional(),
         bidirectionalEntityTypeKeys: z.array(z.string()).optional(),
         inverseName: z.string().optional(),
-        targetAttributeName: z.string().optional(),
         // Schema options
         enumValues: z.array(z.string()).optional(),
         enumSorting: z.nativeEnum(OptionSortingType).optional(),
@@ -105,7 +102,7 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
         isEditMode &&
         editingAttribute &&
         !isRelationshipType(editingAttribute) &&
-        editingAttribute.label === identifierKey;
+        editingAttribute.key === identifierKey;
 
     const form = useForm<AttributeFormValues>({
         resolver: zodResolver(formSchema),
@@ -115,14 +112,11 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
             required: false,
             unique: false,
             cardinality: EntityRelationshipCardinality.ONE_TO_ONE,
-            minOccurs: undefined,
-            maxOccurs: undefined,
             entityTypeKeys: [],
             allowPolymorphic: false,
             bidirectional: false,
             bidirectionalEntityTypeKeys: [],
             inverseName: "",
-            targetAttributeName: "",
             enumValues: [],
             enumSorting: OptionSortingType.MANUAL,
             minimum: undefined,
@@ -154,10 +148,9 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
         }
     }, [selectedType, isEditMode, form]);
 
-    console.log(form.formState.errors);
-
     // Populate form when editing
     useEffect(() => {
+        console.log(editingAttribute);
         if (!open) return;
 
         if (editingAttribute) {
@@ -168,14 +161,11 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
                     required: editingAttribute.required,
                     unique: false,
                     cardinality: editingAttribute.cardinality,
-                    minOccurs: editingAttribute.minOccurs,
-                    maxOccurs: editingAttribute.maxOccurs,
                     entityTypeKeys: editingAttribute.entityTypeKeys,
                     allowPolymorphic: editingAttribute.allowPolymorphic,
                     bidirectional: editingAttribute.bidirectional,
                     bidirectionalEntityTypeKeys: editingAttribute.bidirectionalEntityTypeKeys || [],
                     inverseName: editingAttribute.inverseName,
-                    targetAttributeName: editingAttribute.targetAttributeName || "",
                 });
             } else {
                 const attribute = attributeTypes[editingAttribute.schemaKey];
@@ -204,14 +194,11 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
                 required: false,
                 unique: false,
                 cardinality: EntityRelationshipCardinality.ONE_TO_ONE,
-                minOccurs: undefined,
-                maxOccurs: undefined,
                 entityTypeKeys: [],
                 allowPolymorphic: false,
                 bidirectional: false,
                 bidirectionalEntityTypeKeys: [],
                 inverseName: "",
-                targetAttributeName: "",
                 enumValues: [],
                 enumSorting: OptionSortingType.MANUAL,
                 minimum: undefined,
@@ -307,15 +294,12 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
             label: values.name,
             key: key,
             cardinality: values.cardinality || EntityRelationshipCardinality.ONE_TO_ONE,
-            minOccurs: values.minOccurs,
-            maxOccurs: values.maxOccurs,
             entityTypeKeys: values.entityTypeKeys || [],
             allowPolymorphic: values.allowPolymorphic || false,
             bidirectional: values.bidirectional || false,
             bidirectionalEntityTypeKeys: values.bidirectionalEntityTypeKeys || [],
             inverseName: values.inverseName,
             required: values.required || false,
-            targetAttributeName: values.targetAttributeName || "",
         };
         onSubmit(data);
         return;

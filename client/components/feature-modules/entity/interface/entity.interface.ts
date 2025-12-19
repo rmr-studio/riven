@@ -33,7 +33,6 @@ export interface RelationshipFormData extends EntityTypeAttributeData {
     bidirectionalEntityTypeKeys?: string[];
     inverseName?: string;
     required: boolean;
-    targetAttributeName: string | undefined;
 }
 
 export interface AttributeFormData extends EntityTypeAttributeData {
@@ -63,7 +62,7 @@ export const isRelationshipType = (
 
 // Export overlap detection types
 export type {
-    RelationshipOverlap,
-    OverlapResolution,
     OverlapDetectionResult,
+    OverlapResolution,
+    RelationshipOverlap,
 } from "../hooks/use-relationship-overlap-detection";

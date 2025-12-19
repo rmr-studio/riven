@@ -17,6 +17,7 @@ import { EntityType } from "../../interface/entity.interface";
 
 interface Props {
     availableTypes?: EntityType[];
+    allowSelectAll?: boolean;
     selectedKeys: string[];
     allowPolymorphic: boolean;
     onSelectionChange: (keys: string[], allowPolymorphic: boolean) => void;
@@ -25,6 +26,7 @@ interface Props {
 
 export const EntityTypeMultiSelect: FC<Props> = ({
     availableTypes = [],
+    allowSelectAll = true,
     selectedKeys,
     allowPolymorphic,
     onSelectionChange,
@@ -90,18 +92,20 @@ export const EntityTypeMultiSelect: FC<Props> = ({
                         <CommandEmpty>No entity type found.</CommandEmpty>
                         <CommandGroup>
                             {/* Allow All Entities Option */}
-                            <CommandItem
-                                onSelect={handleAllEntitiesToggle}
-                                className="cursor-pointer"
-                            >
-                                <Checkbox
-                                    checked={allowPolymorphic}
-                                    className="mr-2 pointer-events-none"
-                                />
-                                <div className="flex items-center gap-2 font-medium">
-                                    <span>Allow All Entities</span>
-                                </div>
-                            </CommandItem>
+                            {allowSelectAll && (
+                                <CommandItem
+                                    onSelect={handleAllEntitiesToggle}
+                                    className="cursor-pointer"
+                                >
+                                    <Checkbox
+                                        checked={allowPolymorphic}
+                                        className="mr-2 pointer-events-none"
+                                    />
+                                    <div className="flex items-center gap-2 font-medium">
+                                        <span>Allow All Entities</span>
+                                    </div>
+                                </CommandItem>
+                            )}
 
                             {/* Separator */}
                             <div className="my-1 h-px bg-border" />

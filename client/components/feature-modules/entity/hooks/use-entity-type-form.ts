@@ -152,6 +152,8 @@ export function useEntityTypeForm(
                 },
                 relationships: relationships.map((rel) => ({
                     ...rel,
+                    // For a creation event, the source key would always be the entity type key
+                    sourceKey: values.key,
                     name: rel.label,
                 })),
                 order: order,
@@ -164,6 +166,11 @@ export function useEntityTypeForm(
         if (!entityType) {
             throw new Error("Entity type is required for edit mode");
         }
+
+        const relationshipSourceKeys: Map<string, string> = new Map();
+        entityType.relationships?.forEach((rel) => {
+            relationshipSourceKeys.set(rel.key, rel.sourceKey);
+        });
 
         const updatedType: EntityType = {
             ...entityType,
@@ -190,9 +197,13 @@ export function useEntityTypeForm(
                     return acc;
                 }, {} as Record<string, any>),
             },
+
+            // Remap source key
             relationships: relationships.map((rel) => ({
                 ...rel,
                 name: rel.label,
+                // Preserve existing source key if available
+                sourceKey: relationshipSourceKeys.get(rel.key) || values.key,
             })),
             order: order,
         };
@@ -229,7 +240,7 @@ export function useEntityTypeForm(
                 return [...oldData, response];
             });
 
-            router.push(`dashboard/organisation/${organisationId}/entity`);
+            router.push(`/dashboard/organisation/${organisationId}/entity`);
 
             return response;
         },

@@ -11,8 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/util/utils";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { EntityType, RelationshipFormData } from "../../interface/entity.interface";
 import { useRelationshipOverlapDetection } from "../../hooks/use-relationship-overlap-detection";
+import { EntityType, RelationshipFormData } from "../../interface/entity.interface";
 import { AttributeFormValues } from "../types/entity-type-attribute-dialog";
 import { CardinalitySelector } from "./cardinality-selector";
 import { EntityTypeMultiSelect } from "./entity-type-multi-select";
@@ -26,13 +26,7 @@ interface Props {
     isEditMode?: boolean;
 }
 
-export const RelationshipAttributeForm: FC<Props> = ({
-    relationships = [],
-    type,
-    avaiableTypes,
-    form,
-    isEditMode = false,
-}) => {
+export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form }) => {
     const selectedEntityTypeKeys = form.watch("entityTypeKeys");
     const bidirectional = form.watch("bidirectional");
     const allowPolymorphic = form.watch("allowPolymorphic");
@@ -214,7 +208,7 @@ export const RelationshipAttributeForm: FC<Props> = ({
 
                 <FormField
                     control={form.control}
-                    name="targetAttributeName"
+                    name="inverseName"
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel className={cn(!bidirectional && "text-primary/60")}>
@@ -235,11 +229,12 @@ export const RelationshipAttributeForm: FC<Props> = ({
                     )}
                 />
 
-                {bidirectional && (allowPolymorphic || (selectedEntityTypeKeys && selectedEntityTypeKeys.length > 1)) && (
+                {bidirectional && selectedEntityTypeKeys && selectedEntityTypeKeys.length > 1 && (
                     <FormItem>
                         <FormLabel>Bidirectional Entity Types</FormLabel>
                         <FormControl>
                             <EntityTypeMultiSelect
+                                allowSelectAll={false}
                                 availableTypes={
                                     allowPolymorphic
                                         ? avaiableTypes

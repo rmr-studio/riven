@@ -135,7 +135,7 @@ export const ConfigurationForm: FC<Props> = ({
                                 </FormControl>
                                 <SelectContent>
                                     {availableIdentifiers.map((attr) => (
-                                        <SelectItem key={attr.label} value={attr.label}>
+                                        <SelectItem key={attr.key} value={attr.key}>
                                             {attr.label}
                                         </SelectItem>
                                     ))}
