@@ -19,7 +19,7 @@ import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.entity.EntityValidationService
 import riven.core.util.ServiceUtil
-import java.util.UUID
+import java.util.*
 
 /**
  * Service for managing entity types.
@@ -44,15 +44,6 @@ class EntityTypeService(
     @PreAuthorize("@organisationSecurity.hasOrg(#request.organisationId)")
     fun publishEntityType(request: CreateEntityTypeRequest): EntityType {
         authTokenService.getUserId().let { userId ->
-            // Normalize sourceKey for relationships - set to entity type's own key if not already set
-            val normalizedRelationships = request.relationships?.map { rel ->
-                if (rel.sourceKey == request.key) {
-                    rel  // Already set correctly
-                } else {
-                    rel.copy(sourceKey = request.key)  // Set to entity type's own key for directly added relationships
-                }
-            }
-
             EntityTypeEntity(
                 displayNameSingular = request.name.singular,
                 displayNamePlural = request.name.plural,
@@ -64,7 +55,7 @@ class EntityTypeService(
                 protected = false,
                 type = request.type,
                 schema = request.schema,
-                relationships = normalizedRelationships,
+                relationships = request.relationships,
                 order = request.order ?: listOf(
                     *(request.schema.properties?.keys ?: listOf()).map { key ->
                         EntityTypeOrderingKey(
@@ -72,9 +63,9 @@ class EntityTypeService(
                             EntityPropertyType.ATTRIBUTE
                         )
                     }.toTypedArray(),
-                    *(normalizedRelationships ?: listOf()).map {
+                    *(request.relationships ?: listOf()).map {
                         EntityTypeOrderingKey(
-                            it.key,
+                            it.id,
                             EntityPropertyType.RELATIONSHIP
                         )
                     }.toTypedArray()
@@ -83,7 +74,10 @@ class EntityTypeService(
                 entityTypeRepository.save(this)
             }.also {
                 requireNotNull(it.id)
-                entityRelationshipService.syncRelationships(it)
+                request.relationships?.run {
+                    entityRelationshipService.createRelationships(this, request.organisationId)
+                }
+                
                 activityService.logActivity(
                     activity = Activity.ENTITY_TYPE,
                     operation = OperationType.CREATE,

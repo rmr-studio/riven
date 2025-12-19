@@ -9,8 +9,8 @@ import java.util.*
 /**
  * Defines a relationship requirement for a RELATIONSHIP entity type.
  *
+ * @property id Unique Id for each relationship definition
  * @property name Human-readable label for the relationship (e.g., "Candidate", "Job Posting", "Target Entity")
- * @property key Unique key identifier for the relationship (e.g., "posted", "applied_for")
  * @property required True if this relationship must exist and have defined values
  * @property entityTypeKeys List of allowed entity type keys (e.g., ["candidate", "job"]) or null for polymorphic
  * @property allowPolymorphic True if this relationship can link to any entity type (polymorphic slot)
@@ -30,7 +30,6 @@ data class EntityRelationshipDefinition(
     val id: UUID,
 
     val name: String,
-    val description: String? = null,
 
     // Source context
     val sourceEntityTypeKey: String, // Linking to the source entity type
@@ -47,7 +46,11 @@ data class EntityRelationshipDefinition(
 
     // Bidirectional config
     val bidirectional: Boolean = false,
-    val bidirectionalEntityTypeKeys: List<String>? = null, // Subset of Entity Types (located within in `entityTypeKeys` to maintain a bi-directional relationship for
+    /**
+     * Subset of Entity Types (located within in `entityTypeKeys` to maintain a bi-directional relationship for
+     * Is required to be non-null when `bidirectional` is true
+     */
+    val bidirectionalEntityTypeKeys: List<String>? = null,
     val inverseName: String? = null, // Default Naming for Inverse Relationship Columns. Will populate `name` when creating an inverse relationship definition
 
     val protected: Boolean = false,

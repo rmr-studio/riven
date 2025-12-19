@@ -19,7 +19,7 @@ import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
 import riven.core.util.ServiceUtil
-import java.util.UUID
+import java.util.*
 
 /**
  * Service for managing relationships between entities.
@@ -34,134 +34,165 @@ class EntityRelationshipService(
 ) {
 
     /**
-     * Validates relationship definitions before syncing.
-     * Checks that non-polymorphic relationships reference existing entity types.
+     * Validates an entity types relationships
+     * 1. Check all reference target entity types exist
+     * 2. Check for any naming collisions
+     * 3. Validates that all bi-directional relationships have an inverse correctly defined
      */
     private fun validateRelationshipDefinitions(
         relationships: List<EntityRelationshipDefinition>,
         organisationId: UUID
     ) {
-        relationships.forEach { rel ->
-            // Skip polymorphic relationships - they can reference any type
-            if (rel.allowPolymorphic) return@forEach
+        // Fetch all referenced entity types to load from the database
+        val entityTypesMap: Map<String, EntityTypeEntity> = findAndValidateAssociatedEntityTypes(
+            relationships = relationships,
+            organisationId = organisationId
+        )
 
-            // Validate that all referenced entity types exist
-            rel.entityTypeKeys?.forEach { typeKey ->
-                val exists = entityTypeRepository.findByOrganisationIdAndKey(organisationId, typeKey)
-                    .isPresent
-
-                require(exists) {
-                    "Relationship '${rel.key}' references non-existent entity type '$typeKey'"
+        // Check for any naming collisions + Bi-directional inverse matching
+        val nameSet: MutableSet<String> = mutableSetOf()
+        relationships.forEach {
+            it.name.let { name ->
+                if (nameSet.contains(name)) {
+                    throw IllegalArgumentException("Relationship name collision detected: '$name'")
+                } else {
+                    nameSet.add(name)
                 }
             }
 
-            // Validate bidirectional target types exist
-            rel.bidirectionalEntityTypeKeys?.forEach { typeKey ->
-                val exists = entityTypeRepository.findByOrganisationIdAndKey(organisationId, typeKey)
-                    .isPresent
 
-                require(exists) {
-                    "Relationship '${rel.key}' bidirectional target references non-existent entity type '$typeKey'"
+            if (it.bidirectional) {
+                // Ensure bi-directional relationships have inverse names defined.
+                // But also are included in original subset of entity type keys, given that the relationship is not polymorphic
+                val inverseKeys = requireNotNull((it.bidirectionalEntityTypeKeys))
+
+                if (it.inverseName.isNullOrBlank()) {
+                    throw IllegalArgumentException("Bidirectional relationship for '${it.name}' must have an inverseName defined.")
+                }
+
+                if (!it.allowPolymorphic) {
+                    val keys = requireNotNull(it.entityTypeKeys).toSet()
+                    inverseKeys.forEach { targetKey ->
+                        if (!keys.contains(targetKey)) {
+                            throw IllegalArgumentException("Bidirectional relationship for '${it.name}' includes target entity type '$targetKey' which is not in the original entityTypeKeys list.")
+                        }
+                    }
+                }
+
+                // Ensure bi-directional relationships have matching inverse definitions
+                inverseKeys.forEach { targetKey ->
+                    // We should have already validated this prior. But i like to avoid type assertions
+                    val type = requireNotNull(entityTypesMap[targetKey]) {
+                        "Referenced entity type '$targetKey' does not exist."
+                    }
+                    type.relationships.let { targetRelationships ->
+                        requireNotNull(targetRelationships) {
+                            "Target entity type '$targetKey' does not currently define any relationships"
+                        }
+
+                        targetRelationships.find { relDef ->
+                            relDef.originRelationshipId == it.id
+                        }.run {
+                            if (this == null) {
+                                throw IllegalArgumentException("Bidirectional relationship for '${it.name}' does not have a matching inverse definition in target entity type '$targetKey'.")
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 
     @Transactional
-    fun syncRelationships(type: EntityTypeEntity, prev: List<EntityRelationshipDefinition>? = null) {
-        val typeId = requireNotNull(type.id) { "Entity Type ID can not be null" }
-        val organisationId = requireNotNull(type.organisationId) { "Organization ID can not be null" }
-        val currentRelationships = type.relationships ?: emptyList()
+    fun createRelationships(
+        definitions: List<EntityRelationshipDefinition>,
+        organisationId: UUID
+    ): List<EntityTypeEntity> {
 
-        // STEP 0: Validate relationship definitions
-        validateRelationshipDefinitions(currentRelationships, organisationId)
 
-        // STEP 1: Handle completely removed relationships
-        if (prev != null) {
-            val currentKeys = currentRelationships.map { it.key }.toSet()
-            val removedRelationships = prev.filter { !currentKeys.contains(it.key) }
+        findAndValidateAssociatedEntityTypes(
+            relationships = definitions,
+            organisationId = organisationId
+        )
+        // Group definitions by source entity type
+        val definitionsBySourceType: Map<String, List<EntityRelationshipDefinition>> =
+            definitions.groupBy { it.sourceEntityTypeKey }
 
-            removedRelationships.forEach { removedRel ->
-                // Cleanup instances of this relationship
-                cleanupRemovedRelationshipInstances(
-                    entityTypeId = typeId,
-                    relationshipKey = removedRel.key,
-                    organisationId = organisationId,
+        val updatedEntityTypes = mutableListOf<EntityTypeEntity>()
+
+        // For each source entity type, add/update relationships
+        definitionsBySourceType.forEach { (sourceTypeKey, relDefs) ->
+            val entityType = entityTypeRepository.findByOrganisationIdAndKey(
+                organisationId,
+                sourceTypeKey
+            ).orElseThrow {
+                IllegalArgumentException("Source entity type '$sourceTypeKey' does not exist.")
+            }
+
+            // Add or update each relationship definition
+            var updatedEntityType = entityType
+            relDefs.forEach { relDef ->
+                updatedEntityType = addOrUpdateRelationship(
+                    updatedEntityType,
+                    relDef
                 )
+            }
 
-                // If it was bidirectional, remove inverse definitions from target types
-                if (removedRel.bidirectional && !removedRel.bidirectionalEntityTypeKeys.isNullOrEmpty()) {
-                    removeBidirectionalSync(
-                        sourceEntityTypeKey = type.key,
-                        relationshipKey = removedRel.key,
-                        targetEntityTypeKeys = removedRel.bidirectionalEntityTypeKeys,
-                        organisationId = organisationId
+
+            updatedEntityTypes.add(updatedEntityType)
+
+            // Sync bidirectional relationships
+            val bidirectionalUpdatedTypes = syncBidirectionalRelationships(
+                key = sourceTypeKey,
+                organisationId = organisationId,
+                relationships = relDefs
+            )
+            updatedEntityTypes.addAll(bidirectionalUpdatedTypes)
+        }
+
+        // Save affected entity types and validate updated environment to ensure correctness
+        return entityTypeRepository.saveAll(updatedEntityTypes).also {
+            validateRelationshipDefinitions(definitions, organisationId)
+        }
+    }
+
+    /**
+     * Find and validate all associated entity types referenced in the relationships.
+     */
+    private fun findAndValidateAssociatedEntityTypes(
+        relationships: Collection<EntityRelationshipDefinition>,
+        organisationId: UUID
+    ): Map<String, EntityTypeEntity> {
+        // Fetch all referenced entity types to load from the database
+        val referencedKeys = buildSet {
+            relationships.forEach { rel ->
+                rel.entityTypeKeys?.let(::addAll)
+
+                if (rel.allowPolymorphic) {
+                    addAll(
+                        requireNotNull(rel.bidirectionalEntityTypeKeys) {
+                            "bidirectionalEntityTypeKeys must be provided when allowPolymorphic is true"
+                        }
                     )
                 }
             }
         }
 
-        // STEP 2: Handle bidirectionality changes on existing relationships
-        if (prev != null) {
-            currentRelationships.forEach { currentRel ->
-                val previousRel = prev.find { it.key == currentRel.key }
+        val entityTypes = entityTypeRepository
+            .findByOrganisationIdAndKeyIn(organisationId, referencedKeys)
 
-                if (previousRel != null) {
-                    // Case A: Was bidirectional, now unidirectional
-                    if (previousRel.bidirectional && !currentRel.bidirectional) {
-                        val targetTypes = previousRel.bidirectionalEntityTypeKeys ?: emptyList()
-                        if (targetTypes.isNotEmpty()) {
-                            // Remove inverse definitions from target types
-                            removeBidirectionalSync(
-                                sourceEntityTypeKey = type.key,
-                                relationshipKey = currentRel.key,
-                                targetEntityTypeKeys = targetTypes,
-                                organisationId = organisationId
-                            )
-                            // Cleanup inverse relationship instances
-                            cleanupBidirectionalInstances(
-                                sourceEntityTypeId = typeId,
-                                relationshipKey = currentRel.key,
-                                targetEntityTypeKeys = targetTypes,
-                                organisationId = organisationId
-                            )
-                        }
-                    }
-                    // Case B: Still bidirectional but target types changed
-                    else if (previousRel.bidirectional && currentRel.bidirectional) {
-                        val prevTargets = previousRel.bidirectionalEntityTypeKeys ?: emptyList()
-                        val currentTargets = currentRel.bidirectionalEntityTypeKeys ?: emptyList()
-                        val removedTargets = prevTargets - currentTargets.toSet()
+        val entityTypesByKey = entityTypes.associateBy { it.key }
 
-                        if (removedTargets.isNotEmpty()) {
-                            // Remove inverse definitions from removed target types
-                            removeBidirectionalSync(
-                                sourceEntityTypeKey = type.key,
-                                relationshipKey = currentRel.key,
-                                targetEntityTypeKeys = removedTargets,
-                                organisationId = organisationId
-                            )
-                            // Cleanup inverse relationship instances for removed targets
-                            cleanupBidirectionalInstances(
-                                sourceEntityTypeId = typeId,
-                                relationshipKey = currentRel.key,
-                                targetEntityTypeKeys = removedTargets,
-                                organisationId = organisationId
-                            )
-                        }
-                    }
-                }
-            }
+        val missingKeys = referencedKeys - entityTypesByKey.keys
+        if (missingKeys.isNotEmpty()) {
+            throw IllegalArgumentException(
+                "Referenced entity types do not exist: ${missingKeys.joinToString(", ")}"
+            )
         }
 
-        // STEP 3: Sync new/updated bidirectional relationships
-        // This adds inverse relationship definitions to target entity types
-        syncBidirectionalRelationships(
-            key = type.key,
-            organisationId = organisationId,
-            relationships = currentRelationships
-        )
+        return entityTypesByKey
     }
+
 
     /**
      * Create a relationship between two entities.

@@ -37,7 +37,8 @@ data class EntityType(
     val organisationId: UUID?,
     val type: EntityCategory,
     // Schema will always be created with a unique, non-nullable 'name' attribute
-    val schema: Schema,
+    // Each attribute in the schema will be uniquely identified with a UUID key
+    val schema: EntityTypeSchema,
     val relationships: List<EntityRelationshipDefinition>? = null,
     // The order in which the attributes should be displayed in the UI
     val order: List<EntityTypeOrderingKey>,
@@ -50,3 +51,5 @@ data class EntityType(
     val attributes: Pair<Int, Int>
         get() = Pair(schema.properties?.size ?: 0, relationships?.size ?: 0)
 }
+
+typealias EntityTypeSchema = Schema<UUID>

@@ -18,7 +18,6 @@ data class EntityTypeReferenceRelationshipBuilder(
         return EntityRelationshipDefinition(
             id = UUID.randomUUID(),
             name = resolvedName,
-            description = "Inverse of ${origin.name} from ${origin.sourceEntityTypeKey}",
             // This should allow us to link back to the origin entity type
             sourceEntityTypeKey = origin.sourceEntityTypeKey,
             required = false,  // Inverse relationships typically not required

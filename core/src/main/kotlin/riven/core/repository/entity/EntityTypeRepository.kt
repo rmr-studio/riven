@@ -18,4 +18,9 @@ interface EntityTypeRepository : JpaRepository<EntityTypeEntity, UUID> {
         organisationId: UUID,
         key: String
     ): Optional<EntityTypeEntity>
+
+    fun findByOrganisationIdAndKeyIn(
+        organisationId: UUID,
+        keys: Collection<String>
+    ): List<EntityTypeEntity>
 }
