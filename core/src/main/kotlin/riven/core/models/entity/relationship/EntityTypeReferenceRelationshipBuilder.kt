@@ -13,17 +13,16 @@ data class EntityTypeReferenceRelationshipBuilder(
     val targetEntity: EntityType,
 ) {
     fun build(): EntityRelationshipDefinition {
-        val resolvedName = resolveInverseName()
 
         return EntityRelationshipDefinition(
             id = UUID.randomUUID(),
-            name = resolvedName,
-            // This should allow us to link back to the origin entity type
-            sourceEntityTypeKey = origin.sourceEntityTypeKey,
+            name = resolveInverseName(),
+            // The source entity type is the entity type this REFERENCE is defined on (target entity)
+            sourceEntityTypeKey = targetEntity.key,
             required = false,  // Inverse relationships typically not required
             cardinality = origin.cardinality.invert(),
             allowPolymorphic = false,
-            entityTypeKeys = listOf(origin.sourceEntityTypeKey),
+            entityTypeKeys = listOf(origin.sourceEntityTypeKey),  // Points back to origin entity type
             relationshipType = EntityTypeRelationshipType.REFERENCE,
             originRelationshipId = origin.id,
             bidirectional = false,  // References don't define their own bidirectionality
