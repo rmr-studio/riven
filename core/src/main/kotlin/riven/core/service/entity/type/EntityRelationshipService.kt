@@ -6,7 +6,7 @@ import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.entity.EntityTypeRelationshipType
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.relationship.EntityTypeReferenceRelationshipBuilder
-import riven.core.models.entity.relationship.EntityTypeRelationshipModification
+import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipModification
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
 import java.util.*

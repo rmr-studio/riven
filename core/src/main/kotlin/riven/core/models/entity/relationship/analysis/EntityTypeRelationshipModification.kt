@@ -1,4 +1,4 @@
-package riven.core.models.entity.relationship
+package riven.core.models.entity.relationship.analysis
 
 import riven.core.enums.entity.EntityTypeRelationshipChangeType
 import riven.core.models.entity.configuration.EntityRelationshipDefinition

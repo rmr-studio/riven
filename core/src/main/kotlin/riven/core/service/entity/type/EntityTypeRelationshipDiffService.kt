@@ -3,8 +3,8 @@ package riven.core.service.entity.type
 import org.springframework.stereotype.Service
 import riven.core.enums.entity.EntityTypeRelationshipChangeType
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
-import riven.core.models.entity.relationship.EntityTypeRelationshipDiff
-import riven.core.models.entity.relationship.EntityTypeRelationshipModification
+import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
+import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipModification
 import java.util.UUID
 
 @Service
