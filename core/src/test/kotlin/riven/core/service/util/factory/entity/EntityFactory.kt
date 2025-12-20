@@ -8,10 +8,13 @@ import riven.core.enums.core.DataType
 import riven.core.enums.entity.EntityCategory
 import riven.core.enums.entity.EntityPropertyType
 import riven.core.enums.entity.EntityRelationshipCardinality
+import riven.core.enums.entity.EntityTypeRelationshipType
 import riven.core.models.common.json.JsonObject
 import riven.core.models.common.validation.Schema
+import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.configuration.EntityTypeOrderingKey
+import java.time.ZonedDateTime
 import java.util.*
 
 object EntityFactory {
@@ -37,7 +40,7 @@ object EntityFactory {
         displayNamePlural: String = "Test Entities",
         organisationId: UUID = UUID.randomUUID(),
         type: EntityCategory = EntityCategory.STANDARD,
-        schema: Schema = createSimpleSchema(),
+        schema: EntityTypeSchema = createSimpleSchema(),
         relationships: List<EntityRelationshipDefinition>? = null,
         order: List<EntityTypeOrderingKey>? = null,
         version: Int = 1,
@@ -49,7 +52,7 @@ object EntityFactory {
                 EntityTypeOrderingKey(key, EntityPropertyType.ATTRIBUTE)
             }.toTypedArray(),
             *(relationships ?: listOf()).map {
-                EntityTypeOrderingKey(it.key, EntityPropertyType.RELATIONSHIP)
+                EntityTypeOrderingKey(it.id, EntityPropertyType.RELATIONSHIP)
             }.toTypedArray()
         )
 
@@ -72,12 +75,12 @@ object EntityFactory {
     /**
      * Creates a simple schema with a name field for testing.
      */
-    fun createSimpleSchema(properties: Map<String, Schema>? = null): Schema {
+    fun createSimpleSchema(properties: Map<UUID, Schema<UUID>>? = null): EntityTypeSchema {
         return Schema(
             key = SchemaType.OBJECT,
             type = DataType.OBJECT,
             properties = properties ?: mapOf(
-                "name" to Schema(
+                UUID.randomUUID() to Schema(
                     key = SchemaType.TEXT,
                     type = DataType.STRING,
                     required = true
@@ -101,9 +104,10 @@ object EntityFactory {
      * @return An EntityRelationshipDefinition configured with the provided parameters.
      */
     fun createRelationshipDefinition(
+        id: UUID = UUID.randomUUID(),
         name: String = "Related Entity",
-        key: String = "related_entity",
         sourceKey: String,
+        type: EntityTypeRelationshipType = EntityTypeRelationshipType.ORIGIN,
         required: Boolean = false,
         cardinality: EntityRelationshipCardinality = EntityRelationshipCardinality.MANY_TO_ONE,
         entityTypeKeys: List<String>? = null,
@@ -113,8 +117,8 @@ object EntityFactory {
         inverseName: String? = null
     ): EntityRelationshipDefinition {
         return EntityRelationshipDefinition(
+            id = id,
             name = name,
-            key = key,
             required = required,
             cardinality = cardinality,
             entityTypeKeys = entityTypeKeys,
@@ -122,7 +126,12 @@ object EntityFactory {
             bidirectional = bidirectional,
             bidirectionalEntityTypeKeys = bidirectionalEntityTypeKeys,
             inverseName = inverseName,
-            sourceKey = sourceKey
+            sourceEntityTypeKey = sourceKey,
+            relationshipType = type,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = null,
+            updatedBy = null
         )
     }
 

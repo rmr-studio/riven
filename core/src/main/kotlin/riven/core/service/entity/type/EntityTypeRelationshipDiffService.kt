@@ -66,7 +66,11 @@ class EntityTypeRelationshipDiffService {
             changes += EntityTypeRelationshipChangeType.BIDIRECTIONAL_ENABLED
         if (previous.bidirectional && !updated.bidirectional)
             changes += EntityTypeRelationshipChangeType.BIDIRECTIONAL_DISABLED
-        if (previous.bidirectionalEntityTypeKeys != updated.bidirectionalEntityTypeKeys)
+        // Only really care about target changes in an event where bi-directional is not enabled in the same calculation. As it would be implied that targets changed if enabling.
+        if (previous.bidirectionalEntityTypeKeys != updated.bidirectionalEntityTypeKeys && !changes.contains(
+                EntityTypeRelationshipChangeType.BIDIRECTIONAL_ENABLED
+            )
+        )
             changes += EntityTypeRelationshipChangeType.BIDIRECTIONAL_TARGETS_CHANGED
 
         return EntityTypeRelationshipModification(previous, updated, changes)

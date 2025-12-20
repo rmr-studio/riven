@@ -6,11 +6,9 @@ import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.entity.EntityTypeRelationshipType
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.relationship.EntityTypeReferenceRelationshipBuilder
-import riven.core.repository.entity.EntityRelationshipRepository
-import riven.core.repository.entity.EntityRepository
+import riven.core.models.entity.relationship.EntityTypeRelationshipModification
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
-import riven.core.service.auth.AuthTokenService
 import java.util.*
 
 /**
@@ -19,6 +17,7 @@ import java.util.*
 @Service
 class EntityRelationshipService(
     private val entityTypeRepository: EntityTypeRepository,
+    private val relationshipDiffService: EntityTypeRelationshipDiffService,
     private val activityService: ActivityService
 ) {
 
@@ -38,27 +37,30 @@ class EntityRelationshipService(
             organisationId = organisationId
         )
 
-        // Check for any naming collisions + Bi-directional inverse matching
-        val nameSet: MutableSet<String> = mutableSetOf()
-        relationships.forEach {
-            it.name.let { name ->
-                if (nameSet.contains(name)) {
-                    throw IllegalArgumentException("Relationship name collision detected: '$name'")
-                } else {
-                    nameSet.add(name)
+        validateRelationshipDefinitions(relationships, entityTypesMap)
+    }
+
+    private fun validateNamingCollisions(types: List<EntityTypeEntity>) {
+        types.forEach {
+            val nameSet = mutableSetOf<String>()
+            it.relationships?.forEach { relDef ->
+                if (nameSet.contains(relDef.name)) {
+                    throw IllegalArgumentException("Entity Type '${it.key}' has multiple relationships with the name '${relDef.name}'. Relationship names must be unique within an entity type.")
                 }
+                nameSet.add(relDef.name)
             }
+        }
+    }
 
+    private fun validateRelationshipDefinitions(
+        relationships: List<EntityRelationshipDefinition>,
+        entityTypesMap: Map<String, EntityTypeEntity>,
+    ) {
+        // Check for any naming collisions + Bi-directional inverse matching
+        validateNamingCollisions(entityTypesMap.values.toList())
 
+        relationships.forEach {
             if (it.bidirectional) {
-                // Ensure bi-directional relationships have inverse names defined.
-                val inverseKeys = requireNotNull((it.bidirectionalEntityTypeKeys)) {
-                    "Bidirectional relationship for '${it.name}' must have bidirectionalEntityTypeKeys defined."
-                }
-
-                if (it.inverseName.isNullOrBlank()) {
-                    throw IllegalArgumentException("Bidirectional relationship for '${it.name}' must have an inverseName defined.")
-                }
 
                 // Validate based on relationship type
                 when (it.relationshipType) {
@@ -66,6 +68,16 @@ class EntityRelationshipService(
                         // For ORIGIN relationships:
                         // 1. Validate bidirectionalEntityTypeKeys are in entityTypeKeys (if not polymorphic)
                         // 2. Cross-reference that each target entity type has a REFERENCE relationship pointing back
+
+                        // Ensure bi-directional relationships have inverse names defined.
+                        val inverseKeys = requireNotNull((it.bidirectionalEntityTypeKeys)) {
+                            "Bidirectional relationship for '${it.name}' must have bidirectionalEntityTypeKeys defined."
+                        }
+
+                        if (it.inverseName.isNullOrBlank()) {
+                            throw IllegalArgumentException("Bidirectional relationship for '${it.name}' must have an inverseName defined.")
+                        }
+
 
                         if (!it.allowPolymorphic) {
                             val keys = requireNotNull(it.entityTypeKeys).toSet()
@@ -155,6 +167,7 @@ class EntityRelationshipService(
      */
     @Transactional
     fun createRelationships(
+        id: UUID,
         definitions: List<EntityRelationshipDefinition>,
         organisationId: UUID
     ): List<EntityTypeEntity> {
@@ -212,10 +225,47 @@ class EntityRelationshipService(
         }
 
         // Save all affected entity types
-        return entityTypeRepository.saveAll(entityTypes.values).also {
-            validateRelationshipDefinitions(allRelationshipDefinitions, organisationId)
+        return entityTypeRepository.saveAll(entityTypes.values.toList()).also {
+            validateRelationshipDefinitions(allRelationshipDefinitions, it.associateBy { type -> type.key })
         }.toList()
     }
+
+    @Transactional
+    fun updateRelationships(
+        id: UUID,
+        organisationId: UUID,
+        curr: List<EntityRelationshipDefinition>,
+        prev: List<EntityRelationshipDefinition>? = null
+    ): List<EntityTypeEntity> {
+        prev.let {
+            if (it == null) {
+                // No Diff. Just Add new
+                return createRelationships(id, curr, organisationId)
+            }
+
+            val (added: List<EntityRelationshipDefinition>, removed: List<EntityRelationshipDefinition>, modified: List<EntityTypeRelationshipModification>) = relationshipDiffService.calculate(
+                it,
+                curr
+            )
+
+
+
+            createRelationships(id, added, organisationId)
+
+            removed.forEach {
+
+            }
+
+            modified.forEach {
+
+            }
+        }
+        TODO()
+    }
+
+    private fun removeRelationships() {}
+
+    private fun modifyRelationships() {}
 
     /**
      * Validates that a bidirectional ORIGIN relationship is properly configured.
@@ -405,7 +455,7 @@ class EntityRelationshipService(
         }
 
         val entityTypes = entityTypeRepository
-            .findByOrganisationIdAndKeyIn(organisationId, referencedKeys)
+            .findByOrganisationIdAndKeyIn(organisationId, referencedKeys.toList())
 
         val entityTypesByKey = entityTypes.associateBy { it.key }
 

@@ -10,7 +10,6 @@ import riven.core.enums.entity.EntityPropertyType
 import riven.core.enums.util.OperationType
 import riven.core.exceptions.SchemaValidationException
 import riven.core.models.entity.EntityType
-import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.configuration.EntityTypeOrderingKey
 import riven.core.models.request.entity.CreateEntityTypeRequest
 import riven.core.repository.entity.EntityRepository
@@ -41,14 +40,14 @@ class EntityTypeService(
      * Create and publish a new entity type.
      */
     @Transactional
-    @PreAuthorize("@organisationSecurity.hasOrg(#request.organisationId)")
-    fun publishEntityType(request: CreateEntityTypeRequest): EntityType {
+    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
+    fun publishEntityType(organisationId: UUID, request: CreateEntityTypeRequest): EntityType {
         authTokenService.getUserId().let { userId ->
             EntityTypeEntity(
                 displayNameSingular = request.name.singular,
                 displayNamePlural = request.name.plural,
                 key = request.key,
-                organisationId = request.organisationId,
+                organisationId = organisationId,
                 identifierKey = request.identifier,
                 description = request.description,
                 // Protected Entity Types cannot be modified or deleted by users. This will usually occur during an automatic setup process.
@@ -73,11 +72,11 @@ class EntityTypeService(
             ).run {
                 entityTypeRepository.save(this)
             }.also {
-                requireNotNull(it.id)
+                val id: UUID = requireNotNull(it.id)
                 request.relationships?.run {
-                    entityRelationshipService.createRelationships(this, request.organisationId)
+                    entityRelationshipService.createRelationships(id, this, organisationId)
                 }
-                
+
                 activityService.logActivity(
                     activity = Activity.ENTITY_TYPE,
                     operation = OperationType.CREATE,
@@ -103,15 +102,16 @@ class EntityTypeService(
      * Unlike BlockTypeService which creates new versions, this updates the existing row.
      * Breaking changes are detected and validated against existing entities.
      */
-    @PreAuthorize("@organisationSecurity.hasOrg(#type.organisationId)")
+    @Transactional
+    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
     fun updateEntityType(
+        organisationId: UUID,
         type: EntityType
     ): EntityType {
         val userId = authTokenService.getUserId()
         val existing: EntityTypeEntity = ServiceUtil.findOrThrow { entityTypeRepository.findById(type.id) }
 
-        // Ensure this is not a system type
-        val orgId = requireNotNull(existing.organisationId) { "Cannot update system entity type" }
+        requireNotNull(type.organisationId) { "Cannot update system entity type" }
 
         // Detect breaking changes
         val breakingChanges = entityValidationService.detectSchemaBreakingChanges(
@@ -119,13 +119,8 @@ class EntityTypeService(
             type.schema
         )
 
-        val prevSnapshot: List<EntityRelationshipDefinition>? = existing.relationships.let {
-            if (it == null) return@let null
-            it.map { rel -> rel.copy() }
-        }
-
         if (breakingChanges.any { it.breaking }) {
-            val existingEntities = entityRepository.findByOrganisationIdAndTypeId(orgId, type.id)
+            val existingEntities = entityRepository.findByOrganisationIdAndTypeId(organisationId, type.id)
             val validationSummary = entityValidationService.validateExistingEntitiesAgainstNewSchema(
                 existingEntities,
                 type.schema,
@@ -143,34 +138,24 @@ class EntityTypeService(
             }
         }
 
-        // Normalize sourceKey for relationships - preserve sourceKey for bi-directional relationships,
-        // set to entity type's own key for directly added relationships
-        val normalizedRelationships = type.relationships?.map { rel ->
-            if (rel.sourceKey == existing.key) {
-                rel  // Already set correctly to this entity type's key (directly added)
-            } else if (rel.sourceKey != existing.key && rel.sourceKey.isNotBlank()) {
-                rel  // Preserve sourceKey from bi-directional relationship
-            } else {
-                rel.copy(sourceKey = existing.key)  // Set to entity type's own key for directly added relationships
-            }
+        type.relationships?.let {
+            entityRelationshipService.updateRelationships(type.id, organisationId, it, existing.relationships)
         }
 
-        // Update in place (NOT create new row)
         existing.apply {
             displayNameSingular = type.name.singular
             displayNamePlural = type.name.plural
             description = type.description
             schema = type.schema
-            relationships = normalizedRelationships
+            relationships = type.relationships
             version = existing.version + 1  // Increment for change tracking
         }.run {
             entityTypeRepository.save(this).also { type ->
-                entityRelationshipService.syncRelationships(type, prevSnapshot)
                 activityService.logActivity(
                     activity = Activity.ENTITY_TYPE,
                     operation = OperationType.UPDATE,
                     userId = userId,
-                    organisationId = orgId,
+                    organisationId = organisationId,
                     entityId = this.id,
                     entityType = ApplicationEntityType.ENTITY_TYPE,
                     details = mapOf(
@@ -233,61 +218,4 @@ class EntityTypeService(
     fun getById(id: UUID): EntityTypeEntity {
         return ServiceUtil.findOrThrow { entityTypeRepository.findById(id) }
     }
-
-    /**
-     * Detects bidirectional relationships that were removed or made unidirectional.
-     * Returns map of relationship key to list of target entity type keys that need cleanup.
-     */
-    private fun detectRemovedBidirectionalRelationships(
-        oldRelationships: List<EntityRelationshipDefinition>?,
-        newRelationships: List<EntityRelationshipDefinition>?
-    ): Map<String, List<String>> {
-        val removed = mutableMapOf<String, List<String>>()
-
-        oldRelationships?.forEach { oldRel ->
-            if (!oldRel.bidirectional || oldRel.bidirectionalEntityTypeKeys.isNullOrEmpty()) {
-                return@forEach  // Skip non-bidirectional
-            }
-
-            val newRel = newRelationships?.find { it.key == oldRel.key }
-
-            when {
-                // Relationship completely removed (handled by detectCompletelyRemovedRelationships)
-                newRel == null -> {
-                    // Don't add to removed here; it will be handled separately
-                }
-                // Made unidirectional
-                !newRel.bidirectional -> {
-                    removed[oldRel.key] = oldRel.bidirectionalEntityTypeKeys
-                }
-                // Target entity types changed (removed some)
-                else -> {
-                    val removedTargets = oldRel.bidirectionalEntityTypeKeys -
-                            (newRel.bidirectionalEntityTypeKeys ?: emptyList()).toSet()
-                    if (removedTargets.isNotEmpty()) {
-                        removed[oldRel.key] = removedTargets.toList()
-                    }
-                }
-            }
-        }
-
-        return removed
-    }
-
-    /**
-     * Detects relationships that were completely removed from the entity type definition.
-     * Returns list of relationship keys that need instance cleanup.
-     */
-    private fun detectCompletelyRemovedRelationships(
-        oldRelationships: List<EntityRelationshipDefinition>?,
-        newRelationships: List<EntityRelationshipDefinition>?
-    ): List<String> {
-        val newKeys = newRelationships?.map { it.key }?.toSet() ?: emptySet()
-
-        return oldRelationships
-            ?.filter { oldRel -> !newKeys.contains(oldRel.key) }
-            ?.map { it.key }
-            ?: emptyList()
-    }
-
 }

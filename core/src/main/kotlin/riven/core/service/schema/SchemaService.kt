@@ -36,8 +36,8 @@ class SchemaService(
      * @param path Root path used in recursive error messages (default "$").
      * @return A list of validation error messages; empty if no validation issues were found.
      */
-    fun validate(
-        schema: Schema,
+    fun <T> validate(
+        schema: Schema<T>,
         payload: JsonObject,
         scope: ValidationScope = ValidationScope.STRICT,
         path: String = "$"
@@ -67,8 +67,8 @@ class SchemaService(
      * @param scope The validation scope that controls strictness (errors only cause an exception when `STRICT`).
      * @throws SchemaValidationException if `scope` is `STRICT` and validation produced one or more errors; the exception's `reasons` list contains the error messages.
      */
-    fun validateOrThrow(
-        schema: Schema,
+    fun <T> validateOrThrow(
+        schema: Schema<T>,
         payload: JsonObject,
         scope: ValidationScope
     ) {
@@ -93,8 +93,8 @@ class SchemaService(
      * @param acc Mutable list used to collect error messages; pass an existing list to accumulate across recursive calls.
      * @return The same mutable list passed as `acc`, containing any validation error messages collected for this subtree.
      */
-    private fun validateRecursive(
-        schema: Schema,
+    private fun <T> validateRecursive(
+        schema: Schema<T>,
         payload: Any?,
         path: String,
         scope: ValidationScope,
@@ -200,7 +200,7 @@ class SchemaService(
      * @param payload The value to test against the item schema's type.
      * @return `true` if the payload's runtime type corresponds to `itemSchema.type`, `false` otherwise.
      */
-    private fun looksLikeSingleItem(itemSchema: Schema, payload: JsonValue?): Boolean {
+    private fun <T> looksLikeSingleItem(itemSchema: Schema<T>, payload: JsonValue?): Boolean {
         return when (itemSchema.type) {
             DataType.OBJECT -> payload is Map<*, *>
             DataType.ARRAY -> payload is List<*>          // unlikely, but keep symmetrical
@@ -221,7 +221,7 @@ class SchemaService(
      * @param path The JSON path used in returned error messages when validation fails.
      * @return An error message describing the format violation (including `path`), or `null` if the value is valid.
      */
-    private fun validateStringFormat(schema: Schema, value: String, path: String): String? {
+    private fun <T> validateStringFormat(schema: Schema<T>, value: String, path: String): String? {
         return when (schema.format) {
             DataFormat.EMAIL ->
                 if (!value.matches(Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+\$"))) "Invalid email format at $path" else null
@@ -275,7 +275,7 @@ class SchemaService(
      * @param path The JSON-like path to the value, used for error messages.
      * @return An error message describing the format violation, or `null` if the value satisfies the schema.
      */
-    private fun validateNumberFormat(schema: Schema, value: Double, path: String): String? {
+    private fun <T> validateNumberFormat(schema: Schema<T>, value: Double, path: String): String? {
         return when (schema.format) {
             DataFormat.PERCENTAGE -> {
                 // Numeric variants must be in [0, 1]
@@ -294,7 +294,7 @@ class SchemaService(
      * @param path The JSON path used in error messages.
      * @return An error message if validation fails, or null if valid.
      */
-    private fun validateStringConstraints(schema: Schema, value: String, path: String): String? {
+    private fun <T> validateStringConstraints(schema: Schema<T>, value: String, path: String): String? {
         schema.options?.minLength?.let {
             if (value.length < it) {
                 return "String at $path is too short: ${value.length} < $it"
@@ -336,7 +336,7 @@ class SchemaService(
      * @param path The JSON path used in error messages.
      * @return An error message if validation fails, or null if valid.
      */
-    private fun validateNumberConstraints(schema: Schema, value: Double, path: String): String? {
+    private fun <T> validateNumberConstraints(schema: Schema<T>, value: Double, path: String): String? {
         schema.options?.minimum?.let {
             if (value < it) {
                 return "Number at $path is below minimum: $value < $it"
@@ -373,14 +373,10 @@ class SchemaService(
      * @param path The JSON path used in error messages.
      * @return An error message if validation fails, or null if valid.
      */
-    private fun validateBooleanConstraints(schema: Schema, value: Boolean, path: String): String? {
+    private fun <T> validateBooleanConstraints(schema: Schema<T>, value: Boolean, path: String): String? {
         schema.options?.enum?.let { allowedValues ->
             val booleanValues = allowedValues.mapNotNull {
-                when (it) {
-                    is Boolean -> it
-                    is String -> it.toBooleanStrictOrNull()
-                    else -> null
-                }
+                it.toBooleanStrictOrNull()
             }
             if (value !in booleanValues) {
                 return "Value at $path must be one of: ${booleanValues.joinToString(", ")}"

@@ -25,7 +25,7 @@ class SchemaServiceTest {
     /**
      * Helper function to wrap a single field schema in an OBJECT schema
      */
-    private fun wrapField(fieldName: String, fieldSchema: Schema): Schema {
+    private fun <T> wrapField(fieldName: T, fieldSchema: Schema<T>): Schema<T> {
         return Schema(
             key = SchemaType.OBJECT,
             type = DataType.OBJECT,
@@ -351,7 +351,7 @@ class SchemaServiceTest {
 
             assertTrue(errors.isEmpty(), "Should pass range validation")
         }
-        
+
         @Test
         fun `validates percentage format with number - success`() {
             val schema = wrapField(
@@ -796,7 +796,7 @@ class SchemaServiceTest {
             @Test
             fun `validates empty string with minLength`() {
                 val schema = wrapField(
-                    "name", Schema(
+                    "name", Schema<String>(
                         key = SchemaType.TEXT,
                         type = DataType.STRING,
                         options = Schema.SchemaOptions(minLength = 1)

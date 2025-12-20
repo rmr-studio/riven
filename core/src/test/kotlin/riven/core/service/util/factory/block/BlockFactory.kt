@@ -45,7 +45,7 @@ object BlockFactory {
         key: String = "contact_card",
         version: Int = 1,
         strictness: ValidationScope = ValidationScope.SOFT,
-        schema: Schema = Schema(
+        schema: Schema<String> = Schema(
             key = SchemaType.OBJECT
         ),
         archived: Boolean = false,
@@ -104,7 +104,7 @@ object BlockFactory {
      *
      * @return A BlockSchema whose name is "root".
      */
-    fun generateSchema(): Schema = Schema(
+    fun generateSchema(): Schema<String> = Schema(
         key = SchemaType.OBJECT,
     )
 

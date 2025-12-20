@@ -51,7 +51,7 @@ class EntityTypeController(
         return ResponseEntity.ok(entityType.toModel())
     }
 
-    @PostMapping("/")
+    @PostMapping("/organisation/{organisationID}")
     @Operation(
         summary = "Create a new entity type",
         description = "Creates and publishes a new entity type for the specified organisation."
@@ -61,12 +61,15 @@ class EntityTypeController(
         ApiResponse(responseCode = "400", description = "Invalid request data"),
         ApiResponse(responseCode = "401", description = "Unauthorized access")
     )
-    fun createEntityType(@RequestBody request: CreateEntityTypeRequest): ResponseEntity<EntityType> {
-        val newEntityType = entityTypeService.publishEntityType(request)
+    fun createEntityType(
+        @PathVariable organisationId: UUID,
+        @RequestBody request: CreateEntityTypeRequest
+    ): ResponseEntity<EntityType> {
+        val newEntityType = entityTypeService.publishEntityType(organisationId, request)
         return ResponseEntity.status(201).body(newEntityType)
     }
 
-    @PutMapping("/")
+    @PutMapping("/organisation/{organisationId}")
     @Operation(
         summary = "Updates an existing entity type",
         description = "Updates the data for an already existing entity type for the specified organisation."
@@ -76,8 +79,11 @@ class EntityTypeController(
         ApiResponse(responseCode = "400", description = "Invalid request data"),
         ApiResponse(responseCode = "401", description = "Unauthorized access")
     )
-    fun createEntityType(@RequestBody type: EntityType): ResponseEntity<EntityType> {
-        val newEntityType = entityTypeService.updateEntityType(type)
+    fun createEntityType(
+        @PathVariable organisationId: UUID,
+        @RequestBody type: EntityType
+    ): ResponseEntity<EntityType> {
+        val newEntityType = entityTypeService.updateEntityType(organisationId, type)
         return ResponseEntity.status(201).body(newEntityType)
     }
 
