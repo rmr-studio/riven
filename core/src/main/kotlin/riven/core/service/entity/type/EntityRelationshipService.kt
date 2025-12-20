@@ -1,15 +1,19 @@
 package riven.core.service.entity.type
 
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.entity.EntityTypeRelationshipType
+import riven.core.models.common.display.DisplayName
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.relationship.EntityTypeReferenceRelationshipBuilder
+import riven.core.models.entity.relationship.analysis.EntityTypePolymorphicCandidates
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipModification
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
 import java.util.*
+import kotlin.collections.emptyList
 
 /**
  * Service for managing relationships between entities.
@@ -467,5 +471,28 @@ class EntityRelationshipService(
         }
 
         return entityTypesByKey
+    }
+
+    /**
+     * This will find all relationships that are currently set as polymorphic.
+     * Meaning new entity types could opt in to being valid targets for these relationships, which
+     * should add that new entity type as an bi-directional entity type key within the original definition.
+     */
+    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
+    fun findEligiblePolymorphicRelationships(organisationId: UUID): List<EntityTypePolymorphicCandidates> {
+        return entityTypeRepository.findByOrganisationId(organisationId).flatMap { entityType ->
+            entityType.relationships.let {
+                if (it == null) return@flatMap emptyList<EntityTypePolymorphicCandidates>()
+                it.filter { relDef ->
+                    relDef.allowPolymorphic && relDef.relationshipType == EntityTypeRelationshipType.ORIGIN && relDef.bidirectional
+                }.map { def ->
+                    EntityTypePolymorphicCandidates(
+                        entityTypeKey = entityType.key,
+                        entityTypeName = DisplayName(entityType.displayNameSingular, entityType.displayNamePlural),
+                        relationship = def
+                    )
+                }
+            }
+        }
     }
 }
