@@ -34,15 +34,15 @@ import io.swagger.v3.oas.annotations.media.Schema as JsonSchema
  *   "required": ["contacts"]
  * }
  */
-data class Schema(
+data class Schema<T>(
     // This is a human-readable label for the schema
     val label: String? = null,
     val key: SchemaType,
     val type: DataType = DataType.OBJECT,
     val format: DataFormat? = null,
     val required: Boolean = false,
-    val properties: Map<String, Schema>? = null,
-    val items: Schema? = null,
+    val properties: Map<T, Schema<T>>? = null,
+    val items: Schema<T>? = null,
     val unique: Boolean = false,
     // Indicates whether this schema is protected from deletion or modification
     val protected: Boolean = false,
@@ -76,14 +76,14 @@ data class Schema(
          * @param allowAP When true, object schemas will permit additional properties (`additionalProperties: true`); when false, additional properties are disallowed.
          * @return A map suitable for serialization as a JSON Schema fragment corresponding to the provided schema.
          */
-        fun toJs(schema: Schema, allowAP: Boolean): Map<String, Any> {
+        fun toJs(schema: Schema<T>, allowAP: Boolean): Map<String, Any> {
             return when (schema.type) {
                 DataType.OBJECT -> {
                     val props = mutableMapOf<String, Any>()
                     val requiredKeys = mutableListOf<String>()
                     schema.properties?.forEach { (k, v) ->
-                        props[k] = toJs(v, allowAP)
-                        if (v.required) requiredKeys += k
+                        props[k.toString()] = toJs(v, allowAP)
+                        if (v.required) requiredKeys += k.toString()
                     }
                     buildMap {
                         put("type", "object")

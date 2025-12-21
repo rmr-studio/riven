@@ -30,9 +30,9 @@ export interface RelationshipFormData extends EntityTypeAttributeData {
     entityTypeKeys: string[];
     allowPolymorphic: boolean;
     bidirectional: boolean;
+    bidirectionalEntityTypeKeys?: string[];
     inverseName?: string;
     required: boolean;
-    targetAttributeName: string | undefined;
 }
 
 export interface AttributeFormData extends EntityTypeAttributeData {
@@ -59,3 +59,10 @@ export const isRelationshipType = (
 ): data is RelationshipFormData => {
     return data.type === EntityPropertyType.RELATIONSHIP;
 };
+
+// Export overlap detection types
+export type {
+    OverlapDetectionResult,
+    OverlapResolution,
+    RelationshipOverlap,
+} from "../hooks/use-relationship-overlap-detection";

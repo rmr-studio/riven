@@ -6,8 +6,8 @@ import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
 import riven.core.enums.entity.EntityCategory
 import riven.core.models.common.display.DisplayName
-import riven.core.models.common.validation.Schema
 import riven.core.models.entity.EntityType
+import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.configuration.EntityTypeOrderingKey
 import java.util.*
@@ -61,7 +61,7 @@ data class EntityTypeEntity(
 
     @Type(JsonBinaryType::class)
     @Column(name = "schema", columnDefinition = "jsonb", nullable = false)
-    var schema: Schema,
+    var schema: EntityTypeSchema,
 
     @Type(JsonBinaryType::class)
     @Column(name = "relationships", columnDefinition = "jsonb", nullable = true)

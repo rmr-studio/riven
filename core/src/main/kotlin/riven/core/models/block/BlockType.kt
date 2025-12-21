@@ -21,13 +21,15 @@ data class BlockType(
     val archived: Boolean,
     val strictness: ValidationScope,
     val system: Boolean,
-    val schema: Schema,
+    val schema: BlockTypeSchema,
     val display: BlockDisplay,
     val createdAt: ZonedDateTime?,
     val updatedAt: ZonedDateTime?,
     val createdBy: UUID?,
     val updatedBy: UUID?,
 )
+
+typealias BlockTypeSchema = Schema<String>
 
 
 

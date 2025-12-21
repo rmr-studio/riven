@@ -4,8 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
-import { Database, Edit, Eye, Plus, Trash2 } from "lucide-react";
+import { Database, Edit, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FC, useMemo } from "react";
 import { useEntityTypes } from "../../hooks/use-entity-types";
 import { EntityType } from "../../interface/entity.interface";
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export const EntityTypesOverview: FC<Props> = ({ organisationId }) => {
+    const router = useRouter();
     const { data: types, isPending } = useEntityTypes(organisationId);
 
     const columns: ColumnDef<EntityType>[] = useMemo(
@@ -55,7 +57,7 @@ export const EntityTypesOverview: FC<Props> = ({ organisationId }) => {
                 accessorKey: "relationships",
                 header: "Relationships",
                 cell: ({ row }) => {
-                    const {second} = row.original.attributes
+                    const { second } = row.original.attributes;
                     return <span className="text-muted-foreground">{second}</span>;
                 },
             },
@@ -122,22 +124,22 @@ export const EntityTypesOverview: FC<Props> = ({ organisationId }) => {
                         },
                     ],
                 }}
+                onRowClick={(row) => {
+                    router.push(
+                        `/dashboard/organisation/${organisationId}/entity/${row.original.key}`
+                    );
+                }}
                 rowActions={{
                     enabled: true,
                     menuLabel: "Actions",
                     actions: [
                         {
-                            label: "View",
-                            icon: Eye,
-                            onClick: (row) => {
-                                window.location.href = `/dashboard/organisation/${organisationId}/entity/${row.key}`;
-                            },
-                        },
-                        {
                             label: "Edit",
                             icon: Edit,
                             onClick: (row) => {
-                                window.location.href = `/dashboard/organisation/${organisationId}/entity/${row.key}`;
+                                router.push(
+                                    `/dashboard/organisation/${organisationId}/entity/${row.key}`
+                                );
                             },
                             separator: true,
                         },

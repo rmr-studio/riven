@@ -8,7 +8,6 @@ import java.util.*
  * Repository for EntityType entities.
  */
 interface EntityTypeRepository : JpaRepository<EntityTypeEntity, UUID> {
-
     fun findByOrganisationId(id: UUID): List<EntityTypeEntity>
 
     /**
@@ -19,4 +18,9 @@ interface EntityTypeRepository : JpaRepository<EntityTypeEntity, UUID> {
         organisationId: UUID,
         key: String
     ): Optional<EntityTypeEntity>
+
+    fun findByOrganisationIdAndKeyIn(
+        organisationId: UUID,
+        keys: List<String>
+    ): List<EntityTypeEntity>
 }

@@ -1,4 +1,5 @@
 "use client";
+import { useEntityTypes } from "@/components/feature-modules/entity/hooks/use-entity-types";
 import { Organisation } from "@/components/feature-modules/organisation/interface/organisation.interface";
 import { useProfile } from "@/components/feature-modules/user/hooks/useProfile";
 import { useOrganisationStore } from "@/components/provider/OrganisationContext";
@@ -34,13 +35,15 @@ export const DashboardSidebar = () => {
     const pathName = usePathname();
     const router = useRouter();
     const { data, isPending, isLoadingAuth } = useProfile();
-
     const [selectedOrganisation, setSelectedOrganisation] = useState<Organisation | null>(null);
 
     const selectedOrganisationId = useOrganisationStore((store) => store.selectedOrganisationId); // Select specific state
     const setSelectedOrganisationId = useOrganisationStore(
         (store) => store.setSelectedOrganisation
     );
+
+    const { data: entityTypes, isLoading: isLoadingEntityTypes } =
+        useEntityTypes(selectedOrganisationId);
 
     const loadingUser = isPending || isLoadingAuth;
 
@@ -144,7 +147,35 @@ export const DashboardSidebar = () => {
                           </DropdownMenuContent>
                       </DropdownMenu>
                   ),
-                  items: [],
+                  items: isLoadingEntityTypes
+                      ? Array.from({ length: 3 }).map((_, index) => ({
+                            icon: SquareDashedMousePointer,
+                            hidden: false,
+                            title: "",
+                            url: "#",
+                            isActive: false,
+                            skeleton: true,
+                        }))
+                      : [
+                            ...(entityTypes?.slice(0, 5).map((entityType) => ({
+                                icon: SquareDashedMousePointer,
+                                hidden: false,
+                                title: entityType.name.plural,
+                                url: `/dashboard/organisation/${selectedOrganisation.id}/entity/${entityType.key}`,
+                                isActive: false,
+                            })) ?? []),
+                            ...(entityTypes && entityTypes.length > 5
+                                ? [
+                                      {
+                                          icon: Ellipsis,
+                                          hidden: false,
+                                          title: `See all ${entityTypes.length}`,
+                                          url: `/dashboard/organisation/${selectedOrganisation.id}/entity`,
+                                          isActive: false,
+                                      },
+                                  ]
+                                : []),
+                        ],
               },
               {
                   title: "Workflow",

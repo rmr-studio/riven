@@ -2,10 +2,9 @@ package riven.core.service.entity
 
 import org.springframework.stereotype.Service
 import riven.core.entity.entity.EntityEntity
-import riven.core.entity.entity.EntityRelationshipEntity
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.common.ValidationScope
-import riven.core.models.common.validation.Schema
+import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.service.schema.SchemaService
@@ -82,8 +81,8 @@ class EntityValidationService(
      * Returns a list of changes with breaking flag.
      */
     fun detectSchemaBreakingChanges(
-        oldSchema: Schema,
-        newSchema: Schema
+        oldSchema: EntityTypeSchema,
+        newSchema: EntityTypeSchema
     ): List<SchemaChange> {
         val changes = mutableListOf<SchemaChange>()
 
@@ -93,7 +92,7 @@ class EntityValidationService(
                 changes.add(
                     SchemaChange(
                         type = ChangeType.FIELD_REMOVED,
-                        path = key,
+                        path = key.toString(),
                         description = "Field '$key' removed",
                         breaking = oldField.required
                     )
@@ -107,7 +106,7 @@ class EntityValidationService(
                 changes.add(
                     SchemaChange(
                         type = ChangeType.FIELD_REQUIRED_ADDED,
-                        path = key,
+                        path = key.toString(),
                         description = "Required field '$key' added",
                         breaking = true
                     )
@@ -122,7 +121,7 @@ class EntityValidationService(
                     changes.add(
                         SchemaChange(
                             type = ChangeType.FIELD_TYPE_CHANGED,
-                            path = key,
+                            path = key.toString(),
                             description = "Field '$key' type changed from ${oldField.type} to ${newField.type}",
                             breaking = true
                         )
@@ -134,7 +133,7 @@ class EntityValidationService(
                     changes.add(
                         SchemaChange(
                             type = ChangeType.FIELD_REQUIRED_ADDED,
-                            path = key,
+                            path = key.toString(),
                             description = "Field '$key' changed from optional to required",
                             breaking = true
                         )
@@ -152,7 +151,7 @@ class EntityValidationService(
      */
     fun validateExistingEntitiesAgainstNewSchema(
         entities: List<EntityEntity>,
-        newSchema: Schema,
+        newSchema: EntityTypeSchema,
     ): ValidationSummary {
         var validCount = 0
         var invalidCount = 0

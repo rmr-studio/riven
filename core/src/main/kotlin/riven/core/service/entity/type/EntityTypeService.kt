@@ -1,4 +1,4 @@
-package riven.core.service.entity
+package riven.core.service.entity.type
 
 import jakarta.transaction.Transactional
 import org.springframework.security.access.prepost.PreAuthorize
@@ -11,13 +11,15 @@ import riven.core.enums.util.OperationType
 import riven.core.exceptions.SchemaValidationException
 import riven.core.models.entity.EntityType
 import riven.core.models.entity.configuration.EntityTypeOrderingKey
+import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
 import riven.core.models.request.entity.CreateEntityTypeRequest
+import riven.core.models.response.entity.UpdateEntityTypeResponse
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
-import riven.core.util.ServiceUtil.findManyResults
-import riven.core.util.ServiceUtil.findOrThrow
+import riven.core.service.entity.EntityValidationService
+import riven.core.util.ServiceUtil
 import java.util.*
 
 /**
@@ -31,6 +33,9 @@ class EntityTypeService(
     private val entityTypeRepository: EntityTypeRepository,
     private val entityRepository: EntityRepository,
     private val entityValidationService: EntityValidationService,
+    private val entityRelationshipService: EntityRelationshipService,
+    private val relationshipDiffService: EntityTypeRelationshipDiffService,
+    private val impactAnalysisService: EntityTypeRelationshipImpactAnalysisService,
     private val authTokenService: AuthTokenService,
     private val activityService: ActivityService,
 ) {
@@ -39,14 +44,14 @@ class EntityTypeService(
      * Create and publish a new entity type.
      */
     @Transactional
-    @PreAuthorize("@organisationSecurity.hasOrg(#request.organisationId)")
-    fun publishEntityType(request: CreateEntityTypeRequest): EntityType {
+    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
+    fun publishEntityType(organisationId: UUID, request: CreateEntityTypeRequest): EntityType {
         authTokenService.getUserId().let { userId ->
             EntityTypeEntity(
                 displayNameSingular = request.name.singular,
                 displayNamePlural = request.name.plural,
                 key = request.key,
-                organisationId = request.organisationId,
+                organisationId = organisationId,
                 identifierKey = request.identifier,
                 description = request.description,
                 // Protected Entity Types cannot be modified or deleted by users. This will usually occur during an automatic setup process.
@@ -63,7 +68,7 @@ class EntityTypeService(
                     }.toTypedArray(),
                     *(request.relationships ?: listOf()).map {
                         EntityTypeOrderingKey(
-                            it.key,
+                            it.id,
                             EntityPropertyType.RELATIONSHIP
                         )
                     }.toTypedArray()
@@ -72,6 +77,10 @@ class EntityTypeService(
                 entityTypeRepository.save(this)
             }.also {
                 requireNotNull(it.id)
+                request.relationships?.run {
+                    entityRelationshipService.createRelationships(this, organisationId)
+                }
+
                 activityService.logActivity(
                     activity = Activity.ENTITY_TYPE,
                     operation = OperationType.CREATE,
@@ -96,25 +105,30 @@ class EntityTypeService(
      *
      * Unlike BlockTypeService which creates new versions, this updates the existing row.
      * Breaking changes are detected and validated against existing entities.
+     *
+     * When impactConfirmed=false: Performs impact analysis and returns impacts if any exist
+     * When impactConfirmed=true: Proceeds with the update after user confirmation
      */
-    @PreAuthorize("@organisationSecurity.hasOrg(#type.organisationId)")
-    fun updateEntityType(
-        type: EntityType
-    ): EntityType {
-        val userId = authTokenService.getUserId()
-        val existing: EntityTypeEntity = findOrThrow { entityTypeRepository.findById(type.id) }
+    @Transactional
+    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
+    suspend fun updateEntityType(
+        organisationId: UUID,
+        type: EntityType,
+        impactConfirmed: Boolean = false
+    ): UpdateEntityTypeResponse {
+        authTokenService.getUserId()
+        val existing: EntityTypeEntity = ServiceUtil.findOrThrow { entityTypeRepository.findById(type.id) }
 
-        // Ensure this is not a system type
-        val orgId = requireNotNull(existing.organisationId) { "Cannot update system entity type" }
+        requireNotNull(type.organisationId) { "Cannot update system entity type" }
 
-        // Detect breaking changes
+        // Detect breaking changes in schema
         val breakingChanges = entityValidationService.detectSchemaBreakingChanges(
             existing.schema,
             type.schema
         )
 
         if (breakingChanges.any { it.breaking }) {
-            val existingEntities = entityRepository.findByOrganisationIdAndTypeId(orgId, type.id)
+            val existingEntities = entityRepository.findByOrganisationIdAndTypeId(organisationId, type.id)
             val validationSummary = entityValidationService.validateExistingEntitiesAgainstNewSchema(
                 existingEntities,
                 type.schema,
@@ -132,32 +146,54 @@ class EntityTypeService(
             }
         }
 
-        // Update in place (NOT create new row)
-        existing.apply {
-            displayNameSingular = type.name.singular
-            displayNamePlural = type.name.plural
-            description = type.description
-            schema = type.schema
-            relationships = type.relationships
-            version = existing.version + 1  // Increment for change tracking
-        }.let {
-            entityTypeRepository.save(it).run {
-                activityService.logActivity(
-                    activity = Activity.ENTITY_TYPE,
-                    operation = OperationType.UPDATE,
-                    userId = userId,
-                    organisationId = orgId,
-                    entityId = this.id,
-                    entityType = ApplicationEntityType.ENTITY_TYPE,
-                    details = mapOf(
-                        "type" to this.key,
-                        "version" to this.version,
-                        "breakingChanges" to breakingChanges.filter { it.breaking }.size
-                    )
+        // Calculate relationship changes and analyze impact
+        type.relationships?.run {
+
+            val diff: EntityTypeRelationshipDiff = relationshipDiffService.calculate(
+                previous = existing.relationships ?: emptyList(),
+                updated = type.relationships
+            )
+
+            // User has not confirmed/been notified of impact analysis yet
+            if (!impactConfirmed) {
+                // Analyze the impact of these changes
+                val impact = impactAnalysisService.analyze(
+                    sourceEntityType = existing,
+                    diff = diff
                 )
-                return this.toModel()
+
+                // If impact analysis is enabled (impactConfirmed=false) and there are notable impacts, return them
+                if (hasNotableImpacts(impact)) {
+                    return UpdateEntityTypeResponse(
+                        success = false,
+                        error = null,
+                        entityType = null,
+                        impact = impact
+                    )
+                }
             }
+
+            entityRelationshipService.updateRelationships(organisationId, diff)
         }
+
+
+        // TODO: Proceed with actual update operations
+        // This will be implemented in a follow-up task
+        // For now, return a placeholder response indicating the update would proceed
+        return UpdateEntityTypeResponse(
+            success = true,
+            error = null,
+            entityType = existing,
+            impact = null // No impacts or impacts were confirmed
+        )
+    }
+
+    /**
+     * Determines if the impact analysis contains notable impacts that require user confirmation.
+     */
+    private fun hasNotableImpacts(impact: riven.core.models.entity.relationship.analysis.EntityTypeRelationshipImpactAnalysis): Boolean {
+        return impact.affectedEntityTypes.isNotEmpty() ||
+                impact.dataLossWarnings.isNotEmpty()
     }
 
     /**
@@ -166,7 +202,7 @@ class EntityTypeService(
     @PreAuthorize("@organisationSecurity.hasOrg(#id)")
     fun archiveEntityType(id: UUID, status: Boolean) {
         val userId = authTokenService.getUserId()
-        val existing = findOrThrow { entityTypeRepository.findById(id) }
+        val existing = ServiceUtil.findOrThrow { entityTypeRepository.findById(id) }
         val orgId = requireNotNull(existing.organisationId) { "Cannot archive system entity type" }
 
         if (existing.archived == status) return
@@ -193,21 +229,20 @@ class EntityTypeService(
      */
     @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
     fun getOrganisationEntityTypes(organisationId: UUID): List<EntityType> {
-        return findManyResults {
+        return ServiceUtil.findManyResults {
             entityTypeRepository.findByOrganisationId(organisationId)
         }.map { it.toModel() }
     }
 
     @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
     fun getByKey(key: String, organisationId: UUID): EntityTypeEntity {
-        return findOrThrow { entityTypeRepository.findByOrganisationIdAndKey(organisationId, key) }
+        return ServiceUtil.findOrThrow { entityTypeRepository.findByOrganisationIdAndKey(organisationId, key) }
     }
 
     /**
      * Get entity type by ID.
      */
     fun getById(id: UUID): EntityTypeEntity {
-        return findOrThrow { entityTypeRepository.findById(id) }
+        return ServiceUtil.findOrThrow { entityTypeRepository.findById(id) }
     }
 }
-

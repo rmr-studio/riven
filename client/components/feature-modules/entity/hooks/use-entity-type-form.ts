@@ -120,18 +120,70 @@ export function useEntityTypeForm(
         // Clear any previous errors
         form.clearErrors();
 
-        const request: CreateEntityTypeRequest = {
+        if (mode === "create") {
+            const request: CreateEntityTypeRequest = {
+                key: values.key,
+                organisationId: organisationId,
+                name: {
+                    singular: values.singularName,
+                    plural: values.pluralName,
+                },
+                identifier: values.identifierKey,
+                description: values.description,
+                type: values.type,
+                schema: {
+                    key: SchemaType.OBJECT,
+                    properties: attributeSchema.reduce((acc, attr) => {
+                        acc[attr.key] = {
+                            label: attr.label,
+                            key: attr.schemaKey,
+                            type: attr.dataType,
+                            format: attr.dataFormat,
+                            required: attr.required,
+                            unique: attr.unique,
+                            protected: attr.protected,
+                        };
+                        return acc;
+                    }, {} as Record<string, any>),
+                    type: DataType.OBJECT,
+                    protected: true,
+                    required: true,
+                    unique: false,
+                },
+                relationships: relationships.map((rel) => ({
+                    ...rel,
+                    // For a creation event, the source key would always be the entity type key
+                    sourceKey: values.key,
+                    name: rel.label,
+                })),
+                order: order,
+            };
+
+            await publishType(request);
+            return;
+        }
+
+        if (!entityType) {
+            throw new Error("Entity type is required for edit mode");
+        }
+
+        const relationshipSourceKeys: Map<string, string> = new Map();
+        entityType.relationships?.forEach((rel) => {
+            relationshipSourceKeys.set(rel.key, rel.sourceKey);
+        });
+
+        const updatedType: EntityType = {
+            ...entityType,
             key: values.key,
-            organisationId: organisationId,
             name: {
                 singular: values.singularName,
                 plural: values.pluralName,
             },
-            identifier: values.identifierKey,
+            identifierKey: values.identifierKey,
             description: values.description,
             type: values.type,
             schema: {
-                key: SchemaType.OBJECT,
+                ...entityType.schema,
                 properties: attributeSchema.reduce((acc, attr) => {
                     acc[attr.key] = {
                         label: attr.label,
@@ -144,28 +196,26 @@ export function useEntityTypeForm(
                     };
                     return acc;
                 }, {} as Record<string, any>),
-                type: DataType.OBJECT,
-                protected: true,
-                required: true,
-                unique: false,
             },
+
+            // Remap source key
             relationships: relationships.map((rel) => ({
                 ...rel,
                 name: rel.label,
+                // Preserve existing source key if available
+                sourceKey: relationshipSourceKeys.get(rel.key) || values.key,
             })),
             order: order,
         };
 
-        await publishType(request);
+        await updateType(updatedType);
     };
 
     const { mutateAsync: publishType } = useMutation({
         mutationFn: (request: CreateEntityTypeRequest) =>
             EntityTypeService.publishEntityType(session, request),
         onMutate: () => {
-            submissionToastRef.current = toast.loading(
-                mode === "create" ? "Creating entity type..." : "Updating entity type..."
-            );
+            submissionToastRef.current = toast.loading("Creating entity type...");
         },
         onError: (error: Error) => {
             toast.dismiss(submissionToastRef.current);
@@ -186,19 +236,43 @@ export function useEntityTypeForm(
             queryClient.setQueryData<EntityType[]>(["entityTypes", organisationId], (oldData) => {
                 if (!oldData) return [response];
 
-                if (mode === "create") {
-                    // Add new entity type to the list
-                    return [...oldData, response];
-                } else {
-                    // Update existing entity type in the list
-                    return oldData.map((et) => (et.key === response.key ? response : et));
-                }
+                // Add new entity type to the list
+                return [...oldData, response];
             });
 
-            if (mode === "create") {
-                router.push(`/organisation/${organisationId}/entity`);
-            }
+            router.push(`/dashboard/organisation/${organisationId}/entity`);
 
+            return response;
+        },
+    });
+
+    const { mutateAsync: updateType } = useMutation({
+        mutationFn: (type: EntityType) => EntityTypeService.updateEntityType(session, type),
+        onMutate: () => {
+            submissionToastRef.current = toast.loading("Updating entity type...");
+        },
+        onError: (error: Error) => {
+            toast.dismiss(submissionToastRef.current);
+            toast.error(`Failed to update entity type: ${error.message}`);
+            submissionToastRef.current = undefined;
+        },
+        onSuccess: (response: EntityType) => {
+            toast.dismiss(submissionToastRef.current);
+            toast.success(`Entity type ${mode === "create" ? "created" : "updated"} successfully!`);
+            submissionToastRef.current = undefined;
+
+            // Update the specific entity type in cache
+            queryClient.setQueryData(["entityType", response.key, organisationId], response);
+
+            // Update the entity types list in cache
+            queryClient.setQueryData<EntityType[]>(["entityTypes", organisationId], (oldData) => {
+                if (!oldData) return [response];
+
+                // Replace the updated entity type in the list
+                return oldData.map((et) => (et.key === response.key ? response : et));
+            });
+
+            // Stay on the same page after update
             return response;
         },
     });

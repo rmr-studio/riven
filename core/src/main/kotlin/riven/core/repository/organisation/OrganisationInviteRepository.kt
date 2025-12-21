@@ -1,8 +1,8 @@
 package riven.core.repository.organisation
 
+import org.springframework.data.jpa.repository.JpaRepository
 import riven.core.entity.organisation.OrganisationInviteEntity
 import riven.core.enums.organisation.OrganisationInviteStatus
-import org.springframework.data.jpa.repository.JpaRepository
 import java.util.*
 
 

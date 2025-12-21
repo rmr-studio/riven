@@ -29,7 +29,7 @@ const EntityTypesDashboard = () => {
         return <div>Loading...</div>;
     }
 
-    if (!organisation) return;
+    if (!organisation) return null;
 
     const trail: BreadCrumbTrail[] = [
         { label: "Home", href: "/dashboard" },

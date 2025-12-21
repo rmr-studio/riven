@@ -32,8 +32,6 @@ export function useRelationshipManagement(
                 key: rel.key,
                 label: rel.name || fromKeyCase(rel.key),
                 cardinality: rel.cardinality,
-                minOccurs: rel.minOccurs,
-                maxOccurs: rel.maxOccurs,
                 entityTypeKeys: rel.entityTypeKeys || [],
                 allowPolymorphic: rel.allowPolymorphic,
                 bidirectional: rel.bidirectional,

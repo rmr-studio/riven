@@ -5,6 +5,7 @@ import riven.core.entity.block.BlockEntity
 import riven.core.entity.block.BlockTreeLayoutEntity
 import riven.core.entity.block.BlockTypeEntity
 import riven.core.enums.block.node.NodeType
+import riven.core.enums.common.SchemaType
 import riven.core.enums.common.ValidationScope
 import riven.core.enums.core.ComponentType
 import riven.core.models.block.Block
@@ -44,7 +45,9 @@ object BlockFactory {
         key: String = "contact_card",
         version: Int = 1,
         strictness: ValidationScope = ValidationScope.SOFT,
-        schema: Schema = Schema(),
+        schema: Schema<String> = Schema(
+            key = SchemaType.OBJECT
+        ),
         archived: Boolean = false,
         nesting: BlockTypeNesting = BlockTypeNesting(
             max = null,
@@ -101,7 +104,9 @@ object BlockFactory {
      *
      * @return A BlockSchema whose name is "root".
      */
-    fun generateSchema(): Schema = Schema()
+    fun generateSchema(): Schema<String> = Schema(
+        key = SchemaType.OBJECT,
+    )
 
     /**
      * Creates a default BlockDisplay with an empty form structure and a text render.

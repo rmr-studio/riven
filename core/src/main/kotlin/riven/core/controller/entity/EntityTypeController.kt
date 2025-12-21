@@ -8,7 +8,8 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import riven.core.models.entity.EntityType
 import riven.core.models.request.entity.CreateEntityTypeRequest
-import riven.core.service.entity.EntityTypeService
+import riven.core.models.response.entity.UpdateEntityTypeResponse
+import riven.core.service.entity.type.EntityTypeService
 import java.util.*
 
 @RestController
@@ -51,7 +52,7 @@ class EntityTypeController(
         return ResponseEntity.ok(entityType.toModel())
     }
 
-    @PostMapping("/")
+    @PostMapping("/organisation/{organisationId}")
     @Operation(
         summary = "Create a new entity type",
         description = "Creates and publishes a new entity type for the specified organisation."
@@ -61,8 +62,32 @@ class EntityTypeController(
         ApiResponse(responseCode = "400", description = "Invalid request data"),
         ApiResponse(responseCode = "401", description = "Unauthorized access")
     )
-    fun createEntityType(@RequestBody request: CreateEntityTypeRequest): ResponseEntity<EntityType> {
-        val newEntityType = entityTypeService.publishEntityType(request)
+    fun createEntityType(
+        @PathVariable organisationId: UUID,
+        @RequestBody request: CreateEntityTypeRequest
+    ): ResponseEntity<EntityType> {
+        val newEntityType = entityTypeService.publishEntityType(organisationId, request)
         return ResponseEntity.status(201).body(newEntityType)
     }
+
+    @PutMapping("/organisation/{organisationId}")
+    @Operation(
+        summary = "Updates an existing entity type",
+        description = "Updates the data for an already existing entity type for the specified organisation."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "201", description = "Entity type created successfully"),
+        ApiResponse(responseCode = "400", description = "Invalid request data"),
+        ApiResponse(responseCode = "401", description = "Unauthorized access")
+    )
+    suspend fun updateEntityType(
+        @PathVariable organisationId: UUID,
+        @RequestParam impactConfirmed: Boolean = false,
+        @RequestBody type: EntityType,
+    ): ResponseEntity<UpdateEntityTypeResponse> {
+        val response = entityTypeService.updateEntityType(organisationId, type, impactConfirmed)
+        return ResponseEntity.ok(response)
+    }
+
+
 }

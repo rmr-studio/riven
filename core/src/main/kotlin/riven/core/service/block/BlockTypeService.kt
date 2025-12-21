@@ -210,7 +210,7 @@ class BlockTypeService(
                 blockTypeRepository.findTopByOrganisationIdAndKeyOrderByVersionDesc(
                     organisationId,
                     key
-                )?.let { return it }
+                ).orElse(null)?.let { return it }
             }
         }
         // Fetch from system
@@ -223,7 +223,8 @@ class BlockTypeService(
             }
         } else {
             blockTypeRepository.findTopBySystemTrueAndKeyOrderByVersionDesc(key)
-                ?: throw NoSuchElementException("No BlockType found for key '$key'")
+                .orElseThrow { NoSuchElementException("No BlockType found for key '$key'") }
+
         }
     }
 

@@ -13,6 +13,7 @@ import {
     SidebarMenuItem,
     SidebarRail,
 } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarGroupProps } from "@/lib/interfaces/interface";
 import { cn } from "@/lib/util/utils";
 import { AnimatePresence } from "framer-motion";
@@ -118,20 +119,27 @@ const SidebarGroupRenderer: React.FC<GroupRendererProps> = ({
                                         <div>
                                             {group.items
                                                 ?.filter((item) => !item.hidden)
-                                                .map((item) => (
-                                                    <SidebarMenuItem key={item.title}>
-                                                        <SidebarMenuButton
-                                                            asChild
-                                                            isActive={item.isActive}
-                                                            className="text-muted-foreground r"
-                                                        >
-                                                            <Link href={item.url} className="flex">
-                                                                <item.icon className="size-3" />
-                                                                <span className="text-[13px]">
-                                                                    {item.title}
-                                                                </span>
-                                                            </Link>
-                                                        </SidebarMenuButton>
+                                                .map((item, index) => (
+                                                    <SidebarMenuItem key={item.skeleton ? `skeleton-${index}` : item.title}>
+                                                        {item.skeleton ? (
+                                                            <div className="flex items-center gap-2 px-2 py-1.5">
+                                                                <Skeleton className="size-3 rounded-sm" />
+                                                                <Skeleton className="h-3 flex-1" />
+                                                            </div>
+                                                        ) : (
+                                                            <SidebarMenuButton
+                                                                asChild
+                                                                isActive={item.isActive}
+                                                                className="text-muted-foreground r"
+                                                            >
+                                                                <Link href={item.url} className="flex">
+                                                                    <item.icon className="size-3" />
+                                                                    <span className="text-[13px]">
+                                                                        {item.title}
+                                                                    </span>
+                                                                </Link>
+                                                            </SidebarMenuButton>
+                                                        )}
                                                     </SidebarMenuItem>
                                                 ))}
                                         </div>

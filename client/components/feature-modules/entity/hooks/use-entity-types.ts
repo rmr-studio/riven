@@ -36,6 +36,7 @@ export function useEntityTypeByKey(
         staleTime: 10 * 60 * 1000, // 10 minutes
         enabled: !!key && !!organisationId && !!session && !loading,
         refetchOnWindowFocus: false,
+        retry: 1,
         gcTime: 30 * 60 * 1000, // 30 minutes garbage collection
     });
 
