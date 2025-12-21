@@ -3,6 +3,7 @@ package riven.core.models.entity.configuration
 import riven.core.entity.util.AuditableModel
 import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.enums.entity.EntityTypeRelationshipType
+import riven.core.models.entity.validation.ValidEntityRelationshipDefinition
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -26,10 +27,11 @@ import java.util.*
  *    - Example: Task.assignee → [Person, Team] (not polymorphic, just 2 specific types)
  *
  */
+@ValidEntityRelationshipDefinition
 data class EntityRelationshipDefinition(
     val id: UUID,
 
-    val name: String,
+    var name: String,
 
     // Source context
     val sourceEntityTypeKey: String, // Linking to the source entity type
@@ -37,21 +39,21 @@ data class EntityRelationshipDefinition(
     val relationshipType: EntityTypeRelationshipType,
 
     // Relationship Target Specification
-    val entityTypeKeys: List<String>? = null,
-    val allowPolymorphic: Boolean = false,
+    var entityTypeKeys: List<String>? = null,
+    var allowPolymorphic: Boolean = false,
 
     // Constraints
-    val required: Boolean,
-    val cardinality: EntityRelationshipCardinality,
+    val required: Boolean, // Required relationships are only enforced on RELATIONSHIP entity types
+    var cardinality: EntityRelationshipCardinality,
 
     // Bidirectional config
-    val bidirectional: Boolean = false,
+    var bidirectional: Boolean = false,
     /**
      * Subset of Entity Types (located within in `entityTypeKeys` to maintain a bi-directional relationship for
      * Is required to be non-null when `bidirectional` is true
      */
-    val bidirectionalEntityTypeKeys: List<String>? = null,
-    val inverseName: String? = null, // Default Naming for Inverse Relationship Columns. Will populate `name` when creating an inverse relationship definition
+    var bidirectionalEntityTypeKeys: List<String>? = null,
+    var inverseName: String? = null, // Default Naming for Inverse Relationship Columns. Will populate `name` when creating an inverse relationship definition
 
     val protected: Boolean = false,
     override val createdAt: ZonedDateTime?,

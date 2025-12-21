@@ -5,7 +5,7 @@ import riven.core.enums.entity.EntityTypeRelationshipChangeType
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipModification
-import java.util.UUID
+import java.util.*
 
 @Service
 class EntityTypeRelationshipDiffService {
@@ -48,8 +48,6 @@ class EntityTypeRelationshipDiffService {
             changes += EntityTypeRelationshipChangeType.NAME_CHANGED
         if (previous.cardinality != updated.cardinality)
             changes += EntityTypeRelationshipChangeType.CARDINALITY_CHANGED
-        if (previous.required != updated.required)
-            changes += EntityTypeRelationshipChangeType.REQUIRED_CHANGED
         if (previous.inverseName != updated.inverseName)
             changes += EntityTypeRelationshipChangeType.INVERSE_NAME_CHANGED
 

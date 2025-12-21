@@ -224,17 +224,17 @@ class SchemaService(
     private fun <T> validateStringFormat(schema: Schema<T>, value: String, path: String): String? {
         return when (schema.format) {
             DataFormat.EMAIL ->
-                if (!value.matches(Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+\$"))) "Invalid email format at $path" else null
+                if (!value.matches(Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"))) "Invalid email format at $path" else null
 
             DataFormat.CURRENCY ->
-                if (!value.matches(Regex("^[A-Z]{3}\$"))) "Invalid currency format at $path (expected 3-letter ISO code)" else null
+                if (!value.matches(Regex("^[A-Z]{3}$"))) "Invalid currency format at $path (expected 3-letter ISO code)" else null
 
             DataFormat.PHONE ->
-                if (!value.matches(Regex("^\\+?[1-9]\\d{1,14}\$"))) "Invalid phone format at $path (expected E.164)" else null
+                if (!value.matches(Regex("^\\+?[1-9]\\d{1,14}$"))) "Invalid phone format at $path (expected E.164)" else null
 
             DataFormat.PERCENTAGE -> {
                 // Strings must include '%' (multi-digit allowed): e.g., "20%", "200%", "12.5%"
-                if (!value.matches(Regex("^(\\d+)(\\.\\d+)?%\$")))
+                if (!value.matches(Regex("^(\\d+)(\\.\\d+)?%$")))
                     "Invalid percentage string at $path (expected e.g. 20% or 12.5%)" else null
             }
 
@@ -279,7 +279,7 @@ class SchemaService(
         return when (schema.format) {
             DataFormat.PERCENTAGE -> {
                 // Numeric variants must be in [0, 1]
-                if (value < 0.0 || value > 1.0) "Invalid percentage number at $path (expected 0..1 for 0%..100%)" else null
+                if (value !in 0.0..1.0) "Invalid percentage number at $path (expected 0..1 for 0%..100%)" else null
             }
 
             else -> null
@@ -314,14 +314,8 @@ class SchemaService(
         }
 
         schema.options?.enum?.let { allowedValues ->
-            val stringValues = allowedValues.mapNotNull {
-                when (it) {
-                    is String -> it
-                    else -> it.toString()
-                }
-            }
-            if (value !in stringValues) {
-                return "Value at $path must be one of: ${stringValues.joinToString(", ")}"
+            if (value !in allowedValues) {
+                return "Value at $path must be one of: ${allowedValues.joinToString(", ")}"
             }
         }
 
@@ -346,19 +340,6 @@ class SchemaService(
         schema.options?.maximum?.let {
             if (value > it) {
                 return "Number at $path exceeds maximum: $value > $it"
-            }
-        }
-
-        schema.options?.enum?.let { allowedValues ->
-            val numericValues = allowedValues.mapNotNull {
-                when (it) {
-                    is Number -> it.toDouble()
-                    is String -> it.toDoubleOrNull()
-                    else -> null
-                }
-            }
-            if (value !in numericValues) {
-                return "Value at $path must be one of: ${numericValues.joinToString(", ")}"
             }
         }
 

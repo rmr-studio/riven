@@ -141,7 +141,6 @@ class EntityRelationshipServiceTest {
 
         // When: Creating the unidirectional relationship
         val result = entityRelationshipService.createRelationships(
-            id = jobEntityType.id!!,
             definitions = listOf(jobOpeningsRelationship),
             organisationId = organisationId
         )
@@ -203,7 +202,6 @@ class EntityRelationshipServiceTest {
 
         // When: Creating the bidirectional relationship
         entityRelationshipService.createRelationships(
-            id = companyEntityType.id!!,
             definitions = listOf(employeesRelationship),
             organisationId = organisationId
         )
@@ -317,7 +315,6 @@ class EntityRelationshipServiceTest {
 
         // When: Creating the REFERENCE relationship
         entityRelationshipService.createRelationships(
-            id = jobEntityType.id!!,
             definitions = listOf(jobReferenceRelationship),
             organisationId = organisationId
         )
@@ -390,7 +387,6 @@ class EntityRelationshipServiceTest {
         // When/Then: Should throw validation error
         val exception = assertThrows(IllegalArgumentException::class.java) {
             entityRelationshipService.createRelationships(
-                id = companyEntityType.id!!,
                 definitions = listOf(invalidRelationship),
                 organisationId = organisationId
             )
@@ -404,6 +400,911 @@ class EntityRelationshipServiceTest {
             exception.message!!.contains("job"),
             "Error message should mention the invalid key"
         )
+    }
+
+    // ========== TEST CASE 5: updateRelationships - Adding Relationships ==========
+
+    @Test
+    fun `updateRelationships - adds new ORIGIN relationships`() {
+        // Given: Company entity type with no relationships
+        val companyWithId = companyEntityType.copy(
+            id = UUID.randomUUID(),
+            relationships = emptyList()
+        )
+
+        val newRelationshipId = UUID.randomUUID()
+        val newRelationship = EntityRelationshipDefinition(
+            id = newRelationshipId,
+            name = "Job Openings",
+            sourceEntityTypeKey = "company",
+            originRelationshipId = null,
+            relationshipType = EntityTypeRelationshipType.ORIGIN,
+            entityTypeKeys = listOf("job"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.ONE_TO_MANY,
+            bidirectional = true,
+            bidirectionalEntityTypeKeys = listOf("job"),
+            inverseName = "Company",
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        // Mock the diff service
+        val diff = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff(
+            added = listOf(newRelationship),
+            removed = emptyList(),
+            modified = emptyList()
+        )
+
+        // Mock repository calls
+        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+            .thenReturn(listOf(companyWithId, jobEntityType))
+
+        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("job")))
+            .thenReturn(Optional.of(jobEntityType))
+
+        val savedEntityTypes = mutableListOf<EntityTypeEntity>()
+        whenever(entityTypeRepository.saveAll<EntityTypeEntity>(any()))
+            .thenAnswer { invocation ->
+                val entities = invocation.getArgument(0) as Collection<EntityTypeEntity>
+                savedEntityTypes.addAll(entities)
+                entities
+            }
+
+        whenever(authTokenService.getUserId()).thenReturn(userId)
+
+        // When: Updating relationships with additions
+        entityRelationshipService.updateRelationships(organisationId, diff)
+
+        // Then: Both entity types should be saved with relationships
+        assertTrue(savedEntityTypes.size >= 2, "At least Company and Job should be updated")
+
+        val updatedJob = savedEntityTypes.find { it.key == "job" }
+        assertNotNull(updatedJob, "Job entity type should be updated")
+
+        // Verify job has the inverse REFERENCE relationship
+        val jobReference = updatedJob!!.relationships?.find {
+            it.relationshipType == EntityTypeRelationshipType.REFERENCE &&
+                    it.originRelationshipId == newRelationshipId
+        }
+        assertNotNull(jobReference, "Job should have inverse REFERENCE relationship")
+        assertEquals("Company", jobReference!!.name)
+    }
+
+    // ========== TEST CASE 6: updateRelationships - Removing Relationships ==========
+
+    @Test
+    fun `updateRelationships - removes ORIGIN relationship and cascades to REFERENCE`() {
+        // Given: Company has an ORIGIN relationship, Job has inverse REFERENCE
+        val originRelationshipId = UUID.randomUUID()
+
+        val companyOriginRelationship = EntityRelationshipDefinition(
+            id = originRelationshipId,
+            name = "Employees",
+            sourceEntityTypeKey = "company",
+            originRelationshipId = null,
+            relationshipType = EntityTypeRelationshipType.ORIGIN,
+            entityTypeKeys = listOf("candidate"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.ONE_TO_MANY,
+            bidirectional = true,
+            bidirectionalEntityTypeKeys = listOf("candidate"),
+            inverseName = "Employer",
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val companyWithRelationship = companyEntityType.copy(
+            relationships = listOf(companyOriginRelationship)
+        )
+
+        val candidateReferenceRelationship = EntityRelationshipDefinition(
+            id = UUID.randomUUID(),
+            name = "Employer",
+            sourceEntityTypeKey = "candidate",
+            originRelationshipId = originRelationshipId,
+            relationshipType = EntityTypeRelationshipType.REFERENCE,
+            entityTypeKeys = listOf("company"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
+            bidirectional = false,
+            bidirectionalEntityTypeKeys = null,
+            inverseName = null,
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val candidateWithRelationship = candidateEntityType.copy(
+            relationships = listOf(candidateReferenceRelationship)
+        )
+
+        // Mock the diff service
+        val diff = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff(
+            added = emptyList(),
+            removed = listOf(companyOriginRelationship),
+            modified = emptyList()
+        )
+
+        // Mock repository calls
+        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+            .thenReturn(listOf(companyWithRelationship, candidateWithRelationship))
+
+        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("candidate")))
+            .thenReturn(Optional.of(candidateWithRelationship))
+
+        val savedEntityTypes = mutableListOf<EntityTypeEntity>()
+        whenever(entityTypeRepository.saveAll<EntityTypeEntity>(any()))
+            .thenAnswer { invocation ->
+                val entities = invocation.getArgument(0) as Collection<EntityTypeEntity>
+                savedEntityTypes.addAll(entities)
+                entities
+            }
+
+        whenever(authTokenService.getUserId()).thenReturn(userId)
+
+        // When: Removing the ORIGIN relationship
+        entityRelationshipService.updateRelationships(organisationId, diff)
+
+        // Then: Both relationships should be removed
+        val updatedCompany = savedEntityTypes.find { it.key == "company" }
+        val updatedCandidate = savedEntityTypes.find { it.key == "candidate" }
+
+        assertNotNull(updatedCompany, "Company should be updated")
+        assertNotNull(updatedCandidate, "Candidate should be updated")
+
+        // Verify company's ORIGIN relationship is removed
+        val companyHasOrigin = updatedCompany!!.relationships?.any {
+            it.id == originRelationshipId
+        } ?: false
+        assertFalse(companyHasOrigin, "Company's ORIGIN relationship should be removed")
+
+        // Verify candidate's REFERENCE relationship is also removed (cascade)
+        val candidateHasReference = updatedCandidate!!.relationships?.any {
+            it.originRelationshipId == originRelationshipId
+        } ?: false
+        assertFalse(candidateHasReference, "Candidate's REFERENCE relationship should be cascaded and removed")
+    }
+
+    @Test
+    fun `updateRelationships - prevents removal of protected relationships`() {
+        // Given: A protected ORIGIN relationship
+        val protectedRelationshipId = UUID.randomUUID()
+
+        val protectedRelationship = EntityRelationshipDefinition(
+            id = protectedRelationshipId,
+            name = "System Relationship",
+            sourceEntityTypeKey = "company",
+            originRelationshipId = null,
+            relationshipType = EntityTypeRelationshipType.ORIGIN,
+            entityTypeKeys = listOf("candidate"),
+            allowPolymorphic = false,
+            required = true,
+            cardinality = EntityRelationshipCardinality.ONE_TO_ONE,
+            bidirectional = false,
+            bidirectionalEntityTypeKeys = null,
+            inverseName = null,
+            protected = true, // Protected!
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val companyWithProtected = companyEntityType.copy(
+            relationships = listOf(protectedRelationship)
+        )
+
+        // Mock the diff service
+        val diff = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff(
+            added = emptyList(),
+            removed = listOf(protectedRelationship),
+            modified = emptyList()
+        )
+
+        // Mock repository calls
+        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+            .thenReturn(listOf(companyWithProtected, candidateEntityType))
+
+        whenever(authTokenService.getUserId()).thenReturn(userId)
+
+        // When/Then: Should throw exception
+        val exception = assertThrows(IllegalStateException::class.java) {
+            entityRelationshipService.updateRelationships(organisationId, diff)
+        }
+
+        assertTrue(
+            exception.message!!.contains("Cannot remove protected relationship"),
+            "Error message should mention protected relationship"
+        )
+        assertTrue(
+            exception.message!!.contains("System Relationship"),
+            "Error message should include relationship name"
+        )
+    }
+
+    // ========== TEST CASE 7: updateRelationships - INVERSE_NAME_CHANGED ==========
+
+    @Test
+    fun `updateRelationships - INVERSE_NAME_CHANGED updates REFERENCE relationships using default name`() {
+        // Given: Company has ORIGIN relationship with inverseName "Employer"
+        val originRelationshipId = UUID.randomUUID()
+
+        val previousOriginRelationship = EntityRelationshipDefinition(
+            id = originRelationshipId,
+            name = "Employees",
+            sourceEntityTypeKey = "company",
+            originRelationshipId = null,
+            relationshipType = EntityTypeRelationshipType.ORIGIN,
+            entityTypeKeys = listOf("candidate"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.ONE_TO_MANY,
+            bidirectional = true,
+            bidirectionalEntityTypeKeys = listOf("candidate"),
+            inverseName = "Employer", // Old inverse name
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val updatedOriginRelationship = previousOriginRelationship.copy(
+            inverseName = "Company" // New inverse name
+        )
+
+        val candidateReferenceRelationship = EntityRelationshipDefinition(
+            id = UUID.randomUUID(),
+            name = "Employer", // Still using the default inverse name
+            sourceEntityTypeKey = "candidate",
+            originRelationshipId = originRelationshipId,
+            relationshipType = EntityTypeRelationshipType.REFERENCE,
+            entityTypeKeys = listOf("company"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
+            bidirectional = false,
+            bidirectionalEntityTypeKeys = null,
+            inverseName = null,
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val companyWithRelationship = companyEntityType.copy(
+            relationships = listOf(previousOriginRelationship)
+        )
+
+        val candidateWithRelationship = candidateEntityType.copy(
+            relationships = listOf(candidateReferenceRelationship)
+        )
+
+        // Mock the diff service
+        val modification = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipModification(
+            previous = previousOriginRelationship,
+            updated = updatedOriginRelationship,
+            changes = setOf(riven.core.enums.entity.EntityTypeRelationshipChangeType.INVERSE_NAME_CHANGED)
+        )
+
+        val diff = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff(
+            added = emptyList(),
+            removed = emptyList(),
+            modified = listOf(modification)
+        )
+
+        // Mock repository calls
+        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+            .thenReturn(listOf(companyWithRelationship, candidateWithRelationship))
+
+        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("candidate")))
+            .thenReturn(Optional.of(candidateWithRelationship))
+
+        val savedEntityTypes = mutableListOf<EntityTypeEntity>()
+        whenever(entityTypeRepository.saveAll<EntityTypeEntity>(any()))
+            .thenAnswer { invocation ->
+                val entities = invocation.getArgument(0) as Collection<EntityTypeEntity>
+                savedEntityTypes.addAll(entities)
+                entities
+            }
+
+        // When: Updating with INVERSE_NAME_CHANGED
+        entityRelationshipService.updateRelationships(organisationId, diff)
+
+        // Then: Candidate's REFERENCE relationship should be updated to "Company"
+        val updatedCandidate = savedEntityTypes.find { it.key == "candidate" }
+        assertNotNull(updatedCandidate, "Candidate should be updated")
+
+        val updatedReference = updatedCandidate!!.relationships?.find {
+            it.originRelationshipId == originRelationshipId
+        }
+        assertNotNull(updatedReference, "Reference relationship should exist")
+        assertEquals("Company", updatedReference!!.name, "Reference name should be updated to new inverse name")
+    }
+
+    @Test
+    fun `updateRelationships - INVERSE_NAME_CHANGED skips manually renamed REFERENCE relationships`() {
+        // Given: REFERENCE relationship with custom name (not using default inverse name)
+        val originRelationshipId = UUID.randomUUID()
+
+        val previousOriginRelationship = EntityRelationshipDefinition(
+            id = originRelationshipId,
+            name = "Employees",
+            sourceEntityTypeKey = "company",
+            originRelationshipId = null,
+            relationshipType = EntityTypeRelationshipType.ORIGIN,
+            entityTypeKeys = listOf("candidate"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.ONE_TO_MANY,
+            bidirectional = true,
+            bidirectionalEntityTypeKeys = listOf("candidate"),
+            inverseName = "Employer",
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val updatedOriginRelationship = previousOriginRelationship.copy(
+            inverseName = "Company"
+        )
+
+        val candidateReferenceRelationship = EntityRelationshipDefinition(
+            id = UUID.randomUUID(),
+            name = "Current Employer", // Manually renamed - NOT using default "Employer"
+            sourceEntityTypeKey = "candidate",
+            originRelationshipId = originRelationshipId,
+            relationshipType = EntityTypeRelationshipType.REFERENCE,
+            entityTypeKeys = listOf("company"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
+            bidirectional = false,
+            bidirectionalEntityTypeKeys = null,
+            inverseName = null,
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val companyWithRelationship = companyEntityType.copy(
+            relationships = listOf(previousOriginRelationship)
+        )
+
+        val candidateWithRelationship = candidateEntityType.copy(
+            relationships = listOf(candidateReferenceRelationship)
+        )
+
+        // Mock the diff service
+        val modification = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipModification(
+            previous = previousOriginRelationship,
+            updated = updatedOriginRelationship,
+            changes = setOf(riven.core.enums.entity.EntityTypeRelationshipChangeType.INVERSE_NAME_CHANGED)
+        )
+
+        val diff = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff(
+            added = emptyList(),
+            removed = emptyList(),
+            modified = listOf(modification)
+        )
+
+        // Mock repository calls
+        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+            .thenReturn(listOf(companyWithRelationship, candidateWithRelationship))
+
+        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("candidate")))
+            .thenReturn(Optional.of(candidateWithRelationship))
+
+        val savedEntityTypes = mutableListOf<EntityTypeEntity>()
+        whenever(entityTypeRepository.saveAll<EntityTypeEntity>(any()))
+            .thenAnswer { invocation ->
+                val entities = invocation.getArgument(0) as Collection<EntityTypeEntity>
+                savedEntityTypes.addAll(entities)
+                entities
+            }
+
+        // When: Updating with INVERSE_NAME_CHANGED
+        entityRelationshipService.updateRelationships(organisationId, diff)
+
+        // Then: Candidate's REFERENCE relationship should NOT be changed (it was manually renamed)
+        val updatedCandidate = savedEntityTypes.find { it.key == "candidate" }
+        assertNotNull(updatedCandidate, "Candidate should be updated")
+
+        val updatedReference = updatedCandidate!!.relationships?.find {
+            it.originRelationshipId == originRelationshipId
+        }
+        assertNotNull(updatedReference, "Reference relationship should exist")
+        assertEquals(
+            "Current Employer",
+            updatedReference!!.name,
+            "Manually renamed reference should keep its custom name"
+        )
+    }
+
+    // ========== TEST CASE 8: updateRelationships - CARDINALITY_CHANGED ==========
+
+    @Test
+    fun `updateRelationships - CARDINALITY_CHANGED updates inverse REFERENCE cardinality`() {
+        // Given: ONE_TO_MANY relationship changing to ONE_TO_ONE
+        val originRelationshipId = UUID.randomUUID()
+
+        val previousOriginRelationship = EntityRelationshipDefinition(
+            id = originRelationshipId,
+            name = "Primary Contact",
+            sourceEntityTypeKey = "company",
+            originRelationshipId = null,
+            relationshipType = EntityTypeRelationshipType.ORIGIN,
+            entityTypeKeys = listOf("candidate"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.ONE_TO_MANY, // OLD
+            bidirectional = true,
+            bidirectionalEntityTypeKeys = listOf("candidate"),
+            inverseName = "Companies",
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val updatedOriginRelationship = previousOriginRelationship.copy(
+            cardinality = EntityRelationshipCardinality.ONE_TO_ONE // NEW
+        )
+
+        val candidateReferenceRelationship = EntityRelationshipDefinition(
+            id = UUID.randomUUID(),
+            name = "Companies",
+            sourceEntityTypeKey = "candidate",
+            originRelationshipId = originRelationshipId,
+            relationshipType = EntityTypeRelationshipType.REFERENCE,
+            entityTypeKeys = listOf("company"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.MANY_TO_ONE, // Should become ONE_TO_ONE
+            bidirectional = false,
+            bidirectionalEntityTypeKeys = null,
+            inverseName = null,
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val companyWithRelationship = companyEntityType.copy(
+            relationships = listOf(previousOriginRelationship)
+        )
+
+        val candidateWithRelationship = candidateEntityType.copy(
+            relationships = listOf(candidateReferenceRelationship)
+        )
+
+        // Mock the diff service
+        val modification = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipModification(
+            previous = previousOriginRelationship,
+            updated = updatedOriginRelationship,
+            changes = setOf(riven.core.enums.entity.EntityTypeRelationshipChangeType.CARDINALITY_CHANGED)
+        )
+
+        val diff = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff(
+            added = emptyList(),
+            removed = emptyList(),
+            modified = listOf(modification)
+        )
+
+        // Mock repository calls
+        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+            .thenReturn(listOf(companyWithRelationship, candidateWithRelationship))
+
+        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("candidate")))
+            .thenReturn(Optional.of(candidateWithRelationship))
+
+        val savedEntityTypes = mutableListOf<EntityTypeEntity>()
+        whenever(entityTypeRepository.saveAll<EntityTypeEntity>(any()))
+            .thenAnswer { invocation ->
+                val entities = invocation.getArgument(0) as Collection<EntityTypeEntity>
+                savedEntityTypes.addAll(entities)
+                entities
+            }
+
+        // When: Updating with CARDINALITY_CHANGED
+        entityRelationshipService.updateRelationships(organisationId, diff)
+
+        // Then: Candidate's REFERENCE relationship should have inverted cardinality
+        val updatedCandidate = savedEntityTypes.find { it.key == "candidate" }
+        assertNotNull(updatedCandidate, "Candidate should be updated")
+
+        val updatedReference = updatedCandidate!!.relationships?.find {
+            it.originRelationshipId == originRelationshipId
+        }
+        assertNotNull(updatedReference, "Reference relationship should exist")
+        assertEquals(
+            EntityRelationshipCardinality.ONE_TO_ONE,
+            updatedReference!!.cardinality,
+            "Reference cardinality should be inverted to ONE_TO_ONE"
+        )
+    }
+
+    // ========== TEST CASE 9: updateRelationships - BIDIRECTIONAL_ENABLED ==========
+
+    @Test
+    fun `updateRelationships - BIDIRECTIONAL_ENABLED creates inverse REFERENCE relationships`() {
+        // Given: Unidirectional ORIGIN relationship becoming bidirectional
+        val originRelationshipId = UUID.randomUUID()
+
+        val previousOriginRelationship = EntityRelationshipDefinition(
+            id = originRelationshipId,
+            name = "Jobs",
+            sourceEntityTypeKey = "company",
+            originRelationshipId = null,
+            relationshipType = EntityTypeRelationshipType.ORIGIN,
+            entityTypeKeys = listOf("job"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.ONE_TO_MANY,
+            bidirectional = false, // OLD
+            bidirectionalEntityTypeKeys = null, // OLD
+            inverseName = null, // OLD
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val updatedOriginRelationship = previousOriginRelationship.copy(
+            bidirectional = true, // NEW
+            bidirectionalEntityTypeKeys = listOf("job"), // NEW
+            inverseName = "Company" // NEW
+        )
+
+        val companyWithRelationship = companyEntityType.copy(
+            relationships = listOf(previousOriginRelationship)
+        )
+
+        val jobWithNoRelationship = jobEntityType.copy(
+            relationships = emptyList()
+        )
+
+        // Mock the diff service
+        val modification = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipModification(
+            previous = previousOriginRelationship,
+            updated = updatedOriginRelationship,
+            changes = setOf(riven.core.enums.entity.EntityTypeRelationshipChangeType.BIDIRECTIONAL_ENABLED)
+        )
+
+        val diff = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff(
+            added = emptyList(),
+            removed = emptyList(),
+            modified = listOf(modification)
+        )
+
+        // Mock repository calls
+        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+            .thenReturn(listOf(companyWithRelationship, jobWithNoRelationship))
+
+        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("job")))
+            .thenReturn(Optional.of(jobWithNoRelationship))
+
+        val savedEntityTypes = mutableListOf<EntityTypeEntity>()
+        whenever(entityTypeRepository.saveAll<EntityTypeEntity>(any()))
+            .thenAnswer { invocation ->
+                val entities = invocation.getArgument(0) as Collection<EntityTypeEntity>
+                savedEntityTypes.addAll(entities)
+                entities
+            }
+
+        // When: Enabling bidirectional
+        entityRelationshipService.updateRelationships(organisationId, diff)
+
+        // Then: Job should have a new REFERENCE relationship
+        val updatedJob = savedEntityTypes.find { it.key == "job" }
+        assertNotNull(updatedJob, "Job should be updated")
+
+        val newReference = updatedJob!!.relationships?.find {
+            it.originRelationshipId == originRelationshipId &&
+                    it.relationshipType == EntityTypeRelationshipType.REFERENCE
+        }
+        assertNotNull(newReference, "Job should have new REFERENCE relationship")
+        assertEquals("Company", newReference!!.name)
+        assertEquals(EntityRelationshipCardinality.MANY_TO_ONE, newReference.cardinality)
+    }
+
+    @Test
+    fun `updateRelationships - BIDIRECTIONAL_ENABLED validates bidirectionalEntityTypeKeys is not empty`() {
+        // Given: Relationship with empty bidirectionalEntityTypeKeys
+        val originRelationshipId = UUID.randomUUID()
+
+        val previousOriginRelationship = EntityRelationshipDefinition(
+            id = originRelationshipId,
+            name = "Jobs",
+            sourceEntityTypeKey = "company",
+            originRelationshipId = null,
+            relationshipType = EntityTypeRelationshipType.ORIGIN,
+            entityTypeKeys = listOf("job"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.ONE_TO_MANY,
+            bidirectional = false,
+            bidirectionalEntityTypeKeys = null,
+            inverseName = null,
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val updatedOriginRelationship = previousOriginRelationship.copy(
+            bidirectional = true,
+            bidirectionalEntityTypeKeys = emptyList(), // EMPTY!
+            inverseName = "Company"
+        )
+
+        val companyWithRelationship = companyEntityType.copy(
+            relationships = listOf(previousOriginRelationship)
+        )
+
+        // Mock the diff service
+        val modification = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipModification(
+            previous = previousOriginRelationship,
+            updated = updatedOriginRelationship,
+            changes = setOf(riven.core.enums.entity.EntityTypeRelationshipChangeType.BIDIRECTIONAL_ENABLED)
+        )
+
+        val diff = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff(
+            added = emptyList(),
+            removed = emptyList(),
+            modified = listOf(modification)
+        )
+
+        // Mock repository calls
+        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+            .thenReturn(listOf(jobEntityType, companyWithRelationship))
+
+        // When/Then: Should throw validation error
+        val exception = assertThrows(IllegalArgumentException::class.java) {
+            entityRelationshipService.updateRelationships(organisationId, diff)
+        }
+
+        assertTrue(
+            exception.message!!.contains("bidirectionalEntityTypeKeys must not be empty"),
+            "Error message should mention empty bidirectionalEntityTypeKeys"
+        )
+    }
+
+    // ========== TEST CASE 10: updateRelationships - BIDIRECTIONAL_DISABLED ==========`
+
+    @Test
+    fun `updateRelationships - BIDIRECTIONAL_DISABLED removes inverse REFERENCE relationships`() {
+        // Given: Bidirectional relationship becoming unidirectional
+        val originRelationshipId = UUID.randomUUID()
+
+        val previousOriginRelationship = EntityRelationshipDefinition(
+            id = originRelationshipId,
+            name = "Jobs",
+            sourceEntityTypeKey = "company",
+            originRelationshipId = null,
+            relationshipType = EntityTypeRelationshipType.ORIGIN,
+            entityTypeKeys = listOf("job"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.ONE_TO_MANY,
+            bidirectional = true, // OLD
+            bidirectionalEntityTypeKeys = listOf("job"), // OLD
+            inverseName = "Company", // OLD
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val updatedOriginRelationship = previousOriginRelationship.copy(
+            bidirectional = false, // NEW
+            bidirectionalEntityTypeKeys = null, // NEW
+            inverseName = null // NEW
+        )
+
+        val jobReferenceRelationship = EntityRelationshipDefinition(
+            id = UUID.randomUUID(),
+            name = "Company",
+            sourceEntityTypeKey = "job",
+            originRelationshipId = originRelationshipId,
+            relationshipType = EntityTypeRelationshipType.REFERENCE,
+            entityTypeKeys = listOf("company"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
+            bidirectional = false,
+            bidirectionalEntityTypeKeys = null,
+            inverseName = null,
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val companyWithRelationship = companyEntityType.copy(
+            relationships = listOf(previousOriginRelationship)
+        )
+
+        val jobWithRelationship = jobEntityType.copy(
+            relationships = listOf(jobReferenceRelationship)
+        )
+
+        // Mock the diff service
+        val modification = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipModification(
+            previous = previousOriginRelationship,
+            updated = updatedOriginRelationship,
+            changes = setOf(riven.core.enums.entity.EntityTypeRelationshipChangeType.BIDIRECTIONAL_DISABLED)
+        )
+
+        val diff = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff(
+            added = emptyList(),
+            removed = emptyList(),
+            modified = listOf(modification)
+        )
+
+        // Mock repository calls
+        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+            .thenReturn(listOf(companyWithRelationship, jobWithRelationship))
+
+        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("job")))
+            .thenReturn(Optional.of(jobWithRelationship))
+
+        val savedEntityTypes = mutableListOf<EntityTypeEntity>()
+        whenever(entityTypeRepository.saveAll<EntityTypeEntity>(any()))
+            .thenAnswer { invocation ->
+                val entities = invocation.getArgument(0) as Collection<EntityTypeEntity>
+                savedEntityTypes.addAll(entities)
+                entities
+            }
+
+        // When: Disabling bidirectional
+        entityRelationshipService.updateRelationships(organisationId, diff)
+
+        // Then: Job's REFERENCE relationship should be removed
+        val updatedJob = savedEntityTypes.find { it.key == "job" }
+        assertNotNull(updatedJob, "Job should be updated")
+
+        val hasReference = updatedJob!!.relationships?.any {
+            it.originRelationshipId == originRelationshipId
+        } ?: false
+        assertFalse(hasReference, "Job's REFERENCE relationship should be removed")
+    }
+
+    // ========== TEST CASE 11: updateRelationships - BIDIRECTIONAL_TARGETS_CHANGED ==========
+
+    @Test
+    fun `updateRelationships - BIDIRECTIONAL_TARGETS_CHANGED adds and removes inverse relationships`() {
+        // Given: Relationship changing targets from [candidate] to [job, candidate]
+        val originRelationshipId = UUID.randomUUID()
+
+        val previousOriginRelationship = EntityRelationshipDefinition(
+            id = originRelationshipId,
+            name = "Employees",
+            sourceEntityTypeKey = "company",
+            originRelationshipId = null,
+            relationshipType = EntityTypeRelationshipType.ORIGIN,
+            entityTypeKeys = listOf("candidate", "job"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.ONE_TO_MANY,
+            bidirectional = true,
+            bidirectionalEntityTypeKeys = listOf("candidate"), // OLD: only candidate
+            inverseName = "Employer",
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val updatedOriginRelationship = previousOriginRelationship.copy(
+            bidirectionalEntityTypeKeys = listOf("job", "candidate")
+        )
+
+        val candidateReferenceRelationship = EntityRelationshipDefinition(
+            id = UUID.randomUUID(),
+            name = "Employer",
+            sourceEntityTypeKey = "candidate",
+            originRelationshipId = originRelationshipId,
+            relationshipType = EntityTypeRelationshipType.REFERENCE,
+            entityTypeKeys = listOf("company"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
+            bidirectional = false,
+            bidirectionalEntityTypeKeys = null,
+            inverseName = null,
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val companyWithRelationship = companyEntityType.copy(
+            relationships = listOf(previousOriginRelationship)
+        )
+
+        val candidateWithRelationship = candidateEntityType.copy(
+            relationships = listOf(candidateReferenceRelationship)
+        )
+
+        val jobWithNoRelationship = jobEntityType.copy(
+            relationships = emptyList()
+        )
+
+        // Mock the diff service
+        val modification = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipModification(
+            previous = previousOriginRelationship,
+            updated = updatedOriginRelationship,
+            changes = setOf(riven.core.enums.entity.EntityTypeRelationshipChangeType.BIDIRECTIONAL_TARGETS_CHANGED)
+        )
+
+        val diff = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff(
+            added = emptyList(),
+            removed = emptyList(),
+            modified = listOf(modification)
+        )
+
+        // Mock repository calls
+        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+            .thenReturn(listOf(companyWithRelationship, candidateWithRelationship, jobWithNoRelationship))
+
+        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("job")))
+            .thenReturn(Optional.of(jobWithNoRelationship))
+
+        val savedEntityTypes = mutableListOf<EntityTypeEntity>()
+        whenever(entityTypeRepository.saveAll<EntityTypeEntity>(any()))
+            .thenAnswer { invocation ->
+                val entities = invocation.getArgument(0) as Collection<EntityTypeEntity>
+                savedEntityTypes.addAll(entities)
+                entities
+            }
+
+        // When: Changing bidirectional targets
+        entityRelationshipService.updateRelationships(organisationId, diff)
+
+        // Then: Job should have a new REFERENCE relationship
+        val updatedJob = savedEntityTypes.find { it.key == "job" }
+        assertNotNull(updatedJob, "Job should be updated")
+
+        val newJobReference = updatedJob!!.relationships?.find {
+            it.originRelationshipId == originRelationshipId
+        }
+        assertNotNull(newJobReference, "Job should have new REFERENCE relationship")
+        assertEquals("Employer", newJobReference!!.name)
+
+        // And: Candidate should still have its REFERENCE relationship
+        val updatedCandidate = savedEntityTypes.find { it.key == "candidate" }
+        assertNotNull(updatedCandidate, "Candidate should be updated")
+
+        val candidateStillHasReference = updatedCandidate!!.relationships?.any {
+            it.originRelationshipId == originRelationshipId
+        } ?: false
+        assertTrue(candidateStillHasReference, "Candidate should still have REFERENCE relationship")
     }
 
     // ========== Helper Methods ==========

@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import riven.core.models.entity.EntityType
 import riven.core.models.request.entity.CreateEntityTypeRequest
+import riven.core.models.response.entity.UpdateEntityTypeResponse
 import riven.core.service.entity.type.EntityTypeService
 import java.util.*
 
@@ -51,7 +52,7 @@ class EntityTypeController(
         return ResponseEntity.ok(entityType.toModel())
     }
 
-    @PostMapping("/organisation/{organisationID}")
+    @PostMapping("/organisation/{organisationId}")
     @Operation(
         summary = "Create a new entity type",
         description = "Creates and publishes a new entity type for the specified organisation."
@@ -79,12 +80,13 @@ class EntityTypeController(
         ApiResponse(responseCode = "400", description = "Invalid request data"),
         ApiResponse(responseCode = "401", description = "Unauthorized access")
     )
-    fun createEntityType(
+    suspend fun updateEntityType(
         @PathVariable organisationId: UUID,
-        @RequestBody type: EntityType
-    ): ResponseEntity<EntityType> {
-        val newEntityType = entityTypeService.updateEntityType(organisationId, type)
-        return ResponseEntity.status(201).body(newEntityType)
+        @RequestParam impactConfirmed: Boolean = false,
+        @RequestBody type: EntityType,
+    ): ResponseEntity<UpdateEntityTypeResponse> {
+        val response = entityTypeService.updateEntityType(organisationId, type, impactConfirmed)
+        return ResponseEntity.ok(response)
     }
 
 

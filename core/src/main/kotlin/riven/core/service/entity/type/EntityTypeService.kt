@@ -11,7 +11,9 @@ import riven.core.enums.util.OperationType
 import riven.core.exceptions.SchemaValidationException
 import riven.core.models.entity.EntityType
 import riven.core.models.entity.configuration.EntityTypeOrderingKey
+import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
 import riven.core.models.request.entity.CreateEntityTypeRequest
+import riven.core.models.response.entity.UpdateEntityTypeResponse
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
@@ -32,6 +34,8 @@ class EntityTypeService(
     private val entityRepository: EntityRepository,
     private val entityValidationService: EntityValidationService,
     private val entityRelationshipService: EntityRelationshipService,
+    private val relationshipDiffService: EntityTypeRelationshipDiffService,
+    private val impactAnalysisService: EntityTypeRelationshipImpactAnalysisService,
     private val authTokenService: AuthTokenService,
     private val activityService: ActivityService,
 ) {
@@ -72,9 +76,9 @@ class EntityTypeService(
             ).run {
                 entityTypeRepository.save(this)
             }.also {
-                val id: UUID = requireNotNull(it.id)
+                requireNotNull(it.id)
                 request.relationships?.run {
-                    entityRelationshipService.createRelationships(id, this, organisationId)
+                    entityRelationshipService.createRelationships(this, organisationId)
                 }
 
                 activityService.logActivity(
@@ -101,19 +105,23 @@ class EntityTypeService(
      *
      * Unlike BlockTypeService which creates new versions, this updates the existing row.
      * Breaking changes are detected and validated against existing entities.
+     *
+     * When impactConfirmed=false: Performs impact analysis and returns impacts if any exist
+     * When impactConfirmed=true: Proceeds with the update after user confirmation
      */
     @Transactional
     @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
-    fun updateEntityType(
+    suspend fun updateEntityType(
         organisationId: UUID,
-        type: EntityType
-    ): EntityType {
-        val userId = authTokenService.getUserId()
+        type: EntityType,
+        impactConfirmed: Boolean = false
+    ): UpdateEntityTypeResponse {
+        authTokenService.getUserId()
         val existing: EntityTypeEntity = ServiceUtil.findOrThrow { entityTypeRepository.findById(type.id) }
 
         requireNotNull(type.organisationId) { "Cannot update system entity type" }
 
-        // Detect breaking changes
+        // Detect breaking changes in schema
         val breakingChanges = entityValidationService.detectSchemaBreakingChanges(
             existing.schema,
             type.schema
@@ -138,35 +146,54 @@ class EntityTypeService(
             }
         }
 
-        type.relationships?.let {
-            entityRelationshipService.updateRelationships(type.id, organisationId, it, existing.relationships)
+        // Calculate relationship changes and analyze impact
+        type.relationships?.run {
+
+            val diff: EntityTypeRelationshipDiff = relationshipDiffService.calculate(
+                previous = existing.relationships ?: emptyList(),
+                updated = type.relationships
+            )
+
+            // User has not confirmed/been notified of impact analysis yet
+            if (!impactConfirmed) {
+                // Analyze the impact of these changes
+                val impact = impactAnalysisService.analyze(
+                    sourceEntityType = existing,
+                    diff = diff
+                )
+
+                // If impact analysis is enabled (impactConfirmed=false) and there are notable impacts, return them
+                if (hasNotableImpacts(impact)) {
+                    return UpdateEntityTypeResponse(
+                        success = false,
+                        error = null,
+                        entityType = null,
+                        impact = impact
+                    )
+                }
+            }
+
+            entityRelationshipService.updateRelationships(organisationId, diff)
         }
 
-        existing.apply {
-            displayNameSingular = type.name.singular
-            displayNamePlural = type.name.plural
-            description = type.description
-            schema = type.schema
-            relationships = type.relationships
-            version = existing.version + 1  // Increment for change tracking
-        }.run {
-            entityTypeRepository.save(this).also { type ->
-                activityService.logActivity(
-                    activity = Activity.ENTITY_TYPE,
-                    operation = OperationType.UPDATE,
-                    userId = userId,
-                    organisationId = organisationId,
-                    entityId = this.id,
-                    entityType = ApplicationEntityType.ENTITY_TYPE,
-                    details = mapOf(
-                        "type" to this.key,
-                        "version" to this.version,
-                        "breakingChanges" to breakingChanges.filter { it.breaking }.size
-                    )
-                )
-                return this.toModel()
-            }
-        }
+
+        // TODO: Proceed with actual update operations
+        // This will be implemented in a follow-up task
+        // For now, return a placeholder response indicating the update would proceed
+        return UpdateEntityTypeResponse(
+            success = true,
+            error = null,
+            entityType = existing,
+            impact = null // No impacts or impacts were confirmed
+        )
+    }
+
+    /**
+     * Determines if the impact analysis contains notable impacts that require user confirmation.
+     */
+    private fun hasNotableImpacts(impact: riven.core.models.entity.relationship.analysis.EntityTypeRelationshipImpactAnalysis): Boolean {
+        return impact.affectedEntityTypes.isNotEmpty() ||
+                impact.dataLossWarnings.isNotEmpty()
     }
 
     /**

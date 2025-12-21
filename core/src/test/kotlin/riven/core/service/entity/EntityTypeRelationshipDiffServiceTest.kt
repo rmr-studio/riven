@@ -217,30 +217,6 @@ class EntityTypeRelationshipDiffServiceTest {
         assertEquals(EntityRelationshipCardinality.MANY_TO_MANY, modification.updated.cardinality)
     }
 
-    // ========== TEST CASE 6: Modifications - Required Changes ==========
-
-    @Test
-    fun `calculate - detects required flag change`() {
-        // Given: Relationship required flag changed
-        val relationshipId = UUID.randomUUID()
-        val previous = listOf(
-            createRelationship(id = relationshipId, name = "Employees", sourceKey = "company", required = false)
-        )
-        val updated = listOf(
-            createRelationship(id = relationshipId, name = "Employees", sourceKey = "company", required = true)
-        )
-
-        // When: Calculating diff
-        val diff = diffService.calculate(previous, updated)
-
-        // Then: Required change detected
-        assertEquals(1, diff.modified.size)
-        val modification = diff.modified[0]
-        assertTrue(modification.changes.contains(EntityTypeRelationshipChangeType.REQUIRED_CHANGED))
-        assertFalse(modification.previous.required)
-        assertTrue(modification.updated.required)
-    }
-
     // ========== TEST CASE 7: Modifications - Inverse Name Changes ==========
 
     @Test
@@ -565,7 +541,7 @@ class EntityTypeRelationshipDiffServiceTest {
                 name = "New Name",
                 sourceKey = "company",
                 cardinality = EntityRelationshipCardinality.MANY_TO_MANY,
-                required = true,
+                required = false,
                 bidirectional = true,
                 bidirectionalEntityTypeKeys = listOf("candidate", "job"),
                 entityTypeKeys = listOf("candidate", "job")
@@ -580,10 +556,9 @@ class EntityTypeRelationshipDiffServiceTest {
         val modification = diff.modified[0]
         assertTrue(modification.changes.contains(EntityTypeRelationshipChangeType.NAME_CHANGED))
         assertTrue(modification.changes.contains(EntityTypeRelationshipChangeType.CARDINALITY_CHANGED))
-        assertTrue(modification.changes.contains(EntityTypeRelationshipChangeType.REQUIRED_CHANGED))
         assertTrue(modification.changes.contains(EntityTypeRelationshipChangeType.BIDIRECTIONAL_ENABLED))
         assertTrue(modification.changes.contains(EntityTypeRelationshipChangeType.TARGET_TYPES_ADDED))
-        assertEquals(5, modification.changes.size)
+        assertEquals(4, modification.changes.size)
     }
 
     // ========== TEST CASE 14: Complex Scenarios ==========
