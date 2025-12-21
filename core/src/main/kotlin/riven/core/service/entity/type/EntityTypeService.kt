@@ -5,10 +5,13 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.activity.Activity
+import riven.core.enums.common.SchemaType
 import riven.core.enums.core.ApplicationEntityType
+import riven.core.enums.core.DataType
 import riven.core.enums.entity.EntityPropertyType
 import riven.core.enums.util.OperationType
 import riven.core.exceptions.SchemaValidationException
+import riven.core.models.common.validation.Schema
 import riven.core.models.entity.EntityType
 import riven.core.models.entity.configuration.EntityTypeOrderingKey
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
@@ -47,40 +50,45 @@ class EntityTypeService(
     @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
     fun publishEntityType(organisationId: UUID, request: CreateEntityTypeRequest): EntityType {
         authTokenService.getUserId().let { userId ->
+            val primaryId: UUID = UUID.randomUUID()
+            
             EntityTypeEntity(
                 displayNameSingular = request.name.singular,
                 displayNamePlural = request.name.plural,
                 key = request.key,
                 organisationId = organisationId,
-                identifierKey = request.identifier,
+                identifierKey = primaryId,
                 description = request.description,
                 // Protected Entity Types cannot be modified or deleted by users. This will usually occur during an automatic setup process.
                 protected = false,
                 type = request.type,
-                schema = request.schema,
-                relationships = request.relationships,
-                order = request.order ?: listOf(
-                    *(request.schema.properties?.keys ?: listOf()).map { key ->
-                        EntityTypeOrderingKey(
-                            key,
-                            EntityPropertyType.ATTRIBUTE
-                        )
-                    }.toTypedArray(),
-                    *(request.relationships ?: listOf()).map {
-                        EntityTypeOrderingKey(
-                            it.id,
-                            EntityPropertyType.RELATIONSHIP
-                        )
-                    }.toTypedArray()
+                schema = Schema(
+                    type = DataType.OBJECT,
+                    key = SchemaType.OBJECT,
+                    protected = true,
+                    required = true,
+                    properties = mapOf(
+                        primaryId to Schema(
+                            type = DataType.STRING,
+                            key = SchemaType.TEXT,
+                            label = "Name",
+                            unique = true,
+                            protected = true,
+                            required = true,
+                        ),
+                    )
                 ),
+                relationships = listOf(),
+                order = listOf(
+                    EntityTypeOrderingKey(
+                        key = primaryId,
+                        type = EntityPropertyType.ATTRIBUTE
+                    )
+                )
             ).run {
                 entityTypeRepository.save(this)
             }.also {
                 requireNotNull(it.id)
-                request.relationships?.run {
-                    entityRelationshipService.createRelationships(this, organisationId)
-                }
-
                 activityService.logActivity(
                     activity = Activity.ENTITY_TYPE,
                     operation = OperationType.CREATE,

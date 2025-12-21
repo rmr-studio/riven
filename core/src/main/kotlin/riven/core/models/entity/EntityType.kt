@@ -32,7 +32,7 @@ data class EntityType(
      * of the attributes within the schema (default to ID).
      * The attribute used as the identifier key must be set to unique within the schema.
      */
-    val identifierKey: String = "name",
+    val identifierKey: UUID,
     val description: String?,
     val organisationId: UUID?,
     val type: EntityCategory,
