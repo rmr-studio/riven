@@ -22,6 +22,7 @@ import { toKeyCase } from "@/lib/util/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FC, useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 import { AttributeTypeDropdown } from "../../../../ui/attribute-type-dropdown";
 import type {
@@ -43,6 +44,8 @@ interface AttributeDialogProps {
     currentRelationships?: RelationshipFormData[];
     editingAttribute?: AttributeFormData | RelationshipFormData;
     identifierKey?: string;
+    currentFormKey?: string;
+    currentFormPluralName?: string;
 }
 
 // Zod schema
@@ -115,6 +118,8 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
     currentEntityType,
     editingAttribute,
     identifierKey,
+    currentFormKey,
+    currentFormPluralName,
 }) => {
     const [typePopoverOpen, setTypePopoverOpen] = useState(false);
     const isEditMode = !!editingAttribute;
@@ -124,7 +129,7 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
         isEditMode &&
         editingAttribute &&
         !isRelationshipType(editingAttribute) &&
-        editingAttribute.key === identifierKey;
+        editingAttribute.id === identifierKey;
 
     const form = useForm<AttributeFormValues>({
         resolver: zodResolver(formSchema),
@@ -173,7 +178,6 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
 
     // Populate form when editing
     useEffect(() => {
-        console.log(editingAttribute);
         if (!open) return;
 
         if (editingAttribute) {
@@ -268,20 +272,20 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
     /**
      * Handles form submission for both attributes and relationships.
      * Validates and constructs the appropriate data object before invoking onSubmit.
-     * When handling an attribute update/edit. It is vital that the key is preserved.
+     * When handling an attribute update/edit. It is vital that the id is preserved.
      */
     const handleFormSubmit = useCallback(
         (values: AttributeFormValues) => {
             if (values.selectedType === "RELATIONSHIP")
-                return handleRelationshipSubmission(values, editingAttribute?.key);
-            return handleAttributeSubmission(values, editingAttribute?.key);
+                return handleRelationshipSubmission(values, editingAttribute?.id);
+            return handleAttributeSubmission(values, editingAttribute?.id);
         },
         [onSubmit, editingAttribute]
     );
 
     const handleAttributeSubmission = (
         values: AttributeFormValues,
-        existingKey: string | undefined
+        existingId: string | undefined
     ) => {
         if (values.selectedType === "RELATIONSHIP") return;
         const attribute = attributeTypes[values.selectedType];
@@ -299,7 +303,7 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
 
         const data: AttributeFormData = {
             type: EntityPropertyType.ATTRIBUTE,
-            key: existingKey || toKeyCase(values.name),
+            id: existingId || uuidv4(),
             label: values.name,
             schemaKey: values.selectedType,
             dataType: attribute.type,
@@ -312,22 +316,8 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
         onSubmit(data);
     };
 
-    const createKey = (values: AttributeFormValues): string => {
-        const baseKey = `${toKeyCase(values.name)}`;
-        const existingKeys = currentRelationships.map((r) => r.key);
-
-        // Check for any key conflicts
-        if (!existingKeys.includes(baseKey)) return baseKey;
-
-        // Find next available index
-        let index = 2;
-        let candidateKey = `${baseKey}_${index}`;
-        while (existingKeys.includes(candidateKey)) {
-            index++;
-            candidateKey = `${baseKey}_${index}`;
-        }
-
-        return candidateKey;
+    const createId = (): string => {
+        return uuidv4();
     };
 
     const calculateCardinality = (
@@ -347,15 +337,15 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
 
     const handleRelationshipSubmission = (
         values: AttributeFormValues,
-        existingKey: string | undefined
+        existingId: string | undefined
     ) => {
-        // If creating new relationship (no existingKey) and key is empty, generate it
-        const key = existingKey || createKey(values);
+        // If creating new relationship (no existingId), generate a UUID
+        const id = existingId || createId();
 
         const data: RelationshipFormData = {
             type: EntityPropertyType.RELATIONSHIP,
             label: values.name,
-            key: key,
+            id: id,
             cardinality: calculateCardinality(
                 values.sourceRelationsLimit || "singular",
                 values.targetRelationsLimit || "singular"
@@ -416,6 +406,8 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
                                 type={currentEntityType}
                                 avaiableTypes={entityTypes}
                                 isEditMode={isEditMode}
+                                currentFormKey={currentFormKey}
+                                currentFormPluralName={currentFormPluralName}
                             />
                         )}
 

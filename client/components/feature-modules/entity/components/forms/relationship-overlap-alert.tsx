@@ -23,7 +23,7 @@ export const RelationshipOverlapAlert: FC<RelationshipOverlapAlertProps> = ({
         <div className="space-y-3">
             {overlaps.map((overlap, index) => (
                 <Alert
-                    key={`${overlap.targetEntityKey}-${overlap.existingRelationship.key}`}
+                    key={`${overlap.targetEntityKey}-${overlap.existingRelationship.id}`}
                     className="border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20"
                 >
                     <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />

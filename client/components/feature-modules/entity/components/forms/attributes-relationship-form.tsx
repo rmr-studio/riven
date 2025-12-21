@@ -23,14 +23,80 @@ interface Props {
     avaiableTypes?: EntityType[];
     form: UseFormReturn<AttributeFormValues>;
     isEditMode?: boolean;
+    currentFormKey?: string;
+    currentFormPluralName?: string;
 }
 
-export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form }) => {
+export const RelationshipAttributeForm: FC<Props> = ({
+    type,
+    avaiableTypes,
+    form,
+    currentFormKey,
+    currentFormPluralName,
+}) => {
     const selectedEntityTypeKeys = form.watch("entityTypeKeys");
     const bidirectional = form.watch("bidirectional");
     const allowPolymorphic = form.watch("allowPolymorphic");
-    const bidirectionalEntityTypeKeys = form.watch("bidirectionalEntityTypeKeys");
-    const targetEntity = avaiableTypes?.find((et) => et.key === selectedEntityTypeKeys?.[0]);
+
+    // Merge available types with current entity type to allow self-referential relationships
+    const allAvailableTypes = useMemo(() => {
+        const existingTypes = avaiableTypes || [];
+
+        // If we have an existing entity type, use it
+        if (type) {
+            const currentTypeExists = existingTypes.some((et) => et.key === type.key);
+
+            // If current type already exists in the list, return as is
+            if (currentTypeExists) return existingTypes;
+
+            // Otherwise, add current type to the list and sort alphabetically
+            return [...existingTypes, type].sort((a, b) =>
+                a.name.plural.localeCompare(b.name.plural)
+            );
+        }
+
+        // For new entity types, create a pseudo entity type from form data
+        if (currentFormKey && currentFormPluralName) {
+            const pseudoType: EntityType = {
+                id: "",
+                key: currentFormKey,
+                version: 0,
+                name: {
+                    singular: currentFormPluralName,
+                    plural: currentFormPluralName,
+                },
+                protected: false,
+                // Minimal required fields - these won't be used for self-reference display
+                description: "",
+                type: "STANDARD" as any,
+                identifierKey: "",
+                schema: {
+                    key: "OBJECT" as any,
+                    type: "OBJECT" as any,
+                    required: true,
+                    unique: false,
+                    protected: true,
+                    properties: {},
+                },
+                relationships: [],
+                order: [],
+                entitiesCount: 0,
+                attributes: {
+                    first: 0,
+                    second: 0,
+                },
+            };
+
+            return [...existingTypes, pseudoType].sort((a, b) =>
+                a.name.plural.localeCompare(b.name.plural)
+            );
+        }
+
+        return existingTypes;
+    }, [type, avaiableTypes, currentFormKey, currentFormPluralName]);
+
+    // Determine the current entity key for self-reference identification
+    const currentEntityKey = type?.key || currentFormKey;
 
     // Overlap detection state and logic
     const [dismissedOverlaps, setDismissedOverlaps] = useState<Set<string>>(new Set());
@@ -40,13 +106,13 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form
         type?.key,
         selectedEntityTypeKeys,
         allowPolymorphic,
-        avaiableTypes
+        allAvailableTypes
     );
 
     // Filter out dismissed overlaps
     const activeOverlaps = useMemo(() => {
         return overlapDetection.overlaps.filter((overlap) => {
-            const overlapId = `${overlap.targetEntityKey}-${overlap.existingRelationship.key}`;
+            const overlapId = `${overlap.targetEntityKey}-${overlap.existingRelationship.id}`;
             return !dismissedOverlaps.has(overlapId);
         });
     }, [overlapDetection.overlaps, dismissedOverlaps]);
@@ -55,7 +121,7 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form
     const handleDismissOverlap = useCallback(
         (index: number) => {
             const overlap = activeOverlaps[index];
-            const overlapId = `${overlap.targetEntityKey}-${overlap.existingRelationship.key}`;
+            const overlapId = `${overlap.targetEntityKey}-${overlap.existingRelationship.id}`;
             setDismissedOverlaps((prev) => new Set([...prev, overlapId]));
         },
         [activeOverlaps]
@@ -84,26 +150,29 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form
 
     // Manage bidirectionalEntityTypeKeys based on entity selection changes
     useEffect(() => {
+        // Get current bidirectional value each time
+        const currentBidirectional = form.getValues("bidirectionalEntityTypeKeys") || [];
+
         if (!bidirectional) {
             // Clear bidirectional entity types when bidirectional is turned off
-            if (bidirectionalEntityTypeKeys && bidirectionalEntityTypeKeys.length > 0) {
+            if (currentBidirectional.length > 0) {
                 form.setValue("bidirectionalEntityTypeKeys", []);
             }
         } else {
             // When bidirectional is enabled, auto-select entity types
             if (allowPolymorphic) {
                 // If polymorphic, select all available entity types
-                const allKeys = avaiableTypes?.map((et) => et.key) || [];
-                const currentKeys = bidirectionalEntityTypeKeys || [];
+                const allKeys = allAvailableTypes?.map((et) => et.key) || [];
 
                 // Only update if there's a difference
-                if (JSON.stringify(allKeys.sort()) !== JSON.stringify(currentKeys.sort())) {
+                const allKeysSorted = allKeys.toSorted();
+                const currentSorted = currentBidirectional.toSorted();
+
+                if (JSON.stringify(allKeysSorted) !== JSON.stringify(currentSorted)) {
                     form.setValue("bidirectionalEntityTypeKeys", allKeys);
                 }
             } else if (selectedEntityTypeKeys && selectedEntityTypeKeys.length > 0) {
                 // If not polymorphic, auto-select all selected entity types
-                const currentBidirectional = bidirectionalEntityTypeKeys || [];
-
                 // Start with currently selected bidirectional keys that are still valid
                 const validExistingKeys = currentBidirectional.filter((key) =>
                     selectedEntityTypeKeys.includes(key)
@@ -117,29 +186,32 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form
                 const updatedKeys = [...validExistingKeys, ...newKeys];
 
                 // Only update if there's a difference
-                if (JSON.stringify(updatedKeys.sort()) !== JSON.stringify(currentBidirectional.sort())) {
+                const updatedSorted = updatedKeys.toSorted();
+                const currentSorted = currentBidirectional.toSorted();
+
+                if (JSON.stringify(updatedSorted) !== JSON.stringify(currentSorted)) {
                     form.setValue("bidirectionalEntityTypeKeys", updatedKeys);
                 }
-            } else if (bidirectionalEntityTypeKeys && bidirectionalEntityTypeKeys.length > 0) {
+            } else if (currentBidirectional.length > 0) {
                 // If no entity types selected and not polymorphic, clear bidirectional
                 form.setValue("bidirectionalEntityTypeKeys", []);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
         bidirectional,
         selectedEntityTypeKeys,
         allowPolymorphic,
-        bidirectionalEntityTypeKeys,
-        avaiableTypes,
-        form,
+        // Note: bidirectionalEntityTypeKeys is intentionally excluded to prevent infinite loops
+        // We read it directly in the effect using form.getValues() instead
+        // Note: allAvailableTypes is intentionally excluded to prevent infinite loops
+        // It's a computed value that changes frequently due to sorting
     ]);
 
     // Reset dismissed overlaps when target entity selection changes
     useEffect(() => {
         setDismissedOverlaps(new Set());
     }, [selectedEntityTypeKeys]);
-
-    console.log(selectedEntityTypeKeys, allowPolymorphic);
 
     const bidirectionalDisabled =
         (!selectedEntityTypeKeys || selectedEntityTypeKeys.length === 0) && !allowPolymorphic;
@@ -180,10 +252,11 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form
                                 <FormLabel>Related to</FormLabel>
                                 <FormControl>
                                     <EntityTypeMultiSelect
-                                        availableTypes={avaiableTypes}
+                                        availableTypes={allAvailableTypes}
                                         selectedKeys={selectedEntityTypeKeys || []}
                                         allowPolymorphic={allowPolymorphic || false}
                                         hasError={!!fieldState.error}
+                                        currentEntityKey={currentEntityKey}
                                         onSelectionChange={(keys, allowPoly) => {
                                             form.setValue("entityTypeKeys", keys);
                                             form.setValue("allowPolymorphic", allowPoly);
@@ -306,13 +379,14 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form
                                 allowSelectAll={false}
                                 availableTypes={
                                     allowPolymorphic
-                                        ? avaiableTypes
-                                        : avaiableTypes?.filter((et) =>
+                                        ? allAvailableTypes
+                                        : allAvailableTypes?.filter((et) =>
                                               selectedEntityTypeKeys?.includes(et.key)
                                           )
                                 }
                                 selectedKeys={form.watch("bidirectionalEntityTypeKeys") || []}
                                 allowPolymorphic={false}
+                                currentEntityKey={currentEntityKey}
                                 onSelectionChange={(keys) => {
                                     form.setValue("bidirectionalEntityTypeKeys", keys);
                                 }}

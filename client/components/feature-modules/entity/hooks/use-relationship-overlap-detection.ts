@@ -79,7 +79,7 @@ export function useRelationshipOverlapDetection(
                             suggestedAction: {
                                 type: "add-to-bidirectional",
                                 details: {
-                                    relationshipKey: existingRel.key,
+                                    relationshipKey: existingRel.id,
                                     sourceEntityToAdd: sourceEntityKey,
                                 },
                             },
@@ -108,7 +108,7 @@ export function useRelationshipOverlapDetection(
                             suggestedAction: {
                                 type: "add-to-bidirectional",
                                 details: {
-                                    relationshipKey: existingRel.key,
+                                    relationshipKey: existingRel.id,
                                     sourceEntityToAdd: sourceEntityKey,
                                 },
                             },

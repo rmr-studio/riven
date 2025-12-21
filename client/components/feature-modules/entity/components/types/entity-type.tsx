@@ -46,9 +46,8 @@ import { ConfigurationForm } from "../forms/entity-type-configuration-form";
 import { AttributeDialog } from "./entity-type-attribute-dialog";
 
 interface EntityTypeOverviewProps {
-    entityType?: EntityType;
+    entityType: EntityType;
     organisationId: string;
-    mode: "create" | "edit";
 }
 
 // Common type for data table rows (both attributes and relationships)
@@ -67,20 +66,15 @@ interface EntityTypeFieldRow extends EntityTypeAttributeData {
     targetAttributeName?: string | undefined;
 }
 
-export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
-    entityType,
-    organisationId,
-    mode,
-}) => {
+export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, organisationId }) => {
     const [order, setOrder] = useState<EntityTypeOrderingKey[]>(entityType?.order || []);
     const hasInitialized = useRef(false);
 
     // Form management hook
-    const { handleSubmit: handleFormSubmit } = useEntityTypeForm(organisationId, entityType, mode);
+    const { handleSubmit: handleFormSubmit } = useEntityTypeForm(organisationId, entityType);
     const { form, keyManuallyEdited, setKeyManuallyEdited } = useEntityTypeForm(
         organisationId,
-        entityType,
-        mode
+        entityType
     );
     const identifierKey = form.watch("identifierKey");
     // Attribute management hook
@@ -115,6 +109,61 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
     // Watch the pluralName field for dynamic title
     const pluralName = form.watch("pluralName");
 
+    // Watch the key field to handle self-reference updates
+    const currentKey = form.watch("key");
+    const previousKeyRef = useRef<string>(currentKey);
+    const isUpdatingKeyRef = useRef(false);
+
+    // Update self-referencing relationships when the entity type key changes during creation
+    useEffect(() => {
+        // Skip if we're already updating to avoid infinite loops
+        if (isUpdatingKeyRef.current) {
+            return;
+        }
+
+        if (mode === "create" && previousKeyRef.current && currentKey !== previousKeyRef.current) {
+            const oldKey = previousKeyRef.current;
+            const newKey = currentKey;
+
+            // Mark that we're updating
+            isUpdatingKeyRef.current = true;
+
+            // Update all relationships that reference the old key
+            relationships.forEach((rel) => {
+                let needsUpdate = false;
+                const updatedRel = { ...rel };
+
+                // Update entityTypeKeys if it contains the old key
+                if (rel.entityTypeKeys?.includes(oldKey)) {
+                    updatedRel.entityTypeKeys = rel.entityTypeKeys.map((key) =>
+                        key === oldKey ? newKey : key
+                    );
+                    needsUpdate = true;
+                }
+
+                // Update bidirectionalEntityTypeKeys if it contains the old key
+                if (rel.bidirectionalEntityTypeKeys?.includes(oldKey)) {
+                    updatedRel.bidirectionalEntityTypeKeys = rel.bidirectionalEntityTypeKeys.map(
+                        (key) => (key === oldKey ? newKey : key)
+                    );
+                    needsUpdate = true;
+                }
+
+                // Only update if changes were made
+                if (needsUpdate) {
+                    handleRelationshipEdit(updatedRel);
+                }
+            });
+
+            // Update the previous key reference and reset the updating flag
+            previousKeyRef.current = newKey;
+            isUpdatingKeyRef.current = false;
+        } else if (mode === "create" && !previousKeyRef.current) {
+            // Initialize the previous key reference on first render
+            previousKeyRef.current = currentKey;
+        }
+    }, [currentKey, mode, relationships, handleRelationshipEdit]);
+
     // Determine which tabs have validation errors
     const tabErrors = useMemo(() => {
         const errors = form.formState.errors;
@@ -144,9 +193,11 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
     useEffect(() => {
         if (mode === "create" && attributes.length === 0 && !hasInitialized.current) {
             hasInitialized.current = true;
+            // Generate a UUID for the default name attribute
+            const defaultAttributeId = require("uuid").v4();
             const defaultNameAttribute: AttributeFormData = {
                 type: EntityPropertyType.ATTRIBUTE,
-                key: "name",
+                id: defaultAttributeId,
                 label: "Name",
                 schemaKey: SchemaType.TEXT,
                 dataType: DataType.STRING,
@@ -155,8 +206,8 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                 protected: true,
             };
             handleAttributeAdd(defaultNameAttribute);
-            // Set the default name attribute as the identifier key
-            form.setValue("identifierKey", "name");
+            // Set the default name attribute's UUID as the identifier key
+            form.setValue("identifierKey", defaultAttributeId);
         }
     }, [mode, attributes.length, handleAttributeAdd, form]);
 
@@ -183,6 +234,15 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
         }
     }, []);
 
+    const validName = pluralName && pluralName.trim().length > 0;
+
+    // Clear manual error on pluralName when user enters a valid name
+    useEffect(() => {
+        if (validName && form.formState.errors.pluralName?.type === "manual") {
+            form.clearErrors("pluralName");
+        }
+    }, [validName, form]);
+
     // Sync order array with all attributes and relationships
     useEffect(() => {
         // Create a map of existing order items for quick lookup
@@ -192,26 +252,26 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
 
         // Add any attributes that aren't in the order array
         attributes.forEach((attr) => {
-            const key = `${attr.type}-${attr.key}`;
+            const key = `${attr.type}-${attr.id}`;
             if (!orderMap.has(key)) {
-                newOrder.push({ key: attr.key, type: attr.type });
+                newOrder.push({ key: attr.id, type: attr.type });
                 needsUpdate = true;
             }
         });
 
         // Add any relationships that aren't in the order array
         relationships.forEach((rel) => {
-            const key = `${rel.type}-${rel.key}`;
+            const key = `${rel.type}-${rel.id}`;
             if (!orderMap.has(key)) {
-                newOrder.push({ key: rel.key, type: rel.type });
+                newOrder.push({ key: rel.id, type: rel.type });
                 needsUpdate = true;
             }
         });
 
         // Remove any items from order that no longer exist in attributes or relationships
         const allFieldKeys = new Set([
-            ...attributes.map((a) => `${a.type}-${a.key}`),
-            ...relationships.map((r) => `${r.type}-${r.key}`),
+            ...attributes.map((a) => `${a.type}-${a.id}`),
+            ...relationships.map((r) => `${r.type}-${r.id}`),
         ]);
 
         const filteredOrder = newOrder.filter((o) => allFieldKeys.has(`${o.type}-${o.key}`));
@@ -225,7 +285,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
     const allFields: EntityTypeFieldRow[] = useMemo(() => {
         // Convert attributes to EntityTypeFieldRow
         const attributeRows: EntityTypeFieldRow[] = attributes.map((attr) => ({
-            key: attr.key,
+            id: attr.id,
             label: attr.label,
             type: attr.type,
             required: attr.required,
@@ -241,7 +301,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
 
         // Convert relationships to EntityTypeFieldRow
         const relationshipRows: EntityTypeFieldRow[] = relationships.map((rel) => ({
-            key: rel.key,
+            id: rel.id,
             label: rel.label,
             type: rel.type,
             required: rel.required,
@@ -261,8 +321,8 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
         // Sort based on order array if it exists
         if (order.length > 0) {
             return combined.sort((a, b) => {
-                const aOrderItem = order.find((o) => o.key === a.key && o.type === a.type);
-                const bOrderItem = order.find((o) => o.key === b.key && o.type === b.type);
+                const aOrderItem = order.find((o) => o.key === a.id && o.type === a.type);
+                const bOrderItem = order.find((o) => o.key === b.id && o.type === b.type);
                 const aIndex = aOrderItem ? order.indexOf(aOrderItem) : -1;
                 const bIndex = bOrderItem ? order.indexOf(bOrderItem) : -1;
 
@@ -294,7 +354,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                 </>
             );
 
-        if (identifierKey === row.original.key)
+        if (identifierKey === row.original.id)
             return (
                 <>
                     <TooltipTrigger asChild>
@@ -457,23 +517,23 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
         setEditingAttribute(undefined);
     };
 
-    const handleDeleteField = (key: string, type: EntityPropertyType) => {
+    const handleDeleteField = (id: string, type: EntityPropertyType) => {
         if (type === EntityPropertyType.RELATIONSHIP) {
-            handleRelationshipDelete(key);
+            handleRelationshipDelete(id);
         } else {
-            handleAttributeDelete(key);
+            handleAttributeDelete(id);
         }
     };
 
     const handleEditField = (row: EntityTypeFieldRow) => {
         if (row.type === EntityPropertyType.ATTRIBUTE) {
-            const attribute = attributes.find((attr) => attr.key === row.key);
+            const attribute = attributes.find((attr) => attr.id === row.id);
             if (attribute) {
                 setEditingAttribute(attribute);
                 setDialogOpen(true);
             }
         } else {
-            const relationship = relationships.find((rel) => rel.key === row.key);
+            const relationship = relationships.find((rel) => rel.id === row.id);
             if (relationship) {
                 setEditingAttribute(relationship);
                 setDialogOpen(true);
@@ -484,7 +544,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
     const handleFieldsReorder = (reorderedFields: EntityTypeFieldRow[]) => {
         // Create new order array from reordered fields
         const newOrder: EntityTypeOrderingKey[] = reorderedFields.map((field) => ({
-            key: field.key,
+            key: field.id,
             type: field.type,
         }));
 
@@ -544,28 +604,59 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
 
                     {/* Tabs */}
                     <Tabs defaultValue="configuration" className="w-full">
-                        <TabsList className="justify-start w-1/3">
-                            <TabsTrigger value="configuration">
-                                <div className="flex items-center gap-2">
-                                    Configuration
-                                    {tabErrors.configuration && (
-                                        <AlertCircle className="size-4 mr-1 text-destructive" />
-                                    )}
-                                </div>
-                            </TabsTrigger>
-                            <TabsTrigger value="attributes">
-                                <div className="flex items-center gap-2">
-                                    Attributes
-                                    {tabErrors.attributes && (
-                                        <AlertCircle className="size-4 mr-1 text-destructive" />
-                                    )}
-                                    {allFields.length > 0 && (
-                                        <Badge className="h-4 w-5 border border-border ">
-                                            {allFields.length}
-                                        </Badge>
-                                    )}
-                                </div>
-                            </TabsTrigger>
+                        <TabsList className="justify-start w-2/5">
+                            <div className="w-auto flex flex-grow">
+                                <TabsTrigger value="configuration">
+                                    <div className="flex items-center gap-2">
+                                        Configuration
+                                        {tabErrors.configuration && (
+                                            <AlertCircle className="size-4 mr-1 text-destructive" />
+                                        )}
+                                    </div>
+                                </TabsTrigger>
+                            </div>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div
+                                            className="flex flex-grow w-auto"
+                                            onClick={(e) => {
+                                                if (!validName) {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    // Trigger validation and focus on pluralName field
+                                                    form.setError("pluralName", {
+                                                        type: "manual",
+                                                        message: "Plural name is required",
+                                                    });
+                                                    form.setFocus("pluralName");
+                                                }
+                                            }}
+                                        >
+                                            <TabsTrigger value="attributes" disabled={!validName}>
+                                                <div className="flex items-center gap-2">
+                                                    Attributes
+                                                    {tabErrors.attributes && (
+                                                        <AlertCircle className="size-4 mr-1 text-destructive" />
+                                                    )}
+                                                    {allFields.length > 0 && (
+                                                        <Badge className="h-4 w-5 border border-border ">
+                                                            {allFields.length}
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            </TabsTrigger>
+                                        </div>
+                                    </TooltipTrigger>
+
+                                    <TooltipContent>
+                                        <p className="text-xs">
+                                            Please configure the entity name before adding
+                                            attributes.
+                                        </p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         </TabsList>
 
                         {/* Configuration Tab */}
@@ -598,7 +689,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                                         setDialogOpen(true);
                                     }}
                                 >
-                                    <Plus className="size-4 mr-1 mr-2" />
+                                    <Plus className="size-4 mr-2" />
                                     Add Attribute
                                 </Button>
                             </div>
@@ -652,7 +743,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                                 data={allFields}
                                 enableDragDrop
                                 onReorder={handleFieldsReorder}
-                                getRowId={(row) => row.key}
+                                getRowId={(row) => row.id}
                                 search={{
                                     enabled: true,
                                     searchableColumns: ["label"],
@@ -693,7 +784,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                                             label: "Delete",
                                             icon: Trash2,
                                             onClick: (row) => {
-                                                handleDeleteField(row.key, row.type);
+                                                handleDeleteField(row.id, row.type);
                                             },
                                             variant: "destructive",
                                             disabled: (row) => row?.protected || false,
@@ -724,6 +815,8 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                 currentAttributes={attributes}
                 currentRelationships={relationships}
                 identifierKey={identifierKey}
+                currentFormKey={form.watch("key")}
+                currentFormPluralName={form.watch("pluralName")}
             />
         </>
     );

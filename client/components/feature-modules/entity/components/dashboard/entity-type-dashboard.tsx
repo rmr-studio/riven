@@ -62,6 +62,10 @@ export const EntityTypeOverviewDashboard = () => {
             label: entityType.name.plural,
             href: `/dashboard/organisation/${organisationId}/entity/${entityType.key}`,
         },
+        {
+            label: "Settings",
+            href: `/dashboard/organisation/${organisationId}/entity/${entityType.key}/settings`,
+        },
     ];
 
     return (
@@ -70,11 +74,7 @@ export const EntityTypeOverviewDashboard = () => {
                 <BreadCrumbGroup items={trail} />
             </header>
             <section>
-                <EntityTypeOverview
-                    organisationId={organisationId}
-                    entityType={entityType}
-                    mode="edit"
-                />
+                <EntityTypeOverview organisationId={organisationId} entityType={entityType} />
             </section>
         </div>
     );

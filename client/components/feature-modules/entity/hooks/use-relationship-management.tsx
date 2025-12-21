@@ -12,7 +12,7 @@ export interface UseRelationshipManagementReturn {
     relationships: RelationshipFormData[];
     handleRelationshipAdd: (data: RelationshipFormData) => void;
     handleRelationshipEdit: (data: RelationshipFormData) => void;
-    handleRelationshipDelete: (key: string) => void;
+    handleRelationshipDelete: (id: string) => void;
     handleRelationshipsReorder: (reordered: RelationshipFormData[]) => void;
     editRelationship: (row: RelationshipFormData) => RelationshipFormData | undefined;
 }
@@ -29,8 +29,8 @@ export function useRelationshipManagement(
         if (entityType?.relationships) {
             const existingRels: RelationshipFormData[] = entityType.relationships.map((rel) => ({
                 type: EntityPropertyType.RELATIONSHIP,
-                key: rel.key,
-                label: rel.name || fromKeyCase(rel.key),
+                id: rel.id,
+                label: rel.name || fromKeyCase(rel.id),
                 cardinality: rel.cardinality,
                 entityTypeKeys: rel.entityTypeKeys || [],
                 allowPolymorphic: rel.allowPolymorphic,
@@ -49,10 +49,10 @@ export function useRelationshipManagement(
 
         return [...relationships].sort((a, b) => {
             const aOrderItem = order.find(
-                (o) => o.key === a.key && o.type === EntityPropertyType.RELATIONSHIP
+                (o) => o.key === a.id && o.type === EntityPropertyType.RELATIONSHIP
             );
             const bOrderItem = order.find(
-                (o) => o.key === b.key && o.type === EntityPropertyType.RELATIONSHIP
+                (o) => o.key === b.id && o.type === EntityPropertyType.RELATIONSHIP
             );
             const aIndex = aOrderItem ? order.indexOf(aOrderItem) : -1;
             const bIndex = bOrderItem ? order.indexOf(bOrderItem) : -1;
@@ -70,10 +70,10 @@ export function useRelationshipManagement(
     }, [relationships, order]);
 
     const handleRelationshipAdd = (data: RelationshipFormData) => {
-        // Check for duplicate keys
+        // Check for duplicate ids or labels
         if (
             relationships.find(
-                (rel) => rel.key === data.key || toKeyCase(rel.label) === toKeyCase(data.label)
+                (rel) => rel.id === data.id || toKeyCase(rel.label) === toKeyCase(data.label)
             )
         ) {
             toast.error("This relationship already exists.");
@@ -85,7 +85,7 @@ export function useRelationshipManagement(
         if (onOrderChange) {
             const newOrder: EntityTypeOrderingKey[] = [
                 ...order,
-                { key: data.key, type: EntityPropertyType.RELATIONSHIP },
+                { key: data.id, type: EntityPropertyType.RELATIONSHIP },
             ];
             onOrderChange(newOrder);
         }
@@ -93,7 +93,7 @@ export function useRelationshipManagement(
 
     const handleRelationshipEdit = (data: RelationshipFormData) => {
         setRelationships((prev) => {
-            const index = prev.findIndex((rel) => rel.key === data.key);
+            const index = prev.findIndex((rel) => rel.id === data.id);
             if (index === -1) return prev;
             const updated = [...prev];
             updated[index] = data;
@@ -101,17 +101,17 @@ export function useRelationshipManagement(
         });
     };
 
-    const handleRelationshipDelete = (key: string) => {
-        const relationship = relationships.find((rel) => toKeyCase(rel.key) === toKeyCase(key));
+    const handleRelationshipDelete = (id: string) => {
+        const relationship = relationships.find((rel) => rel.id === id);
         if (relationship?.protected) {
             toast.error("This relationship is protected and cannot be deleted.");
             return;
         }
-        setRelationships((prev) => prev.filter((rel) => toKeyCase(rel.key) !== toKeyCase(key)));
+        setRelationships((prev) => prev.filter((rel) => rel.id !== id));
         // Remove from order array
         if (relationship && onOrderChange) {
             const newOrder = order.filter(
-                (o) => !(o.key === relationship.key && o.type === EntityPropertyType.RELATIONSHIP)
+                (o) => !(o.key === relationship.id && o.type === EntityPropertyType.RELATIONSHIP)
             );
             onOrderChange(newOrder);
         }
@@ -120,16 +120,16 @@ export function useRelationshipManagement(
     const handleRelationshipsReorder = (reorderedRelationships: RelationshipFormData[]) => {
         if (!onOrderChange) return;
 
-        // Get keys for reordered relationships
+        // Get ids for reordered relationships
         const relationshipKeys: EntityTypeOrderingKey[] = reorderedRelationships.map((rel) => ({
-            key: rel.key,
+            key: rel.id,
             type: EntityPropertyType.RELATIONSHIP,
         }));
         onOrderChange(relationshipKeys);
     };
 
     const editRelationship = (row: RelationshipFormData): RelationshipFormData | undefined => {
-        return relationships.find((rel) => rel.key === row.key);
+        return relationships.find((rel) => rel.id === row.id);
     };
 
     return {

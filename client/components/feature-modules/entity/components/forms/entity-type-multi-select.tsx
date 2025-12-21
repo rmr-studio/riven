@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/util/utils";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Repeat } from "lucide-react";
 import { FC, useState } from "react";
 import { EntityType } from "../../interface/entity.interface";
 
@@ -24,6 +24,7 @@ interface Props {
     onSelectionChange: (keys: string[], allowPolymorphic: boolean) => void;
     disabled?: boolean;
     hasError?: boolean;
+    currentEntityKey?: string;
 }
 
 export const EntityTypeMultiSelect: FC<Props> = ({
@@ -34,6 +35,7 @@ export const EntityTypeMultiSelect: FC<Props> = ({
     onSelectionChange,
     disabled = false,
     hasError = false,
+    currentEntityKey,
 }) => {
     const [open, setOpen] = useState(false);
 
@@ -69,7 +71,14 @@ export const EntityTypeMultiSelect: FC<Props> = ({
         }
         if (selectedKeys.length === 1) {
             const selected = availableTypes.find((et) => et.key === selectedKeys[0]);
-            return selected?.name.plural || "1 selected";
+            if (!selected) return "1 selected";
+
+            // Display "This entity" with loop icon for self-reference if no plural name
+            if (selected.key === currentEntityKey && !selected.name.plural) {
+                return "This entity";
+            }
+
+            return selected.name.plural || "This entity";
         }
         return `${selectedKeys.length} entity types selected`;
     };
@@ -119,10 +128,16 @@ export const EntityTypeMultiSelect: FC<Props> = ({
                             {/* Entity Types List */}
                             {availableTypes.map((entityType) => {
                                 const isSelected = selectedKeys.includes(entityType.key);
+                                const isSelfReference = entityType.key === currentEntityKey;
+                                const displayName =
+                                    isSelfReference && !entityType.name.plural
+                                        ? "This entity"
+                                        : entityType.name.plural;
+
                                 return (
                                     <CommandItem
                                         key={entityType.key}
-                                        value={entityType.name.plural}
+                                        value={displayName}
                                         onSelect={() => handleEntityTypeToggle(entityType.key)}
                                         className="cursor-pointer"
                                     >
@@ -131,12 +146,18 @@ export const EntityTypeMultiSelect: FC<Props> = ({
                                             className="mr-2 pointer-events-none"
                                         />
                                         <div className="flex items-center gap-2">
-                                            <div className="flex h-5 w-5 items-center justify-center rounded bg-primary/10">
-                                                <span className="text-xs">
-                                                    {entityType.name.plural.charAt(0)}
-                                                </span>
-                                            </div>
-                                            <span>{entityType.name.plural}</span>
+                                            {isSelfReference ? (
+                                                <div className="flex h-5 w-5 items-center justify-center rounded bg-primary/10">
+                                                    <Repeat className="h-3 w-3 text-primary" />
+                                                </div>
+                                            ) : (
+                                                <div className="flex h-5 w-5 items-center justify-center rounded bg-primary/10">
+                                                    <span className="text-xs">
+                                                        {displayName.charAt(0)}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            <span>{displayName}</span>
                                         </div>
                                         {isSelected && (
                                             <Check className="ml-auto h-4 w-4 text-primary" />

@@ -60,19 +60,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/entity/schema/": {
+    "/api/v1/entity/schema/organisation/{organisationId}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Get all entity types for an organisation
+         * @description Retrieves all entity types associated with the specified organisation.
+         */
+        get: operations["getEntityTypesForOrganisation"];
         /**
          * Updates an existing entity type
          * @description Updates the data for an already existing entity type for the specified organisation.
          */
-        put: operations["createEntityType_1"];
+        put: operations["updateEntityType"];
         /**
          * Create a new entity type
          * @description Creates and publishes a new entity type for the specified organisation.
@@ -324,26 +328,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/entity/schema/organisation/{organisationId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get all entity types for an organisation
-         * @description Retrieves all entity types associated with the specified organisation.
-         */
-        get: operations["getEntityTypesForOrganisation"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/entity/schema/organisation/{organisationId}/key/{key}": {
         parameters: {
             query?: never;
@@ -356,6 +340,26 @@ export interface paths {
          * @description Retrieves a specific entity type by its key associated with the specified organisation.
          */
         get: operations["getEntityTypeByKeyForOrganisation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entity/relationship/organisation/{organisationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get all polymorphic candidates to opt-in to bi-directional relationships
+         * @description Retrieves all entity types with open polymorphic relationships that can be candidates for bi-directional relationships when creating a new entity type.
+         */
+        get: operations["getPolymorphicCandidatesForOrganisation"];
         put?: never;
         post?: never;
         delete?: never;
@@ -563,16 +567,29 @@ export interface components {
         /** @enum {string} */
         EntityRelationshipCardinality: EntityRelationshipCardinality;
         EntityRelationshipDefinition: {
+            /** Format: uuid */
+            id: string;
             name: string;
-            key: string;
-            sourceKey: string;
-            required: boolean;
-            cardinality: components["schemas"]["EntityRelationshipCardinality"];
+            sourceEntityTypeKey: string;
+            /** Format: uuid */
+            originRelationshipId?: string;
+            relationshipType: components["schemas"]["EntityTypeRelationshipType"];
             entityTypeKeys?: string[];
             allowPolymorphic: boolean;
+            required: boolean;
+            cardinality: components["schemas"]["EntityRelationshipCardinality"];
             bidirectional: boolean;
             bidirectionalEntityTypeKeys?: string[];
             inverseName?: string;
+            protected: boolean;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            /** Format: uuid */
+            createdBy?: string;
+            /** Format: uuid */
+            updatedBy?: string;
         };
         EntityType: {
             /** Format: uuid */
@@ -582,12 +599,13 @@ export interface components {
             version: number;
             name: components["schemas"]["DisplayName"];
             protected: boolean;
+            /** Format: uuid */
             identifierKey: string;
             description?: string;
             /** Format: uuid */
             organisationId?: string;
             type: components["schemas"]["EntityCategory"];
-            schema: components["schemas"]["Schema"];
+            schema: components["schemas"]["SchemaUUID"];
             relationships?: components["schemas"]["EntityRelationshipDefinition"][];
             order: components["schemas"]["EntityTypeOrderingKey"][];
             /** Format: int64 */
@@ -603,9 +621,12 @@ export interface components {
             attributes: components["schemas"]["PairIntegerInteger"];
         };
         EntityTypeOrderingKey: {
+            /** Format: uuid */
             key: string;
             type: components["schemas"]["EntityPropertyType"];
         };
+        /** @enum {string} */
+        EntityTypeRelationshipType: EntityTypeRelationshipType;
         /** @enum {string} */
         OptionSortingType: OptionSortingType;
         PairIntegerInteger: {
@@ -613,20 +634,6 @@ export interface components {
             first: number;
             /** Format: int32 */
             second: number;
-        };
-        Schema: {
-            label?: string;
-            key: components["schemas"]["SchemaType"];
-            type: components["schemas"]["DataType"];
-            format?: components["schemas"]["DataFormat"];
-            required: boolean;
-            properties?: {
-                [key: string]: components["schemas"]["Schema"];
-            };
-            items?: components["schemas"]["Schema"];
-            unique: boolean;
-            protected: boolean;
-            options?: components["schemas"]["SchemaOptions"];
         };
         SchemaOptions: {
             default?: Record<string, never>;
@@ -648,6 +655,77 @@ export interface components {
         };
         /** @enum {string} */
         SchemaType: SchemaType;
+        SchemaUUID: {
+            label?: string;
+            key: components["schemas"]["SchemaType"];
+            type: components["schemas"]["DataType"];
+            format?: components["schemas"]["DataFormat"];
+            required: boolean;
+            properties?: {
+                [key: string]: components["schemas"]["SchemaUUID"];
+            };
+            items?: components["schemas"]["SchemaUUID"];
+            unique: boolean;
+            protected: boolean;
+            options?: components["schemas"]["SchemaOptions"];
+        };
+        EntityImpactSummary: {
+            entityTypeKey: string;
+            /** Format: uuid */
+            relationshipId: string;
+            relationshipName: string;
+        };
+        EntityTypeEntity: {
+            /** Format: uuid */
+            id?: string;
+            key: string;
+            displayNameSingular: string;
+            displayNamePlural: string;
+            /** Format: uuid */
+            identifierKey: string;
+            description?: string;
+            /** Format: uuid */
+            organisationId?: string;
+            protected: boolean;
+            type: components["schemas"]["EntityCategory"];
+            /** Format: int32 */
+            version: number;
+            schema: components["schemas"]["SchemaUUID"];
+            relationships?: components["schemas"]["EntityRelationshipDefinition"][];
+            order: components["schemas"]["EntityTypeOrderingKey"][];
+            /** Format: int64 */
+            entitiesCount: number;
+            archived: boolean;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            /** Format: uuid */
+            createdBy?: string;
+            /** Format: uuid */
+            updatedBy?: string;
+        };
+        /** @enum {string} */
+        EntityTypeRelationshipDataLossReason: EntityTypeRelationshipDataLossReason;
+        EntityTypeRelationshipDataLossWarning: {
+            entityTypeKey: string;
+            relationship: components["schemas"]["EntityRelationshipDefinition"];
+            reason: components["schemas"]["EntityTypeRelationshipDataLossReason"];
+            /** Format: int64 */
+            estimatedImpactCount?: number;
+        };
+        EntityTypeRelationshipImpactAnalysis: {
+            affectedEntityTypes: string[];
+            dataLossWarnings: components["schemas"]["EntityTypeRelationshipDataLossWarning"][];
+            modifications: components["schemas"]["EntityImpactSummary"][];
+            removals: components["schemas"]["EntityImpactSummary"][];
+        };
+        UpdateEntityTypeResponse: {
+            success: boolean;
+            error?: string;
+            entityType?: components["schemas"]["EntityTypeEntity"];
+            impact?: components["schemas"]["EntityTypeRelationshipImpactAnalysis"];
+        };
         BindingSource: {
             type: string;
         };
@@ -707,7 +785,7 @@ export interface components {
             archived: boolean;
             strictness: components["schemas"]["ValidationScope"];
             system: boolean;
-            schema: components["schemas"]["Schema"];
+            schema: components["schemas"]["SchemaString"];
             display: components["schemas"]["BlockDisplay"];
             /** Format: date-time */
             createdAt?: string;
@@ -789,6 +867,20 @@ export interface components {
         } & (Omit<components["schemas"]["Operand"], "kind"> & {
             path: string;
         });
+        SchemaString: {
+            label?: string;
+            key: components["schemas"]["SchemaType"];
+            type: components["schemas"]["DataType"];
+            format?: components["schemas"]["DataFormat"];
+            required: boolean;
+            properties?: {
+                [key: string]: components["schemas"]["SchemaString"];
+            };
+            items?: components["schemas"]["SchemaString"];
+            unique: boolean;
+            protected: boolean;
+            options?: components["schemas"]["SchemaOptions"];
+        };
         ThemeTokens: {
             variant?: string;
             colorRole?: string;
@@ -818,21 +910,15 @@ export interface components {
         CreateEntityTypeRequest: {
             name: components["schemas"]["DisplayName"];
             key: string;
-            /** Format: uuid */
-            organisationId: string;
-            identifier: string;
             description?: string;
             type: components["schemas"]["EntityCategory"];
-            schema: components["schemas"]["Schema"];
-            relationships?: components["schemas"]["EntityRelationshipDefinition"][];
-            order?: components["schemas"]["EntityTypeOrderingKey"][];
         };
         CreateBlockTypeRequest: {
             key: string;
             name: string;
             description?: string;
             mode: components["schemas"]["ValidationScope"];
-            schema: components["schemas"]["Schema"];
+            schema: components["schemas"]["SchemaString"];
             display: components["schemas"]["BlockDisplay"];
             /** Format: uuid */
             organisationId: string;
@@ -1001,9 +1087,9 @@ export interface components {
         ListFilterLogicType: ListFilterLogicType;
         Metadata: {
             type: components["schemas"]["BlockMetadataType"];
-            meta: components["schemas"]["BlockMeta"];
             readonly: boolean;
             deletable: boolean;
+            meta: components["schemas"]["BlockMeta"];
         };
         Node: {
             warnings: string[];
@@ -1262,6 +1348,11 @@ export interface components {
                 [key: string]: string;
             };
         };
+        EntityTypePolymorphicCandidates: {
+            entityTypeKey: string;
+            entityTypeName: components["schemas"]["DisplayName"];
+            relationship: components["schemas"]["EntityRelationshipDefinition"];
+        };
         /**
          * @description Enumeration of possible entity types within the system.
          * @enum {string}
@@ -1449,11 +1540,55 @@ export interface operations {
             };
         };
     };
-    createEntityType_1: {
+    getEntityTypesForOrganisation: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                organisationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Entity types retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"][];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"][];
+                };
+            };
+            /** @description Organisation not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"][];
+                };
+            };
+        };
+    };
+    updateEntityType: {
+        parameters: {
+            query?: {
+                impactConfirmed?: boolean;
+            };
+            header?: never;
+            path: {
+                organisationId: string;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -1468,7 +1603,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["EntityType"];
+                    "*/*": components["schemas"]["UpdateEntityTypeResponse"];
                 };
             };
             /** @description Invalid request data */
@@ -1477,7 +1612,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["EntityType"];
+                    "*/*": components["schemas"]["UpdateEntityTypeResponse"];
                 };
             };
             /** @description Unauthorized access */
@@ -1486,7 +1621,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["EntityType"];
+                    "*/*": components["schemas"]["UpdateEntityTypeResponse"];
                 };
             };
         };
@@ -1495,7 +1630,9 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                organisationId: string;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -2047,46 +2184,6 @@ export interface operations {
             };
         };
     };
-    getEntityTypesForOrganisation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                organisationId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Entity types retrieved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["EntityType"][];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["EntityType"][];
-                };
-            };
-            /** @description Organisation not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["EntityType"][];
-                };
-            };
-        };
-    };
     getEntityTypeByKeyForOrganisation: {
         parameters: {
             query?: never;
@@ -2124,6 +2221,46 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["EntityType"];
+                };
+            };
+        };
+    };
+    getPolymorphicCandidatesForOrganisation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organisationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Polymorphic candidates retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypePolymorphicCandidates"][];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypePolymorphicCandidates"][];
+                };
+            };
+            /** @description Organisation not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypePolymorphicCandidates"][];
                 };
             };
         };
@@ -2353,6 +2490,10 @@ export enum EntityRelationshipCardinality {
     MANY_TO_ONE = "MANY_TO_ONE",
     MANY_TO_MANY = "MANY_TO_MANY"
 }
+export enum EntityTypeRelationshipType {
+    REFERENCE = "REFERENCE",
+    ORIGIN = "ORIGIN"
+}
 export enum OptionSortingType {
     MANUAL = "MANUAL",
     ALPHABETICAL = "ALPHABETICAL",
@@ -2375,6 +2516,11 @@ export enum SchemaType {
     MULTI_SELECT = "MULTI_SELECT",
     FILE_ATTACHMENT = "FILE_ATTACHMENT",
     LOCATION = "LOCATION"
+}
+export enum EntityTypeRelationshipDataLossReason {
+    RELATIONSHIP_DELETED = "RELATIONSHIP_DELETED",
+    ENTITY_TYPE_REMOVED_FROM_TARGET = "ENTITY_TYPE_REMOVED_FROM_TARGET",
+    CARDINALITY_RESTRICTION = "CARDINALITY_RESTRICTION"
 }
 export enum BlockFetchPolicy {
     INHERIT = "INHERIT",

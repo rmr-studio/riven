@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Database, Edit, Plus, Trash2 } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FC, useMemo } from "react";
 import { useEntityTypes } from "../../hooks/use-entity-types";
 import { EntityType } from "../../interface/entity.interface";
+import { NewEntityTypeForm } from "../forms/new-entity-type";
 
 interface Props {
     organisationId: string;
@@ -87,12 +87,12 @@ export const EntityTypesOverview: FC<Props> = ({ organisationId }) => {
                         Modify and add entity types in your workspace
                     </p>
                 </div>
-                <Link href={`/dashboard/organisation/${organisationId}/entity/new`}>
+                <NewEntityTypeForm organisationId={organisationId} entityTypes={types}>
                     <Button>
                         <Plus className="h-4 w-4 mr-2" />
                         New Entity Type
                     </Button>
-                </Link>
+                </NewEntityTypeForm>
             </div>
 
             {/* Data Table */}
@@ -138,7 +138,7 @@ export const EntityTypesOverview: FC<Props> = ({ organisationId }) => {
                             icon: Edit,
                             onClick: (row) => {
                                 router.push(
-                                    `/dashboard/organisation/${organisationId}/entity/${row.key}`
+                                    `/dashboard/organisation/${organisationId}/entity/${row.key}/settings`
                                 );
                             },
                             separator: true,

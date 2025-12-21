@@ -69,14 +69,15 @@ export class EntityTypeService {
 
     static async publishEntityType(
         session: Session | null,
+        organisationId: string,
         request: CreateEntityTypeRequest
     ): Promise<EntityType> {
         try {
             validateSession(session);
-            validateUuid(request.organisationId);
+            validateUuid(organisationId);
             const url = api();
 
-            const response = await fetch(`${url}/v1/entity/schema/`, {
+            const response = await fetch(`${url}/v1/entity/schema/organisation/${organisationId}`, {
                 method: "POST",
                 body: JSON.stringify(request),
                 headers: {
@@ -98,13 +99,15 @@ export class EntityTypeService {
 
     static async updateEntityType(
         session: Session | null,
+        organisationId: string,
         entityType: EntityType
     ): Promise<EntityType> {
         try {
             validateSession(session);
+            validateUuid(organisationId);
             const url = api();
 
-            const response = await fetch(`${url}/v1/entity/schema/`, {
+            const response = await fetch(`${url}/v1/entity/schema/organisation/${organisationId}`, {
                 method: "PUT",
                 body: JSON.stringify(entityType),
                 headers: {

@@ -14,8 +14,8 @@ export type Entity = components["schemas"]["Entity"];
 export type EntityRelationshipDefinition = components["schemas"]["EntityRelationshipDefinition"];
 
 export interface EntityTypeAttributeData {
-    // Persistent Hash map lookup key => Cannot be changed after creation. Also unique identifier for relationships
-    key: string;
+    // Persistent Hash map lookup uuid => Cannot be changed after creation. Also unique identifier for relationships
+    id: string;
     // Human readable display name
     label: string;
     type: EntityPropertyType;
@@ -60,8 +60,7 @@ export const isRelationshipType = (
     return data.type === EntityPropertyType.RELATIONSHIP;
 };
 
-export type RelationshipLimit = 'singular' | 'many';
-
+export type RelationshipLimit = "singular" | "many";
 
 // Export overlap detection types
 export type {

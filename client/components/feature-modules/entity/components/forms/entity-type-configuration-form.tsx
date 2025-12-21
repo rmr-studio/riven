@@ -41,7 +41,7 @@ export const ConfigurationForm: FC<Props> = ({
             <h2 className="text-lg font-semibold mb-4">General</h2>
 
             <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-6 items-start">
                     {/* Name */}
                     <FormField
                         control={form.control}
@@ -135,7 +135,7 @@ export const ConfigurationForm: FC<Props> = ({
                                 </FormControl>
                                 <SelectContent>
                                     {availableIdentifiers.map((attr) => (
-                                        <SelectItem key={attr.key} value={attr.key}>
+                                        <SelectItem key={attr.id} value={attr.id}>
                                             {attr.label}
                                         </SelectItem>
                                     ))}
@@ -170,38 +170,6 @@ export const ConfigurationForm: FC<Props> = ({
                                     {...field}
                                 />
                             </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                {/* Type */}
-                <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Type</FormLabel>
-                            <Select
-                                onValueChange={field.onChange}
-                                value={field.value}
-                                disabled={mode === "edit"}
-                            >
-                                <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    <SelectItem value="STANDARD">Standard</SelectItem>
-                                    <SelectItem value="RELATIONSHIP">Relationship</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            {mode === "edit" && (
-                                <FormDescription>
-                                    Entity type cannot be changed after creation
-                                </FormDescription>
-                            )}
                             <FormMessage />
                         </FormItem>
                     )}
