@@ -72,10 +72,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
 
     // Form management hook
     const { handleSubmit: handleFormSubmit } = useEntityTypeForm(organisationId, entityType);
-    const { form, keyManuallyEdited, setKeyManuallyEdited } = useEntityTypeForm(
-        organisationId,
-        entityType
-    );
+    const { form } = useEntityTypeForm(organisationId, entityType);
     const identifierKey = form.watch("identifierKey");
     // Attribute management hook
     const {
@@ -114,56 +111,6 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
     const previousKeyRef = useRef<string>(currentKey);
     const isUpdatingKeyRef = useRef(false);
 
-    // Update self-referencing relationships when the entity type key changes during creation
-    useEffect(() => {
-        // Skip if we're already updating to avoid infinite loops
-        if (isUpdatingKeyRef.current) {
-            return;
-        }
-
-        if (mode === "create" && previousKeyRef.current && currentKey !== previousKeyRef.current) {
-            const oldKey = previousKeyRef.current;
-            const newKey = currentKey;
-
-            // Mark that we're updating
-            isUpdatingKeyRef.current = true;
-
-            // Update all relationships that reference the old key
-            relationships.forEach((rel) => {
-                let needsUpdate = false;
-                const updatedRel = { ...rel };
-
-                // Update entityTypeKeys if it contains the old key
-                if (rel.entityTypeKeys?.includes(oldKey)) {
-                    updatedRel.entityTypeKeys = rel.entityTypeKeys.map((key) =>
-                        key === oldKey ? newKey : key
-                    );
-                    needsUpdate = true;
-                }
-
-                // Update bidirectionalEntityTypeKeys if it contains the old key
-                if (rel.bidirectionalEntityTypeKeys?.includes(oldKey)) {
-                    updatedRel.bidirectionalEntityTypeKeys = rel.bidirectionalEntityTypeKeys.map(
-                        (key) => (key === oldKey ? newKey : key)
-                    );
-                    needsUpdate = true;
-                }
-
-                // Only update if changes were made
-                if (needsUpdate) {
-                    handleRelationshipEdit(updatedRel);
-                }
-            });
-
-            // Update the previous key reference and reset the updating flag
-            previousKeyRef.current = newKey;
-            isUpdatingKeyRef.current = false;
-        } else if (mode === "create" && !previousKeyRef.current) {
-            // Initialize the previous key reference on first render
-            previousKeyRef.current = currentKey;
-        }
-    }, [currentKey, mode, relationships, handleRelationshipEdit]);
-
     // Determine which tabs have validation errors
     const tabErrors = useMemo(() => {
         const errors = form.formState.errors;
@@ -188,28 +135,6 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
             attributes: hasAttributeErrors,
         };
     }, [form.formState.errors]);
-
-    // Auto-generate default "name" attribute for new entity types
-    useEffect(() => {
-        if (mode === "create" && attributes.length === 0 && !hasInitialized.current) {
-            hasInitialized.current = true;
-            // Generate a UUID for the default name attribute
-            const defaultAttributeId = require("uuid").v4();
-            const defaultNameAttribute: AttributeFormData = {
-                type: EntityPropertyType.ATTRIBUTE,
-                id: defaultAttributeId,
-                label: "Name",
-                schemaKey: SchemaType.TEXT,
-                dataType: DataType.STRING,
-                required: true,
-                unique: true,
-                protected: true,
-            };
-            handleAttributeAdd(defaultNameAttribute);
-            // Set the default name attribute's UUID as the identifier key
-            form.setValue("identifierKey", defaultAttributeId);
-        }
-    }, [mode, attributes.length, handleAttributeAdd, form]);
 
     // Check for relationship suggestions from overlap detection
     useEffect(() => {
@@ -562,20 +487,13 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
                                 <Database className="h-6 w-6 text-primary" />
                             </div>
                             <div>
-                                <h1 className="text-2xl font-semibold">
-                                    {pluralName ||
-                                        (mode === "create"
-                                            ? "New Entity Type"
-                                            : entityType?.name.plural || "Entity Type")}
-                                </h1>
-                                {mode === "edit" && entityType?.type && (
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <Badge variant="secondary">{entityType.type}</Badge>
-                                        <span className="text-sm text-muted-foreground">
-                                            Manage object attributes and other relevant settings
-                                        </span>
-                                    </div>
-                                )}
+                                <h1 className="text-2xl font-semibold">{pluralName}</h1>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <Badge variant="secondary">{entityType.type}</Badge>
+                                    <span className="text-sm text-muted-foreground">
+                                        Manage object attributes and other relevant settings
+                                    </span>
+                                </div>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -583,12 +501,8 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
                                 <Button variant="outline">Back</Button>
                             </Link>
                             <Button onClick={handleSaveClick}>
-                                {mode === "create" ? (
-                                    <Plus className="size-4 mr-1" />
-                                ) : (
-                                    <Save className="size-4 mr-1" />
-                                )}
-                                {mode === "create" ? "Create" : "Save Changes"}
+                                <Save className="size-4 mr-1" />
+                                Save Changes
                             </Button>
                         </div>
                     </div>
@@ -663,12 +577,9 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
                         <TabsContent value="configuration" className="space-y-6">
                             <ConfigurationForm
                                 form={form}
-                                keyManuallyEdited={keyManuallyEdited}
-                                setKeyManuallyEdited={setKeyManuallyEdited}
                                 availableIdentifiers={attributes.filter(
                                     (attr) => attr.unique && attr.required
                                 )}
-                                mode={mode}
                             />
                         </TabsContent>
 

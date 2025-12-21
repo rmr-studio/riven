@@ -23,19 +23,10 @@ import { AttributeFormData } from "../../interface/entity.interface";
 
 interface Props {
     form: UseFormReturn<EntityTypeFormValues>;
-    mode: "create" | "edit";
-    keyManuallyEdited: boolean;
-    setKeyManuallyEdited: (value: boolean) => void;
     availableIdentifiers: AttributeFormData[];
 }
 
-export const ConfigurationForm: FC<Props> = ({
-    form,
-    mode,
-    keyManuallyEdited,
-    setKeyManuallyEdited,
-    availableIdentifiers,
-}) => {
+export const ConfigurationForm: FC<Props> = ({ form, availableIdentifiers }) => {
     return (
         <div className="rounded-lg border bg-card p-6">
             <h2 className="text-lg font-semibold mb-4">General</h2>
@@ -86,40 +77,24 @@ export const ConfigurationForm: FC<Props> = ({
                     />
                 </div>
 
-                {/* Key / Slug */}
+                {/* Description */}
                 <FormField
                     control={form.control}
-                    name="key"
+                    name="description"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Identifier / Slug</FormLabel>
+                            <FormLabel>Description</FormLabel>
                             <FormControl>
-                                <Input
-                                    placeholder="e.g., companies"
-                                    disabled={mode === "edit"}
+                                <Textarea
+                                    placeholder="Describe what this entity type represents..."
+                                    rows={3}
                                     {...field}
-                                    onChange={(e) => {
-                                        field.onChange(e);
-                                        if (mode === "create") {
-                                            setKeyManuallyEdited(true);
-                                        }
-                                    }}
                                 />
                             </FormControl>
-                            <FormDescription className="text-xs italic">
-                                A unique key used to identify and link this particular entity type.
-                                This cannot be changed later.
-                                {mode === "create" && !keyManuallyEdited && (
-                                    <span className="block mt-1 text-muted-foreground">
-                                        Auto-generated from plural noun. Edit to customize.
-                                    </span>
-                                )}
-                            </FormDescription>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-
                 {/* Identifier Key */}
                 <FormField
                     control={form.control}
@@ -151,25 +126,6 @@ export const ConfigurationForm: FC<Props> = ({
                                 value must reference an attribute marked as "Unique", and must be a
                                 Required field.
                             </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                {/* Description */}
-                <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Description</FormLabel>
-                            <FormControl>
-                                <Textarea
-                                    placeholder="Describe what this entity type represents..."
-                                    rows={3}
-                                    {...field}
-                                />
-                            </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}

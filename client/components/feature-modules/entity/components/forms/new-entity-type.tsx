@@ -23,7 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ChildNodeProps } from "@/lib/interfaces/interface";
 import { toKeyCase } from "@/lib/util/utils";
 import { PopoverClose } from "@radix-ui/react-popover";
-import { Database, Info, Plus } from "lucide-react";
+import { Blocks, Database, Info, Plus, Workflow } from "lucide-react";
 import { FC, useEffect } from "react";
 import { useNewEntityTypeForm } from "../../hooks/use-new-entity-type-form";
 import { EntityType } from "../../interface/entity.interface";
@@ -159,20 +159,58 @@ export const NewEntityTypeForm: FC<Props> = ({ entityTypes = [], organisationId,
                                                         // Prevent the click from closing the popover
                                                         e.stopPropagation();
                                                     }}
-                                                    className="min-w-3xs w-full"
+                                                    className="flex pl-0 w-52 overflow-hidden"
                                                 >
-                                                    <SelectValue />
+                                                    <div className="flex h-9 w-9 items-center justify-center bg-primary/5 shadow-sm flex-shrink-0">
+                                                        {field.value === "STANDARD" ? (
+                                                            <Blocks className="h-4 w-4 text-primary" />
+                                                        ) : (
+                                                            <Workflow className="h-4 w-4 text-primary" />
+                                                        )}
+                                                    </div>
+                                                    <SelectValue>
+                                                        {field.value === "STANDARD"
+                                                            ? "Standard"
+                                                            : "Relationship"}
+                                                    </SelectValue>
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent
+                                                align="end"
+                                                className="max-w-sm"
                                                 onCloseAutoFocus={(e) => {
                                                     // Prevent focus returning to popover which would close it
                                                     e.preventDefault();
                                                 }}
                                             >
-                                                <SelectItem value="STANDARD">Standard</SelectItem>
-                                                <SelectItem value="RELATIONSHIP">
-                                                    Relationship
+                                                <SelectItem value="STANDARD" textValue="Standard">
+                                                    <div className="flex items-center">
+                                                        <Blocks className="size-4.5 mr-3" />
+                                                        <div>
+                                                            <h3 className="mb-1">Standard</h3>
+                                                            <div className="text-xs leading-tight text-muted-foreground max-w-2xs">
+                                                                Standard entities can exist
+                                                                standalone or link to other
+                                                                entities.
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem
+                                                    value="RELATIONSHIP"
+                                                    textValue="Relationship"
+                                                >
+                                                    <div className="flex items-center">
+                                                        <Workflow className="size-4.5 mr-3" />
+                                                        <div>
+                                                            <h3 className="mb-1">Relationship</h3>
+                                                            <div className="text-xs leading-tight text-muted-foreground max-w-2xs">
+                                                                Relationship Entities are designed
+                                                                to represent connections between
+                                                                other entities.
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </SelectItem>
                                             </SelectContent>
                                         </Select>
