@@ -60,6 +60,9 @@ export const isRelationshipType = (
     return data.type === EntityPropertyType.RELATIONSHIP;
 };
 
+export type RelationshipLimit = 'singular' | 'many';
+
+
 // Export overlap detection types
 export type {
     OverlapDetectionResult,

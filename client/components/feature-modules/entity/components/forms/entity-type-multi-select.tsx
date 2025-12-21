@@ -11,6 +11,7 @@ import {
     CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/util/utils";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { FC, useState } from "react";
 import { EntityType } from "../../interface/entity.interface";
@@ -22,6 +23,7 @@ interface Props {
     allowPolymorphic: boolean;
     onSelectionChange: (keys: string[], allowPolymorphic: boolean) => void;
     disabled?: boolean;
+    hasError?: boolean;
 }
 
 export const EntityTypeMultiSelect: FC<Props> = ({
@@ -31,6 +33,7 @@ export const EntityTypeMultiSelect: FC<Props> = ({
     allowPolymorphic,
     onSelectionChange,
     disabled = false,
+    hasError = false,
 }) => {
     const [open, setOpen] = useState(false);
 
@@ -78,7 +81,10 @@ export const EntityTypeMultiSelect: FC<Props> = ({
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-full justify-between"
+                    className={cn(
+                        "w-full justify-between",
+                        hasError && "border-destructive focus-visible:ring-destructive"
+                    )}
                     disabled={disabled}
                 >
                     <span className="truncate">{getDisplayText()}</span>

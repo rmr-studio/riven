@@ -14,7 +14,6 @@ import { UseFormReturn } from "react-hook-form";
 import { useRelationshipOverlapDetection } from "../../hooks/use-relationship-overlap-detection";
 import { EntityType, RelationshipFormData } from "../../interface/entity.interface";
 import { AttributeFormValues } from "../types/entity-type-attribute-dialog";
-import { CardinalitySelector } from "./cardinality-selector";
 import { EntityTypeMultiSelect } from "./entity-type-multi-select";
 import { RelationshipOverlapAlert } from "./relationship-overlap-alert";
 
@@ -83,7 +82,7 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form
         [type?.key]
     );
 
-    // Clean up bidirectionalEntityTypeKeys when bidirectional is disabled or entity selection changes
+    // Manage bidirectionalEntityTypeKeys based on entity selection changes
     useEffect(() => {
         if (!bidirectional) {
             // Clear bidirectional entity types when bidirectional is turned off
@@ -91,18 +90,39 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form
                 form.setValue("bidirectionalEntityTypeKeys", []);
             }
         } else {
-            // When entity types change, filter out any bidirectional selections that are no longer valid
-            if (bidirectionalEntityTypeKeys && bidirectionalEntityTypeKeys.length > 0) {
-                const validKeys = allowPolymorphic
-                    ? bidirectionalEntityTypeKeys // All selections valid if polymorphic
-                    : bidirectionalEntityTypeKeys.filter((key) =>
-                          selectedEntityTypeKeys?.includes(key)
-                      );
+            // When bidirectional is enabled, auto-select entity types
+            if (allowPolymorphic) {
+                // If polymorphic, select all available entity types
+                const allKeys = avaiableTypes?.map((et) => et.key) || [];
+                const currentKeys = bidirectionalEntityTypeKeys || [];
 
                 // Only update if there's a difference
-                if (validKeys.length !== bidirectionalEntityTypeKeys.length) {
-                    form.setValue("bidirectionalEntityTypeKeys", validKeys);
+                if (JSON.stringify(allKeys.sort()) !== JSON.stringify(currentKeys.sort())) {
+                    form.setValue("bidirectionalEntityTypeKeys", allKeys);
                 }
+            } else if (selectedEntityTypeKeys && selectedEntityTypeKeys.length > 0) {
+                // If not polymorphic, auto-select all selected entity types
+                const currentBidirectional = bidirectionalEntityTypeKeys || [];
+
+                // Start with currently selected bidirectional keys that are still valid
+                const validExistingKeys = currentBidirectional.filter((key) =>
+                    selectedEntityTypeKeys.includes(key)
+                );
+
+                // Add any new entity types that aren't already in bidirectional
+                const newKeys = selectedEntityTypeKeys.filter(
+                    (key) => !currentBidirectional.includes(key)
+                );
+
+                const updatedKeys = [...validExistingKeys, ...newKeys];
+
+                // Only update if there's a difference
+                if (JSON.stringify(updatedKeys.sort()) !== JSON.stringify(currentBidirectional.sort())) {
+                    form.setValue("bidirectionalEntityTypeKeys", updatedKeys);
+                }
+            } else if (bidirectionalEntityTypeKeys && bidirectionalEntityTypeKeys.length > 0) {
+                // If no entity types selected and not polymorphic, clear bidirectional
+                form.setValue("bidirectionalEntityTypeKeys", []);
             }
         }
     }, [
@@ -110,6 +130,7 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form
         selectedEntityTypeKeys,
         allowPolymorphic,
         bidirectionalEntityTypeKeys,
+        avaiableTypes,
         form,
     ]);
 
@@ -117,6 +138,12 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form
     useEffect(() => {
         setDismissedOverlaps(new Set());
     }, [selectedEntityTypeKeys]);
+
+    console.log(selectedEntityTypeKeys, allowPolymorphic);
+
+    const bidirectionalDisabled =
+        (!selectedEntityTypeKeys || selectedEntityTypeKeys.length === 0) && !allowPolymorphic;
+    const bidirectionalFormDisabled = !bidirectional || bidirectionalDisabled;
 
     return (
         <>
@@ -129,63 +156,93 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form
                     onNavigateToTarget={handleNavigateToTarget}
                 />
             )}
+            <div className="border rounded-lg p-6">
+                <div className="flex flex-col lg:flex-row items-start gap-6 w-full">
+                    <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                            <FormItem className="w-full">
+                                <FormLabel>Relationship Name</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="E.g. Person" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-            <div className="space-y-2">
+                    <FormField
+                        control={form.control}
+                        name="entityTypeKeys"
+                        render={({ field, fieldState }) => (
+                            <FormItem className="w-full">
+                                <FormLabel>Related to</FormLabel>
+                                <FormControl>
+                                    <EntityTypeMultiSelect
+                                        availableTypes={avaiableTypes}
+                                        selectedKeys={selectedEntityTypeKeys || []}
+                                        allowPolymorphic={allowPolymorphic || false}
+                                        hasError={!!fieldState.error}
+                                        onSelectionChange={(keys, allowPoly) => {
+                                            form.setValue("entityTypeKeys", keys);
+                                            form.setValue("allowPolymorphic", allowPoly);
+                                        }}
+                                    />
+                                </FormControl>
+                                <FormDescription className="text-xs ml-1">
+                                    Select one or more entity types, or allow all entities
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+
                 <FormField
                     control={form.control}
-                    name="name"
+                    name="sourceRelationsLimit"
                     render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Relationship Name</FormLabel>
-                            <FormControl>
-                                <Input placeholder="E.g. Person" {...field} />
-                            </FormControl>
+                        <FormItem className="w-fit mx-0.5">
+                            <FormLabel>Limit</FormLabel>
+                            <div className="flex items-center gap-4 py-1">
+                                <span
+                                    className={cn(
+                                        "text-sm font-medium transition-colors",
+                                        field.value === "singular"
+                                            ? "text-foreground"
+                                            : "text-muted-foreground"
+                                    )}
+                                >
+                                    1 entity
+                                </span>
+                                <FormControl>
+                                    <Switch
+                                        checked={field.value === "many"}
+                                        onCheckedChange={(checked) => {
+                                            field.onChange(checked ? "many" : "singular");
+                                        }}
+                                    />
+                                </FormControl>
+                                <span
+                                    className={cn(
+                                        "text-sm font-medium transition-colors",
+                                        field.value === "many"
+                                            ? "text-foreground"
+                                            : "text-muted-foreground"
+                                    )}
+                                >
+                                    Unlimited
+                                </span>
+                            </div>
+                            <FormDescription className="text-xs">
+                                Controls how many entities this relationship can point to
+                            </FormDescription>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
             </div>
-
-            <FormField
-                control={form.control}
-                name="cardinality"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Relationship Cardinality</FormLabel>
-                        <FormControl>
-                            <CardinalitySelector
-                                value={field.value}
-                                onValueChange={field.onChange}
-                                sourceEntity={type}
-                                targetEntity={targetEntity}
-                                className="w-full min-h-72"
-                            />
-                        </FormControl>
-                        <FormDescription className="text-xs">
-                            Select how entities relate to each other
-                        </FormDescription>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormItem className="w-full">
-                <FormLabel>Target Entity Types</FormLabel>
-                <FormControl>
-                    <EntityTypeMultiSelect
-                        availableTypes={avaiableTypes}
-                        selectedKeys={selectedEntityTypeKeys || []}
-                        allowPolymorphic={allowPolymorphic || false}
-                        onSelectionChange={(keys, allowPoly) => {
-                            form.setValue("entityTypeKeys", keys);
-                            form.setValue("allowPolymorphic", allowPoly);
-                        }}
-                    />
-                </FormControl>
-                <FormDescription className="text-xs">
-                    Select one or more entity types, or allow all entities
-                </FormDescription>
-                <FormMessage />
-            </FormItem>
 
             <div className="rounded-lg border p-4 space-y-4">
                 <FormField
@@ -194,46 +251,58 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form
                     render={({ field }) => (
                         <FormItem className="flex items-center justify-between space-y-0">
                             <div className="space-y-1">
-                                <FormLabel>Bidirectional Relationship</FormLabel>
-                                <FormDescription>
-                                    Add this relationship to the target entity as well
+                                <FormLabel
+                                    className={cn(bidirectionalDisabled && "text-primary/60")}
+                                >
+                                    Two Way Relationship
+                                </FormLabel>
+                                <FormDescription className="text-xs">
+                                    Manage this relationship from the target entity as well
                                 </FormDescription>
                             </div>
                             <FormControl>
-                                <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="inverseName"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel className={cn(!bidirectional && "text-primary/60")}>
-                                Associated Attribute Name (Target Side)
-                            </FormLabel>
-                            <FormControl>
-                                <Input
-                                    disabled={!bidirectional}
-                                    placeholder="E.g. Company"
-                                    {...field}
+                                <Switch
+                                    disabled={bidirectionalDisabled}
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
                                 />
                             </FormControl>
-                            <FormDescription className="text-xs">
-                                The name of this relationship on the target entity
-                            </FormDescription>
-                            <FormMessage />
                         </FormItem>
                     )}
                 />
+                <div className="flex flex-col lg:flex-row items-start gap-6 w-full">
+                    <FormField
+                        control={form.control}
+                        name="inverseName"
+                        render={({ field }) => (
+                            <FormItem className="w-full">
+                                <FormLabel
+                                    className={cn(bidirectionalFormDisabled && "text-primary/60")}
+                                >
+                                    Default Associated Attribute Name
+                                </FormLabel>
+                                <FormControl>
+                                    <Input
+                                        disabled={bidirectionalFormDisabled}
+                                        placeholder="E.g. Company"
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormDescription className="text-xs">
+                                    The default name of this relationship on the target entity side
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-                {bidirectional && selectedEntityTypeKeys && selectedEntityTypeKeys.length > 1 && (
-                    <FormItem>
-                        <FormLabel>Bidirectional Entity Types</FormLabel>
+                    <FormItem className="w-full">
+                        <FormLabel className={cn(bidirectionalFormDisabled && "text-primary/60")}>
+                            Bidirectional Entity Types
+                        </FormLabel>
                         <FormControl>
                             <EntityTypeMultiSelect
+                                disabled={bidirectionalFormDisabled}
                                 allowSelectAll={false}
                                 availableTypes={
                                     allowPolymorphic
@@ -250,13 +319,65 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form
                             />
                         </FormControl>
                         <FormDescription className="text-xs">
-                            Select which entity types should receive the bidirectional relationship
+                            Select which entity types should receive the two way relationship
                         </FormDescription>
                         <FormMessage />
                     </FormItem>
-                )}
+                </div>
+                <FormField
+                    control={form.control}
+                    name="targetRelationsLimit"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel
+                                className={cn(bidirectionalFormDisabled && "text-primary/60")}
+                            >
+                                Limit
+                            </FormLabel>
+                            <div className="flex items-center gap-4 py-1">
+                                <span
+                                    className={cn(
+                                        "text-sm font-medium transition-colors",
+                                        field.value === "singular"
+                                            ? "text-foreground"
+                                            : "text-muted-foreground",
+                                        bidirectionalFormDisabled && "text-primary/60"
+                                    )}
+                                >
+                                    1 entity
+                                </span>
+                                <FormControl>
+                                    <Switch
+                                        disabled={bidirectionalFormDisabled}
+                                        checked={field.value === "many"}
+                                        onCheckedChange={(checked) => {
+                                            field.onChange(checked ? "many" : "singular");
+                                        }}
+                                    />
+                                </FormControl>
+                                <span
+                                    className={cn(
+                                        "text-sm font-medium transition-colors",
+                                        field.value === "many"
+                                            ? "text-foreground"
+                                            : "text-muted-foreground",
+                                        bidirectionalFormDisabled && "text-primary/60"
+                                    )}
+                                >
+                                    Unlimited
+                                </span>
+                            </div>
+                            <FormDescription className="text-xs">
+                                Controls how many entities the target side of this relationship can
+                                point to
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
             </div>
-            <div className="w-full flex justify-end">
+            {/* // TODO: Only allow setting required on RELATIONSHIP entity types */}
+            {/* <div className="w-full flex justify-end">
                 <FormField
                     control={form.control}
                     name="required"
@@ -269,7 +390,7 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, avaiableTypes, form
                         </FormItem>
                     )}
                 />
-            </div>
+            </div> */}
         </>
     );
 };

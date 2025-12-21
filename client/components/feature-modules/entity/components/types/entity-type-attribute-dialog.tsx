@@ -24,7 +24,11 @@ import { FC, useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { AttributeTypeDropdown } from "../../../../ui/attribute-type-dropdown";
-import type { AttributeFormData, RelationshipFormData } from "../../interface/entity.interface";
+import type {
+    AttributeFormData,
+    RelationshipFormData,
+    RelationshipLimit,
+} from "../../interface/entity.interface";
 import { EntityType, isRelationshipType } from "../../interface/entity.interface";
 import { AttributeForm } from "../forms/attribute-form";
 import { RelationshipAttributeForm } from "../forms/attributes-relationship-form";
@@ -49,12 +53,14 @@ const formSchema = z
         dataFormat: z.nativeEnum(DataFormat).optional(),
         required: z.boolean(),
         unique: z.boolean(),
-        cardinality: z.nativeEnum(EntityRelationshipCardinality).optional(),
         entityTypeKeys: z.array(z.string()).optional(),
         allowPolymorphic: z.boolean().optional(),
         bidirectional: z.boolean().optional(),
         bidirectionalEntityTypeKeys: z.array(z.string()).optional(),
         inverseName: z.string().optional(),
+        //
+        sourceRelationsLimit: z.enum(["singular", "many"]).optional(),
+        targetRelationsLimit: z.enum(["singular", "many"]).optional(),
         // Schema options
         enumValues: z.array(z.string()).optional(),
         enumSorting: z.nativeEnum(OptionSortingType).optional(),
@@ -78,6 +84,22 @@ const formSchema = z
         {
             message: "At least 2 options are required for select and multi-select types",
             path: ["enumValues"], // Attach error to the enumValues field
+        }
+    )
+    .refine(
+        (data) => {
+            // If selectedType is RELATIONSHIP, either entityTypeKeys must have values or allowPolymorphic must be true
+            if (data.selectedType === "RELATIONSHIP") {
+                return (
+                    (data.entityTypeKeys && data.entityTypeKeys.length > 0) ||
+                    data.allowPolymorphic === true
+                );
+            }
+            return true;
+        },
+        {
+            message: "Please select at least one entity type or allow all entity types",
+            path: ["entityTypeKeys"], // Attach error to the entityTypeKeys field
         }
     );
 
@@ -111,7 +133,8 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
             name: "",
             required: false,
             unique: false,
-            cardinality: EntityRelationshipCardinality.ONE_TO_ONE,
+            sourceRelationsLimit: "singular",
+            targetRelationsLimit: "singular",
             entityTypeKeys: [],
             allowPolymorphic: false,
             bidirectional: false,
@@ -155,17 +178,41 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
 
         if (editingAttribute) {
             if (isRelationshipType(editingAttribute)) {
+                // Derive source and target limits from cardinality
+                let sourceLimit: RelationshipLimit = "singular";
+                let targetLimit: RelationshipLimit = "singular";
+
+                switch (editingAttribute.cardinality) {
+                    case EntityRelationshipCardinality.ONE_TO_ONE:
+                        sourceLimit = "singular";
+                        targetLimit = "singular";
+                        break;
+                    case EntityRelationshipCardinality.ONE_TO_MANY:
+                        sourceLimit = "singular";
+                        targetLimit = "many";
+                        break;
+                    case EntityRelationshipCardinality.MANY_TO_ONE:
+                        sourceLimit = "many";
+                        targetLimit = "singular";
+                        break;
+                    case EntityRelationshipCardinality.MANY_TO_MANY:
+                        sourceLimit = "many";
+                        targetLimit = "many";
+                        break;
+                }
+
                 form.reset({
                     selectedType: "RELATIONSHIP",
                     name: editingAttribute.label,
                     required: editingAttribute.required,
                     unique: false,
-                    cardinality: editingAttribute.cardinality,
                     entityTypeKeys: editingAttribute.entityTypeKeys,
                     allowPolymorphic: editingAttribute.allowPolymorphic,
                     bidirectional: editingAttribute.bidirectional,
                     bidirectionalEntityTypeKeys: editingAttribute.bidirectionalEntityTypeKeys || [],
                     inverseName: editingAttribute.inverseName,
+                    sourceRelationsLimit: sourceLimit,
+                    targetRelationsLimit: targetLimit,
                 });
             } else {
                 const attribute = attributeTypes[editingAttribute.schemaKey];
@@ -193,11 +240,12 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
                 name: "",
                 required: false,
                 unique: false,
-                cardinality: EntityRelationshipCardinality.ONE_TO_ONE,
                 entityTypeKeys: [],
                 allowPolymorphic: false,
                 bidirectional: false,
                 bidirectionalEntityTypeKeys: [],
+                sourceRelationsLimit: "singular",
+                targetRelationsLimit: "singular",
                 inverseName: "",
                 enumValues: [],
                 enumSorting: OptionSortingType.MANUAL,
@@ -282,6 +330,21 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
         return candidateKey;
     };
 
+    const calculateCardinality = (
+        source: RelationshipLimit,
+        target: RelationshipLimit
+    ): EntityRelationshipCardinality => {
+        if (source === "singular" && target === "singular") {
+            return EntityRelationshipCardinality.ONE_TO_ONE;
+        } else if (source === "singular" && target === "many") {
+            return EntityRelationshipCardinality.ONE_TO_MANY;
+        } else if (source === "many" && target === "singular") {
+            return EntityRelationshipCardinality.MANY_TO_ONE;
+        } else {
+            return EntityRelationshipCardinality.MANY_TO_MANY;
+        }
+    };
+
     const handleRelationshipSubmission = (
         values: AttributeFormValues,
         existingKey: string | undefined
@@ -293,7 +356,10 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
             type: EntityPropertyType.RELATIONSHIP,
             label: values.name,
             key: key,
-            cardinality: values.cardinality || EntityRelationshipCardinality.ONE_TO_ONE,
+            cardinality: calculateCardinality(
+                values.sourceRelationsLimit || "singular",
+                values.targetRelationsLimit || "singular"
+            ),
             entityTypeKeys: values.entityTypeKeys || [],
             allowPolymorphic: values.allowPolymorphic || false,
             bidirectional: values.bidirectional || false,
