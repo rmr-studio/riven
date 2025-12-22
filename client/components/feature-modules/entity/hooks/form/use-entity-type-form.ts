@@ -1,19 +1,17 @@
 import { useAuth } from "@/components/provider/auth-context";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
 import { isUUID } from "validator";
 import { z } from "zod";
 import {
     AttributeFormData,
     EntityTypeOrderingKey,
     RelationshipFormData,
-    UpdateEntityTypeResponse,
     type EntityType,
 } from "../../interface/entity.interface";
-import { EntityTypeService } from "../../service/entity-type.service";
+import { useUpdateEntityTypeMutation } from "../mutation/use-update-entity-type-mutation";
 import { baseEntityTypeFormSchema } from "./use-new-entity-type-form";
 
 // Zod schema for entity type form
@@ -152,53 +150,7 @@ export function useEntityTypeForm(
         await updateType(updatedType);
     };
 
-    const { mutateAsync: updateType } = useMutation({
-        mutationFn: (type: EntityType) =>
-            EntityTypeService.updateEntityType(session, organisationId, type),
-        onMutate: () => {
-            submissionToastRef.current = toast.loading("Updating entity type...");
-        },
-        onError: (error: Error) => {
-            toast.dismiss(submissionToastRef.current);
-            toast.error(`Failed to update entity type: ${error.message}`);
-            submissionToastRef.current = undefined;
-        },
-        onSuccess: (response: UpdateEntityTypeResponse) => {
-            toast.dismiss(submissionToastRef.current);
-            toast.success(`Entity type updated successfully!`);
-            submissionToastRef.current = undefined;
-
-            // Update cache for all entity types that were updated
-            if (response.updatedEntityTypes) {
-                Object.entries(response.updatedEntityTypes).forEach(([key, entityType]) => {
-                    // Update individual entity type query cache
-                    queryClient.setQueryData(["entityType", key, organisationId], entityType);
-                });
-
-                // Update the entity types list in cache
-                queryClient.setQueryData<EntityType[]>(
-                    ["entityTypes", organisationId],
-                    (oldData) => {
-                        if (!oldData) return Object.values(response.updatedEntityTypes!);
-
-                        // Create a map of updated entity types for efficient lookup
-                        const updatedTypesMap = new Map(
-                            Object.entries(response.updatedEntityTypes!).map(([key, type]) => [
-                                key,
-                                type,
-                            ])
-                        );
-
-                        // Replace all updated entity types in the list
-                        return oldData.map((et) => updatedTypesMap.get(et.key) ?? et);
-                    }
-                );
-            }
-
-            // Stay on the same page after update
-            return response;
-        },
-    });
+    const { mutateAsync: updateType } = useUpdateEntityTypeMutation(organisationId);
 
     return {
         form,

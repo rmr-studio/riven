@@ -75,3 +75,4 @@ export type {
 } from "../hooks/use-relationship-overlap-detection";
 
 export type UpdateEntityTypeResponse = components["schemas"]["UpdateEntityTypeResponse"];
+export type DeleteEntityTypeResponse = components["schemas"]["DeleteEntityTypeResponse"];

@@ -1,15 +1,12 @@
-import { useAuth } from "@/components/provider/auth-context";
 import { EntityCategory, IconColour, IconType } from "@/lib/types/types";
 import { iconFormSchema } from "@/lib/util/form/common/icon.form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
 import { CreateEntityTypeRequest, EntityType } from "../../interface/entity.interface";
-import { EntityTypeService } from "../../service/entity-type.service";
+import { usePublishEntityTypeMutation } from "../mutation/use-publish-entity-type-mutation";
 
 export const baseEntityTypeFormSchema = z
     .object({
@@ -30,10 +27,6 @@ export interface UseEntityTypeFormReturn {
 }
 
 export function useNewEntityTypeForm(organisationId: string): UseEntityTypeFormReturn {
-    const { session } = useAuth();
-    const queryClient = useQueryClient();
-    // Ref to track pending submission toast
-    const submissionToastRef = useRef<string | number | undefined>(undefined);
     const [keyManuallyEdited, setKeyManuallyEdited] = useState(false);
     const router = useRouter();
 
@@ -69,37 +62,11 @@ export function useNewEntityTypeForm(organisationId: string): UseEntityTypeFormR
         await publishType(request);
     };
 
-    const { mutateAsync: publishType } = useMutation({
-        mutationFn: (request: CreateEntityTypeRequest) =>
-            EntityTypeService.publishEntityType(session, organisationId, request),
-        onMutate: () => {
-            submissionToastRef.current = toast.loading("Creating entity type...");
-        },
-        onError: (error: Error) => {
-            toast.dismiss(submissionToastRef.current);
-            toast.error(`Failed to create entity type: ${error.message}`);
-            submissionToastRef.current = undefined;
-        },
+    const { mutateAsync: publishType } = usePublishEntityTypeMutation(organisationId, {
         onSuccess: (response: EntityType) => {
-            toast.dismiss(submissionToastRef.current);
-            toast.success(`Entity type created successfully!`);
-            submissionToastRef.current = undefined;
             router.push(
                 `/dashboard/organisation/${organisationId}/entity/${response.key}/settings?tab=attributes`
             );
-
-            // Update the specific entity type in cache
-            queryClient.setQueryData(["entityType", response.key, organisationId], response);
-
-            // Update the entity types list in cache
-            queryClient.setQueryData<EntityType[]>(["entityTypes", organisationId], (oldData) => {
-                if (!oldData) return [response];
-
-                // Add new entity type to the list
-                return [...oldData, response];
-            });
-
-            return response;
         },
     });
 

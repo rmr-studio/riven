@@ -1,8 +1,8 @@
 import { useAuth } from "@/components/provider/auth-context";
 import { AuthenticatedQueryResult } from "@/lib/interfaces/interface";
 import { useQuery } from "@tanstack/react-query";
-import { EntityType } from "../interface/entity.interface";
-import { EntityTypeService } from "../service/entity-type.service";
+import { EntityType } from "../../interface/entity.interface";
+import { EntityTypeService } from "../../service/entity-type.service";
 
 export function useEntityTypes(organisationId?: string): AuthenticatedQueryResult<EntityType[]> {
     const { session, loading } = useAuth();

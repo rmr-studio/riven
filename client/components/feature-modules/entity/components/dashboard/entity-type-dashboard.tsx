@@ -5,7 +5,7 @@ import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-gro
 import { isResponseError } from "@/lib/util/error/error.util";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useEntityTypeByKey } from "../../hooks/use-entity-types";
+import { useEntityTypeByKey } from "../../hooks/query/use-entity-types";
 import { EntityTypeOverview } from "../types/entity-type";
 
 export const EntityTypeOverviewDashboard = () => {

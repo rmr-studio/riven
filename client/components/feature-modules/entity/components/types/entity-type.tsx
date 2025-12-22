@@ -37,8 +37,8 @@ import {
     useEntityTypeForm,
     type EntityTypeFormValues,
 } from "../../hooks/form/use-entity-type-form";
+import { useEntityTypes } from "../../hooks/query/use-entity-types";
 import { useAttributeManagement } from "../../hooks/use-attribute-management";
-import { useEntityTypes } from "../../hooks/use-entity-types";
 import { useRelationshipManagement } from "../../hooks/use-relationship-management";
 import {
     isAttributeType,

@@ -1,5 +1,5 @@
 "use client";
-import { useEntityTypes } from "@/components/feature-modules/entity/hooks/use-entity-types";
+import { useEntityTypes } from "@/components/feature-modules/entity/hooks/query/use-entity-types";
 import { Organisation } from "@/components/feature-modules/organisation/interface/organisation.interface";
 import { useProfile } from "@/components/feature-modules/user/hooks/useProfile";
 import { useOrganisationStore } from "@/components/provider/OrganisationContext";

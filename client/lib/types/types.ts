@@ -1360,6 +1360,13 @@ export interface components {
          * @enum {string}
          */
         ApplicationEntityType: ApplicationEntityType;
+        DeleteEntityTypeResponse: {
+            impact?: components["schemas"]["EntityTypeRelationshipImpactAnalysis"];
+            updatedEntityTypes?: {
+                [key: string]: components["schemas"]["EntityType"];
+            };
+            error?: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -2469,21 +2476,27 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "*/*": components["schemas"]["DeleteEntityTypeResponse"];
+                };
             };
             /** @description Unauthorized access */
             401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "*/*": components["schemas"]["DeleteEntityTypeResponse"];
+                };
             };
             /** @description Entity type not found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "*/*": components["schemas"]["DeleteEntityTypeResponse"];
+                };
             };
         };
     };

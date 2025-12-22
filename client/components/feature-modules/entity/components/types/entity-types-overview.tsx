@@ -8,7 +8,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Edit, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FC, useMemo } from "react";
-import { useEntityTypes } from "../../hooks/use-entity-types";
+import { useEntityTypes } from "../../hooks/query/use-entity-types";
 import { EntityType } from "../../interface/entity.interface";
 import { NewEntityTypeForm } from "../forms/new-entity-type";
 
