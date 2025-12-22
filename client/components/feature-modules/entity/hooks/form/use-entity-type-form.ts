@@ -101,11 +101,6 @@ export function useEntityTypeForm(
         // Clear any previous errors
         form.clearErrors();
 
-        const relationshipSourceKeys: Map<string, string> = new Map();
-        entityType.relationships?.forEach((rel) => {
-            relationshipSourceKeys.set(rel.id, rel.sourceEntityTypeKey);
-        });
-
         const updatedType: EntityType = {
             ...entityType,
             key: values.key,
@@ -178,17 +173,23 @@ export function useEntityTypeForm(
                 });
 
                 // Update the entity types list in cache
-                queryClient.setQueryData<EntityType[]>(["entityTypes", organisationId], (oldData) => {
-                    if (!oldData) return Object.values(response.updatedEntityTypes!);
+                queryClient.setQueryData<EntityType[]>(
+                    ["entityTypes", organisationId],
+                    (oldData) => {
+                        if (!oldData) return Object.values(response.updatedEntityTypes!);
 
-                    // Create a map of updated entity types for efficient lookup
-                    const updatedTypesMap = new Map(
-                        Object.entries(response.updatedEntityTypes!).map(([key, type]) => [key, type])
-                    );
+                        // Create a map of updated entity types for efficient lookup
+                        const updatedTypesMap = new Map(
+                            Object.entries(response.updatedEntityTypes!).map(([key, type]) => [
+                                key,
+                                type,
+                            ])
+                        );
 
-                    // Replace all updated entity types in the list
-                    return oldData.map((et) => updatedTypesMap.get(et.key) ?? et);
-                });
+                        // Replace all updated entity types in the list
+                        return oldData.map((et) => updatedTypesMap.get(et.key) ?? et);
+                    }
+                );
             }
 
             // Stay on the same page after update

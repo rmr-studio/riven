@@ -319,7 +319,7 @@ export function useEntityTypeAttributeForm(
             ),
             relationshipType: values.relationshipType,
             sourceEntityTypeKey: values.sourceEntityTypeKey,
-            originRelationshipId: values.originRelationshipId,
+            originRelationshipId: values.originRelationshipId || undefined,
             entityTypeKeys: values.entityTypeKeys || [],
             allowPolymorphic: values.allowPolymorphic || false,
             bidirectional: values.bidirectional || false,

@@ -45,7 +45,6 @@ export interface AddBlockDialogProps {
  *       organisationId={organisationId}
  *       entityType={EntityType.CLIENT}
  *       onBlockTypeSelect={(type) => {
- *         console.log('Selected:', type);
  *         setDialogOpen(false);
  *       }}
  *     />

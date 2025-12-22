@@ -73,14 +73,20 @@ export const EntityTypeMultiSelect: FC<Props> = ({
             const selected = availableTypes.find((et) => et.key === selectedKeys[0]);
             if (!selected) return "1 selected";
 
-            // Display "This entity" with loop icon for self-reference if no plural name
-            if (selected.key === currentEntityKey && !selected.name.plural) {
-                return "This entity";
-            }
-
-            return selected.name.plural || "This entity";
+            return selected.name.plural;
         }
-        return `${selectedKeys.length} entity types selected`;
+
+        // Display x,y and [...] entities selected if multiple
+        const names = selectedKeys
+            .map((key) => availableTypes.find((et) => et.key === key))
+            .filter((et): et is EntityType => et !== undefined)
+            .map((et) => et.name.plural);
+
+        if (names.length <= 2) {
+            return names.join(", ");
+        }
+
+        return `${names.slice(0, 2).join(", ")} and ${names.length - 2} more`;
     };
 
     return (

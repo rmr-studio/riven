@@ -44,7 +44,6 @@ export function useRelationshipOverlapDetection(
     availableEntityTypes: EntityType[] | undefined
 ): OverlapDetectionResult {
     return useMemo(() => {
-        console.log("yea");
         // Early returns for invalid state
         if (
             !sourceEntityKey ||

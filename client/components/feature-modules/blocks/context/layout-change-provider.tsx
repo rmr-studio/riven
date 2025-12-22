@@ -495,9 +495,6 @@ export const LayoutChangeProvider: FC<PropsWithChildren> = ({ children }) => {
                         };
                         recordStructuralOperation(operation);
                     });
-                    console.log(
-                        `Applied ${contentChanges.size} content changes and recorded operations`
-                    );
                 }
 
                 // Get structural operations since last save
@@ -521,13 +518,6 @@ export const LayoutChangeProvider: FC<PropsWithChildren> = ({ children }) => {
                     version: nextVersion,
                     operations,
                 };
-
-                console.log("Saving layout changes to backend:", {
-                    layoutId,
-                    version: nextVersion,
-                    operationCount: operations.length,
-                    contentChangeCount: contentChanges?.size || 0,
-                });
 
                 const response = await saveLayout(saveRequest);
                 const { conflict, success } = response;

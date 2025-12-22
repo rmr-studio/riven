@@ -32,8 +32,6 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, availableTypes = []
     // Determine the current entity key for self-reference identification
     const currentEntityKey = type?.key;
 
-    console.log(form.formState.errors);
-
     // Overlap detection state and logic
     const [dismissedOverlaps, setDismissedOverlaps] = useState<Set<string>>(new Set());
 
@@ -91,9 +89,6 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, availableTypes = []
         },
         [type?.key]
     );
-
-    console.log(form.formState.errors);
-    console.log(form.getValues());
 
     // Manage bidirectionalEntityTypeKeys based on entity selection changes
     useEffect(() => {

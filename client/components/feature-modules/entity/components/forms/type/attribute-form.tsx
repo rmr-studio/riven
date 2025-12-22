@@ -34,7 +34,6 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
     onOpenChange,
     onSubmit,
     availableTypes = [],
-    currentAttributes = [],
     currentRelationships = [],
     entityType,
     editingAttribute,

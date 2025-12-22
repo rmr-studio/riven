@@ -64,11 +64,6 @@ export const fromKeyCase = (value: string | null | undefined): string => {
         .join(" ");
 };
 
-export const isUUID = (value: string): boolean => {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(value);
-};
-
 export const allNotNull = <T>(values: (T | null)[]): values is NonNullable<T>[] => {
     return values.every((value) => value !== null);
 };

@@ -25,7 +25,10 @@ import { toKeyCase } from "@/lib/util/utils";
 import { PopoverClose } from "@radix-ui/react-popover";
 import { Blocks, Database, Info, Plus, Workflow } from "lucide-react";
 import { FC, useEffect } from "react";
-import { useNewEntityTypeForm } from "../../hooks/form/use-new-entity-type-form";
+import {
+    NewEntityTypeFormValues,
+    useNewEntityTypeForm,
+} from "../../hooks/form/use-new-entity-type-form";
 import { EntityType } from "../../interface/entity.interface";
 
 interface Props extends ChildNodeProps {
@@ -48,9 +51,9 @@ export const NewEntityTypeForm: FC<Props> = ({ entityTypes = [], organisationId,
             const generatedKey = toKeyCase(pluralName);
             form.setValue("key", generatedKey, { shouldValidate: false });
         }
-    }, [pluralName, keyManuallyEdited, form]);
+    }, [pluralName, keyManuallyEdited]);
 
-    const onSubmit = async (values: any) => {
+    const onSubmit = async (values: NewEntityTypeFormValues) => {
         await handleSubmit(values);
         form.reset();
         setKeyManuallyEdited(false);

@@ -82,7 +82,6 @@ export const EditModeIndicator: FC = () => {
                     return;
                 }
                 contentChanges = result.changes;
-                console.log(`Prepared ${contentChanges.size} content changes`);
             }
 
             // Step 2: Save everything to backend atomically
@@ -117,8 +116,6 @@ export const EditModeIndicator: FC = () => {
                     });
                 });
             });
-
-            console.log("✅ All changes saved successfully");
         } catch (error) {
             console.error("Error saving all changes:", error);
         } finally {
