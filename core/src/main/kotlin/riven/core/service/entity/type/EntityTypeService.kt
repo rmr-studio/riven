@@ -15,7 +15,6 @@ import riven.core.models.common.validation.Schema
 import riven.core.models.entity.EntityType
 import riven.core.models.entity.configuration.EntityTypeOrderingKey
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
-import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipImpactAnalysis
 import riven.core.models.request.entity.CreateEntityTypeRequest
 import riven.core.models.response.entity.DeleteEntityTypeResponse
 import riven.core.models.response.entity.UpdateEntityTypeResponse
@@ -61,6 +60,8 @@ class EntityTypeService(
                 organisationId = organisationId,
                 identifierKey = primaryId,
                 description = request.description,
+                iconType = request.icon.icon,
+                iconColour = request.icon.colour,
                 // Protected Entity Types cannot be modified or deleted by users. This will usually occur during an automatic setup process.
                 protected = false,
                 type = request.type,
@@ -157,7 +158,7 @@ class EntityTypeService(
         }
 
         // Calculate relationship changes and analyze impact
-        var updatedEntityTypes: MutableMap<String, EntityTypeEntity>? = type.relationships?.let {
+        val updatedEntityTypes: MutableMap<String, EntityTypeEntity>? = type.relationships?.let {
 
             val diff: EntityTypeRelationshipDiff = relationshipDiffService.calculate(
                 previous = existing.relationships ?: emptyList(),
@@ -168,14 +169,14 @@ class EntityTypeService(
             if (!impactConfirmed) {
                 // Analyze the impact of these changes
                 val impact = impactAnalysisService.analyze(
+                    organisationId,
                     sourceEntityType = existing,
                     diff = diff
                 )
 
                 // If impact analysis is enabled (impactConfirmed=false) and there are notable impacts, return them
-                if (hasNotableImpacts(impact)) {
+                if (impactAnalysisService.hasNotableImpacts(impact)) {
                     return UpdateEntityTypeResponse(
-                        success = false,
                         error = null,
                         updatedEntityTypes = null,
                         impact = impact
@@ -193,6 +194,10 @@ class EntityTypeService(
             description = type.description
             schema = type.schema
             relationships = type.relationships
+            iconType = type.icon.icon
+            iconColour = type.icon.colour
+            order = type.order
+            version += 1
         }.let {
             entityTypeRepository.save(it)
         }.also {
@@ -208,7 +213,6 @@ class EntityTypeService(
             }
 
             return UpdateEntityTypeResponse(
-                success = true,
                 error = null,
                 updatedEntityTypes = entityTypes,
                 impact = null // No impacts or impacts were confirmed
@@ -216,13 +220,6 @@ class EntityTypeService(
         }
     }
 
-    /**
-     * Determines if the impact analysis contains notable impacts that require user confirmation.
-     */
-    private fun hasNotableImpacts(impact: riven.core.models.entity.relationship.analysis.EntityTypeRelationshipImpactAnalysis): Boolean {
-        return impact.affectedEntityTypes.isNotEmpty() ||
-                impact.dataLossWarnings.isNotEmpty()
-    }
 
     @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
     fun deleteEntityType(
@@ -236,6 +233,7 @@ class EntityTypeService(
 
         if (!impactConfirmed) {
             val impact = impactAnalysisService.analyze(
+                organisationId,
                 existing,
                 diff = EntityTypeRelationshipDiff(
                     added = emptyList(),
@@ -244,9 +242,8 @@ class EntityTypeService(
                 )
             )
 
-            if (hasNotableImpacts(impact)) {
+            if (impactAnalysisService.hasNotableImpacts(impact)) {
                 return DeleteEntityTypeResponse(
-                    success = false,
                     impact = impact,
                     updatedEntityTypes = null,
                     error = null
@@ -273,7 +270,6 @@ class EntityTypeService(
             )
 
             return DeleteEntityTypeResponse(
-                success = true,
                 impact = null,
                 updatedEntityTypes = affectedEntityTypes,
                 error = null
@@ -281,33 +277,6 @@ class EntityTypeService(
         }
     }
 
-    /**
-     * Archive or restore an entity type.
-     */
-    @PreAuthorize("@organisationSecurity.hasOrg(#id)")
-    fun archiveEntityType(id: UUID, status: Boolean) {
-        val userId = authTokenService.getUserId()
-        val existing = ServiceUtil.findOrThrow { entityTypeRepository.findById(id) }
-        val orgId = requireNotNull(existing.organisationId) { "Cannot archive system entity type" }
-
-        if (existing.archived == status) return
-
-        existing.archived = status
-        entityTypeRepository.save(existing)
-
-        activityService.logActivity(
-            activity = Activity.ENTITY_TYPE,
-            operation = if (status) OperationType.ARCHIVE else OperationType.RESTORE,
-            userId = userId,
-            organisationId = orgId,
-            entityId = existing.id,
-            entityType = ApplicationEntityType.ENTITY_TYPE,
-            details = mapOf(
-                "type" to existing.key,
-                "archiveStatus" to status
-            )
-        )
-    }
 
     /**
      * Get all entity types for an organization (including system types).

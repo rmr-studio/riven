@@ -315,6 +315,8 @@ CREATE TABLE IF NOT EXISTS public.entity_types
     "identifier_key"        UUID    NOT NULL,
     "display_name_singular" TEXT    NOT NULL,
     "display_name_plural"   TEXT    NOT NULL,
+    "icon_type"             TEXT    NOT NULL         DEFAULT 'CIRCLE_DASHED', -- Lucide Icon Representation,
+    "icon_colour"           TEXT    NOT NULL         DEFAULT 'NEUTRAL',       -- Colour of the icon,
     "description"           TEXT,
     "protected"             BOOLEAN NOT NULL         DEFAULT FALSE,
     "schema"                JSONB   NOT NULL,

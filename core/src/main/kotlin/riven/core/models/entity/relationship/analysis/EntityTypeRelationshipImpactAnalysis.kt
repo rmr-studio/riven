@@ -13,6 +13,6 @@ package riven.core.models.entity.relationship.analysis
 data class EntityTypeRelationshipImpactAnalysis(
     val affectedEntityTypes: List<String>,
     val dataLossWarnings: List<EntityTypeRelationshipDataLossWarning>,
-    val modifications: List<EntityImpactSummary>,
-    val removals: List<EntityImpactSummary>
+    val columnsRemoved: List<EntityImpactSummary>,
+    val columnsModified: List<EntityImpactSummary>,
 )

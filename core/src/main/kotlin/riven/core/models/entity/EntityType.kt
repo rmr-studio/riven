@@ -2,6 +2,7 @@ package riven.core.models.entity
 
 import riven.core.entity.util.AuditableModel
 import riven.core.enums.entity.EntityCategory
+import riven.core.models.common.Icon
 import riven.core.models.common.display.DisplayName
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
@@ -19,6 +20,7 @@ data class EntityType(
     val id: UUID,
     val key: String,
     val version: Int,
+    val icon: Icon,
     val name: DisplayName,
     /**
      * Each organisation will have a handful of system-generated default entity types to handle

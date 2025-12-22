@@ -7,5 +7,4 @@ data class EntityTypeRelationshipDataLossWarning(
     val entityTypeKey: String,
     val relationship: EntityRelationshipDefinition,
     val reason: EntityTypeRelationshipDataLossReason,
-    val estimatedImpactCount: Long?
 )
