@@ -10,6 +10,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
+import { IconSelector } from "@/components/ui/icon/icon-selector";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -21,9 +22,10 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ChildNodeProps } from "@/lib/interfaces/interface";
+import { IconColour, IconType } from "@/lib/types/types";
 import { toKeyCase } from "@/lib/util/utils";
 import { PopoverClose } from "@radix-ui/react-popover";
-import { Blocks, Database, Info, Plus, Workflow } from "lucide-react";
+import { Blocks, Info, Plus, Workflow } from "lucide-react";
 import { FC, useEffect } from "react";
 import {
     NewEntityTypeFormValues,
@@ -45,6 +47,9 @@ export const NewEntityTypeForm: FC<Props> = ({ entityTypes = [], organisationId,
     // Watch the pluralName field for dynamic title and key generation
     const pluralName = form.watch("pluralName");
 
+    const iconType = form.watch("icon");
+    const iconColour = form.watch("iconColour");
+
     // Auto-generate key from pluralName
     useEffect(() => {
         if (!keyManuallyEdited && pluralName) {
@@ -57,6 +62,11 @@ export const NewEntityTypeForm: FC<Props> = ({ entityTypes = [], organisationId,
         await handleSubmit(values);
         form.reset();
         setKeyManuallyEdited(false);
+    };
+
+    const onIconSelection = (type: IconType, colour: IconColour) => {
+        form.setValue("icon", type);
+        form.setValue("iconColour", colour);
     };
 
     return (
@@ -79,7 +89,11 @@ export const NewEntityTypeForm: FC<Props> = ({ entityTypes = [], organisationId,
                                         </FormDescription>
                                         <div className="flex items-center gap-2">
                                             <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 flex-shrink-0">
-                                                <Database className="h-4 w-4 text-primary" />
+                                                <IconSelector
+                                                    onSelect={onIconSelection}
+                                                    icon={iconType}
+                                                    colour={iconColour}
+                                                />
                                             </div>
                                             <FormControl>
                                                 <div className="h-auto flex flex-grow items-end">
@@ -231,6 +245,7 @@ export const NewEntityTypeForm: FC<Props> = ({ entityTypes = [], organisationId,
                                     <FormLabel>Description</FormLabel>
                                     <FormControl>
                                         <Textarea
+                                            className="max-h-72"
                                             placeholder="Describe what this entity type represents..."
                                             rows={3}
                                             {...field}

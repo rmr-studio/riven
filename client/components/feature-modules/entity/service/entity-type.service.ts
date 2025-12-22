@@ -117,6 +117,8 @@ export class EntityTypeService {
             });
 
             if (response.ok) return await response.json();
+
+            
             throw await handleError(
                 response,
                 (res) => `Failed to update entity type: ${res.status} ${res.statusText}`

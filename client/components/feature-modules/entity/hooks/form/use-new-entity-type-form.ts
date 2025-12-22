@@ -1,5 +1,6 @@
 import { useAuth } from "@/components/provider/auth-context";
-import { EntityCategory } from "@/lib/types/types";
+import { EntityCategory, IconColour, IconType } from "@/lib/types/types";
+import { iconFormSchema } from "@/lib/util/form/common/icon.form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -10,14 +11,15 @@ import { z } from "zod";
 import { CreateEntityTypeRequest, EntityType } from "../../interface/entity.interface";
 import { EntityTypeService } from "../../service/entity-type.service";
 
-export const baseEntityTypeFormSchema = z.object({
-    key: z.string().min(1, "Key is required"),
-    singularName: z.string().min(1, "Singular variant of the name is required"),
-    pluralName: z.string().min(1, "Plural variant of the name is required"),
-    description: z.string().optional(),
-    type: z.nativeEnum(EntityCategory),
-    icon: z.string().optional(),
-});
+export const baseEntityTypeFormSchema = z
+    .object({
+        key: z.string().min(1, "Key is required"),
+        singularName: z.string().min(1, "Singular variant of the name is required"),
+        pluralName: z.string().min(1, "Plural variant of the name is required"),
+        description: z.string().optional(),
+        type: z.nativeEnum(EntityCategory),
+    })
+    .extend(iconFormSchema.shape);
 
 export type NewEntityTypeFormValues = z.infer<typeof baseEntityTypeFormSchema>;
 export interface UseEntityTypeFormReturn {
@@ -45,7 +47,8 @@ export function useNewEntityTypeForm(
             pluralName: "",
             description: "",
             type: EntityCategory.STANDARD,
-            icon: "database",
+            icon: IconType.DATABASE,
+            iconColour: IconColour.NEUTRAL,
         },
         resolver: zodResolver(baseEntityTypeFormSchema),
     });
@@ -60,6 +63,10 @@ export function useNewEntityTypeForm(
             },
             description: values.description,
             type: values.type,
+            icon: {
+                icon: values.icon,
+                colour: values.iconColour,
+            },
         };
 
         await publishType(request);
