@@ -3,8 +3,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
+import { IconCell } from "@/components/ui/icon/icon-cell";
 import { ColumnDef } from "@tanstack/react-table";
-import { Database, Edit, Plus, Trash2 } from "lucide-react";
+import { Edit, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FC, useMemo } from "react";
 import { useEntityTypes } from "../../hooks/use-entity-types";
@@ -26,8 +27,12 @@ export const EntityTypesOverview: FC<Props> = ({ organisationId }) => {
                 header: "Entity Type",
                 cell: ({ row }) => (
                     <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-                            <Database className="h-4 w-4 text-primary" />
+                        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/5">
+                            <IconCell
+                                readonly={true}
+                                iconType={row.original.icon.icon}
+                                colour={row.original.icon.colour}
+                            />
                         </div>
                         <div className="flex flex-col">
                             <span className="font-medium">{row.original.name.plural}</span>

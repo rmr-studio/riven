@@ -1,7 +1,6 @@
 import { useAuth } from "@/components/provider/auth-context";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import { useRef } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
@@ -40,7 +39,6 @@ export function useEntityTypeForm(
     organisationId: string,
     entityType: EntityType
 ): UseEntityTypeFormReturn {
-    const router = useRouter();
     const form = useForm<EntityTypeFormValues>({
         resolver: zodResolver(entityTypeFormSchema),
         defaultValues: {
@@ -50,7 +48,8 @@ export function useEntityTypeForm(
             identifierKey: entityType.identifierKey,
             description: entityType.description ?? "",
             type: entityType.type,
-            icon: "database",
+            icon: entityType.icon.icon,
+            iconColour: entityType.icon.colour,
         },
     });
     const { session } = useAuth();
@@ -107,6 +106,10 @@ export function useEntityTypeForm(
             name: {
                 singular: values.singularName,
                 plural: values.pluralName,
+            },
+            icon: {
+                icon: values.icon,
+                colour: values.iconColour,
             },
             identifierKey: values.identifierKey,
             description: values.description,

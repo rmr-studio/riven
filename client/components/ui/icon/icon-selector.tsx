@@ -19,16 +19,17 @@ import { cn } from "@/lib/util/utils";
 import { FileQuestionMark } from "lucide-react";
 
 import { IconCell } from "./icon-cell";
-import { getAllIconTypes, ICON_REGISTRY, iconTypeToLabel } from "./icon-mapper";
+import { getAllIconTypes, ICON_COLOUR_MAP, ICON_REGISTRY, iconTypeToLabel } from "./icon-mapper";
 
 interface Props extends ClassNameProps {
     onSelect: (iconType: IconType, iconColour: IconColour) => void;
     icon: IconType;
+    displayIconClassName?: string;
     colour: IconColour;
 }
 
-const colorIndicators: Record<IconColour, string> = {
-    NEUTRAL: "bg-neutral-500",
+const ICON_BUTTON_COLOUR_MAP: Record<IconColour, string> = {
+    NEUTRAL: "bg-primary",
     PURPLE: "bg-purple-500",
     BLUE: "bg-blue-500",
     TEAL: "bg-teal-500",
@@ -40,9 +41,16 @@ const colorIndicators: Record<IconColour, string> = {
     GREY: "bg-gray-500",
 };
 
-export const IconSelector: FC<Props> = ({ onSelect, icon, colour, className }) => {
+export const IconSelector: FC<Props> = ({
+    onSelect,
+    icon,
+    colour,
+    className,
+    displayIconClassName,
+}) => {
     const [open, setOpen] = useState(false);
     const [search, setSearch] = useState("");
+
     const [currentColour, setCurrentColour] = useState(colour);
 
     const allIcons = useMemo(getAllIconTypes, []);
@@ -92,9 +100,11 @@ export const IconSelector: FC<Props> = ({ onSelect, icon, colour, className }) =
                     className={cn("w-full flex items-center justify-center", className)}
                 >
                     {SelectedIcon ? (
-                        <SelectedIcon className="h-4 w-4" />
+                        <SelectedIcon
+                            className={cn(ICON_COLOUR_MAP[colour], displayIconClassName)}
+                        />
                     ) : (
-                        <FileQuestionMark className="h-4 w-4" />
+                        <FileQuestionMark className={cn(displayIconClassName)} />
                     )}
                 </Button>
             </PopoverTrigger>
@@ -110,7 +120,7 @@ export const IconSelector: FC<Props> = ({ onSelect, icon, colour, className }) =
                                     onClick={() => setCurrentColour(c)}
                                     className={cn(
                                         "h-6 w-6 rounded-full border-2",
-                                        colorIndicators[c],
+                                        ICON_BUTTON_COLOUR_MAP[c],
                                         currentColour === c && "ring-2 ring-offset-2"
                                     )}
                                 />

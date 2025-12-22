@@ -15,7 +15,6 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Database } from "lucide-react";
 import { FC } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { EntityTypeFormValues } from "../../../hooks/form/use-entity-type-form";
@@ -44,9 +43,6 @@ export const ConfigurationForm: FC<Props> = ({ form, availableIdentifiers }) => 
                                     This will be used to label a collection of these entities
                                 </FormDescription>
                                 <div className="flex items-center gap-2">
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10">
-                                        <Database className="h-4 w-4 text-primary" />
-                                    </div>
                                     <FormControl>
                                         <Input placeholder="e.g., Companies" {...field} />
                                     </FormControl>

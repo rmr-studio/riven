@@ -1,4 +1,4 @@
-import { IconType } from "@/lib/types/types";
+import { IconColour, IconType } from "@/lib/types/types";
 import * as LucideIcons from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
@@ -31,3 +31,17 @@ export function iconTypeToLabel(iconType: IconType): string {
 export function getAllIconTypes(): IconType[] {
     return Object.values(IconType);
 }
+
+export const ICON_COLOUR_MAP: Record<IconColour, string> = {
+    NEUTRAL: "text-primary",
+    PURPLE: "text-purple-500",
+    BLUE: "text-blue-500",
+    TEAL: "text-teal-500",
+    GREEN: "text-green-500",
+    YELLOW: "text-yellow-500",
+    ORANGE: "text-orange-500",
+    RED: "text-red-500",
+    PINK: "text-pink-500",
+    GREY: "text-gray-500",
+};
+

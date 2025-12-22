@@ -5,19 +5,21 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Form } from "@/components/ui/form";
+import { IconSelector } from "@/components/ui/icon/icon-selector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
     DataType,
     EntityPropertyType,
     EntityRelationshipCardinality,
+    IconColour,
+    IconType,
     SchemaType,
 } from "@/lib/types/types";
 import { ColumnDef, Row } from "@tanstack/react-table";
 import {
     AlertCircle,
     CheckCircle2,
-    Database,
     Edit2,
     Key,
     Link2,
@@ -28,6 +30,7 @@ import {
     Trash2,
 } from "lucide-react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FC, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -73,10 +76,41 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
     const [order, setOrder] = useState<EntityTypeOrderingKey[]>(entityType?.order || []);
     const hasInitialized = useRef(false);
 
+    // Read tab query parameter from URL
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const tabParam = searchParams.get("tab");
+
+    // Valid tab values
+    const validTabs = ["configuration", "attributes"];
+    const defaultTab = validTabs.includes(tabParam || "") ? tabParam! : "configuration";
+
+    // Active tab state
+    const [activeTab, setActiveTab] = useState<string>(defaultTab);
+
+    // Sync active tab with URL parameter changes (e.g., browser back/forward)
+    useEffect(() => {
+        if (defaultTab !== activeTab) {
+            setActiveTab(defaultTab);
+        }
+    }, [defaultTab]);
+
+    // Update URL when tab changes
+    const handleTabChange = (value: string) => {
+        setActiveTab(value);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("tab", value);
+        router.push(`${pathname}?${params.toString()}`);
+    };
+
     // Form management hook
     const { handleSubmit: handleFormSubmit } = useEntityTypeForm(organisationId, entityType);
     const { form } = useEntityTypeForm(organisationId, entityType);
+
     const identifierKey = form.watch("identifierKey");
+    const iconType = form.watch("icon");
+    const iconColour = form.watch("iconColour");
     // Attribute management hook
     const {
         attributes,
@@ -476,6 +510,11 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
         setOrder(newOrder);
     };
 
+    const onIconSelect = (icon: IconType, colour: IconColour) => {
+        form.setValue("icon", icon);
+        form.setValue("iconColour", colour);
+    };
+
     return (
         <>
             <Form {...form}>
@@ -483,13 +522,16 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
                     {/* Header */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                                <Database className="h-6 w-6 text-primary" />
-                            </div>
+                            <IconSelector
+                                onSelect={onIconSelect}
+                                icon={iconType}
+                                colour={iconColour}
+                                className="size-14 bg-accent/10 mt-1"
+                                displayIconClassName="size-10"
+                            />
                             <div>
                                 <h1 className="text-2xl font-semibold">{pluralName}</h1>
                                 <div className="flex items-center gap-2 mt-1">
-                                    <Badge variant="secondary">{entityType.type}</Badge>
                                     <span className="text-sm text-muted-foreground">
                                         Manage object attributes and other relevant settings
                                     </span>
@@ -517,7 +559,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
                     )}
 
                     {/* Tabs */}
-                    <Tabs defaultValue="configuration" className="w-full">
+                    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                         <TabsList className="justify-start w-2/5">
                             <TabsTrigger value="configuration">
                                 <div className="flex items-center gap-2">

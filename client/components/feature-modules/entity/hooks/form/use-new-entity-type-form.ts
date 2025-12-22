@@ -29,10 +29,7 @@ export interface UseEntityTypeFormReturn {
     handleSubmit: (values: NewEntityTypeFormValues) => Promise<void>;
 }
 
-export function useNewEntityTypeForm(
-    organisationId: string,
-    entityTypes: EntityType[]
-): UseEntityTypeFormReturn {
+export function useNewEntityTypeForm(organisationId: string): UseEntityTypeFormReturn {
     const { session } = useAuth();
     const queryClient = useQueryClient();
     // Ref to track pending submission toast

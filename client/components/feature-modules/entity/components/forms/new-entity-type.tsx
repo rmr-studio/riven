@@ -41,7 +41,7 @@ interface Props extends ChildNodeProps {
 export const NewEntityTypeForm: FC<Props> = ({ entityTypes = [], organisationId, children }) => {
     const { form, keyManuallyEdited, setKeyManuallyEdited, handleSubmit } = useNewEntityTypeForm(
         organisationId,
-        entityTypes
+        
     );
 
     // Watch the pluralName field for dynamic title and key generation
