@@ -15,7 +15,9 @@ import riven.core.models.common.validation.Schema
 import riven.core.models.entity.EntityType
 import riven.core.models.entity.configuration.EntityTypeOrderingKey
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
+import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipImpactAnalysis
 import riven.core.models.request.entity.CreateEntityTypeRequest
+import riven.core.models.response.entity.DeleteEntityTypeResponse
 import riven.core.models.response.entity.UpdateEntityTypeResponse
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
@@ -220,6 +222,63 @@ class EntityTypeService(
     private fun hasNotableImpacts(impact: riven.core.models.entity.relationship.analysis.EntityTypeRelationshipImpactAnalysis): Boolean {
         return impact.affectedEntityTypes.isNotEmpty() ||
                 impact.dataLossWarnings.isNotEmpty()
+    }
+
+    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
+    fun deleteEntityType(
+        organisationId: UUID,
+        key: String,
+        impactConfirmed: Boolean = false
+    ): DeleteEntityTypeResponse {
+        val userId = authTokenService.getUserId()
+        val existing = ServiceUtil.findOrThrow { entityTypeRepository.findByOrganisationIdAndKey(organisationId, key) }
+        requireNotNull(existing.organisationId) { "Cannot delete system entity type" }
+
+        if (!impactConfirmed) {
+            val impact = impactAnalysisService.analyze(
+                existing,
+                diff = EntityTypeRelationshipDiff(
+                    added = emptyList(),
+                    modified = emptyList(),
+                    removed = existing.relationships ?: emptyList()
+                )
+            )
+
+            if (hasNotableImpacts(impact)) {
+                return DeleteEntityTypeResponse(
+                    success = false,
+                    impact = impact,
+                    updatedEntityTypes = null,
+                    error = null
+                )
+            }
+        }
+
+        val affectedEntityTypes: Map<String, EntityType>? = existing.relationships?.let {
+            entityRelationshipService.removeRelationships(organisationId, it)
+                .mapValues { entry -> entry.value.toModel() }
+        }
+
+        entityTypeRepository.delete(existing).also {
+            activityService.logActivity(
+                activity = Activity.ENTITY_TYPE,
+                operation = OperationType.DELETE,
+                userId = userId,
+                organisationId = organisationId,
+                entityId = existing.id,
+                entityType = ApplicationEntityType.ENTITY_TYPE,
+                details = mapOf(
+                    "type" to existing.key
+                )
+            )
+
+            return DeleteEntityTypeResponse(
+                success = true,
+                impact = null,
+                updatedEntityTypes = affectedEntityTypes,
+                error = null
+            )
+        }
     }
 
     /**

@@ -452,6 +452,34 @@ class EntityRelationshipService(
             }
     }
 
+    fun removeRelationships(
+        organisationId: UUID,
+        relationships: List<EntityRelationshipDefinition>,
+    ): Map<String, EntityTypeEntity> {
+        val entityTypesMap: MutableMap<String, EntityTypeEntity> = findAndValidateAssociatedEntityTypes(
+            relationships = relationships,
+            organisationId = organisationId
+        ).toMutableMap()
+
+        return removeRelationships(entityTypesMap, organisationId, relationships, save = true).associateBy { it.key }
+            .also {
+                // Final validation to ensure environment integrity
+                val validationContexts = relationships.map { relDef ->
+                    RelationshipDefinitionValidationContext(
+                        definition = relDef,
+                        operation = RelationshipOperation.DELETE
+                    )
+                }
+
+                validateRelationshipDefinitions(
+                    relationships = validationContexts,
+                    entityTypesMap = it
+                )
+            }
+
+
+    }
+
     /**
      * Removes relationship definitions and handles cascading updates to related entity types.
      *
@@ -469,7 +497,7 @@ class EntityRelationshipService(
         entityTypes: MutableMap<String, EntityTypeEntity>,
         organisationId: UUID,
         relationships: List<EntityRelationshipDefinition>,
-        save: Boolean = true
+        save: Boolean = false
     ): List<EntityTypeEntity> {
         // Validate before removal to ensure system integrity
         validateRelationshipsBeforeRemoval(relationships, entityTypes)
