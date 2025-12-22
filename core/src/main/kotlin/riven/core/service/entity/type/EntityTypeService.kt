@@ -51,7 +51,7 @@ class EntityTypeService(
     fun publishEntityType(organisationId: UUID, request: CreateEntityTypeRequest): EntityType {
         authTokenService.getUserId().let { userId ->
             val primaryId: UUID = UUID.randomUUID()
-            
+
             EntityTypeEntity(
                 displayNameSingular = request.name.singular,
                 displayNamePlural = request.name.plural,
@@ -119,7 +119,7 @@ class EntityTypeService(
      */
     @Transactional
     @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
-    suspend fun updateEntityType(
+    fun updateEntityType(
         organisationId: UUID,
         type: EntityType,
         impactConfirmed: Boolean = false
@@ -155,7 +155,7 @@ class EntityTypeService(
         }
 
         // Calculate relationship changes and analyze impact
-        type.relationships?.run {
+        var updatedEntityTypes: MutableMap<String, EntityTypeEntity>? = type.relationships?.let {
 
             val diff: EntityTypeRelationshipDiff = relationshipDiffService.calculate(
                 previous = existing.relationships ?: emptyList(),
@@ -175,25 +175,43 @@ class EntityTypeService(
                     return UpdateEntityTypeResponse(
                         success = false,
                         error = null,
-                        entityType = null,
+                        updatedEntityTypes = null,
                         impact = impact
                     )
                 }
             }
 
-            entityRelationshipService.updateRelationships(organisationId, diff)
+            // Proceed with updating relationships and modifying linked entities
+            entityRelationshipService.updateRelationships(organisationId, diff).toMutableMap()
         }
 
+        existing.apply {
+            displayNameSingular = type.name.singular
+            displayNamePlural = type.name.plural
+            description = type.description
+            schema = type.schema
+            relationships = type.relationships
+        }.let {
+            entityTypeRepository.save(it)
+        }.also {
+            val entityTypes: Map<String, EntityType> = updatedEntityTypes.let {
+                if (it == null) {
+                    return@let mapOf(
+                        existing.key to existing.toModel()
+                    )
+                }
 
-        // TODO: Proceed with actual update operations
-        // This will be implemented in a follow-up task
-        // For now, return a placeholder response indicating the update would proceed
-        return UpdateEntityTypeResponse(
-            success = true,
-            error = null,
-            entityType = existing,
-            impact = null // No impacts or impacts were confirmed
-        )
+                it[existing.key] = existing
+                it.mapValues { entry -> entry.value.toModel() }
+            }
+
+            return UpdateEntityTypeResponse(
+                success = true,
+                error = null,
+                updatedEntityTypes = entityTypes,
+                impact = null // No impacts or impacts were confirmed
+            )
+        }
     }
 
     /**
