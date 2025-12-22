@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { EntityType, EntityRelationshipDefinition } from "../interface/entity.interface";
+import { EntityRelationshipDefinition, EntityType } from "../interface/entity.interface";
 
 export interface RelationshipOverlap {
     type: "polymorphic" | "multi-type";
@@ -79,7 +79,7 @@ export function useRelationshipOverlapDetection(
                             suggestedAction: {
                                 type: "add-to-bidirectional",
                                 details: {
-                                    relationshipKey: existingRel.key,
+                                    relationshipKey: existingRel.id,
                                     sourceEntityToAdd: sourceEntityKey,
                                 },
                             },
@@ -108,7 +108,7 @@ export function useRelationshipOverlapDetection(
                             suggestedAction: {
                                 type: "add-to-bidirectional",
                                 details: {
-                                    relationshipKey: existingRel.key,
+                                    relationshipKey: existingRel.id,
                                     sourceEntityToAdd: sourceEntityKey,
                                 },
                             },

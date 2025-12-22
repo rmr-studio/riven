@@ -1,6 +1,5 @@
 package riven.core.models.common.validation
 
-import io.swagger.v3.oas.annotations.media.ArraySchema
 import riven.core.enums.common.OptionSortingType
 import riven.core.enums.common.SchemaType
 import riven.core.enums.core.DataFormat
@@ -8,7 +7,6 @@ import riven.core.enums.core.DataType
 import riven.core.models.common.json.JsonObject
 import riven.core.models.common.json.JsonValue
 import java.time.ZonedDateTime
-import io.swagger.v3.oas.annotations.media.Schema as JsonSchema
 
 /**
  * The Schema defines the structure and data storage requirements for a given object.

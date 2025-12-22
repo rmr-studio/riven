@@ -11,7 +11,8 @@ import {
     CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/util/utils";
+import { Check, ChevronsUpDown, Repeat } from "lucide-react";
 import { FC, useState } from "react";
 import { EntityType } from "../../interface/entity.interface";
 
@@ -22,6 +23,8 @@ interface Props {
     allowPolymorphic: boolean;
     onSelectionChange: (keys: string[], allowPolymorphic: boolean) => void;
     disabled?: boolean;
+    hasError?: boolean;
+    currentEntityKey?: string;
 }
 
 export const EntityTypeMultiSelect: FC<Props> = ({
@@ -31,6 +34,8 @@ export const EntityTypeMultiSelect: FC<Props> = ({
     allowPolymorphic,
     onSelectionChange,
     disabled = false,
+    hasError = false,
+    currentEntityKey,
 }) => {
     const [open, setOpen] = useState(false);
 
@@ -66,9 +71,22 @@ export const EntityTypeMultiSelect: FC<Props> = ({
         }
         if (selectedKeys.length === 1) {
             const selected = availableTypes.find((et) => et.key === selectedKeys[0]);
-            return selected?.name.plural || "1 selected";
+            if (!selected) return "1 selected";
+
+            return selected.name.plural;
         }
-        return `${selectedKeys.length} entity types selected`;
+
+        // Display x,y and [...] entities selected if multiple
+        const names = selectedKeys
+            .map((key) => availableTypes.find((et) => et.key === key))
+            .filter((et): et is EntityType => et !== undefined)
+            .map((et) => et.name.plural);
+
+        if (names.length <= 2) {
+            return names.join(", ");
+        }
+
+        return `${names.slice(0, 2).join(", ")} and ${names.length - 2} more`;
     };
 
     return (
@@ -78,14 +96,26 @@ export const EntityTypeMultiSelect: FC<Props> = ({
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-full justify-between"
-                    disabled={disabled}
+                    className={cn(
+                        "w-full justify-between",
+                        hasError && "border-destructive focus-visible:ring-destructive"
+                    )}
+                    disabled={disabled || open}
                 >
                     <span className="truncate">{getDisplayText()}</span>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-full p-0" align="start">
+            <PopoverContent
+                className="w-full p-0"
+                align="start"
+                portal={true}
+                onOpenAutoFocus={(e) => e.preventDefault()}
+                onEscapeKeyDown={(e) => {
+                    e.stopPropagation();
+                    setOpen(false);
+                }}
+            >
                 <Command>
                     <CommandInput placeholder="Search entity types..." />
                     <CommandList>
@@ -113,10 +143,16 @@ export const EntityTypeMultiSelect: FC<Props> = ({
                             {/* Entity Types List */}
                             {availableTypes.map((entityType) => {
                                 const isSelected = selectedKeys.includes(entityType.key);
+                                const isSelfReference = entityType.key === currentEntityKey;
+                                const displayName =
+                                    isSelfReference && !entityType.name.plural
+                                        ? "This entity"
+                                        : entityType.name.plural;
+
                                 return (
                                     <CommandItem
                                         key={entityType.key}
-                                        value={entityType.name.plural}
+                                        value={displayName}
                                         onSelect={() => handleEntityTypeToggle(entityType.key)}
                                         className="cursor-pointer"
                                     >
@@ -125,12 +161,18 @@ export const EntityTypeMultiSelect: FC<Props> = ({
                                             className="mr-2 pointer-events-none"
                                         />
                                         <div className="flex items-center gap-2">
-                                            <div className="flex h-5 w-5 items-center justify-center rounded bg-primary/10">
-                                                <span className="text-xs">
-                                                    {entityType.name.plural.charAt(0)}
-                                                </span>
-                                            </div>
-                                            <span>{entityType.name.plural}</span>
+                                            {isSelfReference ? (
+                                                <div className="flex h-5 w-5 items-center justify-center rounded bg-primary/10">
+                                                    <Repeat className="h-3 w-3 text-primary" />
+                                                </div>
+                                            ) : (
+                                                <div className="flex h-5 w-5 items-center justify-center rounded bg-primary/10">
+                                                    <span className="text-xs">
+                                                        {displayName.charAt(0)}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            <span>{displayName}</span>
                                         </div>
                                         {isSelected && (
                                             <Check className="ml-auto h-4 w-4 text-primary" />

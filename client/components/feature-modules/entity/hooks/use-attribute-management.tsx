@@ -18,7 +18,7 @@ export interface UseAttributeManagementReturn {
     attributeColumns: ColumnDef<AttributeFormData>[];
     handleAttributeAdd: (data: AttributeFormData) => void;
     handleAttributeEdit: (data: AttributeFormData) => void;
-    handleAttributeDelete: (name: string) => void;
+    handleAttributeDelete: (id: string) => void;
     handleAttributesReorder: (reordered: AttributeFormData[]) => void;
     editAttribute: (row: AttributeFormData) => AttributeFormData | undefined;
 }
@@ -37,8 +37,8 @@ export function useAttributeManagement(
             const existingAttrs: AttributeFormData[] = Object.entries(
                 entityType.schema.properties
             ).map(([key, schema]) => ({
+                id: key,
                 type: EntityPropertyType.ATTRIBUTE,
-                key: key,
                 label: schema.label || fromKeyCase(key),
                 schemaKey: schema.key,
                 dataType: schema.type,
@@ -60,10 +60,10 @@ export function useAttributeManagement(
 
         return [...attributes].sort((a, b) => {
             const aOrderItem = order.find(
-                (o) => o.key === a.key && o.type === EntityPropertyType.ATTRIBUTE
+                (o) => o.key === a.id && o.type === EntityPropertyType.ATTRIBUTE
             );
             const bOrderItem = order.find(
-                (o) => o.key === b.key && o.type === EntityPropertyType.ATTRIBUTE
+                (o) => o.key === b.id && o.type === EntityPropertyType.ATTRIBUTE
             );
             const aIndex = aOrderItem ? order.indexOf(aOrderItem) : -1;
             const bIndex = bOrderItem ? order.indexOf(bOrderItem) : -1;
@@ -88,7 +88,7 @@ export function useAttributeManagement(
                 header: "Name",
                 cell: ({ row }) => {
                     const isProtected = row.original.protected;
-                    const isIdentifier = row.original.key === identifierKey;
+                    const isIdentifier = row.original.id === identifierKey;
 
                     return (
                         <TooltipProvider>
@@ -156,10 +156,10 @@ export function useAttributeManagement(
     }, [identifierKey]);
 
     const handleAttributeAdd = (data: AttributeFormData) => {
-        // Check for duplicate names/keys
+        // Check for duplicate ids or labels
         if (
             attributes.find(
-                (attr) => attr.key === data.key || toKeyCase(attr.label) === toKeyCase(data.label)
+                (attr) => attr.id === data.id || toKeyCase(attr.label) === toKeyCase(data.label)
             )
         ) {
             toast.error("This attribute already exists.");
@@ -171,7 +171,7 @@ export function useAttributeManagement(
         if (onOrderChange) {
             const newOrder: EntityTypeOrderingKey[] = [
                 ...order,
-                { key: data.key, type: EntityPropertyType.ATTRIBUTE },
+                { key: data.id, type: EntityPropertyType.ATTRIBUTE },
             ];
             onOrderChange(newOrder);
         }
@@ -179,7 +179,7 @@ export function useAttributeManagement(
 
     const handleAttributeEdit = (data: AttributeFormData) => {
         setAttributes((prev) => {
-            const index = prev.findIndex((attr) => attr.key === data.key);
+            const index = prev.findIndex((attr) => attr.id === data.id);
             if (index === -1) return prev;
             const updated = [...prev];
             updated[index] = data;
@@ -187,17 +187,17 @@ export function useAttributeManagement(
         });
     };
 
-    const handleAttributeDelete = (key: string) => {
-        const attribute = attributes.find((attr) => toKeyCase(attr.key) === toKeyCase(key));
+    const handleAttributeDelete = (id: string) => {
+        const attribute = attributes.find((attr) => attr.id === id);
         if (attribute?.protected) {
             toast.error("This attribute is protected and cannot be deleted.");
             return;
         }
-        setAttributes((prev) => prev.filter((attr) => toKeyCase(attr.key) !== toKeyCase(key)));
+        setAttributes((prev) => prev.filter((attr) => attr.id !== id));
         // Remove from order array
         if (attribute && onOrderChange) {
             const newOrder = order.filter(
-                (o) => !(o.key === attribute.key && o.type === EntityPropertyType.ATTRIBUTE)
+                (o) => !(o.key === attribute.id && o.type === EntityPropertyType.ATTRIBUTE)
             );
             onOrderChange(newOrder);
         }
@@ -206,16 +206,16 @@ export function useAttributeManagement(
     const handleAttributesReorder = (reorderedAttributes: AttributeFormData[]) => {
         if (!onOrderChange) return;
 
-        // Get keys for reordered attributes
+        // Get ids for reordered attributes
         const attributeKeys: EntityTypeOrderingKey[] = reorderedAttributes.map((attr) => ({
-            key: attr.key,
+            key: attr.id,
             type: EntityPropertyType.ATTRIBUTE,
         }));
         onOrderChange(attributeKeys);
     };
 
     const editAttribute = (row: AttributeFormData): AttributeFormData | undefined => {
-        return attributes.find((attr) => attr.key === row.key);
+        return attributes.find((attr) => attr.id === row.id);
     };
 
     return {

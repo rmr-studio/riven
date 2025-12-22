@@ -34,9 +34,9 @@ data class EntityRelationshipDefinition(
     var name: String,
 
     // Source context
-    val sourceEntityTypeKey: String, // Linking to the source entity type
-    val originRelationshipId: UUID? = null, // Linking to the relationship WITHIN the source entity type (Provided this is a reference definition)
     val relationshipType: EntityTypeRelationshipType,
+    val sourceEntityTypeKey: String, // Linking to the source entity type
+    val originRelationshipId: UUID? = null, // Linking to the relationship WITHIN the source entity type. Provided this is a REFERENCE
 
     // Relationship Target Specification
     var entityTypeKeys: List<String>? = null,

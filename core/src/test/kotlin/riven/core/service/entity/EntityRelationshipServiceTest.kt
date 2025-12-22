@@ -1310,6 +1310,8 @@ class EntityRelationshipServiceTest {
     // ========== Helper Methods ==========
 
     private fun createEntityType(key: String, singularName: String, pluralName: String): EntityTypeEntity {
+        val id: UUID = UUID.randomUUID()
+
         return EntityTypeEntity(
             id = UUID.randomUUID(),
             key = key,
@@ -1320,10 +1322,18 @@ class EntityRelationshipServiceTest {
             schema = Schema<UUID>(
                 key = SchemaType.OBJECT,
                 type = DataType.OBJECT,
-                properties = emptyMap()
+                properties = mapOf(
+                    id to Schema(
+                        key = SchemaType.TEXT,
+                        label = "Name",
+                        type = DataType.STRING,
+                        required = true
+                    )
+                )
             ),
             order = emptyList(),
-            relationships = emptyList()
+            relationships = emptyList(),
+            identifierKey = id
         )
     }
 }

@@ -45,7 +45,7 @@ object EntityFactory {
         order: List<EntityTypeOrderingKey>? = null,
         version: Int = 1,
         protected: Boolean = false,
-        identifierKey: String = "name"
+        identifierKey: UUID = schema.properties?.keys?.first() ?: UUID.randomUUID()
     ): EntityTypeEntity {
         val defaultOrder = order ?: listOf(
             *(schema.properties?.keys ?: listOf()).map { key ->

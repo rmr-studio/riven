@@ -312,7 +312,7 @@ CREATE TABLE IF NOT EXISTS public.entity_types
     "key"                   TEXT    NOT NULL,
     "type"                  TEXT    NOT NULL CHECK (type IN ('STANDARD', 'RELATIONSHIP')),
     "organisation_id"       UUID REFERENCES organisations (id) ON DELETE CASCADE,
-    "identifier_key"        TEXT    NOT NULL,
+    "identifier_key"        UUID    NOT NULL,
     "display_name_singular" TEXT    NOT NULL,
     "display_name_plural"   TEXT    NOT NULL,
     "description"           TEXT,

@@ -5,6 +5,7 @@ import {
     DataType,
     EntityPropertyType,
     EntityRelationshipCardinality,
+    EntityTypeRelationshipType,
     SchemaType,
 } from "@/lib/types/types";
 
@@ -14,8 +15,8 @@ export type Entity = components["schemas"]["Entity"];
 export type EntityRelationshipDefinition = components["schemas"]["EntityRelationshipDefinition"];
 
 export interface EntityTypeAttributeData {
-    // Persistent Hash map lookup key => Cannot be changed after creation. Also unique identifier for relationships
-    key: string;
+    // Persistent Hash map lookup uuid => Cannot be changed after creation. Also unique identifier for relationships
+    id: string;
     // Human readable display name
     label: string;
     type: EntityPropertyType;
@@ -24,13 +25,17 @@ export interface EntityTypeAttributeData {
 }
 
 export interface RelationshipFormData extends EntityTypeAttributeData {
-    cardinality: EntityRelationshipCardinality;
-    minOccurs?: number;
-    maxOccurs?: number;
     entityTypeKeys: string[];
+
+    relationshipType: EntityTypeRelationshipType;
+    sourceEntityTypeKey: string;
+    originRelationshipId?: string;
+
     allowPolymorphic: boolean;
     bidirectional: boolean;
     bidirectionalEntityTypeKeys?: string[];
+    cardinality: EntityRelationshipCardinality;
+
     inverseName?: string;
     required: boolean;
 }
@@ -60,9 +65,13 @@ export const isRelationshipType = (
     return data.type === EntityPropertyType.RELATIONSHIP;
 };
 
+export type RelationshipLimit = "singular" | "many";
+
 // Export overlap detection types
 export type {
     OverlapDetectionResult,
     OverlapResolution,
     RelationshipOverlap,
 } from "../hooks/use-relationship-overlap-detection";
+
+export type UpdateEntityTypeResponse = components["schemas"]["UpdateEntityTypeResponse"];

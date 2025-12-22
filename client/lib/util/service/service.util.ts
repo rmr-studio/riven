@@ -1,7 +1,7 @@
 import { Session } from "@supabase/supabase-js";
 import {} from "uuid";
+import { isUUID } from "validator";
 import { fromError, ResponseError } from "../error/error.util";
-import { isUUID } from "../utils";
 
 export function validateSession(session: Session | null): asserts session is NonNullable<Session> {
     if (!session?.access_token) {

@@ -52,7 +52,6 @@ const ENTITY_ICONS = {
  * <EntitySelectorModal
  *   open={isOpen}
  *   onOpenChange={setIsOpen}
- *   onSelect={(items) => console.log("Selected:", items)}
  *   entityType="CLIENT"
  *   organisationId={orgId}
  *   multiSelect={true}
@@ -65,7 +64,7 @@ const ENTITY_ICONS = {
  * <EntitySelectorModal
  *   open={isOpen}
  *   onOpenChange={setIsOpen}
- *   onSelect={(items) => console.log("Selected:", items)}
+
  *   entityType="CLIENT"
  *   organisationId={orgId}
  *   multiSelect={true}

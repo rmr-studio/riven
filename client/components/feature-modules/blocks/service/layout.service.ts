@@ -1,4 +1,3 @@
-import { EntityType } from "@/lib/types/types";
 import { formatError, fromError, isResponseError } from "@/lib/util/error/error.util";
 import { handleError, validateSession, validateUuid } from "@/lib/util/service/service.util";
 import { api } from "@/lib/util/utils";

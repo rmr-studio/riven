@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import riven.core.models.entity.EntityType
@@ -67,7 +68,7 @@ class EntityTypeController(
         @RequestBody request: CreateEntityTypeRequest
     ): ResponseEntity<EntityType> {
         val newEntityType = entityTypeService.publishEntityType(organisationId, request)
-        return ResponseEntity.status(201).body(newEntityType)
+        return ResponseEntity.status(HttpStatus.CREATED).body(newEntityType)
     }
 
     @PutMapping("/organisation/{organisationId}")
@@ -76,17 +77,27 @@ class EntityTypeController(
         description = "Updates the data for an already existing entity type for the specified organisation."
     )
     @ApiResponses(
-        ApiResponse(responseCode = "201", description = "Entity type created successfully"),
+        ApiResponse(responseCode = "200", description = "Entity type updated successfully"),
+        ApiResponse(
+            responseCode = "409",
+            description = "Conflict due to cascading impacts on existing entities as a result of aforementioned changes"
+        ),
         ApiResponse(responseCode = "400", description = "Invalid request data"),
         ApiResponse(responseCode = "401", description = "Unauthorized access")
     )
-    suspend fun updateEntityType(
+    fun updateEntityType(
         @PathVariable organisationId: UUID,
         @RequestParam impactConfirmed: Boolean = false,
         @RequestBody type: EntityType,
     ): ResponseEntity<UpdateEntityTypeResponse> {
         val response = entityTypeService.updateEntityType(organisationId, type, impactConfirmed)
-        return ResponseEntity.ok(response)
+
+        // There is an impact that the user needs to consider and confirm. Return 409 Conflict.
+        if (response.impact != null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response)
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(response)
     }
 
 

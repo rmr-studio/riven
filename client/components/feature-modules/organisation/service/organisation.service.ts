@@ -9,8 +9,9 @@ import {
     UpdateOrganisationRequest,
 } from "@/components/feature-modules/organisation/interface/organisation.interface";
 import { fromError, isResponseError } from "@/lib/util/error/error.util";
-import { api, isUUID } from "@/lib/util/utils";
+import { api } from "@/lib/util/utils";
 import { Session } from "@supabase/supabase-js";
+import { isUUID } from "validator";
 
 export const createOrganisation = async (
     session: Session | null,

@@ -15,7 +15,7 @@ class EntityTypeRelationshipImpactAnalysisService(
     private val entityTypeRepository: EntityRelationshipRepository,
     private val entityRepository: EntityRepository
 ) {
-    suspend fun analyze(
+    fun analyze(
         sourceEntityType: EntityTypeEntity,
         diff: EntityTypeRelationshipDiff
     ): EntityTypeRelationshipImpactAnalysis {
@@ -66,7 +66,7 @@ class EntityTypeRelationshipImpactAnalysisService(
         )
     }
 
-    private suspend fun analyzeModificationImpact(
+    private fun analyzeModificationImpact(
         mod: EntityTypeRelationshipModification,
         affectedTypes: MutableSet<String>,
         warnings: MutableList<EntityTypeRelationshipDataLossWarning>,

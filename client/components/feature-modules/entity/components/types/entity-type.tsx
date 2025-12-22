@@ -30,8 +30,11 @@ import {
 import Link from "next/link";
 import { FC, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import {
+    useEntityTypeForm,
+    type EntityTypeFormValues,
+} from "../../hooks/form/use-entity-type-form";
 import { useAttributeManagement } from "../../hooks/use-attribute-management";
-import { EntityTypeFormValues, useEntityTypeForm } from "../../hooks/use-entity-type-form";
 import { useEntityTypes } from "../../hooks/use-entity-types";
 import { useRelationshipManagement } from "../../hooks/use-relationship-management";
 import {
@@ -42,13 +45,12 @@ import {
     type EntityTypeOrderingKey,
     type RelationshipFormData,
 } from "../../interface/entity.interface";
-import { ConfigurationForm } from "../forms/entity-type-configuration-form";
-import { AttributeDialog } from "./entity-type-attribute-dialog";
+import { AttributeDialog } from "../forms/type/attribute-form";
+import { ConfigurationForm } from "../forms/type/configuration-form";
 
 interface EntityTypeOverviewProps {
-    entityType?: EntityType;
+    entityType: EntityType;
     organisationId: string;
-    mode: "create" | "edit";
 }
 
 // Common type for data table rows (both attributes and relationships)
@@ -67,21 +69,13 @@ interface EntityTypeFieldRow extends EntityTypeAttributeData {
     targetAttributeName?: string | undefined;
 }
 
-export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
-    entityType,
-    organisationId,
-    mode,
-}) => {
+export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, organisationId }) => {
     const [order, setOrder] = useState<EntityTypeOrderingKey[]>(entityType?.order || []);
     const hasInitialized = useRef(false);
 
     // Form management hook
-    const { handleSubmit: handleFormSubmit } = useEntityTypeForm(organisationId, entityType, mode);
-    const { form, keyManuallyEdited, setKeyManuallyEdited } = useEntityTypeForm(
-        organisationId,
-        entityType,
-        mode
-    );
+    const { handleSubmit: handleFormSubmit } = useEntityTypeForm(organisationId, entityType);
+    const { form } = useEntityTypeForm(organisationId, entityType);
     const identifierKey = form.watch("identifierKey");
     // Attribute management hook
     const {
@@ -140,26 +134,6 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
         };
     }, [form.formState.errors]);
 
-    // Auto-generate default "name" attribute for new entity types
-    useEffect(() => {
-        if (mode === "create" && attributes.length === 0 && !hasInitialized.current) {
-            hasInitialized.current = true;
-            const defaultNameAttribute: AttributeFormData = {
-                type: EntityPropertyType.ATTRIBUTE,
-                key: "name",
-                label: "Name",
-                schemaKey: SchemaType.TEXT,
-                dataType: DataType.STRING,
-                required: true,
-                unique: true,
-                protected: true,
-            };
-            handleAttributeAdd(defaultNameAttribute);
-            // Set the default name attribute as the identifier key
-            form.setValue("identifierKey", "name");
-        }
-    }, [mode, attributes.length, handleAttributeAdd, form]);
-
     // Check for relationship suggestions from overlap detection
     useEffect(() => {
         const suggestionData = sessionStorage.getItem("relationship-suggestion");
@@ -183,6 +157,15 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
         }
     }, []);
 
+    const validName = pluralName && pluralName.trim().length > 0;
+
+    // Clear manual error on pluralName when user enters a valid name
+    useEffect(() => {
+        if (validName && form.formState.errors.pluralName?.type === "manual") {
+            form.clearErrors("pluralName");
+        }
+    }, [validName, form]);
+
     // Sync order array with all attributes and relationships
     useEffect(() => {
         // Create a map of existing order items for quick lookup
@@ -192,26 +175,26 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
 
         // Add any attributes that aren't in the order array
         attributes.forEach((attr) => {
-            const key = `${attr.type}-${attr.key}`;
+            const key = `${attr.type}-${attr.id}`;
             if (!orderMap.has(key)) {
-                newOrder.push({ key: attr.key, type: attr.type });
+                newOrder.push({ key: attr.id, type: attr.type });
                 needsUpdate = true;
             }
         });
 
         // Add any relationships that aren't in the order array
         relationships.forEach((rel) => {
-            const key = `${rel.type}-${rel.key}`;
+            const key = `${rel.type}-${rel.id}`;
             if (!orderMap.has(key)) {
-                newOrder.push({ key: rel.key, type: rel.type });
+                newOrder.push({ key: rel.id, type: rel.type });
                 needsUpdate = true;
             }
         });
 
         // Remove any items from order that no longer exist in attributes or relationships
         const allFieldKeys = new Set([
-            ...attributes.map((a) => `${a.type}-${a.key}`),
-            ...relationships.map((r) => `${r.type}-${r.key}`),
+            ...attributes.map((a) => `${a.type}-${a.id}`),
+            ...relationships.map((r) => `${r.type}-${r.id}`),
         ]);
 
         const filteredOrder = newOrder.filter((o) => allFieldKeys.has(`${o.type}-${o.key}`));
@@ -225,7 +208,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
     const allFields: EntityTypeFieldRow[] = useMemo(() => {
         // Convert attributes to EntityTypeFieldRow
         const attributeRows: EntityTypeFieldRow[] = attributes.map((attr) => ({
-            key: attr.key,
+            id: attr.id,
             label: attr.label,
             type: attr.type,
             required: attr.required,
@@ -241,7 +224,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
 
         // Convert relationships to EntityTypeFieldRow
         const relationshipRows: EntityTypeFieldRow[] = relationships.map((rel) => ({
-            key: rel.key,
+            id: rel.id,
             label: rel.label,
             type: rel.type,
             required: rel.required,
@@ -261,8 +244,8 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
         // Sort based on order array if it exists
         if (order.length > 0) {
             return combined.sort((a, b) => {
-                const aOrderItem = order.find((o) => o.key === a.key && o.type === a.type);
-                const bOrderItem = order.find((o) => o.key === b.key && o.type === b.type);
+                const aOrderItem = order.find((o) => o.key === a.id && o.type === a.type);
+                const bOrderItem = order.find((o) => o.key === b.id && o.type === b.type);
                 const aIndex = aOrderItem ? order.indexOf(aOrderItem) : -1;
                 const bIndex = bOrderItem ? order.indexOf(bOrderItem) : -1;
 
@@ -294,7 +277,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                 </>
             );
 
-        if (identifierKey === row.original.key)
+        if (identifierKey === row.original.id)
             return (
                 <>
                     <TooltipTrigger asChild>
@@ -357,15 +340,9 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                 cell: ({ row }) => {
                     const isRelationship = row.original.type === EntityPropertyType.RELATIONSHIP;
                     if (isRelationship) {
-                        const rel = row.original as RelationshipFormData;
                         return (
                             <div className="flex flex-col gap-1">
-                                <Badge variant="outline">
-                                    {rel.cardinality.replace(/_/g, " ")}
-                                </Badge>
-                                <span className="text-xs text-muted-foreground">
-                                    {rel.entityTypeKeys?.join(", ") || "Any"}
-                                </span>
+                                <Badge variant="outline">Relationship</Badge>
                             </div>
                         );
                     } else {
@@ -382,10 +359,18 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                     const constraints: string[] = [];
 
                     if (row.original.required) constraints.push("Required");
-                    if (!isRelationship && (row.original as AttributeFormData).unique)
+
+                    if (!isRelationship && row.original.unique) {
                         constraints.push("Unique");
-                    if (isRelationship && (row.original as RelationshipFormData).bidirectional)
+                    }
+
+                    if (isRelationship && row.original.allowPolymorphic) {
+                        constraints.push("Polymorphic");
+                    }
+
+                    if (isRelationship && row.original.bidirectional) {
                         constraints.push("Bidirectional");
+                    }
 
                     return (
                         <div className="flex gap-1 flex-wrap">
@@ -457,23 +442,23 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
         setEditingAttribute(undefined);
     };
 
-    const handleDeleteField = (key: string, type: EntityPropertyType) => {
+    const handleDeleteField = (id: string, type: EntityPropertyType) => {
         if (type === EntityPropertyType.RELATIONSHIP) {
-            handleRelationshipDelete(key);
+            handleRelationshipDelete(id);
         } else {
-            handleAttributeDelete(key);
+            handleAttributeDelete(id);
         }
     };
 
     const handleEditField = (row: EntityTypeFieldRow) => {
         if (row.type === EntityPropertyType.ATTRIBUTE) {
-            const attribute = attributes.find((attr) => attr.key === row.key);
+            const attribute = attributes.find((attr) => attr.id === row.id);
             if (attribute) {
                 setEditingAttribute(attribute);
                 setDialogOpen(true);
             }
         } else {
-            const relationship = relationships.find((rel) => rel.key === row.key);
+            const relationship = relationships.find((rel) => rel.id === row.id);
             if (relationship) {
                 setEditingAttribute(relationship);
                 setDialogOpen(true);
@@ -484,7 +469,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
     const handleFieldsReorder = (reorderedFields: EntityTypeFieldRow[]) => {
         // Create new order array from reordered fields
         const newOrder: EntityTypeOrderingKey[] = reorderedFields.map((field) => ({
-            key: field.key,
+            key: field.id,
             type: field.type,
         }));
 
@@ -502,20 +487,13 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                                 <Database className="h-6 w-6 text-primary" />
                             </div>
                             <div>
-                                <h1 className="text-2xl font-semibold">
-                                    {pluralName ||
-                                        (mode === "create"
-                                            ? "New Entity Type"
-                                            : entityType?.name.plural || "Entity Type")}
-                                </h1>
-                                {mode === "edit" && entityType?.type && (
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <Badge variant="secondary">{entityType.type}</Badge>
-                                        <span className="text-sm text-muted-foreground">
-                                            Manage object attributes and other relevant settings
-                                        </span>
-                                    </div>
-                                )}
+                                <h1 className="text-2xl font-semibold">{pluralName}</h1>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <Badge variant="secondary">{entityType.type}</Badge>
+                                    <span className="text-sm text-muted-foreground">
+                                        Manage object attributes and other relevant settings
+                                    </span>
+                                </div>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -523,12 +501,8 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                                 <Button variant="outline">Back</Button>
                             </Link>
                             <Button onClick={handleSaveClick}>
-                                {mode === "create" ? (
-                                    <Plus className="size-4 mr-1" />
-                                ) : (
-                                    <Save className="size-4 mr-1" />
-                                )}
-                                {mode === "create" ? "Create" : "Save Changes"}
+                                <Save className="size-4 mr-1" />
+                                Save Changes
                             </Button>
                         </div>
                     </div>
@@ -544,7 +518,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
 
                     {/* Tabs */}
                     <Tabs defaultValue="configuration" className="w-full">
-                        <TabsList className="justify-start w-1/3">
+                        <TabsList className="justify-start w-2/5">
                             <TabsTrigger value="configuration">
                                 <div className="flex items-center gap-2">
                                     Configuration
@@ -553,6 +527,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                                     )}
                                 </div>
                             </TabsTrigger>
+
                             <TabsTrigger value="attributes">
                                 <div className="flex items-center gap-2">
                                     Attributes
@@ -572,12 +547,9 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                         <TabsContent value="configuration" className="space-y-6">
                             <ConfigurationForm
                                 form={form}
-                                keyManuallyEdited={keyManuallyEdited}
-                                setKeyManuallyEdited={setKeyManuallyEdited}
                                 availableIdentifiers={attributes.filter(
                                     (attr) => attr.unique && attr.required
                                 )}
-                                mode={mode}
                             />
                         </TabsContent>
 
@@ -598,7 +570,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                                         setDialogOpen(true);
                                     }}
                                 >
-                                    <Plus className="size-4 mr-1 mr-2" />
+                                    <Plus className="size-4 mr-2" />
                                     Add Attribute
                                 </Button>
                             </div>
@@ -652,7 +624,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                                 data={allFields}
                                 enableDragDrop
                                 onReorder={handleFieldsReorder}
-                                getRowId={(row) => row.key}
+                                getRowId={(row) => row.id}
                                 search={{
                                     enabled: true,
                                     searchableColumns: ["label"],
@@ -693,7 +665,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                                             label: "Delete",
                                             icon: Trash2,
                                             onClick: (row) => {
-                                                handleDeleteField(row.key, row.type);
+                                                handleDeleteField(row.id, row.type);
                                             },
                                             variant: "destructive",
                                             disabled: (row) => row?.protected || false,
@@ -718,8 +690,8 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({
                     }
                 }}
                 onSubmit={handleAttributeSubmit}
-                entityTypes={entityTypes}
-                currentEntityType={entityType}
+                availableTypes={entityTypes}
+                entityType={entityType}
                 editingAttribute={editingAttribute}
                 currentAttributes={attributes}
                 currentRelationships={relationships}

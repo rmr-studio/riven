@@ -41,7 +41,7 @@ data class EntityTypeEntity(
     var displayNamePlural: String,
 
     @Column(name = "identifier_key", nullable = false)
-    val identifierKey: String = "name",
+    val identifierKey: UUID,
 
     @Column(name = "description", nullable = true)
     var description: String? = null,

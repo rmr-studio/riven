@@ -332,9 +332,6 @@ export const BlockEditProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
                 // Commit to BlockEnvironment (using tracked version to record operation)
                 updateTrackedBlock(blockId, updatedNode);
-                console.log(`✅ Saved block ${blockId} - changes detected and applied`);
-            } else {
-                console.log(`⏭️ Skipped saving block ${blockId} - no changes detected`);
             }
 
             // Clean up session and draft
@@ -416,8 +413,6 @@ export const BlockEditProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             }
         });
 
-        console.log(`Prepared ${changes.size} of ${allBlockIds.length} blocks for save`);
-
         // Don't clean up sessions yet - coordinator will do that after save succeeds
         return { success: true, changes };
     }, [editingSessions, drafts, validateBlock, getBlock]);
@@ -428,15 +423,12 @@ export const BlockEditProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         // Clean up ALL sessions and drafts at once
         setEditingSessions(new Map());
         setDrafts(new Map());
-
-        console.log(`Discarded edits for ${allBlockIds.length} blocks`);
     }, [editingSessions]);
 
     const exitAllSessions = useCallback(() => {
         const count = editingSessions.size;
         setEditingSessions(new Map());
         setDrafts(new Map());
-        console.log(`Exited ${count} edit sessions without saving`);
     }, [editingSessions]);
 
     /* -------------------------------------------------------------------------- */

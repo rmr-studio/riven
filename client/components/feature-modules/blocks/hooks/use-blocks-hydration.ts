@@ -28,7 +28,6 @@ import { BlockService, HydrateBlocksResponse } from "../service/block.service";
  * // Access results per block
  * const block1Result = results?.["block-1"];
  * if (block1Result && !block1Result.error) {
- *   console.log(block1Result.references);
  * }
  */
 export const useBlocksHydration = (

@@ -18,30 +18,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Database } from "lucide-react";
 import { FC } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { EntityTypeFormValues } from "../../hooks/use-entity-type-form";
-import { AttributeFormData } from "../../interface/entity.interface";
+import { EntityTypeFormValues } from "../../../hooks/form/use-entity-type-form";
+import { AttributeFormData } from "../../../interface/entity.interface";
 
 interface Props {
     form: UseFormReturn<EntityTypeFormValues>;
-    mode: "create" | "edit";
-    keyManuallyEdited: boolean;
-    setKeyManuallyEdited: (value: boolean) => void;
     availableIdentifiers: AttributeFormData[];
 }
 
-export const ConfigurationForm: FC<Props> = ({
-    form,
-    mode,
-    keyManuallyEdited,
-    setKeyManuallyEdited,
-    availableIdentifiers,
-}) => {
+export const ConfigurationForm: FC<Props> = ({ form, availableIdentifiers }) => {
     return (
         <div className="rounded-lg border bg-card p-6">
             <h2 className="text-lg font-semibold mb-4">General</h2>
 
             <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-6 items-start">
                     {/* Name */}
                     <FormField
                         control={form.control}
@@ -86,76 +77,6 @@ export const ConfigurationForm: FC<Props> = ({
                     />
                 </div>
 
-                {/* Key / Slug */}
-                <FormField
-                    control={form.control}
-                    name="key"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Identifier / Slug</FormLabel>
-                            <FormControl>
-                                <Input
-                                    placeholder="e.g., companies"
-                                    disabled={mode === "edit"}
-                                    {...field}
-                                    onChange={(e) => {
-                                        field.onChange(e);
-                                        if (mode === "create") {
-                                            setKeyManuallyEdited(true);
-                                        }
-                                    }}
-                                />
-                            </FormControl>
-                            <FormDescription className="text-xs italic">
-                                A unique key used to identify and link this particular entity type.
-                                This cannot be changed later.
-                                {mode === "create" && !keyManuallyEdited && (
-                                    <span className="block mt-1 text-muted-foreground">
-                                        Auto-generated from plural noun. Edit to customize.
-                                    </span>
-                                )}
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                {/* Identifier Key */}
-                <FormField
-                    control={form.control}
-                    name="identifierKey"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Identifier Key</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a unique identifier" />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {availableIdentifiers.map((attr) => (
-                                        <SelectItem key={attr.key} value={attr.key}>
-                                            {attr.label}
-                                        </SelectItem>
-                                    ))}
-                                    {availableIdentifiers.length === 0 && (
-                                        <SelectItem value="name" disabled>
-                                            No unique attributes available
-                                        </SelectItem>
-                                    )}
-                                </SelectContent>
-                            </Select>
-                            <FormDescription>
-                                This attribute will be used to uniquely identify an entity. This
-                                value must reference an attribute marked as "Unique", and must be a
-                                Required field.
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
                 {/* Description */}
                 <FormField
                     control={form.control}
@@ -174,34 +95,36 @@ export const ConfigurationForm: FC<Props> = ({
                         </FormItem>
                     )}
                 />
-
-                {/* Type */}
+                {/* Identifier Key */}
                 <FormField
                     control={form.control}
-                    name="type"
+                    name="identifierKey"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Type</FormLabel>
-                            <Select
-                                onValueChange={field.onChange}
-                                value={field.value}
-                                disabled={mode === "edit"}
-                            >
+                            <FormLabel>Identifier Key</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue />
+                                    <SelectTrigger className="w-xs">
+                                        <SelectValue placeholder="Select a unique identifier" />
                                     </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    <SelectItem value="STANDARD">Standard</SelectItem>
-                                    <SelectItem value="RELATIONSHIP">Relationship</SelectItem>
+                                    {availableIdentifiers.map((attr) => (
+                                        <SelectItem key={attr.id} value={attr.id}>
+                                            {attr.label}
+                                        </SelectItem>
+                                    ))}
+                                    {availableIdentifiers.length === 0 && (
+                                        <SelectItem value="name" disabled>
+                                            No unique attributes available
+                                        </SelectItem>
+                                    )}
                                 </SelectContent>
                             </Select>
-                            {mode === "edit" && (
-                                <FormDescription>
-                                    Entity type cannot be changed after creation
-                                </FormDescription>
-                            )}
+                            <FormDescription className="max-w-sm mx-1">
+                                This attribute will be used to uniquely identify an entity, and must
+                                point to an attribute marked as unique, and mandatory.
+                            </FormDescription>
                             <FormMessage />
                         </FormItem>
                     )}

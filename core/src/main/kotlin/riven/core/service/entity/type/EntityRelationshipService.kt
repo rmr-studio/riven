@@ -6,12 +6,15 @@ import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.activity.Activity
 import riven.core.enums.core.ApplicationEntityType
+import riven.core.enums.entity.EntityPropertyType
 import riven.core.enums.entity.EntityTypeRelationshipChangeType
 import riven.core.enums.entity.EntityTypeRelationshipType
 import riven.core.enums.entity.invert
 import riven.core.enums.util.OperationType
 import riven.core.models.common.display.DisplayName
+import riven.core.models.entity.EntityType
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
+import riven.core.models.entity.configuration.EntityTypeOrderingKey
 import riven.core.models.entity.relationship.EntityTypeReferenceRelationshipBuilder
 import riven.core.models.entity.relationship.analysis.EntityTypePolymorphicCandidates
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
@@ -91,6 +94,7 @@ class EntityRelationshipService(
                 RelationshipOperation.CREATE, RelationshipOperation.UPDATE -> {
                     validateRelationshipForCreateOrUpdate(relDef, entityTypesMap)
                 }
+
                 RelationshipOperation.DELETE -> {
                     validateRelationshipForDelete(relDef, entityTypesMap)
                 }
@@ -381,7 +385,7 @@ class EntityRelationshipService(
     fun updateRelationships(
         organisationId: UUID,
         diff: EntityTypeRelationshipDiff
-    ) {
+    ): Map<String, EntityTypeEntity> {
         // Load all target entity types
         val entityTypesMap: MutableMap<String, EntityTypeEntity> = findAndValidateAssociatedEntityTypes(
             relationships = diff.added + diff.removed + diff.modified.map { it.updated },
@@ -410,41 +414,42 @@ class EntityRelationshipService(
         modifyRelationships(entityTypesMap, organisationId, diff.modified, save = false)
 
         // Save all affected entity types and validate relationship environment
-        entityTypeRepository.saveAll(entityTypesMap.values.toList()).also { savedTypes ->
-            val savedTypesMap = savedTypes.associateBy { type -> type.key }
+        return entityTypeRepository.saveAll(entityTypesMap.values.toList())
 
-            // Build validation contexts with appropriate operations
-            val validationContexts = mutableListOf<RelationshipDefinitionValidationContext>()
+            .associateBy { it.key }.also { savedTypes ->
 
-            // Added relationships - validate as CREATE
-            validationContexts.addAll(diff.added.map { relDef ->
-                RelationshipDefinitionValidationContext(
-                    definition = relDef,
-                    operation = RelationshipOperation.CREATE
+                // Build validation contexts with appropriate operations
+                val validationContexts = mutableListOf<RelationshipDefinitionValidationContext>()
+
+                // Added relationships - validate as CREATE
+                validationContexts.addAll(diff.added.map { relDef ->
+                    RelationshipDefinitionValidationContext(
+                        definition = relDef,
+                        operation = RelationshipOperation.CREATE
+                    )
+                })
+
+                // Removed relationships - validate as DELETE (check that environment is clean)
+                validationContexts.addAll(diff.removed.map { relDef ->
+                    RelationshipDefinitionValidationContext(
+                        definition = relDef,
+                        operation = RelationshipOperation.DELETE
+                    )
+                })
+
+                // Modified relationships - validate as UPDATE
+                validationContexts.addAll(diff.modified.map { modification ->
+                    RelationshipDefinitionValidationContext(
+                        definition = modification.updated,
+                        operation = RelationshipOperation.UPDATE
+                    )
+                })
+
+                validateRelationshipDefinitions(
+                    relationships = validationContexts,
+                    entityTypesMap = savedTypes
                 )
-            })
-
-            // Removed relationships - validate as DELETE (check that environment is clean)
-            validationContexts.addAll(diff.removed.map { relDef ->
-                RelationshipDefinitionValidationContext(
-                    definition = relDef,
-                    operation = RelationshipOperation.DELETE
-                )
-            })
-
-            // Modified relationships - validate as UPDATE
-            validationContexts.addAll(diff.modified.map { modification ->
-                RelationshipDefinitionValidationContext(
-                    definition = modification.updated,
-                    operation = RelationshipOperation.UPDATE
-                )
-            })
-
-            validateRelationshipDefinitions(
-                relationships = validationContexts,
-                entityTypesMap = savedTypesMap
-            )
-        }
+            }
     }
 
     /**
@@ -556,7 +561,8 @@ class EntityRelationshipService(
         // Remove the ORIGIN relationship from source entity type
         val updatedRelationships = sourceEntityType.relationships?.toMutableList() ?: mutableListOf()
         updatedRelationships.removeIf { it.id == originRelationship.id }
-        sourceEntityType = sourceEntityType.copy(relationships = updatedRelationships)
+        val updatedOrder = sourceEntityType.order.filter { it.key != originRelationship.id }
+        sourceEntityType = sourceEntityType.copy(relationships = updatedRelationships, order = updatedOrder)
         entityTypes[sourceKey] = sourceEntityType
 
         // If bidirectional, remove all inverse REFERENCE relationships from target entity types
@@ -624,7 +630,9 @@ class EntityRelationshipService(
         // Remove the REFERENCE relationship from source entity type
         val updatedRelationships = sourceEntityType.relationships?.toMutableList() ?: mutableListOf()
         updatedRelationships.removeIf { it.id == referenceRelationship.id }
-        sourceEntityType = sourceEntityType.copy(relationships = updatedRelationships)
+
+        val updatedOrder = sourceEntityType.order.filter { it.key != referenceRelationship.id }
+        sourceEntityType = sourceEntityType.copy(relationships = updatedRelationships, order = updatedOrder)
         entityTypes[referenceRelationship.sourceEntityTypeKey] = sourceEntityType
 
         // Update the origin ORIGIN relationship
@@ -1269,6 +1277,12 @@ class EntityRelationshipService(
         } else {
             // Add new relationship
             existingRelationships.add(newRelationship)
+
+            // Append to table order
+            entityType.order += EntityTypeOrderingKey(
+                newRelationship.id,
+                EntityPropertyType.RELATIONSHIP
+            )
         }
 
         return entityType.copy(relationships = existingRelationships)
