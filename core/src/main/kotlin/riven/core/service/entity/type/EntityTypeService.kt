@@ -120,6 +120,8 @@ class EntityTypeService(
      * When impactConfirmed=false: Performs impact analysis and returns impacts if any exist
      * When impactConfirmed=true: Proceeds with the update after user confirmation
      */
+
+    // Todo. Relationship reference deletions should also be able to specify just removal of Bidirectional Link, or entire relationship linkage
     @Transactional
     @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
     fun updateEntityType(

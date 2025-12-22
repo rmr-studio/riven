@@ -2,7 +2,10 @@ package riven.core.service.entity.type
 
 import org.springframework.stereotype.Service
 import riven.core.entity.entity.EntityTypeEntity
-import riven.core.enums.entity.*
+import riven.core.enums.entity.EntityRelationshipCardinality
+import riven.core.enums.entity.EntityTypeRelationshipChangeType
+import riven.core.enums.entity.EntityTypeRelationshipDataLossReason
+import riven.core.enums.entity.canCauseImpact
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.relationship.analysis.*
 import riven.core.repository.entity.EntityRepository
@@ -19,6 +22,16 @@ class EntityTypeRelationshipImpactAnalysisService(
         sourceEntityType: EntityTypeEntity,
         diff: EntityTypeRelationshipDiff
     ): EntityTypeRelationshipImpactAnalysis {
+        // Todo. Will need to flesh this out later once entity data has been modelled and implemented. Not really top priority
+
+        return EntityTypeRelationshipImpactAnalysis(
+            affectedEntityTypes = emptyList(),
+            dataLossWarnings = emptyList(),
+            columnsRemoved = emptyList(),
+            columnsModified = emptyList()
+        )
+
+
         val warnings = mutableListOf<EntityTypeRelationshipDataLossWarning>()
         val deletions = mutableListOf<EntityImpactSummary>()
         val updates = mutableListOf<EntityImpactSummary>()
@@ -46,7 +59,7 @@ class EntityTypeRelationshipImpactAnalysisService(
 
         // Analyze modifications
         diff.modified.forEach {
-            analyzeModificationImpact(it, affectedTypes, warnings, deletions, updates)
+            analyzeModificationImpact(entityTypeMap, it, affectedTypes, warnings, deletions, updates)
         }
 
         return EntityTypeRelationshipImpactAnalysis(
@@ -77,14 +90,14 @@ class EntityTypeRelationshipImpactAnalysisService(
 
         // Bidirectional targets changed
         if (EntityTypeRelationshipChangeType.BIDIRECTIONAL_TARGETS_CHANGED in mod.changes) {
-            val prevBiTargets = prev.bidirectionalEntityTypeKeys ?: emptySet()
-            val updBiTargets = upd.bidirectionalEntityTypeKeys ?: emptySet()
+            prev.bidirectionalEntityTypeKeys ?: emptySet()
+            upd.bidirectionalEntityTypeKeys ?: emptySet()
 
-            // Removed bidirectional targets → delete references
-            (prevBiTargets - updBiTargets.toSet()).forEach { targetKey ->
-                affectedTypes += targetKey
-                deletions += EntityImpactSummary(targetKey, prev.id, prev.name)
-            }
+//            // Removed bidirectional targets → delete references
+//            (prevBiTargets - updBiTargets.toSet()).forEach { targetKey ->
+//                affectedTypes += targetKey
+//                deletions += EntityImpactSummary(targetKey, prev.id, prev.name)
+//            }
         }
 
         // Inverse name changed → update references
@@ -121,34 +134,48 @@ class EntityTypeRelationshipImpactAnalysisService(
         dataLossWarnings: MutableList<EntityTypeRelationshipDataLossWarning>
     ) {
 
-        if (relationship.relationshipType == EntityTypeRelationshipType.ORIGIN && relationship.bidirectional) {
-            relationship.bidirectionalEntityTypeKeys?.forEach { targetKey ->
-                affectedTypes += targetKey
-                removedColumns.addLast(
-                    EntityImpactSummary(
-                        entityTypeKey = targetKey,
-                        relationshipId = relationship.id,
-                        relationshipName = relationship.name
-                    )
-                )
-            }
-        }
 
-        // Check for data loss
-        // TODO Implement counting affected entities
-        val affectedCount = 0L
-//            val affectedCount = entityDataRepository
-//                .countEntitiesWithRelationshipData(sourceEntityType.key, removed.id)
-        if (affectedCount > 0) {
-            warnings += EntityTypeRelationshipDataLossWarning(
-                entityTypeKey = sourceEntityType.key,
-                relationship = removed,
-                reason = EntityTypeRelationshipDataLossReason.RELATIONSHIP_DELETED,
-                estimatedImpactCount = affectedCount
-            )
-        }
+//        if (relationship.relationshipType == EntityTypeRelationshipType.ORIGIN && relationship.bidirectional) {
+//            relationship.bidirectionalEntityTypeKeys?.forEach { targetKey ->
+//                affectedTypes += targetKey
+//                removedColumns.addLast(
+//                    EntityImpactSummary(
+//                        entityTypeKey = targetKey,
+//                        relationshipId = relationship.id,
+//                        relationshipName = relationship.name
+//                    )
+//                )
+//            }
+//        }
+//
+//        // Check for data loss
+//        // TODO Implement counting affected entities
+//        val affectedCount = 0L
+////            val affectedCount = entityDataRepository
+////                .countEntitiesWithRelationshipData(sourceEntityType.key, removed.id)
+//        if (affectedCount > 0) {
+//            warnings += EntityTypeRelationshipDataLossWarning(
+//                entityTypeKey = sourceEntityType.key,
+//                relationship = removed,
+//                reason = EntityTypeRelationshipDataLossReason.RELATIONSHIP_DELETED,
+//                estimatedImpactCount = affectedCount
+//            )
+//        }
 
     }
+
+    /**
+     * Removing an ORIGIN relationship definition could impact multiple entity types that reference this relationship.
+     * This would include removing any bi-directional relationships in target entity types.
+     */
+    private fun analyseOriginDefinitionRemovalImpact() {}
+
+    /**
+     * Removing a REFERENCE relationship definition would have a smaller impact surface.
+     * But could
+     *
+     */
+    private fun analyseReferenceDefinitionRemovalImpact() {}
 
     /**
      * Determines if the impact analysis contains notable impacts that require user confirmation.
