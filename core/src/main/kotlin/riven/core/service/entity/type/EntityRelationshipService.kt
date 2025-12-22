@@ -1279,11 +1279,9 @@ class EntityRelationshipService(
             existingRelationships.add(newRelationship)
 
             // Append to table order
-            entityType.order = listOf(
-                *entityType.order.toTypedArray(), EntityTypeOrderingKey(
-                    newRelationship.id,
-                    EntityPropertyType.RELATIONSHIP
-                )
+            entityType.order += EntityTypeOrderingKey(
+                newRelationship.id,
+                EntityPropertyType.RELATIONSHIP
             )
         }
 

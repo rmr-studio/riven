@@ -68,7 +68,7 @@ class EntityTypeController(
         @RequestBody request: CreateEntityTypeRequest
     ): ResponseEntity<EntityType> {
         val newEntityType = entityTypeService.publishEntityType(organisationId, request)
-        return ResponseEntity.status(201).body(newEntityType)
+        return ResponseEntity.status(HttpStatus.CREATED).body(newEntityType)
     }
 
     @PutMapping("/organisation/{organisationId}")
@@ -77,10 +77,10 @@ class EntityTypeController(
         description = "Updates the data for an already existing entity type for the specified organisation."
     )
     @ApiResponses(
-        ApiResponse(responseCode = "201", description = "Entity type created successfully"),
+        ApiResponse(responseCode = "200", description = "Entity type updated successfully"),
         ApiResponse(
             responseCode = "409",
-            description = "Conflict due to cascading impacts on existing entities as a result of afformentioned changes"
+            description = "Conflict due to cascading impacts on existing entities as a result of aforementioned changes"
         ),
         ApiResponse(responseCode = "400", description = "Invalid request data"),
         ApiResponse(responseCode = "401", description = "Unauthorized access")
@@ -97,7 +97,7 @@ class EntityTypeController(
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response)
         }
 
-        return ResponseEntity.status(200).body(response)
+        return ResponseEntity.status(HttpStatus.OK).body(response)
     }
 
 
