@@ -18,8 +18,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Database } from "lucide-react";
 import { FC } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { EntityTypeFormValues } from "../../hooks/use-entity-type-form";
-import { AttributeFormData } from "../../interface/entity.interface";
+import { EntityTypeFormValues } from "../../../hooks/form/use-entity-type-form";
+import { AttributeFormData } from "../../../interface/entity.interface";
 
 interface Props {
     form: UseFormReturn<EntityTypeFormValues>;

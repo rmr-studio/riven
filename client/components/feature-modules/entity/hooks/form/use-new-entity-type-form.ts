@@ -7,8 +7,8 @@ import { useRef, useState } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { CreateEntityTypeRequest, EntityType } from "../interface/entity.interface";
-import { EntityTypeService } from "../service/entity-type.service";
+import { CreateEntityTypeRequest, EntityType } from "../../interface/entity.interface";
+import { EntityTypeService } from "../../service/entity-type.service";
 
 export const baseEntityTypeFormSchema = z.object({
     key: z.string().min(1, "Key is required"),

@@ -1,5 +1,4 @@
 import { useAuth } from "@/components/provider/auth-context";
-import { EntityTypeRelationshipType } from "@/lib/types/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -12,9 +11,10 @@ import {
     AttributeFormData,
     EntityTypeOrderingKey,
     RelationshipFormData,
+    UpdateEntityTypeResponse,
     type EntityType,
-} from "../interface/entity.interface";
-import { EntityTypeService } from "../service/entity-type.service";
+} from "../../interface/entity.interface";
+import { EntityTypeService } from "../../service/entity-type.service";
 import { baseEntityTypeFormSchema } from "./use-new-entity-type-form";
 
 // Zod schema for entity type form
@@ -136,8 +136,9 @@ export function useEntityTypeForm(
             relationships: relationships.map((rel) => ({
                 id: rel.id,
                 name: rel.label,
-                sourceEntityTypeKey: relationshipSourceKeys.get(rel.id) || values.key,
-                relationshipType: EntityTypeRelationshipType.REFERENCE,
+                relationshipType: rel.relationshipType,
+                sourceEntityTypeKey: rel.sourceEntityTypeKey,
+                originRelationshipId: rel.originRelationshipId,
                 entityTypeKeys: rel.entityTypeKeys,
                 allowPolymorphic: rel.allowPolymorphic,
                 required: rel.required,
@@ -164,21 +165,31 @@ export function useEntityTypeForm(
             toast.error(`Failed to update entity type: ${error.message}`);
             submissionToastRef.current = undefined;
         },
-        onSuccess: (response: EntityType) => {
+        onSuccess: (response: UpdateEntityTypeResponse) => {
             toast.dismiss(submissionToastRef.current);
             toast.success(`Entity type updated successfully!`);
             submissionToastRef.current = undefined;
 
-            // Update the specific entity type in cache
-            queryClient.setQueryData(["entityType", response.key, organisationId], response);
+            // Update cache for all entity types that were updated
+            if (response.updatedEntityTypes) {
+                Object.entries(response.updatedEntityTypes).forEach(([key, entityType]) => {
+                    // Update individual entity type query cache
+                    queryClient.setQueryData(["entityType", key, organisationId], entityType);
+                });
 
-            // Update the entity types list in cache
-            queryClient.setQueryData<EntityType[]>(["entityTypes", organisationId], (oldData) => {
-                if (!oldData) return [response];
+                // Update the entity types list in cache
+                queryClient.setQueryData<EntityType[]>(["entityTypes", organisationId], (oldData) => {
+                    if (!oldData) return Object.values(response.updatedEntityTypes!);
 
-                // Replace the updated entity type in the list
-                return oldData.map((et) => (et.key === response.key ? response : et));
-            });
+                    // Create a map of updated entity types for efficient lookup
+                    const updatedTypesMap = new Map(
+                        Object.entries(response.updatedEntityTypes!).map(([key, type]) => [key, type])
+                    );
+
+                    // Replace all updated entity types in the list
+                    return oldData.map((et) => updatedTypesMap.get(et.key) ?? et);
+                });
+            }
 
             // Stay on the same page after update
             return response;

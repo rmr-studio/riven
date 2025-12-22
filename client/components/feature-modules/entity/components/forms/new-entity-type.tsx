@@ -25,7 +25,7 @@ import { toKeyCase } from "@/lib/util/utils";
 import { PopoverClose } from "@radix-ui/react-popover";
 import { Blocks, Database, Info, Plus, Workflow } from "lucide-react";
 import { FC, useEffect } from "react";
-import { useNewEntityTypeForm } from "../../hooks/use-new-entity-type-form";
+import { useNewEntityTypeForm } from "../../hooks/form/use-new-entity-type-form";
 import { EntityType } from "../../interface/entity.interface";
 
 interface Props extends ChildNodeProps {

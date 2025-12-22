@@ -2,7 +2,7 @@ import { fromError, isResponseError } from "@/lib/util/error/error.util";
 import { handleError, validateSession, validateUuid } from "@/lib/util/service/service.util";
 import { api } from "@/lib/util/utils";
 import { Session } from "@supabase/supabase-js";
-import { CreateEntityTypeRequest, EntityType } from "../interface/entity.interface";
+import { CreateEntityTypeRequest, EntityType, UpdateEntityTypeResponse } from "../interface/entity.interface";
 
 export class EntityTypeService {
     static async getEntityTypes(
@@ -101,7 +101,7 @@ export class EntityTypeService {
         session: Session | null,
         organisationId: string,
         entityType: EntityType
-    ): Promise<EntityType> {
+    ): Promise<UpdateEntityTypeResponse> {
         try {
             validateSession(session);
             validateUuid(organisationId);

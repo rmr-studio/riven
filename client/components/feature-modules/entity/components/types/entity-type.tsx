@@ -30,8 +30,11 @@ import {
 import Link from "next/link";
 import { FC, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import {
+    useEntityTypeForm,
+    type EntityTypeFormValues,
+} from "../../hooks/form/use-entity-type-form";
 import { useAttributeManagement } from "../../hooks/use-attribute-management";
-import { EntityTypeFormValues, useEntityTypeForm } from "../../hooks/use-entity-type-form";
 import { useEntityTypes } from "../../hooks/use-entity-types";
 import { useRelationshipManagement } from "../../hooks/use-relationship-management";
 import {
@@ -42,8 +45,8 @@ import {
     type EntityTypeOrderingKey,
     type RelationshipFormData,
 } from "../../interface/entity.interface";
-import { ConfigurationForm } from "../forms/entity-type-configuration-form";
-import { AttributeDialog } from "./entity-type-attribute-dialog";
+import { AttributeDialog } from "../forms/type/attribute-form";
+import { ConfigurationForm } from "../forms/type/configuration-form";
 
 interface EntityTypeOverviewProps {
     entityType: EntityType;
@@ -337,15 +340,9 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
                 cell: ({ row }) => {
                     const isRelationship = row.original.type === EntityPropertyType.RELATIONSHIP;
                     if (isRelationship) {
-                        const rel = row.original as RelationshipFormData;
                         return (
                             <div className="flex flex-col gap-1">
-                                <Badge variant="outline">
-                                    {rel.cardinality.replace(/_/g, " ")}
-                                </Badge>
-                                <span className="text-xs text-muted-foreground">
-                                    {rel.entityTypeKeys?.join(", ") || "Any"}
-                                </span>
+                                <Badge variant="outline">Relationship</Badge>
                             </div>
                         );
                     } else {
@@ -362,10 +359,18 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
                     const constraints: string[] = [];
 
                     if (row.original.required) constraints.push("Required");
-                    if (!isRelationship && (row.original as AttributeFormData).unique)
+
+                    if (!isRelationship && row.original.unique) {
                         constraints.push("Unique");
-                    if (isRelationship && (row.original as RelationshipFormData).bidirectional)
+                    }
+
+                    if (isRelationship && row.original.allowPolymorphic) {
+                        constraints.push("Polymorphic");
+                    }
+
+                    if (isRelationship && row.original.bidirectional) {
                         constraints.push("Bidirectional");
+                    }
 
                     return (
                         <div className="flex gap-1 flex-wrap">
@@ -691,8 +696,6 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
                 currentAttributes={attributes}
                 currentRelationships={relationships}
                 identifierKey={identifierKey}
-                currentFormKey={form.watch("key")}
-                currentFormPluralName={form.watch("pluralName")}
             />
         </>
     );

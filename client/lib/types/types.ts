@@ -570,10 +570,10 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
+            relationshipType: components["schemas"]["EntityTypeRelationshipType"];
             sourceEntityTypeKey: string;
             /** Format: uuid */
             originRelationshipId?: string;
-            relationshipType: components["schemas"]["EntityTypeRelationshipType"];
             entityTypeKeys?: string[];
             allowPolymorphic: boolean;
             required: boolean;
@@ -675,36 +675,6 @@ export interface components {
             relationshipId: string;
             relationshipName: string;
         };
-        EntityTypeEntity: {
-            /** Format: uuid */
-            id?: string;
-            key: string;
-            displayNameSingular: string;
-            displayNamePlural: string;
-            /** Format: uuid */
-            identifierKey: string;
-            description?: string;
-            /** Format: uuid */
-            organisationId?: string;
-            protected: boolean;
-            type: components["schemas"]["EntityCategory"];
-            /** Format: int32 */
-            version: number;
-            schema: components["schemas"]["SchemaUUID"];
-            relationships?: components["schemas"]["EntityRelationshipDefinition"][];
-            order: components["schemas"]["EntityTypeOrderingKey"][];
-            /** Format: int64 */
-            entitiesCount: number;
-            archived: boolean;
-            /** Format: date-time */
-            createdAt?: string;
-            /** Format: date-time */
-            updatedAt?: string;
-            /** Format: uuid */
-            createdBy?: string;
-            /** Format: uuid */
-            updatedBy?: string;
-        };
         /** @enum {string} */
         EntityTypeRelationshipDataLossReason: EntityTypeRelationshipDataLossReason;
         EntityTypeRelationshipDataLossWarning: {
@@ -723,7 +693,9 @@ export interface components {
         UpdateEntityTypeResponse: {
             success: boolean;
             error?: string;
-            entityType?: components["schemas"]["EntityTypeEntity"];
+            updatedEntityTypes?: {
+                [key: string]: components["schemas"]["EntityType"];
+            };
             impact?: components["schemas"]["EntityTypeRelationshipImpactAnalysis"];
         };
         BindingSource: {
@@ -1087,9 +1059,9 @@ export interface components {
         ListFilterLogicType: ListFilterLogicType;
         Metadata: {
             type: components["schemas"]["BlockMetadataType"];
+            meta: components["schemas"]["BlockMeta"];
             readonly: boolean;
             deletable: boolean;
-            meta: components["schemas"]["BlockMeta"];
         };
         Node: {
             warnings: string[];

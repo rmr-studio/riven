@@ -30,7 +30,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, X } from "lucide-react";
 import { FC, useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { AttributeFormValues } from "../types/entity-type-attribute-dialog";
+import { AttributeFormValues } from "./type/attribute-form";
 
 interface Props {
     form: UseFormReturn<AttributeFormValues>;

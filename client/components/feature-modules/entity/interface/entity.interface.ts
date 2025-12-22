@@ -5,6 +5,7 @@ import {
     DataType,
     EntityPropertyType,
     EntityRelationshipCardinality,
+    EntityTypeRelationshipType,
     SchemaType,
 } from "@/lib/types/types";
 
@@ -24,13 +25,17 @@ export interface EntityTypeAttributeData {
 }
 
 export interface RelationshipFormData extends EntityTypeAttributeData {
-    cardinality: EntityRelationshipCardinality;
-    minOccurs?: number;
-    maxOccurs?: number;
     entityTypeKeys: string[];
+
+    relationshipType: EntityTypeRelationshipType;
+    sourceEntityTypeKey: string;
+    originRelationshipId?: string;
+
     allowPolymorphic: boolean;
     bidirectional: boolean;
     bidirectionalEntityTypeKeys?: string[];
+    cardinality: EntityRelationshipCardinality;
+
     inverseName?: string;
     required: boolean;
 }
@@ -68,3 +73,5 @@ export type {
     OverlapResolution,
     RelationshipOverlap,
 } from "../hooks/use-relationship-overlap-detection";
+
+export type UpdateEntityTypeResponse = components["schemas"]["UpdateEntityTypeResponse"];

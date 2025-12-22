@@ -11,11 +11,11 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/util/utils";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { useRelationshipOverlapDetection } from "../../hooks/use-relationship-overlap-detection";
-import { EntityType, RelationshipFormData } from "../../interface/entity.interface";
-import { AttributeFormValues } from "../types/entity-type-attribute-dialog";
-import { EntityTypeMultiSelect } from "./entity-type-multi-select";
-import { RelationshipOverlapAlert } from "./relationship-overlap-alert";
+import { AttributeFormValues } from "../../../hooks/form/use-attribute-form";
+import { useRelationshipOverlapDetection } from "../../../hooks/use-relationship-overlap-detection";
+import { EntityType, RelationshipFormData } from "../../../interface/entity.interface";
+import { EntityTypeMultiSelect } from "../entity-type-multi-select";
+import { RelationshipOverlapAlert } from "../relationship-overlap-alert";
 
 interface Props {
     relationships: RelationshipFormData[];
@@ -32,6 +32,8 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, availableTypes = []
     // Determine the current entity key for self-reference identification
     const currentEntityKey = type?.key;
 
+    console.log(form.formState.errors);
+
     // Overlap detection state and logic
     const [dismissedOverlaps, setDismissedOverlaps] = useState<Set<string>>(new Set());
 
@@ -42,6 +44,14 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, availableTypes = []
         allowPolymorphic,
         availableTypes
     );
+
+    const cardinalityToggleEntityName = useMemo(() => {
+        if (selectedEntityTypeKeys && selectedEntityTypeKeys.length === 1) {
+            const targetType = availableTypes.find((et) => et.key === selectedEntityTypeKeys[0]);
+            return targetType ? targetType.name.singular : "entity";
+        }
+        return "Entity";
+    }, [selectedEntityTypeKeys, availableTypes]);
 
     // Filter out dismissed overlaps
     const activeOverlaps = useMemo(() => {
@@ -81,6 +91,9 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, availableTypes = []
         },
         [type?.key]
     );
+
+    console.log(form.formState.errors);
+    console.log(form.getValues());
 
     // Manage bidirectionalEntityTypeKeys based on entity selection changes
     useEffect(() => {
@@ -221,7 +234,7 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, availableTypes = []
                                             : "text-muted-foreground"
                                     )}
                                 >
-                                    1 entity
+                                    1 {cardinalityToggleEntityName}
                                 </span>
                                 <FormControl>
                                     <Switch
@@ -352,7 +365,7 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, availableTypes = []
                                         bidirectionalFormDisabled && "text-primary/60"
                                     )}
                                 >
-                                    1 entity
+                                    1 {type.name.singular}
                                 </span>
                                 <FormControl>
                                     <Switch
