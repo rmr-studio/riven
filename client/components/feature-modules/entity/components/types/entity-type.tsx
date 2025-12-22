@@ -106,11 +106,6 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
     // Watch the pluralName field for dynamic title
     const pluralName = form.watch("pluralName");
 
-    // Watch the key field to handle self-reference updates
-    const currentKey = form.watch("key");
-    const previousKeyRef = useRef<string>(currentKey);
-    const isUpdatingKeyRef = useRef(false);
-
     // Determine which tabs have validation errors
     const tabErrors = useMemo(() => {
         const errors = form.formState.errors;
@@ -519,58 +514,28 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
                     {/* Tabs */}
                     <Tabs defaultValue="configuration" className="w-full">
                         <TabsList className="justify-start w-2/5">
-                            <div className="w-auto flex flex-grow">
-                                <TabsTrigger value="configuration">
-                                    <div className="flex items-center gap-2">
-                                        Configuration
-                                        {tabErrors.configuration && (
-                                            <AlertCircle className="size-4 mr-1 text-destructive" />
-                                        )}
-                                    </div>
-                                </TabsTrigger>
-                            </div>
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div
-                                            className="flex flex-grow w-auto"
-                                            onClick={(e) => {
-                                                if (!validName) {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    // Trigger validation and focus on pluralName field
-                                                    form.setError("pluralName", {
-                                                        type: "manual",
-                                                        message: "Plural name is required",
-                                                    });
-                                                    form.setFocus("pluralName");
-                                                }
-                                            }}
-                                        >
-                                            <TabsTrigger value="attributes" disabled={!validName}>
-                                                <div className="flex items-center gap-2">
-                                                    Attributes
-                                                    {tabErrors.attributes && (
-                                                        <AlertCircle className="size-4 mr-1 text-destructive" />
-                                                    )}
-                                                    {allFields.length > 0 && (
-                                                        <Badge className="h-4 w-5 border border-border ">
-                                                            {allFields.length}
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                            </TabsTrigger>
-                                        </div>
-                                    </TooltipTrigger>
+                            <TabsTrigger value="configuration">
+                                <div className="flex items-center gap-2">
+                                    Configuration
+                                    {tabErrors.configuration && (
+                                        <AlertCircle className="size-4 mr-1 text-destructive" />
+                                    )}
+                                </div>
+                            </TabsTrigger>
 
-                                    <TooltipContent>
-                                        <p className="text-xs">
-                                            Please configure the entity name before adding
-                                            attributes.
-                                        </p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
+                            <TabsTrigger value="attributes">
+                                <div className="flex items-center gap-2">
+                                    Attributes
+                                    {tabErrors.attributes && (
+                                        <AlertCircle className="size-4 mr-1 text-destructive" />
+                                    )}
+                                    {allFields.length > 0 && (
+                                        <Badge className="h-4 w-5 border border-border ">
+                                            {allFields.length}
+                                        </Badge>
+                                    )}
+                                </div>
+                            </TabsTrigger>
                         </TabsList>
 
                         {/* Configuration Tab */}
@@ -720,8 +685,8 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
                     }
                 }}
                 onSubmit={handleAttributeSubmit}
-                entityTypes={entityTypes}
-                currentEntityType={entityType}
+                availableTypes={entityTypes}
+                entityType={entityType}
                 editingAttribute={editingAttribute}
                 currentAttributes={attributes}
                 currentRelationships={relationships}

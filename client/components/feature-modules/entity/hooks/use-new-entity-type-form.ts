@@ -80,6 +80,9 @@ export function useNewEntityTypeForm(
             toast.dismiss(submissionToastRef.current);
             toast.success(`Entity type created successfully!`);
             submissionToastRef.current = undefined;
+            router.push(
+                `/dashboard/organisation/${organisationId}/entity/${response.key}/settings?tab=attributes`
+            );
 
             // Update the specific entity type in cache
             queryClient.setQueryData(["entityType", response.key, organisationId], response);
@@ -91,10 +94,6 @@ export function useNewEntityTypeForm(
                 // Add new entity type to the list
                 return [...oldData, response];
             });
-
-            router.push(
-                `/dashboard/organisation/${organisationId}/entity/${response.key}/settings?tab=attributes`
-            );
 
             return response;
         },

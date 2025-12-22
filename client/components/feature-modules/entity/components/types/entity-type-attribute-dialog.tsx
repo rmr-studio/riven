@@ -18,11 +18,10 @@ import {
     SchemaType,
 } from "@/lib/types/types";
 import { attributeTypes } from "@/lib/util/form/schema.util";
-import { toKeyCase } from "@/lib/util/utils";
+import { uuid } from "@/lib/util/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FC, useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 import { AttributeTypeDropdown } from "../../../../ui/attribute-type-dropdown";
 import type {
@@ -38,8 +37,8 @@ interface AttributeDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSubmit: (attribute: AttributeFormData | RelationshipFormData) => void;
-    entityTypes?: EntityType[];
-    currentEntityType?: EntityType;
+    availableTypes: EntityType[];
+    entityType: EntityType;
     currentAttributes?: AttributeFormData[];
     currentRelationships?: RelationshipFormData[];
     editingAttribute?: AttributeFormData | RelationshipFormData;
@@ -112,10 +111,10 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
     open,
     onOpenChange,
     onSubmit,
-    entityTypes = [],
+    availableTypes = [],
     currentAttributes = [],
     currentRelationships = [],
-    currentEntityType,
+    entityType,
     editingAttribute,
     identifierKey,
     currentFormKey,
@@ -174,10 +173,12 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
                 }
             }
         }
-    }, [selectedType, isEditMode, form]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedType, isEditMode]);
 
     // Populate form when editing
     useEffect(() => {
+        console.log(editingAttribute);
         if (!open) return;
 
         if (editingAttribute) {
@@ -260,14 +261,16 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
                 regex: undefined,
             });
         }
-    }, [open, editingAttribute, form]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, editingAttribute]);
 
     // Reset form when dialog closes
     useEffect(() => {
         if (!open) {
             form.reset();
         }
-    }, [open, form]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open]);
 
     /**
      * Handles form submission for both attributes and relationships.
@@ -303,7 +306,7 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
 
         const data: AttributeFormData = {
             type: EntityPropertyType.ATTRIBUTE,
-            id: existingId || uuidv4(),
+            id: existingId || uuid(),
             label: values.name,
             schemaKey: values.selectedType,
             dataType: attribute.type,
@@ -314,10 +317,6 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
         };
 
         onSubmit(data);
-    };
-
-    const createId = (): string => {
-        return uuidv4();
     };
 
     const calculateCardinality = (
@@ -339,13 +338,12 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
         values: AttributeFormValues,
         existingId: string | undefined
     ) => {
-        // If creating new relationship (no existingId), generate a UUID
-        const id = existingId || createId();
+        // If creating new relationship (no existingKey) and key is empty, generate it
 
         const data: RelationshipFormData = {
+            id: existingId || uuid(),
             type: EntityPropertyType.RELATIONSHIP,
             label: values.name,
-            id: id,
             cardinality: calculateCardinality(
                 values.sourceRelationsLimit || "singular",
                 values.targetRelationsLimit || "singular"
@@ -403,11 +401,8 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
                             <RelationshipAttributeForm
                                 relationships={currentRelationships}
                                 form={form}
-                                type={currentEntityType}
-                                avaiableTypes={entityTypes}
-                                isEditMode={isEditMode}
-                                currentFormKey={currentFormKey}
-                                currentFormPluralName={currentFormPluralName}
+                                type={entityType}
+                                availableTypes={availableTypes}
                             />
                         )}
 

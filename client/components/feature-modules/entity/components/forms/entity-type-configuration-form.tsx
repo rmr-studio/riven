@@ -104,7 +104,7 @@ export const ConfigurationForm: FC<Props> = ({ form, availableIdentifiers }) => 
                             <FormLabel>Identifier Key</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
-                                    <SelectTrigger>
+                                    <SelectTrigger className="w-xs">
                                         <SelectValue placeholder="Select a unique identifier" />
                                     </SelectTrigger>
                                 </FormControl>
@@ -121,10 +121,9 @@ export const ConfigurationForm: FC<Props> = ({ form, availableIdentifiers }) => 
                                     )}
                                 </SelectContent>
                             </Select>
-                            <FormDescription>
-                                This attribute will be used to uniquely identify an entity. This
-                                value must reference an attribute marked as "Unique", and must be a
-                                Required field.
+                            <FormDescription className="max-w-sm mx-1">
+                                This attribute will be used to uniquely identify an entity, and must
+                                point to an attribute marked as unique, and mandatory.
                             </FormDescription>
                             <FormMessage />
                         </FormItem>

@@ -19,84 +19,18 @@ import { RelationshipOverlapAlert } from "./relationship-overlap-alert";
 
 interface Props {
     relationships: RelationshipFormData[];
-    type?: EntityType;
-    avaiableTypes?: EntityType[];
+    type: EntityType;
+    availableTypes: EntityType[];
     form: UseFormReturn<AttributeFormValues>;
-    isEditMode?: boolean;
-    currentFormKey?: string;
-    currentFormPluralName?: string;
 }
 
-export const RelationshipAttributeForm: FC<Props> = ({
-    type,
-    avaiableTypes,
-    form,
-    currentFormKey,
-    currentFormPluralName,
-}) => {
+export const RelationshipAttributeForm: FC<Props> = ({ type, availableTypes = [], form }) => {
     const selectedEntityTypeKeys = form.watch("entityTypeKeys");
     const bidirectional = form.watch("bidirectional");
     const allowPolymorphic = form.watch("allowPolymorphic");
 
-    // Merge available types with current entity type to allow self-referential relationships
-    const allAvailableTypes = useMemo(() => {
-        const existingTypes = avaiableTypes || [];
-
-        // If we have an existing entity type, use it
-        if (type) {
-            const currentTypeExists = existingTypes.some((et) => et.key === type.key);
-
-            // If current type already exists in the list, return as is
-            if (currentTypeExists) return existingTypes;
-
-            // Otherwise, add current type to the list and sort alphabetically
-            return [...existingTypes, type].sort((a, b) =>
-                a.name.plural.localeCompare(b.name.plural)
-            );
-        }
-
-        // For new entity types, create a pseudo entity type from form data
-        if (currentFormKey && currentFormPluralName) {
-            const pseudoType: EntityType = {
-                id: "",
-                key: currentFormKey,
-                version: 0,
-                name: {
-                    singular: currentFormPluralName,
-                    plural: currentFormPluralName,
-                },
-                protected: false,
-                // Minimal required fields - these won't be used for self-reference display
-                description: "",
-                type: "STANDARD" as any,
-                identifierKey: "",
-                schema: {
-                    key: "OBJECT" as any,
-                    type: "OBJECT" as any,
-                    required: true,
-                    unique: false,
-                    protected: true,
-                    properties: {},
-                },
-                relationships: [],
-                order: [],
-                entitiesCount: 0,
-                attributes: {
-                    first: 0,
-                    second: 0,
-                },
-            };
-
-            return [...existingTypes, pseudoType].sort((a, b) =>
-                a.name.plural.localeCompare(b.name.plural)
-            );
-        }
-
-        return existingTypes;
-    }, [type, avaiableTypes, currentFormKey, currentFormPluralName]);
-
     // Determine the current entity key for self-reference identification
-    const currentEntityKey = type?.key || currentFormKey;
+    const currentEntityKey = type?.key;
 
     // Overlap detection state and logic
     const [dismissedOverlaps, setDismissedOverlaps] = useState<Set<string>>(new Set());
@@ -106,7 +40,7 @@ export const RelationshipAttributeForm: FC<Props> = ({
         type?.key,
         selectedEntityTypeKeys,
         allowPolymorphic,
-        allAvailableTypes
+        availableTypes
     );
 
     // Filter out dismissed overlaps
@@ -162,7 +96,7 @@ export const RelationshipAttributeForm: FC<Props> = ({
             // When bidirectional is enabled, auto-select entity types
             if (allowPolymorphic) {
                 // If polymorphic, select all available entity types
-                const allKeys = allAvailableTypes?.map((et) => et.key) || [];
+                const allKeys = availableTypes.map((et) => et.key) || [];
 
                 // Only update if there's a difference
                 const allKeysSorted = allKeys.toSorted();
@@ -204,7 +138,7 @@ export const RelationshipAttributeForm: FC<Props> = ({
         allowPolymorphic,
         // Note: bidirectionalEntityTypeKeys is intentionally excluded to prevent infinite loops
         // We read it directly in the effect using form.getValues() instead
-        // Note: allAvailableTypes is intentionally excluded to prevent infinite loops
+        // Note: availableTypesis intentionally excluded to prevent infinite loops
         // It's a computed value that changes frequently due to sorting
     ]);
 
@@ -252,7 +186,7 @@ export const RelationshipAttributeForm: FC<Props> = ({
                                 <FormLabel>Related to</FormLabel>
                                 <FormControl>
                                     <EntityTypeMultiSelect
-                                        availableTypes={allAvailableTypes}
+                                        availableTypes={availableTypes}
                                         selectedKeys={selectedEntityTypeKeys || []}
                                         allowPolymorphic={allowPolymorphic || false}
                                         hasError={!!fieldState.error}
@@ -379,8 +313,8 @@ export const RelationshipAttributeForm: FC<Props> = ({
                                 allowSelectAll={false}
                                 availableTypes={
                                     allowPolymorphic
-                                        ? allAvailableTypes
-                                        : allAvailableTypes?.filter((et) =>
+                                        ? availableTypes
+                                        : availableTypes.filter((et) =>
                                               selectedEntityTypeKeys?.includes(et.key)
                                           )
                                 }

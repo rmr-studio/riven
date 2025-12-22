@@ -1,9 +1,14 @@
 import { clsx, type ClassValue } from "clsx";
 import dayjs from "dayjs";
 import { twMerge } from "tailwind-merge";
+import { v4 } from "uuid";
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
+}
+
+export function uuid() {
+    return v4();
 }
 
 export function undefinedIfNull<T>(value: T | null): T | undefined {

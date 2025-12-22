@@ -94,13 +94,22 @@ export const EntityTypeMultiSelect: FC<Props> = ({
                         "w-full justify-between",
                         hasError && "border-destructive focus-visible:ring-destructive"
                     )}
-                    disabled={disabled}
+                    disabled={disabled || open}
                 >
                     <span className="truncate">{getDisplayText()}</span>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-full p-0" align="start">
+            <PopoverContent
+                className="w-full p-0"
+                align="start"
+                portal={true}
+                onOpenAutoFocus={(e) => e.preventDefault()}
+                onEscapeKeyDown={(e) => {
+                    e.stopPropagation();
+                    setOpen(false);
+                }}
+            >
                 <Command>
                     <CommandInput placeholder="Search entity types..." />
                     <CommandList>
