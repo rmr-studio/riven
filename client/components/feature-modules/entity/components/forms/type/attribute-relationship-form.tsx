@@ -14,10 +14,15 @@ import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { AttributeFormValues } from "../../../hooks/form/use-attribute-form";
 import { useRelationshipOverlapDetection } from "../../../hooks/use-relationship-overlap-detection";
-import { EntityType, RelationshipFormData } from "../../../interface/entity.interface";
+import {
+    EntityRelationshipDefinition,
+    EntityType,
+    RelationshipFormData,
+} from "../../../interface/entity.interface";
+import { getInverseCardinality, processCardinalityToLimits } from "../../../util/relationship.util";
 import { EntityTypeMultiSelect } from "../entity-type-multi-select";
 import { RelationshipOverlapAlert } from "../relationship-overlap-alert";
-import { RelationshipLink } from "./relationship/relationship-link";
+import { RelationshipLink } from "./relationship/relationship-links";
 
 interface Props {
     mode: "create" | "edit";
@@ -25,9 +30,16 @@ interface Props {
     type: EntityType;
     availableTypes: EntityType[];
     form: UseFormReturn<AttributeFormValues>;
+    onSubmit: (values: AttributeFormValues) => void;
 }
 
-export const RelationshipAttributeForm: FC<Props> = ({ type, availableTypes = [], form, mode }) => {
+export const RelationshipAttributeForm: FC<Props> = ({
+    type,
+    availableTypes = [],
+    form,
+    mode,
+    onSubmit,
+}) => {
     const relationshipType = form.watch("relationshipType");
     const selectedEntityTypeKeys = form.watch("entityTypeKeys");
     const bidirectional = form.watch("bidirectional");
@@ -48,6 +60,23 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, availableTypes = []
         allowPolymorphic,
         availableTypes
     );
+
+    const createFromSuggestion = (relationship: EntityRelationshipDefinition) => {
+        if (!relationship.inverseName) return;
+        const inverse = getInverseCardinality(relationship.cardinality);
+        const { source, target } = processCardinalityToLimits(inverse);
+
+        form.setValue("name", relationship.inverseName);
+        form.setValue("relationshipType", EntityTypeRelationshipType.REFERENCE);
+        form.setValue("entityTypeKeys", [relationship.sourceEntityTypeKey]);
+        form.setValue("allowPolymorphic", false);
+        form.setValue("sourceRelationsLimit", source);
+        form.setValue("targetRelationsLimit", target);
+        form.setValue("originRelationshipId", relationship.id);
+
+        // Use setTimeout to ensure all form values are set before validation
+        form.handleSubmit(onSubmit)();
+    };
 
     const cardinalityToggleEntityName = useMemo(() => {
         if (selectedEntityTypeKeys && selectedEntityTypeKeys.length === 1) {
@@ -446,7 +475,7 @@ export const RelationshipAttributeForm: FC<Props> = ({ type, availableTypes = []
                 />
             </div> */}
             </div>
-            {mode === "create" && <RelationshipLink type={type} />}
+            {mode === "create" && <RelationshipLink type={type} onCreate={createFromSuggestion} />}
         </section>
     );
 };

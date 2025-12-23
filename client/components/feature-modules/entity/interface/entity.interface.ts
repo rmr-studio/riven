@@ -1,4 +1,4 @@
-import { SchemaOptions } from "@/lib/interfaces/common.interface";
+import { Icon, SchemaOptions } from "@/lib/interfaces/common.interface";
 import {
     components,
     DataFormat,
@@ -68,16 +68,17 @@ export const isRelationshipType = (
 export type RelationshipLimit = "singular" | "many";
 
 export interface EntityRelationshipCandidate {
-    entityTypeKey: string;
-    entityTypeName: string;
-    existingRelationship?: EntityRelationshipDefinition;
+    icon: Icon;
+    name: string;
+    key: string;
+    existingRelationship: EntityRelationshipDefinition;
 }
 
 // Export overlap detection types
 export type {
     OverlapDetectionResult,
     OverlapResolution,
-    RelationshipOverlap,
+    RelationshipOverlap
 } from "../hooks/use-relationship-overlap-detection";
 
 export type UpdateEntityTypeResponse = components["schemas"]["UpdateEntityTypeResponse"];

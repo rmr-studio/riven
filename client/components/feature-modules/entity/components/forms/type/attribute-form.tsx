@@ -95,6 +95,7 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
                                 form={form}
                                 type={entityType}
                                 availableTypes={availableTypes}
+                                onSubmit={handleSubmit}
                             />
                         ) : (
                             <AttributeForm

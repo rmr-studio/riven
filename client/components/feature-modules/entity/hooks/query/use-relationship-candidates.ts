@@ -23,21 +23,21 @@ export function useRelationshipCandidates(type: EntityType): UseRelationshipCand
     // Fitler out all unreferenced polymorphic relationships, or current relationship definitions that support the given entity type but does not yet reference it bidirectionally
     return {
         loading: false,
-        candidates: data
-            .flatMap((type) => {
-                if (!type.relationships) return [];
-                type.relationships.filter(
+        candidates: data.flatMap((et) => {
+            if (!et.relationships) return [];
+            return et.relationships
+                .filter(
                     (def) =>
                         (def.allowPolymorphic || def.entityTypeKeys?.includes(type.key)) &&
-                        def.bidirectional &&
                         def.relationshipType === EntityTypeRelationshipType.ORIGIN &&
                         !def.bidirectionalEntityTypeKeys?.includes(type.key)
-                );
-            })
-            .map((rel) => ({
-                entityTypeKey: type.key,
-                entityTypeName: type.name.singular,
-                existingRelationship: rel,
-            })),
+                )
+                .map((rel) => ({
+                    name: et.name.singular,
+                    key: et.key,
+                    icon: et.icon,
+                    existingRelationship: rel,
+                }));
+        }),
     };
 }

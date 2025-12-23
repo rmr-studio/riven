@@ -2,7 +2,6 @@ import { SchemaOptions } from "@/lib/interfaces/common.interface";
 import {
     DataFormat,
     EntityPropertyType,
-    EntityRelationshipCardinality,
     EntityTypeRelationshipType,
     OptionSortingType,
     SchemaType,
@@ -19,8 +18,11 @@ import {
     EntityType,
     isRelationshipType,
     RelationshipFormData,
-    RelationshipLimit,
 } from "../../interface/entity.interface";
+import {
+    calculateCardinalityFromLimits,
+    processCardinalityToLimits,
+} from "../../util/relationship.util";
 
 // Zod schema
 export const entityTypeAttributeFormSchema = z
@@ -170,45 +172,13 @@ export function useEntityTypeAttributeForm(
         }
     }, [currentType, isEditMode]);
 
-    const processCardinality = (
-        attribute: RelationshipFormData
-    ): { source: RelationshipLimit; target: RelationshipLimit } => {
-        switch (attribute.cardinality) {
-            case EntityRelationshipCardinality.ONE_TO_ONE:
-                return { source: "singular", target: "singular" };
-            case EntityRelationshipCardinality.ONE_TO_MANY:
-                return { source: "singular", target: "many" };
-            case EntityRelationshipCardinality.MANY_TO_ONE:
-                return { source: "many", target: "singular" };
-            case EntityRelationshipCardinality.MANY_TO_MANY:
-                return { source: "many", target: "many" };
-            default:
-                return { source: "singular", target: "singular" };
-        }
-    };
-
-    const calculateCardinality = (
-        source: RelationshipLimit,
-        target: RelationshipLimit
-    ): EntityRelationshipCardinality => {
-        if (source === "singular" && target === "singular") {
-            return EntityRelationshipCardinality.ONE_TO_ONE;
-        } else if (source === "singular" && target === "many") {
-            return EntityRelationshipCardinality.ONE_TO_MANY;
-        } else if (source === "many" && target === "singular") {
-            return EntityRelationshipCardinality.MANY_TO_ONE;
-        } else {
-            return EntityRelationshipCardinality.MANY_TO_MANY;
-        }
-    };
-
     // When the dialogue is opened for editing, populate the form with existing attribute data, or blank for new attribute
     useEffect(() => {
         if (!open || !attribute) return;
 
         if (isRelationshipType(attribute)) {
             // Parse Relationship Payload
-            const { source, target } = processCardinality(attribute);
+            const { source, target } = processCardinalityToLimits(attribute.cardinality);
 
             form.reset({
                 selectedType: "RELATIONSHIP",
@@ -313,7 +283,7 @@ export function useEntityTypeAttributeForm(
             id: existingId || uuid(),
             type: EntityPropertyType.RELATIONSHIP,
             label: values.name,
-            cardinality: calculateCardinality(
+            cardinality: calculateCardinalityFromLimits(
                 values.sourceRelationsLimit || "singular",
                 values.targetRelationsLimit || "singular"
             ),
