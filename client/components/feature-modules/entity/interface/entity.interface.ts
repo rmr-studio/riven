@@ -67,6 +67,12 @@ export const isRelationshipType = (
 
 export type RelationshipLimit = "singular" | "many";
 
+export interface EntityRelationshipCandidate {
+    entityTypeKey: string;
+    entityTypeName: string;
+    existingRelationship?: EntityRelationshipDefinition;
+}
+
 // Export overlap detection types
 export type {
     OverlapDetectionResult,

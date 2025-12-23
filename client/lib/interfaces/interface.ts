@@ -46,7 +46,7 @@ export interface SidebarGroupProps {
     collapsible?: boolean;
     actions?: React.ReactNode;
     items: Array<{
-        icon: Icon;
+        icon: React.ReactNode;
         title: string;
         url: string;
         hidden?: boolean;

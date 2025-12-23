@@ -58,7 +58,7 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="w-full min-w-11/12 lg:min-w-5xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-full min-w-11/12 lg:min-w-6xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{isEditMode ? "Edit attribute" : "Create attribute"}</DialogTitle>
                     <DialogDescription>
@@ -90,6 +90,7 @@ export const AttributeDialog: FC<AttributeDialogProps> = ({
 
                         {currentType === "RELATIONSHIP" ? (
                             <RelationshipAttributeForm
+                                mode={editingAttribute ? "edit" : "create"}
                                 relationships={currentRelationships}
                                 form={form}
                                 type={entityType}

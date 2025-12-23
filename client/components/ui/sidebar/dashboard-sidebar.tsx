@@ -26,6 +26,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "../dropdown-menu";
+import { IconCell } from "../icon/icon-cell";
 import { Skeleton } from "../skeleton";
 import { AppSidebar } from "./root-sidebar";
 import { Action, OptionSwitcher } from "./switcher";
@@ -76,13 +77,17 @@ export const DashboardSidebar = () => {
         },
     ];
 
+    const DEFAULT_ICON_CLASS_PROPS = {
+        className: "size-4",
+    };
+
     const sidebarContent: SidebarGroupProps[] = selectedOrganisation
         ? [
               {
                   title: "Overview",
                   items: [
                       {
-                          icon: Building2,
+                          icon: <Building2 {...DEFAULT_ICON_CLASS_PROPS} />,
                           hidden: false,
                           title: "Organisation",
                           url: `/dashboard/organisation/${selectedOrganisation.id}`,
@@ -139,7 +144,7 @@ export const DashboardSidebar = () => {
                   ),
                   items: isLoadingEntityTypes
                       ? Array.from({ length: 3 }).map((_, index) => ({
-                            icon: SquareDashedMousePointer,
+                            icon: <SquareDashedMousePointer {...DEFAULT_ICON_CLASS_PROPS} />,
                             hidden: false,
                             title: "",
                             url: "#",
@@ -148,7 +153,13 @@ export const DashboardSidebar = () => {
                         }))
                       : [
                             ...(entityTypes?.slice(0, 5).map((entityType) => ({
-                                icon: SquareDashedMousePointer,
+                                icon: (
+                                    <IconCell
+                                        readonly
+                                        iconType={entityType.icon.icon}
+                                        colour={entityType.icon.colour}
+                                    />
+                                ),
                                 hidden: false,
                                 title: entityType.name.plural,
                                 url: `/dashboard/organisation/${selectedOrganisation.id}/entity/${entityType.key}`,
@@ -157,7 +168,7 @@ export const DashboardSidebar = () => {
                             ...(entityTypes && entityTypes.length > 5
                                 ? [
                                       {
-                                          icon: Ellipsis,
+                                          icon: <Ellipsis {...DEFAULT_ICON_CLASS_PROPS} />,
                                           hidden: false,
                                           title: `See all ${entityTypes.length}`,
                                           url: `/dashboard/organisation/${selectedOrganisation.id}/entity`,
@@ -172,7 +183,7 @@ export const DashboardSidebar = () => {
                   collapsible: true,
                   items: [
                       {
-                          icon: GitGraph,
+                          icon: <GitGraph {...DEFAULT_ICON_CLASS_PROPS} />,
                           hidden: false,
                           title: "Workflows",
                           url: `/dashboard/organisation/${selectedOrganisation.id}/members`,
@@ -181,7 +192,7 @@ export const DashboardSidebar = () => {
                           ),
                       },
                       {
-                          icon: Workflow,
+                          icon: <Workflow {...DEFAULT_ICON_CLASS_PROPS} />,
                           hidden: false,
                           title: "Automations",
                           url: `/dashboard/organisation/${selectedOrganisation.id}/members`,
@@ -196,7 +207,7 @@ export const DashboardSidebar = () => {
                           collapsible: true,
                           items: [
                               {
-                                  icon: Workflow,
+                                  icon: <Building2 {...DEFAULT_ICON_CLASS_PROPS} />,
                                   hidden: false,
                                   title: "Default Templates",
                                   url: `/dashboard/organisation/${selectedOrganisation.id}/templates`,
@@ -213,14 +224,14 @@ export const DashboardSidebar = () => {
                   collapsible: true,
                   items: [
                       {
-                          icon: TrendingUpDown,
+                          icon: <TrendingUpDown {...DEFAULT_ICON_CLASS_PROPS} />,
                           hidden: false,
                           title: "Usage",
                           url: `/dashboard/organisation/${selectedOrganisation.id}/usage`,
                           isActive: pathName.startsWith(`/dashboard/usage`),
                       },
                       {
-                          icon: CalendarHeart,
+                          icon: <CalendarHeart {...DEFAULT_ICON_CLASS_PROPS} />,
                           hidden: false,
                           title: "Subscription",
                           url: `/dashboard/organisation/${selectedOrganisation.id}/subscriptions`,
@@ -233,7 +244,7 @@ export const DashboardSidebar = () => {
                   collapsible: true,
                   items: [
                       {
-                          icon: CogIcon,
+                          icon: <CogIcon {...DEFAULT_ICON_CLASS_PROPS} />,
                           hidden: false,
                           title: "Organisation Settings",
                           url: `/dashboard/organisation/${selectedOrganisation.id}/settings`,

@@ -14,6 +14,7 @@ export function useEntityTypes(organisationId?: string): AuthenticatedQueryResul
         staleTime: 5 * 60 * 1000, // 5 minutes
         enabled: !!session && !!organisationId && !loading,
         refetchOnWindowFocus: false,
+        refetchOnMount: false,
         gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
     });
 

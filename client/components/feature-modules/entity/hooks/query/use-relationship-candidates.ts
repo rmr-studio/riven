@@ -1,0 +1,43 @@
+import { useOrganisation } from "@/components/feature-modules/organisation/hooks/use-organisation";
+import { EntityTypeRelationshipType } from "@/lib/types/types";
+import { EntityRelationshipCandidate, EntityType } from "../../interface/entity.interface";
+import { useEntityTypes } from "./use-entity-types";
+
+interface UseRelationshipCandidatesReturn {
+    loading: boolean;
+    candidates: EntityRelationshipCandidate[];
+}
+
+/**
+ * This hook will fetch all current relationships for every organisation entity type that is considered polymorphic. So is a viable candidate for a new entity type to be linked to.
+ */
+export function useRelationshipCandidates(type: EntityType): UseRelationshipCandidatesReturn {
+    const { data: organisation } = useOrganisation();
+    const { data } = useEntityTypes(organisation?.id);
+    if (!data)
+        return {
+            loading: true,
+            candidates: [],
+        };
+
+    // Fitler out all unreferenced polymorphic relationships, or current relationship definitions that support the given entity type but does not yet reference it bidirectionally
+    return {
+        loading: false,
+        candidates: data
+            .flatMap((type) => {
+                if (!type.relationships) return [];
+                type.relationships.filter(
+                    (def) =>
+                        (def.allowPolymorphic || def.entityTypeKeys?.includes(type.key)) &&
+                        def.bidirectional &&
+                        def.relationshipType === EntityTypeRelationshipType.ORIGIN &&
+                        !def.bidirectionalEntityTypeKeys?.includes(type.key)
+                );
+            })
+            .map((rel) => ({
+                entityTypeKey: type.key,
+                entityTypeName: type.name.singular,
+                existingRelationship: rel,
+            })),
+    };
+}
