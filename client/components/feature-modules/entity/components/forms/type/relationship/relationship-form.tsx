@@ -1,3 +1,6 @@
+import { useEntityTypeRelationshipForm } from "@/components/feature-modules/entity/hooks/form/type/use-relationship-form";
+import { useEntityTypes } from "@/components/feature-modules/entity/hooks/query/use-entity-types";
+import { useOrganisation } from "@/components/feature-modules/organisation/hooks/use-organisation";
 import {
     FormControl,
     FormDescription,
@@ -11,41 +14,35 @@ import { Switch } from "@/components/ui/switch";
 import { EntityTypeRelationshipType } from "@/lib/types/types";
 import { cn } from "@/lib/util/utils";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
-import { UseFormReturn } from "react-hook-form";
-import { AttributeFormValues } from "../../../hooks/form/use-attribute-form";
-import { useRelationshipOverlapDetection } from "../../../hooks/use-relationship-overlap-detection";
+import { useRelationshipOverlapDetection } from "../../../../hooks/use-relationship-overlap-detection";
 import {
     EntityRelationshipDefinition,
     EntityType,
-    RelationshipFormData,
-} from "../../../interface/entity.interface";
-import { getInverseCardinality, processCardinalityToLimits } from "../../../util/relationship.util";
-import { EntityTypeMultiSelect } from "../entity-type-multi-select";
-import { RelationshipOverlapAlert } from "../relationship-overlap-alert";
-import { RelationshipLink } from "./relationship/relationship-links";
+    RelationshipLimit,
+} from "../../../../interface/entity.interface";
+import {
+    getInverseCardinality,
+    processCardinalityToLimits,
+} from "../../../../util/relationship.util";
+import { EntityTypeMultiSelect } from "../../entity-type-multi-select";
+import { RelationshipOverlapAlert } from "../../relationship-overlap-alert";
+import { RelationshipLink } from "./relationship-links";
 
 interface Props {
-    mode: "create" | "edit";
-    relationships: RelationshipFormData[];
     type: EntityType;
-    availableTypes: EntityType[];
-    form: UseFormReturn<AttributeFormValues>;
-    onSubmit: (values: AttributeFormValues) => void;
+    relationship?: EntityRelationshipDefinition;
+    onSave: () => void;
 }
 
-export const RelationshipAttributeForm: FC<Props> = ({
-    type,
-    availableTypes = [],
-    form,
-    mode,
-    onSubmit,
-}) => {
-    const relationshipType = form.watch("relationshipType");
+export const RelationshipAttributeForm: FC<Props> = ({ type, relationship, onSave }) => {
+    const { data: organisation } = useOrganisation();
+    const { data: availableTypes = [] } = useEntityTypes(organisation?.id);
+    const { form, mode, handleSubmit } = useEntityTypeRelationshipForm(type, onSave, relationship);
+
+    const isReference = relationship?.relationshipType === EntityTypeRelationshipType.REFERENCE;
     const selectedEntityTypeKeys = form.watch("entityTypeKeys");
     const bidirectional = form.watch("bidirectional");
     const allowPolymorphic = form.watch("allowPolymorphic");
-
-    const isReference = relationshipType === EntityTypeRelationshipType.REFERENCE;
 
     // Determine the current entity key for self-reference identification
     const currentEntityKey = type?.key;
@@ -67,15 +64,15 @@ export const RelationshipAttributeForm: FC<Props> = ({
         const { source, target } = processCardinalityToLimits(inverse);
 
         form.setValue("name", relationship.inverseName);
+        form.setValue("allowPolymorphic", false);
         form.setValue("relationshipType", EntityTypeRelationshipType.REFERENCE);
         form.setValue("entityTypeKeys", [relationship.sourceEntityTypeKey]);
-        form.setValue("allowPolymorphic", false);
         form.setValue("sourceRelationsLimit", source);
         form.setValue("targetRelationsLimit", target);
         form.setValue("originRelationshipId", relationship.id);
 
         // Use setTimeout to ensure all form values are set before validation
-        form.handleSubmit(onSubmit)();
+        form.handleSubmit(handleSubmit)();
     };
 
     const cardinalityToggleEntityName = useMemo(() => {
@@ -125,66 +122,6 @@ export const RelationshipAttributeForm: FC<Props> = ({
         [type?.key]
     );
 
-    // Manage bidirectionalEntityTypeKeys based on entity selection changes
-    useEffect(() => {
-        // Get current bidirectional value each time
-        const currentBidirectional = form.getValues("bidirectionalEntityTypeKeys") || [];
-
-        if (!bidirectional) {
-            // Clear bidirectional entity types when bidirectional is turned off
-            if (currentBidirectional.length > 0) {
-                form.setValue("bidirectionalEntityTypeKeys", []);
-            }
-        } else {
-            // When bidirectional is enabled, auto-select entity types
-            if (allowPolymorphic) {
-                // If polymorphic, select all available entity types
-                const allKeys = availableTypes.map((et) => et.key) || [];
-
-                // Only update if there's a difference
-                const allKeysSorted = allKeys.toSorted();
-                const currentSorted = currentBidirectional.toSorted();
-
-                if (JSON.stringify(allKeysSorted) !== JSON.stringify(currentSorted)) {
-                    form.setValue("bidirectionalEntityTypeKeys", allKeys);
-                }
-            } else if (selectedEntityTypeKeys && selectedEntityTypeKeys.length > 0) {
-                // If not polymorphic, auto-select all selected entity types
-                // Start with currently selected bidirectional keys that are still valid
-                const validExistingKeys = currentBidirectional.filter((key) =>
-                    selectedEntityTypeKeys.includes(key)
-                );
-
-                // Add any new entity types that aren't already in bidirectional
-                const newKeys = selectedEntityTypeKeys.filter(
-                    (key) => !currentBidirectional.includes(key)
-                );
-
-                const updatedKeys = [...validExistingKeys, ...newKeys];
-
-                // Only update if there's a difference
-                const updatedSorted = updatedKeys.toSorted();
-                const currentSorted = currentBidirectional.toSorted();
-
-                if (JSON.stringify(updatedSorted) !== JSON.stringify(currentSorted)) {
-                    form.setValue("bidirectionalEntityTypeKeys", updatedKeys);
-                }
-            } else if (currentBidirectional.length > 0) {
-                // If no entity types selected and not polymorphic, clear bidirectional
-                form.setValue("bidirectionalEntityTypeKeys", []);
-            }
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [
-        bidirectional,
-        selectedEntityTypeKeys,
-        allowPolymorphic,
-        // Note: bidirectionalEntityTypeKeys is intentionally excluded to prevent infinite loops
-        // We read it directly in the effect using form.getValues() instead
-        // Note: availableTypesis intentionally excluded to prevent infinite loops
-        // It's a computed value that changes frequently due to sorting
-    ]);
-
     // Reset dismissed overlaps when target entity selection changes
     useEffect(() => {
         setDismissedOverlaps(new Set());
@@ -225,7 +162,6 @@ export const RelationshipAttributeForm: FC<Props> = ({
                         <FormField
                             control={form.control}
                             name="entityTypeKeys"
-                            disabled
                             render={({ field, fieldState }) => (
                                 <FormItem
                                     className={cn(
@@ -274,7 +210,7 @@ export const RelationshipAttributeForm: FC<Props> = ({
                                     <span
                                         className={cn(
                                             "text-sm font-medium transition-colors",
-                                            field.value === "singular"
+                                            field.value === RelationshipLimit.SINGULAR
                                                 ? "text-foreground"
                                                 : "text-muted-foreground"
                                         )}
@@ -284,16 +220,20 @@ export const RelationshipAttributeForm: FC<Props> = ({
                                     <FormControl>
                                         <Switch
                                             disabled={isReference}
-                                            checked={field.value === "many"}
+                                            checked={field.value === RelationshipLimit.MANY}
                                             onCheckedChange={(checked) => {
-                                                field.onChange(checked ? "many" : "singular");
+                                                field.onChange(
+                                                    checked
+                                                        ? RelationshipLimit.MANY
+                                                        : RelationshipLimit.SINGULAR
+                                                );
                                             }}
                                         />
                                     </FormControl>
                                     <span
                                         className={cn(
                                             "text-sm font-medium transition-colors",
-                                            field.value === "many"
+                                            field.value === RelationshipLimit.MANY
                                                 ? "text-foreground"
                                                 : "text-muted-foreground"
                                         )}
@@ -420,7 +360,7 @@ export const RelationshipAttributeForm: FC<Props> = ({
                                         <span
                                             className={cn(
                                                 "text-sm font-medium transition-colors",
-                                                field.value === "singular"
+                                                field.value === RelationshipLimit.SINGULAR
                                                     ? "text-foreground"
                                                     : "text-muted-foreground",
                                                 bidirectionalFormDisabled && "text-primary/60"
@@ -431,16 +371,20 @@ export const RelationshipAttributeForm: FC<Props> = ({
                                         <FormControl>
                                             <Switch
                                                 disabled={bidirectionalFormDisabled}
-                                                checked={field.value === "many"}
+                                                checked={field.value === RelationshipLimit.MANY}
                                                 onCheckedChange={(checked) => {
-                                                    field.onChange(checked ? "many" : "singular");
+                                                    field.onChange(
+                                                        checked
+                                                            ? RelationshipLimit.MANY
+                                                            : RelationshipLimit.SINGULAR
+                                                    );
                                                 }}
                                             />
                                         </FormControl>
                                         <span
                                             className={cn(
                                                 "text-sm font-medium transition-colors",
-                                                field.value === "many"
+                                                field.value === RelationshipLimit.MANY
                                                     ? "text-foreground"
                                                     : "text-muted-foreground",
                                                 bidirectionalFormDisabled && "text-primary/60"

@@ -11,43 +11,32 @@ import {
 import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { FC, useState } from "react";
 import { AttributeTypeDropdown } from "../../../../../ui/attribute-type-dropdown";
-import { useEntityTypeAttributeForm } from "../../../hooks/form/use-attribute-form";
-import type { AttributeFormData, RelationshipFormData } from "../../../interface/entity.interface";
-import { EntityType, isRelationshipType } from "../../../interface/entity.interface";
-import { RelationshipAttributeForm } from "./attribute-relationship-form";
-import { AttributeForm } from "./attribute-schema-form";
+import type {
+    EntityAttributeDefinition,
+    EntityRelationshipDefinition,
+} from "../../../interface/entity.interface";
+import { EntityType } from "../../../interface/entity.interface";
+import { AttributeForm } from "./attribute/schema-form";
+import { RelationshipAttributeForm } from "./relationship/relationship-form";
 
 interface AttributeDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSubmit: (attribute: AttributeFormData | RelationshipFormData) => void;
     availableTypes: EntityType[];
     entityType: EntityType;
-    currentAttributes?: AttributeFormData[];
-    currentRelationships?: RelationshipFormData[];
-    editingAttribute?: AttributeFormData | RelationshipFormData;
-    identifierKey?: string;
+    editingAttribute?: EntityRelationshipDefinition | EntityAttributeDefinition;
+    identifierKey: string;
 }
 
 export const AttributeDialog: FC<AttributeDialogProps> = ({
     open,
     onOpenChange,
-    onSubmit,
     availableTypes = [],
-    currentRelationships = [],
     entityType,
     editingAttribute,
     identifierKey,
 }) => {
     const [typePopoverOpen, setTypePopoverOpen] = useState(false);
-    const { form, handleSubmit, currentType, mode } = useEntityTypeAttributeForm(
-        entityType,
-        open,
-        onSubmit,
-        editingAttribute
-    );
-
-    const isEditMode = mode === "edit";
 
     // Check if the editing attribute is the identifier key
     const isIdentifierAttribute =

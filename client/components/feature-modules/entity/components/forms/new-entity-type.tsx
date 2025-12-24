@@ -30,7 +30,7 @@ import { FC, useEffect } from "react";
 import {
     NewEntityTypeFormValues,
     useNewEntityTypeForm,
-} from "../../hooks/form/use-new-entity-type-form";
+} from "../../hooks/form/type/use-new-type-form";
 import { EntityType } from "../../interface/entity.interface";
 
 interface Props extends ChildNodeProps {
@@ -39,10 +39,8 @@ interface Props extends ChildNodeProps {
 }
 
 export const NewEntityTypeForm: FC<Props> = ({ entityTypes = [], organisationId, children }) => {
-    const { form, keyManuallyEdited, setKeyManuallyEdited, handleSubmit } = useNewEntityTypeForm(
-        organisationId,
-        
-    );
+    const { form, keyManuallyEdited, setKeyManuallyEdited, handleSubmit } =
+        useNewEntityTypeForm(organisationId);
 
     // Watch the pluralName field for dynamic title and key generation
     const pluralName = form.watch("pluralName");

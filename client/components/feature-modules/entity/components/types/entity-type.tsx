@@ -36,13 +36,11 @@ import { toast } from "sonner";
 import {
     useEntityTypeForm,
     type EntityTypeFormValues,
-} from "../../hooks/form/use-entity-type-form";
+} from "../../hooks/form/type/use-configuration-form";
 import { useEntityTypes } from "../../hooks/query/use-entity-types";
 import { useAttributeManagement } from "../../hooks/use-attribute-management";
 import { useRelationshipManagement } from "../../hooks/use-relationship-management";
 import {
-    isAttributeType,
-    type AttributeFormData,
     type EntityType,
     type EntityTypeAttributeData,
     type EntityTypeOrderingKey,
@@ -446,34 +444,13 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
 
     const submit = useCallback(
         (values: EntityTypeFormValues) => {
-            handleFormSubmit(values, attributes, relationships, order);
+            handleFormSubmit(values, attributes);
         },
-        [attributes, relationships, order]
+        [attributes]
     );
 
     const handleSaveClick = () => {
         form.handleSubmit(submit, handleInvalidSubmit)();
-    };
-
-    const handleAttributeSubmit = (data: AttributeFormData | RelationshipFormData) => {
-        if (editingAttribute) {
-            if (isAttributeType(data)) {
-                handleAttributeEdit(data);
-            } else {
-                handleRelationshipEdit(data);
-            }
-        } else {
-            // Add new attribute/relationship
-            if (isAttributeType(data)) {
-                handleAttributeAdd(data);
-            } else {
-                handleRelationshipAdd(data);
-            }
-        }
-
-        // Close dialog after state updates - this ensures proper cleanup
-        setDialogOpen(false);
-        setEditingAttribute(undefined);
     };
 
     const handleDeleteField = (id: string, type: EntityPropertyType) => {
@@ -731,12 +708,9 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
                         setEditingAttribute(undefined);
                     }
                 }}
-                onSubmit={handleAttributeSubmit}
                 availableTypes={entityTypes}
                 entityType={entityType}
                 editingAttribute={editingAttribute}
-                currentAttributes={attributes}
-                currentRelationships={relationships}
                 identifierKey={identifierKey}
             />
         </>

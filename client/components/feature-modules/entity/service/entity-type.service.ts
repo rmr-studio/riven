@@ -4,9 +4,9 @@ import { api } from "@/lib/util/utils";
 import { Session } from "@supabase/supabase-js";
 import {
     CreateEntityTypeRequest,
-    DeleteEntityTypeResponse,
     EntityType,
-    UpdateEntityTypeResponse,
+    EntityTypeImpactResponse,
+    TypeDefinitionRequest,
 } from "../interface/entity.interface";
 
 export class EntityTypeService {
@@ -102,23 +102,17 @@ export class EntityTypeService {
         }
     }
 
-    static async updateEntityType(
+    static async saveEntityTypeConfiguration(
         session: Session | null,
         organisationId: string,
-        entityType: EntityType,
-        impactConfirmed: boolean = false
-    ): Promise<UpdateEntityTypeResponse> {
+        entityType: EntityType
+    ): Promise<EntityType> {
         try {
             validateSession(session);
             validateUuid(organisationId);
             const url = api();
-
-            const queryParams = new URLSearchParams({
-                impactConfirmed: String(impactConfirmed),
-            });
-
             const response = await fetch(
-                `${url}/v1/entity/schema/organisation/${organisationId}?${queryParams}`,
+                `${url}/v1/entity/schema/organisation/${organisationId}/configuration`,
                 {
                     method: "PUT",
                     body: JSON.stringify(entityType),
@@ -130,7 +124,7 @@ export class EntityTypeService {
             );
 
             // Both 200 (success) and 409 (conflict with impact) return UpdateEntityTypeResponse
-            if (response.ok || response.status === 409) {
+            if (response.ok) {
                 return await response.json();
             }
 
@@ -144,12 +138,60 @@ export class EntityTypeService {
         }
     }
 
+    static async reorderEntityTypeAttributes() {
+        //todo
+    }
+
+    /**
+     * This will handle saving (ie. Publishing/Updating) new entity schema attributes and definitions
+     */
+    static async saveEntityTypeDefinition(
+        session: Session | null,
+        organisationId: string,
+        definition: TypeDefinitionRequest,
+        impactConfirmed: boolean = false
+    ): Promise<EntityTypeImpactResponse> {
+        try {
+            validateSession(session);
+            validateUuid(organisationId);
+            const url = api();
+
+            const queryParams = new URLSearchParams({
+                impactConfirmed: String(impactConfirmed),
+            });
+
+            const response = await fetch(
+                `${url}/v1/entity/schema/organisation/${organisationId}/definition?${queryParams}`,
+                {
+                    method: "POST",
+                    body: JSON.stringify(definition),
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${session.access_token}`,
+                    },
+                }
+            );
+
+            if (response.ok) return await response.json();
+
+            throw await handleError(
+                response,
+                (res) => `Failed to save entity type definition: ${res.status} ${res.statusText}`
+            );
+        } catch (error) {
+            if (isResponseError(error)) throw error;
+            throw fromError(error);
+        }
+    }
+
+    static async deleteEntityAttribute() {}
+
     static async deleteEntityType(
         session: Session | null,
         organisationId: string,
         entityTypeKey: string,
         impactConfirmed: boolean = false
-    ): Promise<DeleteEntityTypeResponse> {
+    ): Promise<EntityTypeImpactResponse> {
         try {
             validateSession(session);
             validateUuid(organisationId);

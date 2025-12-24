@@ -11,8 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import { SchemaType } from "@/lib/types/types";
 import { FC } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { EnumOptionsEditor } from "../enum-options-editor";
-import { AttributeFormValues } from "./attribute-form";
+import { EnumOptionsEditor } from "../../enum-options-editor";
+import { AttributeFormValues } from "../attribute-form";
 
 interface Props {
     form: UseFormReturn<AttributeFormValues>;

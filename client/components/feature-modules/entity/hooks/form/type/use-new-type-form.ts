@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import { CreateEntityTypeRequest, EntityType } from "../../interface/entity.interface";
-import { usePublishEntityTypeMutation } from "../mutation/use-publish-entity-type-mutation";
+import { CreateEntityTypeRequest, EntityType } from "../../../interface/entity.interface";
+import { usePublishEntityTypeMutation } from "../../mutation/type/use-publish-type-mutation";
 
 export const baseEntityTypeFormSchema = z
     .object({

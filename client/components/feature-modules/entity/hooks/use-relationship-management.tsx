@@ -38,6 +38,7 @@ export function useRelationshipManagement(
                 entityTypeKeys: rel.entityTypeKeys || [],
                 allowPolymorphic: rel.allowPolymorphic,
                 bidirectional: rel.bidirectional,
+                bidirectionalEntityTypeKeys: rel.bidirectionalEntityTypeKeys || [],
                 inverseName: rel.inverseName,
                 required: rel.required,
                 targetAttributeName: undefined, // This might need to be derived from somewhere

@@ -1,12 +1,9 @@
-import { Icon, SchemaOptions } from "@/lib/interfaces/common.interface";
+import { Icon, SchemaUUID } from "@/lib/interfaces/common.interface";
 import {
     components,
-    DataFormat,
-    DataType,
     EntityPropertyType,
     EntityRelationshipCardinality,
     EntityTypeRelationshipType,
-    SchemaType,
 } from "@/lib/types/types";
 
 export type EntityType = components["schemas"]["EntityType"];
@@ -40,32 +37,12 @@ export interface RelationshipFormData extends EntityTypeAttributeData {
     required: boolean;
 }
 
-export interface AttributeFormData extends EntityTypeAttributeData {
-    // Key to the relevant schema type
-    schemaKey: SchemaType;
-    dataType: DataType;
-    dataFormat?: DataFormat;
-    required: boolean;
-    unique: boolean;
-    options?: SchemaOptions;
-    protected?: boolean;
-}
-
 export type CreateEntityTypeRequest = components["schemas"]["CreateEntityTypeRequest"];
 
-export const isAttributeType = (
-    data: AttributeFormData | RelationshipFormData
-): data is AttributeFormData => {
-    return data.type === EntityPropertyType.ATTRIBUTE;
-};
-
-export const isRelationshipType = (
-    data: AttributeFormData | RelationshipFormData
-): data is RelationshipFormData => {
-    return data.type === EntityPropertyType.RELATIONSHIP;
-};
-
-export type RelationshipLimit = "singular" | "many";
+export enum RelationshipLimit {
+    SINGULAR,
+    MANY,
+}
 
 export interface EntityRelationshipCandidate {
     icon: Icon;
@@ -78,8 +55,18 @@ export interface EntityRelationshipCandidate {
 export type {
     OverlapDetectionResult,
     OverlapResolution,
-    RelationshipOverlap
+    RelationshipOverlap,
 } from "../hooks/use-relationship-overlap-detection";
 
-export type UpdateEntityTypeResponse = components["schemas"]["UpdateEntityTypeResponse"];
-export type DeleteEntityTypeResponse = components["schemas"]["DeleteEntityTypeResponse"];
+export type EntityTypeImpactResponse = components["schemas"]["EntityTypeImpactResponse"];
+
+export type TypeDefinitionRequest = components["schemas"]["TypeDefinitionRequest"];
+export type SaveRelationshipDefinitionRequest =
+    components["schemas"]["SaveRelationshipDefinitionRequest"];
+export type SaveAttributeDefinitionRequest =
+    components["schemas"]["SaveAttributeDefinitionRequest"];
+
+export interface EntityAttributeDefinition {
+    id: string;
+    schema: SchemaUUID;
+}

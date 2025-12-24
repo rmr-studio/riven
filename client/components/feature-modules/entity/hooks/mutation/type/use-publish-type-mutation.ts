@@ -2,8 +2,8 @@ import { useAuth } from "@/components/provider/auth-context";
 import { useMutation, UseMutationOptions, useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 import { toast } from "sonner";
-import { CreateEntityTypeRequest, EntityType } from "../../interface/entity.interface";
-import { EntityTypeService } from "../../service/entity-type.service";
+import { CreateEntityTypeRequest, EntityType } from "../../../interface/entity.interface";
+import { EntityTypeService } from "../../../service/entity-type.service";
 
 export function usePublishEntityTypeMutation(
     organisationId: string,

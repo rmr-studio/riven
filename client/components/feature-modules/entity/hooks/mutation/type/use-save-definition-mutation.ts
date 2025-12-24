@@ -1,41 +1,45 @@
 import { useAuth } from "@/components/provider/auth-context";
-import { useMutation, UseMutationOptions, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, type UseMutationOptions } from "@tanstack/react-query";
 import { useRef } from "react";
 import { toast } from "sonner";
-import { EntityType, UpdateEntityTypeResponse } from "../../interface/entity.interface";
-import { EntityTypeService } from "../../service/entity-type.service";
+import {
+    EntityType,
+    TypeDefinitionRequest,
+    type EntityTypeImpactResponse,
+} from "../../../interface/entity.interface";
+import { EntityTypeService } from "../../../service/entity-type.service";
 
-export function useUpdateEntityTypeMutation(
+export function useSaveDefinitionMutation(
     organisationId: string,
-    options?: UseMutationOptions<UpdateEntityTypeResponse, Error, EntityType>
+    options?: UseMutationOptions<EntityTypeImpactResponse, Error, TypeDefinitionRequest>
 ) {
     const queryClient = useQueryClient();
     const { session } = useAuth();
     const submissionToastRef = useRef<string | number | undefined>(undefined);
 
     return useMutation({
-        mutationFn: (type: EntityType) =>
-            EntityTypeService.updateEntityType(session, organisationId, type),
+        mutationFn: (definition: TypeDefinitionRequest) =>
+            EntityTypeService.saveEntityTypeDefinition(session, organisationId, definition),
         onMutate: (data) => {
             options?.onMutate?.(data);
-            submissionToastRef.current = toast.loading("Updating entity type...");
+            submissionToastRef.current = toast.loading("Saving entity type definition...");
         },
-        onError: (error: Error, variables: EntityType, context: unknown) => {
+        onError: (error: Error, variables: TypeDefinitionRequest, context: unknown) => {
             options?.onError?.(error, variables, context);
             toast.dismiss(submissionToastRef.current);
             submissionToastRef.current = undefined;
-            toast.error(`Failed to update entity type: ${error.message}`);
+            toast.error(`Failed to save entity type definition: ${error.message}`);
         },
         onSuccess: (
-            response: UpdateEntityTypeResponse,
-            variables: EntityType,
+            response: EntityTypeImpactResponse,
+            variables: TypeDefinitionRequest,
             context: unknown
         ) => {
             options?.onSuccess?.(response, variables, context);
             toast.dismiss(submissionToastRef.current);
-            toast.success(`Entity type updated successfully!`);
+            submissionToastRef.current = undefined;
+            toast.success(`Entity type definition saved successfully!`);
 
-            // Update cache for all entity types that were updated
             if (response.updatedEntityTypes) {
                 Object.entries(response.updatedEntityTypes).forEach(([key, entityType]) => {
                     // Update individual entity type query cache
@@ -62,7 +66,6 @@ export function useUpdateEntityTypeMutation(
                 );
             }
 
-            // Stay on the same page after update
             return response;
         },
     });

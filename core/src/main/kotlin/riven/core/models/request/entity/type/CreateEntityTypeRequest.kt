@@ -1,4 +1,4 @@
-package riven.core.models.request.entity
+package riven.core.models.request.entity.type
 
 import riven.core.enums.entity.EntityCategory
 import riven.core.models.common.Icon

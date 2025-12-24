@@ -60,28 +60,20 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/entity/schema/organisation/{organisationId}": {
+    "/api/v1/entity/schema/organisation/{organisationId}/configuration": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
+        get?: never;
         /**
-         * Get all entity types for an organisation
-         * @description Retrieves all entity types associated with the specified organisation.
-         */
-        get: operations["getEntityTypesForOrganisation"];
-        /**
-         * Updates an existing entity type
+         * Updates an existing entity type configuration
          * @description Updates the data for an already existing entity type for the specified organisation.
          */
         put: operations["updateEntityType"];
-        /**
-         * Create a new entity type
-         * @description Creates and publishes a new entity type for the specified organisation.
-         */
-        post: operations["createEntityType"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -170,6 +162,50 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["acceptInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entity/schema/organisation/{organisationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get all entity types for an organisation
+         * @description Retrieves all entity types associated with the specified organisation.
+         */
+        get: operations["getEntityTypesForOrganisation"];
+        put?: never;
+        /**
+         * Create a new entity type
+         * @description Creates and publishes a new entity type for the specified organisation.
+         */
+        post: operations["createEntityType"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entity/schema/organisation/{organisationId}/definition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add or update an attribute or relationship
+         * @description Adds or updates an attribute or relationship in the specified entity type for the given organisation.
+         */
+        post: operations["saveEntityTypeDefinition"];
         delete?: never;
         options?: never;
         head?: never;
@@ -340,26 +376,6 @@ export interface paths {
          * @description Retrieves a specific entity type by its key associated with the specified organisation.
          */
         get: operations["getEntityTypeByKeyForOrganisation"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/entity/relationship/organisation/{organisationId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get all polymorphic candidates to opt-in to bi-directional relationships
-         * @description Retrieves all entity types with open polymorphic relationships that can be candidates for bi-directional relationships when creating a new entity type.
-         */
-        get: operations["getPolymorphicCandidatesForOrganisation"];
         put?: never;
         post?: never;
         delete?: never;
@@ -698,35 +714,6 @@ export interface components {
             protected: boolean;
             options?: components["schemas"]["SchemaOptions"];
         };
-        EntityImpactSummary: {
-            entityTypeKey: string;
-            /** Format: uuid */
-            relationshipId: string;
-            relationshipName: string;
-            impact: string;
-        };
-        /** @enum {string} */
-        EntityTypeRelationshipDataLossReason: EntityTypeRelationshipDataLossReason;
-        EntityTypeRelationshipDataLossWarning: {
-            entityTypeKey: string;
-            relationship: components["schemas"]["EntityRelationshipDefinition"];
-            reason: components["schemas"]["EntityTypeRelationshipDataLossReason"];
-            /** Format: int64 */
-            estimatedImpactCount?: number;
-        };
-        EntityTypeRelationshipImpactAnalysis: {
-            affectedEntityTypes: string[];
-            dataLossWarnings: components["schemas"]["EntityTypeRelationshipDataLossWarning"][];
-            columnsRemoved: components["schemas"]["EntityImpactSummary"][];
-            columnsModified: components["schemas"]["EntityImpactSummary"][];
-        };
-        UpdateEntityTypeResponse: {
-            error?: string;
-            updatedEntityTypes?: {
-                [key: string]: components["schemas"]["EntityType"];
-            };
-            impact?: components["schemas"]["EntityTypeRelationshipImpactAnalysis"];
-        };
         BindingSource: {
             type: string;
         };
@@ -914,6 +901,56 @@ export interface components {
             description?: string;
             type: components["schemas"]["EntityCategory"];
             icon: components["schemas"]["Icon"];
+        };
+        /** @enum {string} */
+        EntityTypeRequestDefinition: EntityTypeRequestDefinition;
+        /** @description Request to save a schema attribute definition for an entity type */
+        SaveAttributeDefinitionRequest: WithRequired<components["schemas"]["TypeDefinition"], "id" | "key" | "type"> & {
+            schema: components["schemas"]["SchemaUUID"];
+        };
+        /** @description Request to save a relationship definition for an entity type */
+        SaveRelationshipDefinitionRequest: WithRequired<components["schemas"]["TypeDefinition"], "id" | "key" | "type"> & {
+            relationship: components["schemas"]["EntityRelationshipDefinition"];
+        };
+        TypeDefinition: {
+            key: string;
+            /** Format: uuid */
+            id: string;
+            type: components["schemas"]["EntityTypeRequestDefinition"];
+        };
+        TypeDefinitionRequest: {
+            /** Format: int32 */
+            index?: number;
+            definition: components["schemas"]["SaveAttributeDefinitionRequest"] | components["schemas"]["SaveRelationshipDefinitionRequest"];
+        };
+        EntityImpactSummary: {
+            entityTypeKey: string;
+            /** Format: uuid */
+            relationshipId: string;
+            relationshipName: string;
+            impact: string;
+        };
+        EntityTypeImpactResponse: {
+            error?: string;
+            updatedEntityTypes?: {
+                [key: string]: components["schemas"]["EntityType"];
+            };
+            impact?: components["schemas"]["EntityTypeRelationshipImpactAnalysis"];
+        };
+        /** @enum {string} */
+        EntityTypeRelationshipDataLossReason: EntityTypeRelationshipDataLossReason;
+        EntityTypeRelationshipDataLossWarning: {
+            entityTypeKey: string;
+            relationship: components["schemas"]["EntityRelationshipDefinition"];
+            reason: components["schemas"]["EntityTypeRelationshipDataLossReason"];
+            /** Format: int64 */
+            estimatedImpactCount?: number;
+        };
+        EntityTypeRelationshipImpactAnalysis: {
+            affectedEntityTypes: string[];
+            dataLossWarnings: components["schemas"]["EntityTypeRelationshipDataLossWarning"][];
+            columnsRemoved: components["schemas"]["EntityImpactSummary"][];
+            columnsModified: components["schemas"]["EntityImpactSummary"][];
         };
         CreateBlockTypeRequest: {
             key: string;
@@ -1350,23 +1387,11 @@ export interface components {
                 [key: string]: string;
             };
         };
-        EntityTypePolymorphicCandidates: {
-            entityTypeKey: string;
-            entityTypeName: components["schemas"]["DisplayName"];
-            relationship: components["schemas"]["EntityRelationshipDefinition"];
-        };
         /**
          * @description Enumeration of possible entity types within the system.
          * @enum {string}
          */
         ApplicationEntityType: ApplicationEntityType;
-        DeleteEntityTypeResponse: {
-            impact?: components["schemas"]["EntityTypeRelationshipImpactAnalysis"];
-            updatedEntityTypes?: {
-                [key: string]: components["schemas"]["EntityType"];
-            };
-            error?: string;
-        };
     };
     responses: never;
     parameters: never;
@@ -1549,51 +1574,9 @@ export interface operations {
             };
         };
     };
-    getEntityTypesForOrganisation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                organisationId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Entity types retrieved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["EntityType"][];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["EntityType"][];
-                };
-            };
-            /** @description Organisation not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["EntityType"][];
-                };
-            };
-        };
-    };
     updateEntityType: {
         parameters: {
-            query?: {
-                impactConfirmed?: boolean;
-            };
+            query?: never;
             header?: never;
             path: {
                 organisationId: string;
@@ -1608,59 +1591,6 @@ export interface operations {
         responses: {
             /** @description Entity type updated successfully */
             200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["UpdateEntityTypeResponse"];
-                };
-            };
-            /** @description Invalid request data */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["UpdateEntityTypeResponse"];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["UpdateEntityTypeResponse"];
-                };
-            };
-            /** @description Conflict due to cascading impacts on existing entities as a result of aforementioned changes */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["UpdateEntityTypeResponse"];
-                };
-            };
-        };
-    };
-    createEntityType: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                organisationId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateEntityTypeRequest"];
-            };
-        };
-        responses: {
-            /** @description Entity type created successfully */
-            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1829,6 +1759,145 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    getEntityTypesForOrganisation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organisationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Entity types retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"][];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"][];
+                };
+            };
+            /** @description Organisation not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"][];
+                };
+            };
+        };
+    };
+    createEntityType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organisationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEntityTypeRequest"];
+            };
+        };
+        responses: {
+            /** @description Entity type created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"];
+                };
+            };
+            /** @description Invalid request data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"];
+                };
+            };
+        };
+    };
+    saveEntityTypeDefinition: {
+        parameters: {
+            query?: {
+                impactConfirmed?: boolean;
+            };
+            header?: never;
+            path: {
+                organisationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TypeDefinitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Entity type definition saved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
+                };
+            };
+            /** @description Invalid request data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
+                };
+            };
+            /** @description Conflict due to cascading impacts on existing entities as a result of aforementioned changes */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
+                };
             };
         };
     };
@@ -2243,46 +2312,6 @@ export interface operations {
             };
         };
     };
-    getPolymorphicCandidatesForOrganisation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                organisationId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Polymorphic candidates retrieved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["EntityTypePolymorphicCandidates"][];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["EntityTypePolymorphicCandidates"][];
-                };
-            };
-            /** @description Organisation not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["EntityTypePolymorphicCandidates"][];
-                };
-            };
-        };
-    };
     getBlockTypes: {
         parameters: {
             query?: never;
@@ -2461,7 +2490,9 @@ export interface operations {
     };
     deleteEntityTypeByKey: {
         parameters: {
-            query?: never;
+            query?: {
+                impactConfirmed?: boolean;
+            };
             header?: never;
             path: {
                 organisationID: string;
@@ -2477,7 +2508,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["DeleteEntityTypeResponse"];
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
                 };
             };
             /** @description Unauthorized access */
@@ -2486,7 +2517,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["DeleteEntityTypeResponse"];
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
                 };
             };
             /** @description Entity type not found */
@@ -2495,7 +2526,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["DeleteEntityTypeResponse"];
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
                 };
             };
         };
@@ -4256,11 +4287,6 @@ export enum SchemaType {
     FILE_ATTACHMENT = "FILE_ATTACHMENT",
     LOCATION = "LOCATION"
 }
-export enum EntityTypeRelationshipDataLossReason {
-    RELATIONSHIP_DELETED = "RELATIONSHIP_DELETED",
-    ENTITY_TYPE_REMOVED_FROM_TARGET = "ENTITY_TYPE_REMOVED_FROM_TARGET",
-    CARDINALITY_RESTRICTION = "CARDINALITY_RESTRICTION"
-}
 export enum BlockFetchPolicy {
     INHERIT = "INHERIT",
     LAZY = "LAZY",
@@ -4312,9 +4338,18 @@ export enum ValidationScope {
     STRICT = "STRICT",
     NONE = "NONE"
 }
+export enum EntityTypeRequestDefinition {
+    RELATIONSHIP = "RELATIONSHIP",
+    SCHEMA = "SCHEMA"
+}
 type WithRequired<T, K extends keyof T> = T & {
     [P in K]-?: T[P];
 };
+export enum EntityTypeRelationshipDataLossReason {
+    RELATIONSHIP_DELETED = "RELATIONSHIP_DELETED",
+    ENTITY_TYPE_REMOVED_FROM_TARGET = "ENTITY_TYPE_REMOVED_FROM_TARGET",
+    CARDINALITY_RESTRICTION = "CARDINALITY_RESTRICTION"
+}
 export enum BlockListOrderingMode {
     MANUAL = "MANUAL",
     SORTED = "SORTED"

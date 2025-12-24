@@ -366,7 +366,6 @@ export function DataTable<TData, TValue>({
     });
 
     const rowIds = useMemo(() => {
-        console.log("table rows:", table.getRowModel().rows);
         return table.getRowModel().rows.map((row) => row.id as UniqueIdentifier);
     }, [table, tableData]);
 

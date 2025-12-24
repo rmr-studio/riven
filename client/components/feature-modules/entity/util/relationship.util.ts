@@ -21,15 +21,15 @@ export const processCardinalityToLimits = (
 ): { source: RelationshipLimit; target: RelationshipLimit } => {
     switch (cardinality) {
         case EntityRelationshipCardinality.ONE_TO_ONE:
-            return { source: "singular", target: "singular" };
+            return { source: RelationshipLimit.SINGULAR, target: RelationshipLimit.SINGULAR };
         case EntityRelationshipCardinality.ONE_TO_MANY:
-            return { source: "singular", target: "many" };
+            return { source: RelationshipLimit.SINGULAR, target: RelationshipLimit.MANY };
         case EntityRelationshipCardinality.MANY_TO_ONE:
-            return { source: "many", target: "singular" };
+            return { source: RelationshipLimit.MANY, target: RelationshipLimit.SINGULAR };
         case EntityRelationshipCardinality.MANY_TO_MANY:
-            return { source: "many", target: "many" };
+            return { source: RelationshipLimit.MANY, target: RelationshipLimit.MANY };
         default:
-            return { source: "singular", target: "singular" };
+            return { source: RelationshipLimit.SINGULAR, target: RelationshipLimit.SINGULAR };
     }
 };
 
@@ -37,11 +37,11 @@ export const calculateCardinalityFromLimits = (
     source: RelationshipLimit,
     target: RelationshipLimit
 ): EntityRelationshipCardinality => {
-    if (source === "singular" && target === "singular") {
+    if (source === RelationshipLimit.SINGULAR && target === RelationshipLimit.SINGULAR) {
         return EntityRelationshipCardinality.ONE_TO_ONE;
-    } else if (source === "singular" && target === "many") {
+    } else if (source === RelationshipLimit.SINGULAR && target === RelationshipLimit.MANY) {
         return EntityRelationshipCardinality.ONE_TO_MANY;
-    } else if (source === "many" && target === "singular") {
+    } else if (source === RelationshipLimit.MANY && target === RelationshipLimit.SINGULAR) {
         return EntityRelationshipCardinality.MANY_TO_ONE;
     } else {
         return EntityRelationshipCardinality.MANY_TO_MANY;

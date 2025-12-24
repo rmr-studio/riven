@@ -17,12 +17,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { FC } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { EntityTypeFormValues } from "../../../hooks/form/use-entity-type-form";
-import { AttributeFormData } from "../../../interface/entity.interface";
+import { EntityTypeFormValues } from "../../../hooks/form/type/use-configuration-form";
+import { EntityAttributeDefinition } from "../../../interface/entity.interface";
 
 interface Props {
     form: UseFormReturn<EntityTypeFormValues>;
-    availableIdentifiers: AttributeFormData[];
+    availableIdentifiers: EntityAttributeDefinition[];
 }
 
 export const ConfigurationForm: FC<Props> = ({ form, availableIdentifiers }) => {
