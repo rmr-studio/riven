@@ -1,3 +1,8 @@
+import { useEntityTypeAttributeSchemaForm } from "@/components/feature-modules/entity/hooks/form/type/use-schema-form";
+import {
+    EntityAttributeDefinition,
+    EntityType,
+} from "@/components/feature-modules/entity/interface/entity.interface";
 import {
     FormControl,
     FormDescription,
@@ -8,33 +13,42 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { DialogControl } from "@/lib/interfaces/interface";
 import { SchemaType } from "@/lib/types/types";
-import { FC } from "react";
-import { UseFormReturn } from "react-hook-form";
+import { FC, useEffect, useMemo } from "react";
 import { EnumOptionsEditor } from "../../enum-options-editor";
-import { AttributeFormValues } from "../attribute-form";
 
 interface Props {
-    form: UseFormReturn<AttributeFormValues>;
-    isEditMode?: boolean;
-    isIdentifierAttribute?: boolean;
+    dialog: DialogControl;
+    currentType: SchemaType;
+    attribute?: EntityAttributeDefinition;
+    type: EntityType;
 }
 
-export const AttributeForm: FC<Props> = ({
-    form,
-    isEditMode = false,
-    isIdentifierAttribute = false,
-}) => {
-    const selectedType: SchemaType | "RELATIONSHIP" = form.watch("selectedType");
-    if (selectedType === "RELATIONSHIP") return null;
+export const SchemaForm: FC<Props> = ({ currentType, attribute, type, dialog }) => {
+    const { open, setOpen } = dialog;
 
+    const onSave = () => {
+        setOpen(false);
+    };
+
+    const { form, handleSubmit } = useEntityTypeAttributeSchemaForm(type, open, onSave, attribute);
     // Determine what schema options to show based on the selected type
-
-    const requireEnumOptions = [SchemaType.SELECT, SchemaType.MULTI_SELECT].includes(selectedType);
-    const requireNumericalValidation = selectedType == SchemaType.NUMBER;
+    const requireEnumOptions = [SchemaType.SELECT, SchemaType.MULTI_SELECT].includes(currentType);
+    const requireNumericalValidation = currentType == SchemaType.NUMBER;
     const requireStringValidation = [SchemaType.TEXT, SchemaType.EMAIL, SchemaType.PHONE].includes(
-        selectedType
+        currentType
     );
+
+    // Adjust Schema type inside form based on AttributeTypeDropdown value in outer component
+    useEffect(() => {
+        form.setValue("selectedType", currentType);
+    }, [currentType]);
+
+    const isIdentifierAttribute: boolean = useMemo(() => {
+        if (!attribute) return false;
+        return attribute.id === type.identifierKey;
+    }, [attribute, type]);
 
     return (
         <>

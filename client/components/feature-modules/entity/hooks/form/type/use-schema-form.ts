@@ -54,7 +54,7 @@ export const attributeFormSchema = z
         }
     );
 
-export interface UseEntityTypeAttributeFormReturn {
+export interface useEntityTypeAttributeSchemaFormReturn {
     form: UseFormReturn<AttributeFormValues>;
     handleSubmit: (values: AttributeFormValues) => void;
     currentType: SchemaType;
@@ -63,12 +63,12 @@ export interface UseEntityTypeAttributeFormReturn {
 
 export type AttributeFormValues = z.infer<typeof attributeFormSchema>;
 
-export function useEntityTypeAttributeForm(
+export function useEntityTypeAttributeSchemaForm(
     type: EntityType,
     open: boolean,
     onSave: () => void,
     attribute?: EntityAttributeDefinition
-): UseEntityTypeAttributeFormReturn {
+): useEntityTypeAttributeSchemaFormReturn {
     // Always start form as blank, this is because we would want it to reset to blank when a dialogue is re-opened.
     // Regardless of selected attribute, or previous changes.
     const form = useForm<AttributeFormValues>({

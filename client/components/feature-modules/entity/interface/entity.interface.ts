@@ -37,6 +37,18 @@ export interface RelationshipFormData extends EntityTypeAttributeData {
     required: boolean;
 }
 
+export const isRelationshipDefinition = (
+    attribute: EntityRelationshipDefinition | EntityAttributeDefinition
+): attribute is EntityRelationshipDefinition => {
+    return !('schema' in attribute);
+}
+
+export const isAttributeDefinition = (
+    attribute: EntityRelationshipDefinition | EntityAttributeDefinition
+): attribute is EntityAttributeDefinition => {
+    return 'schema' in attribute;
+}
+
 export type CreateEntityTypeRequest = components["schemas"]["CreateEntityTypeRequest"];
 
 export enum RelationshipLimit {

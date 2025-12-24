@@ -107,7 +107,7 @@ export const ConfigurationForm: FC<Props> = ({ form, availableIdentifiers }) => 
                                 <SelectContent>
                                     {availableIdentifiers.map((attr) => (
                                         <SelectItem key={attr.id} value={attr.id}>
-                                            {attr.label}
+                                            {attr.schema.label}
                                         </SelectItem>
                                     ))}
                                     {availableIdentifiers.length === 0 && (

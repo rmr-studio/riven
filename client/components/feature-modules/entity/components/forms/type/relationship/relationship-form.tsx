@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { DialogControl } from "@/lib/interfaces/interface";
 import { EntityTypeRelationshipType } from "@/lib/types/types";
 import { cn } from "@/lib/util/utils";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
@@ -31,13 +32,23 @@ import { RelationshipLink } from "./relationship-links";
 interface Props {
     type: EntityType;
     relationship?: EntityRelationshipDefinition;
-    onSave: () => void;
+    dialog: DialogControl;
 }
 
-export const RelationshipAttributeForm: FC<Props> = ({ type, relationship, onSave }) => {
+export const RelationshipAttributeForm: FC<Props> = ({ type, relationship, dialog }) => {
+    const { open, setOpen: onOpenChange } = dialog;
+    const onSave = () => {
+        onOpenChange(false);
+    };
+
     const { data: organisation } = useOrganisation();
     const { data: availableTypes = [] } = useEntityTypes(organisation?.id);
-    const { form, mode, handleSubmit } = useEntityTypeRelationshipForm(type, onSave, relationship);
+    const { form, mode, handleSubmit } = useEntityTypeRelationshipForm(
+        type,
+        open,
+        onSave,
+        relationship
+    );
 
     const isReference = relationship?.relationshipType === EntityTypeRelationshipType.REFERENCE;
     const selectedEntityTypeKeys = form.watch("entityTypeKeys");

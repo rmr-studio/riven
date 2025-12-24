@@ -1,4 +1,4 @@
-import { DataType } from "@/lib/types/types";
+import { DataType, SchemaType } from "@/lib/types/types";
 import { AttributeSchemaType, attributeTypes } from "@/lib/util/form/schema.util";
 import { cn } from "@/lib/util/utils";
 import { Check, ChevronsUpDown, Link2 } from "lucide-react";
@@ -16,15 +16,15 @@ import { FormControl } from "./form";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 
 interface Props {
-    attributeKey: string;
-    onChange: (value: string) => void;
+    type: SchemaType | "RELATIONSHIP";
+    onChange: (value: SchemaType | "RELATIONSHIP") => void;
     open: boolean;
     setOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 export type AttributeKey = DataType | "RELATIONSHIP";
 
-export const AttributeTypeDropdown: FC<Props> = ({ onChange, attributeKey, open, setOpen }) => {
+export const AttributeTypeDropdown: FC<Props> = ({ onChange, type, open, setOpen }) => {
     const commonAttributes: AttributeSchemaType[] = useMemo(() => {
         return [
             attributeTypes.TEXT,
@@ -55,14 +55,13 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, attributeKey, open,
     }, []);
 
     const selectedAttribute = useMemo(() => {
-        if (attributeKey === "RELATIONSHIP") {
+        if (type === "RELATIONSHIP") {
             return { label: "Relationship", icon: Link2 };
         }
-        return (
-            Object.values(attributeTypes).find((attr) => attr.key === attributeKey) ||
-            Object.values(attributeTypes)[0]
-        );
-    }, [attributeKey]);
+
+        return attributeTypes[type];
+    }, [type]);
+
     const getGroupName = (type: DataType): string => {
         switch (type) {
             case DataType.STRING:
@@ -124,9 +123,7 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, attributeKey, open,
                                 <Check
                                     className={cn(
                                         "mr-1 size-3.5",
-                                        attributeKey === "RELATIONSHIP"
-                                            ? "opacity-100"
-                                            : "opacity-0"
+                                        type === "RELATIONSHIP" ? "opacity-100" : "opacity-0"
                                     )}
                                 />
                                 <Link2 className="mr-1 size-3.5" />
@@ -147,7 +144,7 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, attributeKey, open,
                                     <Check
                                         className={cn(
                                             "mr-1 size-3.5",
-                                            attributeKey === attr.key ? "opacity-100" : "opacity-0"
+                                            type === attr.key ? "opacity-100" : "opacity-0"
                                         )}
                                     />
                                     <attr.icon className="mr-1 size-3.5" />
@@ -177,7 +174,7 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, attributeKey, open,
                                                 <Check
                                                     className={cn(
                                                         "mr-1 size-3.5",
-                                                        attributeKey === attr.key
+                                                        type === attr.key
                                                             ? "opacity-100"
                                                             : "opacity-0"
                                                     )}
