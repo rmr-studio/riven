@@ -1,4 +1,6 @@
 package riven.core.enums.entity
 
-class EntityTypeRequestDefinition {
+enum class EntityTypeRequestDefinition {
+    RELATIONSHIP,
+    SCHEMA
 }

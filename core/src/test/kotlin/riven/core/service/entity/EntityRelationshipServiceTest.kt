@@ -132,7 +132,7 @@ class EntityRelationshipServiceTest {
 
         // Mock repository calls
         whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
-            .thenReturn(listOf(jobEntityType))
+            .thenReturn(listOf(companyEntityType, jobEntityType))
 
         whenever(entityTypeRepository.saveAll<EntityTypeEntity>(any()))
             .thenAnswer { invocation ->
@@ -145,8 +145,16 @@ class EntityRelationshipServiceTest {
             organisationId = organisationId
         )
 
+        // Verify Relationship was not added to job entity type
+        val updatedJobEntityType = result.find { it.key == "job" }
+        assertNotNull(updatedJobEntityType, "Job entity type should be present in the result")
+        val hasReferenceRelationship = updatedJobEntityType!!.relationships?.any {
+            it.originRelationshipId == relationshipId &&
+                    it.relationshipType == EntityTypeRelationshipType.REFERENCE
+        } ?: false
+        assertFalse(hasReferenceRelationship, "Job entity type should NOT have a REFERENCE relationship added")
+
         // Then: Only the source entity type is returned
-        assertEquals(1, result.size, "Job entity type should be updated")
 
         // Verify that we only looked up the referenced entity types for validation
         verify(entityTypeRepository, times(1)).findByOrganisationIdAndKeyIn(
@@ -382,7 +390,7 @@ class EntityRelationshipServiceTest {
 
         // Mock repository calls
         whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
-            .thenReturn(listOf(candidateEntityType, jobEntityType))
+            .thenReturn(listOf(companyEntityType, candidateEntityType, jobEntityType))
 
         // When/Then: Should throw validation error
         val exception = assertThrows(IllegalArgumentException::class.java) {

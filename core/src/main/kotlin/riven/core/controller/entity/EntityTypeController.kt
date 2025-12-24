@@ -8,8 +8,9 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import riven.core.models.entity.EntityType
-import riven.core.models.request.entity.CreateEntityTypeRequest
-import riven.core.models.response.entity.UpdateEntityTypeResponse
+import riven.core.models.request.entity.type.CreateEntityTypeRequest
+import riven.core.models.request.entity.type.TypeDefinitionRequest
+import riven.core.models.response.entity.type.EntityTypeImpactResponse
 import riven.core.service.entity.type.EntityTypeService
 import java.util.*
 
@@ -71,32 +72,21 @@ class EntityTypeController(
         return ResponseEntity.status(HttpStatus.CREATED).body(newEntityType)
     }
 
-    @PutMapping("/organisation/{organisationId}")
+    @PutMapping("/organisation/{organisationId}/configuration")
     @Operation(
-        summary = "Updates an existing entity type",
+        summary = "Updates an existing entity type configuration",
         description = "Updates the data for an already existing entity type for the specified organisation."
     )
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "Entity type updated successfully"),
-        ApiResponse(
-            responseCode = "409",
-            description = "Conflict due to cascading impacts on existing entities as a result of aforementioned changes"
-        ),
         ApiResponse(responseCode = "400", description = "Invalid request data"),
         ApiResponse(responseCode = "401", description = "Unauthorized access")
     )
     fun updateEntityType(
         @PathVariable organisationId: UUID,
-        @RequestParam impactConfirmed: Boolean = false,
         @RequestBody type: EntityType,
-    ): ResponseEntity<UpdateEntityTypeResponse> {
-        val response = entityTypeService.updateEntityType(organisationId, type, impactConfirmed)
-
-        // There is an impact that the user needs to consider and confirm. Return 409 Conflict.
-        if (response.impact != null) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(response)
-        }
-
+    ): ResponseEntity<EntityType> {
+        val response = entityTypeService.updateEntityTypeConfiguration(organisationId, type)
         return ResponseEntity.status(HttpStatus.OK).body(response)
     }
 
@@ -112,11 +102,39 @@ class EntityTypeController(
     )
     fun deleteEntityTypeByKey(
         @PathVariable organisationID: UUID,
-        @PathVariable key: String
-    ): ResponseEntity<Void> {
-        entityTypeService.deleteEntityType(organisationID, key)
-        return ResponseEntity.ok().build()
+        @PathVariable key: String,
+        @RequestParam impactConfirmed: Boolean = false,
+    ): ResponseEntity<EntityTypeImpactResponse> {
+        val response = entityTypeService.deleteEntityType(organisationID, key, impactConfirmed)
+        if (response.impact != null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response)
+        }
+        return ResponseEntity.ok(response)
     }
 
-
+    @PostMapping("/organisation/{organisationId}/definition")
+    @Operation(
+        summary = "Add or update an attribute or relationship",
+        description = "Adds or updates an attribute or relationship in the specified entity type for the given organisation."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Entity type definition saved successfully"),
+        ApiResponse(
+            responseCode = "409",
+            description = "Conflict due to cascading impacts on existing entities as a result of aforementioned changes"
+        ),
+        ApiResponse(responseCode = "400", description = "Invalid request data"),
+        ApiResponse(responseCode = "401", description = "Unauthorized access")
+    )
+    fun saveEntityTypeDefinition(
+        @PathVariable organisationId: UUID,
+        @RequestBody request: TypeDefinitionRequest,
+        @RequestParam impactConfirmed: Boolean = false,
+    ): ResponseEntity<EntityTypeImpactResponse> {
+        val response = entityTypeService.saveEntityTypeDefinition(organisationId, request, impactConfirmed)
+        if (response.impact != null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response)
+        }
+        return ResponseEntity.ok(response)
+    }
 }

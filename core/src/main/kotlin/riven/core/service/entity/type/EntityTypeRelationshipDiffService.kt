@@ -12,7 +12,7 @@ class EntityTypeRelationshipDiffService {
     fun calculate(
         previous: List<EntityRelationshipDefinition>,
         updated: List<EntityRelationshipDefinition>
-    ): EntityTypeRelationshipDiff {
+    ): EntityTypeRelationshipDiff? {
         val previousById = previous.associateBy { it.id }
         val updatedById = updated.associateBy { it.id }
 
@@ -35,10 +35,14 @@ class EntityTypeRelationshipDiffService {
             }
             .filter { it.changes.isNotEmpty() }
 
+        if (added.isEmpty() && removed.isEmpty() && modified.isEmpty()) {
+            return null
+        }
+
         return EntityTypeRelationshipDiff(added, removed, modified)
     }
 
-    private fun calculateModification(
+    fun calculateModification(
         previous: EntityRelationshipDefinition,
         updated: EntityRelationshipDefinition
     ): EntityTypeRelationshipModification {

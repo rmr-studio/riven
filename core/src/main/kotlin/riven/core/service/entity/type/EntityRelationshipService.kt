@@ -1,6 +1,5 @@
 package riven.core.service.entity.type
 
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.entity.EntityTypeEntity
@@ -11,12 +10,9 @@ import riven.core.enums.entity.EntityTypeRelationshipChangeType
 import riven.core.enums.entity.EntityTypeRelationshipType
 import riven.core.enums.entity.invert
 import riven.core.enums.util.OperationType
-import riven.core.models.common.display.DisplayName
-import riven.core.models.entity.EntityType
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.configuration.EntityTypeOrderingKey
 import riven.core.models.entity.relationship.EntityTypeReferenceRelationshipBuilder
-import riven.core.models.entity.relationship.analysis.EntityTypePolymorphicCandidates
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipModification
 import riven.core.repository.entity.EntityTypeRepository
@@ -643,7 +639,7 @@ class EntityRelationshipService(
         entityTypes: MutableMap<String, EntityTypeEntity>,
         organisationId: UUID
     ) {
-        // Enhancement 1: Protected relationships check
+
         if (referenceRelationship.protected) {
             throw IllegalStateException(
                 "Cannot remove protected relationship '${referenceRelationship.name}' (ID: ${referenceRelationship.id}). " +
@@ -651,11 +647,14 @@ class EntityRelationshipService(
             )
         }
 
+        // Find the ORIGIN relationship's source entity type
         var sourceEntityType = requireNotNull(entityTypes[referenceRelationship.sourceEntityTypeKey]) {
             "Source entity type '$referenceRelationship.sourceEntityTypeKey' not found in entity types map"
         }
 
-        // Remove the REFERENCE relationship from source entity type
+        // Remove the entity type from the origin relationship definition.
+
+        // Remove the REFERENCE relationship
         val updatedRelationships = sourceEntityType.relationships?.toMutableList() ?: mutableListOf()
         updatedRelationships.removeIf { it.id == referenceRelationship.id }
 
@@ -777,6 +776,24 @@ class EntityRelationshipService(
             // Note: The actual entity data validation is deferred to the impact analysis
             // that runs before the user confirms the update (in EntityTypeService)
         }
+    }
+
+    fun modifyRelationships(
+        organisationId: UUID,
+        diffs: List<EntityTypeRelationshipModification>,
+        save: Boolean = false
+    ): List<EntityTypeEntity> {
+        val entityTypesMap: MutableMap<String, EntityTypeEntity> = findAndValidateAssociatedEntityTypes(
+            relationships = diffs.flatMap { listOf(it.previous, it.updated) },
+            organisationId = organisationId
+        ).toMutableMap()
+
+        return modifyRelationships(
+            entityTypes = entityTypesMap,
+            organisationId = organisationId,
+            diffs = diffs,
+            save = save
+        )
     }
 
     /**
@@ -1326,6 +1343,7 @@ class EntityRelationshipService(
         // Fetch all referenced entity types to load from the database
         val referencedKeys = buildSet {
             relationships.forEach { rel ->
+                add(rel.sourceEntityTypeKey)
                 rel.entityTypeKeys?.let(::addAll)
 
                 if (rel.allowPolymorphic) {
@@ -1353,26 +1371,5 @@ class EntityRelationshipService(
         return entityTypesByKey
     }
 
-    /**
-     * This will find all relationships that are currently set as polymorphic.
-     * Meaning new entity types could opt in to being valid targets for these relationships, which
-     * should add that new entity type as an bi-directional entity type key within the original definition.
-     */
-    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
-    fun findEligiblePolymorphicRelationships(organisationId: UUID): List<EntityTypePolymorphicCandidates> {
-        return entityTypeRepository.findByOrganisationId(organisationId).flatMap { entityType ->
-            entityType.relationships.let {
-                if (it == null) return@flatMap emptyList<EntityTypePolymorphicCandidates>()
-                it.filter { relDef ->
-                    relDef.allowPolymorphic && relDef.relationshipType == EntityTypeRelationshipType.ORIGIN && relDef.bidirectional
-                }.map { def ->
-                    EntityTypePolymorphicCandidates(
-                        entityTypeKey = entityType.key,
-                        entityTypeName = DisplayName(entityType.displayNameSingular, entityType.displayNamePlural),
-                        relationship = def
-                    )
-                }
-            }
-        }
-    }
+
 }

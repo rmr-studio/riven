@@ -1,7 +1,6 @@
 package riven.core.service.entity
 
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -49,11 +48,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
-
-        // Then: No changes detected
-        assertTrue(diff.added.isEmpty(), "No relationships should be added")
-        assertTrue(diff.removed.isEmpty(), "No relationships should be removed")
-        assertTrue(diff.modified.isEmpty(), "No relationships should be modified")
+        assertTrue(diff == null, "No differences should be detected for identical lists")
     }
 
     @Test
@@ -64,11 +59,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
-
-        // Then: No changes detected
-        assertTrue(diff.added.isEmpty())
-        assertTrue(diff.removed.isEmpty())
-        assertTrue(diff.modified.isEmpty())
+        assertTrue(diff == null, "No differences should be detected for identical lists")
     }
 
     // ========== TEST CASE 2: Additions ==========
@@ -86,7 +77,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
-
+        requireNotNull(diff)
         // Then: One addition detected
         assertEquals(1, diff.added.size)
         assertEquals(newRelationship.id, diff.added[0].id)
@@ -105,7 +96,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
-
+        requireNotNull(diff)
         // Then: Three additions detected
         assertEquals(3, diff.added.size)
         assertTrue(diff.added.any { it.id == newRel1.id })
@@ -130,7 +121,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
-
+        requireNotNull(diff)
         // Then: One removal detected
         assertEquals(1, diff.removed.size)
         assertEquals(removedRelationship.id, diff.removed[0].id)
@@ -148,7 +139,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
-
+        requireNotNull(diff)
         // Then: Two removals detected
         assertEquals(2, diff.removed.size)
         assertTrue(diff.removed.any { it.id == removedRel1.id })
@@ -172,6 +163,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
+        requireNotNull(diff)
 
         // Then: Name change detected
         assertEquals(1, diff.modified.size)
@@ -208,6 +200,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
+        requireNotNull(diff)
 
         // Then: Cardinality change detected
         assertEquals(1, diff.modified.size)
@@ -242,6 +235,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
+        requireNotNull(diff)
 
         // Then: Inverse name change detected
         assertEquals(1, diff.modified.size)
@@ -276,6 +270,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
+        requireNotNull(diff)
 
         // Then: Target types added detected
         assertEquals(1, diff.modified.size)
@@ -308,6 +303,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
+        requireNotNull(diff)
 
         // Then: Target types added detected
         assertEquals(1, diff.modified.size)
@@ -340,6 +336,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
+        requireNotNull(diff)
 
         // Then: Target types removed detected
         assertEquals(1, diff.modified.size)
@@ -372,6 +369,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
+        requireNotNull(diff)
 
         // Then: Both target types added and removed detected
         assertEquals(1, diff.modified.size)
@@ -406,7 +404,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
-
+        requireNotNull(diff)
         // Then: Bidirectional enabled detected
         assertEquals(1, diff.modified.size)
         val modification = diff.modified[0]
@@ -441,6 +439,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
+        requireNotNull(diff)
 
         // Then: Bidirectional disabled detected
         assertEquals(1, diff.modified.size)
@@ -477,6 +476,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
+        requireNotNull(diff)
 
         // Then: Bidirectional targets changed detected
         assertEquals(1, diff.modified.size)
@@ -511,6 +511,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
+        requireNotNull(diff)
 
         // Then: Bidirectional targets changed detected
         assertEquals(1, diff.modified.size)
@@ -550,6 +551,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
+        requireNotNull(diff)
 
         // Then: Multiple changes detected
         assertEquals(1, diff.modified.size)
@@ -585,6 +587,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
+        requireNotNull(diff)
 
         // Then: All operations detected correctly
         assertEquals(1, diff.added.size)
@@ -621,6 +624,7 @@ class EntityTypeRelationshipDiffServiceTest {
 
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
+        requireNotNull(diff)
 
         // Then: Correctly identifies all changes
         assertEquals(20, diff.added.size, "Should detect 20 new relationships (51-70)")
@@ -652,10 +656,9 @@ class EntityTypeRelationshipDiffServiceTest {
         // When: Calculating diff
         val diff = diffService.calculate(previous, updated)
 
+
         // Then: No modifications reported
-        assertTrue(diff.modified.isEmpty(), "Should not report modifications when content is identical")
-        assertTrue(diff.added.isEmpty())
-        assertTrue(diff.removed.isEmpty())
+        assertTrue(diff == null, "Should not report modifications when content is identical")
     }
 
     // ========== Helper Methods ==========
