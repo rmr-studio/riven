@@ -146,7 +146,7 @@ export function useEntityTypeRelationshipForm(
         async () => async (values: RelationshipFormValues) => {
             const id = relationship?.id ?? uuid();
             const definition: SaveRelationshipDefinitionRequest = {
-                type: EntityTypeRequestDefinition.RELATIONSHIP,
+                type: EntityTypeRequestDefinition.SAVE_RELATIONSHIP,
                 id,
                 key: type.key,
                 relationship: {

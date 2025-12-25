@@ -168,7 +168,7 @@ export function useEntityTypeAttributeSchemaForm(
 
             const definition: SaveAttributeDefinitionRequest = {
                 id,
-                type: EntityTypeRequestDefinition.SCHEMA,
+                type: EntityTypeRequestDefinition.SAVE_SCHEMA,
                 key: type.key,
                 schema: {
                     key: attributeType.key,

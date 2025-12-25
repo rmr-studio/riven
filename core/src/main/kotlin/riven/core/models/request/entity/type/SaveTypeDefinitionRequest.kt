@@ -4,21 +4,11 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping
 import io.swagger.v3.oas.annotations.media.Schema
-import riven.core.deserializer.TypeDefinitionRequestDeserializer
 import riven.core.enums.entity.EntityTypeRequestDefinition
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import java.util.*
 
-
-@Schema(hidden = true)
-@JsonDeserialize(using = TypeDefinitionRequestDeserializer::class)
-sealed interface TypeDefinition {
-    // Optional index to adjust the ordering of the entity type columns to accommodate new or updated attributes
-    val type: EntityTypeRequestDefinition
-    val id: UUID
-    val key: String
-}
 
 @Schema(
     name = "SaveAttributeDefinitionRequest",

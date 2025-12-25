@@ -47,11 +47,16 @@ export type {
 
 export type EntityTypeImpactResponse = components["schemas"]["EntityTypeImpactResponse"];
 
-export type TypeDefinitionRequest = components["schemas"]["TypeDefinitionRequest"];
+export type SaveTypeDefinitionRequest = components["schemas"]["SaveTypeDefinitionRequest"];
 export type SaveRelationshipDefinitionRequest =
     components["schemas"]["SaveRelationshipDefinitionRequest"];
 export type SaveAttributeDefinitionRequest =
     components["schemas"]["SaveAttributeDefinitionRequest"];
+
+export type DeleteTypeDefinitionRequest = components["schemas"]["DeleteTypeDefinitionRequest"];
+export type DeleteAttributeDefinitionRequest = components["schemas"]["DeleteAttributeDefinitionRequest"];
+export type DeleteRelationshipDefinitionRequest = components["schemas"]["DeleteRelationshipDefinitionRequest"];
+
 
 export interface EntityAttributeDefinition {
     id: string;

@@ -28,16 +28,6 @@ const EntityTypeDataTable: FC<Props> = ({ type, identifierKey, onEdit, onDelete 
 
     const form = useConfigForm();
 
-    const orderMatch = (curr: EntityTypeOrderingKey[], saved: EntityTypeOrderingKey[]) => {
-        if (curr.length !== saved.length) return false;
-
-        console.log(curr, saved);
-
-        return curr.every((item, index) => {
-            return item.key === saved[index].key && item.type === saved[index].type;
-        });
-    };
-
     const handleFieldsReorder = (newOrder: EntityTypeAttributeRow[]) => {
         const order: EntityTypeOrderingKey[] = newOrder.map((item) => {
             return {
@@ -46,24 +36,8 @@ const EntityTypeDataTable: FC<Props> = ({ type, identifierKey, onEdit, onDelete 
             };
         });
 
-        // Compare new order with original order from entity type
-        const matchesOriginal = orderMatch(order, type.order);
-        console.log(matchesOriginal);
-        console.log(form.formState.dirtyFields);
-        // Only mark as dirty if the order has changed from the original
-
-        if (matchesOriginal) {
-            // Remove from dirty if matches original
-            form.resetField("order", {
-                keepDirty: false,
-                defaultValue: type.order,
-            });
-            console.log(form.formState.dirtyFields);
-            return;
-        }
-
         form.setValue("order", order, {
-            shouldDirty: !matchesOriginal,
+            shouldDirty: true,
         });
     };
 

@@ -4,9 +4,10 @@ import { api } from "@/lib/util/utils";
 import { Session } from "@supabase/supabase-js";
 import {
     CreateEntityTypeRequest,
+    DeleteTypeDefinitionRequest,
     EntityType,
     EntityTypeImpactResponse,
-    TypeDefinitionRequest,
+    SaveTypeDefinitionRequest,
 } from "../interface/entity.interface";
 
 export class EntityTypeService {
@@ -142,13 +143,53 @@ export class EntityTypeService {
         //todo
     }
 
+    static async removeEntityTypeDefinition(
+        session: Session | null,
+        organisationId: string,
+        definition: DeleteTypeDefinitionRequest,
+        impactConfirmed: boolean = false
+    ): Promise<EntityTypeImpactResponse> {
+        try {
+            validateSession(session);
+            validateUuid(organisationId);
+            const url = api();
+
+            const queryParams = new URLSearchParams({
+                impactConfirmed: String(impactConfirmed),
+            });
+
+            const response = await fetch(
+                `${url}/v1/entity/schema/organisation/${organisationId}/definition?${queryParams}`,
+                {
+                    method: "DELETE",
+                    body: JSON.stringify(definition),
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${session.access_token}`,
+                    },
+                }
+            );
+
+            // Both 200 (success) and 409 (conflict with impact) return EntityTypeImpactResponse
+            if (response.ok || response.status === 409) return await response.json();
+
+            throw await handleError(
+                response,
+                (res) => `Failed to delete entity type definition: ${res.status} ${res.statusText}`
+            );
+        } catch (error) {
+            if (isResponseError(error)) throw error;
+            throw fromError(error);
+        }
+    }
+
     /**
      * This will handle saving (ie. Publishing/Updating) new entity schema attributes and definitions
      */
     static async saveEntityTypeDefinition(
         session: Session | null,
         organisationId: string,
-        definition: TypeDefinitionRequest,
+        definition: SaveTypeDefinitionRequest,
         impactConfirmed: boolean = false
     ): Promise<EntityTypeImpactResponse> {
         try {
@@ -172,7 +213,8 @@ export class EntityTypeService {
                 }
             );
 
-            if (response.ok) return await response.json();
+            // Both 200 (success) and 409 (conflict with impact) return EntityTypeImpactResponse
+            if (response.ok || response.status === 409) return await response.json();
 
             throw await handleError(
                 response,
@@ -183,8 +225,6 @@ export class EntityTypeService {
             throw fromError(error);
         }
     }
-
-    static async deleteEntityAttribute() {}
 
     static async deleteEntityType(
         session: Session | null,

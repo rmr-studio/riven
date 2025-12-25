@@ -162,6 +162,10 @@ export const useEntityTypeConfigurationStore = <T,>(
     return useStore(context, selector);
 };
 
+export const useConfigFormState = () => {
+    return useEntityTypeConfigurationStore((state) => state);
+};
+
 // Optimized hooks for common access patterns
 export const useConfigForm = () => {
     return useEntityTypeConfigurationStore((state) => state.form);
@@ -169,12 +173,4 @@ export const useConfigForm = () => {
 
 export const useConfigIsDirty = () => {
     return useEntityTypeConfigurationStore((state) => state.isDirty);
-};
-
-export const useConfigActions = () => {
-    return useEntityTypeConfigurationStore((state) => ({
-        saveDraft: state.saveDraft,
-        clearDraft: state.clearDraft,
-        markSaved: state.markSaved,
-    }));
 };

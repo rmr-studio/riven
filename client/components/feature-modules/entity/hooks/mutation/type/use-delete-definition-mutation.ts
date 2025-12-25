@@ -1,26 +1,18 @@
-import { useAuth } from "@/components/provider/auth-context";
-import { useMutation, useQueryClient, type UseMutationOptions } from "@tanstack/react-query";
-import { useRef } from "react";
-import { toast } from "sonner";
+import { UseMutationOptions } from "@tanstack/react-query";
 import {
-    EntityType,
-    SaveTypeDefinitionRequest,
-    SaveTypeDefinitionRequest,
-    type EntityTypeImpactResponse,
+    DeleteTypeDefinitionRequest,
+    EntityTypeImpactResponse,
 } from "../../../interface/entity.interface";
-import { EntityTypeService } from "../../../service/entity-type.service";
 
-export function useSaveDefinitionMutation(
+export function useDeleteDefinitionMutation(
     organisationId: string,
-    options?: UseMutationOptions<EntityTypeImpactResponse, Error, SaveTypeDefinitionRequest>
+    options?: UseMutationOptions<EntityTypeImpactResponse, Error, DeleteTypeDefinitionRequest>
 ) {
     const queryClient = useQueryClient();
     const { session } = useAuth();
-    const submissionToastRef = useRef<string | number | undefined>(undefined);
-
     return useMutation({
-        mutationFn: (definition: SaveTypeDefinitionRequest) =>
-            EntityTypeService.saveEntityTypeDefinition(session, organisationId, definition),
+        mutationFn: (definition: DeleteTypeDefinitionRequest) =>
+            EntityTypeService.deleteEntityTypeDefinition(session, organisationId, definition),
         onMutate: (data) => {
             options?.onMutate?.(data);
             submissionToastRef.current = toast.loading("Saving entity type definition...");

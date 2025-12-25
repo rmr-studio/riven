@@ -206,7 +206,11 @@ export interface paths {
          * @description Adds or updates an attribute or relationship in the specified entity type for the given organisation.
          */
         post: operations["saveEntityTypeDefinition"];
-        delete?: never;
+        /**
+         * Removes an attribute or relationship from an entity type
+         * @description Removes an attribute or relationship from the specified entity type for the given organisation.
+         */
+        delete: operations["deleteEntityTypeDefinition"];
         options?: never;
         head?: never;
         patch?: never;
@@ -903,6 +907,14 @@ export interface components {
             icon: components["schemas"]["Icon"];
         };
         /** @enum {string} */
+        DeleteAction: DeleteAction;
+        /** @description Request to remove a schema attribute definition for an entity type */
+        DeleteAttributeDefinitionRequest: WithRequired<components["schemas"]["TypeDefinition"], "id" | "key" | "type">;
+        /** @description Request to remove a relationship definition for an entity type */
+        DeleteRelationshipDefinitionRequest: WithRequired<components["schemas"]["TypeDefinition"], "id" | "key" | "type"> & {
+            deleteAction: components["schemas"]["DeleteAction"];
+        };
+        /** @enum {string} */
         EntityTypeRequestDefinition: EntityTypeRequestDefinition;
         /** @description Request to save a schema attribute definition for an entity type */
         SaveAttributeDefinitionRequest: WithRequired<components["schemas"]["TypeDefinition"], "id" | "key" | "type"> & {
@@ -912,16 +924,16 @@ export interface components {
         SaveRelationshipDefinitionRequest: WithRequired<components["schemas"]["TypeDefinition"], "id" | "key" | "type"> & {
             relationship: components["schemas"]["EntityRelationshipDefinition"];
         };
+        SaveTypeDefinitionRequest: {
+            /** Format: int32 */
+            index?: number;
+            definition: components["schemas"]["SaveAttributeDefinitionRequest"] | components["schemas"]["SaveRelationshipDefinitionRequest"];
+        };
         TypeDefinition: {
             key: string;
             /** Format: uuid */
             id: string;
             type: components["schemas"]["EntityTypeRequestDefinition"];
-        };
-        TypeDefinitionRequest: {
-            /** Format: int32 */
-            index?: number;
-            definition: components["schemas"]["SaveAttributeDefinitionRequest"] | components["schemas"]["SaveRelationshipDefinitionRequest"];
         };
         EntityImpactSummary: {
             entityTypeKey: string;
@@ -1392,6 +1404,9 @@ export interface components {
          * @enum {string}
          */
         ApplicationEntityType: ApplicationEntityType;
+        DeleteTypeDefinitionRequest: {
+            definition: components["schemas"]["DeleteRelationshipDefinitionRequest"] | components["schemas"]["DeleteAttributeDefinitionRequest"];
+        };
     };
     responses: never;
     parameters: never;
@@ -1859,11 +1874,66 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TypeDefinitionRequest"];
+                "application/json": components["schemas"]["SaveTypeDefinitionRequest"];
             };
         };
         responses: {
             /** @description Entity type definition saved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
+                };
+            };
+            /** @description Invalid request data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
+                };
+            };
+            /** @description Conflict due to cascading impacts on existing entities as a result of aforementioned changes */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
+                };
+            };
+        };
+    };
+    deleteEntityTypeDefinition: {
+        parameters: {
+            query?: {
+                impactConfirmed?: boolean;
+            };
+            header?: never;
+            path: {
+                organisationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteTypeDefinitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Entity type definition removed successfully */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -4338,13 +4408,20 @@ export enum ValidationScope {
     STRICT = "STRICT",
     NONE = "NONE"
 }
-export enum EntityTypeRequestDefinition {
-    RELATIONSHIP = "RELATIONSHIP",
-    SCHEMA = "SCHEMA"
+export enum DeleteAction {
+    REMOVE_BIDIRECTIONAL = "REMOVE_BIDIRECTIONAL",
+    REMOVE_ENTITY_TYPE = "REMOVE_ENTITY_TYPE",
+    DELETE_RELATIONSHIP = "DELETE_RELATIONSHIP"
 }
 type WithRequired<T, K extends keyof T> = T & {
     [P in K]-?: T[P];
 };
+export enum EntityTypeRequestDefinition {
+    SAVE_RELATIONSHIP = "SAVE_RELATIONSHIP",
+    SAVE_SCHEMA = "SAVE_SCHEMA",
+    DELETE_SCHEMA = "DELETE_SCHEMA",
+    DELETE_RELATIONSHIP = "DELETE_RELATIONSHIP"
+}
 export enum EntityTypeRelationshipDataLossReason {
     RELATIONSHIP_DELETED = "RELATIONSHIP_DELETED",
     ENTITY_TYPE_REMOVED_FROM_TARGET = "ENTITY_TYPE_REMOVED_FROM_TARGET",

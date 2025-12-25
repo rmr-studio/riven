@@ -23,12 +23,12 @@ class TypeDefinitionRequestDeserializer : JsonDeserializer<TypeDefinition>() {
         return when (definitionType) {
             EntityTypeRequestDefinition.RELATIONSHIP -> p.codec.treeToValue(
                 node,
-                SaveAttributeDefinitionRequest::class.java
+                SaveRelationshipDefinitionRequest::class.java
             )
 
             EntityTypeRequestDefinition.SCHEMA -> p.codec.treeToValue(
                 node,
-                SaveRelationshipDefinitionRequest::class.java
+                SaveAttributeDefinitionRequest::class.java
             )
         }
     }

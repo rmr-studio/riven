@@ -89,11 +89,11 @@ export const RelationshipAttributeForm: FC<Props> = ({
         form.setValue("allowPolymorphic", false);
         form.setValue("relationshipType", EntityTypeRelationshipType.REFERENCE);
         form.setValue("entityTypeKeys", [relationship.sourceEntityTypeKey]);
+        form.setValue("sourceEntityTypeKey", relationship.sourceEntityTypeKey);
         form.setValue("sourceRelationsLimit", source);
         form.setValue("targetRelationsLimit", target);
         form.setValue("originRelationshipId", relationship.id);
 
-        // Use setTimeout to ensure all form values are set before validation
         form.handleSubmit(handleSubmit)();
     };
 
