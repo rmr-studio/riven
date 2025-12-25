@@ -11,12 +11,14 @@ import { baseEntityTypeFormSchema } from "./use-new-type-form";
 const entityTypeFormSchema = z
     .object({
         identifierKey: z.string().min(1, "Identifier key is required").refine(isUUID),
+        order: z.inf,
     })
     .extend(baseEntityTypeFormSchema.shape);
 
 export type EntityTypeFormValues = z.infer<typeof entityTypeFormSchema>;
 
 export interface UseEntityTypeFormReturn {
+    unsavedChanges: boolean;
     form: UseFormReturn<EntityTypeFormValues>;
     handleSubmit: (
         values: EntityTypeFormValues,

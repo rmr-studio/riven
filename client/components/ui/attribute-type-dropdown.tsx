@@ -16,6 +16,7 @@ import { FormControl } from "./form";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 
 interface Props {
+    disabled?: boolean;
     type: SchemaType | "RELATIONSHIP";
     onChange: (value: SchemaType | "RELATIONSHIP") => void;
     open: boolean;
@@ -24,7 +25,13 @@ interface Props {
 
 export type AttributeKey = DataType | "RELATIONSHIP";
 
-export const AttributeTypeDropdown: FC<Props> = ({ onChange, type, open, setOpen }) => {
+export const AttributeTypeDropdown: FC<Props> = ({
+    onChange,
+    type,
+    open,
+    setOpen,
+    disabled = false,
+}) => {
     const commonAttributes: AttributeSchemaType[] = useMemo(() => {
         return [
             attributeTypes.TEXT,
@@ -87,7 +94,7 @@ export const AttributeTypeDropdown: FC<Props> = ({ onChange, type, open, setOpen
                         variant="outline"
                         role="combobox"
                         className="w-full justify-between"
-                        disabled={open}
+                        disabled={disabled || open}
                     >
                         <div className="flex items-center gap-2">
                             <selectedAttribute.icon className="h-4 w-4" />

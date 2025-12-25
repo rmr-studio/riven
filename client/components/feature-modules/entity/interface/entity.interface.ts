@@ -1,53 +1,28 @@
 import { Icon, SchemaUUID } from "@/lib/interfaces/common.interface";
-import {
-    components,
-    EntityPropertyType,
-    EntityRelationshipCardinality,
-    EntityTypeRelationshipType,
-} from "@/lib/types/types";
+import { components, EntityPropertyType } from "@/lib/types/types";
 
 export type EntityType = components["schemas"]["EntityType"];
 export type EntityTypeOrderingKey = components["schemas"]["EntityTypeOrderingKey"];
 export type Entity = components["schemas"]["Entity"];
 export type EntityRelationshipDefinition = components["schemas"]["EntityRelationshipDefinition"];
 
-export interface EntityTypeAttributeData {
-    // Persistent Hash map lookup uuid => Cannot be changed after creation. Also unique identifier for relationships
+export interface EntityTypeDefinition {
     id: string;
-    // Human readable display name
-    label: string;
     type: EntityPropertyType;
-    protected?: boolean;
-    required: boolean;
-}
-
-export interface RelationshipFormData extends EntityTypeAttributeData {
-    entityTypeKeys: string[];
-
-    relationshipType: EntityTypeRelationshipType;
-    sourceEntityTypeKey: string;
-    originRelationshipId?: string;
-
-    allowPolymorphic: boolean;
-    bidirectional: boolean;
-    bidirectionalEntityTypeKeys?: string[];
-    cardinality: EntityRelationshipCardinality;
-
-    inverseName?: string;
-    required: boolean;
+    definition: EntityAttributeDefinition | EntityRelationshipDefinition;
 }
 
 export const isRelationshipDefinition = (
     attribute: EntityRelationshipDefinition | EntityAttributeDefinition
 ): attribute is EntityRelationshipDefinition => {
-    return !('schema' in attribute);
-}
+    return !("schema" in attribute);
+};
 
 export const isAttributeDefinition = (
     attribute: EntityRelationshipDefinition | EntityAttributeDefinition
 ): attribute is EntityAttributeDefinition => {
-    return 'schema' in attribute;
-}
+    return "schema" in attribute;
+};
 
 export type CreateEntityTypeRequest = components["schemas"]["CreateEntityTypeRequest"];
 

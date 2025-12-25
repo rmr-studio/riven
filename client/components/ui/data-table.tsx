@@ -55,7 +55,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/util/utils";
 
 export interface SearchConfig<T> {
@@ -160,7 +167,7 @@ function DraggableRow<TData>({
             onClick={() => onRowClick?.(row)}
         >
             {enableDragDrop && (
-                <TableCell className="w-[40px] p-2">
+                <TableCell className="w-[40px] p-2 ">
                     <button
                         className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
                         {...(isMounted ? attributes : {})}
@@ -172,12 +179,12 @@ function DraggableRow<TData>({
                 </TableCell>
             )}
             {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>
+                <TableCell key={cell.id} className="border-l first:border-l-transparent">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </TableCell>
             ))}
             {rowActions?.enabled && (
-                <TableCell className="w-[50px] p-2">
+                <TableCell className="w-[50px] p-2 ">
                     <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
                             <Button
@@ -635,12 +642,12 @@ export function DataTable<TData, TValue>({
     const tableContent = (
         <div
             className={cn(
-                "relative w-full",
-                isDragDropEnabled ? "overflow-visible" : "overflow-x-auto"
+                "relative w-full rounded-t-md",
+                isDragDropEnabled ? "overflow-visible" : "overflow-x-auto "
             )}
         >
-            <table className={cn("w-full caption-bottom text-sm", className)}>
-                <TableHeader>
+            <Table>
+                <TableHeader className="bg-accent/30">
                     {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id}>
                             {isDragDropEnabled && (
@@ -649,7 +656,7 @@ export function DataTable<TData, TValue>({
                                 </TableHead>
                             )}
                             {headerGroup.headers.map((header) => (
-                                <TableHead key={header.id}>
+                                <TableHead key={header.id} className="py-2 px-3">
                                     {header.isPlaceholder
                                         ? null
                                         : flexRender(
@@ -688,14 +695,14 @@ export function DataTable<TData, TValue>({
                                     (isDragDropEnabled ? 1 : 0) +
                                     (rowActions?.enabled ? 1 : 0)
                                 }
-                                className="h-24 text-center text-muted-foreground"
+                                className="h-24 text-center text-muted-foreground "
                             >
                                 {emptyMessage}
                             </TableCell>
                         </TableRow>
                     )}
                 </TableBody>
-            </table>
+            </Table>
         </div>
     );
 
