@@ -3,17 +3,16 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Form } from "@/components/ui/form";
-import { IconSelector } from "@/components/ui/icon/icon-selector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { IconColour, IconType } from "@/lib/types/types";
 import { AlertCircle } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FC, useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
-import { useEntityTypeForm } from "../../hooks/form/type/use-configuration-form";
+import { useEntityTypeConfigurationStore } from "../../context/configuration-provider";
 import { type EntityType } from "../../interface/entity.interface";
 
 import { ConfigurationForm } from "../forms/type/configuration-form";
+import { EntityTypeConfigurationHeader } from "../ui/entity-type-header";
+import { EntityTypeSaveButton } from "../ui/entity-type-save-button";
 import { EntityTypesAttributes } from "./entity-type-attributes";
 
 interface EntityTypeOverviewProps {
@@ -50,14 +49,9 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
         router.push(`${pathname}?${params.toString()}`);
     };
 
-    // Configuration form needs to be global for unsaved value accessibility
-    const { form } = useEntityTypeForm(organisationId, entityType);
-
-    // Global Form Values
-    const identifierKey = form.watch("identifierKey");
-    const iconType = form.watch("icon");
-    const iconColour = form.watch("iconColour");
-    const pluralName = form.watch("pluralName");
+    // Get form and submit handler from store
+    const form = useEntityTypeConfigurationStore((state) => state.form);
+    const handleSubmit = useEntityTypeConfigurationStore((state) => state.handleSubmit);
 
     // Determine which tabs have validation errors
     const tabErrors = useMemo(() => {
@@ -80,63 +74,14 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
         };
     }, [form.formState.errors]);
 
-    const validName = pluralName && pluralName.trim().length > 0;
-
-    // Clear manual error on pluralName when user enters a valid name
-    useEffect(() => {
-        if (validName && form.formState.errors.pluralName?.type === "manual") {
-            form.clearErrors("pluralName");
-        }
-    }, [validName, form]);
-
-    const handleInvalidSubmit = (errors: typeof form.formState.errors) => {
-        const errorMessages: string[] = [];
-
-        // Collect all error messages
-        Object.entries(errors).forEach(([field, error]) => {
-            if (error && typeof error === "object" && "message" in error) {
-                const fieldName = field.replace(/([A-Z])/g, " $1").toLowerCase();
-                errorMessages.push(`${fieldName}: ${error.message}`);
-            }
-        });
-
-        // Show toast with all validation errors
-        toast.error("Validation errors", {
-            description:
-                errorMessages.length > 0
-                    ? errorMessages.join("\n")
-                    : "Please check all required fields and try again.",
-        });
-    };
-
-    const onIconSelect = (icon: IconType, colour: IconColour) => {
-        form.setValue("icon", icon);
-        form.setValue("iconColour", colour);
-    };
-
     return (
         <>
             <Form {...form}>
                 <div className="space-y-6">
                     {/* Header */}
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <IconSelector
-                                onSelect={onIconSelect}
-                                icon={iconType}
-                                colour={iconColour}
-                                className="size-14 bg-accent/10 mt-1"
-                                displayIconClassName="size-10"
-                            />
-                            <div>
-                                <h1 className="text-2xl font-semibold">{pluralName}</h1>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <span className="text-sm text-muted-foreground">
-                                        Manage object attributes and other relevant settings
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+                        <EntityTypeConfigurationHeader />
+                        <EntityTypeSaveButton onSubmit={handleSubmit} />
                     </div>
 
                     {/* Validation Errors */}
@@ -173,7 +118,6 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
                         {/* Configuration Tab */}
                         <TabsContent value="configuration" className="space-y-6">
                             <ConfigurationForm
-                                form={form}
                                 availableIdentifiers={Object.entries(
                                     entityType.schema.properties ?? {}
                                 )
@@ -187,11 +131,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
 
                         {/* Attributes Tab */}
                         <TabsContent value="attributes" className="space-y-4">
-                            <EntityTypesAttributes
-                                type={entityType}
-                                identifierKey={identifierKey}
-                                organisationId={organisationId}
-                            />
+                            <EntityTypesAttributes type={entityType} />
                         </TabsContent>
                     </Tabs>
                 </div>

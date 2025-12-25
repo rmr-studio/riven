@@ -22,7 +22,6 @@ import { RelationshipAttributeForm } from "../../forms/type/relationship/relatio
 interface Props {
     dialog: DialogControl;
     type: EntityType;
-    identifierKey: string;
     selectedAttribute?: EntityAttributeDefinition | EntityRelationshipDefinition;
 }
 

@@ -179,7 +179,10 @@ function DraggableRow<TData>({
                 </TableCell>
             )}
             {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id} className="border-l first:border-l-transparent">
+                <TableCell
+                    key={cell.id}
+                    className="border-l border-l-accent/40 first:border-l-transparent"
+                >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </TableCell>
             ))}

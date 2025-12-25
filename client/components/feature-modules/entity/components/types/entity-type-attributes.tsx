@@ -1,25 +1,32 @@
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { FC, useEffect, useMemo, useState } from "react";
-import {
-    EntityAttributeDefinition,
-    type EntityType,
-    type EntityTypeDefinition,
-} from "../../interface/entity.interface";
+import { FC, useEffect, useState } from "react";
+import { useConfigForm } from "../../context/configuration-provider";
+import { type EntityType, type EntityTypeDefinition } from "../../interface/entity.interface";
 import { AttributeFormModal } from "../modals/type/attribute-form-modal";
 import EntityTypeDataTable from "./entity-type-data-table";
 
 interface Props {
     type: EntityType;
-    identifierKey: string;
-    organisationId: string;
 }
 
-export const EntityTypesAttributes: FC<Props> = ({ type, identifierKey, organisationId }) => {
+export const EntityTypesAttributes: FC<Props> = ({ type }) => {
+    // Get identifierKey from store instead of props, fallback to entity type default
+
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingAttribute, setEditingAttribute] = useState<EntityTypeDefinition | undefined>(
         undefined
     );
+    useEffect(() => {
+        if (!dialogOpen) {
+            setEditingAttribute(undefined);
+        }
+    }, [dialogOpen]);
+
+    const form = useConfigForm();
+    if (!form) return null;
+    const { watch } = form;
+    const identifierKey = watch("identifierKey");
 
     const onDelete = (attribute: EntityTypeDefinition) => {};
 
@@ -27,19 +34,6 @@ export const EntityTypesAttributes: FC<Props> = ({ type, identifierKey, organisa
         setEditingAttribute(attribute);
         setDialogOpen(true);
     };
-
-    const attributes: EntityAttributeDefinition[] = useMemo(() => {
-        return Object.entries(type.schema.properties || {}).map(([key, schema]) => ({
-            id: key,
-            schema,
-        }));
-    }, [type.attributes]);
-
-    useEffect(() => {
-        if (!dialogOpen) {
-            setEditingAttribute(undefined);
-        }
-    }, [dialogOpen]);
 
     return (
         <>
@@ -71,7 +65,6 @@ export const EntityTypesAttributes: FC<Props> = ({ type, identifierKey, organisa
             <AttributeFormModal
                 dialog={{ open: dialogOpen, setOpen: setDialogOpen }}
                 type={type}
-                identifierKey={identifierKey}
                 selectedAttribute={editingAttribute?.definition}
             />
         </>

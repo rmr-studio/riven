@@ -5,6 +5,7 @@ import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-gro
 import { isResponseError } from "@/lib/util/error/error.util";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { EntityTypeConfigurationProvider } from "../../context/configuration-provider";
 import { useEntityTypeByKey } from "../../hooks/query/use-entity-types";
 import { EntityTypeOverview } from "../types/entity-type";
 
@@ -74,7 +75,12 @@ export const EntityTypeOverviewDashboard = () => {
                 <BreadCrumbGroup items={trail} />
             </header>
             <section>
-                <EntityTypeOverview organisationId={organisationId} entityType={entityType} />
+                <EntityTypeConfigurationProvider
+                    organisationId={organisationId}
+                    entityType={entityType}
+                >
+                    <EntityTypeOverview organisationId={organisationId} entityType={entityType} />
+                </EntityTypeConfigurationProvider>
             </section>
         </div>
     );

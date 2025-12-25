@@ -16,16 +16,18 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { FC } from "react";
-import { UseFormReturn } from "react-hook-form";
-import { EntityTypeFormValues } from "../../../hooks/form/type/use-configuration-form";
+import { useConfigForm } from "../../../context/configuration-provider";
 import { EntityAttributeDefinition } from "../../../interface/entity.interface";
 
 interface Props {
-    form: UseFormReturn<EntityTypeFormValues>;
     availableIdentifiers: EntityAttributeDefinition[];
 }
 
-export const ConfigurationForm: FC<Props> = ({ form, availableIdentifiers }) => {
+export const ConfigurationForm: FC<Props> = ({ availableIdentifiers }) => {
+    const form = useConfigForm();
+    console.log(form);
+    if (!form) return null;
+
     return (
         <div className="rounded-lg border bg-card p-6">
             <h2 className="text-lg font-semibold mb-4">General</h2>
