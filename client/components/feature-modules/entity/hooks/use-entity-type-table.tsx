@@ -1,11 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import {
-    DataType,
-    EntityPropertyType,
-    EntityRelationshipCardinality,
-    SchemaType,
-} from "@/lib/types/types";
+import { EntityPropertyType } from "@/lib/types/types";
 import { toTitleCase } from "@/lib/util/utils";
 import { ColumnDef, Row } from "@tanstack/react-table";
 import { Key, Link2, ListTodo, ListX } from "lucide-react";
@@ -14,28 +9,11 @@ import {
     EntityAttributeDefinition,
     EntityRelationshipDefinition,
     EntityType,
+    EntityTypeAttributeRow,
     EntityTypeDefinition,
 } from "../interface/entity.interface";
 
 // Common type for data table rows (both attributes and relationships)
-interface EntityTypeAttributeRow {
-    // Persistent Hash map lookup uuid => Cannot be changed after creation. Also unique identifier for relationships
-    id: string;
-    // Human readable display name
-    label: string;
-    type: EntityPropertyType;
-    protected?: boolean;
-    required: boolean;
-    schemaType: SchemaType | "RELATIONSHIP";
-    additionalConstraints: string[];
-    dataType?: DataType;
-    unique?: boolean;
-    // Relationship-specific fields (optional for attributes)
-    cardinality?: EntityRelationshipCardinality;
-    entityTypeKeys?: string[];
-    allowPolymorphic?: boolean;
-    bidirectional?: boolean;
-}
 
 interface UseEntityTypeTableReturn {
     columns: ColumnDef<EntityTypeAttributeRow>[];
@@ -229,12 +207,8 @@ export function useEntityTypeTable(
         ];
 
         return rows.toSorted((a, b) => {
-            const aOrderItem = order.find(
-                (o) => o.key === a.id && o.type === EntityPropertyType.ATTRIBUTE
-            );
-            const bOrderItem = order.find(
-                (o) => o.key === b.id && o.type === EntityPropertyType.ATTRIBUTE
-            );
+            const aOrderItem = order.find((o) => o.key === a.id);
+            const bOrderItem = order.find((o) => o.key === b.id);
             const aIndex = aOrderItem ? order.indexOf(aOrderItem) : -1;
             const bIndex = bOrderItem ? order.indexOf(bOrderItem) : -1;
 

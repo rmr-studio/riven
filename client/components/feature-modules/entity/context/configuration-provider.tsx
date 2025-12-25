@@ -30,10 +30,12 @@ export interface EntityTypeConfigurationProviderProps {
 const entityTypeFormSchema = z
     .object({
         identifierKey: z.string().min(1, "Identifier key is required").refine(isUUID),
-        order: z.object({
-            key: z.string().min(1, "Ordering key is required").refine(isUUID),
-            type: z.nativeEnum(EntityPropertyType),
-        }),
+        order: z.array(
+            z.object({
+                key: z.string().min(1, "Ordering key is required").refine(isUUID),
+                type: z.nativeEnum(EntityPropertyType),
+            })
+        ),
     })
     .extend(baseEntityTypeFormSchema.shape);
 
@@ -59,6 +61,7 @@ export const EntityTypeConfigurationProvider = ({
             type: entityType.type,
             icon: entityType.icon.icon,
             iconColour: entityType.icon.colour,
+            order: entityType.order,
         },
     });
 
@@ -82,8 +85,6 @@ export const EntityTypeConfigurationProvider = ({
 
     // Load draft and set up form watchers on mount
     useEffect(() => {
-        console.log("Hey");
-
         const store = storeRef.current?.getState();
         if (!store) return;
 

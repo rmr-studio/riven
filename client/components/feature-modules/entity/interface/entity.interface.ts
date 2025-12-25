@@ -1,5 +1,5 @@
 import { Icon, SchemaUUID } from "@/lib/interfaces/common.interface";
-import { components, EntityPropertyType } from "@/lib/types/types";
+import { components, DataType, EntityPropertyType, EntityRelationshipCardinality, SchemaType } from "@/lib/types/types";
 
 export type EntityType = components["schemas"]["EntityType"];
 export type EntityTypeOrderingKey = components["schemas"]["EntityTypeOrderingKey"];
@@ -56,4 +56,23 @@ export type SaveAttributeDefinitionRequest =
 export interface EntityAttributeDefinition {
     id: string;
     schema: SchemaUUID;
+}
+
+export interface EntityTypeAttributeRow {
+    // Persistent Hash map lookup uuid => Cannot be changed after creation. Also unique identifier for relationships
+    id: string;
+    // Human readable display name
+    label: string;
+    type: EntityPropertyType;
+    protected?: boolean;
+    required: boolean;
+    schemaType: SchemaType | "RELATIONSHIP";
+    additionalConstraints: string[];
+    dataType?: DataType;
+    unique?: boolean;
+    // Relationship-specific fields (optional for attributes)
+    cardinality?: EntityRelationshipCardinality;
+    entityTypeKeys?: string[];
+    allowPolymorphic?: boolean;
+    bidirectional?: boolean;
 }
