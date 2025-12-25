@@ -1,6 +1,8 @@
 package riven.core.enums.entity
 
 enum class EntityTypeRequestDefinition {
-    RELATIONSHIP,
-    SCHEMA
+    SAVE_RELATIONSHIP,
+    SAVE_SCHEMA,
+    DELETE_SCHEMA,
+    DELETE_RELATIONSHIP
 }

@@ -60,4 +60,20 @@ class EntityAttributeService(
         }
     }
 
+    fun removeAttributeDefinition(
+        type: EntityTypeEntity,
+        attributeId: UUID
+    ) {
+        val updatedSchema = type.schema.copy(
+            properties = type.schema.properties?.toMutableMap()?.also {
+                // Remove attribute definition
+                it.remove(attributeId)
+            }
+        )
+
+        type.apply {
+            schema = updatedSchema
+        }
+    }
+
 }

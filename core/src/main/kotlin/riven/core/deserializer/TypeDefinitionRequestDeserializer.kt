@@ -5,9 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import riven.core.enums.entity.EntityTypeRequestDefinition
-import riven.core.models.request.entity.type.SaveAttributeDefinitionRequest
-import riven.core.models.request.entity.type.SaveRelationshipDefinitionRequest
-import riven.core.models.request.entity.type.TypeDefinition
+import riven.core.models.request.entity.type.*
 import riven.core.util.getEnumFromField
 
 
@@ -21,14 +19,24 @@ class TypeDefinitionRequestDeserializer : JsonDeserializer<TypeDefinition>() {
         )
 
         return when (definitionType) {
-            EntityTypeRequestDefinition.RELATIONSHIP -> p.codec.treeToValue(
+            EntityTypeRequestDefinition.SAVE_RELATIONSHIP -> p.codec.treeToValue(
                 node,
                 SaveRelationshipDefinitionRequest::class.java
             )
 
-            EntityTypeRequestDefinition.SCHEMA -> p.codec.treeToValue(
+            EntityTypeRequestDefinition.SAVE_SCHEMA -> p.codec.treeToValue(
                 node,
                 SaveAttributeDefinitionRequest::class.java
+            )
+
+            EntityTypeRequestDefinition.DELETE_RELATIONSHIP -> p.codec.treeToValue(
+                node,
+                DeleteRelationshipDefinitionRequest::class.java
+            )
+
+            EntityTypeRequestDefinition.DELETE_SCHEMA -> p.codec.treeToValue(
+                node,
+                DeleteAttributeDefinitionRequest::class.java
             )
         }
     }

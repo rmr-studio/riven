@@ -42,7 +42,7 @@ class EntityTypeRelationshipImpactAnalysisService(
         val entityTypeMap: Map<String, EntityTypeEntity> = entityTypeRepository
             .findByOrganisationIdAndKeyIn(
                 organisationId,
-                diff.removed.map { it.sourceEntityTypeKey } +
+                diff.removed.map { it.relationship.sourceEntityTypeKey } +
                         diff.modified.filter { it.changes.any { change -> change.canCauseImpact() } }.flatMap {
                             listOf(
                                 it.previous.sourceEntityTypeKey,
@@ -54,7 +54,7 @@ class EntityTypeRelationshipImpactAnalysisService(
 
         // Analyze removals
         diff.removed.forEach {
-            analyseRelationRemovalImpact(it, entityTypeMap, affectedTypes, deletions, warnings)
+            analyseRelationRemovalImpact(it.relationship, entityTypeMap, affectedTypes, deletions, warnings)
         }
 
         // Analyze modifications

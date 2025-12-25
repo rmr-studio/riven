@@ -19,6 +19,8 @@ import riven.core.enums.entity.EntityTypeRelationshipType
 import riven.core.enums.organisation.OrganisationRoles
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
+import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDeleteRequest
+import riven.core.models.request.entity.type.DeleteRelationshipDefinitionRequest
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
@@ -231,7 +233,7 @@ class EntityRelationshipServiceTest {
         }
         assertNotNull(candidateReferenceRel, "Candidate should have a REFERENCE relationship")
         assertEquals("Employer", candidateReferenceRel!!.name)
-        assertEquals("candidate", candidateReferenceRel.sourceEntityTypeKey)
+        assertEquals("company", candidateReferenceRel.sourceEntityTypeKey)
         assertEquals(listOf("company"), candidateReferenceRel.entityTypeKeys)
         assertEquals(EntityRelationshipCardinality.MANY_TO_ONE, candidateReferenceRel.cardinality)
         assertFalse(candidateReferenceRel.bidirectional, "REFERENCE relationships should not be bidirectional")
@@ -243,7 +245,7 @@ class EntityRelationshipServiceTest {
         }
         assertNotNull(jobReferenceRel, "Job should have a REFERENCE relationship")
         assertEquals("Employer", jobReferenceRel!!.name)
-        assertEquals("job", jobReferenceRel.sourceEntityTypeKey)
+        assertEquals("company", jobReferenceRel.sourceEntityTypeKey)
         assertEquals(listOf("company"), jobReferenceRel.entityTypeKeys)
     }
 
@@ -541,7 +543,14 @@ class EntityRelationshipServiceTest {
         // Mock the diff service
         val diff = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff(
             added = emptyList(),
-            removed = listOf(companyOriginRelationship),
+            removed = listOf(
+                EntityTypeRelationshipDeleteRequest(
+                    relationship = companyOriginRelationship,
+                    type = companyEntityType,
+                    action = DeleteRelationshipDefinitionRequest.DeleteAction.DELETE_RELATIONSHIP
+
+                )
+            ),
             modified = emptyList()
         )
 
@@ -617,7 +626,14 @@ class EntityRelationshipServiceTest {
         // Mock the diff service
         val diff = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff(
             added = emptyList(),
-            removed = listOf(protectedRelationship),
+            removed = listOf(
+                EntityTypeRelationshipDeleteRequest(
+                    relationship = protectedRelationship,
+                    type = companyEntityType,
+                    action = DeleteRelationshipDefinitionRequest.DeleteAction.DELETE_RELATIONSHIP
+
+                )
+            ),
             modified = emptyList()
         )
 
@@ -1313,6 +1329,585 @@ class EntityRelationshipServiceTest {
             it.originRelationshipId == originRelationshipId
         } ?: false
         assertTrue(candidateStillHasReference, "Candidate should still have REFERENCE relationship")
+    }
+
+    // ========== TEST CASE 12: removeRelationships - REFERENCE with REMOVE_BIDIRECTIONAL ==========
+
+    @Test
+    fun `removeRelationships - REFERENCE with REMOVE_BIDIRECTIONAL removes bidirectional link only`() {
+        // Given: Company has ORIGIN relationship to [candidate, job]
+        //        Candidate has REFERENCE relationship back
+        //        We want to remove Candidate's REFERENCE using REMOVE_BIDIRECTIONAL
+        val originRelationshipId = UUID.randomUUID()
+        val referenceRelationshipId = UUID.randomUUID()
+
+        val companyOriginRelationship = EntityRelationshipDefinition(
+            id = originRelationshipId,
+            name = "Employees",
+            sourceEntityTypeKey = "company",
+            originRelationshipId = null,
+            relationshipType = EntityTypeRelationshipType.ORIGIN,
+            entityTypeKeys = listOf("candidate", "job"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.ONE_TO_MANY,
+            bidirectional = true,
+            bidirectionalEntityTypeKeys = listOf("candidate", "job"),
+            inverseName = "Employer",
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val companyWithRelationship = companyEntityType.copy(
+            relationships = listOf(companyOriginRelationship)
+        )
+
+        val candidateReferenceRelationship = EntityRelationshipDefinition(
+            id = referenceRelationshipId,
+            name = "Employer",
+            sourceEntityTypeKey = "company", // Points to where ORIGIN is defined
+            originRelationshipId = originRelationshipId,
+            relationshipType = EntityTypeRelationshipType.REFERENCE,
+            entityTypeKeys = listOf("company"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
+            bidirectional = false,
+            bidirectionalEntityTypeKeys = null,
+            inverseName = null,
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val candidateWithRelationship = candidateEntityType.copy(
+            relationships = listOf(candidateReferenceRelationship)
+        )
+
+        // Mock repository calls
+        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+            .thenReturn(listOf(companyWithRelationship, candidateWithRelationship))
+
+        val savedEntityTypes = mutableListOf<EntityTypeEntity>()
+        whenever(entityTypeRepository.saveAll<EntityTypeEntity>(any()))
+            .thenAnswer { invocation ->
+                val entities = invocation.getArgument(0) as Collection<EntityTypeEntity>
+                savedEntityTypes.addAll(entities)
+                entities
+            }
+
+        whenever(authTokenService.getUserId()).thenReturn(userId)
+
+        // When: Removing the REFERENCE relationship with REMOVE_BIDIRECTIONAL action
+        entityRelationshipService.removeRelationships(
+            organisationId = organisationId,
+            relationships = listOf(
+                EntityTypeRelationshipDeleteRequest(
+                    relationship = candidateReferenceRelationship,
+                    type = candidateWithRelationship,
+                    action = DeleteRelationshipDefinitionRequest.DeleteAction.REMOVE_BIDIRECTIONAL
+                )
+            )
+        )
+
+        // Then: Candidate's REFERENCE relationship should be removed
+        val updatedCandidate = savedEntityTypes.find { it.key == "candidate" }
+        assertNotNull(updatedCandidate, "Candidate should be updated")
+
+        val candidateHasReference = updatedCandidate!!.relationships?.any {
+            it.id == referenceRelationshipId
+        } ?: false
+        assertFalse(candidateHasReference, "Candidate's REFERENCE relationship should be removed")
+
+        // And: Company's ORIGIN relationship should still exist
+        val updatedCompany = savedEntityTypes.find { it.key == "company" }
+        assertNotNull(updatedCompany, "Company should be updated")
+
+        val updatedOrigin = updatedCompany!!.relationships?.find {
+            it.id == originRelationshipId
+        }
+        assertNotNull(updatedOrigin, "Company's ORIGIN relationship should still exist")
+
+        // And: Candidate should be removed from bidirectionalEntityTypeKeys but entityTypeKeys intact
+        assertFalse(
+            updatedOrigin!!.bidirectionalEntityTypeKeys?.contains("candidate") ?: true,
+            "Candidate should be removed from bidirectionalEntityTypeKeys"
+        )
+        assertTrue(
+            updatedOrigin.bidirectionalEntityTypeKeys?.contains("job") ?: false,
+            "Job should still be in bidirectionalEntityTypeKeys"
+        )
+        assertTrue(
+            updatedOrigin.entityTypeKeys?.contains("candidate") ?: false,
+            "Candidate should still be in entityTypeKeys (relationship data preserved)"
+        )
+        assertTrue(
+            updatedOrigin.entityTypeKeys?.contains("job") ?: false,
+            "Job should still be in entityTypeKeys"
+        )
+    }
+
+    // ========== TEST CASE 13: removeRelationships - REFERENCE with REMOVE_ENTITY_TYPE ==========
+
+    @Test
+    fun `removeRelationships - REFERENCE with REMOVE_ENTITY_TYPE removes entity type from relationship`() {
+        // Given: Company has ORIGIN relationship to [candidate, job]
+        //        Candidate has REFERENCE relationship back
+        //        We want to remove Candidate's REFERENCE using REMOVE_ENTITY_TYPE
+        val originRelationshipId = UUID.randomUUID()
+        val referenceRelationshipId = UUID.randomUUID()
+
+        val companyOriginRelationship = EntityRelationshipDefinition(
+            id = originRelationshipId,
+            name = "Employees",
+            sourceEntityTypeKey = "company",
+            originRelationshipId = null,
+            relationshipType = EntityTypeRelationshipType.ORIGIN,
+            entityTypeKeys = listOf("candidate", "job"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.ONE_TO_MANY,
+            bidirectional = true,
+            bidirectionalEntityTypeKeys = listOf("candidate", "job"),
+            inverseName = "Employer",
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val companyWithRelationship = companyEntityType.copy(
+            relationships = listOf(companyOriginRelationship)
+        )
+
+        val candidateReferenceRelationship = EntityRelationshipDefinition(
+            id = referenceRelationshipId,
+            name = "Employer",
+            sourceEntityTypeKey = "company", // Points to where ORIGIN is defined
+            originRelationshipId = originRelationshipId,
+            relationshipType = EntityTypeRelationshipType.REFERENCE,
+            entityTypeKeys = listOf("company"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
+            bidirectional = false,
+            bidirectionalEntityTypeKeys = null,
+            inverseName = null,
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val candidateWithRelationship = candidateEntityType.copy(
+            relationships = listOf(candidateReferenceRelationship)
+        )
+
+        // Mock repository calls
+        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+            .thenReturn(listOf(companyWithRelationship, candidateWithRelationship))
+
+        val savedEntityTypes = mutableListOf<EntityTypeEntity>()
+        whenever(entityTypeRepository.saveAll<EntityTypeEntity>(any()))
+            .thenAnswer { invocation ->
+                val entities = invocation.getArgument(0) as Collection<EntityTypeEntity>
+                savedEntityTypes.addAll(entities)
+                entities
+            }
+
+        whenever(authTokenService.getUserId()).thenReturn(userId)
+
+        // When: Removing the REFERENCE relationship with REMOVE_ENTITY_TYPE action
+        entityRelationshipService.removeRelationships(
+            organisationId = organisationId,
+            relationships = listOf(
+                EntityTypeRelationshipDeleteRequest(
+                    relationship = candidateReferenceRelationship,
+                    type = candidateWithRelationship,
+                    action = DeleteRelationshipDefinitionRequest.DeleteAction.REMOVE_ENTITY_TYPE
+                )
+            )
+        )
+
+        // Then: Candidate's REFERENCE relationship should be removed
+        val updatedCandidate = savedEntityTypes.find { it.key == "candidate" }
+        assertNotNull(updatedCandidate, "Candidate should be updated")
+
+        val candidateHasReference = updatedCandidate!!.relationships?.any {
+            it.id == referenceRelationshipId
+        } ?: false
+        assertFalse(candidateHasReference, "Candidate's REFERENCE relationship should be removed")
+
+        // And: Company's ORIGIN relationship should still exist
+        val updatedCompany = savedEntityTypes.find { it.key == "company" }
+        assertNotNull(updatedCompany, "Company should be updated")
+
+        val updatedOrigin = updatedCompany!!.relationships?.find {
+            it.id == originRelationshipId
+        }
+        assertNotNull(updatedOrigin, "Company's ORIGIN relationship should still exist")
+
+        // And: Candidate should be removed from BOTH bidirectionalEntityTypeKeys AND entityTypeKeys
+        assertFalse(
+            updatedOrigin!!.bidirectionalEntityTypeKeys?.contains("candidate") ?: true,
+            "Candidate should be removed from bidirectionalEntityTypeKeys"
+        )
+        assertTrue(
+            updatedOrigin.bidirectionalEntityTypeKeys?.contains("job") ?: false,
+            "Job should still be in bidirectionalEntityTypeKeys"
+        )
+        assertFalse(
+            updatedOrigin.entityTypeKeys?.contains("candidate") ?: true,
+            "Candidate should be removed from entityTypeKeys (relationship data removed)"
+        )
+        assertTrue(
+            updatedOrigin.entityTypeKeys?.contains("job") ?: false,
+            "Job should still be in entityTypeKeys"
+        )
+    }
+
+    // ========== TEST CASE 14: removeRelationships - REFERENCE with DELETE_RELATIONSHIP ==========
+
+    @Test
+    fun `removeRelationships - REFERENCE with DELETE_RELATIONSHIP cascades to delete ORIGIN`() {
+        // Given: Company has ORIGIN relationship to [candidate, job]
+        //        Candidate has REFERENCE relationship back
+        //        Job has REFERENCE relationship back
+        //        We want to remove Candidate's REFERENCE using DELETE_RELATIONSHIP
+        //        This should cascade to delete the entire ORIGIN and all other REFERENCES
+        val originRelationshipId = UUID.randomUUID()
+        val candidateReferenceId = UUID.randomUUID()
+        val jobReferenceId = UUID.randomUUID()
+
+        val companyOriginRelationship = EntityRelationshipDefinition(
+            id = originRelationshipId,
+            name = "Employees",
+            sourceEntityTypeKey = "company",
+            originRelationshipId = null,
+            relationshipType = EntityTypeRelationshipType.ORIGIN,
+            entityTypeKeys = listOf("candidate", "job"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.ONE_TO_MANY,
+            bidirectional = true,
+            bidirectionalEntityTypeKeys = listOf("candidate", "job"),
+            inverseName = "Employer",
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val companyWithRelationship = companyEntityType.copy(
+            relationships = listOf(companyOriginRelationship)
+        )
+
+        val candidateReferenceRelationship = EntityRelationshipDefinition(
+            id = candidateReferenceId,
+            name = "Employer",
+            sourceEntityTypeKey = "company", // Points to where ORIGIN is defined
+            originRelationshipId = originRelationshipId,
+            relationshipType = EntityTypeRelationshipType.REFERENCE,
+            entityTypeKeys = listOf("company"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
+            bidirectional = false,
+            bidirectionalEntityTypeKeys = null,
+            inverseName = null,
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val candidateWithRelationship = candidateEntityType.copy(
+            relationships = listOf(candidateReferenceRelationship)
+        )
+
+        val jobReferenceRelationship = EntityRelationshipDefinition(
+            id = jobReferenceId,
+            name = "Employer",
+            sourceEntityTypeKey = "company", // Points to where ORIGIN is defined
+            originRelationshipId = originRelationshipId,
+            relationshipType = EntityTypeRelationshipType.REFERENCE,
+            entityTypeKeys = listOf("company"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
+            bidirectional = false,
+            bidirectionalEntityTypeKeys = null,
+            inverseName = null,
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val jobWithRelationship = jobEntityType.copy(
+            relationships = listOf(jobReferenceRelationship)
+        )
+
+        // Mock repository calls
+        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+            .thenReturn(listOf(companyWithRelationship, candidateWithRelationship, jobWithRelationship))
+
+        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("candidate")))
+            .thenReturn(Optional.of(candidateWithRelationship))
+
+        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("job")))
+            .thenReturn(Optional.of(jobWithRelationship))
+
+        val savedEntityTypes = mutableListOf<EntityTypeEntity>()
+        whenever(entityTypeRepository.saveAll<EntityTypeEntity>(any()))
+            .thenAnswer { invocation ->
+                val entities = invocation.getArgument(0) as Collection<EntityTypeEntity>
+                savedEntityTypes.addAll(entities)
+                entities
+            }
+
+        whenever(authTokenService.getUserId()).thenReturn(userId)
+
+        // When: Removing the REFERENCE relationship with DELETE_RELATIONSHIP action
+        entityRelationshipService.removeRelationships(
+            organisationId = organisationId,
+            relationships = listOf(
+                EntityTypeRelationshipDeleteRequest(
+                    relationship = candidateReferenceRelationship,
+                    type = candidateWithRelationship,
+                    action = DeleteRelationshipDefinitionRequest.DeleteAction.DELETE_RELATIONSHIP
+                )
+            )
+        )
+
+        // Then: Company's ORIGIN relationship should be completely removed
+        val updatedCompany = savedEntityTypes.find { it.key == "company" }
+        assertNotNull(updatedCompany, "Company should be updated")
+
+        val companyHasOrigin = updatedCompany!!.relationships?.any {
+            it.id == originRelationshipId
+        } ?: false
+        assertFalse(companyHasOrigin, "Company's ORIGIN relationship should be completely removed")
+
+        // And: Candidate's REFERENCE relationship should be removed
+        val updatedCandidate = savedEntityTypes.find { it.key == "candidate" }
+        assertNotNull(updatedCandidate, "Candidate should be updated")
+
+        val candidateHasReference = updatedCandidate!!.relationships?.any {
+            it.id == candidateReferenceId
+        } ?: false
+        assertFalse(candidateHasReference, "Candidate's REFERENCE relationship should be removed")
+
+        // And: Job's REFERENCE relationship should also be cascaded and removed
+        val updatedJob = savedEntityTypes.find { it.key == "job" }
+        assertNotNull(updatedJob, "Job should be updated")
+
+        val jobHasReference = updatedJob!!.relationships?.any {
+            it.id == jobReferenceId
+        } ?: false
+        assertFalse(jobHasReference, "Job's REFERENCE relationship should be cascaded and removed")
+    }
+
+    // ========== TEST CASE 15: removeRelationships - Protected REFERENCE relationship ==========
+
+    @Test
+    fun `removeRelationships - prevents removal of protected REFERENCE relationships`() {
+        // Given: A protected REFERENCE relationship
+        val originRelationshipId = UUID.randomUUID()
+        val protectedReferenceId = UUID.randomUUID()
+
+        val companyOriginRelationship = EntityRelationshipDefinition(
+            id = originRelationshipId,
+            name = "System Employees",
+            sourceEntityTypeKey = "company",
+            originRelationshipId = null,
+            relationshipType = EntityTypeRelationshipType.ORIGIN,
+            entityTypeKeys = listOf("candidate"),
+            allowPolymorphic = false,
+            required = true,
+            cardinality = EntityRelationshipCardinality.ONE_TO_MANY,
+            bidirectional = true,
+            bidirectionalEntityTypeKeys = listOf("candidate"),
+            inverseName = "System Employer",
+            protected = true,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val companyWithRelationship = companyEntityType.copy(
+            relationships = listOf(companyOriginRelationship)
+        )
+
+        val candidateReferenceRelationship = EntityRelationshipDefinition(
+            id = protectedReferenceId,
+            name = "System Employer",
+            sourceEntityTypeKey = "company", // Points to where ORIGIN is defined
+            originRelationshipId = originRelationshipId,
+            relationshipType = EntityTypeRelationshipType.REFERENCE,
+            entityTypeKeys = listOf("company"),
+            allowPolymorphic = false,
+            required = true,
+            cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
+            bidirectional = false,
+            bidirectionalEntityTypeKeys = null,
+            inverseName = null,
+            protected = true, // Protected!
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val candidateWithRelationship = candidateEntityType.copy(
+            relationships = listOf(candidateReferenceRelationship)
+        )
+
+        // Mock repository calls
+        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+            .thenReturn(listOf(companyWithRelationship, candidateWithRelationship))
+
+        whenever(authTokenService.getUserId()).thenReturn(userId)
+
+        // When/Then: Should throw exception for any action
+        val exception = assertThrows(IllegalStateException::class.java) {
+            entityRelationshipService.removeRelationships(
+                organisationId = organisationId,
+                relationships = listOf(
+                    EntityTypeRelationshipDeleteRequest(
+                        relationship = candidateReferenceRelationship,
+                        type = candidateWithRelationship,
+                        action = DeleteRelationshipDefinitionRequest.DeleteAction.REMOVE_BIDIRECTIONAL
+                    )
+                )
+            )
+        }
+
+        assertTrue(
+            exception.message!!.contains("Cannot remove protected relationship"),
+            "Error message should mention protected relationship"
+        )
+        assertTrue(
+            exception.message!!.contains("System Employer"),
+            "Error message should include relationship name"
+        )
+    }
+
+    // ========== TEST CASE 16: removeRelationships - REMOVE_BIDIRECTIONAL with single target ==========
+
+    @Test
+    fun `removeRelationships - REFERENCE with REMOVE_BIDIRECTIONAL when only one bidirectional target exists`() {
+        // Given: Company has ORIGIN relationship to only [candidate]
+        //        When we remove candidate's REFERENCE with REMOVE_BIDIRECTIONAL
+        //        The ORIGIN's bidirectionalEntityTypeKeys becomes empty but relationship persists
+        val originRelationshipId = UUID.randomUUID()
+        val referenceRelationshipId = UUID.randomUUID()
+
+        val companyOriginRelationship = EntityRelationshipDefinition(
+            id = originRelationshipId,
+            name = "Employees",
+            sourceEntityTypeKey = "company",
+            originRelationshipId = null,
+            relationshipType = EntityTypeRelationshipType.ORIGIN,
+            entityTypeKeys = listOf("candidate"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.ONE_TO_MANY,
+            bidirectional = true,
+            bidirectionalEntityTypeKeys = listOf("candidate"), // Only one target
+            inverseName = "Employer",
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val companyWithRelationship = companyEntityType.copy(
+            relationships = listOf(companyOriginRelationship)
+        )
+
+        val candidateReferenceRelationship = EntityRelationshipDefinition(
+            id = referenceRelationshipId,
+            name = "Employer",
+            sourceEntityTypeKey = "company", // Points to where ORIGIN is defined
+            originRelationshipId = originRelationshipId,
+            relationshipType = EntityTypeRelationshipType.REFERENCE,
+            entityTypeKeys = listOf("company"),
+            allowPolymorphic = false,
+            required = false,
+            cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
+            bidirectional = false,
+            bidirectionalEntityTypeKeys = null,
+            inverseName = null,
+            protected = false,
+            createdAt = ZonedDateTime.now(),
+            updatedAt = ZonedDateTime.now(),
+            createdBy = userId,
+            updatedBy = userId
+        )
+
+        val candidateWithRelationship = candidateEntityType.copy(
+            relationships = listOf(candidateReferenceRelationship)
+        )
+
+        // Mock repository calls
+        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+            .thenReturn(listOf(companyWithRelationship, candidateWithRelationship))
+
+        val savedEntityTypes = mutableListOf<EntityTypeEntity>()
+        whenever(entityTypeRepository.saveAll<EntityTypeEntity>(any()))
+            .thenAnswer { invocation ->
+                val entities = invocation.getArgument(0) as Collection<EntityTypeEntity>
+                savedEntityTypes.addAll(entities)
+                entities
+            }
+
+        whenever(authTokenService.getUserId()).thenReturn(userId)
+
+        // When: Removing the only REFERENCE relationship with REMOVE_BIDIRECTIONAL
+        entityRelationshipService.removeRelationships(
+            organisationId = organisationId,
+            relationships = listOf(
+                EntityTypeRelationshipDeleteRequest(
+                    relationship = candidateReferenceRelationship,
+                    type = candidateWithRelationship,
+                    action = DeleteRelationshipDefinitionRequest.DeleteAction.REMOVE_BIDIRECTIONAL
+                )
+            )
+        )
+
+        // Then: Company's ORIGIN relationship should still exist
+        val updatedCompany = savedEntityTypes.find { it.key == "company" }
+        assertNotNull(updatedCompany, "Company should be updated")
+
+        val updatedOrigin = updatedCompany!!.relationships?.find {
+            it.id == originRelationshipId
+        }
+        assertNotNull(updatedOrigin, "Company's ORIGIN relationship should still exist")
+
+        // And: bidirectionalEntityTypeKeys should be empty
+        assertTrue(
+            updatedOrigin!!.bidirectionalEntityTypeKeys?.isEmpty() ?: false,
+            "bidirectionalEntityTypeKeys should be empty but relationship still exists"
+        )
+
+        // And: entityTypeKeys should still contain candidate (unidirectional now)
+        assertTrue(
+            updatedOrigin.entityTypeKeys?.contains("candidate") ?: false,
+            "entityTypeKeys should still contain candidate for unidirectional access"
+        )
     }
 
     // ========== Helper Methods ==========

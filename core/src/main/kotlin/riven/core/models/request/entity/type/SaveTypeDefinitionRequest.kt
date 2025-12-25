@@ -16,7 +16,7 @@ import java.util.*
 )
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class SaveAttributeDefinitionRequest(
-    override val type: EntityTypeRequestDefinition = EntityTypeRequestDefinition.SCHEMA,
+    override val type: EntityTypeRequestDefinition = EntityTypeRequestDefinition.SAVE_SCHEMA,
     override val key: String,
     override val id: UUID,
     val schema: EntityTypeSchema
@@ -29,21 +29,21 @@ data class SaveAttributeDefinitionRequest(
 )
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class SaveRelationshipDefinitionRequest(
-    override val type: EntityTypeRequestDefinition = EntityTypeRequestDefinition.RELATIONSHIP,
+    override val type: EntityTypeRequestDefinition = EntityTypeRequestDefinition.SAVE_RELATIONSHIP,
     override val key: String,
     override val id: UUID,
     val relationship: EntityRelationshipDefinition
 ) : TypeDefinition
 
 
-data class TypeDefinitionRequest(
+data class SaveTypeDefinitionRequest(
     val index: Int?,
     @field:Schema(
         oneOf = [SaveAttributeDefinitionRequest::class, SaveRelationshipDefinitionRequest::class],
         discriminatorProperty = "type",
         discriminatorMapping = [
-            DiscriminatorMapping(value = "RELATIONSHIP", schema = SaveRelationshipDefinitionRequest::class),
-            DiscriminatorMapping(value = "SCHEMA", schema = SaveAttributeDefinitionRequest::class),
+            DiscriminatorMapping(value = "SAVE_RELATIONSHIP", schema = SaveRelationshipDefinitionRequest::class),
+            DiscriminatorMapping(value = "SAVE_SCHEMA", schema = SaveAttributeDefinitionRequest::class),
         ]
     )
     val definition: TypeDefinition

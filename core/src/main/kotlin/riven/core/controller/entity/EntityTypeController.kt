@@ -9,7 +9,8 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import riven.core.models.entity.EntityType
 import riven.core.models.request.entity.type.CreateEntityTypeRequest
-import riven.core.models.request.entity.type.TypeDefinitionRequest
+import riven.core.models.request.entity.type.DeleteTypeDefinitionRequest
+import riven.core.models.request.entity.type.SaveTypeDefinitionRequest
 import riven.core.models.response.entity.type.EntityTypeImpactResponse
 import riven.core.service.entity.type.EntityTypeService
 import java.util.*
@@ -128,10 +129,36 @@ class EntityTypeController(
     )
     fun saveEntityTypeDefinition(
         @PathVariable organisationId: UUID,
-        @RequestBody request: TypeDefinitionRequest,
+        @RequestBody request: SaveTypeDefinitionRequest,
         @RequestParam impactConfirmed: Boolean = false,
     ): ResponseEntity<EntityTypeImpactResponse> {
         val response = entityTypeService.saveEntityTypeDefinition(organisationId, request, impactConfirmed)
+        if (response.impact != null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response)
+        }
+        return ResponseEntity.ok(response)
+    }
+
+    @DeleteMapping("/organisation/{organisationId}/definition")
+    @Operation(
+        summary = "Removes an attribute or relationship from an entity type",
+        description = "Removes an attribute or relationship from the specified entity type for the given organisation."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Entity type definition removed successfully"),
+        ApiResponse(
+            responseCode = "409",
+            description = "Conflict due to cascading impacts on existing entities as a result of aforementioned changes"
+        ),
+        ApiResponse(responseCode = "400", description = "Invalid request data"),
+        ApiResponse(responseCode = "401", description = "Unauthorized access")
+    )
+    fun deleteEntityTypeDefinition(
+        @PathVariable organisationId: UUID,
+        @RequestBody request: DeleteTypeDefinitionRequest,
+        @RequestParam impactConfirmed: Boolean = false,
+    ): ResponseEntity<EntityTypeImpactResponse> {
+        val response = entityTypeService.removeEntityTypeDefinition(organisationId, request, impactConfirmed)
         if (response.impact != null) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response)
         }
