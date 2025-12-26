@@ -1,0 +1,44 @@
+import { useAuth } from "@/components/provider/auth-context";
+import { useMutation, useQueryClient, type UseMutationOptions } from "@tanstack/react-query";
+import { useRef } from "react";
+import { toast } from "sonner";
+import { Entity } from "../../../interface/entity.interface";
+import { EntityInstanceService } from "../../../service/entity-instance.service";
+
+export function useCreateEntityMutation(
+    organisationId: string,
+    entityTypeKey: string,
+    options?: UseMutationOptions<Entity, Error, Record<string, any>>
+) {
+    const queryClient = useQueryClient();
+    const { session } = useAuth();
+    const submissionToastRef = useRef<string | number | undefined>(undefined);
+
+    return useMutation({
+        mutationFn: (payload: Record<string, any>) =>
+            EntityInstanceService.createEntity(session, organisationId, entityTypeKey, payload),
+        onMutate: (data) => {
+            options?.onMutate?.(data);
+            submissionToastRef.current = toast.loading("Creating entity...");
+        },
+        onError: (error: Error, variables: Record<string, any>, context: unknown) => {
+            options?.onError?.(error, variables, context);
+            toast.dismiss(submissionToastRef.current);
+            submissionToastRef.current = undefined;
+            toast.error(`Failed to create entity: ${error.message}`);
+        },
+        onSuccess: (entity: Entity, variables: Record<string, any>, context: unknown) => {
+            options?.onSuccess?.(entity, variables, context);
+            toast.dismiss(submissionToastRef.current);
+            submissionToastRef.current = undefined;
+            toast.success("Entity created successfully!");
+
+            // Invalidate the entities list query to refetch
+            queryClient.invalidateQueries({
+                queryKey: ["entities", organisationId, entityTypeKey],
+            });
+
+            return entity;
+        },
+    });
+}

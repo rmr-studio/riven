@@ -80,3 +80,57 @@ export interface EntityTypeAttributeRow {
     allowPolymorphic?: boolean;
     bidirectional?: boolean;
 }
+
+// ===== Entity Instance Draft Types =====
+
+import { UseFormReturn } from "react-hook-form";
+import { SchemaUUID } from "@/lib/interfaces/common.interface";
+
+/**
+ * Entity instance draft store interface
+ * Manages state for creating new entity instances with inline editing
+ */
+export interface EntityInstanceDraftStore {
+    // State
+    organisationId: string;
+    entityType: EntityType;
+    isDraftMode: boolean;
+    draftValues: Record<string, any> | null;
+    lastModifiedAt: number | null;
+    form: UseFormReturn<Record<string, any>>;
+
+    // Actions
+    enterDraftMode: () => void;
+    exitDraftMode: () => void;
+    saveDraft: (values: Record<string, any>) => void;
+    loadDraft: () => Record<string, any> | null;
+    clearDraft: () => void;
+    submitDraft: () => Promise<Entity>;
+    resetDraft: () => void;
+}
+
+/**
+ * Props interface for entity field widgets
+ * Used for rendering inline editable fields in draft rows
+ */
+export interface EntityFieldWidgetProps {
+    value: any;
+    onChange: (value: any) => void;
+    onBlur: () => void;
+    disabled?: boolean;
+    schema: SchemaUUID;
+    errors?: string[];
+}
+
+/**
+ * Props interface for relationship picker component
+ * Used for selecting related entities in draft rows
+ */
+export interface RelationshipPickerProps {
+    relationship: EntityRelationshipDefinition;
+    value: string | string[] | null;
+    onChange: (value: string | string[] | null) => void;
+    onBlur: () => void;
+    errors?: string[];
+    disabled?: boolean;
+}

@@ -1,6 +1,10 @@
+"use client";
+
 import { DataTable, ColumnFilter, RowActionsConfig } from "@/components/ui/data-table";
 import { ColumnDef, Row } from "@tanstack/react-table";
 import { FC, useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import { Entity, EntityType } from "../../interface/entity.interface";
 import {
     EntityInstanceRow,
@@ -10,6 +14,13 @@ import {
     generateSearchConfigFromEntityType,
     transformEntitiesToRows,
 } from "./entity-instance-table-utils.tsx";
+import {
+    EntityInstanceDraftProvider,
+    useEntityInstanceDraftStore,
+    useIsDraftMode,
+} from "../../context/entity-instance-draft-provider";
+import { EntityInstanceDraftRow } from "./entity-instance-draft-row";
+import { useOrganisationId } from "@/components/feature-modules/organisation/hooks/use-organisation-id";
 
 export interface EntityInstanceDataTableProps {
     entityType: EntityType;
@@ -20,6 +31,7 @@ export interface EntityInstanceDataTableProps {
     enableFilters?: boolean;
     enableSorting?: boolean;
     enableDragDrop?: boolean;
+    enableDraftMode?: boolean; // NEW: Enable draft mode
 
     // Customization
     includeRelationships?: boolean;
@@ -31,19 +43,22 @@ export interface EntityInstanceDataTableProps {
     // Callbacks
     onRowClick?: (entity: Entity) => void;
     onReorder?: (entities: Entity[]) => void;
+    onEntityCreated?: (entity: Entity) => void; // NEW: Callback when entity is created
 
     // Display
     className?: string;
     emptyMessage?: string;
 }
 
-export const EntityInstanceDataTable: FC<EntityInstanceDataTableProps> = ({
+// Internal component with draft mode hooks
+const EntityInstanceDataTableInternal: FC<EntityInstanceDataTableProps> = ({
     entityType,
     entities,
     enableSearch = true,
     enableFilters = true,
     enableSorting = true,
     enableDragDrop = false,
+    enableDraftMode = false,
     includeRelationships = false,
     customColumns,
     customFilters,
@@ -51,13 +66,27 @@ export const EntityInstanceDataTable: FC<EntityInstanceDataTableProps> = ({
     selectFilterThreshold = 10,
     onRowClick,
     onReorder,
+    onEntityCreated,
     className,
     emptyMessage = "No entities found.",
 }) => {
+    const isDraftMode = enableDraftMode ? useIsDraftMode() : false;
+
     // Transform entities to row data
     const rowData = useMemo(() => {
-        return transformEntitiesToRows(entities);
-    }, [entities]);
+        const rows = transformEntitiesToRows(entities);
+
+        // Prepend draft row placeholder when in draft mode
+        if (isDraftMode) {
+            const draftRow: EntityInstanceRow = {
+                _entityId: "_draft",
+                _entity: null as any, // Special case for draft
+            };
+            return [draftRow, ...rows];
+        }
+
+        return rows;
+    }, [entities, isDraftMode]);
 
     // Generate columns from entity type
     const columns = useMemo(() => {
@@ -103,36 +132,92 @@ export const EntityInstanceDataTable: FC<EntityInstanceDataTableProps> = ({
     };
 
     return (
-        <DataTable
-            columns={columns}
-            data={rowData}
-            enableSorting={enableSorting}
-            enableDragDrop={enableDragDrop}
-            onReorder={handleReorder}
-            getRowId={(row) => row._entityId}
-            search={
-                enableSearch && searchableColumns.length > 0
-                    ? {
-                          enabled: true,
-                          searchableColumns,
-                          placeholder: "Search entities...",
-                      }
-                    : undefined
-            }
-            filter={
-                enableFilters && filters.length > 0
-                    ? {
-                          enabled: true,
-                          filters,
-                      }
-                    : undefined
-            }
-            rowActions={rowActions}
-            onRowClick={onRowClick ? handleRowClick : undefined}
-            emptyMessage={emptyMessage}
-            className={className}
-        />
+        <div className="space-y-4">
+            {/* Draft mode controls */}
+            {enableDraftMode && <DraftModeControls />}
+
+            {/* Data table with custom row rendering for draft */}
+            <DataTable
+                columns={columns}
+                data={rowData}
+                enableSorting={enableSorting}
+                enableDragDrop={enableDragDrop}
+                onReorder={handleReorder}
+                getRowId={(row) => row._entityId}
+                search={
+                    enableSearch && searchableColumns.length > 0
+                        ? {
+                              enabled: true,
+                              searchableColumns,
+                              placeholder: "Search entities...",
+                          }
+                        : undefined
+                }
+                filter={
+                    enableFilters && filters.length > 0
+                        ? {
+                              enabled: true,
+                              filters,
+                          }
+                        : undefined
+                }
+                rowActions={rowActions}
+                onRowClick={onRowClick ? handleRowClick : undefined}
+                emptyMessage={emptyMessage}
+                className={className}
+                customRowRender={
+                    enableDraftMode
+                        ? (row) => {
+                              if (row.original._entityId === "_draft") {
+                                  return <EntityInstanceDraftRow entityType={entityType} />;
+                              }
+                              return null; // Use default row rendering
+                          }
+                        : undefined
+                }
+            />
+        </div>
     );
+};
+
+// Draft mode controls component
+const DraftModeControls: FC = () => {
+    const { isDraftMode, enterDraftMode } = useEntityInstanceDraftStore((state) => ({
+        isDraftMode: state.isDraftMode,
+        enterDraftMode: state.enterDraftMode,
+    }));
+
+    if (isDraftMode) return null;
+
+    return (
+        <div className="flex justify-end">
+            <Button onClick={enterDraftMode} variant="outline" size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Add New
+            </Button>
+        </div>
+    );
+};
+
+// Main export component with conditional provider
+export const EntityInstanceDataTable: FC<EntityInstanceDataTableProps> = (props) => {
+    const organisationId = useOrganisationId();
+
+    // If draft mode is enabled, wrap with provider
+    if (props.enableDraftMode) {
+        return (
+            <EntityInstanceDraftProvider
+                organisationId={organisationId}
+                entityType={props.entityType}
+                onEntityCreated={props.onEntityCreated}
+            >
+                <EntityInstanceDataTableInternal {...props} />
+            </EntityInstanceDraftProvider>
+        );
+    }
+
+    // Otherwise render directly
+    return <EntityInstanceDataTableInternal {...props} />;
 };
 
 export default EntityInstanceDataTable;

@@ -331,3 +331,19 @@ export function generateSearchConfigFromEntityType(
 
     return searchableColumns;
 }
+
+/**
+ * Get entity display name using the identifier field value
+ * Falls back to truncated entity ID if identifier value not found
+ */
+export function getEntityDisplayName(entity: Entity): string {
+    // Get the identifier field value from the entity payload
+    const identifierValue = entity.payload?.[entity.entityType.identifierKey];
+
+    if (identifierValue !== null && identifierValue !== undefined) {
+        return String(identifierValue);
+    }
+
+    // Fallback to truncated entity ID
+    return `Entity ${entity.id.slice(0, 8)}...`;
+}
