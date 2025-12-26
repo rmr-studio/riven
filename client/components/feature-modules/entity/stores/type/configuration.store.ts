@@ -1,7 +1,7 @@
-import { type EntityTypeFormValues } from "../../context/configuration-provider";
 import { UseFormReturn } from "react-hook-form";
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
+import { type EntityTypeFormValues } from "../../context/configuration-provider";
 import { EntityType } from "../../interface/entity.interface";
 
 // State interface
@@ -172,6 +172,7 @@ export const createEntityTypeConfigStore = (
                         icon: values.icon,
                         colour: values.iconColour,
                     },
+                    order: values.order,
                     identifierKey: values.identifierKey as string,
                     description: values.description as string | undefined,
                     type: values.type,
@@ -181,9 +182,10 @@ export const createEntityTypeConfigStore = (
                 await updateMutation(updatedType);
 
                 // Mark as saved in store and clear draft
-                get().markSaved();
+
                 // Reset form dirty state
                 form.reset(form.getValues());
+                get().markSaved();
             },
 
             reset: () => {

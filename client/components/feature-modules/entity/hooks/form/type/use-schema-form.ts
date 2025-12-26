@@ -10,7 +10,7 @@ import {
     EntityAttributeDefinition,
     EntityType,
     SaveAttributeDefinitionRequest,
-    TypeDefinitionRequest,
+    SaveTypeDefinitionRequest,
 } from "../../../interface/entity.interface";
 import { useSaveDefinitionMutation } from "../../mutation/type/use-save-definition-mutation";
 
@@ -182,7 +182,7 @@ export function useEntityTypeAttributeSchemaForm(
                 },
             };
 
-            const request: TypeDefinitionRequest = {
+            const request: SaveTypeDefinitionRequest = {
                 index: undefined,
                 definition,
             };

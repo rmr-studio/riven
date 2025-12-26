@@ -102,6 +102,15 @@ export const EntityTypeConfigurationProvider = ({
                         store.setDirty(true);
                     },
                 },
+                cancel: {
+                    label: "Dismiss",
+                    onClick: () => {
+                        store.clearDraft();
+                    },
+                },
+                onDismiss: () => {
+                    store.clearDraft();
+                },
             });
         }
     }, [entityType.key]);

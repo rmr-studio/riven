@@ -10,7 +10,7 @@ import {
     EntityType,
     RelationshipLimit,
     SaveRelationshipDefinitionRequest,
-    TypeDefinitionRequest,
+    SaveTypeDefinitionRequest,
 } from "../../../interface/entity.interface";
 import {
     calculateCardinalityFromLimits,
@@ -143,7 +143,7 @@ export function useEntityTypeRelationshipForm(
     });
 
     const handleSubmit = useCallback(
-        async () => async (values: RelationshipFormValues) => {
+         async (values: RelationshipFormValues) => {
             const id = relationship?.id ?? uuid();
             const definition: SaveRelationshipDefinitionRequest = {
                 type: EntityTypeRequestDefinition.SAVE_RELATIONSHIP,
@@ -169,7 +169,7 @@ export function useEntityTypeRelationshipForm(
                 },
             };
 
-            const request: TypeDefinitionRequest = {
+            const request: SaveTypeDefinitionRequest = {
                 index: undefined,
                 definition,
             };

@@ -7,9 +7,10 @@ import { IconCell } from "@/components/ui/icon/icon-cell";
 import { ColumnDef } from "@tanstack/react-table";
 import { Edit, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { FC, useMemo } from "react";
+import { FC, useMemo, useState } from "react";
+import { useDeleteTypeMutation } from "../../hooks/mutation/type/use-delete-type-mutation";
 import { useEntityTypes } from "../../hooks/query/use-entity-types";
-import { EntityType } from "../../interface/entity.interface";
+import { EntityType, EntityTypeImpactResponse } from "../../interface/entity.interface";
 import { NewEntityTypeForm } from "../forms/new-entity-type";
 
 interface Props {
@@ -18,7 +19,20 @@ interface Props {
 
 export const EntityTypesOverview: FC<Props> = ({ organisationId }) => {
     const router = useRouter();
+    const [impactModalOpen, setImpactModalOpen] = useState<boolean>(false);
+
     const { data: types, isPending } = useEntityTypes(organisationId);
+
+    const onImpactConfirmation = (impact: EntityTypeImpactResponse) => {
+        // todo
+        setImpactModalOpen(true);
+    };
+
+    const { mutateAsync: deleteType } = useDeleteTypeMutation(organisationId, onImpactConfirmation);
+
+    const onDelete = async (row: EntityType) => {
+        await deleteType({ key: row.key });
+    };
 
     const columns: ColumnDef<EntityType>[] = useMemo(
         () => [
@@ -151,10 +165,7 @@ export const EntityTypesOverview: FC<Props> = ({ organisationId }) => {
                         {
                             label: "Delete",
                             icon: Trash2,
-                            onClick: (row) => {
-                                // TODO: Implement delete functionality
-                                console.log("Delete entity type:", row);
-                            },
+                            onClick: onDelete,
                             variant: "destructive",
                         },
                     ],

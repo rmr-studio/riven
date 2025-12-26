@@ -30,6 +30,7 @@ export function useRelationshipCandidates(type: EntityType): UseRelationshipCand
                     (def) =>
                         (def.allowPolymorphic || def.entityTypeKeys?.includes(type.key)) &&
                         def.relationshipType === EntityTypeRelationshipType.ORIGIN &&
+                        def.bidirectional &&
                         !def.bidirectionalEntityTypeKeys?.includes(type.key)
                 )
                 .map((rel) => ({

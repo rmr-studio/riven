@@ -57,7 +57,6 @@ export type DeleteTypeDefinitionRequest = components["schemas"]["DeleteTypeDefin
 export type DeleteAttributeDefinitionRequest = components["schemas"]["DeleteAttributeDefinitionRequest"];
 export type DeleteRelationshipDefinitionRequest = components["schemas"]["DeleteRelationshipDefinitionRequest"];
 
-
 export interface EntityAttributeDefinition {
     id: string;
     schema: SchemaUUID;

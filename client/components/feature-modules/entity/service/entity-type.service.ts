@@ -139,10 +139,6 @@ export class EntityTypeService {
         }
     }
 
-    static async reorderEntityTypeAttributes() {
-        //todo
-    }
-
     static async removeEntityTypeDefinition(
         session: Session | null,
         organisationId: string,

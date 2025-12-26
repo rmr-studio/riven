@@ -25,7 +25,6 @@ interface Props {
 
 export const ConfigurationForm: FC<Props> = ({ availableIdentifiers }) => {
     const form = useConfigForm();
-    console.log(form);
     if (!form) return null;
 
     return (
