@@ -1,32 +1,32 @@
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { DialogControl } from "@/lib/interfaces/interface";
 import {
-  DeleteAction,
-  EntityPropertyType,
-  EntityTypeRelationshipType,
-  EntityTypeRequestDefinition,
+    DeleteAction,
+    EntityPropertyType,
+    EntityTypeRelationshipType,
+    EntityTypeRequestDefinition,
 } from "@/lib/types/types";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { FC, useEffect, useMemo, useState } from "react";
 import { useOrganisation } from "../../../../organisation/hooks/use-organisation";
 import { useDeleteDefinitionMutation } from "../../../hooks/mutation/type/use-delete-definition-mutation";
 import {
-  DeleteAttributeDefinitionRequest,
-  DeleteRelationshipDefinitionRequest,
-  EntityType,
-  EntityTypeDefinition,
-  isAttributeDefinition,
-  isRelationshipDefinition,
+    DeleteAttributeDefinitionRequest,
+    DeleteRelationshipDefinitionRequest,
+    EntityType,
+    EntityTypeDefinition,
+    isAttributeDefinition,
+    isRelationshipDefinition,
 } from "../../../interface/entity.interface";
 
 interface Props {
@@ -36,16 +36,17 @@ interface Props {
 }
 
 const DELETE_ACTION_LABELS: Record<DeleteAction, { label: string; description: string }> = {
-    [DeleteAction.DELETE_RELATIONSHIP]: {
-        label: "Delete Relationship Only",
-        description:
-            "Removes this relationship definition from the entity type. The relationship data will be deleted.",
-    },
     [DeleteAction.REMOVE_BIDIRECTIONAL]: {
         label: "Remove Bidirectional Link",
         description:
             "Removes the bidirectional link between entities. The relationship will become unidirectional.",
     },
+    [DeleteAction.DELETE_RELATIONSHIP]: {
+        label: "Delete Relationship Only",
+        description:
+            "Removes this relationship definition from the entity type. The relationship data will be deleted.",
+    },
+
     [DeleteAction.REMOVE_ENTITY_TYPE]: {
         label: "Remove from Entity Type",
         description:
@@ -56,14 +57,16 @@ const DELETE_ACTION_LABELS: Record<DeleteAction, { label: string; description: s
 export const DeleteDefinitionModal: FC<Props> = ({ dialog, type, definition }) => {
     const { open, setOpen: onOpenChange } = dialog;
     const { data: organisation } = useOrganisation();
-    const [deleteAction, setDeleteAction] = useState<DeleteAction | undefined>(undefined);
+    const [deleteAction, setDeleteAction] = useState<DeleteAction>(
+        DeleteAction.REMOVE_BIDIRECTIONAL
+    );
     const [isDeleting, setIsDeleting] = useState(false);
 
     const isRelationship = definition?.type === EntityPropertyType.RELATIONSHIP;
     const isAttribute = definition?.type === EntityPropertyType.ATTRIBUTE;
 
     const isReference = useMemo(() => {
-        if(!definition) return false;
+        if (!definition) return false;
         if (!isRelationshipDefinition(definition.definition)) return false;
         return definition.definition.relationshipType === EntityTypeRelationshipType.REFERENCE;
     }, [definition]);
@@ -84,13 +87,13 @@ export const DeleteDefinitionModal: FC<Props> = ({ dialog, type, definition }) =
     // Reset delete action when dialog closes or definition changes
     useEffect(() => {
         if (!open) {
-            setDeleteAction(undefined);
+            setDeleteAction(DeleteAction.REMOVE_BIDIRECTIONAL);
             setIsDeleting(false);
         }
     }, [open]);
 
     useEffect(() => {
-        setDeleteAction(undefined);
+        setDeleteAction(DeleteAction.REMOVE_BIDIRECTIONAL);
     }, [definition?.id]);
 
     const handleDelete = async () => {
