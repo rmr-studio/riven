@@ -117,8 +117,6 @@ class EntityTypeService(
      * When impactConfirmed=false: Performs impact analysis and returns impacts if any exist
      * When impactConfirmed=true: Proceeds with the update after user confirmation
      */
-
-
     @Transactional
     @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
     fun updateEntityTypeConfiguration(
@@ -135,6 +133,7 @@ class EntityTypeService(
             description = type.description
             iconType = type.icon.icon
             iconColour = type.icon.colour
+            order = type.order
         }.let {
             entityTypeRepository.save(it).toModel()
         }
@@ -170,7 +169,7 @@ class EntityTypeService(
                         entityRelationshipService.updateRelationships(
                             organisationId,
                             diff = EntityTypeRelationshipDiff(
-                                added = listOf(relationship),
+                                added = listOf(definition),
                                 modified = emptyList(),
                                 removed = emptyList()
                             )
@@ -398,8 +397,6 @@ class EntityTypeService(
         requireNotNull(existing.organisationId) { "Cannot delete system entity type" }
 
         existing.relationships?.let {
-
-
             if (!impactConfirmed) {
                 val impact = impactAnalysisService.analyze(
                     organisationId,

@@ -21,6 +21,7 @@ import riven.core.models.common.validation.Schema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDeleteRequest
 import riven.core.models.request.entity.type.DeleteRelationshipDefinitionRequest
+import riven.core.models.request.entity.type.SaveRelationshipDefinitionRequest
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
@@ -143,7 +144,13 @@ class EntityRelationshipServiceTest {
 
         // When: Creating the unidirectional relationship
         val result = entityRelationshipService.createRelationships(
-            definitions = listOf(jobOpeningsRelationship),
+            definitions = listOf(
+                SaveRelationshipDefinitionRequest(
+                    id = jobOpeningsRelationship.id,
+                    key = "company",
+                    relationship = jobOpeningsRelationship
+                )
+            ),
             organisationId = organisationId
         )
 
@@ -212,7 +219,13 @@ class EntityRelationshipServiceTest {
 
         // When: Creating the bidirectional relationship
         entityRelationshipService.createRelationships(
-            definitions = listOf(employeesRelationship),
+            definitions = listOf(
+                SaveRelationshipDefinitionRequest(
+                    id = employeesRelationship.id,
+                    key = "company",
+                    relationship = employeesRelationship
+                )
+            ),
             organisationId = organisationId
         )
 
@@ -284,7 +297,7 @@ class EntityRelationshipServiceTest {
         val jobReferenceRelationship = EntityRelationshipDefinition(
             id = UUID.randomUUID(),
             name = "Partner Companies",
-            sourceEntityTypeKey = "job",
+            sourceEntityTypeKey = "company",
             originRelationshipId = originRelationshipId,
             relationshipType = EntityTypeRelationshipType.REFERENCE,
             entityTypeKeys = listOf("company"), // Points to company
@@ -325,7 +338,13 @@ class EntityRelationshipServiceTest {
 
         // When: Creating the REFERENCE relationship
         entityRelationshipService.createRelationships(
-            definitions = listOf(jobReferenceRelationship),
+            definitions = listOf(
+                SaveRelationshipDefinitionRequest(
+                    id = jobReferenceRelationship.id,
+                    key = "job",
+                    relationship = jobReferenceRelationship
+                )
+            ),
             organisationId = organisationId
         )
 
@@ -397,7 +416,13 @@ class EntityRelationshipServiceTest {
         // When/Then: Should throw validation error
         val exception = assertThrows(IllegalArgumentException::class.java) {
             entityRelationshipService.createRelationships(
-                definitions = listOf(invalidRelationship),
+                definitions = listOf(
+                    SaveRelationshipDefinitionRequest(
+                        id = invalidRelationship.id,
+                        key = "company",
+                        relationship = invalidRelationship
+                    )
+                ),
                 organisationId = organisationId
             )
         }
@@ -445,7 +470,13 @@ class EntityRelationshipServiceTest {
 
         // Mock the diff service
         val diff = riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff(
-            added = listOf(newRelationship),
+            added = listOf(
+                SaveRelationshipDefinitionRequest(
+                    id = newRelationship.id,
+                    key = "company",
+                    relationship = newRelationship
+                )
+            ),
             removed = emptyList(),
             modified = emptyList()
         )

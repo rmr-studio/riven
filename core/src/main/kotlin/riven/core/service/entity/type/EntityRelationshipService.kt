@@ -17,6 +17,7 @@ import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDele
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipModification
 import riven.core.models.request.entity.type.DeleteRelationshipDefinitionRequest
+import riven.core.models.request.entity.type.SaveRelationshipDefinitionRequest
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
@@ -166,19 +167,11 @@ class EntityRelationshipService(
                     }) { "REFERENCE relationship '${relDef.name}' references origin relationship ID '$originRelationshipId' which does not exist in entity type '$originEntityTypeKey'." }
                 }
 
-                // Validate this entity type is in the origin's bidirectionalEntityTypeKeys
-                requireNotNull(origin.bidirectionalEntityTypeKeys) {
-                    "Origin relationship '${origin.name}' must have bidirectionalEntityTypeKeys defined for bidirectional REFERENCE relationship '${relDef.name}'."
-                }.run {
-                    if (!this.contains(relDef.sourceEntityTypeKey)) {
-                        throw IllegalArgumentException(
-                            "REFERENCE relationship '${relDef.name}' has sourceEntityTypeKey '${relDef.sourceEntityTypeKey}' which is not included in the origin relationship's bidirectionalEntityTypeKeys: ${
-                                this.joinToString(
-                                    ", "
-                                )
-                            }."
-                        )
-                    }
+                // Validate all reference relationships point back to the origin
+                if (origin.sourceEntityTypeKey != relDef.sourceEntityTypeKey) {
+                    throw IllegalArgumentException(
+                        "REFERENCE relationship '${relDef.name}' source entity type '${relDef.sourceEntityTypeKey}' does not match origin relationship's source entity type '${origin.sourceEntityTypeKey}'."
+                    )
                 }
             }
         }
@@ -281,12 +274,12 @@ class EntityRelationshipService(
      */
     @Transactional
     fun createRelationships(
-        definitions: List<EntityRelationshipDefinition>,
+        definitions: List<SaveRelationshipDefinitionRequest>,
         organisationId: UUID
     ): List<EntityTypeEntity> {
         // Validate all associated entity types exist
         val entities = findAndValidateAssociatedEntityTypes(
-            relationships = definitions,
+            relationships = definitions.map { it.relationship },
             organisationId = organisationId
         ).toMutableMap()
         return this.createRelationships(entities, definitions, organisationId)
@@ -295,7 +288,7 @@ class EntityRelationshipService(
     @Transactional
     fun createRelationships(
         entityTypes: MutableMap<String, EntityTypeEntity>,
-        definitions: List<EntityRelationshipDefinition>,
+        definitions: List<SaveRelationshipDefinitionRequest>,
         organisationId: UUID,
         save: Boolean = true
     ): List<EntityTypeEntity> {
@@ -303,48 +296,58 @@ class EntityRelationshipService(
         val allRelationshipDefinitions = mutableListOf<EntityRelationshipDefinition>()
 
         // Group definitions by source entity type
-        val definitionsBySourceType: Map<String, List<EntityRelationshipDefinition>> =
-            definitions.groupBy { it.sourceEntityTypeKey }
+
 
         // Validate definitions
-        definitionsBySourceType.forEach { (_, relDefs) ->
+        definitions.forEach { request ->
             // Validate and add each relationship definition
-            relDefs.forEach { relDef ->
-                // Validate bidirectional ORIGIN relationships before adding
-                if (relDef.bidirectional && relDef.relationshipType == EntityTypeRelationshipType.ORIGIN) {
-                    validateOriginBidirectionalRelationship(relDef)
-                }
 
-                allRelationshipDefinitions.add(relDef)
+            val (_, _, _, definition) = request
+
+            // Validate bidirectional ORIGIN relationships before adding
+            if (definition.bidirectional && definition.relationshipType == EntityTypeRelationshipType.ORIGIN) {
+                validateOriginBidirectionalRelationship(definition)
             }
+
+            allRelationshipDefinitions.add(definition)
+
         }
 
         // Handle bidirectional relationships
-        definitionsBySourceType.forEach { (_, relDefs) ->
-            relDefs.forEach { relDef ->
-                if (!relDef.bidirectional) return@forEach
-                when (relDef.relationshipType) {
-                    // For ORIGIN bidirectional relationships: create REFERENCE relationships on target entity types
-                    EntityTypeRelationshipType.ORIGIN -> {
-                        val createdReferences = createInverseReferenceRelationships(
-                            originRelationship = relDef,
-                            organisationId = organisationId,
-                            entityTypesByKey = entityTypes
-                        )
-                        allRelationshipDefinitions.addAll(createdReferences)
-                    }
+        definitions.forEach { request ->
 
-                    // For REFERENCE bidirectional relationships: update origin to include this entity type
-                    EntityTypeRelationshipType.REFERENCE -> {
-                        updateOriginForReferenceRelationship(
-                            referenceRelationship = relDef,
-                            organisationId = organisationId,
-                            entityTypesByKey = entityTypes
-                        )
-                    }
+            val (_, key, _, definition) = request
+            // Add the relationship definition to the source entity type
+            val entity = requireNotNull(entityTypes[key]) { "Entity type '$key' not found in entity types map" }
+            entityTypes[key] = addOrUpdateRelationship(
+                entityType = entity,
+                newRelationship = definition
+            )
+
+            if (!definition.bidirectional) return@forEach
+            when (definition.relationshipType) {
+                // For ORIGIN bidirectional relationships: create REFERENCE relationships on target entity types
+                EntityTypeRelationshipType.ORIGIN -> {
+                    val createdReferences = createInverseReferenceRelationships(
+                        originRelationship = definition,
+                        organisationId = organisationId,
+                        entityTypesByKey = entityTypes
+                    )
+                    allRelationshipDefinitions.addAll(createdReferences)
+                }
+
+                // For REFERENCE bidirectional relationships: update origin to include this entity type
+                EntityTypeRelationshipType.REFERENCE -> {
+                    updateOriginForReferenceRelationship(
+                        referenceRelationship = definition,
+                        key = key,
+                        organisationId = organisationId,
+                        entityTypesByKey = entityTypes
+                    )
                 }
             }
         }
+
 
         save.let {
             if (it) {
@@ -373,7 +376,7 @@ class EntityRelationshipService(
     ): Map<String, EntityTypeEntity> {
         // Load all target entity types
         val entityTypesMap: MutableMap<String, EntityTypeEntity> = findAndValidateAssociatedEntityTypes(
-            relationships = diff.added + diff.removed.map { it.relationship } + diff.modified.map { it.updated },
+            relationships = diff.added.map { it.relationship } + diff.removed.map { it.relationship } + diff.modified.map { it.updated },
             organisationId = organisationId
         ).toMutableMap()
 
@@ -381,7 +384,10 @@ class EntityRelationshipService(
         val sourceKeys = buildSet {
             diff.removed.forEach { add(it.relationship.sourceEntityTypeKey) }
             diff.modified.forEach { add(it.updated.sourceEntityTypeKey) }
-            diff.added.forEach { add(it.sourceEntityTypeKey) }
+            diff.added.forEach {
+                add(it.key)
+                add(it.relationship.sourceEntityTypeKey)
+            }
         }
 
         // Load source entity types that aren't already in the map
@@ -409,7 +415,7 @@ class EntityRelationshipService(
                 // Added relationships - validate as CREATE
                 validationContexts.addAll(diff.added.map { relDef ->
                     RelationshipDefinitionValidationContext(
-                        definition = relDef,
+                        definition = relDef.relationship,
                         operation = RelationshipOperation.CREATE
                     )
                 })
@@ -1238,6 +1244,7 @@ class EntityRelationshipService(
      * in its bidirectionalEntityTypeKeys and entityTypeKeys (if not polymorphic).
      */
     private fun updateOriginForReferenceRelationship(
+        key: String,
         referenceRelationship: EntityRelationshipDefinition,
         organisationId: UUID,
         entityTypesByKey: MutableMap<String, EntityTypeEntity>
@@ -1264,19 +1271,19 @@ class EntityRelationshipService(
         }
 
         val originRelationship = relationships[originRelationshipIndex]
-        val sourceKey = referenceRelationship.sourceEntityTypeKey
+        referenceRelationship.sourceEntityTypeKey
 
         // Update bidirectionalEntityTypeKeys to include this entity type
         val updatedBidirectionalKeys = (originRelationship.bidirectionalEntityTypeKeys ?: emptyList()).toMutableList()
-        if (!updatedBidirectionalKeys.contains(sourceKey)) {
-            updatedBidirectionalKeys.add(sourceKey)
+        if (!updatedBidirectionalKeys.contains(key)) {
+            updatedBidirectionalKeys.add(key)
         }
 
         // Update entityTypeKeys if not polymorphic
         val updatedEntityTypeKeys = if (!originRelationship.allowPolymorphic) {
             val currentKeys = (originRelationship.entityTypeKeys ?: emptyList()).toMutableList()
-            if (!currentKeys.contains(sourceKey)) {
-                currentKeys.add(sourceKey)
+            if (!currentKeys.contains(key)) {
+                currentKeys.add(key)
             }
             currentKeys
         } else {

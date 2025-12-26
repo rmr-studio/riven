@@ -1,9 +1,9 @@
 package riven.core.models.entity.relationship.analysis
 
-import riven.core.models.entity.configuration.EntityRelationshipDefinition
+import riven.core.models.request.entity.type.SaveRelationshipDefinitionRequest
 
 data class EntityTypeRelationshipDiff(
-    val added: List<EntityRelationshipDefinition>,
+    val added: List<SaveRelationshipDefinitionRequest>,
     val removed: List<EntityTypeRelationshipDeleteRequest>,
     val modified: List<EntityTypeRelationshipModification>,
 )
