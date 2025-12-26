@@ -20,11 +20,6 @@ interface Props {
 export const RelationshipLink: FC<Props> = ({ type, onCreate }) => {
     const { candidates, loading } = useRelationshipCandidates(type);
 
-    // Create a new reference relationship definiition for this entity to create a link to the existing candidate
-    const onSelect = (relationship: EntityRelationshipDefinition) => {
-        onCreate(relationship)
-    };
-
     return (
         <>
             {!loading && candidates.length > 0 && (
@@ -43,7 +38,7 @@ export const RelationshipLink: FC<Props> = ({ type, onCreate }) => {
                                 name={candidate.name}
                                 relationship={candidate.existingRelationship}
                                 icon={candidate.icon}
-                                onSelect={onSelect}
+                                onSelect={onCreate}
                             />
                         ))}
                     </CardContent>
