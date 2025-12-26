@@ -41,6 +41,16 @@ const EntityTypeDataTable: FC<Props> = ({ type, identifierKey, onEdit, onDelete 
         });
     };
 
+    const canDelete = (row: EntityTypeAttributeRow): boolean => {
+        return (
+            !row.protected &&
+            !(
+                [type.identifierKey, identifierKey].includes(row.id) &&
+                row.type === EntityPropertyType.ATTRIBUTE
+            )
+        );
+    };
+
     return (
         <DataTable
             columns={columns}
@@ -91,7 +101,7 @@ const EntityTypeDataTable: FC<Props> = ({ type, identifierKey, onEdit, onDelete 
                             deleteRow(row);
                         },
                         variant: "destructive",
-                        disabled: (row) => row?.protected || false,
+                        disabled: (row) => !canDelete(row),
                     },
                 ],
             }}

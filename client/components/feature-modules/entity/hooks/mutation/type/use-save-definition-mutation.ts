@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import {
     EntityType,
     SaveTypeDefinitionRequest,
-    SaveTypeDefinitionRequest,
     type EntityTypeImpactResponse,
 } from "../../../interface/entity.interface";
 import { EntityTypeService } from "../../../service/entity-type.service";
