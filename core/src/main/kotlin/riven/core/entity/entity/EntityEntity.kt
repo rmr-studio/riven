@@ -4,8 +4,12 @@ import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
-import riven.core.models.common.json.JsonObject
+import riven.core.enums.common.IconColour
+import riven.core.enums.common.IconType
+import riven.core.models.common.Icon
 import riven.core.models.entity.Entity
+import riven.core.models.entity.payload.EntityAttributePayload
+import java.time.ZonedDateTime
 import java.util.*
 import jakarta.persistence.Entity as JPAEntity
 
@@ -15,11 +19,8 @@ import jakarta.persistence.Entity as JPAEntity
 @JPAEntity
 @Table(
     name = "entities",
-    uniqueConstraints = [
-        UniqueConstraint(name = "uq_entity_org_key", columnNames = ["organisation_id", "key"])
-    ],
     indexes = [
-        Index(name = "idx_entities_type_id", columnList = "type_id"),
+        Index(name = "idx_entities_organisation_id_type_id", columnList = "organisation_id, type_id"),
     ]
 )
 data class EntityEntity(
@@ -31,22 +32,32 @@ data class EntityEntity(
     @Column(name = "organisation_id", nullable = false)
     val organisationId: UUID,
 
+    // Denormalized keys referencing important EntityType information to avoid joins.
     @Column(name = "key", nullable = false)
     var key: String,
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "type_id", nullable = false)
-    val type: EntityTypeEntity,
-
-    @Column(name = "type_version", nullable = false)
-    var typeVersion: Int,
-
-    @Column(name = "name", nullable = true)
-    var name: String? = null,
+    @Column(name = "type_id", nullable = false)
+    val typeId: UUID,
+    @Column("identifier_key", nullable = false, columnDefinition = "uuid")
+    val identifierKey: UUID,
 
     @Type(JsonBinaryType::class)
     @Column(name = "payload", columnDefinition = "jsonb", nullable = false)
-    var payload: JsonObject,
+    var payload: Map<UUID, EntityAttributePayload>,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "icon_colour", nullable = false)
+    var iconColour: IconColour = IconColour.NEUTRAL,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "icon_type", nullable = false)
+    var iconType: IconType = IconType.FILE,
+
+
+    @Column("archived", nullable = false)
+    var archived: Boolean = false,
+
+    @Column("deleted_at", nullable = true)
+    var deletedAt: ZonedDateTime? = null,
 ) : AuditableEntity() {
 
     /**
@@ -57,10 +68,13 @@ data class EntityEntity(
         return Entity(
             id = id,
             organisationId = this.organisationId,
-            entityType = this.type.toModel(),
-            typeVersion = this.typeVersion,
-            name = this.name,
+            typeId = this.typeId,
             payload = this.payload,
+            identifierKey = this.identifierKey,
+            icon = Icon(
+                icon = this.iconType,
+                colour = this.iconColour
+            ),
             createdAt = if (audit) this.createdAt else null,
             updatedAt = if (audit) this.updatedAt else null,
             createdBy = if (audit) this.createdBy else null,

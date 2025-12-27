@@ -10,14 +10,16 @@ import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.entity.EntityCategory
 import riven.core.enums.util.OperationType
 import riven.core.exceptions.SchemaValidationException
-import riven.core.models.common.json.JsonObject
 import riven.core.models.entity.Entity
+import riven.core.models.entity.EntityType
+import riven.core.models.request.entity.SaveEntityRequest
 import riven.core.repository.entity.EntityRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.entity.type.EntityTypeService
 import riven.core.util.ServiceUtil.findManyResults
 import riven.core.util.ServiceUtil.findOrThrow
+import java.time.ZonedDateTime
 import java.util.*
 
 /**
@@ -40,28 +42,56 @@ class EntityService(
         return findManyResults { entityRepository.findAllById(ids) }
     }
 
+    fun getEntitiesByTypeId(
+        organisationId: UUID,
+        typeId: UUID
+    ): List<Entity> {
+        return findManyResults {
+            entityRepository.findByTypeId(organisationId, typeId)
+        }.map { it.toModel() }
+    }
+
+    fun getEntitiesByTypeIds(
+        organisationId: UUID,
+        typeIds: List<UUID>
+    ): Map<UUID, List<Entity>> {
+        return findManyResults {
+            entityRepository.findByOrganisationIdAndTypeIdInAndArchivedIsFalse(
+                organisationId = organisationId,
+                typeIds = typeIds
+            )
+        }.groupBy { it.typeId }
+            .mapValues { entry -> entry.value.map { it.toModel() } }
+    }
+
     /**
      * Create a new entity with validation.
      */
     @Transactional
     @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
-    fun createEntity(
+    fun saveEntity(
         organisationId: UUID,
-        typeKey: String,
-        name: String?,
-        payload: Map<String, Any>
+        request: SaveEntityRequest
     ): Entity {
         val userId = authTokenService.getUserId()
-        val entityType = entityTypeService.getByKey(typeKey, organisationId)
+        val (type, payload, icon) = request
+        val entityType = entityTypeService.getByKey(type, organisationId)
+        val typeId = requireNotNull(entityType.id) { "Entity type ID cannot be null" }
 
         val entity = EntityEntity(
             organisationId = organisationId,
-            type = entityType,
-            key = typeKey,
-            typeVersion = entityType.version,
-            name = name,
-            payload = payload
+            typeId = typeId,
+            identifierKey = entityType.identifierKey,
+            key = type,
+            payload = payload,
         )
+
+        icon?.let {
+            entity.apply {
+                this.iconType = it.icon
+                this.iconColour = it.colour
+            }
+        }
 
         // Validate payload against schema
         entityValidationService.validateEntity(entity, entityType).run {
@@ -80,51 +110,7 @@ class EntityService(
                 entityType = ApplicationEntityType.ENTITY,
                 details = mapOf(
                     "type" to entityType.key,
-                    "name" to (name ?: ""),
                     "category" to entityType.type.name
-                )
-            )
-            this.toModel()
-        }
-    }
-
-    /**
-     * Update an existing entity.
-     */
-    @Transactional
-    @PostAuthorize("@organisationSecurity.hasOrg(#returnObject.organisationId)")
-    fun updateEntity(
-        id: UUID,
-        name: String?,
-        payload: JsonObject
-    ): Entity {
-        val userId = authTokenService.getUserId()
-        val existing: EntityEntity = findOrThrow { entityRepository.findById(id) }
-
-        existing.apply {
-            this.name = name
-            this.payload = payload
-        }
-
-        // Validate against current schema
-        entityValidationService.validateEntity(existing, existing.type).run {
-            if (isNotEmpty()) {
-                throw SchemaValidationException(this)
-            }
-        }
-
-
-        return entityRepository.save(existing).run {
-            activityService.logActivity(
-                activity = Activity.ENTITY,
-                operation = OperationType.UPDATE,
-                userId = userId,
-                organisationId = existing.organisationId,
-                entityId = this.id,
-                entityType = ApplicationEntityType.ENTITY,
-                details = mapOf(
-                    "type" to existing.type.key,
-                    "name" to (name ?: "")
                 )
             )
             this.toModel()
@@ -138,9 +124,13 @@ class EntityService(
     @PreAuthorize("@organisationSecurity.hasOrg(#id)")
     fun deleteEntity(id: UUID) {
         val userId = authTokenService.getUserId()
-        val existing = findOrThrow { entityRepository.findById(id) }
 
-        entityRepository.deleteById(id)
+        val existing = findOrThrow { entityRepository.findById(id) }.apply {
+            archived = true
+            deletedAt = ZonedDateTime.now()
+        }.run {
+            entityRepository.save(this)
+        }
 
         activityService.logActivity(
             activity = Activity.ENTITY,
@@ -150,8 +140,7 @@ class EntityService(
             entityId = id,
             entityType = ApplicationEntityType.ENTITY,
             details = mapOf(
-                "type" to existing.type.key,
-                "name" to (existing.name ?: "")
+                "type" to existing.key,
             )
         )
     }
@@ -175,14 +164,14 @@ class EntityService(
     }
 
     /**
-     * Get all entities of a specific type.
+     * Get all entities of a specific type using their primitive key.
      */
-    fun getEntitiesByType(
+    fun getEntitiesByTypeKey(
         organisationId: UUID,
         typeKey: String
     ): List<Entity> {
         return findManyResults {
-            entityRepository.findByOrganisationIdAndTypeKey(organisationId, typeKey)
+            entityRepository.findByTypeKey(organisationId, typeKey)
         }.map { it.toModel() }
     }
 
@@ -195,27 +184,5 @@ class EntityService(
         }.map { it.toModel() }
     }
 
-    /**
-     * Validate relationship entity constraints.
-     * Ensures RELATIONSHIP entities have all required relationships.
-     */
-    @Transactional
-    fun validateRelationshipEntityConstraints(entityId: UUID) {
-        val entity = findOrThrow { entityRepository.findById(entityId) }
 
-        if (entity.type.type == EntityCategory.RELATIONSHIP) {
-            entity.type.relationships.run {
-                requireNotNull(this)
-                // Relationship Entities should always have at-least 2 relationships
-                require(this.size >= 2) {
-                    "Relationship entity type '${entity.type.key}' must define at least two relationships"
-                }
-                entityValidationService.validateRelationshipEntity(entityId, this).also { errors ->
-                    if (errors.isNotEmpty()) {
-                        throw IllegalStateException(errors.joinToString("; "))
-                    }
-                }
-            }
-        }
-    }
 }

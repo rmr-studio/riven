@@ -24,9 +24,12 @@ import java.util.*
 @Entity
 @Table(
     name = "entity_types",
+    indexes = [
+        Index(columnList = "organisation_id", name = "idx_entity_types_organisation_id"),
+    ],
     uniqueConstraints = [
         UniqueConstraint(columnNames = ["organisation_id", "key"])
-    ],
+    ]
 )
 data class EntityTypeEntity(
     @Id
@@ -87,7 +90,10 @@ data class EntityTypeEntity(
     var entitiesCount: Long = 0L,
 
     @Column(name = "archived", nullable = false, columnDefinition = "boolean default false")
-    var archived: Boolean = false
+    var archived: Boolean = false,
+
+    @Column(name = "deleted_at", nullable = true)
+    var deletedAt: Date? = null,
 ) : AuditableEntity() {
 
     /**

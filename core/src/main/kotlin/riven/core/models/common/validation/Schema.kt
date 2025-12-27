@@ -1,9 +1,12 @@
 package riven.core.models.common.validation
 
+import riven.core.enums.common.IconColour
+import riven.core.enums.common.IconType
 import riven.core.enums.common.OptionSortingType
 import riven.core.enums.common.SchemaType
 import riven.core.enums.core.DataFormat
 import riven.core.enums.core.DataType
+import riven.core.models.common.Icon
 import riven.core.models.common.json.JsonObject
 import riven.core.models.common.json.JsonValue
 import java.time.ZonedDateTime
@@ -36,6 +39,10 @@ data class Schema<T>(
     // This is a human-readable label for the schema
     val label: String? = null,
     val key: SchemaType,
+    val icon: Icon = Icon(
+        icon = IconType.LANDMARK,
+        colour = IconColour.NEUTRAL
+    ),
     val type: DataType = DataType.OBJECT,
     val format: DataFormat? = null,
     val required: Boolean = false,
