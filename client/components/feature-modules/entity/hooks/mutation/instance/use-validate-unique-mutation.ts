@@ -1,6 +1,6 @@
 import { useAuth } from "@/components/provider/auth-context";
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
-import { EntityInstanceService } from "../../../service/entity-instance.service";
+import { EntityService } from "../../../service/entity.service";
 
 interface ValidateUniqueParams {
     attributeId: string;
@@ -21,7 +21,7 @@ export function useValidateUniqueMutation(
                 return true;
             }
 
-            return await EntityInstanceService.checkUniqueValue(
+            return await EntityService.checkUniqueValue(
                 session,
                 organisationId,
                 entityTypeKey,

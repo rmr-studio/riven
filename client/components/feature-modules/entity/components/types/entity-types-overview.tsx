@@ -9,9 +9,9 @@ import { Edit, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FC, useMemo, useState } from "react";
 import { useDeleteTypeMutation } from "../../hooks/mutation/type/use-delete-type-mutation";
-import { useEntityTypes } from "../../hooks/query/use-entity-types";
+import { useEntityTypes } from "../../hooks/query/type/use-entity-types";
 import { EntityType, EntityTypeImpactResponse } from "../../interface/entity.interface";
-import { NewEntityTypeForm } from "../forms/new-entity-type";
+import { NewEntityTypeForm } from "../forms/type/new-entity-type-form";
 
 interface Props {
     organisationId: string;

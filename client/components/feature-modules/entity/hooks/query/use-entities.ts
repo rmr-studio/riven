@@ -1,10 +1,10 @@
 import { useAuth } from "@/components/provider/auth-context";
 import { AuthenticatedQueryResult } from "@/lib/interfaces/interface";
 import { useQuery } from "@tanstack/react-query";
-import { Entity } from "../../../interface/entity.interface";
-import { EntityInstanceService } from "../../../service/entity-instance.service";
+import { Entity } from "../../interface/entity.interface";
+import { EntityService } from "../../service/entity.service";
 
-export function useEntityInstances(
+export function useEntity(
     organisationId: string,
     entityTypeKey: string
 ): AuthenticatedQueryResult<Entity[]> {
@@ -12,11 +12,7 @@ export function useEntityInstances(
     const query = useQuery({
         queryKey: ["entities", organisationId, entityTypeKey],
         queryFn: async () => {
-            return await EntityInstanceService.getEntitiesForType(
-                session,
-                organisationId,
-                entityTypeKey
-            );
+            return await EntityService.getEntitiesForType(session, organisationId, entityTypeKey);
         },
         staleTime: 5 * 60 * 1000, // 5 minutes
         enabled: !!session && !!organisationId && !!entityTypeKey && !loading,
@@ -30,3 +26,6 @@ export function useEntityInstances(
         ...query,
     };
 }
+
+
+

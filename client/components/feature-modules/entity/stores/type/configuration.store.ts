@@ -1,5 +1,5 @@
 import { UseFormReturn } from "react-hook-form";
-import { create } from "zustand";
+import { create, StoreApi } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { type EntityTypeFormValues } from "../../context/configuration-provider";
 import { EntityType } from "../../interface/entity.interface";
@@ -61,7 +61,7 @@ export const createEntityTypeConfigStore = (
     entityType: EntityType,
     form: UseFormReturn<EntityTypeFormValues>,
     updateMutation: (type: EntityType) => Promise<EntityType>
-) => {
+): StoreApi<EntityTypeConfigStore> => {
     const storageKey = `entity-type-draft-${entityTypeKey}`;
 
     return create<EntityTypeConfigStore>()(

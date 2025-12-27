@@ -4,7 +4,7 @@ import { api } from "@/lib/util/utils";
 import { Session } from "@supabase/supabase-js";
 import { Entity } from "../interface/entity.interface";
 
-export class EntityInstanceService {
+export class EntityService {
     /**
      * Create a new entity instance for a given entity type
      */
@@ -20,7 +20,7 @@ export class EntityInstanceService {
             const url = api();
 
             const response = await fetch(
-                `${url}/v1/entity/instance/organisation/${organisationId}/type/${encodeURIComponent(
+                `${url}/v1/entity/organisation/${organisationId}/type/${encodeURIComponent(
                     entityTypeKey
                 )}`,
                 {
@@ -37,8 +37,7 @@ export class EntityInstanceService {
 
             throw await handleError(
                 response,
-                (res) =>
-                    `Failed to create entity instance: ${res.status} ${res.statusText}`
+                (res) => `Failed to create entity instance: ${res.status} ${res.statusText}`
             );
         } catch (error) {
             if (isResponseError(error)) throw error;
@@ -47,7 +46,7 @@ export class EntityInstanceService {
     }
 
     /**
-     * Get all entity instances for a given entity type
+     * Get all entity instances
      */
     static async getEntitiesForType(
         session: Session | null,
@@ -60,7 +59,7 @@ export class EntityInstanceService {
             const url = api();
 
             const response = await fetch(
-                `${url}/v1/entity/instance/organisation/${organisationId}/type/${encodeURIComponent(
+                `${url}/v1/entity/organisation/${organisationId}/type/${encodeURIComponent(
                     entityTypeKey
                 )}`,
                 {
@@ -76,8 +75,45 @@ export class EntityInstanceService {
 
             throw await handleError(
                 response,
-                (res) =>
-                    `Failed to fetch entity instances: ${res.status} ${res.statusText}`
+                (res) => `Failed to fetch entity instances: ${res.status} ${res.statusText}`
+            );
+        } catch (error) {
+            if (isResponseError(error)) throw error;
+            throw fromError(error);
+        }
+    }
+
+    /**
+     * Get all entity instances for multiple keys
+     */
+    static async getEntitiesForTypes(
+        session: Session | null,
+        organisationId: string,
+        entityTypeKey: string[]
+    ): Promise<Record<string, Entity[]>> {
+        try {
+            validateSession(session);
+            validateUuid(organisationId);
+            const url = api();
+
+            const response = await fetch(
+                `${url}/v1/entity/organisation/${organisationId}?keys=${entityTypeKey
+                    .map((key) => encodeURIComponent(key))
+                    .join(",")}`,
+                {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${session.access_token}`,
+                    },
+                }
+            );
+
+            if (response.ok) return await response.json();
+
+            throw await handleError(
+                response,
+                (res) => `Failed to fetch entity instances: ${res.status} ${res.statusText}`
             );
         } catch (error) {
             if (isResponseError(error)) throw error;
@@ -108,7 +144,7 @@ export class EntityInstanceService {
             });
 
             const response = await fetch(
-                `${url}/v1/entity/instance/organisation/${organisationId}/type/${encodeURIComponent(
+                `${url}/v1/entity/organisation/${organisationId}/type/${encodeURIComponent(
                     entityTypeKey
                 )}/validate-unique?${queryParams}`,
                 {
@@ -127,8 +163,7 @@ export class EntityInstanceService {
 
             throw await handleError(
                 response,
-                (res) =>
-                    `Failed to validate unique value: ${res.status} ${res.statusText}`
+                (res) => `Failed to validate unique value: ${res.status} ${res.statusText}`
             );
         } catch (error) {
             if (isResponseError(error)) throw error;

@@ -5,7 +5,7 @@ import { User } from "@/components/feature-modules/user/interface/user.interface
 import {
     createOrganisationStore,
     type OrganisationStore,
-} from "@/stores/organisation/organisation.store";
+} from "@/components/feature-modules/organisation/store/organisation.store";
 import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
 import { useStore } from "zustand";
 

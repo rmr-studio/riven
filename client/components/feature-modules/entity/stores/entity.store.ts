@@ -1,11 +1,11 @@
-import { UseFormReturn } from "react-hook-form";
-import { create } from "zustand";
-import { subscribeWithSelector } from "zustand/middleware";
-import { Entity, EntityType } from "../../interface/entity.interface";
 import { buildDefaultValuesFromEntityType } from "@/lib/util/form/entity-instance-validation.util";
+import { UseFormReturn } from "react-hook-form";
+import { create, StoreApi } from "zustand";
+import { subscribeWithSelector } from "zustand/middleware";
+import { Entity, EntityType } from "../interface/entity.interface";
 
 // State interface
-interface EntityInstanceDraftState {
+interface EntityDraftState {
     // Organization and entity type data
     organisationId: string;
     entityType: EntityType;
@@ -24,7 +24,7 @@ interface EntityInstanceDraftState {
 }
 
 // Actions interface
-interface EntityInstanceDraftActions {
+interface EntityDraftActions {
     // Enter draft mode (initialize new entity draft)
     enterDraftMode: () => void;
 
@@ -47,18 +47,18 @@ interface EntityInstanceDraftActions {
     resetDraft: () => void;
 }
 
-export type EntityInstanceDraftStore = EntityInstanceDraftState & EntityInstanceDraftActions;
+export type EntityDraftStore = EntityDraftState & EntityDraftActions;
 
 // Store factory (per-entity-type instances)
-export const createEntityInstanceDraftStore = (
+export const createEntityDraftStore = (
     organisationId: string,
     entityType: EntityType,
     form: UseFormReturn<Record<string, any>>,
     createMutation: (payload: Record<string, any>) => Promise<Entity>
-) => {
+): StoreApi<EntityDraftStore> => {
     const storageKey = `entity-instance-draft-${organisationId}-${entityType.key}`;
 
-    return create<EntityInstanceDraftStore>()(
+    return create<EntityDraftStore>()(
         subscribeWithSelector((set, get) => ({
             // Initial state
             organisationId,
@@ -173,4 +173,4 @@ export const createEntityInstanceDraftStore = (
 };
 
 // Export store API type for TypeScript
-export type EntityInstanceDraftStoreApi = ReturnType<typeof createEntityInstanceDraftStore>;
+export type EntityDraftStoreApi = ReturnType<typeof createEntityDraftStore>;

@@ -1,27 +1,28 @@
 "use client";
 
-import { FC, useState } from "react";
 import { SchemaUUID } from "@/lib/interfaces/common.interface";
-import { useDraftForm } from "../../../context/entity-instance-draft-provider";
-import { useValidateUniqueMutation } from "../../../hooks/mutation/instance/use-validate-unique-mutation";
-import { getWidgetForSchema } from "./entity-instance-field-registry";
-import { useOrganisationId } from "@/components/feature-modules/organisation/hooks/use-organisation-id";
 import { Loader2 } from "lucide-react";
+import { useParams } from "next/navigation";
+import { FC, useState } from "react";
+import { useDraftForm } from "../../../context/entity-provider";
+import { useValidateUniqueMutation } from "../../../hooks/mutation/instance/use-validate-unique-mutation";
+import { getWidgetForSchema } from "./entity-field-registry";
 
-export interface EntityInstanceFieldCellProps {
+export interface EntityFieldCellProps {
     attributeId: string;
     schema: SchemaUUID;
     entityTypeKey: string;
 }
 
-export const EntityInstanceFieldCell: FC<EntityInstanceFieldCellProps> = ({
+export const EntityFieldCell: FC<EntityFieldCellProps> = ({
     attributeId,
     schema,
+
     entityTypeKey,
 }) => {
     const form = useDraftForm();
-    const organisationId = useOrganisationId();
     const [isValidatingUnique, setIsValidatingUnique] = useState(false);
+    const { organisationId } = useParams<{ organisationId: string }>();
 
     // Get current value and errors from form
     const value = form.watch(attributeId);

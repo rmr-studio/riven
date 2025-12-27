@@ -1,8 +1,8 @@
 "use client";
-import { useEntityTypes } from "@/components/feature-modules/entity/hooks/query/use-entity-types";
+import { useEntityTypes } from "@/components/feature-modules/entity/hooks/query/type/use-entity-types";
 import { Organisation } from "@/components/feature-modules/organisation/interface/organisation.interface";
+import { useOrganisationStore } from "@/components/feature-modules/organisation/provider/organisation-provider";
 import { useProfile } from "@/components/feature-modules/user/hooks/useProfile";
-import { useOrganisationStore } from "@/components/provider/OrganisationContext";
 import { SidebarGroupProps } from "@/lib/interfaces/interface";
 import { DropdownMenuGroup } from "@radix-ui/react-dropdown-menu";
 import {

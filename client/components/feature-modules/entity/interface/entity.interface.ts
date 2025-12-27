@@ -1,5 +1,11 @@
 import { Icon, SchemaUUID } from "@/lib/interfaces/common.interface";
-import { components, DataType, EntityPropertyType, EntityRelationshipCardinality, SchemaType } from "@/lib/types/types";
+import {
+    components,
+    DataType,
+    EntityPropertyType,
+    EntityRelationshipCardinality,
+    SchemaType,
+} from "@/lib/types/types";
 
 export type EntityType = components["schemas"]["EntityType"];
 export type EntityTypeOrderingKey = components["schemas"]["EntityTypeOrderingKey"];
@@ -54,8 +60,10 @@ export type SaveAttributeDefinitionRequest =
     components["schemas"]["SaveAttributeDefinitionRequest"];
 
 export type DeleteTypeDefinitionRequest = components["schemas"]["DeleteTypeDefinitionRequest"];
-export type DeleteAttributeDefinitionRequest = components["schemas"]["DeleteAttributeDefinitionRequest"];
-export type DeleteRelationshipDefinitionRequest = components["schemas"]["DeleteRelationshipDefinitionRequest"];
+export type DeleteAttributeDefinitionRequest =
+    components["schemas"]["DeleteAttributeDefinitionRequest"];
+export type DeleteRelationshipDefinitionRequest =
+    components["schemas"]["DeleteRelationshipDefinitionRequest"];
 
 export interface EntityAttributeDefinition {
     id: string;
@@ -79,34 +87,6 @@ export interface EntityTypeAttributeRow {
     entityTypeKeys?: string[];
     allowPolymorphic?: boolean;
     bidirectional?: boolean;
-}
-
-// ===== Entity Instance Draft Types =====
-
-import { UseFormReturn } from "react-hook-form";
-import { SchemaUUID } from "@/lib/interfaces/common.interface";
-
-/**
- * Entity instance draft store interface
- * Manages state for creating new entity instances with inline editing
- */
-export interface EntityInstanceDraftStore {
-    // State
-    organisationId: string;
-    entityType: EntityType;
-    isDraftMode: boolean;
-    draftValues: Record<string, any> | null;
-    lastModifiedAt: number | null;
-    form: UseFormReturn<Record<string, any>>;
-
-    // Actions
-    enterDraftMode: () => void;
-    exitDraftMode: () => void;
-    saveDraft: (values: Record<string, any>) => void;
-    loadDraft: () => Record<string, any> | null;
-    clearDraft: () => void;
-    submitDraft: () => Promise<Entity>;
-    resetDraft: () => void;
 }
 
 /**

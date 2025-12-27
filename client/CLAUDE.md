@@ -374,6 +374,112 @@ throw await handleError(response, (res) => `Failed: ${res.status} ${res.statusTe
 - Let errors propagate to mutation hooks
 - Display errors via toast notifications
 
+#### 9. Form Management Patterns
+
+**Choose between two approaches based on complexity:**
+
+**Form Hook Pattern** - For isolated components with minimal prop drilling:
+
+```typescript
+// hooks/form/use-relationship-form.ts
+export interface UseEntityRelationshipFormReturn {
+    form: UseFormReturn<RelationshipFormValues>;
+    handleSubmit: (values: RelationshipFormValues) => void;
+    handleReset: () => void;
+    mode: "create" | "edit";
+}
+
+export function useEntityTypeRelationshipForm(
+    organisationId: string,
+    type: EntityType,
+    open: boolean,
+    onSave: () => void,
+    onCancel: () => void,
+    relationship?: EntityRelationshipDefinition
+): UseEntityRelationshipFormReturn {
+    const form = useForm<RelationshipFormValues>({
+        resolver: zodResolver(relationFormSchema),
+        defaultValues: { /* ... */ },
+    });
+
+    const { mutateAsync: saveDefinition } = useSaveDefinitionMutation(organisationId, {
+        onSuccess: () => onSave(),
+    });
+
+    const handleSubmit = useCallback(async (values: RelationshipFormValues) => {
+        // Transform and submit data
+        await saveDefinition(request);
+    }, [relationship, type]);
+
+    return { form, handleSubmit, handleReset: onCancel, mode: relationship ? "edit" : "create" };
+}
+```
+
+**Context Provider Pattern** - For global forms spanning multiple components:
+
+```typescript
+// context/configuration-provider.tsx
+const EntityTypeConfigContext = createContext<EntityTypeConfigStoreApi | undefined>(undefined);
+
+export const EntityTypeConfigurationProvider = ({
+    children,
+    organisationId,
+    entityType,
+}: EntityTypeConfigurationProviderProps) => {
+    const storeRef = useRef<EntityTypeConfigStoreApi | null>(null);
+
+    // Create form instance
+    const form = useForm<EntityTypeFormValues>({
+        resolver: zodResolver(entityTypeFormSchema),
+        defaultValues: { /* ... */ },
+    });
+
+    // Create mutation function
+    const { mutateAsync: updateType } = useSaveEntityTypeConfiguration(organisationId);
+
+    // Create store only once per entity type
+    if (!storeRef.current) {
+        storeRef.current = createEntityTypeConfigStore(
+            entityType.key,
+            organisationId,
+            entityType,
+            form,
+            updateType
+        );
+    }
+
+    // Auto-save and draft management effects
+    useEffect(() => {
+        const store = storeRef.current?.getState();
+        if (!store) return;
+
+        // Draft restoration logic
+        const draft = store.loadDraft();
+        if (draft) {
+            toast.info("Unsaved changes found", {
+                action: { label: "Restore", onClick: () => form.reset(draft) },
+            });
+        }
+    }, [entityType.key]);
+
+    return (
+        <EntityTypeConfigContext.Provider value={storeRef.current}>
+            {children}
+        </EntityTypeConfigContext.Provider>
+    );
+};
+
+// Hook to access form from any child component
+export const useConfigForm = () => {
+    return useEntityTypeConfigurationStore((state) => state.form);
+};
+```
+
+**When to use each pattern:**
+
+- **Form Hook:** Modal forms, isolated components, single-level usage, simple workflows
+- **Context Provider:** Multi-step forms, forms with nested components at different levels, global state needed, complex draft/auto-save requirements
+
 ## 6. Key Domain Concepts
 
 ### Entity Type System

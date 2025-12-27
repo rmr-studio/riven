@@ -1,37 +1,35 @@
 "use client";
 
+import { buildZodSchemaFromEntityType } from "@/lib/util/form/entity-instance-validation.util";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 import { useStore } from "zustand";
-import { buildZodSchemaFromEntityType } from "@/lib/util/form/entity-instance-validation.util";
 import { useCreateEntityMutation } from "../hooks/mutation/instance/use-create-entity-mutation";
 import { Entity, EntityType } from "../interface/entity.interface";
 import {
-    createEntityInstanceDraftStore,
-    EntityInstanceDraftStore,
-    EntityInstanceDraftStoreApi,
-} from "../stores/instance/draft.store";
+    createEntityDraftStore,
+    EntityDraftStore,
+    EntityDraftStoreApi,
+} from "../stores/entity.store";
 
-const EntityInstanceDraftContext = createContext<EntityInstanceDraftStoreApi | undefined>(
-    undefined
-);
+const EntityDraftContext = createContext<EntityDraftStoreApi | undefined>(undefined);
 
-export interface EntityInstanceDraftProviderProps {
+export interface EntityDraftProviderProps {
     children: ReactNode;
     organisationId: string;
     entityType: EntityType;
     onEntityCreated?: (entity: Entity) => void;
 }
 
-export const EntityInstanceDraftProvider = ({
+export const EntityDraftProvider = ({
     children,
     organisationId,
     entityType,
     onEntityCreated,
-}: EntityInstanceDraftProviderProps) => {
-    const storeRef = useRef<EntityInstanceDraftStoreApi | null>(null);
+}: EntityDraftProviderProps) => {
+    const storeRef = useRef<EntityDraftStoreApi | null>(null);
     const unsavedToastRef = useRef<string | number | undefined>(undefined);
 
     // Build dynamic Zod schema from entity type
@@ -48,24 +46,15 @@ export const EntityInstanceDraftProvider = ({
     });
 
     // Create mutation for entity creation
-    const { mutateAsync: createEntity } = useCreateEntityMutation(
-        organisationId,
-        entityType.key,
-        {
-            onSuccess: (entity) => {
-                onEntityCreated?.(entity);
-            },
-        }
-    );
+    const { mutateAsync: createEntity } = useCreateEntityMutation(organisationId, entityType.key, {
+        onSuccess: (entity) => {
+            onEntityCreated?.(entity);
+        },
+    });
 
     // Create store only once per entity type
     if (!storeRef.current) {
-        storeRef.current = createEntityInstanceDraftStore(
-            organisationId,
-            entityType,
-            form,
-            createEntity
-        );
+        storeRef.current = createEntityDraftStore(organisationId, entityType, form, createEntity);
     }
 
     // Load draft and prompt restoration on mount
@@ -128,22 +117,18 @@ export const EntityInstanceDraftProvider = ({
     }, [form]);
 
     return (
-        <EntityInstanceDraftContext.Provider value={storeRef.current}>
+        <EntityDraftContext.Provider value={storeRef.current}>
             <FormProvider {...form}>{children}</FormProvider>
-        </EntityInstanceDraftContext.Provider>
+        </EntityDraftContext.Provider>
     );
 };
 
 // Hook to access store with selector
-export const useEntityInstanceDraftStore = <T,>(
-    selector: (store: EntityInstanceDraftStore) => T
-): T => {
-    const context = useContext(EntityInstanceDraftContext);
+export const useEntityDraftStore = <T,>(selector: (store: EntityDraftStore) => T): T => {
+    const context = useContext(EntityDraftContext);
 
     if (!context) {
-        throw new Error(
-            "useEntityInstanceDraftStore must be used within EntityInstanceDraftProvider"
-        );
+        throw new Error("useEntityDraftStore must be used within EntityDraftProvider");
     }
 
     return useStore(context, selector);
@@ -151,7 +136,7 @@ export const useEntityInstanceDraftStore = <T,>(
 
 // Optimized hook for accessing draft mode state
 export const useIsDraftMode = () => {
-    return useEntityInstanceDraftStore((state) => state.isDraftMode);
+    return useEntityDraftStore((state) => state.isDraftMode);
 };
 
 // Hook to access the form context

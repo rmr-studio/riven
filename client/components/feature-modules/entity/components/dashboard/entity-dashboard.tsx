@@ -3,49 +3,44 @@
 import { useOrganisation } from "@/components/feature-modules/organisation/hooks/use-organisation";
 import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-group";
 import { isResponseError } from "@/lib/util/error/error.util";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useRouter } from "next/router";
 import { useEffect } from "react";
-import { EntityTypeConfigurationProvider } from "../../context/configuration-provider";
 import { useEntityTypeByKey } from "../../hooks/query/type/use-entity-types";
-import { EntityTypeOverview } from "../types/entity-type";
+import { useEntity } from "../../hooks/query/use-entities";
+import EntityDataTable from "../tables/entity-data-table";
 
-export const EntityTypeOverviewDashboard = () => {
+export const EntityDashboard = () => {
     const { data: organisation } = useOrganisation();
-    const params = useParams<{ organisationId: string; key: string }>();
-    const { organisationId, key } = params;
+    const { organisationId, key: typeKey } = useParams<{ organisationId: string; key: string }>();
     const router = useRouter();
     const {
         data: entityType,
-        isPending,
-        error,
+        isPending: isPendingEntityType,
+        error: entityTypeError,
         isLoadingAuth,
-    } = useEntityTypeByKey(key, organisationId);
+    } = useEntityTypeByKey(typeKey, organisationId);
+    const {
+        data: entities,
+        isPending: isPendingEntities,
+        error: entitiesError,
+    } = useEntity(organisationId, typeKey);
 
     useEffect(() => {
         // Query has finished, organisation has not been found. Redirect back to organisation view with associated error
-        if (!isPending && !entityType) {
-            if (!error || !isResponseError(error)) {
+        if (!isPendingEntityType && !entityType) {
+            if (!entityTypeError || !isResponseError(entityTypeError)) {
                 router.push("/dashboard/organisation/");
                 return;
             }
 
             // Query has returned an ID we can use to route to a valid error message
-            const responseError = error;
+            const responseError = entityTypeError;
             router.push(
                 `/dashboard/organisation/${organisationId}/entity?error=${responseError.error}`
             );
         }
-    }, [isPending, isLoadingAuth, entityType, error, router]);
-
-    if (isPending) {
-        return (
-            <div className="py-6 px-12">
-                <div>Loading entity type...</div>
-            </div>
-        );
-    }
-
-    if (!entityType) return null;
+    }, [isPendingEntityType, isLoadingAuth, entityType, entityTypeError, router]);
 
     const trail: BreadCrumbTrail[] = [
         { label: "Home", href: "/dashboard" },
@@ -63,10 +58,6 @@ export const EntityTypeOverviewDashboard = () => {
             label: entityType.name.plural,
             href: `/dashboard/organisation/${organisationId}/entity/${entityType.key}`,
         },
-        {
-            label: "Settings",
-            href: `/dashboard/organisation/${organisationId}/entity/${entityType.key}/settings`,
-        },
     ];
 
     return (
@@ -75,12 +66,11 @@ export const EntityTypeOverviewDashboard = () => {
                 <BreadCrumbGroup items={trail} />
             </header>
             <section>
-                <EntityTypeConfigurationProvider
-                    organisationId={organisationId}
+                <EntityDataTable
                     entityType={entityType}
-                >
-                    <EntityTypeOverview organisationId={organisationId} entityType={entityType} />
-                </EntityTypeConfigurationProvider>
+                    entities={entities || []}
+                    loadingEntities={isPendingEntities || isLoadingAuth}
+                />
             </section>
         </div>
     );

@@ -1,5 +1,5 @@
 import { useEntityTypeRelationshipForm } from "@/components/feature-modules/entity/hooks/form/type/use-relationship-form";
-import { useEntityTypes } from "@/components/feature-modules/entity/hooks/query/use-entity-types";
+import { useEntityTypes } from "@/components/feature-modules/entity/hooks/query/type/use-entity-types";
 import { Button } from "@/components/ui/button";
 import {
     Form,
@@ -26,8 +26,8 @@ import {
     getInverseCardinality,
     processCardinalityToLimits,
 } from "../../../../util/relationship.util";
-import { EntityTypeMultiSelect } from "../../entity-type-multi-select";
 import { RelationshipOverlapAlert } from "../../relationship-overlap-alert";
+import { EntityTypeMultiSelect } from "./entity-type-multi-select";
 import { RelationshipLink } from "./relationship-links";
 
 interface Props {
@@ -125,7 +125,7 @@ export const RelationshipAttributeForm: FC<Props> = ({
     );
 
     // Handler for navigating to target entity to edit relationship
-    // todo go back and fix this 
+    // todo go back and fix this
     const handleNavigateToTarget = useCallback(
         (targetEntityKey: string, relationshipKey: string) => {
             // Store suggestion in sessionStorage for target entity editor

@@ -30,8 +30,8 @@ import { FC, useEffect } from "react";
 import {
     NewEntityTypeFormValues,
     useNewEntityTypeForm,
-} from "../../hooks/form/type/use-new-type-form";
-import { EntityType } from "../../interface/entity.interface";
+} from "../../../hooks/form/type/use-new-type-form";
+import { EntityType } from "../../../interface/entity.interface";
 
 interface Props extends ChildNodeProps {
     entityTypes?: EntityType[];

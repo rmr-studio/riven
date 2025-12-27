@@ -1,4 +1,4 @@
-import { useRelationshipCandidates } from "@/components/feature-modules/entity/hooks/query/use-relationship-candidates";
+import { useRelationshipCandidates } from "@/components/feature-modules/entity/hooks/query/type/use-relationship-candidates";
 import {
     EntityRelationshipDefinition,
     EntityType,

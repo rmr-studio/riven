@@ -1,6 +1,6 @@
 import { useOrganisation } from "@/components/feature-modules/organisation/hooks/use-organisation";
 import { EntityTypeRelationshipType } from "@/lib/types/types";
-import { EntityRelationshipCandidate, EntityType } from "../../interface/entity.interface";
+import { EntityRelationshipCandidate, EntityType } from "../../../interface/entity.interface";
 import { useEntityTypes } from "./use-entity-types";
 
 interface UseRelationshipCandidatesReturn {

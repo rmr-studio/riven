@@ -1,6 +1,6 @@
 "use client";
 
-import { useOrganisationStore } from "@/components/provider/OrganisationContext";
+import { useOrganisationStore } from "@/components/feature-modules/organisation/provider/organisation-provider";
 import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-group";
 import { isResponseError } from "@/lib/util/error/error.util";
 import { useRouter } from "next/navigation";

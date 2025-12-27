@@ -1,24 +1,21 @@
 "use client";
 
-import { FC, useState } from "react";
-import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { TableCell, TableRow } from "@/components/ui/table";
 import { Check, X } from "lucide-react";
+import { FC, useState } from "react";
 import { toast } from "sonner";
+import { useDraftForm, useEntityDraftStore } from "../../context/entity-provider";
 import { EntityType } from "../../interface/entity.interface";
-import { useEntityInstanceDraftStore } from "../../context/entity-instance-draft-provider";
-import { useDraftForm } from "../../context/entity-instance-draft-provider";
-import { EntityInstanceFieldCell } from "../forms/instance/entity-instance-field-cell";
-import { EntityInstanceRelationshipPicker } from "../forms/instance/entity-instance-relationship-picker";
+import { EntityFieldCell } from "../forms/instance/entity-field-cell";
+import { EntityRelationshipPicker } from "../forms/instance/entity-relationship-picker";
 
-export interface EntityInstanceDraftRowProps {
+export interface EntityDraftRowProps {
     entityType: EntityType;
 }
 
-export const EntityInstanceDraftRow: FC<EntityInstanceDraftRowProps> = ({
-    entityType,
-}) => {
-    const { submitDraft, resetDraft } = useEntityInstanceDraftStore((state) => ({
+export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType }) => {
+    const { submitDraft, resetDraft } = useEntityDraftStore((state) => ({
         submitDraft: state.submitDraft,
         resetDraft: state.resetDraft,
     }));
@@ -32,8 +29,7 @@ export const EntityInstanceDraftRow: FC<EntityInstanceDraftRowProps> = ({
             await submitDraft();
             toast.success("Entity created successfully!");
         } catch (error) {
-            const message =
-                error instanceof Error ? error.message : "Failed to create entity";
+            const message = error instanceof Error ? error.message : "Failed to create entity";
             toast.error(message);
         } finally {
             setIsSubmitting(false);
@@ -48,7 +44,7 @@ export const EntityInstanceDraftRow: FC<EntityInstanceDraftRowProps> = ({
     const attributeCells = Object.entries(entityType.schema.properties || {}).map(
         ([attributeId, schema]) => (
             <TableCell key={attributeId} className="border-dashed p-2">
-                <EntityInstanceFieldCell
+                <EntityFieldCell
                     attributeId={attributeId}
                     schema={schema}
                     entityTypeKey={entityType.key}
@@ -61,7 +57,7 @@ export const EntityInstanceDraftRow: FC<EntityInstanceDraftRowProps> = ({
     const relationshipCells =
         entityType.relationships?.map((relationship) => (
             <TableCell key={relationship.id} className="border-dashed p-2">
-                <EntityInstanceRelationshipPicker relationship={relationship} />
+                <EntityRelationshipPicker relationship={relationship} />
             </TableCell>
         )) ?? [];
 
@@ -90,9 +86,7 @@ export const EntityInstanceDraftRow: FC<EntityInstanceDraftRowProps> = ({
                         onClick={handleSubmit}
                         disabled={isSubmitting || hasErrors}
                         title={
-                            hasErrors
-                                ? "Please fix validation errors"
-                                : "Submit and create entity"
+                            hasErrors ? "Please fix validation errors" : "Submit and create entity"
                         }
                     >
                         <Check className="h-4 w-4" />

@@ -1,14 +1,9 @@
 "use client";
 
-import { FC } from "react";
-import { useQueries } from "@tanstack/react-query";
-import { EntityRelationshipCardinality } from "@/lib/types/types";
 import { useAuth } from "@/components/provider/auth-context";
-import { useOrganisationId } from "@/components/feature-modules/organisation/hooks/use-organisation-id";
-import { EntityRelationshipDefinition } from "../../../interface/entity.interface";
-import { EntityInstanceService } from "../../../service/entity-instance.service";
-import { useDraftForm } from "../../../context/entity-instance-draft-provider";
-import { getEntityDisplayName } from "../../../components/tables/entity-instance-table-utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
     Select,
     SelectContent,
@@ -16,42 +11,52 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import { EntityRelationshipCardinality } from "@/lib/types/types";
+import { useQueries } from "@tanstack/react-query";
 import { Loader2, X } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { useParams } from "next/navigation";
+import { FC, useMemo } from "react";
+import { useDraftForm } from "../../../context/entity-provider";
+import { useEntityTypes } from "../../../hooks/query/type/use-entity-types";
+import { EntityRelationshipDefinition, EntityType } from "../../../interface/entity.interface";
+import { EntityService } from "../../../service/entity.service";
+import { getEntityDisplayName } from "../../tables/entity-table-utils";
 
-export interface EntityInstanceRelationshipPickerProps {
+export interface EntityRelationshipPickerProps {
     relationship: EntityRelationshipDefinition;
 }
 
-export const EntityInstanceRelationshipPicker: FC<
-    EntityInstanceRelationshipPickerProps
-> = ({ relationship }) => {
+export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ relationship }) => {
     const form = useDraftForm();
     const { session } = useAuth();
-    const organisationId = useOrganisationId();
-
+    const { organisationId } = useParams<{ organisationId: string }>();
     const fieldName = relationship.id;
     const value = form.watch(fieldName);
     const fieldError = form.formState.errors[fieldName];
     const errors = fieldError?.message ? [String(fieldError.message)] : undefined;
+
+    const { data: entityTypes } = useEntityTypes(organisationId);
 
     // Determine if single or multi select
     const isSingleSelect =
         relationship.cardinality === EntityRelationshipCardinality.ONE_TO_ONE ||
         relationship.cardinality === EntityRelationshipCardinality.MANY_TO_ONE;
 
+    const types: EntityType[] = useMemo(() => {
+        return (
+            (relationship.allowPolymorphic
+                ? entityTypes
+                : entityTypes?.filter((et) =>
+                      (relationship.entityTypeKeys ?? []).includes(et.key)
+                  )) ?? []
+        );
+    }, [entityTypes, relationship]);
+
     // Load entities for all target types
     const entitiesQueries = useQueries({
-        queries: relationship.entityTypeKeys.map((typeKey) => ({
+        queries: types.map(type => type.key).map((key) => ({
             queryKey: ["entities", organisationId, typeKey],
-            queryFn: () =>
-                EntityInstanceService.getEntitiesForType(
-                    session,
-                    organisationId,
-                    typeKey
-                ),
+            queryFn: () => EntityService.getEntitiesForType(session, organisationId, typeKey),
             enabled: !!session && !!organisationId,
         })),
         combine: (results) => {
@@ -93,11 +98,7 @@ export const EntityInstanceRelationshipPicker: FC<
     }
 
     if (entitiesQueries.isError) {
-        return (
-            <div className="text-sm text-destructive">
-                Failed to load entities
-            </div>
-        );
+        return <div className="text-sm text-destructive">Failed to load entities</div>;
     }
 
     const entities = entitiesQueries.data || [];
@@ -106,9 +107,7 @@ export const EntityInstanceRelationshipPicker: FC<
     if (isSingleSelect) {
         return (
             <div className="space-y-2">
-                <Label className={errors ? "text-destructive" : ""}>
-                    {relationship.name}
-                </Label>
+                <Label className={errors ? "text-destructive" : ""}>{relationship.name}</Label>
                 <Select
                     value={value || undefined}
                     onValueChange={handleChange}
@@ -145,18 +144,12 @@ export const EntityInstanceRelationshipPicker: FC<
     }
 
     // Multi-select rendering
-    const selectedEntities = entities.filter((e) =>
-        (value || []).includes(e.id)
-    );
-    const availableEntities = entities.filter(
-        (e) => !(value || []).includes(e.id)
-    );
+    const selectedEntities = entities.filter((e) => (value || []).includes(e.id));
+    const availableEntities = entities.filter((e) => !(value || []).includes(e.id));
 
     return (
         <div className="space-y-2">
-            <Label className={errors ? "text-destructive" : ""}>
-                {relationship.name}
-            </Label>
+            <Label className={errors ? "text-destructive" : ""}>{relationship.name}</Label>
 
             {/* Selected entities */}
             {selectedEntities.length > 0 && (
@@ -193,8 +186,8 @@ export const EntityInstanceRelationshipPicker: FC<
                                 entities.length === 0
                                     ? "No entities available"
                                     : selectedEntities.length > 0
-                                      ? `Add another ${relationship.name.toLowerCase()}...`
-                                      : `Select ${relationship.name.toLowerCase()}...`
+                                    ? `Add another ${relationship.name.toLowerCase()}...`
+                                    : `Select ${relationship.name.toLowerCase()}...`
                             }
                         />
                     </SelectTrigger>
@@ -209,9 +202,7 @@ export const EntityInstanceRelationshipPicker: FC<
             )}
 
             {selectedEntities.length === 0 && availableEntities.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                    No entities available
-                </p>
+                <p className="text-sm text-muted-foreground">No entities available</p>
             )}
 
             {errors && (

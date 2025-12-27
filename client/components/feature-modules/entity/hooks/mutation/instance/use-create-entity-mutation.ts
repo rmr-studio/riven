@@ -3,7 +3,7 @@ import { useMutation, useQueryClient, type UseMutationOptions } from "@tanstack/
 import { useRef } from "react";
 import { toast } from "sonner";
 import { Entity } from "../../../interface/entity.interface";
-import { EntityInstanceService } from "../../../service/entity-instance.service";
+import { EntityService } from "../../../service/entity.service";
 
 export function useCreateEntityMutation(
     organisationId: string,
@@ -16,7 +16,7 @@ export function useCreateEntityMutation(
 
     return useMutation({
         mutationFn: (payload: Record<string, any>) =>
-            EntityInstanceService.createEntity(session, organisationId, entityTypeKey, payload),
+            EntityService.createEntity(session, organisationId, entityTypeKey, payload),
         onMutate: (data) => {
             options?.onMutate?.(data);
             submissionToastRef.current = toast.loading("Creating entity...");

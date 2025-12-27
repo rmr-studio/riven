@@ -1,31 +1,31 @@
 "use client";
 
-import { DataTable, ColumnFilter, RowActionsConfig } from "@/components/ui/data-table";
-import { ColumnDef, Row } from "@tanstack/react-table";
-import { FC, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { ColumnFilter, DataTable, RowActionsConfig } from "@/components/ui/data-table";
+import { ColumnDef, Row } from "@tanstack/react-table";
 import { Plus } from "lucide-react";
-import { Entity, EntityType } from "../../interface/entity.interface";
+import { useParams } from "next/navigation";
+import { FC, useMemo } from "react";
 import {
-    EntityInstanceRow,
+    EntityDraftProvider,
+    useEntityDraftStore,
+    useIsDraftMode,
+} from "../../context/entity-provider";
+import { Entity, EntityType } from "../../interface/entity.interface";
+import { EntityDraftRow } from "./entity-draft-row";
+import {
+    EntityRow,
     applyColumnOrdering,
     generateColumnsFromEntityType,
     generateFiltersFromEntityType,
     generateSearchConfigFromEntityType,
     transformEntitiesToRows,
-} from "./entity-instance-table-utils.tsx";
-import {
-    EntityInstanceDraftProvider,
-    useEntityInstanceDraftStore,
-    useIsDraftMode,
-} from "../../context/entity-instance-draft-provider";
-import { EntityInstanceDraftRow } from "./entity-instance-draft-row";
-import { useOrganisationId } from "@/components/feature-modules/organisation/hooks/use-organisation-id";
+} from "./entity-table-utils";
 
-export interface EntityInstanceDataTableProps {
+export interface EntityDataTableProps {
     entityType: EntityType;
     entities: Entity[];
-
+    loadingEntities?: boolean;
     // Feature toggles
     enableSearch?: boolean;
     enableFilters?: boolean;
@@ -35,9 +35,9 @@ export interface EntityInstanceDataTableProps {
 
     // Customization
     includeRelationships?: boolean;
-    customColumns?: ColumnDef<EntityInstanceRow>[];
-    customFilters?: ColumnFilter<EntityInstanceRow>[];
-    rowActions?: RowActionsConfig<EntityInstanceRow>;
+    customColumns?: ColumnDef<EntityRow>[];
+    customFilters?: ColumnFilter<EntityRow>[];
+    rowActions?: RowActionsConfig<EntityRow>;
     selectFilterThreshold?: number;
 
     // Callbacks
@@ -51,9 +51,10 @@ export interface EntityInstanceDataTableProps {
 }
 
 // Internal component with draft mode hooks
-const EntityInstanceDataTableInternal: FC<EntityInstanceDataTableProps> = ({
+const EntityDataTableInternal: FC<EntityDataTableProps> = ({
     entityType,
     entities,
+    loadingEntities,
     enableSearch = true,
     enableFilters = true,
     enableSorting = true,
@@ -78,7 +79,7 @@ const EntityInstanceDataTableInternal: FC<EntityInstanceDataTableProps> = ({
 
         // Prepend draft row placeholder when in draft mode
         if (isDraftMode) {
-            const draftRow: EntityInstanceRow = {
+            const draftRow: EntityRow = {
                 _entityId: "_draft",
                 _entity: null as any, // Special case for draft
             };
@@ -104,11 +105,7 @@ const EntityInstanceDataTableInternal: FC<EntityInstanceDataTableProps> = ({
             return customFilters;
         }
 
-        return generateFiltersFromEntityType(
-            entityType,
-            entities,
-            selectFilterThreshold
-        );
+        return generateFiltersFromEntityType(entityType, entities, selectFilterThreshold);
     }, [entityType, entities, customFilters, selectFilterThreshold]);
 
     // Generate search configuration
@@ -117,14 +114,14 @@ const EntityInstanceDataTableInternal: FC<EntityInstanceDataTableProps> = ({
     }, [entityType]);
 
     // Handle row click to return full entity object
-    const handleRowClick = (row: Row<EntityInstanceRow>) => {
+    const handleRowClick = (row: Row<EntityRow>) => {
         if (onRowClick) {
             onRowClick(row.original._entity);
         }
     };
 
     // Handle reorder to return entities array
-    const handleReorder = (reorderedRows: EntityInstanceRow[]) => {
+    const handleReorder = (reorderedRows: EntityRow[]) => {
         if (onReorder) {
             const reorderedEntities = reorderedRows.map((row) => row._entity);
             onReorder(reorderedEntities);
@@ -144,15 +141,11 @@ const EntityInstanceDataTableInternal: FC<EntityInstanceDataTableProps> = ({
                 enableDragDrop={enableDragDrop}
                 onReorder={handleReorder}
                 getRowId={(row) => row._entityId}
-                search={
-                    enableSearch && searchableColumns.length > 0
-                        ? {
-                              enabled: true,
-                              searchableColumns,
-                              placeholder: "Search entities...",
-                          }
-                        : undefined
-                }
+                search={{
+                    enabled: enableSearch && searchableColumns.length > 0,
+                    searchableColumns,
+                    placeholder: "Search entities...",
+                }}
                 filter={
                     enableFilters && filters.length > 0
                         ? {
@@ -169,7 +162,7 @@ const EntityInstanceDataTableInternal: FC<EntityInstanceDataTableProps> = ({
                     enableDraftMode
                         ? (row) => {
                               if (row.original._entityId === "_draft") {
-                                  return <EntityInstanceDraftRow entityType={entityType} />;
+                                  return <EntityDraftRow entityType={entityType} />;
                               }
                               return null; // Use default row rendering
                           }
@@ -182,7 +175,7 @@ const EntityInstanceDataTableInternal: FC<EntityInstanceDataTableProps> = ({
 
 // Draft mode controls component
 const DraftModeControls: FC = () => {
-    const { isDraftMode, enterDraftMode } = useEntityInstanceDraftStore((state) => ({
+    const { isDraftMode, enterDraftMode } = useEntityDraftStore((state) => ({
         isDraftMode: state.isDraftMode,
         enterDraftMode: state.enterDraftMode,
     }));
@@ -200,24 +193,24 @@ const DraftModeControls: FC = () => {
 };
 
 // Main export component with conditional provider
-export const EntityInstanceDataTable: FC<EntityInstanceDataTableProps> = (props) => {
-    const organisationId = useOrganisationId();
-
+export const EntityDataTable: FC<EntityDataTableProps> = ({ ...props }) => {
+    const { onEntityCreated, entityType } = props;
+    const { organisationId } = useParams<{ organisationId: string }>();
     // If draft mode is enabled, wrap with provider
     if (props.enableDraftMode) {
         return (
-            <EntityInstanceDraftProvider
+            <EntityDraftProvider
                 organisationId={organisationId}
-                entityType={props.entityType}
-                onEntityCreated={props.onEntityCreated}
+                entityType={entityType}
+                onEntityCreated={onEntityCreated}
             >
-                <EntityInstanceDataTableInternal {...props} />
-            </EntityInstanceDraftProvider>
+                <EntityDataTableInternal {...props} />
+            </EntityDraftProvider>
         );
     }
 
     // Otherwise render directly
-    return <EntityInstanceDataTableInternal {...props} />;
+    return <EntityDataTableInternal {...props} />;
 };
 
-export default EntityInstanceDataTable;
+export default EntityDataTable;

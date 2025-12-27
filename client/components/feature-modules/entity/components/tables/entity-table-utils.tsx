@@ -7,7 +7,7 @@ import { ReactNode } from "react";
 import { Entity, EntityType, EntityTypeOrderingKey } from "../../interface/entity.interface";
 
 // Row type for entity instance data table
-export interface EntityInstanceRow {
+export interface EntityRow {
     _entityId: string;
     _entity: Entity;
     [attributeId: string]: any; // Dynamic fields from payload
@@ -16,9 +16,9 @@ export interface EntityInstanceRow {
 /**
  * Transform entities into flat row objects for the data table
  */
-export function transformEntitiesToRows(entities: Entity[]): EntityInstanceRow[] {
+export function transformEntitiesToRows(entities: Entity[]): EntityRow[] {
     return entities.map((entity) => {
-        const row: EntityInstanceRow = {
+        const row: EntityRow = {
             _entityId: entity.id,
             _entity: entity,
         };
@@ -124,11 +124,7 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
 
     // BOOLEAN type formatting
     if (dataType === DataType.BOOLEAN) {
-        return (
-            <Badge variant={value ? "default" : "secondary"}>
-                {value ? "Yes" : "No"}
-            </Badge>
-        );
+        return <Badge variant={value ? "default" : "secondary"}>{value ? "Yes" : "No"}</Badge>;
     }
 
     // ARRAY type formatting
@@ -155,10 +151,8 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
 /**
  * Generate columns from entity type schema
  */
-export function generateColumnsFromEntityType(
-    entityType: EntityType
-): ColumnDef<EntityInstanceRow>[] {
-    const columns: ColumnDef<EntityInstanceRow>[] = [];
+export function generateColumnsFromEntityType(entityType: EntityType): ColumnDef<EntityRow>[] {
+    const columns: ColumnDef<EntityRow>[] = [];
 
     if (!entityType.schema.properties) {
         return columns;
@@ -189,13 +183,11 @@ export function generateColumnsFromEntityType(
  * Apply column ordering based on entity type order array
  */
 export function applyColumnOrdering(
-    columns: ColumnDef<EntityInstanceRow>[],
+    columns: ColumnDef<EntityRow>[],
     order: EntityTypeOrderingKey[]
-): ColumnDef<EntityInstanceRow>[] {
-    const orderedColumns: ColumnDef<EntityInstanceRow>[] = [];
-    const columnMap = new Map(
-        columns.map((col) => [col.accessorKey as string, col])
-    );
+): ColumnDef<EntityRow>[] {
+    const orderedColumns: ColumnDef<EntityRow>[] = [];
+    const columnMap = new Map(columns.map((col) => [col.accessorKey as string, col]));
 
     // Add columns in order array sequence
     order.forEach((orderItem) => {
@@ -247,8 +239,8 @@ export function generateFiltersFromEntityType(
     entityType: EntityType,
     entities: Entity[],
     selectFilterThreshold: number = 10
-): ColumnFilter<EntityInstanceRow>[] {
-    const filters: ColumnFilter<EntityInstanceRow>[] = [];
+): ColumnFilter<EntityRow>[] {
+    const filters: ColumnFilter<EntityRow>[] = [];
 
     if (!entityType.schema.properties) {
         return filters;
@@ -270,7 +262,7 @@ export function generateFiltersFromEntityType(
             // Use select filter for low-cardinality attributes
             if (uniqueValues.length > 0 && uniqueValues.length <= selectFilterThreshold) {
                 filters.push({
-                    column: attributeId as keyof EntityInstanceRow & string,
+                    column: attributeId as keyof EntityRow & string,
                     type: "select",
                     label,
                     options: uniqueValues,
@@ -278,7 +270,7 @@ export function generateFiltersFromEntityType(
             } else if (uniqueValues.length > selectFilterThreshold) {
                 // Use text filter for high-cardinality attributes
                 filters.push({
-                    column: attributeId as keyof EntityInstanceRow & string,
+                    column: attributeId as keyof EntityRow & string,
                     type: "text",
                     label,
                     placeholder: `Filter by ${label.toLowerCase()}...`,
@@ -289,7 +281,7 @@ export function generateFiltersFromEntityType(
         // NUMBER type filters
         if (dataType === DataType.NUMBER) {
             filters.push({
-                column: attributeId as keyof EntityInstanceRow & string,
+                column: attributeId as keyof EntityRow & string,
                 type: "number-range",
                 label,
             });
@@ -298,7 +290,7 @@ export function generateFiltersFromEntityType(
         // BOOLEAN type filters
         if (dataType === DataType.BOOLEAN) {
             filters.push({
-                column: attributeId as keyof EntityInstanceRow & string,
+                column: attributeId as keyof EntityRow & string,
                 type: "boolean",
                 label,
             });
@@ -315,7 +307,7 @@ export function generateFiltersFromEntityType(
  */
 export function generateSearchConfigFromEntityType(
     entityType: EntityType
-): (keyof EntityInstanceRow & string)[] {
+): (keyof EntityRow & string)[] {
     const searchableColumns: string[] = [];
 
     if (!entityType.schema.properties) {
