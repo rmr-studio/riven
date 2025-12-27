@@ -9,10 +9,11 @@ import java.util.*
 @JsonTypeName("REORDER_BLOCK")
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class ReorderBlockOperation(
-    override val type: BlockOperationType = BlockOperationType.REORDER_BLOCK,
     override val blockId: UUID,
     // The List node the current child block is posted under
     val parentId: UUID,
     val fromIndex: Int,
     val toIndex: Int
-) : BlockOperation
+) : BlockOperation {
+    override val type: BlockOperationType = BlockOperationType.REORDER_BLOCK
+}

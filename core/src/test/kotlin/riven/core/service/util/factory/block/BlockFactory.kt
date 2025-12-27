@@ -4,7 +4,6 @@ import riven.core.entity.block.BlockChildEntity
 import riven.core.entity.block.BlockEntity
 import riven.core.entity.block.BlockTreeLayoutEntity
 import riven.core.entity.block.BlockTypeEntity
-import riven.core.enums.block.node.NodeType
 import riven.core.enums.common.SchemaType
 import riven.core.enums.common.ValidationScope
 import riven.core.enums.core.ComponentType
@@ -146,7 +145,6 @@ object BlockFactory {
         name: String? = "Test Node",
         children: List<Node>? = null
     ): ContentNode = ContentNode(
-        type = NodeType.CONTENT,
         block = createBlockModel(
             id = blockId,
             orgId = orgId,

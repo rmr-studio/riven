@@ -14,10 +14,11 @@ import java.util.*
 )
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class DeleteAttributeDefinitionRequest(
-    override val type: EntityTypeRequestDefinition = EntityTypeRequestDefinition.DELETE_SCHEMA,
     override val key: String,
     override val id: UUID,
-) : TypeDefinition
+) : TypeDefinition {
+    override val type: EntityTypeRequestDefinition = EntityTypeRequestDefinition.DELETE_SCHEMA
+}
 
 
 @Schema(
@@ -26,11 +27,13 @@ data class DeleteAttributeDefinitionRequest(
 )
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class DeleteRelationshipDefinitionRequest(
-    override val type: EntityTypeRequestDefinition = EntityTypeRequestDefinition.DELETE_RELATIONSHIP,
+
     override val key: String,
     override val id: UUID,
     val deleteAction: DeleteAction
 ) : TypeDefinition {
+    override val type: EntityTypeRequestDefinition = EntityTypeRequestDefinition.DELETE_RELATIONSHIP
+
     enum class DeleteAction {
         // Removes only the bi-directional reference back to the origin definition
         REMOVE_BIDIRECTIONAL,

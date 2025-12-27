@@ -12,7 +12,6 @@ import java.util.*
 @JsonTypeName("ADD_BLOCK")
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class AddBlockOperation(
-    override val type: BlockOperationType = BlockOperationType.ADD_BLOCK,
     // Temporary ID for the new block for local frontend referencing.. Will be replaced by the server with a permanent ID.
     override val blockId: UUID,
     @field:Schema(
@@ -27,4 +26,6 @@ data class AddBlockOperation(
     val parentId: UUID? = null,
     // Only applicable to List nodes
     val index: Int? = null
-) : BlockOperation
+) : BlockOperation {
+    override val type: BlockOperationType = BlockOperationType.ADD_BLOCK
+}

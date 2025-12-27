@@ -16,11 +16,12 @@ import java.util.*
 )
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class SaveAttributeDefinitionRequest(
-    override val type: EntityTypeRequestDefinition = EntityTypeRequestDefinition.SAVE_SCHEMA,
     override val key: String,
     override val id: UUID,
     val schema: EntityTypeSchema
-) : TypeDefinition
+) : TypeDefinition {
+    override val type: EntityTypeRequestDefinition = EntityTypeRequestDefinition.SAVE_SCHEMA
+}
 
 
 @Schema(
@@ -29,11 +30,12 @@ data class SaveAttributeDefinitionRequest(
 )
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class SaveRelationshipDefinitionRequest(
-    override val type: EntityTypeRequestDefinition = EntityTypeRequestDefinition.SAVE_RELATIONSHIP,
     override val key: String,
     override val id: UUID,
     val relationship: EntityRelationshipDefinition
-) : TypeDefinition
+) : TypeDefinition {
+    override val type: EntityTypeRequestDefinition = EntityTypeRequestDefinition.SAVE_RELATIONSHIP
+}
 
 
 data class SaveTypeDefinitionRequest(

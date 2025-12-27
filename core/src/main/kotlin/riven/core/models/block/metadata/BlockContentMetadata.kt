@@ -12,10 +12,11 @@ import riven.core.models.common.json.JsonObject
 data class BlockContentMetadata(
     @param:Schema(type = "object", additionalProperties = Schema.AdditionalPropertiesValue.TRUE)
     var data: JsonObject = emptyMap(),
-    override val type: BlockMetadataType = BlockMetadataType.CONTENT,
     override val meta: BlockMeta = BlockMeta(),
     override val deletable: Boolean = true,
     override val readonly: Boolean = false,
     val listConfig: BlockListConfiguration? = null
-) : Metadata
+) : Metadata {
+    override val type: BlockMetadataType = BlockMetadataType.CONTENT
+}
 

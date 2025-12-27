@@ -21,11 +21,12 @@ sealed interface Node {
 )
 @JsonDeserialize(using = com.fasterxml.jackson.databind.JsonDeserializer.None::class)
 data class ContentNode(
-    override val type: NodeType = NodeType.CONTENT,
     override val block: Block,
     override val warnings: List<String> = emptyList(),
     val children: List<Node>? = null,
-) : Node
+) : Node {
+    override val type: NodeType = NodeType.CONTENT
+}
 
 
 @Schema(
@@ -34,7 +35,6 @@ data class ContentNode(
 )
 @JsonDeserialize(using = com.fasterxml.jackson.databind.JsonDeserializer.None::class)
 data class ReferenceNode(
-    override val type: NodeType = NodeType.REFERENCE,
     override val block: Block,
     override val warnings: List<String> = emptyList(),
     @field:Schema(
@@ -46,4 +46,6 @@ data class ReferenceNode(
         oneOf = [EntityReference::class, BlockTreeReference::class]
     )
     val reference: ReferencePayload
-) : Node
+) : Node {
+    override val type: NodeType = NodeType.REFERENCE
+}
