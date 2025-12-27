@@ -4,7 +4,10 @@ import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
+import riven.core.enums.common.IconColour
+import riven.core.enums.common.IconType
 import riven.core.enums.entity.EntityCategory
+import riven.core.models.common.Icon
 import riven.core.models.common.display.DisplayName
 import riven.core.models.entity.EntityType
 import riven.core.models.entity.EntityTypeSchema
@@ -39,6 +42,14 @@ data class EntityTypeEntity(
 
     @Column(name = "display_name_plural", nullable = false)
     var displayNamePlural: String,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "icon_type", nullable = false)
+    var iconType: IconType = IconType.CIRCLE_DASHED,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "icon_colour", nullable = false)
+    var iconColour: IconColour = IconColour.NEUTRAL,
 
     @Column(name = "identifier_key", nullable = false)
     val identifierKey: UUID,
@@ -89,6 +100,7 @@ data class EntityTypeEntity(
             key = this.key,
             version = this.version,
             name = DisplayName(this.displayNameSingular, this.displayNamePlural),
+            icon = Icon(this.iconType, this.iconColour),
             identifierKey = this.identifierKey,
             description = this.description,
             organisationId = this.organisationId,

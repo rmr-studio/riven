@@ -3,42 +3,11 @@ package riven.core.service.entity.type
 import org.springframework.stereotype.Service
 import riven.core.enums.entity.EntityTypeRelationshipChangeType
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
-import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipModification
-import java.util.*
 
 @Service
 class EntityTypeRelationshipDiffService {
-    fun calculate(
-        previous: List<EntityRelationshipDefinition>,
-        updated: List<EntityRelationshipDefinition>
-    ): EntityTypeRelationshipDiff {
-        val previousById = previous.associateBy { it.id }
-        val updatedById = updated.associateBy { it.id }
-
-        val previousIds: Set<UUID> = previousById.keys
-        val updatedIds: Set<UUID> = updatedById.keys
-
-        val addedIds: Set<UUID> = updatedIds - previousIds
-        val removedIds: Set<UUID> = previousIds - updatedIds
-        val potentiallyModifiedIds: Set<UUID> = previousIds.intersect(updatedIds)
-
-        val added = addedIds.map { updatedById[it]!! }
-        val removed = removedIds.map { previousById[it]!! }
-
-        val modified = potentiallyModifiedIds.toList()
-            .map { id: UUID ->
-                val (prev, updated) = id.let {
-                    previousById.getValue(it) to updatedById.getValue(it)
-                }
-                calculateModification(prev, updated)
-            }
-            .filter { it.changes.isNotEmpty() }
-
-        return EntityTypeRelationshipDiff(added, removed, modified)
-    }
-
-    private fun calculateModification(
+    fun calculateModification(
         previous: EntityRelationshipDefinition,
         updated: EntityRelationshipDefinition
     ): EntityTypeRelationshipModification {

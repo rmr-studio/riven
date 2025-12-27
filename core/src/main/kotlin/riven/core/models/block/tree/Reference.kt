@@ -22,9 +22,10 @@ sealed interface ReferencePayload {
 )
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class EntityReference(
-    override val type: ReferenceType = ReferenceType.ENTITY,
     val reference: List<ReferenceItem<Entity>>? = null
-) : ReferencePayload
+) : ReferencePayload {
+    override val type: ReferenceType = ReferenceType.ENTITY
+}
 
 @Schema(
     name = "BlockTreeReference",
@@ -32,9 +33,10 @@ data class EntityReference(
 )
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class BlockTreeReference(
-    override val type: ReferenceType = ReferenceType.BLOCK,
     val reference: ReferenceItem<BlockTree>? = null
-) : ReferencePayload
+) : ReferencePayload {
+    override val type: ReferenceType = ReferenceType.BLOCK
+}
 
 
 data class ReferenceItem<T>(

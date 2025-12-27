@@ -120,7 +120,13 @@ const SidebarGroupRenderer: React.FC<GroupRendererProps> = ({
                                             {group.items
                                                 ?.filter((item) => !item.hidden)
                                                 .map((item, index) => (
-                                                    <SidebarMenuItem key={item.skeleton ? `skeleton-${index}` : item.title}>
+                                                    <SidebarMenuItem
+                                                        key={
+                                                            item.skeleton
+                                                                ? `skeleton-${index}`
+                                                                : item.title
+                                                        }
+                                                    >
                                                         {item.skeleton ? (
                                                             <div className="flex items-center gap-2 px-2 py-1.5">
                                                                 <Skeleton className="size-3 rounded-sm" />
@@ -132,8 +138,14 @@ const SidebarGroupRenderer: React.FC<GroupRendererProps> = ({
                                                                 isActive={item.isActive}
                                                                 className="text-muted-foreground r"
                                                             >
-                                                                <Link href={item.url} className="flex">
-                                                                    <item.icon className="size-3" />
+                                                                <Link
+                                                                    href={item.url}
+                                                                    className="flex"
+                                                                >
+                                                                    <div className="mr-2 flex-shrink-0">
+                                                                        {item.icon}
+                                                                    </div>
+
                                                                     <span className="text-[13px]">
                                                                         {item.title}
                                                                     </span>

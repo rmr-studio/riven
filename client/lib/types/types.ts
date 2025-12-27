@@ -60,28 +60,20 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/entity/schema/organisation/{organisationId}": {
+    "/api/v1/entity/schema/organisation/{organisationId}/configuration": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
+        get?: never;
         /**
-         * Get all entity types for an organisation
-         * @description Retrieves all entity types associated with the specified organisation.
-         */
-        get: operations["getEntityTypesForOrganisation"];
-        /**
-         * Updates an existing entity type
+         * Updates an existing entity type configuration
          * @description Updates the data for an already existing entity type for the specified organisation.
          */
         put: operations["updateEntityType"];
-        /**
-         * Create a new entity type
-         * @description Creates and publishes a new entity type for the specified organisation.
-         */
-        post: operations["createEntityType"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -171,6 +163,54 @@ export interface paths {
         put?: never;
         post: operations["acceptInvite"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entity/schema/organisation/{organisationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get all entity types for an organisation
+         * @description Retrieves all entity types associated with the specified organisation.
+         */
+        get: operations["getEntityTypesForOrganisation"];
+        put?: never;
+        /**
+         * Create a new entity type
+         * @description Creates and publishes a new entity type for the specified organisation.
+         */
+        post: operations["createEntityType"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entity/schema/organisation/{organisationId}/definition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add or update an attribute or relationship
+         * @description Adds or updates an attribute or relationship in the specified entity type for the given organisation.
+         */
+        post: operations["saveEntityTypeDefinition"];
+        /**
+         * Removes an attribute or relationship from an entity type
+         * @description Removes an attribute or relationship from the specified entity type for the given organisation.
+         */
+        delete: operations["deleteEntityTypeDefinition"];
         options?: never;
         head?: never;
         patch?: never;
@@ -342,27 +382,11 @@ export interface paths {
         get: operations["getEntityTypeByKeyForOrganisation"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/entity/relationship/organisation/{organisationId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
         /**
-         * Get all polymorphic candidates to opt-in to bi-directional relationships
-         * @description Retrieves all entity types with open polymorphic relationships that can be candidates for bi-directional relationships when creating a new entity type.
+         * Delete an entity type by key
+         * @description Deletes the specified entity type by its key for the given organisation.
          */
-        get: operations["getPolymorphicCandidatesForOrganisation"];
-        put?: never;
-        post?: never;
-        delete?: never;
+        delete: operations["deleteEntityTypeByKey"];
         options?: never;
         head?: never;
         patch?: never;
@@ -597,6 +621,7 @@ export interface components {
             key: string;
             /** Format: int32 */
             version: number;
+            icon: components["schemas"]["Icon"];
             name: components["schemas"]["DisplayName"];
             protected: boolean;
             /** Format: uuid */
@@ -627,6 +652,14 @@ export interface components {
         };
         /** @enum {string} */
         EntityTypeRelationshipType: EntityTypeRelationshipType;
+        Icon: {
+            icon: components["schemas"]["IconType"];
+            colour: components["schemas"]["IconColour"];
+        };
+        /** @enum {string} */
+        IconColour: IconColour;
+        /** @enum {string} */
+        IconType: IconType;
         /** @enum {string} */
         OptionSortingType: OptionSortingType;
         PairIntegerInteger: {
@@ -668,35 +701,6 @@ export interface components {
             unique: boolean;
             protected: boolean;
             options?: components["schemas"]["SchemaOptions"];
-        };
-        EntityImpactSummary: {
-            entityTypeKey: string;
-            /** Format: uuid */
-            relationshipId: string;
-            relationshipName: string;
-        };
-        /** @enum {string} */
-        EntityTypeRelationshipDataLossReason: EntityTypeRelationshipDataLossReason;
-        EntityTypeRelationshipDataLossWarning: {
-            entityTypeKey: string;
-            relationship: components["schemas"]["EntityRelationshipDefinition"];
-            reason: components["schemas"]["EntityTypeRelationshipDataLossReason"];
-            /** Format: int64 */
-            estimatedImpactCount?: number;
-        };
-        EntityTypeRelationshipImpactAnalysis: {
-            affectedEntityTypes: string[];
-            dataLossWarnings: components["schemas"]["EntityTypeRelationshipDataLossWarning"][];
-            modifications: components["schemas"]["EntityImpactSummary"][];
-            removals: components["schemas"]["EntityImpactSummary"][];
-        };
-        UpdateEntityTypeResponse: {
-            success: boolean;
-            error?: string;
-            updatedEntityTypes?: {
-                [key: string]: components["schemas"]["EntityType"];
-            };
-            impact?: components["schemas"]["EntityTypeRelationshipImpactAnalysis"];
         };
         BindingSource: {
             type: string;
@@ -884,6 +888,65 @@ export interface components {
             key: string;
             description?: string;
             type: components["schemas"]["EntityCategory"];
+            icon: components["schemas"]["Icon"];
+        };
+        /** @enum {string} */
+        DeleteAction: DeleteAction;
+        /** @description Request to remove a schema attribute definition for an entity type */
+        DeleteAttributeDefinitionRequest: WithRequired<components["schemas"]["TypeDefinition"], "id" | "key" | "type">;
+        /** @description Request to remove a relationship definition for an entity type */
+        DeleteRelationshipDefinitionRequest: WithRequired<components["schemas"]["TypeDefinition"], "id" | "key" | "type"> & {
+            deleteAction: components["schemas"]["DeleteAction"];
+        };
+        /** @enum {string} */
+        EntityTypeRequestDefinition: EntityTypeRequestDefinition;
+        /** @description Request to save a schema attribute definition for an entity type */
+        SaveAttributeDefinitionRequest: WithRequired<components["schemas"]["TypeDefinition"], "id" | "key" | "type"> & {
+            schema: components["schemas"]["SchemaUUID"];
+        };
+        /** @description Request to save a relationship definition for an entity type */
+        SaveRelationshipDefinitionRequest: WithRequired<components["schemas"]["TypeDefinition"], "id" | "key" | "type"> & {
+            relationship: components["schemas"]["EntityRelationshipDefinition"];
+        };
+        SaveTypeDefinitionRequest: {
+            /** Format: int32 */
+            index?: number;
+            definition: components["schemas"]["SaveAttributeDefinitionRequest"] | components["schemas"]["SaveRelationshipDefinitionRequest"];
+        };
+        TypeDefinition: {
+            key: string;
+            /** Format: uuid */
+            id: string;
+            type: components["schemas"]["EntityTypeRequestDefinition"];
+        };
+        EntityImpactSummary: {
+            entityTypeKey: string;
+            /** Format: uuid */
+            relationshipId: string;
+            relationshipName: string;
+            impact: string;
+        };
+        EntityTypeImpactResponse: {
+            error?: string;
+            updatedEntityTypes?: {
+                [key: string]: components["schemas"]["EntityType"];
+            };
+            impact?: components["schemas"]["EntityTypeRelationshipImpactAnalysis"];
+        };
+        /** @enum {string} */
+        EntityTypeRelationshipDataLossReason: EntityTypeRelationshipDataLossReason;
+        EntityTypeRelationshipDataLossWarning: {
+            entityTypeKey: string;
+            relationship: components["schemas"]["EntityRelationshipDefinition"];
+            reason: components["schemas"]["EntityTypeRelationshipDataLossReason"];
+            /** Format: int64 */
+            estimatedImpactCount?: number;
+        };
+        EntityTypeRelationshipImpactAnalysis: {
+            affectedEntityTypes: string[];
+            dataLossWarnings: components["schemas"]["EntityTypeRelationshipDataLossWarning"][];
+            columnsRemoved: components["schemas"]["EntityImpactSummary"][];
+            columnsModified: components["schemas"]["EntityImpactSummary"][];
         };
         CreateBlockTypeRequest: {
             key: string;
@@ -1320,16 +1383,14 @@ export interface components {
                 [key: string]: string;
             };
         };
-        EntityTypePolymorphicCandidates: {
-            entityTypeKey: string;
-            entityTypeName: components["schemas"]["DisplayName"];
-            relationship: components["schemas"]["EntityRelationshipDefinition"];
-        };
         /**
          * @description Enumeration of possible entity types within the system.
          * @enum {string}
          */
         ApplicationEntityType: ApplicationEntityType;
+        DeleteTypeDefinitionRequest: {
+            definition: components["schemas"]["DeleteRelationshipDefinitionRequest"] | components["schemas"]["DeleteAttributeDefinitionRequest"];
+        };
     };
     responses: never;
     parameters: never;
@@ -1512,51 +1573,9 @@ export interface operations {
             };
         };
     };
-    getEntityTypesForOrganisation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                organisationId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Entity types retrieved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["EntityType"][];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["EntityType"][];
-                };
-            };
-            /** @description Organisation not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["EntityType"][];
-                };
-            };
-        };
-    };
     updateEntityType: {
         parameters: {
-            query?: {
-                impactConfirmed?: boolean;
-            };
+            query?: never;
             header?: never;
             path: {
                 organisationId: string;
@@ -1569,52 +1588,8 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Entity type created successfully */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["UpdateEntityTypeResponse"];
-                };
-            };
-            /** @description Invalid request data */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["UpdateEntityTypeResponse"];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["UpdateEntityTypeResponse"];
-                };
-            };
-        };
-    };
-    createEntityType: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                organisationId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateEntityTypeRequest"];
-            };
-        };
-        responses: {
-            /** @description Entity type created successfully */
-            201: {
+            /** @description Entity type updated successfully */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1783,6 +1758,200 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    getEntityTypesForOrganisation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organisationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Entity types retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"][];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"][];
+                };
+            };
+            /** @description Organisation not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"][];
+                };
+            };
+        };
+    };
+    createEntityType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organisationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEntityTypeRequest"];
+            };
+        };
+        responses: {
+            /** @description Entity type created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"];
+                };
+            };
+            /** @description Invalid request data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityType"];
+                };
+            };
+        };
+    };
+    saveEntityTypeDefinition: {
+        parameters: {
+            query?: {
+                impactConfirmed?: boolean;
+            };
+            header?: never;
+            path: {
+                organisationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveTypeDefinitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Entity type definition saved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
+                };
+            };
+            /** @description Invalid request data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
+                };
+            };
+            /** @description Conflict due to cascading impacts on existing entities as a result of aforementioned changes */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
+                };
+            };
+        };
+    };
+    deleteEntityTypeDefinition: {
+        parameters: {
+            query?: {
+                impactConfirmed?: boolean;
+            };
+            header?: never;
+            path: {
+                organisationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteTypeDefinitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Entity type definition removed successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
+                };
+            };
+            /** @description Invalid request data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
+                };
+            };
+            /** @description Conflict due to cascading impacts on existing entities as a result of aforementioned changes */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
+                };
             };
         };
     };
@@ -2197,24 +2366,27 @@ export interface operations {
             };
         };
     };
-    getPolymorphicCandidatesForOrganisation: {
+    deleteEntityTypeByKey: {
         parameters: {
-            query?: never;
+            query?: {
+                impactConfirmed?: boolean;
+            };
             header?: never;
             path: {
                 organisationId: string;
+                key: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Polymorphic candidates retrieved successfully */
+            /** @description Entity type deleted successfully */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["EntityTypePolymorphicCandidates"][];
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
                 };
             };
             /** @description Unauthorized access */
@@ -2223,16 +2395,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["EntityTypePolymorphicCandidates"][];
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
                 };
             };
-            /** @description Organisation not found */
+            /** @description Entity type not found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["EntityTypePolymorphicCandidates"][];
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
                 };
             };
         };
@@ -2466,6 +2638,1686 @@ export enum EntityTypeRelationshipType {
     REFERENCE = "REFERENCE",
     ORIGIN = "ORIGIN"
 }
+export enum IconColour {
+    NEUTRAL = "NEUTRAL",
+    PURPLE = "PURPLE",
+    BLUE = "BLUE",
+    TEAL = "TEAL",
+    GREEN = "GREEN",
+    YELLOW = "YELLOW",
+    ORANGE = "ORANGE",
+    RED = "RED",
+    PINK = "PINK",
+    GREY = "GREY"
+}
+export enum IconType {
+    A_ARROW_DOWN = "A_ARROW_DOWN",
+    A_ARROW_UP = "A_ARROW_UP",
+    A_LARGE_SMALL = "A_LARGE_SMALL",
+    ACCESSIBILITY = "ACCESSIBILITY",
+    ACTIVITY = "ACTIVITY",
+    AIR_VENT = "AIR_VENT",
+    AIRPLAY = "AIRPLAY",
+    ALARM_CLOCK = "ALARM_CLOCK",
+    ALARM_CLOCK_CHECK = "ALARM_CLOCK_CHECK",
+    ALARM_CLOCK_MINUS = "ALARM_CLOCK_MINUS",
+    ALARM_CLOCK_OFF = "ALARM_CLOCK_OFF",
+    ALARM_CLOCK_PLUS = "ALARM_CLOCK_PLUS",
+    ALARM_SMOKE = "ALARM_SMOKE",
+    ALBUM = "ALBUM",
+    ALIGN_CENTER_HORIZONTAL = "ALIGN_CENTER_HORIZONTAL",
+    ALIGN_CENTER_VERTICAL = "ALIGN_CENTER_VERTICAL",
+    ALIGN_END_HORIZONTAL = "ALIGN_END_HORIZONTAL",
+    ALIGN_END_VERTICAL = "ALIGN_END_VERTICAL",
+    ALIGN_HORIZONTAL_DISTRIBUTE_CENTER = "ALIGN_HORIZONTAL_DISTRIBUTE_CENTER",
+    ALIGN_HORIZONTAL_DISTRIBUTE_END = "ALIGN_HORIZONTAL_DISTRIBUTE_END",
+    ALIGN_HORIZONTAL_DISTRIBUTE_START = "ALIGN_HORIZONTAL_DISTRIBUTE_START",
+    ALIGN_HORIZONTAL_JUSTIFY_CENTER = "ALIGN_HORIZONTAL_JUSTIFY_CENTER",
+    ALIGN_HORIZONTAL_JUSTIFY_END = "ALIGN_HORIZONTAL_JUSTIFY_END",
+    ALIGN_HORIZONTAL_JUSTIFY_START = "ALIGN_HORIZONTAL_JUSTIFY_START",
+    ALIGN_HORIZONTAL_SPACE_AROUND = "ALIGN_HORIZONTAL_SPACE_AROUND",
+    ALIGN_HORIZONTAL_SPACE_BETWEEN = "ALIGN_HORIZONTAL_SPACE_BETWEEN",
+    ALIGN_START_HORIZONTAL = "ALIGN_START_HORIZONTAL",
+    ALIGN_START_VERTICAL = "ALIGN_START_VERTICAL",
+    ALIGN_VERTICAL_DISTRIBUTE_CENTER = "ALIGN_VERTICAL_DISTRIBUTE_CENTER",
+    ALIGN_VERTICAL_DISTRIBUTE_END = "ALIGN_VERTICAL_DISTRIBUTE_END",
+    ALIGN_VERTICAL_DISTRIBUTE_START = "ALIGN_VERTICAL_DISTRIBUTE_START",
+    ALIGN_VERTICAL_JUSTIFY_CENTER = "ALIGN_VERTICAL_JUSTIFY_CENTER",
+    ALIGN_VERTICAL_JUSTIFY_END = "ALIGN_VERTICAL_JUSTIFY_END",
+    ALIGN_VERTICAL_JUSTIFY_START = "ALIGN_VERTICAL_JUSTIFY_START",
+    ALIGN_VERTICAL_SPACE_AROUND = "ALIGN_VERTICAL_SPACE_AROUND",
+    ALIGN_VERTICAL_SPACE_BETWEEN = "ALIGN_VERTICAL_SPACE_BETWEEN",
+    AMBULANCE = "AMBULANCE",
+    AMPERSAND = "AMPERSAND",
+    AMPERSANDS = "AMPERSANDS",
+    AMPHORA = "AMPHORA",
+    ANCHOR = "ANCHOR",
+    ANGRY = "ANGRY",
+    ANNOYED = "ANNOYED",
+    ANTENNA = "ANTENNA",
+    ANVIL = "ANVIL",
+    APERTURE = "APERTURE",
+    APP_WINDOW = "APP_WINDOW",
+    APP_WINDOW_MAC = "APP_WINDOW_MAC",
+    APPLE = "APPLE",
+    ARCHIVE = "ARCHIVE",
+    ARCHIVE_RESTORE = "ARCHIVE_RESTORE",
+    ARCHIVE_X = "ARCHIVE_X",
+    ARMCHAIR = "ARMCHAIR",
+    ARROW_BIG_DOWN = "ARROW_BIG_DOWN",
+    ARROW_BIG_DOWN_DASH = "ARROW_BIG_DOWN_DASH",
+    ARROW_BIG_LEFT = "ARROW_BIG_LEFT",
+    ARROW_BIG_LEFT_DASH = "ARROW_BIG_LEFT_DASH",
+    ARROW_BIG_RIGHT = "ARROW_BIG_RIGHT",
+    ARROW_BIG_RIGHT_DASH = "ARROW_BIG_RIGHT_DASH",
+    ARROW_BIG_UP = "ARROW_BIG_UP",
+    ARROW_BIG_UP_DASH = "ARROW_BIG_UP_DASH",
+    ARROW_DOWN = "ARROW_DOWN",
+    ARROW_DOWN_0_1 = "ARROW_DOWN_0_1",
+    ARROW_DOWN_1_0 = "ARROW_DOWN_1_0",
+    ARROW_DOWN_A_Z = "ARROW_DOWN_A_Z",
+    ARROW_DOWN_FROM_LINE = "ARROW_DOWN_FROM_LINE",
+    ARROW_DOWN_LEFT = "ARROW_DOWN_LEFT",
+    ARROW_DOWN_NARROW_WIDE = "ARROW_DOWN_NARROW_WIDE",
+    ARROW_DOWN_RIGHT = "ARROW_DOWN_RIGHT",
+    ARROW_DOWN_TO_DOT = "ARROW_DOWN_TO_DOT",
+    ARROW_DOWN_TO_LINE = "ARROW_DOWN_TO_LINE",
+    ARROW_DOWN_UP = "ARROW_DOWN_UP",
+    ARROW_DOWN_WIDE_NARROW = "ARROW_DOWN_WIDE_NARROW",
+    ARROW_DOWN_Z_A = "ARROW_DOWN_Z_A",
+    ARROW_LEFT = "ARROW_LEFT",
+    ARROW_LEFT_FROM_LINE = "ARROW_LEFT_FROM_LINE",
+    ARROW_LEFT_RIGHT = "ARROW_LEFT_RIGHT",
+    ARROW_LEFT_TO_LINE = "ARROW_LEFT_TO_LINE",
+    ARROW_RIGHT = "ARROW_RIGHT",
+    ARROW_RIGHT_FROM_LINE = "ARROW_RIGHT_FROM_LINE",
+    ARROW_RIGHT_LEFT = "ARROW_RIGHT_LEFT",
+    ARROW_RIGHT_TO_LINE = "ARROW_RIGHT_TO_LINE",
+    ARROW_UP = "ARROW_UP",
+    ARROW_UP_0_1 = "ARROW_UP_0_1",
+    ARROW_UP_1_0 = "ARROW_UP_1_0",
+    ARROW_UP_A_Z = "ARROW_UP_A_Z",
+    ARROW_UP_DOWN = "ARROW_UP_DOWN",
+    ARROW_UP_FROM_DOT = "ARROW_UP_FROM_DOT",
+    ARROW_UP_FROM_LINE = "ARROW_UP_FROM_LINE",
+    ARROW_UP_LEFT = "ARROW_UP_LEFT",
+    ARROW_UP_NARROW_WIDE = "ARROW_UP_NARROW_WIDE",
+    ARROW_UP_RIGHT = "ARROW_UP_RIGHT",
+    ARROW_UP_TO_LINE = "ARROW_UP_TO_LINE",
+    ARROW_UP_WIDE_NARROW = "ARROW_UP_WIDE_NARROW",
+    ARROW_UP_Z_A = "ARROW_UP_Z_A",
+    ARROWS_UP_FROM_LINE = "ARROWS_UP_FROM_LINE",
+    ASTERISK = "ASTERISK",
+    AT_SIGN = "AT_SIGN",
+    ATOM = "ATOM",
+    AUDIO_LINES = "AUDIO_LINES",
+    AUDIO_WAVEFORM = "AUDIO_WAVEFORM",
+    AWARD = "AWARD",
+    AXE = "AXE",
+    AXIS_3D = "AXIS_3D",
+    BABY = "BABY",
+    BACKPACK = "BACKPACK",
+    BADGE = "BADGE",
+    BADGE_ALERT = "BADGE_ALERT",
+    BADGE_CENT = "BADGE_CENT",
+    BADGE_CHECK = "BADGE_CHECK",
+    BADGE_DOLLAR_SIGN = "BADGE_DOLLAR_SIGN",
+    BADGE_EURO = "BADGE_EURO",
+    BADGE_INDIAN_RUPEE = "BADGE_INDIAN_RUPEE",
+    BADGE_INFO = "BADGE_INFO",
+    BADGE_JAPANESE_YEN = "BADGE_JAPANESE_YEN",
+    BADGE_MINUS = "BADGE_MINUS",
+    BADGE_PERCENT = "BADGE_PERCENT",
+    BADGE_PLUS = "BADGE_PLUS",
+    BADGE_POUND_STERLING = "BADGE_POUND_STERLING",
+    BADGE_QUESTION_MARK = "BADGE_QUESTION_MARK",
+    BADGE_RUSSIAN_RUBLE = "BADGE_RUSSIAN_RUBLE",
+    BADGE_SWISS_FRANC = "BADGE_SWISS_FRANC",
+    BADGE_TURKISH_LIRA = "BADGE_TURKISH_LIRA",
+    BADGE_X = "BADGE_X",
+    BAGGAGE_CLAIM = "BAGGAGE_CLAIM",
+    BALLOON = "BALLOON",
+    BAN = "BAN",
+    BANANA = "BANANA",
+    BANDAGE = "BANDAGE",
+    BANKNOTE = "BANKNOTE",
+    BANKNOTE_ARROW_DOWN = "BANKNOTE_ARROW_DOWN",
+    BANKNOTE_ARROW_UP = "BANKNOTE_ARROW_UP",
+    BANKNOTE_X = "BANKNOTE_X",
+    BARCODE = "BARCODE",
+    BARREL = "BARREL",
+    BASELINE = "BASELINE",
+    BATH = "BATH",
+    BATTERY = "BATTERY",
+    BATTERY_CHARGING = "BATTERY_CHARGING",
+    BATTERY_FULL = "BATTERY_FULL",
+    BATTERY_LOW = "BATTERY_LOW",
+    BATTERY_MEDIUM = "BATTERY_MEDIUM",
+    BATTERY_PLUS = "BATTERY_PLUS",
+    BATTERY_WARNING = "BATTERY_WARNING",
+    BEAKER = "BEAKER",
+    BEAN = "BEAN",
+    BEAN_OFF = "BEAN_OFF",
+    BED = "BED",
+    BED_DOUBLE = "BED_DOUBLE",
+    BED_SINGLE = "BED_SINGLE",
+    BEEF = "BEEF",
+    BEER = "BEER",
+    BEER_OFF = "BEER_OFF",
+    BELL = "BELL",
+    BELL_DOT = "BELL_DOT",
+    BELL_ELECTRIC = "BELL_ELECTRIC",
+    BELL_MINUS = "BELL_MINUS",
+    BELL_OFF = "BELL_OFF",
+    BELL_PLUS = "BELL_PLUS",
+    BELL_RING = "BELL_RING",
+    BETWEEN_HORIZONTAL_END = "BETWEEN_HORIZONTAL_END",
+    BETWEEN_HORIZONTAL_START = "BETWEEN_HORIZONTAL_START",
+    BETWEEN_VERTICAL_END = "BETWEEN_VERTICAL_END",
+    BETWEEN_VERTICAL_START = "BETWEEN_VERTICAL_START",
+    BICEPS_FLEXED = "BICEPS_FLEXED",
+    BIKE = "BIKE",
+    BINARY = "BINARY",
+    BINOCULARS = "BINOCULARS",
+    BIOHAZARD = "BIOHAZARD",
+    BIRD = "BIRD",
+    BIRDHOUSE = "BIRDHOUSE",
+    BITCOIN = "BITCOIN",
+    BLEND = "BLEND",
+    BLINDS = "BLINDS",
+    BLOCKS = "BLOCKS",
+    BLUETOOTH = "BLUETOOTH",
+    BLUETOOTH_CONNECTED = "BLUETOOTH_CONNECTED",
+    BLUETOOTH_OFF = "BLUETOOTH_OFF",
+    BLUETOOTH_SEARCHING = "BLUETOOTH_SEARCHING",
+    BOLD = "BOLD",
+    BOLT = "BOLT",
+    BOMB = "BOMB",
+    BONE = "BONE",
+    BOOK = "BOOK",
+    BOOK_A = "BOOK_A",
+    BOOK_ALERT = "BOOK_ALERT",
+    BOOK_AUDIO = "BOOK_AUDIO",
+    BOOK_CHECK = "BOOK_CHECK",
+    BOOK_COPY = "BOOK_COPY",
+    BOOK_DASHED = "BOOK_DASHED",
+    BOOK_DOWN = "BOOK_DOWN",
+    BOOK_HEADPHONES = "BOOK_HEADPHONES",
+    BOOK_HEART = "BOOK_HEART",
+    BOOK_IMAGE = "BOOK_IMAGE",
+    BOOK_KEY = "BOOK_KEY",
+    BOOK_LOCK = "BOOK_LOCK",
+    BOOK_MARKED = "BOOK_MARKED",
+    BOOK_MINUS = "BOOK_MINUS",
+    BOOK_OPEN = "BOOK_OPEN",
+    BOOK_OPEN_CHECK = "BOOK_OPEN_CHECK",
+    BOOK_OPEN_TEXT = "BOOK_OPEN_TEXT",
+    BOOK_PLUS = "BOOK_PLUS",
+    BOOK_SEARCH = "BOOK_SEARCH",
+    BOOK_TEXT = "BOOK_TEXT",
+    BOOK_TYPE = "BOOK_TYPE",
+    BOOK_UP = "BOOK_UP",
+    BOOK_UP_2 = "BOOK_UP_2",
+    BOOK_USER = "BOOK_USER",
+    BOOK_X = "BOOK_X",
+    BOOKMARK = "BOOKMARK",
+    BOOKMARK_CHECK = "BOOKMARK_CHECK",
+    BOOKMARK_MINUS = "BOOKMARK_MINUS",
+    BOOKMARK_PLUS = "BOOKMARK_PLUS",
+    BOOKMARK_X = "BOOKMARK_X",
+    BOOM_BOX = "BOOM_BOX",
+    BOT = "BOT",
+    BOT_MESSAGE_SQUARE = "BOT_MESSAGE_SQUARE",
+    BOT_OFF = "BOT_OFF",
+    BOTTLE_WINE = "BOTTLE_WINE",
+    BOW_ARROW = "BOW_ARROW",
+    BOX = "BOX",
+    BOXES = "BOXES",
+    BRACES = "BRACES",
+    BRACKETS = "BRACKETS",
+    BRAIN = "BRAIN",
+    BRAIN_CIRCUIT = "BRAIN_CIRCUIT",
+    BRAIN_COG = "BRAIN_COG",
+    BRICK_WALL = "BRICK_WALL",
+    BRICK_WALL_FIRE = "BRICK_WALL_FIRE",
+    BRICK_WALL_SHIELD = "BRICK_WALL_SHIELD",
+    BRIEFCASE = "BRIEFCASE",
+    BRIEFCASE_BUSINESS = "BRIEFCASE_BUSINESS",
+    BRIEFCASE_CONVEYOR_BELT = "BRIEFCASE_CONVEYOR_BELT",
+    BRIEFCASE_MEDICAL = "BRIEFCASE_MEDICAL",
+    BRING_TO_FRONT = "BRING_TO_FRONT",
+    BRUSH = "BRUSH",
+    BRUSH_CLEANING = "BRUSH_CLEANING",
+    BUBBLES = "BUBBLES",
+    BUG = "BUG",
+    BUG_OFF = "BUG_OFF",
+    BUG_PLAY = "BUG_PLAY",
+    BUILDING = "BUILDING",
+    BUILDING_2 = "BUILDING_2",
+    BUS = "BUS",
+    BUS_FRONT = "BUS_FRONT",
+    CABLE = "CABLE",
+    CABLE_CAR = "CABLE_CAR",
+    CAKE = "CAKE",
+    CAKE_SLICE = "CAKE_SLICE",
+    CALCULATOR = "CALCULATOR",
+    CALENDAR = "CALENDAR",
+    CALENDAR_1 = "CALENDAR_1",
+    CALENDAR_ARROW_DOWN = "CALENDAR_ARROW_DOWN",
+    CALENDAR_ARROW_UP = "CALENDAR_ARROW_UP",
+    CALENDAR_CHECK = "CALENDAR_CHECK",
+    CALENDAR_CHECK_2 = "CALENDAR_CHECK_2",
+    CALENDAR_CLOCK = "CALENDAR_CLOCK",
+    CALENDAR_COG = "CALENDAR_COG",
+    CALENDAR_DAYS = "CALENDAR_DAYS",
+    CALENDAR_FOLD = "CALENDAR_FOLD",
+    CALENDAR_HEART = "CALENDAR_HEART",
+    CALENDAR_MINUS = "CALENDAR_MINUS",
+    CALENDAR_MINUS_2 = "CALENDAR_MINUS_2",
+    CALENDAR_OFF = "CALENDAR_OFF",
+    CALENDAR_PLUS = "CALENDAR_PLUS",
+    CALENDAR_PLUS_2 = "CALENDAR_PLUS_2",
+    CALENDAR_RANGE = "CALENDAR_RANGE",
+    CALENDAR_SEARCH = "CALENDAR_SEARCH",
+    CALENDAR_SYNC = "CALENDAR_SYNC",
+    CALENDAR_X = "CALENDAR_X",
+    CALENDAR_X_2 = "CALENDAR_X_2",
+    CALENDARS = "CALENDARS",
+    CAMERA = "CAMERA",
+    CAMERA_OFF = "CAMERA_OFF",
+    CANDY = "CANDY",
+    CANDY_CANE = "CANDY_CANE",
+    CANDY_OFF = "CANDY_OFF",
+    CANNABIS = "CANNABIS",
+    CANNABIS_OFF = "CANNABIS_OFF",
+    CAPTIONS = "CAPTIONS",
+    CAPTIONS_OFF = "CAPTIONS_OFF",
+    CAR = "CAR",
+    CAR_FRONT = "CAR_FRONT",
+    CAR_TAXI_FRONT = "CAR_TAXI_FRONT",
+    CARAVAN = "CARAVAN",
+    CARD_SIM = "CARD_SIM",
+    CARROT = "CARROT",
+    CASE_LOWER = "CASE_LOWER",
+    CASE_SENSITIVE = "CASE_SENSITIVE",
+    CASE_UPPER = "CASE_UPPER",
+    CASSETTE_TAPE = "CASSETTE_TAPE",
+    CAST = "CAST",
+    CASTLE = "CASTLE",
+    CAT = "CAT",
+    CCTV = "CCTV",
+    CHART_AREA = "CHART_AREA",
+    CHART_BAR = "CHART_BAR",
+    CHART_BAR_BIG = "CHART_BAR_BIG",
+    CHART_BAR_DECREASING = "CHART_BAR_DECREASING",
+    CHART_BAR_INCREASING = "CHART_BAR_INCREASING",
+    CHART_BAR_STACKED = "CHART_BAR_STACKED",
+    CHART_CANDLESTICK = "CHART_CANDLESTICK",
+    CHART_COLUMN = "CHART_COLUMN",
+    CHART_COLUMN_BIG = "CHART_COLUMN_BIG",
+    CHART_COLUMN_DECREASING = "CHART_COLUMN_DECREASING",
+    CHART_COLUMN_INCREASING = "CHART_COLUMN_INCREASING",
+    CHART_COLUMN_STACKED = "CHART_COLUMN_STACKED",
+    CHART_GANTT = "CHART_GANTT",
+    CHART_LINE = "CHART_LINE",
+    CHART_NETWORK = "CHART_NETWORK",
+    CHART_NO_AXES_COLUMN = "CHART_NO_AXES_COLUMN",
+    CHART_NO_AXES_COLUMN_DECREASING = "CHART_NO_AXES_COLUMN_DECREASING",
+    CHART_NO_AXES_COLUMN_INCREASING = "CHART_NO_AXES_COLUMN_INCREASING",
+    CHART_NO_AXES_COMBINED = "CHART_NO_AXES_COMBINED",
+    CHART_NO_AXES_GANTT = "CHART_NO_AXES_GANTT",
+    CHART_PIE = "CHART_PIE",
+    CHART_SCATTER = "CHART_SCATTER",
+    CHART_SPLINE = "CHART_SPLINE",
+    CHECK = "CHECK",
+    CHECK_CHECK = "CHECK_CHECK",
+    CHECK_LINE = "CHECK_LINE",
+    CHEF_HAT = "CHEF_HAT",
+    CHERRY = "CHERRY",
+    CHESS_BISHOP = "CHESS_BISHOP",
+    CHESS_KING = "CHESS_KING",
+    CHESS_KNIGHT = "CHESS_KNIGHT",
+    CHESS_PAWN = "CHESS_PAWN",
+    CHESS_QUEEN = "CHESS_QUEEN",
+    CHESS_ROOK = "CHESS_ROOK",
+    CHEVRON_DOWN = "CHEVRON_DOWN",
+    CHEVRON_FIRST = "CHEVRON_FIRST",
+    CHEVRON_LAST = "CHEVRON_LAST",
+    CHEVRON_LEFT = "CHEVRON_LEFT",
+    CHEVRON_RIGHT = "CHEVRON_RIGHT",
+    CHEVRON_UP = "CHEVRON_UP",
+    CHEVRONS_DOWN = "CHEVRONS_DOWN",
+    CHEVRONS_DOWN_UP = "CHEVRONS_DOWN_UP",
+    CHEVRONS_LEFT = "CHEVRONS_LEFT",
+    CHEVRONS_LEFT_RIGHT = "CHEVRONS_LEFT_RIGHT",
+    CHEVRONS_LEFT_RIGHT_ELLIPSIS = "CHEVRONS_LEFT_RIGHT_ELLIPSIS",
+    CHEVRONS_RIGHT = "CHEVRONS_RIGHT",
+    CHEVRONS_RIGHT_LEFT = "CHEVRONS_RIGHT_LEFT",
+    CHEVRONS_UP = "CHEVRONS_UP",
+    CHEVRONS_UP_DOWN = "CHEVRONS_UP_DOWN",
+    CHROMIUM = "CHROMIUM",
+    CHURCH = "CHURCH",
+    CIGARETTE = "CIGARETTE",
+    CIGARETTE_OFF = "CIGARETTE_OFF",
+    CIRCLE = "CIRCLE",
+    CIRCLE_ALERT = "CIRCLE_ALERT",
+    CIRCLE_ARROW_DOWN = "CIRCLE_ARROW_DOWN",
+    CIRCLE_ARROW_LEFT = "CIRCLE_ARROW_LEFT",
+    CIRCLE_ARROW_OUT_DOWN_LEFT = "CIRCLE_ARROW_OUT_DOWN_LEFT",
+    CIRCLE_ARROW_OUT_DOWN_RIGHT = "CIRCLE_ARROW_OUT_DOWN_RIGHT",
+    CIRCLE_ARROW_OUT_UP_LEFT = "CIRCLE_ARROW_OUT_UP_LEFT",
+    CIRCLE_ARROW_OUT_UP_RIGHT = "CIRCLE_ARROW_OUT_UP_RIGHT",
+    CIRCLE_ARROW_RIGHT = "CIRCLE_ARROW_RIGHT",
+    CIRCLE_ARROW_UP = "CIRCLE_ARROW_UP",
+    CIRCLE_CHECK = "CIRCLE_CHECK",
+    CIRCLE_CHECK_BIG = "CIRCLE_CHECK_BIG",
+    CIRCLE_CHEVRON_DOWN = "CIRCLE_CHEVRON_DOWN",
+    CIRCLE_CHEVRON_LEFT = "CIRCLE_CHEVRON_LEFT",
+    CIRCLE_CHEVRON_RIGHT = "CIRCLE_CHEVRON_RIGHT",
+    CIRCLE_CHEVRON_UP = "CIRCLE_CHEVRON_UP",
+    CIRCLE_DASHED = "CIRCLE_DASHED",
+    CIRCLE_DIVIDE = "CIRCLE_DIVIDE",
+    CIRCLE_DOLLAR_SIGN = "CIRCLE_DOLLAR_SIGN",
+    CIRCLE_DOT = "CIRCLE_DOT",
+    CIRCLE_DOT_DASHED = "CIRCLE_DOT_DASHED",
+    CIRCLE_ELLIPSIS = "CIRCLE_ELLIPSIS",
+    CIRCLE_EQUAL = "CIRCLE_EQUAL",
+    CIRCLE_FADING_ARROW_UP = "CIRCLE_FADING_ARROW_UP",
+    CIRCLE_FADING_PLUS = "CIRCLE_FADING_PLUS",
+    CIRCLE_GAUGE = "CIRCLE_GAUGE",
+    CIRCLE_MINUS = "CIRCLE_MINUS",
+    CIRCLE_OFF = "CIRCLE_OFF",
+    CIRCLE_PARKING = "CIRCLE_PARKING",
+    CIRCLE_PARKING_OFF = "CIRCLE_PARKING_OFF",
+    CIRCLE_PAUSE = "CIRCLE_PAUSE",
+    CIRCLE_PERCENT = "CIRCLE_PERCENT",
+    CIRCLE_PILE = "CIRCLE_PILE",
+    CIRCLE_PLAY = "CIRCLE_PLAY",
+    CIRCLE_PLUS = "CIRCLE_PLUS",
+    CIRCLE_POUND_STERLING = "CIRCLE_POUND_STERLING",
+    CIRCLE_POWER = "CIRCLE_POWER",
+    CIRCLE_QUESTION_MARK = "CIRCLE_QUESTION_MARK",
+    CIRCLE_SLASH = "CIRCLE_SLASH",
+    CIRCLE_SLASH_2 = "CIRCLE_SLASH_2",
+    CIRCLE_SMALL = "CIRCLE_SMALL",
+    CIRCLE_STAR = "CIRCLE_STAR",
+    CIRCLE_STOP = "CIRCLE_STOP",
+    CIRCLE_USER = "CIRCLE_USER",
+    CIRCLE_USER_ROUND = "CIRCLE_USER_ROUND",
+    CIRCLE_X = "CIRCLE_X",
+    CIRCUIT_BOARD = "CIRCUIT_BOARD",
+    CITRUS = "CITRUS",
+    CLAPPERBOARD = "CLAPPERBOARD",
+    CLIPBOARD = "CLIPBOARD",
+    CLIPBOARD_CHECK = "CLIPBOARD_CHECK",
+    CLIPBOARD_CLOCK = "CLIPBOARD_CLOCK",
+    CLIPBOARD_COPY = "CLIPBOARD_COPY",
+    CLIPBOARD_LIST = "CLIPBOARD_LIST",
+    CLIPBOARD_MINUS = "CLIPBOARD_MINUS",
+    CLIPBOARD_PASTE = "CLIPBOARD_PASTE",
+    CLIPBOARD_PEN = "CLIPBOARD_PEN",
+    CLIPBOARD_PEN_LINE = "CLIPBOARD_PEN_LINE",
+    CLIPBOARD_PLUS = "CLIPBOARD_PLUS",
+    CLIPBOARD_TYPE = "CLIPBOARD_TYPE",
+    CLIPBOARD_X = "CLIPBOARD_X",
+    CLOCK = "CLOCK",
+    CLOCK_1 = "CLOCK_1",
+    CLOCK_10 = "CLOCK_10",
+    CLOCK_11 = "CLOCK_11",
+    CLOCK_12 = "CLOCK_12",
+    CLOCK_2 = "CLOCK_2",
+    CLOCK_3 = "CLOCK_3",
+    CLOCK_4 = "CLOCK_4",
+    CLOCK_5 = "CLOCK_5",
+    CLOCK_6 = "CLOCK_6",
+    CLOCK_7 = "CLOCK_7",
+    CLOCK_8 = "CLOCK_8",
+    CLOCK_9 = "CLOCK_9",
+    CLOCK_ALERT = "CLOCK_ALERT",
+    CLOCK_ARROW_DOWN = "CLOCK_ARROW_DOWN",
+    CLOCK_ARROW_UP = "CLOCK_ARROW_UP",
+    CLOCK_CHECK = "CLOCK_CHECK",
+    CLOCK_FADING = "CLOCK_FADING",
+    CLOCK_PLUS = "CLOCK_PLUS",
+    CLOSED_CAPTION = "CLOSED_CAPTION",
+    CLOUD = "CLOUD",
+    CLOUD_ALERT = "CLOUD_ALERT",
+    CLOUD_BACKUP = "CLOUD_BACKUP",
+    CLOUD_CHECK = "CLOUD_CHECK",
+    CLOUD_COG = "CLOUD_COG",
+    CLOUD_DOWNLOAD = "CLOUD_DOWNLOAD",
+    CLOUD_DRIZZLE = "CLOUD_DRIZZLE",
+    CLOUD_FOG = "CLOUD_FOG",
+    CLOUD_HAIL = "CLOUD_HAIL",
+    CLOUD_LIGHTNING = "CLOUD_LIGHTNING",
+    CLOUD_MOON = "CLOUD_MOON",
+    CLOUD_MOON_RAIN = "CLOUD_MOON_RAIN",
+    CLOUD_OFF = "CLOUD_OFF",
+    CLOUD_RAIN = "CLOUD_RAIN",
+    CLOUD_RAIN_WIND = "CLOUD_RAIN_WIND",
+    CLOUD_SNOW = "CLOUD_SNOW",
+    CLOUD_SUN = "CLOUD_SUN",
+    CLOUD_SUN_RAIN = "CLOUD_SUN_RAIN",
+    CLOUD_SYNC = "CLOUD_SYNC",
+    CLOUD_UPLOAD = "CLOUD_UPLOAD",
+    CLOUDY = "CLOUDY",
+    CLOVER = "CLOVER",
+    CLUB = "CLUB",
+    CODE = "CODE",
+    CODE_XML = "CODE_XML",
+    CODEPEN = "CODEPEN",
+    CODESANDBOX = "CODESANDBOX",
+    COFFEE = "COFFEE",
+    COG = "COG",
+    COINS = "COINS",
+    COLUMNS_2 = "COLUMNS_2",
+    COLUMNS_3 = "COLUMNS_3",
+    COLUMNS_3_COG = "COLUMNS_3_COG",
+    COLUMNS_4 = "COLUMNS_4",
+    COMBINE = "COMBINE",
+    COMMAND = "COMMAND",
+    COMPASS = "COMPASS",
+    COMPONENT = "COMPONENT",
+    COMPUTER = "COMPUTER",
+    CONCIERGE_BELL = "CONCIERGE_BELL",
+    CONE = "CONE",
+    CONSTRUCTION = "CONSTRUCTION",
+    CONTACT = "CONTACT",
+    CONTACT_ROUND = "CONTACT_ROUND",
+    CONTAINER = "CONTAINER",
+    CONTRAST = "CONTRAST",
+    COOKIE = "COOKIE",
+    COOKING_POT = "COOKING_POT",
+    COPY = "COPY",
+    COPY_CHECK = "COPY_CHECK",
+    COPY_MINUS = "COPY_MINUS",
+    COPY_PLUS = "COPY_PLUS",
+    COPY_SLASH = "COPY_SLASH",
+    COPY_X = "COPY_X",
+    COPYLEFT = "COPYLEFT",
+    COPYRIGHT = "COPYRIGHT",
+    CORNER_DOWN_LEFT = "CORNER_DOWN_LEFT",
+    CORNER_DOWN_RIGHT = "CORNER_DOWN_RIGHT",
+    CORNER_LEFT_DOWN = "CORNER_LEFT_DOWN",
+    CORNER_LEFT_UP = "CORNER_LEFT_UP",
+    CORNER_RIGHT_DOWN = "CORNER_RIGHT_DOWN",
+    CORNER_RIGHT_UP = "CORNER_RIGHT_UP",
+    CORNER_UP_LEFT = "CORNER_UP_LEFT",
+    CORNER_UP_RIGHT = "CORNER_UP_RIGHT",
+    CPU = "CPU",
+    CREATIVE_COMMONS = "CREATIVE_COMMONS",
+    CREDIT_CARD = "CREDIT_CARD",
+    CROISSANT = "CROISSANT",
+    CROP = "CROP",
+    CROSS = "CROSS",
+    CROSSHAIR = "CROSSHAIR",
+    CROWN = "CROWN",
+    CUBOID = "CUBOID",
+    CUP_SODA = "CUP_SODA",
+    CURRENCY = "CURRENCY",
+    CYLINDER = "CYLINDER",
+    DAM = "DAM",
+    DATABASE = "DATABASE",
+    DATABASE_BACKUP = "DATABASE_BACKUP",
+    DATABASE_ZAP = "DATABASE_ZAP",
+    DECIMALS_ARROW_LEFT = "DECIMALS_ARROW_LEFT",
+    DECIMALS_ARROW_RIGHT = "DECIMALS_ARROW_RIGHT",
+    DELETE = "DELETE",
+    DESSERT = "DESSERT",
+    DIAMETER = "DIAMETER",
+    DIAMOND = "DIAMOND",
+    DIAMOND_MINUS = "DIAMOND_MINUS",
+    DIAMOND_PERCENT = "DIAMOND_PERCENT",
+    DIAMOND_PLUS = "DIAMOND_PLUS",
+    DICE_1 = "DICE_1",
+    DICE_2 = "DICE_2",
+    DICE_3 = "DICE_3",
+    DICE_4 = "DICE_4",
+    DICE_5 = "DICE_5",
+    DICE_6 = "DICE_6",
+    DICES = "DICES",
+    DIFF = "DIFF",
+    DISC = "DISC",
+    DISC_2 = "DISC_2",
+    DISC_3 = "DISC_3",
+    DISC_ALBUM = "DISC_ALBUM",
+    DIVIDE = "DIVIDE",
+    DNA = "DNA",
+    DNA_OFF = "DNA_OFF",
+    DOCK = "DOCK",
+    DOG = "DOG",
+    DOLLAR_SIGN = "DOLLAR_SIGN",
+    DONUT = "DONUT",
+    DOOR_CLOSED = "DOOR_CLOSED",
+    DOOR_CLOSED_LOCKED = "DOOR_CLOSED_LOCKED",
+    DOOR_OPEN = "DOOR_OPEN",
+    DOT = "DOT",
+    DOWNLOAD = "DOWNLOAD",
+    DRAFTING_COMPASS = "DRAFTING_COMPASS",
+    DRAMA = "DRAMA",
+    DRIBBBLE = "DRIBBBLE",
+    DRILL = "DRILL",
+    DRONE = "DRONE",
+    DROPLET = "DROPLET",
+    DROPLET_OFF = "DROPLET_OFF",
+    DROPLETS = "DROPLETS",
+    DRUM = "DRUM",
+    DRUMSTICK = "DRUMSTICK",
+    DUMBBELL = "DUMBBELL",
+    EAR = "EAR",
+    EAR_OFF = "EAR_OFF",
+    EARTH = "EARTH",
+    EARTH_LOCK = "EARTH_LOCK",
+    ECLIPSE = "ECLIPSE",
+    EGG = "EGG",
+    EGG_FRIED = "EGG_FRIED",
+    EGG_OFF = "EGG_OFF",
+    ELLIPSIS = "ELLIPSIS",
+    ELLIPSIS_VERTICAL = "ELLIPSIS_VERTICAL",
+    EQUAL = "EQUAL",
+    EQUAL_APPROXIMATELY = "EQUAL_APPROXIMATELY",
+    EQUAL_NOT = "EQUAL_NOT",
+    ERASER = "ERASER",
+    ETHERNET_PORT = "ETHERNET_PORT",
+    EURO = "EURO",
+    EV_CHARGER = "EV_CHARGER",
+    EXPAND = "EXPAND",
+    EXTERNAL_LINK = "EXTERNAL_LINK",
+    EYE = "EYE",
+    EYE_CLOSED = "EYE_CLOSED",
+    EYE_OFF = "EYE_OFF",
+    FACEBOOK = "FACEBOOK",
+    FACTORY = "FACTORY",
+    FAN = "FAN",
+    FAST_FORWARD = "FAST_FORWARD",
+    FEATHER = "FEATHER",
+    FENCE = "FENCE",
+    FERRIS_WHEEL = "FERRIS_WHEEL",
+    FIGMA = "FIGMA",
+    FILE = "FILE",
+    FILE_ARCHIVE = "FILE_ARCHIVE",
+    FILE_AXIS_3D = "FILE_AXIS_3D",
+    FILE_BADGE = "FILE_BADGE",
+    FILE_BOX = "FILE_BOX",
+    FILE_BRACES = "FILE_BRACES",
+    FILE_BRACES_CORNER = "FILE_BRACES_CORNER",
+    FILE_CHART_COLUMN = "FILE_CHART_COLUMN",
+    FILE_CHART_COLUMN_INCREASING = "FILE_CHART_COLUMN_INCREASING",
+    FILE_CHART_LINE = "FILE_CHART_LINE",
+    FILE_CHART_PIE = "FILE_CHART_PIE",
+    FILE_CHECK = "FILE_CHECK",
+    FILE_CHECK_CORNER = "FILE_CHECK_CORNER",
+    FILE_CLOCK = "FILE_CLOCK",
+    FILE_CODE = "FILE_CODE",
+    FILE_CODE_CORNER = "FILE_CODE_CORNER",
+    FILE_COG = "FILE_COG",
+    FILE_DIFF = "FILE_DIFF",
+    FILE_DIGIT = "FILE_DIGIT",
+    FILE_DOWN = "FILE_DOWN",
+    FILE_EXCLAMATION_POINT = "FILE_EXCLAMATION_POINT",
+    FILE_HEADPHONE = "FILE_HEADPHONE",
+    FILE_HEART = "FILE_HEART",
+    FILE_IMAGE = "FILE_IMAGE",
+    FILE_INPUT = "FILE_INPUT",
+    FILE_KEY = "FILE_KEY",
+    FILE_LOCK = "FILE_LOCK",
+    FILE_MINUS = "FILE_MINUS",
+    FILE_MINUS_CORNER = "FILE_MINUS_CORNER",
+    FILE_MUSIC = "FILE_MUSIC",
+    FILE_OUTPUT = "FILE_OUTPUT",
+    FILE_PEN = "FILE_PEN",
+    FILE_PEN_LINE = "FILE_PEN_LINE",
+    FILE_PLAY = "FILE_PLAY",
+    FILE_PLUS = "FILE_PLUS",
+    FILE_PLUS_CORNER = "FILE_PLUS_CORNER",
+    FILE_QUESTION_MARK = "FILE_QUESTION_MARK",
+    FILE_SCAN = "FILE_SCAN",
+    FILE_SEARCH = "FILE_SEARCH",
+    FILE_SEARCH_CORNER = "FILE_SEARCH_CORNER",
+    FILE_SIGNAL = "FILE_SIGNAL",
+    FILE_SLIDERS = "FILE_SLIDERS",
+    FILE_SPREADSHEET = "FILE_SPREADSHEET",
+    FILE_STACK = "FILE_STACK",
+    FILE_SYMLINK = "FILE_SYMLINK",
+    FILE_TERMINAL = "FILE_TERMINAL",
+    FILE_TEXT = "FILE_TEXT",
+    FILE_TYPE = "FILE_TYPE",
+    FILE_TYPE_CORNER = "FILE_TYPE_CORNER",
+    FILE_UP = "FILE_UP",
+    FILE_USER = "FILE_USER",
+    FILE_VIDEO_CAMERA = "FILE_VIDEO_CAMERA",
+    FILE_VOLUME = "FILE_VOLUME",
+    FILE_X = "FILE_X",
+    FILE_X_CORNER = "FILE_X_CORNER",
+    FILES = "FILES",
+    FILM = "FILM",
+    FINGERPRINT_PATTERN = "FINGERPRINT_PATTERN",
+    FIRE_EXTINGUISHER = "FIRE_EXTINGUISHER",
+    FISH = "FISH",
+    FISH_OFF = "FISH_OFF",
+    FISH_SYMBOL = "FISH_SYMBOL",
+    FISHING_HOOK = "FISHING_HOOK",
+    FLAG = "FLAG",
+    FLAG_OFF = "FLAG_OFF",
+    FLAG_TRIANGLE_LEFT = "FLAG_TRIANGLE_LEFT",
+    FLAG_TRIANGLE_RIGHT = "FLAG_TRIANGLE_RIGHT",
+    FLAME = "FLAME",
+    FLAME_KINDLING = "FLAME_KINDLING",
+    FLASHLIGHT = "FLASHLIGHT",
+    FLASHLIGHT_OFF = "FLASHLIGHT_OFF",
+    FLASK_CONICAL = "FLASK_CONICAL",
+    FLASK_CONICAL_OFF = "FLASK_CONICAL_OFF",
+    FLASK_ROUND = "FLASK_ROUND",
+    FLIP_HORIZONTAL = "FLIP_HORIZONTAL",
+    FLIP_HORIZONTAL_2 = "FLIP_HORIZONTAL_2",
+    FLIP_VERTICAL = "FLIP_VERTICAL",
+    FLIP_VERTICAL_2 = "FLIP_VERTICAL_2",
+    FLOWER = "FLOWER",
+    FLOWER_2 = "FLOWER_2",
+    FOCUS = "FOCUS",
+    FOLD_HORIZONTAL = "FOLD_HORIZONTAL",
+    FOLD_VERTICAL = "FOLD_VERTICAL",
+    FOLDER = "FOLDER",
+    FOLDER_ARCHIVE = "FOLDER_ARCHIVE",
+    FOLDER_CHECK = "FOLDER_CHECK",
+    FOLDER_CLOCK = "FOLDER_CLOCK",
+    FOLDER_CLOSED = "FOLDER_CLOSED",
+    FOLDER_CODE = "FOLDER_CODE",
+    FOLDER_COG = "FOLDER_COG",
+    FOLDER_DOT = "FOLDER_DOT",
+    FOLDER_DOWN = "FOLDER_DOWN",
+    FOLDER_GIT = "FOLDER_GIT",
+    FOLDER_GIT_2 = "FOLDER_GIT_2",
+    FOLDER_HEART = "FOLDER_HEART",
+    FOLDER_INPUT = "FOLDER_INPUT",
+    FOLDER_KANBAN = "FOLDER_KANBAN",
+    FOLDER_KEY = "FOLDER_KEY",
+    FOLDER_LOCK = "FOLDER_LOCK",
+    FOLDER_MINUS = "FOLDER_MINUS",
+    FOLDER_OPEN = "FOLDER_OPEN",
+    FOLDER_OPEN_DOT = "FOLDER_OPEN_DOT",
+    FOLDER_OUTPUT = "FOLDER_OUTPUT",
+    FOLDER_PEN = "FOLDER_PEN",
+    FOLDER_PLUS = "FOLDER_PLUS",
+    FOLDER_ROOT = "FOLDER_ROOT",
+    FOLDER_SEARCH = "FOLDER_SEARCH",
+    FOLDER_SEARCH_2 = "FOLDER_SEARCH_2",
+    FOLDER_SYMLINK = "FOLDER_SYMLINK",
+    FOLDER_SYNC = "FOLDER_SYNC",
+    FOLDER_TREE = "FOLDER_TREE",
+    FOLDER_UP = "FOLDER_UP",
+    FOLDER_X = "FOLDER_X",
+    FOLDERS = "FOLDERS",
+    FOOTPRINTS = "FOOTPRINTS",
+    FORKLIFT = "FORKLIFT",
+    FORM = "FORM",
+    FORWARD = "FORWARD",
+    FRAME = "FRAME",
+    FRAMER = "FRAMER",
+    FROWN = "FROWN",
+    FUEL = "FUEL",
+    FULLSCREEN = "FULLSCREEN",
+    FUNNEL = "FUNNEL",
+    FUNNEL_PLUS = "FUNNEL_PLUS",
+    FUNNEL_X = "FUNNEL_X",
+    GALLERY_HORIZONTAL = "GALLERY_HORIZONTAL",
+    GALLERY_HORIZONTAL_END = "GALLERY_HORIZONTAL_END",
+    GALLERY_THUMBNAILS = "GALLERY_THUMBNAILS",
+    GALLERY_VERTICAL = "GALLERY_VERTICAL",
+    GALLERY_VERTICAL_END = "GALLERY_VERTICAL_END",
+    GAMEPAD = "GAMEPAD",
+    GAMEPAD_2 = "GAMEPAD_2",
+    GAMEPAD_DIRECTIONAL = "GAMEPAD_DIRECTIONAL",
+    GAUGE = "GAUGE",
+    GAVEL = "GAVEL",
+    GEM = "GEM",
+    GEORGIAN_LARI = "GEORGIAN_LARI",
+    GHOST = "GHOST",
+    GIFT = "GIFT",
+    GIT_BRANCH = "GIT_BRANCH",
+    GIT_BRANCH_MINUS = "GIT_BRANCH_MINUS",
+    GIT_BRANCH_PLUS = "GIT_BRANCH_PLUS",
+    GIT_COMMIT_HORIZONTAL = "GIT_COMMIT_HORIZONTAL",
+    GIT_COMMIT_VERTICAL = "GIT_COMMIT_VERTICAL",
+    GIT_COMPARE = "GIT_COMPARE",
+    GIT_COMPARE_ARROWS = "GIT_COMPARE_ARROWS",
+    GIT_FORK = "GIT_FORK",
+    GIT_GRAPH = "GIT_GRAPH",
+    GIT_MERGE = "GIT_MERGE",
+    GIT_PULL_REQUEST = "GIT_PULL_REQUEST",
+    GIT_PULL_REQUEST_ARROW = "GIT_PULL_REQUEST_ARROW",
+    GIT_PULL_REQUEST_CLOSED = "GIT_PULL_REQUEST_CLOSED",
+    GIT_PULL_REQUEST_CREATE = "GIT_PULL_REQUEST_CREATE",
+    GIT_PULL_REQUEST_CREATE_ARROW = "GIT_PULL_REQUEST_CREATE_ARROW",
+    GIT_PULL_REQUEST_DRAFT = "GIT_PULL_REQUEST_DRAFT",
+    GITHUB = "GITHUB",
+    GITLAB = "GITLAB",
+    GLASS_WATER = "GLASS_WATER",
+    GLASSES = "GLASSES",
+    GLOBE = "GLOBE",
+    GLOBE_LOCK = "GLOBE_LOCK",
+    GOAL = "GOAL",
+    GPU = "GPU",
+    GRADUATION_CAP = "GRADUATION_CAP",
+    GRAPE = "GRAPE",
+    GRID_2X2 = "GRID_2X2",
+    GRID_2X2_CHECK = "GRID_2X2_CHECK",
+    GRID_2X2_PLUS = "GRID_2X2_PLUS",
+    GRID_2X2_X = "GRID_2X2_X",
+    GRID_3X2 = "GRID_3X2",
+    GRID_3X3 = "GRID_3X3",
+    GRIP = "GRIP",
+    GRIP_HORIZONTAL = "GRIP_HORIZONTAL",
+    GRIP_VERTICAL = "GRIP_VERTICAL",
+    GROUP = "GROUP",
+    GUITAR = "GUITAR",
+    HAM = "HAM",
+    HAMBURGER = "HAMBURGER",
+    HAMMER = "HAMMER",
+    HAND = "HAND",
+    HAND_COINS = "HAND_COINS",
+    HAND_FIST = "HAND_FIST",
+    HAND_GRAB = "HAND_GRAB",
+    HAND_HEART = "HAND_HEART",
+    HAND_HELPING = "HAND_HELPING",
+    HAND_METAL = "HAND_METAL",
+    HAND_PLATTER = "HAND_PLATTER",
+    HANDBAG = "HANDBAG",
+    HANDSHAKE = "HANDSHAKE",
+    HARD_DRIVE = "HARD_DRIVE",
+    HARD_DRIVE_DOWNLOAD = "HARD_DRIVE_DOWNLOAD",
+    HARD_DRIVE_UPLOAD = "HARD_DRIVE_UPLOAD",
+    HARD_HAT = "HARD_HAT",
+    HASH = "HASH",
+    HAT_GLASSES = "HAT_GLASSES",
+    HAZE = "HAZE",
+    HD = "HD",
+    HDMI_PORT = "HDMI_PORT",
+    HEADING = "HEADING",
+    HEADING_1 = "HEADING_1",
+    HEADING_2 = "HEADING_2",
+    HEADING_3 = "HEADING_3",
+    HEADING_4 = "HEADING_4",
+    HEADING_5 = "HEADING_5",
+    HEADING_6 = "HEADING_6",
+    HEADPHONE_OFF = "HEADPHONE_OFF",
+    HEADPHONES = "HEADPHONES",
+    HEADSET = "HEADSET",
+    HEART = "HEART",
+    HEART_CRACK = "HEART_CRACK",
+    HEART_HANDSHAKE = "HEART_HANDSHAKE",
+    HEART_MINUS = "HEART_MINUS",
+    HEART_OFF = "HEART_OFF",
+    HEART_PLUS = "HEART_PLUS",
+    HEART_PULSE = "HEART_PULSE",
+    HEATER = "HEATER",
+    HELICOPTER = "HELICOPTER",
+    HEXAGON = "HEXAGON",
+    HIGHLIGHTER = "HIGHLIGHTER",
+    HISTORY = "HISTORY",
+    HOP = "HOP",
+    HOP_OFF = "HOP_OFF",
+    HOSPITAL = "HOSPITAL",
+    HOTEL = "HOTEL",
+    HOURGLASS = "HOURGLASS",
+    HOUSE = "HOUSE",
+    HOUSE_HEART = "HOUSE_HEART",
+    HOUSE_PLUG = "HOUSE_PLUG",
+    HOUSE_PLUS = "HOUSE_PLUS",
+    HOUSE_WIFI = "HOUSE_WIFI",
+    ICE_CREAM_BOWL = "ICE_CREAM_BOWL",
+    ICE_CREAM_CONE = "ICE_CREAM_CONE",
+    ID_CARD = "ID_CARD",
+    ID_CARD_LANYARD = "ID_CARD_LANYARD",
+    IMAGE = "IMAGE",
+    IMAGE_DOWN = "IMAGE_DOWN",
+    IMAGE_MINUS = "IMAGE_MINUS",
+    IMAGE_OFF = "IMAGE_OFF",
+    IMAGE_PLAY = "IMAGE_PLAY",
+    IMAGE_PLUS = "IMAGE_PLUS",
+    IMAGE_UP = "IMAGE_UP",
+    IMAGE_UPSCALE = "IMAGE_UPSCALE",
+    IMAGES = "IMAGES",
+    IMPORT = "IMPORT",
+    INBOX = "INBOX",
+    INDIAN_RUPEE = "INDIAN_RUPEE",
+    INFINITY = "INFINITY",
+    INFO = "INFO",
+    INSPECTION_PANEL = "INSPECTION_PANEL",
+    INSTAGRAM = "INSTAGRAM",
+    ITALIC = "ITALIC",
+    ITERATION_CCW = "ITERATION_CCW",
+    ITERATION_CW = "ITERATION_CW",
+    JAPANESE_YEN = "JAPANESE_YEN",
+    JOYSTICK = "JOYSTICK",
+    KANBAN = "KANBAN",
+    KAYAK = "KAYAK",
+    KEY = "KEY",
+    KEY_ROUND = "KEY_ROUND",
+    KEY_SQUARE = "KEY_SQUARE",
+    KEYBOARD = "KEYBOARD",
+    KEYBOARD_MUSIC = "KEYBOARD_MUSIC",
+    KEYBOARD_OFF = "KEYBOARD_OFF",
+    LAMP = "LAMP",
+    LAMP_CEILING = "LAMP_CEILING",
+    LAMP_DESK = "LAMP_DESK",
+    LAMP_FLOOR = "LAMP_FLOOR",
+    LAMP_WALL_DOWN = "LAMP_WALL_DOWN",
+    LAMP_WALL_UP = "LAMP_WALL_UP",
+    LAND_PLOT = "LAND_PLOT",
+    LANDMARK = "LANDMARK",
+    LANGUAGES = "LANGUAGES",
+    LAPTOP = "LAPTOP",
+    LAPTOP_MINIMAL = "LAPTOP_MINIMAL",
+    LAPTOP_MINIMAL_CHECK = "LAPTOP_MINIMAL_CHECK",
+    LASSO = "LASSO",
+    LASSO_SELECT = "LASSO_SELECT",
+    LAUGH = "LAUGH",
+    LAYERS = "LAYERS",
+    LAYERS_2 = "LAYERS_2",
+    LAYERS_PLUS = "LAYERS_PLUS",
+    LAYOUT_DASHBOARD = "LAYOUT_DASHBOARD",
+    LAYOUT_GRID = "LAYOUT_GRID",
+    LAYOUT_LIST = "LAYOUT_LIST",
+    LAYOUT_PANEL_LEFT = "LAYOUT_PANEL_LEFT",
+    LAYOUT_PANEL_TOP = "LAYOUT_PANEL_TOP",
+    LAYOUT_TEMPLATE = "LAYOUT_TEMPLATE",
+    LEAF = "LEAF",
+    LEAFY_GREEN = "LEAFY_GREEN",
+    LECTERN = "LECTERN",
+    LIBRARY = "LIBRARY",
+    LIBRARY_BIG = "LIBRARY_BIG",
+    LIFE_BUOY = "LIFE_BUOY",
+    LIGATURE = "LIGATURE",
+    LIGHTBULB = "LIGHTBULB",
+    LIGHTBULB_OFF = "LIGHTBULB_OFF",
+    LINE_SQUIGGLE = "LINE_SQUIGGLE",
+    LINK = "LINK",
+    LINK_2 = "LINK_2",
+    LINK_2_OFF = "LINK_2_OFF",
+    LINKEDIN = "LINKEDIN",
+    LIST = "LIST",
+    LIST_CHECK = "LIST_CHECK",
+    LIST_CHECKS = "LIST_CHECKS",
+    LIST_CHEVRONS_DOWN_UP = "LIST_CHEVRONS_DOWN_UP",
+    LIST_CHEVRONS_UP_DOWN = "LIST_CHEVRONS_UP_DOWN",
+    LIST_COLLAPSE = "LIST_COLLAPSE",
+    LIST_END = "LIST_END",
+    LIST_FILTER = "LIST_FILTER",
+    LIST_FILTER_PLUS = "LIST_FILTER_PLUS",
+    LIST_INDENT_DECREASE = "LIST_INDENT_DECREASE",
+    LIST_INDENT_INCREASE = "LIST_INDENT_INCREASE",
+    LIST_MINUS = "LIST_MINUS",
+    LIST_MUSIC = "LIST_MUSIC",
+    LIST_ORDERED = "LIST_ORDERED",
+    LIST_PLUS = "LIST_PLUS",
+    LIST_RESTART = "LIST_RESTART",
+    LIST_START = "LIST_START",
+    LIST_TODO = "LIST_TODO",
+    LIST_TREE = "LIST_TREE",
+    LIST_VIDEO = "LIST_VIDEO",
+    LIST_X = "LIST_X",
+    LOADER = "LOADER",
+    LOADER_CIRCLE = "LOADER_CIRCLE",
+    LOADER_PINWHEEL = "LOADER_PINWHEEL",
+    LOCATE = "LOCATE",
+    LOCATE_FIXED = "LOCATE_FIXED",
+    LOCATE_OFF = "LOCATE_OFF",
+    LOCK = "LOCK",
+    LOCK_KEYHOLE = "LOCK_KEYHOLE",
+    LOCK_KEYHOLE_OPEN = "LOCK_KEYHOLE_OPEN",
+    LOCK_OPEN = "LOCK_OPEN",
+    LOG_IN = "LOG_IN",
+    LOG_OUT = "LOG_OUT",
+    LOGS = "LOGS",
+    LOLLIPOP = "LOLLIPOP",
+    LUGGAGE = "LUGGAGE",
+    MAGNET = "MAGNET",
+    MAIL = "MAIL",
+    MAIL_CHECK = "MAIL_CHECK",
+    MAIL_MINUS = "MAIL_MINUS",
+    MAIL_OPEN = "MAIL_OPEN",
+    MAIL_PLUS = "MAIL_PLUS",
+    MAIL_QUESTION_MARK = "MAIL_QUESTION_MARK",
+    MAIL_SEARCH = "MAIL_SEARCH",
+    MAIL_WARNING = "MAIL_WARNING",
+    MAIL_X = "MAIL_X",
+    MAILBOX = "MAILBOX",
+    MAILS = "MAILS",
+    MAP = "MAP",
+    MAP_MINUS = "MAP_MINUS",
+    MAP_PIN = "MAP_PIN",
+    MAP_PIN_CHECK = "MAP_PIN_CHECK",
+    MAP_PIN_CHECK_INSIDE = "MAP_PIN_CHECK_INSIDE",
+    MAP_PIN_HOUSE = "MAP_PIN_HOUSE",
+    MAP_PIN_MINUS = "MAP_PIN_MINUS",
+    MAP_PIN_MINUS_INSIDE = "MAP_PIN_MINUS_INSIDE",
+    MAP_PIN_OFF = "MAP_PIN_OFF",
+    MAP_PIN_PEN = "MAP_PIN_PEN",
+    MAP_PIN_PLUS = "MAP_PIN_PLUS",
+    MAP_PIN_PLUS_INSIDE = "MAP_PIN_PLUS_INSIDE",
+    MAP_PIN_X = "MAP_PIN_X",
+    MAP_PIN_X_INSIDE = "MAP_PIN_X_INSIDE",
+    MAP_PINNED = "MAP_PINNED",
+    MAP_PLUS = "MAP_PLUS",
+    MARS = "MARS",
+    MARS_STROKE = "MARS_STROKE",
+    MARTINI = "MARTINI",
+    MAXIMIZE = "MAXIMIZE",
+    MAXIMIZE_2 = "MAXIMIZE_2",
+    MEDAL = "MEDAL",
+    MEGAPHONE = "MEGAPHONE",
+    MEGAPHONE_OFF = "MEGAPHONE_OFF",
+    MEH = "MEH",
+    MEMORY_STICK = "MEMORY_STICK",
+    MENU = "MENU",
+    MERGE = "MERGE",
+    MESSAGE_CIRCLE = "MESSAGE_CIRCLE",
+    MESSAGE_CIRCLE_CODE = "MESSAGE_CIRCLE_CODE",
+    MESSAGE_CIRCLE_DASHED = "MESSAGE_CIRCLE_DASHED",
+    MESSAGE_CIRCLE_HEART = "MESSAGE_CIRCLE_HEART",
+    MESSAGE_CIRCLE_MORE = "MESSAGE_CIRCLE_MORE",
+    MESSAGE_CIRCLE_OFF = "MESSAGE_CIRCLE_OFF",
+    MESSAGE_CIRCLE_PLUS = "MESSAGE_CIRCLE_PLUS",
+    MESSAGE_CIRCLE_QUESTION_MARK = "MESSAGE_CIRCLE_QUESTION_MARK",
+    MESSAGE_CIRCLE_REPLY = "MESSAGE_CIRCLE_REPLY",
+    MESSAGE_CIRCLE_WARNING = "MESSAGE_CIRCLE_WARNING",
+    MESSAGE_CIRCLE_X = "MESSAGE_CIRCLE_X",
+    MESSAGE_SQUARE = "MESSAGE_SQUARE",
+    MESSAGE_SQUARE_CODE = "MESSAGE_SQUARE_CODE",
+    MESSAGE_SQUARE_DASHED = "MESSAGE_SQUARE_DASHED",
+    MESSAGE_SQUARE_DIFF = "MESSAGE_SQUARE_DIFF",
+    MESSAGE_SQUARE_DOT = "MESSAGE_SQUARE_DOT",
+    MESSAGE_SQUARE_HEART = "MESSAGE_SQUARE_HEART",
+    MESSAGE_SQUARE_LOCK = "MESSAGE_SQUARE_LOCK",
+    MESSAGE_SQUARE_MORE = "MESSAGE_SQUARE_MORE",
+    MESSAGE_SQUARE_OFF = "MESSAGE_SQUARE_OFF",
+    MESSAGE_SQUARE_PLUS = "MESSAGE_SQUARE_PLUS",
+    MESSAGE_SQUARE_QUOTE = "MESSAGE_SQUARE_QUOTE",
+    MESSAGE_SQUARE_REPLY = "MESSAGE_SQUARE_REPLY",
+    MESSAGE_SQUARE_SHARE = "MESSAGE_SQUARE_SHARE",
+    MESSAGE_SQUARE_TEXT = "MESSAGE_SQUARE_TEXT",
+    MESSAGE_SQUARE_WARNING = "MESSAGE_SQUARE_WARNING",
+    MESSAGE_SQUARE_X = "MESSAGE_SQUARE_X",
+    MESSAGES_SQUARE = "MESSAGES_SQUARE",
+    MIC = "MIC",
+    MIC_OFF = "MIC_OFF",
+    MIC_VOCAL = "MIC_VOCAL",
+    MICROCHIP = "MICROCHIP",
+    MICROSCOPE = "MICROSCOPE",
+    MICROWAVE = "MICROWAVE",
+    MILESTONE = "MILESTONE",
+    MILK = "MILK",
+    MILK_OFF = "MILK_OFF",
+    MINIMIZE = "MINIMIZE",
+    MINIMIZE_2 = "MINIMIZE_2",
+    MINUS = "MINUS",
+    MONITOR = "MONITOR",
+    MONITOR_CHECK = "MONITOR_CHECK",
+    MONITOR_CLOUD = "MONITOR_CLOUD",
+    MONITOR_COG = "MONITOR_COG",
+    MONITOR_DOT = "MONITOR_DOT",
+    MONITOR_DOWN = "MONITOR_DOWN",
+    MONITOR_OFF = "MONITOR_OFF",
+    MONITOR_PAUSE = "MONITOR_PAUSE",
+    MONITOR_PLAY = "MONITOR_PLAY",
+    MONITOR_SMARTPHONE = "MONITOR_SMARTPHONE",
+    MONITOR_SPEAKER = "MONITOR_SPEAKER",
+    MONITOR_STOP = "MONITOR_STOP",
+    MONITOR_UP = "MONITOR_UP",
+    MONITOR_X = "MONITOR_X",
+    MOON = "MOON",
+    MOON_STAR = "MOON_STAR",
+    MOTORBIKE = "MOTORBIKE",
+    MOUNTAIN = "MOUNTAIN",
+    MOUNTAIN_SNOW = "MOUNTAIN_SNOW",
+    MOUSE = "MOUSE",
+    MOUSE_OFF = "MOUSE_OFF",
+    MOUSE_POINTER = "MOUSE_POINTER",
+    MOUSE_POINTER_2 = "MOUSE_POINTER_2",
+    MOUSE_POINTER_2_OFF = "MOUSE_POINTER_2_OFF",
+    MOUSE_POINTER_BAN = "MOUSE_POINTER_BAN",
+    MOUSE_POINTER_CLICK = "MOUSE_POINTER_CLICK",
+    MOVE = "MOVE",
+    MOVE_3D = "MOVE_3D",
+    MOVE_DIAGONAL = "MOVE_DIAGONAL",
+    MOVE_DIAGONAL_2 = "MOVE_DIAGONAL_2",
+    MOVE_DOWN = "MOVE_DOWN",
+    MOVE_DOWN_LEFT = "MOVE_DOWN_LEFT",
+    MOVE_DOWN_RIGHT = "MOVE_DOWN_RIGHT",
+    MOVE_HORIZONTAL = "MOVE_HORIZONTAL",
+    MOVE_LEFT = "MOVE_LEFT",
+    MOVE_RIGHT = "MOVE_RIGHT",
+    MOVE_UP = "MOVE_UP",
+    MOVE_UP_LEFT = "MOVE_UP_LEFT",
+    MOVE_UP_RIGHT = "MOVE_UP_RIGHT",
+    MOVE_VERTICAL = "MOVE_VERTICAL",
+    MUSIC = "MUSIC",
+    MUSIC_2 = "MUSIC_2",
+    MUSIC_3 = "MUSIC_3",
+    MUSIC_4 = "MUSIC_4",
+    NAVIGATION = "NAVIGATION",
+    NAVIGATION_2 = "NAVIGATION_2",
+    NAVIGATION_2_OFF = "NAVIGATION_2_OFF",
+    NAVIGATION_OFF = "NAVIGATION_OFF",
+    NETWORK = "NETWORK",
+    NEWSPAPER = "NEWSPAPER",
+    NFC = "NFC",
+    NON_BINARY = "NON_BINARY",
+    NOTEBOOK = "NOTEBOOK",
+    NOTEBOOK_PEN = "NOTEBOOK_PEN",
+    NOTEBOOK_TABS = "NOTEBOOK_TABS",
+    NOTEBOOK_TEXT = "NOTEBOOK_TEXT",
+    NOTEPAD_TEXT = "NOTEPAD_TEXT",
+    NOTEPAD_TEXT_DASHED = "NOTEPAD_TEXT_DASHED",
+    NUT = "NUT",
+    NUT_OFF = "NUT_OFF",
+    OCTAGON = "OCTAGON",
+    OCTAGON_ALERT = "OCTAGON_ALERT",
+    OCTAGON_MINUS = "OCTAGON_MINUS",
+    OCTAGON_PAUSE = "OCTAGON_PAUSE",
+    OCTAGON_X = "OCTAGON_X",
+    OMEGA = "OMEGA",
+    OPTION = "OPTION",
+    ORBIT = "ORBIT",
+    ORIGAMI = "ORIGAMI",
+    PACKAGE = "PACKAGE",
+    PACKAGE_2 = "PACKAGE_2",
+    PACKAGE_CHECK = "PACKAGE_CHECK",
+    PACKAGE_MINUS = "PACKAGE_MINUS",
+    PACKAGE_OPEN = "PACKAGE_OPEN",
+    PACKAGE_PLUS = "PACKAGE_PLUS",
+    PACKAGE_SEARCH = "PACKAGE_SEARCH",
+    PACKAGE_X = "PACKAGE_X",
+    PAINT_BUCKET = "PAINT_BUCKET",
+    PAINT_ROLLER = "PAINT_ROLLER",
+    PAINTBRUSH = "PAINTBRUSH",
+    PAINTBRUSH_VERTICAL = "PAINTBRUSH_VERTICAL",
+    PALETTE = "PALETTE",
+    PANDA = "PANDA",
+    PANEL_BOTTOM = "PANEL_BOTTOM",
+    PANEL_BOTTOM_CLOSE = "PANEL_BOTTOM_CLOSE",
+    PANEL_BOTTOM_DASHED = "PANEL_BOTTOM_DASHED",
+    PANEL_BOTTOM_OPEN = "PANEL_BOTTOM_OPEN",
+    PANEL_LEFT = "PANEL_LEFT",
+    PANEL_LEFT_CLOSE = "PANEL_LEFT_CLOSE",
+    PANEL_LEFT_DASHED = "PANEL_LEFT_DASHED",
+    PANEL_LEFT_OPEN = "PANEL_LEFT_OPEN",
+    PANEL_LEFT_RIGHT_DASHED = "PANEL_LEFT_RIGHT_DASHED",
+    PANEL_RIGHT = "PANEL_RIGHT",
+    PANEL_RIGHT_CLOSE = "PANEL_RIGHT_CLOSE",
+    PANEL_RIGHT_DASHED = "PANEL_RIGHT_DASHED",
+    PANEL_RIGHT_OPEN = "PANEL_RIGHT_OPEN",
+    PANEL_TOP = "PANEL_TOP",
+    PANEL_TOP_BOTTOM_DASHED = "PANEL_TOP_BOTTOM_DASHED",
+    PANEL_TOP_CLOSE = "PANEL_TOP_CLOSE",
+    PANEL_TOP_DASHED = "PANEL_TOP_DASHED",
+    PANEL_TOP_OPEN = "PANEL_TOP_OPEN",
+    PANELS_LEFT_BOTTOM = "PANELS_LEFT_BOTTOM",
+    PANELS_RIGHT_BOTTOM = "PANELS_RIGHT_BOTTOM",
+    PANELS_TOP_LEFT = "PANELS_TOP_LEFT",
+    PAPERCLIP = "PAPERCLIP",
+    PARENTHESES = "PARENTHESES",
+    PARKING_METER = "PARKING_METER",
+    PARTY_POPPER = "PARTY_POPPER",
+    PAUSE = "PAUSE",
+    PAW_PRINT = "PAW_PRINT",
+    PC_CASE = "PC_CASE",
+    PEN = "PEN",
+    PEN_LINE = "PEN_LINE",
+    PEN_OFF = "PEN_OFF",
+    PEN_TOOL = "PEN_TOOL",
+    PENCIL = "PENCIL",
+    PENCIL_LINE = "PENCIL_LINE",
+    PENCIL_OFF = "PENCIL_OFF",
+    PENCIL_RULER = "PENCIL_RULER",
+    PENTAGON = "PENTAGON",
+    PERCENT = "PERCENT",
+    PERSON_STANDING = "PERSON_STANDING",
+    PHILIPPINE_PESO = "PHILIPPINE_PESO",
+    PHONE = "PHONE",
+    PHONE_CALL = "PHONE_CALL",
+    PHONE_FORWARDED = "PHONE_FORWARDED",
+    PHONE_INCOMING = "PHONE_INCOMING",
+    PHONE_MISSED = "PHONE_MISSED",
+    PHONE_OFF = "PHONE_OFF",
+    PHONE_OUTGOING = "PHONE_OUTGOING",
+    PI = "PI",
+    PIANO = "PIANO",
+    PICKAXE = "PICKAXE",
+    PICTURE_IN_PICTURE = "PICTURE_IN_PICTURE",
+    PICTURE_IN_PICTURE_2 = "PICTURE_IN_PICTURE_2",
+    PIGGY_BANK = "PIGGY_BANK",
+    PILCROW = "PILCROW",
+    PILCROW_LEFT = "PILCROW_LEFT",
+    PILCROW_RIGHT = "PILCROW_RIGHT",
+    PILL = "PILL",
+    PILL_BOTTLE = "PILL_BOTTLE",
+    PIN = "PIN",
+    PIN_OFF = "PIN_OFF",
+    PIPETTE = "PIPETTE",
+    PIZZA = "PIZZA",
+    PLANE = "PLANE",
+    PLANE_LANDING = "PLANE_LANDING",
+    PLANE_TAKEOFF = "PLANE_TAKEOFF",
+    PLAY = "PLAY",
+    PLUG = "PLUG",
+    PLUG_2 = "PLUG_2",
+    PLUG_ZAP = "PLUG_ZAP",
+    PLUS = "PLUS",
+    POCKET = "POCKET",
+    POCKET_KNIFE = "POCKET_KNIFE",
+    PODCAST = "PODCAST",
+    POINTER = "POINTER",
+    POINTER_OFF = "POINTER_OFF",
+    POPCORN = "POPCORN",
+    POPSICLE = "POPSICLE",
+    POUND_STERLING = "POUND_STERLING",
+    POWER = "POWER",
+    POWER_OFF = "POWER_OFF",
+    PRESENTATION = "PRESENTATION",
+    PRINTER = "PRINTER",
+    PRINTER_CHECK = "PRINTER_CHECK",
+    PROJECTOR = "PROJECTOR",
+    PROPORTIONS = "PROPORTIONS",
+    PUZZLE = "PUZZLE",
+    PYRAMID = "PYRAMID",
+    QR_CODE = "QR_CODE",
+    QUOTE = "QUOTE",
+    RABBIT = "RABBIT",
+    RADAR = "RADAR",
+    RADIATION = "RADIATION",
+    RADICAL = "RADICAL",
+    RADIO = "RADIO",
+    RADIO_RECEIVER = "RADIO_RECEIVER",
+    RADIO_TOWER = "RADIO_TOWER",
+    RADIUS = "RADIUS",
+    RAIL_SYMBOL = "RAIL_SYMBOL",
+    RAINBOW = "RAINBOW",
+    RAT = "RAT",
+    RATIO = "RATIO",
+    RECEIPT = "RECEIPT",
+    RECEIPT_CENT = "RECEIPT_CENT",
+    RECEIPT_EURO = "RECEIPT_EURO",
+    RECEIPT_INDIAN_RUPEE = "RECEIPT_INDIAN_RUPEE",
+    RECEIPT_JAPANESE_YEN = "RECEIPT_JAPANESE_YEN",
+    RECEIPT_POUND_STERLING = "RECEIPT_POUND_STERLING",
+    RECEIPT_RUSSIAN_RUBLE = "RECEIPT_RUSSIAN_RUBLE",
+    RECEIPT_SWISS_FRANC = "RECEIPT_SWISS_FRANC",
+    RECEIPT_TEXT = "RECEIPT_TEXT",
+    RECEIPT_TURKISH_LIRA = "RECEIPT_TURKISH_LIRA",
+    RECTANGLE_CIRCLE = "RECTANGLE_CIRCLE",
+    RECTANGLE_ELLIPSIS = "RECTANGLE_ELLIPSIS",
+    RECTANGLE_GOGGLES = "RECTANGLE_GOGGLES",
+    RECTANGLE_HORIZONTAL = "RECTANGLE_HORIZONTAL",
+    RECTANGLE_VERTICAL = "RECTANGLE_VERTICAL",
+    RECYCLE = "RECYCLE",
+    REDO = "REDO",
+    REDO_2 = "REDO_2",
+    REDO_DOT = "REDO_DOT",
+    REFRESH_CCW = "REFRESH_CCW",
+    REFRESH_CCW_DOT = "REFRESH_CCW_DOT",
+    REFRESH_CW = "REFRESH_CW",
+    REFRESH_CW_OFF = "REFRESH_CW_OFF",
+    REFRIGERATOR = "REFRIGERATOR",
+    REGEX = "REGEX",
+    REMOVE_FORMATTING = "REMOVE_FORMATTING",
+    REPEAT = "REPEAT",
+    REPEAT_1 = "REPEAT_1",
+    REPEAT_2 = "REPEAT_2",
+    REPLACE = "REPLACE",
+    REPLACE_ALL = "REPLACE_ALL",
+    REPLY = "REPLY",
+    REPLY_ALL = "REPLY_ALL",
+    REWIND = "REWIND",
+    RIBBON = "RIBBON",
+    ROCKET = "ROCKET",
+    ROCKING_CHAIR = "ROCKING_CHAIR",
+    ROLLER_COASTER = "ROLLER_COASTER",
+    ROSE = "ROSE",
+    ROTATE_3D = "ROTATE_3D",
+    ROTATE_CCW = "ROTATE_CCW",
+    ROTATE_CCW_KEY = "ROTATE_CCW_KEY",
+    ROTATE_CCW_SQUARE = "ROTATE_CCW_SQUARE",
+    ROTATE_CW = "ROTATE_CW",
+    ROTATE_CW_SQUARE = "ROTATE_CW_SQUARE",
+    ROUTE = "ROUTE",
+    ROUTE_OFF = "ROUTE_OFF",
+    ROUTER = "ROUTER",
+    ROWS_2 = "ROWS_2",
+    ROWS_3 = "ROWS_3",
+    ROWS_4 = "ROWS_4",
+    RSS = "RSS",
+    RULER = "RULER",
+    RULER_DIMENSION_LINE = "RULER_DIMENSION_LINE",
+    RUSSIAN_RUBLE = "RUSSIAN_RUBLE",
+    SAILBOAT = "SAILBOAT",
+    SALAD = "SALAD",
+    SANDWICH = "SANDWICH",
+    SATELLITE = "SATELLITE",
+    SATELLITE_DISH = "SATELLITE_DISH",
+    SAUDI_RIYAL = "SAUDI_RIYAL",
+    SAVE = "SAVE",
+    SAVE_ALL = "SAVE_ALL",
+    SAVE_OFF = "SAVE_OFF",
+    SCALE = "SCALE",
+    SCALE_3D = "SCALE_3D",
+    SCALING = "SCALING",
+    SCAN = "SCAN",
+    SCAN_BARCODE = "SCAN_BARCODE",
+    SCAN_EYE = "SCAN_EYE",
+    SCAN_FACE = "SCAN_FACE",
+    SCAN_HEART = "SCAN_HEART",
+    SCAN_LINE = "SCAN_LINE",
+    SCAN_QR_CODE = "SCAN_QR_CODE",
+    SCAN_SEARCH = "SCAN_SEARCH",
+    SCAN_TEXT = "SCAN_TEXT",
+    SCHOOL = "SCHOOL",
+    SCISSORS = "SCISSORS",
+    SCISSORS_LINE_DASHED = "SCISSORS_LINE_DASHED",
+    SCOOTER = "SCOOTER",
+    SCREEN_SHARE = "SCREEN_SHARE",
+    SCREEN_SHARE_OFF = "SCREEN_SHARE_OFF",
+    SCROLL = "SCROLL",
+    SCROLL_TEXT = "SCROLL_TEXT",
+    SEARCH = "SEARCH",
+    SEARCH_ALERT = "SEARCH_ALERT",
+    SEARCH_CHECK = "SEARCH_CHECK",
+    SEARCH_CODE = "SEARCH_CODE",
+    SEARCH_SLASH = "SEARCH_SLASH",
+    SEARCH_X = "SEARCH_X",
+    SECTION = "SECTION",
+    SEND = "SEND",
+    SEND_HORIZONTAL = "SEND_HORIZONTAL",
+    SEND_TO_BACK = "SEND_TO_BACK",
+    SEPARATOR_HORIZONTAL = "SEPARATOR_HORIZONTAL",
+    SEPARATOR_VERTICAL = "SEPARATOR_VERTICAL",
+    SERVER = "SERVER",
+    SERVER_COG = "SERVER_COG",
+    SERVER_CRASH = "SERVER_CRASH",
+    SERVER_OFF = "SERVER_OFF",
+    SETTINGS = "SETTINGS",
+    SETTINGS_2 = "SETTINGS_2",
+    SHAPES = "SHAPES",
+    SHARE = "SHARE",
+    SHARE_2 = "SHARE_2",
+    SHEET = "SHEET",
+    SHELL = "SHELL",
+    SHIELD = "SHIELD",
+    SHIELD_ALERT = "SHIELD_ALERT",
+    SHIELD_BAN = "SHIELD_BAN",
+    SHIELD_CHECK = "SHIELD_CHECK",
+    SHIELD_ELLIPSIS = "SHIELD_ELLIPSIS",
+    SHIELD_HALF = "SHIELD_HALF",
+    SHIELD_MINUS = "SHIELD_MINUS",
+    SHIELD_OFF = "SHIELD_OFF",
+    SHIELD_PLUS = "SHIELD_PLUS",
+    SHIELD_QUESTION_MARK = "SHIELD_QUESTION_MARK",
+    SHIELD_USER = "SHIELD_USER",
+    SHIELD_X = "SHIELD_X",
+    SHIP = "SHIP",
+    SHIP_WHEEL = "SHIP_WHEEL",
+    SHIRT = "SHIRT",
+    SHOPPING_BAG = "SHOPPING_BAG",
+    SHOPPING_BASKET = "SHOPPING_BASKET",
+    SHOPPING_CART = "SHOPPING_CART",
+    SHOVEL = "SHOVEL",
+    SHOWER_HEAD = "SHOWER_HEAD",
+    SHREDDER = "SHREDDER",
+    SHRIMP = "SHRIMP",
+    SHRINK = "SHRINK",
+    SHRUB = "SHRUB",
+    SHUFFLE = "SHUFFLE",
+    SIGMA = "SIGMA",
+    SIGNAL = "SIGNAL",
+    SIGNAL_HIGH = "SIGNAL_HIGH",
+    SIGNAL_LOW = "SIGNAL_LOW",
+    SIGNAL_MEDIUM = "SIGNAL_MEDIUM",
+    SIGNAL_ZERO = "SIGNAL_ZERO",
+    SIGNATURE = "SIGNATURE",
+    SIGNPOST = "SIGNPOST",
+    SIGNPOST_BIG = "SIGNPOST_BIG",
+    SIREN = "SIREN",
+    SKIP_BACK = "SKIP_BACK",
+    SKIP_FORWARD = "SKIP_FORWARD",
+    SKULL = "SKULL",
+    SLACK = "SLACK",
+    SLASH = "SLASH",
+    SLICE = "SLICE",
+    SLIDERS_HORIZONTAL = "SLIDERS_HORIZONTAL",
+    SLIDERS_VERTICAL = "SLIDERS_VERTICAL",
+    SMARTPHONE = "SMARTPHONE",
+    SMARTPHONE_CHARGING = "SMARTPHONE_CHARGING",
+    SMARTPHONE_NFC = "SMARTPHONE_NFC",
+    SMILE = "SMILE",
+    SMILE_PLUS = "SMILE_PLUS",
+    SNAIL = "SNAIL",
+    SNOWFLAKE = "SNOWFLAKE",
+    SOAP_DISPENSER_DROPLET = "SOAP_DISPENSER_DROPLET",
+    SOFA = "SOFA",
+    SOLAR_PANEL = "SOLAR_PANEL",
+    SOUP = "SOUP",
+    SPACE = "SPACE",
+    SPADE = "SPADE",
+    SPARKLE = "SPARKLE",
+    SPARKLES = "SPARKLES",
+    SPEAKER = "SPEAKER",
+    SPEECH = "SPEECH",
+    SPELL_CHECK = "SPELL_CHECK",
+    SPELL_CHECK_2 = "SPELL_CHECK_2",
+    SPLINE = "SPLINE",
+    SPLINE_POINTER = "SPLINE_POINTER",
+    SPLIT = "SPLIT",
+    SPOOL = "SPOOL",
+    SPOTLIGHT = "SPOTLIGHT",
+    SPRAY_CAN = "SPRAY_CAN",
+    SPROUT = "SPROUT",
+    SQUARE = "SQUARE",
+    SQUARE_ACTIVITY = "SQUARE_ACTIVITY",
+    SQUARE_ARROW_DOWN = "SQUARE_ARROW_DOWN",
+    SQUARE_ARROW_DOWN_LEFT = "SQUARE_ARROW_DOWN_LEFT",
+    SQUARE_ARROW_DOWN_RIGHT = "SQUARE_ARROW_DOWN_RIGHT",
+    SQUARE_ARROW_LEFT = "SQUARE_ARROW_LEFT",
+    SQUARE_ARROW_OUT_DOWN_LEFT = "SQUARE_ARROW_OUT_DOWN_LEFT",
+    SQUARE_ARROW_OUT_DOWN_RIGHT = "SQUARE_ARROW_OUT_DOWN_RIGHT",
+    SQUARE_ARROW_OUT_UP_LEFT = "SQUARE_ARROW_OUT_UP_LEFT",
+    SQUARE_ARROW_OUT_UP_RIGHT = "SQUARE_ARROW_OUT_UP_RIGHT",
+    SQUARE_ARROW_RIGHT = "SQUARE_ARROW_RIGHT",
+    SQUARE_ARROW_UP = "SQUARE_ARROW_UP",
+    SQUARE_ARROW_UP_LEFT = "SQUARE_ARROW_UP_LEFT",
+    SQUARE_ARROW_UP_RIGHT = "SQUARE_ARROW_UP_RIGHT",
+    SQUARE_ASTERISK = "SQUARE_ASTERISK",
+    SQUARE_BOTTOM_DASHED_SCISSORS = "SQUARE_BOTTOM_DASHED_SCISSORS",
+    SQUARE_CHART_GANTT = "SQUARE_CHART_GANTT",
+    SQUARE_CHECK = "SQUARE_CHECK",
+    SQUARE_CHECK_BIG = "SQUARE_CHECK_BIG",
+    SQUARE_CHEVRON_DOWN = "SQUARE_CHEVRON_DOWN",
+    SQUARE_CHEVRON_LEFT = "SQUARE_CHEVRON_LEFT",
+    SQUARE_CHEVRON_RIGHT = "SQUARE_CHEVRON_RIGHT",
+    SQUARE_CHEVRON_UP = "SQUARE_CHEVRON_UP",
+    SQUARE_CODE = "SQUARE_CODE",
+    SQUARE_DASHED = "SQUARE_DASHED",
+    SQUARE_DASHED_BOTTOM = "SQUARE_DASHED_BOTTOM",
+    SQUARE_DASHED_BOTTOM_CODE = "SQUARE_DASHED_BOTTOM_CODE",
+    SQUARE_DASHED_KANBAN = "SQUARE_DASHED_KANBAN",
+    SQUARE_DASHED_MOUSE_POINTER = "SQUARE_DASHED_MOUSE_POINTER",
+    SQUARE_DASHED_TOP_SOLID = "SQUARE_DASHED_TOP_SOLID",
+    SQUARE_DIVIDE = "SQUARE_DIVIDE",
+    SQUARE_DOT = "SQUARE_DOT",
+    SQUARE_EQUAL = "SQUARE_EQUAL",
+    SQUARE_FUNCTION = "SQUARE_FUNCTION",
+    SQUARE_KANBAN = "SQUARE_KANBAN",
+    SQUARE_LIBRARY = "SQUARE_LIBRARY",
+    SQUARE_M = "SQUARE_M",
+    SQUARE_MENU = "SQUARE_MENU",
+    SQUARE_MINUS = "SQUARE_MINUS",
+    SQUARE_MOUSE_POINTER = "SQUARE_MOUSE_POINTER",
+    SQUARE_PARKING = "SQUARE_PARKING",
+    SQUARE_PARKING_OFF = "SQUARE_PARKING_OFF",
+    SQUARE_PAUSE = "SQUARE_PAUSE",
+    SQUARE_PEN = "SQUARE_PEN",
+    SQUARE_PERCENT = "SQUARE_PERCENT",
+    SQUARE_PI = "SQUARE_PI",
+    SQUARE_PILCROW = "SQUARE_PILCROW",
+    SQUARE_PLAY = "SQUARE_PLAY",
+    SQUARE_PLUS = "SQUARE_PLUS",
+    SQUARE_POWER = "SQUARE_POWER",
+    SQUARE_RADICAL = "SQUARE_RADICAL",
+    SQUARE_ROUND_CORNER = "SQUARE_ROUND_CORNER",
+    SQUARE_SCISSORS = "SQUARE_SCISSORS",
+    SQUARE_SIGMA = "SQUARE_SIGMA",
+    SQUARE_SLASH = "SQUARE_SLASH",
+    SQUARE_SPLIT_HORIZONTAL = "SQUARE_SPLIT_HORIZONTAL",
+    SQUARE_SPLIT_VERTICAL = "SQUARE_SPLIT_VERTICAL",
+    SQUARE_SQUARE = "SQUARE_SQUARE",
+    SQUARE_STACK = "SQUARE_STACK",
+    SQUARE_STAR = "SQUARE_STAR",
+    SQUARE_STOP = "SQUARE_STOP",
+    SQUARE_TERMINAL = "SQUARE_TERMINAL",
+    SQUARE_USER = "SQUARE_USER",
+    SQUARE_USER_ROUND = "SQUARE_USER_ROUND",
+    SQUARE_X = "SQUARE_X",
+    SQUARES_EXCLUDE = "SQUARES_EXCLUDE",
+    SQUARES_INTERSECT = "SQUARES_INTERSECT",
+    SQUARES_SUBTRACT = "SQUARES_SUBTRACT",
+    SQUARES_UNITE = "SQUARES_UNITE",
+    SQUIRCLE = "SQUIRCLE",
+    SQUIRCLE_DASHED = "SQUIRCLE_DASHED",
+    SQUIRREL = "SQUIRREL",
+    STAMP = "STAMP",
+    STAR = "STAR",
+    STAR_HALF = "STAR_HALF",
+    STAR_OFF = "STAR_OFF",
+    STEP_BACK = "STEP_BACK",
+    STEP_FORWARD = "STEP_FORWARD",
+    STETHOSCOPE = "STETHOSCOPE",
+    STICKER = "STICKER",
+    STICKY_NOTE = "STICKY_NOTE",
+    STONE = "STONE",
+    STORE = "STORE",
+    STRETCH_HORIZONTAL = "STRETCH_HORIZONTAL",
+    STRETCH_VERTICAL = "STRETCH_VERTICAL",
+    STRIKETHROUGH = "STRIKETHROUGH",
+    SUBSCRIPT = "SUBSCRIPT",
+    SUN = "SUN",
+    SUN_DIM = "SUN_DIM",
+    SUN_MEDIUM = "SUN_MEDIUM",
+    SUN_MOON = "SUN_MOON",
+    SUN_SNOW = "SUN_SNOW",
+    SUNRISE = "SUNRISE",
+    SUNSET = "SUNSET",
+    SUPERSCRIPT = "SUPERSCRIPT",
+    SWATCH_BOOK = "SWATCH_BOOK",
+    SWISS_FRANC = "SWISS_FRANC",
+    SWITCH_CAMERA = "SWITCH_CAMERA",
+    SWORD = "SWORD",
+    SWORDS = "SWORDS",
+    SYRINGE = "SYRINGE",
+    TABLE = "TABLE",
+    TABLE_2 = "TABLE_2",
+    TABLE_CELLS_MERGE = "TABLE_CELLS_MERGE",
+    TABLE_CELLS_SPLIT = "TABLE_CELLS_SPLIT",
+    TABLE_COLUMNS_SPLIT = "TABLE_COLUMNS_SPLIT",
+    TABLE_OF_CONTENTS = "TABLE_OF_CONTENTS",
+    TABLE_PROPERTIES = "TABLE_PROPERTIES",
+    TABLE_ROWS_SPLIT = "TABLE_ROWS_SPLIT",
+    TABLET = "TABLET",
+    TABLET_SMARTPHONE = "TABLET_SMARTPHONE",
+    TABLETS = "TABLETS",
+    TAG = "TAG",
+    TAGS = "TAGS",
+    TALLY_1 = "TALLY_1",
+    TALLY_2 = "TALLY_2",
+    TALLY_3 = "TALLY_3",
+    TALLY_4 = "TALLY_4",
+    TALLY_5 = "TALLY_5",
+    TANGENT = "TANGENT",
+    TARGET = "TARGET",
+    TELESCOPE = "TELESCOPE",
+    TENT = "TENT",
+    TENT_TREE = "TENT_TREE",
+    TERMINAL = "TERMINAL",
+    TEST_TUBE = "TEST_TUBE",
+    TEST_TUBE_DIAGONAL = "TEST_TUBE_DIAGONAL",
+    TEST_TUBES = "TEST_TUBES",
+    TEXT_ALIGN_CENTER = "TEXT_ALIGN_CENTER",
+    TEXT_ALIGN_END = "TEXT_ALIGN_END",
+    TEXT_ALIGN_JUSTIFY = "TEXT_ALIGN_JUSTIFY",
+    TEXT_ALIGN_START = "TEXT_ALIGN_START",
+    TEXT_CURSOR = "TEXT_CURSOR",
+    TEXT_CURSOR_INPUT = "TEXT_CURSOR_INPUT",
+    TEXT_INITIAL = "TEXT_INITIAL",
+    TEXT_QUOTE = "TEXT_QUOTE",
+    TEXT_SEARCH = "TEXT_SEARCH",
+    TEXT_SELECT = "TEXT_SELECT",
+    TEXT_WRAP = "TEXT_WRAP",
+    THEATER = "THEATER",
+    THERMOMETER = "THERMOMETER",
+    THERMOMETER_SNOWFLAKE = "THERMOMETER_SNOWFLAKE",
+    THERMOMETER_SUN = "THERMOMETER_SUN",
+    THUMBS_DOWN = "THUMBS_DOWN",
+    THUMBS_UP = "THUMBS_UP",
+    TICKET = "TICKET",
+    TICKET_CHECK = "TICKET_CHECK",
+    TICKET_MINUS = "TICKET_MINUS",
+    TICKET_PERCENT = "TICKET_PERCENT",
+    TICKET_PLUS = "TICKET_PLUS",
+    TICKET_SLASH = "TICKET_SLASH",
+    TICKET_X = "TICKET_X",
+    TICKETS = "TICKETS",
+    TICKETS_PLANE = "TICKETS_PLANE",
+    TIMER = "TIMER",
+    TIMER_OFF = "TIMER_OFF",
+    TIMER_RESET = "TIMER_RESET",
+    TOGGLE_LEFT = "TOGGLE_LEFT",
+    TOGGLE_RIGHT = "TOGGLE_RIGHT",
+    TOILET = "TOILET",
+    TOOL_CASE = "TOOL_CASE",
+    TOOLBOX = "TOOLBOX",
+    TORNADO = "TORNADO",
+    TORUS = "TORUS",
+    TOUCHPAD = "TOUCHPAD",
+    TOUCHPAD_OFF = "TOUCHPAD_OFF",
+    TOWER_CONTROL = "TOWER_CONTROL",
+    TOY_BRICK = "TOY_BRICK",
+    TRACTOR = "TRACTOR",
+    TRAFFIC_CONE = "TRAFFIC_CONE",
+    TRAIN_FRONT = "TRAIN_FRONT",
+    TRAIN_FRONT_TUNNEL = "TRAIN_FRONT_TUNNEL",
+    TRAIN_TRACK = "TRAIN_TRACK",
+    TRAM_FRONT = "TRAM_FRONT",
+    TRANSGENDER = "TRANSGENDER",
+    TRASH = "TRASH",
+    TRASH_2 = "TRASH_2",
+    TREE_DECIDUOUS = "TREE_DECIDUOUS",
+    TREE_PALM = "TREE_PALM",
+    TREE_PINE = "TREE_PINE",
+    TREES = "TREES",
+    TRELLO = "TRELLO",
+    TRENDING_DOWN = "TRENDING_DOWN",
+    TRENDING_UP = "TRENDING_UP",
+    TRENDING_UP_DOWN = "TRENDING_UP_DOWN",
+    TRIANGLE = "TRIANGLE",
+    TRIANGLE_ALERT = "TRIANGLE_ALERT",
+    TRIANGLE_DASHED = "TRIANGLE_DASHED",
+    TRIANGLE_RIGHT = "TRIANGLE_RIGHT",
+    TROPHY = "TROPHY",
+    TRUCK = "TRUCK",
+    TRUCK_ELECTRIC = "TRUCK_ELECTRIC",
+    TURKISH_LIRA = "TURKISH_LIRA",
+    TURNTABLE = "TURNTABLE",
+    TURTLE = "TURTLE",
+    TV = "TV",
+    TV_MINIMAL = "TV_MINIMAL",
+    TV_MINIMAL_PLAY = "TV_MINIMAL_PLAY",
+    TWITCH = "TWITCH",
+    TWITTER = "TWITTER",
+    TYPE = "TYPE",
+    TYPE_OUTLINE = "TYPE_OUTLINE",
+    UMBRELLA = "UMBRELLA",
+    UMBRELLA_OFF = "UMBRELLA_OFF",
+    UNDERLINE = "UNDERLINE",
+    UNDO = "UNDO",
+    UNDO_2 = "UNDO_2",
+    UNDO_DOT = "UNDO_DOT",
+    UNFOLD_HORIZONTAL = "UNFOLD_HORIZONTAL",
+    UNFOLD_VERTICAL = "UNFOLD_VERTICAL",
+    UNGROUP = "UNGROUP",
+    UNIVERSITY = "UNIVERSITY",
+    UNLINK = "UNLINK",
+    UNLINK_2 = "UNLINK_2",
+    UNPLUG = "UNPLUG",
+    UPLOAD = "UPLOAD",
+    USB = "USB",
+    USER = "USER",
+    USER_CHECK = "USER_CHECK",
+    USER_COG = "USER_COG",
+    USER_LOCK = "USER_LOCK",
+    USER_MINUS = "USER_MINUS",
+    USER_PEN = "USER_PEN",
+    USER_PLUS = "USER_PLUS",
+    USER_ROUND = "USER_ROUND",
+    USER_ROUND_CHECK = "USER_ROUND_CHECK",
+    USER_ROUND_COG = "USER_ROUND_COG",
+    USER_ROUND_MINUS = "USER_ROUND_MINUS",
+    USER_ROUND_PEN = "USER_ROUND_PEN",
+    USER_ROUND_PLUS = "USER_ROUND_PLUS",
+    USER_ROUND_SEARCH = "USER_ROUND_SEARCH",
+    USER_ROUND_X = "USER_ROUND_X",
+    USER_SEARCH = "USER_SEARCH",
+    USER_STAR = "USER_STAR",
+    USER_X = "USER_X",
+    USERS = "USERS",
+    USERS_ROUND = "USERS_ROUND",
+    UTENSILS = "UTENSILS",
+    UTENSILS_CROSSED = "UTENSILS_CROSSED",
+    UTILITY_POLE = "UTILITY_POLE",
+    VAN = "VAN",
+    VARIABLE = "VARIABLE",
+    VAULT = "VAULT",
+    VECTOR_SQUARE = "VECTOR_SQUARE",
+    VEGAN = "VEGAN",
+    VENETIAN_MASK = "VENETIAN_MASK",
+    VENUS = "VENUS",
+    VENUS_AND_MARS = "VENUS_AND_MARS",
+    VIBRATE = "VIBRATE",
+    VIBRATE_OFF = "VIBRATE_OFF",
+    VIDEO = "VIDEO",
+    VIDEO_OFF = "VIDEO_OFF",
+    VIDEOTAPE = "VIDEOTAPE",
+    VIEW = "VIEW",
+    VOICEMAIL = "VOICEMAIL",
+    VOLLEYBALL = "VOLLEYBALL",
+    VOLUME = "VOLUME",
+    VOLUME_1 = "VOLUME_1",
+    VOLUME_2 = "VOLUME_2",
+    VOLUME_OFF = "VOLUME_OFF",
+    VOLUME_X = "VOLUME_X",
+    VOTE = "VOTE",
+    WALLET = "WALLET",
+    WALLET_CARDS = "WALLET_CARDS",
+    WALLET_MINIMAL = "WALLET_MINIMAL",
+    WALLPAPER = "WALLPAPER",
+    WAND = "WAND",
+    WAND_SPARKLES = "WAND_SPARKLES",
+    WAREHOUSE = "WAREHOUSE",
+    WASHING_MACHINE = "WASHING_MACHINE",
+    WATCH = "WATCH",
+    WAVES = "WAVES",
+    WAVES_ARROW_DOWN = "WAVES_ARROW_DOWN",
+    WAVES_ARROW_UP = "WAVES_ARROW_UP",
+    WAVES_LADDER = "WAVES_LADDER",
+    WAYPOINTS = "WAYPOINTS",
+    WEBCAM = "WEBCAM",
+    WEBHOOK = "WEBHOOK",
+    WEBHOOK_OFF = "WEBHOOK_OFF",
+    WEIGHT = "WEIGHT",
+    WEIGHT_TILDE = "WEIGHT_TILDE",
+    WHEAT = "WHEAT",
+    WHEAT_OFF = "WHEAT_OFF",
+    WHOLE_WORD = "WHOLE_WORD",
+    WIFI = "WIFI",
+    WIFI_COG = "WIFI_COG",
+    WIFI_HIGH = "WIFI_HIGH",
+    WIFI_LOW = "WIFI_LOW",
+    WIFI_OFF = "WIFI_OFF",
+    WIFI_PEN = "WIFI_PEN",
+    WIFI_SYNC = "WIFI_SYNC",
+    WIFI_ZERO = "WIFI_ZERO",
+    WIND = "WIND",
+    WIND_ARROW_DOWN = "WIND_ARROW_DOWN",
+    WINE = "WINE",
+    WINE_OFF = "WINE_OFF",
+    WORKFLOW = "WORKFLOW",
+    WORM = "WORM",
+    WRENCH = "WRENCH",
+    X = "X",
+    YOUTUBE = "YOUTUBE",
+    ZAP = "ZAP",
+    ZAP_OFF = "ZAP_OFF",
+    ZOOM_IN = "ZOOM_IN",
+    ZOOM_OUT = "ZOOM_OUT"
+}
 export enum OptionSortingType {
     MANUAL = "MANUAL",
     ALPHABETICAL = "ALPHABETICAL",
@@ -2488,11 +4340,6 @@ export enum SchemaType {
     MULTI_SELECT = "MULTI_SELECT",
     FILE_ATTACHMENT = "FILE_ATTACHMENT",
     LOCATION = "LOCATION"
-}
-export enum EntityTypeRelationshipDataLossReason {
-    RELATIONSHIP_DELETED = "RELATIONSHIP_DELETED",
-    ENTITY_TYPE_REMOVED_FROM_TARGET = "ENTITY_TYPE_REMOVED_FROM_TARGET",
-    CARDINALITY_RESTRICTION = "CARDINALITY_RESTRICTION"
 }
 export enum BlockFetchPolicy {
     INHERIT = "INHERIT",
@@ -2545,9 +4392,25 @@ export enum ValidationScope {
     STRICT = "STRICT",
     NONE = "NONE"
 }
+export enum DeleteAction {
+    REMOVE_BIDIRECTIONAL = "REMOVE_BIDIRECTIONAL",
+    REMOVE_ENTITY_TYPE = "REMOVE_ENTITY_TYPE",
+    DELETE_RELATIONSHIP = "DELETE_RELATIONSHIP"
+}
 type WithRequired<T, K extends keyof T> = T & {
     [P in K]-?: T[P];
 };
+export enum EntityTypeRequestDefinition {
+    SAVE_RELATIONSHIP = "SAVE_RELATIONSHIP",
+    SAVE_SCHEMA = "SAVE_SCHEMA",
+    DELETE_SCHEMA = "DELETE_SCHEMA",
+    DELETE_RELATIONSHIP = "DELETE_RELATIONSHIP"
+}
+export enum EntityTypeRelationshipDataLossReason {
+    RELATIONSHIP_DELETED = "RELATIONSHIP_DELETED",
+    ENTITY_TYPE_REMOVED_FROM_TARGET = "ENTITY_TYPE_REMOVED_FROM_TARGET",
+    CARDINALITY_RESTRICTION = "CARDINALITY_RESTRICTION"
+}
 export enum BlockListOrderingMode {
     MANUAL = "MANUAL",
     SORTED = "SORTED"

@@ -15,18 +15,18 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Database } from "lucide-react";
 import { FC } from "react";
-import { UseFormReturn } from "react-hook-form";
-import { EntityTypeFormValues } from "../../../hooks/form/use-entity-type-form";
-import { AttributeFormData } from "../../../interface/entity.interface";
+import { useConfigForm } from "../../../context/configuration-provider";
+import { EntityAttributeDefinition } from "../../../interface/entity.interface";
 
 interface Props {
-    form: UseFormReturn<EntityTypeFormValues>;
-    availableIdentifiers: AttributeFormData[];
+    availableIdentifiers: EntityAttributeDefinition[];
 }
 
-export const ConfigurationForm: FC<Props> = ({ form, availableIdentifiers }) => {
+export const ConfigurationForm: FC<Props> = ({ availableIdentifiers }) => {
+    const form = useConfigForm();
+    if (!form) return null;
+
     return (
         <div className="rounded-lg border bg-card p-6">
             <h2 className="text-lg font-semibold mb-4">General</h2>
@@ -44,9 +44,6 @@ export const ConfigurationForm: FC<Props> = ({ form, availableIdentifiers }) => 
                                     This will be used to label a collection of these entities
                                 </FormDescription>
                                 <div className="flex items-center gap-2">
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10">
-                                        <Database className="h-4 w-4 text-primary" />
-                                    </div>
                                     <FormControl>
                                         <Input placeholder="e.g., Companies" {...field} />
                                     </FormControl>
@@ -109,11 +106,13 @@ export const ConfigurationForm: FC<Props> = ({ form, availableIdentifiers }) => 
                                     </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    {availableIdentifiers.map((attr) => (
-                                        <SelectItem key={attr.id} value={attr.id}>
-                                            {attr.label}
-                                        </SelectItem>
-                                    ))}
+                                    {availableIdentifiers
+                                        .filter((attr) => !!attr.schema.label)
+                                        .map((attr) => (
+                                            <SelectItem key={attr.id} value={attr.id}>
+                                                {attr.schema.label}
+                                            </SelectItem>
+                                        ))}
                                     {availableIdentifiers.length === 0 && (
                                         <SelectItem value="name" disabled>
                                             No unique attributes available

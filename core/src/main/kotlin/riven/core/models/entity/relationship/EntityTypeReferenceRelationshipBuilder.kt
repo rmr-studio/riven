@@ -17,8 +17,8 @@ data class EntityTypeReferenceRelationshipBuilder(
         return EntityRelationshipDefinition(
             id = UUID.randomUUID(),
             name = resolveInverseName(),
-            // The source entity type is the entity type this REFERENCE is defined on (target entity)
-            sourceEntityTypeKey = targetEntity.key,
+            // The source entity type is the entity type this relationship is REFERENCING (ie. The entity type that holds the ORIGIN definition)
+            sourceEntityTypeKey = origin.sourceEntityTypeKey,
             required = false,  // Inverse relationships typically not required
             cardinality = origin.cardinality.invert(),
             allowPolymorphic = false,

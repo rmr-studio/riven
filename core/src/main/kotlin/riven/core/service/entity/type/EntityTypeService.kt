@@ -9,19 +9,20 @@ import riven.core.enums.common.SchemaType
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.core.DataType
 import riven.core.enums.entity.EntityPropertyType
+import riven.core.enums.entity.EntityTypeRelationshipType
 import riven.core.enums.util.OperationType
-import riven.core.exceptions.SchemaValidationException
 import riven.core.models.common.validation.Schema
+import riven.core.models.entity.EntityRelationship
 import riven.core.models.entity.EntityType
+import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.configuration.EntityTypeOrderingKey
+import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDeleteRequest
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
-import riven.core.models.request.entity.CreateEntityTypeRequest
-import riven.core.models.response.entity.UpdateEntityTypeResponse
-import riven.core.repository.entity.EntityRepository
+import riven.core.models.request.entity.type.*
+import riven.core.models.response.entity.type.EntityTypeImpactResponse
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
-import riven.core.service.entity.EntityValidationService
 import riven.core.util.ServiceUtil
 import java.util.*
 
@@ -34,9 +35,8 @@ import java.util.*
 @Service
 class EntityTypeService(
     private val entityTypeRepository: EntityTypeRepository,
-    private val entityRepository: EntityRepository,
-    private val entityValidationService: EntityValidationService,
     private val entityRelationshipService: EntityRelationshipService,
+    private val entityAttributeService: EntityAttributeService,
     private val relationshipDiffService: EntityTypeRelationshipDiffService,
     private val impactAnalysisService: EntityTypeRelationshipImpactAnalysisService,
     private val authTokenService: AuthTokenService,
@@ -59,6 +59,8 @@ class EntityTypeService(
                 organisationId = organisationId,
                 identifierKey = primaryId,
                 description = request.description,
+                iconType = request.icon.icon,
+                iconColour = request.icon.colour,
                 // Protected Entity Types cannot be modified or deleted by users. This will usually occur during an automatic setup process.
                 protected = false,
                 type = request.type,
@@ -119,136 +121,347 @@ class EntityTypeService(
      */
     @Transactional
     @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
-    fun updateEntityType(
+    fun updateEntityTypeConfiguration(
         organisationId: UUID,
-        type: EntityType,
-        impactConfirmed: Boolean = false
-    ): UpdateEntityTypeResponse {
+        type: EntityType
+    ): EntityType {
         authTokenService.getUserId()
+        requireNotNull(type.organisationId) { "Cannot update system entity type" }
         val existing: EntityTypeEntity = ServiceUtil.findOrThrow { entityTypeRepository.findById(type.id) }
 
-        requireNotNull(type.organisationId) { "Cannot update system entity type" }
-
-        // Detect breaking changes in schema
-        val breakingChanges = entityValidationService.detectSchemaBreakingChanges(
-            existing.schema,
-            type.schema
-        )
-
-        if (breakingChanges.any { it.breaking }) {
-            val existingEntities = entityRepository.findByOrganisationIdAndTypeId(organisationId, type.id)
-            val validationSummary = entityValidationService.validateExistingEntitiesAgainstNewSchema(
-                existingEntities,
-                type.schema,
-            )
-
-            if (validationSummary.invalidCount > 0) {
-                throw SchemaValidationException(
-                    listOf(
-                        "Cannot apply breaking schema changes: ${validationSummary.invalidCount} entities would become invalid. " +
-                                "Sample errors: ${
-                                    validationSummary.sampleErrors.take(3).map { it.errors.joinToString() }
-                                }"
-                    )
-                )
-            }
-        }
-
-        // Calculate relationship changes and analyze impact
-        var updatedEntityTypes: MutableMap<String, EntityTypeEntity>? = type.relationships?.let {
-
-            val diff: EntityTypeRelationshipDiff = relationshipDiffService.calculate(
-                previous = existing.relationships ?: emptyList(),
-                updated = type.relationships
-            )
-
-            // User has not confirmed/been notified of impact analysis yet
-            if (!impactConfirmed) {
-                // Analyze the impact of these changes
-                val impact = impactAnalysisService.analyze(
-                    sourceEntityType = existing,
-                    diff = diff
-                )
-
-                // If impact analysis is enabled (impactConfirmed=false) and there are notable impacts, return them
-                if (hasNotableImpacts(impact)) {
-                    return UpdateEntityTypeResponse(
-                        success = false,
-                        error = null,
-                        updatedEntityTypes = null,
-                        impact = impact
-                    )
-                }
-            }
-
-            // Proceed with updating relationships and modifying linked entities
-            entityRelationshipService.updateRelationships(organisationId, diff).toMutableMap()
-        }
-
-        existing.apply {
+        return existing.apply {
             displayNameSingular = type.name.singular
             displayNamePlural = type.name.plural
             description = type.description
-            schema = type.schema
-            relationships = type.relationships
+            iconType = type.icon.icon
+            iconColour = type.icon.colour
+            order = type.order
         }.let {
-            entityTypeRepository.save(it)
-        }.also {
-            val entityTypes: Map<String, EntityType> = updatedEntityTypes.let {
-                if (it == null) {
-                    return@let mapOf(
-                        existing.key to existing.toModel()
-                    )
-                }
+            entityTypeRepository.save(it).toModel()
+        }
+    }
 
-                it[existing.key] = existing
-                it.mapValues { entry -> entry.value.toModel() }
+    @Transactional
+    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
+    fun saveEntityTypeDefinition(
+        organisationId: UUID,
+        request: SaveTypeDefinitionRequest,
+        impactConfirmed: Boolean = false
+    ): EntityTypeImpactResponse {
+        val (index: Int?, definition) = request
+        val existing =
+            ServiceUtil.findOrThrow { entityTypeRepository.findByOrganisationIdAndKey(organisationId, definition.key) }
+
+        val impactedEntityTypes = mutableMapOf<String, EntityType>()
+
+        when (definition) {
+            is SaveAttributeDefinitionRequest -> {
+                entityAttributeService.saveAttributeDefinition(organisationId, existing, definition).also {
+                    impactedEntityTypes[existing.key] = existing.toModel()
+                }
             }
 
-            return UpdateEntityTypeResponse(
-                success = true,
-                error = null,
-                updatedEntityTypes = entityTypes,
-                impact = null // No impacts or impacts were confirmed
+            is SaveRelationshipDefinitionRequest -> {
+                val (_, id: UUID, relationship: EntityRelationshipDefinition) = definition
+
+                // Find prev, if exists
+                existing.relationships?.firstOrNull { it.id == id }.run {
+                    // If new, just add new relationships
+                    if (this == null) {
+                        entityRelationshipService.updateRelationships(
+                            organisationId,
+                            diff = EntityTypeRelationshipDiff(
+                                added = listOf(definition),
+                                modified = emptyList(),
+                                removed = emptyList()
+                            )
+                        ).forEach { (key, type) -> impactedEntityTypes[key] = type.toModel() }
+
+                        return@run
+                    }
+
+                    val diff = relationshipDiffService.calculateModification(
+                        previous = this,
+                        updated = relationship
+                    )
+
+                    if (!impactConfirmed) {
+
+
+                        // Calculate potential impact of relationship change
+                        impactAnalysisService.analyze(
+                            organisationId,
+                            existing,
+                            diff = EntityTypeRelationshipDiff(
+                                added = emptyList(),
+                                modified = listOf(diff),
+                                removed = emptyList()
+                            )
+                        ).run {
+                            if (impactAnalysisService.hasNotableImpacts(this)) {
+                                return EntityTypeImpactResponse(
+                                    error = null,
+                                    updatedEntityTypes = null,
+                                    impact = this
+                                )
+                            }
+                        }
+
+                    }
+
+                    // Proceed with updating relationships and modifying linked entities
+                    entityRelationshipService.updateRelationships(
+                        organisationId,
+                        diff = EntityTypeRelationshipDiff(
+                            added = emptyList(),
+                            modified = listOf(diff),
+                            removed = emptyList()
+                        )
+                    ).forEach { (key, type) ->
+                        impactedEntityTypes[key] = type.toModel()
+                    }
+                }
+            }
+
+            else -> throw IllegalArgumentException("Unsupported definition type: ${definition::class.java}")
+        }
+
+
+        // Handle new order
+        val currentIndex = existing.order.indexOfFirst { it.key == definition.id }
+        // New attribute/relationship being added
+        if (currentIndex == -1) {
+            val updatedOrdering = reorderEntityTypeColumns(
+                order = existing.order,
+                key = EntityTypeOrderingKey(
+                    key = definition.id,
+                    type = when (definition) {
+                        is SaveAttributeDefinitionRequest -> EntityPropertyType.ATTRIBUTE
+                        is SaveRelationshipDefinitionRequest -> EntityPropertyType.RELATIONSHIP
+                        else -> throw IllegalArgumentException("Unsupported definition type: ${definition::class.java}")
+                    }
+                ),
+                prev = null,
+                new = request.index ?: existing.order.size
+            )
+
+            existing.apply {
+                order = updatedOrdering
+            }
+        } else {
+            request.index?.run {
+                if (this == index) return@run
+                // Existing attribute/relationship being reordered
+                val updatedOrdering = reorderEntityTypeColumns(
+                    order = existing.order,
+                    key = EntityTypeOrderingKey(
+                        key = definition.id,
+                        type = when (definition) {
+                            is SaveAttributeDefinitionRequest -> EntityPropertyType.ATTRIBUTE
+                            is SaveRelationshipDefinitionRequest -> EntityPropertyType.RELATIONSHIP
+                            else -> throw IllegalArgumentException("Unsupported definition type: ${definition::class.java}")
+                        }
+                    ),
+                    prev = index,
+                    new = this
+                )
+
+                existing.apply {
+                    order = updatedOrdering
+                }
+            }
+        }
+
+        entityTypeRepository.save(existing).also {
+            // Log Activity
+            impactedEntityTypes[existing.key] = it.toModel()
+            return EntityTypeImpactResponse(
+                impact = null,
+                updatedEntityTypes = impactedEntityTypes,
+                error = null
             )
         }
     }
 
-    /**
-     * Determines if the impact analysis contains notable impacts that require user confirmation.
-     */
-    private fun hasNotableImpacts(impact: riven.core.models.entity.relationship.analysis.EntityTypeRelationshipImpactAnalysis): Boolean {
-        return impact.affectedEntityTypes.isNotEmpty() ||
-                impact.dataLossWarnings.isNotEmpty()
+    fun removeEntityTypeDefinition(
+        organisationId: UUID,
+        request: DeleteTypeDefinitionRequest,
+        impactConfirmed: Boolean = false
+    ): EntityTypeImpactResponse {
+        val (definition) = request
+        val existing =
+            ServiceUtil.findOrThrow { entityTypeRepository.findByOrganisationIdAndKey(organisationId, definition.key) }
+
+        val impactedEntityTypes = mutableMapOf<String, EntityType>()
+
+        when (definition) {
+            is DeleteAttributeDefinitionRequest -> {
+                entityAttributeService.removeAttributeDefinition(existing, definition.id)
+            }
+
+            is DeleteRelationshipDefinitionRequest -> {
+                existing.relationships?.firstOrNull { it.id == definition.id }?.run {
+
+                    if (!impactConfirmed) {
+                        // Calculate potential impact of relationship removal
+                        impactAnalysisService.analyze(
+                            organisationId,
+                            existing,
+                            diff = EntityTypeRelationshipDiff(
+                                added = emptyList(),
+                                modified = emptyList(),
+                                removed = listOf(
+                                    EntityTypeRelationshipDeleteRequest(
+                                        relationship = this,
+                                        action = definition.deleteAction,
+                                        type = existing
+                                    )
+                                )
+                            )
+                        ).run {
+                            if (impactAnalysisService.hasNotableImpacts(this)) {
+                                return EntityTypeImpactResponse(
+                                    error = null,
+                                    updatedEntityTypes = null,
+                                    impact = this
+                                )
+                            }
+                        }
+                    }
+
+                    // Proceed with removing relationships and modifying linked entities
+                    entityRelationshipService.removeRelationships(
+                        organisationId,
+                        listOf(
+                            EntityTypeRelationshipDeleteRequest(
+                                relationship = this,
+                                action = definition.deleteAction,
+                                type = existing
+                            )
+                        )
+                    ).forEach { (key, type) ->
+                        impactedEntityTypes[key] = type.toModel()
+                    }
+                }
+            }
+
+            else -> throw IllegalArgumentException("Unsupported definition type: ${definition::class.java}")
+
+        }
+
+        // Remove from entity type ordering
+        existing.apply {
+            order = order.filterNot { it.key == definition.id }
+        }.let {
+            entityTypeRepository.save(it).also {
+                impactedEntityTypes[existing.key] = it.toModel()
+                return EntityTypeImpactResponse(
+                    impact = null,
+                    updatedEntityTypes = impactedEntityTypes,
+                    error = null
+                )
+            }
+        }
     }
 
     /**
-     * Archive or restore an entity type.
+     * Reorder entity type columns (attributes/relationships).
      */
-    @PreAuthorize("@organisationSecurity.hasOrg(#id)")
-    fun archiveEntityType(id: UUID, status: Boolean) {
+    fun reorderEntityTypeColumns(
+        order: List<EntityTypeOrderingKey>,
+        key: EntityTypeOrderingKey,
+        prev: Int?,
+        new: Int
+    ): List<EntityTypeOrderingKey> {
+        val mutableOrder = order.toMutableList()
+
+        if (prev != null) {
+            // Key already exists, remove it from its current position
+            mutableOrder.removeAt(prev)
+        }
+
+        // Insert the key at the new position, coercing to valid bounds
+        val insertIndex = new.coerceIn(0, mutableOrder.size)
+        mutableOrder.add(insertIndex, key)
+
+        return mutableOrder
+    }
+
+
+    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
+    fun deleteEntityType(
+        organisationId: UUID,
+        key: String,
+        impactConfirmed: Boolean = false
+    ): EntityTypeImpactResponse {
         val userId = authTokenService.getUserId()
-        val existing = ServiceUtil.findOrThrow { entityTypeRepository.findById(id) }
-        val orgId = requireNotNull(existing.organisationId) { "Cannot archive system entity type" }
+        val existing = ServiceUtil.findOrThrow { entityTypeRepository.findByOrganisationIdAndKey(organisationId, key) }
+        requireNotNull(existing.organisationId) { "Cannot delete system entity type" }
 
-        if (existing.archived == status) return
+        existing.relationships?.let {
+            if (!impactConfirmed) {
+                val impact = impactAnalysisService.analyze(
+                    organisationId,
+                    existing,
+                    diff = EntityTypeRelationshipDiff(
+                        added = emptyList(),
+                        modified = emptyList(),
+                        removed = it.map { relationship ->
+                            EntityTypeRelationshipDeleteRequest(
+                                relationship = relationship,
+                                action = if (relationship.relationshipType == EntityTypeRelationshipType.ORIGIN)
+                                    DeleteRelationshipDefinitionRequest.DeleteAction.DELETE_RELATIONSHIP
+                                else DeleteRelationshipDefinitionRequest.DeleteAction.REMOVE_ENTITY_TYPE,
+                                type = existing
+                            )
+                        }
+                    )
+                )
 
-        existing.archived = status
-        entityTypeRepository.save(existing)
+                if (impactAnalysisService.hasNotableImpacts(impact)) {
+                    return EntityTypeImpactResponse(
+                        impact = impact,
+                        updatedEntityTypes = null,
+                        error = null
+                    )
+                }
+            }
+        }
 
-        activityService.logActivity(
-            activity = Activity.ENTITY_TYPE,
-            operation = if (status) OperationType.ARCHIVE else OperationType.RESTORE,
-            userId = userId,
-            organisationId = orgId,
-            entityId = existing.id,
-            entityType = ApplicationEntityType.ENTITY_TYPE,
-            details = mapOf(
-                "type" to existing.key,
-                "archiveStatus" to status
+        val affectedEntityTypes: Map<String, EntityType>? = existing.relationships?.let {
+            entityRelationshipService.removeRelationships(organisationId, it.map { relationship ->
+                EntityTypeRelationshipDeleteRequest(
+                    relationship = relationship,
+                    action = if (relationship.relationshipType == EntityTypeRelationshipType.ORIGIN)
+                        DeleteRelationshipDefinitionRequest.DeleteAction.DELETE_RELATIONSHIP
+                    else DeleteRelationshipDefinitionRequest.DeleteAction.REMOVE_ENTITY_TYPE,
+                    type = existing
+                )
+            })
+                .mapValues { entry -> entry.value.toModel() }
+        }
+
+        entityTypeRepository.delete(existing).also {
+            activityService.logActivity(
+                activity = Activity.ENTITY_TYPE,
+                operation = OperationType.DELETE,
+                userId = userId,
+                organisationId = organisationId,
+                entityId = existing.id,
+                entityType = ApplicationEntityType.ENTITY_TYPE,
+                details = mapOf(
+                    "type" to existing.key
+                )
             )
-        )
+
+            return EntityTypeImpactResponse(
+                impact = null,
+                updatedEntityTypes = affectedEntityTypes,
+                error = null
+            )
+        }
     }
+
 
     /**
      * Get all entity types for an organization (including system types).

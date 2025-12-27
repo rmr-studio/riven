@@ -13,7 +13,6 @@ import riven.core.models.entity.Entity
 @JsonTypeName("entity_reference")
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class EntityReferenceMetadata(
-    override val type: BlockMetadataType = BlockMetadataType.ENTITY_REFERENCE,
     override val fetchPolicy: BlockReferenceFetchPolicy = BlockReferenceFetchPolicy.LAZY,
     override val path: String = "\$.items",           // <— used by service to scope rows
     // How the referenced entities should be presented
@@ -27,4 +26,6 @@ data class EntityReferenceMetadata(
     override val config: ListConfig = ListConfig(),
     override val allowDuplicates: Boolean = false,          // <— optional guard
     override val meta: BlockMeta = BlockMeta()
-) : ReferenceMetadata, ListMetadata<Entity>
+) : ReferenceMetadata, ListMetadata<Entity> {
+    override val type: BlockMetadataType = BlockMetadataType.ENTITY_REFERENCE
+}

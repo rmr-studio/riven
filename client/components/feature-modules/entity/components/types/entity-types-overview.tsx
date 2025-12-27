@@ -3,12 +3,14 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
+import { IconCell } from "@/components/ui/icon/icon-cell";
 import { ColumnDef } from "@tanstack/react-table";
-import { Database, Edit, Plus, Trash2 } from "lucide-react";
+import { Edit, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { FC, useMemo } from "react";
-import { useEntityTypes } from "../../hooks/use-entity-types";
-import { EntityType } from "../../interface/entity.interface";
+import { FC, useMemo, useState } from "react";
+import { useDeleteTypeMutation } from "../../hooks/mutation/type/use-delete-type-mutation";
+import { useEntityTypes } from "../../hooks/query/use-entity-types";
+import { EntityType, EntityTypeImpactResponse } from "../../interface/entity.interface";
 import { NewEntityTypeForm } from "../forms/new-entity-type";
 
 interface Props {
@@ -17,7 +19,20 @@ interface Props {
 
 export const EntityTypesOverview: FC<Props> = ({ organisationId }) => {
     const router = useRouter();
+    const [impactModalOpen, setImpactModalOpen] = useState<boolean>(false);
+
     const { data: types, isPending } = useEntityTypes(organisationId);
+
+    const onImpactConfirmation = (impact: EntityTypeImpactResponse) => {
+        // todo
+        setImpactModalOpen(true);
+    };
+
+    const { mutateAsync: deleteType } = useDeleteTypeMutation(organisationId, onImpactConfirmation);
+
+    const onDelete = async (row: EntityType) => {
+        await deleteType({ key: row.key });
+    };
 
     const columns: ColumnDef<EntityType>[] = useMemo(
         () => [
@@ -26,8 +41,12 @@ export const EntityTypesOverview: FC<Props> = ({ organisationId }) => {
                 header: "Entity Type",
                 cell: ({ row }) => (
                     <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-                            <Database className="h-4 w-4 text-primary" />
+                        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/5">
+                            <IconCell
+                                readonly={true}
+                                iconType={row.original.icon.icon}
+                                colour={row.original.icon.colour}
+                            />
                         </div>
                         <div className="flex flex-col">
                             <span className="font-medium">{row.original.name.plural}</span>
@@ -146,10 +165,7 @@ export const EntityTypesOverview: FC<Props> = ({ organisationId }) => {
                         {
                             label: "Delete",
                             icon: Trash2,
-                            onClick: (row) => {
-                                // TODO: Implement delete functionality
-                                console.log("Delete entity type:", row);
-                            },
+                            onClick: onDelete,
                             variant: "destructive",
                         },
                     ],

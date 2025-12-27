@@ -9,8 +9,9 @@ import java.util.*
 @JsonTypeName("MOVE_BLOCK")
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class MoveBlockOperation(
-    override val type: BlockOperationType = BlockOperationType.MOVE_BLOCK,
     override val blockId: UUID,
     val fromParentId: UUID? = null,
     val toParentId: UUID? = null,
-) : BlockOperation
+) : BlockOperation {
+    override val type: BlockOperationType = BlockOperationType.MOVE_BLOCK
+}

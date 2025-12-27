@@ -12,7 +12,6 @@ import riven.core.enums.block.structure.BlockReferenceFetchPolicy
 @JsonTypeName("block_reference")
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class BlockReferenceMetadata(
-    override val type: BlockMetadataType = BlockMetadataType.BLOCK_REFERENCE,
     override val fetchPolicy: BlockReferenceFetchPolicy = BlockReferenceFetchPolicy.LAZY,
     override val deletable: Boolean = true,
     override val readonly: Boolean = false,
@@ -20,4 +19,6 @@ data class BlockReferenceMetadata(
     override val path: String = "\$.block",
     val expandDepth: Int = 1,
     val item: ReferenceItem
-) : ReferenceMetadata
+) : ReferenceMetadata {
+    override val type: BlockMetadataType = BlockMetadataType.BLOCK_REFERENCE
+}
