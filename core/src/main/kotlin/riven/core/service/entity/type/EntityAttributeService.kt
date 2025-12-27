@@ -21,7 +21,7 @@ class EntityAttributeService(
         request: SaveAttributeDefinitionRequest
     ) {
         val typeId = requireNotNull(type.id) { "Entity type ID must not be null when saving attribute definition" }
-        val (_, _, id: UUID, attribute: EntityTypeSchema) = request
+        val (_, id: UUID, attribute: EntityTypeSchema) = request
 
         val updatedSchema = type.schema.copy(
             properties = type.schema.properties?.toMutableMap()?.also {
@@ -40,7 +40,7 @@ class EntityAttributeService(
             val existingEntities = entityRepository.findByOrganisationIdAndTypeId(organisationId, typeId)
             val validationSummary = entityValidationService.validateExistingEntitiesAgainstNewSchema(
                 existingEntities,
-                type.schema,
+                updatedSchema,
             )
 
             if (validationSummary.invalidCount > 0) {

@@ -91,7 +91,7 @@ class EntityTypeController(
         return ResponseEntity.status(HttpStatus.OK).body(response)
     }
 
-    @DeleteMapping("/organisation/{organisationID}/key/{key}")
+    @DeleteMapping("/organisation/{organisationId}/key/{key}")
     @Operation(
         summary = "Delete an entity type by key",
         description = "Deletes the specified entity type by its key for the given organisation."
@@ -102,11 +102,11 @@ class EntityTypeController(
         ApiResponse(responseCode = "404", description = "Entity type not found")
     )
     fun deleteEntityTypeByKey(
-        @PathVariable organisationID: UUID,
+        @PathVariable organisationId: UUID,
         @PathVariable key: String,
         @RequestParam impactConfirmed: Boolean = false,
     ): ResponseEntity<EntityTypeImpactResponse> {
-        val response = entityTypeService.deleteEntityType(organisationID, key, impactConfirmed)
+        val response = entityTypeService.deleteEntityType(organisationId, key, impactConfirmed)
         if (response.impact != null) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response)
         }

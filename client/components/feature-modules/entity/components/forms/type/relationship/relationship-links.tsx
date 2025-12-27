@@ -21,29 +21,28 @@ export const RelationshipLink: FC<Props> = ({ type, onCreate }) => {
     const { candidates, loading } = useRelationshipCandidates(type);
 
     return (
-        <>
-            {!loading && candidates.length > 0 && (
-                <Card className="min-w-xs bg-transparent">
-                    <CardHeader>
-                        <CardTitle>Available Relationships</CardTitle>
-                        <CardDescription>
-                            We have found {candidates.length} existing relationships that can be
-                            linked to this entity type.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {candidates.map((candidate) => (
-                            <Candidate
-                                key={`${candidate.existingRelationship.id}-${candidate.key}`}
-                                name={candidate.name}
-                                relationship={candidate.existingRelationship}
-                                icon={candidate.icon}
-                                onSelect={onCreate}
-                            />
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
-        </>
+        !loading &&
+        candidates.length > 0 && (
+            <Card className="min-w-xs bg-transparent">
+                <CardHeader>
+                    <CardTitle>Available Relationships</CardTitle>
+                    <CardDescription>
+                        We have found {candidates.length} existing relationship
+                        {candidates.length !== 1 ? "s" : ""} that can be linked to this entity type.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {candidates.map((candidate) => (
+                        <Candidate
+                            key={`${candidate.existingRelationship.id}-${candidate.key}`}
+                            name={candidate.name}
+                            relationship={candidate.existingRelationship}
+                            icon={candidate.icon}
+                            onSelect={onCreate}
+                        />
+                    ))}
+                </CardContent>
+            </Card>
+        )
     );
 };

@@ -14,24 +14,24 @@ interface Props {
     relationship: EntityRelationshipDefinition;
 }
 
+const getCardinalityDescription = (
+    cardinality: EntityRelationshipCardinality,
+    entityName: string
+): string => {
+    const inverse = getInverseCardinality(cardinality);
+
+    switch (inverse) {
+        case EntityRelationshipCardinality.ONE_TO_ONE:
+        case EntityRelationshipCardinality.ONE_TO_MANY:
+            return `Stores one ${entityName.toLowerCase()} reference`;
+        case EntityRelationshipCardinality.MANY_TO_ONE:
+        case EntityRelationshipCardinality.MANY_TO_MANY:
+            return `Stores unlimited ${entityName.toLowerCase()} references`;
+    }
+};
+
 export const Candidate: FC<Props> = ({ name, icon, relationship, onSelect }) => {
     const { icon: iconType, colour } = icon;
-
-    const getCardinalityDescription = (
-        cardinality: EntityRelationshipCardinality,
-        entityName: string
-    ): string => {
-        const inverse = getInverseCardinality(cardinality);
-
-        switch (inverse) {
-            case EntityRelationshipCardinality.ONE_TO_ONE:
-            case EntityRelationshipCardinality.ONE_TO_MANY:
-                return `Stores one ${entityName.toLowerCase()} reference`;
-            case EntityRelationshipCardinality.MANY_TO_ONE:
-            case EntityRelationshipCardinality.MANY_TO_MANY:
-                return `Stores unlimited ${entityName.toLowerCase()} references`;
-        }
-    };
 
     return (
         <Card

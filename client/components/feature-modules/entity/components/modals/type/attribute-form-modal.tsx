@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { DialogControl } from "@/lib/interfaces/interface";
 import { SchemaType } from "@/lib/types/types";
+import { Loader2 } from "lucide-react";
 import { FC, useEffect, useMemo, useState } from "react";
 import {
     EntityAttributeDefinition,
@@ -53,7 +54,17 @@ export const AttributeFormModal: FC<Props> = ({ dialog, type, selectedAttribute 
         return !isRelationshipDefinition(selectedAttribute);
     }, [selectedAttribute]);
 
-    if (!organisation) return null;
+    if (!organisation) {
+        return (
+            <Dialog open={open} onOpenChange={onOpenChange}>
+                <DialogContent>
+                    <div className="flex items-center justify-center p-6">
+                        <Loader2 className="size-6 animate-spin" />
+                    </div>
+                </DialogContent>
+            </Dialog>
+        );
+    }
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -79,7 +90,9 @@ export const AttributeFormModal: FC<Props> = ({ dialog, type, selectedAttribute 
                                 organisationId={organisation.id}
                                 dialog={dialog}
                                 type={type}
-                                relationship={selectedAttribute as EntityRelationshipDefinition}
+                                relationship={
+                                    selectedAttribute as EntityRelationshipDefinition | undefined
+                                }
                             />
                         ) : (
                             <SchemaForm
@@ -87,7 +100,7 @@ export const AttributeFormModal: FC<Props> = ({ dialog, type, selectedAttribute 
                                 dialog={dialog}
                                 currentType={currentType as SchemaType}
                                 type={type}
-                                attribute={selectedAttribute as EntityAttributeDefinition}
+                                attribute={selectedAttribute as EntityAttributeDefinition | undefined}
                             />
                         )}
                     </section>

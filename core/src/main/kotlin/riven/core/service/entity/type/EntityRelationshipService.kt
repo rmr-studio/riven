@@ -302,7 +302,7 @@ class EntityRelationshipService(
         definitions.forEach { request ->
             // Validate and add each relationship definition
 
-            val (_, _, _, definition) = request
+            val (_, _, definition: EntityRelationshipDefinition) = request
 
             // Validate bidirectional ORIGIN relationships before adding
             if (definition.bidirectional && definition.relationshipType == EntityTypeRelationshipType.ORIGIN) {
@@ -316,7 +316,7 @@ class EntityRelationshipService(
         // Handle bidirectional relationships
         definitions.forEach { request ->
 
-            val (_, key, _, definition) = request
+            val (key: String, _, definition: EntityRelationshipDefinition) = request
             // Add the relationship definition to the source entity type
             val entity = requireNotNull(entityTypes[key]) { "Entity type '$key' not found in entity types map" }
             entityTypes[key] = addOrUpdateRelationship(

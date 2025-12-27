@@ -125,6 +125,7 @@ export const RelationshipAttributeForm: FC<Props> = ({
     );
 
     // Handler for navigating to target entity to edit relationship
+    // todo go back and fix this 
     const handleNavigateToTarget = useCallback(
         (targetEntityKey: string, relationshipKey: string) => {
             // Store suggestion in sessionStorage for target entity editor

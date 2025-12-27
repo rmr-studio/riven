@@ -12,7 +12,6 @@ import java.util.*
 @JsonTypeName("UPDATE_BLOCK")
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class UpdateBlockOperation(
-    override val type: BlockOperationType = BlockOperationType.UPDATE_BLOCK,
     override val blockId: UUID,
 
     @field:Schema(
@@ -24,4 +23,6 @@ data class UpdateBlockOperation(
         ]
     )
     val updatedContent: Node
-) : BlockOperation
+) : BlockOperation {
+    override val type: BlockOperationType = BlockOperationType.UPDATE_BLOCK
+}

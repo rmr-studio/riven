@@ -77,7 +77,7 @@ export function useEntityTypeRelationshipForm(
     open: boolean,
     onSave: () => void,
     onCancel: () => void,
-    relationship?: EntityRelationshipDefinition,
+    relationship?: EntityRelationshipDefinition
 ): UseEntityRelationshipFormReturn {
     const form = useForm<RelationshipFormValues>({
         resolver: zodResolver(relationFormSchema),
@@ -100,10 +100,6 @@ export function useEntityTypeRelationshipForm(
             originRelationshipId: relationship?.originRelationshipId || undefined,
         },
     });
-
-    const handleReset = useCallback(() => {
-        onCancel();
-    }, []);
 
     // When the dialogue is opened for editing, populate the form with existing attribute data, or blank for new attribute
     useEffect(() => {
@@ -143,7 +139,7 @@ export function useEntityTypeRelationshipForm(
     });
 
     const handleSubmit = useCallback(
-         async (values: RelationshipFormValues) => {
+        async (values: RelationshipFormValues) => {
             const id = relationship?.id ?? uuid();
             const definition: SaveRelationshipDefinitionRequest = {
                 type: EntityTypeRequestDefinition.SAVE_RELATIONSHIP,
@@ -182,7 +178,7 @@ export function useEntityTypeRelationshipForm(
     return {
         form,
         handleSubmit,
-        handleReset,
+        handleReset: onCancel,
         mode: relationship ? "edit" : "create",
     };
 }

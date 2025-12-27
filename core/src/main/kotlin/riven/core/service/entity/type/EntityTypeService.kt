@@ -12,7 +12,9 @@ import riven.core.enums.entity.EntityPropertyType
 import riven.core.enums.entity.EntityTypeRelationshipType
 import riven.core.enums.util.OperationType
 import riven.core.models.common.validation.Schema
+import riven.core.models.entity.EntityRelationship
 import riven.core.models.entity.EntityType
+import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.configuration.EntityTypeOrderingKey
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDeleteRequest
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
@@ -160,7 +162,7 @@ class EntityTypeService(
             }
 
             is SaveRelationshipDefinitionRequest -> {
-                val (_, _, id, relationship) = definition
+                val (_, id: UUID, relationship: EntityRelationshipDefinition) = definition
 
                 // Find prev, if exists
                 existing.relationships?.firstOrNull { it.id == id }.run {

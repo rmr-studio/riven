@@ -7,17 +7,27 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { DialogControl } from "@/lib/interfaces/interface";
 import {
     DeleteAction,
-    EntityPropertyType,
     EntityTypeRelationshipType,
     EntityTypeRequestDefinition,
 } from "@/lib/types/types";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { FC, useEffect, useMemo, useState } from "react";
+import { FC, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { useOrganisation } from "../../../../organisation/hooks/use-organisation";
 import { useDeleteDefinitionMutation } from "../../../hooks/mutation/type/use-delete-definition-mutation";
 import {
@@ -32,7 +42,7 @@ import {
 interface Props {
     dialog: DialogControl;
     type: EntityType;
-    definition?: EntityTypeDefinition;
+    definition: EntityTypeDefinition;
 }
 
 const DELETE_ACTION_LABELS: Record<DeleteAction, { label: string; description: string }> = {
@@ -54,22 +64,50 @@ const DELETE_ACTION_LABELS: Record<DeleteAction, { label: string; description: s
     },
 };
 
-export const DeleteDefinitionModal: FC<Props> = ({ dialog, type, definition }) => {
+const schema = z
+    .object({
+        action: z.nativeEnum(DeleteAction).optional(),
+        type: z.enum(["ORIGIN_RELATIONSHIP", "REFERENCE_RELATIONSHIP", "SCHEMA"]),
+    })
+    .refine(
+        (data) => {
+            if (data.type === "REFERENCE_RELATIONSHIP") {
+                return data.action !== undefined;
+            }
+            return true;
+        },
+        {
+            message: "Delete action is required for reference relationships",
+        }
+    );
+
+type DeleteDefinitionFormValues = z.infer<typeof schema>;
+type DefinitionType = "ORIGIN_RELATIONSHIP" | "REFERENCE_RELATIONSHIP" | "SCHEMA";
+
+export const DeleteDefinitionModal: FC<Props> = ({ dialog, type: entityType, definition }) => {
     const { open, setOpen: onOpenChange } = dialog;
     const { data: organisation } = useOrganisation();
-    const [deleteAction, setDeleteAction] = useState<DeleteAction>(
-        DeleteAction.REMOVE_BIDIRECTIONAL
-    );
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const isRelationship = definition?.type === EntityPropertyType.RELATIONSHIP;
-    const isAttribute = definition?.type === EntityPropertyType.ATTRIBUTE;
+    const form = useForm<DeleteDefinitionFormValues>({
+        resolver: zodResolver(schema),
+    });
 
-    const isReference = useMemo(() => {
-        if (!definition) return false;
-        if (!isRelationshipDefinition(definition.definition)) return false;
-        return definition.definition.relationshipType === EntityTypeRelationshipType.REFERENCE;
-    }, [definition]);
+    useEffect(() => {
+        if (!isRelationshipDefinition(definition.definition)) {
+            form.setValue("type", "SCHEMA");
+            return;
+        }
+        form.setValue(
+            "type",
+            definition.definition.relationshipType === EntityTypeRelationshipType.REFERENCE
+                ? "REFERENCE_RELATIONSHIP"
+                : "ORIGIN_RELATIONSHIP"
+        );
+    }, [definition, form]);
+
+    const type: DefinitionType = form.watch("type");
+    const action: DeleteAction | undefined = form.watch("action");
 
     const { mutateAsync: deleteDefinition } = useDeleteDefinitionMutation(organisation?.id || "", {
         onMutate: () => {
@@ -84,29 +122,22 @@ export const DeleteDefinitionModal: FC<Props> = ({ dialog, type, definition }) =
         },
     });
 
-    // Reset delete action when dialog closes or definition changes
-    useEffect(() => {
-        if (!open) {
-            setDeleteAction(DeleteAction.REMOVE_BIDIRECTIONAL);
-            setIsDeleting(false);
-        }
-    }, [open]);
-
-    useEffect(() => {
-        setDeleteAction(DeleteAction.REMOVE_BIDIRECTIONAL);
-    }, [definition?.id]);
-
-    const handleDelete = async () => {
+    const onSubmit = async (values: DeleteDefinitionFormValues) => {
         if (!definition || !organisation) return;
 
+        const isRelationship = isRelationshipDefinition(definition.definition);
+
         if (isRelationship) {
-            if (!deleteAction) return;
+            const isReference = values.type === "REFERENCE_RELATIONSHIP";
+
+            if (isReference && !values.action) return;
 
             const request: DeleteRelationshipDefinitionRequest = {
                 id: definition.id,
-                key: type.key,
+                key: entityType.key,
                 type: EntityTypeRequestDefinition.DELETE_RELATIONSHIP,
-                deleteAction: isReference ? deleteAction : DeleteAction.DELETE_RELATIONSHIP,
+                deleteAction:
+                    isReference && values.action ? values.action : DeleteAction.DELETE_RELATIONSHIP,
             };
 
             await deleteDefinition({
@@ -118,7 +149,7 @@ export const DeleteDefinitionModal: FC<Props> = ({ dialog, type, definition }) =
 
         const request: DeleteAttributeDefinitionRequest = {
             id: definition.id,
-            key: type.key,
+            key: entityType.key,
             type: EntityTypeRequestDefinition.DELETE_SCHEMA,
         };
 
@@ -126,8 +157,6 @@ export const DeleteDefinitionModal: FC<Props> = ({ dialog, type, definition }) =
             definition: request,
         });
     };
-
-    const canDelete = !(isReference && !deleteAction);
 
     if (!organisation || !definition) return null;
 
@@ -137,12 +166,14 @@ export const DeleteDefinitionModal: FC<Props> = ({ dialog, type, definition }) =
         ? definition.definition.schema.label || definition.id
         : definition.id;
 
+    const canDelete = type !== "REFERENCE_RELATIONSHIP" || action !== undefined;
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle>
-                        Delete {isRelationship ? "Relationship" : "Attribute"}
+                        Delete {type === "SCHEMA" ? "Attribute" : "Relationship"}
                     </DialogTitle>
                     <DialogDescription>
                         Are you sure you want to delete "{definitionLabel}"? This action cannot be
@@ -150,85 +181,100 @@ export const DeleteDefinitionModal: FC<Props> = ({ dialog, type, definition }) =
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4 py-4">
-                    {isReference && (
-                        <>
-                            <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-md">
-                                <AlertCircle className="size-4 text-amber-600 dark:text-amber-500 mt-0.5 shrink-0" />
-                                <div className="text-sm text-amber-900 dark:text-amber-200">
-                                    <p className="font-medium mb-1">Relationship Deletion</p>
-                                    <p className="text-amber-800 dark:text-amber-300">
-                                        Please select how you want to handle this relationship
-                                        deletion.
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+                        {type === "REFERENCE_RELATIONSHIP" && (
+                            <>
+                                <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-md">
+                                    <AlertCircle className="size-4 text-amber-600 dark:text-amber-500 mt-0.5 shrink-0" />
+                                    <div className="text-sm text-amber-900 dark:text-amber-200">
+                                        <p className="font-medium mb-1">Relationship Deletion</p>
+                                        <p className="text-amber-800 dark:text-amber-300">
+                                            Please select how you want to handle this relationship
+                                            deletion.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <FormField
+                                    control={form.control}
+                                    name="action"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-3">
+                                            <FormLabel>Deletion Action</FormLabel>
+                                            <FormControl>
+                                                <RadioGroup
+                                                    onValueChange={field.onChange}
+                                                    value={field.value}
+                                                    className="space-y-3"
+                                                >
+                                                    {Object.entries(DELETE_ACTION_LABELS).map(
+                                                        ([actionKey, info]) => (
+                                                            <FormItem
+                                                                key={actionKey}
+                                                                className="flex items-start space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent/50 transition-colors cursor-pointer"
+                                                                onClick={() =>
+                                                                    field.onChange(actionKey)
+                                                                }
+                                                            >
+                                                                <FormControl>
+                                                                    <RadioGroupItem
+                                                                        value={actionKey}
+                                                                        className="mt-0.5"
+                                                                    />
+                                                                </FormControl>
+                                                                <div className="flex-1 space-y-1">
+                                                                    <Label
+                                                                        htmlFor={actionKey}
+                                                                        className="text-sm font-medium cursor-pointer"
+                                                                    >
+                                                                        {info.label}
+                                                                    </Label>
+                                                                    <p className="text-sm text-muted-foreground">
+                                                                        {info.description}
+                                                                    </p>
+                                                                </div>
+                                                            </FormItem>
+                                                        )
+                                                    )}
+                                                </RadioGroup>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </>
+                        )}
+
+                        {type === "ORIGIN_RELATIONSHIP" && (
+                            <div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-md">
+                                <AlertCircle className="size-4 text-green-600 dark:text-green-500 mt-0.5 shrink-0" />
+                                <div className="text-sm text-green-900 dark:text-green-200">
+                                    <p className="font-medium mb-1">Info</p>
+                                    <p className="text-green-800 dark:text-green-300">
+                                        Deleting this relationship will remove it from the entity
+                                        type, and from all other entity types that currently hold a
+                                        two way relationship with it. All associated relationship
+                                        data will be deleted.
                                     </p>
                                 </div>
                             </div>
+                        )}
 
-                            <div className="space-y-3">
-                                <Label className="text-sm font-medium">Deletion Action</Label>
-                                <RadioGroup
-                                    value={deleteAction}
-                                    onValueChange={(value) =>
-                                        setDeleteAction(value as DeleteAction)
-                                    }
-                                >
-                                    {Object.entries(DELETE_ACTION_LABELS).map(([action, info]) => (
-                                        <div
-                                            key={action}
-                                            className="flex items-start space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent/50 transition-colors cursor-pointer"
-                                            onClick={() => setDeleteAction(action as DeleteAction)}
-                                        >
-                                            <RadioGroupItem
-                                                value={action}
-                                                id={action}
-                                                className="mt-0.5"
-                                            />
-                                            <div className="flex-1 space-y-1">
-                                                <Label
-                                                    htmlFor={action}
-                                                    className="text-sm font-medium cursor-pointer"
-                                                >
-                                                    {info.label}
-                                                </Label>
-                                                <p className="text-sm text-muted-foreground">
-                                                    {info.description}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </RadioGroup>
+                        {type === "SCHEMA" && (
+                            <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-md">
+                                <AlertCircle className="size-4 text-red-600 dark:text-red-500 mt-0.5 shrink-0" />
+                                <div className="text-sm text-red-900 dark:text-red-200">
+                                    <p className="font-medium mb-1">Warning</p>
+                                    <p className="text-red-800 dark:text-red-300">
+                                        Deleting this attribute will remove it from all entities of
+                                        this type. This action cannot be undone.
+                                    </p>
+                                </div>
                             </div>
-                        </>
-                    )}
-
-                    {isRelationship && !isReference && (
-                        <div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-md">
-                            <AlertCircle className="size-4 text-green-600 dark:text-green-500 mt-0.5 shrink-0" />
-                            <div className="text-sm text-green-900 dark:text-green-200">
-                                <p className="font-medium mb-1">Info</p>
-                                <p className="text-green-800 dark:text-green-300">
-                                    Deleting this relationship will remove it from the entity type,
-                                    and from all other entity types that currently hold a two way
-                                    relationship with it. All associated relationship data will be
-                                    deleted.
-                                </p>
-                            </div>
-                        </div>
-                    )}
-
-                    {isAttribute && (
-                        <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-md">
-                            <AlertCircle className="size-4 text-red-600 dark:text-red-500 mt-0.5 shrink-0" />
-                            <div className="text-sm text-red-900 dark:text-red-200">
-                                <p className="font-medium mb-1">Warning</p>
-                                <p className="text-red-800 dark:text-red-300">
-                                    Deleting this attribute will remove it from all entities of this
-                                    type. This action cannot be undone.
-                                </p>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </form>
+                </Form>
 
                 <DialogFooter>
                     <Button
@@ -240,7 +286,7 @@ export const DeleteDefinitionModal: FC<Props> = ({ dialog, type, definition }) =
                     </Button>
                     <Button
                         variant="destructive"
-                        onClick={handleDelete}
+                        onClick={form.handleSubmit(onSubmit)}
                         disabled={!canDelete || isDeleting}
                     >
                         {isDeleting && <Loader2 className="size-4 animate-spin" />}

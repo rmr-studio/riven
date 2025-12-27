@@ -49,31 +49,36 @@ export function useDeleteTypeMutation(
 
             toast.success(`Entity type definition deleted successfully!`);
 
-            if (response.updatedEntityTypes) {
-                Object.entries(response.updatedEntityTypes).forEach(([key, entityType]) => {
-                    // Update individual entity type query cache
-                    queryClient.setQueryData(["entityType", key, organisationId], entityType);
-                });
+            if (!response.updatedEntityTypes) return;
 
-                // Update the entity types list in cache
-                queryClient.setQueryData<EntityType[]>(
-                    ["entityTypes", organisationId],
-                    (oldData) => {
-                        if (!oldData) return Object.values(response.updatedEntityTypes!);
+            Object.entries(response.updatedEntityTypes).forEach(([key, entityType]) => {
+                // Update individual entity type query cache
+                queryClient.setQueryData(["entityType", key, organisationId], entityType);
+            });
 
-                        // Create a map of updated entity types for efficient lookup
-                        const updatedTypesMap = new Map(
-                            Object.entries(response.updatedEntityTypes!).map(([key, type]) => [
-                                key,
-                                type,
-                            ])
-                        );
+            queryClient.invalidateQueries({
+                queryKey: ["entityType", variables.key, organisationId],
+            });
 
-                        // Replace all updated entity types in the list
-                        return oldData.map((et) => updatedTypesMap.get(et.key) ?? et);
-                    }
+            // Update the entity types list in cache
+            queryClient.setQueryData<EntityType[]>(["entityTypes", organisationId], (oldData) => {
+                if (!response.updatedEntityTypes) return;
+
+                if (!oldData)
+                    return Object.values(response.updatedEntityTypes).filter(
+                        (et) => et.key !== variables.key
+                    );
+
+                // Create a map of updated entity types for efficient lookup
+                const updatedTypesMap = new Map(
+                    Object.entries(response.updatedEntityTypes!).map(([key, type]) => [key, type])
                 );
-            }
+
+                // Replace all updated entity types in the list and remove the delete entity type
+                return oldData
+                    .map((et) => updatedTypesMap.get(et.key) ?? et)
+                    .filter((et) => et.key !== variables.key);
+            });
 
             return response;
         },
