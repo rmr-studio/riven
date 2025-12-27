@@ -382,7 +382,11 @@ export interface paths {
         get: operations["getEntityTypeByKeyForOrganisation"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete an entity type by key
+         * @description Deletes the specified entity type by its key for the given organisation.
+         */
+        delete: operations["deleteEntityTypeByKey"];
         options?: never;
         head?: never;
         patch?: never;
@@ -475,26 +479,6 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["revokeInvite"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/entity/schema/organisation/{organisationID}/key/{key}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Delete an entity type by key
-         * @description Deletes the specified entity type by its key for the given organisation.
-         */
-        delete: operations["deleteEntityTypeByKey"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2382,6 +2366,49 @@ export interface operations {
             };
         };
     };
+    deleteEntityTypeByKey: {
+        parameters: {
+            query?: {
+                impactConfirmed?: boolean;
+            };
+            header?: never;
+            path: {
+                organisationId: string;
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Entity type deleted successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
+                };
+            };
+            /** @description Entity type not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
+                };
+            };
+        };
+    };
     getBlockTypes: {
         parameters: {
             query?: never;
@@ -2555,49 +2582,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-        };
-    };
-    deleteEntityTypeByKey: {
-        parameters: {
-            query?: {
-                impactConfirmed?: boolean;
-            };
-            header?: never;
-            path: {
-                organisationID: string;
-                key: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Entity type deleted successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
-                };
-            };
-            /** @description Entity type not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["EntityTypeImpactResponse"];
-                };
             };
         };
     };

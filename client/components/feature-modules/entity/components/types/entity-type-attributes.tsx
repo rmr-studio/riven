@@ -22,6 +22,7 @@ export const EntityTypesAttributes: FC<Props> = ({ type }) => {
     const [deletingAttribute, setDeletingAttribute] = useState<EntityTypeDefinition | undefined>(
         undefined
     );
+    const form = useConfigForm();
 
     useEffect(() => {
         if (!dialogOpen) {
@@ -35,8 +36,6 @@ export const EntityTypesAttributes: FC<Props> = ({ type }) => {
         }
     }, [deleteDialogOpen]);
 
-    const form = useConfigForm();
-    if (!form) return null;
     const { watch } = form;
     const identifierKey = watch("identifierKey");
 
@@ -82,11 +81,13 @@ export const EntityTypesAttributes: FC<Props> = ({ type }) => {
                 type={type}
                 selectedAttribute={editingAttribute?.definition}
             />
-            <DeleteDefinitionModal
-                dialog={{ open: deleteDialogOpen, setOpen: setDeleteDialogOpen }}
-                type={type}
-                definition={deletingAttribute}
-            />
+            {deletingAttribute && (
+                <DeleteDefinitionModal
+                    dialog={{ open: deleteDialogOpen, setOpen: setDeleteDialogOpen }}
+                    type={type}
+                    definition={deletingAttribute}
+                />
+            )}
         </>
     );
 };

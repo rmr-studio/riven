@@ -157,13 +157,13 @@ export function useEntityTypeAttributeSchemaForm(
             const id = attribute?.id || uuid();
 
             const options: SchemaOptions = {
-                enum: values.enumValues || undefined,
-                enumSorting: values.enumSorting || undefined,
-                minimum: values.minimum || undefined,
-                maximum: values.maximum || undefined,
-                minLength: values.minLength || undefined,
-                maxLength: values.maxLength || undefined,
-                regex: values.regex || undefined,
+                enum: values.enumValues ?? undefined,
+                enumSorting: values.enumSorting ?? undefined,
+                minimum: values.minimum ?? undefined,
+                maximum: values.maximum ?? undefined,
+                minLength: values.minLength ?? undefined,
+                maxLength: values.maxLength ?? undefined,
+                regex: values.regex ?? undefined,
             };
 
             const definition: SaveAttributeDefinitionRequest = {

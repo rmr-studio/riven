@@ -126,28 +126,26 @@ export const EntityTypeConfigurationProvider = ({
 
         const debouncedSaveRef = { current: null as NodeJS.Timeout | null };
 
-        const subscription = form.watch((values) => {
-            const dirty = Object.keys(dirtyFields).length > 0;
-            store.setDirty(dirty);
+        const dirty = Object.keys(dirtyFields).length > 0;
+        store.setDirty(dirty);
 
-            if (dirty) {
-                if (debouncedSaveRef.current) {
-                    clearTimeout(debouncedSaveRef.current);
-                }
-
-                debouncedSaveRef.current = setTimeout(() => {
-                    store.saveDraft(values);
-                }, 1000);
+        if (dirty) {
+            if (debouncedSaveRef.current) {
+                clearTimeout(debouncedSaveRef.current);
             }
-        });
+
+            debouncedSaveRef.current = setTimeout(() => {
+                const currentValues = form.getValues();
+                store.saveDraft(currentValues);
+            }, 1000);
+        }
 
         return () => {
-            subscription.unsubscribe();
             if (debouncedSaveRef.current) {
                 clearTimeout(debouncedSaveRef.current);
             }
         };
-    }, [form]);
+    }, [dirtyFields]);
 
     return (
         <EntityTypeConfigContext.Provider value={storeRef.current}>

@@ -106,11 +106,13 @@ export const ConfigurationForm: FC<Props> = ({ availableIdentifiers }) => {
                                     </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    {availableIdentifiers.map((attr) => (
-                                        <SelectItem key={attr.id} value={attr.id}>
-                                            {attr.schema.label}
-                                        </SelectItem>
-                                    ))}
+                                    {availableIdentifiers
+                                        .filter((attr) => !!attr.schema.label)
+                                        .map((attr) => (
+                                            <SelectItem key={attr.id} value={attr.id}>
+                                                {attr.schema.label}
+                                            </SelectItem>
+                                        ))}
                                     {availableIdentifiers.length === 0 && (
                                         <SelectItem value="name" disabled>
                                             No unique attributes available
