@@ -32,7 +32,7 @@ class EntityValidationService(
     ): List<String> {
         return schemaService.validate(
             schema = entityType.schema,
-            payload = entity.payload,
+            payload = entity.payload.map { it.key.toString() to it.value }.toMap(),
             scope = ValidationScope.STRICT
         )
     }
@@ -165,7 +165,7 @@ class EntityValidationService(
 
             val errors = schemaService.validate(
                 schema = newSchema,
-                payload = entity.payload,
+                payload = entity.payload.map { it.key.toString() to it.value }.toMap(),
                 scope = ValidationScope.STRICT
             )
 

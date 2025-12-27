@@ -20,7 +20,8 @@ import jakarta.persistence.Entity as JPAEntity
 @Table(
     name = "entities",
     indexes = [
-        Index(name = "idx_entities_organisation_id_type_id", columnList = "organisation_id, type_id"),
+        Index(name = "idx_entities_type_id", columnList = "type_id"),
+        Index(name = "idx_entities_organisation_id", columnList = "organisation_id"),
     ]
 )
 data class EntityEntity(
@@ -32,9 +33,6 @@ data class EntityEntity(
     @Column(name = "organisation_id", nullable = false)
     val organisationId: UUID,
 
-    // Denormalized keys referencing important EntityType information to avoid joins.
-    @Column(name = "key", nullable = false)
-    var key: String,
     @Column(name = "type_id", nullable = false)
     val typeId: UUID,
     @Column("identifier_key", nullable = false, columnDefinition = "uuid")

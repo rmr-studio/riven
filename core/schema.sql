@@ -370,8 +370,12 @@ CREATE TABLE IF NOT EXISTS public.entities
     "deleted_at"      TIMESTAMP WITH TIME ZONE DEFAULT NULL
 );
 
-create index if not exists idx_entities_organisation_id_type_id
-    on entities (organisation_id, type_id)
+create index if not exists idx_entities_type_id
+    on entities (type_id)
+    where archived = false;
+
+create index if not exists idx_entities_organisation_id
+    on entities (organisation_id)
     where archived = false;
 
 

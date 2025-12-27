@@ -51,7 +51,7 @@ class EntityController(
         ApiResponse(responseCode = "401", description = "Unauthorized access"),
         ApiResponse(responseCode = "404", description = "Organisation not found")
     )
-    fun getEntityByTypeKeyForOrganisation(
+    fun getEntityByTypeIdForOrganisation(
         @PathVariable organisationId: UUID,
         @PathVariable id: UUID
     ): ResponseEntity<List<Entity>> {

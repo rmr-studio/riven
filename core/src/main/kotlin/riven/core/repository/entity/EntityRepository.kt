@@ -16,26 +16,5 @@ interface EntityRepository : JpaRepository<EntityEntity, UUID> {
     @Query("SELECT e FROM EntityEntity e WHERE e.organisationId = :organisationId AND e.archived = false")
     fun findByOrganisationId(organisationId: UUID): List<EntityEntity>
 
-    fun findByOrganisationIdAndTypeIdInAndArchivedIsFalse(
-        organisationId: UUID,
-        typeIds: List<UUID>
-    ): List<EntityEntity>
 
-    /**
-     * Find all entities of a specific type.
-     */
-    @Query("SELECT e FROM EntityEntity e WHERE e.type.id = :typeId AND e.organisationId = :organisationId AND e.archived = false")
-    fun findByTypeId(
-        organisationId: UUID,
-        typeId: UUID
-    ): List<EntityEntity>
-
-    /**
-     * Find all active entities of a specific type by type key.
-     */
-    @Query("SELECT e FROM EntityEntity e WHERE e.key = :typeKey AND e.organisationId = :organisationId AND e.archived = false")
-    fun findByTypeKey(
-        organisationId: UUID,
-        typeKey: String
-    ): List<EntityEntity>
 }

@@ -1,6 +1,5 @@
 package riven.core.service.util.factory.entity
 
-import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityRelationshipEntity
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.common.SchemaType
@@ -9,7 +8,6 @@ import riven.core.enums.entity.EntityCategory
 import riven.core.enums.entity.EntityPropertyType
 import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.enums.entity.EntityTypeRelationshipType
-import riven.core.models.common.json.JsonObject
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
@@ -164,35 +162,5 @@ object EntityFactory {
         )
     }
 
-    /**
-     * Creates an EntityEntity (entity instance) with the given parameters.
-     *
-     * @param id The entity UUID. Defaults to a newly generated UUID.
-     * @param organisationId The organisation UUID. Defaults to a newly generated UUID.
-     * @param key The unique key for the entity.
-     * @param type The entity type.
-     * @param typeVersion The entity type version.
-     * @param name The entity name.
-     * @param payload The entity payload data.
-     * @return An EntityEntity configured with the provided parameters.
-     */
-    fun createEntity(
-        id: UUID = UUID.randomUUID(),
-        organisationId: UUID = UUID.randomUUID(),
-        key: String = "test_entity_1",
-        type: EntityTypeEntity,
-        typeVersion: Int = 1,
-        name: String? = "Test Entity",
-        payload: JsonObject = mapOf("name" to "Test Entity")
-    ): EntityEntity {
-        return EntityEntity(
-            id = id,
-            organisationId = organisationId,
-            key = key,
-            type = type,
-            typeVersion = typeVersion,
-            name = name,
-            payload = payload
-        )
-    }
+
 }
