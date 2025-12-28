@@ -7,11 +7,9 @@ import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.entity.EntityEntity
 import riven.core.enums.activity.Activity
 import riven.core.enums.core.ApplicationEntityType
-import riven.core.enums.entity.EntityCategory
 import riven.core.enums.util.OperationType
 import riven.core.exceptions.SchemaValidationException
 import riven.core.models.entity.Entity
-import riven.core.models.entity.EntityType
 import riven.core.models.request.entity.SaveEntityRequest
 import riven.core.repository.entity.EntityRepository
 import riven.core.service.activity.ActivityService
@@ -42,26 +40,27 @@ class EntityService(
         return findManyResults { entityRepository.findAllById(ids) }
     }
 
+    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
     fun getEntitiesByTypeId(
         organisationId: UUID,
         typeId: UUID
     ): List<Entity> {
         return findManyResults {
-            entityRepository.findByTypeId(organisationId, typeId)
+            entityRepository.findByTypeId(typeId)
         }.map { it.toModel() }
     }
 
+    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
     fun getEntitiesByTypeIds(
         organisationId: UUID,
         typeIds: List<UUID>
     ): Map<UUID, List<Entity>> {
         return findManyResults {
-            entityRepository.findByOrganisationIdAndTypeIdInAndArchivedIsFalse(
-                organisationId = organisationId,
+            entityRepository.findByTypeIdIn(
                 typeIds = typeIds
             )
-        }.groupBy { it.typeId }
-            .mapValues { entry -> entry.value.map { it.toModel() } }
+        }.map { it.toModel() }.groupBy { it.typeId }
+
     }
 
     /**
@@ -82,7 +81,6 @@ class EntityService(
             organisationId = organisationId,
             typeId = typeId,
             identifierKey = entityType.identifierKey,
-            key = type,
             payload = payload,
         )
 
@@ -140,40 +138,11 @@ class EntityService(
             entityId = id,
             entityType = ApplicationEntityType.ENTITY,
             details = mapOf(
-                "type" to existing.key,
+                "typeId" to existing.typeId.toString()
             )
         )
     }
 
-    /**
-     * Archive or restore an entity.
-     * An archival operation will move the entity to a separate archival table, and a restoration will bring it back.
-     */
-    @Transactional
-    @PreAuthorize("@organisationSecurity.hasOrg(#id)")
-    fun archiveEntity(id: UUID, archive: Boolean): Entity {
-        TODO()
-    }
-
-    /**
-     * Get entity by ID.
-     */
-    @PostAuthorize("@organisationSecurity.hasOrg(returnObject.organisationId)")
-    fun getEntityById(id: UUID, audit: Boolean = false): Entity {
-        return findOrThrow { entityRepository.findById(id) }.toModel(audit)
-    }
-
-    /**
-     * Get all entities of a specific type using their primitive key.
-     */
-    fun getEntitiesByTypeKey(
-        organisationId: UUID,
-        typeKey: String
-    ): List<Entity> {
-        return findManyResults {
-            entityRepository.findByTypeKey(organisationId, typeKey)
-        }.map { it.toModel() }
-    }
 
     /**
      * Get all entities for an organization.

@@ -16,5 +16,15 @@ interface EntityRepository : JpaRepository<EntityEntity, UUID> {
     @Query("SELECT e FROM EntityEntity e WHERE e.organisationId = :organisationId AND e.archived = false")
     fun findByOrganisationId(organisationId: UUID): List<EntityEntity>
 
+    @Query("SELECT e FROM EntityEntity e WHERE e.typeId = :typeId AND e.archived = false")
+    fun findByTypeId(typeId: UUID): List<EntityEntity>
 
+    @Query(
+        """
+       SELECT e FROM EntityEntity e 
+            WHERE e.typeId in :typeIds 
+            AND e.archived = false 
+    """
+    )
+    fun findByTypeIdIn(typeIds: List<UUID>): List<EntityEntity>
 }
