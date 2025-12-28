@@ -2,10 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
+import { EntityPropertyType } from "@/lib/types/types";
 import { Check, X } from "lucide-react";
-import { FC, useState } from "react";
+import { FC, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useDraftForm, useEntityDraftStore } from "../../context/entity-provider";
+import { useEntityDraft } from "../../context/entity-provider";
 import { EntityType } from "../../interface/entity.interface";
 import { EntityFieldCell } from "../forms/instance/entity-field-cell";
 import { EntityRelationshipPicker } from "../forms/instance/entity-relationship-picker";
@@ -15,12 +16,8 @@ export interface EntityDraftRowProps {
 }
 
 export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType }) => {
-    const { submitDraft, resetDraft } = useEntityDraftStore((state) => ({
-        submitDraft: state.submitDraft,
-        resetDraft: state.resetDraft,
-    }));
+    const { form, resetDraft, submitDraft } = useEntityDraft();
 
-    const form = useDraftForm();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async () => {
@@ -40,26 +37,49 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType }) => {
         resetDraft();
     };
 
-    // Build cells for each attribute in order
-    const attributeCells = Object.entries(entityType.schema.properties || {}).map(
-        ([attributeId, schema]) => (
-            <TableCell key={attributeId} className="border-dashed p-2">
-                <EntityFieldCell
-                    attributeId={attributeId}
-                    schema={schema}
-                    entityTypeKey={entityType.key}
-                />
-            </TableCell>
-        )
-    );
+    // Build ordered cells based on entityType.order
+    const orderedCells = useMemo(() => {
+        // Create maps for quick lookup
+        const attributeCellsMap = new Map(
+            Object.entries(entityType.schema.properties || {}).map(([attributeId, schema]) => [
+                attributeId,
+                <TableCell key={attributeId} className="border-dashed p-2">
+                    <EntityFieldCell
+                        attributeId={attributeId}
+                        schema={schema}
+                        entityTypeKey={entityType.key}
+                    />
+                </TableCell>,
+            ])
+        );
 
-    // Build cells for relationships (if any)
-    const relationshipCells =
-        entityType.relationships?.map((relationship) => (
-            <TableCell key={relationship.id} className="border-dashed p-2">
-                <EntityRelationshipPicker relationship={relationship} />
-            </TableCell>
-        )) ?? [];
+        const relationshipCellsMap = new Map(
+            (entityType.relationships || []).map((relationship) => [
+                relationship.id,
+                <TableCell key={relationship.id} className="border-dashed p-2">
+                    <EntityRelationshipPicker relationship={relationship} />
+                </TableCell>,
+            ])
+        );
+
+        // Apply ordering based on entityType.order
+        const cells: JSX.Element[] = [];
+        entityType.order?.forEach((orderItem) => {
+            if (orderItem.type === EntityPropertyType.ATTRIBUTE) {
+                const cell = attributeCellsMap.get(orderItem.key);
+                if (cell) {
+                    cells.push(cell);
+                }
+            } else if (orderItem.type === EntityPropertyType.RELATIONSHIP) {
+                const cell = relationshipCellsMap.get(orderItem.key);
+                if (cell) {
+                    cells.push(cell);
+                }
+            }
+        });
+
+        return cells;
+    }, [entityType]);
 
     // Check if form is valid
     const isValid = form.formState.isValid && !form.formState.isValidating;
@@ -67,14 +87,8 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType }) => {
 
     return (
         <TableRow className="bg-muted/30 border-dashed hover:bg-muted/40">
-            {/* Empty cell for drag handle column (disabled for draft row) */}
-            <TableCell className="w-8 border-dashed" />
-
-            {/* Attribute cells */}
-            {attributeCells}
-
-            {/* Relationship cells */}
-            {relationshipCells}
+            {/* Ordered cells (attributes and relationships) */}
+            {orderedCells}
 
             {/* Action buttons */}
             <TableCell className="w-24 border-dashed">

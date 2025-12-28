@@ -15,7 +15,8 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { FC } from "react";
+import { EntityPropertyType } from "@/lib/types/types";
+import { FC, useEffect } from "react";
 import { useConfigForm } from "../../../context/configuration-provider";
 import { EntityAttributeDefinition } from "../../../interface/entity.interface";
 
@@ -26,6 +27,61 @@ interface Props {
 export const ConfigurationForm: FC<Props> = ({ availableIdentifiers }) => {
     const form = useConfigForm();
     if (!form) return null;
+
+    // Watch for identifier key changes and auto-reorder to ensure identifier is first
+    useEffect(() => {
+        const subscription = form.watch((values, { name }) => {
+            // Only react to identifierKey changes
+            if (name !== "identifierKey") return;
+
+            const newIdentifierKey = values.identifierKey;
+            const currentOrder = values.order || [];
+
+            if (!newIdentifierKey) return;
+
+            // Check if identifier is already first
+            const firstItem = currentOrder[0];
+            if (
+                firstItem?.key === newIdentifierKey &&
+                firstItem?.type === EntityPropertyType.ATTRIBUTE
+            ) {
+                // Already in first position, nothing to do
+                return;
+            }
+
+            // Find identifier in current order
+            const identifierIndex = currentOrder.findIndex(
+                (item) =>
+                    item.key === newIdentifierKey && item.type === EntityPropertyType.ATTRIBUTE
+            );
+
+            let newOrder;
+            if (identifierIndex !== -1) {
+                // Identifier exists in order, move it to first position
+                const identifierItem = currentOrder[identifierIndex];
+                newOrder = [
+                    identifierItem,
+                    ...currentOrder.filter((_, idx) => idx !== identifierIndex),
+                ];
+            } else {
+                // Identifier not in order, add it at first position
+                newOrder = [
+                    {
+                        key: newIdentifierKey,
+                        type: EntityPropertyType.ATTRIBUTE,
+                    },
+                    ...currentOrder,
+                ];
+            }
+
+            // Update the order in the form
+            form.setValue("order", newOrder, {
+                shouldDirty: true,
+            });
+        });
+
+        return () => subscription.unsubscribe();
+    }, [form]);
 
     return (
         <div className="rounded-lg border bg-card p-6">

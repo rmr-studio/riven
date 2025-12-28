@@ -3,10 +3,10 @@
 import { buildZodSchemaFromEntityType } from "@/lib/util/form/entity-instance-validation.util";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
-import { FormProvider, useForm, useFormContext } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useStore } from "zustand";
-import { useCreateEntityMutation } from "../hooks/mutation/instance/use-create-entity-mutation";
+import { useCreateEntityMutation } from "../hooks/mutation/instance/use-save-entity-mutation";
 import { Entity, EntityType } from "../interface/entity.interface";
 import {
     createEntityDraftStore,
@@ -123,8 +123,7 @@ export const EntityDraftProvider = ({
     );
 };
 
-// Hook to access store with selector
-export const useEntityDraftStore = <T,>(selector: (store: EntityDraftStore) => T): T => {
+const useEntityDraftStore = <T,>(selector: (store: EntityDraftStore) => T): T => {
     const context = useContext(EntityDraftContext);
 
     if (!context) {
@@ -134,12 +133,6 @@ export const useEntityDraftStore = <T,>(selector: (store: EntityDraftStore) => T
     return useStore(context, selector);
 };
 
-// Optimized hook for accessing draft mode state
-export const useIsDraftMode = () => {
-    return useEntityDraftStore((state) => state.isDraftMode);
-};
-
-// Hook to access the form context
-export const useDraftForm = () => {
-    return useFormContext<Record<string, any>>();
+export const useEntityDraft = () => {
+    return useEntityDraftStore((state) => state);
 };

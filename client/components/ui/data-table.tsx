@@ -31,7 +31,7 @@ import {
     useReactTable,
 } from "@tanstack/react-table";
 import { Filter, GripVertical, MoreVertical, Search, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -119,7 +119,7 @@ interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
     enableDragDrop?: boolean;
-    onReorder?: (data: TData[]) => void;
+    onReorder?: (data: TData[]) => void | boolean;
     getRowId?: (row: TData, index: number) => string;
     enableSorting?: boolean;
     enableFiltering?: boolean;
@@ -129,6 +129,9 @@ interface DataTableProps<TData, TValue> {
     search?: SearchConfig<TData>;
     filter?: FilterConfig<TData>;
     rowActions?: RowActionsConfig<TData>;
+    customRowRenderer?: (row: Row<TData>) => ReactNode | null;
+    isDraftMode?: boolean;
+    disableDragForRow?: (row: Row<TData>) => boolean;
 }
 
 interface DraggableRowProps<TData> {
@@ -137,6 +140,8 @@ interface DraggableRowProps<TData> {
     onRowClick?: (row: Row<TData>) => void;
     isMounted: boolean;
     rowActions?: RowActionsConfig<TData>;
+    disabled?: boolean;
+    disableDragForRow?: (row: Row<TData>) => boolean;
 }
 
 function DraggableRow<TData>({
@@ -145,10 +150,14 @@ function DraggableRow<TData>({
     onRowClick,
     isMounted,
     rowActions,
+    disabled,
+    disableDragForRow,
 }: DraggableRowProps<TData>) {
+    const isDragDisabled = disableDragForRow?.(row) ?? false;
+
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: row.id,
-        disabled: !enableDragDrop || !isMounted,
+        disabled: !enableDragDrop || !isMounted || isDragDisabled,
     });
 
     const style = isMounted
@@ -163,15 +172,22 @@ function DraggableRow<TData>({
             ref={enableDragDrop && isMounted ? setNodeRef : undefined}
             style={style}
             data-state={row.getIsSelected() ? "selected" : undefined}
-            className={cn(isDragging && "opacity-50", onRowClick && "cursor-pointer")}
-            onClick={() => onRowClick?.(row)}
+            className={cn(
+                isDragging && "opacity-50",
+                onRowClick && !disabled && "cursor-pointer",
+                disabled && "opacity-40 pointer-events-none"
+            )}
+            onClick={() => !disabled && onRowClick?.(row)}
         >
             {enableDragDrop && (
                 <TableCell className="w-[40px] p-2 ">
                     <button
-                        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
-                        {...(isMounted ? attributes : {})}
-                        {...(isMounted ? listeners : {})}
+                        className={cn(
+                            "cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors",
+                            isDragDisabled && "opacity-30 cursor-not-allowed"
+                        )}
+                        {...(isMounted && !isDragDisabled ? attributes : {})}
+                        {...(isMounted && !isDragDisabled ? listeners : {})}
                         onClick={(e) => e.stopPropagation()}
                     >
                         <GripVertical className="h-4 w-4" />
@@ -248,6 +264,9 @@ export function DataTable<TData, TValue>({
     search,
     filter,
     rowActions,
+    customRowRenderer,
+    isDraftMode = false,
+    disableDragForRow,
 }: DataTableProps<TData, TValue>) {
     const [tableData, setTableData] = useState<TData[]>(data);
     const [sorting, setSorting] = useState<SortingState>([]);
@@ -379,6 +398,17 @@ export function DataTable<TData, TValue>({
         return table.getRowModel().rows.map((row) => row.id as UniqueIdentifier);
     }, [table, tableData]);
 
+    // Filter out disabled rows from sortable context to keep them fixed in position
+    const sortableRowIds = useMemo(() => {
+        if (!disableDragForRow) return rowIds;
+
+        const rows = table.getRowModel().rows;
+        return rowIds.filter((rowId) => {
+            const row = rows.find((r) => r.id === rowId);
+            return row ? !disableDragForRow(row) : true;
+        });
+    }, [rowIds, table, disableDragForRow]);
+
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
 
@@ -387,8 +417,15 @@ export function DataTable<TData, TValue>({
             const newIndex = rowIds.indexOf(over.id);
 
             const newData = arrayMove(tableData, oldIndex, newIndex);
-            setTableData(newData);
-            onReorder?.(newData);
+
+            // Call onReorder and check if it returns false (rejection)
+            const result = onReorder?.(newData);
+
+            // Only update internal state if not explicitly rejected (result !== false)
+            if (result !== false) {
+                setTableData(newData);
+            }
+            // If rejected (result === false), don't update - table stays at original position
         }
     };
 
@@ -650,7 +687,7 @@ export function DataTable<TData, TValue>({
             )}
         >
             <Table>
-                <TableHeader className="bg-accent/30">
+                <TableHeader className="bg-background">
                     {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id}>
                             {isDragDropEnabled && (
@@ -678,9 +715,15 @@ export function DataTable<TData, TValue>({
                 </TableHeader>
                 <TableBody>
                     {table.getRowModel().rows?.length ? (
-                        table
-                            .getRowModel()
-                            .rows.map((row) => (
+                        table.getRowModel().rows.map((row) => {
+                            // Check for custom row renderer
+                            const customRow = customRowRenderer?.(row);
+                            if (customRow) {
+                                return customRow;
+                            }
+
+                            // Default rendering with draft mode awareness
+                            return (
                                 <DraggableRow
                                     key={row.id}
                                     row={row}
@@ -688,8 +731,11 @@ export function DataTable<TData, TValue>({
                                     onRowClick={onRowClick}
                                     isMounted={isMounted}
                                     rowActions={rowActions}
+                                    disabled={isDraftMode}
+                                    disableDragForRow={disableDragForRow}
                                 />
-                            ))
+                            );
+                        })
                     ) : (
                         <TableRow>
                             <TableCell
@@ -727,77 +773,78 @@ export function DataTable<TData, TValue>({
     return (
         <div className="w-full space-y-4">
             {/* Toolbar - Search and Filters on same line */}
-            {(search?.enabled || (filter?.enabled && filter.filters.length > 0)) && (
-                <div className="flex items-center gap-2 flex-wrap">
-                    {/* Search Input */}
-                    {search?.enabled && (
-                        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                            <div className="relative flex-1 max-w-sm">
-                                <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                <Input
-                                    placeholder={search.placeholder ?? "Search..."}
-                                    value={searchValue}
-                                    onChange={(e) => setSearchValue(e.target.value)}
-                                    className="pl-8 pr-8 h-9"
-                                />
-                                {searchValue && (
-                                    <button
-                                        onClick={handleClearSearch}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </button>
-                                )}
-                            </div>
-                            {searchValue && (
-                                <p className="text-sm text-muted-foreground whitespace-nowrap">
-                                    {table.getFilteredRowModel().rows.length} result
-                                    {table.getFilteredRowModel().rows.length !== 1 ? "s" : ""}
-                                </p>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Filter Button */}
-                    {filter?.enabled && filter.filters.length > 0 && (
-                        <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" size="sm" className="h-9">
-                                    <Filter className="h-4 w-4 mr-2" />
-                                    Filters
-                                    {activeFilterCount > 0 && (
-                                        <Badge variant="secondary" className="ml-2 h-5 px-1.5">
-                                            {activeFilterCount}
-                                        </Badge>
-                                    )}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-80 p-0" align="end">
-                                <div className="flex items-center justify-between p-4 border-b">
-                                    <h4 className="font-semibold text-sm">Filter Options</h4>
-                                    {activeFilterCount > 0 && (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={handleClearFilters}
-                                            className="h-7 text-xs text-muted-foreground hover:text-foreground"
+            {(search?.enabled || (filter?.enabled && filter.filters.length > 0)) &&
+                !isDraftMode && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {/* Search Input */}
+                        {search?.enabled && (
+                            <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                                <div className="relative flex-1 max-w-sm">
+                                    <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    <Input
+                                        placeholder={search.placeholder ?? "Search..."}
+                                        value={searchValue}
+                                        onChange={(e) => setSearchValue(e.target.value)}
+                                        className="pl-8 pr-8 h-9"
+                                    />
+                                    {searchValue && (
+                                        <button
+                                            onClick={handleClearSearch}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                                         >
-                                            Clear all
-                                        </Button>
+                                            <X className="h-4 w-4" />
+                                        </button>
                                     )}
                                 </div>
-                                <ScrollArea className="max-h-[400px]">
-                                    <div className="p-4 space-y-4">
-                                        {filter.filters.map((columnFilter) =>
-                                            renderFilter(columnFilter)
+                                {searchValue && (
+                                    <p className="text-sm text-muted-foreground whitespace-nowrap">
+                                        {table.getFilteredRowModel().rows.length} result
+                                        {table.getFilteredRowModel().rows.length !== 1 ? "s" : ""}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Filter Button */}
+                        {filter?.enabled && filter.filters.length > 0 && (
+                            <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" size="sm" className="h-9">
+                                        <Filter className="h-4 w-4 mr-2" />
+                                        Filters
+                                        {activeFilterCount > 0 && (
+                                            <Badge variant="secondary" className="ml-2 h-5 px-1.5">
+                                                {activeFilterCount}
+                                            </Badge>
+                                        )}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80 p-0" align="end">
+                                    <div className="flex items-center justify-between p-4 border-b">
+                                        <h4 className="font-semibold text-sm">Filter Options</h4>
+                                        {activeFilterCount > 0 && (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={handleClearFilters}
+                                                className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                                            >
+                                                Clear all
+                                            </Button>
                                         )}
                                     </div>
-                                </ScrollArea>
-                            </PopoverContent>
-                        </Popover>
-                    )}
-                </div>
-            )}
+                                    <ScrollArea className="max-h-[400px]">
+                                        <div className="p-4 space-y-4">
+                                            {filter.filters.map((columnFilter) =>
+                                                renderFilter(columnFilter)
+                                            )}
+                                        </div>
+                                    </ScrollArea>
+                                </PopoverContent>
+                            </Popover>
+                        )}
+                    </div>
+                )}
 
             {wrappedContent}
         </div>

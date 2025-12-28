@@ -3,12 +3,12 @@
 import { useOrganisation } from "@/components/feature-modules/organisation/hooks/use-organisation";
 import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-group";
 import { isResponseError } from "@/lib/util/error/error.util";
-import { useParams } from "next/navigation";
-import { useRouter } from "next/router";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { EntityDraftProvider } from "../../context/entity-provider";
 import { useEntityTypeByKey } from "../../hooks/query/type/use-entity-types";
 import { useEntity } from "../../hooks/query/use-entities";
-import EntityDataTable from "../tables/entity-data-table";
+import { EntityDataTable } from "../tables/entity-data-table";
 
 export const EntityDashboard = () => {
     const { data: organisation } = useOrganisation();
@@ -24,7 +24,7 @@ export const EntityDashboard = () => {
         data: entities,
         isPending: isPendingEntities,
         error: entitiesError,
-    } = useEntity(organisationId, typeKey);
+    } = useEntity(organisationId, entityType?.id);
 
     useEffect(() => {
         // Query has finished, organisation has not been found. Redirect back to organisation view with associated error
@@ -41,6 +41,8 @@ export const EntityDashboard = () => {
             );
         }
     }, [isPendingEntityType, isLoadingAuth, entityType, entityTypeError, router]);
+
+    if (!entityType) return null;
 
     const trail: BreadCrumbTrail[] = [
         { label: "Home", href: "/dashboard" },
@@ -66,11 +68,13 @@ export const EntityDashboard = () => {
                 <BreadCrumbGroup items={trail} />
             </header>
             <section>
-                <EntityDataTable
-                    entityType={entityType}
-                    entities={entities || []}
-                    loadingEntities={isPendingEntities || isLoadingAuth}
-                />
+                <EntityDraftProvider organisationId={organisationId} entityType={entityType}>
+                    <EntityDataTable
+                        entityType={entityType}
+                        entities={entities || []}
+                        loadingEntities={isPendingEntities || isLoadingAuth}
+                    />
+                </EntityDraftProvider>
             </section>
         </div>
     );

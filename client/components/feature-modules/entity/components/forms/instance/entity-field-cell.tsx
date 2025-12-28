@@ -1,11 +1,9 @@
 "use client";
 
+import { FormWidgetProps } from "@/components/feature-modules/blocks/components/forms";
 import { SchemaUUID } from "@/lib/interfaces/common.interface";
-import { Loader2 } from "lucide-react";
-import { useParams } from "next/navigation";
-import { FC, useState } from "react";
-import { useDraftForm } from "../../../context/entity-provider";
-import { useValidateUniqueMutation } from "../../../hooks/mutation/instance/use-validate-unique-mutation";
+import { FC } from "react";
+import { useEntityDraft } from "../../../context/entity-provider";
 import { getWidgetForSchema } from "./entity-field-registry";
 
 export interface EntityFieldCellProps {
@@ -20,47 +18,14 @@ export const EntityFieldCell: FC<EntityFieldCellProps> = ({
 
     entityTypeKey,
 }) => {
-    const form = useDraftForm();
-    const [isValidatingUnique, setIsValidatingUnique] = useState(false);
-    const { organisationId } = useParams<{ organisationId: string }>();
-
+    const { form } = useEntityDraft();
     // Get current value and errors from form
     const value = form.watch(attributeId);
     const fieldError = form.formState.errors[attributeId];
     const errors = fieldError?.message ? [String(fieldError.message)] : undefined;
 
-    // Unique validation mutation
-    const { mutateAsync: validateUnique } = useValidateUniqueMutation(
-        organisationId,
-        entityTypeKey
-    );
-
     // Get widget component for this schema type
-    const Widget = getWidgetForSchema(schema);
-
-    const handleBlur = async () => {
-        // Trigger field validation (Zod schema)
-        await form.trigger(attributeId);
-
-        // Check uniqueness if required
-        if (schema.unique && value !== null && value !== undefined && value !== "") {
-            setIsValidatingUnique(true);
-            try {
-                const isUnique = await validateUnique({ attributeId, value });
-                if (!isUnique) {
-                    form.setError(attributeId, {
-                        type: "unique",
-                        message: `This ${schema.label?.toLowerCase() || "value"} is already in use`,
-                    });
-                }
-            } catch (error) {
-                console.error("Unique validation error:", error);
-                // Don't show error to user - will be validated on submit
-            } finally {
-                setIsValidatingUnique(false);
-            }
-        }
-    };
+    const Widget: FC<FormWidgetProps> = getWidgetForSchema(schema);
 
     const handleChange = (newValue: any) => {
         // Clear error when user starts typing
@@ -75,6 +40,14 @@ export const EntityFieldCell: FC<EntityFieldCellProps> = ({
         });
     };
 
+    /**
+     * This should perform a brief validation check for existing data already loaded inside the client.
+     * E.g. for URL fields, check if the value is a valid URL format. If invalid, set error in form state.
+     * This should also perform a brief uniqueness check if the schema requires it, e.g. check against existing entities in the entity store.
+     * This shouldnt perform a full validation, nor call any APIs, just basic checks that can be done client-side.
+     */
+    const onBlur = () => {};
+
     if (!Widget) {
         return (
             <div className="text-sm text-muted-foreground">
@@ -88,10 +61,7 @@ export const EntityFieldCell: FC<EntityFieldCellProps> = ({
             <Widget
                 value={value}
                 onChange={handleChange}
-                onBlur={handleBlur}
-                label={schema.label || attributeId}
-                placeholder={`Enter ${schema.label?.toLowerCase() || "value"}...`}
-                disabled={isValidatingUnique}
+                onBlur={onBlur}
                 errors={errors}
                 schema={schema}
                 options={
@@ -103,11 +73,6 @@ export const EntityFieldCell: FC<EntityFieldCellProps> = ({
                         : undefined
                 }
             />
-            {isValidatingUnique && (
-                <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                </div>
-            )}
         </div>
     );
 };

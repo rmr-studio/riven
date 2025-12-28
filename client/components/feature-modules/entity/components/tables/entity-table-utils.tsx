@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { ColumnFilter, FilterOption } from "@/components/ui/data-table";
+import { IconCell } from "@/components/ui/icon/icon-cell";
 import { DataFormat, DataType, EntityPropertyType } from "@/lib/types/types";
 import { toTitleCase } from "@/lib/util/utils";
 import { ColumnDef } from "@tanstack/react-table";
@@ -161,7 +162,22 @@ export function generateColumnsFromEntityType(entityType: EntityType): ColumnDef
     Object.entries(entityType.schema.properties).forEach(([attributeId, schema]) => {
         columns.push({
             accessorKey: attributeId,
-            header: schema.label || attributeId,
+            header: (_) => {
+                const { icon, label } = schema;
+                const { icon: type, colour } = icon;
+
+                return (
+                    <div className="flex items-center">
+                        <IconCell
+                            readonly
+                            iconType={type}
+                            colour={colour}
+                            className="size-4 mr-2"
+                        />
+                        <span>{label}</span>
+                    </div>
+                );
+            },
             cell: ({ row }) => {
                 const value = row.getValue(attributeId);
                 return formatEntityAttributeValue(value, schema);
@@ -172,6 +188,39 @@ export function generateColumnsFromEntityType(entityType: EntityType): ColumnDef
                 required: schema.required,
                 unique: schema.unique,
                 protected: schema.protected,
+            },
+        });
+    });
+
+    entityType.relationships?.forEach((relationship) => {
+        columns.push({
+            accessorKey: relationship.id,
+            header: () => {
+                const {icon, name} = relationship
+                return (
+                    <div className="flex items-center">
+                        <IconCell
+                            readonly
+                            iconType={icon.icon}
+                            colour={icon.colour}
+                            className="size-4 mr-2"
+                        />
+                        <span>{name}</span>
+                    </div>
+                );
+            },
+            cell: ({ row }) => {
+                return (
+                    <Badge variant="outline" className="font-mono">
+                        Relationships
+                    </Badge>
+                );
+            },
+            enableSorting: false,
+            meta: {
+                schema: {
+                    type: "RELATIONSHIP",
+                },
             },
         });
     });

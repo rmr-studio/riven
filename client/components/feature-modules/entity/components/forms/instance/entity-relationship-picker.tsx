@@ -3,7 +3,6 @@
 import { useAuth } from "@/components/provider/auth-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import {
     Select,
     SelectContent,
@@ -16,7 +15,7 @@ import { useQueries } from "@tanstack/react-query";
 import { Loader2, X } from "lucide-react";
 import { useParams } from "next/navigation";
 import { FC, useMemo } from "react";
-import { useDraftForm } from "../../../context/entity-provider";
+import { useEntityDraft } from "../../../context/entity-provider";
 import { useEntityTypes } from "../../../hooks/query/type/use-entity-types";
 import { EntityRelationshipDefinition, EntityType } from "../../../interface/entity.interface";
 import { EntityService } from "../../../service/entity.service";
@@ -27,7 +26,7 @@ export interface EntityRelationshipPickerProps {
 }
 
 export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ relationship }) => {
-    const form = useDraftForm();
+    const { form } = useEntityDraft();
     const { session } = useAuth();
     const { organisationId } = useParams<{ organisationId: string }>();
     const fieldName = relationship.id;
@@ -54,11 +53,13 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ re
 
     // Load entities for all target types
     const entitiesQueries = useQueries({
-        queries: types.map(type => type.key).map((key) => ({
-            queryKey: ["entities", organisationId, typeKey],
-            queryFn: () => EntityService.getEntitiesForType(session, organisationId, typeKey),
-            enabled: !!session && !!organisationId,
-        })),
+        queries: types
+            .map((type) => type.id)
+            .map((typeId) => ({
+                queryKey: ["entities", organisationId, typeId],
+                queryFn: () => EntityService.getEntitiesForType(session, organisationId, typeId),
+                enabled: !!session && !!organisationId,
+            })),
         combine: (results) => {
             return {
                 data: results.flatMap((r) => r.data ?? []),
@@ -107,7 +108,7 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ re
     if (isSingleSelect) {
         return (
             <div className="space-y-2">
-                <Label className={errors ? "text-destructive" : ""}>{relationship.name}</Label>
+                
                 <Select
                     value={value || undefined}
                     onValueChange={handleChange}
@@ -149,8 +150,6 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ re
 
     return (
         <div className="space-y-2">
-            <Label className={errors ? "text-destructive" : ""}>{relationship.name}</Label>
-
             {/* Selected entities */}
             {selectedEntities.length > 0 && (
                 <div className="flex flex-wrap gap-2">

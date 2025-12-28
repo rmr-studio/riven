@@ -1,7 +1,9 @@
 import { DataTable } from "@/components/ui/data-table";
 import { EntityPropertyType } from "@/lib/types/types";
+import { Row } from "@tanstack/react-table";
 import { Edit2, Trash2 } from "lucide-react";
-import { FC } from "react";
+import { FC, useCallback } from "react";
+import { toast } from "sonner";
 import { useConfigForm } from "../../context/configuration-provider";
 import { useEntityTypeTable } from "../../hooks/use-entity-type-table";
 import {
@@ -28,7 +30,24 @@ const EntityTypeDataTable: FC<Props> = ({ type, identifierKey, onEdit, onDelete 
 
     const form = useConfigForm();
 
-    const handleFieldsReorder = (newOrder: EntityTypeAttributeRow[]) => {
+    const handleFieldsReorder = (newOrder: EntityTypeAttributeRow[]): boolean => {
+        // Validate: Identifier must remain in first position
+        const firstRow = newOrder[0];
+
+        // Check if first row is the identifier
+        const isFirstRowIdentifier =
+            firstRow.id === identifierKey && firstRow.type === EntityPropertyType.ATTRIBUTE;
+
+        if (!isFirstRowIdentifier) {
+            // Reject the reorder - identifier was moved from first position
+            toast.error("The identifier column must remain in the first position", {
+                description: "This field serves as the primary identifier and cannot be moved.",
+            });
+
+            return false; // Reject - table will stay at original position
+        }
+
+        // Valid reorder - proceed as normal
         const order: EntityTypeOrderingKey[] = newOrder.map((item) => {
             return {
                 key: item.id,
@@ -39,6 +58,8 @@ const EntityTypeDataTable: FC<Props> = ({ type, identifierKey, onEdit, onDelete 
         form.setValue("order", order, {
             shouldDirty: true,
         });
+
+        return true; // Accept the reorder
     };
 
     const canDelete = (row: EntityTypeAttributeRow): boolean => {
@@ -51,6 +72,17 @@ const EntityTypeDataTable: FC<Props> = ({ type, identifierKey, onEdit, onDelete 
         );
     };
 
+    // Disable drag for identifier column (it must stay first)
+    const disableDragForRow = useCallback(
+        (row: Row<EntityTypeAttributeRow>) => {
+            return (
+                row.original.id === identifierKey &&
+                row.original.type === EntityPropertyType.ATTRIBUTE
+            );
+        },
+        [identifierKey]
+    );
+
     return (
         <DataTable
             columns={columns}
@@ -58,6 +90,7 @@ const EntityTypeDataTable: FC<Props> = ({ type, identifierKey, onEdit, onDelete 
             enableDragDrop
             onReorder={handleFieldsReorder}
             getRowId={(row) => row.id}
+            disableDragForRow={disableDragForRow}
             search={{
                 enabled: true,
                 searchableColumns: ["label"],

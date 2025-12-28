@@ -51,17 +51,16 @@ export class EntityService {
     static async getEntitiesForType(
         session: Session | null,
         organisationId: string,
-        entityTypeKey: string
+        typeId: string
     ): Promise<Entity[]> {
         try {
             validateSession(session);
             validateUuid(organisationId);
+            validateUuid(typeId);
             const url = api();
 
             const response = await fetch(
-                `${url}/v1/entity/organisation/${organisationId}/type/${encodeURIComponent(
-                    entityTypeKey
-                )}`,
+                `${url}/v1/entity/organisation/${organisationId}/type/${typeId}`,
                 {
                     method: "GET",
                     headers: {
@@ -89,7 +88,7 @@ export class EntityService {
     static async getEntitiesForTypes(
         session: Session | null,
         organisationId: string,
-        entityTypeKey: string[]
+        typeIds: string[]
     ): Promise<Record<string, Entity[]>> {
         try {
             validateSession(session);
@@ -97,8 +96,8 @@ export class EntityService {
             const url = api();
 
             const response = await fetch(
-                `${url}/v1/entity/organisation/${organisationId}?keys=${entityTypeKey
-                    .map((key) => encodeURIComponent(key))
+                `${url}/v1/entity/organisation/${organisationId}?ids=${typeIds
+                    .map((id) => encodeURIComponent(id))
                     .join(",")}`,
                 {
                     method: "GET",

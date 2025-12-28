@@ -1,63 +1,47 @@
-import { SchemaType } from "@/lib/types/types";
 import { SchemaUUID } from "@/lib/interfaces/common.interface";
+import { SchemaType } from "@/lib/types/types";
 import { FC } from "react";
 
 // Import existing widgets from blocks module
-import { TextInputWidget } from "@/components/feature-modules/blocks/components/forms/widgets/text-input-widget";
-import { NumberInputWidget } from "@/components/feature-modules/blocks/components/forms/widgets/number-input-widget";
+import { FormWidgetProps } from "@/components/feature-modules/blocks/components/forms";
 import { CheckboxWidget } from "@/components/feature-modules/blocks/components/forms/widgets/checkbox-widget";
+import { CurrencyInputWidget } from "@/components/feature-modules/blocks/components/forms/widgets/currency-input-widget";
 import { DatePickerWidget } from "@/components/feature-modules/blocks/components/forms/widgets/date-picker-widget";
 import { DropdownWidget } from "@/components/feature-modules/blocks/components/forms/widgets/dropdown-widget";
-import { FileUploadWidget } from "@/components/feature-modules/blocks/components/forms/widgets/file-upload-widget";
-import { SliderWidget } from "@/components/feature-modules/blocks/components/forms/widgets/slider-widget";
 import { EmailInputWidget } from "@/components/feature-modules/blocks/components/forms/widgets/email-input-widget";
+import { FileUploadWidget } from "@/components/feature-modules/blocks/components/forms/widgets/file-upload-widget";
+import { NumberInputWidget } from "@/components/feature-modules/blocks/components/forms/widgets/number-input-widget";
 import { PhoneInputWidget } from "@/components/feature-modules/blocks/components/forms/widgets/phone-input-widget";
-import { CurrencyInputWidget } from "@/components/feature-modules/blocks/components/forms/widgets/currency-input-widget";
-import { TextareaWidget } from "@/components/feature-modules/blocks/components/forms/widgets/textarea-widget";
-
-/**
- * Props interface for entity field widgets
- * Extends the base FormWidgetProps with schema-specific data
- */
-export interface EntityFieldWidgetProps {
-    value: any;
-    onChange: (value: any) => void;
-    onBlur: () => void;
-    disabled?: boolean;
-    schema: SchemaUUID;
-    errors?: string[];
-}
+import { SliderWidget } from "@/components/feature-modules/blocks/components/forms/widgets/slider-widget";
+import { TextInputWidget } from "@/components/feature-modules/blocks/components/forms/widgets/text-input-widget";
 
 /**
  * Registry mapping SchemaType to widget components
  * Reuses existing widgets from blocks module where possible
  */
-export const entityFieldWidgetRegistry: Record<
-    SchemaType,
-    FC<EntityFieldWidgetProps>
-> = {
-    [SchemaType.TEXT]: TextInputWidget as any,
-    [SchemaType.NUMBER]: NumberInputWidget as any,
-    [SchemaType.CHECKBOX]: CheckboxWidget as any,
-    [SchemaType.EMAIL]: EmailInputWidget as any,
-    [SchemaType.PHONE]: PhoneInputWidget as any,
-    [SchemaType.DATE]: DatePickerWidget as any,
-    [SchemaType.DATETIME]: DatePickerWidget as any, // with time enabled via schema
-    [SchemaType.CURRENCY]: CurrencyInputWidget as any,
-    [SchemaType.PERCENTAGE]: NumberInputWidget as any, // will show % suffix
-    [SchemaType.RATING]: SliderWidget as any,
-    [SchemaType.SELECT]: DropdownWidget as any,
-    [SchemaType.MULTI_SELECT]: DropdownWidget as any, // TODO: Create MultiSelectWidget
-    [SchemaType.URL]: TextInputWidget as any, // with URL validation
-    [SchemaType.LOCATION]: TextInputWidget as any, // TODO: Create LocationWidget (simple text for now)
-    [SchemaType.FILE_ATTACHMENT]: FileUploadWidget as any,
-    [SchemaType.OBJECT]: TextareaWidget as any, // TODO: Create JsonEditorWidget (textarea for now)
+export const entityFieldWidgetRegistry: Record<SchemaType, FC<FormWidgetProps>> = {
+    [SchemaType.TEXT]: TextInputWidget,
+    [SchemaType.NUMBER]: NumberInputWidget,
+    [SchemaType.CHECKBOX]: CheckboxWidget,
+    [SchemaType.EMAIL]: EmailInputWidget,
+    [SchemaType.PHONE]: PhoneInputWidget,
+    [SchemaType.DATE]: DatePickerWidget,
+    [SchemaType.DATETIME]: DatePickerWidget, // with time enabled via schema
+    [SchemaType.CURRENCY]: CurrencyInputWidget,
+    [SchemaType.PERCENTAGE]: NumberInputWidget, // will show % suffix
+    [SchemaType.RATING]: SliderWidget,
+    [SchemaType.SELECT]: DropdownWidget,
+    [SchemaType.MULTI_SELECT]: DropdownWidget, // TODO: Create MultiSelectWidget
+    [SchemaType.URL]: TextInputWidget, // with URL validation
+    [SchemaType.LOCATION]: TextInputWidget, // TODO: Create LocationWidget (simple text for now)
+    [SchemaType.FILE_ATTACHMENT]: FileUploadWidget,
+    [SchemaType.OBJECT]: TextInputWidget,
 };
 
 /**
  * Get widget component for a given schema
  */
-export function getWidgetForSchema(schema: SchemaUUID): FC<EntityFieldWidgetProps> {
+export function getWidgetForSchema(schema: SchemaUUID): FC<FormWidgetProps> {
     return entityFieldWidgetRegistry[schema.key];
 }
 

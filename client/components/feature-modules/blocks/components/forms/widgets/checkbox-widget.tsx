@@ -17,7 +17,7 @@ export const CheckboxWidget: FC<FormWidgetProps<boolean>> = ({
 }) => {
     const hasErrors = errors && errors.length > 0;
     // Sanitize label for use as HTML id
-    const sanitizedId = label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const sanitizedId = label?.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
     return (
         <div className="space-y-2">

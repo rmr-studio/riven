@@ -1,10 +1,10 @@
 "use client";
 
-import { FC } from "react";
-import { FormWidgetProps } from "../form-widget.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/util/utils";
+import { FC } from "react";
+import { FormWidgetProps } from "../form-widget.types";
 
 export const EmailInputWidget: FC<FormWidgetProps<string>> = ({
     value,
@@ -20,9 +20,11 @@ export const EmailInputWidget: FC<FormWidgetProps<string>> = ({
 
     return (
         <div className="space-y-2">
-            <Label htmlFor={label} className={cn(hasErrors && "text-destructive")}>
-                {label}
-            </Label>
+            {label && (
+                <Label htmlFor={label} className={cn(hasErrors && "text-destructive")}>
+                    {label}
+                </Label>
+            )}
             {description && <p className="text-sm text-muted-foreground">{description}</p>}
             <Input
                 id={label}

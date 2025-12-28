@@ -10,6 +10,7 @@ import { FC, useEffect, useMemo, useState } from "react";
 import { useEntityTypeConfigurationStore } from "../../context/configuration-provider";
 import { type EntityType } from "../../interface/entity.interface";
 
+import { DataType } from "@/lib/types/types";
 import { ConfigurationForm } from "../forms/type/configuration-form";
 import { EntityTypeConfigurationHeader } from "../ui/entity-type-header";
 import { EntityTypeSaveButton } from "../ui/entity-type-save-button";
@@ -74,6 +75,21 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
         };
     }, [form.formState.errors]);
 
+    const identifierKeys = useMemo(() => {
+        if (!entityType.schema.properties) return [];
+        return Object.entries(entityType.schema.properties)
+            .filter(
+                ([, attr]) =>
+                    attr.unique &&
+                    attr.required &&
+                    (attr.type === DataType.STRING || attr.type === DataType.NUMBER)
+            )
+            .map(([id, attr]) => ({
+                id,
+                schema: attr,
+            }));
+    }, [entityType.schema.properties]);
+
     return (
         <>
             <Form {...form}>
@@ -117,16 +133,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
 
                         {/* Configuration Tab */}
                         <TabsContent value="configuration" className="space-y-6">
-                            <ConfigurationForm
-                                availableIdentifiers={Object.entries(
-                                    entityType.schema.properties ?? {}
-                                )
-                                    .filter(([, attr]) => attr.unique && attr.required)
-                                    .map(([id, attr]) => ({
-                                        id,
-                                        schema: attr,
-                                    }))}
-                            />
+                            <ConfigurationForm availableIdentifiers={identifierKeys} />
                         </TabsContent>
 
                         {/* Attributes Tab */}
