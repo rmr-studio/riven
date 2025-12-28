@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ChildNodeProps } from "@/lib/interfaces/interface";
-import { IconColour, IconType } from "@/lib/types/types";
 import { toKeyCase } from "@/lib/util/utils";
 import { PopoverClose } from "@radix-ui/react-popover";
 import { Blocks, Info, Plus, Workflow } from "lucide-react";
@@ -45,9 +44,6 @@ export const NewEntityTypeForm: FC<Props> = ({ entityTypes = [], organisationId,
     // Watch the pluralName field for dynamic title and key generation
     const pluralName = form.watch("pluralName");
 
-    const iconType = form.watch("icon");
-    const iconColour = form.watch("iconColour");
-
     // Auto-generate key from pluralName
     useEffect(() => {
         if (!keyManuallyEdited && pluralName) {
@@ -60,11 +56,6 @@ export const NewEntityTypeForm: FC<Props> = ({ entityTypes = [], organisationId,
         await handleSubmit(values);
         form.reset();
         setKeyManuallyEdited(false);
-    };
-
-    const onIconSelection = (type: IconType, colour: IconColour) => {
-        form.setValue("icon", type);
-        form.setValue("iconColour", colour);
     };
 
     return (
@@ -87,10 +78,17 @@ export const NewEntityTypeForm: FC<Props> = ({ entityTypes = [], organisationId,
                                         </FormDescription>
                                         <div className="flex items-center gap-2">
                                             <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 flex-shrink-0">
-                                                <IconSelector
-                                                    onSelect={onIconSelection}
-                                                    icon={iconType}
-                                                    colour={iconColour}
+                                                <FormField
+                                                    control={form.control}
+                                                    name="icon"
+                                                    render={({ field }) => {
+                                                        return (
+                                                            <IconSelector
+                                                                onSelect={field.onChange}
+                                                                icon={field.value}
+                                                            />
+                                                        );
+                                                    }}
                                                 />
                                             </div>
                                             <FormControl>

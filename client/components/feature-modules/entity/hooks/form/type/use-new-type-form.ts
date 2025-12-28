@@ -37,8 +37,10 @@ export function useNewEntityTypeForm(organisationId: string): UseEntityTypeFormR
             pluralName: "",
             description: "",
             type: EntityCategory.STANDARD,
-            icon: IconType.DATABASE,
-            iconColour: IconColour.NEUTRAL,
+            icon: {
+                icon: IconType.DATABASE,
+                colour: IconColour.NEUTRAL,
+            },
         },
         resolver: zodResolver(baseEntityTypeFormSchema),
     });
@@ -53,10 +55,7 @@ export function useNewEntityTypeForm(organisationId: string): UseEntityTypeFormR
             },
             description: values.description,
             type: values.type,
-            icon: {
-                icon: values.icon,
-                colour: values.iconColour,
-            },
+            icon: values.icon,
         };
 
         await publishType(request);

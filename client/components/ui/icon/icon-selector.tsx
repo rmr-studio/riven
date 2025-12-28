@@ -18,14 +18,14 @@ import { IconColour, IconType } from "@/lib/types/types";
 import { cn } from "@/lib/util/utils";
 import { FileQuestionMark } from "lucide-react";
 
+import { Icon } from "@/lib/interfaces/common.interface";
 import { IconCell } from "./icon-cell";
 import { getAllIconTypes, ICON_COLOUR_MAP, ICON_REGISTRY, iconTypeToLabel } from "./icon-mapper";
 
 interface Props extends ClassNameProps {
-    onSelect: (iconType: IconType, iconColour: IconColour) => void;
-    icon: IconType;
+    onSelect: (icon: Icon) => void;
+    icon: Icon;
     displayIconClassName?: string;
-    colour: IconColour;
 }
 
 const ICON_BUTTON_COLOUR_MAP: Record<IconColour, string> = {
@@ -43,8 +43,8 @@ const ICON_BUTTON_COLOUR_MAP: Record<IconColour, string> = {
 
 export const IconSelector: FC<Props> = ({
     onSelect,
-    icon,
-    colour,
+
+    icon: { icon, colour },
     className,
     displayIconClassName,
 }) => {
@@ -63,7 +63,10 @@ export const IconSelector: FC<Props> = ({
 
     const handleSelect = useCallback(
         (iconType: IconType) => {
-            onSelect(iconType, currentColour);
+            onSelect({
+                icon: iconType,
+                colour: currentColour,
+            });
             setOpen(false);
             setSearch("");
         },

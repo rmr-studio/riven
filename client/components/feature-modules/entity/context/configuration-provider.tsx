@@ -59,8 +59,8 @@ export const EntityTypeConfigurationProvider = ({
             identifierKey: entityType.identifierKey,
             description: entityType.description ?? "",
             type: entityType.type,
-            icon: entityType.icon.icon,
-            iconColour: entityType.icon.colour,
+
+            icon: entityType.icon,
             order: entityType.order,
         },
     });
@@ -126,26 +126,28 @@ export const EntityTypeConfigurationProvider = ({
 
         const debouncedSaveRef = { current: null as NodeJS.Timeout | null };
 
-        const dirty = Object.keys(dirtyFields).length > 0;
-        store.setDirty(dirty);
+        const subscription = form.watch((values) => {
+            const dirty = Object.keys(dirtyFields).length > 0;
+            store.setDirty(dirty);
 
-        if (dirty) {
-            if (debouncedSaveRef.current) {
-                clearTimeout(debouncedSaveRef.current);
+            if (dirty) {
+                if (debouncedSaveRef.current) {
+                    clearTimeout(debouncedSaveRef.current);
+                }
+
+                debouncedSaveRef.current = setTimeout(() => {
+                    store.saveDraft(values);
+                }, 1000);
             }
-
-            debouncedSaveRef.current = setTimeout(() => {
-                const currentValues = form.getValues();
-                store.saveDraft(currentValues);
-            }, 1000);
-        }
+        });
 
         return () => {
+            subscription.unsubscribe();
             if (debouncedSaveRef.current) {
                 clearTimeout(debouncedSaveRef.current);
             }
         };
-    }, [dirtyFields]);
+    }, [form]);
 
     return (
         <EntityTypeConfigContext.Provider value={storeRef.current}>
