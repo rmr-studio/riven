@@ -70,6 +70,7 @@ export interface SearchConfig<T> {
     searchableColumns: (keyof T extends string ? keyof T : never)[];
     placeholder?: string;
     debounceMs?: number;
+    disabled?: boolean;
     onSearchChange?: (value: string) => void;
 }
 
@@ -97,6 +98,7 @@ export interface ColumnFilter<T> {
 export interface FilterConfig<T> {
     enabled: boolean;
     filters: ColumnFilter<T>[];
+    disabled?: boolean;
     onFiltersChange?: (filters: Record<string, any>) => void;
 }
 
@@ -840,9 +842,8 @@ export function DataTable<TData, TValue>({
     return (
         <div className="w-full space-y-4">
             {/* Toolbar - Search and Filters on same line */}
-            {(search?.enabled || (filter?.enabled && filter.filters.length > 0)) &&
-                !isDraftMode && (
-                    <div className="flex items-center gap-2 flex-wrap">
+            {(search?.enabled || (filter?.enabled && filter.filters.length > 0)) && (
+                <div className="flex items-center gap-2 flex-wrap">
                         {/* Search Input */}
                         {search?.enabled && (
                             <div className="flex items-center gap-2 flex-1 min-w-[200px]">
@@ -853,8 +854,9 @@ export function DataTable<TData, TValue>({
                                         value={searchValue}
                                         onChange={(e) => setSearchValue(e.target.value)}
                                         className="pl-8 pr-8 h-9"
+                                        disabled={search.disabled}
                                     />
-                                    {searchValue && (
+                                    {searchValue && !search.disabled && (
                                         <button
                                             onClick={handleClearSearch}
                                             className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
@@ -876,7 +878,7 @@ export function DataTable<TData, TValue>({
                         {filter?.enabled && filter.filters.length > 0 && (
                             <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
                                 <PopoverTrigger asChild>
-                                    <Button variant="outline" size="sm" className="h-9">
+                                    <Button variant="outline" size="sm" className="h-9" disabled={filter.disabled}>
                                         <Filter className="h-4 w-4 mr-2" />
                                         Filters
                                         {activeFilterCount > 0 && (

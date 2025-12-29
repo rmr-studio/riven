@@ -115,4 +115,10 @@ export interface RelationshipPickerProps {
     disabled?: boolean;
 }
 
-export type 
+export type EntityAttributePrimitivePayload =
+    components["schemas"]["EntityAttributePrimitivePayload"];
+export type EntityAttributeRelationPayloadReference =
+    components["schemas"]["EntityAttributeRelationPayloadReference"];
+export type SaveEntityRequest = components["schemas"]["SaveEntityRequest"];
+export type SaveEntityResponse = components["schemas"]["SaveEntityResponse"];
+export type EntityAttributeRequest = components["schemas"]["EntityAttributeRequest"];

@@ -168,10 +168,7 @@ export const createEntityTypeConfigStore = (
                         singular: values.singularName as string,
                         plural: values.pluralName as string,
                     },
-                    icon: {
-                        icon: values.icon,
-                        colour: values.iconColour,
-                    },
+                    icon: values.icon,
                     order: values.order,
                     identifierKey: values.identifierKey as string,
                     description: values.description as string | undefined,

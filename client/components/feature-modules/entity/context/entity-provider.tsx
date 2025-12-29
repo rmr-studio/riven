@@ -6,7 +6,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode }
 import { FormProvider, useForm, useFormState } from "react-hook-form";
 import { toast } from "sonner";
 import { useStore } from "zustand";
-import { useCreateEntityMutation } from "../hooks/mutation/instance/use-save-entity-mutation";
+import { useSaveEntityMutation } from "../hooks/mutation/instance/use-save-entity-mutation";
 import { Entity, EntityType } from "../interface/entity.interface";
 import {
     createEntityDraftStore,
@@ -46,7 +46,7 @@ export const EntityDraftProvider = ({
     });
 
     // Create mutation for entity creation
-    const { mutateAsync: createEntity } = useCreateEntityMutation(organisationId, entityType.key, {
+    const { mutateAsync: saveEntity } = useSaveEntityMutation(organisationId, entityType.key, {
         onSuccess: (entity) => {
             onEntityCreated?.(entity);
         },
@@ -62,7 +62,7 @@ export const EntityDraftProvider = ({
 
     // Create store only once per entity type
     if (!storeRef.current) {
-        storeRef.current = createEntityDraftStore(organisationId, entityType, form, createEntity);
+        storeRef.current = createEntityDraftStore(organisationId, entityType, form, saveEntity);
     }
 
     // Load draft and prompt restoration on mount

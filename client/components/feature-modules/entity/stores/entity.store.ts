@@ -2,7 +2,13 @@ import { buildDefaultValuesFromEntityType } from "@/lib/util/form/entity-instanc
 import { UseFormReturn } from "react-hook-form";
 import { create, StoreApi } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
-import { Entity, EntityType } from "../interface/entity.interface";
+import {
+    Entity,
+    EntityAttributeRequest,
+    EntityType,
+    SaveEntityRequest,
+    SaveEntityResponse,
+} from "../interface/entity.interface";
 
 // State interface
 interface EntityDraftState {
@@ -54,7 +60,7 @@ export const createEntityDraftStore = (
     organisationId: string,
     entityType: EntityType,
     form: UseFormReturn<Record<string, any>>,
-    createMutation: (payload: Record<string, any>) => Promise<Entity>
+    saveMutation: (request: SaveEntityRequest) => Promise<SaveEntityResponse>
 ): StoreApi<EntityDraftStore> => {
     const storageKey = `entity-instance-draft-${organisationId}-${entityType.key}`;
 
@@ -156,8 +162,16 @@ export const createEntityDraftStore = (
                     throw new Error("Validation failed. Please correct the errors and try again.");
                 }
 
-                // Create the entity
-                const entity = await createMutation(values);
+                const request: SaveEntityRequest = {
+                    payload: Object.entries(values).reduce((acc, [key, value]) => {
+                        const payload: EntityAttributeRequest = 
+                        
+                        acc[key] = {
+                            payload:
+                        }
+                        return acc;
+                    }, {} as Record<string, EntityAttributeRequest>),
+                };
 
                 // Exit draft mode and clear draft
                 get().exitDraftMode();

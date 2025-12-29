@@ -2,30 +2,31 @@ import { fromError, isResponseError } from "@/lib/util/error/error.util";
 import { handleError, validateSession, validateUuid } from "@/lib/util/service/service.util";
 import { api } from "@/lib/util/utils";
 import { Session } from "@supabase/supabase-js";
-import { Entity } from "../interface/entity.interface";
+import { Entity, SaveEntityRequest } from "../interface/entity.interface";
 
 export class EntityService {
     /**
      * Create a new entity instance for a given entity type
      */
-    static async createEntity(
+    static async saveEntity(
         session: Session | null,
         organisationId: string,
-        entityTypeKey: string,
-        payload: Record<string, any>
+        entityTypeId: string,
+        request: SaveEntityRequest
     ): Promise<Entity> {
         try {
             validateSession(session);
             validateUuid(organisationId);
+            validateUuid(entityTypeId);
             const url = api();
 
             const response = await fetch(
                 `${url}/v1/entity/organisation/${organisationId}/type/${encodeURIComponent(
-                    entityTypeKey
+                    entityTypeId
                 )}`,
                 {
                     method: "POST",
-                    body: JSON.stringify(payload),
+                    body: JSON.stringify(request),
                     headers: {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${session.access_token}`,

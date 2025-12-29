@@ -96,7 +96,7 @@ export const EntityDataTable: FC<Props> = ({
             <DataTable
                 columns={columns}
                 data={rowData}
-                enableSorting={true}
+                enableSorting={!isDraftMode}
                 // enableDragDrop={enableDragDrop}
                 // onReorder={handleReorder}
                 getRowId={(row) => row._entityId}
@@ -104,10 +104,12 @@ export const EntityDataTable: FC<Props> = ({
                     enabled: enableSearch && searchableColumns.length > 0,
                     searchableColumns,
                     placeholder: "Search entities...",
+                    disabled: isDraftMode,
                 }}
                 filter={{
                     enabled: filters.length > 0,
                     filters,
+                    disabled: isDraftMode,
                 }}
                 emptyMessage={emptyMessage}
                 className={className}
