@@ -7,6 +7,7 @@ import riven.core.enums.common.ValidationScope
 import riven.core.enums.entity.validation.EntityTypeChangeType
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
+import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.entity.validation.EntityTypeSchemaChange
 import riven.core.models.entity.validation.EntityTypeValidationSummary
 import riven.core.models.entity.validation.EntityValidationError
@@ -32,7 +33,10 @@ class EntityValidationService(
     ): List<String> {
         return schemaService.validate(
             schema = entityType.schema,
-            payload = entity.payload.map { it.key.toString() to it.value }.toMap(),
+            // Only validate ATTRIBUTE properties in this context. Relationship validation is separate.
+            payload = entity.payload.mapNotNull {
+                it.key.toString() to ((it.value as? EntityAttributePrimitivePayload)?.value ?: return@mapNotNull null)
+            }.toMap(),
             scope = ValidationScope.STRICT
         )
     }

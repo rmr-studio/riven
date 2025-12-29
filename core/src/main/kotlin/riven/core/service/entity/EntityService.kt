@@ -13,6 +13,7 @@ import riven.core.models.common.Icon
 import riven.core.models.entity.Entity
 import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.request.entity.SaveEntityRequest
+import riven.core.models.response.entity.SaveEntityResponse
 import riven.core.repository.entity.EntityRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
@@ -75,58 +76,69 @@ class EntityService(
         entityTypeId: UUID,
         request: SaveEntityRequest,
         impactConfirmed: Boolean = false
-    ): Entity {
-        val (id: UUID?, payload: Map<UUID, EntityAttributeRequest>, icon: Icon?) = request
-        val userId = authTokenService.getUserId()
-        val type: EntityTypeEntity = entityTypeService.getById(entityTypeId).also {
-            requireNotNull(it.id)
-        }
-
-        val prev: EntityEntity? = id?.let { findOrThrow { entityRepository.findById(it) } }
-        prev?.run {
-            if (!impactConfirmed) {
-                // Determine if changes to Entity payload can cause breaking changes
-                TODO()
+    ): SaveEntityResponse {
+        try {
+            val (id: UUID?, payload: Map<UUID, EntityAttributeRequest>, icon: Icon?) = request
+            val userId = authTokenService.getUserId()
+            val type: EntityTypeEntity = entityTypeService.getById(entityTypeId).also {
+                requireNotNull(it.id)
             }
-        }
 
-        val entity = EntityEntity(
-            organisationId = organisationId,
-            typeId = entityTypeId,
-            iconType = icon?.icon ?: type.iconType,
-            iconColour = icon?.colour ?: type.iconColour,
-            identifierKey = type.identifierKey,
-            payload = payload.map { it.key to it.value.payload }.toMap(),
-        )
-
-        icon?.let {
-            entity.apply {
-                this.iconType = it.icon
-                this.iconColour = it.colour
+            val prev: EntityEntity? = id?.let { findOrThrow { entityRepository.findById(it) } }
+            prev?.run {
+                if (!impactConfirmed) {
+                    // Determine if changes to Entity payload can cause breaking changes
+                    TODO()
+                }
             }
-        }
 
-        // Validate payload against schema
-        entityValidationService.validateEntity(entity, type).run {
-            if (isNotEmpty()) {
-                throw SchemaValidationException(this)
-            }
-        }
-
-        return entityRepository.save(entity).run {
-            activityService.logActivity(
-                activity = Activity.ENTITY,
-                operation = OperationType.CREATE,
-                userId = userId,
+            val entity = EntityEntity(
                 organisationId = organisationId,
-                entityId = this.id,
-                entityType = ApplicationEntityType.ENTITY,
-                details = mapOf(
-                    "type" to type.key,
-                    "category" to type.displayNameSingular
-                )
+                typeId = entityTypeId,
+                iconType = icon?.icon ?: type.iconType,
+                iconColour = icon?.colour ?: type.iconColour,
+                identifierKey = type.identifierKey,
+                payload = payload.map { it.key to it.value.payload }.toMap(),
             )
-            this.toModel()
+
+            icon?.let {
+                entity.apply {
+                    this.iconType = it.icon
+                    this.iconColour = it.colour
+                }
+            }
+
+            // Validate payload against schema
+            entityValidationService.validateEntity(entity, type).run {
+                if (isNotEmpty()) {
+                    throw SchemaValidationException(this)
+                }
+            }
+
+            return entityRepository.save(entity).run {
+                activityService.logActivity(
+                    activity = Activity.ENTITY,
+                    operation = OperationType.CREATE,
+                    userId = userId,
+                    organisationId = organisationId,
+                    entityId = this.id,
+                    entityType = ApplicationEntityType.ENTITY,
+                    details = mapOf(
+                        "type" to type.key,
+                        "category" to type.displayNameSingular
+                    )
+                )
+
+                SaveEntityResponse(
+                    entity = entity.toModel()
+                )
+            }
+        } catch (e: SchemaValidationException) {
+            return SaveEntityResponse(
+                errors = e.reasons
+            )
+        } catch (e: Exception) {
+            throw e
         }
     }
 

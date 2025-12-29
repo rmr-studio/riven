@@ -127,12 +127,12 @@ class SchemaService(
                 }
                 schema.properties?.forEach { (key, childSchema) ->
                     if (hasReachedLimit()) return acc
-                    if (!mapPayload.containsKey(key)) {
-                        if (childSchema.required) acc += "Missing required value at $path/$key"
+                    if (!mapPayload.containsKey(key.toString())) {
+                        if (childSchema.required) acc += "Missing required value at $path/${key.toString()}"
                         return@forEach
                     }
-                    val value = mapPayload[key]
-                    validateRecursive(childSchema, value, "$path/$key", scope, acc)
+                    val value = mapPayload[key.toString()]
+                    validateRecursive(childSchema, value, "$path/$key.toString()", scope, acc)
                 }
             }
 

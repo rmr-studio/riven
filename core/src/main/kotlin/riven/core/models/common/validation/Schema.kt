@@ -128,7 +128,11 @@ data class Schema<T>(
                     schema.options?.regex?.let { base["pattern"] = it }
                     schema.options?.minLength?.let { base["minLength"] = it }
                     schema.options?.maxLength?.let { base["maxLength"] = it }
-                    schema.options?.enum?.let { base["enum"] = it }
+                    schema.options?.enum?.let {
+                        if (it.isNotEmpty()) {
+                            base["enum"] = it
+                        }
+                    }
 
                     base
                 }
@@ -154,14 +158,22 @@ data class Schema<T>(
                             put("type", "number")
                             schema.options?.minimum?.let { put("minimum", it) }
                             schema.options?.maximum?.let { put("maximum", it) }
-                            schema.options?.enum?.let { put("enum", it) }
+                            schema.options?.enum?.let {
+                                if (it.isNotEmpty()) {
+                                    put("enum", it)
+                                }
+                            }
                         }
                     }
                 }
 
                 DataType.BOOLEAN -> buildMap {
                     put("type", "boolean")
-                    schema.options?.enum?.let { put("enum", it) }
+                    schema.options?.enum?.let {
+                        if (it.isNotEmpty()) {
+                            put("enum", it)
+                        }
+                    }
                 }
 
                 DataType.NULL -> buildMap {

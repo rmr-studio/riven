@@ -10,6 +10,9 @@ import java.util.*
  */
 interface EntityRepository : JpaRepository<EntityEntity, UUID> {
 
+    @Query("SELECT e FROM EntityEntity e WHERE e.id = :id AND e.archived = false")
+    override fun findById(id: UUID): Optional<EntityEntity>
+
     /**
      * Find all entities for an organization.
      */

@@ -1,6 +1,8 @@
 package riven.core.controller.entity
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -8,6 +10,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import riven.core.models.entity.Entity
 import riven.core.models.request.entity.SaveEntityRequest
+import riven.core.models.response.entity.SaveEntityResponse
 import riven.core.service.entity.EntityService
 import java.util.*
 
@@ -68,18 +71,39 @@ class EntityController(
         description = "Saves either a new entity, or an updated instance within the specified organisation."
     )
     @ApiResponses(
-        ApiResponse(responseCode = "200", description = "Entity instance saved successfully"),
-        ApiResponse(responseCode = "400", description = "Invalid entity data provided"),
+        ApiResponse(
+            responseCode = "200", description = "Entity instance saved successfully", content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = SaveEntityResponse::class)
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "400", description = "Invalid entity data provided", content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = SaveEntityResponse::class)
+                )
+            ]
+        ),
         ApiResponse(responseCode = "401", description = "Unauthorized access"),
         ApiResponse(responseCode = "404", description = "Organisation or entity type not found"),
-        ApiResponse(responseCode = "409", description = "Conflict of data or unconfirmed impacts")
+        ApiResponse(
+            responseCode = "409", description = "Conflict of data or unconfirmed impacts", content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = SaveEntityResponse::class)
+                )
+            ]
+        )
     )
     fun saveEntity(
         @PathVariable organisationId: UUID,
         @PathVariable entityTypeId: UUID,
         @RequestBody request: SaveEntityRequest,
         @RequestParam impactConfirmed: Boolean = false
-    ) {
+    ): ResponseEntity<SaveEntityResponse> {
         val response = entityService.saveEntity(organisationId, entityTypeId, request, impactConfirmed)
         return ResponseEntity.ok(response)
     }

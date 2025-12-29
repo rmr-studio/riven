@@ -1,5 +1,6 @@
 package riven.core.models.entity.payload
 
+import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping
 import io.swagger.v3.oas.annotations.media.Schema
@@ -17,6 +18,11 @@ sealed interface EntityAttributePayload {
     val type: EntityPropertyType
 }
 
+@Schema(
+    name = "EntityAttributePrimitivePayload",
+    description = "An attribute payload representing a primitive value with a defined schema type"
+)
+@JsonDeserialize(using = JsonDeserializer.None::class)
 data class EntityAttributePrimitivePayload(
     val value: JsonValue,
     val schemaType: SchemaType
@@ -24,6 +30,11 @@ data class EntityAttributePrimitivePayload(
     override val type: EntityPropertyType = EntityPropertyType.ATTRIBUTE
 }
 
+@Schema(
+    name = "EntityAttributeRelationPayloadReference",
+    description = "An attribute payload representing relationships to other entities by their IDs"
+)
+@JsonDeserialize(using = JsonDeserializer.None::class)
 data class EntityAttributeRelationPayloadReference(
     val relations: List<UUID>
 ) : EntityAttributePayload {
