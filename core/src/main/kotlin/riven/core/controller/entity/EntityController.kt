@@ -62,7 +62,7 @@ class EntityController(
         return ResponseEntity.ok(response)
     }
 
-    @PostMapping("/organisation/{organisationId}")
+    @PostMapping("/organisation/{organisationId}/type/{entityTypeId}")
     @Operation(
         summary = "Saves an entity instance",
         description = "Saves either a new entity, or an updated instance within the specified organisation."
@@ -76,10 +76,12 @@ class EntityController(
     )
     fun saveEntity(
         @PathVariable organisationId: UUID,
+        @PathVariable entityTypeId: UUID,
         @RequestBody request: SaveEntityRequest,
         @RequestParam impactConfirmed: Boolean = false
     ) {
-        TODO()
+        val response = entityService.saveEntity(organisationId, entityTypeId, request, impactConfirmed)
+        return ResponseEntity.ok(response)
     }
 
 }

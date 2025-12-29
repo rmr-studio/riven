@@ -1,15 +1,17 @@
 package riven.core.service.entity
 
-import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.entity.EntityEntity
+import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.activity.Activity
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
 import riven.core.exceptions.SchemaValidationException
+import riven.core.models.common.Icon
 import riven.core.models.entity.Entity
+import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.request.entity.SaveEntityRequest
 import riven.core.repository.entity.EntityRepository
 import riven.core.service.activity.ActivityService
@@ -70,18 +72,31 @@ class EntityService(
     @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
     fun saveEntity(
         organisationId: UUID,
-        request: SaveEntityRequest
+        entityTypeId: UUID,
+        request: SaveEntityRequest,
+        impactConfirmed: Boolean = false
     ): Entity {
+        val (id: UUID?, payload: Map<UUID, EntityAttributeRequest>, icon: Icon?) = request
         val userId = authTokenService.getUserId()
-        val (type, payload, icon) = request
-        val entityType = entityTypeService.getByKey(type, organisationId)
-        val typeId = requireNotNull(entityType.id) { "Entity type ID cannot be null" }
+        val type: EntityTypeEntity = entityTypeService.getById(entityTypeId).also {
+            requireNotNull(it.id)
+        }
+
+        val prev: EntityEntity? = id?.let { findOrThrow { entityRepository.findById(it) } }
+        prev?.run {
+            if (!impactConfirmed) {
+                // Determine if changes to Entity payload can cause breaking changes
+                TODO()
+            }
+        }
 
         val entity = EntityEntity(
             organisationId = organisationId,
-            typeId = typeId,
-            identifierKey = entityType.identifierKey,
-            payload = payload,
+            typeId = entityTypeId,
+            iconType = icon?.icon ?: type.iconType,
+            iconColour = icon?.colour ?: type.iconColour,
+            identifierKey = type.identifierKey,
+            payload = payload.map { it.key to it.value.payload }.toMap(),
         )
 
         icon?.let {
@@ -92,7 +107,7 @@ class EntityService(
         }
 
         // Validate payload against schema
-        entityValidationService.validateEntity(entity, entityType).run {
+        entityValidationService.validateEntity(entity, type).run {
             if (isNotEmpty()) {
                 throw SchemaValidationException(this)
             }
@@ -107,8 +122,8 @@ class EntityService(
                 entityId = this.id,
                 entityType = ApplicationEntityType.ENTITY,
                 details = mapOf(
-                    "type" to entityType.key,
-                    "category" to entityType.type.name
+                    "type" to type.key,
+                    "category" to type.displayNameSingular
                 )
             )
             this.toModel()
