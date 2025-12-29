@@ -40,9 +40,11 @@ export const CurrencyInputWidget: FC<FormWidgetProps<number>> = ({
 
     return (
         <div className="space-y-2">
-            <Label htmlFor={label} className={cn(hasErrors && "text-destructive")}>
-                {label}
-            </Label>
+            {label && (
+                <Label htmlFor={label} className={cn(hasErrors && "text-destructive")}>
+                    {label}
+                </Label>
+            )}
             {description && <p className="text-sm text-muted-foreground">{description}</p>}
             <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">

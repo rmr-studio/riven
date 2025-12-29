@@ -136,7 +136,8 @@ export const EntityTypeConfigurationProvider = ({
                 }
 
                 debouncedSaveRef.current = setTimeout(() => {
-                    store.saveDraft(values);
+                    const curr = form.getValues();
+                    store.saveDraft(curr);
                 }, 1000);
             }
         });

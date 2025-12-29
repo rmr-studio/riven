@@ -115,6 +115,13 @@ export interface RowActionsConfig<TData> {
     menuLabel?: string;
 }
 
+export interface ColumnResizingConfig {
+    enabled: boolean;
+    columnResizeMode?: "onChange" | "onEnd";
+    defaultColumnSize?: number;
+    onColumnWidthsChange?: (columnSizing: Record<string, number>) => void;
+}
+
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
@@ -129,6 +136,7 @@ interface DataTableProps<TData, TValue> {
     search?: SearchConfig<TData>;
     filter?: FilterConfig<TData>;
     rowActions?: RowActionsConfig<TData>;
+    columnResizing?: ColumnResizingConfig;
     customRowRenderer?: (row: Row<TData>) => ReactNode | null;
     isDraftMode?: boolean;
     disableDragForRow?: (row: Row<TData>) => boolean;
@@ -140,6 +148,7 @@ interface DraggableRowProps<TData> {
     onRowClick?: (row: Row<TData>) => void;
     isMounted: boolean;
     rowActions?: RowActionsConfig<TData>;
+    columnResizing?: ColumnResizingConfig;
     disabled?: boolean;
     disableDragForRow?: (row: Row<TData>) => boolean;
 }
@@ -150,6 +159,7 @@ function DraggableRow<TData>({
     onRowClick,
     isMounted,
     rowActions,
+    columnResizing,
     disabled,
     disableDragForRow,
 }: DraggableRowProps<TData>) {
@@ -198,8 +208,16 @@ function DraggableRow<TData>({
                 <TableCell
                     key={cell.id}
                     className="border-l border-l-accent/40 first:border-l-transparent"
+                    style={{
+                        width: columnResizing?.enabled ? `${cell.column.getSize()}px` : undefined,
+                        maxWidth: columnResizing?.enabled ? `${cell.column.getSize()}px` : undefined,
+                    }}
                 >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    <div className={cn(columnResizing?.enabled && "overflow-x-auto")}>
+                        <div className="overflow-hidden text-ellipsis">
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </div>
+                    </div>
                 </TableCell>
             ))}
             {rowActions?.enabled && (
@@ -264,6 +282,7 @@ export function DataTable<TData, TValue>({
     search,
     filter,
     rowActions,
+    columnResizing,
     customRowRenderer,
     isDraftMode = false,
     disableDragForRow,
@@ -277,6 +296,7 @@ export function DataTable<TData, TValue>({
     const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
     const [enabledFilters, setEnabledFilters] = useState<Set<string>>(new Set());
     const [isMounted, setIsMounted] = useState(false);
+    const [columnSizing, setColumnSizing] = useState<Record<string, number>>({});
 
     // Prevent hydration errors by only enabling DnD on client
     useEffect(() => {
@@ -330,6 +350,15 @@ export function DataTable<TData, TValue>({
         );
         filter.onFiltersChange?.(enabledActiveFilters);
     }, [activeFilters, enabledFilters, filter]);
+
+    // Trigger callback when column sizing changes
+    useEffect(() => {
+        if (!columnResizing?.enabled) return;
+
+        if (Object.keys(columnSizing).length > 0) {
+            columnResizing.onColumnWidthsChange?.(columnSizing);
+        }
+    }, [columnSizing, columnResizing]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -386,11 +415,21 @@ export function DataTable<TData, TValue>({
                 },
             },
         }),
+        ...(columnResizing?.enabled && {
+            columnResizeMode: columnResizing.columnResizeMode ?? "onEnd",
+            onColumnSizingChange: setColumnSizing,
+            defaultColumn: {
+                size: columnResizing.defaultColumnSize ?? 150,
+                minSize: 50,
+                maxSize: 500,
+            },
+        }),
         getRowId: getRowId,
         state: {
             ...(enableSorting && { sorting }),
             ...((enableFiltering || search?.enabled || filter?.enabled) && { columnFilters }),
             ...(search?.enabled && { globalFilter }),
+            ...(columnResizing?.enabled && { columnSizing }),
         },
     });
 
@@ -686,7 +725,7 @@ export function DataTable<TData, TValue>({
                 isDragDropEnabled ? "overflow-visible" : "overflow-x-auto "
             )}
         >
-            <Table>
+            <Table className={cn(columnResizing?.enabled && "table-fixed w-full")}>
                 <TableHeader className="bg-background">
                     {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id}>
@@ -696,13 +735,40 @@ export function DataTable<TData, TValue>({
                                 </TableHead>
                             )}
                             {headerGroup.headers.map((header) => (
-                                <TableHead key={header.id} className="py-2 px-3">
-                                    {header.isPlaceholder
-                                        ? null
-                                        : flexRender(
-                                              header.column.columnDef.header,
-                                              header.getContext()
-                                          )}
+                                <TableHead
+                                    key={header.id}
+                                    className="py-2 px-3 relative"
+                                    style={{
+                                        width: columnResizing?.enabled
+                                            ? `${header.getSize()}px`
+                                            : undefined,
+                                    }}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        {header.isPlaceholder
+                                            ? null
+                                            : flexRender(
+                                                  header.column.columnDef.header,
+                                                  header.getContext()
+                                              )}
+                                    </div>
+
+                                    {columnResizing?.enabled &&
+                                        header.column.getCanResize() &&
+                                        !isDraftMode && (
+                                            <div
+                                                onMouseDown={header.getResizeHandler()}
+                                                onTouchStart={header.getResizeHandler()}
+                                                className={cn(
+                                                    "absolute top-0 right-0 h-full w-1 cursor-col-resize select-none",
+                                                    "bg-transparent hover:bg-blue-500 hover:w-[2px]",
+                                                    "active:bg-blue-600 transition-all duration-150",
+                                                    header.column.getIsResizing() &&
+                                                        "bg-blue-600 w-[2px]"
+                                                )}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        )}
                                 </TableHead>
                             ))}
                             {rowActions?.enabled && (
@@ -731,6 +797,7 @@ export function DataTable<TData, TValue>({
                                     onRowClick={onRowClick}
                                     isMounted={isMounted}
                                     rowActions={rowActions}
+                                    columnResizing={columnResizing}
                                     disabled={isDraftMode}
                                     disableDragForRow={disableDragForRow}
                                 />

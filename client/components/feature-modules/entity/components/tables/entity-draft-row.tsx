@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { EntityPropertyType } from "@/lib/types/types";
 import { Check, X } from "lucide-react";
-import { FC, useMemo, useState } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useEntityDraft } from "../../context/entity-provider";
 import { EntityType } from "../../interface/entity.interface";
@@ -44,11 +44,7 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType }) => {
             Object.entries(entityType.schema.properties || {}).map(([attributeId, schema]) => [
                 attributeId,
                 <TableCell key={attributeId} className="border-dashed p-2">
-                    <EntityFieldCell
-                        attributeId={attributeId}
-                        schema={schema}
-                        entityTypeKey={entityType.key}
-                    />
+                    <EntityFieldCell attributeId={attributeId} schema={schema} />
                 </TableCell>,
             ])
         );
@@ -61,29 +57,26 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType }) => {
                 </TableCell>,
             ])
         );
-
-        // Apply ordering based on entityType.order
-        const cells: JSX.Element[] = [];
-        entityType.order?.forEach((orderItem) => {
-            if (orderItem.type === EntityPropertyType.ATTRIBUTE) {
-                const cell = attributeCellsMap.get(orderItem.key);
-                if (cell) {
-                    cells.push(cell);
+        if (!entityType.order) return [];
+        return entityType.order
+            .map((attribute) => {
+                const { type, key: id } = attribute;
+                if (type === EntityPropertyType.ATTRIBUTE) {
+                    return attributeCellsMap.get(attribute.key);
+                } else if (type === EntityPropertyType.RELATIONSHIP) {
+                    return relationshipCellsMap.get(attribute.key);
                 }
-            } else if (orderItem.type === EntityPropertyType.RELATIONSHIP) {
-                const cell = relationshipCellsMap.get(orderItem.key);
-                if (cell) {
-                    cells.push(cell);
-                }
-            }
-        });
-
-        return cells;
+            })
+            .filter((cell) => !!cell);
     }, [entityType]);
 
     // Check if form is valid
     const isValid = form.formState.isValid && !form.formState.isValidating;
     const hasErrors = Object.keys(form.formState.errors).length > 0;
+
+    useEffect(() => {
+        console.log("Form errors updated:", form.formState.errors);
+    }, [form.formState.errors]);
 
     return (
         <TableRow className="bg-muted/30 border-dashed hover:bg-muted/40">

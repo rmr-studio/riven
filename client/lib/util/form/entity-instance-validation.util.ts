@@ -1,15 +1,16 @@
-import { SchemaOptions, SchemaUUID } from "@/lib/interfaces/common.interface";
+import {
+    EntityRelationshipDefinition,
+    EntityType,
+} from "@/components/feature-modules/entity/interface/entity.interface";
+import { SchemaUUID } from "@/lib/interfaces/common.interface";
 import { DataFormat, DataType, EntityRelationshipCardinality, SchemaType } from "@/lib/types/types";
-import { EntityRelationshipDefinition, EntityType } from "@/components/feature-modules/entity/interface/entity.interface";
-import { attributeTypes } from "./schema.util";
 import { z } from "zod";
+import { attributeTypes } from "./schema.util";
 
 /**
  * Build a Zod schema from an EntityType definition for validation
  */
-export function buildZodSchemaFromEntityType(
-    entityType: EntityType
-): z.ZodObject<any> {
+export function buildZodSchemaFromEntityType(entityType: EntityType): z.ZodObject<any> {
     const schemaShape: Record<string, z.ZodTypeAny> = {};
 
     // Build schemas for all attributes
@@ -33,6 +34,7 @@ export function buildZodSchemaFromEntityType(
  * Build a Zod schema for an individual attribute field
  */
 export function buildFieldSchema(schema: SchemaUUID): z.ZodTypeAny {
+    console.log(schema);
     const attributeType = attributeTypes[schema.key];
     let fieldSchema: z.ZodTypeAny;
 
@@ -60,6 +62,10 @@ export function buildFieldSchema(schema: SchemaUUID): z.ZodTypeAny {
     // Handle required/optional
     if (!schema.required) {
         fieldSchema = fieldSchema.optional().nullable();
+    } else {
+        fieldSchema = fieldSchema.refine((val) => val !== null && val !== undefined, {
+            message: `${schema.label || "Field"} is required`,
+        });
     }
 
     return fieldSchema;
@@ -91,10 +97,7 @@ function buildStringSchema(schema: SchemaUUID): z.ZodString {
         if (options.regex) {
             try {
                 const pattern = new RegExp(options.regex);
-                stringSchema = stringSchema.regex(
-                    pattern,
-                    `Must match pattern: ${options.regex}`
-                );
+                stringSchema = stringSchema.regex(pattern, `Must match pattern: ${options.regex}`);
             } catch (error) {
                 console.error("Invalid regex pattern:", options.regex, error);
             }
@@ -139,6 +142,10 @@ function buildStringSchema(schema: SchemaUUID): z.ZodString {
         }
     }
 
+    if (schema.required) {
+        stringSchema = stringSchema.min(1, `${schema.label || "Field"} is required`);
+    }
+
     return stringSchema;
 }
 
@@ -155,16 +162,10 @@ function buildNumberSchema(schema: SchemaUUID): z.ZodNumber {
     if (options) {
         // Min/max value constraints
         if (options.minimum !== undefined && options.minimum !== null) {
-            numberSchema = numberSchema.min(
-                options.minimum,
-                `Must be at least ${options.minimum}`
-            );
+            numberSchema = numberSchema.min(options.minimum, `Must be at least ${options.minimum}`);
         }
         if (options.maximum !== undefined && options.maximum !== null) {
-            numberSchema = numberSchema.max(
-                options.maximum,
-                `Must be at most ${options.maximum}`
-            );
+            numberSchema = numberSchema.max(options.maximum, `Must be at most ${options.maximum}`);
         }
 
         // Integer validation if specified
@@ -218,9 +219,7 @@ export function buildRelationshipFieldSchema(
         }
     } else {
         // Array of entity IDs
-        fieldSchema = z.array(
-            z.string().uuid(`Each ${relationship.name} must be a valid entity`)
-        );
+        fieldSchema = z.array(z.string().uuid(`Each ${relationship.name} must be a valid entity`));
 
         if (relationship.required) {
             fieldSchema = fieldSchema.min(1, `At least one ${relationship.name} is required`);
@@ -258,9 +257,7 @@ export function getDefaultValueForSchema(schema: SchemaUUID): any {
 /**
  * Build default values for all fields in an entity type
  */
-export function buildDefaultValuesFromEntityType(
-    entityType: EntityType
-): Record<string, any> {
+export function buildDefaultValuesFromEntityType(entityType: EntityType): Record<string, any> {
     const defaults: Record<string, any> = {};
 
     // Set defaults for attributes

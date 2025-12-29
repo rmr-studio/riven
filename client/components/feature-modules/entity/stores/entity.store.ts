@@ -147,9 +147,10 @@ export const createEntityDraftStore = (
 
                 // Get current form values
                 const values = form.getValues();
-
+                console.log(values);
                 // Validate all fields
                 const isValid = await form.trigger();
+                console.log(isValid);
 
                 if (!isValid) {
                     throw new Error("Validation failed. Please correct the errors and try again.");
