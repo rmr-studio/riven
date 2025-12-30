@@ -1,20 +1,18 @@
 "use client";
 
-import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useDataTableStore, useDataTableActions } from "../data-table-provider";
-import type { SearchConfig } from "../data-table.types";
+import { Search, X } from "lucide-react";
 import { useEffect } from "react";
+import { useDataTableSearch } from "../data-table-provider";
+import type { SearchConfig } from "../data-table.types";
 
 interface DataTableSearchInputProps<TData> {
     config: SearchConfig<TData>;
 }
 
 export function DataTableSearchInput<TData>({ config }: DataTableSearchInputProps<TData>) {
-    const searchValue = useDataTableStore<TData, string>((state) => state.searchValue);
-    const globalFilter = useDataTableStore<TData, string>((state) => state.globalFilter);
-    const tableInstance = useDataTableStore<TData, any>((state) => state.tableInstance);
-    const { setSearchValue, setGlobalFilter, clearSearch } = useDataTableActions<TData>();
+    const { searchValue, setSearchValue, setGlobalFilter, clearSearch, table } =
+        useDataTableSearch();
 
     // Debounce search value to global filter
     useEffect(() => {
@@ -27,7 +25,7 @@ export function DataTableSearchInput<TData>({ config }: DataTableSearchInputProp
         return () => clearTimeout(timer);
     }, [searchValue, config.debounceMs, setGlobalFilter, config]);
 
-    const resultCount = tableInstance ? tableInstance.getFilteredRowModel().rows.length : 0;
+    const resultCount = table ? table.getFilteredRowModel().rows.length : 0;
 
     return (
         <div className="flex items-center gap-2 flex-1 min-w-[200px]">

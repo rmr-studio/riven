@@ -34,7 +34,6 @@ export function buildZodSchemaFromEntityType(entityType: EntityType): z.ZodObjec
  * Build a Zod schema for an individual attribute field
  */
 export function buildFieldSchema(schema: SchemaUUID): z.ZodTypeAny {
-    console.log(schema);
     const attributeType = attributeTypes[schema.key];
     let fieldSchema: z.ZodTypeAny;
 

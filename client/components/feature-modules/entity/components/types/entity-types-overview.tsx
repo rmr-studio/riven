@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable, DataTableProvider } from "@/components/ui/data-table";
 import { IconCell } from "@/components/ui/icon/icon-cell";
 import { ColumnDef } from "@tanstack/react-table";
 import { Edit, Plus, Trash2 } from "lucide-react";
@@ -115,64 +115,64 @@ export const EntityTypesOverview: FC<Props> = ({ organisationId }) => {
             </div>
 
             {/* Data Table */}
-            <DataTable
-                columns={columns}
-                data={types ?? []}
-                enableSorting
-                search={{
-                    enabled: true,
-                    searchableColumns: ["name", "key"],
-                    placeholder: "Search entity types...",
-                }}
-                filter={{
-                    enabled: true,
-                    filters: [
-                        {
-                            column: "type",
-                            type: "select",
-                            label: "Type",
-                            options: [
-                                { label: "Standard", value: "STANDARD" },
-                                { label: "Relationship", value: "RELATIONSHIP" },
-                            ],
-                        },
-                        {
-                            column: "protected",
-                            type: "boolean",
-                            label: "Protected",
-                        },
-                    ],
-                }}
-                onRowClick={(row) => {
-                    router.push(
-                        `/dashboard/organisation/${organisationId}/entity/${row.original.key}`
-                    );
-                }}
-                rowActions={{
-                    enabled: true,
-                    menuLabel: "Actions",
-                    actions: [
-                        {
-                            label: "Edit",
-                            icon: Edit,
-                            onClick: (row) => {
-                                router.push(
-                                    `/dashboard/organisation/${organisationId}/entity/${row.key}/settings`
-                                );
+            <DataTableProvider initialData={types || []}>
+                <DataTable
+                    columns={columns}
+                    enableSorting
+                    search={{
+                        enabled: true,
+                        searchableColumns: ["name.plural", "name.singular"],
+                        placeholder: "Search entity types...",
+                    }}
+                    filter={{
+                        enabled: true,
+                        filters: [
+                            {
+                                column: "type",
+                                type: "select",
+                                label: "Type",
+                                options: [
+                                    { label: "Standard", value: "STANDARD" },
+                                    { label: "Relationship", value: "RELATIONSHIP" },
+                                ],
                             },
-                            separator: true,
-                        },
-                        {
-                            label: "Delete",
-                            icon: Trash2,
-                            onClick: onDelete,
-                            variant: "destructive",
-                        },
-                    ],
-                }}
-                emptyMessage="No entity types found."
-                className="border rounded-md"
-            />
+                            {
+                                column: "protected",
+                                type: "boolean",
+                                label: "Protected",
+                            },
+                        ],
+                    }}
+                    onRowClick={(row) => {
+                        router.push(
+                            `/dashboard/organisation/${organisationId}/entity/${row.original.key}`
+                        );
+                    }}
+                    rowActions={{
+                        enabled: true,
+                        menuLabel: "Actions",
+                        actions: [
+                            {
+                                label: "Edit",
+                                icon: Edit,
+                                onClick: (row) => {
+                                    router.push(
+                                        `/dashboard/organisation/${organisationId}/entity/${row.key}/settings`
+                                    );
+                                },
+                                separator: true,
+                            },
+                            {
+                                label: "Delete",
+                                icon: Trash2,
+                                onClick: onDelete,
+                                variant: "destructive",
+                            },
+                        ],
+                    }}
+                    emptyMessage="No entity types found."
+                />
+            </DataTableProvider>
         </div>
     );
 };

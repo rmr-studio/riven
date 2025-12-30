@@ -18,6 +18,7 @@
  * </DataTableProvider>
  */
 
+import { Table } from "@tanstack/react-table";
 import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 import {
@@ -212,6 +213,22 @@ export function useDataTableStore<TData, TResult>(
  */
 export function useDataTableActions<TData>() {
     return useDataTableStore<TData, DataTableStore<TData>>((state) => state, () => true);
+}
+
+export function useDataTableSearch<TData>(){
+    return useDataTableStore<TData, {
+        searchValue: string;
+        setGlobalFilter: (value: string) => void;
+        table: Table<TData> | null;
+        setSearchValue: (value: string) => void;
+        clearSearch: () => void;
+    }>((state) => ({
+        setGlobalFilter: state.setGlobalFilter,
+        searchValue: state.searchValue,
+        setSearchValue: state.setSearchValue,
+        table: state.tableInstance,
+        clearSearch: state.clearSearch,
+    }));
 }
 
 // ============================================================================

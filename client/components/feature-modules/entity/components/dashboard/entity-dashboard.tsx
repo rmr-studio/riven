@@ -8,7 +8,7 @@ import { useEffect } from "react";
 import { EntityTypeConfigurationProvider } from "../../context/configuration-provider";
 import { EntityDraftProvider } from "../../context/entity-provider";
 import { useEntityTypeByKey } from "../../hooks/query/type/use-entity-types";
-import { useEntity } from "../../hooks/query/use-entities";
+import { useEntities } from "../../hooks/query/use-entities";
 import { EntityDataTable } from "../tables/entity-data-table";
 
 export const EntityDashboard = () => {
@@ -25,7 +25,7 @@ export const EntityDashboard = () => {
         data: entities,
         isPending: isPendingEntities,
         error: entitiesError,
-    } = useEntity(organisationId, entityType?.id);
+    } = useEntities(organisationId, entityType?.id);
 
     useEffect(() => {
         // Query has finished, organisation has not been found. Redirect back to organisation view with associated error
@@ -69,7 +69,10 @@ export const EntityDashboard = () => {
                 <BreadCrumbGroup items={trail} />
             </header>
             <section>
-                <EntityTypeConfigurationProvider organisationId={organisationId} entityType={entityType}>
+                <EntityTypeConfigurationProvider
+                    organisationId={organisationId}
+                    entityType={entityType}
+                >
                     <EntityDraftProvider organisationId={organisationId} entityType={entityType}>
                         <EntityDataTable
                             entityType={entityType}

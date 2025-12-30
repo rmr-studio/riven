@@ -207,10 +207,8 @@ export function useEntityTypeTable(
         ];
 
         return rows.toSorted((a, b) => {
-            const aColumnItem = columns.find((o) => o.key === a.id);
-            const bColumnItem = columns.find((o) => o.key === b.id);
-            const aIndex = aColumnItem ? columns.indexOf(aColumnItem) : -1;
-            const bIndex = bColumnItem ? columns.indexOf(bColumnItem) : -1;
+            const aIndex = columns.findIndex((o) => o.key === a.id);
+            const bIndex = columns.findIndex((o) => o.key === b.id);
 
             // If both are in columns array, sort by their position
             if (aIndex !== -1 && bIndex !== -1) {
@@ -222,7 +220,7 @@ export function useEntityTypeTable(
             // If neither is in columns array, maintain current columns
             return 0;
         });
-    }, [type, attributeLookup]);
+    }, [type]);
 
     const onEdit = (row: EntityTypeAttributeRow) => {
         const definition = attributeLookup.get(row.id);

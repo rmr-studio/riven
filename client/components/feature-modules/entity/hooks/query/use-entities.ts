@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Entity } from "../../interface/entity.interface";
 import { EntityService } from "../../service/entity.service";
 
-export function useEntity(
+export function useEntities(
     organisationId?: string,
     typeId?: string
 ): AuthenticatedQueryResult<Entity[]> {

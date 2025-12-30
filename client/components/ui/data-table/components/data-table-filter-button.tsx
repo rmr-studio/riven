@@ -1,6 +1,5 @@
 "use client";
 
-import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -13,27 +12,27 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { useDataTableStore, useDataTableActions } from "../data-table-provider";
 import { cn } from "@/lib/util/utils";
-import type { ColumnFilter, FilterConfig } from "../data-table.types";
+import { X } from "lucide-react";
 import { useEffect } from "react";
+import { useDataTableActions, useDataTableStore } from "../data-table-provider";
+import type { ColumnFilter, FilterConfig } from "../data-table.types";
 
 interface DataTableFilterButtonProps<TData> {
     config: FilterConfig<TData>;
 }
 
 export function DataTableFilterButton<TData>({ config }: DataTableFilterButtonProps<TData>) {
-    const activeFilters = useDataTableStore<TData, Record<string, any>>((state) => state.activeFilters);
+    const activeFilters = useDataTableStore<TData, Record<string, any>>(
+        (state) => state.activeFilters
+    );
     const enabledFilters = useDataTableStore<TData, Set<string>>((state) => state.enabledFilters);
-    const activeFilterCount = useDataTableStore<TData, number>((state) => state.getActiveFilterCount());
+    const activeFilterCount = useDataTableStore<TData, number>((state) =>
+        state.getActiveFilterCount()
+    );
 
-    const {
-        setColumnFilters,
-        clearAllFilters,
-        clearFilter,
-        toggleFilter,
-        updateFilter
-    } = useDataTableActions<TData>();
+    const { setColumnFilters, clearAllFilters, clearFilter, toggleFilter, updateFilter } =
+        useDataTableActions<TData>();
 
     // Sync active filters with column filters (only for enabled filters)
     useEffect(() => {
@@ -72,7 +71,9 @@ export function DataTableFilterButton<TData>({ config }: DataTableFilterButtonPr
                     return (
                         <div className="relative">
                             <Input
-                                placeholder={columnFilter.placeholder ?? `Filter ${columnFilter.label}...`}
+                                placeholder={
+                                    columnFilter.placeholder ?? `Filter ${columnFilter.label}...`
+                                }
                                 value={currentValue ?? ""}
                                 onChange={(e) => updateFilter(columnId, e.target.value)}
                                 className="h-9"
@@ -80,6 +81,7 @@ export function DataTableFilterButton<TData>({ config }: DataTableFilterButtonPr
                             />
                             {currentValue && isEnabled && (
                                 <button
+                                    type="button"
                                     onClick={() => clearFilter(columnId)}
                                     className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                 >
@@ -130,7 +132,9 @@ export function DataTableFilterButton<TData>({ config }: DataTableFilterButtonPr
                                             onCheckedChange={(checked) => {
                                                 const newValues = checked
                                                     ? [...selectedValues, option.value]
-                                                    : selectedValues.filter((v) => v !== option.value);
+                                                    : selectedValues.filter(
+                                                          (v) => v !== option.value
+                                                      );
                                                 updateFilter(columnId, newValues);
                                             }}
                                         />
@@ -182,7 +186,9 @@ export function DataTableFilterButton<TData>({ config }: DataTableFilterButtonPr
                                 onChange={(e) =>
                                     updateFilter(columnId, {
                                         ...rangeValue,
-                                        min: e.target.value ? parseFloat(e.target.value) : undefined,
+                                        min: e.target.value
+                                            ? parseFloat(e.target.value)
+                                            : undefined,
                                     })
                                 }
                                 className="h-9"
@@ -195,7 +201,9 @@ export function DataTableFilterButton<TData>({ config }: DataTableFilterButtonPr
                                 onChange={(e) =>
                                     updateFilter(columnId, {
                                         ...rangeValue,
-                                        max: e.target.value ? parseFloat(e.target.value) : undefined,
+                                        max: e.target.value
+                                            ? parseFloat(e.target.value)
+                                            : undefined,
                                     })
                                 }
                                 className="h-9"
@@ -224,6 +232,7 @@ export function DataTableFilterButton<TData>({ config }: DataTableFilterButtonPr
                     </Label>
                     {isEnabled && currentValue && (
                         <button
+                            type="button"
                             onClick={() => clearFilter(columnId)}
                             className="text-muted-foreground hover:text-foreground"
                         >
@@ -242,6 +251,7 @@ export function DataTableFilterButton<TData>({ config }: DataTableFilterButtonPr
                 <h4 className="font-semibold text-sm">Filter Options</h4>
                 {activeFilterCount > 0 && (
                     <Button
+                        type="button"
                         variant="ghost"
                         size="sm"
                         onClick={clearAllFilters}

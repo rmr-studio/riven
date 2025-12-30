@@ -1,7 +1,9 @@
+"use client";
+
 import { DataType, IconColour, IconType, SchemaType } from "@/lib/types/types";
 import { AttributeSchemaType, attributeTypes } from "@/lib/util/form/schema.util";
 import { cn } from "@/lib/util/utils";
-import { Check, ChevronsUpDown, Link2 } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { Dispatch, FC, SetStateAction, useMemo } from "react";
 import { Button } from "./button";
 import {
@@ -145,7 +147,11 @@ export const AttributeTypeDropdown: FC<Props> = ({
                                         type === "RELATIONSHIP" ? "opacity-100" : "opacity-0"
                                     )}
                                 />
-                                <Link2 className="mr-1 size-3.5" />
+                                <IconCell
+                                    readonly
+                                    iconType={IconType.LINK_2}
+                                    colour={IconColour.NEUTRAL}
+                                />
                                 Relationship
                             </CommandItem>
                         </CommandGroup>
@@ -168,7 +174,7 @@ export const AttributeTypeDropdown: FC<Props> = ({
                                     />
                                     <IconCell
                                         readonly
-                                        className="mr-1 size-3.5"
+                                        className="mr-1 size-4"
                                         iconType={attr.icon.icon}
                                         colour={attr.icon.colour}
                                     />

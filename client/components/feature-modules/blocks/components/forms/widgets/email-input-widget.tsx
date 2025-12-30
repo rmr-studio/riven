@@ -1,8 +1,8 @@
 "use client";
 
-import { OptionalTooltip } from "@/components/ui/optional-tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { OptionalTooltip } from "@/components/ui/optional-tooltip";
 import { cn } from "@/lib/util/utils";
 import { CircleAlert } from "lucide-react";
 import { FC } from "react";
@@ -16,6 +16,7 @@ export const EmailInputWidget: FC<FormWidgetProps<string>> = ({
     description,
     placeholder,
     errors,
+    autoFocus,
     displayError = "message",
     disabled,
 }) => {
@@ -37,6 +38,7 @@ export const EmailInputWidget: FC<FormWidgetProps<string>> = ({
                     <Input
                         id={label}
                         type="email"
+                        autoFocus={autoFocus}
                         value={value || ""}
                         onChange={(e) => onChange(e.target.value)}
                         onBlur={onBlur}

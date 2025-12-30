@@ -13,7 +13,8 @@ import { Row } from "@tanstack/react-table";
 
 export interface SearchConfig<T> {
     enabled: boolean;
-    searchableColumns: (keyof T extends string ? keyof T : never)[];
+    /** Column IDs or nested paths (e.g., "name", "user.email") to search */
+    searchableColumns: string[];
     placeholder?: string;
     debounceMs?: number;
     disabled?: boolean;

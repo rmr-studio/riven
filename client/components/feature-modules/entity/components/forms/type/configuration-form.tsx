@@ -77,7 +77,7 @@ export const ConfigurationForm: FC<Props> = ({ availableIdentifiers }) => {
     }, [identifierKey]);
 
     return (
-        <div className="rounded-lg bcolumns bg-card p-6">
+        <div className="rounded-lg border bg-card p-6">
             <h2 className="text-lg font-semibold mb-4">General</h2>
 
             <div className="space-y-6">

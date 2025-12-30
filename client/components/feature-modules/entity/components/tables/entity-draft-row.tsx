@@ -6,7 +6,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { EntityPropertyType } from "@/lib/types/types";
 import { Row } from "@tanstack/react-table";
 import { Check, X } from "lucide-react";
-import { FC, useMemo, useState } from "react";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useEntityDraft } from "../../context/entity-provider";
 import { EntityType } from "../../interface/entity.interface";
@@ -26,7 +26,7 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = async () => {
+    const handleSubmit = useCallback(async () => {
         setIsSubmitting(true);
         try {
             await submitDraft();
@@ -37,11 +37,41 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
         } finally {
             setIsSubmitting(false);
         }
-    };
+    }, [submitDraft]);
 
-    const handleReset = () => {
+    const handleReset = useCallback(() => {
         resetDraft();
-    };
+    }, [resetDraft]);
+
+    // Keyboard event listeners for Enter (submit) and Escape (cancel)
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            // Enter key: submit the draft
+            if (event.key === "Enter" && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
+                // Don't submit if there are errors or already submitting
+                if (!hasErrors && !isSubmitting) {
+                    event.preventDefault();
+                    handleSubmit();
+                }
+            }
+
+            // Escape key: cancel and reset the draft
+            if (event.key === "Escape") {
+                if (!isSubmitting) {
+                    event.preventDefault();
+                    handleReset();
+                }
+            }
+        };
+
+        // Add event listener
+        window.addEventListener("keydown", handleKeyDown);
+
+        // Cleanup on unmount
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [hasErrors, isSubmitting, handleSubmit, handleReset]); // Re-attach listener when these dependencies change
 
     // Build a map of column IDs to their sizes from the row's cells
     const columnSizeMap = useMemo(() => {
@@ -56,79 +86,69 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
     const orderedCells = useMemo(() => {
         const columnCount = entityType.columns ? entityType.columns.length : 0;
         if (columnCount === 0) return [];
-
-        // Create maps for quick lookup
-        const attributeCellsMap = new Map(
-            Object.entries(entityType.schema.properties || {}).map(([attributeId, schema]) => {
-                return [attributeId, <EntityFieldCell attributeId={attributeId} schema={schema} />];
-            })
-        );
-
-        const relationshipCellsMap = new Map(
-            (entityType.relationships || []).map((relationship) => {
-                return [relationship.id, <EntityRelationshipPicker relationship={relationship} />];
-            })
-        );
         if (!entityType.columns) return [];
-        return (
-            entityType.columns
-                // .map((attribute) => {
-                //     const { type, key: id } = attribute;
-                //     if (type === EntityPropertyType.ATTRIBUTE) {
-                //         return { id, cell: attributeCellsMap.get(attribute.key) };
-                //     } else if (type === EntityPropertyType.RELATIONSHIP) {
-                //         return { id, cell: relationshipCellsMap.get(attribute.key) };
-                //     }
-                // })
-                .map((item, index) => {
-                    const { key: id, type } = item;
-                    const element =
-                        type === EntityPropertyType.ATTRIBUTE
-                            ? attributeCellsMap.get(id)
-                            : relationshipCellsMap.get(id);
 
-                    if (!element) return null;
+        return entityType.columns.map((item, index) => {
+            const { key: id, type } = item;
+            const isFirstCell = index === 0;
+            const isLastCell = index === columnCount - 1;
 
-                    const width = columnSizeMap.get(id);
-                    return (
-                        <TableCell
-                            key={id}
-                            className="border-l border-l-accent/40 first:border-l-transparent p-2 relative"
-                            style={{
-                                width: width ? `${width}px` : undefined,
-                                maxWidth: width ? `${width}px` : undefined,
-                            }}
-                        >
-                            {element}
-                            {/* Append action button to last cell */}
-                            {index === columnCount - 1 && (
-                                <div className="flex gap-2 justify-end absolute top-2 right-2">
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
-                                        onClick={handleSubmit}
-                                        disabled={isSubmitting || hasErrors}
-                                    >
-                                        <Check className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                        onClick={handleReset}
-                                        disabled={isSubmitting}
-                                        title="Cancel and discard draft"
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            )}
-                        </TableCell>
-                    );
-                })
-        );
-    }, [entityType, columnSizeMap]);
+            // Create element with autoFocus on first cell
+            const element =
+                type === EntityPropertyType.ATTRIBUTE ? (
+                    <EntityFieldCell
+                        attributeId={id}
+                        schema={entityType.schema.properties?.[id]}
+                        autoFocus={isFirstCell}
+                    />
+                ) : type === EntityPropertyType.RELATIONSHIP ? (
+                    <EntityRelationshipPicker
+                        relationship={entityType.relationships?.find((r) => r.id === id)!}
+                        autoFocus={isFirstCell}
+                    />
+                ) : null;
+
+            if (!element) return null;
+
+            const width = columnSizeMap.get(id);
+            return (
+                <TableCell
+                    key={id}
+                    className="border-l border-l-accent/40 first:border-l-transparent p-2 relative"
+                    style={{
+                        width: width ? `${width}px` : undefined,
+                        maxWidth: width ? `${width}px` : undefined,
+                    }}
+                >
+                    {element}
+                    {/* Append action buttons to last cell */}
+                    {isLastCell && (
+                        <div className="flex gap-2 justify-end absolute top-2 right-2">
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                onClick={handleSubmit}
+                                disabled={isSubmitting || hasErrors}
+                            >
+                                <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={handleReset}
+                                disabled={isSubmitting}
+                                title="Cancel and discard draft"
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    )}
+                </TableCell>
+            );
+        });
+    }, [entityType, columnSizeMap, isSubmitting, hasErrors]);
 
     return (
         <>
@@ -136,9 +156,10 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
                 <TableCell>
                     <Checkbox disabled />
                 </TableCell>
-                {/* Ordered cells (attributes and relationships) */}
-                {orderedCells}
-
+                
+                    {/* Ordered cells (attributes and relationships) */}
+                    {orderedCells}
+            
                 {/* Action buttons cell */}
             </TableRow>
         </>

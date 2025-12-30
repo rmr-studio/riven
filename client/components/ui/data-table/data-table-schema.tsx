@@ -1,11 +1,11 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
-import { DataTable, FilterConfig, SearchConfig, ColumnFilter, FilterOption } from "./data-table";
 import { Schema } from "@/lib/interfaces/common.interface";
-import { DataType, DataFormat } from "@/lib/types/types";
-import { Badge } from "./badge";
+import { DataFormat, DataType } from "@/lib/types/types";
+import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
+import { ColumnFilter, DataTable, FilterConfig, FilterOption, SearchConfig } from ".";
+import { Badge } from "../badge";
 
 /**
  * Schema-Driven Data Table
@@ -97,10 +97,18 @@ function formatCellValue(value: any, schema: Schema): React.ReactNode {
     switch (schema.type) {
         case DataType.STRING:
             if (schema.format === DataFormat.EMAIL) {
-                return <a href={`mailto:${value}`} className="text-primary hover:underline">{value}</a>;
+                return (
+                    <a href={`mailto:${value}`} className="text-primary hover:underline">
+                        {value}
+                    </a>
+                );
             }
             if (schema.format === DataFormat.PHONE) {
-                return <a href={`tel:${value}`} className="text-primary hover:underline">{value}</a>;
+                return (
+                    <a href={`tel:${value}`} className="text-primary hover:underline">
+                        {value}
+                    </a>
+                );
             }
             if (schema.format === DataFormat.DATE) {
                 return new Date(value).toLocaleDateString();
@@ -117,11 +125,7 @@ function formatCellValue(value: any, schema: Schema): React.ReactNode {
             return <span>{value.toLocaleString()}</span>;
 
         case DataType.BOOLEAN:
-            return (
-                <Badge variant={value ? "default" : "secondary"}>
-                    {value ? "Yes" : "No"}
-                </Badge>
-            );
+            return <Badge variant={value ? "default" : "secondary"}>{value ? "Yes" : "No"}</Badge>;
 
         case DataType.ARRAY:
             if (Array.isArray(value)) {
@@ -249,7 +253,8 @@ export function SchemaDataTable<TData extends Record<string, any>>({
     // Generate search config from schema
     const searchConfig = useMemo(() => {
         if (!enableSearch) return undefined;
-        const searchableColumns = customSearchableColumns ?? generateSearchConfigFromSchema<TData>(schema);
+        const searchableColumns =
+            customSearchableColumns ?? generateSearchConfigFromSchema<TData>(schema);
         if (searchableColumns.length === 0) return undefined;
 
         return {
@@ -344,5 +349,7 @@ export function EnhancedSchemaDataTable<TData extends Record<string, any>>(
         });
     }, [schema, data, autoDetectSelectFilters, selectFilterThreshold, customFilters]);
 
-    return <SchemaDataTable {...rest} schema={schema} data={data} customFilters={enhancedFilters} />;
+    return (
+        <SchemaDataTable {...rest} schema={schema} data={data} customFilters={enhancedFilters} />
+    );
 }

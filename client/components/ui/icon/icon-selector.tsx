@@ -100,6 +100,7 @@ export const IconSelector: FC<Props> = ({
                 <Button
                     variant="outline"
                     role="combobox"
+                    type="button"
                     className={cn("w-full flex items-center justify-center", className)}
                 >
                     {SelectedIcon ? (
@@ -119,6 +120,7 @@ export const IconSelector: FC<Props> = ({
                         <div className="border-b p-3 flex gap-2 flex-wrap">
                             {Object.values(IconColour).map((c) => (
                                 <button
+                                    type="button"
                                     key={c}
                                     onClick={() => setCurrentColour(c)}
                                     className={cn(

@@ -33,6 +33,8 @@ export function useSaveEntityMutation(
             context: unknown
         ) => {
             // Handle schema validation or impact confirmation errors
+            toast.dismiss(submissionToastRef.current);
+            submissionToastRef.current = undefined;
             if (response.errors) {
                 return response;
             }
@@ -40,8 +42,6 @@ export function useSaveEntityMutation(
             if (response.entity) {
                 options?.onSuccess?.(response, variables, context);
 
-                toast.dismiss(submissionToastRef.current);
-                submissionToastRef.current = undefined;
                 toast.success("Entity created successfully!");
 
                 // Invalidate the entities list query to refetch

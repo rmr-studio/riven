@@ -96,6 +96,7 @@ export class EntityService {
         try {
             validateSession(session);
             validateUuid(organisationId);
+            typeIds.forEach((id) => validateUuid(id));
             const url = api();
 
             const response = await fetch(

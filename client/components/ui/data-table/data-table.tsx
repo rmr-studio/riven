@@ -195,7 +195,7 @@ export function DataTable<TData, TValue>({
     // TanStack Table Configuration
     // ========================================================================
 
-    // Custom global filter function
+    // Custom global filter function with nested property support
     const globalFilterFn = (row: Row<TData>, columnId: string, filterValue: string) => {
         if (!search?.enabled || !filterValue) return true;
 
@@ -204,9 +204,33 @@ export function DataTable<TData, TValue>({
 
         const searchLower = filterValue.toLowerCase();
 
+        // Helper to get nested property value (e.g., "name.plural")
+        const getNestedValue = (obj: any, path: string): any => {
+            return path.split('.').reduce((current, prop) => current?.[prop], obj);
+        };
+
         return searchableColumns.some((colId) => {
-            const value = row.getValue(colId as string);
+            const colIdStr = colId as string;
+            let value: any;
+
+            // Check if colId contains dot notation (nested property)
+            if (colIdStr.includes('.')) {
+                // Access nested property from row.original
+                value = getNestedValue(row.original, colIdStr);
+            } else {
+                // Standard column access
+                value = row.getValue(colIdStr);
+            }
+
             if (value == null) return false;
+
+            // Handle objects by searching all their string values
+            if (typeof value === 'object' && !Array.isArray(value)) {
+                return Object.values(value).some(v =>
+                    v != null && String(v).toLowerCase().includes(searchLower)
+                );
+            }
+
             return String(value).toLowerCase().includes(searchLower);
         });
     };

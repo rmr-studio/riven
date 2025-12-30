@@ -28,6 +28,7 @@ import {
     generateColumnsFromEntityType,
     generateFiltersFromEntityType,
     generateSearchConfigFromEntityType,
+    isDraftRow,
     transformEntitiesToRows,
 } from "./entity-table-utils";
 
@@ -55,7 +56,7 @@ export const EntityDataTable: FC<Props> = ({
         if (isDraftMode) {
             const draftRow: EntityRow = {
                 _entityId: "_draft",
-                _entity: null as any, // Special case for draft
+                _isDraft: true,
             };
             return [...rows, draftRow];
         }
@@ -98,8 +99,8 @@ export const EntityDataTable: FC<Props> = ({
     // Custom row renderer for draft mode
     const customRowRenderer = useCallback(
         (row: Row<EntityRow>) => {
-            // Check if this is the draft row
-            if (row.original._entityId === "_draft") {
+            // Check if this is the draft row using type-safe guard
+            if (isDraftRow(row.original)) {
                 return <EntityDraftRow key="_draft" entityType={entityType} row={row} />;
             }
             return null; // Use default rendering

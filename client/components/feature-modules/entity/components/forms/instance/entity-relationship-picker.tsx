@@ -24,9 +24,10 @@ import { getEntityDisplayName } from "../../tables/entity-table-utils";
 
 export interface EntityRelationshipPickerProps {
     relationship: EntityRelationshipDefinition;
+    autoFocus?: boolean;
 }
 
-export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ relationship }) => {
+export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ relationship, autoFocus }) => {
     const { form } = useEntityDraft();
     const { session } = useAuth();
     const { organisationId } = useParams<{ organisationId: string }>();
@@ -121,13 +122,13 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ re
     if (isSingleSelect) {
         return (
             <div className="space-y-2 w-full min-w-0">
-                
+
                 <Select
                     value={value || undefined}
                     onValueChange={handleChange}
                     disabled={entities.length === 0}
                 >
-                    <SelectTrigger onBlur={handleBlur}>
+                    <SelectTrigger onBlur={handleBlur} autoFocus={autoFocus}>
                         <SelectValue
                             placeholder={
                                 entities.length === 0
@@ -192,7 +193,7 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ re
                     }}
                     disabled={entities.length === 0}
                 >
-                    <SelectTrigger onBlur={handleBlur}>
+                    <SelectTrigger onBlur={handleBlur} autoFocus={autoFocus}>
                         <SelectValue
                             placeholder={
                                 entities.length === 0

@@ -1,14 +1,14 @@
 "use client";
 
-import { OptionalTooltip } from "@/components/ui/optional-tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { OptionalTooltip } from "@/components/ui/optional-tooltip";
 import { cn } from "@/lib/util/utils";
 import { CircleAlert } from "lucide-react";
 import { FC } from "react";
 import { FormWidgetProps } from "../form-widget.types";
 
-export const NumberInputWidget: FC<FormWidgetProps<number>> = ({
+export const NumberInputWidget: FC<FormWidgetProps<number | undefined>> = ({
     value,
     onChange,
     onBlur,
@@ -18,6 +18,7 @@ export const NumberInputWidget: FC<FormWidgetProps<number>> = ({
     errors,
     displayError = "message",
     disabled,
+    autoFocus
 }) => {
     const hasErrors = errors && errors.length > 0;
 
@@ -38,7 +39,10 @@ export const NumberInputWidget: FC<FormWidgetProps<number>> = ({
                         id={label}
                         type="number"
                         value={value ?? ""}
-                        onChange={(e) => onChange(e.target.value ? parseFloat(e.target.value) : 0)}
+                        onChange={(e) =>
+                            onChange(e.target.value ? parseFloat(e.target.value) : undefined)
+                        }
+                        au
                         onBlur={onBlur}
                         placeholder={placeholder}
                         disabled={disabled}

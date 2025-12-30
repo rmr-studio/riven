@@ -16,6 +16,7 @@ export interface FormWidgetProps<T = any> {
     errors?: string[];
     displayError?: "message" | "tooltip" | "none";
     options?: Array<{ label: string; value: string }>;
+    autoFocus?: boolean;
 }
 
 /**

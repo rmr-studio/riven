@@ -11,9 +11,10 @@ import { getWidgetForSchema } from "./entity-field-registry";
 export interface EntityFieldCellProps {
     attributeId: string;
     schema: SchemaUUID;
+    autoFocus?: boolean;
 }
 
-export const EntityFieldCell: FC<EntityFieldCellProps> = ({ attributeId, schema }) => {
+export const EntityFieldCell: FC<EntityFieldCellProps> = ({ attributeId, schema, autoFocus }) => {
     const { form } = useEntityDraft();
 
     // Watch for validation errors on this specific field
@@ -66,6 +67,7 @@ export const EntityFieldCell: FC<EntityFieldCellProps> = ({ attributeId, schema 
                                 schema={schema}
                                 displayError="tooltip"
                                 errors={errorMessages}
+                                autoFocus={autoFocus}
                                 options={
                                     schema.options?.enum
                                         ? schema.options.enum.map((opt) => ({

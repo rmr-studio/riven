@@ -93,7 +93,7 @@ export const createEntityDraftStore = (
     form: UseFormReturn<Record<string, any>>,
     saveMutation: (request: SaveEntityRequest) => Promise<SaveEntityResponse>
 ): StoreApi<EntityDraftStore> => {
-    const storageKey = `entity-instance-draft-${organisationId}-${entityType.key}`;
+    const storageKey = `${organisationId}-entity-instance-draft-${entityType.key}`;
 
     // Build attribute metadata map once during initialization
     const attributeMetadataMap = buildAttributeMetadataMap(entityType);

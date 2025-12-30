@@ -152,7 +152,6 @@ const EntityTypeDataTable: FC<Props> = ({ type, identifierKey, onEdit, onDelete 
                     ],
                 }}
                 emptyMessage="No fields defined yet. Add your first attribute or relationship to get started."
-                className="border rounded-md"
             />
         </DataTableProvider>
     );

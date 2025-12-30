@@ -19,6 +19,7 @@ export const TextInputWidget: FC<FormWidgetProps<string>> = ({
     errors,
     displayError = "message",
     disabled,
+    autoFocus,
 }) => {
     const hasErrors = errors && errors.length > 0;
 
@@ -42,6 +43,7 @@ export const TextInputWidget: FC<FormWidgetProps<string>> = ({
                         onBlur={onBlur}
                         placeholder={placeholder}
                         disabled={disabled}
+                        autoFocus={autoFocus}
                         className={cn(
                             hasErrors && "border-destructive focus-visible:ring-destructive"
                         )}

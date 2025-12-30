@@ -100,7 +100,9 @@ export const AttributeFormModal: FC<Props> = ({ dialog, type, selectedAttribute 
                                 dialog={dialog}
                                 currentType={currentType as SchemaType}
                                 type={type}
-                                attribute={selectedAttribute as EntityAttributeDefinition | undefined}
+                                attribute={
+                                    selectedAttribute as EntityAttributeDefinition | undefined
+                                }
                             />
                         )}
                     </section>

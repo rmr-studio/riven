@@ -13,10 +13,33 @@ import {
 } from "../../interface/entity.interface";
 
 // Row type for entity instance data table
-export interface EntityRow {
-    _entityId: string;
-    _entity: Entity;
-    [attributeId: string]: any; // Dynamic fields from payload
+// Discriminated union to safely handle both entity rows and draft rows
+export type EntityRow =
+    | {
+          _entityId: string;
+          _isDraft: false;
+          _entity: Entity;
+          [attributeId: string]: any; // Dynamic fields from payload
+      }
+    | {
+          _entityId: string;
+          _isDraft: true;
+          _entity?: undefined; // Explicitly undefined for draft rows
+          [attributeId: string]: any; // Dynamic fields for draft values
+      };
+
+/**
+ * Type guard to check if a row is a draft row
+ */
+export function isDraftRow(row: EntityRow): row is Extract<EntityRow, { _isDraft: true }> {
+    return row._isDraft === true;
+}
+
+/**
+ * Type guard to check if a row is an entity row (not draft)
+ */
+export function isEntityRow(row: EntityRow): row is Extract<EntityRow, { _isDraft: false }> {
+    return row._isDraft === false;
 }
 
 /**
@@ -28,6 +51,7 @@ export function transformEntitiesToRows(entities: Entity[]): EntityRow[] {
         .map((entity) => {
             const row: EntityRow = {
                 _entityId: entity.id,
+                _isDraft: false,
                 _entity: entity,
             };
 

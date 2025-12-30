@@ -62,7 +62,7 @@ export const createEntityTypeConfigStore = (
     form: UseFormReturn<EntityTypeFormValues>,
     updateMutation: (type: EntityType) => Promise<EntityType>
 ): StoreApi<EntityTypeConfigStore> => {
-    const storageKey = `entity-type-draft-${entityTypeKey}`;
+    const storageKey = `${organisationId}-entity-type-draft-${entityTypeKey}`;
 
     return create<EntityTypeConfigStore>()(
         subscribeWithSelector((set, get) => ({

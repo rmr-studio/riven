@@ -56,7 +56,7 @@ export interface EntityRelationshipCandidate {
 export type {
     OverlapDetectionResult,
     OverlapResolution,
-    RelationshipOverlap,
+    RelationshipOverlap
 } from "../hooks/use-relationship-overlap-detection";
 
 export type EntityTypeImpactResponse = components["schemas"]["EntityTypeImpactResponse"];
@@ -97,18 +97,6 @@ export interface EntityTypeAttributeRow {
     bidirectional?: boolean;
 }
 
-/**
- * Props interface for entity field widgets
- * Used for rendering inline editable fields in draft rows
- */
-export interface EntityFieldWidgetProps {
-    value: any;
-    onChange: (value: any) => void;
-    onBlur: () => void;
-    disabled?: boolean;
-    schema: SchemaUUID;
-    errors?: string[];
-}
 
 /**
  * Props interface for relationship picker component
