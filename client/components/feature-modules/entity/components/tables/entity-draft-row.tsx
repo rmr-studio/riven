@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { EntityPropertyType } from "@/lib/types/types";
 import { Row } from "@tanstack/react-table";
@@ -20,6 +21,8 @@ export interface EntityDraftRowProps {
 
 export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => {
     const { form, resetDraft, submitDraft } = useEntityDraft();
+    // Check if form is valid
+    const hasErrors = Object.keys(form.formState.errors).length > 0;
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -51,93 +54,93 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
 
     // Build ordered cells based on entityType.columns
     const orderedCells = useMemo(() => {
+        const columnCount = entityType.columns ? entityType.columns.length : 0;
+        if (columnCount === 0) return [];
+
         // Create maps for quick lookup
         const attributeCellsMap = new Map(
             Object.entries(entityType.schema.properties || {}).map(([attributeId, schema]) => {
-                const width = columnSizeMap.get(attributeId);
-                return [
-                    attributeId,
-                    <TableCell
-                        key={attributeId}
-                        className="border-l border-l-accent/40 first:border-l-transparent p-2"
-                        style={{
-                            width: width ? `${width}px` : undefined,
-                            maxWidth: width ? `${width}px` : undefined,
-                        }}
-                    >
-                        <EntityFieldCell attributeId={attributeId} schema={schema} />
-                    </TableCell>,
-                ];
+                return [attributeId, <EntityFieldCell attributeId={attributeId} schema={schema} />];
             })
         );
 
         const relationshipCellsMap = new Map(
             (entityType.relationships || []).map((relationship) => {
-                const width = columnSizeMap.get(relationship.id);
-                return [
-                    relationship.id,
-                    <TableCell
-                        key={relationship.id}
-                        className="border-l border-l-accent/40 first:border-l-transparent p-2"
-                        style={{
-                            width: width ? `${width}px` : undefined,
-                            maxWidth: width ? `${width}px` : undefined,
-                        }}
-                    >
-                        <EntityRelationshipPicker relationship={relationship} />
-                    </TableCell>,
-                ];
+                return [relationship.id, <EntityRelationshipPicker relationship={relationship} />];
             })
         );
         if (!entityType.columns) return [];
-        return entityType.columns
-            .map((attribute) => {
-                const { type, key: id } = attribute;
-                if (type === EntityPropertyType.ATTRIBUTE) {
-                    return attributeCellsMap.get(attribute.key);
-                } else if (type === EntityPropertyType.RELATIONSHIP) {
-                    return relationshipCellsMap.get(attribute.key);
-                }
-            })
-            .filter((cell) => !!cell);
+        return (
+            entityType.columns
+                // .map((attribute) => {
+                //     const { type, key: id } = attribute;
+                //     if (type === EntityPropertyType.ATTRIBUTE) {
+                //         return { id, cell: attributeCellsMap.get(attribute.key) };
+                //     } else if (type === EntityPropertyType.RELATIONSHIP) {
+                //         return { id, cell: relationshipCellsMap.get(attribute.key) };
+                //     }
+                // })
+                .map((item, index) => {
+                    const { key: id, type } = item;
+                    const element =
+                        type === EntityPropertyType.ATTRIBUTE
+                            ? attributeCellsMap.get(id)
+                            : relationshipCellsMap.get(id);
+
+                    if (!element) return null;
+
+                    const width = columnSizeMap.get(id);
+                    return (
+                        <TableCell
+                            key={id}
+                            className="border-l border-l-accent/40 first:border-l-transparent p-2 relative"
+                            style={{
+                                width: width ? `${width}px` : undefined,
+                                maxWidth: width ? `${width}px` : undefined,
+                            }}
+                        >
+                            {element}
+                            {/* Append action button to last cell */}
+                            {index === columnCount - 1 && (
+                                <div className="flex gap-2 justify-end absolute top-2 right-2">
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                        onClick={handleSubmit}
+                                        disabled={isSubmitting || hasErrors}
+                                    >
+                                        <Check className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                        onClick={handleReset}
+                                        disabled={isSubmitting}
+                                        title="Cancel and discard draft"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            )}
+                        </TableCell>
+                    );
+                })
+        );
     }, [entityType, columnSizeMap]);
 
-    // Check if form is valid
-    const hasErrors = Object.keys(form.formState.errors).length > 0;
     return (
         <>
             <TableRow className="bg-muted/30 border-dashed hover:bg-muted/40 relative">
+                <TableCell>
+                    <Checkbox disabled />
+                </TableCell>
                 {/* Ordered cells (attributes and relationships) */}
                 {orderedCells}
 
-                {/* Action buttons */}
+                {/* Action buttons cell */}
             </TableRow>
-            <div className="w-24 border-dashed absolute bottom-3 right-2">
-                <div className="flex gap-2 justify-end">
-                    <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
-                        onClick={handleSubmit}
-                        disabled={isSubmitting || hasErrors}
-                        title={
-                            hasErrors ? "Please fix validation errors" : "Submit and create entity"
-                        }
-                    >
-                        <Check className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={handleReset}
-                        disabled={isSubmitting}
-                        title="Cancel and discard draft"
-                    >
-                        <X className="h-4 w-4" />
-                    </Button>
-                </div>
-            </div>
         </>
     );
 };

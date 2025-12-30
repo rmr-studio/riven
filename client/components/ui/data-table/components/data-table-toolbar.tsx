@@ -1,0 +1,60 @@
+"use client";
+
+import { Filter } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DataTableSearchInput } from "./data-table-search-input";
+import { DataTableFilterButton } from "./data-table-filter-button";
+import { useDataTableStore, useDataTableActions } from "../data-table-provider";
+import type { SearchConfig, FilterConfig } from "../data-table.types";
+
+interface DataTableToolbarProps<TData> {
+    search?: SearchConfig<TData>;
+    filter?: FilterConfig<TData>;
+}
+
+export function DataTableToolbar<TData>({ search, filter }: DataTableToolbarProps<TData>) {
+    const activeFilterCount = useDataTableStore<TData, number>((state) => state.getActiveFilterCount());
+    const filterPopoverOpen = useDataTableStore<TData, boolean>((state) => state.filterPopoverOpen);
+    const { setFilterPopoverOpen } = useDataTableActions<TData>();
+
+    const showSearch = search?.enabled;
+    const showFilter = filter?.enabled && filter.filters.length > 0;
+
+    if (!showSearch && !showFilter) {
+        return null;
+    }
+
+    return (
+        <div className="flex items-center gap-2 flex-wrap">
+            {/* Search Input */}
+            {showSearch && <DataTableSearchInput config={search} />}
+
+            {/* Filter Button */}
+            {showFilter && (
+                <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-9"
+                            disabled={filter.disabled}
+                        >
+                            <Filter className="h-4 w-4 mr-2" />
+                            Filters
+                            {activeFilterCount > 0 && (
+                                <Badge variant="secondary" className="ml-2 h-5 px-1.5">
+                                    {activeFilterCount}
+                                </Badge>
+                            )}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 p-0" align="end">
+                        <DataTableFilterButton config={filter} />
+                    </PopoverContent>
+                </Popover>
+            )}
+        </div>
+    );
+}

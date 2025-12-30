@@ -1,7 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ColumnOrderingConfig, ColumnResizingConfig, DataTable } from "@/components/ui/data-table";
+import {
+    ColumnOrderingConfig,
+    ColumnResizingConfig,
+    DataTable,
+    DataTableProvider,
+} from "@/components/ui/data-table";
+import { DEFAULT_COLUMN_WIDTH } from "@/components/ui/data-table/data-table";
 import { Form } from "@/components/ui/form";
 import { ClassNameProps } from "@/lib/interfaces/interface";
 import { debounce } from "@/lib/util/debounce.util";
@@ -69,7 +75,7 @@ export const EntityDataTable: FC<Props> = ({
     }, [entityType, entities]);
 
     // Generate search configuration
-    const searchableColumns = useMemo(() => {
+    const searchableColumns = useMemo<string[]>(() => {
         return generateSearchConfigFromEntityType(entityType);
     }, [entityType]);
 
@@ -77,6 +83,17 @@ export const EntityDataTable: FC<Props> = ({
         ? "Loading entities..."
         : `No ${entityType.name.plural} found.`;
     const enableSearch = entities.length > 10;
+
+    // Search configuration
+    const searchConfig = useMemo(
+        () => ({
+            enabled: enableSearch && searchableColumns.length > 0,
+            searchableColumns: searchableColumns as any,
+            placeholder: "Search entities...",
+            disabled: isDraftMode,
+        }),
+        [enableSearch, searchableColumns, isDraftMode]
+    );
 
     // Custom row renderer for draft mode
     const customRowRenderer = useCallback(
@@ -101,21 +118,18 @@ export const EntityDataTable: FC<Props> = ({
     const columnResizingConfig: ColumnResizingConfig = useMemo(
         () => ({
             enabled: true,
-            columnResizeMode: "onChange", // Live resizing during drag
-            defaultColumnSize: 150,
-            onColumnWidthsChange: (columnSizing) =>
-                debouncedResizeHandler(entityType, columnSizing),
+            columnResizeMode: "onChange" as const, // Live resizing during drag
+            defaultColumnSize: DEFAULT_COLUMN_WIDTH,
         }),
-        [entityType, debouncedResizeHandler]
+        []
     );
 
     // Column ordering configuration
     const columnOrderingConfig: ColumnOrderingConfig = useMemo(
         () => ({
             enabled: true,
-            onColumnOrderChange: (columnOrder) => handleColumnOrderChange(entityType, columnOrder),
         }),
-        [entityType]
+        []
     );
 
     return (
@@ -146,42 +160,43 @@ export const EntityDataTable: FC<Props> = ({
                 </div>
 
                 {/* Data table with custom row rendering for draft */}
-                <DataTable
-                    columns={columns}
-                    data={rowData}
-                    // enableSorting={!isDraftMode}
-                    // enableDragDrop={enableDragDrop}
-                    // onReorder={handleReorder}
-                    rowSelection={{
-                        enabled: true,
-                        persistCheckboxes: false,
-                        clearOnFilterChange: true,
-                        actionComponent: ({ selectedRows, clearSelection }) => (
-                            <div className="flex gap-2">
-                                <Button>Delete {selectedRows.length}</Button>
-                                <Button>Export</Button>
-                            </div>
-                        ),
-                    }}
-                    getRowId={(row) => row._entityId}
-                    search={{
-                        enabled: enableSearch && searchableColumns.length > 0,
-                        searchableColumns,
-                        placeholder: "Search entities...",
-                        disabled: isDraftMode,
-                    }}
-                    filter={{
-                        enabled: filters.length > 0,
-                        filters,
-                        disabled: isDraftMode,
-                    }}
-                    columnResizing={columnResizingConfig}
-                    columnOrdering={columnOrderingConfig}
-                    emptyMessage={emptyMessage}
-                    className={className}
-                    customRowRenderer={customRowRenderer}
-                    addingNewEntry={isDraftMode}
-                />
+                <DataTableProvider
+                    initialData={rowData}
+                    onColumnWidthsChange={(columnSizing) =>
+                        debouncedResizeHandler(entityType, columnSizing)
+                    }
+                    onColumnOrderChange={(columnOrder) =>
+                        handleColumnOrderChange(entityType, columnOrder)
+                    }
+                >
+                    <DataTable
+                        columns={columns}
+                        rowSelection={{
+                            enabled: true,
+                            persistCheckboxes: false,
+                            clearOnFilterChange: true,
+                            actionComponent: ({ selectedRows, clearSelection }) => (
+                                <div className="flex gap-2">
+                                    <Button>Delete {selectedRows.length}</Button>
+                                    <Button>Export</Button>
+                                </div>
+                            ),
+                        }}
+                        getRowId={(row) => row._entityId}
+                        search={searchConfig}
+                        filter={{
+                            enabled: filters.length > 0,
+                            filters,
+                            disabled: isDraftMode,
+                        }}
+                        columnResizing={columnResizingConfig}
+                        columnOrdering={columnOrderingConfig}
+                        emptyMessage={emptyMessage}
+                        className={className}
+                        customRowRenderer={customRowRenderer}
+                        addingNewEntry={isDraftMode}
+                    />
+                </DataTableProvider>
             </div>
         </Form>
     );
