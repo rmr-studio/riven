@@ -380,6 +380,51 @@ function DraggableRow<TData>({
     );
 }
 
+// Selection Action Bar Component (defined outside to prevent re-creation on every render)
+interface SelectionActionBarProps<TData> {
+    selectedCount: number;
+    selectedRows: TData[];
+    onClear: () => void;
+    actionComponent?: React.ComponentType<SelectionActionProps<TData>>;
+}
+
+function SelectionActionBar<TData>({
+    selectedCount,
+    selectedRows,
+    onClear,
+    actionComponent: CustomActionComponent,
+}: SelectionActionBarProps<TData>) {
+    return (
+        <div
+            className={cn(
+                "bg-primary text-primary-foreground absolute -top-4 left-0 p-2",
+                "border-b shadow-lg rounded-t-md"
+            )}
+        >
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <span className="text-sm font-medium">{selectedCount} selected</span>
+                    {CustomActionComponent && (
+                        <CustomActionComponent
+                            selectedRows={selectedRows}
+                            clearSelection={onClear}
+                        />
+                    )}
+                </div>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onClear}
+                    className="text-primary-foreground hover:text-primary-foreground/80 hover:bg-primary-foreground/10"
+                >
+                    <X className="h-4 w-4 mr-2" />
+                    Clear
+                </Button>
+            </div>
+        </div>
+    );
+}
+
 export function DataTable<TData, TValue>({
     columns,
     data,
@@ -803,51 +848,6 @@ export function DataTable<TData, TValue>({
         }
     };
 
-    // Selection Action Bar Component
-    interface SelectionActionBarProps<TData> {
-        onClear: () => void;
-        selectedRows: TData[];
-        actionComponent?: React.ComponentType<SelectionActionProps<TData>>;
-    }
-
-    function SelectionActionBar<TData>({
-        selectedRows,
-        onClear,
-        actionComponent: CustomActionComponent,
-    }: SelectionActionBarProps<TData>) {
-        return (
-            <div
-                className={cn(
-                    "bg-primary text-primary-foreground",
-                    "border-b shadow-lg rounded-t-md",
-                    "animate-in slide-in-from-top duration-200",
-                    "px-4 py-3"
-                )}
-            >
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <span className="text-sm font-medium">{selectedCount} selected</span>
-                        {CustomActionComponent && (
-                            <CustomActionComponent
-                                selectedRows={selectedRows}
-                                clearSelection={onClear}
-                            />
-                        )}
-                    </div>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onClear}
-                        className="text-primary-foreground hover:text-primary-foreground/80 hover:bg-primary-foreground/10"
-                    >
-                        <X className="h-4 w-4 mr-2" />
-                        Clear
-                    </Button>
-                </div>
-            </div>
-        );
-    }
-
     const renderFilter = (columnFilter: ColumnFilter<TData>) => {
         const columnId = String(columnFilter.column);
         const currentValue = activeFilters[columnId];
@@ -1180,10 +1180,11 @@ export function DataTable<TData, TValue>({
     );
 
     return (
-        <div className="w-full space-y-4">
+        <div className="w-full space-y-4 relative">
             {/* Selection Action Bar */}
             {isSelectionEnabled && hasSelections && (
                 <SelectionActionBar
+                    selectedCount={selectedCount}
                     selectedRows={selectedRowsData}
                     onClear={() => setRowSelectionState({})}
                     actionComponent={rowSelection?.actionComponent}

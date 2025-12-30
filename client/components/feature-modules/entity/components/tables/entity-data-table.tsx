@@ -152,6 +152,17 @@ export const EntityDataTable: FC<Props> = ({
                     // enableSorting={!isDraftMode}
                     // enableDragDrop={enableDragDrop}
                     // onReorder={handleReorder}
+                    rowSelection={{
+                        enabled: true,
+                        persistCheckboxes: false,
+                        clearOnFilterChange: true,
+                        actionComponent: ({ selectedRows, clearSelection }) => (
+                            <div className="flex gap-2">
+                                <Button>Delete {selectedRows.length}</Button>
+                                <Button>Export</Button>
+                            </div>
+                        ),
+                    }}
                     getRowId={(row) => row._entityId}
                     search={{
                         enabled: enableSearch && searchableColumns.length > 0,
