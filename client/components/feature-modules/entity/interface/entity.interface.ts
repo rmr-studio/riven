@@ -1,10 +1,18 @@
 import { Icon, SchemaUUID } from "@/lib/interfaces/common.interface";
-import { components, DataType, EntityPropertyType, EntityRelationshipCardinality, SchemaType } from "@/lib/types/types";
+import {
+    components,
+    DataType,
+    EntityPropertyType,
+    EntityRelationshipCardinality,
+    SchemaType,
+} from "@/lib/types/types";
 
 export type EntityType = components["schemas"]["EntityType"];
-export type EntityTypeOrderingKey = components["schemas"]["EntityTypeOrderingKey"];
+export type EntityTypeAttributeColumn = components["schemas"]["EntityTypeAttributeColumn"];
 export type Entity = components["schemas"]["Entity"];
 export type EntityRelationshipDefinition = components["schemas"]["EntityRelationshipDefinition"];
+export type EntityAttributePayload = components["schemas"]["EntityAttributePayload"];
+export type EntityAttribute = components["schemas"]["EntityAttribute"];
 
 export interface EntityTypeDefinition {
     id: string;
@@ -22,6 +30,12 @@ export const isAttributeDefinition = (
     attribute: EntityRelationshipDefinition | EntityAttributeDefinition
 ): attribute is EntityAttributeDefinition => {
     return "schema" in attribute;
+};
+
+export const isRelationshipPayload = (
+    payload: EntityAttributePayload
+): payload is EntityAttributeRelationPayload => {
+    return payload.type === EntityPropertyType.RELATIONSHIP;
 };
 
 export type CreateEntityTypeRequest = components["schemas"]["CreateEntityTypeRequest"];
@@ -42,7 +56,7 @@ export interface EntityRelationshipCandidate {
 export type {
     OverlapDetectionResult,
     OverlapResolution,
-    RelationshipOverlap,
+    RelationshipOverlap
 } from "../hooks/use-relationship-overlap-detection";
 
 export type EntityTypeImpactResponse = components["schemas"]["EntityTypeImpactResponse"];
@@ -54,8 +68,10 @@ export type SaveAttributeDefinitionRequest =
     components["schemas"]["SaveAttributeDefinitionRequest"];
 
 export type DeleteTypeDefinitionRequest = components["schemas"]["DeleteTypeDefinitionRequest"];
-export type DeleteAttributeDefinitionRequest = components["schemas"]["DeleteAttributeDefinitionRequest"];
-export type DeleteRelationshipDefinitionRequest = components["schemas"]["DeleteRelationshipDefinitionRequest"];
+export type DeleteAttributeDefinitionRequest =
+    components["schemas"]["DeleteAttributeDefinitionRequest"];
+export type DeleteRelationshipDefinitionRequest =
+    components["schemas"]["DeleteRelationshipDefinitionRequest"];
 
 export interface EntityAttributeDefinition {
     id: string;
@@ -80,3 +96,28 @@ export interface EntityTypeAttributeRow {
     allowPolymorphic?: boolean;
     bidirectional?: boolean;
 }
+
+
+/**
+ * Props interface for relationship picker component
+ * Used for selecting related entities in draft rows
+ */
+export interface RelationshipPickerProps {
+    relationship: EntityRelationshipDefinition;
+    value: string | string[] | null;
+    onChange: (value: string | string[] | null) => void;
+    onBlur: () => void;
+    errors?: string[];
+    disabled?: boolean;
+}
+
+export type EntityAttributePrimitivePayload =
+    components["schemas"]["EntityAttributePrimitivePayload"];
+export type EntityAttributeRelationPayloadReference =
+    components["schemas"]["EntityAttributeRelationPayloadReference"];
+
+export type EntityAttributeRelationPayload =
+    components["schemas"]["EntityAttributeRelationPayload"];
+export type SaveEntityRequest = components["schemas"]["SaveEntityRequest"];
+export type SaveEntityResponse = components["schemas"]["SaveEntityResponse"];
+export type EntityAttributeRequest = components["schemas"]["EntityAttributeRequest"];

@@ -7,11 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FC, useEffect, useMemo, useState } from "react";
-import { useEntityTypeConfigurationStore } from "../../context/configuration-provider";
+import { useConfigFormState } from "../../context/configuration-provider";
 import { type EntityType } from "../../interface/entity.interface";
 
+import { DataType } from "@/lib/types/types";
 import { ConfigurationForm } from "../forms/type/configuration-form";
-import { EntityTypeConfigurationHeader } from "../ui/entity-type-header";
+import { EntityTypeHeader } from "../ui/entity-type-header";
 import { EntityTypeSaveButton } from "../ui/entity-type-save-button";
 import { EntityTypesAttributes } from "./entity-type-attributes";
 
@@ -50,8 +51,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
     };
 
     // Get form and submit handler from store
-    const form = useEntityTypeConfigurationStore((state) => state.form);
-    const handleSubmit = useEntityTypeConfigurationStore((state) => state.handleSubmit);
+    const { form, handleSubmit } = useConfigFormState();
 
     // Determine which tabs have validation errors
     const tabErrors = useMemo(() => {
@@ -74,13 +74,32 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
         };
     }, [form.formState.errors]);
 
+    const identifierKeys = useMemo(() => {
+        if (!entityType.schema.properties) return [];
+        return Object.entries(entityType.schema.properties)
+            .filter(
+                ([, attr]) =>
+                    attr.unique &&
+                    attr.required &&
+                    (attr.type === DataType.STRING || attr.type === DataType.NUMBER)
+            )
+            .map(([id, attr]) => ({
+                id,
+                schema: attr,
+            }));
+    }, [entityType.schema.properties]);
+
     return (
         <>
             <Form {...form}>
                 <div className="space-y-6">
                     {/* Header */}
                     <div className="flex items-center justify-between">
-                        <EntityTypeConfigurationHeader />
+                        <EntityTypeHeader>
+                            <span className="text-sm text-muted-foreground">
+                                Manage object attributes and other relevant settings
+                            </span>
+                        </EntityTypeHeader>
                         <EntityTypeSaveButton onSubmit={handleSubmit} />
                     </div>
 
@@ -117,16 +136,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, or
 
                         {/* Configuration Tab */}
                         <TabsContent value="configuration" className="space-y-6">
-                            <ConfigurationForm
-                                availableIdentifiers={Object.entries(
-                                    entityType.schema.properties ?? {}
-                                )
-                                    .filter(([, attr]) => attr.unique && attr.required)
-                                    .map(([id, attr]) => ({
-                                        id,
-                                        schema: attr,
-                                    }))}
-                            />
+                            <ConfigurationForm availableIdentifiers={identifierKeys} />
                         </TabsContent>
 
                         {/* Attributes Tab */}

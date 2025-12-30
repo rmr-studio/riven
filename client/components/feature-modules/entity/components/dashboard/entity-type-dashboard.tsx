@@ -6,7 +6,7 @@ import { isResponseError } from "@/lib/util/error/error.util";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { EntityTypeConfigurationProvider } from "../../context/configuration-provider";
-import { useEntityTypeByKey } from "../../hooks/query/use-entity-types";
+import { useEntityTypeByKey } from "../../hooks/query/type/use-entity-types";
 import { EntityTypeOverview } from "../types/entity-type";
 
 export const EntityTypeOverviewDashboard = () => {

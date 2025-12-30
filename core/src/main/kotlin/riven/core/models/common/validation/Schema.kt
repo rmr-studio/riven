@@ -1,9 +1,12 @@
 package riven.core.models.common.validation
 
+import riven.core.enums.common.IconColour
+import riven.core.enums.common.IconType
 import riven.core.enums.common.OptionSortingType
 import riven.core.enums.common.SchemaType
 import riven.core.enums.core.DataFormat
 import riven.core.enums.core.DataType
+import riven.core.models.common.Icon
 import riven.core.models.common.json.JsonObject
 import riven.core.models.common.json.JsonValue
 import java.time.ZonedDateTime
@@ -36,6 +39,10 @@ data class Schema<T>(
     // This is a human-readable label for the schema
     val label: String? = null,
     val key: SchemaType,
+    val icon: Icon = Icon(
+        icon = IconType.LANDMARK,
+        colour = IconColour.NEUTRAL
+    ),
     val type: DataType = DataType.OBJECT,
     val format: DataFormat? = null,
     val required: Boolean = false,
@@ -121,7 +128,11 @@ data class Schema<T>(
                     schema.options?.regex?.let { base["pattern"] = it }
                     schema.options?.minLength?.let { base["minLength"] = it }
                     schema.options?.maxLength?.let { base["maxLength"] = it }
-                    schema.options?.enum?.let { base["enum"] = it }
+                    schema.options?.enum?.let {
+                        if (it.isNotEmpty()) {
+                            base["enum"] = it
+                        }
+                    }
 
                     base
                 }
@@ -147,14 +158,22 @@ data class Schema<T>(
                             put("type", "number")
                             schema.options?.minimum?.let { put("minimum", it) }
                             schema.options?.maximum?.let { put("maximum", it) }
-                            schema.options?.enum?.let { put("enum", it) }
+                            schema.options?.enum?.let {
+                                if (it.isNotEmpty()) {
+                                    put("enum", it)
+                                }
+                            }
                         }
                     }
                 }
 
                 DataType.BOOLEAN -> buildMap {
                     put("type", "boolean")
-                    schema.options?.enum?.let { put("enum", it) }
+                    schema.options?.enum?.let {
+                        if (it.isNotEmpty()) {
+                            put("enum", it)
+                        }
+                    }
                 }
 
                 DataType.NULL -> buildMap {

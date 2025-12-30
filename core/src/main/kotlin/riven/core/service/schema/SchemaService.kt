@@ -127,12 +127,12 @@ class SchemaService(
                 }
                 schema.properties?.forEach { (key, childSchema) ->
                     if (hasReachedLimit()) return acc
-                    if (!mapPayload.containsKey(key)) {
-                        if (childSchema.required) acc += "Missing required value at $path/$key"
+                    if (!mapPayload.containsKey(key.toString())) {
+                        if (childSchema.required) acc += "Missing required value at $path/${key.toString()}"
                         return@forEach
                     }
-                    val value = mapPayload[key]
-                    validateRecursive(childSchema, value, "$path/$key", scope, acc)
+                    val value = mapPayload[key.toString()]
+                    validateRecursive(childSchema, value, "$path/$key.toString()", scope, acc)
                 }
             }
 
@@ -314,7 +314,7 @@ class SchemaService(
         }
 
         schema.options?.enum?.let { allowedValues ->
-            if (value !in allowedValues) {
+            if (allowedValues.isNotEmpty() && value !in allowedValues) {
                 return "Value at $path must be one of: ${allowedValues.joinToString(", ")}"
             }
         }
@@ -359,7 +359,7 @@ class SchemaService(
             val booleanValues = allowedValues.mapNotNull {
                 it.toBooleanStrictOrNull()
             }
-            if (value !in booleanValues) {
+            if (allowedValues.isNotEmpty() && value !in booleanValues) {
                 return "Value at $path must be one of: ${booleanValues.joinToString(", ")}"
             }
         }

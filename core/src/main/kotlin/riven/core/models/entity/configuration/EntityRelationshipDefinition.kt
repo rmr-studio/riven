@@ -1,8 +1,11 @@
 package riven.core.models.entity.configuration
 
 import riven.core.entity.util.AuditableModel
+import riven.core.enums.common.IconColour
+import riven.core.enums.common.IconType
 import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.enums.entity.EntityTypeRelationshipType
+import riven.core.models.common.Icon
 import riven.core.models.entity.validation.ValidEntityRelationshipDefinition
 import java.time.ZonedDateTime
 import java.util.*
@@ -30,6 +33,10 @@ import java.util.*
 @ValidEntityRelationshipDefinition
 data class EntityRelationshipDefinition(
     val id: UUID,
+    val icon: Icon = Icon(
+        icon = IconType.LINK,
+        colour = IconColour.NEUTRAL
+    ),
 
     var name: String,
 

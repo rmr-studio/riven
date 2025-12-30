@@ -7,24 +7,28 @@ Riven is a Next.js-based SaaS platform for entity and content management with dy
 ## 2. Tech Stack
 
 **Core:**
-- Next.js 15.3.4 (App Router) + React 19 + TypeScript 5
-- Tailwind CSS 4 + shadcn/ui (Radix primitives)
+
+-   Next.js 15.3.4 (App Router) + React 19 + TypeScript 5
+-   Tailwind CSS 4 + shadcn/ui (Radix primitives)
 
 **State Management:**
-- Zustand 5.0.8 (client state, stores)
-- TanStack Query 5.81.2 (server state, caching, mutations)
-- React Hook Form 7.58.1 + Zod 3.25.67 (forms & validation)
+
+-   Zustand 5.0.8 (client state, stores)
+-   TanStack Query 5.81.2 (server state, caching, mutations)
+-   React Hook Form 7.58.1 + Zod 3.25.67 (forms & validation)
 
 **Key Dependencies:**
-- Gridstack 12.3.3 (drag-and-drop grid layouts)
-- XYFlow 12.10.0 (node-based UI/graphs)
-- Framer Motion 12.23.24 (animations)
-- Supabase 2.50.0 (auth & backend)
-- OpenAPI TypeScript 7.8.0 (type generation)
+
+-   Gridstack 12.3.3 (drag-and-drop grid layouts)
+-   XYFlow 12.10.0 (node-based UI/graphs)
+-   Framer Motion 12.23.24 (animations)
+-   Supabase 2.50.0 (auth & backend)
+-   OpenAPI TypeScript 7.8.0 (type generation)
 
 **Dev Tools:**
-- Jest 29.7.0 + Testing Library
-- ESLint + Docker
+
+-   Jest 29.7.0 + Testing Library
+-   ESLint + Docker
 
 ## 3. Architecture
 
@@ -84,8 +88,9 @@ feature-name/
 ```
 
 **Key modules:**
-- **blocks/** - Flexible content composition with drag-and-drop grid layouts, nested block hierarchies, entity references, form widgets, portal-based rendering
-- **entity/** - Dynamic schema management with attributes, bidirectional relationships, cardinality constraints, impact analysis, auto-save configuration forms
+
+-   **blocks/** - Flexible content composition with drag-and-drop grid layouts, nested block hierarchies, entity references, form widgets, portal-based rendering
+-   **entity/** - Dynamic schema management with attributes, bidirectional relationships, cardinality constraints, impact analysis, auto-save configuration forms
 
 ## 4. Development Commands
 
@@ -103,18 +108,20 @@ npm run types        # Generate TypeScript types from OpenAPI (http://localhost:
 ### Naming
 
 **Files:**
-- Components: `kebab-case.tsx` (e.g., `entity-type-header.tsx`)
-- Utilities: `kebab-case.util.ts`
-- Services: `kebab-case.service.ts`
-- Hooks: `use-kebab-case.ts`
-- Stores: `kebab-case.store.ts`
-- Interfaces: `kebab-case.interface.ts`
+
+-   Components: `kebab-case.tsx` (e.g., `entity-type-header.tsx`)
+-   Utilities: `kebab-case.util.ts`
+-   Services: `kebab-case.service.ts`
+-   Hooks: `use-kebab-case.ts`
+-   Stores: `kebab-case.store.ts`
+-   Interfaces: `kebab-case.interface.ts`
 
 **Code:**
-- Components: `PascalCase`
-- Hooks: `use{Name}` prefix
-- Props interfaces: `{ComponentName}Props`
-- Types/Interfaces: `PascalCase`
+
+-   Components: `PascalCase`
+-   Hooks: `use{Name}` prefix
+-   Props interfaces: `{ComponentName}Props`
+-   Types/Interfaces: `PascalCase`
 
 ### Common Patterns
 
@@ -143,7 +150,7 @@ export class EntityTypeService {
         validateUuid(organisationId);
 
         const response = await fetch(`/api/organisations/${organisationId}/entity-types`, {
-            headers: { Authorization: `Bearer ${session.access_token}` }
+            headers: { Authorization: `Bearer ${session.access_token}` },
         });
 
         if (response.ok) return await response.json();
@@ -153,10 +160,11 @@ export class EntityTypeService {
 ```
 
 **Pattern:**
-- Static methods for all service operations
-- Always validate session and UUIDs first
-- Use `handleError` utility for consistent error handling
-- Return typed responses from OpenAPI schemas
+
+-   Static methods for all service operations
+-   Always validate session and UUIDs first
+-   Use `handleError` utility for consistent error handling
+-   Return typed responses from OpenAPI schemas
 
 #### 3. TanStack Query Hooks
 
@@ -188,10 +196,11 @@ export function useSaveDefinitionMutation(
 ```
 
 **Pattern:**
-- Encapsulate mutation logic with toast notifications
-- Update/invalidate cache on success
-- Toast refs for loading → success/error transitions
-- Allow options override for custom behavior
+
+-   Encapsulate mutation logic with toast notifications
+-   Update/invalidate cache on success
+-   Toast refs for loading → success/error transitions
+-   Allow options override for custom behavior
 
 #### 4. Zustand Stores with Context
 
@@ -247,18 +256,21 @@ export const useEntityTypeConfigurationStore = <T,>(
 ```
 
 **Pattern:**
-- Factory function creates scoped store instances
-- Provider wraps components needing access
-- Selector-based hooks for performance
-- `subscribeWithSelector` enables fine-grained subscriptions
-- Store refs in provider prevent recreation
+
+-   Factory function creates scoped store instances
+-   Provider wraps components needing access
+-   Selector-based hooks for performance
+-   `subscribeWithSelector` enables fine-grained subscriptions
+-   Store refs in provider prevent recreation
 
 #### 5. React Hook Form + Auto-save
 
 ```typescript
 const form = useForm<EntityTypeFormValues>({
     resolver: zodResolver(entityTypeFormSchema),
-    defaultValues: { /* ... */ },
+    defaultValues: {
+        /* ... */
+    },
 });
 
 // Auto-save effect (common pattern)
@@ -285,11 +297,12 @@ useEffect(() => {
 ```
 
 **Pattern:**
-- Zod schema validation
-- Auto-save with 1-second debounce
-- Draft persistence to localStorage
-- Restoration prompt on mount
-- Draft staleness check (usually 7 days)
+
+-   Zod schema validation
+-   Auto-save with 1-second debounce
+-   Draft persistence to localStorage
+-   Restoration prompt on mount
+-   Draft staleness check (usually 7 days)
 
 #### 6. Portal-Based Rendering (Blocks)
 
@@ -320,17 +333,16 @@ export const RenderElementProvider: FC<ProviderProps> = ({ wrapElement }) => {
 ```
 
 **Pattern:**
-- React portals render content into grid containers
-- Each widget has isolated context
-- Container management via hooks
-- Gridstack integration for positioning
+
+-   React portals render content into grid containers
+-   Each widget has isolated context
+-   Container management via hooks
+-   Gridstack integration for positioning
 
 #### 7. Type Guards & Discriminated Unions
 
 ```typescript
-export const isContentMetadata = (
-    payload: Block["payload"]
-): payload is BlockContentMetadata =>
+export const isContentMetadata = (payload: Block["payload"]): payload is BlockContentMetadata =>
     payload?.type === BlockMetadataType.CONTENT;
 
 // Usage with type narrowing
@@ -369,10 +381,124 @@ throw await handleError(response, (res) => `Failed: ${res.status} ${res.statusTe
 ```
 
 **Pattern:**
-- Always use `handleError` for fetch responses
-- Provide context-specific error messages
-- Let errors propagate to mutation hooks
-- Display errors via toast notifications
+
+-   Always use `handleError` for fetch responses
+-   Provide context-specific error messages
+-   Let errors propagate to mutation hooks
+-   Display errors via toast notifications
+
+#### 9. Form Management Patterns
+
+**Choose between two approaches based on complexity:**
+
+**Form Hook Pattern** - For isolated components with minimal prop drilling:
+
+```typescript
+// hooks/form/use-relationship-form.ts
+export interface UseEntityRelationshipFormReturn {
+    form: UseFormReturn<RelationshipFormValues>;
+    handleSubmit: (values: RelationshipFormValues) => void;
+    handleReset: () => void;
+    mode: "create" | "edit";
+}
+
+export function useEntityTypeRelationshipForm(
+    organisationId: string,
+    type: EntityType,
+    open: boolean,
+    onSave: () => void,
+    onCancel: () => void,
+    relationship?: EntityRelationshipDefinition
+): UseEntityRelationshipFormReturn {
+    const form = useForm<RelationshipFormValues>({
+        resolver: zodResolver(relationFormSchema),
+        defaultValues: {
+            /* ... */
+        },
+    });
+
+    const { mutateAsync: saveDefinition } = useSaveDefinitionMutation(organisationId, {
+        onSuccess: () => onSave(),
+    });
+
+    const handleSubmit = useCallback(
+        async (values: RelationshipFormValues) => {
+            // Transform and submit data
+            await saveDefinition(request);
+        },
+        [relationship, type]
+    );
+
+    return { form, handleSubmit, handleReset: onCancel, mode: relationship ? "edit" : "create" };
+}
+```
+
+**Context Provider Pattern** - For global forms spanning multiple components:
+
+```typescript
+// context/configuration-provider.tsx
+const EntityTypeConfigContext = createContext<EntityTypeConfigStoreApi | undefined>(undefined);
+
+export const EntityTypeConfigurationProvider = ({
+    children,
+    organisationId,
+    entityType,
+}: EntityTypeConfigurationProviderProps) => {
+    const storeRef = useRef<EntityTypeConfigStoreApi | null>(null);
+
+    // Create form instance
+    const form = useForm<EntityTypeFormValues>({
+        resolver: zodResolver(entityTypeFormSchema),
+        defaultValues: {
+            /* ... */
+        },
+    });
+
+    // Create mutation function
+    const { mutateAsync: updateType } = useSaveEntityTypeConfiguration(organisationId);
+
+    // Create store only once per entity type
+    if (!storeRef.current) {
+        storeRef.current = createEntityTypeConfigStore(
+            entityType.key,
+            organisationId,
+            entityType,
+            form,
+            updateType
+        );
+    }
+
+    // Auto-save and draft management effects
+    useEffect(() => {
+        const store = storeRef.current?.getState();
+        if (!store) return;
+
+        // Draft restoration logic
+        const draft = store.loadDraft();
+        if (draft) {
+            toast.info("Unsaved changes found", {
+                action: { label: "Restore", onClick: () => form.reset(draft) },
+            });
+        }
+    }, [entityType.key]);
+
+    return (
+        <EntityTypeConfigContext.Provider value={storeRef.current}>
+            {children}
+        </EntityTypeConfigContext.Provider>
+    );
+};
+
+// Hook to access form from any child component
+export const useConfigForm = () => {
+    return useEntityTypeConfigurationStore((state) => state.form);
+};
+```
+
+**When to use each pattern:**
+
+-   **Form Hook:** Modal forms, isolated components, single-level usage, simple workflows
+-   **Context Provider:** Multi-step forms, forms with nested components at different levels, global state needed, complex draft/auto-save requirements
 
 ## 6. Key Domain Concepts
 
@@ -381,24 +507,28 @@ throw await handleError(response, (res) => `Failed: ${res.status} ${res.statusTe
 **Dynamic schema management** for custom business objects:
 
 **Entity Types:**
-- User-defined schemas (e.g., Client, Project, Invoice)
-- Custom attributes with validation
-- Bidirectional relationships with cardinality constraints
-- Icon, color, and identifier key configuration
+
+-   User-defined schemas (e.g., Client, Project, Invoice)
+-   Custom attributes with validation
+-   Bidirectional relationships with cardinality constraints
+-   Icon, color, and identifier key configuration
 
 **Attributes:**
-- UUID-based with SchemaUUID references
-- Data types: string, number, boolean, date, enum
-- Constraints: required, unique, min/max length
-- Protected attributes (cannot be deleted)
+
+-   UUID-based with SchemaUUID references
+-   Data types: string, number, boolean, date, enum
+-   Constraints: required, unique, min/max length
+-   Protected attributes (cannot be deleted)
 
 **Relationships:**
-- Bidirectional with automatic inverse creation
-- Cardinality: ONE_TO_ONE, ONE_TO_MANY, MANY_TO_ONE, MANY_TO_MANY
-- Polymorphic (multiple target types)
-- Overlap detection prevents conflicts
+
+-   Bidirectional with automatic inverse creation
+-   Cardinality: ONE_TO_ONE, ONE_TO_MANY, MANY_TO_ONE, MANY_TO_MANY
+-   Polymorphic (multiple target types)
+-   Overlap detection prevents conflicts
 
 **Configuration Flow:**
+
 1. Define entity type (name, icon, description)
 2. Add/edit attributes with validation rules
 3. Configure relationships with target types
@@ -407,27 +537,31 @@ throw await handleError(response, (res) => `Failed: ${res.status} ${res.statusTe
 6. Changes applied atomically
 
 **Critical Features:**
-- **Auto-save:** Form changes saved to localStorage every 1 second
-- **Draft Management:** Drafts expire after 7 days, restoration offered on mount
-- **Impact Analysis:** Server performs dry-run before schema changes
-- **Dirty Tracking:** Visual indicators show unsaved changes
+
+-   **Auto-save:** Form changes saved to localStorage every 1 second
+-   **Draft Management:** Drafts expire after 7 days, restoration offered on mount
+-   **Impact Analysis:** Server performs dry-run before schema changes
+-   **Dirty Tracking:** Visual indicators show unsaved changes
 
 ### Block System
 
 **Flexible content composition** framework:
 
 **Blocks:**
-- Fundamental content units with type definitions
-- Content blocks (user data) or reference blocks (entity/block references)
-- Support nested children based on type configuration
-- Grid-based positioning with drag-and-drop
+
+-   Fundamental content units with type definitions
+-   Content blocks (user data) or reference blocks (entity/block references)
+-   Support nested children based on type configuration
+-   Grid-based positioning with drag-and-drop
 
 **Block Metadata Types:**
+
 1. **Content:** User-entered data, form-based editing, list configuration
 2. **Entity Reference:** References to entity instances with hydration
 3. **Block Reference:** References to reusable block trees
 
 **Rendering Flow:**
+
 1. **Environment Setup:** Grid initialization, widget registration, layout history
 2. **Hydration:** Resolve entity references, fetch block trees, merge data
 3. **Rendering:** Portal-based rendering to grid containers, component structure from definitions, dynamic binding resolution
@@ -460,6 +594,7 @@ interface RelationshipOverlap {
 ```
 
 **Detection Logic:**
+
 1. Check existing relationships with same target
 2. Analyze cardinality compatibility
 3. Detect inverse relationship conflicts
@@ -479,6 +614,7 @@ interface EntityTypeImpactResponse {
 ```
 
 **Flow:**
+
 1. User initiates schema change
 2. Server performs dry-run analysis
 3. Returns 409 if impact detected
@@ -489,39 +625,44 @@ interface EntityTypeImpactResponse {
 ### Multi-tenancy
 
 **Organisation-scoped resources:**
-- All major features scoped to organisation ID
-- Route pattern: `/dashboard/organisation/[organisationId]/{feature}`
-- Entity types, blocks, members isolated per org
-- Subscription and usage tracking per org
+
+-   All major features scoped to organisation ID
+-   Route pattern: `/dashboard/organisation/[organisationId]/{feature}`
+-   Entity types, blocks, members isolated per org
+-   Subscription and usage tracking per org
 
 ## Development Gotchas
 
 1. **Never import types directly from `lib/types/types.ts`** - Always use re-exported types from feature interfaces
-2. **Auto-save is 1 second debounced** - Don't add additional debouncing in form components
-3. **Draft storage keys must be unique** - Include both organisationId and entity key
-4. **Impact confirmation required** - Schema changes need `impactConfirmed=true` after showing impact
-5. **Portal rendering requires containers** - Gridstack must be initialized before rendering widgets
-6. **Store factories are per-instance** - Never reuse store instances across different entities
-7. **Session validation is critical** - Always call `validateSession()` before API calls
-8. **Type guards over assertions** - Use type guard functions, not `as` casts
-9. **OpenAPI types regenerate** - Run `npm run types` after backend schema changes
-10. **Client components need directive** - Add `"use client"` when using hooks/browser APIs
+2. **Enums can be importated directly from `libs/types.ts`** - They do not need to be re-exported, as it is an exported const
+3. **Auto-save is 1 second debounced** - Don't add additional debouncing in form components
+4. **Draft storage keys must be unique** - Include both organisationId and entity key
+5. **Impact confirmation required** - Schema changes need `impactConfirmed=true` after showing impact
+6. **Portal rendering requires containers** - Gridstack must be initialized before rendering widgets
+7. **Store factories are per-instance** - Never reuse store instances across different entities
+8. **Session validation is critical** - Always call `validateSession()` before API calls
+9. **Type guards over assertions** - Use type guard functions, not `as` casts
+10. **OpenAPI types regenerate** - Run `npm run types` after backend schema changes
+11. **Client components need directive** - Add `"use client"` when using hooks/browser APIs
 
 ## Common Tasks
 
 **Add a new entity attribute:**
+
 1. Create form field in `entity-type-attributes-form.tsx`
 2. Update Zod schema with validation
 3. Add to form default values
 4. Handle in save mutation
 
 **Add a new form widget (blocks):**
+
 1. Create widget component in `components/feature-modules/blocks/components/forms/widgets/`
 2. Register in `formWidgetRegistry` with default value
 3. Add type to widget type enum
 4. Update render logic if needed
 
 **Add a new entity relationship:**
+
 1. Use relationship form in entity configuration
 2. Select target type and cardinality
 3. Review overlap detection results
@@ -529,6 +670,7 @@ interface EntityTypeImpactResponse {
 5. System creates inverse automatically
 
 **Create a new feature module:**
+
 1. Create directory in `components/feature-modules/`
 2. Add subdirectories: `components/`, `hooks/`, `interface/`, `service/`, `util/`
 3. Create interface file with OpenAPI type re-exports
@@ -539,10 +681,11 @@ interface EntityTypeImpactResponse {
 ## Maintenance
 
 When making significant changes:
-- **New dependencies:** Update Tech Stack section
-- **Architectural shifts:** Update Architecture section
-- **New conventions:** Update Code Conventions section
-- **Domain changes:** Update Key Domain Concepts section
-- **New gotchas:** Add to Development Gotchas section
+
+-   **New dependencies:** Update Tech Stack section
+-   **Architectural shifts:** Update Architecture section
+-   **New conventions:** Update Code Conventions section
+-   **Domain changes:** Update Key Domain Concepts section
+-   **New gotchas:** Add to Development Gotchas section
 
 Keep this file accurate and concise - it's a reference for AI assistants and new developers.

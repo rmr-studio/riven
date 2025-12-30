@@ -1,7 +1,9 @@
-import { DataType, SchemaType } from "@/lib/types/types";
+"use client";
+
+import { DataType, IconColour, IconType, SchemaType } from "@/lib/types/types";
 import { AttributeSchemaType, attributeTypes } from "@/lib/util/form/schema.util";
 import { cn } from "@/lib/util/utils";
-import { Check, ChevronsUpDown, Link2 } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { Dispatch, FC, SetStateAction, useMemo } from "react";
 import { Button } from "./button";
 import {
@@ -13,6 +15,7 @@ import {
     CommandList,
 } from "./command";
 import { FormControl } from "./form";
+import { IconCell } from "./icon/icon-cell";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 
 interface Props {
@@ -63,7 +66,13 @@ export const AttributeTypeDropdown: FC<Props> = ({
 
     const selectedAttribute = useMemo(() => {
         if (type === "RELATIONSHIP") {
-            return { label: "Relationship", icon: Link2 };
+            return {
+                label: "Relationship",
+                icon: {
+                    icon: IconType.LINK_2,
+                    colour: IconColour.NEUTRAL,
+                },
+            };
         }
 
         return attributeTypes[type];
@@ -97,7 +106,12 @@ export const AttributeTypeDropdown: FC<Props> = ({
                         disabled={disabled || open}
                     >
                         <div className="flex items-center gap-2">
-                            <selectedAttribute.icon className="h-4 w-4" />
+                            <IconCell
+                                readonly
+                                className="mr-1 size-4"
+                                iconType={selectedAttribute.icon.icon}
+                                colour={selectedAttribute.icon.colour}
+                            />
                             <span>{selectedAttribute.label}</span>
                         </div>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -133,7 +147,11 @@ export const AttributeTypeDropdown: FC<Props> = ({
                                         type === "RELATIONSHIP" ? "opacity-100" : "opacity-0"
                                     )}
                                 />
-                                <Link2 className="mr-1 size-3.5" />
+                                <IconCell
+                                    readonly
+                                    iconType={IconType.LINK_2}
+                                    colour={IconColour.NEUTRAL}
+                                />
                                 Relationship
                             </CommandItem>
                         </CommandGroup>
@@ -154,7 +172,12 @@ export const AttributeTypeDropdown: FC<Props> = ({
                                             type === attr.key ? "opacity-100" : "opacity-0"
                                         )}
                                     />
-                                    <attr.icon className="mr-1 size-3.5" />
+                                    <IconCell
+                                        readonly
+                                        className="mr-1 size-4"
+                                        iconType={attr.icon.icon}
+                                        colour={attr.icon.colour}
+                                    />
                                     {attr.label}
                                 </CommandItem>
                             ))}
@@ -186,7 +209,12 @@ export const AttributeTypeDropdown: FC<Props> = ({
                                                             : "opacity-0"
                                                     )}
                                                 />
-                                                <attr.icon className="mr-1 size-3.5" />
+                                                <IconCell
+                                                    readonly
+                                                    className="mr-1 size-4"
+                                                    iconType={attr.icon.icon}
+                                                    colour={attr.icon.colour}
+                                                />
                                                 {attr.label}
                                             </CommandItem>
                                         ))}

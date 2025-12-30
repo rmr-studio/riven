@@ -1,9 +1,0 @@
-package riven.core.models.entity.configuration
-
-import riven.core.enums.entity.EntityPropertyType
-import java.util.*
-
-data class EntityTypeOrderingKey(
-    val key: UUID,
-    val type: EntityPropertyType
-)

@@ -11,7 +11,7 @@ import riven.core.enums.entity.EntityTypeRelationshipType
 import riven.core.enums.entity.invert
 import riven.core.enums.util.OperationType
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
-import riven.core.models.entity.configuration.EntityTypeOrderingKey
+import riven.core.models.entity.configuration.EntityTypeAttributeColumn
 import riven.core.models.entity.relationship.EntityTypeReferenceRelationshipBuilder
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDeleteRequest
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
@@ -578,8 +578,8 @@ class EntityRelationshipService(
         // Remove the ORIGIN relationship from source entity type
         val updatedRelationships = sourceEntityType.relationships?.toMutableList() ?: mutableListOf()
         updatedRelationships.removeIf { it.id == originRelationship.id }
-        val updatedOrder = sourceEntityType.order.filter { it.key != originRelationship.id }
-        sourceEntityType = sourceEntityType.copy(relationships = updatedRelationships, order = updatedOrder)
+        val updatedOrder = sourceEntityType.columns.filter { it.key != originRelationship.id }
+        sourceEntityType = sourceEntityType.copy(relationships = updatedRelationships, columns = updatedOrder)
         entityTypes[sourceKey] = sourceEntityType
 
         // If bidirectional, remove all inverse REFERENCE relationships from target entity types
@@ -1322,7 +1322,7 @@ class EntityRelationshipService(
             existingRelationships.add(newRelationship)
 
             // Append to table order
-            entityType.order += EntityTypeOrderingKey(
+            entityType.columns += EntityTypeAttributeColumn(
                 newRelationship.id,
                 EntityPropertyType.RELATIONSHIP
             )

@@ -37,7 +37,7 @@ class EntityAttributeService(
         )
 
         if (breakingChanges.any { it.breaking }) {
-            val existingEntities = entityRepository.findByOrganisationIdAndTypeId(organisationId, typeId)
+            val existingEntities = entityRepository.findByTypeId(typeId)
             val validationSummary = entityValidationService.validateExistingEntitiesAgainstNewSchema(
                 existingEntities,
                 updatedSchema,

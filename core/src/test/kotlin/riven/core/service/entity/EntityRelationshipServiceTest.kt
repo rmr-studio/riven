@@ -1965,7 +1965,7 @@ class EntityRelationshipServiceTest {
                     )
                 )
             ),
-            order = emptyList(),
+            columns = emptyList(),
             relationships = emptyList(),
             identifierKey = id
         )

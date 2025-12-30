@@ -8,7 +8,7 @@ export type FCWC<T> = React.FC<React.PropsWithChildren<T>>;
 export type Propless = {};
 
 export interface ChildNodeProps {
-    children: React.ReactNode;
+    children?: React.ReactNode;
 }
 
 export interface ClassNameProps {

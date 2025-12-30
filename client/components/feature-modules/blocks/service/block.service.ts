@@ -2,7 +2,11 @@ import { fromError, isResponseError } from "@/lib/util/error/error.util";
 import { handleError, validateSession, validateUuid } from "@/lib/util/service/service.util";
 import { api } from "@/lib/util/utils";
 import { Session } from "@supabase/supabase-js";
-import { EntityReferenceHydrationRequest, HydrateBlockRequest, HydrateBlockResponse } from "../interface/block.interface";
+import {
+    EntityReferenceHydrationRequest,
+    HydrateBlockRequest,
+    HydrateBlockResponse,
+} from "../interface/block.interface";
 
 /**
  * Block Service - HTTP API Integration for Block operations
@@ -34,7 +38,6 @@ export class BlockService {
      * // Access results per block
      * const block1Result = results["block-uuid-1"];
      * if (block1Result && !block1Result.error) {
-     *   console.log(block1Result.references); // Resolved entities
      * }
      */
     static async hydrateBlocks(

@@ -1,7 +1,7 @@
-"use client";
+import { EntityDashboard } from "@/components/feature-modules/entity/components/dashboard/entity-dashboard";
 
 const EntityTypeDataPage = () => {
-    return <div>Chat clip that</div>;
+    return <EntityDashboard />;
 };
 
 export default EntityTypeDataPage;

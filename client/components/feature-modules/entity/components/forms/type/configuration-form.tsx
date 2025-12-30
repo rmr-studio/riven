@@ -15,7 +15,8 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { FC } from "react";
+import { EntityPropertyType } from "@/lib/types/types";
+import { FC, useEffect } from "react";
 import { useConfigForm } from "../../../context/configuration-provider";
 import { EntityAttributeDefinition } from "../../../interface/entity.interface";
 
@@ -26,6 +27,54 @@ interface Props {
 export const ConfigurationForm: FC<Props> = ({ availableIdentifiers }) => {
     const form = useConfigForm();
     if (!form) return null;
+
+    const identifierKey = form.watch("identifierKey");
+    const columns = form.watch("columns");
+
+    // Watch for identifier key changes and auto-recolumns to ensure identifier is first
+    useEffect(() => {
+        if (columns.length <= 1) return;
+
+        // Check if identifier is already first
+        const firstItem = columns[0];
+        if (firstItem?.key === identifierKey && firstItem?.type === EntityPropertyType.ATTRIBUTE) {
+            // Already in first position, nothing to do
+            return;
+        }
+
+        // Find identifier in current columns
+        const identifierIndex = columns.findIndex(
+            (item) => item.key === identifierKey && item.type === EntityPropertyType.ATTRIBUTE
+        );
+
+        if (identifierIndex !== -1) {
+            // Identifier exists in columns, move it to first position
+            const identifierItem = columns[identifierIndex];
+            form.setValue(
+                "columns",
+                [identifierItem, ...columns.filter((_, idx) => idx !== identifierIndex)],
+                {
+                    shouldDirty: true,
+                }
+            );
+            return;
+        }
+        // Identifier not in columns, add it at first position
+        form.setValue(
+            "columns",
+            [
+                {
+                    key: identifierKey,
+                    type: EntityPropertyType.ATTRIBUTE,
+                    width: 150,
+                },
+                ...columns,
+            ],
+            { shouldDirty: true }
+        );
+
+        // Update the columns in the form
+    }, [identifierKey]);
 
     return (
         <div className="rounded-lg border bg-card p-6">

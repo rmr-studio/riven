@@ -4,8 +4,13 @@ import org.springframework.stereotype.Service
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.common.ValidationScope
+import riven.core.enums.entity.validation.EntityTypeChangeType
+import riven.core.enums.entity.EntityPropertyType
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
+import riven.core.models.entity.validation.EntityTypeSchemaChange
+import riven.core.models.entity.validation.EntityTypeValidationSummary
+import riven.core.models.entity.validation.EntityValidationError
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.service.schema.SchemaService
 import java.util.*
@@ -28,7 +33,19 @@ class EntityValidationService(
     ): List<String> {
         return schemaService.validate(
             schema = entityType.schema,
-            payload = entity.payload,
+            // Only validate ATTRIBUTE properties in this context. Relationship validation is separate.
+            payload = entity.payload.mapNotNull { (key, value) ->
+                @Suppress("UNCHECKED_CAST")
+                val jsonMap = value as? Map<String, Any?> ?: return@mapNotNull null
+                val type = (jsonMap["type"] as? String)?.let { EntityPropertyType.valueOf(it) }
+
+                // Only validate ATTRIBUTE properties, skip RELATIONSHIP properties
+                if (type == EntityPropertyType.ATTRIBUTE) {
+                    key to jsonMap["value"]
+                } else {
+                    null
+                }
+            }.toMap(),
             scope = ValidationScope.STRICT
         )
     }
@@ -83,15 +100,15 @@ class EntityValidationService(
     fun detectSchemaBreakingChanges(
         oldSchema: EntityTypeSchema,
         newSchema: EntityTypeSchema
-    ): List<SchemaChange> {
-        val changes = mutableListOf<SchemaChange>()
+    ): List<EntityTypeSchemaChange> {
+        val changes = mutableListOf<EntityTypeSchemaChange>()
 
         // Detect removed fields (breaking if required)
         oldSchema.properties?.forEach { (key, oldField) ->
             if (newSchema.properties?.get(key) == null) {
                 changes.add(
-                    SchemaChange(
-                        type = ChangeType.FIELD_REMOVED,
+                    EntityTypeSchemaChange(
+                        type = EntityTypeChangeType.FIELD_REMOVED,
                         path = key.toString(),
                         description = "Field '$key' removed",
                         breaking = oldField.required
@@ -104,8 +121,8 @@ class EntityValidationService(
         newSchema.properties?.forEach { (key, newField) ->
             if (oldSchema.properties?.get(key) == null && newField.required) {
                 changes.add(
-                    SchemaChange(
-                        type = ChangeType.FIELD_REQUIRED_ADDED,
+                    EntityTypeSchemaChange(
+                        type = EntityTypeChangeType.FIELD_REQUIRED_ADDED,
                         path = key.toString(),
                         description = "Required field '$key' added",
                         breaking = true
@@ -119,8 +136,8 @@ class EntityValidationService(
             newSchema.properties?.get(key)?.let { newField ->
                 if (oldField.type != newField.type) {
                     changes.add(
-                        SchemaChange(
-                            type = ChangeType.FIELD_TYPE_CHANGED,
+                        EntityTypeSchemaChange(
+                            type = EntityTypeChangeType.FIELD_TYPE_CHANGED,
                             path = key.toString(),
                             description = "Field '$key' type changed from ${oldField.type} to ${newField.type}",
                             breaking = true
@@ -131,8 +148,8 @@ class EntityValidationService(
                 // Detect required flag changes
                 if (!oldField.required && newField.required) {
                     changes.add(
-                        SchemaChange(
-                            type = ChangeType.FIELD_REQUIRED_ADDED,
+                        EntityTypeSchemaChange(
+                            type = EntityTypeChangeType.FIELD_REQUIRED_ADDED,
                             path = key.toString(),
                             description = "Field '$key' changed from optional to required",
                             breaking = true
@@ -152,7 +169,7 @@ class EntityValidationService(
     fun validateExistingEntitiesAgainstNewSchema(
         entities: List<EntityEntity>,
         newSchema: EntityTypeSchema,
-    ): ValidationSummary {
+    ): EntityTypeValidationSummary {
         var validCount = 0
         var invalidCount = 0
         val sampleErrors = mutableListOf<EntityValidationError>()
@@ -161,7 +178,7 @@ class EntityValidationService(
 
             val errors = schemaService.validate(
                 schema = newSchema,
-                payload = entity.payload,
+                payload = entity.payload.map { it.key.toString() to it.value }.toMap(),
                 scope = ValidationScope.STRICT
             )
 
@@ -174,7 +191,8 @@ class EntityValidationService(
                     sampleErrors.add(
                         EntityValidationError(
                             entityId = entity.id!!,
-                            entityName = entity.name,
+                            // todo. Use Entity type identifier
+                            entityName = "",
                             errors = errors
                         )
                     )
@@ -182,7 +200,7 @@ class EntityValidationService(
             }
         }
 
-        return ValidationSummary(
+        return EntityTypeValidationSummary(
             totalEntities = entities.size,
             validCount = validCount,
             invalidCount = invalidCount,
@@ -190,43 +208,3 @@ class EntityValidationService(
         )
     }
 }
-
-/**
- * Represents a schema change between two versions.
- */
-data class SchemaChange(
-    val type: ChangeType,
-    val path: String,
-    val description: String,
-    val breaking: Boolean
-)
-
-/**
- * Types of schema changes.
- */
-enum class ChangeType {
-    FIELD_ADDED,
-    FIELD_REMOVED,
-    FIELD_TYPE_CHANGED,
-    FIELD_REQUIRED_ADDED,
-    FIELD_OPTIONAL_REMOVED
-}
-
-/**
- * Summary of validation results for existing entities.
- */
-data class ValidationSummary(
-    val totalEntities: Int,
-    val validCount: Int,
-    val invalidCount: Int,
-    val sampleErrors: List<EntityValidationError>
-)
-
-/**
- * Validation error for a specific entity.
- */
-data class EntityValidationError(
-    val entityId: UUID,
-    val entityName: String?,
-    val errors: List<String>
-)

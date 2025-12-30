@@ -177,6 +177,7 @@ export function useEntityTypeAttributeSchemaForm(
                     format: attributeType.format,
                     label: values.name,
                     required: values.required,
+                    icon: attributeType.icon,
                     unique: values.unique,
                     options: options,
                 },

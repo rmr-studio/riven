@@ -1,0 +1,77 @@
+package riven.core.models.entity.payload
+
+import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping
+import io.swagger.v3.oas.annotations.media.Schema
+import riven.core.deserializer.EntityAttributePayloadDeserializer
+import riven.core.enums.common.SchemaType
+import riven.core.enums.entity.EntityPropertyType
+import riven.core.models.common.json.JsonValue
+import riven.core.models.entity.EntityLink
+import java.util.*
+
+
+@Schema(hidden = true)
+@JsonDeserialize(using = EntityAttributePayloadDeserializer::class)
+sealed interface EntityAttributePayload {
+    val type: EntityPropertyType
+}
+
+@Schema(
+    name = "EntityAttributePrimitivePayload",
+    description = "An attribute payload representing a primitive value with a defined schema type"
+)
+@JsonDeserialize(using = JsonDeserializer.None::class)
+data class EntityAttributePrimitivePayload(
+    val value: JsonValue,
+    val schemaType: SchemaType
+) : EntityAttributePayload {
+    override val type: EntityPropertyType = EntityPropertyType.ATTRIBUTE
+}
+
+@Schema(
+    name = "EntityAttributeRelationPayloadReference",
+    description = "An attribute payload representing relationships to other entities by their IDs"
+)
+@JsonDeserialize(using = JsonDeserializer.None::class)
+data class EntityAttributeRelationPayloadReference(
+    val relations: List<UUID>
+) : EntityAttributePayload {
+    override val type: EntityPropertyType = EntityPropertyType.RELATIONSHIP
+}
+
+@Schema(
+    name = "EntityAttributeRelationPayload",
+    description = "An attribute payload representing a relationship to another entity, with a full identifying link"
+)
+@JsonDeserialize(using = JsonDeserializer.None::class)
+data class EntityAttributeRelationPayload(
+    val relations: List<EntityLink>
+) : EntityAttributePayload {
+    override val type: EntityPropertyType = EntityPropertyType.RELATIONSHIP
+}
+
+data class EntityAttributeRequest(
+    @field:Schema(
+        oneOf = [EntityAttributePrimitivePayload::class, EntityAttributeRelationPayloadReference::class],
+        discriminatorProperty = "type",
+        discriminatorMapping = [
+            DiscriminatorMapping(value = "ATTRIBUTE", schema = EntityAttributePrimitivePayload::class),
+            DiscriminatorMapping(value = "RELATIONSHIP", schema = EntityAttributeRelationPayloadReference::class),
+        ]
+    )
+    val payload: EntityAttributePayload
+)
+
+data class EntityAttribute(
+    @field:Schema(
+        oneOf = [EntityAttributePrimitivePayload::class, EntityAttributeRelationPayload::class],
+        discriminatorProperty = "type",
+        discriminatorMapping = [
+            DiscriminatorMapping(value = "ATTRIBUTE", schema = EntityAttributePrimitivePayload::class),
+            DiscriminatorMapping(value = "RELATIONSHIP", schema = EntityAttributeRelationPayload::class),
+        ]
+    )
+    val payload: EntityAttributePayload
+)

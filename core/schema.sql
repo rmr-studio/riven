@@ -320,7 +320,7 @@ CREATE TABLE IF NOT EXISTS public.entity_types
     "description"           TEXT,
     "protected"             BOOLEAN NOT NULL         DEFAULT FALSE,
     "schema"                JSONB   NOT NULL,
-    "column_order"          JSONB,
+    "columns"               JSONB,
     -- Denormalized count of entities of this type for faster access
     "count"                 INTEGER NOT NULL         DEFAULT 0,
     "relationships"         JSONB,
@@ -330,6 +330,7 @@ CREATE TABLE IF NOT EXISTS public.entity_types
     "updated_at"            TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "created_by"            UUID,
     "updated_by"            UUID,
+    "deleted_at"            TIMESTAMP WITH TIME ZONE DEFAULT NULL,
 
     -- Single row per entity type (mutable pattern)
     -- Also creates an index on organisation_id + key for faster lookups
@@ -342,6 +343,10 @@ CREATE TABLE IF NOT EXISTS public.entity_types
         )
 );
 
+create index if not exists idx_entity_types_organisation_id
+    on entity_types (organisation_id)
+    where archived = false;
+
 -- =====================================================
 -- 2. ENTITIES TABLE
 -- =====================================================
@@ -351,38 +356,55 @@ CREATE TABLE IF NOT EXISTS public.entities
     "id"              UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
     "organisation_id" UUID    NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
     "type_id"         UUID    NOT NULL REFERENCES entity_types (id) ON DELETE RESTRICT,
-    "type_version"    INTEGER NOT NULL,
     "name"            TEXT,
-    "payload"         JSONB   NOT NULL         DEFAULT '{}'::jsonb,
-    "created_at"      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "updated_at"      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "created_by"      UUID    REFERENCES users (id) ON DELETE SET NULL,
-    "updated_by"      UUID    REFERENCES users (id) ON DELETE SET NULL
-);
-
--- Archived Entities Table => Soft Delete Pattern, also to help reduce query latency on main entities table
-CREATE TABLE IF NOT EXISTS public.archived_entities
-(
-    "id"              UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
+    "archived"        BOOLEAN NOT NULL         DEFAULT FALSE,
     -- Duplicate key from entity_type for faster lookups without needing separate query
-    "key"             TEXT    NOT NULL,
-    "organisation_id" UUID    NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
-    "archived_at"     TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "type_id"         UUID    NOT NULL REFERENCES entity_types (id) ON DELETE RESTRICT,
-    "type_version"    INTEGER NOT NULL,
-    "name"            TEXT,
+    "identifier_key"  UUID    NOT NULL,
     "payload"         JSONB   NOT NULL         DEFAULT '{}'::jsonb,
+    "icon_type"       TEXT    NOT NULL         DEFAULT 'FILE',    -- Lucide Icon Representation,
+    "icon_colour"     TEXT    NOT NULL         DEFAULT 'NEUTRAL', --
     "created_at"      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "updated_at"      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "created_by"      UUID    REFERENCES users (id) ON DELETE SET NULL,
     "updated_by"      UUID    REFERENCES users (id) ON DELETE SET NULL,
-
-    -- Creates unique index for faster lookups
-    UNIQUE (organisation_id, key)
+    "deleted_at"      TIMESTAMP WITH TIME ZONE DEFAULT NULL
 );
 
+create index if not exists idx_entities_type_id
+    on entities (type_id)
+    where archived = false;
+
+create index if not exists idx_entities_organisation_id
+    on entities (organisation_id)
+    where archived = false;
+
+
+CREATE OR REPLACE FUNCTION sync_entity_identifier_key()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+    -- Only act when identifier_key has changed
+    IF NEW.identifier_key IS DISTINCT FROM OLD.identifier_key THEN
+        UPDATE entities
+        SET identifier_key = NEW.identifier_key
+        WHERE type_id = NEW.id;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_sync_entity_identifier_key
+    AFTER UPDATE OF identifier_key
+    ON entity_types
+    FOR EACH ROW
+EXECUTE FUNCTION sync_entity_identifier_key();
+
 -- Indexes for entities
-CREATE INDEX idx_entities_type_id ON entities (type_id);
+drop index if exists idx_entities_organisation_id;
+
+
+
 CREATE INDEX idx_entities_payload_gin ON entities USING GIN (payload jsonb_path_ops);
 
 -- Function to update entity count in entity_types

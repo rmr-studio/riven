@@ -10,25 +10,24 @@ import java.util.*
  */
 interface EntityRepository : JpaRepository<EntityEntity, UUID> {
 
+    @Query("SELECT e FROM EntityEntity e WHERE e.id = :id AND e.archived = false")
+    override fun findById(id: UUID): Optional<EntityEntity>
+
     /**
      * Find all entities for an organization.
      */
+    @Query("SELECT e FROM EntityEntity e WHERE e.organisationId = :organisationId AND e.archived = false")
     fun findByOrganisationId(organisationId: UUID): List<EntityEntity>
 
-    /**
-     * Find all entities of a specific type.
-     */
-    fun findByOrganisationIdAndTypeId(
-        organisationId: UUID,
-        typeId: UUID
-    ): List<EntityEntity>
+    @Query("SELECT e FROM EntityEntity e WHERE e.typeId = :typeId AND e.archived = false")
+    fun findByTypeId(typeId: UUID): List<EntityEntity>
 
-    /**
-     * Find all entities of a specific type by type key.
-     */
-    @Query("SELECT e FROM EntityEntity e WHERE e.type.key = :typeKey AND e.organisationId = :organisationId")
-    fun findByOrganisationIdAndTypeKey(
-        organisationId: UUID,
-        typeKey: String
-    ): List<EntityEntity>
+    @Query(
+        """
+       SELECT e FROM EntityEntity e 
+            WHERE e.typeId in :typeIds 
+            AND e.archived = false 
+    """
+    )
+    fun findByTypeIdIn(typeIds: List<UUID>): List<EntityEntity>
 }

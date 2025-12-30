@@ -1,0 +1,9 @@
+package riven.core.enums.entity.validation
+
+enum class EntityTypeChangeType {
+    FIELD_ADDED,
+    FIELD_REMOVED,
+    FIELD_TYPE_CHANGED,
+    FIELD_REQUIRED_ADDED,
+    FIELD_OPTIONAL_REMOVED
+}

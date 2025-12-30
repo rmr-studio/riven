@@ -30,10 +30,11 @@ export interface EntityTypeConfigurationProviderProps {
 const entityTypeFormSchema = z
     .object({
         identifierKey: z.string().min(1, "Identifier key is required").refine(isUUID),
-        order: z.array(
+        columns: z.array(
             z.object({
                 key: z.string().min(1, "Ordering key is required").refine(isUUID),
                 type: z.nativeEnum(EntityPropertyType),
+                width: z.number().min(150, "Minimum width is 150").max(1000, "Maximum width is 1000"),
             })
         ),
     })
@@ -59,9 +60,9 @@ export const EntityTypeConfigurationProvider = ({
             identifierKey: entityType.identifierKey,
             description: entityType.description ?? "",
             type: entityType.type,
-            icon: entityType.icon.icon,
-            iconColour: entityType.icon.colour,
-            order: entityType.order,
+
+            icon: entityType.icon,
+            columns: entityType.columns,
         },
     });
 
@@ -126,26 +127,29 @@ export const EntityTypeConfigurationProvider = ({
 
         const debouncedSaveRef = { current: null as NodeJS.Timeout | null };
 
-        const dirty = Object.keys(dirtyFields).length > 0;
-        store.setDirty(dirty);
+        const subscription = form.watch((values) => {
+            const dirty = Object.keys(dirtyFields).length > 0;
+            store.setDirty(dirty);
 
-        if (dirty) {
-            if (debouncedSaveRef.current) {
-                clearTimeout(debouncedSaveRef.current);
+            if (dirty) {
+                if (debouncedSaveRef.current) {
+                    clearTimeout(debouncedSaveRef.current);
+                }
+
+                debouncedSaveRef.current = setTimeout(() => {
+                    const curr = form.getValues();
+                    store.saveDraft(curr);
+                }, 1000);
             }
-
-            debouncedSaveRef.current = setTimeout(() => {
-                const currentValues = form.getValues();
-                store.saveDraft(currentValues);
-            }, 1000);
-        }
+        });
 
         return () => {
+            subscription.unsubscribe();
             if (debouncedSaveRef.current) {
                 clearTimeout(debouncedSaveRef.current);
             }
         };
-    }, [dirtyFields]);
+    }, [form]);
 
     return (
         <EntityTypeConfigContext.Provider value={storeRef.current}>
@@ -155,9 +159,7 @@ export const EntityTypeConfigurationProvider = ({
 };
 
 // Hook to access store with selector
-export const useEntityTypeConfigurationStore = <T,>(
-    selector: (store: EntityTypeConfigStore) => T
-): T => {
+const useEntityTypeConfigurationStore = <T,>(selector: (store: EntityTypeConfigStore) => T): T => {
     const context = useContext(EntityTypeConfigContext);
 
     if (!context) {

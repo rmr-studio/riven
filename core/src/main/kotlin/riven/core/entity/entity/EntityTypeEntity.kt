@@ -12,7 +12,7 @@ import riven.core.models.common.display.DisplayName
 import riven.core.models.entity.EntityType
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
-import riven.core.models.entity.configuration.EntityTypeOrderingKey
+import riven.core.models.entity.configuration.EntityTypeAttributeColumn
 import java.util.*
 
 /**
@@ -24,9 +24,12 @@ import java.util.*
 @Entity
 @Table(
     name = "entity_types",
+    indexes = [
+        Index(columnList = "organisation_id", name = "idx_entity_types_organisation_id"),
+    ],
     uniqueConstraints = [
         UniqueConstraint(columnNames = ["organisation_id", "key"])
-    ],
+    ]
 )
 data class EntityTypeEntity(
     @Id
@@ -79,15 +82,18 @@ data class EntityTypeEntity(
     var relationships: List<EntityRelationshipDefinition>? = null,
 
     @Type(JsonBinaryType::class)
-    @Column(name = "column_order", columnDefinition = "jsonb", nullable = true)
-    var order: List<EntityTypeOrderingKey>,
+    @Column(name = "columns", columnDefinition = "jsonb", nullable = true)
+    var columns: List<EntityTypeAttributeColumn>,
 
     // Number of entities of this type, calculated via trigger on entities table
     @Column(name = "count", nullable = false)
     var entitiesCount: Long = 0L,
 
     @Column(name = "archived", nullable = false, columnDefinition = "boolean default false")
-    var archived: Boolean = false
+    var archived: Boolean = false,
+
+    @Column(name = "deleted_at", nullable = true)
+    var deletedAt: Date? = null,
 ) : AuditableEntity() {
 
     /**
@@ -108,7 +114,7 @@ data class EntityTypeEntity(
             type = this.type,
             schema = this.schema,
             relationships = this.relationships,
-            order = this.order,
+            columns = this.columns,
             createdAt = this.createdAt,
             updatedAt = this.updatedAt,
             createdBy = this.createdBy,

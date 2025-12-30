@@ -1,7 +1,10 @@
 package riven.core.models.entity
 
 import riven.core.entity.util.AuditableModel
-import riven.core.models.common.json.JsonObject
+import riven.core.enums.common.IconColour
+import riven.core.enums.common.IconType
+import riven.core.models.common.Icon
+import riven.core.models.entity.payload.EntityAttribute
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -11,13 +14,29 @@ import java.util.*
 data class Entity(
     val id: UUID,
     val organisationId: UUID,
-    val entityType: EntityType,
-    val typeVersion: Int,
-    val name: String?,
-    val payload: JsonObject,
+    val typeId: UUID,
+
+    val payload: Map<UUID, EntityAttribute>,
+    val icon: Icon = Icon(
+        icon = IconType.FILE,
+        colour = IconColour.NEUTRAL
+    ),
     val validationErrors: List<String>? = null,
+    // A unique identifier key for the entity within its type, taken and synced from EntityType for easier lookup
+    val identifierKey: UUID,
     override val createdAt: ZonedDateTime? = null,
     override val updatedAt: ZonedDateTime? = null,
     override val createdBy: UUID? = null,
     override val updatedBy: UUID? = null
-) : AuditableModel()
+) : AuditableModel() {
+    val link: EntityLink
+        get() = EntityLink(
+            id = this.id,
+            organisationId = this.organisationId,
+            icon = this.icon,
+            label = this.identifier
+        )
+
+    val identifier: String
+        get() = this.payload[identifierKey].toString()
+}

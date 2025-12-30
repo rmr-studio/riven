@@ -12,10 +12,9 @@ import riven.core.enums.entity.EntityPropertyType
 import riven.core.enums.entity.EntityTypeRelationshipType
 import riven.core.enums.util.OperationType
 import riven.core.models.common.validation.Schema
-import riven.core.models.entity.EntityRelationship
 import riven.core.models.entity.EntityType
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
-import riven.core.models.entity.configuration.EntityTypeOrderingKey
+import riven.core.models.entity.configuration.EntityTypeAttributeColumn
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDeleteRequest
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
 import riven.core.models.request.entity.type.*
@@ -81,8 +80,8 @@ class EntityTypeService(
                     )
                 ),
                 relationships = listOf(),
-                order = listOf(
-                    EntityTypeOrderingKey(
+                columns = listOf(
+                    EntityTypeAttributeColumn(
                         key = primaryId,
                         type = EntityPropertyType.ATTRIBUTE
                     )
@@ -135,7 +134,7 @@ class EntityTypeService(
             description = type.description
             iconType = type.icon.icon
             iconColour = type.icon.colour
-            order = type.order
+            columns = type.columns
         }.let {
             entityTypeRepository.save(it).toModel()
         }
@@ -228,12 +227,12 @@ class EntityTypeService(
 
 
         // Handle new order
-        val currentIndex = existing.order.indexOfFirst { it.key == definition.id }
+        val currentIndex = existing.columns.indexOfFirst { it.key == definition.id }
         // New attribute/relationship being added
         if (currentIndex == -1) {
             val updatedOrdering = reorderEntityTypeColumns(
-                order = existing.order,
-                key = EntityTypeOrderingKey(
+                order = existing.columns,
+                key = EntityTypeAttributeColumn(
                     key = definition.id,
                     type = when (definition) {
                         is SaveAttributeDefinitionRequest -> EntityPropertyType.ATTRIBUTE
@@ -242,19 +241,19 @@ class EntityTypeService(
                     }
                 ),
                 prev = null,
-                new = request.index ?: existing.order.size
+                new = request.index ?: existing.columns.size
             )
 
             existing.apply {
-                order = updatedOrdering
+                columns = updatedOrdering
             }
         } else {
             request.index?.run {
                 if (this == index) return@run
                 // Existing attribute/relationship being reordered
                 val updatedOrdering = reorderEntityTypeColumns(
-                    order = existing.order,
-                    key = EntityTypeOrderingKey(
+                    order = existing.columns,
+                    key = EntityTypeAttributeColumn(
                         key = definition.id,
                         type = when (definition) {
                             is SaveAttributeDefinitionRequest -> EntityPropertyType.ATTRIBUTE
@@ -267,7 +266,7 @@ class EntityTypeService(
                 )
 
                 existing.apply {
-                    order = updatedOrdering
+                    columns = updatedOrdering
                 }
             }
         }
@@ -351,7 +350,7 @@ class EntityTypeService(
 
         // Remove from entity type ordering
         existing.apply {
-            order = order.filterNot { it.key == definition.id }
+            columns = columns.filterNot { it.key == definition.id }
         }.let {
             entityTypeRepository.save(it).also {
                 impactedEntityTypes[existing.key] = it.toModel()
@@ -368,11 +367,11 @@ class EntityTypeService(
      * Reorder entity type columns (attributes/relationships).
      */
     fun reorderEntityTypeColumns(
-        order: List<EntityTypeOrderingKey>,
-        key: EntityTypeOrderingKey,
+        order: List<EntityTypeAttributeColumn>,
+        key: EntityTypeAttributeColumn,
         prev: Int?,
         new: Int
-    ): List<EntityTypeOrderingKey> {
+    ): List<EntityTypeAttributeColumn> {
         val mutableOrder = order.toMutableList()
 
         if (prev != null) {
