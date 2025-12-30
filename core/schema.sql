@@ -320,7 +320,7 @@ CREATE TABLE IF NOT EXISTS public.entity_types
     "description"           TEXT,
     "protected"             BOOLEAN NOT NULL         DEFAULT FALSE,
     "schema"                JSONB   NOT NULL,
-    "column_order"          JSONB,
+    "columns"               JSONB,
     -- Denormalized count of entities of this type for faster access
     "count"                 INTEGER NOT NULL         DEFAULT 0,
     "relationships"         JSONB,

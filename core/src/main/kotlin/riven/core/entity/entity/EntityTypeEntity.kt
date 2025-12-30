@@ -12,7 +12,7 @@ import riven.core.models.common.display.DisplayName
 import riven.core.models.entity.EntityType
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
-import riven.core.models.entity.configuration.EntityTypeOrderingKey
+import riven.core.models.entity.configuration.EntityTypeAttributeColumn
 import java.util.*
 
 /**
@@ -82,8 +82,8 @@ data class EntityTypeEntity(
     var relationships: List<EntityRelationshipDefinition>? = null,
 
     @Type(JsonBinaryType::class)
-    @Column(name = "column_order", columnDefinition = "jsonb", nullable = true)
-    var order: List<EntityTypeOrderingKey>,
+    @Column(name = "columns", columnDefinition = "jsonb", nullable = true)
+    var columns: List<EntityTypeAttributeColumn>,
 
     // Number of entities of this type, calculated via trigger on entities table
     @Column(name = "count", nullable = false)
@@ -114,7 +114,7 @@ data class EntityTypeEntity(
             type = this.type,
             schema = this.schema,
             relationships = this.relationships,
-            order = this.order,
+            columns = this.columns,
             createdAt = this.createdAt,
             updatedAt = this.updatedAt,
             createdBy = this.createdBy,

@@ -4,7 +4,7 @@ import riven.core.entity.util.AuditableModel
 import riven.core.enums.common.IconColour
 import riven.core.enums.common.IconType
 import riven.core.models.common.Icon
-import riven.core.models.entity.payload.EntityAttributePayload
+import riven.core.models.entity.payload.EntityAttribute
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -15,7 +15,8 @@ data class Entity(
     val id: UUID,
     val organisationId: UUID,
     val typeId: UUID,
-    val payload: Map<UUID, EntityAttributePayload>,
+
+    val payload: Map<UUID, EntityAttribute>,
     val icon: Icon = Icon(
         icon = IconType.FILE,
         colour = IconColour.NEUTRAL

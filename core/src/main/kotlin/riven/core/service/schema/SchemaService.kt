@@ -314,7 +314,7 @@ class SchemaService(
         }
 
         schema.options?.enum?.let { allowedValues ->
-            if (value !in allowedValues) {
+            if (allowedValues.isNotEmpty() && value !in allowedValues) {
                 return "Value at $path must be one of: ${allowedValues.joinToString(", ")}"
             }
         }
@@ -359,7 +359,7 @@ class SchemaService(
             val booleanValues = allowedValues.mapNotNull {
                 it.toBooleanStrictOrNull()
             }
-            if (value !in booleanValues) {
+            if (allowedValues.isNotEmpty() && value !in booleanValues) {
                 return "Value at $path must be one of: ${booleanValues.joinToString(", ")}"
             }
         }

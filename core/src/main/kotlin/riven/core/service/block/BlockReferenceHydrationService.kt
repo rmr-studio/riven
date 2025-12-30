@@ -62,7 +62,7 @@ class BlockReferenceHydrationService(
         val entitiesById = if (entityIds.isNotEmpty()) {
             entityService.getEntitiesByIds(entityIds)
                 .associateBy { it.id }
-                .mapValues { it.value.toModel() }
+                .mapValues { it.value.toModel(relationships = emptyMap()) }
         } else {
             emptyMap()
         }

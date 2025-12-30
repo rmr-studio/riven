@@ -6,7 +6,7 @@ import riven.core.models.common.Icon
 import riven.core.models.common.display.DisplayName
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
-import riven.core.models.entity.configuration.EntityTypeOrderingKey
+import riven.core.models.entity.configuration.EntityTypeAttributeColumn
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -42,8 +42,8 @@ data class EntityType(
     // Each attribute in the schema will be uniquely identified with a UUID key
     val schema: EntityTypeSchema,
     val relationships: List<EntityRelationshipDefinition>? = null,
-    // The order in which the attributes should be displayed in the UI
-    val order: List<EntityTypeOrderingKey>,
+    // Configuration for how attributes are displayed in tabular/list views (ie. Column ordering, widths, etc)
+    val columns: List<EntityTypeAttributeColumn>,
     val entitiesCount: Long = 0L,
     override val createdAt: ZonedDateTime?,
     override val updatedAt: ZonedDateTime?,

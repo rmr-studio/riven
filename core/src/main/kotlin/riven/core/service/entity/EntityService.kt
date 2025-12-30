@@ -11,6 +11,9 @@ import riven.core.enums.util.OperationType
 import riven.core.exceptions.SchemaValidationException
 import riven.core.models.common.Icon
 import riven.core.models.entity.Entity
+import riven.core.models.entity.payload.EntityAttributePayload
+import riven.core.models.entity.payload.EntityAttributePrimitivePayload
+import riven.core.models.entity.payload.EntityAttributeRelationPayloadReference
 import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.request.entity.SaveEntityRequest
 import riven.core.models.response.entity.SaveEntityResponse
@@ -35,6 +38,26 @@ class EntityService(
     private val activityService: ActivityService
 ) {
 
+    /**
+     * Converts EntityAttributePayload to a JSON-compatible map structure.
+     */
+    private fun toJsonPayload(payload: EntityAttributePayload): Map<String, Any?> {
+        return when (payload) {
+            is EntityAttributePrimitivePayload -> mapOf(
+                "type" to payload.type.name,
+                "value" to payload.value,
+                "schemaType" to payload.schemaType.name
+            )
+            is EntityAttributeRelationPayloadReference -> mapOf(
+                "type" to payload.type.name,
+                "relations" to payload.relations
+            )
+            else -> mapOf(
+                "type" to payload.type.name
+            )
+        }
+    }
+
     fun getEntity(id: UUID): EntityEntity {
         return findOrThrow { entityRepository.findById(id) }
     }
@@ -50,7 +73,7 @@ class EntityService(
     ): List<Entity> {
         return findManyResults {
             entityRepository.findByTypeId(typeId)
-        }.map { it.toModel() }
+        }.map { it.toModel(relationships = emptyMap()) }
     }
 
     @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
@@ -62,7 +85,7 @@ class EntityService(
             entityRepository.findByTypeIdIn(
                 typeIds = typeIds
             )
-        }.map { it.toModel() }.groupBy { it.typeId }
+        }.map { it.toModel(relationships = emptyMap()) }.groupBy { it.typeId }
 
     }
 
@@ -98,7 +121,7 @@ class EntityService(
                 iconType = icon?.icon ?: type.iconType,
                 iconColour = icon?.colour ?: type.iconColour,
                 identifierKey = type.identifierKey,
-                payload = payload.map { it.key to it.value.payload }.toMap(),
+                payload = payload.map { it.key.toString() to toJsonPayload(it.value.payload) }.toMap(),
             )
 
             icon?.let {
@@ -130,7 +153,7 @@ class EntityService(
                 )
 
                 SaveEntityResponse(
-                    entity = entity.toModel()
+                    entity = entity.toModel(relationships = emptyMap())
                 )
             }
         } catch (e: SchemaValidationException) {
@@ -177,7 +200,7 @@ class EntityService(
     fun getOrganisationEntities(organisationId: UUID): List<Entity> {
         return findManyResults {
             entityRepository.findByOrganisationId(organisationId)
-        }.map { it.toModel() }
+        }.map { it.toModel(relationships = emptyMap()) }
     }
 
 

@@ -5,9 +5,9 @@ import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.common.ValidationScope
 import riven.core.enums.entity.validation.EntityTypeChangeType
+import riven.core.enums.entity.EntityPropertyType
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
-import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.entity.validation.EntityTypeSchemaChange
 import riven.core.models.entity.validation.EntityTypeValidationSummary
 import riven.core.models.entity.validation.EntityValidationError
@@ -34,8 +34,17 @@ class EntityValidationService(
         return schemaService.validate(
             schema = entityType.schema,
             // Only validate ATTRIBUTE properties in this context. Relationship validation is separate.
-            payload = entity.payload.mapNotNull {
-                it.key.toString() to ((it.value as? EntityAttributePrimitivePayload)?.value ?: return@mapNotNull null)
+            payload = entity.payload.mapNotNull { (key, value) ->
+                @Suppress("UNCHECKED_CAST")
+                val jsonMap = value as? Map<String, Any?> ?: return@mapNotNull null
+                val type = (jsonMap["type"] as? String)?.let { EntityPropertyType.valueOf(it) }
+
+                // Only validate ATTRIBUTE properties, skip RELATIONSHIP properties
+                if (type == EntityPropertyType.ATTRIBUTE) {
+                    key to jsonMap["value"]
+                } else {
+                    null
+                }
             }.toMap(),
             scope = ValidationScope.STRICT
         )

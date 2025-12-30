@@ -6,9 +6,16 @@ import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
 import riven.core.enums.common.IconColour
 import riven.core.enums.common.IconType
+import riven.core.enums.common.SchemaType
+import riven.core.enums.entity.EntityPropertyType
 import riven.core.models.common.Icon
 import riven.core.models.entity.Entity
+import riven.core.models.entity.EntityLink
+import riven.core.models.entity.payload.EntityAttribute
 import riven.core.models.entity.payload.EntityAttributePayload
+import riven.core.models.entity.payload.EntityAttributePrimitivePayload
+import riven.core.models.entity.payload.EntityAttributeRelationPayload
+import riven.core.models.entity.payload.EntityAttributeRelationPayloadReference
 import java.time.ZonedDateTime
 import java.util.*
 import jakarta.persistence.Entity as JPAEntity
@@ -40,7 +47,7 @@ data class EntityEntity(
 
     @Type(JsonBinaryType::class)
     @Column(name = "payload", columnDefinition = "jsonb", nullable = false)
-    var payload: Map<UUID, EntityAttributePayload>,
+    var payload: Map<String, Any>,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "icon_colour", nullable = false)
@@ -59,15 +66,68 @@ data class EntityEntity(
 ) : AuditableEntity() {
 
     /**
+     * Converts the persisted JSON payload back to EntityAttributePayload objects.
+     */
+    private fun fromJsonPayload(jsonPayload: Map<String, Any?>): EntityAttributePayload {
+        val type = (jsonPayload["type"] as? String)?.let { EntityPropertyType.valueOf(it) }
+            ?: throw IllegalArgumentException("Missing or invalid 'type' in payload")
+
+        return when (type) {
+            EntityPropertyType.ATTRIBUTE -> {
+                val value = jsonPayload["value"]
+                val schemaType = (jsonPayload["schemaType"] as? String)?.let { SchemaType.valueOf(it) }
+                    ?: throw IllegalArgumentException("Missing or invalid 'schemaType' in primitive payload")
+                EntityAttributePrimitivePayload(value = value, schemaType = schemaType)
+            }
+
+            EntityPropertyType.RELATIONSHIP -> {
+                @Suppress("UNCHECKED_CAST")
+                val relations = (jsonPayload["relations"] as? List<String>)?.map { UUID.fromString(it) }
+                    ?: emptyList()
+                EntityAttributeRelationPayloadReference(relations = relations)
+            }
+        }
+    }
+
+    /**
      * Convert this entity to a domain model.
      */
-    fun toModel(audit: Boolean = false): Entity {
+    fun toModel(audit: Boolean = false, relationships: Map<UUID, EntityLink>): Entity {
         val id = requireNotNull(this.id) { "EntityEntity ID cannot be null" }
+
+        // Convert the persisted JSON payload back to EntityAttributePayload structure
+        val convertedPayload: Map<UUID, EntityAttribute> = this.payload.mapNotNull { (key, value) ->
+            try {
+                @Suppress("UNCHECKED_CAST")
+                val jsonMap = value as? Map<String, Any?> ?: return@mapNotNull null
+                val payload: EntityAttribute = fromJsonPayload(jsonMap).let {
+                    when(it.type){
+                        EntityPropertyType.ATTRIBUTE -> EntityAttribute(
+                            payload = it
+                        )
+                        EntityPropertyType.RELATIONSHIP -> EntityAttribute(
+                            payload = EntityAttributeRelationPayload(
+                                relations = (it as EntityAttributeRelationPayloadReference).relations.mapNotNull { relId ->
+                                    relationships[relId]
+                                }
+                            )
+                        )
+                }}
+
+                UUID.fromString(key) to payload
+
+
+            } catch (e: Exception) {
+                // Log or handle conversion errors gracefully
+                null
+            }
+        }.toMap()
+
         return Entity(
             id = id,
             organisationId = this.organisationId,
             typeId = this.typeId,
-            payload = this.payload,
+            payload = convertedPayload,
             identifierKey = this.identifierKey,
             icon = Icon(
                 icon = this.iconType,

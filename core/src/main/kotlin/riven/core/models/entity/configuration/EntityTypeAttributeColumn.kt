@@ -3,7 +3,8 @@ package riven.core.models.entity.configuration
 import riven.core.enums.entity.EntityPropertyType
 import java.util.*
 
-data class EntityTypeOrderingKey(
+data class EntityTypeAttributeColumn(
     val key: UUID,
-    val type: EntityPropertyType
+    val type: EntityPropertyType,
+    val width: Int = 150
 )

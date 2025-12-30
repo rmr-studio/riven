@@ -1644,7 +1644,7 @@ class EntityValidationServiceTest {
             organisationId = organisationId,
             type = EntityCategory.STANDARD,
             schema = schema,
-            order = emptyList(),
+            columns = emptyList(),
             relationships = emptyList(),
             identifierKey = nameAttributeKey,
             iconType = IconType.CIRCLE_DASHED,
@@ -1657,11 +1657,31 @@ class EntityValidationServiceTest {
         payload: Map<UUID, riven.core.models.entity.payload.EntityAttributePayload>,
         organisationId: UUID = this.organisationId
     ): EntityEntity {
+        // Convert EntityAttributePayload to JSON-compatible structure
+        val jsonPayload = payload.map { (key, value) ->
+            key.toString() to when (value) {
+                is EntityAttributePrimitivePayload -> mapOf(
+                    "type" to value.type.name,
+                    "value" to value.value,
+                    "schemaType" to value.schemaType.name
+                )
+
+                is EntityAttributeRelationPayloadReference -> mapOf(
+                    "type" to value.type.name,
+                    "relations" to value.relations
+                )
+
+                else -> mapOf(
+                    "type" to value.type.name
+                )
+            }
+        }.toMap()
+
         return EntityEntity(
             id = UUID.randomUUID(),
             organisationId = organisationId,
             typeId = typeId,
-            payload = payload,
+            payload = jsonPayload,
             identifierKey = nameAttributeKey,
             iconType = IconType.FILE,
             iconColour = IconColour.NEUTRAL

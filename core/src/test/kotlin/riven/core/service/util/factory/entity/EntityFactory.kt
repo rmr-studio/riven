@@ -11,7 +11,7 @@ import riven.core.enums.entity.EntityTypeRelationshipType
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
-import riven.core.models.entity.configuration.EntityTypeOrderingKey
+import riven.core.models.entity.configuration.EntityTypeAttributeColumn
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -40,17 +40,17 @@ object EntityFactory {
         type: EntityCategory = EntityCategory.STANDARD,
         schema: EntityTypeSchema = createSimpleSchema(),
         relationships: List<EntityRelationshipDefinition>? = null,
-        order: List<EntityTypeOrderingKey>? = null,
+        order: List<EntityTypeAttributeColumn>? = null,
         version: Int = 1,
         protected: Boolean = false,
         identifierKey: UUID = schema.properties?.keys?.first() ?: UUID.randomUUID()
     ): EntityTypeEntity {
         val defaultOrder = order ?: listOf(
             *(schema.properties?.keys ?: listOf()).map { key ->
-                EntityTypeOrderingKey(key, EntityPropertyType.ATTRIBUTE)
+                EntityTypeAttributeColumn(key, EntityPropertyType.ATTRIBUTE)
             }.toTypedArray(),
             *(relationships ?: listOf()).map {
-                EntityTypeOrderingKey(it.id, EntityPropertyType.RELATIONSHIP)
+                EntityTypeAttributeColumn(it.id, EntityPropertyType.RELATIONSHIP)
             }.toTypedArray()
         )
 
@@ -63,7 +63,7 @@ object EntityFactory {
             type = type,
             schema = schema,
             relationships = relationships,
-            order = defaultOrder,
+            columns = defaultOrder,
             version = version,
             protected = protected,
             identifierKey = identifierKey

@@ -41,6 +41,11 @@ data class EntityAttributeRelationPayloadReference(
     override val type: EntityPropertyType = EntityPropertyType.RELATIONSHIP
 }
 
+@Schema(
+    name = "EntityAttributeRelationPayload",
+    description = "An attribute payload representing a relationship to another entity, with a full identifying link"
+)
+@JsonDeserialize(using = JsonDeserializer.None::class)
 data class EntityAttributeRelationPayload(
     val relations: List<EntityLink>
 ) : EntityAttributePayload {
@@ -54,6 +59,18 @@ data class EntityAttributeRequest(
         discriminatorMapping = [
             DiscriminatorMapping(value = "ATTRIBUTE", schema = EntityAttributePrimitivePayload::class),
             DiscriminatorMapping(value = "RELATIONSHIP", schema = EntityAttributeRelationPayloadReference::class),
+        ]
+    )
+    val payload: EntityAttributePayload
+)
+
+data class EntityAttribute(
+    @field:Schema(
+        oneOf = [EntityAttributePrimitivePayload::class, EntityAttributeRelationPayload::class],
+        discriminatorProperty = "type",
+        discriminatorMapping = [
+            DiscriminatorMapping(value = "ATTRIBUTE", schema = EntityAttributePrimitivePayload::class),
+            DiscriminatorMapping(value = "RELATIONSHIP", schema = EntityAttributeRelationPayload::class),
         ]
     )
     val payload: EntityAttributePayload
