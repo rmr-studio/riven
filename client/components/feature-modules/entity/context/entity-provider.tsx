@@ -3,7 +3,7 @@
 import { buildZodSchemaFromEntityType } from "@/lib/util/form/entity-instance-validation.util";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
-import { FormProvider, useForm, useFormState } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useStore } from "zustand";
 import { useSaveEntityMutation } from "../hooks/mutation/instance/use-save-entity-mutation";
@@ -46,19 +46,13 @@ export const EntityDraftProvider = ({
     });
 
     // Create mutation for entity creation
-    const { mutateAsync: saveEntity } = useSaveEntityMutation(organisationId, entityType.key, {
-        onSuccess: (entity) => {
-            onEntityCreated?.(entity);
+    const { mutateAsync: saveEntity } = useSaveEntityMutation(organisationId, entityType.id, {
+        onSuccess: (response) => {
+            // The mutation should already guard against a null entity, but :shrug:
+            if (!response.entity) return;
+            onEntityCreated?.(response.entity);
         },
     });
-
-    const { errors } = useFormState({
-        control: form.control,
-    });
-
-    useEffect(() => {
-        console.log(errors);
-    }, [errors]);
 
     // Create store only once per entity type
     if (!storeRef.current) {

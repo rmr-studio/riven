@@ -15,6 +15,7 @@ import { useQueries } from "@tanstack/react-query";
 import { Loader2, X } from "lucide-react";
 import { useParams } from "next/navigation";
 import { FC, useMemo } from "react";
+import { useFormState } from "react-hook-form";
 import { useEntityDraft } from "../../../context/entity-provider";
 import { useEntityTypes } from "../../../hooks/query/type/use-entity-types";
 import { EntityRelationshipDefinition, EntityType } from "../../../interface/entity.interface";
@@ -31,8 +32,20 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ re
     const { organisationId } = useParams<{ organisationId: string }>();
     const fieldName = relationship.id;
     const value = form.watch(fieldName);
-    const fieldError = form.formState.errors[fieldName];
-    const errors = fieldError?.message ? [String(fieldError.message)] : undefined;
+
+    // Watch for validation errors on this specific field
+    const { errors: formErrors } = useFormState({
+        control: form.control,
+        name: fieldName,
+    });
+
+    // Extract error messages for this field
+    const fieldError = formErrors[fieldName];
+    const errors = fieldError?.message
+        ? [String(fieldError.message)]
+        : fieldError?.type
+          ? [String(fieldError.type)]
+          : undefined;
 
     const { data: entityTypes } = useEntityTypes(organisationId);
 
@@ -107,7 +120,7 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ re
     // Single select rendering
     if (isSingleSelect) {
         return (
-            <div className="space-y-2">
+            <div className="space-y-2 w-full min-w-0">
                 
                 <Select
                     value={value || undefined}

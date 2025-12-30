@@ -5,6 +5,7 @@ import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-gro
 import { isResponseError } from "@/lib/util/error/error.util";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { EntityTypeConfigurationProvider } from "../../context/configuration-provider";
 import { EntityDraftProvider } from "../../context/entity-provider";
 import { useEntityTypeByKey } from "../../hooks/query/type/use-entity-types";
 import { useEntity } from "../../hooks/query/use-entities";
@@ -68,13 +69,15 @@ export const EntityDashboard = () => {
                 <BreadCrumbGroup items={trail} />
             </header>
             <section>
-                <EntityDraftProvider organisationId={organisationId} entityType={entityType}>
-                    <EntityDataTable
-                        entityType={entityType}
-                        entities={entities || []}
-                        loadingEntities={isPendingEntities || isLoadingAuth}
-                    />
-                </EntityDraftProvider>
+                <EntityTypeConfigurationProvider organisationId={organisationId} entityType={entityType}>
+                    <EntityDraftProvider organisationId={organisationId} entityType={entityType}>
+                        <EntityDataTable
+                            entityType={entityType}
+                            entities={entities || []}
+                            loadingEntities={isPendingEntities || isLoadingAuth}
+                        />
+                    </EntityDraftProvider>
+                </EntityTypeConfigurationProvider>
             </section>
         </div>
     );

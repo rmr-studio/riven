@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/util/utils";
 
 import { OptionalTooltip } from "@/components/ui/optional-tooltip";
+import { CircleAlert } from "lucide-react";
 import { FC } from "react";
 import { FormWidgetProps } from "../form-widget.types";
 
@@ -16,13 +17,16 @@ export const TextInputWidget: FC<FormWidgetProps<string>> = ({
     description,
     placeholder,
     errors,
+    displayError = "message",
     disabled,
-    tooltip = "",
 }) => {
     const hasErrors = errors && errors.length > 0;
 
     return (
-        <OptionalTooltip content={tooltip}>
+        <OptionalTooltip
+            content={errors?.join(", ") || ""}
+            disabled={displayError !== "tooltip" || !hasErrors}
+        >
             <div className="space-y-2">
                 {label && (
                     <Label htmlFor={label} className={cn(hasErrors && "text-destructive")}>
@@ -30,16 +34,23 @@ export const TextInputWidget: FC<FormWidgetProps<string>> = ({
                     </Label>
                 )}
                 {description && <p className="text-sm text-muted-foreground">{description}</p>}
-                <Input
-                    id={label}
-                    value={value || ""}
-                    onChange={(e) => onChange(e.target.value)}
-                    onBlur={onBlur}
-                    placeholder={placeholder}
-                    disabled={disabled}
-                    className={cn(hasErrors && "border-destructive focus-visible:ring-destructive")}
-                />
-                {hasErrors && (
+                <div className="relative">
+                    <Input
+                        id={label}
+                        value={value || ""}
+                        onChange={(e) => onChange(e.target.value)}
+                        onBlur={onBlur}
+                        placeholder={placeholder}
+                        disabled={disabled}
+                        className={cn(
+                            hasErrors && "border-destructive focus-visible:ring-destructive"
+                        )}
+                    />
+                    {displayError === "tooltip" && hasErrors && (
+                        <CircleAlert className="absolute -right-1 -bottom-1 size-4 text-destructive fill-background" />
+                    )}
+                </div>
+                {displayError === "message" && hasErrors && (
                     <div className="space-y-1">
                         {errors.map((error, idx) => (
                             <p key={idx} className="text-sm text-destructive">

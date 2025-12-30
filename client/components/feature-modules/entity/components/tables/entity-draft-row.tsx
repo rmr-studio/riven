@@ -3,19 +3,22 @@
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { EntityPropertyType } from "@/lib/types/types";
+import { Row } from "@tanstack/react-table";
 import { Check, X } from "lucide-react";
-import { FC, useEffect, useMemo, useState } from "react";
+import { FC, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useEntityDraft } from "../../context/entity-provider";
 import { EntityType } from "../../interface/entity.interface";
 import { EntityFieldCell } from "../forms/instance/entity-field-cell";
 import { EntityRelationshipPicker } from "../forms/instance/entity-relationship-picker";
+import { EntityRow } from "./entity-table-utils";
 
 export interface EntityDraftRowProps {
     entityType: EntityType;
+    row: Row<EntityRow>;
 }
 
-export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType }) => {
+export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => {
     const { form, resetDraft, submitDraft } = useEntityDraft();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,28 +40,57 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType }) => {
         resetDraft();
     };
 
-    // Build ordered cells based on entityType.order
+    // Build a map of column IDs to their sizes from the row's cells
+    const columnSizeMap = useMemo(() => {
+        const map = new Map<string, number>();
+        row.getVisibleCells().forEach((cell) => {
+            map.set(cell.column.id, cell.column.getSize());
+        });
+        return map;
+    }, [row]);
+
+    // Build ordered cells based on entityType.columns
     const orderedCells = useMemo(() => {
         // Create maps for quick lookup
         const attributeCellsMap = new Map(
-            Object.entries(entityType.schema.properties || {}).map(([attributeId, schema]) => [
-                attributeId,
-                <TableCell key={attributeId} className="border-dashed p-2">
-                    <EntityFieldCell attributeId={attributeId} schema={schema} />
-                </TableCell>,
-            ])
+            Object.entries(entityType.schema.properties || {}).map(([attributeId, schema]) => {
+                const width = columnSizeMap.get(attributeId);
+                return [
+                    attributeId,
+                    <TableCell
+                        key={attributeId}
+                        className="border-l border-l-accent/40 first:border-l-transparent p-2"
+                        style={{
+                            width: width ? `${width}px` : undefined,
+                            maxWidth: width ? `${width}px` : undefined,
+                        }}
+                    >
+                        <EntityFieldCell attributeId={attributeId} schema={schema} />
+                    </TableCell>,
+                ];
+            })
         );
 
         const relationshipCellsMap = new Map(
-            (entityType.relationships || []).map((relationship) => [
-                relationship.id,
-                <TableCell key={relationship.id} className="border-dashed p-2">
-                    <EntityRelationshipPicker relationship={relationship} />
-                </TableCell>,
-            ])
+            (entityType.relationships || []).map((relationship) => {
+                const width = columnSizeMap.get(relationship.id);
+                return [
+                    relationship.id,
+                    <TableCell
+                        key={relationship.id}
+                        className="border-l border-l-accent/40 first:border-l-transparent p-2"
+                        style={{
+                            width: width ? `${width}px` : undefined,
+                            maxWidth: width ? `${width}px` : undefined,
+                        }}
+                    >
+                        <EntityRelationshipPicker relationship={relationship} />
+                    </TableCell>,
+                ];
+            })
         );
-        if (!entityType.order) return [];
-        return entityType.order
+        if (!entityType.columns) return [];
+        return entityType.columns
             .map((attribute) => {
                 const { type, key: id } = attribute;
                 if (type === EntityPropertyType.ATTRIBUTE) {
@@ -68,23 +100,19 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType }) => {
                 }
             })
             .filter((cell) => !!cell);
-    }, [entityType]);
+    }, [entityType, columnSizeMap]);
 
     // Check if form is valid
-    const isValid = form.formState.isValid && !form.formState.isValidating;
     const hasErrors = Object.keys(form.formState.errors).length > 0;
-
-    useEffect(() => {
-        console.log("Form errors updated:", form.formState.errors);
-    }, [form.formState.errors]);
-
     return (
-        <TableRow className="bg-muted/30 border-dashed hover:bg-muted/40">
-            {/* Ordered cells (attributes and relationships) */}
-            {orderedCells}
+        <>
+            <TableRow className="bg-muted/30 border-dashed hover:bg-muted/40 relative">
+                {/* Ordered cells (attributes and relationships) */}
+                {orderedCells}
 
-            {/* Action buttons */}
-            <TableCell className="w-24 border-dashed">
+                {/* Action buttons */}
+            </TableRow>
+            <div className="w-24 border-dashed absolute bottom-3 right-2">
                 <div className="flex gap-2 justify-end">
                     <Button
                         size="sm"
@@ -109,7 +137,7 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType }) => {
                         <X className="h-4 w-4" />
                     </Button>
                 </div>
-            </TableCell>
-        </TableRow>
+            </div>
+        </>
     );
 };

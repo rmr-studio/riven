@@ -1,10 +1,12 @@
 "use client";
 
-import { FC } from "react";
-import { FormWidgetProps } from "../form-widget.types";
+import { OptionalTooltip } from "@/components/ui/optional-tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/util/utils";
+import { CircleAlert } from "lucide-react";
+import { FC } from "react";
+import { FormWidgetProps } from "../form-widget.types";
 
 export const PhoneInputWidget: FC<FormWidgetProps<string>> = ({
     value,
@@ -14,35 +16,50 @@ export const PhoneInputWidget: FC<FormWidgetProps<string>> = ({
     description,
     placeholder,
     errors,
+    displayError = "message",
     disabled,
 }) => {
     const hasErrors = errors && errors.length > 0;
 
     return (
-        <div className="space-y-2">
-            <Label htmlFor={label} className={cn(hasErrors && "text-destructive")}>
-                {label}
-            </Label>
-            {description && <p className="text-sm text-muted-foreground">{description}</p>}
-            <Input
-                id={label}
-                type="tel"
-                value={value || ""}
-                onChange={(e) => onChange(e.target.value)}
-                onBlur={onBlur}
-                placeholder={placeholder || "+1 (555) 123-4567"}
-                disabled={disabled}
-                className={cn(hasErrors && "border-destructive focus-visible:ring-destructive")}
-            />
-            {hasErrors && (
-                <div className="space-y-1">
-                    {errors.map((error, idx) => (
-                        <p key={idx} className="text-sm text-destructive">
-                            {error}
-                        </p>
-                    ))}
+        <OptionalTooltip
+            content={errors?.join(", ") || ""}
+            disabled={displayError !== "tooltip" || !hasErrors}
+        >
+            <div className="space-y-2">
+                {label && (
+                    <Label htmlFor={label} className={cn(hasErrors && "text-destructive")}>
+                        {label}
+                    </Label>
+                )}
+                {description && <p className="text-sm text-muted-foreground">{description}</p>}
+                <div className="relative">
+                    <Input
+                        id={label}
+                        type="tel"
+                        value={value || ""}
+                        onChange={(e) => onChange(e.target.value)}
+                        onBlur={onBlur}
+                        placeholder={placeholder || "+1 (555) 123-4567"}
+                        disabled={disabled}
+                        className={cn(
+                            hasErrors && "border-destructive focus-visible:ring-destructive"
+                        )}
+                    />
+                    {displayError === "tooltip" && hasErrors && (
+                        <CircleAlert className="absolute -right-1 -bottom-1 size-4 text-destructive fill-background" />
+                    )}
                 </div>
-            )}
-        </div>
+                {displayError === "message" && hasErrors && (
+                    <div className="space-y-1">
+                        {errors.map((error, idx) => (
+                            <p key={idx} className="text-sm text-destructive">
+                                {error}
+                            </p>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </OptionalTooltip>
     );
 };

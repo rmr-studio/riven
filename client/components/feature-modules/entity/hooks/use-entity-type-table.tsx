@@ -198,7 +198,7 @@ export function useEntityTypeTable(
     };
 
     const sortedRowData: EntityTypeAttributeRow[] = useMemo(() => {
-        const { schema, order, relationships } = type;
+        const { schema, columns, relationships } = type;
         const rows: EntityTypeAttributeRow[] = [
             ...Object.entries(schema.properties || {}).map(([id, attr]) =>
                 convertSchemaPropertyToRow({ id, schema: attr })
@@ -207,19 +207,19 @@ export function useEntityTypeTable(
         ];
 
         return rows.toSorted((a, b) => {
-            const aOrderItem = order.find((o) => o.key === a.id);
-            const bOrderItem = order.find((o) => o.key === b.id);
-            const aIndex = aOrderItem ? order.indexOf(aOrderItem) : -1;
-            const bIndex = bOrderItem ? order.indexOf(bOrderItem) : -1;
+            const aColumnItem = columns.find((o) => o.key === a.id);
+            const bColumnItem = columns.find((o) => o.key === b.id);
+            const aIndex = aColumnItem ? columns.indexOf(aColumnItem) : -1;
+            const bIndex = bColumnItem ? columns.indexOf(bColumnItem) : -1;
 
-            // If both are in order array, sort by their position
+            // If both are in columns array, sort by their position
             if (aIndex !== -1 && bIndex !== -1) {
                 return aIndex - bIndex;
             }
-            // If only one is in order array, prioritize it
+            // If only one is in columns array, prioritize it
             if (aIndex !== -1) return -1;
             if (bIndex !== -1) return 1;
-            // If neither is in order array, maintain current order
+            // If neither is in columns array, maintain current columns
             return 0;
         });
     }, [type, attributeLookup]);

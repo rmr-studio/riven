@@ -9,7 +9,7 @@ import { useEntityTypeTable } from "../../hooks/use-entity-type-table";
 import {
     EntityType,
     EntityTypeAttributeRow,
-    EntityTypeOrderingKey,
+    EntityTypeAttributeColumn,
     type EntityTypeDefinition,
 } from "../../interface/entity.interface";
 
@@ -48,14 +48,15 @@ const EntityTypeDataTable: FC<Props> = ({ type, identifierKey, onEdit, onDelete 
         }
 
         // Valid reorder - proceed as normal
-        const order: EntityTypeOrderingKey[] = newOrder.map((item) => {
+        const columns: EntityTypeAttributeColumn[] = newOrder.map((item) => {
             return {
+                
                 key: item.id,
                 type: item.type,
             };
         });
 
-        form.setValue("order", order, {
+        form.setValue("columns", columns, {
             shouldDirty: true,
         });
 

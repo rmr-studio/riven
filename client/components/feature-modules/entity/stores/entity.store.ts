@@ -1,20 +1,27 @@
+import { EntityPropertyType } from "@/lib/types/types";
 import { buildDefaultValuesFromEntityType } from "@/lib/util/form/entity-instance-validation.util";
 import { UseFormReturn } from "react-hook-form";
 import { create, StoreApi } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import {
-    Entity,
+    EntityAttributePrimitivePayload,
+    EntityAttributeRelationPayloadReference,
     EntityAttributeRequest,
     EntityType,
     SaveEntityRequest,
     SaveEntityResponse,
 } from "../interface/entity.interface";
 
+// Metadata for each attribute/relationship
+
 // State interface
 interface EntityDraftState {
     // Organization and entity type data
     organisationId: string;
     entityType: EntityType;
+
+    // Memoized map of attribute ID -> metadata for fast lookups
+    attributeMetadataMap: Map<string, EntityPropertyType>;
 
     // Draft mode flag
     isDraftMode: boolean;
@@ -47,13 +54,37 @@ interface EntityDraftActions {
     clearDraft: () => void;
 
     // Submit draft (create entity)
-    submitDraft: () => Promise<Entity>;
+    submitDraft: () => Promise<SaveEntityResponse>;
 
     // Reset draft (exit draft mode)
     resetDraft: () => void;
 }
 
 export type EntityDraftStore = EntityDraftState & EntityDraftActions;
+
+/**
+ * Build a memoized map of attribute ID -> metadata
+ * This allows O(1) lookup to determine if an attribute is a schema attribute or relationship
+ */
+const buildAttributeMetadataMap = (entityType: EntityType): Map<string, EntityPropertyType> => {
+    const map = new Map<string, EntityPropertyType>();
+
+    // Add schema attributes
+    if (entityType.schema?.properties) {
+        Object.entries(entityType.schema.properties).forEach(([attributeId, schema]) => {
+            map.set(attributeId, EntityPropertyType.ATTRIBUTE);
+        });
+    }
+
+    // Add relationships
+    if (entityType.relationships) {
+        entityType.relationships.forEach((relationship) => {
+            map.set(relationship.id, EntityPropertyType.RELATIONSHIP);
+        });
+    }
+
+    return map;
+};
 
 // Store factory (per-entity-type instances)
 export const createEntityDraftStore = (
@@ -64,11 +95,15 @@ export const createEntityDraftStore = (
 ): StoreApi<EntityDraftStore> => {
     const storageKey = `entity-instance-draft-${organisationId}-${entityType.key}`;
 
+    // Build attribute metadata map once during initialization
+    const attributeMetadataMap = buildAttributeMetadataMap(entityType);
+
     return create<EntityDraftStore>()(
         subscribeWithSelector((set, get) => ({
             // Initial state
             organisationId,
             entityType,
+            attributeMetadataMap,
             isDraftMode: false,
             form,
             draftValues: null,
@@ -149,34 +184,68 @@ export const createEntityDraftStore = (
             },
 
             submitDraft: async () => {
-                const { form } = get();
+                const { form, attributeMetadataMap } = get();
 
                 // Get current form values
                 const values = form.getValues();
-                console.log(values);
+
                 // Validate all fields
                 const isValid = await form.trigger();
-                console.log(isValid);
 
                 if (!isValid) {
                     throw new Error("Validation failed. Please correct the errors and try again.");
                 }
 
-                const request: SaveEntityRequest = {
-                    payload: Object.entries(values).reduce((acc, [key, value]) => {
-                        const payload: EntityAttributeRequest = 
-                        
-                        acc[key] = {
-                            payload:
-                        }
-                        return acc;
-                    }, {} as Record<string, EntityAttributeRequest>),
-                };
+                // Transform form values into request payload
+                const payload: Record<string, EntityAttributeRequest> = {};
+
+                Object.entries(values).forEach(([key, value]) => {
+                    const metadata = attributeMetadataMap.get(key);
+
+                    if (!metadata) {
+                        console.warn(`No metadata found for attribute: ${key}`);
+                        return;
+                    }
+
+                    if (metadata === EntityPropertyType.ATTRIBUTE) {
+                        const attribute = entityType.schema.properties?.[key];
+                        if (!attribute) return;
+
+                        // Schema attribute - create primitive payload
+                        const primitivePayload: EntityAttributePrimitivePayload = {
+                            value: value as any, // JsonValue (Any)
+                            schemaType: attribute.key,
+                            type: EntityPropertyType.ATTRIBUTE,
+                        };
+
+                        payload[key] = {
+                            payload: primitivePayload,
+                        };
+                    } else if (metadata === EntityPropertyType.RELATIONSHIP) {
+                        // Relationship - create relation payload
+                        // Normalize to array of UUIDs
+                        const relations = Array.isArray(value) ? value : value ? [value] : [];
+
+                        const relationPayload: EntityAttributeRelationPayloadReference = {
+                            relations,
+                            type: EntityPropertyType.RELATIONSHIP,
+                        };
+
+                        payload[key] = {
+                            payload: relationPayload,
+                        };
+                    }
+                });
+
+                const request: SaveEntityRequest = { payload };
+
+                // Call the save mutation
+                const response = await saveMutation(request);
 
                 // Exit draft mode and clear draft
                 get().exitDraftMode();
 
-                return entity;
+                return response;
             },
 
             resetDraft: () => {

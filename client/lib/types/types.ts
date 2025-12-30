@@ -693,7 +693,7 @@ export interface components {
             type: components["schemas"]["EntityCategory"];
             schema: components["schemas"]["SchemaUUID"];
             relationships?: components["schemas"]["EntityRelationshipDefinition"][];
-            order: components["schemas"]["EntityTypeOrderingKey"][];
+            columns: components["schemas"]["EntityTypeAttributeColumn"][];
             /** Format: int64 */
             entitiesCount: number;
             /** Format: date-time */
@@ -706,10 +706,12 @@ export interface components {
             updatedBy?: string;
             attributes: components["schemas"]["PairIntegerInteger"];
         };
-        EntityTypeOrderingKey: {
+        EntityTypeAttributeColumn: {
             /** Format: uuid */
             key: string;
             type: components["schemas"]["EntityPropertyType"];
+            /** Format: int32 */
+            width: number;
         };
         /** @enum {string} */
         EntityTypeRelationshipType: EntityTypeRelationshipType;
@@ -1014,10 +1016,16 @@ export interface components {
         EntityAttributePayload: {
             type: components["schemas"]["EntityPropertyType"];
         };
+        /** @description An attribute payload representing a primitive value with a defined schema type */
         EntityAttributePrimitivePayload: WithRequired<components["schemas"]["EntityAttributePayload"], "type"> & {
             value?: Record<string, never>;
             schemaType: components["schemas"]["SchemaType"];
         };
+        /** @description An attribute payload representing a relationship to another entity, with a full identifying link */
+        EntityAttributeRelationPayload: WithRequired<components["schemas"]["EntityAttributePayload"], "type"> & {
+            relations: components["schemas"]["EntityLink"][];
+        };
+        /** @description An attribute payload representing relationships to other entities by their IDs */
         EntityAttributeRelationPayloadReference: WithRequired<components["schemas"]["EntityAttributePayload"], "type"> & {
             relations: string[];
         };
@@ -1048,7 +1056,7 @@ export interface components {
             /** Format: uuid */
             typeId: string;
             payload: {
-                [key: string]: unknown;
+                [key: string]: components["schemas"]["EntityAttribute"];
             };
             icon: components["schemas"]["Icon"];
             validationErrors?: string[];
@@ -1064,6 +1072,9 @@ export interface components {
             updatedBy?: string;
             identifier: string;
             link: components["schemas"]["EntityLink"];
+        };
+        EntityAttribute: {
+            payload: components["schemas"]["EntityAttributePrimitivePayload"] | components["schemas"]["EntityAttributeRelationPayload"];
         };
         SaveEntityResponse: {
             entity?: components["schemas"]["Entity"];
@@ -1221,9 +1232,9 @@ export interface components {
         ListFilterLogicType: ListFilterLogicType;
         Metadata: {
             type: components["schemas"]["BlockMetadataType"];
+            meta: components["schemas"]["BlockMeta"];
             readonly: boolean;
             deletable: boolean;
-            meta: components["schemas"]["BlockMeta"];
         };
         Node: {
             warnings: string[];
@@ -2078,7 +2089,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SaveEntityResponse"];
+                    "application/json": components["schemas"]["SaveEntityResponse"];
                 };
             };
             /** @description Invalid entity data provided */
@@ -2087,7 +2098,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SaveEntityResponse"];
+                    "application/json": components["schemas"]["SaveEntityResponse"];
                 };
             };
             /** @description Unauthorized access */
@@ -2114,7 +2125,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SaveEntityResponse"];
+                    "application/json": components["schemas"]["SaveEntityResponse"];
                 };
             };
         };

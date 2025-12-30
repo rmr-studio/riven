@@ -8,9 +8,11 @@ import {
 } from "@/lib/types/types";
 
 export type EntityType = components["schemas"]["EntityType"];
-export type EntityTypeOrderingKey = components["schemas"]["EntityTypeOrderingKey"];
+export type EntityTypeAttributeColumn = components["schemas"]["EntityTypeAttributeColumn"];
 export type Entity = components["schemas"]["Entity"];
 export type EntityRelationshipDefinition = components["schemas"]["EntityRelationshipDefinition"];
+export type EntityAttributePayload = components["schemas"]["EntityAttributePayload"];
+export type EntityAttribute = components["schemas"]["EntityAttribute"];
 
 export interface EntityTypeDefinition {
     id: string;
@@ -28,6 +30,12 @@ export const isAttributeDefinition = (
     attribute: EntityRelationshipDefinition | EntityAttributeDefinition
 ): attribute is EntityAttributeDefinition => {
     return "schema" in attribute;
+};
+
+export const isRelationshipPayload = (
+    payload: EntityAttributePayload
+): payload is EntityAttributeRelationPayload => {
+    return payload.type === EntityPropertyType.RELATIONSHIP;
 };
 
 export type CreateEntityTypeRequest = components["schemas"]["CreateEntityTypeRequest"];
@@ -119,6 +127,9 @@ export type EntityAttributePrimitivePayload =
     components["schemas"]["EntityAttributePrimitivePayload"];
 export type EntityAttributeRelationPayloadReference =
     components["schemas"]["EntityAttributeRelationPayloadReference"];
+
+export type EntityAttributeRelationPayload =
+    components["schemas"]["EntityAttributeRelationPayload"];
 export type SaveEntityRequest = components["schemas"]["SaveEntityRequest"];
 export type SaveEntityResponse = components["schemas"]["SaveEntityResponse"];
 export type EntityAttributeRequest = components["schemas"]["EntityAttributeRequest"];

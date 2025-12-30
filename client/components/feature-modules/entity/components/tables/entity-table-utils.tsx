@@ -5,7 +5,12 @@ import { DataFormat, DataType, EntityPropertyType } from "@/lib/types/types";
 import { toTitleCase } from "@/lib/util/utils";
 import { ColumnDef } from "@tanstack/react-table";
 import { ReactNode } from "react";
-import { Entity, EntityType, EntityTypeOrderingKey } from "../../interface/entity.interface";
+import {
+    Entity,
+    EntityType,
+    EntityTypeAttributeColumn,
+    isRelationshipPayload,
+} from "../../interface/entity.interface";
 
 // Row type for entity instance data table
 export interface EntityRow {
@@ -18,21 +23,25 @@ export interface EntityRow {
  * Transform entities into flat row objects for the data table
  */
 export function transformEntitiesToRows(entities: Entity[]): EntityRow[] {
-    return entities.map((entity) => {
-        const row: EntityRow = {
-            _entityId: entity.id,
-            _entity: entity,
-        };
+    return entities
+        .filter((entity) => !!entity.payload)
+        .map((entity) => {
+            const row: EntityRow = {
+                _entityId: entity.id,
+                _entity: entity,
+            };
 
-        // Flatten payload into row properties
-        if (entity.payload) {
             Object.entries(entity.payload).forEach(([key, value]) => {
-                row[key] = value;
+                const { payload } = value;
+                if (isRelationshipPayload(payload)) {
+                    row[key] = payload.relations;
+                    return;
+                }
+                row[key] = payload.value;
             });
-        }
 
-        return row;
-    });
+            return row;
+        });
 }
 
 /**
@@ -196,7 +205,7 @@ export function generateColumnsFromEntityType(entityType: EntityType): ColumnDef
         columns.push({
             accessorKey: relationship.id,
             header: () => {
-                const {icon, name} = relationship
+                const { icon, name } = relationship;
                 return (
                     <div className="flex items-center">
                         <IconCell
@@ -229,17 +238,17 @@ export function generateColumnsFromEntityType(entityType: EntityType): ColumnDef
 }
 
 /**
- * Apply column ordering based on entity type order array
+ * Apply column ordering based on entity type columns array
  */
 export function applyColumnOrdering(
     columns: ColumnDef<EntityRow>[],
-    order: EntityTypeOrderingKey[]
+    columnsOrder: EntityTypeAttributeColumn[]
 ): ColumnDef<EntityRow>[] {
     const orderedColumns: ColumnDef<EntityRow>[] = [];
     const columnMap = new Map(columns.map((col) => [col.accessorKey as string, col]));
 
     // Add columns in order array sequence
-    order.forEach((orderItem) => {
+    columnsOrder.forEach((orderItem) => {
         if (orderItem.type === EntityPropertyType.ATTRIBUTE) {
             const column = columnMap.get(orderItem.key);
             if (column) {
@@ -379,7 +388,7 @@ export function generateSearchConfigFromEntityType(
  */
 export function getEntityDisplayName(entity: Entity): string {
     // Get the identifier field value from the entity payload
-    const identifierValue = entity.payload?.[entity.entityType.identifierKey];
+    const identifierValue = entity.payload[entity.identifierKey];
 
     if (identifierValue !== null && identifierValue !== undefined) {
         return String(identifierValue);

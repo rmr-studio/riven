@@ -4,7 +4,7 @@ import { FormWidgetProps } from "@/components/feature-modules/blocks/components/
 import { FormField } from "@/components/ui/form";
 import { SchemaUUID } from "@/lib/interfaces/common.interface";
 import { FC } from "react";
-import { Noop } from "react-hook-form";
+import { useFormState } from "react-hook-form";
 import { useEntityDraft } from "../../../context/entity-provider";
 import { getWidgetForSchema } from "./entity-field-registry";
 
@@ -16,18 +16,31 @@ export interface EntityFieldCellProps {
 export const EntityFieldCell: FC<EntityFieldCellProps> = ({ attributeId, schema }) => {
     const { form } = useEntityDraft();
 
+    // Watch for validation errors on this specific field
+    const { errors } = useFormState({
+        control: form.control,
+        name: attributeId,
+    });
+
     // Get widget component for this schema type
     const Widget: FC<FormWidgetProps> = getWidgetForSchema(schema);
 
+    // Extract error messages for this field
+    const fieldError = errors[attributeId];
+    const errorMessages = fieldError?.message
+        ? [String(fieldError.message)]
+        : fieldError?.type
+        ? [String(fieldError.type)]
+        : undefined;
+
     /**
-     * This should perform a brief validation check for existing data already loaded inside the client.
-     * E.g. for URL fields, check if the value is a valid URL format. If invalid, set error in form state.
-     * This should also perform a brief uniqueness check if the schema requires it, e.g. check against existing entities in the entity store.
-     * This shouldnt perform a full validation, nor call any APIs, just basic checks that can be done client-side.
+     * Handle blur event:
+     * 1. Trigger React Hook Form's native onBlur
+     * 2. Re-validate this specific field to update error state
      */
-    const onBlur = (onBlur: Noop, value: unknown) => {
-        onBlur();
-        console.log(value);
+    const handleBlur = async () => {
+        // Trigger validation for this specific field
+        await form.trigger(attributeId);
     };
 
     if (!Widget) {
@@ -39,26 +52,30 @@ export const EntityFieldCell: FC<EntityFieldCellProps> = ({ attributeId, schema 
     }
 
     return (
-        <div className="relative">
+        <div className="relative w-full min-w-0">
             <FormField
                 control={form.control}
                 name={attributeId}
                 render={({ field }) => {
                     return (
-                        <Widget
-                            value={field.value}
-                            onChange={field.onChange}
-                            onBlur={() => onBlur(field.onBlur, field.value)}
-                            schema={schema}
-                            options={
-                                schema.options?.enum
-                                    ? schema.options.enum.map((opt) => ({
-                                          label: opt,
-                                          value: opt,
-                                      }))
-                                    : undefined
-                            }
-                        />
+                        <div className="w-full min-w-0">
+                            <Widget
+                                value={field.value}
+                                onChange={field.onChange}
+                                onBlur={handleBlur}
+                                schema={schema}
+                                displayError="tooltip"
+                                errors={errorMessages}
+                                options={
+                                    schema.options?.enum
+                                        ? schema.options.enum.map((opt) => ({
+                                              label: opt,
+                                              value: opt,
+                                          }))
+                                        : undefined
+                                }
+                            />
+                        </div>
                     );
                 }}
             />

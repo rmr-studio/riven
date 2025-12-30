@@ -2,13 +2,13 @@ import { useAuth } from "@/components/provider/auth-context";
 import { useMutation, useQueryClient, type UseMutationOptions } from "@tanstack/react-query";
 import { useRef } from "react";
 import { toast } from "sonner";
-import { Entity, SaveEntityRequest } from "../../../interface/entity.interface";
+import { SaveEntityRequest, SaveEntityResponse } from "../../../interface/entity.interface";
 import { EntityService } from "../../../service/entity.service";
 
 export function useSaveEntityMutation(
     organisationId: string,
-    entityTypeKey: string,
-    options?: UseMutationOptions<Entity, Error, SaveEntityRequest>
+    entityTypeId: string,
+    options?: UseMutationOptions<SaveEntityResponse, Error, SaveEntityRequest>
 ) {
     const queryClient = useQueryClient();
     const { session } = useAuth();
@@ -16,7 +16,7 @@ export function useSaveEntityMutation(
 
     return useMutation({
         mutationFn: (payload: SaveEntityRequest) =>
-            EntityService.saveEntity(session, organisationId, entityTypeKey, payload),
+            EntityService.saveEntity(session, organisationId, entityTypeId, payload),
         onMutate: (data) => {
             options?.onMutate?.(data);
             submissionToastRef.current = toast.loading("Creating entity...");
@@ -27,18 +27,30 @@ export function useSaveEntityMutation(
             submissionToastRef.current = undefined;
             toast.error(`Failed to create entity: ${error.message}`);
         },
-        onSuccess: (entity: Entity, variables: SaveEntityRequest, context: unknown) => {
-            options?.onSuccess?.(entity, variables, context);
-            toast.dismiss(submissionToastRef.current);
-            submissionToastRef.current = undefined;
-            toast.success("Entity created successfully!");
+        onSuccess: (
+            response: SaveEntityResponse,
+            variables: SaveEntityRequest,
+            context: unknown
+        ) => {
+            // Handle schema validation or impact confirmation errors
+            if (response.errors) {
+                return response;
+            }
 
-            // Invalidate the entities list query to refetch
-            queryClient.invalidateQueries({
-                queryKey: ["entities", organisationId, entityTypeKey],
-            });
+            if (response.entity) {
+                options?.onSuccess?.(response, variables, context);
 
-            return entity;
+                toast.dismiss(submissionToastRef.current);
+                submissionToastRef.current = undefined;
+                toast.success("Entity created successfully!");
+
+                // Invalidate the entities list query to refetch
+                queryClient.invalidateQueries({
+                    queryKey: ["entities", organisationId, entityTypeId],
+                });
+
+                return response;
+            }
         },
     });
 }

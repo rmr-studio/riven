@@ -13,6 +13,7 @@ import {
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import {
     arrayMove,
+    horizontalListSortingStrategy,
     SortableContext,
     sortableKeyboardCoordinates,
     useSortable,
@@ -26,12 +27,14 @@ import {
     getCoreRowModel,
     getFilteredRowModel,
     getSortedRowModel,
+    Header,
     Row,
+    RowSelectionState,
     SortingState,
     useReactTable,
 } from "@tanstack/react-table";
 import { Filter, GripVertical, MoreVertical, Search, X } from "lucide-react";
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -121,7 +124,26 @@ export interface ColumnResizingConfig {
     enabled: boolean;
     columnResizeMode?: "onChange" | "onEnd";
     defaultColumnSize?: number;
+    initialColumnSizing?: Record<string, number>;
     onColumnWidthsChange?: (columnSizing: Record<string, number>) => void;
+}
+
+export interface ColumnOrderingConfig {
+    enabled: boolean;
+    onColumnOrderChange?: (columnOrder: string[]) => void;
+}
+
+export interface SelectionActionProps<TData> {
+    selectedRows: TData[];
+    clearSelection: () => void;
+}
+
+export interface RowSelectionConfig<TData> {
+    enabled: boolean;
+    onSelectionChange?: (selectedRows: TData[]) => void;
+    actionComponent?: React.ComponentType<SelectionActionProps<TData>>;
+    persistCheckboxes?: boolean; // Default false - checkboxes persist after selection
+    clearOnFilterChange?: boolean; // Default true - clear selections when filters change
 }
 
 interface DataTableProps<TData, TValue> {
@@ -139,9 +161,12 @@ interface DataTableProps<TData, TValue> {
     filter?: FilterConfig<TData>;
     rowActions?: RowActionsConfig<TData>;
     columnResizing?: ColumnResizingConfig;
+    columnOrdering?: ColumnOrderingConfig;
     customRowRenderer?: (row: Row<TData>) => ReactNode | null;
-    isDraftMode?: boolean;
+    addingNewEntry?: boolean;
     disableDragForRow?: (row: Row<TData>) => boolean;
+    onTableReady?: (columnSizes: Record<string, number>) => void;
+    rowSelection?: RowSelectionConfig<TData>;
 }
 
 interface DraggableRowProps<TData> {
@@ -153,6 +178,83 @@ interface DraggableRowProps<TData> {
     columnResizing?: ColumnResizingConfig;
     disabled?: boolean;
     disableDragForRow?: (row: Row<TData>) => boolean;
+    hoveredRowId: string | null;
+    onRowHover: (rowId: string | null) => void;
+    isSelectionEnabled: boolean;
+    hasSelections: boolean;
+}
+
+interface DraggableColumnHeaderProps<TData, TValue> {
+    header: Header<TData, TValue>;
+    enableColumnOrdering: boolean;
+    isMounted: boolean;
+    columnResizing?: ColumnResizingConfig;
+    addingNewEntry: boolean;
+}
+
+function DraggableColumnHeader<TData, TValue>({
+    header,
+    enableColumnOrdering,
+    isMounted,
+    columnResizing,
+    addingNewEntry,
+}: DraggableColumnHeaderProps<TData, TValue>) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+        id: header.id,
+        disabled: !enableColumnOrdering || !isMounted,
+    });
+
+    const style = isMounted
+        ? {
+              transform: CSS.Transform.toString(transform),
+              transition,
+              opacity: isDragging ? 0.5 : 1,
+              width: columnResizing?.enabled ? `${header.getSize()}px` : undefined,
+          }
+        : {
+              width: columnResizing?.enabled ? `${header.getSize()}px` : undefined,
+          };
+
+    return (
+        <TableHead
+            ref={enableColumnOrdering && isMounted ? setNodeRef : undefined}
+            style={style}
+            key={header.id}
+            className={cn(
+                "py-2 px-3 relative border-l first:border-l-transparent",
+                enableColumnOrdering && "cursor-move"
+            )}
+            {...(isMounted && enableColumnOrdering ? attributes : {})}
+            {...(isMounted && enableColumnOrdering ? listeners : {})}
+        >
+            <div className="flex items-center justify-between">
+                {header.isPlaceholder
+                    ? null
+                    : flexRender(header.column.columnDef.header, header.getContext())}
+            </div>
+
+            {columnResizing?.enabled && header.column.getCanResize() && !addingNewEntry && (
+                <div
+                    onMouseDown={header.getResizeHandler()}
+                    onTouchStart={header.getResizeHandler()}
+                    className={cn(
+                        "absolute top-0 right-0 h-full w-3 cursor-col-resize select-none",
+                        "group/resizer z-10"
+                    )}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div
+                        className={cn(
+                            "absolute top-0 right-0 h-full w-[1px]",
+                            "bg-transparent group-hover/resizer:bg-blue-500 group-hover/resizer:w-[2px]",
+                            "group-active/resizer:bg-blue-600 transition-all duration-150",
+                            header.column.getIsResizing() && "bg-blue-600 w-[2px]"
+                        )}
+                    />
+                </div>
+            )}
+        </TableHead>
+    );
 }
 
 function DraggableRow<TData>({
@@ -164,6 +266,10 @@ function DraggableRow<TData>({
     columnResizing,
     disabled,
     disableDragForRow,
+    hoveredRowId,
+    onRowHover,
+    isSelectionEnabled,
+    hasSelections,
 }: DraggableRowProps<TData>) {
     const isDragDisabled = disableDragForRow?.(row) ?? false;
 
@@ -190,6 +296,8 @@ function DraggableRow<TData>({
                 disabled && "opacity-40 pointer-events-none"
             )}
             onClick={() => !disabled && onRowClick?.(row)}
+            onMouseEnter={() => isSelectionEnabled && onRowHover(row.id)}
+            onMouseLeave={() => isSelectionEnabled && onRowHover(null)}
         >
             {enableDragDrop && (
                 <TableCell className="w-[40px] p-2 ">
@@ -212,7 +320,9 @@ function DraggableRow<TData>({
                     className="border-l border-l-accent/40 first:border-l-transparent"
                     style={{
                         width: columnResizing?.enabled ? `${cell.column.getSize()}px` : undefined,
-                        maxWidth: columnResizing?.enabled ? `${cell.column.getSize()}px` : undefined,
+                        maxWidth: columnResizing?.enabled
+                            ? `${cell.column.getSize()}px`
+                            : undefined,
                     }}
                 >
                     <div className={cn(columnResizing?.enabled && "overflow-x-auto")}>
@@ -285,9 +395,12 @@ export function DataTable<TData, TValue>({
     filter,
     rowActions,
     columnResizing,
+    columnOrdering,
     customRowRenderer,
-    isDraftMode = false,
+    addingNewEntry = false,
     disableDragForRow,
+    onTableReady,
+    rowSelection,
 }: DataTableProps<TData, TValue>) {
     const [tableData, setTableData] = useState<TData[]>(data);
     const [sorting, setSorting] = useState<SortingState>([]);
@@ -298,12 +411,24 @@ export function DataTable<TData, TValue>({
     const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
     const [enabledFilters, setEnabledFilters] = useState<Set<string>>(new Set());
     const [isMounted, setIsMounted] = useState(false);
-    const [columnSizing, setColumnSizing] = useState<Record<string, number>>({});
+    const [columnSizing, setColumnSizing] = useState<Record<string, number>>(
+        columnResizing?.initialColumnSizing ?? {}
+    );
+    const [columnOrder, setColumnOrder] = useState<string[]>([]);
+    const [rowSelectionState, setRowSelectionState] = useState<RowSelectionState>({});
+    const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
 
     // Prevent hydration errors by only enabling DnD on client
     useEffect(() => {
         setIsMounted(true);
     }, []);
+
+    // Update column sizing when initialColumnSizing changes
+    useEffect(() => {
+        if (columnResizing?.initialColumnSizing) {
+            setColumnSizing(columnResizing.initialColumnSizing);
+        }
+    }, [columnResizing?.initialColumnSizing]);
 
     // Debounce search
     useEffect(() => {
@@ -362,6 +487,48 @@ export function DataTable<TData, TValue>({
         }
     }, [columnSizing, columnResizing]);
 
+    // Trigger callback when column order changes
+    useEffect(() => {
+        if (!columnOrdering?.enabled) return;
+
+        if (columnOrder.length > 0) {
+            columnOrdering.onColumnOrderChange?.(columnOrder);
+        }
+    }, [columnOrder, columnOrdering]);
+
+    // Derived state for row selection
+    const hasSelections = useMemo(() => {
+        return Object.keys(rowSelectionState).length > 0;
+    }, [rowSelectionState]);
+
+    const activeFilterCount = useMemo(() => {
+        return Object.entries(activeFilters).filter(([key, value]) => {
+            // Only count if filter is enabled
+            if (!enabledFilters.has(key)) return false;
+            if (Array.isArray(value)) return value.length > 0;
+            return value !== null && value !== undefined && value !== "";
+        }).length;
+    }, [activeFilters, enabledFilters]);
+
+    const isDragDropEnabled = useMemo(() => {
+        if (!enableDragDrop) return false;
+        if (globalFilter && globalFilter.length > 0) return false;
+        if (activeFilterCount > 0) return false;
+        // Disable drag-drop when rows are selected
+        if (hasSelections) return false;
+        return true;
+    }, [enableDragDrop, globalFilter, activeFilterCount, hasSelections]);
+
+    const isSelectionEnabled = useMemo(() => {
+        if (!rowSelection?.enabled) return false;
+        // Disable selection when drag-drop is active
+        if (enableDragDrop && !globalFilter && activeFilterCount === 0 && !hasSelections) {
+            // Drag-drop would be enabled, so disable selection
+            return false;
+        }
+        return true;
+    }, [rowSelection?.enabled, enableDragDrop, globalFilter, activeFilterCount, hasSelections]);
+
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
@@ -372,6 +539,54 @@ export function DataTable<TData, TValue>({
             coordinateGetter: sortableKeyboardCoordinates,
         })
     );
+
+    // Generate final columns array with selection column
+    const finalColumns = useMemo(() => {
+        if (!isSelectionEnabled) return columns;
+
+        const selectionColumn: ColumnDef<TData, TValue> = {
+            id: "select",
+            size: 40,
+            minSize: 40,
+            maxSize: 40,
+            enableResizing: false,
+            enableSorting: false,
+            enableHiding: false,
+            header: ({ table }) => (
+                <div className="flex items-center justify-center">
+                    <Checkbox
+                        checked={table.getIsAllPageRowsSelected()}
+                        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                        aria-label="Select all"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            ),
+            cell: ({ row }) => {
+                // Checkbox visible when: persist mode OR has selections OR hovering this row
+                const isVisible =
+                    rowSelection?.persistCheckboxes || hasSelections || hoveredRowId === row.id;
+
+                return (
+                    <div className="flex items-center justify-center">
+                        <Checkbox
+                            checked={row.getIsSelected()}
+                            onCheckedChange={(value) => row.toggleSelected(!!value)}
+                            aria-label="Select row"
+                            onClick={(e) => e.stopPropagation()}
+                            className={cn(
+                                "transition-opacity duration-150",
+                                !isVisible && "opacity-0 pointer-events-none"
+                            )}
+                        />
+                    </div>
+                );
+            },
+        };
+
+        // Insert at beginning
+        return [selectionColumn, ...columns];
+    }, [columns, isSelectionEnabled, rowSelection?.persistCheckboxes, hasSelections, hoveredRowId]);
 
     // Custom global filter function that searches across specified columns
     const globalFilterFn = (row: Row<TData>, columnId: string, filterValue: string) => {
@@ -391,7 +606,7 @@ export function DataTable<TData, TValue>({
 
     const table = useReactTable({
         data: tableData,
-        columns,
+        columns: finalColumns,
         getCoreRowModel: getCoreRowModel(),
         ...(enableSorting && {
             getSortedRowModel: getSortedRowModel(),
@@ -426,18 +641,75 @@ export function DataTable<TData, TValue>({
                 maxSize: 500,
             },
         }),
+        ...(columnOrdering?.enabled && {
+            onColumnOrderChange: setColumnOrder,
+        }),
+        ...(isSelectionEnabled && {
+            enableRowSelection: true,
+            onRowSelectionChange: setRowSelectionState,
+        }),
         getRowId: getRowId,
         state: {
             ...(enableSorting && { sorting }),
             ...((enableFiltering || search?.enabled || filter?.enabled) && { columnFilters }),
             ...(search?.enabled && { globalFilter }),
             ...(columnResizing?.enabled && { columnSizing }),
+            ...(columnOrdering?.enabled && { columnOrder }),
+            ...(isSelectionEnabled && { rowSelection: rowSelectionState }),
         },
     });
+
+    // Notify parent of initial column sizes after table is ready
+    const hasNotifiedRef = useRef(false);
+    useEffect(() => {
+        if (!onTableReady || !isMounted || hasNotifiedRef.current) return;
+
+        // Only call once when table is first mounted with data
+        if (tableData.length === 0) return;
+
+        // Build column sizes map from current table state
+        const sizes: Record<string, number> = {};
+        table.getAllLeafColumns().forEach((column) => {
+            sizes[column.id] = column.getSize();
+        });
+
+        onTableReady(sizes);
+        hasNotifiedRef.current = true;
+    }, [isMounted, tableData.length, table, onTableReady]);
+
+    // Derived state for selected rows (depends on table)
+    const selectedRowsData = useMemo(() => {
+        if (!isSelectionEnabled || !table) return [];
+        return table.getSelectedRowModel().rows.map((row) => row.original);
+    }, [isSelectionEnabled, table, rowSelectionState]);
+
+    const selectedCount = useMemo(() => {
+        return Object.keys(rowSelectionState).filter((key) => rowSelectionState[key]).length;
+    }, [rowSelectionState]);
+
+    // Notify parent of selection changes
+    useEffect(() => {
+        if (!rowSelection?.enabled || !rowSelection.onSelectionChange) return;
+        rowSelection.onSelectionChange(selectedRowsData);
+    }, [selectedRowsData, rowSelection]);
+
+    // Clear selections when filters change (if configured)
+    useEffect(() => {
+        if (!rowSelection?.enabled) return;
+        if (rowSelection.clearOnFilterChange === false) return;
+
+        if (globalFilter || activeFilterCount > 0) {
+            setRowSelectionState({});
+        }
+    }, [globalFilter, activeFilterCount, rowSelection]);
 
     const rowIds = useMemo(() => {
         return table.getRowModel().rows.map((row) => row.id as UniqueIdentifier);
     }, [table, tableData]);
+
+    const columnIds = useMemo(() => {
+        return table.getAllLeafColumns().map((col) => col.id as UniqueIdentifier);
+    }, [table]);
 
     // Filter out disabled rows from sortable context to keep them fixed in position
     const sortableRowIds = useMemo(() => {
@@ -453,7 +725,20 @@ export function DataTable<TData, TValue>({
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
 
-        if (over && active.id !== over.id) {
+        if (!over || active.id === over.id) return;
+
+        // Check if we're dragging a column (column IDs will be strings from table headers)
+        const isColumnDrag = columnIds.includes(active.id);
+
+        if (isColumnDrag) {
+            // Handle column reordering
+            const oldIndex = columnIds.indexOf(active.id);
+            const newIndex = columnIds.indexOf(over.id);
+
+            const newColumnOrder = arrayMove(columnIds as string[], oldIndex, newIndex);
+            setColumnOrder(newColumnOrder);
+        } else {
+            // Handle row reordering
             const oldIndex = rowIds.indexOf(active.id);
             const newIndex = rowIds.indexOf(over.id);
 
@@ -518,24 +803,50 @@ export function DataTable<TData, TValue>({
         }
     };
 
-    const activeFilterCount = useMemo(() => {
-        return Object.entries(activeFilters).filter(([key, value]) => {
-            // Only count if filter is enabled
-            if (!enabledFilters.has(key)) return false;
-            if (Array.isArray(value)) return value.length > 0;
-            return value !== null && value !== undefined && value !== "";
-        }).length;
-    }, [activeFilters, enabledFilters]);
+    // Selection Action Bar Component
+    interface SelectionActionBarProps<TData> {
+        onClear: () => void;
+        selectedRows: TData[];
+        actionComponent?: React.ComponentType<SelectionActionProps<TData>>;
+    }
 
-    // Disable drag and drop when search or filters are active
-    const isDragDropEnabled = useMemo(() => {
-        if (!enableDragDrop) return false;
-        // Disable if there's an active search
-        if (globalFilter && globalFilter.length > 0) return false;
-        // Disable if there are active filters
-        if (activeFilterCount > 0) return false;
-        return true;
-    }, [enableDragDrop, globalFilter, activeFilterCount]);
+    function SelectionActionBar<TData>({
+        selectedRows,
+        onClear,
+        actionComponent: CustomActionComponent,
+    }: SelectionActionBarProps<TData>) {
+        return (
+            <div
+                className={cn(
+                    "bg-primary text-primary-foreground",
+                    "border-b shadow-lg rounded-t-md",
+                    "animate-in slide-in-from-top duration-200",
+                    "px-4 py-3"
+                )}
+            >
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <span className="text-sm font-medium">{selectedCount} selected</span>
+                        {CustomActionComponent && (
+                            <CustomActionComponent
+                                selectedRows={selectedRows}
+                                clearSelection={onClear}
+                            />
+                        )}
+                    </div>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onClear}
+                        className="text-primary-foreground hover:text-primary-foreground/80 hover:bg-primary-foreground/10"
+                    >
+                        <X className="h-4 w-4 mr-2" />
+                        Clear
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 
     const renderFilter = (columnFilter: ColumnFilter<TData>) => {
         const columnId = String(columnFilter.column);
@@ -736,43 +1047,68 @@ export function DataTable<TData, TValue>({
                                     <span className="sr-only">Drag handle</span>
                                 </TableHead>
                             )}
-                            {headerGroup.headers.map((header) => (
-                                <TableHead
-                                    key={header.id}
-                                    className="py-2 px-3 relative"
-                                    style={{
-                                        width: columnResizing?.enabled
-                                            ? `${header.getSize()}px`
-                                            : undefined,
-                                    }}
+                            {columnOrdering?.enabled && isMounted ? (
+                                <SortableContext
+                                    items={columnIds}
+                                    strategy={horizontalListSortingStrategy}
                                 >
-                                    <div className="flex items-center justify-between">
-                                        {header.isPlaceholder
-                                            ? null
-                                            : flexRender(
-                                                  header.column.columnDef.header,
-                                                  header.getContext()
-                                              )}
-                                    </div>
+                                    {headerGroup.headers.map((header) => (
+                                        <DraggableColumnHeader
+                                            key={header.id}
+                                            header={header}
+                                            enableColumnOrdering={columnOrdering.enabled}
+                                            isMounted={isMounted}
+                                            columnResizing={columnResizing}
+                                            addingNewEntry={addingNewEntry}
+                                        />
+                                    ))}
+                                </SortableContext>
+                            ) : (
+                                headerGroup.headers.map((header) => (
+                                    <TableHead
+                                        key={header.id}
+                                        className="py-2 px-3 relative border-l first:border-l-transparent"
+                                        style={{
+                                            width: columnResizing?.enabled
+                                                ? `${header.getSize()}px`
+                                                : undefined,
+                                        }}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            {header.isPlaceholder
+                                                ? null
+                                                : flexRender(
+                                                      header.column.columnDef.header,
+                                                      header.getContext()
+                                                  )}
+                                        </div>
 
-                                    {columnResizing?.enabled &&
-                                        header.column.getCanResize() &&
-                                        !isDraftMode && (
-                                            <div
-                                                onMouseDown={header.getResizeHandler()}
-                                                onTouchStart={header.getResizeHandler()}
-                                                className={cn(
-                                                    "absolute top-0 right-0 h-full w-1 cursor-col-resize select-none",
-                                                    "bg-transparent hover:bg-blue-500 hover:w-[2px]",
-                                                    "active:bg-blue-600 transition-all duration-150",
-                                                    header.column.getIsResizing() &&
-                                                        "bg-blue-600 w-[2px]"
-                                                )}
-                                                onClick={(e) => e.stopPropagation()}
-                                            />
-                                        )}
-                                </TableHead>
-                            ))}
+                                        {columnResizing?.enabled &&
+                                            header.column.getCanResize() &&
+                                            !addingNewEntry && (
+                                                <div
+                                                    onMouseDown={header.getResizeHandler()}
+                                                    onTouchStart={header.getResizeHandler()}
+                                                    className={cn(
+                                                        "absolute top-0 right-0 h-full w-3 cursor-col-resize select-none",
+                                                        "group/resizer z-10"
+                                                    )}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <div
+                                                        className={cn(
+                                                            "absolute top-0 right-0 h-full w-[1px]",
+                                                            "bg-transparent group-hover/resizer:bg-blue-500 group-hover/resizer:w-[2px]",
+                                                            "group-active/resizer:bg-blue-600 transition-all duration-150",
+                                                            header.column.getIsResizing() &&
+                                                                "bg-blue-600 w-[2px]"
+                                                        )}
+                                                    />
+                                                </div>
+                                            )}
+                                    </TableHead>
+                                ))
+                            )}
                             {rowActions?.enabled && (
                                 <TableHead className="w-[50px]">
                                     <span className="sr-only">Actions</span>
@@ -800,8 +1136,12 @@ export function DataTable<TData, TValue>({
                                     isMounted={isMounted}
                                     rowActions={rowActions}
                                     columnResizing={columnResizing}
-                                    disabled={isDraftMode}
+                                    disabled={addingNewEntry}
                                     disableDragForRow={disableDragForRow}
+                                    hoveredRowId={hoveredRowId}
+                                    onRowHover={setHoveredRowId}
+                                    isSelectionEnabled={isSelectionEnabled}
+                                    hasSelections={hasSelections}
                                 />
                             );
                         })
@@ -809,7 +1149,7 @@ export function DataTable<TData, TValue>({
                         <TableRow>
                             <TableCell
                                 colSpan={
-                                    columns.length +
+                                    finalColumns.length +
                                     (isDragDropEnabled ? 1 : 0) +
                                     (rowActions?.enabled ? 1 : 0)
                                 }
@@ -841,79 +1181,93 @@ export function DataTable<TData, TValue>({
 
     return (
         <div className="w-full space-y-4">
+            {/* Selection Action Bar */}
+            {isSelectionEnabled && hasSelections && (
+                <SelectionActionBar
+                    selectedRows={selectedRowsData}
+                    onClear={() => setRowSelectionState({})}
+                    actionComponent={rowSelection?.actionComponent}
+                />
+            )}
+
             {/* Toolbar - Search and Filters on same line */}
             {(search?.enabled || (filter?.enabled && filter.filters.length > 0)) && (
                 <div className="flex items-center gap-2 flex-wrap">
-                        {/* Search Input */}
-                        {search?.enabled && (
-                            <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                                <div className="relative flex-1 max-w-sm">
-                                    <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input
-                                        placeholder={search.placeholder ?? "Search..."}
-                                        value={searchValue}
-                                        onChange={(e) => setSearchValue(e.target.value)}
-                                        className="pl-8 pr-8 h-9"
-                                        disabled={search.disabled}
-                                    />
-                                    {searchValue && !search.disabled && (
-                                        <button
-                                            onClick={handleClearSearch}
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </button>
-                                    )}
-                                </div>
-                                {searchValue && (
-                                    <p className="text-sm text-muted-foreground whitespace-nowrap">
-                                        {table.getFilteredRowModel().rows.length} result
-                                        {table.getFilteredRowModel().rows.length !== 1 ? "s" : ""}
-                                    </p>
+                    {/* Search Input */}
+                    {search?.enabled && (
+                        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                            <div className="relative flex-1 max-w-sm">
+                                <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    placeholder={search.placeholder ?? "Search..."}
+                                    value={searchValue}
+                                    onChange={(e) => setSearchValue(e.target.value)}
+                                    className="pl-8 pr-8 h-9"
+                                    disabled={search.disabled}
+                                />
+                                {searchValue && !search.disabled && (
+                                    <button
+                                        onClick={handleClearSearch}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </button>
                                 )}
                             </div>
-                        )}
+                            {searchValue && (
+                                <p className="text-sm text-muted-foreground whitespace-nowrap">
+                                    {table.getFilteredRowModel().rows.length} result
+                                    {table.getFilteredRowModel().rows.length !== 1 ? "s" : ""}
+                                </p>
+                            )}
+                        </div>
+                    )}
 
-                        {/* Filter Button */}
-                        {filter?.enabled && filter.filters.length > 0 && (
-                            <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button variant="outline" size="sm" className="h-9" disabled={filter.disabled}>
-                                        <Filter className="h-4 w-4 mr-2" />
-                                        Filters
-                                        {activeFilterCount > 0 && (
-                                            <Badge variant="secondary" className="ml-2 h-5 px-1.5">
-                                                {activeFilterCount}
-                                            </Badge>
-                                        )}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-80 p-0" align="end">
-                                    <div className="flex items-center justify-between p-4 border-b">
-                                        <h4 className="font-semibold text-sm">Filter Options</h4>
-                                        {activeFilterCount > 0 && (
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={handleClearFilters}
-                                                className="h-7 text-xs text-muted-foreground hover:text-foreground"
-                                            >
-                                                Clear all
-                                            </Button>
+                    {/* Filter Button */}
+                    {filter?.enabled && filter.filters.length > 0 && (
+                        <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-9"
+                                    disabled={filter.disabled}
+                                >
+                                    <Filter className="h-4 w-4 mr-2" />
+                                    Filters
+                                    {activeFilterCount > 0 && (
+                                        <Badge variant="secondary" className="ml-2 h-5 px-1.5">
+                                            {activeFilterCount}
+                                        </Badge>
+                                    )}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80 p-0" align="end">
+                                <div className="flex items-center justify-between p-4 border-b">
+                                    <h4 className="font-semibold text-sm">Filter Options</h4>
+                                    {activeFilterCount > 0 && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={handleClearFilters}
+                                            className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                                        >
+                                            Clear all
+                                        </Button>
+                                    )}
+                                </div>
+                                <ScrollArea className="max-h-[400px]">
+                                    <div className="p-4 space-y-4">
+                                        {filter.filters.map((columnFilter) =>
+                                            renderFilter(columnFilter)
                                         )}
                                     </div>
-                                    <ScrollArea className="max-h-[400px]">
-                                        <div className="p-4 space-y-4">
-                                            {filter.filters.map((columnFilter) =>
-                                                renderFilter(columnFilter)
-                                            )}
-                                        </div>
-                                    </ScrollArea>
-                                </PopoverContent>
-                            </Popover>
-                        )}
-                    </div>
-                )}
+                                </ScrollArea>
+                            </PopoverContent>
+                        </Popover>
+                    )}
+                </div>
+            )}
 
             {wrappedContent}
         </div>

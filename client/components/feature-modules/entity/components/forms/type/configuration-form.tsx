@@ -29,48 +29,55 @@ export const ConfigurationForm: FC<Props> = ({ availableIdentifiers }) => {
     if (!form) return null;
 
     const identifierKey = form.watch("identifierKey");
-    const order = form.watch("order");
+    const columns = form.watch("columns");
 
-    // Watch for identifier key changes and auto-reorder to ensure identifier is first
+    // Watch for identifier key changes and auto-recolumns to ensure identifier is first
     useEffect(() => {
-        if (order.length <= 1) return;
+        if (columns.length <= 1) return;
 
         // Check if identifier is already first
-        const firstItem = order[0];
+        const firstItem = columns[0];
         if (firstItem?.key === identifierKey && firstItem?.type === EntityPropertyType.ATTRIBUTE) {
             // Already in first position, nothing to do
             return;
         }
 
-        // Find identifier in current order
-        const identifierIndex = order.findIndex(
+        // Find identifier in current columns
+        const identifierIndex = columns.findIndex(
             (item) => item.key === identifierKey && item.type === EntityPropertyType.ATTRIBUTE
         );
 
-        let newOrder;
         if (identifierIndex !== -1) {
-            // Identifier exists in order, move it to first position
-            const identifierItem = order[identifierIndex];
-            newOrder = [identifierItem, ...order.filter((_, idx) => idx !== identifierIndex)];
-        } else {
-            // Identifier not in order, add it at first position
-            newOrder = [
+            // Identifier exists in columns, move it to first position
+            const identifierItem = columns[identifierIndex];
+            form.setValue(
+                "columns",
+                [identifierItem, ...columns.filter((_, idx) => idx !== identifierIndex)],
+                {
+                    shouldDirty: true,
+                }
+            );
+            return;
+        }
+        // Identifier not in columns, add it at first position
+        form.setValue(
+            "columns",
+            [
                 {
                     key: identifierKey,
                     type: EntityPropertyType.ATTRIBUTE,
+                    width: 150,
                 },
-                ...order,
-            ];
-        }
+                ...columns,
+            ],
+            { shouldDirty: true }
+        );
 
-        // Update the order in the form
-        form.setValue("order", newOrder, {
-            shouldDirty: true,
-        });
+        // Update the columns in the form
     }, [identifierKey]);
 
     return (
-        <div className="rounded-lg border bg-card p-6">
+        <div className="rounded-lg bcolumns bg-card p-6">
             <h2 className="text-lg font-semibold mb-4">General</h2>
 
             <div className="space-y-6">

@@ -30,10 +30,11 @@ export interface EntityTypeConfigurationProviderProps {
 const entityTypeFormSchema = z
     .object({
         identifierKey: z.string().min(1, "Identifier key is required").refine(isUUID),
-        order: z.array(
+        columns: z.array(
             z.object({
                 key: z.string().min(1, "Ordering key is required").refine(isUUID),
                 type: z.nativeEnum(EntityPropertyType),
+                width: z.number().min(150, "Minimum width is 150").max(1000, "Maximum width is 1000"),
             })
         ),
     })
@@ -61,7 +62,7 @@ export const EntityTypeConfigurationProvider = ({
             type: entityType.type,
 
             icon: entityType.icon,
-            order: entityType.order,
+            columns: entityType.columns,
         },
     });
 
@@ -158,9 +159,7 @@ export const EntityTypeConfigurationProvider = ({
 };
 
 // Hook to access store with selector
-export const useEntityTypeConfigurationStore = <T,>(
-    selector: (store: EntityTypeConfigStore) => T
-): T => {
+const useEntityTypeConfigurationStore = <T,>(selector: (store: EntityTypeConfigStore) => T): T => {
     const context = useContext(EntityTypeConfigContext);
 
     if (!context) {

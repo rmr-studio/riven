@@ -10,11 +10,11 @@ export interface FormWidgetProps<T = any> {
     onBlur?: () => void;
     label?: string;
     description?: string;
-    tooltip?: string;
     placeholder?: string;
-    errors?: string[];
-    schema: SchemaUUID | Schema
+    schema: SchemaUUID | Schema;
     disabled?: boolean;
+    errors?: string[];
+    displayError?: "message" | "tooltip" | "none";
     options?: Array<{ label: string; value: string }>;
 }
 

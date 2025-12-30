@@ -11,35 +11,6 @@ export type OrganisationPlan = components["schemas"]["Organisation"]["plan"];
 export type OrganisationRole =
     components["schemas"]["OrganisationMember"]["membershipDetails"]["role"];
 
-// --- 🎨 Tile Layout Types ---
-export interface TileLayoutConfig {
-    sections: TileSection[];
-    spacing: number;
-    showAvatar: boolean;
-    showPlan: boolean;
-    showMemberCount: boolean;
-    showMemberSince: boolean;
-    showRole: boolean;
-    showCustomAttributes: boolean;
-    showAddress: boolean;
-    showPaymentInfo: boolean;
-    showBusinessNumber: boolean;
-    showTaxId: boolean;
-}
-
-export interface TileSection {
-    id: string;
-    type: "avatar" | "info" | "details" | "custom";
-    title: string;
-    visible: boolean;
-    order: number;
-    width: number;
-    height: number;
-    x: number;
-    y: number;
-    customAttributes?: string[];
-}
-
 // -- - 🔗 API Request Models ---
 export type OrganisationCreationRequest = components["schemas"]["OrganisationCreationRequest"];
 

@@ -2,7 +2,7 @@ import { fromError, isResponseError } from "@/lib/util/error/error.util";
 import { handleError, validateSession, validateUuid } from "@/lib/util/service/service.util";
 import { api } from "@/lib/util/utils";
 import { Session } from "@supabase/supabase-js";
-import { Entity, SaveEntityRequest } from "../interface/entity.interface";
+import { Entity, SaveEntityRequest, SaveEntityResponse } from "../interface/entity.interface";
 
 export class EntityService {
     /**
@@ -13,7 +13,7 @@ export class EntityService {
         organisationId: string,
         entityTypeId: string,
         request: SaveEntityRequest
-    ): Promise<Entity> {
+    ): Promise<SaveEntityResponse> {
         try {
             validateSession(session);
             validateUuid(organisationId);
@@ -34,7 +34,9 @@ export class EntityService {
                 }
             );
 
-            if (response.ok) return await response.json();
+            // A payload of validation errors and impact errors are also returned with 400 and 409 status codes
+            if (response.ok || response.status === 400 || response.status === 409)
+                return await response.json();
 
             throw await handleError(
                 response,
