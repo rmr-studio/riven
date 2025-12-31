@@ -14,7 +14,7 @@ import riven.core.models.request.entity.type.SaveAttributeDefinitionRequest
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityUniqueValuesRepository
 import riven.core.service.entity.EntityValidationService
-import java.util.UUID
+import java.util.*
 
 @Service
 class EntityTypeAttributeService(
@@ -130,5 +130,13 @@ class EntityTypeAttributeService(
         list: List<EntityUniqueValueEntity>
     ): List<EntityUniqueValueEntity> {
         return uniqueEntityValueRepository.saveAll(list)
+    }
+
+    fun archiveEntity(id: UUID): Int {
+        return uniqueEntityValueRepository.archiveEntity(id)
+    }
+
+    fun archiveType(id: UUID): Int {
+        return uniqueEntityValueRepository.archiveType(id)
     }
 }

@@ -1,6 +1,7 @@
 package riven.core.repository.entity
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import riven.core.entity.entity.EntityRelationshipEntity
 import java.util.*
@@ -13,8 +14,11 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
     /**
      * Find all relationships where the given entity is the source.
      */
+    @Query("SELECT r FROM EntityRelationshipEntity r WHERE r.sourceId = :id and r.archived = false")
     fun findBySourceId(id: UUID): List<EntityRelationshipEntity>
-    fun findBySourceIdIn(id: Collection<UUID>): List<EntityRelationshipEntity>
+
+    @Query("SELECT r FROM EntityRelationshipEntity r WHERE r.sourceId in :ids and r.archived = false")
+    fun findBySourceIdIn(ids: Collection<UUID>): List<EntityRelationshipEntity>
 
     /**
      * Find all relationships where the given entity is the target.
@@ -64,4 +68,8 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
      * Delete relationships by source entity and field ID where target is in the given list.
      */
     fun deleteAllBySourceIdAndFieldIdAndTargetIdIn(sourceId: UUID, fieldId: UUID, targetIds: Collection<UUID>)
+
+    @Modifying
+    @Query("UPDATE EntityRelationshipEntity r SET r.archived = true, r.deletedAt = CURRENT_TIMESTAMP WHERE r.sourceId = :id or r.targetId = :id")
+    fun archiveEntity(id: UUID): Int
 }

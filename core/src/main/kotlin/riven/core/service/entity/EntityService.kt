@@ -1,5 +1,6 @@
 package riven.core.service.entity
 
+import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -65,8 +66,15 @@ class EntityService(
         }
     }
 
-    fun getEntity(id: UUID): EntityEntity {
-        return findOrThrow { entityRepository.findById(id) }
+    @PostAuthorize("@organisationSecurity.hasOrg(returnObject.organisationId)")
+    fun getEntity(id: UUID): Entity {
+        val entity = findOrThrow { entityRepository.findById(id) }
+        val relationships = entityRelationshipService.findRelatedEntities(
+            entityId = id
+        )
+
+        return entity.toModel(relationships = relationships)
+
     }
 
     fun getEntitiesByIds(ids: Set<UUID>): List<EntityEntity> {
@@ -78,9 +86,19 @@ class EntityService(
         organisationId: UUID,
         typeId: UUID
     ): List<Entity> {
-        return findManyResults {
+        val entities = findManyResults {
             entityRepository.findByTypeId(typeId)
-        }.map { it.toModel(relationships = emptyMap()) }
+        }
+
+        require(entities.all { it.organisationId == organisationId }) { "One or more entities do not belong to the specified organisation" }
+        val relationships = entityRelationshipService.findRelatedEntities(
+            entityIds = entities.mapNotNull { it.id }.toSet()
+        )
+
+        return entities.map {
+            val id = requireNotNull(it.id)
+            it.toModel(relationships = relationships[id] ?: emptyMap())
+        }
     }
 
     @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
@@ -88,11 +106,22 @@ class EntityService(
         organisationId: UUID,
         typeIds: List<UUID>
     ): Map<UUID, List<Entity>> {
-        return findManyResults {
+        val entities = findManyResults {
             entityRepository.findByTypeIdIn(
                 typeIds = typeIds
             )
-        }.map { it.toModel(relationships = emptyMap()) }.groupBy { it.typeId }
+        }
+
+        require(entities.all { it.organisationId == organisationId }) { "One or more entities do not belong to the specified organisation" }
+
+        val relationships = entityRelationshipService.findRelatedEntities(
+            entityIds = entities.mapNotNull { it.id }.toSet()
+        )
+
+        return entities.map {
+            val id = requireNotNull(it.id)
+            it.toModel(relationships = relationships[id] ?: emptyMap())
+        }.groupBy { it.typeId }
 
     }
 
@@ -209,14 +238,17 @@ class EntityService(
      * Delete an entity.
      */
     @Transactional
-    @PreAuthorize("@organisationSecurity.hasOrg(#id)")
-    fun deleteEntity(id: UUID) {
+    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
+    fun deleteEntity(organisationId: UUID, id: UUID) {
         val userId = authTokenService.getUserId()
 
         val existing = findOrThrow { entityRepository.findById(id) }.apply {
             archived = true
             deletedAt = ZonedDateTime.now()
         }.run {
+            require(this.organisationId == organisationId) { "Entity does not belong to the specified organisation" }
+            entityAttributeService.archiveEntity(id)
+            entityRelationshipService.archiveEntity(id)
             entityRepository.save(this)
         }
 
@@ -224,7 +256,7 @@ class EntityService(
             activity = Activity.ENTITY,
             operation = OperationType.DELETE,
             userId = userId,
-            organisationId = existing.organisationId,
+            organisationId = organisationId,
             entityId = id,
             entityType = ApplicationEntityType.ENTITY,
             details = mapOf(

@@ -1,6 +1,7 @@
 package riven.core.entity.entity
 
 import jakarta.persistence.*
+import java.time.ZonedDateTime
 import java.util.*
 
 @Entity
@@ -25,5 +26,11 @@ data class EntityUniqueValueEntity(
     val fieldValue: String,
 
     @Column(name = "entity_id", nullable = false)
-    val entityId: UUID
+    val entityId: UUID,
+
+    @Column(name = "archived", nullable = false)
+    val archived: Boolean = false,
+
+    @Column(name = "deleted_at")
+    val deletedAt: ZonedDateTime? = null
 )

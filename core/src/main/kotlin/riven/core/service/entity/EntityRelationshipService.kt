@@ -325,4 +325,8 @@ class EntityRelationshipService(
             }.toMap()
         }
     }
+
+    fun archiveEntity(id: UUID): Int {
+        return entityRelationshipRepository.archiveEntity(id)
+    }
 }
