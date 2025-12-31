@@ -5,12 +5,14 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
+import riven.core.entity.entity.EntityUniqueValueEntity
 import riven.core.enums.activity.Activity
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
 import riven.core.exceptions.SchemaValidationException
 import riven.core.models.common.Icon
 import riven.core.models.entity.Entity
+import riven.core.models.entity.EntityLink
 import riven.core.models.entity.payload.EntityAttributePayload
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.entity.payload.EntityAttributeRelationPayloadReference
@@ -20,6 +22,7 @@ import riven.core.models.response.entity.SaveEntityResponse
 import riven.core.repository.entity.EntityRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.entity.type.EntityTypeAttributeService
 import riven.core.service.entity.type.EntityTypeService
 import riven.core.util.ServiceUtil.findManyResults
 import riven.core.util.ServiceUtil.findOrThrow
@@ -33,7 +36,9 @@ import java.util.*
 class EntityService(
     private val entityRepository: EntityRepository,
     private val entityTypeService: EntityTypeService,
+    private val entityRelationshipService: EntityRelationshipService,
     private val entityValidationService: EntityValidationService,
+    private val entityAttributeService: EntityTypeAttributeService,
     private val authTokenService: AuthTokenService,
     private val activityService: ActivityService
 ) {
@@ -48,10 +53,12 @@ class EntityService(
                 "value" to payload.value,
                 "schemaType" to payload.schemaType.name
             )
+
             is EntityAttributeRelationPayloadReference -> mapOf(
                 "type" to payload.type.name,
                 "relations" to payload.relations
             )
+
             else -> mapOf(
                 "type" to payload.type.name
             )
@@ -103,9 +110,8 @@ class EntityService(
         try {
             val (id: UUID?, payload: Map<UUID, EntityAttributeRequest>, icon: Icon?) = request
             val userId = authTokenService.getUserId()
-            val type: EntityTypeEntity = entityTypeService.getById(entityTypeId).also {
-                requireNotNull(it.id)
-            }
+            val type: EntityTypeEntity = entityTypeService.getById(entityTypeId)
+            val typeId = requireNotNull(type.id) { "Entity type ID cannot be null" }
 
             val prev: EntityEntity? = id?.let { findOrThrow { entityRepository.findById(it) } }
             prev?.run {
@@ -139,6 +145,40 @@ class EntityService(
             }
 
             return entityRepository.save(entity).run {
+                val id = requireNotNull(this.id) { "Saved entity ID cannot be null" }
+
+                // Handle Unique Constraints
+                val uniqueAttributes = entityAttributeService.extractUniqueAttributes(type, payload)
+
+                // Check uniqueness constraints. Should any fail, an exception is thrown and the transaction rolled back
+                uniqueAttributes.filterValues { it != null }.also {
+                    it.forEach { (key, value) ->
+                        // Shouldn't be null due to filter above, but just for assertation avoidance
+                        if (value == null) return@forEach
+                        entityAttributeService.checkAttributeUniqueness(
+                            typeId = typeId,
+                            key = key,
+                            value = value.value
+                        )
+                    }
+                }.map {
+                    EntityUniqueValueEntity(
+                        entityId = id,
+                        typeId = typeId,
+                        fieldId = it.key,
+                        fieldValue = it.value!!.value.toString(),
+                    )
+                }.run {
+                    entityAttributeService.saveUniqueValues(this)
+                }
+
+                // Handle Management of Relationships. Previous entity state is required for diffing (in the event where relationships have been updated)
+                val relationships: Map<UUID, EntityLink> = entityRelationshipService.saveRelationships(
+                    type = type,
+                    prev = prev,
+                    curr = this
+                ).flatMap { it.value }.associateBy { it.id }
+
                 activityService.logActivity(
                     activity = Activity.ENTITY,
                     operation = OperationType.CREATE,
@@ -153,7 +193,7 @@ class EntityService(
                 )
 
                 SaveEntityResponse(
-                    entity = entity.toModel(relationships = emptyMap())
+                    entity = entity.toModel(relationships = relationships)
                 )
             }
         } catch (e: SchemaValidationException) {

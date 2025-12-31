@@ -97,15 +97,16 @@ class ExceptionHandler(private val logger: KLogger, private val config: Applicat
         }
     }
 
-    @ExceptionHandler(SupabaseException::class)
-    fun handleSupabaseException(ex: SupabaseException): ResponseEntity<ErrorResponse> {
+    @ExceptionHandler(UniqueConstraintViolationException::class)
+    fun handleConflictException(ex: UniqueConstraintViolationException): ResponseEntity<ErrorResponse> {
         return ErrorResponse(
-            statusCode = HttpStatus.INTERNAL_SERVER_ERROR,
-            error = "SUPABASE ERROR",
-            message = ex.message ?: "An error occurred with Supabase",
+            statusCode = HttpStatus.CONFLICT,
+            error = "CONFLICT",
+            message = ex.message ?: "Unique constraint violation occurred",
             stackTrace = config.includeStackTrace.takeIf { it }?.let { ex.stackTraceToString() }
         ).also { logger.error { it } }.let {
             ResponseEntity(it, it.statusCode)
         }
     }
+
 }

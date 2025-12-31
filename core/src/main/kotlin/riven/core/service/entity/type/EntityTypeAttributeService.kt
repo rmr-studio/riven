@@ -2,17 +2,25 @@ package riven.core.service.entity.type
 
 import org.springframework.stereotype.Service
 import riven.core.entity.entity.EntityTypeEntity
+import riven.core.entity.entity.EntityUniqueValueEntity
+import riven.core.enums.core.DataType
 import riven.core.exceptions.SchemaValidationException
+import riven.core.exceptions.UniqueConstraintViolationException
+import riven.core.models.common.json.JsonValue
 import riven.core.models.entity.EntityTypeSchema
+import riven.core.models.entity.payload.EntityAttributePrimitivePayload
+import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.request.entity.type.SaveAttributeDefinitionRequest
 import riven.core.repository.entity.EntityRepository
+import riven.core.repository.entity.EntityUniqueValuesRepository
 import riven.core.service.entity.EntityValidationService
-import java.util.*
+import java.util.UUID
 
 @Service
-class EntityAttributeService(
+class EntityTypeAttributeService(
     private val entityValidationService: EntityValidationService,
     private val entityRepository: EntityRepository,
+    private val uniqueEntityValueRepository: EntityUniqueValuesRepository
 ) {
 
     fun saveAttributeDefinition(
@@ -22,6 +30,16 @@ class EntityAttributeService(
     ) {
         val typeId = requireNotNull(type.id) { "Entity type ID must not be null when saving attribute definition" }
         val (_, id: UUID, attribute: EntityTypeSchema) = request
+
+        // Validate some basic constraints on the attribute definition itself
+        if (attribute.unique) {
+            // Assert that the data type itself supports uniqueness (ie. STRING, NUMBER)
+            if (attribute.type != DataType.STRING && attribute.type != DataType.NUMBER) {
+                throw SchemaValidationException(
+                    listOf("Attribute with 'unique' constraint must be of type STRING or NUMBER")
+                )
+            }
+        }
 
         val updatedSchema = type.schema.copy(
             properties = type.schema.properties?.toMutableMap()?.also {
@@ -76,4 +94,41 @@ class EntityAttributeService(
         }
     }
 
+    fun extractUniqueAttributes(
+        type: EntityTypeEntity,
+        payload: Map<UUID, EntityAttributeRequest>
+    ): Map<UUID, EntityAttributePrimitivePayload?> {
+        val uniqueProperties = type.schema.properties.let {
+            if (it == null) return emptyMap<UUID, EntityAttributePrimitivePayload?>()
+            it.filter { (_, schema) -> schema.unique }.keys
+        }
+
+        return payload.filter { (key, _) -> uniqueProperties.contains(key) }
+            .mapValues { (_, value) ->
+                when (value.payload) {
+                    is EntityAttributePrimitivePayload -> value.payload
+                    else -> null
+                }
+            }
+    }
+
+    fun checkAttributeUniqueness(
+        typeId: UUID,
+        key: UUID,
+        value: JsonValue
+    ) {
+        return uniqueEntityValueRepository.findConflict(typeId, key, value.toString()).let {
+            if (it != null) {
+                throw UniqueConstraintViolationException(
+                    "Unique constraint violation for attribute '$key' with value '$value' on entity type '$typeId'"
+                )
+            }
+        }
+    }
+
+    fun saveUniqueValues(
+        list: List<EntityUniqueValueEntity>
+    ): List<EntityUniqueValueEntity> {
+        return uniqueEntityValueRepository.saveAll(list)
+    }
 }

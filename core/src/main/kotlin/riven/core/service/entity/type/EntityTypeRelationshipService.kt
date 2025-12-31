@@ -27,7 +27,7 @@ import java.util.*
  * Service for managing relationships between entities.
  */
 @Service
-class EntityRelationshipService(
+class EntityTypeRelationshipService(
     private val entityTypeRepository: EntityTypeRepository,
     private val activityService: ActivityService,
     private val authTokenService: AuthTokenService

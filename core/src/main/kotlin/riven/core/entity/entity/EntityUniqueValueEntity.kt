@@ -1,0 +1,29 @@
+package riven.core.entity.entity
+
+import jakarta.persistence.*
+import java.util.*
+
+@Entity
+@Table(
+    name = "entities_unique_values",
+    uniqueConstraints = [
+        UniqueConstraint(name = "uq_unique_attribute_per_type", columnNames = ["type_id", "field_id", "field_value"])
+    ]
+)
+data class EntityUniqueValueEntity(
+    @Id
+    @Column(name = "id", nullable = false, columnDefinition = "uuid")
+    val id: UUID? = null,
+
+    @Column(name = "type_id", nullable = false)
+    val typeId: UUID,
+
+    @Column(name = "field_id", nullable = false)
+    val fieldId: UUID,
+
+    @Column(name = "field_value", nullable = false)
+    val fieldValue: String,
+
+    @Column(name = "entity_id", nullable = false)
+    val entityId: UUID
+)

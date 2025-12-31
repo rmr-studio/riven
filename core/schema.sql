@@ -378,6 +378,21 @@ create index if not exists idx_entities_organisation_id
     on entities (organisation_id)
     where archived = false;
 
+create index idx_entities_payload_gin on entities using gin (payload jsonb_path_ops) where archived = false and deleted_at is null;
+
+--Easy way to enforce unique fields per entity type. This table will store unique field values for entities.
+--When an entity is created or updated, the relevant unique fields will be inserted/updated here
+--This will allow us to enforce uniqueness at the database level by performing insert-or-fail operations
+CREATE TABLE IF NOT EXISTS public.entities_unique_values
+(
+    "id"          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "type_id"     UUID NOT NULL REFERENCES entity_types (id) ON DELETE CASCADE,
+    "entity_id"   UUID NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
+    "field_id"    TEXT NOT NULL,
+    "field_value" TEXT NOT NULL,
+    CONSTRAINT uq_unique_attribute_per_type
+        UNIQUE (type_id, field_id, field_value)
+);
 
 CREATE OR REPLACE FUNCTION sync_entity_identifier_key()
     RETURNS TRIGGER AS
@@ -445,25 +460,24 @@ CREATE INDEX idx_archived_entities_type_id ON archived_entities (type_id);
 -- =====================================================
 CREATE TABLE IF NOT EXISTS public.entity_relationships
 (
-    "id"               UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
-    "organisation_id"  UUID NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
-    "source_entity_id" UUID NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
-    "target_entity_id" UUID NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
-    "key"              TEXT NOT NULL,
-    "label"            TEXT,
-    "created_at"       TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "updated_at"       TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "created_by"       UUID REFERENCES users (id) ON DELETE SET NULL,
-    "updated_by"       UUID REFERENCES users (id) ON DELETE SET NULL,
+    "id"                    UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
+    "organisation_id"       UUID NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
+    "source_entity_id"      UUID NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
+    "target_entity_id"      UUID NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
+    "relationship_field_id" UUID NOT NULL,
+    "created_at"            TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updated_at"            TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "created_by"            UUID REFERENCES users (id) ON DELETE SET NULL,
+    "updated_by"            UUID REFERENCES users (id) ON DELETE SET NULL,
 
     -- Prevent duplicate relationships
-    UNIQUE (source_entity_id, target_entity_id, key)
+    UNIQUE (source_entity_id, relationship_field_id, target_entity_id)
 );
 
 -- Indexes for entity_relationships
-CREATE INDEX idx_entity_relationships_source_key ON entity_relationships (source_entity_id, key);
 CREATE INDEX idx_entity_relationships_target ON entity_relationships (target_entity_id);
 CREATE INDEX idx_entity_relationships_organisation ON entity_relationships (organisation_id);
+
 
 -- =====================================================
 -- 4. ROW LEVEL SECURITY (RLS) POLICIES

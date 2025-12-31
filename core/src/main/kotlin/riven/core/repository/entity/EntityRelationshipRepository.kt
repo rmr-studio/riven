@@ -14,25 +14,30 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
      * Find all relationships where the given entity is the source.
      */
     fun findBySourceId(id: UUID): List<EntityRelationshipEntity>
+    fun findBySourceIdIn(id: Collection<UUID>): List<EntityRelationshipEntity>
 
     /**
      * Find all relationships where the given entity is the target.
      */
     fun findByTargetId(id: UUID): List<EntityRelationshipEntity>
 
-    fun findBySourceIdAndKey(sourceId: UUID, key: String): EntityRelationshipEntity?
+    fun findBySourceIdAndFieldId(sourceId: UUID, fieldId: UUID): EntityRelationshipEntity?
 
     /**
-     * Find all relationships with a specific key where the given entity is the source.
+     * Find all relationships with a specific fieldId where the given entity is the source.
      */
-    fun findAllBySourceIdAndKey(sourceId: UUID, key: String): List<EntityRelationshipEntity>
+    fun findAllBySourceIdAndFieldId(sourceId: UUID, fieldId: UUID): List<EntityRelationshipEntity>
 
     /**
-     * Find relationships with a specific source, target, and key.
+     * Find relationships with a specific source, target, and fieldId.
      */
-    fun findBySourceIdAndTargetIdAndKey(sourceId: UUID, targetId: UUID, key: String): List<EntityRelationshipEntity>
+    fun findBySourceIdAndTargetIdAndFieldId(
+        sourceId: UUID,
+        targetId: UUID,
+        fieldId: UUID
+    ): List<EntityRelationshipEntity>
 
-    fun countBySourceIdAndKey(sourceId: UUID, key: String): Long
+    fun countBySourceIdAndFieldId(sourceId: UUID, fieldId: UUID): Long
 
     /**
      * Find all relationships involving the given entity (as source or target).
@@ -44,4 +49,19 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
     """
     )
     fun findAllRelationshipsForEntity(entityId: UUID): List<EntityRelationshipEntity>
+
+    /**
+     * Find all relationships for a source entity across multiple field IDs.
+     */
+    fun findAllBySourceIdAndFieldIdIn(sourceId: UUID, fieldIds: Collection<UUID>): List<EntityRelationshipEntity>
+
+    /**
+     * Delete all relationships for a source entity with a specific field ID.
+     */
+    fun deleteAllBySourceIdAndFieldId(sourceId: UUID, fieldId: UUID)
+
+    /**
+     * Delete relationships by source entity and field ID where target is in the given list.
+     */
+    fun deleteAllBySourceIdAndFieldIdAndTargetIdIn(sourceId: UUID, fieldId: UUID, targetIds: Collection<UUID>)
 }

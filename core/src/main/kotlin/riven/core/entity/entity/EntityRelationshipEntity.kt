@@ -12,10 +12,9 @@ import java.util.*
 @Table(
     name = "entity_relationships",
     uniqueConstraints = [
-        UniqueConstraint(columnNames = ["source_entity_id", "target_entity_id", "key"])
+        UniqueConstraint(columnNames = ["source_entity_id", "relationship_field_id", "target_entity_id"])
     ],
     indexes = [
-        Index(name = "idx_entity_relationships_source", columnList = "source_entity_id"),
         Index(name = "idx_entity_relationships_target", columnList = "target_entity_id"),
         Index(name = "idx_entity_relationships_organisation", columnList = "organisation_id")
     ]
@@ -26,21 +25,17 @@ data class EntityRelationshipEntity(
     @Column(name = "id", nullable = false, columnDefinition = "uuid")
     val id: UUID? = null,
 
-    @Column(name = "organisation_id", nullable = false)
+    @Column(name = "organisation_id", nullable = false, columnDefinition = "uuid")
     val organisationId: UUID,
 
-    @Column(name = "source_entity_id", nullable = false)
+    @Column(name = "source_entity_id", nullable = false, columnDefinition = "uuid")
     val sourceId: UUID,
 
-    @Column(name = "target_entity_id", nullable = false)
+    @Column(name = "target_entity_id", nullable = false, columnDefinition = "uuid")
     val targetId: UUID,
 
-    @Column(name = "key", nullable = false)
-    val key: String,
-
-    // Human representation of the Relationship ( "<x> is friend of <y>" -> "is friend of" )
-    @Column(name = "label", nullable = true)
-    val label: String? = null,
+    @Column(name = "relationship_field_id", nullable = false, columnDefinition = "uuid")
+    val fieldId: UUID,
 
     ) : AuditableEntity() {
 
@@ -52,8 +47,7 @@ data class EntityRelationshipEntity(
         return EntityRelationship(
             id = id,
             organisationId = this.organisationId,
-            key = this.key,
-            label = this.label,
+            fieldId = this.fieldId,
             sourceEntityId = this.sourceId,
             targetEntityId = this.targetId,
             createdAt = if (audit) this.createdAt else null,

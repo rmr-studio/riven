@@ -4,8 +4,8 @@ import org.springframework.stereotype.Service
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.common.ValidationScope
-import riven.core.enums.entity.validation.EntityTypeChangeType
 import riven.core.enums.entity.EntityPropertyType
+import riven.core.enums.entity.validation.EntityTypeChangeType
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.validation.EntityTypeSchemaChange
@@ -146,10 +146,34 @@ class EntityValidationService(
                 }
 
                 // Detect required flag changes
+                /**
+                 * TODO - Eventually we would need to consider querying the current
+                 * data to instead just determine if this change can be automatically applied
+                 * without causing existing data to become invalid. (Ie. if all current entities have a value for this field)
+                 */
                 if (!oldField.required && newField.required) {
                     changes.add(
                         EntityTypeSchemaChange(
                             type = EntityTypeChangeType.FIELD_REQUIRED_ADDED,
+                            path = key.toString(),
+                            description = "Field '$key' changed from optional to required",
+                            breaking = true
+                        )
+                    )
+                }
+
+                // Detect unique flag changes
+                /**
+                 * TODO - Eventually we would need to consider querying the current
+                 * data to instead just determine if this change can be automatically applied
+                 * without causing existing data to become invalid. (Ie. if all existing values are unique)
+                 * We could then automatically perform the necessary data migration to enforce uniqueness
+                 * and move all data to the normalized unique table
+                 */
+                if (!oldField.unique && newField.unique) {
+                    changes.add(
+                        EntityTypeSchemaChange(
+                            type = EntityTypeChangeType.FIELD_UNIQUE_ADDED,
                             path = key.toString(),
                             description = "Field '$key' changed from optional to required",
                             breaking = true

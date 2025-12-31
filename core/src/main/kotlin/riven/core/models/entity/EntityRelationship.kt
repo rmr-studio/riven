@@ -9,8 +9,7 @@ import java.util.*
  */
 data class EntityRelationship(
     val id: UUID,
-    val key: String,
-    val label: String? = null,
+    val fieldId: UUID,
     val organisationId: UUID,
     val sourceEntityId: UUID,
     val sourceEntity: Entity? = null, // Can be hydrated if needed

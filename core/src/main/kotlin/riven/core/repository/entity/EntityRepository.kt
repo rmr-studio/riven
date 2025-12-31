@@ -13,6 +13,9 @@ interface EntityRepository : JpaRepository<EntityEntity, UUID> {
     @Query("SELECT e FROM EntityEntity e WHERE e.id = :id AND e.archived = false")
     override fun findById(id: UUID): Optional<EntityEntity>
 
+    @Query("SELECT e FROM EntityEntity e WHERE e.id in :ids AND e.archived = false")
+    fun findByIdIn(ids: Collection<UUID>): List<EntityEntity>
+
     /**
      * Find all entities for an organization.
      */
