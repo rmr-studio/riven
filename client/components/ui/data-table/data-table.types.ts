@@ -6,6 +6,8 @@
  */
 
 import { Row } from "@tanstack/react-table";
+import { SchemaUUID } from "@/lib/interfaces/common.interface";
+import { z } from "zod";
 
 // ============================================================================
 // Search Configuration
@@ -104,4 +106,27 @@ export interface RowSelectionConfig<TData> {
     actionComponent?: React.ComponentType<SelectionActionProps<TData>>;
     persistCheckboxes?: boolean;
     clearOnFilterChange?: boolean;
+}
+
+// ============================================================================
+// Inline Editing Configuration
+// ============================================================================
+
+export interface EditableColumnMeta<TValue = any> {
+    /** Whether this column supports inline editing */
+    editable?: boolean;
+    /** Schema for widget selection and validation */
+    fieldSchema: SchemaUUID;
+    /** Optional Zod validation schema override */
+    zodSchema?: z.ZodSchema<TValue>;
+    /** Transform value from display format to edit format */
+    parseValue?: (rawValue: any) => TValue;
+    /** Transform value from edit format to display format */
+    formatValue?: (editValue: TValue) => any;
+}
+
+// Extend TanStack Table ColumnMeta to include our editable properties
+declare module '@tanstack/react-table' {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    interface ColumnMeta<TData, TValue> extends Partial<EditableColumnMeta<TValue>> {}
 }

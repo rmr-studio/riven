@@ -78,6 +78,7 @@ export const EntityDashboard = () => {
                             entityType={entityType}
                             entities={entities || []}
                             loadingEntities={isPendingEntities || isLoadingAuth}
+                            organisationId={organisationId}
                         />
                     </EntityDraftProvider>
                 </EntityTypeConfigurationProvider>

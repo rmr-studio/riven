@@ -7,6 +7,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ReactNode } from "react";
 import {
     Entity,
+    EntityAttribute,
     EntityType,
     EntityTypeAttributeColumn,
     isRelationshipPayload,
@@ -161,13 +162,22 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
         return <Badge variant={value ? "default" : "secondary"}>{value ? "Yes" : "No"}</Badge>;
     }
 
-    // ARRAY type formatting
+    // ARRAY type formatting (multi-select enums, etc.)
     if (dataType === DataType.ARRAY) {
         if (Array.isArray(value)) {
+            if (value.length === 0) {
+                return <span className="text-muted-foreground">—</span>;
+            }
+
+            // Render each item as its own badge
             return (
-                <Badge variant="outline" className="font-mono">
-                    [{value.length} items]
-                </Badge>
+                <div className="flex flex-wrap gap-1">
+                    {value.map((item, idx) => (
+                        <Badge key={idx} variant="secondary" className="font-normal">
+                            {String(item)}
+                        </Badge>
+                    ))}
+                </div>
             );
         }
         return <Badge variant="outline">Array</Badge>;
@@ -185,7 +195,10 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
 /**
  * Generate columns from entity type schema
  */
-export function generateColumnsFromEntityType(entityType: EntityType): ColumnDef<EntityRow>[] {
+export function generateColumnsFromEntityType(
+    entityType: EntityType,
+    options?: { enableEditing?: boolean }
+): ColumnDef<EntityRow>[] {
     const columns: ColumnDef<EntityRow>[] = [];
 
     if (!entityType.schema.properties) {
@@ -216,12 +229,25 @@ export function generateColumnsFromEntityType(entityType: EntityType): ColumnDef
                 return formatEntityAttributeValue(value, schema);
             },
             enableSorting: true,
-            meta: {
-                schema,
-                required: schema.required,
-                unique: schema.unique,
-                protected: schema.protected,
-            },
+            meta: options?.enableEditing
+                ? {
+                      editable: true,
+                      fieldSchema: schema, // SchemaUUID for widget selection
+                      // Don't need zodSchema - widget handles validation via schema
+                      parseValue: (val: any) => val, // Pass through as-is
+                      formatValue: (val: any) => val, // Pass through as-is
+                      // Keep existing meta
+                      schema,
+                      required: schema.required,
+                      unique: schema.unique,
+                      protected: schema.protected,
+                  }
+                : {
+                      schema,
+                      required: schema.required,
+                      unique: schema.unique,
+                      protected: schema.protected,
+                  },
         });
     });
 
@@ -412,12 +438,16 @@ export function generateSearchConfigFromEntityType(
  */
 export function getEntityDisplayName(entity: Entity): string {
     // Get the identifier field value from the entity payload
-    const identifierValue = entity.payload[entity.identifierKey];
-
-    if (identifierValue !== null && identifierValue !== undefined) {
-        return String(identifierValue);
+    const identifierValue: EntityAttribute | null = entity.payload[entity.identifierKey];
+    if (!identifierValue) {
+        return `Entity ${entity.id.slice(0, 8)}...`;
     }
 
-    // Fallback to truncated entity ID
-    return `Entity ${entity.id.slice(0, 8)}...`;
+    const { payload } = identifierValue;
+    // An identifier value should always be of type ATTRIBUTE and be of SCHEMA TYPE STRING or NUMBER
+    if (isRelationshipPayload(payload)) {
+        return `Entity ${entity.id.slice(0, 8)}...`;
+    }
+
+    return String(payload.value);
 }

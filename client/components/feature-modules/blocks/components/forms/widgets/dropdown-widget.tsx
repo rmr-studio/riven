@@ -40,7 +40,16 @@ export const DropdownWidget: FC<FormWidgetProps<string>> = ({
                 )}
                 {description && <p className="text-sm text-muted-foreground">{description}</p>}
                 <div className="relative">
-                    <Popover open={open} onOpenChange={setOpen}>
+                    <Popover
+                        open={open}
+                        onOpenChange={(isOpen) => {
+                            setOpen(isOpen);
+                            // Call onBlur when popover closes (handles both selection and click-outside)
+                            if (!isOpen) {
+                                onBlur?.();
+                            }
+                        }}
+                    >
                         <PopoverTrigger asChild>
                             <Button
                                 variant="outline"
@@ -69,7 +78,6 @@ export const DropdownWidget: FC<FormWidgetProps<string>> = ({
                                             onSelect={() => {
                                                 onChange(option.value);
                                                 setOpen(false);
-                                                onBlur?.();
                                             }}
                                         >
                                             <Check

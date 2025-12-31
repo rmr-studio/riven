@@ -11,6 +11,8 @@ import { RowActionsMenu } from "./row-actions-menu";
 import { cn } from "@/lib/util/utils";
 import type { RowActionsConfig, ColumnResizingConfig } from "../data-table.types";
 import React from "react";
+import { ReadOnlyCell } from "./cells/read-only-cell";
+import { EditableCell } from "./cells/editable-cell";
 
 interface DraggableRowProps<TData> {
     row: Row<TData>;
@@ -21,6 +23,7 @@ interface DraggableRowProps<TData> {
     disabled?: boolean;
     disableDragForRow?: (row: Row<TData>) => boolean;
     isSelectionEnabled: boolean;
+    enableInlineEdit?: boolean;
 }
 
 function DraggableRowComponent<TData>({
@@ -32,11 +35,20 @@ function DraggableRowComponent<TData>({
     disabled,
     disableDragForRow,
     isSelectionEnabled,
+    enableInlineEdit,
 }: DraggableRowProps<TData>) {
     const isMounted = useDataTableStore<TData, boolean>((state) => state.isMounted);
     const hoveredRowId = useDataTableStore<TData, string | null>((state) => state.hoveredRowId);
     const hasSelections = useDataTableStore<TData, boolean>((state) => state.hasSelections());
+    const editingCell = useDataTableStore<TData, { rowId: string; columnId: string } | null>(
+        (state) => state.editingCell
+    );
     const { setHoveredRowId } = useDataTableActions<TData>();
+    const startEditing = useDataTableStore<TData, (rowId: string, columnId: string, initialValue: any) => Promise<void>>(
+        (state) => state.startEditing
+    );
+    const cancelEditing = useDataTableStore<TData, () => void>((state) => state.cancelEditing);
+    const commitEdit = useDataTableStore<TData, () => Promise<void>>((state) => state.commitEdit);
 
     const isDragDisabled = disableDragForRow?.(row) ?? false;
 
@@ -101,6 +113,17 @@ function DraggableRowComponent<TData>({
                     );
                 }
 
+                // Check if this cell is being edited
+                const isEditing =
+                    editingCell?.rowId === row.id &&
+                    editingCell?.columnId === cell.column.id;
+
+                // Check if this cell is editable
+                const isEditable =
+                    cell.column.columnDef.meta?.editable &&
+                    enableInlineEdit &&
+                    !disabled;
+
                 return (
                     <TableCell
                         key={cell.id}
@@ -110,11 +133,29 @@ function DraggableRowComponent<TData>({
                             maxWidth: columnResizing?.enabled ? `${cell.column.getSize()}px` : undefined,
                         }}
                     >
-                        <div className={cn(columnResizing?.enabled && "overflow-x-auto")}>
-                            <div className="overflow-hidden text-ellipsis">
-                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {isEditing ? (
+                            <EditableCell
+                                cell={cell}
+                                onSave={async () => {
+                                    await commitEdit();
+                                }}
+                                onCancel={cancelEditing}
+                            />
+                        ) : (
+                            <div className={cn(columnResizing?.enabled && "overflow-x-auto")}>
+                                <div className="overflow-hidden text-ellipsis">
+                                    <ReadOnlyCell
+                                        cell={cell}
+                                        isEditable={isEditable ?? false}
+                                        onClick={() => {
+                                            if (isEditable) {
+                                                startEditing(row.id, cell.column.id, cell.getValue());
+                                            }
+                                        }}
+                                    />
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </TableCell>
                 );
             })}

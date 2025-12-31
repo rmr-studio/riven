@@ -37,7 +37,7 @@ import {
     Row,
     useReactTable,
 } from "@tanstack/react-table";
-import { ReactNode, useEffect, useMemo, useRef } from "react";
+import { ReactNode, useCallback, useEffect, useMemo, useRef } from "react";
 import { DataTableBody } from "./components/data-table-body";
 import { DataTableHeader } from "./components/data-table-header";
 import { DataTableSelectionBar } from "./components/data-table-selection-bar";
@@ -76,6 +76,12 @@ export interface DataTableProps<TData, TValue> {
     disableDragForRow?: (row: Row<TData>) => boolean;
     onTableReady?: (columnSizes: Record<string, number>) => void;
     rowSelection?: RowSelectionConfig<TData>;
+    /** Enable inline cell editing */
+    enableInlineEdit?: boolean;
+    /** Callback when a cell is edited (returns true on success) */
+    onCellEdit?: (row: TData, columnId: string, newValue: any, oldValue: any) => Promise<boolean>;
+    /** Edit mode trigger (click or doubleClick) */
+    editMode?: "click" | "doubleClick";
 }
 
 export const DEFAULT_COLUMN_WIDTH = 250;
@@ -104,6 +110,9 @@ export function DataTable<TData, TValue>({
     disableDragForRow,
     onTableReady,
     rowSelection,
+    enableInlineEdit = false,
+    onCellEdit,
+    editMode = "click",
 }: DataTableProps<TData, TValue>) {
     // ========================================================================
     // Store State & Actions
@@ -123,6 +132,13 @@ export function DataTable<TData, TValue>({
         state.getActiveFilterCount()
     );
 
+    const editingCell = useDataTableStore<TData, { rowId: string; columnId: string } | null>(
+        (state) => state.editingCell
+    );
+    const requestCommit = useDataTableStore<TData, () => void>(
+        (state) => state.requestCommit
+    );
+
     const {
         setSorting,
         setColumnSizing,
@@ -132,6 +148,9 @@ export function DataTable<TData, TValue>({
         reorderRows,
         clearSelection,
     } = useDataTableActions<TData>();
+
+    // Ref for table container to detect outside clicks
+    const tableContainerRef = useRef<HTMLDivElement>(null);
 
     // Derived state
     const { isDragDropEnabled, isSelectionEnabled } = useDerivedState<TData>(
@@ -206,7 +225,7 @@ export function DataTable<TData, TValue>({
 
         // Helper to get nested property value (e.g., "name.plural")
         const getNestedValue = (obj: any, path: string): any => {
-            return path.split('.').reduce((current, prop) => current?.[prop], obj);
+            return path.split(".").reduce((current, prop) => current?.[prop], obj);
         };
 
         return searchableColumns.some((colId) => {
@@ -214,7 +233,7 @@ export function DataTable<TData, TValue>({
             let value: any;
 
             // Check if colId contains dot notation (nested property)
-            if (colIdStr.includes('.')) {
+            if (colIdStr.includes(".")) {
                 // Access nested property from row.original
                 value = getNestedValue(row.original, colIdStr);
             } else {
@@ -225,9 +244,9 @@ export function DataTable<TData, TValue>({
             if (value == null) return false;
 
             // Handle objects by searching all their string values
-            if (typeof value === 'object' && !Array.isArray(value)) {
-                return Object.values(value).some(v =>
-                    v != null && String(v).toLowerCase().includes(searchLower)
+            if (typeof value === "object" && !Array.isArray(value)) {
+                return Object.values(value).some(
+                    (v) => v != null && String(v).toLowerCase().includes(searchLower)
                 );
             }
 
@@ -252,7 +271,11 @@ export function DataTable<TData, TValue>({
                     const value = row.getValue(columnId);
                     return filterValue.includes(value);
                 },
-                numberRange: (row: Row<TData>, columnId: string, filterValue: { min?: number; max?: number }) => {
+                numberRange: (
+                    row: Row<TData>,
+                    columnId: string,
+                    filterValue: { min?: number; max?: number }
+                ) => {
                     if (!filterValue) return true;
                     const value = row.getValue(columnId) as number;
                     if (filterValue.min !== undefined && value < filterValue.min) return false;
@@ -329,6 +352,55 @@ export function DataTable<TData, TValue>({
     }, [globalFilter, activeFilterCount, rowSelection, clearSelection]);
 
     // ========================================================================
+    // Handle Click Outside Editing Cell
+    // ========================================================================
+
+    const handleClickOutside = useCallback(
+        (event: MouseEvent) => {
+            if (!editingCell) return;
+
+            const target = event.target as HTMLElement;
+
+            // Check if click is inside the table container
+            if (tableContainerRef.current?.contains(target)) {
+                // Click is inside table - let the cell click handlers manage this
+                // (startEditing auto-commits previous cell)
+                return;
+            }
+
+            // Check if click is inside a portal (select dropdowns, popovers, etc.)
+            // These are rendered outside the table but are still part of the editing context
+            const isInsidePortal =
+                target.closest("[data-radix-popper-content-wrapper]") ||
+                target.closest("[data-radix-select-viewport]") ||
+                target.closest("[data-radix-menu-content]") ||
+                target.closest("[data-radix-popover-content]") ||
+                target.closest("[role='listbox']") ||
+                target.closest("[role='dialog']");
+
+            if (isInsidePortal) {
+                return;
+            }
+
+            // Click is outside the table and not in a portal - request commit via callback
+            // This works for all widget types including popover-based ones without focus
+            requestCommit();
+        },
+        [editingCell, requestCommit]
+    );
+
+    useEffect(() => {
+        if (!editingCell) return;
+
+        // Use mousedown to catch the click before focus changes
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [editingCell, handleClickOutside]);
+
+    // ========================================================================
     // DnD Sensors
     // ========================================================================
 
@@ -391,6 +463,7 @@ export function DataTable<TData, TValue>({
 
     const tableContent = (
         <div
+            ref={tableContainerRef}
             className={cn(
                 "relative w-full rounded-t-md",
                 isDragDropEnabled ? "overflow-visible" : "overflow-x-auto"
@@ -417,6 +490,7 @@ export function DataTable<TData, TValue>({
                     disableDragForRow={disableDragForRow}
                     emptyMessage={emptyMessage}
                     finalColumnsCount={finalColumns.length}
+                    enableInlineEdit={enableInlineEdit}
                 />
             </Table>
         </div>

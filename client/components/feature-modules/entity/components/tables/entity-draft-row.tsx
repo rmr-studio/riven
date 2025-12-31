@@ -1,12 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { EntityPropertyType } from "@/lib/types/types";
 import { Row } from "@tanstack/react-table";
 import { Check, X } from "lucide-react";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import { FC, ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useEntityDraft } from "../../context/entity-provider";
 import { EntityType } from "../../interface/entity.interface";
@@ -82,6 +81,26 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
         return map;
     }, [row]);
 
+    const getElement = (
+        id: string,
+        type: EntityType,
+        property: EntityPropertyType,
+        isFirstCell: boolean
+    ): ReactNode | null => {
+        if (property === EntityPropertyType.ATTRIBUTE) {
+            const schema = entityType.schema.properties?.[id];
+            if (!schema) return null;
+            return <EntityFieldCell attributeId={id} schema={schema} autoFocus={isFirstCell} />;
+        }
+
+        const relationship = entityType.relationships?.find((r) => r.id === id);
+        if (property === EntityPropertyType.RELATIONSHIP && relationship) {
+            return <EntityRelationshipPicker relationship={relationship} autoFocus={isFirstCell} />;
+        }
+
+        return null;
+    };
+
     // Build ordered cells based on entityType.columns
     const orderedCells = useMemo(() => {
         const columnCount = entityType.columns ? entityType.columns.length : 0;
@@ -91,23 +110,9 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
         return entityType.columns.map((item, index) => {
             const { key: id, type } = item;
             const isFirstCell = index === 0;
-            const isLastCell = index === columnCount - 1;
 
             // Create element with autoFocus on first cell
-            const element =
-                type === EntityPropertyType.ATTRIBUTE ? (
-                    <EntityFieldCell
-                        attributeId={id}
-                        schema={entityType.schema.properties?.[id]}
-                        autoFocus={isFirstCell}
-                    />
-                ) : type === EntityPropertyType.RELATIONSHIP ? (
-                    <EntityRelationshipPicker
-                        relationship={entityType.relationships?.find((r) => r.id === id)!}
-                        autoFocus={isFirstCell}
-                    />
-                ) : null;
-
+            const element = getElement(id, entityType, type, isFirstCell);
             if (!element) return null;
 
             const width = columnSizeMap.get(id);
@@ -121,30 +126,6 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
                     }}
                 >
                     {element}
-                    {/* Append action buttons to last cell */}
-                    {isLastCell && (
-                        <div className="flex gap-2 justify-end absolute top-2 right-2">
-                            <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
-                                onClick={handleSubmit}
-                                disabled={isSubmitting || hasErrors}
-                            >
-                                <Check className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onClick={handleReset}
-                                disabled={isSubmitting}
-                                title="Cancel and discard draft"
-                            >
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    )}
                 </TableCell>
             );
         });
@@ -153,13 +134,33 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
     return (
         <>
             <TableRow className="bg-muted/30 border-dashed hover:bg-muted/40 relative">
-                <TableCell>
-                    <Checkbox disabled />
+                <TableCell className="px-0 justify-start">
+                    <div className="flex">
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={handleReset}
+                            disabled={isSubmitting}
+                            title="Cancel and discard draft"
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={handleSubmit}
+                            disabled={isSubmitting || hasErrors}
+                        >
+                            <Check className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </TableCell>
-                
-                    {/* Ordered cells (attributes and relationships) */}
-                    {orderedCells}
-            
+
+                {/* Ordered cells (attributes and relationships) */}
+                {orderedCells}
+
                 {/* Action buttons cell */}
             </TableRow>
         </>

@@ -52,6 +52,8 @@ export interface DataTableProviderProps<TData> extends CreateDataTableStoreOptio
     onSearchChange?: (value: string) => void;
     /** Callback when selection changes */
     onSelectionChange?: (selectedRows: TData[]) => void;
+    /** Callback when a cell is edited (returns true on success) */
+    onCellEdit?: (row: TData, columnId: string, newValue: any, oldValue: any) => Promise<boolean>;
 }
 
 export function DataTableProvider<TData>({
@@ -64,6 +66,8 @@ export function DataTableProvider<TData>({
     onFiltersChange,
     onSearchChange,
     onSelectionChange,
+    onCellEdit,
+    getRowId,
 }: DataTableProviderProps<TData>) {
     const storeRef = useRef<DataTableStoreApi<TData> | null>(null);
 
@@ -72,6 +76,19 @@ export function DataTableProvider<TData>({
         storeRef.current = createDataTableStore<TData>({
             initialData,
             initialColumnSizing,
+            getRowId,
+            onCellEdit: onCellEdit
+                ? async (rowId: string, columnId: string, newValue: any, oldValue: any) => {
+                      // Convert rowId to row object
+                      const rowIndex = initialData.findIndex((r, idx) => {
+                          const id = getRowId ? getRowId(r, idx) : String(idx);
+                          return id === rowId;
+                      });
+                      if (rowIndex === -1) return false;
+                      const row = initialData[rowIndex];
+                      return await onCellEdit(row, columnId, newValue, oldValue);
+                  }
+                : undefined,
         });
     }
 

@@ -55,6 +55,13 @@ export const SchemaForm: FC<Props> = ({ currentType, attribute, type, dialog, or
         currentType
     );
 
+    const allowUniqueness = [
+        SchemaType.TEXT,
+        SchemaType.EMAIL,
+        SchemaType.PHONE,
+        SchemaType.NUMBER,
+    ].includes(currentType); // Add types that allow uniqueness here
+
     // Adjust Schema type inside form based on AttributeTypeDropdown value in outer component
     useEffect(() => {
         form.setValue("selectedType", currentType);
@@ -106,29 +113,31 @@ export const SchemaForm: FC<Props> = ({ currentType, attribute, type, dialog, or
                             </>
                         )}
                     />
-                    <FormField
-                        control={form.control}
-                        name="unique"
-                        render={({ field }) => (
-                            <>
-                                <FormItem className="flex items-center justify-between space-y-0 mb-1">
-                                    <FormLabel>Unique</FormLabel>
-                                    <FormControl>
-                                        <Switch
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                            disabled={isIdentifierAttribute}
-                                        />
-                                    </FormControl>
-                                </FormItem>
-                                <FormDescription className="text-xs italic">
-                                    {isIdentifierAttribute
-                                        ? "This attribute is the identifier key and must be unique"
-                                        : "Unique attributes enforce distinct values across all records. There can be only one record with a given value."}
-                                </FormDescription>
-                            </>
-                        )}
-                    />
+                    {allowUniqueness && (
+                        <FormField
+                            control={form.control}
+                            name="unique"
+                            render={({ field }) => (
+                                <>
+                                    <FormItem className="flex items-center justify-between space-y-0 mb-1">
+                                        <FormLabel>Unique</FormLabel>
+                                        <FormControl>
+                                            <Switch
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                                disabled={isIdentifierAttribute}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                    <FormDescription className="text-xs italic">
+                                        {isIdentifierAttribute
+                                            ? "This attribute is the identifier key and must be unique"
+                                            : "Unique attributes enforce distinct values across all records. There can be only one record with a given value."}
+                                    </FormDescription>
+                                </>
+                            )}
+                        />
+                    )}
                 </div>
 
                 {/* Schema Options */}

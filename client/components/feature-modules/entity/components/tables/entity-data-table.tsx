@@ -16,10 +16,12 @@ import { Plus } from "lucide-react";
 import { FC, useCallback, useMemo, useRef } from "react";
 import { useConfigFormState } from "../../context/configuration-provider";
 import { useEntityDraft } from "../../context/entity-provider";
-import { Entity, EntityType } from "../../interface/entity.interface";
+import { Entity, EntityType, EntityPropertyType } from "../../interface/entity.interface";
 import { EntityTypeHeader } from "../ui/entity-type-header";
 import { EntityTypeSaveButton } from "../ui/entity-type-save-button";
 import { EntityDraftRow } from "./entity-draft-row";
+import { useUpdateEntityMutation } from "../../hooks/mutation/instance/use-update-entity-mutation";
+import { useAuth } from "@/components/provider/auth-context";
 import { handleColumnOrderChange } from "./entity-table-order-handler";
 import { handleColumnResize } from "./entity-table-resize-handler";
 import {
@@ -36,6 +38,7 @@ export interface Props extends ClassNameProps {
     entityType: EntityType;
     entities: Entity[];
     loadingEntities?: boolean;
+    organisationId: string;
 }
 
 // Internal component with draft mode hooks
@@ -44,9 +47,14 @@ export const EntityDataTable: FC<Props> = ({
     entities,
     loadingEntities,
     className,
+    organisationId,
 }) => {
     const { isDraftMode, enterDraftMode } = useEntityDraft();
     const { form, handleSubmit } = useConfigFormState();
+    const { session } = useAuth();
+
+    // Update entity mutation for inline editing
+    const { mutateAsync: updateEntity } = useUpdateEntityMutation(organisationId, entityType.id);
 
     // Transform entities to row data
     const rowData = useMemo(() => {
@@ -64,9 +72,9 @@ export const EntityDataTable: FC<Props> = ({
         return rows;
     }, [entities, isDraftMode]);
 
-    // Generate columns from entity type
+    // Generate columns from entity type with inline editing enabled
     const columns = useMemo(() => {
-        const generatedColumns = generateColumnsFromEntityType(entityType);
+        const generatedColumns = generateColumnsFromEntityType(entityType, { enableEditing: true });
         return applyColumnOrdering(generatedColumns, entityType.columns);
     }, [entityType]);
 
@@ -133,6 +141,37 @@ export const EntityDataTable: FC<Props> = ({
         []
     );
 
+    // Row ID getter for inline editing
+    const getRowId = useCallback((row: EntityRow, _index: number) => row._entityId, []);
+
+    // Cell edit handler for inline editing
+    const handleCellEdit = useCallback(
+        async (row: EntityRow, columnId: string, newValue: any, _oldValue: any): Promise<boolean> => {
+            // Don't allow editing draft rows
+            if (isDraftRow(row)) return false;
+
+            try {
+                await updateEntity({
+                    entityId: row._entity.id,
+                    payload: {
+                        [columnId]: {
+                            payload: {
+                                value: newValue,
+                                schemaType: entityType.schema.properties![columnId]?.key,
+                                type: EntityPropertyType.ATTRIBUTE,
+                            },
+                        },
+                    },
+                });
+                return true;
+            } catch (error) {
+                console.error("Failed to update entity:", error);
+                return false;
+            }
+        },
+        [updateEntity, entityType.schema.properties]
+    );
+
     return (
         <Form {...form}>
             <div className="space-y-4">
@@ -163,6 +202,8 @@ export const EntityDataTable: FC<Props> = ({
                 {/* Data table with custom row rendering for draft */}
                 <DataTableProvider
                     initialData={rowData}
+                    getRowId={getRowId}
+                    onCellEdit={handleCellEdit}
                     onColumnWidthsChange={(columnSizing) =>
                         debouncedResizeHandler(entityType, columnSizing)
                     }
@@ -172,6 +213,7 @@ export const EntityDataTable: FC<Props> = ({
                 >
                     <DataTable
                         columns={columns}
+                        enableInlineEdit={!isDraftMode}
                         rowSelection={{
                             enabled: true,
                             persistCheckboxes: false,

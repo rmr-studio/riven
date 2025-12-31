@@ -19,6 +19,7 @@ interface DataTableBodyProps<TData> {
     disableDragForRow?: (row: Row<TData>) => boolean;
     emptyMessage?: string;
     finalColumnsCount: number;
+    enableInlineEdit?: boolean;
 }
 
 export function DataTableBody<TData>({
@@ -33,6 +34,7 @@ export function DataTableBody<TData>({
     disableDragForRow,
     emptyMessage = "No results.",
     finalColumnsCount,
+    enableInlineEdit,
 }: DataTableBodyProps<TData>) {
     const rowIds = useMemo(() => {
         return table.getRowModel().rows.map((row) => row.id);
@@ -91,6 +93,7 @@ export function DataTableBody<TData>({
                         disabled={addingNewEntry}
                         disableDragForRow={disableDragForRow}
                         isSelectionEnabled={isSelectionEnabled}
+                        enableInlineEdit={enableInlineEdit}
                     />
                 );
             })}

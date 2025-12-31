@@ -70,6 +70,17 @@ interface UISliceState {
     filterPopoverOpen: boolean;
 }
 
+interface EditSliceState {
+    /** Currently editing cell (rowId + columnId) */
+    editingCell: { rowId: string; columnId: string } | null;
+    /** Pending value being edited */
+    pendingValue: any;
+    /** Save operation in progress */
+    isSaving: boolean;
+    /** Save error message */
+    saveError: string | null;
+}
+
 // ============================================================================
 // Actions Interfaces (organized by concern)
 // ============================================================================
@@ -124,6 +135,21 @@ interface UIActions {
     setFilterPopoverOpen: (open: boolean) => void;
 }
 
+interface EditActions<TData> {
+    /** Start editing a cell (auto-commits previous cell if editing) */
+    startEditing: (rowId: string, columnId: string, initialValue: any) => Promise<void>;
+    /** Update the pending value as user types */
+    updatePendingValue: (value: any) => void;
+    /** Cancel editing and revert to original value */
+    cancelEditing: () => void;
+    /** Commit edit: validate → call callback → update data or stay in edit mode */
+    commitEdit: () => Promise<void>;
+    /** Register a commit callback from the editing widget (called on click-outside) */
+    registerCommitCallback: (callback: (() => void) | null) => void;
+    /** Request commit via the registered callback (for click-outside handling) */
+    requestCommit: () => void;
+}
+
 // ============================================================================
 // Combined Store Type
 // ============================================================================
@@ -135,12 +161,14 @@ export type DataTableStore<TData> =
     & SelectionSliceState
     & ColumnSliceState
     & UISliceState
+    & EditSliceState
     & DataActions<TData>
     & SortingActions
     & FilteringActions
     & SelectionActions<TData>
     & ColumnActions
     & UIActions
+    & EditActions<TData>
     & {
         // Derived state (computed on-demand)
         /** Number of active filters */
@@ -164,6 +192,10 @@ export interface CreateDataTableStoreOptions<TData> {
     initialData: TData[];
     /** Initial column sizing */
     initialColumnSizing?: Record<string, number>;
+    /** Callback for cell edit (returns true on success) */
+    onCellEdit?: (rowId: string, columnId: string, newValue: any, oldValue: any) => Promise<boolean>;
+    /** Function to get unique row ID */
+    getRowId?: (row: TData, index: number) => string;
 }
 
 /**
@@ -175,7 +207,15 @@ export interface CreateDataTableStoreOptions<TData> {
 export const createDataTableStore = <TData,>(
     options: CreateDataTableStoreOptions<TData>
 ) => {
-    const { initialData, initialColumnSizing = {} } = options;
+    const {
+        initialData,
+        initialColumnSizing = {},
+        onCellEdit,
+        getRowId = (row: TData, index: number) => String(index),
+    } = options;
+
+    // Closure variable for commit callback - not reactive to avoid re-render loops
+    let commitCallback: (() => void) | null = null;
 
     return create<DataTableStore<TData>>()(
         subscribeWithSelector((set, get) => ({
@@ -208,6 +248,12 @@ export const createDataTableStore = <TData,>(
             // UI slice
             isMounted: false,
             filterPopoverOpen: false,
+
+            // Edit slice
+            editingCell: null,
+            pendingValue: null,
+            isSaving: false,
+            saveError: null,
 
             // ================================================================
             // Data Actions
@@ -344,6 +390,90 @@ export const createDataTableStore = <TData,>(
             setMounted: (mounted) => set({ isMounted: mounted }),
 
             setFilterPopoverOpen: (open) => set({ filterPopoverOpen: open }),
+
+            // ================================================================
+            // Edit Actions
+            // ================================================================
+
+            startEditing: async (rowId, columnId, initialValue) => {
+                const { editingCell, commitEdit } = get();
+
+                // If editing a different cell, commit the previous one in the background
+                if (editingCell && (editingCell.rowId !== rowId || editingCell.columnId !== columnId)) {
+                    // Don't await - commit in background to avoid race condition with click events
+                    // This allows immediate transition to the new cell
+                    commitEdit().catch((error) => {
+                        console.error('Background commit failed:', error);
+                    });
+                }
+
+                // Immediately set new editing cell (don't wait for previous commit)
+                set({
+                    editingCell: { rowId, columnId },
+                    pendingValue: initialValue,
+                    saveError: null,
+                });
+            },
+
+            updatePendingValue: (value) => set({ pendingValue: value }),
+
+            cancelEditing: () => {
+                commitCallback = null;
+                set({
+                    editingCell: null,
+                    pendingValue: null,
+                    saveError: null,
+                });
+            },
+
+            commitEdit: async () => {
+                const { editingCell, pendingValue, tableData } = get();
+                if (!editingCell || !onCellEdit) return;
+
+                const { rowId, columnId } = editingCell;
+                const rowIndex = tableData.findIndex((r, idx) => getRowId(r, idx) === rowId);
+                if (rowIndex === -1) return;
+
+                const row = tableData[rowIndex];
+                const oldValue = (row as any)[columnId];
+
+                set({ isSaving: true, saveError: null });
+
+                try {
+                    const success = await onCellEdit(rowId, columnId, pendingValue, oldValue);
+
+                    if (success) {
+                        // Optimistic update
+                        commitCallback = null;
+                        set((state) => ({
+                            tableData: state.tableData.map((r, idx) =>
+                                getRowId(r, idx) === rowId ? { ...r, [columnId]: pendingValue } : r
+                            ),
+                            editingCell: null,
+                            pendingValue: null,
+                            isSaving: false,
+                            saveError: null,
+                        }));
+                    } else {
+                        // Stay in edit mode on failure
+                        set({ isSaving: false, saveError: 'Save failed' });
+                    }
+                } catch (error) {
+                    set({ isSaving: false, saveError: (error as Error).message || 'Save failed' });
+                }
+            },
+
+            registerCommitCallback: (callback) => {
+                // Use closure variable - no state update to avoid re-render loops
+                commitCallback = callback;
+            },
+
+            requestCommit: () => {
+                // Use closure variable
+                if (commitCallback) {
+                    commitCallback();
+                }
+            },
 
             // ================================================================
             // Derived State (Computed)
