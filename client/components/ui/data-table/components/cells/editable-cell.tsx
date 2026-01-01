@@ -15,6 +15,7 @@ import {
     isSingleSelectRelationship,
 } from "../../data-table.types";
 import { CellEditorWidget } from "./cell-editor-widget";
+import EditEntityRelationshipPicker from "@/components/feature-modules/entity/components/forms/instance/relationship/edit-entity-picker";
 
 interface EditableCellProps<TData, TValue> {
     cell: Cell<TData, TValue>;
@@ -247,13 +248,11 @@ export function EditableCell<TData, TValue>({
     if (isEditableRelationshipColumn(meta)) {
         return (
             <div className="relative w-full" onKeyDown={handleKeyDown}>
-                <EntityRelationshipPicker
+                <EditEntityRelationshipPicker
                     relationship={meta.relationship}
                     form={form}
-                    fieldName="value"
                     onBlur={handleSave}
-                    autoFocus
-                    compact
+
                 />
                 <SavingOverlay />
             </div>

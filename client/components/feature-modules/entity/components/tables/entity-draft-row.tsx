@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { useEntityDraft } from "../../context/entity-provider";
 import { EntityType } from "../../interface/entity.interface";
 import { EntityFieldCell } from "../forms/instance/entity-field-cell";
-import { EntityRelationshipPicker } from "../forms/instance/entity-relationship-picker";
+import { DraftEntityRelationshipPicker } from "../forms/instance/relationship/draft-entity-picker";
 import { EntityRow } from "./entity-table-utils";
 
 export interface EntityDraftRowProps {
@@ -97,7 +97,7 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
 
         const relationship = entityType.relationships?.find((r) => r.id === id);
         if (property === EntityPropertyType.RELATIONSHIP && relationship) {
-            return <EntityRelationshipPicker relationship={relationship} autoFocus={isFirstCell} />;
+            return <DraftEntityRelationshipPicker relationship={relationship} />;
         }
 
         return null;
