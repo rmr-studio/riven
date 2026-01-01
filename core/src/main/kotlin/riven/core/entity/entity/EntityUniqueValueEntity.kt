@@ -13,6 +13,7 @@ import java.util.*
 )
 data class EntityUniqueValueEntity(
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", nullable = false, columnDefinition = "uuid")
     val id: UUID? = null,
 

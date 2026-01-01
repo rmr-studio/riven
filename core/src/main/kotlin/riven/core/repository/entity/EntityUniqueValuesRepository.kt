@@ -7,38 +7,81 @@ import riven.core.entity.entity.EntityUniqueValueEntity
 import java.util.*
 
 interface EntityUniqueValuesRepository : JpaRepository<EntityUniqueValueEntity, UUID> {
+
+    /**
+     * Check if a conflict exists for a unique value, excluding the current entity.
+     * Uses native query to completely avoid Hibernate entity tracking.
+     */
     @Query(
-        """
-    SELECT e FROM EntityUniqueValueEntity e 
-    WHERE e.typeId = :typeId 
-      AND e.fieldId = :fieldId 
-      AND e.fieldValue = :fieldValue
-"""
+        value = """
+            SELECT EXISTS(
+                SELECT 1 FROM entities_unique_values
+                WHERE type_id = :typeId
+                  AND field_id = :fieldId
+                  AND field_value = :fieldValue
+                  AND archived = false
+                  AND (:excludeEntityId IS NULL OR entity_id <> :excludeEntityId)
+            )
+        """,
+        nativeQuery = true
     )
-    fun findConflict(
+    fun existsConflict(
         typeId: UUID,
         fieldId: UUID,
         fieldValue: String,
-    ): EntityUniqueValueEntity?
+        excludeEntityId: UUID? = null
+    ): Boolean
 
+    /**
+     * Delete all unique values for an entity using native SQL.
+     * Completely bypasses Hibernate entity tracking.
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(
+        value = "DELETE FROM entities_unique_values WHERE entity_id = :entityId",
+        nativeQuery = true
+    )
+    fun deleteAllByEntityId(entityId: UUID): Int
+
+    /**
+     * Insert a unique value using native SQL.
+     * Bypasses Hibernate to avoid stale state issues.
+     */
     @Modifying
     @Query(
-        """
-        UPDATE EntityUniqueValueEntity e
-        SET e.archived = true, e.deletedAt = CURRENT_TIMESTAMP
-        WHERE e.entityId = :entityId AND e.archived = false
-    """
+        value = """
+            INSERT INTO entities_unique_values (id, type_id, entity_id, field_id, field_value, archived)
+            VALUES (:id, :typeId, :entityId, :fieldId, :fieldValue, false)
+        """,
+        nativeQuery = true
+    )
+    fun insertUniqueValue(
+        id: UUID,
+        typeId: UUID,
+        entityId: UUID,
+        fieldId: UUID,
+        fieldValue: String
+    )
+
+    @Modifying(clearAutomatically = true)
+    @Query(
+        value = """
+            UPDATE entities_unique_values
+            SET archived = true, deleted_at = CURRENT_TIMESTAMP
+            WHERE entity_id = :entityId AND archived = false
+        """,
+        nativeQuery = true
     )
     fun archiveEntity(entityId: UUID): Int
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query(
-        """
-        UPDATE EntityUniqueValueEntity e
-        SET e.archived = true, e.deletedAt = CURRENT_TIMESTAMP
-        WHERE e.typeId = :typeId AND e.archived = false
-    """
+        value = """
+            UPDATE entities_unique_values
+            SET archived = true, deleted_at = CURRENT_TIMESTAMP
+            WHERE type_id = :typeId AND archived = false
+        """,
+        nativeQuery = true
     )
     fun archiveType(typeId: UUID): Int
-
 }

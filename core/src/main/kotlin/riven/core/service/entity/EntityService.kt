@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
-import riven.core.entity.entity.EntityUniqueValueEntity
 import riven.core.enums.activity.Activity
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
@@ -19,6 +18,7 @@ import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.entity.payload.EntityAttributeRelationPayloadReference
 import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.request.entity.SaveEntityRequest
+import riven.core.models.response.entity.EntityImpactResponse
 import riven.core.models.response.entity.SaveEntityResponse
 import riven.core.repository.entity.EntityRepository
 import riven.core.service.activity.ActivityService
@@ -126,7 +126,8 @@ class EntityService(
     }
 
     /**
-     * Create a new entity with validation.
+     * Create or update an entity with validation.
+     * If request.id is provided, updates the existing entity; otherwise creates a new one.
      */
     @Transactional
     @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
@@ -142,29 +143,38 @@ class EntityService(
             val type: EntityTypeEntity = entityTypeService.getById(entityTypeId)
             val typeId = requireNotNull(type.id) { "Entity type ID cannot be null" }
 
+            // Check if this is an update (existing entity) or create (new entity)
             val prev: EntityEntity? = id?.let { findOrThrow { entityRepository.findById(it) } }
+
+
             prev?.run {
-                if (!impactConfirmed) {
-                    // Determine if changes to Entity payload can cause breaking changes
-                    TODO()
-                }
+                require(this.organisationId == organisationId) { "Entity does not belong to the specified organisation" }
+                require(this.typeId == entityTypeId) { "Entity type cannot be changed" }
             }
 
-            val entity = EntityEntity(
-                organisationId = organisationId,
-                typeId = entityTypeId,
-                iconType = icon?.icon ?: type.iconType,
-                iconColour = icon?.colour ?: type.iconColour,
-                identifierKey = type.identifierKey,
-                payload = payload.map { it.key.toString() to toJsonPayload(it.value.payload) }.toMap(),
-            )
+            // Build the payload map
+            val payloadMap = payload.map { it.key.toString() to toJsonPayload(it.value.payload) }.toMap()
 
-            icon?.let {
-                entity.apply {
-                    this.iconType = it.icon
-                    this.iconColour = it.colour
+            // Either update the existing entity or create a new one
+            val entity = prev.let {
+                if (it != null) {
+                    return@let it.copy(
+                        iconType = icon?.icon ?: it.iconType,
+                        iconColour = icon?.colour ?: it.iconColour,
+                        payload = payloadMap,
+                    )
                 }
+
+                EntityEntity(
+                    organisationId = organisationId,
+                    typeId = entityTypeId,
+                    iconType = icon?.icon ?: type.iconType,
+                    iconColour = icon?.colour ?: type.iconColour,
+                    identifierKey = type.identifierKey,
+                    payload = payloadMap,
+                )
             }
+
 
             // Validate payload against schema
             entityValidationService.validateEntity(entity, type).run {
@@ -174,32 +184,29 @@ class EntityService(
             }
 
             return entityRepository.save(entity).run {
-                val id = requireNotNull(this.id) { "Saved entity ID cannot be null" }
+                val entityId = requireNotNull(this.id) { "Saved entity ID cannot be null" }
 
                 // Handle Unique Constraints
                 val uniqueAttributes = entityAttributeService.extractUniqueAttributes(type, payload)
 
-                // Check uniqueness constraints. Should any fail, an exception is thrown and the transaction rolled back
-                uniqueAttributes.filterValues { it != null }.also {
-                    it.forEach { (key, value) ->
-                        // Shouldn't be null due to filter above, but just for assertation avoidance
-                        if (value == null) return@forEach
+                // Check uniqueness constraints. Should any fail, an exception is thrown and the transaction rolled back.
+                // When updating, exclude the current entity from the conflict check.
+                val uniqueValuesToSave = uniqueAttributes
+                    .filterValues { it != null }
+                    .mapNotNull { (fieldId, value) ->
+                        if (value == null) return@mapNotNull null
                         entityAttributeService.checkAttributeUniqueness(
                             typeId = typeId,
-                            key = key,
-                            value = value.value
+                            fieldId = fieldId,
+                            value = value.value,
+                            excludeEntityId = entityId
                         )
+                        fieldId to value.value.toString()
                     }
-                }.map {
-                    EntityUniqueValueEntity(
-                        entityId = id,
-                        typeId = typeId,
-                        fieldId = it.key,
-                        fieldValue = it.value!!.value.toString(),
-                    )
-                }.run {
-                    entityAttributeService.saveUniqueValues(this)
-                }
+                    .toMap()
+
+                // Use native SQL operations to avoid Hibernate session conflicts
+                entityAttributeService.saveUniqueValues(entityId, typeId, uniqueValuesToSave)
 
                 // Handle Management of Relationships. Previous entity state is required for diffing (in the event where relationships have been updated)
                 val relationships: Map<UUID, EntityLink> = entityRelationshipService.saveRelationships(
@@ -210,7 +217,7 @@ class EntityService(
 
                 activityService.logActivity(
                     activity = Activity.ENTITY,
-                    operation = OperationType.CREATE,
+                    operation = if (prev != null) OperationType.UPDATE else OperationType.CREATE,
                     userId = userId,
                     organisationId = organisationId,
                     entityId = this.id,
@@ -239,7 +246,7 @@ class EntityService(
      */
     @Transactional
     @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
-    fun deleteEntity(organisationId: UUID, id: UUID) {
+    fun deleteEntity(organisationId: UUID, id: UUID): EntityImpactResponse {
         val userId = authTokenService.getUserId()
 
         val existing = findOrThrow { entityRepository.findById(id) }.apply {
@@ -263,6 +270,8 @@ class EntityService(
                 "typeId" to existing.typeId.toString()
             )
         )
+
+        TODO()
     }
 
 

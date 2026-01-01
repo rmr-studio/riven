@@ -381,14 +381,14 @@ create index if not exists idx_entities_organisation_id
 create index idx_entities_payload_gin on entities using gin (payload jsonb_path_ops) where archived = false and deleted_at is null;
 
 --Easy way to enforce unique fields per entity type. This table will store unique field values for entities.
---When an entity is created or updated, the relevant unique fields will be inserted/updated here
---This will allow us to enforce uniqueness at the database level by performing insert-or-fail operations
+--When an entity is created or updated, the relevant unique fields will be deleted and re-inserted/updated here
+
 CREATE TABLE IF NOT EXISTS public.entities_unique_values
 (
     "id"          UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
     "type_id"     UUID    NOT NULL REFERENCES entity_types (id) ON DELETE CASCADE,
     "entity_id"   UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
-    "field_id"    TEXT    NOT NULL,
+    "field_id"    UUID    NOT NULL,
     "field_value" TEXT    NOT NULL,
     "archived"    BOOLEAN NOT NULL         DEFAULT FALSE,
     "deleted_at"  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

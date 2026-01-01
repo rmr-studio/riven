@@ -112,24 +112,52 @@ class EntityTypeAttributeService(
             }
     }
 
+    /**
+     * Check if a unique constraint would be violated.
+     * Excludes the current entity from the check to allow updates.
+     */
     fun checkAttributeUniqueness(
         typeId: UUID,
-        key: UUID,
-        value: JsonValue
+        fieldId: UUID,
+        value: JsonValue,
+        excludeEntityId: UUID? = null
     ) {
-        return uniqueEntityValueRepository.findConflict(typeId, key, value.toString()).let {
-            if (it != null) {
-                throw UniqueConstraintViolationException(
-                    "Unique constraint violation for attribute '$key' with value '$value' on entity type '$typeId'"
-                )
-            }
+        val hasConflict = uniqueEntityValueRepository.existsConflict(
+            typeId = typeId,
+            fieldId = fieldId,
+            fieldValue = value.toString(),
+            excludeEntityId = excludeEntityId
+        )
+        if (hasConflict) {
+            throw UniqueConstraintViolationException(
+                "Unique constraint violation for attribute '$fieldId' with value '$value' on entity type '$typeId'"
+            )
         }
     }
 
+    /**
+     * Save unique values for an entity.
+     * Deletes existing values first, then inserts new ones.
+     * Uses native SQL for both operations to completely bypass Hibernate entity tracking.
+     */
     fun saveUniqueValues(
-        list: List<EntityUniqueValueEntity>
-    ): List<EntityUniqueValueEntity> {
-        return uniqueEntityValueRepository.saveAll(list)
+        entityId: UUID,
+        typeId: UUID,
+        uniqueValues: Map<UUID, String>
+    ) {
+        // Delete existing values using native SQL
+        uniqueEntityValueRepository.deleteAllByEntityId(entityId)
+
+        // Insert new values using native SQL
+        uniqueValues.forEach { (fieldId, fieldValue) ->
+            uniqueEntityValueRepository.insertUniqueValue(
+                id = UUID.randomUUID(),
+                typeId = typeId,
+                entityId = entityId,
+                fieldId = fieldId,
+                fieldValue = fieldValue
+            )
+        }
     }
 
     fun archiveEntity(id: UUID): Int {
