@@ -14,7 +14,7 @@ import { OptionalTooltip } from "@/components/ui/optional-tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/util/utils";
 import { Check, ChevronsUpDown, CircleAlert, X } from "lucide-react";
-import { FC, useState } from "react";
+import { FC, useState, useEffect } from "react";
 import { FormWidgetProps } from "../form-widget.types";
 
 export const MultiSelectWidget: FC<FormWidgetProps<string[]>> = ({
@@ -28,9 +28,19 @@ export const MultiSelectWidget: FC<FormWidgetProps<string[]>> = ({
     displayError = "message",
     disabled,
     options = [],
+    autoFocus,
 }) => {
     const [open, setOpen] = useState(false);
     const hasErrors = errors && errors.length > 0;
+
+    // Auto-open popover when autoFocus is true (e.g., in table cell edit mode)
+    useEffect(() => {
+        if (autoFocus && !disabled) {
+            // Small delay to ensure DOM is ready
+            const timer = setTimeout(() => setOpen(true), 0);
+            return () => clearTimeout(timer);
+        }
+    }, [autoFocus, disabled]);
 
     const selectedOptions = options.filter((opt) => value.includes(opt.value));
 

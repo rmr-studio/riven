@@ -77,18 +77,7 @@ export function DataTableProvider<TData>({
             initialData,
             initialColumnSizing,
             getRowId,
-            onCellEdit: onCellEdit
-                ? async (rowId: string, columnId: string, newValue: any, oldValue: any) => {
-                      // Convert rowId to row object
-                      const rowIndex = initialData.findIndex((r, idx) => {
-                          const id = getRowId ? getRowId(r, idx) : String(idx);
-                          return id === rowId;
-                      });
-                      if (rowIndex === -1) return false;
-                      const row = initialData[rowIndex];
-                      return await onCellEdit(row, columnId, newValue, oldValue);
-                  }
-                : undefined,
+            onCellEdit,
         });
     }
 
@@ -134,7 +123,13 @@ export function DataTableProvider<TData>({
                       activeFilters: state.activeFilters,
                       enabledFilters: state.enabledFilters,
                   }),
-                  ({ activeFilters, enabledFilters }: { activeFilters: Record<string, any>; enabledFilters: Set<string> }) => {
+                  ({
+                      activeFilters,
+                      enabledFilters,
+                  }: {
+                      activeFilters: Record<string, any>;
+                      enabledFilters: Set<string>;
+                  }) => {
                       const enabledActiveFilters = Object.fromEntries(
                           Object.entries(activeFilters).filter(([key]) => enabledFilters.has(key))
                       );
@@ -229,17 +224,23 @@ export function useDataTableStore<TData, TResult>(
  * but React won't re-render because we only use it for actions.
  */
 export function useDataTableActions<TData>() {
-    return useDataTableStore<TData, DataTableStore<TData>>((state) => state, () => true);
+    return useDataTableStore<TData, DataTableStore<TData>>(
+        (state) => state,
+        () => true
+    );
 }
 
-export function useDataTableSearch<TData>(){
-    return useDataTableStore<TData, {
-        searchValue: string;
-        setGlobalFilter: (value: string) => void;
-        table: Table<TData> | null;
-        setSearchValue: (value: string) => void;
-        clearSearch: () => void;
-    }>((state) => ({
+export function useDataTableSearch<TData>() {
+    return useDataTableStore<
+        TData,
+        {
+            searchValue: string;
+            setGlobalFilter: (value: string) => void;
+            table: Table<TData> | null;
+            setSearchValue: (value: string) => void;
+            clearSearch: () => void;
+        }
+    >((state) => ({
         setGlobalFilter: state.setGlobalFilter,
         searchValue: state.searchValue,
         setSearchValue: state.setSearchValue,
@@ -325,6 +326,29 @@ export function useUIState<TData>() {
     >((state) => ({
         isMounted: state.isMounted,
         filterPopoverOpen: state.filterPopoverOpen,
+    }));
+}
+
+export function useCellInteraction<TData>() {
+    return useDataTableStore<
+        TData,
+        {
+            editingCell: { rowId: string; columnId: string } | null;
+            focusedCell: { rowId: string; columnId: string } | null;
+            startEditing: (rowId: string, columnId: string, initialValue: any) => Promise<void>;
+            cancelEditing: () => void;
+            commitEdit: () => Promise<void>;
+            exitToFocused: () => void;
+            updatePendingValue: (value: any) => void;
+        }
+    >((state) => ({
+        editingCell: state.editingCell,
+        focusedCell: state.focusedCell,
+        startEditing: state.startEditing,
+        cancelEditing: state.cancelEditing,
+        commitEdit: state.commitEdit,
+        exitToFocused: state.exitToFocused,
+        updatePendingValue: state.updatePendingValue,
     }));
 }
 

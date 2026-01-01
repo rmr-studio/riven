@@ -132,6 +132,9 @@ export function DataTable<TData, TValue>({
         state.getActiveFilterCount()
     );
 
+    const focusedCell = useDataTableStore<TData, { rowId: string; columnId: string } | null>(
+        (state) => state.focusedCell
+    );
     const editingCell = useDataTableStore<TData, { rowId: string; columnId: string } | null>(
         (state) => state.editingCell
     );
@@ -147,6 +150,12 @@ export function DataTable<TData, TValue>({
         setTableInstance,
         reorderRows,
         clearSelection,
+        // Focus actions
+        clearFocus,
+        focusNextCell,
+        focusPrevCell,
+        focusAdjacentCell,
+        enterEditMode,
     } = useDataTableActions<TData>();
 
     // Ref for table container to detect outside clicks
@@ -352,12 +361,28 @@ export function DataTable<TData, TValue>({
     }, [globalFilter, activeFilterCount, rowSelection, clearSelection]);
 
     // ========================================================================
+    // Clear Focus When Focused Row No Longer Exists
+    // ========================================================================
+
+    useEffect(() => {
+        if (!focusedCell) return;
+
+        const rows = table.getRowModel().rows;
+        const rowExists = rows.some(r => r.id === focusedCell.rowId);
+
+        if (!rowExists) {
+            clearFocus();
+        }
+    }, [table, focusedCell, clearFocus]);
+
+    // ========================================================================
     // Handle Click Outside Editing Cell
     // ========================================================================
 
     const handleClickOutside = useCallback(
         (event: MouseEvent) => {
-            if (!editingCell) return;
+            // Only handle if we have focus or edit state
+            if (!editingCell && !focusedCell) return;
 
             const target = event.target as HTMLElement;
 
@@ -382,15 +407,20 @@ export function DataTable<TData, TValue>({
                 return;
             }
 
-            // Click is outside the table and not in a portal - request commit via callback
-            // This works for all widget types including popover-based ones without focus
-            requestCommit();
+            // Click is outside the table and not in a portal
+            if (editingCell) {
+                // Commit edit and clear focus
+                requestCommit();
+            }
+            // Clear focus when clicking outside table
+            clearFocus();
         },
-        [editingCell, requestCommit]
+        [editingCell, focusedCell, requestCommit, clearFocus]
     );
 
     useEffect(() => {
-        if (!editingCell) return;
+        // Attach when editing or focused
+        if (!editingCell && !focusedCell) return;
 
         // Use mousedown to catch the click before focus changes
         document.addEventListener("mousedown", handleClickOutside);
@@ -398,7 +428,64 @@ export function DataTable<TData, TValue>({
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [editingCell, handleClickOutside]);
+    }, [editingCell, focusedCell, handleClickOutside]);
+
+    // ========================================================================
+    // Table-Level Keyboard Navigation (when focused but not editing)
+    // ========================================================================
+
+    const handleTableKeyDown = useCallback(
+        (event: KeyboardEvent) => {
+            // Only handle when focused but not editing
+            if (!focusedCell || editingCell) return;
+
+            switch (event.key) {
+                case 'Enter':
+                    event.preventDefault();
+                    enterEditMode();
+                    break;
+                case 'Escape':
+                    event.preventDefault();
+                    clearFocus();
+                    break;
+                case 'Tab':
+                    event.preventDefault();
+                    if (event.shiftKey) {
+                        focusPrevCell();
+                    } else {
+                        focusNextCell();
+                    }
+                    break;
+                case 'ArrowUp':
+                    event.preventDefault();
+                    focusAdjacentCell('up');
+                    break;
+                case 'ArrowDown':
+                    event.preventDefault();
+                    focusAdjacentCell('down');
+                    break;
+                case 'ArrowLeft':
+                    event.preventDefault();
+                    focusAdjacentCell('left');
+                    break;
+                case 'ArrowRight':
+                    event.preventDefault();
+                    focusAdjacentCell('right');
+                    break;
+            }
+        },
+        [focusedCell, editingCell, enterEditMode, clearFocus, focusNextCell, focusPrevCell, focusAdjacentCell]
+    );
+
+    useEffect(() => {
+        // Only attach keyboard handler when focused but not editing
+        if (!focusedCell || editingCell) return;
+
+        document.addEventListener('keydown', handleTableKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleTableKeyDown);
+        };
+    }, [focusedCell, editingCell, handleTableKeyDown]);
 
     // ========================================================================
     // DnD Sensors
@@ -491,6 +578,7 @@ export function DataTable<TData, TValue>({
                     emptyMessage={emptyMessage}
                     finalColumnsCount={finalColumns.length}
                     enableInlineEdit={enableInlineEdit}
+                    focusedCell={focusedCell}
                 />
             </Table>
         </div>

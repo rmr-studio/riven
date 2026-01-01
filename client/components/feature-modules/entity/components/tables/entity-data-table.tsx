@@ -9,24 +9,34 @@ import {
 } from "@/components/ui/data-table";
 import { DEFAULT_COLUMN_WIDTH } from "@/components/ui/data-table/data-table";
 import { Form } from "@/components/ui/form";
+import { SchemaUUID } from "@/lib/interfaces/common.interface";
 import { ClassNameProps } from "@/lib/interfaces/interface";
+import { EntityPropertyType } from "@/lib/types/types";
 import { debounce } from "@/lib/util/debounce.util";
 import { Row } from "@tanstack/react-table";
 import { Plus } from "lucide-react";
 import { FC, useCallback, useMemo, useRef } from "react";
 import { useConfigFormState } from "../../context/configuration-provider";
 import { useEntityDraft } from "../../context/entity-provider";
-import { Entity, EntityType, EntityPropertyType } from "../../interface/entity.interface";
+import { useSaveEntityMutation } from "../../hooks/mutation/instance/use-save-entity-mutation";
+import {
+    Entity,
+    EntityAttributePrimitivePayload,
+    EntityAttributeRelationPayloadReference,
+    EntityAttributeRequest,
+    EntityRelationshipDefinition,
+    EntityType,
+    isRelationshipPayload,
+    SaveEntityRequest,
+} from "../../interface/entity.interface";
 import { EntityTypeHeader } from "../ui/entity-type-header";
 import { EntityTypeSaveButton } from "../ui/entity-type-save-button";
 import { EntityDraftRow } from "./entity-draft-row";
-import { useUpdateEntityMutation } from "../../hooks/mutation/instance/use-update-entity-mutation";
-import { useAuth } from "@/components/provider/auth-context";
 import { handleColumnOrderChange } from "./entity-table-order-handler";
 import { handleColumnResize } from "./entity-table-resize-handler";
 import {
-    EntityRow,
     applyColumnOrdering,
+    EntityRow,
     generateColumnsFromEntityType,
     generateFiltersFromEntityType,
     generateSearchConfigFromEntityType,
@@ -51,10 +61,9 @@ export const EntityDataTable: FC<Props> = ({
 }) => {
     const { isDraftMode, enterDraftMode } = useEntityDraft();
     const { form, handleSubmit } = useConfigFormState();
-    const { session } = useAuth();
 
     // Update entity mutation for inline editing
-    const { mutateAsync: updateEntity } = useUpdateEntityMutation(organisationId, entityType.id);
+    const { mutateAsync: saveEntity } = useSaveEntityMutation(organisationId, entityType.id);
 
     // Transform entities to row data
     const rowData = useMemo(() => {
@@ -145,32 +154,80 @@ export const EntityDataTable: FC<Props> = ({
     const getRowId = useCallback((row: EntityRow, _index: number) => row._entityId, []);
 
     // Cell edit handler for inline editing
-    const handleCellEdit = useCallback(
-        async (row: EntityRow, columnId: string, newValue: any, _oldValue: any): Promise<boolean> => {
-            // Don't allow editing draft rows
-            if (isDraftRow(row)) return false;
+    const handleCellEdit = async (
+        row: EntityRow,
+        columnId: string,
+        newValue: any,
+        _oldValue: any
+    ): Promise<boolean> => {
+        // Don't allow editing draft rows
+        if (isDraftRow(row)) return false;
+        const entity = entities.find((e) => e.id === row._entityId);
+        if (!entity) return false;
 
-            try {
-                await updateEntity({
-                    entityId: row._entity.id,
+        // Determine if updated column is an attribute or relationship
+        const attributeDef: SchemaUUID | undefined = entityType.schema.properties?.[columnId];
+        const relationshipDef: EntityRelationshipDefinition | undefined =
+            entityType.relationships?.find((rel) => rel.id === columnId);
+
+        // Prepare updated entity payload
+        if (attributeDef) {
+            const payloadEntry: EntityAttributePrimitivePayload = {
+                type: EntityPropertyType.ATTRIBUTE,
+                value: newValue,
+                schemaType: attributeDef.key,
+            };
+
+            return await updateEntity(entity, columnId, { payload: payloadEntry });
+        }
+
+        if (relationshipDef) {
+            const relationshipEntry: EntityAttributeRelationPayloadReference = {
+                type: EntityPropertyType.RELATIONSHIP,
+                relations: Array.isArray(newValue) ? newValue : [newValue],
+            };
+
+            return await updateEntity(entity, columnId, { payload: relationshipEntry });
+        }
+
+        return false;
+    };
+
+    const updateEntity = async (
+        entity: Entity,
+        columnId: string,
+        entry: EntityAttributeRequest
+    ): Promise<boolean> => {
+        const payload: Map<string, EntityAttributeRequest> = new Map();
+        Object.entries(entity.payload).forEach(([key, value]) => {
+            if (isRelationshipPayload(value.payload)) {
+                payload.set(key, {
                     payload: {
-                        [columnId]: {
-                            payload: {
-                                value: newValue,
-                                schemaType: entityType.schema.properties![columnId]?.key,
-                                type: EntityPropertyType.ATTRIBUTE,
-                            },
-                        },
+                        type: EntityPropertyType.RELATIONSHIP,
+                        relations: value.payload.relations.map((rel) => rel.id),
                     },
                 });
-                return true;
-            } catch (error) {
-                console.error("Failed to update entity:", error);
-                return false;
+            } else {
+                payload.set(key, {
+                    payload: {
+                        type: EntityPropertyType.ATTRIBUTE,
+                        value: value.payload.value,
+                        schemaType: value.payload.schemaType,
+                    },
+                });
             }
-        },
-        [updateEntity, entityType.schema.properties]
-    );
+        });
+
+        const updatedEntity: SaveEntityRequest = {
+            id: entity.id,
+            payload: {
+                ...Object.fromEntries(payload),
+                [columnId]: entry,
+            },
+        };
+
+        return (await saveEntity(updatedEntity)) != null;
+    };
 
     return (
         <Form {...form}>

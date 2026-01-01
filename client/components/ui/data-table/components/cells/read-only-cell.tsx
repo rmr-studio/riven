@@ -1,7 +1,7 @@
 "use client";
 
-import { Cell, flexRender } from "@tanstack/react-table";
 import { cn } from "@/lib/util/utils";
+import { Cell, flexRender } from "@tanstack/react-table";
 
 interface ReadOnlyCellProps<TData, TValue> {
     cell: Cell<TData, TValue>;
@@ -30,14 +30,14 @@ export function ReadOnlyCell<TData, TValue>({
         <div
             onClick={onClick}
             className={cn(
-                'cursor-pointer rounded px-2 py-1 -mx-2 -my-1',
-                'hover:bg-muted/50 hover:ring-1 hover:ring-ring/20',
-                'transition-colors duration-150'
+                "cursor-pointer rounded px-2 py-1 -mx-2 -my-1",
+                "hover:bg-muted/50 hover:ring-1 hover:ring-ring/20",
+                "transition-colors duration-150 w-full min-h-[1.5rem]"
             )}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
                     onClick();
                 }

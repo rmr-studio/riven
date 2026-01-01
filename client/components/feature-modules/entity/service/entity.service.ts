@@ -49,51 +49,6 @@ export class EntityService {
     }
 
     /**
-     * Update an existing entity instance
-     */
-    static async updateEntity(
-        session: Session | null,
-        organisationId: string,
-        entityTypeId: string,
-        entityId: string,
-        request: SaveEntityRequest
-    ): Promise<SaveEntityResponse> {
-        try {
-            validateSession(session);
-            validateUuid(organisationId);
-            validateUuid(entityTypeId);
-            validateUuid(entityId);
-            const url = api();
-
-            const response = await fetch(
-                `${url}/v1/entity/organisation/${organisationId}/type/${encodeURIComponent(
-                    entityTypeId
-                )}/${entityId}`,
-                {
-                    method: "PUT",
-                    body: JSON.stringify(request),
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${session.access_token}`,
-                    },
-                }
-            );
-
-            // A payload of validation errors and impact errors are also returned with 400 and 409 status codes
-            if (response.ok || response.status === 400 || response.status === 409)
-                return await response.json();
-
-            throw await handleError(
-                response,
-                (res) => `Failed to update entity instance: ${res.status} ${res.statusText}`
-            );
-        } catch (error) {
-            if (isResponseError(error)) throw error;
-            throw fromError(error);
-        }
-    }
-
-    /**
      * Get all entity instances
      */
     static async getEntitiesForType(

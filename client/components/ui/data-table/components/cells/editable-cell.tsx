@@ -14,6 +14,8 @@ interface EditableCellProps<TData, TValue> {
     cell: Cell<TData, TValue>;
     onSave: (value: any) => Promise<void>;
     onCancel: () => void;
+    onFocusNext?: () => void;
+    onFocusPrev?: () => void;
 }
 
 /**
@@ -82,6 +84,8 @@ export function EditableCell<TData, TValue>({
     cell,
     onSave,
     onCancel,
+    onFocusNext,
+    onFocusPrev,
 }: EditableCellProps<TData, TValue>) {
     const meta = cell.column.columnDef.meta;
     const initialValue = cell.getValue();
@@ -138,7 +142,7 @@ export function EditableCell<TData, TValue>({
     }, []); // Empty deps - only register once on mount
 
     // Keyboard shortcuts
-    const handleKeyDown = (e: React.KeyboardEvent) => {
+    const handleKeyDown = async (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             e.stopPropagation();
@@ -147,6 +151,16 @@ export function EditableCell<TData, TValue>({
             e.preventDefault();
             e.stopPropagation();
             onCancel();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            e.stopPropagation();
+            // Save and navigate to next/prev cell
+            await handleSave();
+            if (e.shiftKey) {
+                onFocusPrev?.();
+            } else {
+                onFocusNext?.();
+            }
         }
     };
 

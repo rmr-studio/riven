@@ -75,7 +75,7 @@ export function transformEntitiesToRows(entities: Entity[]): EntityRow[] {
 export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
     // Handle null/undefined
     if (value === null || value === undefined) {
-        return <span className="text-muted-foreground">—</span>;
+        return <span className="text-muted-foreground">-</span>;
     }
 
     const dataType = schema.type as DataType;
@@ -166,7 +166,7 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
     if (dataType === DataType.ARRAY) {
         if (Array.isArray(value)) {
             if (value.length === 0) {
-                return <span className="text-muted-foreground">—</span>;
+                return <div className="text-muted-foreground flex grow h-full" />;
             }
 
             // Render each item as its own badge
@@ -269,11 +269,23 @@ export function generateColumnsFromEntityType(
                 );
             },
             cell: ({ row }) => {
-                return (
-                    <Badge variant="outline" className="font-mono">
-                        Relationships
-                    </Badge>
-                );
+                const value = row.getValue(relationship.id);
+                if (!value) return;
+                if (Array.isArray(value)) {
+                    if (value.length === 0) {
+                        return;
+                    }
+
+                    return (
+                        <div className="flex flex-wrap gap-1">
+                            {value.map((item: any, idx: number) => (
+                                <Badge key={idx} variant="secondary" className="font-normal">
+                                    {String(item)}
+                                </Badge>
+                            ))}
+                        </div>
+                    );
+                }
             },
             enableSorting: false,
             meta: {

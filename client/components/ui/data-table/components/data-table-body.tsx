@@ -20,6 +20,7 @@ interface DataTableBodyProps<TData> {
     emptyMessage?: string;
     finalColumnsCount: number;
     enableInlineEdit?: boolean;
+    focusedCell?: { rowId: string; columnId: string } | null;
 }
 
 export function DataTableBody<TData>({
@@ -35,6 +36,7 @@ export function DataTableBody<TData>({
     emptyMessage = "No results.",
     finalColumnsCount,
     enableInlineEdit,
+    focusedCell,
 }: DataTableBodyProps<TData>) {
     const rowIds = useMemo(() => {
         return table.getRowModel().rows.map((row) => row.id);
@@ -94,6 +96,7 @@ export function DataTableBody<TData>({
                         disableDragForRow={disableDragForRow}
                         isSelectionEnabled={isSelectionEnabled}
                         enableInlineEdit={enableInlineEdit}
+                        focusedCell={focusedCell}
                     />
                 );
             })}

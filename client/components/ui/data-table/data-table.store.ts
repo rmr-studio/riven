@@ -17,6 +17,7 @@
  */
 
 import { ColumnFiltersState, RowSelectionState, SortingState, Table } from "@tanstack/react-table";
+import { toast } from "sonner";
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 
@@ -71,6 +72,8 @@ interface UISliceState {
 }
 
 interface EditSliceState {
+    /** Currently focused cell (rowId + columnId) - highlighted but not editing */
+    focusedCell: { rowId: string; columnId: string } | null;
     /** Currently editing cell (rowId + columnId) */
     editingCell: { rowId: string; columnId: string } | null;
     /** Pending value being edited */
@@ -102,7 +105,9 @@ interface FilteringActions {
     setColumnFilters: (filters: ColumnFiltersState) => void;
     setGlobalFilter: (filter: string) => void;
     setSearchValue: (value: string) => void;
-    setActiveFilters: (filters: Record<string, any> | ((prev: Record<string, any>) => Record<string, any>)) => void;
+    setActiveFilters: (
+        filters: Record<string, any> | ((prev: Record<string, any>) => Record<string, any>)
+    ) => void;
     setEnabledFilters: (filters: Set<string> | ((prev: Set<string>) => Set<string>)) => void;
     /** Clear search input and global filter */
     clearSearch: () => void;
@@ -117,7 +122,9 @@ interface FilteringActions {
 }
 
 interface SelectionActions<TData> {
-    setRowSelection: (selection: RowSelectionState | ((prev: RowSelectionState) => RowSelectionState)) => void;
+    setRowSelection: (
+        selection: RowSelectionState | ((prev: RowSelectionState) => RowSelectionState)
+    ) => void;
     setHoveredRowId: (rowId: string | null) => void;
     /** Clear all row selections */
     clearSelection: () => void;
@@ -126,7 +133,9 @@ interface SelectionActions<TData> {
 }
 
 interface ColumnActions {
-    setColumnSizing: (sizing: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)) => void;
+    setColumnSizing: (
+        sizing: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)
+    ) => void;
     setColumnOrder: (order: string[]) => void;
 }
 
@@ -148,28 +157,40 @@ interface EditActions<TData> {
     registerCommitCallback: (callback: (() => void) | null) => void;
     /** Request commit via the registered callback (for click-outside handling) */
     requestCommit: () => void;
+    /** Set focused cell without entering edit mode */
+    setFocusedCell: (rowId: string, columnId: string) => void;
+    /** Clear focus (unfocus table entirely) */
+    clearFocus: () => void;
+    /** Navigate focus to next editable cell (Tab behavior, wraps) */
+    focusNextCell: () => void;
+    /** Navigate focus to previous editable cell (Shift+Tab behavior, wraps) */
+    focusPrevCell: () => void;
+    /** Navigate focus to adjacent cell (arrow key behavior) */
+    focusAdjacentCell: (direction: "up" | "down" | "left" | "right") => void;
+    /** Enter edit mode for currently focused cell */
+    enterEditMode: () => void;
+    /** Exit edit mode but keep focus on cell (discard changes) */
+    exitToFocused: () => void;
 }
 
 // ============================================================================
 // Combined Store Type
 // ============================================================================
 
-export type DataTableStore<TData> =
-    & DataState<TData>
-    & SortingSliceState
-    & FilteringSliceState
-    & SelectionSliceState
-    & ColumnSliceState
-    & UISliceState
-    & EditSliceState
-    & DataActions<TData>
-    & SortingActions
-    & FilteringActions
-    & SelectionActions<TData>
-    & ColumnActions
-    & UIActions
-    & EditActions<TData>
-    & {
+export type DataTableStore<TData> = DataState<TData> &
+    SortingSliceState &
+    FilteringSliceState &
+    SelectionSliceState &
+    ColumnSliceState &
+    UISliceState &
+    EditSliceState &
+    DataActions<TData> &
+    SortingActions &
+    FilteringActions &
+    SelectionActions<TData> &
+    ColumnActions &
+    UIActions &
+    EditActions<TData> & {
         // Derived state (computed on-demand)
         /** Number of active filters */
         getActiveFilterCount: () => number;
@@ -193,9 +214,141 @@ export interface CreateDataTableStoreOptions<TData> {
     /** Initial column sizing */
     initialColumnSizing?: Record<string, number>;
     /** Callback for cell edit (returns true on success) */
-    onCellEdit?: (rowId: string, columnId: string, newValue: any, oldValue: any) => Promise<boolean>;
+    onCellEdit?: (row: TData, columnId: string, newValue: any, oldValue: any) => Promise<boolean>;
     /** Function to get unique row ID */
     getRowId?: (row: TData, index: number) => string;
+}
+
+// ============================================================================
+// Navigation Helpers
+// ============================================================================
+
+/**
+ * Find the next/previous editable cell with wrapping behavior.
+ * - Right/Tab at end of row → first cell of next row
+ * - Left/Shift+Tab at start of row → last cell of previous row
+ * - Wraps around at table boundaries
+ */
+function findNextEditableCell<TData>(
+    table: Table<TData>,
+    currentRowId: string,
+    currentColumnId: string,
+    direction: "next" | "prev"
+): { rowId: string; columnId: string } | null {
+    const rows = table.getRowModel().rows;
+    const columns = table
+        .getAllLeafColumns()
+        .filter((col) => col.columnDef.meta?.editable && col.id !== "select");
+
+    if (columns.length === 0 || rows.length === 0) return null;
+
+    const currentRowIndex = rows.findIndex((r) => r.id === currentRowId);
+    const currentColIndex = columns.findIndex((c) => c.id === currentColumnId);
+
+    if (currentRowIndex === -1 || currentColIndex === -1) return null;
+
+    let rowIdx = currentRowIndex;
+    let colIdx = currentColIndex;
+
+    if (direction === "next") {
+        colIdx++;
+        if (colIdx >= columns.length) {
+            colIdx = 0;
+            rowIdx++;
+        }
+        if (rowIdx >= rows.length) {
+            // Wrap to first cell of table
+            rowIdx = 0;
+            colIdx = 0;
+        }
+    } else {
+        colIdx--;
+        if (colIdx < 0) {
+            colIdx = columns.length - 1;
+            rowIdx--;
+        }
+        if (rowIdx < 0) {
+            // Wrap to last cell of table
+            rowIdx = rows.length - 1;
+            colIdx = columns.length - 1;
+        }
+    }
+
+    return {
+        rowId: rows[rowIdx].id,
+        columnId: columns[colIdx].id,
+    };
+}
+
+/**
+ * Find adjacent cell in the specified direction.
+ * - Up/Down: Stop at table boundaries (no wrap)
+ * - Left/Right: Wrap to next/previous row
+ */
+function findAdjacentCell<TData>(
+    table: Table<TData>,
+    currentRowId: string,
+    currentColumnId: string,
+    direction: "up" | "down" | "left" | "right"
+): { rowId: string; columnId: string } | null {
+    const rows = table.getRowModel().rows;
+    const columns = table
+        .getAllLeafColumns()
+        .filter((col) => col.columnDef.meta?.editable && col.id !== "select");
+
+    if (columns.length === 0 || rows.length === 0) return null;
+
+    const currentRowIndex = rows.findIndex((r) => r.id === currentRowId);
+    const currentColIndex = columns.findIndex((c) => c.id === currentColumnId);
+
+    if (currentRowIndex === -1 || currentColIndex === -1) return null;
+
+    let rowIdx = currentRowIndex;
+    let colIdx = currentColIndex;
+
+    switch (direction) {
+        case "up":
+            if (rowIdx > 0) {
+                rowIdx--;
+            } else {
+                return null; // At top boundary
+            }
+            break;
+        case "down":
+            if (rowIdx < rows.length - 1) {
+                rowIdx++;
+            } else {
+                return null; // At bottom boundary
+            }
+            break;
+        case "left":
+            if (colIdx > 0) {
+                colIdx--;
+            } else if (rowIdx > 0) {
+                // Wrap to previous row's last cell
+                rowIdx--;
+                colIdx = columns.length - 1;
+            } else {
+                return null; // At very first cell
+            }
+            break;
+        case "right":
+            if (colIdx < columns.length - 1) {
+                colIdx++;
+            } else if (rowIdx < rows.length - 1) {
+                // Wrap to next row's first cell
+                rowIdx++;
+                colIdx = 0;
+            } else {
+                return null; // At very last cell
+            }
+            break;
+    }
+
+    return {
+        rowId: rows[rowIdx].id,
+        columnId: columns[colIdx].id,
+    };
 }
 
 /**
@@ -204,9 +357,7 @@ export interface CreateDataTableStoreOptions<TData> {
  * Each table gets its own store instance to avoid state collisions.
  * The store is scoped to the table's lifecycle via the provider.
  */
-export const createDataTableStore = <TData,>(
-    options: CreateDataTableStoreOptions<TData>
-) => {
+export const createDataTableStore = <TData>(options: CreateDataTableStoreOptions<TData>) => {
     const {
         initialData,
         initialColumnSizing = {},
@@ -250,6 +401,7 @@ export const createDataTableStore = <TData,>(
             filterPopoverOpen: false,
 
             // Edit slice
+            focusedCell: null,
             editingCell: null,
             pendingValue: null,
             isSaving: false,
@@ -277,7 +429,7 @@ export const createDataTableStore = <TData,>(
 
             setSorting: (sorting) =>
                 set((state) => ({
-                    sorting: typeof sorting === "function" ? sorting(state.sorting) : sorting
+                    sorting: typeof sorting === "function" ? sorting(state.sorting) : sorting,
                 })),
 
             // ================================================================
@@ -292,21 +444,24 @@ export const createDataTableStore = <TData,>(
 
             setActiveFilters: (filters) =>
                 set((state) => ({
-                    activeFilters: typeof filters === "function" ? filters(state.activeFilters) : filters
+                    activeFilters:
+                        typeof filters === "function" ? filters(state.activeFilters) : filters,
                 })),
 
             setEnabledFilters: (filters) =>
                 set((state) => ({
-                    enabledFilters: typeof filters === "function" ? filters(state.enabledFilters) : filters
+                    enabledFilters:
+                        typeof filters === "function" ? filters(state.enabledFilters) : filters,
                 })),
 
             clearSearch: () => set({ searchValue: "", globalFilter: "" }),
 
-            clearAllFilters: () => set({
-                activeFilters: {},
-                enabledFilters: new Set(),
-                columnFilters: []
-            }),
+            clearAllFilters: () =>
+                set({
+                    activeFilters: {},
+                    enabledFilters: new Set(),
+                    columnFilters: [],
+                }),
 
             clearFilter: (columnId) => {
                 set((state) => {
@@ -326,7 +481,7 @@ export const createDataTableStore = <TData,>(
             toggleFilter: (columnId, enabled) => {
                 if (enabled) {
                     set((state) => ({
-                        enabledFilters: new Set(state.enabledFilters).add(columnId)
+                        enabledFilters: new Set(state.enabledFilters).add(columnId),
                     }));
                 } else {
                     set((state) => {
@@ -349,7 +504,7 @@ export const createDataTableStore = <TData,>(
                     activeFilters: {
                         ...state.activeFilters,
                         [columnId]: value,
-                    }
+                    },
                 }));
             },
 
@@ -359,7 +514,8 @@ export const createDataTableStore = <TData,>(
 
             setRowSelection: (selection) =>
                 set((state) => ({
-                    rowSelection: typeof selection === "function" ? selection(state.rowSelection) : selection
+                    rowSelection:
+                        typeof selection === "function" ? selection(state.rowSelection) : selection,
                 })),
 
             setHoveredRowId: (rowId) => set({ hoveredRowId: rowId }),
@@ -378,7 +534,8 @@ export const createDataTableStore = <TData,>(
 
             setColumnSizing: (sizing) =>
                 set((state) => ({
-                    columnSizing: typeof sizing === "function" ? sizing(state.columnSizing) : sizing
+                    columnSizing:
+                        typeof sizing === "function" ? sizing(state.columnSizing) : sizing,
                 })),
 
             setColumnOrder: (order) => set({ columnOrder: order }),
@@ -399,11 +556,14 @@ export const createDataTableStore = <TData,>(
                 const { editingCell, commitEdit } = get();
 
                 // If editing a different cell, commit the previous one in the background
-                if (editingCell && (editingCell.rowId !== rowId || editingCell.columnId !== columnId)) {
+                if (
+                    editingCell &&
+                    (editingCell.rowId !== rowId || editingCell.columnId !== columnId)
+                ) {
                     // Don't await - commit in background to avoid race condition with click events
                     // This allows immediate transition to the new cell
                     commitEdit().catch((error) => {
-                        console.error('Background commit failed:', error);
+                        console.error("Background commit failed:", error);
                     });
                 }
 
@@ -440,10 +600,10 @@ export const createDataTableStore = <TData,>(
                 set({ isSaving: true, saveError: null });
 
                 try {
-                    const success = await onCellEdit(rowId, columnId, pendingValue, oldValue);
+                    const success = await onCellEdit(row, columnId, pendingValue, oldValue);
 
                     if (success) {
-                        // Optimistic update
+                        // Optimistic update - keep focus on the cell after save
                         commitCallback = null;
                         set((state) => ({
                             tableData: state.tableData.map((r, idx) =>
@@ -453,13 +613,20 @@ export const createDataTableStore = <TData,>(
                             pendingValue: null,
                             isSaving: false,
                             saveError: null,
+                            focusedCell: editingCell, // Keep focus on the saved cell
                         }));
                     } else {
-                        // Stay in edit mode on failure
-                        set({ isSaving: false, saveError: 'Save failed' });
+                        toast.error("Failed to save changes.");
+                        set({
+                            isSaving: false,
+                            saveError: "Save failed",
+                            editingCell: null,
+                            pendingValue: null,
+                            focusedCell: editingCell,
+                        });
                     }
                 } catch (error) {
-                    set({ isSaving: false, saveError: (error as Error).message || 'Save failed' });
+                    set({ isSaving: false, saveError: (error as Error).message || "Save failed" });
                 }
             },
 
@@ -473,6 +640,95 @@ export const createDataTableStore = <TData,>(
                 if (commitCallback) {
                     commitCallback();
                 }
+            },
+
+            // ================================================================
+            // Focus Actions
+            // ================================================================
+
+            setFocusedCell: (rowId, columnId) => {
+                set({ focusedCell: { rowId, columnId } });
+            },
+
+            clearFocus: () => {
+                set({ focusedCell: null });
+            },
+
+            focusNextCell: () => {
+                const { focusedCell, tableInstance } = get();
+                if (!focusedCell || !tableInstance) return;
+
+                const nextCell = findNextEditableCell(
+                    tableInstance,
+                    focusedCell.rowId,
+                    focusedCell.columnId,
+                    "next"
+                );
+                if (nextCell) {
+                    set({ focusedCell: nextCell });
+                }
+            },
+
+            focusPrevCell: () => {
+                const { focusedCell, tableInstance } = get();
+                if (!focusedCell || !tableInstance) return;
+
+                const prevCell = findNextEditableCell(
+                    tableInstance,
+                    focusedCell.rowId,
+                    focusedCell.columnId,
+                    "prev"
+                );
+                if (prevCell) {
+                    set({ focusedCell: prevCell });
+                }
+            },
+
+            focusAdjacentCell: (direction) => {
+                const { focusedCell, tableInstance } = get();
+                if (!focusedCell || !tableInstance) return;
+
+                const adjacentCell = findAdjacentCell(
+                    tableInstance,
+                    focusedCell.rowId,
+                    focusedCell.columnId,
+                    direction
+                );
+                if (adjacentCell) {
+                    set({ focusedCell: adjacentCell });
+                }
+            },
+
+            enterEditMode: () => {
+                const { focusedCell, tableInstance, tableData } = get();
+                if (!focusedCell || !tableInstance) return;
+
+                // Find the row and get the cell value
+                const rowIndex = tableData.findIndex(
+                    (r, idx) => getRowId(r, idx) === focusedCell.rowId
+                );
+                if (rowIndex === -1) return;
+
+                const row = tableData[rowIndex];
+                const value = (row as Record<string, unknown>)[focusedCell.columnId];
+
+                set({
+                    editingCell: focusedCell,
+                    pendingValue: value,
+                    saveError: null,
+                });
+            },
+
+            exitToFocused: () => {
+                const { editingCell } = get();
+                commitCallback = null;
+                set({
+                    editingCell: null,
+                    pendingValue: null,
+                    saveError: null,
+                    // Keep focus on the cell that was being edited
+                    focusedCell: editingCell,
+                });
             },
 
             // ================================================================
@@ -511,7 +767,12 @@ export const createDataTableStore = <TData,>(
                 if (!selectionConfig) return false;
                 const { globalFilter, hasSelections, getActiveFilterCount } = get();
                 // Disable selection when drag-drop would be active
-                if (dragDropConfig && !globalFilter && getActiveFilterCount() === 0 && !hasSelections()) {
+                if (
+                    dragDropConfig &&
+                    !globalFilter &&
+                    getActiveFilterCount() === 0 &&
+                    !hasSelections()
+                ) {
                     return false;
                 }
                 return true;

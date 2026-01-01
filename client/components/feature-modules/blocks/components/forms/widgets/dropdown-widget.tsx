@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Check, ChevronsUpDown, CircleAlert } from "lucide-react";
 import { cn } from "@/lib/util/utils";
-import { FC, useState } from "react";
+import { FC, useState, useEffect } from "react";
 import { FormWidgetProps } from "../form-widget.types";
 
 export const DropdownWidget: FC<FormWidgetProps<string>> = ({
@@ -21,9 +21,19 @@ export const DropdownWidget: FC<FormWidgetProps<string>> = ({
     displayError = "message",
     disabled,
     options = [],
+    autoFocus,
 }) => {
     const [open, setOpen] = useState(false);
     const hasErrors = errors && errors.length > 0;
+
+    // Auto-open popover when autoFocus is true (e.g., in table cell edit mode)
+    useEffect(() => {
+        if (autoFocus && !disabled) {
+            // Small delay to ensure DOM is ready
+            const timer = setTimeout(() => setOpen(true), 0);
+            return () => clearTimeout(timer);
+        }
+    }, [autoFocus, disabled]);
 
     const selectedOption = options.find((opt) => opt.value === value);
 
