@@ -3,7 +3,7 @@ import { ColumnFilter, FilterOption } from "@/components/ui/data-table";
 import { IconCell } from "@/components/ui/icon/icon-cell";
 import { DataFormat, DataType, EntityPropertyType } from "@/lib/types/types";
 import { toTitleCase } from "@/lib/util/utils";
-import { ColumnDef } from "@tanstack/react-table";
+import { AccessorKeyColumnDef } from "@tanstack/react-table";
 import { ReactNode } from "react";
 import {
     Entity,
@@ -84,22 +84,6 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
     // STRING type formatting
     if (dataType === DataType.STRING) {
         const strValue = String(value);
-
-        if (dataFormat === DataFormat.EMAIL) {
-            return (
-                <a href={`mailto:${strValue}`} className="text-primary hover:underline">
-                    {strValue}
-                </a>
-            );
-        }
-
-        if (dataFormat === DataFormat.PHONE) {
-            return (
-                <a href={`tel:${strValue}`} className="text-primary hover:underline">
-                    {strValue}
-                </a>
-            );
-        }
 
         if (dataFormat === DataFormat.URL) {
             return (
@@ -198,13 +182,14 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
 export function generateColumnsFromEntityType(
     entityType: EntityType,
     options?: { enableEditing?: boolean }
-): ColumnDef<EntityRow>[] {
-    const columns: ColumnDef<EntityRow>[] = [];
+): AccessorKeyColumnDef<EntityRow>[] {
+    const columns: AccessorKeyColumnDef<EntityRow>[] = [];
 
     if (!entityType.schema.properties) {
         return columns;
     }
 
+    // Generate attribute columns
     Object.entries(entityType.schema.properties).forEach(([attributeId, schema]) => {
         columns.push({
             accessorKey: attributeId,
@@ -231,26 +216,30 @@ export function generateColumnsFromEntityType(
             enableSorting: true,
             meta: options?.enableEditing
                 ? {
+                      type: "attribute" as const,
                       editable: true,
-                      fieldSchema: schema, // SchemaUUID for widget selection
-                      // Don't need zodSchema - widget handles validation via schema
-                      parseValue: (val: any) => val, // Pass through as-is
-                      formatValue: (val: any) => val, // Pass through as-is
-                      // Keep existing meta
                       schema,
-                      required: schema.required,
-                      unique: schema.unique,
-                      protected: schema.protected,
+                      parseValue: (val: any) => val,
+                      formatValue: (val: any) => val,
+                      displayMeta: {
+                          required: schema.required,
+                          unique: schema.unique,
+                          protected: schema.protected,
+                      },
                   }
                 : {
-                      schema,
-                      required: schema.required,
-                      unique: schema.unique,
-                      protected: schema.protected,
+                      type: "readonly" as const,
+                      editable: false,
+                      displayMeta: {
+                          required: schema.required,
+                          unique: schema.unique,
+                          protected: schema.protected,
+                      },
                   },
         });
     });
 
+    // Generate relationship columns
     entityType.relationships?.forEach((relationship) => {
         columns.push({
             accessorKey: relationship.id,
@@ -270,10 +259,10 @@ export function generateColumnsFromEntityType(
             },
             cell: ({ row }) => {
                 const value = row.getValue(relationship.id);
-                if (!value) return;
+                if (!value) return null;
                 if (Array.isArray(value)) {
                     if (value.length === 0) {
-                        return;
+                        return null;
                     }
 
                     return (
@@ -286,13 +275,29 @@ export function generateColumnsFromEntityType(
                         </div>
                     );
                 }
+                return <span>{String(value)}</span>;
             },
             enableSorting: false,
-            meta: {
-                schema: {
-                    type: "RELATIONSHIP",
-                },
-            },
+            meta: options?.enableEditing
+                ? {
+                      type: "relationship" as const,
+                      editable: true,
+                      relationship,
+                      parseValue: (val: any) => val,
+                      formatValue: (val: any) => val,
+                      displayMeta: {
+                          required: relationship.required,
+                          protected: relationship.protected,
+                      },
+                  }
+                : {
+                      type: "readonly" as const,
+                      editable: false,
+                      displayMeta: {
+                          required: relationship.required,
+                          protected: relationship.protected,
+                      },
+                  },
         });
     });
 
@@ -303,11 +308,12 @@ export function generateColumnsFromEntityType(
  * Apply column ordering based on entity type columns array
  */
 export function applyColumnOrdering(
-    columns: ColumnDef<EntityRow>[],
+    columns: AccessorKeyColumnDef<EntityRow>[],
     columnsOrder: EntityTypeAttributeColumn[]
-): ColumnDef<EntityRow>[] {
-    const orderedColumns: ColumnDef<EntityRow>[] = [];
-    const columnMap = new Map(columns.map((col) => [col.accessorKey as string, col]));
+): AccessorKeyColumnDef<EntityRow>[] {
+    console.log(columns);
+    const orderedColumns: AccessorKeyColumnDef<EntityRow>[] = [];
+    const columnMap = new Map(columns.map((col) => [col["accessorKey"], col]));
 
     // Add columns in order array sequence
     columnsOrder.forEach((orderItem) => {
@@ -382,7 +388,7 @@ export function generateFiltersFromEntityType(
             // Use select filter for low-cardinality attributes
             if (uniqueValues.length > 0 && uniqueValues.length <= selectFilterThreshold) {
                 filters.push({
-                    column: attributeId as keyof EntityRow & string,
+                    column: attributeId,
                     type: "select",
                     label,
                     options: uniqueValues,
@@ -401,7 +407,7 @@ export function generateFiltersFromEntityType(
         // NUMBER type filters
         if (dataType === DataType.NUMBER) {
             filters.push({
-                column: attributeId as keyof EntityRow & string,
+                column: attributeId,
                 type: "number-range",
                 label,
             });
@@ -410,7 +416,7 @@ export function generateFiltersFromEntityType(
         // BOOLEAN type filters
         if (dataType === DataType.BOOLEAN) {
             filters.push({
-                column: attributeId as keyof EntityRow & string,
+                column: attributeId,
                 type: "boolean",
                 label,
             });

@@ -23,6 +23,8 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
     // Check if form is valid
     const hasErrors = Object.keys(form.formState.errors).length > 0;
 
+    console.log(form.formState.errors);
+
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = useCallback(async () => {

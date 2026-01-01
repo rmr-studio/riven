@@ -20,6 +20,7 @@ import { ColumnFiltersState, RowSelectionState, SortingState, Table } from "@tan
 import { toast } from "sonner";
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
+import { isEditableColumn } from "./data-table.types";
 
 // ============================================================================
 // State Interfaces (organized by concern)
@@ -242,7 +243,7 @@ function findNextEditableCell<TData>(
     const rows = table.getRowModel().rows;
     const columns = table
         .getAllLeafColumns()
-        .filter((col) => col.columnDef.meta?.editable && col.id !== "select");
+        .filter((col) => isEditableColumn(col.columnDef.meta) && col.id !== "select");
 
     if (columns.length === 0 || rows.length === 0) return null;
 
@@ -298,7 +299,7 @@ function findAdjacentCell<TData>(
     const rows = table.getRowModel().rows;
     const columns = table
         .getAllLeafColumns()
-        .filter((col) => col.columnDef.meta?.editable && col.id !== "select");
+        .filter((col) => isEditableColumn(col.columnDef.meta) && col.id !== "select");
 
     if (columns.length === 0 || rows.length === 0) return null;
 

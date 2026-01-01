@@ -3,6 +3,7 @@
 import { useAuth } from "@/components/provider/auth-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { isSingleSelectRelationship } from "@/components/ui/data-table/data-table.types";
 import {
     Select,
     SelectContent,
@@ -10,50 +11,67 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { EntityRelationshipCardinality } from "@/lib/types/types";
 import { useQueries } from "@tanstack/react-query";
 import { Loader2, X } from "lucide-react";
 import { useParams } from "next/navigation";
-import { FC, useMemo } from "react";
-import { useFormState } from "react-hook-form";
-import { useEntityDraft } from "../../../context/entity-provider";
+import { FC, useMemo, createContext, useContext } from "react";
+import { UseFormReturn } from "react-hook-form";
 import { useEntityTypes } from "../../../hooks/query/type/use-entity-types";
 import { EntityRelationshipDefinition, EntityType } from "../../../interface/entity.interface";
 import { EntityService } from "../../../service/entity.service";
 import { getEntityDisplayName } from "../../tables/entity-table-utils";
 
+/**
+ * Context for passing form to relationship picker in inline edit mode.
+ * This avoids the hooks rules issue when useEntityDraft is not available.
+ */
+const InlineEditFormContext = createContext<UseFormReturn<any> | null>(null);
+
+export const useInlineEditForm = () => useContext(InlineEditFormContext);
+
 export interface EntityRelationshipPickerProps {
     relationship: EntityRelationshipDefinition;
     autoFocus?: boolean;
+    /**
+     * Optional form instance for inline editing mode.
+     * If not provided, falls back to useEntityDraft() context.
+     */
+    form?: UseFormReturn<any>;
+    /**
+     * Field name for inline editing mode.
+     * Defaults to relationship.id if not provided.
+     */
+    fieldName?: string;
+    /**
+     * Callback for blur events in inline editing mode.
+     */
+    onBlur?: () => void;
+    /**
+     * Compact mode for inline cell editing (smaller styling).
+     */
+    compact?: boolean;
 }
 
-export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ relationship, autoFocus }) => {
-    const { form } = useEntityDraft();
+/**
+ * Inner component that requires a form - called by the main picker after form is resolved
+ */
+const EntityRelationshipPickerInner: FC<
+    EntityRelationshipPickerProps & { resolvedForm: UseFormReturn<any> }
+> = ({
+    relationship,
+    autoFocus,
+    fieldName: fieldNameProp,
+    onBlur: onBlurProp,
+    compact = false,
+    resolvedForm: form,
+}) => {
     const { session } = useAuth();
     const { organisationId } = useParams<{ organisationId: string }>();
-    const fieldName = relationship.id;
-    const value = form.watch(fieldName);
-
-    // Watch for validation errors on this specific field
-    const { errors: formErrors } = useFormState({
-        control: form.control,
-        name: fieldName,
-    });
-
-    // Extract error messages for this field
-    const fieldError = formErrors[fieldName];
-    const errors = fieldError?.message
-        ? [String(fieldError.message)]
-        : fieldError?.type
-          ? [String(fieldError.type)]
-          : undefined;
+    const fieldName = fieldNameProp ?? relationship.id;
 
     const { data: entityTypes } = useEntityTypes(organisationId);
 
-    // Determine if single or multi select
-    const isSingleSelect =
-        relationship.cardinality === EntityRelationshipCardinality.ONE_TO_ONE ||
-        relationship.cardinality === EntityRelationshipCardinality.MANY_TO_ONE;
+    const isSingleSelect = isSingleSelectRelationship(relationship.cardinality);
 
     const types: EntityType[] = useMemo(() => {
         return (
@@ -65,7 +83,6 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ re
         );
     }, [entityTypes, relationship]);
 
-    // Load entities for all target types
     const entitiesQueries = useQueries({
         queries: types
             .map((type) => type.id)
@@ -74,14 +91,14 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ re
                 queryFn: () => EntityService.getEntitiesForType(session, organisationId, typeId),
                 enabled: !!session && !!organisationId,
             })),
-        combine: (results) => {
-            return {
-                data: results.flatMap((r) => r.data ?? []),
-                isLoading: results.some((r) => r.isLoading),
-                isError: results.some((r) => r.isError),
-            };
-        },
+        combine: (results) => ({
+            data: results.flatMap((r) => r.data ?? []),
+            isLoading: results.some((r) => r.isLoading),
+            isError: results.some((r) => r.isError),
+        }),
     });
+
+    const value = form.watch(fieldName);
 
     const handleChange = (newValue: any) => {
         form.setValue(fieldName, newValue, {
@@ -92,6 +109,7 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ re
 
     const handleBlur = async () => {
         await form.trigger(fieldName);
+        onBlurProp?.();
     };
 
     const handleRemove = (entityId: string) => {
@@ -118,17 +136,19 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ re
 
     const entities = entitiesQueries.data || [];
 
-    // Single select rendering
     if (isSingleSelect) {
         return (
-            <div className="space-y-2 w-full min-w-0">
-
+            <div className={compact ? "w-full min-w-0" : "space-y-2 w-full min-w-0"}>
                 <Select
                     value={value || undefined}
                     onValueChange={handleChange}
                     disabled={entities.length === 0}
                 >
-                    <SelectTrigger onBlur={handleBlur} autoFocus={autoFocus}>
+                    <SelectTrigger
+                        onBlur={handleBlur}
+                        autoFocus={autoFocus}
+                        className={compact ? "h-8" : undefined}
+                    >
                         <SelectValue
                             placeholder={
                                 entities.length === 0
@@ -145,45 +165,37 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ re
                         ))}
                     </SelectContent>
                 </Select>
-                {errors && (
-                    <div className="space-y-1">
-                        {errors.map((error, idx) => (
-                            <p key={idx} className="text-sm text-destructive">
-                                {error}
-                            </p>
-                        ))}
-                    </div>
-                )}
             </div>
         );
     }
 
-    // Multi-select rendering
     const selectedEntities = entities.filter((e) => (value || []).includes(e.id));
     const availableEntities = entities.filter((e) => !(value || []).includes(e.id));
 
     return (
-        <div className="space-y-2">
-            {/* Selected entities */}
+        <div className={compact ? "space-y-1 w-full" : "space-y-2"}>
             {selectedEntities.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <div className={compact ? "flex flex-wrap gap-1" : "flex flex-wrap gap-2"}>
                     {selectedEntities.map((entity) => (
-                        <Badge key={entity.id} variant="secondary" className="gap-1">
+                        <Badge
+                            key={entity.id}
+                            variant="secondary"
+                            className={compact ? "gap-1 text-xs" : "gap-1"}
+                        >
                             {getEntityDisplayName(entity)}
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-4 w-4 p-0 hover:bg-transparent"
+                                className={compact ? "h-3 w-3 p-0 hover:bg-transparent" : "h-4 w-4 p-0 hover:bg-transparent"}
                                 onClick={() => handleRemove(entity.id)}
                             >
-                                <X className="h-3 w-3" />
+                                <X className={compact ? "h-2 w-2" : "h-3 w-3"} />
                             </Button>
                         </Badge>
                     ))}
                 </div>
             )}
 
-            {/* Add entity selector */}
             {availableEntities.length > 0 && (
                 <Select
                     value=""
@@ -193,14 +205,18 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ re
                     }}
                     disabled={entities.length === 0}
                 >
-                    <SelectTrigger onBlur={handleBlur} autoFocus={autoFocus}>
+                    <SelectTrigger
+                        onBlur={handleBlur}
+                        autoFocus={autoFocus}
+                        className={compact ? "h-8" : undefined}
+                    >
                         <SelectValue
                             placeholder={
                                 entities.length === 0
                                     ? "No entities available"
                                     : selectedEntities.length > 0
-                                    ? `Add another ${relationship.name.toLowerCase()}...`
-                                    : `Select ${relationship.name.toLowerCase()}...`
+                                      ? `Add another ${relationship.name.toLowerCase()}...`
+                                      : `Select ${relationship.name.toLowerCase()}...`
                             }
                         />
                     </SelectTrigger>
@@ -215,18 +231,40 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ re
             )}
 
             {selectedEntities.length === 0 && availableEntities.length === 0 && (
-                <p className="text-sm text-muted-foreground">No entities available</p>
-            )}
-
-            {errors && (
-                <div className="space-y-1">
-                    {errors.map((error, idx) => (
-                        <p key={idx} className="text-sm text-destructive">
-                            {error}
-                        </p>
-                    ))}
-                </div>
+                <p className={compact ? "text-xs text-muted-foreground" : "text-sm text-muted-foreground"}>
+                    No entities available
+                </p>
             )}
         </div>
     );
+};
+
+/**
+ * Wrapper for inline edit mode - uses form prop directly
+ */
+export const EntityRelationshipPickerInline: FC<
+    Omit<EntityRelationshipPickerProps, "form"> & { form: UseFormReturn<any> }
+> = (props) => {
+    return <EntityRelationshipPickerInner {...props} resolvedForm={props.form} />;
+};
+
+/**
+ * Main EntityRelationshipPicker component.
+ *
+ * When used with form prop: Uses the provided form directly (for inline editing)
+ * When used without form prop: Must be within EntityDraftProvider (uses useEntityDraft)
+ */
+export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = (props) => {
+    // Lazy import to avoid circular dependencies
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { useEntityDraft } = require("../../../context/entity-provider");
+
+    // If form is provided via props, use it directly
+    if (props.form) {
+        return <EntityRelationshipPickerInner {...props} resolvedForm={props.form} />;
+    }
+
+    // Otherwise, use the context (this will throw if not in provider)
+    const entityDraft = useEntityDraft();
+    return <EntityRelationshipPickerInner {...props} resolvedForm={entityDraft.form} />;
 };

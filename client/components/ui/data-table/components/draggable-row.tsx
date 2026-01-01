@@ -9,6 +9,7 @@ import { GripVertical } from "lucide-react";
 import React from "react";
 import { useCellInteraction, useDataTableActions, useDataTableStore } from "../data-table-provider";
 import type { ColumnResizingConfig, RowActionsConfig } from "../data-table.types";
+import { isEditableColumn } from "../data-table.types";
 import { EditableCell } from "./cells/editable-cell";
 import { RowActionsMenu } from "./row-actions-menu";
 
@@ -98,12 +99,8 @@ function DraggableRowComponent<TData>({
                             key={cell.id}
                             className="border-l border-l-accent/40 first:border-l-transparent"
                             style={{
-                                width: columnResizing?.enabled
-                                    ? `${cell.column.getSize()}px`
-                                    : undefined,
-                                maxWidth: columnResizing?.enabled
-                                    ? `${cell.column.getSize()}px`
-                                    : undefined,
+                                width: `${cell.column.getSize()}px`,
+                                maxWidth: `${cell.column.getSize()}px`,
                             }}
                         >
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -121,9 +118,9 @@ function DraggableRowComponent<TData>({
                     focusedCell?.columnId === cell.column.id &&
                     !isEditing;
 
-                // Check if this cell is editable
+                // Check if this cell is editable using type guard
                 const isEditable =
-                    cell.column.columnDef.meta?.editable && enableInlineEdit && !disabled;
+                    isEditableColumn(cell.column.columnDef.meta) && enableInlineEdit && !disabled;
 
                 // Handle cell click with focus state awareness
                 const handleCellClick = () => {
@@ -160,12 +157,8 @@ function DraggableRowComponent<TData>({
                                 "ring-2 ring-blue-500 ring-inset bg-blue-50 dark:bg-blue-500/5"
                         )}
                         style={{
-                            width: columnResizing?.enabled
-                                ? `${cell.column.getSize()}px`
-                                : undefined,
-                            maxWidth: columnResizing?.enabled
-                                ? `${cell.column.getSize()}px`
-                                : undefined,
+                            width: `${cell.column.getSize()}px`,
+                            maxWidth: `${cell.column.getSize()}px`,
                         }}
                     >
                         {isEditing ? (

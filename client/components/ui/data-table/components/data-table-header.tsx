@@ -61,7 +61,7 @@ export function DataTableHeader<TData>({
                                 key={header.id}
                                 className="py-2 px-3 relative border-l first:border-l-transparent"
                                 style={{
-                                    width: columnResizing?.enabled ? `${header.getSize()}px` : undefined,
+                                    width: `${header.getSize()}px`,
                                 }}
                             >
                                 <div className="flex items-center justify-between">

@@ -263,6 +263,11 @@ export function DataTable<TData, TValue>({
         });
     };
 
+    // Check if any column has explicit size defined
+    const hasExplicitColumnSizes = useMemo(() => {
+        return finalColumns.some((col) => col.size !== undefined);
+    }, [finalColumns]);
+
     const table = useReactTable<TData>({
         data: tableData,
         columns: finalColumns,
@@ -293,14 +298,15 @@ export function DataTable<TData, TValue>({
                 },
             },
         }),
+        // Always set defaultColumn for sizing, but only enable resize interactions if columnResizing is enabled
+        defaultColumn: {
+            size: columnResizing?.defaultColumnSize ?? 150,
+            minSize: 50,
+            maxSize: 500,
+        },
         ...(columnResizing?.enabled && {
             columnResizeMode: columnResizing.columnResizeMode ?? "onEnd",
             onColumnSizingChange: setColumnSizing,
-            defaultColumn: {
-                size: columnResizing.defaultColumnSize ?? 150,
-                minSize: 50,
-                maxSize: 500,
-            },
         }),
         ...(columnOrdering?.enabled && {
             onColumnOrderChange: setColumnOrder,
@@ -556,7 +562,7 @@ export function DataTable<TData, TValue>({
                 isDragDropEnabled ? "overflow-visible" : "overflow-x-auto"
             )}
         >
-            <Table className={cn(columnResizing?.enabled && "table-fixed w-full")}>
+            <Table className={cn((columnResizing?.enabled || hasExplicitColumnSizes) && "table-fixed w-full")}>
                 <DataTableHeader
                     table={table}
                     enableDragDrop={isDragDropEnabled}

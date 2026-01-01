@@ -7,6 +7,8 @@
 
 import { Row } from "@tanstack/react-table";
 import { SchemaUUID } from "@/lib/interfaces/common.interface";
+import { EntityRelationshipCardinality } from "@/lib/types/types";
+import { EntityRelationshipDefinition } from "@/components/feature-modules/entity/interface/entity.interface";
 import { z } from "zod";
 
 // ============================================================================
@@ -41,7 +43,7 @@ export interface FilterOption {
 }
 
 export interface ColumnFilter<T> {
-    column: keyof T extends string ? keyof T : never;
+    column: keyof T & string;
     type: FilterType;
     label: string;
     options?: FilterOption[];
@@ -109,14 +111,47 @@ export interface RowSelectionConfig<TData> {
 }
 
 // ============================================================================
-// Inline Editing Configuration
+// Inline Editing Configuration - Column Meta Types
 // ============================================================================
 
-export interface EditableColumnMeta<TValue = any> {
-    /** Whether this column supports inline editing */
-    editable?: boolean;
+/**
+ * Discriminant values for column meta types
+ */
+export type ColumnMetaType = "readonly" | "attribute" | "relationship";
+
+/**
+ * Display metadata shared across column types
+ */
+export interface ColumnDisplayMeta {
+    required?: boolean;
+    unique?: boolean;
+    protected?: boolean;
+}
+
+/**
+ * Base properties shared across all column meta types
+ */
+interface BaseColumnMeta {
+    /** Additional display metadata (e.g., for headers) */
+    displayMeta?: ColumnDisplayMeta;
+}
+
+/**
+ * Meta for non-editable columns (display-only)
+ */
+export interface ReadOnlyColumnMeta extends BaseColumnMeta {
+    type: "readonly";
+    editable: false;
+}
+
+/**
+ * Meta for editable attribute columns (uses SchemaUUID)
+ */
+export interface EditableAttributeColumnMeta<TValue = any> extends BaseColumnMeta {
+    type: "attribute";
+    editable: true;
     /** Schema for widget selection and validation */
-    fieldSchema: SchemaUUID;
+    schema: SchemaUUID;
     /** Optional Zod validation schema override */
     zodSchema?: z.ZodSchema<TValue>;
     /** Transform value from display format to edit format */
@@ -125,8 +160,112 @@ export interface EditableColumnMeta<TValue = any> {
     formatValue?: (editValue: TValue) => any;
 }
 
-// Extend TanStack Table ColumnMeta to include our editable properties
-declare module '@tanstack/react-table' {
+/**
+ * Meta for editable relationship columns (uses EntityRelationshipDefinition)
+ */
+export interface EditableRelationshipColumnMeta extends BaseColumnMeta {
+    type: "relationship";
+    editable: true;
+    /** Full relationship definition for picker configuration */
+    relationship: EntityRelationshipDefinition;
+    /** Optional Zod validation schema override */
+    zodSchema?: z.ZodSchema<string | string[] | null>;
+    /** Transform value from display format to edit format */
+    parseValue?: (rawValue: any) => string | string[] | null;
+    /** Transform value from edit format to display format */
+    formatValue?: (editValue: string | string[] | null) => any;
+}
+
+/**
+ * Discriminated union of all column meta types
+ */
+export type DataTableColumnMeta<TValue = any> =
+    | ReadOnlyColumnMeta
+    | EditableAttributeColumnMeta<TValue>
+    | EditableRelationshipColumnMeta;
+
+// ============================================================================
+// Type Guards for Column Meta
+// ============================================================================
+
+/**
+ * Check if column meta represents an editable attribute column
+ */
+export function isEditableAttributeColumn(
+    meta: unknown
+): meta is EditableAttributeColumnMeta {
+    if (!meta || typeof meta !== "object") return false;
+    const m = meta as Record<string, unknown>;
+    return m.type === "attribute" && m.editable === true && "schema" in m;
+}
+
+/**
+ * Check if column meta represents an editable relationship column
+ */
+export function isEditableRelationshipColumn(
+    meta: unknown
+): meta is EditableRelationshipColumnMeta {
+    if (!meta || typeof meta !== "object") return false;
+    const m = meta as Record<string, unknown>;
+    return m.type === "relationship" && m.editable === true && "relationship" in m;
+}
+
+/**
+ * Check if column meta represents any editable column (attribute or relationship)
+ */
+export function isEditableColumn(
+    meta: unknown
+): meta is EditableAttributeColumnMeta | EditableRelationshipColumnMeta {
+    return isEditableAttributeColumn(meta) || isEditableRelationshipColumn(meta);
+}
+
+/**
+ * Check if column meta represents a read-only column
+ */
+export function isReadOnlyColumn(
+    meta: unknown
+): meta is ReadOnlyColumnMeta {
+    if (!meta || typeof meta !== "object") return true; // No meta = read-only
+    const m = meta as Record<string, unknown>;
+    if (m.type === "readonly") return true;
+    if (m.editable === false) return true;
+    return !isEditableColumn(meta);
+}
+
+/**
+ * Helper to determine if relationship is single-select based on cardinality
+ */
+export function isSingleSelectRelationship(
+    cardinality: EntityRelationshipCardinality
+): boolean {
+    return (
+        cardinality === EntityRelationshipCardinality.ONE_TO_ONE ||
+        cardinality === EntityRelationshipCardinality.MANY_TO_ONE
+    );
+}
+
+// ============================================================================
+// TanStack Table Module Augmentation
+// ============================================================================
+
+declare module "@tanstack/react-table" {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    interface ColumnMeta<TData, TValue> extends Partial<EditableColumnMeta<TValue>> {}
+    interface ColumnMeta<TData, TValue> {
+        /** Column meta type discriminant */
+        type?: ColumnMetaType;
+        /** Whether this column supports inline editing */
+        editable?: boolean;
+        /** Schema for attribute columns (SchemaUUID) */
+        schema?: SchemaUUID;
+        /** Relationship definition for relationship columns */
+        relationship?: EntityRelationshipDefinition;
+        /** Optional Zod validation schema override */
+        zodSchema?: z.ZodSchema<TValue>;
+        /** Transform value from display format to edit format */
+        parseValue?: (rawValue: any) => TValue;
+        /** Transform value from edit format to display format */
+        formatValue?: (editValue: TValue) => any;
+        /** Display metadata for headers */
+        displayMeta?: ColumnDisplayMeta;
+    }
 }

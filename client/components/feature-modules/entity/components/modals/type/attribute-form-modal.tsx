@@ -68,7 +68,14 @@ export const AttributeFormModal: FC<Props> = ({ dialog, type, selectedAttribute 
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="w-full min-w-11/12 lg:min-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogContent
+                className="w-full min-w-11/12 lg:min-w-6xl max-h-[90vh] overflow-y-auto"
+                onEscapeKeyDown={(e) => {
+                    if (dropdownOpen) {
+                        e.preventDefault();
+                    }
+                }}
+            >
                 <DialogHeader>
                     <DialogTitle>{isEditMode ? "Edit attribute" : "Create attribute"}</DialogTitle>
                     <DialogDescription>

@@ -49,57 +49,67 @@ export function useEntityTypeTable(
             return map;
         }, [type]);
 
-    const getIcon = (row: Row<EntityTypeAttributeRow>): ReactNode | null => {
-        if (row.original.type === EntityPropertyType.RELATIONSHIP)
-            return (
-                <>
-                    <TooltipTrigger asChild>
-                        <Link2 className="size-4 mr-1 text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent className=" text-xs font-mono italic">
-                        This attribute references a relationship to another entity type
-                    </TooltipContent>
-                </>
+    const IconWithTooltip = ({
+        icon: Icon,
+        tooltip,
+    }: {
+        icon: typeof Key;
+        tooltip: string;
+    }): ReactNode => (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Icon className="size-4 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent className="text-xs font-mono italic">{tooltip}</TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+
+    const getIndicatorIcons = (row: Row<EntityTypeAttributeRow>): ReactNode => {
+        const icons: ReactNode[] = [];
+
+        if (identifierKey === row.original.id) {
+            return [
+                <IconWithTooltip
+                    key="identifier"
+                    icon={Key}
+                    tooltip="This attribute represents the primary identifier for this entity"
+                />,
+            ];
+        }
+
+        if (row.original.type === EntityPropertyType.RELATIONSHIP) {
+            icons.push(
+                <IconWithTooltip
+                    key="relationship"
+                    icon={Link2}
+                    tooltip="This attribute references a relationship to another entity type"
+                />
             );
+        }
 
-        if (identifierKey === row.original.id)
-            return (
-                <>
-                    <TooltipTrigger asChild>
-                        <Key className="size-4 mr-1 text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent className=" text-xs font-mono italic">
-                        This attribute represents the primary identifier for this entity
-                    </TooltipContent>
-                </>
+        if (row.original.required) {
+            icons.push(
+                <IconWithTooltip
+                    key="required"
+                    icon={ListTodo}
+                    tooltip="This attribute is required and must have a value for each entity"
+                />
             );
+        }
 
-        if (!row.original.required && !row.original.unique) return <div className="w-4 mr-1"></div>;
+        if (row.original.unique) {
+            icons.push(
+                <IconWithTooltip
+                    key="unique"
+                    icon={ListX}
+                    tooltip="This attribute must have a unique value for each entity"
+                />
+            );
+        }
 
-        return (
-            <div className="flex space-x-2">
-                {row.original.required && (
-                    <>
-                        <TooltipTrigger asChild>
-                            <ListTodo className="size-4 mr-1 text-muted-foreground" />
-                        </TooltipTrigger>
-                        <TooltipContent className=" text-xs font-mono italic">
-                            This attribute is required and must have a value for each entity
-                        </TooltipContent>
-                    </>
-                )}
-                {row.original.unique && (
-                    <>
-                        <TooltipTrigger asChild>
-                            <ListX className="size-4 mr-1 text-muted-foreground" />
-                        </TooltipTrigger>
-                        <TooltipContent className=" text-xs font-mono italic">
-                            This attribute must have a unique value for each entity
-                        </TooltipContent>
-                    </>
-                )}
-            </div>
-        );
+        return <div className="flex items-center gap-1.5">{icons}</div>;
     };
 
     // Unified columns for both attributes and relationships
@@ -109,16 +119,17 @@ export function useEntityTypeTable(
                 accessorKey: "label",
                 header: "Name",
                 cell: ({ row }) => {
-                    return (
-                        <div className="flex items-center gap-2">
-                            <TooltipProvider>
-                                <Tooltip>{getIcon(row)}</Tooltip>
-                            </TooltipProvider>
-                            <span className="font-medium">{row.original.label}</span>
-                        </div>
-                    );
+                    return <span className="font-medium">{row.original.label}</span>;
                 },
             },
+            {
+                id: "properties",
+                size: 60,
+                header: "Properties",
+                enableResizing: false,
+                cell: ({ row }) => getIndicatorIcons(row),
+            },
+
             {
                 accessorKey: "rowType",
                 header: "Type",
@@ -162,7 +173,7 @@ export function useEntityTypeTable(
                 },
             },
         ],
-        []
+        [identifierKey]
     );
 
     const convertRelationshipToRow = (
