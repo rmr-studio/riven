@@ -43,7 +43,8 @@ function DraggableRowComponent<TData>({
     const { setHoveredRowId, setFocusedCell, focusNextCell, focusPrevCell } =
         useDataTableActions<TData>();
 
-    const { exitToFocused, commitEdit, startEditing, editingCell, updatePendingValue } = useCellInteraction();
+    const { exitToFocused, commitEdit, startEditing, editingCell, updatePendingValue } =
+        useCellInteraction();
 
     const isDragDisabled = disableDragForRow?.(row) ?? false;
 
