@@ -122,11 +122,7 @@ export const AttributeTypeDropdown: FC<Props> = ({
                 className="w-[400px] p-0"
                 align="start"
                 portal={true}
-                onOpenAutoFocus={(e) => e.preventDefault()}
-                onEscapeKeyDown={(e) => {
-                    e.stopPropagation();
-                    setOpen(false);
-                }}
+                onEscapeKeyDown={() => setOpen(false)}
             >
                 <Command>
                     <CommandInput placeholder="Search attribute types..." />

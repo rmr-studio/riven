@@ -33,10 +33,10 @@ export function DraggableColumnHeader<TData, TValue>({
               transform: CSS.Transform.toString(transform),
               transition,
               opacity: isDragging ? 0.5 : 1,
-              width: columnResizing?.enabled ? `${header.getSize()}px` : undefined,
+              width: `${header.getSize()}px`,
           }
         : {
-              width: columnResizing?.enabled ? `${header.getSize()}px` : undefined,
+              width: `${header.getSize()}px`,
           };
 
     return (

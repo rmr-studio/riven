@@ -1,14 +1,20 @@
 "use client";
 
-import { Cell } from "@tanstack/react-table";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
-import { useEffect, useRef } from "react";
-import { useDataTableStore } from "../../data-table-provider";
-import { CellEditorWidget } from "./cell-editor-widget";
+import { EntityRelationshipPicker } from "@/components/feature-modules/entity/components/forms/instance/entity-relationship-picker";
 import { SchemaUUID } from "@/lib/interfaces/common.interface";
 import { SchemaType } from "@/lib/types/types";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Cell } from "@tanstack/react-table";
+import { Loader2 } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { useForm } from "react-hook-form";
+import { useDataTableStore } from "../../data-table-provider";
+import {
+    isEditableAttributeColumn,
+    isEditableRelationshipColumn,
+    isSingleSelectRelationship,
+} from "../../data-table.types";
+import { CellEditorWidget } from "./cell-editor-widget";
 
 interface EditableCellProps<TData, TValue> {
     cell: Cell<TData, TValue>;
@@ -19,18 +25,35 @@ interface EditableCellProps<TData, TValue> {
 }
 
 /**
- * Schema-aware value comparison that handles different widget types correctly
+ * Normalize empty values for comparison
  */
-function isValueEqual(value1: any, value2: any, schema: SchemaUUID): boolean {
-    const schemaType = schema.key;
+function normalizeEmpty(val: any): any {
+    if (
+        val === null ||
+        val === undefined ||
+        val === "" ||
+        (Array.isArray(val) && val.length === 0)
+    ) {
+        return null;
+    }
+    return val;
+}
 
-    // Normalize empty values (null, undefined, "", [])
-    const normalizeEmpty = (val: any) => {
-        if (val === null || val === undefined || val === "" || (Array.isArray(val) && val.length === 0)) {
-            return null;
-        }
-        return val;
-    };
+/**
+ * Compare arrays order-independently
+ */
+function arraysEqual(arr1: any[], arr2: any[]): boolean {
+    if (arr1.length !== arr2.length) return false;
+    const sorted1 = [...arr1].sort();
+    const sorted2 = [...arr2].sort();
+    return JSON.stringify(sorted1) === JSON.stringify(sorted2);
+}
+
+/**
+ * Schema-aware value comparison for attribute columns
+ */
+function isAttributeValueEqual(value1: any, value2: any, schema: SchemaUUID): boolean {
+    const schemaType = schema.key;
 
     const normalized1 = normalizeEmpty(value1);
     const normalized2 = normalizeEmpty(value2);
@@ -46,11 +69,12 @@ function isValueEqual(value1: any, value2: any, schema: SchemaUUID): boolean {
     }
 
     // For multi-select, compare arrays (order-independent)
-    if (schemaType === SchemaType.MULTI_SELECT && Array.isArray(normalized1) && Array.isArray(normalized2)) {
-        if (normalized1.length !== normalized2.length) return false;
-        const sorted1 = [...normalized1].sort();
-        const sorted2 = [...normalized2].sort();
-        return JSON.stringify(sorted1) === JSON.stringify(sorted2);
+    if (
+        schemaType === SchemaType.MULTI_SELECT &&
+        Array.isArray(normalized1) &&
+        Array.isArray(normalized2)
+    ) {
+        return arraysEqual(normalized1, normalized2);
     }
 
     // For checkbox, ensure boolean comparison
@@ -59,9 +83,13 @@ function isValueEqual(value1: any, value2: any, schema: SchemaUUID): boolean {
     }
 
     // For numbers, handle string vs number comparison
-    if (schemaType === SchemaType.NUMBER || schemaType === SchemaType.CURRENCY || schemaType === SchemaType.PERCENTAGE) {
-        const num1 = typeof normalized1 === 'string' ? parseFloat(normalized1) : normalized1;
-        const num2 = typeof normalized2 === 'string' ? parseFloat(normalized2) : normalized2;
+    if (
+        schemaType === SchemaType.NUMBER ||
+        schemaType === SchemaType.CURRENCY ||
+        schemaType === SchemaType.PERCENTAGE
+    ) {
+        const num1 = typeof normalized1 === "string" ? parseFloat(normalized1) : normalized1;
+        const num2 = typeof normalized2 === "string" ? parseFloat(normalized2) : normalized2;
 
         // Handle NaN cases
         if (isNaN(num1) && isNaN(num2)) return true;
@@ -75,10 +103,41 @@ function isValueEqual(value1: any, value2: any, schema: SchemaUUID): boolean {
 }
 
 /**
+ * Relationship-aware value comparison
+ */
+function isRelationshipValueEqual(value1: any, value2: any, isSingleSelect: boolean): boolean {
+    const normalized1 = normalizeEmpty(value1);
+    const normalized2 = normalizeEmpty(value2);
+
+    // Both are empty - no change
+    if (normalized1 === null && normalized2 === null) {
+        return true;
+    }
+
+    // One is empty, other is not - changed
+    if (normalized1 === null || normalized2 === null) {
+        return false;
+    }
+
+    // For single-select, simple string comparison
+    if (isSingleSelect) {
+        return normalized1 === normalized2;
+    }
+
+    // For multi-select, order-independent array comparison
+    if (Array.isArray(normalized1) && Array.isArray(normalized2)) {
+        return arraysEqual(normalized1, normalized2);
+    }
+
+    return normalized1 === normalized2;
+}
+
+/**
  * EditableCell component
  *
  * Renders an editable cell with form validation and keyboard shortcuts.
- * Creates a per-cell React Hook Form instance for validation.
+ * Supports both attribute columns (using schema-based widgets) and
+ * relationship columns (using EntityRelationshipPicker).
  */
 export function EditableCell<TData, TValue>({
     cell,
@@ -93,27 +152,39 @@ export function EditableCell<TData, TValue>({
 
     // Create per-cell form instance
     const form = useForm({
-        resolver: meta?.zodSchema ? zodResolver(meta.zodSchema) : undefined,
+        resolver: meta?.zodSchema ? zodResolver(meta.zodSchema as any) : undefined,
         defaultValues: { value: parsedValue },
-        mode: 'onChange',
+        mode: "onChange",
     });
 
     const isSaving = useDataTableStore<TData, boolean>((state) => state.isSaving);
-    const registerCommitCallback = useDataTableStore<TData, (callback: (() => void) | null) => void>(
-        (state) => state.registerCommitCallback
-    );
+    const registerCommitCallback = useDataTableStore<
+        TData,
+        (callback: (() => void) | null) => void
+    >((state) => state.registerCommitCallback);
 
     // Use ref to always have the latest save function without re-registering
     const handleSaveRef = useRef<() => void>(() => {});
 
     // Validation + save (only if value changed)
     const handleSave = async () => {
-        const newValue = form.getValues('value');
+        const newValue = form.getValues("value");
         const formattedValue = meta?.formatValue?.(newValue) ?? newValue;
-
-        // Check if value has changed using schema-aware comparison
         const initialFormatted = meta?.formatValue?.(parsedValue) ?? parsedValue;
-        const hasChanged = !isValueEqual(formattedValue, initialFormatted, meta.fieldSchema);
+
+        // Check if value has changed using type-aware comparison
+        let hasChanged = true;
+
+        if (isEditableAttributeColumn(meta)) {
+            hasChanged = !isAttributeValueEqual(formattedValue, initialFormatted, meta.schema);
+        } else if (isEditableRelationshipColumn(meta)) {
+            const isSingleSelect = isSingleSelectRelationship(meta.relationship.cardinality);
+            hasChanged = !isRelationshipValueEqual(
+                formattedValue,
+                initialFormatted,
+                isSingleSelect
+            );
+        }
 
         if (!hasChanged) {
             // No changes - just exit edit mode without saving
@@ -122,7 +193,7 @@ export function EditableCell<TData, TValue>({
         }
 
         // Value changed - validate and save
-        const isValid = await form.trigger('value');
+        const isValid = await form.trigger("value");
         if (!isValid) return; // Stay in edit mode
 
         await onSave(formattedValue);
@@ -143,15 +214,15 @@ export function EditableCell<TData, TValue>({
 
     // Keyboard shortcuts
     const handleKeyDown = async (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             e.stopPropagation();
             handleSave();
-        } else if (e.key === 'Escape') {
+        } else if (e.key === "Escape") {
             e.preventDefault();
             e.stopPropagation();
             onCancel();
-        } else if (e.key === 'Tab') {
+        } else if (e.key === "Tab") {
             e.preventDefault();
             e.stopPropagation();
             // Save and navigate to next/prev cell
@@ -164,26 +235,47 @@ export function EditableCell<TData, TValue>({
         }
     };
 
-    if (!meta?.fieldSchema) {
-        return <div className="text-sm text-destructive">No schema defined for editing</div>;
+    // Saving indicator overlay
+    const SavingOverlay = () =>
+        isSaving ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+        ) : null;
+
+    // Render relationship editor
+    if (isEditableRelationshipColumn(meta)) {
+        return (
+            <div className="relative w-full" onKeyDown={handleKeyDown}>
+                <EntityRelationshipPicker
+                    relationship={meta.relationship}
+                    form={form}
+                    fieldName="value"
+                    onBlur={handleSave}
+                    autoFocus
+                    compact
+                />
+                <SavingOverlay />
+            </div>
+        );
     }
 
-    return (
-        <div className="relative w-full" onKeyDown={handleKeyDown}>
-            <CellEditorWidget
-                form={form}
-                fieldName="value"
-                schema={meta.fieldSchema}
-                autoFocus
-                onBlur={handleSave}
-            />
+    // Render attribute editor
+    if (isEditableAttributeColumn(meta)) {
+        return (
+            <div className="relative w-full" onKeyDown={handleKeyDown}>
+                <CellEditorWidget
+                    form={form}
+                    fieldName="value"
+                    schema={meta.schema}
+                    autoFocus
+                    onBlur={handleSave}
+                />
+                <SavingOverlay />
+            </div>
+        );
+    }
 
-            {/* Saving indicator */}
-            {isSaving && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded">
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                </div>
-            )}
-        </div>
-    );
+    // Fallback for unknown column type
+    return <div className="text-sm text-destructive">Unsupported column type for editing</div>;
 }

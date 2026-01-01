@@ -2,9 +2,8 @@
 
 import { buildZodSchemaFromEntityType } from "@/lib/util/form/entity-instance-validation.util";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useRef, type ReactNode } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { useStore } from "zustand";
 import { useSaveEntityMutation } from "../hooks/mutation/instance/use-save-entity-mutation";
 import { Entity, EntityType } from "../interface/entity.interface";
@@ -30,7 +29,6 @@ export const EntityDraftProvider = ({
     onEntityCreated,
 }: EntityDraftProviderProps) => {
     const storeRef = useRef<EntityDraftStoreApi | null>(null);
-    const unsavedToastRef = useRef<string | number | undefined>(undefined);
 
     // Build dynamic Zod schema from entity type
     const schema = useMemo(
@@ -58,65 +56,6 @@ export const EntityDraftProvider = ({
     if (!storeRef.current) {
         storeRef.current = createEntityDraftStore(organisationId, entityType, form, saveEntity);
     }
-
-    // Load draft and prompt restoration on mount
-    useEffect(() => {
-        const store = storeRef.current?.getState();
-        if (!store) return;
-
-        // Check for draft and prompt user to restore
-        const draft = store.loadDraft();
-        if (draft && !unsavedToastRef.current) {
-            unsavedToastRef.current = toast.info("Unsaved draft found", {
-                description: "Would you like to restore your previous draft entity?",
-                action: {
-                    label: "Restore",
-                    onClick: () => {
-                        form.reset(draft);
-                        store.enterDraftMode();
-                    },
-                },
-                cancel: {
-                    label: "Dismiss",
-                    onClick: () => {
-                        store.clearDraft();
-                    },
-                },
-                onDismiss: () => {
-                    store.clearDraft();
-                },
-            });
-        }
-    }, [entityType.key]);
-
-    // Subscribe to form changes for auto-save when in draft mode
-    useEffect(() => {
-        const store = storeRef.current?.getState();
-        if (!store) return;
-
-        const debouncedSaveRef = { current: null as NodeJS.Timeout | null };
-
-        const subscription = form.watch((values) => {
-            // Only auto-save when in draft mode
-            if (!store.isDraftMode) return;
-
-            // Debounce save (1 second)
-            if (debouncedSaveRef.current) {
-                clearTimeout(debouncedSaveRef.current);
-            }
-
-            debouncedSaveRef.current = setTimeout(() => {
-                store.saveDraft(values);
-            }, 1000);
-        });
-
-        return () => {
-            subscription.unsubscribe();
-            if (debouncedSaveRef.current) {
-                clearTimeout(debouncedSaveRef.current);
-            }
-        };
-    }, [form]);
 
     return (
         <EntityDraftContext.Provider value={storeRef.current}>

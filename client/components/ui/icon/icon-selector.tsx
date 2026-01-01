@@ -74,6 +74,7 @@ export const IconSelector: FC<Props> = ({
     );
 
     const parentRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
     const columns = 8;
     const rowVirtualizer = useVirtualizer({
         count: Math.ceil(filteredIcons.length / columns),
@@ -89,6 +90,7 @@ export const IconSelector: FC<Props> = ({
         // One layout frame AFTER mount
         requestAnimationFrame(() => {
             rowVirtualizer.measure();
+            inputRef.current?.focus();
         });
     }, [open, filteredIcons.length, rowVirtualizer]);
 
@@ -134,6 +136,7 @@ export const IconSelector: FC<Props> = ({
 
                         <Command shouldFilter={false}>
                             <CommandInput
+                                ref={inputRef}
                                 placeholder="Filter icons..."
                                 value={search}
                                 onValueChange={setSearch}

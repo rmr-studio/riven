@@ -42,7 +42,7 @@ export function useSaveEntityMutation(
             // Handle schema validation or impact confirmation errors
             if (response.errors) {
                 onConflict?.(variables, response);
-                return response;
+                return
             }
 
             if (response.entity) {
