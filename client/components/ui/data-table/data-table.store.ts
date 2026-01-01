@@ -82,6 +82,8 @@ interface EditSliceState {
     isSaving: boolean;
     /** Save error message */
     saveError: string | null;
+    /** Cell edit callback (stored in state to allow updates) */
+    onCellEdit: ((row: any, columnId: string, newValue: any, oldValue: any) => Promise<boolean>) | null;
 }
 
 // ============================================================================
@@ -171,6 +173,8 @@ interface EditActions<TData> {
     enterEditMode: () => void;
     /** Exit edit mode but keep focus on cell (discard changes) */
     exitToFocused: () => void;
+    /** Update the cell edit callback (allows syncing from props) */
+    setOnCellEdit: (callback: ((row: TData, columnId: string, newValue: any, oldValue: any) => Promise<boolean>) | null) => void;
 }
 
 // ============================================================================
@@ -406,6 +410,7 @@ export const createDataTableStore = <TData>(options: CreateDataTableStoreOptions
             pendingValue: null,
             isSaving: false,
             saveError: null,
+            onCellEdit: onCellEdit || null,
 
             // ================================================================
             // Data Actions
@@ -587,8 +592,8 @@ export const createDataTableStore = <TData>(options: CreateDataTableStoreOptions
             },
 
             commitEdit: async () => {
-                const { editingCell, pendingValue, tableData } = get();
-                if (!editingCell || !onCellEdit) return;
+                const { editingCell, pendingValue, tableData, onCellEdit: cellEditCallback } = get();
+                if (!editingCell || !cellEditCallback) return;
 
                 const { rowId, columnId } = editingCell;
                 const rowIndex = tableData.findIndex((r, idx) => getRowId(r, idx) === rowId);
@@ -600,7 +605,7 @@ export const createDataTableStore = <TData>(options: CreateDataTableStoreOptions
                 set({ isSaving: true, saveError: null });
 
                 try {
-                    const success = await onCellEdit(row, columnId, pendingValue, oldValue);
+                    const success = await cellEditCallback(row, columnId, pendingValue, oldValue);
 
                     if (success) {
                         // Optimistic update - keep focus on the cell after save
@@ -641,6 +646,8 @@ export const createDataTableStore = <TData>(options: CreateDataTableStoreOptions
                     commitCallback();
                 }
             },
+
+            setOnCellEdit: (callback) => set({ onCellEdit: callback }),
 
             // ================================================================
             // Focus Actions

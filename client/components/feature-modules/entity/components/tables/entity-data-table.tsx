@@ -28,6 +28,7 @@ import {
     EntityType,
     isRelationshipPayload,
     SaveEntityRequest,
+    SaveEntityResponse,
 } from "../../interface/entity.interface";
 import { EntityTypeHeader } from "../ui/entity-type-header";
 import { EntityTypeSaveButton } from "../ui/entity-type-save-button";
@@ -62,8 +63,10 @@ export const EntityDataTable: FC<Props> = ({
     const { isDraftMode, enterDraftMode } = useEntityDraft();
     const { form, handleSubmit } = useConfigFormState();
 
+    const handleConflict = (request: SaveEntityRequest, response: SaveEntityResponse) => {}
+
     // Update entity mutation for inline editing
-    const { mutateAsync: saveEntity } = useSaveEntityMutation(organisationId, entityType.id);
+    const { mutateAsync: saveEntity } = useSaveEntityMutation(organisationId, entityType.id, undefined, handleConflict);
 
     // Transform entities to row data
     const rowData = useMemo(() => {
@@ -154,44 +157,47 @@ export const EntityDataTable: FC<Props> = ({
     const getRowId = useCallback((row: EntityRow, _index: number) => row._entityId, []);
 
     // Cell edit handler for inline editing
-    const handleCellEdit = async (
-        row: EntityRow,
-        columnId: string,
-        newValue: any,
-        _oldValue: any
-    ): Promise<boolean> => {
-        // Don't allow editing draft rows
-        if (isDraftRow(row)) return false;
-        const entity = entities.find((e) => e.id === row._entityId);
-        if (!entity) return false;
+    const handleCellEdit = useCallback(
+        async (
+            row: EntityRow,
+            columnId: string,
+            newValue: any,
+            _oldValue: any
+        ): Promise<boolean> => {
+            // Don't allow editing draft rows
+            if (isDraftRow(row)) return false;
+            const entity = entities.find((e) => e.id === row._entityId);
+            if (!entity) return false;
 
-        // Determine if updated column is an attribute or relationship
-        const attributeDef: SchemaUUID | undefined = entityType.schema.properties?.[columnId];
-        const relationshipDef: EntityRelationshipDefinition | undefined =
-            entityType.relationships?.find((rel) => rel.id === columnId);
+            // Determine if updated column is an attribute or relationship
+            const attributeDef: SchemaUUID | undefined = entityType.schema.properties?.[columnId];
+            const relationshipDef: EntityRelationshipDefinition | undefined =
+                entityType.relationships?.find((rel) => rel.id === columnId);
 
-        // Prepare updated entity payload
-        if (attributeDef) {
-            const payloadEntry: EntityAttributePrimitivePayload = {
-                type: EntityPropertyType.ATTRIBUTE,
-                value: newValue,
-                schemaType: attributeDef.key,
-            };
+            // Prepare updated entity payload
+            if (attributeDef) {
+                const payloadEntry: EntityAttributePrimitivePayload = {
+                    type: EntityPropertyType.ATTRIBUTE,
+                    value: newValue,
+                    schemaType: attributeDef.key,
+                };
 
-            return await updateEntity(entity, columnId, { payload: payloadEntry });
-        }
+                return await updateEntity(entity, columnId, { payload: payloadEntry });
+            }
 
-        if (relationshipDef) {
-            const relationshipEntry: EntityAttributeRelationPayloadReference = {
-                type: EntityPropertyType.RELATIONSHIP,
-                relations: Array.isArray(newValue) ? newValue : [newValue],
-            };
+            if (relationshipDef) {
+                const relationshipEntry: EntityAttributeRelationPayloadReference = {
+                    type: EntityPropertyType.RELATIONSHIP,
+                    relations: Array.isArray(newValue) ? newValue : [newValue],
+                };
 
-            return await updateEntity(entity, columnId, { payload: relationshipEntry });
-        }
+                return await updateEntity(entity, columnId, { payload: relationshipEntry });
+            }
 
-        return false;
-    };
+            return false;
+        },
+        [entities, entityType]
+    );
 
     const updateEntity = async (
         entity: Entity,
@@ -226,7 +232,8 @@ export const EntityDataTable: FC<Props> = ({
             },
         };
 
-        return (await saveEntity(updatedEntity)) != null;
+        const response = await saveEntity(updatedEntity);
+        return !response.errors && !!response.entity;
     };
 
     return (

@@ -86,6 +86,11 @@ export function DataTableProvider<TData>({
         storeRef.current?.getState().setTableData(initialData);
     }, [initialData]);
 
+    // Sync onCellEdit callback changes to store (prevents stale closures)
+    useEffect(() => {
+        storeRef.current?.getState().setOnCellEdit(onCellEdit ?? null);
+    }, [onCellEdit]);
+
     // Subscribe to store changes and notify parent via callbacks
     useEffect(() => {
         if (!storeRef.current) return;

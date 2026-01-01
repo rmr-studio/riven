@@ -8,7 +8,8 @@ import { EntityService } from "../../../service/entity.service";
 export function useSaveEntityMutation(
     organisationId: string,
     entityTypeId: string,
-    options?: UseMutationOptions<SaveEntityResponse, Error, SaveEntityRequest>
+    options?: UseMutationOptions<SaveEntityResponse, Error, SaveEntityRequest>,
+    onConflict?: (request: SaveEntityRequest, response: SaveEntityResponse) => void
 ) {
     const queryClient = useQueryClient();
     const { session } = useAuth();
@@ -40,6 +41,7 @@ export function useSaveEntityMutation(
 
             // Handle schema validation or impact confirmation errors
             if (response.errors) {
+                onConflict?.(variables, response);
                 return response;
             }
 
