@@ -13,6 +13,7 @@ import { SchemaUUID } from "@/lib/interfaces/common.interface";
 import { ClassNameProps } from "@/lib/interfaces/interface";
 import { EntityPropertyType } from "@/lib/types/types";
 import { debounce } from "@/lib/util/debounce.util";
+import { cn } from "@/lib/util/utils";
 import { Row } from "@tanstack/react-table";
 import { Plus } from "lucide-react";
 import { FC, useCallback, useMemo, useRef } from "react";
@@ -63,10 +64,15 @@ export const EntityDataTable: FC<Props> = ({
     const { isDraftMode, enterDraftMode } = useEntityDraft();
     const { form, handleSubmit } = useConfigFormState();
 
-    const handleConflict = (request: SaveEntityRequest, response: SaveEntityResponse) => {}
+    const handleConflict = (request: SaveEntityRequest, response: SaveEntityResponse) => {};
 
     // Update entity mutation for inline editing
-    const { mutateAsync: saveEntity } = useSaveEntityMutation(organisationId, entityType.id, undefined, handleConflict);
+    const { mutateAsync: saveEntity } = useSaveEntityMutation(
+        organisationId,
+        entityType.id,
+        undefined,
+        handleConflict
+    );
 
     // Transform entities to row data
     const rowData = useMemo(() => {
@@ -149,6 +155,9 @@ export const EntityDataTable: FC<Props> = ({
     const columnOrderingConfig: ColumnOrderingConfig = useMemo(
         () => ({
             enabled: true,
+            onColumnOrderChange: (columnOrder: string[]) => {
+                handleColumnOrderChange(entityType, columnOrder);
+            },
         }),
         []
     );
@@ -238,7 +247,7 @@ export const EntityDataTable: FC<Props> = ({
 
     return (
         <Form {...form}>
-            <div className="space-y-4">
+            <div className="space-y-4 min-w-0 w-full">
                 {/* Draft mode controls */}
                 <div>
                     <div className="flex justify-between">
@@ -277,10 +286,8 @@ export const EntityDataTable: FC<Props> = ({
                 >
                     <DataTable
                         columns={columns}
-                        enableInlineEdit={!isDraftMode}
                         rowSelection={{
                             enabled: true,
-                            persistCheckboxes: false,
                             clearOnFilterChange: true,
                             actionComponent: ({ selectedRows, clearSelection }) => (
                                 <div className="flex gap-2">
@@ -289,6 +296,7 @@ export const EntityDataTable: FC<Props> = ({
                                 </div>
                             ),
                         }}
+                        enableDragDrop
                         getRowId={(row) => row._entityId}
                         search={searchConfig}
                         filter={{
@@ -299,7 +307,8 @@ export const EntityDataTable: FC<Props> = ({
                         columnResizing={columnResizingConfig}
                         columnOrdering={columnOrderingConfig}
                         emptyMessage={emptyMessage}
-                        className={className}
+                        className={cn(className)}
+                        enableInlineEdit={true}
                         customRowRenderer={customRowRenderer}
                         addingNewEntry={isDraftMode}
                     />

@@ -1,13 +1,26 @@
 import { Badge } from "@/components/ui/badge";
 import { ColumnFilter, FilterOption } from "@/components/ui/data-table";
+import {
+    createAttributeRenderer,
+    createRelationshipRenderer,
+} from "@/components/ui/data-table/components/cells/edit-renderers";
+import { ColumnEditConfig } from "@/components/ui/data-table/data-table.types";
 import { IconCell } from "@/components/ui/icon/icon-cell";
-import { DataFormat, DataType, EntityPropertyType } from "@/lib/types/types";
+import { SchemaUUID } from "@/lib/interfaces/common.interface";
+import {
+    DataFormat,
+    DataType,
+    EntityPropertyType,
+    EntityRelationshipCardinality,
+    SchemaType,
+} from "@/lib/types/types";
 import { toTitleCase } from "@/lib/util/utils";
 import { AccessorKeyColumnDef } from "@tanstack/react-table";
 import { ReactNode } from "react";
 import {
     Entity,
     EntityAttribute,
+    EntityRelationshipDefinition,
     EntityType,
     EntityTypeAttributeColumn,
     isRelationshipPayload,
@@ -176,6 +189,138 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
     return <span>{String(value)}</span>;
 }
 
+// ============================================================================
+// Value Equality Helpers (for edit change detection)
+// ============================================================================
+
+/**
+ * Normalize empty values for comparison
+ */
+function normalizeEmpty(val: unknown): unknown {
+    if (
+        val === null ||
+        val === undefined ||
+        val === "" ||
+        (Array.isArray(val) && val.length === 0)
+    ) {
+        return null;
+    }
+    return val;
+}
+
+/**
+ * Compare arrays order-independently
+ */
+function arraysEqual(arr1: unknown[], arr2: unknown[]): boolean {
+    if (arr1.length !== arr2.length) return false;
+    const sorted1 = [...arr1].sort();
+    const sorted2 = [...arr2].sort();
+    return JSON.stringify(sorted1) === JSON.stringify(sorted2);
+}
+
+/**
+ * Creates an equality function for attribute values based on schema type
+ */
+export function createAttributeEqualityFn(
+    schema: SchemaUUID
+): (oldValue: unknown, newValue: unknown) => boolean {
+    const schemaType = schema.key;
+
+    return (value1: unknown, value2: unknown): boolean => {
+        const normalized1 = normalizeEmpty(value1);
+        const normalized2 = normalizeEmpty(value2);
+
+        // Both are empty - no change
+        if (normalized1 === null && normalized2 === null) {
+            return true;
+        }
+
+        // One is empty, other is not - changed
+        if (normalized1 === null || normalized2 === null) {
+            return false;
+        }
+
+        // For multi-select, compare arrays (order-independent)
+        if (
+            schemaType === SchemaType.MULTI_SELECT &&
+            Array.isArray(normalized1) &&
+            Array.isArray(normalized2)
+        ) {
+            return arraysEqual(normalized1, normalized2);
+        }
+
+        // For checkbox, ensure boolean comparison
+        if (schemaType === SchemaType.CHECKBOX) {
+            return Boolean(normalized1) === Boolean(normalized2);
+        }
+
+        // For numbers, handle string vs number comparison
+        if (
+            schemaType === SchemaType.NUMBER ||
+            schemaType === SchemaType.CURRENCY ||
+            schemaType === SchemaType.PERCENTAGE
+        ) {
+            const num1 =
+                typeof normalized1 === "string" ? parseFloat(normalized1) : (normalized1 as number);
+            const num2 =
+                typeof normalized2 === "string" ? parseFloat(normalized2) : (normalized2 as number);
+
+            // Handle NaN cases
+            if (isNaN(num1) && isNaN(num2)) return true;
+            if (isNaN(num1) || isNaN(num2)) return false;
+
+            return num1 === num2;
+        }
+
+        // For other types, use JSON.stringify comparison
+        return JSON.stringify(normalized1) === JSON.stringify(normalized2);
+    };
+}
+
+/**
+ * Creates an equality function for relationship values based on cardinality
+ */
+export function createRelationshipEqualityFn(
+    relationship: EntityRelationshipDefinition
+): (oldValue: string | string[] | null, newValue: string | string[] | null) => boolean {
+    const isSingleSelect =
+        relationship.cardinality === EntityRelationshipCardinality.ONE_TO_ONE ||
+        relationship.cardinality === EntityRelationshipCardinality.MANY_TO_ONE;
+
+    return (value1: string | string[] | null, value2: string | string[] | null): boolean => {
+        const normalized1 = normalizeEmpty(value1);
+        const normalized2 = normalizeEmpty(value2);
+
+        // Both are empty - no change
+        if (normalized1 === null && normalized2 === null) {
+            return true;
+        }
+
+        // One is empty, other is not - changed
+        if (normalized1 === null || normalized2 === null) {
+            return false;
+        }
+
+        // For single-select, simple string comparison
+        if (isSingleSelect) {
+            return normalized1 === normalized2;
+        }
+
+        // For multi-select, order-independent array comparison
+        if (Array.isArray(normalized1) && Array.isArray(normalized2)) {
+            return arraysEqual(normalized1, normalized2);
+        }
+
+        return normalized1 === normalized2;
+    };
+}
+
+// ============================================================================
+// Column Generation
+// ============================================================================
+
+export type RelationshipValue = string | string[] | null;
+
 /**
  * Generate columns from entity type schema
  */
@@ -191,6 +336,17 @@ export function generateColumnsFromEntityType(
 
     // Generate attribute columns
     Object.entries(entityType.schema.properties).forEach(([attributeId, schema]) => {
+        // Create edit config if editing is enabled
+        const editConfig: ColumnEditConfig<EntityRow, unknown> | undefined = options?.enableEditing
+            ? {
+                  enabled: true,
+                  render: createAttributeRenderer<EntityRow>(schema),
+                  parseValue: (val: unknown) => val,
+                  formatValue: (val: unknown) => val,
+                  isEqual: createAttributeEqualityFn(schema),
+              }
+            : undefined;
+
         columns.push({
             accessorKey: attributeId,
             header: (_) => {
@@ -214,33 +370,31 @@ export function generateColumnsFromEntityType(
                 return formatEntityAttributeValue(value, schema);
             },
             enableSorting: true,
-            meta: options?.enableEditing
-                ? {
-                      type: "attribute" as const,
-                      editable: true,
-                      schema,
-                      parseValue: (val: any) => val,
-                      formatValue: (val: any) => val,
-                      displayMeta: {
-                          required: schema.required,
-                          unique: schema.unique,
-                          protected: schema.protected,
-                      },
-                  }
-                : {
-                      type: "readonly" as const,
-                      editable: false,
-                      displayMeta: {
-                          required: schema.required,
-                          unique: schema.unique,
-                          protected: schema.protected,
-                      },
-                  },
+            meta: {
+                edit: editConfig,
+                displayMeta: {
+                    required: schema.required,
+                    unique: schema.unique,
+                    protected: schema.protected,
+                },
+            },
         });
     });
 
     // Generate relationship columns
     entityType.relationships?.forEach((relationship) => {
+        // Create edit config if editing is enabled
+        const editConfig: ColumnEditConfig<EntityRow, RelationshipValue> | undefined =
+            options?.enableEditing
+                ? {
+                      enabled: true,
+                      render: createRelationshipRenderer<EntityRow>(relationship),
+                      parseValue: (val: unknown) => val as string | string[] | null,
+                      formatValue: (val: string | string[] | null) => val,
+                      isEqual: createRelationshipEqualityFn(relationship),
+                  }
+                : undefined;
+
         columns.push({
             accessorKey: relationship.id,
             header: () => {
@@ -267,7 +421,7 @@ export function generateColumnsFromEntityType(
 
                     return (
                         <div className="flex flex-wrap gap-1">
-                            {value.map((item: any, idx: number) => (
+                            {value.map((item: unknown, idx: number) => (
                                 <Badge key={idx} variant="secondary" className="font-normal">
                                     {String(item)}
                                 </Badge>
@@ -278,26 +432,13 @@ export function generateColumnsFromEntityType(
                 return <span>{String(value)}</span>;
             },
             enableSorting: false,
-            meta: options?.enableEditing
-                ? {
-                      type: "relationship" as const,
-                      editable: true,
-                      relationship,
-                      parseValue: (val: any) => val,
-                      formatValue: (val: any) => val,
-                      displayMeta: {
-                          required: relationship.required,
-                          protected: relationship.protected,
-                      },
-                  }
-                : {
-                      type: "readonly" as const,
-                      editable: false,
-                      displayMeta: {
-                          required: relationship.required,
-                          protected: relationship.protected,
-                      },
-                  },
+            meta: {
+                edit: editConfig,
+                displayMeta: {
+                    required: relationship.required,
+                    protected: relationship.protected,
+                },
+            },
         });
     });
 

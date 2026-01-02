@@ -77,7 +77,8 @@ export interface DataTableProps<TData, TValue> {
     onTableReady?: (columnSizes: Record<string, number>) => void;
     rowSelection?: RowSelectionConfig<TData>;
     /** Enable inline cell editing */
-    
+    enableInlineEdit?: boolean;
+
     /** Callback when a cell is edited (returns true on success) */
     onCellEdit?: (row: TData, columnId: string, newValue: any, oldValue: any) => Promise<boolean>;
     /** Edit mode trigger (click or doubleClick) */
@@ -127,7 +128,6 @@ export function DataTable<TData, TValue>({
     );
     const columnOrder = useDataTableStore<TData, string[]>((state) => state.columnOrder);
     const rowSelectionState = useDataTableStore<TData, any>((state) => state.rowSelection);
-    const hoveredRowId = useDataTableStore<TData, string | null>((state) => state.hoveredRowId);
     const activeFilterCount = useDataTableStore<TData, number>((state) =>
         state.getActiveFilterCount()
     );
@@ -138,9 +138,7 @@ export function DataTable<TData, TValue>({
     const editingCell = useDataTableStore<TData, { rowId: string; columnId: string } | null>(
         (state) => state.editingCell
     );
-    const requestCommit = useDataTableStore<TData, () => void>(
-        (state) => state.requestCommit
-    );
+    const requestCommit = useDataTableStore<TData, () => void>((state) => state.requestCommit);
 
     const {
         setSorting,
@@ -164,7 +162,7 @@ export function DataTable<TData, TValue>({
     // Derived state
     const { isDragDropEnabled, isSelectionEnabled } = useDerivedState<TData>(
         enableDragDrop,
-        rowSelection?.enabled ?? false
+        rowSelection?.enabled || false
     );
 
     // ========================================================================
@@ -172,13 +170,16 @@ export function DataTable<TData, TValue>({
     // ========================================================================
 
     const finalColumns = useMemo(() => {
-        if (!isSelectionEnabled) return columns;
+        if (!isSelectionEnabled && !enableDragDrop) {
+            return columns;
+        }
 
-        const selectionColumn: ColumnDef<TData, TValue> = {
-            id: "select",
-            size: 40,
-            minSize: 40,
-            maxSize: 40,
+        // Action Column includes selection/drag handle, row actions and expand button
+        const actionsColumn: ColumnDef<TData, TValue> = {
+            id: "actions",
+            size: 80,
+            minSize: 80,
+            maxSize: 80,
             enableResizing: false,
             enableSorting: false,
             enableHiding: false,
@@ -192,32 +193,10 @@ export function DataTable<TData, TValue>({
                     />
                 </div>
             ),
-            cell: ({ row }) => {
-                const hasSelections = useDataTableStore<TData, boolean>((state) =>
-                    state.hasSelections()
-                );
-                const isVisible =
-                    rowSelection?.persistCheckboxes || hasSelections || hoveredRowId === row.id;
-
-                return (
-                    <div className="flex items-center justify-center">
-                        <Checkbox
-                            checked={row.getIsSelected()}
-                            onCheckedChange={(value) => row.toggleSelected(!!value)}
-                            aria-label="Select row"
-                            onClick={(e) => e.stopPropagation()}
-                            className={cn(
-                                "transition-opacity duration-150",
-                                !isVisible && "opacity-0 pointer-events-none"
-                            )}
-                        />
-                    </div>
-                );
-            },
         };
 
-        return [selectionColumn, ...columns];
-    }, [columns, isSelectionEnabled, rowSelection?.persistCheckboxes, hoveredRowId]);
+        return [actionsColumn, ...columns];
+    }, [columns]);
 
     // ========================================================================
     // TanStack Table Configuration
@@ -374,7 +353,7 @@ export function DataTable<TData, TValue>({
         if (!focusedCell) return;
 
         const rows = table.getRowModel().rows;
-        const rowExists = rows.some(r => r.id === focusedCell.rowId);
+        const rowExists = rows.some((r) => r.id === focusedCell.rowId);
 
         if (!rowExists) {
             clearFocus();
@@ -446,15 +425,15 @@ export function DataTable<TData, TValue>({
             if (!focusedCell || editingCell) return;
 
             switch (event.key) {
-                case 'Enter':
+                case "Enter":
                     event.preventDefault();
                     enterEditMode();
                     break;
-                case 'Escape':
+                case "Escape":
                     event.preventDefault();
                     clearFocus();
                     break;
-                case 'Tab':
+                case "Tab":
                     event.preventDefault();
                     if (event.shiftKey) {
                         focusPrevCell();
@@ -462,34 +441,42 @@ export function DataTable<TData, TValue>({
                         focusNextCell();
                     }
                     break;
-                case 'ArrowUp':
+                case "ArrowUp":
                     event.preventDefault();
-                    focusAdjacentCell('up');
+                    focusAdjacentCell("up");
                     break;
-                case 'ArrowDown':
+                case "ArrowDown":
                     event.preventDefault();
-                    focusAdjacentCell('down');
+                    focusAdjacentCell("down");
                     break;
-                case 'ArrowLeft':
+                case "ArrowLeft":
                     event.preventDefault();
-                    focusAdjacentCell('left');
+                    focusAdjacentCell("left");
                     break;
-                case 'ArrowRight':
+                case "ArrowRight":
                     event.preventDefault();
-                    focusAdjacentCell('right');
+                    focusAdjacentCell("right");
                     break;
             }
         },
-        [focusedCell, editingCell, enterEditMode, clearFocus, focusNextCell, focusPrevCell, focusAdjacentCell]
+        [
+            focusedCell,
+            editingCell,
+            enterEditMode,
+            clearFocus,
+            focusNextCell,
+            focusPrevCell,
+            focusAdjacentCell,
+        ]
     );
 
     useEffect(() => {
         // Only attach keyboard handler when focused but not editing
         if (!focusedCell || editingCell) return;
 
-        document.addEventListener('keydown', handleTableKeyDown);
+        document.addEventListener("keydown", handleTableKeyDown);
         return () => {
-            document.removeEventListener('keydown', handleTableKeyDown);
+            document.removeEventListener("keydown", handleTableKeyDown);
         };
     }, [focusedCell, editingCell, handleTableKeyDown]);
 
@@ -555,17 +542,12 @@ export function DataTable<TData, TValue>({
     // ========================================================================
 
     const tableContent = (
-        <div
-            ref={tableContainerRef}
-            className={cn(
-                "relative w-full rounded-t-md",
-                isDragDropEnabled ? "overflow-visible" : "overflow-x-auto"
-            )}
-        >
-            <Table className={cn((columnResizing?.enabled || hasExplicitColumnSizes) && "table-fixed w-full")}>
+        <div ref={tableContainerRef} className={cn("relative rounded-t-md overflow-auto")}>
+            <Table
+                className={cn((columnResizing?.enabled || hasExplicitColumnSizes) && "table-fixed")}
+            >
                 <DataTableHeader
                     table={table}
-                    enableDragDrop={isDragDropEnabled}
                     enableColumnOrdering={columnOrdering?.enabled ?? false}
                     columnResizing={columnResizing}
                     rowActions={rowActions}
@@ -590,13 +572,18 @@ export function DataTable<TData, TValue>({
         </div>
     );
 
+    // Only apply vertical axis restriction when row drag-drop is enabled but column ordering is not
+    // Column ordering needs horizontal movement, so we can't restrict to vertical axis
+    const dndModifiers =
+        isDragDropEnabled && !columnOrdering?.enabled ? [restrictToVerticalAxis] : [];
+
     const wrappedContent =
         isDragDropEnabled || columnOrdering?.enabled ? (
             <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
-                modifiers={[restrictToVerticalAxis]}
+                modifiers={dndModifiers}
             >
                 {tableContent}
             </DndContext>
@@ -605,7 +592,7 @@ export function DataTable<TData, TValue>({
         );
 
     return (
-        <div className={cn("w-full space-y-4 relative", className)}>
+        <div className={cn("space-y-4 relative min-w-0", className)}>
             {/* Selection Action Bar */}
             <DataTableSelectionBar actionComponent={rowSelection?.actionComponent} />
 

@@ -1,11 +1,11 @@
 "use client";
 
+import { TableHead } from "@/components/ui/table";
+import { cn } from "@/lib/util/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Header, flexRender } from "@tanstack/react-table";
-import { TableHead } from "@/components/ui/table";
 import { useDataTableStore } from "../data-table-provider";
-import { cn } from "@/lib/util/utils";
 import type { ColumnResizingConfig } from "../data-table.types";
 
 interface DraggableColumnHeaderProps<TData, TValue> {
@@ -28,6 +28,8 @@ export function DraggableColumnHeader<TData, TValue>({
         disabled: !enableColumnOrdering || !isMounted,
     });
 
+    const isSelectColumn = header.id === "actions";
+
     const style = isMounted
         ? {
               transform: CSS.Transform.toString(transform),
@@ -46,7 +48,7 @@ export function DraggableColumnHeader<TData, TValue>({
             key={header.id}
             className={cn(
                 "py-2 px-3 relative border-l first:border-l-transparent",
-                enableColumnOrdering && "cursor-move"
+                enableColumnOrdering && !isSelectColumn && "cursor-move"
             )}
             {...(isMounted && enableColumnOrdering ? attributes : {})}
             {...(isMounted && enableColumnOrdering ? listeners : {})}

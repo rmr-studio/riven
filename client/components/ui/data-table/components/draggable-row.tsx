@@ -7,6 +7,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Row, flexRender } from "@tanstack/react-table";
 import { GripVertical } from "lucide-react";
 import React from "react";
+import { Checkbox } from "../../checkbox";
 import { useCellInteraction, useDataTableActions, useDataTableStore } from "../data-table-provider";
 import type { ColumnResizingConfig, RowActionsConfig } from "../data-table.types";
 import { isEditableColumn } from "../data-table.types";
@@ -21,8 +22,8 @@ interface DraggableRowProps<TData> {
     columnResizing?: ColumnResizingConfig;
     disabled?: boolean;
     disableDragForRow?: (row: Row<TData>) => boolean;
-    isSelectionEnabled: boolean;
     enableInlineEdit?: boolean;
+    isSelectionEnabled: boolean;
     focusedCell?: { rowId: string; columnId: string } | null;
 }
 
@@ -43,10 +44,13 @@ function DraggableRowComponent<TData>({
     const { setHoveredRowId, setFocusedCell, focusNextCell, focusPrevCell } =
         useDataTableActions<TData>();
 
+    const hoveredRowId = useDataTableStore<TData, string | null>((state) => state.hoveredRowId);
+
     const { exitToFocused, commitEdit, startEditing, editingCell, updatePendingValue } =
         useCellInteraction();
 
     const isDragDisabled = disableDragForRow?.(row) ?? false;
+    
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: row.id,
@@ -60,6 +64,9 @@ function DraggableRowComponent<TData>({
           }
         : undefined;
 
+    const hasSelections = useDataTableStore<TData, boolean>((state) => state.hasSelections());
+    const isVisible = hasSelections || hoveredRowId === row.id;
+
     return (
         <TableRow
             ref={enableDragDrop && isMounted ? setNodeRef : undefined}
@@ -71,40 +78,49 @@ function DraggableRowComponent<TData>({
                 disabled && "opacity-40 pointer-events-none"
             )}
             onClick={() => !disabled && onRowClick?.(row)}
-            onMouseEnter={() => isSelectionEnabled && setHoveredRowId(row.id)}
-            onMouseLeave={() => isSelectionEnabled && setHoveredRowId(null)}
+            onMouseEnter={() => setHoveredRowId(row.id)}
+            onMouseLeave={() => setHoveredRowId(null)}
         >
-            {/* Drag handle column */}
-            {enableDragDrop && (
-                <TableCell className="w-[40px] p-2">
-                    <button
-                        className={cn(
-                            "cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors",
-                            isDragDisabled && "opacity-30 cursor-not-allowed"
-                        )}
-                        {...(isMounted && !isDragDisabled ? attributes : {})}
-                        {...(isMounted && !isDragDisabled ? listeners : {})}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <GripVertical className="h-4 w-4" />
-                    </button>
-                </TableCell>
-            )}
-
             {/* Data cells (includes selection checkbox if enabled) */}
             {row.getVisibleCells().map((cell) => {
-                // Special handling for selection column
-                if (cell.column.id === "select") {
+                // Special handling for selection column - make it sticky
+                if (cell.column.id === "actions") {
                     return (
                         <TableCell
                             key={cell.id}
-                            className="border-l border-l-accent/40 first:border-l-transparent"
+                            className={cn(
+                                "border-l border-l-accent/40 first:border-l-transparent flex items-center gap-2",
+                                row.getIsSelected() ? "bg-muted" : "bg-background",
+                                isVisible
+                                    ? "opacity-100"
+                                    : "opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                            )}
                             style={{
                                 width: `${cell.column.getSize()}px`,
                                 maxWidth: `${cell.column.getSize()}px`,
                             }}
                         >
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            {enableDragDrop && isMounted && (
+                                <button
+                                    className={cn(
+                                        "cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors",
+                                        isDragDisabled && "opacity-30 cursor-not-allowed"
+                                    )}
+                                    {...(isMounted && !isDragDisabled ? attributes : {})}
+                                    {...(isMounted && !isDragDisabled ? listeners : {})}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <GripVertical className="h-4 w-4" />
+                                </button>
+                            )}
+                            {isSelectionEnabled && (
+                                <Checkbox
+                                    checked={row.getIsSelected()}
+                                    onCheckedChange={(value) => row.toggleSelected(!!value)}
+                                    aria-label="Select row"
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                            )}
                         </TableCell>
                     );
                 }
@@ -189,7 +205,6 @@ function DraggableRowComponent<TData>({
                     </TableCell>
                 );
             })}
-
             {/* Row actions column */}
             {rowActions?.enabled && (
                 <TableCell className="w-[50px] p-2">

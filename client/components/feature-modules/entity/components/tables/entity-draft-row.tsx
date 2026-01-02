@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { EntityPropertyType } from "@/lib/types/types";
+import { cn } from "@/lib/util/utils";
 import { Row } from "@tanstack/react-table";
 import { Check, X } from "lucide-react";
 import { FC, ReactNode, useCallback, useEffect, useMemo, useState } from "react";
@@ -133,11 +134,13 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
         });
     }, [entityType, columnSizeMap, isSubmitting, hasErrors]);
 
+    const submitDisabled = isSubmitting || hasErrors;
+
     return (
         <>
             <TableRow className="bg-muted/30 border-dashed hover:bg-muted/40 relative">
                 <TableCell className="px-0 justify-start">
-                    <div className="flex">
+                    <div className="flex flex-wrap z-30">
                         <Button
                             size="sm"
                             variant="ghost"
@@ -151,9 +154,12 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
                         <Button
                             size="sm"
                             variant="ghost"
-                            className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            className={cn(
+                                `h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50`,
+                                submitDisabled && "text-primary/40"
+                            )}
                             onClick={handleSubmit}
-                            disabled={isSubmitting || hasErrors}
+                            disabled={submitDisabled}
                         >
                             <Check className="h-4 w-4" />
                         </Button>

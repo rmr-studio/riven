@@ -368,7 +368,7 @@ export function useDerivedState<TData>(enableDragDrop: boolean, enableSelection:
         }
     >((state) => ({
         isDragDropEnabled: state.isDragDropEnabled(enableDragDrop),
-        isSelectionEnabled: state.isSelectionEnabled(enableSelection, enableDragDrop),
+        isSelectionEnabled: enableSelection,
         activeFilterCount: state.getActiveFilterCount(),
     }));
 }

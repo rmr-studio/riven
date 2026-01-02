@@ -1,13 +1,19 @@
 "use client";
 
-import { OptionalTooltip } from "@/components/ui/optional-tooltip";
 import { Button } from "@/components/ui/button";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+} from "@/components/ui/command";
 import { Label } from "@/components/ui/label";
+import { OptionalTooltip } from "@/components/ui/optional-tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { Check, ChevronsUpDown, CircleAlert } from "lucide-react";
 import { cn } from "@/lib/util/utils";
-import { FC, useState, useEffect } from "react";
+import { Check, ChevronsUpDown, CircleAlert } from "lucide-react";
+import { FC, useEffect, useState } from "react";
 import { FormWidgetProps } from "../form-widget.types";
 
 export const DropdownWidget: FC<FormWidgetProps<string>> = ({
@@ -84,7 +90,7 @@ export const DropdownWidget: FC<FormWidgetProps<string>> = ({
                                     {options.map((option) => (
                                         <CommandItem
                                             key={option.value}
-                                            value={option.value}
+                                            value={option.label}
                                             onSelect={() => {
                                                 onChange(option.value);
                                                 setOpen(false);
@@ -93,7 +99,9 @@ export const DropdownWidget: FC<FormWidgetProps<string>> = ({
                                             <Check
                                                 className={cn(
                                                     "mr-2 h-4 w-4",
-                                                    value === option.value ? "opacity-100" : "opacity-0"
+                                                    value === option.value
+                                                        ? "opacity-100"
+                                                        : "opacity-0"
                                                 )}
                                             />
                                             {option.label}

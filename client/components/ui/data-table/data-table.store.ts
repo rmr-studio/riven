@@ -84,7 +84,9 @@ interface EditSliceState {
     /** Save error message */
     saveError: string | null;
     /** Cell edit callback (stored in state to allow updates) */
-    onCellEdit: ((row: any, columnId: string, newValue: any, oldValue: any) => Promise<boolean>) | null;
+    onCellEdit:
+        | ((row: any, columnId: string, newValue: any, oldValue: any) => Promise<boolean>)
+        | null;
 }
 
 // ============================================================================
@@ -175,7 +177,11 @@ interface EditActions<TData> {
     /** Exit edit mode but keep focus on cell (discard changes) */
     exitToFocused: () => void;
     /** Update the cell edit callback (allows syncing from props) */
-    setOnCellEdit: (callback: ((row: TData, columnId: string, newValue: any, oldValue: any) => Promise<boolean>) | null) => void;
+    setOnCellEdit: (
+        callback:
+            | ((row: TData, columnId: string, newValue: any, oldValue: any) => Promise<boolean>)
+            | null
+    ) => void;
 }
 
 // ============================================================================
@@ -205,8 +211,8 @@ export type DataTableStore<TData> = DataState<TData> &
         hasSelections: () => boolean;
         /** Whether drag-drop should be enabled (no filters/search/selections) */
         isDragDropEnabled: (enableDragDrop: boolean) => boolean;
-        /** Whether selection should be enabled (inverse of drag-drop in some cases) */
-        isSelectionEnabled: (selectionConfig: boolean, dragDropConfig: boolean) => boolean;
+        
+        
     };
 
 // ============================================================================
@@ -593,7 +599,12 @@ export const createDataTableStore = <TData>(options: CreateDataTableStoreOptions
             },
 
             commitEdit: async () => {
-                const { editingCell, pendingValue, tableData, onCellEdit: cellEditCallback } = get();
+                const {
+                    editingCell,
+                    pendingValue,
+                    tableData,
+                    onCellEdit: cellEditCallback,
+                } = get();
                 if (!editingCell || !cellEditCallback) return;
 
                 const { rowId, columnId } = editingCell;
@@ -764,25 +775,9 @@ export const createDataTableStore = <TData>(options: CreateDataTableStoreOptions
 
             isDragDropEnabled: (enableDragDrop) => {
                 if (!enableDragDrop) return false;
-                const { globalFilter, hasSelections, getActiveFilterCount } = get();
+                const { globalFilter, getActiveFilterCount } = get();
                 if (globalFilter && globalFilter.length > 0) return false;
                 if (getActiveFilterCount() > 0) return false;
-                if (hasSelections()) return false;
-                return true;
-            },
-
-            isSelectionEnabled: (selectionConfig, dragDropConfig) => {
-                if (!selectionConfig) return false;
-                const { globalFilter, hasSelections, getActiveFilterCount } = get();
-                // Disable selection when drag-drop would be active
-                if (
-                    dragDropConfig &&
-                    !globalFilter &&
-                    getActiveFilterCount() === 0 &&
-                    !hasSelections()
-                ) {
-                    return false;
-                }
                 return true;
             },
         }))

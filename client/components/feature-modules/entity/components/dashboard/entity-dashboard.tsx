@@ -64,11 +64,11 @@ export const EntityDashboard = () => {
     ];
 
     return (
-        <div className="py-6 px-12">
+        <div className="py-6 px-12 relative overflow-hidden">
             <header className="flex items-center justify-between mb-8">
                 <BreadCrumbGroup items={trail} />
             </header>
-            <section>
+            <section className="flex min-w-0 w-full">
                 <EntityTypeConfigurationProvider
                     organisationId={organisationId}
                     entityType={entityType}
