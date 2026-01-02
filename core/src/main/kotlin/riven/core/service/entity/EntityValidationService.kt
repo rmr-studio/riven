@@ -4,7 +4,6 @@ import org.springframework.stereotype.Service
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.common.ValidationScope
-import riven.core.enums.entity.EntityPropertyType
 import riven.core.enums.entity.validation.EntityTypeChangeType
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
@@ -34,18 +33,7 @@ class EntityValidationService(
         return schemaService.validate(
             schema = entityType.schema,
             // Only validate ATTRIBUTE properties in this context. Relationship validation is separate.
-            payload = entity.payload.mapNotNull { (key, value) ->
-                @Suppress("UNCHECKED_CAST")
-                val jsonMap = value as? Map<String, Any?> ?: return@mapNotNull null
-                val type = (jsonMap["type"] as? String)?.let { EntityPropertyType.valueOf(it) }
-
-                // Only validate ATTRIBUTE properties, skip RELATIONSHIP properties
-                if (type == EntityPropertyType.ATTRIBUTE) {
-                    key to jsonMap["value"]
-                } else {
-                    null
-                }
-            }.toMap(),
+            payload = entity.payload.mapValues { it.value.value },
             scope = ValidationScope.STRICT
         )
     }

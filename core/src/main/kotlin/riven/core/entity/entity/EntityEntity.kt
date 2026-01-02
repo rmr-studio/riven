@@ -11,11 +11,7 @@ import riven.core.enums.entity.EntityPropertyType
 import riven.core.models.common.Icon
 import riven.core.models.entity.Entity
 import riven.core.models.entity.EntityLink
-import riven.core.models.entity.payload.EntityAttribute
-import riven.core.models.entity.payload.EntityAttributePayload
-import riven.core.models.entity.payload.EntityAttributePrimitivePayload
-import riven.core.models.entity.payload.EntityAttributeRelationPayload
-import riven.core.models.entity.payload.EntityAttributeRelationPayloadReference
+import riven.core.models.entity.payload.*
 import java.time.ZonedDateTime
 import java.util.*
 import jakarta.persistence.Entity as JPAEntity
@@ -47,7 +43,7 @@ data class EntityEntity(
 
     @Type(JsonBinaryType::class)
     @Column(name = "payload", columnDefinition = "jsonb", nullable = false)
-    var payload: Map<String, Any>,
+    var payload: Map<String, EntityAttributePrimitivePayload>,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "icon_colour", nullable = false)
@@ -101,10 +97,11 @@ data class EntityEntity(
                 @Suppress("UNCHECKED_CAST")
                 val jsonMap = value as? Map<String, Any?> ?: return@mapNotNull null
                 val payload: EntityAttribute = fromJsonPayload(jsonMap).let {
-                    when(it.type){
+                    when (it.type) {
                         EntityPropertyType.ATTRIBUTE -> EntityAttribute(
                             payload = it
                         )
+
                         EntityPropertyType.RELATIONSHIP -> EntityAttribute(
                             payload = EntityAttributeRelationPayload(
                                 relations = (it as EntityAttributeRelationPayloadReference).relations.mapNotNull { relId ->
@@ -112,7 +109,8 @@ data class EntityEntity(
                                 }
                             )
                         )
-                }}
+                    }
+                }
 
                 UUID.fromString(key) to payload
 

@@ -135,7 +135,6 @@ class EntityService(
         organisationId: UUID,
         entityTypeId: UUID,
         request: SaveEntityRequest,
-        impactConfirmed: Boolean = false
     ): SaveEntityResponse {
         try {
             val (id: UUID?, payload: Map<UUID, EntityAttributeRequest>, icon: Icon?) = request
@@ -147,13 +146,32 @@ class EntityService(
             val prev: EntityEntity? = id?.let { findOrThrow { entityRepository.findById(it) } }
 
 
+            val attributePayload: Map<String, EntityAttributePrimitivePayload> = payload.mapNotNull { (key, value) ->
+                key.toString() to value.payload.let {
+                    when (it) {
+                        is EntityAttributePrimitivePayload -> it
+                        else -> return@mapNotNull null
+                    }
+                }
+            }.toMap()
+
+            val relationshipPayload: Map<UUID, List<UUID>> = payload.mapNotNull { (key, value) ->
+                when (val pl = value.payload) {
+                    is EntityAttributeRelationPayloadReference -> {
+                        key to pl.relations
+                    }
+
+                    else -> return@mapNotNull null
+                }
+            }.toMap()
+
             prev?.run {
                 require(this.organisationId == organisationId) { "Entity does not belong to the specified organisation" }
                 require(this.typeId == entityTypeId) { "Entity type cannot be changed" }
             }
 
             // Build the payload map
-            val payloadMap = payload.map { it.key.toString() to toJsonPayload(it.value.payload) }.toMap()
+            payload.map { it.key.toString() to toJsonPayload(it.value.payload) }.toMap()
 
             // Either update the existing entity or create a new one
             val entity = prev.let {
@@ -161,7 +179,7 @@ class EntityService(
                     return@let it.copy(
                         iconType = icon?.icon ?: it.iconType,
                         iconColour = icon?.colour ?: it.iconColour,
-                        payload = payloadMap,
+                        payload = attributePayload,
                     )
                 }
 
@@ -171,7 +189,7 @@ class EntityService(
                     iconType = icon?.icon ?: type.iconType,
                     iconColour = icon?.colour ?: type.iconColour,
                     identifierKey = type.identifierKey,
-                    payload = payloadMap,
+                    payload = attributePayload,
                 )
             }
 
@@ -208,11 +226,12 @@ class EntityService(
                 // Use native SQL operations to avoid Hibernate session conflicts
                 entityAttributeService.saveUniqueValues(entityId, typeId, uniqueValuesToSave)
 
-                // Handle Management of Relationships. Previous entity state is required for diffing (in the event where relationships have been updated)
+                // Handle Management of Relationships. Previous payload snapshot is required for diffing (in the event where relationships have been updated)
                 val relationships: Map<UUID, EntityLink> = entityRelationshipService.saveRelationships(
+                    id = entityId,
+                    organisationId = organisationId,
                     type = type,
-                    prev = prev,
-                    curr = this
+                    curr = relationshipPayload
                 ).flatMap { it.value }.associateBy { it.id }
 
                 activityService.logActivity(

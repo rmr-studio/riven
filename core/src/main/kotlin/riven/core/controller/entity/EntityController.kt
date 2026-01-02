@@ -103,9 +103,8 @@ class EntityController(
         @PathVariable organisationId: UUID,
         @PathVariable entityTypeId: UUID,
         @RequestBody request: SaveEntityRequest,
-        @RequestParam impactConfirmed: Boolean = false
     ): ResponseEntity<SaveEntityResponse> {
-        val response = entityService.saveEntity(organisationId, entityTypeId, request, impactConfirmed)
+        val response = entityService.saveEntity(organisationId, entityTypeId, request)
         return ResponseEntity.ok(response)
     }
 

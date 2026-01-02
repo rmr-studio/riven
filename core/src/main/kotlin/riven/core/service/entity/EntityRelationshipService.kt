@@ -5,7 +5,6 @@ import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityRelationshipEntity
 import riven.core.entity.entity.EntityTypeEntity
-import riven.core.enums.entity.EntityPropertyType
 import riven.core.enums.entity.EntityTypeRelationshipType
 import riven.core.models.common.Icon
 import riven.core.models.entity.EntityLink
@@ -22,29 +21,6 @@ class EntityRelationshipService(
     private val entityTypeService: EntityTypeService
 ) {
 
-    /**
-     * Extracts relationship field IDs and their target entity IDs from an entity's payload.
-     */
-    private fun extractRelationshipsFromPayload(payload: Map<String, Any>): Map<UUID, List<UUID>> {
-        return payload.mapNotNull { (key, value) ->
-            @Suppress("UNCHECKED_CAST")
-            val payloadMap = value as? Map<String, Any?> ?: return@mapNotNull null
-            val type = (payloadMap["type"] as? String)?.let {
-                runCatching { EntityPropertyType.valueOf(it) }.getOrNull()
-            } ?: return@mapNotNull null
-
-            if (type != EntityPropertyType.RELATIONSHIP) return@mapNotNull null
-
-            val fieldId = runCatching { UUID.fromString(key) }.getOrNull() ?: return@mapNotNull null
-
-            @Suppress("UNCHECKED_CAST")
-            val relations = (payloadMap["relations"] as? List<String>)?.mapNotNull { rel ->
-                runCatching { UUID.fromString(rel) }.getOrNull()
-            } ?: emptyList()
-
-            fieldId to relations
-        }.toMap()
-    }
 
     /**
      * Saves relationships between entities based on the provided payload.
@@ -52,34 +28,28 @@ class EntityRelationshipService(
      * Also manages bidirectional relationships by creating inverse records.
      *
      * @param type The entity type containing relationship definitions
-     * @param prev The previous entity state (null for new entities)
-     * @param curr The current/new entity state
+     * @param curr
      * @return Map of field IDs to EntityLinks for hydrating the response
      */
     @Transactional
     fun saveRelationships(
+        id: UUID,
+        organisationId: UUID,
         type: EntityTypeEntity,
-        prev: EntityEntity?,
-        curr: EntityEntity
+        curr: Map<UUID, List<UUID>>,
     ): Map<UUID, List<EntityLink>> {
-        val entityId = requireNotNull(curr.id) { "Entity ID cannot be null" }
-        val organisationId = curr.organisationId
+
 
         // Extract current relationships from payload
-        val currentRelationships = extractRelationshipsFromPayload(curr.payload)
-        if (currentRelationships.isEmpty() && prev == null) {
-            return emptyMap()
-        }
-
-        // Extract previous relationships for diffing
-        val previousRelationships = prev?.let { extractRelationshipsFromPayload(it.payload) } ?: emptyMap()
+        val prev: Map<UUID, List<UUID>> = entityRelationshipRepository.findBySourceId(id).groupBy { it.fieldId }
+            .mapValues { it.value.map { rel -> rel.targetId } }
 
         // Get relationship definitions from the entity type
         val relationshipDefinitions = type.relationships?.associateBy { it.id } ?: emptyMap()
 
         // Collect all target entity IDs for batch fetching (from BOTH current AND previous for deletions)
-        val currentTargetIds = currentRelationships.values.flatten().toSet()
-        val previousTargetIds = previousRelationships.values.flatten().toSet()
+        val currentTargetIds = curr.values.flatten().toSet()
+        val previousTargetIds = prev.values.flatten().toSet()
         val allTargetIds = currentTargetIds + previousTargetIds
 
         // Batch fetch all target entities (need both for additions AND deletions)
@@ -100,9 +70,9 @@ class EntityRelationshipService(
         // Process each relationship field
         val resultLinks = mutableMapOf<UUID, List<EntityLink>>()
 
-        for ((fieldId, targetIds) in currentRelationships) {
+        for ((fieldId, targetIds) in curr) {
             val definition = relationshipDefinitions[fieldId] ?: continue
-            val prevTargetIds = previousRelationships[fieldId]?.toSet() ?: emptySet()
+            val prevTargetIds = prev[fieldId]?.toSet() ?: emptySet()
             val currTargetIds = targetIds.toSet()
 
             // Calculate additions and removals
@@ -112,7 +82,7 @@ class EntityRelationshipService(
             // Remove old relationships
             if (toRemove.isNotEmpty()) {
                 entityRelationshipRepository.deleteAllBySourceIdAndFieldIdAndTargetIdIn(
-                    sourceId = entityId,
+                    sourceId = id,
                     fieldId = fieldId,
                     targetIds = toRemove
                 )
@@ -121,7 +91,7 @@ class EntityRelationshipService(
                 if (definition.bidirectional) {
                     removeInverseRelationships(
                         definition = definition,
-                        sourceEntityId = entityId,
+                        sourceEntityId = id,
                         targetEntityIds = toRemove,
                         targetEntities = targetEntities,
                         targetEntityTypes = targetEntityTypes
@@ -137,7 +107,7 @@ class EntityRelationshipService(
 
                     EntityRelationshipEntity(
                         organisationId = organisationId,
-                        sourceId = entityId,
+                        sourceId = id,
                         targetId = targetId,
                         fieldId = fieldId
                     )
@@ -149,7 +119,7 @@ class EntityRelationshipService(
                 if (definition.bidirectional) {
                     createInverseRelationships(
                         definition = definition,
-                        sourceEntity = curr,
+                        sourceEntityId = id,
                         targetEntityIds = toAdd,
                         targetEntities = targetEntities,
                         targetEntityTypes = targetEntityTypes,
@@ -174,17 +144,17 @@ class EntityRelationshipService(
         }
 
         // Handle removed relationship fields entirely (fields that existed before but not now)
-        val removedFields = previousRelationships.keys - currentRelationships.keys
+        val removedFields = prev.keys - curr.keys
         for (fieldId in removedFields) {
             val definition = relationshipDefinitions[fieldId] ?: continue
-            val prevTargetIds = previousRelationships[fieldId]?.toSet() ?: continue
+            val prevTargetIds = prev[fieldId]?.toSet() ?: continue
 
-            entityRelationshipRepository.deleteAllBySourceIdAndFieldId(entityId, fieldId)
+            entityRelationshipRepository.deleteAllBySourceIdAndFieldId(id, fieldId)
 
             if (definition.bidirectional && prevTargetIds.isNotEmpty()) {
                 removeInverseRelationships(
                     definition = definition,
-                    sourceEntityId = entityId,
+                    sourceEntityId = id,
                     targetEntityIds = prevTargetIds,
                     targetEntities = targetEntities,
                     targetEntityTypes = targetEntityTypes
@@ -202,14 +172,12 @@ class EntityRelationshipService(
      */
     private fun createInverseRelationships(
         definition: EntityRelationshipDefinition,
-        sourceEntity: EntityEntity,
+        sourceEntityId: UUID,
         targetEntityIds: Set<UUID>,
         targetEntities: Map<UUID?, EntityEntity>,
         targetEntityTypes: Map<UUID?, EntityTypeEntity>,
         organisationId: UUID
     ) {
-        val sourceEntityId = requireNotNull(sourceEntity.id) { "Source entity ID cannot be null" }
-
         // Group target entities by their type
         val targetsByType = targetEntityIds.mapNotNull { targetId ->
             val entity = targetEntities[targetId] ?: return@mapNotNull null
@@ -282,8 +250,8 @@ class EntityRelationshipService(
      */
     private fun extractIdentifierLabel(entity: EntityEntity): String {
         val identifierKey = entity.identifierKey.toString()
-        val payload = entity.payload[identifierKey] as? Map<*, *>
-        return payload?.get("value")?.toString() ?: entity.id.toString()
+        val payload = entity.payload[identifierKey]
+        return payload?.value?.toString() ?: entity.id.toString()
     }
 
     fun findRelatedEntities(entityId: UUID): Map<UUID, EntityLink> {
