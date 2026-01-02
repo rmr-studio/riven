@@ -1057,6 +1057,10 @@ export interface components {
             id: string;
             /** Format: uuid */
             organisationId: string;
+            /** Format: uuid */
+            fieldId: string;
+            /** Format: uuid */
+            sourceEntityId: string;
             icon: components["schemas"]["Icon"];
             label: string;
         };
@@ -1091,7 +1095,6 @@ export interface components {
             /** Format: uuid */
             updatedBy?: string;
             identifier: string;
-            link: components["schemas"]["EntityLink"];
         };
         EntityAttribute: {
             payload: components["schemas"]["EntityAttributePrimitivePayload"] | components["schemas"]["EntityAttributeRelationPayload"];
@@ -2097,9 +2100,7 @@ export interface operations {
     };
     saveEntity: {
         parameters: {
-            query?: {
-                impactConfirmed?: boolean;
-            };
+            query?: never;
             header?: never;
             path: {
                 organisationId: string;

@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EntityRelationshipCardinality } from "@/lib/types/types";
 import { Check, Loader2, X } from "lucide-react";
 import { useParams } from "next/navigation";
-import { FC, useMemo, useState } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import { useEntityTypes } from "../../../hooks/query/type/use-entity-types";
 import { useEntitiesFromManyTypes } from "../../../hooks/query/use-entities";
 import {
@@ -49,8 +49,6 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
 
     const { organisationId } = useParams<{ organisationId: string }>();
     const { data: entityTypes } = useEntityTypes(organisationId);
-
-    console.log(relationship);
 
     const isSingleSelect =
         relationship.cardinality === EntityRelationshipCardinality.ONE_TO_ONE ||
@@ -103,6 +101,12 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
     const selectedEntities = entities.filter((e) => (value || []).includes(e.id));
 
     const onSelectEntity = (entity: Entity) => {
+        // If entity is already selected, do un-select
+        if ((value || []).includes(entity.id)) {
+            handleChange((value || []).filter((id) => id !== entity.id));
+            return;
+        }
+
         if (isSingleSelect) {
             handleChange([entity.id]);
             setPopoverOpen(false);
@@ -118,10 +122,10 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
         handleRemove(id);
     };
 
-    const getEntityLabel = (entity: Entity) => {
+    const getEntityLabel = (entity: Entity): string | undefined => {
         const payload = entity.payload[entity.identifierKey].payload;
         if (isRelationshipPayload(payload)) return;
-        return payload.value;
+        return String(payload.value);
     };
 
     const getTypeLabel = (typeId: string) => {
@@ -141,6 +145,15 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
         return <div className="text-sm text-destructive">Failed to load entities</div>;
     }
 
+    // Auto-open popover when autoFocus is true (e.g., in table cell edit mode)
+    useEffect(() => {
+        if (autoFocus) {
+            // Small delay to ensure DOM is ready
+            const timer = setTimeout(() => setPopoverOpen(true), 0);
+            return () => clearTimeout(timer);
+        }
+    }, [autoFocus]);
+
     return (
         <div className="space-y-3">
             <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
@@ -150,7 +163,6 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
                         role="combobox"
                         aria-expanded={popoverOpen}
                         className="w-full justify-between"
-                        autoFocus={autoFocus}
                     >
                         <div className="flex flex-wrap gap-2">
                             {selectedEntities?.map((entity) => (
@@ -173,20 +185,23 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
                     </Button>
                 </PopoverTrigger>
 
-                <PopoverContent className="w-[360px] p-0" align="start">
+                <PopoverContent className="w-[360px] p-0 mt-2" align="end">
                     <Command>
                         {/* Tabs for filtering by entity type */}
+
                         <Tabs value={selectedType} onValueChange={setSelectedType}>
-                            <TabsList>
-                                <TabsTrigger value="ALL">All</TabsTrigger>
+                            {/* Only show tab list if there are multiple types */}
+                            {types.length > 1 && (
+                                <TabsList>
+                                    <TabsTrigger value="ALL">All</TabsTrigger>
 
-                                {types.map((type) => (
-                                    <TabsTrigger key={type.id} value={type.id}>
-                                        {type.name.singular}
-                                    </TabsTrigger>
-                                ))}
-                            </TabsList>
-
+                                    {types.map((type) => (
+                                        <TabsTrigger key={type.id} value={type.id}>
+                                            {type.name.singular}
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                            )}
                             <TabsContent value={selectedType} className="mt-2">
                                 <CommandInput placeholder="Search entities..." />
                                 <CommandEmpty>No entities found.</CommandEmpty>

@@ -29,7 +29,9 @@ export const DraftEntityRelationshipPicker: FC<Props> = ({ relationship }) => {
         await form.trigger(relationship.id);
     };
 
-    const handleChange = (newValue: string | string[] | null) => {};
+    const handleChange = (newValue: string | string[] | null) => {
+        form.setValue(relationship.id, newValue);
+    };
 
     const handleRemove = (entityId: string) => {
         if (Array.isArray(value)) {
