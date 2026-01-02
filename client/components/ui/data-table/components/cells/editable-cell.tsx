@@ -17,7 +17,7 @@ import {
 import { CellEditorWidget } from "./cell-editor-widget";
 import EditEntityRelationshipPicker from "@/components/feature-modules/entity/components/forms/instance/relationship/edit-entity-picker";
 
-interface EditableCellProps<TData, TValue> {
+export interface EditableCellProps<TData, TValue> {
     cell: Cell<TData, TValue>;
     onSave: (value: any) => Promise<void>;
     onCancel: () => void;

@@ -77,7 +77,7 @@ export interface DataTableProps<TData, TValue> {
     onTableReady?: (columnSizes: Record<string, number>) => void;
     rowSelection?: RowSelectionConfig<TData>;
     /** Enable inline cell editing */
-    enableInlineEdit?: boolean;
+    
     /** Callback when a cell is edited (returns true on success) */
     onCellEdit?: (row: TData, columnId: string, newValue: any, oldValue: any) => Promise<boolean>;
     /** Edit mode trigger (click or doubleClick) */

@@ -66,19 +66,6 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
         types.map((type) => type.id)
     );
 
-    if (isLoading) {
-        return (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Loading entities...
-            </div>
-        );
-    }
-
-    if (isError) {
-        return <div className="text-sm text-destructive">Failed to load entities</div>;
-    }
-
     const entityTypeKeyIdMap: Record<string, EntityType> = useMemo(() => {
         return types.reduce((acc, type) => {
             acc[type.id] = type;
@@ -130,40 +117,37 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
         return entityTypeKeyIdMap[typeId]?.name.singular || "Unknown Type";
     };
 
+    if (isLoading) {
+        return (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading entities...
+            </div>
+        );
+    }
+
+    if (isError) {
+        return <div className="text-sm text-destructive">Failed to load entities</div>;
+    }
+
     return (
         <div className="space-y-3">
             {/* Selected entities */}
-            {selectedEntities.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                    {selectedEntities.map((entity) => (
-                        <Badge key={entity.id} variant="secondary" className="gap-1">
-                            {getEntityLabel(entity)}
-                            <button
-                                type="button"
-                                onClick={() => onRemoveEntity(entity.id)}
-                                className="ml-1 rounded-sm hover:text-destructive"
-                            >
-                                <X className="h-3 w-3" />
-                            </button>
-                        </Badge>
-                    ))}
-                </div>
-            )}
 
-            {/* Tabs for filtering by entity type */}
-            <Tabs value={selectedType} onValueChange={setSelectedType}>
-                <TabsList>
-                    <TabsTrigger value="ALL">All</TabsTrigger>
+            <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                {/* Tabs for filtering by entity type */}
+                <Tabs value={selectedType} onValueChange={setSelectedType}>
+                    <TabsList>
+                        <TabsTrigger value="ALL">All</TabsTrigger>
 
-                    {types.map((type) => (
-                        <TabsTrigger key={type.id} value={type.id}>
-                            {type.name.singular}
-                        </TabsTrigger>
-                    ))}
-                </TabsList>
+                        {types.map((type) => (
+                            <TabsTrigger key={type.id} value={type.id}>
+                                {type.name.singular}
+                            </TabsTrigger>
+                        ))}
+                    </TabsList>
 
-                <TabsContent value={selectedType} className="mt-2">
-                    <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                    <TabsContent value={selectedType} className="mt-2">
                         <PopoverTrigger asChild>
                             <Button
                                 variant="outline"
@@ -172,7 +156,25 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
                                 className="w-full justify-between"
                                 autoFocus={autoFocus}
                             >
-                                Select entity…
+                                {selectedEntities.length > 0 && (
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedEntities.map((entity) => (
+                                            <Badge
+                                                key={entity.id}
+                                                variant="secondary"
+                                                className="gap-1"
+                                            >
+                                                {getEntityLabel(entity)}
+                                                <div
+                                                    onClick={() => onRemoveEntity(entity.id)}
+                                                    className="ml-1 rounded-sm hover:text-destructive"
+                                                >
+                                                    <X className="h-3 w-3" />
+                                                </div>
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                )}
                             </Button>
                         </PopoverTrigger>
 
@@ -209,9 +211,9 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
                                 </CommandGroup>
                             </Command>
                         </PopoverContent>
-                    </Popover>
-                </TabsContent>
-            </Tabs>
+                    </TabsContent>
+                </Tabs>
+            </Popover>
 
             {errors && <p className="text-sm text-destructive">{errors}</p>}
         </div>

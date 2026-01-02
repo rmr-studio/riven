@@ -5,10 +5,11 @@
  * and provide a single source of truth for all table-related interfaces.
  */
 
-import { Row } from "@tanstack/react-table";
+import { EntityRelationshipDefinition } from "@/components/feature-modules/entity/interface/entity.interface";
 import { SchemaUUID } from "@/lib/interfaces/common.interface";
 import { EntityRelationshipCardinality } from "@/lib/types/types";
-import { EntityRelationshipDefinition } from "@/components/feature-modules/entity/interface/entity.interface";
+import { Cell } from "@tanstack/react-table";
+import { ReactNode } from "react";
 import { z } from "zod";
 
 // ============================================================================
@@ -55,6 +56,13 @@ export interface FilterConfig<T> {
     filters: ColumnFilter<T>[];
     disabled?: boolean;
     onFiltersChange?: (filters: Record<string, any>) => void;
+}
+
+export interface EditConfig<TData> {
+    enabled: boolean;
+    /** Callback when a row is edited (returns true on success) */
+    onRowEdit?: (row: TData, updatedValues: Partial<TData>) => Promise<boolean>;
+    render: (cell: Cell<TData, unknown>, onBlur: (value: unknown) => void) => ReactNode | null;
 }
 
 // ============================================================================
@@ -191,9 +199,7 @@ export type DataTableColumnMeta<TValue = any> =
 /**
  * Check if column meta represents an editable attribute column
  */
-export function isEditableAttributeColumn(
-    meta: unknown
-): meta is EditableAttributeColumnMeta {
+export function isEditableAttributeColumn(meta: unknown): meta is EditableAttributeColumnMeta {
     if (!meta || typeof meta !== "object") return false;
     const m = meta as Record<string, unknown>;
     return m.type === "attribute" && m.editable === true && "schema" in m;
@@ -222,9 +228,7 @@ export function isEditableColumn(
 /**
  * Check if column meta represents a read-only column
  */
-export function isReadOnlyColumn(
-    meta: unknown
-): meta is ReadOnlyColumnMeta {
+export function isReadOnlyColumn(meta: unknown): meta is ReadOnlyColumnMeta {
     if (!meta || typeof meta !== "object") return true; // No meta = read-only
     const m = meta as Record<string, unknown>;
     if (m.type === "readonly") return true;
@@ -235,9 +239,7 @@ export function isReadOnlyColumn(
 /**
  * Helper to determine if relationship is single-select based on cardinality
  */
-export function isSingleSelectRelationship(
-    cardinality: EntityRelationshipCardinality
-): boolean {
+export function isSingleSelectRelationship(cardinality: EntityRelationshipCardinality): boolean {
     return (
         cardinality === EntityRelationshipCardinality.ONE_TO_ONE ||
         cardinality === EntityRelationshipCardinality.MANY_TO_ONE
