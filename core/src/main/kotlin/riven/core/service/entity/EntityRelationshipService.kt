@@ -133,6 +133,8 @@ class EntityRelationshipService(
                 val targetEntity = targetEntities[targetId] ?: return@mapNotNull null
                 EntityLink(
                     id = targetId,
+                    sourceEntityId = id,
+                    fieldId = fieldId,
                     organisationId = targetEntity.organisationId,
                     icon = Icon(
                         icon = targetEntity.iconType,
@@ -254,44 +256,23 @@ class EntityRelationshipService(
         return payload?.value?.toString() ?: entity.id.toString()
     }
 
-    fun findRelatedEntities(entityId: UUID): Map<UUID, EntityLink> {
-        return entityRelationshipRepository.findBySourceId(entityId).run {
-            val targetIds = this.map { it.targetId }.toSet()
-            entityRepository.findByIdIn(targetIds).associate { targetEntity ->
-                val id = requireNotNull(targetEntity.id) { "Entity ID cannot be null" }
-                id to EntityLink(
-                    id = id,
-                    organisationId = targetEntity.organisationId,
-                    icon = Icon(
-                        icon = targetEntity.iconType,
-                        colour = targetEntity.iconColour
-                    ),
-                    label = extractIdentifierLabel(targetEntity)
-                )
+    fun findRelatedEntities(entityId: UUID): Map<UUID, List<EntityLink>> {
+        return entityRelationshipRepository.findEntityLinksBySourceId(entityId)
+            .groupBy { it.getFieldId() }
+            .mapValues { (_, projections) ->
+                projections.map { it.toEntityLink() }
             }
-        }
     }
 
-    fun findRelatedEntities(entityIds: Set<UUID>): Map<UUID, Map<UUID, EntityLink>> {
-        val relationships = entityRelationshipRepository.findBySourceIdIn(entityIds)
-        val allTargetIds = relationships.map { it.targetId }.toSet()
-        val targetEntities = entityRepository.findByIdIn(allTargetIds).associateBy { it.id }
-
-        return relationships.groupBy { it.sourceId }.mapValues { (_, rels) ->
-            rels.mapNotNull { rel ->
-                val targetEntity = targetEntities[rel.targetId] ?: return@mapNotNull null
-                val id = requireNotNull(targetEntity.id) { "Entity ID cannot be null" }
-                id to EntityLink(
-                    id = id,
-                    organisationId = targetEntity.organisationId,
-                    icon = Icon(
-                        icon = targetEntity.iconType,
-                        colour = targetEntity.iconColour
-                    ),
-                    label = extractIdentifierLabel(targetEntity)
-                )
-            }.toMap()
-        }
+    fun findRelatedEntities(entityIds: Set<UUID>): Map<UUID, Map<UUID, List<EntityLink>>> {
+        return entityRelationshipRepository.findEntityLinksBySourceIdIn(entityIds)
+            .groupBy { it.getSourceEntityId() }
+            .mapValues { (_, projections) ->
+                projections.groupBy { it.getFieldId() }
+                    .mapValues { (_, fieldProjections) ->
+                        fieldProjections.map { it.toEntityLink() }
+                    }
+            }
     }
 
     fun archiveEntity(id: UUID): Int {

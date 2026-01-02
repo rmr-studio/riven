@@ -29,14 +29,6 @@ data class Entity(
     override val createdBy: UUID? = null,
     override val updatedBy: UUID? = null
 ) : AuditableModel() {
-    val link: EntityLink
-        get() = EntityLink(
-            id = this.id,
-            organisationId = this.organisationId,
-            icon = this.icon,
-            label = this.identifier
-        )
-
     val identifier: String
         get() = this.payload[identifierKey].toString()
 }

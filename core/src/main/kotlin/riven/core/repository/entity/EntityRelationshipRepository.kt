@@ -4,7 +4,40 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import riven.core.entity.entity.EntityRelationshipEntity
+import riven.core.enums.common.IconColour
+import riven.core.enums.common.IconType
+import riven.core.models.common.Icon
+import riven.core.models.entity.EntityLink
 import java.util.*
+
+/**
+ * Projection interface for EntityLink native query results.
+ * Spring Data JPA will automatically map the query columns to these methods.
+ */
+interface EntityLinkProjection {
+    fun getId(): UUID
+    fun getOrganisationId(): UUID
+    fun getFieldId(): UUID
+    fun getSourceEntityId(): UUID
+    fun getIconType(): String
+    fun getIconColour(): String
+    fun getLabel(): String
+
+    /**
+     * Convert this projection to an EntityLink domain model.
+     */
+    fun toEntityLink(): EntityLink = EntityLink(
+        id = getId(),
+        organisationId = getOrganisationId(),
+        fieldId = getFieldId(),
+        sourceEntityId = getSourceEntityId(),
+        icon = Icon(
+            icon = IconType.valueOf(getIconType()),
+            colour = IconColour.valueOf(getIconColour())
+        ),
+        label = getLabel()
+    )
+}
 
 /**
  * Repository for relationships between entities.
@@ -72,4 +105,63 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
     @Modifying
     @Query("UPDATE EntityRelationshipEntity r SET r.archived = true, r.deletedAt = CURRENT_TIMESTAMP WHERE r.sourceId = :id or r.targetId = :id")
     fun archiveEntity(id: UUID): Int
+
+    /**
+     * Find all entity links for a source entity by joining relationships with target entities.
+     * Extracts the label from the target entity's payload using its identifier_key.
+     *
+     * The query uses PostgreSQL JSONB operators:
+     * - `payload -> identifier_key::text` accesses the JSONB object at the dynamic key
+     * - `->> 'value'` extracts the 'value' field as text
+     * - COALESCE falls back to the entity ID if the label is not found
+     */
+    @Query(
+        value = """
+            SELECT
+                e.id as id,
+                e.organisation_id as organisationId,
+                r.relationship_field_id as fieldId,
+                r.source_entity_id as sourceEntityId,
+                e.icon_type as iconType,
+                e.icon_colour as iconColour,
+                COALESCE(
+                    e.payload -> e.identifier_key::text ->> 'value',
+                    e.id::text
+                ) as label
+            FROM entity_relationships r
+            JOIN entities e ON r.target_entity_id = e.id
+            WHERE r.source_entity_id = :sourceId
+            AND r.archived = false
+            AND e.archived = false
+        """,
+        nativeQuery = true
+    )
+    fun findEntityLinksBySourceId(sourceId: UUID): List<EntityLinkProjection>
+
+    /**
+     * Find all entity links for multiple source entities.
+     * Returns a flat list that can be grouped by sourceEntityId in the service layer.
+     */
+    @Query(
+        value = """
+            SELECT
+                e.id as id,
+                e.organisation_id as organisationId,
+                r.relationship_field_id as fieldId,
+                r.source_entity_id as sourceEntityId,
+                e.icon_type as iconType,
+                e.icon_colour as iconColour,
+                COALESCE(
+                    e.payload -> e.identifier_key::text ->> 'value',
+                    e.id::text
+                ) as label
+            FROM entity_relationships r
+            JOIN entities e ON r.target_entity_id = e.id
+            WHERE r.source_entity_id IN :sourceIds
+            AND r.archived = false
+            AND e.archived = false
+        """,
+        nativeQuery = true
+    )
+    fun findEntityLinksBySourceIdIn(sourceIds: Collection<UUID>): List<EntityLinkProjection>
 }

@@ -170,9 +170,6 @@ class EntityService(
                 require(this.typeId == entityTypeId) { "Entity type cannot be changed" }
             }
 
-            // Build the payload map
-            payload.map { it.key.toString() to toJsonPayload(it.value.payload) }.toMap()
-
             // Either update the existing entity or create a new one
             val entity = prev.let {
                 if (it != null) {
