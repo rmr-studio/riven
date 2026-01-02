@@ -26,8 +26,13 @@ export function DataTableHeader<TData>({
 }: DataTableHeaderProps<TData>) {
     const isMounted = useDataTableStore<TData, boolean>((state) => state.isMounted);
 
-    const columnIds = useMemo(() => {
-        return table.getAllLeafColumns().map((col) => col.id);
+    // Get all column IDs for sortable context
+    // Exclude 'actions' column as it should stay fixed at the left
+    const sortableColumnIds = useMemo(() => {
+        return table
+            .getAllLeafColumns()
+            .filter((col) => col.id !== "actions")
+            .map((col) => col.id);
     }, [table]);
 
     return (
@@ -36,7 +41,7 @@ export function DataTableHeader<TData>({
                 <TableRow key={headerGroup.id}>
                     {/* Column headers */}
                     {enableColumnOrdering && isMounted ? (
-                        <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
+                        <SortableContext items={sortableColumnIds} strategy={horizontalListSortingStrategy}>
                             {headerGroup.headers.map((header) => (
                                 <DraggableColumnHeader
                                     key={header.id}

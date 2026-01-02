@@ -70,6 +70,8 @@ interface UISliceState {
     isMounted: boolean;
     /** Filter popover open state */
     filterPopoverOpen: boolean;
+    /** Column currently being resized (or null if none) */
+    resizingColumnId: string | null;
 }
 
 interface EditSliceState {
@@ -147,6 +149,7 @@ interface ColumnActions {
 interface UIActions {
     setMounted: (mounted: boolean) => void;
     setFilterPopoverOpen: (open: boolean) => void;
+    setResizingColumnId: (columnId: string | null) => void;
 }
 
 interface EditActions<TData> {
@@ -410,6 +413,7 @@ export const createDataTableStore = <TData>(options: CreateDataTableStoreOptions
             // UI slice
             isMounted: false,
             filterPopoverOpen: false,
+            resizingColumnId: null,
 
             // Edit slice
             focusedCell: null,
@@ -559,6 +563,8 @@ export const createDataTableStore = <TData>(options: CreateDataTableStoreOptions
             setMounted: (mounted) => set({ isMounted: mounted }),
 
             setFilterPopoverOpen: (open) => set({ filterPopoverOpen: open }),
+
+            setResizingColumnId: (columnId) => set({ resizingColumnId: columnId }),
 
             // ================================================================
             // Edit Actions

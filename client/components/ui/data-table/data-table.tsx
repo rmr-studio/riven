@@ -22,12 +22,12 @@ import {
     DndContext,
     DragEndEvent,
     KeyboardSensor,
+    Modifier,
     PointerSensor,
     UniqueIdentifier,
     useSensor,
     useSensors,
 } from "@dnd-kit/core";
-import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import {
     ColumnDef,
@@ -130,6 +130,10 @@ export function DataTable<TData, TValue>({
     const rowSelectionState = useDataTableStore<TData, any>((state) => state.rowSelection);
     const activeFilterCount = useDataTableStore<TData, number>((state) =>
         state.getActiveFilterCount()
+    );
+
+    const resizingColumnId = useDataTableStore<TData, string | null>(
+        (state) => state.resizingColumnId
     );
 
     const focusedCell = useDataTableStore<TData, { rowId: string; columnId: string } | null>(
@@ -503,7 +507,17 @@ export function DataTable<TData, TValue>({
         return table.getRowModel().rows.map((row) => row.id as UniqueIdentifier);
     }, [table, tableData]);
 
+    // Column IDs excluding fixed columns (actions) for reordering
+    const sortableColumnIds = useMemo(() => {
+        return table
+            .getAllLeafColumns()
+            .filter((col) => col.id !== "actions")
+            .map((col) => col.id as UniqueIdentifier);
+    }, [table]);
+
     const handleDragEnd = (event: DragEndEvent) => {
+        if (resizingColumnId) return;
+
         const { active, over } = event;
 
         if (!over || active.id === over.id) return;
@@ -511,11 +525,23 @@ export function DataTable<TData, TValue>({
         const isColumnDrag = columnIds.includes(active.id);
 
         if (isColumnDrag) {
-            // Handle column reordering
-            const oldIndex = columnIds.indexOf(active.id);
-            const newIndex = columnIds.indexOf(over.id);
+            // Skip if trying to drag the actions column (defensive check)
+            if (active.id === "actions" || over.id === "actions") return;
 
-            const newColumnOrder = arrayMove(columnIds as string[], oldIndex, newIndex);
+            // Handle column reordering (only for sortable columns)
+            const oldIndex = sortableColumnIds.indexOf(active.id);
+            const newIndex = sortableColumnIds.indexOf(over.id);
+
+            if (oldIndex === -1 || newIndex === -1) return;
+
+            const reorderedColumns = arrayMove(sortableColumnIds as string[], oldIndex, newIndex);
+
+            // Always keep 'actions' column first if it exists
+            const hasActionsColumn = columnIds.includes("actions");
+            const newColumnOrder = hasActionsColumn
+                ? ["actions", ...reorderedColumns]
+                : reorderedColumns;
+
             setColumnOrder(newColumnOrder);
         } else {
             // Handle row reordering
@@ -572,10 +598,25 @@ export function DataTable<TData, TValue>({
         </div>
     );
 
-    // Only apply vertical axis restriction when row drag-drop is enabled but column ordering is not
-    // Column ordering needs horizontal movement, so we can't restrict to vertical axis
-    const dndModifiers =
-        isDragDropEnabled && !columnOrdering?.enabled ? [restrictToVerticalAxis] : [];
+    // Custom modifier that applies axis restriction based on what's being dragged
+    // - Column headers: restrict to horizontal axis (y: 0)
+    // - Rows: restrict to vertical axis (x: 0)
+    const axisRestrictionModifier: Modifier = useCallback(
+        ({ transform, active }) => {
+            if (!active) return transform;
+
+            const isColumnDrag = columnIds.includes(active.id);
+
+            if (isColumnDrag) {
+                // Column ordering: horizontal only
+                return { ...transform, y: 0 };
+            } else {
+                // Row drag-drop: vertical only
+                return { ...transform, x: 0 };
+            }
+        },
+        [columnIds]
+    );
 
     const wrappedContent =
         isDragDropEnabled || columnOrdering?.enabled ? (
@@ -583,7 +624,7 @@ export function DataTable<TData, TValue>({
                 sensors={sensors}
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
-                modifiers={dndModifiers}
+                modifiers={[axisRestrictionModifier]}
             >
                 {tableContent}
             </DndContext>
