@@ -1,3 +1,4 @@
+import { entityReferenceFormSchema } from "@/components/feature-modules/entity/components/tables/entity-table-utils";
 import {
     EntityRelationshipDefinition,
     EntityType,
@@ -196,37 +197,23 @@ function buildArraySchema(schema: SchemaUUID): z.ZodArray<any> {
 /**
  * Build a Zod schema for relationship fields
  */
-export function buildRelationshipFieldSchema(
-    relationship: EntityRelationshipDefinition
-): z.ZodTypeAny {
+export function buildRelationshipFieldSchema(relationship: EntityRelationshipDefinition) {
     const isSingleSelect =
         relationship.cardinality === EntityRelationshipCardinality.ONE_TO_ONE ||
         relationship.cardinality === EntityRelationshipCardinality.MANY_TO_ONE;
 
-    let fieldSchema: z.ZodTypeAny;
+    let schema = entityReferenceFormSchema;
 
     if (isSingleSelect) {
         // Single entity ID
-        fieldSchema = z.string().uuid(`${relationship.name} must be a valid entity`);
-
-        if (!relationship.required) {
-            fieldSchema = fieldSchema.optional().nullable();
-        }
-    } else {
-        // Array of entity IDs
-        fieldSchema = z.array(z.string().uuid(`Each ${relationship.name} must be a valid entity`));
-
-        if (relationship.required) {
-            fieldSchema = (fieldSchema as z.ZodArray<z.ZodString>).min(
-                1,
-                `At least one ${relationship.name} is required`
-            );
-        } else {
-            fieldSchema = fieldSchema.optional().nullable();
-        }
+        schema = schema.max(1, `Only one ${relationship.name} can be selected`);
     }
 
-    return fieldSchema;
+    if (relationship.required) {
+        return schema.min(1, `At least one ${relationship.name} is required`);
+    }
+
+    return schema;
 }
 
 /**

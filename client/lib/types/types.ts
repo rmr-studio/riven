@@ -1062,6 +1062,7 @@ export interface components {
             /** Format: uuid */
             sourceEntityId: string;
             icon: components["schemas"]["Icon"];
+            key: string;
             label: string;
         };
         SaveEntityRequest: {

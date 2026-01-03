@@ -14,17 +14,39 @@ import {
     EntityRelationshipCardinality,
     SchemaType,
 } from "@/lib/types/types";
+import { iconFormSchema } from "@/lib/util/form/common/icon.form";
+import { buildFieldSchema } from "@/lib/util/form/entity-instance-validation.util";
 import { toTitleCase } from "@/lib/util/utils";
-import { AccessorKeyColumnDef } from "@tanstack/react-table";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AccessorKeyColumnDef, Cell } from "@tanstack/react-table";
+import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 import { ReactNode } from "react";
+import { useForm } from "react-hook-form";
+import { isUUID } from "validator";
+import { z } from "zod";
 import {
     Entity,
     EntityAttribute,
+    EntityLink,
     EntityRelationshipDefinition,
     EntityType,
     EntityTypeAttributeColumn,
     isRelationshipPayload,
 } from "../../interface/entity.interface";
+
+export const entityReferenceFormSchema = z.array(
+    z
+        .object({
+            id: z.string().refine(isUUID, { message: "Invalid UUID" }),
+            organisationId: z.string().refine(isUUID, { message: "Invalid UUID" }),
+            sourceEntityId: z.string().refine(isUUID, { message: "Invalid UUID" }),
+            fieldId: z.string().refine(isUUID, { message: "Invalid UUID" }),
+            label: z.string().min(1, { message: "Label cannot be empty" }),
+            key: z.string().refine(isUUID, { message: "Invalid UUID" }),
+        })
+        .extend(iconFormSchema.shape)
+);
 
 // Row type for entity instance data table
 // Discriminated union to safely handle both entity rows and draft rows
@@ -282,12 +304,12 @@ export function createAttributeEqualityFn(
  */
 export function createRelationshipEqualityFn(
     relationship: EntityRelationshipDefinition
-): (oldValue: string | string[] | null, newValue: string | string[] | null) => boolean {
+): (oldValue: EntityLink[], newValue: EntityLink[]) => boolean {
     const isSingleSelect =
         relationship.cardinality === EntityRelationshipCardinality.ONE_TO_ONE ||
         relationship.cardinality === EntityRelationshipCardinality.MANY_TO_ONE;
 
-    return (value1: string | string[] | null, value2: string | string[] | null): boolean => {
+    return (value1: EntityLink[], value2: EntityLink[]): boolean => {
         const normalized1 = normalizeEmpty(value1);
         const normalized2 = normalizeEmpty(value2);
 
@@ -319,8 +341,6 @@ export function createRelationshipEqualityFn(
 // Column Generation
 // ============================================================================
 
-export type RelationshipValue = string | string[] | null;
-
 /**
  * Generate columns from entity type schema
  */
@@ -337,12 +357,28 @@ export function generateColumnsFromEntityType(
     // Generate attribute columns
     Object.entries(entityType.schema.properties).forEach(([attributeId, schema]) => {
         // Create edit config if editing is enabled
-        const editConfig: ColumnEditConfig<EntityRow, unknown> | undefined = options?.enableEditing
+        const editConfig: ColumnEditConfig<EntityRow, any, any> | undefined = options?.enableEditing
             ? {
                   enabled: true,
+                  createFormInstance: (cell: Cell<EntityRow, any>) => {
+                      const value = cell.getValue();
+
+                      // Build Zod schema for this attribute based on its type
+                      const fieldSchema = buildFieldSchema(schema);
+                      const formSchema = z.object({
+                          value: fieldSchema,
+                      });
+
+                      return useForm({
+                          resolver: zodResolver(formSchema) as any,
+                          defaultValues: {
+                              value: value ?? null,
+                          },
+                      });
+                  },
                   render: createAttributeRenderer<EntityRow>(schema),
-                  parseValue: (val: unknown) => val,
-                  formatValue: (val: unknown) => val,
+                  parseValue: (val: any) => val,
+                  formatValue: (val: any) => val,
                   isEqual: createAttributeEqualityFn(schema),
               }
             : undefined;
@@ -384,13 +420,27 @@ export function generateColumnsFromEntityType(
     // Generate relationship columns
     entityType.relationships?.forEach((relationship) => {
         // Create edit config if editing is enabled
-        const editConfig: ColumnEditConfig<EntityRow, RelationshipValue> | undefined =
+        const editConfig: ColumnEditConfig<EntityRow, EntityLink[], EntityLink[]> | undefined =
             options?.enableEditing
                 ? {
                       enabled: true,
+                      createFormInstance: (cell: Cell<EntityRow, EntityLink[]>) => {
+                          const value: EntityLink[] = cell.getValue() || [];
+
+                          const formSchema = z.object({
+                              value: entityReferenceFormSchema,
+                          });
+
+                          return useForm({
+                              resolver: zodResolver(formSchema) as any,
+                              defaultValues: {
+                                  value: value,
+                              },
+                          });
+                      },
                       render: createRelationshipRenderer<EntityRow>(relationship),
-                      parseValue: (val: unknown) => val as string | string[] | null,
-                      formatValue: (val: string | string[] | null) => val,
+                      parseValue: (val: EntityLink[]) => val,
+                      formatValue: (val: EntityLink[]) => val,
                       isEqual: createRelationshipEqualityFn(relationship),
                   }
                 : undefined;
@@ -412,7 +462,7 @@ export function generateColumnsFromEntityType(
                 );
             },
             cell: ({ row }) => {
-                const value = row.getValue(relationship.id);
+                const value: EntityLink[] = row.getValue(relationship.id);
                 if (!value) return null;
                 if (Array.isArray(value)) {
                     if (value.length === 0) {
@@ -421,11 +471,32 @@ export function generateColumnsFromEntityType(
 
                     return (
                         <div className="flex flex-wrap gap-1">
-                            {value.map((item: unknown, idx: number) => (
-                                <Badge key={idx} variant="secondary" className="font-normal">
-                                    {String(item)}
-                                </Badge>
-                            ))}
+                            {value.map((item: EntityLink) => {
+                                const { icon, label, fieldId, id, organisationId, key } = item;
+                                const { icon: type, colour } = icon;
+
+                                return (
+                                    <Link
+                                        href={`/organisation/${organisationId}/entity/${key}/${id}`}
+                                        key={`${fieldId}-${id}`}
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <Badge
+                                            variant="secondary"
+                                            className="hover:bg-border font-normal group transition-all"
+                                        >
+                                            <IconCell
+                                                readonly
+                                                iconType={type}
+                                                colour={colour}
+                                                className="size-4 mr-2"
+                                            />
+                                            <span className="group-hover:underline">{label}</span>
+                                            <ArrowUpRight className="size-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        </Badge>
+                                    </Link>
+                                );
+                            })}
                         </div>
                     );
                 }
@@ -433,7 +504,7 @@ export function generateColumnsFromEntityType(
             },
             enableSorting: false,
             meta: {
-                edit: editConfig,
+                edit: editConfig ,
                 displayMeta: {
                     required: relationship.required,
                     protected: relationship.protected,

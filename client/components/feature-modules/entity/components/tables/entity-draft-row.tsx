@@ -7,6 +7,7 @@ import { cn } from "@/lib/util/utils";
 import { Row } from "@tanstack/react-table";
 import { Check, X } from "lucide-react";
 import { FC, ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { useFormState } from "react-hook-form";
 import { toast } from "sonner";
 import { useEntityDraft } from "../../context/entity-provider";
 import { EntityType } from "../../interface/entity.interface";
@@ -22,7 +23,12 @@ export interface EntityDraftRowProps {
 export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => {
     const { form, resetDraft, submitDraft } = useEntityDraft();
     // Check if form is valid
-    const hasErrors = Object.keys(form.formState.errors).length > 0;
+
+    const { errors } = useFormState({
+        control: form.control,
+    });
+
+    const hasErrors = Object.keys(errors).length > 0;
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -137,6 +143,7 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
     return (
         <>
             <TableRow className="bg-muted/30 border-dashed hover:bg-muted/40 relative">
+                {/* // Action buttons cell (This is rendered inside the action column instead of the drag handle etc) */}
                 <TableCell className="px-0 justify-start">
                     <div className="flex flex-wrap z-30">
                         <Button

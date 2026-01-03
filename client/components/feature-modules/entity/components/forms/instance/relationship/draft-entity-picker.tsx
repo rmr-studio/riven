@@ -1,7 +1,10 @@
 import { useEntityDraft } from "@/components/feature-modules/entity/context/entity-provider";
-import { EntityRelationshipDefinition } from "@/components/feature-modules/entity/interface/entity.interface";
-import { FC } from "react";
-import { useFormState } from "react-hook-form";
+import {
+    EntityLink,
+    EntityRelationshipDefinition,
+} from "@/components/feature-modules/entity/interface/entity.interface";
+import { FC, useCallback } from "react";
+import { useFormState, useWatch } from "react-hook-form";
 import { EntityRelationshipPicker } from "../entity-relationship-picker";
 
 interface Props {
@@ -11,7 +14,10 @@ interface Props {
 export const DraftEntityRelationshipPicker: FC<Props> = ({ relationship }) => {
     const { form } = useEntityDraft();
 
-    const value = form.watch(relationship.id);
+    const value: EntityLink[] = useWatch({
+        control: form.control,
+        name: relationship.id,
+    });
 
     // Watch for validation errors on this specific field
     const { errors: formErrors } = useFormState({
@@ -29,13 +35,17 @@ export const DraftEntityRelationshipPicker: FC<Props> = ({ relationship }) => {
         await form.trigger(relationship.id);
     };
 
-    const handleChange = (newValue: string | string[] | null) => {
-        form.setValue(relationship.id, newValue);
-    };
+    const handleChange = useCallback(
+        (values: EntityLink[]) => {
+            console.log("Setting relationship values:", values);
+            form.setValue(relationship.id, values);
+        },
+        [form, relationship.id]
+    );
 
     const handleRemove = (entityId: string) => {
         if (Array.isArray(value)) {
-            const updatedValue = value.filter((id) => id !== entityId);
+            const updatedValue = value.filter((link) => link.id !== entityId);
             form.setValue(relationship.id, updatedValue);
         } else {
             form.setValue(relationship.id, null);

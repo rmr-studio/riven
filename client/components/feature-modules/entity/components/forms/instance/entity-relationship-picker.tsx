@@ -9,9 +9,11 @@ import {
     CommandInput,
     CommandItem,
 } from "@/components/ui/command";
+import { IconCell } from "@/components/ui/icon/icon-cell";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EntityRelationshipCardinality } from "@/lib/types/types";
+import { uuid } from "@/lib/util/utils";
 import { Check, Loader2, X } from "lucide-react";
 import { useParams } from "next/navigation";
 import { FC, useEffect, useMemo, useState } from "react";
@@ -19,6 +21,7 @@ import { useEntityTypes } from "../../../hooks/query/type/use-entity-types";
 import { useEntitiesFromManyTypes } from "../../../hooks/query/use-entities";
 import {
     Entity,
+    EntityLink,
     EntityRelationshipDefinition,
     EntityType,
     isRelationshipPayload,
@@ -27,10 +30,10 @@ import {
 export interface EntityRelationshipPickerProps {
     relationship: EntityRelationshipDefinition;
     autoFocus?: boolean;
-    value: string[];
+    value: EntityLink[];
     errors?: string[];
     handleBlur: () => Promise<void>;
-    handleChange: (newValue: string | string[] | null) => void;
+    handleChange: (values: EntityLink[]) => void;
     handleRemove: (entityId: string) => void;
 }
 
@@ -98,24 +101,42 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
         return groupedEntities[selectedType] || [];
     }, [groupedEntities, entities, selectedType]);
 
-    const selectedEntities = entities.filter((e) => (value || []).includes(e.id));
+    const selectedEntities = entities.filter((entity: Entity) =>
+        value.some((link) => entity.id === link.id)
+    );
 
     const onSelectEntity = (entity: Entity) => {
         // If entity is already selected, do un-select
-        if ((value || []).includes(entity.id)) {
-            handleChange((value || []).filter((id) => id !== entity.id));
+        if (value.some((link) => link.id === entity.id)) {
+            handleChange(value.filter((link) => link.id !== entity.id));
             return;
         }
 
+        const type: EntityType | undefined = entityTypes?.find((et) => et.id === entity.typeId);
+        if (!type) return;
+
+        const label = getEntityLabel(entity);
+        if (!label) return;
+
+        const link: EntityLink = {
+            id: entity.id,
+            organisationId,
+            fieldId: relationship.id,
+            key: type.key,
+            sourceEntityId: uuid(), // Dummy sourceEntityId; will be replaced on save
+            icon: entity.icon ?? type.icon,
+            label,
+        };
+
         if (isSingleSelect) {
-            handleChange([entity.id]);
+            handleChange([link]);
             setPopoverOpen(false);
             return;
         }
 
-        if ((value || []).includes(entity.id)) return;
+        if (value.some((link) => link.id === entity.id)) return;
 
-        handleChange([...(value || []), entity.id]);
+        handleChange([...value, link]);
     };
 
     const onRemoveEntity = (id: string) => {
@@ -132,6 +153,16 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
         return entityTypeKeyIdMap[typeId]?.name.singular || "Unknown Type";
     };
 
+    // Auto-open popover when autoFocus is true (e.g., in table cell edit mode)
+    useEffect(() => {
+        if (!popoverOpen && !isLoading && !isError)
+            if (autoFocus) {
+                // Small delay to ensure DOM is ready
+                const timer = setTimeout(() => setPopoverOpen(true), 0);
+                return () => clearTimeout(timer);
+            }
+    }, [autoFocus, isLoading, isError]);
+
     if (isLoading) {
         return (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -145,18 +176,18 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
         return <div className="text-sm text-destructive">Failed to load entities</div>;
     }
 
-    // Auto-open popover when autoFocus is true (e.g., in table cell edit mode)
-    useEffect(() => {
-        if (autoFocus) {
-            // Small delay to ensure DOM is ready
-            const timer = setTimeout(() => setPopoverOpen(true), 0);
-            return () => clearTimeout(timer);
-        }
-    }, [autoFocus]);
-
     return (
         <div className="space-y-3">
-            <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+            <Popover
+                open={popoverOpen}
+                onOpenChange={async (isOpen) => {
+                    setPopoverOpen(isOpen);
+                    // Call onBlur when popover closes (handles both selection and click-outside)
+                    if (!isOpen) {
+                        await handleBlur();
+                    }
+                }}
+            >
                 <PopoverTrigger asChild>
                     <Button
                         variant="outline"
@@ -208,7 +239,15 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
 
                                 <CommandGroup>
                                     {filteredEntities.map((entity) => {
-                                        const isSelected = (value || []).includes(entity.id);
+                                        const isSelected = value.some(
+                                            (link) => link.id === entity.id
+                                        );
+
+                                        const { icon, colour } = entity.icon ??
+                                            entityTypeKeyIdMap[entity.typeId]?.icon ?? {
+                                                icon: "FILE",
+                                                colour: "NEUTRAL",
+                                            };
 
                                         return (
                                             <CommandItem
@@ -217,11 +256,19 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
                                                 onSelect={() => onSelectEntity(entity)}
                                             >
                                                 <div className="flex w-full items-center justify-between">
-                                                    <div className="flex flex-col">
-                                                        <span>{getEntityLabel(entity)}</span>
-                                                        <span className="text-xs text-muted-foreground">
-                                                            {getTypeLabel(entity.typeId)}
-                                                        </span>
+                                                    <div className="flex items-center">
+                                                        <IconCell
+                                                            readonly
+                                                            iconType={icon}
+                                                            colour={colour}
+                                                            className="mr-2 size-6"
+                                                        />
+                                                        <div>
+                                                            <div>{getEntityLabel(entity)}</div>
+                                                            <div className="text-xs text-muted-foreground">
+                                                                {getTypeLabel(entity.typeId)}
+                                                            </div>
+                                                        </div>
                                                     </div>
 
                                                     {isSelected && (

@@ -17,6 +17,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { EntityPropertyType } from "@/lib/types/types";
 import { FC, useEffect } from "react";
+import { useWatch } from "react-hook-form";
 import { useConfigForm } from "../../../context/configuration-provider";
 import { EntityAttributeDefinition } from "../../../interface/entity.interface";
 
@@ -28,8 +29,15 @@ export const ConfigurationForm: FC<Props> = ({ availableIdentifiers }) => {
     const form = useConfigForm();
     if (!form) return null;
 
-    const identifierKey = form.watch("identifierKey");
-    const columns = form.watch("columns");
+    const identifierKey = useWatch({
+        control: form.control,
+        name: "identifierKey",
+    });
+
+    const columns = useWatch({
+        control: form.control,
+        name: "columns",
+    });
 
     // Watch for identifier key changes and auto-recolumns to ensure identifier is first
     useEffect(() => {

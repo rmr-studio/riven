@@ -1,23 +1,19 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Cell } from "@tanstack/react-table";
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { UseFormReturn } from "react-hook-form";
+import { toast } from "sonner";
 import { useDataTableStore } from "../../data-table-provider";
-import { isEditableColumn } from "../../data-table.types";
+import { ColumnEditConfig, isEditableColumn } from "../../data-table.types";
 
-export interface EditableCellProps<TData, TValue> {
-    cell: Cell<TData, TValue>;
-    onSave: (value: unknown) => Promise<void>;
+export interface EditableCellProps<TData, TCellValue> {
+    cell: Cell<TData, TCellValue>;
+    onSave: (value: TCellValue) => Promise<void>;
     onCancel: () => void;
     onFocusNext?: () => void;
     onFocusPrev?: () => void;
-}
-
-interface FormValues {
-    value: unknown;
 }
 
 /**
@@ -26,13 +22,13 @@ interface FormValues {
  * Manages form state and keyboard navigation, delegates rendering
  * to the column's custom edit.render function.
  */
-export function EditableCell<TData, TValue>({
+export function EditableCell<TData, TCellValue, TValue = TCellValue>({
     cell,
     onSave,
     onCancel,
     onFocusNext,
     onFocusPrev,
-}: EditableCellProps<TData, TValue>) {
+}: EditableCellProps<TData, TCellValue>) {
     const meta = cell.column.columnDef.meta;
 
     // Guard: Column must have edit config
@@ -40,47 +36,66 @@ export function EditableCell<TData, TValue>({
         return <div className="text-sm text-destructive">Column not editable</div>;
     }
 
-    const editConfig = meta.edit;
-    const initialValue = cell.getValue();
-    const parsedValue = editConfig.parseValue?.(initialValue) ?? initialValue;
-
-    // Create per-cell form instance
-    const form = useForm<FormValues>({
-        resolver: editConfig.zodSchema ? zodResolver(editConfig.zodSchema) : undefined,
-        defaultValues: { value: parsedValue },
-        mode: "onChange",
-    });
+    const editConfig = meta.edit as unknown as ColumnEditConfig<TData, TCellValue, TValue>;
+    const form = editConfig.createFormInstance(cell as any) as UseFormReturn<{ value: TValue }>;
 
     const isSaving = useDataTableStore<TData, boolean>((state) => state.isSaving);
-    const registerCommitCallback = useDataTableStore<TData, (callback: (() => void) | null) => void>(
-        (state) => state.registerCommitCallback
-    );
+    const registerCommitCallback = useDataTableStore<
+        TData,
+        (callback: (() => void) | null) => void
+    >((state) => state.registerCommitCallback);
 
     const handleSaveRef = useRef<() => void>(() => {});
 
-    // Validation + save (only if value changed)
+    /**
+     * Validates the form and saves if the value has changed
+     * Uses the parseValue/formatValue functions to transform between edit and cell formats
+     * Uses the isEqual function to compare values for changes
+     */
     const handleSave = async () => {
-        const newValue = form.getValues("value");
-        const formattedValue = editConfig.formatValue?.(newValue) ?? newValue;
-        const initialFormatted = editConfig.formatValue?.(parsedValue) ?? parsedValue;
-
-        // Use custom equality or default JSON comparison
-        const hasChanged = editConfig.isEqual
-            ? !editConfig.isEqual(initialFormatted, formattedValue)
-            : JSON.stringify(initialFormatted) !== JSON.stringify(formattedValue);
-
-        if (!hasChanged) {
+        // Validate the form
+        const isValid = await form.trigger();
+        if (!isValid) {
+            toast.error("Unable to save. Invalid values");
             onCancel();
             return;
         }
 
-        // Validate if schema provided
-        if (editConfig.zodSchema) {
-            const isValid = await form.trigger("value");
-            if (!isValid) return;
+        // Get the new value from the form
+        const { value: newEditValue } = form.getValues();
+
+        // Get the original cell value
+        const originalCellValue: TCellValue = cell.getValue();
+
+        // Parse the original cell value to edit format for comparison
+        const parseValue = editConfig.parseValue ?? ((val: TCellValue) => val as unknown as TValue);
+        const originalEditValue: TValue = parseValue(originalCellValue);
+
+        // Check if the value has changed
+        const isEqual =
+            editConfig.isEqual ??
+            ((a: TValue, b: TValue) => JSON.stringify(a) === JSON.stringify(b));
+        const hasChanged = !isEqual(originalEditValue, newEditValue);
+
+        // Only save if the value has changed
+        if (!hasChanged) {
+            onCancel(); // Close editor without saving
+            return;
         }
 
-        await onSave(formattedValue);
+        // Format the value back to cell format for saving
+        const formatValue =
+            editConfig.formatValue ?? ((val: TValue) => val as unknown as TCellValue);
+        const newCellValue: TCellValue = formatValue(newEditValue);
+
+        // TODO: Save the entity with the new value
+        // This is where you would call the entity save API
+        try {
+            await onSave(newCellValue);
+        } catch (error) {
+            console.error("Failed to save cell value:", error);
+            // Form stays open on error so user can retry
+        }
     };
 
     handleSaveRef.current = handleSave;
@@ -114,15 +129,15 @@ export function EditableCell<TData, TValue>({
     return (
         <div className="relative w-full" onKeyDown={handleKeyDown}>
             {editConfig.render({
-                cell,
-                form,
-                value: form.watch("value"),
+                cell: cell as any,
+                form: form as any,
+                value: form.watch("value" as any) as TValue,
                 onSave: handleSave,
                 onCancel,
                 onFocusNext,
                 onFocusPrev,
                 isSaving,
-            })}
+            } as any)}
 
             {/* Saving overlay */}
             {isSaving && (

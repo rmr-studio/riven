@@ -4,13 +4,13 @@ import { FormWidgetProps } from "@/components/feature-modules/blocks/components/
 import { getWidgetForSchema } from "@/components/feature-modules/entity/components/forms/instance/entity-field-registry";
 import { EntityRelationshipPicker } from "@/components/feature-modules/entity/components/forms/instance/entity-relationship-picker";
 import {
+    EntityLink,
     EntityRelationshipDefinition,
 } from "@/components/feature-modules/entity/interface/entity.interface";
 import { FormField } from "@/components/ui/form";
 import { SchemaUUID } from "@/lib/interfaces/common.interface";
-import { EntityRelationshipCardinality } from "@/lib/types/types";
 import { FC } from "react";
-import { useFormState } from "react-hook-form";
+import { useFormState, useWatch } from "react-hook-form";
 import { EditRenderProps } from "../../data-table.types";
 
 /**
@@ -33,7 +33,7 @@ import { EditRenderProps } from "../../data-table.types";
  */
 export function createAttributeRenderer<TData>(
     schema: SchemaUUID
-): (props: EditRenderProps<TData>) => React.ReactNode {
+): (props: EditRenderProps<TData, unknown>) => React.ReactNode {
     return function AttributeEditRenderer({ form, onSave }) {
         const Widget: FC<FormWidgetProps> = getWidgetForSchema(schema);
 
@@ -43,8 +43,8 @@ export function createAttributeRenderer<TData>(
         const errorMessages = fieldError?.message
             ? [String(fieldError.message)]
             : fieldError?.type
-              ? [String(fieldError.type)]
-              : undefined;
+            ? [String(fieldError.type)]
+            : undefined;
 
         // Trigger validation on blur
         const handleBlur = async () => {
@@ -106,60 +106,42 @@ export function createAttributeRenderer<TData>(
  */
 export function createRelationshipRenderer<TData>(
     relationship: EntityRelationshipDefinition
-): (props: EditRenderProps<TData>) => React.ReactNode {
-    const isSingleSelect =
-        relationship.cardinality === EntityRelationshipCardinality.ONE_TO_ONE ||
-        relationship.cardinality === EntityRelationshipCardinality.MANY_TO_ONE;
-
+): (props: EditRenderProps<TData, EntityLink[]>) => React.ReactNode {
     return function RelationshipEditRenderer({ form, onSave }) {
-        const value = form.watch("value");
-
-        // Normalize to array for the picker
-        const normalizedValue: string[] = Array.isArray(value) ? value : value ? [value] : [];
+        const value: EntityLink[] = useWatch({
+            control: form.control,
+            name: "value",
+        });
 
         // Extract error messages
         const { errors } = useFormState({ control: form.control, name: "value" });
+        
         const fieldError = errors["value"];
         const errorMessages = fieldError?.message
             ? [String(fieldError.message)]
             : fieldError?.type
-              ? [String(fieldError.type)]
-              : undefined;
+            ? [String(fieldError.type)]
+            : undefined;
 
-        const handleChange = (newValue: string | string[] | null) => {
-            if (isSingleSelect) {
-                // For single-select, normalize to single value
-                const singleValue = Array.isArray(newValue) ? (newValue[0] ?? null) : newValue;
-                form.setValue("value", singleValue as string | string[] | null);
-            } else {
-                form.setValue("value", newValue as string | string[] | null);
-            }
+        const handleChange = (newValue: EntityLink[]) => {
+            form.setValue("value", newValue);
         };
 
         const handleRemove = (entityId: string) => {
-            const current = form.getValues("value");
-            if (Array.isArray(current)) {
-                form.setValue(
-                    "value",
-                    current.filter((id) => id !== entityId)
-                );
-            } else if (current === entityId) {
-                form.setValue("value", null);
-            }
-        };
-
-        const handleBlur = async () => {
-            await form.trigger("value");
-            onSave();
+            const current = form.getValues("value") ?? [];
+            form.setValue(
+                "value",
+                current.filter((link) => link.id !== entityId)
+            );
         };
 
         return (
             <EntityRelationshipPicker
                 relationship={relationship}
                 autoFocus
-                value={normalizedValue}
+                value={value}
                 errors={errorMessages}
-                handleBlur={handleBlur}
+                handleBlur={onSave}
                 handleChange={handleChange}
                 handleRemove={handleRemove}
             />

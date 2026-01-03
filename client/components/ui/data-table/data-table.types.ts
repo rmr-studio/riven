@@ -8,7 +8,6 @@
 import { Cell } from "@tanstack/react-table";
 import { ReactNode } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { z } from "zod";
 
 // ============================================================================
 // Search Configuration
@@ -63,13 +62,13 @@ export interface FilterConfig<T> {
 /**
  * Props passed to custom edit renderers
  */
-export interface EditRenderProps<TData> {
+export interface EditRenderProps<TData, TCellValue = unknown> {
     /** The TanStack Table cell being edited */
-    cell: Cell<TData, unknown>;
+    cell: Cell<TData, TCellValue>;
     /** React Hook Form instance for the cell */
-    form: UseFormReturn<{ value: unknown }>;
+    form: UseFormReturn<{ value: TCellValue }>;
     /** Current value being edited (reactive) */
-    value: unknown;
+    value: TCellValue;
     /** Callback to trigger save (validates and commits) */
     onSave: () => Promise<void>;
     /** Callback to cancel editing */
@@ -85,8 +84,18 @@ export interface EditRenderProps<TData> {
 /**
  * Column-level edit configuration
  * Each column can provide its own render function for editing
+ *
+ * @template TData - The row data type
+ * @template TCellValue - The value type stored in the cell
+ * @template TValue - The value type used during editing (may differ from TCellValue)
  */
-export interface ColumnEditConfig<TData, TValue = unknown> {
+export interface ColumnEditConfig<TData, TCellValue = unknown, TValue = TCellValue> {
+    /**
+     * Create a React Hook Form instance for this cell
+     * The form should validate and manage the edit value
+     */
+    createFormInstance: (cell: Cell<TData, TCellValue>) => UseFormReturn<{ value: TValue }>;
+
     /** Whether this column is editable */
     enabled: boolean;
 
@@ -94,27 +103,21 @@ export interface ColumnEditConfig<TData, TValue = unknown> {
      * Custom render function for edit mode
      * Receives cell context and form instance, returns JSX
      */
-    render: (props: EditRenderProps<TData>) => ReactNode;
-
-    /**
-     * Optional Zod schema for validation
-     * If not provided, no validation is performed
-     */
-    zodSchema?: z.ZodSchema<TValue>;
+    render: (props: EditRenderProps<TData, TValue>) => ReactNode;
 
     /**
      * Transform value from cell format to edit format
      * Called when entering edit mode
      * @default identity function
      */
-    parseValue?: (cellValue: unknown) => TValue;
+    parseValue?: (cellValue: TCellValue) => TValue;
 
     /**
      * Transform value from edit format to cell/storage format
      * Called when saving
      * @default identity function
      */
-    formatValue?: (editValue: TValue) => unknown;
+    formatValue?: (editValue: TValue) => TCellValue;
 
     /**
      * Custom equality check for value comparison
@@ -196,9 +199,11 @@ export interface ColumnDisplayMeta {
 /**
  * Check if column has edit configuration enabled
  */
-export function isEditableColumn<TData, TValue>(
-    meta: { edit?: ColumnEditConfig<TData, TValue>; displayMeta?: ColumnDisplayMeta } | undefined
-): meta is { edit: ColumnEditConfig<TData, TValue>; displayMeta?: ColumnDisplayMeta } {
+export function isEditableColumn<TData, TCellValue, TValue = TCellValue>(
+    meta:
+        | { edit?: ColumnEditConfig<TData, TCellValue, TValue>; displayMeta?: ColumnDisplayMeta }
+        | undefined
+): meta is { edit: ColumnEditConfig<TData, TCellValue, TValue>; displayMeta?: ColumnDisplayMeta } {
     return meta?.edit?.enabled === true && typeof meta.edit.render === "function";
 }
 
