@@ -131,6 +131,7 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
         if (isSingleSelect) {
             handleChange([link]);
             setPopoverOpen(false);
+            handleBlur();
             return;
         }
 

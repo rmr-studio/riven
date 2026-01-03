@@ -2,9 +2,8 @@
 
 import { Cell } from "@tanstack/react-table";
 import { Loader2 } from "lucide-react";
-import { useEffect, useRef } from "react";
-import { UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
+import { useCallback, useEffect, useRef } from "react";
+import { UseFormReturn, useFormState } from "react-hook-form";
 import { useDataTableStore } from "../../data-table-provider";
 import { ColumnEditConfig, isEditableColumn } from "../../data-table.types";
 
@@ -47,16 +46,17 @@ export function EditableCell<TData, TCellValue, TValue = TCellValue>({
 
     const handleSaveRef = useRef<() => void>(() => {});
 
+    const { errors, isValid } = useFormState({ control: form.control });
+
     /**
      * Validates the form and saves if the value has changed
      * Uses the parseValue/formatValue functions to transform between edit and cell formats
      * Uses the isEqual function to compare values for changes
      */
-    const handleSave = async () => {
+    const handleSave = useCallback(async () => {
         // Validate the form
-        const isValid = await form.trigger();
+
         if (!isValid) {
-            toast.error("Unable to save. Invalid values");
             onCancel();
             return;
         }
@@ -96,7 +96,7 @@ export function EditableCell<TData, TCellValue, TValue = TCellValue>({
             console.error("Failed to save cell value:", error);
             // Form stays open on error so user can retry
         }
-    };
+    }, [onSave, onCancel, cell, editConfig, form, errors, isValid]);
 
     handleSaveRef.current = handleSave;
 

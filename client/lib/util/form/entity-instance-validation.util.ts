@@ -220,6 +220,11 @@ export function buildRelationshipFieldSchema(relationship: EntityRelationshipDef
  * Get default value for a schema field
  */
 export function getDefaultValueForSchema(schema: SchemaUUID): any {
+    // Check for custom default value in options first
+    if (schema.options?.default !== undefined && schema.options?.default !== null) {
+        return schema.options.default;
+    }
+
     const attributeType = attributeTypes[schema.key];
 
     switch (attributeType.type) {
@@ -245,20 +250,17 @@ export function getDefaultValueForSchema(schema: SchemaUUID): any {
 export function buildDefaultValuesFromEntityType(entityType: EntityType): Record<string, any> {
     const defaults: Record<string, any> = {};
 
-    // Set defaults for attributes
+    // Set defaults for attributes (uses options.default if available)
     if (entityType.schema.properties) {
         Object.entries(entityType.schema.properties).forEach(([id, schema]) => {
             defaults[id] = getDefaultValueForSchema(schema);
         });
     }
 
-    // Set defaults for relationships
+    // Set defaults for relationships (always empty arrays since entityReferenceFormSchema is array-based)
     if (entityType.relationships) {
         entityType.relationships.forEach((rel) => {
-            const isMulti =
-                rel.cardinality === EntityRelationshipCardinality.ONE_TO_MANY ||
-                rel.cardinality === EntityRelationshipCardinality.MANY_TO_MANY;
-            defaults[rel.id] = isMulti ? [] : null;
+            defaults[rel.id] = [];
         });
     }
 

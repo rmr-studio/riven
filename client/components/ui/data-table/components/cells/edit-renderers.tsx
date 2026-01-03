@@ -115,7 +115,7 @@ export function createRelationshipRenderer<TData>(
 
         // Extract error messages
         const { errors } = useFormState({ control: form.control, name: "value" });
-        
+
         const fieldError = errors["value"];
         const errorMessages = fieldError?.message
             ? [String(fieldError.message)]
@@ -135,13 +135,18 @@ export function createRelationshipRenderer<TData>(
             );
         };
 
+        const onBlur = async () => {
+            await form.trigger("value");
+            await onSave();
+        };
+
         return (
             <EntityRelationshipPicker
                 relationship={relationship}
                 autoFocus
                 value={value}
                 errors={errorMessages}
-                handleBlur={onSave}
+                handleBlur={onBlur}
                 handleChange={handleChange}
                 handleRemove={handleRemove}
             />

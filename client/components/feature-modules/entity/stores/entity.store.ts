@@ -7,6 +7,7 @@ import {
     EntityAttributePrimitivePayload,
     EntityAttributeRelationPayloadReference,
     EntityAttributeRequest,
+    EntityLink,
     EntityType,
     SaveEntityRequest,
     SaveEntityResponse,
@@ -150,10 +151,10 @@ export const createEntityDraftStore = (
                     } else if (metadata === EntityPropertyType.RELATIONSHIP) {
                         // Relationship - create relation payload
                         // Normalize to array of UUIDs
-                        const relations = Array.isArray(value) ? value : value ? [value] : [];
+                        const relations: EntityLink[] = value
 
                         const relationPayload: EntityAttributeRelationPayloadReference = {
-                            relations,
+                            relations: relations.map((rel) => rel.id),
                             type: EntityPropertyType.RELATIONSHIP,
                         };
 

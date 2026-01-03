@@ -1,6 +1,9 @@
 "use client";
 
-import { buildZodSchemaFromEntityType } from "@/lib/util/form/entity-instance-validation.util";
+import {
+    buildDefaultValuesFromEntityType,
+    buildZodSchemaFromEntityType,
+} from "@/lib/util/form/entity-instance-validation.util";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createContext, useContext, useMemo, useRef, type ReactNode } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -36,10 +39,16 @@ export const EntityDraftProvider = ({
         [entityType.key, entityType.schema, entityType.relationships]
     );
 
+    // Build default values from entity type (includes attribute defaults and relationship arrays)
+    const defaultValues = useMemo(
+        () => buildDefaultValuesFromEntityType(entityType),
+        [entityType.key, entityType.schema, entityType.relationships]
+    );
+
     // Create form instance with dynamic schema
     const form = useForm<Record<string, any>>({
         resolver: zodResolver(schema),
-        defaultValues: {},
+        defaultValues,
         mode: "onBlur", // Validate on blur (user preference)
     });
 

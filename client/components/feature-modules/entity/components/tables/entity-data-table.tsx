@@ -25,6 +25,7 @@ import {
     EntityAttributePrimitivePayload,
     EntityAttributeRelationPayloadReference,
     EntityAttributeRequest,
+    EntityLink,
     EntityRelationshipDefinition,
     EntityType,
     isRelationshipPayload,
@@ -195,9 +196,10 @@ export const EntityDataTable: FC<Props> = ({
             }
 
             if (relationshipDef) {
+                const relationship: EntityLink[] = newValue;
                 const relationshipEntry: EntityAttributeRelationPayloadReference = {
                     type: EntityPropertyType.RELATIONSHIP,
-                    relations: Array.isArray(newValue) ? newValue : [newValue],
+                    relations: relationship.map((rel) => rel.id),
                 };
 
                 return await updateEntity(entity, columnId, { payload: relationshipEntry });

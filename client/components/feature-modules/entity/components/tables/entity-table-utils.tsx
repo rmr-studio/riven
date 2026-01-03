@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnFilter, FilterOption } from "@/components/ui/data-table";
 import {
     createAttributeRenderer,
@@ -43,7 +44,7 @@ export const entityReferenceFormSchema = z.array(
             sourceEntityId: z.string().refine(isUUID, { message: "Invalid UUID" }),
             fieldId: z.string().refine(isUUID, { message: "Invalid UUID" }),
             label: z.string().min(1, { message: "Label cannot be empty" }),
-            key: z.string().refine(isUUID, { message: "Invalid UUID" }),
+            key: z.string().min(1, { message: "Key cannot be empty" }),
         })
         .extend(iconFormSchema.shape)
 );
@@ -178,7 +179,12 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
 
     // BOOLEAN type formatting
     if (dataType === DataType.BOOLEAN) {
-        return <Badge variant={value ? "default" : "secondary"}>{value ? "Yes" : "No"}</Badge>;
+        return (
+            <Badge variant={"secondary"} className="px-2 py-1 gap-2">
+                <Checkbox checked={Boolean(value)} disabled={true} />
+                <span>{value ? "Yes" : "No"}</span>
+            </Badge>
+        );
     }
 
     // ARRAY type formatting (multi-select enums, etc.)
@@ -218,7 +224,7 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
 /**
  * Normalize empty values for comparison
  */
-function normalizeEmpty(val: unknown): unknown {
+function normalizeEmpty<T>(val: T): T | null {
     if (
         val === null ||
         val === undefined ||
@@ -325,7 +331,7 @@ export function createRelationshipEqualityFn(
 
         // For single-select, simple string comparison
         if (isSingleSelect) {
-            return normalized1 === normalized2;
+            return JSON.stringify(normalized1[0]) === JSON.stringify(normalized2[0]);
         }
 
         // For multi-select, order-independent array comparison
@@ -333,7 +339,7 @@ export function createRelationshipEqualityFn(
             return arraysEqual(normalized1, normalized2);
         }
 
-        return normalized1 === normalized2;
+        return JSON.stringify(normalized1) === JSON.stringify(normalized2);
     };
 }
 
@@ -432,10 +438,11 @@ export function generateColumnsFromEntityType(
                           });
 
                           return useForm({
-                              resolver: zodResolver(formSchema) as any,
+                              resolver: zodResolver(formSchema),
                               defaultValues: {
                                   value: value,
                               },
+                              mode: "onBlur",
                           });
                       },
                       render: createRelationshipRenderer<EntityRow>(relationship),
@@ -504,7 +511,7 @@ export function generateColumnsFromEntityType(
             },
             enableSorting: false,
             meta: {
-                edit: editConfig ,
+                edit: editConfig,
                 displayMeta: {
                     required: relationship.required,
                     protected: relationship.protected,
