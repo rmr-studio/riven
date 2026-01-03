@@ -183,6 +183,7 @@ class EntityService(
                 EntityEntity(
                     organisationId = organisationId,
                     typeId = entityTypeId,
+                    typeKey = type.key,
                     iconType = icon?.icon ?: type.iconType,
                     iconColour = icon?.colour ?: type.iconColour,
                     identifierKey = type.identifierKey,
@@ -223,13 +224,13 @@ class EntityService(
                 // Use native SQL operations to avoid Hibernate session conflicts
                 entityAttributeService.saveUniqueValues(entityId, typeId, uniqueValuesToSave)
 
-                // Handle Management of Relationships. Previous payload snapshot is required for diffing (in the event where relationships have been updated)
-                val relationships: Map<UUID, EntityLink> = entityRelationshipService.saveRelationships(
+
+                val relationships: Map<UUID, List<EntityLink>> = entityRelationshipService.saveRelationships(
                     id = entityId,
                     organisationId = organisationId,
                     type = type,
                     curr = relationshipPayload
-                ).flatMap { it.value }.associateBy { it.id }
+                )
 
                 activityService.logActivity(
                     activity = Activity.ENTITY,

@@ -356,8 +356,8 @@ CREATE TABLE IF NOT EXISTS public.entities
     "id"              UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
     "organisation_id" UUID    NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
     "type_id"         UUID    NOT NULL REFERENCES entity_types (id) ON DELETE RESTRICT,
-    "name"            TEXT,
     "archived"        BOOLEAN NOT NULL         DEFAULT FALSE,
+    "type_key"        TEXT    NOT NULL,                           -- Denormalized key from entity_type for easier access
     -- Duplicate key from entity_type for faster lookups without needing separate query
     "identifier_key"  UUID    NOT NULL,
     "payload"         JSONB   NOT NULL         DEFAULT '{}'::jsonb,

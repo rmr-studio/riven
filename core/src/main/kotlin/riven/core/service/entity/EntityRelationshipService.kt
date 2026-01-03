@@ -11,6 +11,7 @@ import riven.core.models.entity.EntityLink
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityRepository
+import riven.core.repository.entity.toEntityLink
 import riven.core.service.entity.type.EntityTypeService
 import java.util.*
 
@@ -115,8 +116,8 @@ class EntityRelationshipService(
 
                 entityRelationshipRepository.saveAll(newRelationships)
 
-                // Create inverse relationships if bidirectional
-                if (definition.bidirectional) {
+                // Create inverse relationships if bidirectional, or if REFERENCE type (ie. The byproduct of a bidirectional relationship)
+                if (definition.bidirectional || definition.relationshipType == EntityTypeRelationshipType.REFERENCE) {
                     createInverseRelationships(
                         definition = definition,
                         sourceEntityId = id,
@@ -136,6 +137,7 @@ class EntityRelationshipService(
                     sourceEntityId = id,
                     fieldId = fieldId,
                     organisationId = targetEntity.organisationId,
+                    key = targetEntity.typeKey,
                     icon = Icon(
                         icon = targetEntity.iconType,
                         colour = targetEntity.iconColour

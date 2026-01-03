@@ -1672,7 +1672,8 @@ class EntityValidationServiceTest {
             payload = entityPayload,
             identifierKey = nameAttributeKey,
             iconType = IconType.FILE,
-            iconColour = IconColour.NEUTRAL
+            iconColour = IconColour.NEUTRAL,
+            typeKey = "test-entity-type"
         )
     }
 }

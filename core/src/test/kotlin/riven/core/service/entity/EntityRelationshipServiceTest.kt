@@ -554,14 +554,16 @@ class EntityRelationshipServiceTest {
 
             // Mock: existing relationship in database
             whenever(entityRelationshipRepository.findBySourceId(entityId))
-                .thenReturn(listOf(
-                    EntityRelationshipEntity(
-                        organisationId = organisationId,
-                        sourceId = entityId,
-                        targetId = existingContactId,
-                        fieldId = companyContactsRelId
+                .thenReturn(
+                    listOf(
+                        EntityRelationshipEntity(
+                            organisationId = organisationId,
+                            sourceId = entityId,
+                            targetId = existingContactId,
+                            fieldId = companyContactsRelId
+                        )
                     )
-                ))
+                )
 
             val contacts = listOf(
                 createEntity(id = existingContactId, typeId = contactEntityType.id!!, payload = emptyMap()),
@@ -609,14 +611,16 @@ class EntityRelationshipServiceTest {
 
             // Mock: existing contact relationship in database
             whenever(entityRelationshipRepository.findBySourceId(entityId))
-                .thenReturn(listOf(
-                    EntityRelationshipEntity(
-                        organisationId = organisationId,
-                        sourceId = entityId,
-                        targetId = contactId,
-                        fieldId = companyContactsRelId
+                .thenReturn(
+                    listOf(
+                        EntityRelationshipEntity(
+                            organisationId = organisationId,
+                            sourceId = entityId,
+                            targetId = contactId,
+                            fieldId = companyContactsRelId
+                        )
                     )
-                ))
+                )
 
             val entities = listOf(
                 createEntity(id = contactId, typeId = contactEntityType.id!!, payload = emptyMap()),
@@ -671,20 +675,22 @@ class EntityRelationshipServiceTest {
 
             // Mock: existing relationships in database
             whenever(entityRelationshipRepository.findBySourceId(entityId))
-                .thenReturn(listOf(
-                    EntityRelationshipEntity(
-                        organisationId = organisationId,
-                        sourceId = entityId,
-                        targetId = contact1Id,
-                        fieldId = companyContactsRelId
-                    ),
-                    EntityRelationshipEntity(
-                        organisationId = organisationId,
-                        sourceId = entityId,
-                        targetId = contact2Id,
-                        fieldId = companyContactsRelId
+                .thenReturn(
+                    listOf(
+                        EntityRelationshipEntity(
+                            organisationId = organisationId,
+                            sourceId = entityId,
+                            targetId = contact1Id,
+                            fieldId = companyContactsRelId
+                        ),
+                        EntityRelationshipEntity(
+                            organisationId = organisationId,
+                            sourceId = entityId,
+                            targetId = contact2Id,
+                            fieldId = companyContactsRelId
+                        )
                     )
-                ))
+                )
 
             val contacts = listOf(
                 createEntity(id = contact1Id, typeId = contactEntityType.id!!, payload = emptyMap()),
@@ -723,14 +729,16 @@ class EntityRelationshipServiceTest {
 
             // Mock: existing relationship in database
             whenever(entityRelationshipRepository.findBySourceId(entityId))
-                .thenReturn(listOf(
-                    EntityRelationshipEntity(
-                        organisationId = organisationId,
-                        sourceId = entityId,
-                        targetId = contactId,
-                        fieldId = companyContactsRelId
+                .thenReturn(
+                    listOf(
+                        EntityRelationshipEntity(
+                            organisationId = organisationId,
+                            sourceId = entityId,
+                            targetId = contactId,
+                            fieldId = companyContactsRelId
+                        )
                     )
-                ))
+                )
 
             val contact = createEntity(id = contactId, typeId = contactEntityType.id!!, payload = emptyMap())
 
@@ -772,20 +780,22 @@ class EntityRelationshipServiceTest {
 
             // Mock: existing relationships in database
             whenever(entityRelationshipRepository.findBySourceId(entityId))
-                .thenReturn(listOf(
-                    EntityRelationshipEntity(
-                        organisationId = organisationId,
-                        sourceId = entityId,
-                        targetId = contact1Id,
-                        fieldId = companyContactsRelId
-                    ),
-                    EntityRelationshipEntity(
-                        organisationId = organisationId,
-                        sourceId = entityId,
-                        targetId = contact2Id,
-                        fieldId = companyContactsRelId
+                .thenReturn(
+                    listOf(
+                        EntityRelationshipEntity(
+                            organisationId = organisationId,
+                            sourceId = entityId,
+                            targetId = contact1Id,
+                            fieldId = companyContactsRelId
+                        ),
+                        EntityRelationshipEntity(
+                            organisationId = organisationId,
+                            sourceId = entityId,
+                            targetId = contact2Id,
+                            fieldId = companyContactsRelId
+                        )
                     )
-                ))
+                )
 
             val contacts = listOf(
                 createEntity(id = contact1Id, typeId = contactEntityType.id!!, payload = emptyMap()),
@@ -827,14 +837,16 @@ class EntityRelationshipServiceTest {
 
             // Mock: existing relationship in database
             whenever(entityRelationshipRepository.findBySourceId(entityId))
-                .thenReturn(listOf(
-                    EntityRelationshipEntity(
-                        organisationId = organisationId,
-                        sourceId = entityId,
-                        targetId = oldContactId,
-                        fieldId = companyContactsRelId
+                .thenReturn(
+                    listOf(
+                        EntityRelationshipEntity(
+                            organisationId = organisationId,
+                            sourceId = entityId,
+                            targetId = oldContactId,
+                            fieldId = companyContactsRelId
+                        )
                     )
-                ))
+                )
 
             val contacts = listOf(
                 createEntity(id = oldContactId, typeId = contactEntityType.id!!, payload = emptyMap()),
@@ -886,14 +898,16 @@ class EntityRelationshipServiceTest {
 
             // Mock: existing contact relationship in database
             whenever(entityRelationshipRepository.findBySourceId(entityId))
-                .thenReturn(listOf(
-                    EntityRelationshipEntity(
-                        organisationId = organisationId,
-                        sourceId = entityId,
-                        targetId = contactId,
-                        fieldId = companyContactsRelId
+                .thenReturn(
+                    listOf(
+                        EntityRelationshipEntity(
+                            organisationId = organisationId,
+                            sourceId = entityId,
+                            targetId = contactId,
+                            fieldId = companyContactsRelId
+                        )
                     )
-                ))
+                )
 
             val entities = listOf(
                 createEntity(id = contactId, typeId = contactEntityType.id!!, payload = emptyMap()),
@@ -1013,14 +1027,16 @@ class EntityRelationshipServiceTest {
 
             // Mock: existing relationship in database
             whenever(entityRelationshipRepository.findBySourceId(entityId))
-                .thenReturn(listOf(
-                    EntityRelationshipEntity(
-                        organisationId = organisationId,
-                        sourceId = entityId,
-                        targetId = contactId,
-                        fieldId = companyContactsRelId
+                .thenReturn(
+                    listOf(
+                        EntityRelationshipEntity(
+                            organisationId = organisationId,
+                            sourceId = entityId,
+                            targetId = contactId,
+                            fieldId = companyContactsRelId
+                        )
                     )
-                ))
+                )
 
             val contact = createEntity(id = contactId, typeId = contactEntityType.id!!, payload = emptyMap())
 
@@ -1138,14 +1154,16 @@ class EntityRelationshipServiceTest {
 
             // Mock: existing relationship in database
             whenever(entityRelationshipRepository.findBySourceId(documentId))
-                .thenReturn(listOf(
-                    EntityRelationshipEntity(
-                        organisationId = organisationId,
-                        sourceId = documentId,
-                        targetId = contactId,
-                        fieldId = uniRelId
+                .thenReturn(
+                    listOf(
+                        EntityRelationshipEntity(
+                            organisationId = organisationId,
+                            sourceId = documentId,
+                            targetId = contactId,
+                            fieldId = uniRelId
+                        )
                     )
-                ))
+                )
 
             val contact = createEntity(id = contactId, typeId = contactEntityType.id!!, payload = emptyMap())
 
@@ -1347,6 +1365,7 @@ class EntityRelationshipServiceTest {
             id = id,
             organisationId = organisationId,
             typeId = typeId,
+            typeKey = "test-entity-key",
             identifierKey = identifierKey,
             iconType = iconType,
             iconColour = iconColour,

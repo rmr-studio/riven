@@ -14,6 +14,8 @@ data class EntityLink(
     val fieldId: UUID,
     val sourceEntityId: UUID,
     val icon: Icon,
+    // This should be the value taken from the field marked as the `key` of that entity type for navigation purposes
+    val key: String,
     // This should be the value taken from the field marked as the `identifier` of that entity type
     val label: String
 )

@@ -38,6 +38,10 @@ data class EntityEntity(
 
     @Column(name = "type_id", nullable = false)
     val typeId: UUID,
+
+    @Column(name = "type_key", nullable = false)
+    val typeKey: String,
+
     @Column("identifier_key", nullable = false, columnDefinition = "uuid")
     val identifierKey: UUID,
 

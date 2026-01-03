@@ -13,31 +13,36 @@ import java.util.*
 /**
  * Projection interface for EntityLink native query results.
  * Spring Data JPA will automatically map the query columns to these methods.
+ *
+ * Note: This interface must only contain simple property accessors (getters).
+ * Use the toEntityLink() extension function to convert to the domain model.
  */
 interface EntityLinkProjection {
     fun getId(): UUID
     fun getOrganisationId(): UUID
+    fun getTypeKey(): String
     fun getFieldId(): UUID
     fun getSourceEntityId(): UUID
     fun getIconType(): String
     fun getIconColour(): String
     fun getLabel(): String
-
-    /**
-     * Convert this projection to an EntityLink domain model.
-     */
-    fun toEntityLink(): EntityLink = EntityLink(
-        id = getId(),
-        organisationId = getOrganisationId(),
-        fieldId = getFieldId(),
-        sourceEntityId = getSourceEntityId(),
-        icon = Icon(
-            icon = IconType.valueOf(getIconType()),
-            colour = IconColour.valueOf(getIconColour())
-        ),
-        label = getLabel()
-    )
 }
+
+/**
+ * Convert this projection to an EntityLink domain model.
+ */
+fun EntityLinkProjection.toEntityLink(): EntityLink = EntityLink(
+    id = getId(),
+    organisationId = getOrganisationId(),
+    fieldId = getFieldId(),
+    sourceEntityId = getSourceEntityId(),
+    icon = Icon(
+        icon = IconType.valueOf(getIconType()),
+        colour = IconColour.valueOf(getIconColour())
+    ),
+    key = getTypeKey(),
+    label = getLabel()
+)
 
 /**
  * Repository for relationships between entities.
@@ -124,6 +129,7 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
                 r.source_entity_id as sourceEntityId,
                 e.icon_type as iconType,
                 e.icon_colour as iconColour,
+                e.type_key as typeKey,
                 COALESCE(
                     e.payload -> e.identifier_key::text ->> 'value',
                     e.id::text
@@ -151,6 +157,7 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
                 r.source_entity_id as sourceEntityId,
                 e.icon_type as iconType,
                 e.icon_colour as iconColour,
+                e.type_key as typeKey,
                 COALESCE(
                     e.payload -> e.identifier_key::text ->> 'value',
                     e.id::text
