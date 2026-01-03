@@ -1,4 +1,5 @@
 import { DataTable, DataTableProvider } from "@/components/ui/data-table";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { EntityPropertyType } from "@/lib/types/types";
 import { Row } from "@tanstack/react-table";
 import { Edit2, Trash2 } from "lucide-react";
@@ -98,61 +99,63 @@ const EntityTypeDataTable: FC<Props> = ({ type, identifierKey, onEdit, onDelete 
 
     return (
         <DataTableProvider initialData={sortedRowData}>
-            <DataTable
-                columns={columns}
-                enableDragDrop
-                onReorder={handleFieldsReorder}
-                getRowId={(row) => row.id}
-                disableDragForRow={disableDragForRow}
-                search={{
-                    enabled: true,
-                    searchableColumns: ["label"],
-                    placeholder: "Search fields...",
-                }}
-                filter={{
-                    enabled: true,
-                    filters: [
-                        {
-                            column: "type",
-                            type: "select",
-                            label: "Type",
-                            options: [
-                                {
-                                    label: "Attributes",
-                                    value: EntityPropertyType.ATTRIBUTE,
-                                },
-                                {
-                                    label: "Relationships",
-                                    value: EntityPropertyType.RELATIONSHIP,
-                                },
-                            ],
-                        },
-                    ],
-                }}
-                rowActions={{
-                    enabled: true,
-                    menuLabel: "Actions",
-                    actions: [
-                        {
-                            label: "Edit",
-                            icon: Edit2,
-                            onClick: (row) => {
-                                editRow(row);
+            <TooltipProvider>
+                <DataTable
+                    columns={columns}
+                    enableDragDrop
+                    onReorder={handleFieldsReorder}
+                    getRowId={(row) => row.id}
+                    disableDragForRow={disableDragForRow}
+                    search={{
+                        enabled: true,
+                        searchableColumns: ["label"],
+                        placeholder: "Search fields...",
+                    }}
+                    filter={{
+                        enabled: true,
+                        filters: [
+                            {
+                                column: "type",
+                                type: "select",
+                                label: "Type",
+                                options: [
+                                    {
+                                        label: "Attributes",
+                                        value: EntityPropertyType.ATTRIBUTE,
+                                    },
+                                    {
+                                        label: "Relationships",
+                                        value: EntityPropertyType.RELATIONSHIP,
+                                    },
+                                ],
                             },
-                        },
-                        {
-                            label: "Delete",
-                            icon: Trash2,
-                            onClick: (row) => {
-                                deleteRow(row);
+                        ],
+                    }}
+                    rowActions={{
+                        enabled: true,
+                        menuLabel: "Actions",
+                        actions: [
+                            {
+                                label: "Edit",
+                                icon: Edit2,
+                                onClick: (row) => {
+                                    editRow(row);
+                                },
                             },
-                            variant: "destructive",
-                            disabled: (row) => !canDelete(row),
-                        },
-                    ],
-                }}
-                emptyMessage="No fields defined yet. Add your first attribute or relationship to get started."
-            />
+                            {
+                                label: "Delete",
+                                icon: Trash2,
+                                onClick: (row) => {
+                                    deleteRow(row);
+                                },
+                                variant: "destructive",
+                                disabled: (row) => !canDelete(row),
+                            },
+                        ],
+                    }}
+                    emptyMessage="No fields defined yet. Add your first attribute or relationship to get started."
+                />
+            </TooltipProvider>
         </DataTableProvider>
     );
 };

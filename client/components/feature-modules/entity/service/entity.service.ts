@@ -2,7 +2,12 @@ import { fromError, isResponseError } from "@/lib/util/error/error.util";
 import { handleError, validateSession, validateUuid } from "@/lib/util/service/service.util";
 import { api } from "@/lib/util/utils";
 import { Session } from "@supabase/supabase-js";
-import { Entity, SaveEntityRequest, SaveEntityResponse } from "../interface/entity.interface";
+import {
+    DeleteEntityResponse,
+    Entity,
+    SaveEntityRequest,
+    SaveEntityResponse,
+} from "../interface/entity.interface";
 
 export class EntityService {
     /**
@@ -124,49 +129,31 @@ export class EntityService {
         }
     }
 
-    /**
-     * Check if a value is unique for a given attribute
-     * Returns true if unique, false if duplicate exists
-     */
-    static async checkUniqueValue(
+    static async deleteEntities(
         session: Session | null,
         organisationId: string,
-        entityTypeKey: string,
-        attributeId: string,
-        value: any
-    ): Promise<boolean> {
+        entityIds: string[]
+    ): Promise<DeleteEntityResponse> {
         try {
             validateSession(session);
             validateUuid(organisationId);
-            validateUuid(attributeId);
+            entityIds.forEach((id) => validateUuid(id));
             const url = api();
 
-            const queryParams = new URLSearchParams({
-                attributeId,
-                value: String(value),
+            const response = await fetch(`${url}/v1/entity/organisation/${organisationId}`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify(entityIds),
             });
 
-            const response = await fetch(
-                `${url}/v1/entity/organisation/${organisationId}/type/${encodeURIComponent(
-                    entityTypeKey
-                )}/validate-unique?${queryParams}`,
-                {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${session.access_token}`,
-                    },
-                }
-            );
-
-            if (response.ok) {
-                const result = await response.json();
-                return result.isUnique ?? true;
-            }
+            if (response.ok) return await response.json();
 
             throw await handleError(
                 response,
-                (res) => `Failed to validate unique value: ${res.status} ${res.statusText}`
+                (res) => `Failed to delete entity instances: ${res.status} ${res.statusText}`
             );
         } catch (error) {
             if (isResponseError(error)) throw error;
