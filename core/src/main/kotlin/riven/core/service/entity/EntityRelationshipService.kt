@@ -88,8 +88,8 @@ class EntityRelationshipService(
                     targetIds = toRemove
                 )
 
-                // Remove inverse relationships if bidirectional
-                if (definition.bidirectional) {
+                // Remove inverse relationships if bidirectional, or if REFERENCE type
+                if (definition.bidirectional || definition.relationshipType == EntityTypeRelationshipType.REFERENCE) {
                     removeInverseRelationships(
                         definition = definition,
                         sourceEntityId = id,
@@ -182,34 +182,49 @@ class EntityRelationshipService(
         targetEntityTypes: Map<UUID?, EntityTypeEntity>,
         organisationId: UUID
     ) {
+
+
         // Group target entities by their type
         val targetsByType = targetEntityIds.mapNotNull { targetId ->
             val entity = targetEntities[targetId] ?: return@mapNotNull null
             entity.typeId to targetId
         }.groupBy({ it.first }, { it.second })
 
+        val inverseRelationshipEntities = mutableListOf<EntityRelationshipEntity>()
+
         // For each target type, find the inverse relationship definition
         for ((targetTypeId, entityIds) in targetsByType) {
             val targetType = targetEntityTypes[targetTypeId] ?: continue
 
-            // Find the REFERENCE relationship that points back to this ORIGIN
-            val inverseDefinition = targetType.relationships?.find { rel ->
-                rel.relationshipType == EntityTypeRelationshipType.REFERENCE &&
-                        rel.originRelationshipId == definition.id
+            // Find the inverse relationship definition
+            val inverseDefinition = definition.relationshipType.let {
+                if (it == EntityTypeRelationshipType.REFERENCE) {
+                    return@let targetType.relationships?.find { rel ->
+                        rel.relationshipType == EntityTypeRelationshipType.ORIGIN &&
+                                rel.id == definition.originRelationshipId
+                    }
+                }
+                targetType.relationships?.find { rel ->
+                    rel.relationshipType == EntityTypeRelationshipType.REFERENCE &&
+                            rel.originRelationshipId == definition.id
+                }
             } ?: continue
 
-            // Create inverse relationships
-            val inverseRelationships = entityIds.map { targetEntityId ->
+
+            inverseRelationshipEntities.addAll(entityIds.map { targetEntityId ->
                 EntityRelationshipEntity(
                     organisationId = organisationId,
                     sourceId = targetEntityId,
                     targetId = sourceEntityId,
                     fieldId = inverseDefinition.id
                 )
-            }
+            })
 
-            entityRelationshipRepository.saveAll(inverseRelationships)
         }
+
+        entityRelationshipRepository.saveAll(inverseRelationshipEntities)
+
+
     }
 
     /**
@@ -232,10 +247,20 @@ class EntityRelationshipService(
         for ((targetTypeId, entityIds) in targetsByType) {
             val targetType = targetEntityTypes[targetTypeId] ?: continue
 
-            // Find the REFERENCE relationship that points back to this ORIGIN
-            val inverseDefinition = targetType.relationships?.find { rel ->
-                rel.relationshipType == EntityTypeRelationshipType.REFERENCE &&
-                        rel.originRelationshipId == definition.id
+            // Find the inverse relationship definition
+            // If this is a REFERENCE, find the ORIGIN on the target
+            // If this is an ORIGIN (bidirectional), find the REFERENCE on the target
+            val inverseDefinition = definition.relationshipType.let {
+                if (it == EntityTypeRelationshipType.REFERENCE) {
+                    return@let targetType.relationships?.find { rel ->
+                        rel.relationshipType == EntityTypeRelationshipType.ORIGIN &&
+                                rel.id == definition.originRelationshipId
+                    }
+                }
+                targetType.relationships?.find { rel ->
+                    rel.relationshipType == EntityTypeRelationshipType.REFERENCE &&
+                            rel.originRelationshipId == definition.id
+                }
             } ?: continue
 
             // Delete inverse relationships for each target entity

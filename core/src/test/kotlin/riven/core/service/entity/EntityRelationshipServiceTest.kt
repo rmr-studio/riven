@@ -435,6 +435,139 @@ class EntityRelationshipServiceTest {
         }
 
         @Test
+        fun `saveRelationships - creates inverse relationship on origin entity when saving from REFERENCE side`() {
+            // Given: A contact (REFERENCE side) adding a relationship to a company
+            // This tests the REFERENCE -> ORIGIN mirroring path
+            val contactId = UUID.randomUUID()
+            val companyId = UUID.randomUUID()
+            val company = createEntity(
+                id = companyId,
+                typeId = companyEntityType.id!!,
+                payload = emptyMap()
+            )
+
+            // Mock repository calls
+            whenever(entityRepository.findAllById(any()))
+                .thenReturn(listOf(company))
+            whenever(entityTypeService.getByIds(any()))
+                .thenReturn(listOf(companyEntityType))
+
+            val savedRelationships = mutableListOf<EntityRelationshipEntity>()
+            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
+                .thenAnswer { invocation ->
+                    val entities = invocation.getArgument(0) as Collection<EntityRelationshipEntity>
+                    savedRelationships.addAll(entities)
+                    entities
+                }
+
+            // When: Saving relationships from the REFERENCE side (contact -> company)
+            entityRelationshipService.saveRelationships(
+                id = contactId,
+                organisationId = organisationId,
+                type = contactEntityType,
+                curr = mapOf(contactCompanyRelId to listOf(companyId))
+            )
+
+            // Then: Two relationships created - source and inverse
+            assertEquals(2, savedRelationships.size, "Should create both source and inverse relationships")
+
+            // Verify source relationship: contact -> company (REFERENCE side)
+            val sourceRel = savedRelationships.find {
+                it.sourceId == contactId && it.targetId == companyId
+            }
+            assertNotNull(sourceRel, "Source relationship should exist")
+            assertEquals(contactCompanyRelId, sourceRel!!.fieldId, "Source field ID should match REFERENCE definition")
+
+            // Verify inverse relationship: company -> contact (back to ORIGIN side)
+            val inverseRel = savedRelationships.find {
+                it.sourceId == companyId && it.targetId == contactId
+            }
+            assertNotNull(inverseRel, "Inverse relationship should exist on ORIGIN side")
+            assertEquals(
+                companyContactsRelId,
+                inverseRel!!.fieldId,
+                "Inverse field ID should match ORIGIN definition"
+            )
+        }
+
+        @Test
+        fun `saveRelationships - creates inverse relationships for multiple targets when saving from REFERENCE side`() {
+            // Given: A contact that can belong to multiple companies (if cardinality allowed)
+            // For this test, we'll create multiple contacts pointing to the same company
+            val contact1Id = UUID.randomUUID()
+            val contact2Id = UUID.randomUUID()
+            val companyId = UUID.randomUUID()
+
+            val company = createEntity(
+                id = companyId,
+                typeId = companyEntityType.id!!,
+                payload = emptyMap()
+            )
+
+            // Mock repository calls
+            whenever(entityRepository.findAllById(any()))
+                .thenReturn(listOf(company))
+            whenever(entityTypeService.getByIds(any()))
+                .thenReturn(listOf(companyEntityType))
+
+            val savedRelationshipsContact1 = mutableListOf<EntityRelationshipEntity>()
+            val savedRelationshipsContact2 = mutableListOf<EntityRelationshipEntity>()
+
+            // First call for contact1
+            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
+                .thenAnswer { invocation ->
+                    val entities = invocation.getArgument(0) as Collection<EntityRelationshipEntity>
+                    savedRelationshipsContact1.addAll(entities)
+                    entities
+                }
+
+            // When: Contact 1 saves relationship to company
+            entityRelationshipService.saveRelationships(
+                id = contact1Id,
+                organisationId = organisationId,
+                type = contactEntityType,
+                curr = mapOf(contactCompanyRelId to listOf(companyId))
+            )
+
+            // Then: Both source and inverse created for contact1
+            assertEquals(2, savedRelationshipsContact1.size, "Should create source and inverse for contact1")
+
+            val contact1Inverse = savedRelationshipsContact1.find {
+                it.sourceId == companyId && it.targetId == contact1Id
+            }
+            assertNotNull(contact1Inverse, "Company should have inverse to contact1")
+            assertEquals(companyContactsRelId, contact1Inverse!!.fieldId)
+
+            // Reset and test contact2
+            reset(entityRelationshipRepository)
+            whenever(entityRelationshipRepository.findBySourceId(any()))
+                .thenReturn(emptyList())
+            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
+                .thenAnswer { invocation ->
+                    val entities = invocation.getArgument(0) as Collection<EntityRelationshipEntity>
+                    savedRelationshipsContact2.addAll(entities)
+                    entities
+                }
+
+            // When: Contact 2 saves relationship to same company
+            entityRelationshipService.saveRelationships(
+                id = contact2Id,
+                organisationId = organisationId,
+                type = contactEntityType,
+                curr = mapOf(contactCompanyRelId to listOf(companyId))
+            )
+
+            // Then: Both source and inverse created for contact2
+            assertEquals(2, savedRelationshipsContact2.size, "Should create source and inverse for contact2")
+
+            val contact2Inverse = savedRelationshipsContact2.find {
+                it.sourceId == companyId && it.targetId == contact2Id
+            }
+            assertNotNull(contact2Inverse, "Company should have inverse to contact2")
+            assertEquals(companyContactsRelId, contact2Inverse!!.fieldId)
+        }
+
+        @Test
         fun `saveRelationships - creates inverse relationships across multiple entity types (polymorphic)`() {
             // Given: An entity type that can relate to multiple target types bidirectionally
             val polymorphicRelId = UUID.randomUUID()
@@ -768,6 +901,57 @@ class EntityRelationshipServiceTest {
                 eq(contactId),
                 eq(contactCompanyRelId),
                 eq(setOf(entityId))
+            )
+        }
+
+        @Test
+        fun `saveRelationships - removes origin inverse when target removed from REFERENCE side`() {
+            // Given: A contact (REFERENCE side) removing its relationship to a company
+            // This tests the REFERENCE -> ORIGIN removal mirroring path
+            val contactId = UUID.randomUUID()
+            val companyId = UUID.randomUUID()
+
+            // Mock: existing relationship in database
+            whenever(entityRelationshipRepository.findBySourceId(contactId))
+                .thenReturn(
+                    listOf(
+                        EntityRelationshipEntity(
+                            organisationId = organisationId,
+                            sourceId = contactId,
+                            targetId = companyId,
+                            fieldId = contactCompanyRelId
+                        )
+                    )
+                )
+
+            val company = createEntity(id = companyId, typeId = companyEntityType.id!!, payload = emptyMap())
+
+            whenever(entityRepository.findAllById(any()))
+                .thenReturn(listOf(company))
+            whenever(entityTypeService.getByIds(any()))
+                .thenReturn(listOf(companyEntityType))
+
+            // When: Saving relationships with empty list (all companies removed from contact)
+            entityRelationshipService.saveRelationships(
+                id = contactId,
+                organisationId = organisationId,
+                type = contactEntityType,
+                curr = mapOf(contactCompanyRelId to emptyList())
+            )
+
+            // Then: Both source and inverse relationships are deleted
+            // Source: contact -> company (REFERENCE side)
+            verify(entityRelationshipRepository).deleteAllBySourceIdAndFieldIdAndTargetIdIn(
+                eq(contactId),
+                eq(contactCompanyRelId),
+                eq(setOf(companyId))
+            )
+
+            // Inverse: company -> contact (the ORIGIN side)
+            verify(entityRelationshipRepository).deleteAllBySourceIdAndFieldIdAndTargetIdIn(
+                eq(companyId),
+                eq(companyContactsRelId),
+                eq(setOf(contactId))
             )
         }
 
