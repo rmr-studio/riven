@@ -15,6 +15,15 @@ import riven.core.repository.entity.toEntityLink
 import riven.core.service.entity.type.EntityTypeService
 import java.util.*
 
+/**
+ * Result of saving relationships, containing both the relationship links
+ * and any entities that were impacted by inverse relationship changes.
+ */
+data class SaveRelationshipsResult(
+    val links: Map<UUID, List<EntityLink>>,
+    val impactedEntityIds: Set<UUID>
+)
+
 @Service
 class EntityRelationshipService(
     private val entityRelationshipRepository: EntityRelationshipRepository,
@@ -29,8 +38,8 @@ class EntityRelationshipService(
      * Also manages bidirectional relationships by creating inverse records.
      *
      * @param type The entity type containing relationship definitions
-     * @param curr
-     * @return Map of field IDs to EntityLinks for hydrating the response
+     * @param curr The current relationship payload (field ID -> list of target entity IDs)
+     * @return SaveRelationshipsResult containing links and impacted entity IDs
      */
     @Transactional
     fun saveRelationships(
@@ -38,7 +47,9 @@ class EntityRelationshipService(
         organisationId: UUID,
         type: EntityTypeEntity,
         curr: Map<UUID, List<UUID>>,
-    ): Map<UUID, List<EntityLink>> {
+    ): SaveRelationshipsResult {
+        // Track all entities impacted by inverse relationship changes
+        val impactedEntityIds = mutableSetOf<UUID>()
 
 
         // Extract current relationships from payload
@@ -90,13 +101,14 @@ class EntityRelationshipService(
 
                 // Remove inverse relationships if bidirectional, or if REFERENCE type
                 if (definition.bidirectional || definition.relationshipType == EntityTypeRelationshipType.REFERENCE) {
-                    removeInverseRelationships(
+                    val removedImpacted = removeInverseRelationships(
                         definition = definition,
                         sourceEntityId = id,
                         targetEntityIds = toRemove,
                         targetEntities = targetEntities,
                         targetEntityTypes = targetEntityTypes
                     )
+                    impactedEntityIds.addAll(removedImpacted)
                 }
             }
 
@@ -118,7 +130,7 @@ class EntityRelationshipService(
 
                 // Create inverse relationships if bidirectional, or if REFERENCE type (ie. The byproduct of a bidirectional relationship)
                 if (definition.bidirectional || definition.relationshipType == EntityTypeRelationshipType.REFERENCE) {
-                    createInverseRelationships(
+                    val createdImpacted = createInverseRelationships(
                         definition = definition,
                         sourceEntityId = id,
                         targetEntityIds = toAdd,
@@ -126,6 +138,7 @@ class EntityRelationshipService(
                         targetEntityTypes = targetEntityTypes,
                         organisationId = organisationId
                     )
+                    impactedEntityIds.addAll(createdImpacted)
                 }
             }
 
@@ -156,23 +169,29 @@ class EntityRelationshipService(
             entityRelationshipRepository.deleteAllBySourceIdAndFieldId(id, fieldId)
 
             if (definition.bidirectional && prevTargetIds.isNotEmpty()) {
-                removeInverseRelationships(
+                val removedImpacted = removeInverseRelationships(
                     definition = definition,
                     sourceEntityId = id,
                     targetEntityIds = prevTargetIds,
                     targetEntities = targetEntities,
                     targetEntityTypes = targetEntityTypes
                 )
+                impactedEntityIds.addAll(removedImpacted)
             }
         }
 
-        return resultLinks
+        return SaveRelationshipsResult(
+            links = resultLinks,
+            impactedEntityIds = impactedEntityIds
+        )
     }
 
     /**
      * Creates inverse relationships for bidirectional relationship definitions.
      * For each target entity, finds the corresponding REFERENCE relationship definition
      * and creates an EntityRelationshipEntity pointing back to the source.
+     *
+     * @return Set of entity IDs that had inverse relationships created (impacted entities)
      */
     private fun createInverseRelationships(
         definition: EntityRelationshipDefinition,
@@ -181,8 +200,8 @@ class EntityRelationshipService(
         targetEntities: Map<UUID?, EntityEntity>,
         targetEntityTypes: Map<UUID?, EntityTypeEntity>,
         organisationId: UUID
-    ) {
-
+    ): Set<UUID> {
+        val impactedEntityIds = mutableSetOf<UUID>()
 
         // Group target entities by their type
         val targetsByType = targetEntityIds.mapNotNull { targetId ->
@@ -212,6 +231,9 @@ class EntityRelationshipService(
 
 
             inverseRelationshipEntities.addAll(entityIds.map { targetEntityId ->
+                // Track this entity as impacted
+                impactedEntityIds.add(targetEntityId)
+
                 EntityRelationshipEntity(
                     organisationId = organisationId,
                     sourceId = targetEntityId,
@@ -224,11 +246,13 @@ class EntityRelationshipService(
 
         entityRelationshipRepository.saveAll(inverseRelationshipEntities)
 
-
+        return impactedEntityIds
     }
 
     /**
      * Removes inverse relationships when a bidirectional relationship is removed.
+     *
+     * @return Set of entity IDs that had inverse relationships removed (impacted entities)
      */
     private fun removeInverseRelationships(
         definition: EntityRelationshipDefinition,
@@ -236,7 +260,9 @@ class EntityRelationshipService(
         targetEntityIds: Set<UUID>,
         targetEntities: Map<UUID?, EntityEntity>,
         targetEntityTypes: Map<UUID?, EntityTypeEntity>
-    ) {
+    ): Set<UUID> {
+        val impactedEntityIds = mutableSetOf<UUID>()
+
         // Group target entities by their type
         val targetsByType = targetEntityIds.mapNotNull { targetId ->
             val entity = targetEntities[targetId] ?: return@mapNotNull null
@@ -265,6 +291,9 @@ class EntityRelationshipService(
 
             // Delete inverse relationships for each target entity
             for (targetEntityId in entityIds) {
+                // Track this entity as impacted
+                impactedEntityIds.add(targetEntityId)
+
                 entityRelationshipRepository.deleteAllBySourceIdAndFieldIdAndTargetIdIn(
                     sourceId = targetEntityId,
                     fieldId = inverseDefinition.id,
@@ -272,6 +301,8 @@ class EntityRelationshipService(
                 )
             }
         }
+
+        return impactedEntityIds
     }
 
     /**

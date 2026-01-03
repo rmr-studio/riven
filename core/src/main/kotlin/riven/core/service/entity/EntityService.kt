@@ -225,7 +225,7 @@ class EntityService(
                 entityAttributeService.saveUniqueValues(entityId, typeId, uniqueValuesToSave)
 
 
-                val relationships: Map<UUID, List<EntityLink>> = entityRelationshipService.saveRelationships(
+                val relationshipResult: SaveRelationshipsResult = entityRelationshipService.saveRelationships(
                     id = entityId,
                     organisationId = organisationId,
                     type = type,
@@ -245,8 +245,25 @@ class EntityService(
                     )
                 )
 
+                // Fetch impacted entities with their updated relationships
+                val impactedEntities: Map<UUID, List<Entity>>? = if (relationshipResult.impactedEntityIds.isNotEmpty()) {
+                    val impactedEntityEntities = entityRepository.findAllById(relationshipResult.impactedEntityIds)
+                    val impactedRelationships = entityRelationshipService.findRelatedEntities(
+                        entityIds = relationshipResult.impactedEntityIds
+                    )
+                    impactedEntityEntities
+                        .map { impactedEntity ->
+                            val impactedId = requireNotNull(impactedEntity.id)
+                            impactedEntity.toModel(relationships = impactedRelationships[impactedId] ?: emptyMap())
+                        }
+                        .groupBy { it.typeId }
+                } else {
+                    null
+                }
+
                 SaveEntityResponse(
-                    entity = entity.toModel(relationships = relationships)
+                    entity = entity.toModel(relationships = relationshipResult.links),
+                    impactedEntities = impactedEntities
                 )
             }
         } catch (e: SchemaValidationException) {

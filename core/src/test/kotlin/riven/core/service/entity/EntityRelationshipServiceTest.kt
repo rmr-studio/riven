@@ -199,8 +199,9 @@ class EntityRelationshipServiceTest {
                 curr = emptyMap()
             )
 
-            // Then: Returns empty map, no repository interactions
-            assertTrue(result.isEmpty(), "Result should be empty for entity with no relationships")
+            // Then: Returns empty links, no repository interactions
+            assertTrue(result.links.isEmpty(), "Result should be empty for entity with no relationships")
+            assertTrue(result.impactedEntityIds.isEmpty(), "No entities should be impacted")
             verify(entityRelationshipRepository, never()).saveAll<EntityRelationshipEntity>(any())
             verify(entityRelationshipRepository, never()).deleteAllBySourceIdAndFieldId(any(), any())
         }
@@ -239,12 +240,12 @@ class EntityRelationshipServiceTest {
             )
 
             // Then: Creates relationship and returns EntityLink
-            assertFalse(result.isEmpty(), "Result should contain the relationship")
-            assertTrue(result.containsKey(companyContactsRelId), "Result should have the field ID as key")
-            assertEquals(1, result[companyContactsRelId]?.size, "Should have one EntityLink")
+            assertFalse(result.links.isEmpty(), "Result should contain the relationship")
+            assertTrue(result.links.containsKey(companyContactsRelId), "Result should have the field ID as key")
+            assertEquals(1, result.links[companyContactsRelId]?.size, "Should have one EntityLink")
             assertEquals(
                 contactId,
-                result[companyContactsRelId]?.first()?.id,
+                result.links[companyContactsRelId]?.first()?.id,
                 "EntityLink should reference the contact"
             )
 
@@ -285,7 +286,7 @@ class EntityRelationshipServiceTest {
             )
 
             // Then: Creates all relationships
-            assertEquals(3, result[companyContactsRelId]?.size, "Should have three EntityLinks")
+            assertEquals(3, result.links[companyContactsRelId]?.size, "Should have three EntityLinks")
 
             verify(entityRelationshipRepository).saveAll<EntityRelationshipEntity>(argThat { entities: Collection<EntityRelationshipEntity> ->
                 entities.size == 3 &&
@@ -323,10 +324,10 @@ class EntityRelationshipServiceTest {
             )
 
             // Then: Both relationship fields have EntityLinks
-            assertTrue(result.containsKey(companyContactsRelId), "Result should have contacts field")
-            assertTrue(result.containsKey(companyProjectsRelId), "Result should have projects field")
-            assertEquals(1, result[companyContactsRelId]?.size)
-            assertEquals(1, result[companyProjectsRelId]?.size)
+            assertTrue(result.links.containsKey(companyContactsRelId), "Result should have contacts field")
+            assertTrue(result.links.containsKey(companyProjectsRelId), "Result should have projects field")
+            assertEquals(1, result.links[companyContactsRelId]?.size)
+            assertEquals(1, result.links[companyProjectsRelId]?.size)
         }
     }
 
@@ -361,7 +362,7 @@ class EntityRelationshipServiceTest {
                 }
 
             // When: Saving relationships
-            entityRelationshipService.saveRelationships(
+            val result = entityRelationshipService.saveRelationships(
                 id = entityId,
                 organisationId = organisationId,
                 type = companyEntityType,
@@ -388,6 +389,10 @@ class EntityRelationshipServiceTest {
                 inverseRel!!.fieldId,
                 "Inverse field ID should match REFERENCE definition"
             )
+
+            // Verify impacted entities includes the contact (which had inverse relationship created)
+            assertTrue(result.impactedEntityIds.contains(contactId), "Contact should be in impacted entities")
+            assertEquals(1, result.impactedEntityIds.size, "Only one entity should be impacted")
         }
 
         @Test
@@ -461,7 +466,7 @@ class EntityRelationshipServiceTest {
                 }
 
             // When: Saving relationships from the REFERENCE side (contact -> company)
-            entityRelationshipService.saveRelationships(
+            val result = entityRelationshipService.saveRelationships(
                 id = contactId,
                 organisationId = organisationId,
                 type = contactEntityType,
@@ -488,6 +493,10 @@ class EntityRelationshipServiceTest {
                 inverseRel!!.fieldId,
                 "Inverse field ID should match ORIGIN definition"
             )
+
+            // Verify impacted entities includes the company (which had inverse relationship created)
+            assertTrue(result.impactedEntityIds.contains(companyId), "Company should be in impacted entities")
+            assertEquals(1, result.impactedEntityIds.size, "Only one entity should be impacted")
         }
 
         @Test
@@ -789,8 +798,8 @@ class EntityRelationshipServiceTest {
             assertTrue(projectRels.isNotEmpty(), "Should create project relationships")
 
             // Result should include both relationship fields
-            assertTrue(result.containsKey(companyContactsRelId), "Result should have contacts")
-            assertTrue(result.containsKey(companyProjectsRelId), "Result should have projects")
+            assertTrue(result.links.containsKey(companyContactsRelId), "Result should have contacts")
+            assertTrue(result.links.containsKey(companyProjectsRelId), "Result should have projects")
         }
     }
 
@@ -881,7 +890,7 @@ class EntityRelationshipServiceTest {
                 .thenReturn(listOf(contactEntityType))
 
             // When: Saving relationships with empty list (all contacts removed)
-            entityRelationshipService.saveRelationships(
+            val result = entityRelationshipService.saveRelationships(
                 id = entityId,
                 organisationId = organisationId,
                 type = companyEntityType,
@@ -902,6 +911,10 @@ class EntityRelationshipServiceTest {
                 eq(contactCompanyRelId),
                 eq(setOf(entityId))
             )
+
+            // Verify impacted entities includes the contact (which had inverse relationship removed)
+            assertTrue(result.impactedEntityIds.contains(contactId), "Contact should be in impacted entities")
+            assertEquals(1, result.impactedEntityIds.size, "Only one entity should be impacted")
         }
 
         @Test
@@ -932,7 +945,7 @@ class EntityRelationshipServiceTest {
                 .thenReturn(listOf(companyEntityType))
 
             // When: Saving relationships with empty list (all companies removed from contact)
-            entityRelationshipService.saveRelationships(
+            val result = entityRelationshipService.saveRelationships(
                 id = contactId,
                 organisationId = organisationId,
                 type = contactEntityType,
@@ -953,6 +966,10 @@ class EntityRelationshipServiceTest {
                 eq(companyContactsRelId),
                 eq(setOf(contactId))
             )
+
+            // Verify impacted entities includes the company (which had inverse relationship removed)
+            assertTrue(result.impactedEntityIds.contains(companyId), "Company should be in impacted entities")
+            assertEquals(1, result.impactedEntityIds.size, "Only one entity should be impacted")
         }
 
         @Test
@@ -1173,7 +1190,7 @@ class EntityRelationshipServiceTest {
             assertEquals(validContactId, sourceRels.first().targetId)
 
             // Result should only have the valid entity link
-            assertEquals(1, result[companyContactsRelId]?.size, "Result should only have valid EntityLink")
+            assertEquals(1, result.links[companyContactsRelId]?.size, "Result should only have valid EntityLink")
         }
 
         @Test
@@ -1200,7 +1217,7 @@ class EntityRelationshipServiceTest {
 
             // Then: Unknown field is skipped, no relationships created
             verify(entityRelationshipRepository, never()).saveAll<EntityRelationshipEntity>(any())
-            assertFalse(result.containsKey(unknownFieldId), "Unknown field should not be in result")
+            assertFalse(result.links.containsKey(unknownFieldId), "Unknown field should not be in result")
         }
 
         @Test
@@ -1422,7 +1439,7 @@ class EntityRelationshipServiceTest {
             )
 
             // Then: EntityLink has correct properties
-            val entityLink = result[companyContactsRelId]?.first()
+            val entityLink = result.links[companyContactsRelId]?.first()
             assertNotNull(entityLink, "EntityLink should exist")
             assertEquals(contactId, entityLink!!.id)
             assertEquals(IconType.USER, entityLink.icon.icon)
@@ -1460,7 +1477,7 @@ class EntityRelationshipServiceTest {
             )
 
             // Then: EntityLink uses ID as label
-            val entityLink = result[companyContactsRelId]?.first()
+            val entityLink = result.links[companyContactsRelId]?.first()
             assertNotNull(entityLink)
             assertEquals(contactId.toString(), entityLink!!.label, "Should use entity ID as fallback label")
         }
