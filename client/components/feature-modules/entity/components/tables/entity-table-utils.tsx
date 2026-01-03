@@ -484,7 +484,7 @@ export function generateColumnsFromEntityType(
 
                                 return (
                                     <Link
-                                        href={`/organisation/${organisationId}/entity/${key}/${id}`}
+                                        href={`/dashboard/organisation/${organisationId}/entity/${key}/${id}`}
                                         key={`${fieldId}-${id}`}
                                         onClick={(e) => e.stopPropagation()}
                                     >
