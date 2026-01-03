@@ -12,13 +12,12 @@ import riven.core.enums.util.OperationType
 import riven.core.exceptions.SchemaValidationException
 import riven.core.models.common.Icon
 import riven.core.models.entity.Entity
-import riven.core.models.entity.EntityLink
 import riven.core.models.entity.payload.EntityAttributePayload
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.entity.payload.EntityAttributeRelationPayloadReference
 import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.request.entity.SaveEntityRequest
-import riven.core.models.response.entity.EntityImpactResponse
+import riven.core.models.response.entity.DeleteEntityResponse
 import riven.core.models.response.entity.SaveEntityResponse
 import riven.core.repository.entity.EntityRepository
 import riven.core.service.activity.ActivityService
@@ -27,7 +26,6 @@ import riven.core.service.entity.type.EntityTypeAttributeService
 import riven.core.service.entity.type.EntityTypeService
 import riven.core.util.ServiceUtil.findManyResults
 import riven.core.util.ServiceUtil.findOrThrow
-import java.time.ZonedDateTime
 import java.util.*
 
 /**
@@ -70,7 +68,8 @@ class EntityService(
     fun getEntity(id: UUID): Entity {
         val entity = findOrThrow { entityRepository.findById(id) }
         val relationships = entityRelationshipService.findRelatedEntities(
-            entityId = id
+            entityId = id,
+            organisationId = entity.organisationId
         )
 
         return entity.toModel(relationships = relationships)
@@ -92,12 +91,13 @@ class EntityService(
 
         require(entities.all { it.organisationId == organisationId }) { "One or more entities do not belong to the specified organisation" }
         val relationships = entityRelationshipService.findRelatedEntities(
-            entityIds = entities.mapNotNull { it.id }.toSet()
+            entityIds = entities.mapNotNull { it.id }.toSet(),
+            organisationId = organisationId
         )
 
         return entities.map {
             val id = requireNotNull(it.id)
-            it.toModel(relationships = relationships[id] ?: emptyMap())
+            it.toModel(audit = true, relationships = relationships[id] ?: emptyMap())
         }
     }
 
@@ -115,12 +115,13 @@ class EntityService(
         require(entities.all { it.organisationId == organisationId }) { "One or more entities do not belong to the specified organisation" }
 
         val relationships = entityRelationshipService.findRelatedEntities(
-            entityIds = entities.mapNotNull { it.id }.toSet()
+            entityIds = entities.mapNotNull { it.id }.toSet(),
+            organisationId = organisationId
         )
 
         return entities.map {
             val id = requireNotNull(it.id)
-            it.toModel(relationships = relationships[id] ?: emptyMap())
+            it.toModel(audit = true, relationships = relationships[id] ?: emptyMap())
         }.groupBy { it.typeId }
 
     }
@@ -246,23 +247,28 @@ class EntityService(
                 )
 
                 // Fetch impacted entities with their updated relationships
-                val impactedEntities: Map<UUID, List<Entity>>? = if (relationshipResult.impactedEntityIds.isNotEmpty()) {
-                    val impactedEntityEntities = entityRepository.findAllById(relationshipResult.impactedEntityIds)
-                    val impactedRelationships = entityRelationshipService.findRelatedEntities(
-                        entityIds = relationshipResult.impactedEntityIds
-                    )
-                    impactedEntityEntities
-                        .map { impactedEntity ->
-                            val impactedId = requireNotNull(impactedEntity.id)
-                            impactedEntity.toModel(relationships = impactedRelationships[impactedId] ?: emptyMap())
-                        }
-                        .groupBy { it.typeId }
-                } else {
-                    null
-                }
+                val impactedEntities: Map<UUID, List<Entity>>? =
+                    if (relationshipResult.impactedEntityIds.isNotEmpty()) {
+                        val impactedEntityEntities = entityRepository.findAllById(relationshipResult.impactedEntityIds)
+                        val impactedRelationships = entityRelationshipService.findRelatedEntities(
+                            entityIds = relationshipResult.impactedEntityIds,
+                            organisationId = organisationId
+                        )
+                        impactedEntityEntities
+                            .map { impactedEntity ->
+                                val impactedId = requireNotNull(impactedEntity.id)
+                                impactedEntity.toModel(
+                                    audit = true,
+                                    relationships = impactedRelationships[impactedId] ?: emptyMap()
+                                )
+                            }
+                            .groupBy { it.typeId }
+                    } else {
+                        null
+                    }
 
                 SaveEntityResponse(
-                    entity = entity.toModel(relationships = relationshipResult.links),
+                    entity = entity.toModel(audit = true, relationships = relationshipResult.links),
                     impactedEntities = impactedEntities
                 )
             }
@@ -275,37 +281,81 @@ class EntityService(
         }
     }
 
-    /**
-     * Delete an entity.
-     */
+
     @Transactional
     @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
-    fun deleteEntity(organisationId: UUID, id: UUID): EntityImpactResponse {
+    fun deleteEntities(organisationId: UUID, ids: List<UUID>): DeleteEntityResponse {
         val userId = authTokenService.getUserId()
-
-        val existing = findOrThrow { entityRepository.findById(id) }.apply {
-            archived = true
-            deletedAt = ZonedDateTime.now()
-        }.run {
-            require(this.organisationId == organisationId) { "Entity does not belong to the specified organisation" }
-            entityAttributeService.archiveEntity(id)
-            entityRelationshipService.archiveEntity(id)
-            entityRepository.save(this)
+        if (ids.isEmpty()) {
+            return DeleteEntityResponse(
+                error = "No entity IDs provided for deletion"
+            )
         }
 
-        activityService.logActivity(
-            activity = Activity.ENTITY,
-            operation = OperationType.DELETE,
-            userId = userId,
-            organisationId = organisationId,
-            entityId = id,
-            entityType = ApplicationEntityType.ENTITY,
-            details = mapOf(
-                "typeId" to existing.typeId.toString()
-            )
-        )
+        // Find all relationships where deleted entities are targets (to identify impacted entities)
+        val relationshipsToArchive = ids.flatMap { deletedId ->
+            entityRelationshipService.findByTargetId(deletedId)
+        }
 
-        TODO()
+        // Extract unique source entity IDs that will be impacted
+        val impactedEntityIds = relationshipsToArchive
+            .map { it.sourceId }
+            .toSet()
+            .filter { !ids.contains(it) } // Exclude entities being deleted
+
+        // Archive entities, their unique values, and relationships
+        val deletedEntities = entityRepository.archiveByIds(ids.toTypedArray(), organisationId)
+        val deletedRowIds = deletedEntities.mapNotNull { it.id }.toSet()
+
+        if (deletedRowIds.isEmpty()) {
+            return DeleteEntityResponse(
+                error = "No entities were deleted. Please check the provided IDs."
+            )
+        }
+
+        entityAttributeService.archiveEntities(deletedRowIds)
+        entityRelationshipService.archiveEntities(deletedRowIds, organisationId)
+
+        // Log activity for each deleted entity
+        deletedEntities.forEach { entity ->
+            activityService.logActivity(
+                activity = Activity.ENTITY,
+                operation = OperationType.DELETE,
+                userId = userId,
+                organisationId = organisationId,
+                entityId = entity.id,
+                entityType = ApplicationEntityType.ENTITY,
+                details = mapOf(
+                    "typeId" to entity.typeId.toString(),
+                    "typeKey" to entity.typeKey
+                )
+            )
+        }
+
+        // Fetch impacted entities with their updated relationships
+        val updatedEntities: Map<UUID, List<Entity>>? = if (impactedEntityIds.isNotEmpty()) {
+            val impactedEntityEntities = entityRepository.findAllById(impactedEntityIds)
+            val impactedRelationships = entityRelationshipService.findRelatedEntities(
+                entityIds = impactedEntityIds.toSet(),
+                organisationId = organisationId
+            )
+            impactedEntityEntities
+                .map { impactedEntity ->
+                    val impactedId = requireNotNull(impactedEntity.id)
+                    impactedEntity.toModel(
+                        audit = true,
+                        relationships = impactedRelationships[impactedId] ?: emptyMap()
+                    )
+                }
+                .groupBy { it.typeId }
+        } else {
+            null
+        }
+
+        return DeleteEntityResponse(
+            deletedCount = deletedRowIds.size,
+            updatedEntities = updatedEntities
+        )
     }
 
 

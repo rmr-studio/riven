@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import riven.core.models.entity.Entity
 import riven.core.models.request.entity.SaveEntityRequest
-import riven.core.models.response.entity.EntityImpactResponse
+import riven.core.models.response.entity.DeleteEntityResponse
 import riven.core.models.response.entity.SaveEntityResponse
 import riven.core.service.entity.EntityService
 import java.util.*
@@ -108,7 +108,8 @@ class EntityController(
         return ResponseEntity.ok(response)
     }
 
-    @DeleteMapping("/organisation/{organisationId}/entity/{entityId}")
+
+    @DeleteMapping("/organisation/{organisationId}")
     @Operation(
         summary = "Deletes an entity instance",
         description = "Deleted the specified entity instance within the organisation."
@@ -120,10 +121,9 @@ class EntityController(
     )
     fun deleteEntity(
         @PathVariable organisationId: UUID,
-        @PathVariable entityId: UUID
-    ): ResponseEntity<EntityImpactResponse> {
-        entityService.deleteEntity(organisationId, entityId)
-        val response = entityService.deleteEntity(organisationId, entityId)
+        @RequestBody entityIds: List<UUID>,
+    ): ResponseEntity<DeleteEntityResponse> {
+        val response = entityService.deleteEntities(organisationId, entityIds)
         return ResponseEntity.ok(response)
     }
 }
