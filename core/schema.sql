@@ -393,9 +393,8 @@ CREATE TABLE IF NOT EXISTS public.entities_unique_values
     "archived"    BOOLEAN NOT NULL         DEFAULT FALSE,
     "deleted_at"  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_unique_attribute_per_type
-        UNIQUE (type_id, field_id, field_value)
+        UNIQUE (type_id, field_id, field_value, archived)
 );
-
 
 CREATE OR REPLACE FUNCTION sync_entity_identifier_key()
     RETURNS TRIGGER AS
@@ -421,31 +420,58 @@ EXECUTE FUNCTION sync_entity_identifier_key();
 
 
 -- Function to update entity count in entity_types
+-- Handles soft deletion via 'archived' field:
+-- - INSERT: increment count (only if not archived)
+-- - UPDATE: decrement on archive, increment on restore
+-- - DELETE: decrement only if not already archived (avoid double-decrement)
 CREATE OR REPLACE FUNCTION public.update_entity_type_count()
     RETURNS TRIGGER AS
 $$
 BEGIN
     IF (TG_OP = 'INSERT') THEN
-        -- Increment entity count on INSERT
-        UPDATE public.entity_types
-        SET count      = count + 1,
-            updated_at = now()
-        WHERE id = NEW.type_id;
+        -- Increment entity count on INSERT (only if not archived)
+        IF NEW.archived = false THEN
+            UPDATE public.entity_types
+            SET count      = count + 1,
+                updated_at = now()
+            WHERE id = NEW.type_id;
+        END IF;
+
+    ELSIF (TG_OP = 'UPDATE') THEN
+        -- Handle archive status changes
+        IF OLD.archived = false AND NEW.archived = true THEN
+            -- Entity is being archived: decrement count
+            UPDATE public.entity_types
+            SET count      = count - 1,
+                updated_at = now()
+            WHERE id = NEW.type_id;
+
+        ELSIF OLD.archived = true AND NEW.archived = false THEN
+            -- Entity is being restored: increment count
+            UPDATE public.entity_types
+            SET count      = count + 1,
+                updated_at = now()
+            WHERE id = NEW.type_id;
+        END IF;
+
     ELSIF (TG_OP = 'DELETE') THEN
-        -- Decrement entity count on DELETE
-        UPDATE public.entity_types
-        SET count      = count - 1,
-            updated_at = now()
-        WHERE id = OLD.type_id;
+        -- Decrement entity count on DELETE (only if not already archived)
+        -- If archived, the count was already decremented during archiving
+        IF OLD.archived = false THEN
+            UPDATE public.entity_types
+            SET count      = count - 1,
+                updated_at = now()
+            WHERE id = OLD.type_id;
+        END IF;
     END IF;
 
-    RETURN NULL; -- Triggers on INSERT/DELETE do not modify the rows
+    RETURN NULL; -- Triggers on INSERT/UPDATE/DELETE do not modify the rows
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger for INSERT and DELETE on entities
+-- Trigger for INSERT, UPDATE (of archived field), and DELETE on entities
 CREATE OR REPLACE TRIGGER trg_update_entity_type_count
-    AFTER INSERT OR DELETE
+    AFTER INSERT OR UPDATE OF archived OR DELETE
     ON public.entities
     FOR EACH ROW
 EXECUTE FUNCTION public.update_entity_type_count();

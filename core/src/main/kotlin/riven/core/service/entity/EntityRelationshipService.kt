@@ -314,16 +314,16 @@ class EntityRelationshipService(
         return payload?.value?.toString() ?: entity.id.toString()
     }
 
-    fun findRelatedEntities(entityId: UUID): Map<UUID, List<EntityLink>> {
-        return entityRelationshipRepository.findEntityLinksBySourceId(entityId)
+    fun findRelatedEntities(entityId: UUID, organisationId: UUID): Map<UUID, List<EntityLink>> {
+        return entityRelationshipRepository.findEntityLinksBySourceId(entityId, organisationId)
             .groupBy { it.getFieldId() }
             .mapValues { (_, projections) ->
                 projections.map { it.toEntityLink() }
             }
     }
 
-    fun findRelatedEntities(entityIds: Set<UUID>): Map<UUID, Map<UUID, List<EntityLink>>> {
-        return entityRelationshipRepository.findEntityLinksBySourceIdIn(entityIds)
+    fun findRelatedEntities(entityIds: Set<UUID>, organisationId: UUID): Map<UUID, Map<UUID, List<EntityLink>>> {
+        return entityRelationshipRepository.findEntityLinksBySourceIdIn(entityIds.toTypedArray(), organisationId)
             .groupBy { it.getSourceEntityId() }
             .mapValues { (_, projections) ->
                 projections.groupBy { it.getFieldId() }
@@ -333,7 +333,15 @@ class EntityRelationshipService(
             }
     }
 
-    fun archiveEntity(id: UUID): Int {
-        return entityRelationshipRepository.archiveEntity(id)
+    /**
+     * Find all relationships where the given entity is the target.
+     * Used to identify entities that will be impacted when a target entity is deleted.
+     */
+    fun findByTargetId(targetId: UUID): List<EntityRelationshipEntity> {
+        return entityRelationshipRepository.findByTargetId(targetId)
+    }
+
+    fun archiveEntities(ids: Collection<UUID>, organisationId: UUID): List<EntityRelationshipEntity> {
+        return entityRelationshipRepository.archiveEntities(ids.toTypedArray(), organisationId)
     }
 }

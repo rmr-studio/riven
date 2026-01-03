@@ -38,8 +38,6 @@ export const isRelationshipPayload = (
     return payload.type === EntityPropertyType.RELATIONSHIP;
 };
 
-
-
 export type CreateEntityTypeRequest = components["schemas"]["CreateEntityTypeRequest"];
 
 export enum RelationshipLimit {
@@ -74,6 +72,8 @@ export type DeleteAttributeDefinitionRequest =
     components["schemas"]["DeleteAttributeDefinitionRequest"];
 export type DeleteRelationshipDefinitionRequest =
     components["schemas"]["DeleteRelationshipDefinitionRequest"];
+
+export type DeleteEntityResponse = components["schemas"]["DeleteEntityResponse"];
 
 export interface EntityAttributeDefinition {
     id: string;

@@ -1,8 +1,11 @@
 package riven.core.models.response.entity
 
-data class EntityImpactResponse(
-    // Return the updated entity(s) after the update operation
+import riven.core.models.entity.Entity
+import java.util.*
+
+data class DeleteEntityResponse(
     val error: String? = null,
-    val updatedEntities: Map<String, Any>? = null,
-    val impact: Any? = null
+    // If the delete operation impacted other entities (eg. due to relationship changes), return them here grouped by EntityType key
+    val deletedCount: Int = 0,
+    val updatedEntities: Map<UUID, List<Entity>>? = null,
 )

@@ -68,11 +68,11 @@ interface EntityUniqueValuesRepository : JpaRepository<EntityUniqueValueEntity, 
         value = """
             UPDATE entities_unique_values
             SET archived = true, deleted_at = CURRENT_TIMESTAMP
-            WHERE entity_id = :entityId AND archived = false
+            WHERE entity_id in :ids and archived = false
         """,
         nativeQuery = true
     )
-    fun archiveEntity(entityId: UUID): Int
+    fun archiveEntities(ids: Collection<UUID>): Int
 
     @Modifying(clearAutomatically = true)
     @Query(

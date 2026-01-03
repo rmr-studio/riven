@@ -8,7 +8,10 @@ import java.util.*
 @Table(
     name = "entities_unique_values",
     uniqueConstraints = [
-        UniqueConstraint(name = "uq_unique_attribute_per_type", columnNames = ["type_id", "field_id", "field_value"])
+        UniqueConstraint(
+            name = "uq_unique_attribute_per_type",
+            columnNames = ["type_id", "field_id", "field_value", "archived"]
+        )
     ]
 )
 data class EntityUniqueValueEntity(
