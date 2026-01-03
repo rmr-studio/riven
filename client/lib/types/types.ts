@@ -544,6 +544,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/entity/organisation/{organisationId}/entity/{entityId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Deletes an entity instance
+         * @description Deleted the specified entity instance within the organisation.
+         */
+        delete: operations["deleteEntity"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1037,7 +1057,12 @@ export interface components {
             id: string;
             /** Format: uuid */
             organisationId: string;
+            /** Format: uuid */
+            fieldId: string;
+            /** Format: uuid */
+            sourceEntityId: string;
             icon: components["schemas"]["Icon"];
+            key: string;
             label: string;
         };
         SaveEntityRequest: {
@@ -1071,7 +1096,6 @@ export interface components {
             /** Format: uuid */
             updatedBy?: string;
             identifier: string;
-            link: components["schemas"]["EntityLink"];
         };
         EntityAttribute: {
             payload: components["schemas"]["EntityAttributePrimitivePayload"] | components["schemas"]["EntityAttributeRelationPayload"];
@@ -1079,6 +1103,9 @@ export interface components {
         SaveEntityResponse: {
             entity?: components["schemas"]["Entity"];
             errors?: string[];
+            impactedEntities?: {
+                [key: string]: components["schemas"]["Entity"][];
+            };
         };
         CreateBlockTypeRequest: {
             key: string;
@@ -1232,9 +1259,9 @@ export interface components {
         ListFilterLogicType: ListFilterLogicType;
         Metadata: {
             type: components["schemas"]["BlockMetadataType"];
-            meta: components["schemas"]["BlockMeta"];
             readonly: boolean;
             deletable: boolean;
+            meta: components["schemas"]["BlockMeta"];
         };
         Node: {
             warnings: string[];
@@ -1500,6 +1527,13 @@ export interface components {
         ApplicationEntityType: ApplicationEntityType;
         DeleteTypeDefinitionRequest: {
             definition: components["schemas"]["DeleteRelationshipDefinitionRequest"] | components["schemas"]["DeleteAttributeDefinitionRequest"];
+        };
+        EntityImpactResponse: {
+            error?: string;
+            updatedEntities?: {
+                [key: string]: Record<string, never>;
+            };
+            impact?: Record<string, never>;
         };
     };
     responses: never;
@@ -2067,9 +2101,7 @@ export interface operations {
     };
     saveEntity: {
         parameters: {
-            query?: {
-                impactConfirmed?: boolean;
-            };
+            query?: never;
             header?: never;
             path: {
                 organisationId: string;
@@ -2846,6 +2878,47 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    deleteEntity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                organisationId: string;
+                entityId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Entity instance deleted successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityImpactResponse"];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityImpactResponse"];
+                };
+            };
+            /** @description Organisation or entity not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EntityImpactResponse"];
+                };
             };
         };
     };

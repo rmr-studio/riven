@@ -52,6 +52,8 @@ export interface DataTableProviderProps<TData> extends CreateDataTableStoreOptio
     onSearchChange?: (value: string) => void;
     /** Callback when selection changes */
     onSelectionChange?: (selectedRows: TData[]) => void;
+    /** Callback when a cell is edited (returns true on success) */
+    onCellEdit?: (row: TData, columnId: string, newValue: any, oldValue: any) => Promise<boolean>;
 }
 
 export function DataTableProvider<TData>({
@@ -64,6 +66,8 @@ export function DataTableProvider<TData>({
     onFiltersChange,
     onSearchChange,
     onSelectionChange,
+    onCellEdit,
+    getRowId,
 }: DataTableProviderProps<TData>) {
     const storeRef = useRef<DataTableStoreApi<TData> | null>(null);
 
@@ -72,6 +76,8 @@ export function DataTableProvider<TData>({
         storeRef.current = createDataTableStore<TData>({
             initialData,
             initialColumnSizing,
+            getRowId,
+            onCellEdit,
         });
     }
 
@@ -79,6 +85,11 @@ export function DataTableProvider<TData>({
     useEffect(() => {
         storeRef.current?.getState().setTableData(initialData);
     }, [initialData]);
+
+    // Sync onCellEdit callback changes to store (prevents stale closures)
+    useEffect(() => {
+        storeRef.current?.getState().setOnCellEdit(onCellEdit ?? null);
+    }, [onCellEdit]);
 
     // Subscribe to store changes and notify parent via callbacks
     useEffect(() => {
@@ -117,7 +128,13 @@ export function DataTableProvider<TData>({
                       activeFilters: state.activeFilters,
                       enabledFilters: state.enabledFilters,
                   }),
-                  ({ activeFilters, enabledFilters }: { activeFilters: Record<string, any>; enabledFilters: Set<string> }) => {
+                  ({
+                      activeFilters,
+                      enabledFilters,
+                  }: {
+                      activeFilters: Record<string, any>;
+                      enabledFilters: Set<string>;
+                  }) => {
                       const enabledActiveFilters = Object.fromEntries(
                           Object.entries(activeFilters).filter(([key]) => enabledFilters.has(key))
                       );
@@ -212,17 +229,23 @@ export function useDataTableStore<TData, TResult>(
  * but React won't re-render because we only use it for actions.
  */
 export function useDataTableActions<TData>() {
-    return useDataTableStore<TData, DataTableStore<TData>>((state) => state, () => true);
+    return useDataTableStore<TData, DataTableStore<TData>>(
+        (state) => state,
+        () => true
+    );
 }
 
-export function useDataTableSearch<TData>(){
-    return useDataTableStore<TData, {
-        searchValue: string;
-        setGlobalFilter: (value: string) => void;
-        table: Table<TData> | null;
-        setSearchValue: (value: string) => void;
-        clearSearch: () => void;
-    }>((state) => ({
+export function useDataTableSearch<TData>() {
+    return useDataTableStore<
+        TData,
+        {
+            searchValue: string;
+            setGlobalFilter: (value: string) => void;
+            table: Table<TData> | null;
+            setSearchValue: (value: string) => void;
+            clearSearch: () => void;
+        }
+    >((state) => ({
         setGlobalFilter: state.setGlobalFilter,
         searchValue: state.searchValue,
         setSearchValue: state.setSearchValue,
@@ -311,6 +334,29 @@ export function useUIState<TData>() {
     }));
 }
 
+export function useCellInteraction<TData>() {
+    return useDataTableStore<
+        TData,
+        {
+            editingCell: { rowId: string; columnId: string } | null;
+            focusedCell: { rowId: string; columnId: string } | null;
+            startEditing: (rowId: string, columnId: string, initialValue: any) => Promise<void>;
+            cancelEditing: () => void;
+            commitEdit: () => Promise<void>;
+            exitToFocused: () => void;
+            updatePendingValue: (value: any) => void;
+        }
+    >((state) => ({
+        editingCell: state.editingCell,
+        focusedCell: state.focusedCell,
+        startEditing: state.startEditing,
+        cancelEditing: state.cancelEditing,
+        commitEdit: state.commitEdit,
+        exitToFocused: state.exitToFocused,
+        updatePendingValue: state.updatePendingValue,
+    }));
+}
+
 /** Get derived state flags */
 export function useDerivedState<TData>(enableDragDrop: boolean, enableSelection: boolean) {
     return useDataTableStore<
@@ -322,7 +368,7 @@ export function useDerivedState<TData>(enableDragDrop: boolean, enableSelection:
         }
     >((state) => ({
         isDragDropEnabled: state.isDragDropEnabled(enableDragDrop),
-        isSelectionEnabled: state.isSelectionEnabled(enableSelection, enableDragDrop),
+        isSelectionEnabled: enableSelection,
         activeFilterCount: state.getActiveFilterCount(),
     }));
 }

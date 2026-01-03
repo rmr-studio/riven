@@ -1,13 +1,19 @@
 "use client";
 
-import { OptionalTooltip } from "@/components/ui/optional-tooltip";
 import { Button } from "@/components/ui/button";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+} from "@/components/ui/command";
 import { Label } from "@/components/ui/label";
+import { OptionalTooltip } from "@/components/ui/optional-tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { Check, ChevronsUpDown, CircleAlert } from "lucide-react";
 import { cn } from "@/lib/util/utils";
-import { FC, useState } from "react";
+import { Check, ChevronsUpDown, CircleAlert } from "lucide-react";
+import { FC, useEffect, useState } from "react";
 import { FormWidgetProps } from "../form-widget.types";
 
 export const DropdownWidget: FC<FormWidgetProps<string>> = ({
@@ -21,9 +27,19 @@ export const DropdownWidget: FC<FormWidgetProps<string>> = ({
     displayError = "message",
     disabled,
     options = [],
+    autoFocus,
 }) => {
     const [open, setOpen] = useState(false);
     const hasErrors = errors && errors.length > 0;
+
+    // Auto-open popover when autoFocus is true (e.g., in table cell edit mode)
+    useEffect(() => {
+        if (autoFocus && !disabled) {
+            // Small delay to ensure DOM is ready
+            const timer = setTimeout(() => setOpen(true), 0);
+            return () => clearTimeout(timer);
+        }
+    }, [autoFocus, disabled]);
 
     const selectedOption = options.find((opt) => opt.value === value);
 
@@ -40,7 +56,16 @@ export const DropdownWidget: FC<FormWidgetProps<string>> = ({
                 )}
                 {description && <p className="text-sm text-muted-foreground">{description}</p>}
                 <div className="relative">
-                    <Popover open={open} onOpenChange={setOpen}>
+                    <Popover
+                        open={open}
+                        onOpenChange={(isOpen) => {
+                            setOpen(isOpen);
+                            // Call onBlur when popover closes (handles both selection and click-outside)
+                            if (!isOpen) {
+                                onBlur?.();
+                            }
+                        }}
+                    >
                         <PopoverTrigger asChild>
                             <Button
                                 variant="outline"
@@ -65,17 +90,18 @@ export const DropdownWidget: FC<FormWidgetProps<string>> = ({
                                     {options.map((option) => (
                                         <CommandItem
                                             key={option.value}
-                                            value={option.value}
+                                            value={option.label}
                                             onSelect={() => {
                                                 onChange(option.value);
                                                 setOpen(false);
-                                                onBlur?.();
                                             }}
                                         >
                                             <Check
                                                 className={cn(
                                                     "mr-2 h-4 w-4",
-                                                    value === option.value ? "opacity-100" : "opacity-0"
+                                                    value === option.value
+                                                        ? "opacity-100"
+                                                        : "opacity-0"
                                                 )}
                                             />
                                             {option.label}

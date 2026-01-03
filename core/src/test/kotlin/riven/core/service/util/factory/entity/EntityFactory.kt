@@ -149,16 +149,14 @@ object EntityFactory {
         organisationId: UUID = UUID.randomUUID(),
         sourceId: UUID = UUID.randomUUID(),
         targetId: UUID = UUID.randomUUID(),
-        key: String = "related_entity",
-        label: String? = "Related Entity"
+        fieldId: UUID = UUID.randomUUID()
     ): EntityRelationshipEntity {
         return EntityRelationshipEntity(
             id = id,
             organisationId = organisationId,
             sourceId = sourceId,
             targetId = targetId,
-            key = key,
-            label = label
+            fieldId = fieldId
         )
     }
 

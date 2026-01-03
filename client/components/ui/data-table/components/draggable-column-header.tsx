@@ -1,11 +1,12 @@
 "use client";
 
+import { TableHead } from "@/components/ui/table";
+import { cn } from "@/lib/util/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Header, flexRender } from "@tanstack/react-table";
-import { TableHead } from "@/components/ui/table";
-import { useDataTableStore } from "../data-table-provider";
-import { cn } from "@/lib/util/utils";
+import { useCallback } from "react";
+import { useDataTableActions, useDataTableStore } from "../data-table-provider";
 import type { ColumnResizingConfig } from "../data-table.types";
 
 interface DraggableColumnHeaderProps<TData, TValue> {
@@ -22,21 +23,57 @@ export function DraggableColumnHeader<TData, TValue>({
     addingNewEntry,
 }: DraggableColumnHeaderProps<TData, TValue>) {
     const isMounted = useDataTableStore<TData, boolean>((state) => state.isMounted);
+    const resizingColumnId = useDataTableStore<TData, string | null>(
+        (state) => state.resizingColumnId
+    );
+    const { setResizingColumnId } = useDataTableActions<TData>();
+
+    // Actions column should not be draggable - it stays fixed at the left
+    const isActionsColumn = header.id === "actions";
+
+    // Check if ANY column is currently being resized (not just this one)
+    const isAnyColumnResizing = resizingColumnId !== null;
+    const isThisColumnResizing = header.column.getIsResizing();
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: header.id,
-        disabled: !enableColumnOrdering || !isMounted,
+        disabled: !enableColumnOrdering || !isMounted || isActionsColumn || isAnyColumnResizing,
     });
+
+    // Wrap the resize handler to track resize state in the store
+    // Attaches global mouseup/touchend listener to clear state when resize ends
+    // Uses a small delay before re-enabling drag to prevent accidental reorder on small columns
+    const wrappedResizeHandler = useCallback(
+        (event: React.MouseEvent | React.TouchEvent) => {
+            setResizingColumnId(header.id);
+
+            const cleanup = () => {
+                // Debounce before re-enabling drag to prevent accidental reorder
+                // when resizing small columns (mouse release can trigger drag)
+
+                setResizingColumnId(null);
+
+                document.removeEventListener("mouseup", cleanup);
+                document.removeEventListener("touchend", cleanup);
+            };
+
+            document.addEventListener("mouseup", cleanup);
+            document.addEventListener("touchend", cleanup);
+
+            header.getResizeHandler()(event);
+        },
+        [header, setResizingColumnId]
+    );
 
     const style = isMounted
         ? {
-              transform: CSS.Transform.toString(transform),
-              transition,
+              transform: isAnyColumnResizing ? undefined : CSS.Transform.toString(transform),
+              transition: isAnyColumnResizing ? undefined : transition,
               opacity: isDragging ? 0.5 : 1,
-              width: columnResizing?.enabled ? `${header.getSize()}px` : undefined,
+              width: `${header.getSize()}px`,
           }
         : {
-              width: columnResizing?.enabled ? `${header.getSize()}px` : undefined,
+              width: `${header.getSize()}px`,
           };
 
     return (
@@ -46,7 +83,7 @@ export function DraggableColumnHeader<TData, TValue>({
             key={header.id}
             className={cn(
                 "py-2 px-3 relative border-l first:border-l-transparent",
-                enableColumnOrdering && "cursor-move"
+                enableColumnOrdering && !isActionsColumn && "cursor-move"
             )}
             {...(isMounted && enableColumnOrdering ? attributes : {})}
             {...(isMounted && enableColumnOrdering ? listeners : {})}
@@ -59,8 +96,8 @@ export function DraggableColumnHeader<TData, TValue>({
 
             {columnResizing?.enabled && header.column.getCanResize() && !addingNewEntry && (
                 <div
-                    onMouseDown={header.getResizeHandler()}
-                    onTouchStart={header.getResizeHandler()}
+                    onMouseDown={wrappedResizeHandler}
+                    onTouchStart={wrappedResizeHandler}
                     className={cn(
                         "absolute top-0 right-0 h-full w-3 cursor-col-resize select-none",
                         "group/resizer z-10"
@@ -72,7 +109,7 @@ export function DraggableColumnHeader<TData, TValue>({
                             "absolute top-0 right-0 h-full w-[1px]",
                             "bg-transparent group-hover/resizer:bg-blue-500 group-hover/resizer:w-[2px]",
                             "group-active/resizer:bg-blue-600 transition-all duration-150",
-                            header.column.getIsResizing() && "bg-blue-600 w-[2px]"
+                            isThisColumnResizing && "bg-blue-600 w-[2px]"
                         )}
                     />
                 </div>

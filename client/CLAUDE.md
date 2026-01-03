@@ -90,7 +90,7 @@ feature-name/
 **Key modules:**
 
 -   **blocks/** - Flexible content composition with drag-and-drop grid layouts, nested block hierarchies, entity references, form widgets, portal-based rendering
--   **entity/** - Dynamic schema management with attributes, bidirectional relationships, cardinality constraints, impact analysis, auto-save configuration forms
+-   **entity/** - Dynamic schema management with attributes, bidirectional relationships, cardinality constraints, impact analysis
 
 ## 4. Development Commands
 
@@ -216,17 +216,8 @@ export const createEntityTypeConfigStore = (
     return create<EntityTypeConfigStore>()(
         subscribeWithSelector((set, get) => ({
             isDirty: false,
-            draftValues: null,
 
             setDirty: (isDirty) => set({ isDirty }),
-            saveDraft: (values) => {
-                const storageKey = `entity-type-draft-${organisationId}-${entityTypeKey}`;
-                localStorage.setItem(storageKey, JSON.stringify({
-                    values,
-                    timestamp: Date.now()
-                }));
-                set({ draftValues: values });
-            },
         }))
     );
 };
@@ -263,7 +254,7 @@ export const useEntityTypeConfigurationStore = <T,>(
 -   `subscribeWithSelector` enables fine-grained subscriptions
 -   Store refs in provider prevent recreation
 
-#### 5. React Hook Form + Auto-save
+#### 5. React Hook Form
 
 ```typescript
 const form = useForm<EntityTypeFormValues>({
@@ -271,38 +262,15 @@ const form = useForm<EntityTypeFormValues>({
     defaultValues: {
         /* ... */
     },
+    mode: "onBlur", // Validate on blur
 });
-
-// Auto-save effect (common pattern)
-useEffect(() => {
-    const subscription = form.watch((values) => {
-        const timeoutId = setTimeout(() => {
-            store.saveDraft(values);
-        }, 1000); // Debounce 1 second
-
-        return () => clearTimeout(timeoutId);
-    });
-
-    return () => subscription.unsubscribe();
-}, [form, store]);
-
-// Draft restoration on mount
-useEffect(() => {
-    const draft = store.getDraft();
-    if (draft && !isStale(draft.timestamp)) {
-        form.reset(draft.values);
-        toast.info("Restored unsaved changes");
-    }
-}, []);
 ```
 
 **Pattern:**
 
--   Zod schema validation
--   Auto-save with 1-second debounce
--   Draft persistence to localStorage
--   Restoration prompt on mount
--   Draft staleness check (usually 7 days)
+-   Zod schema validation via `zodResolver`
+-   Appropriate validation mode (onBlur, onChange, onSubmit)
+-   Type-safe form values from schema
 
 #### 6. Portal-Based Rendering (Blocks)
 
@@ -468,20 +436,6 @@ export const EntityTypeConfigurationProvider = ({
         );
     }
 
-    // Auto-save and draft management effects
-    useEffect(() => {
-        const store = storeRef.current?.getState();
-        if (!store) return;
-
-        // Draft restoration logic
-        const draft = store.loadDraft();
-        if (draft) {
-            toast.info("Unsaved changes found", {
-                action: { label: "Restore", onClick: () => form.reset(draft) },
-            });
-        }
-    }, [entityType.key]);
-
     return (
         <EntityTypeConfigContext.Provider value={storeRef.current}>
             {children}
@@ -498,7 +452,7 @@ export const useConfigForm = () => {
 **When to use each pattern:**
 
 -   **Form Hook:** Modal forms, isolated components, single-level usage, simple workflows
--   **Context Provider:** Multi-step forms, forms with nested components at different levels, global state needed, complex draft/auto-save requirements
+-   **Context Provider:** Multi-step forms, forms with nested components at different levels, global state needed
 
 ## 6. Key Domain Concepts
 
@@ -538,8 +492,6 @@ export const useConfigForm = () => {
 
 **Critical Features:**
 
--   **Auto-save:** Form changes saved to localStorage every 1 second
--   **Draft Management:** Drafts expire after 7 days, restoration offered on mount
 -   **Impact Analysis:** Server performs dry-run before schema changes
 -   **Dirty Tracking:** Visual indicators show unsaved changes
 
@@ -634,16 +586,14 @@ interface EntityTypeImpactResponse {
 ## Development Gotchas
 
 1. **Never import types directly from `lib/types/types.ts`** - Always use re-exported types from feature interfaces
-2. **Enums can be importated directly from `libs/types.ts`** - They do not need to be re-exported, as it is an exported const
-3. **Auto-save is 1 second debounced** - Don't add additional debouncing in form components
-4. **Draft storage keys must be unique** - Include both organisationId and entity key
-5. **Impact confirmation required** - Schema changes need `impactConfirmed=true` after showing impact
-6. **Portal rendering requires containers** - Gridstack must be initialized before rendering widgets
-7. **Store factories are per-instance** - Never reuse store instances across different entities
-8. **Session validation is critical** - Always call `validateSession()` before API calls
-9. **Type guards over assertions** - Use type guard functions, not `as` casts
-10. **OpenAPI types regenerate** - Run `npm run types` after backend schema changes
-11. **Client components need directive** - Add `"use client"` when using hooks/browser APIs
+2. **Enums can be imported directly from `libs/types.ts`** - They do not need to be re-exported, as it is an exported const
+3. **Impact confirmation required** - Schema changes need `impactConfirmed=true` after showing impact
+4. **Portal rendering requires containers** - Gridstack must be initialized before rendering widgets
+5. **Store factories are per-instance** - Never reuse store instances across different entities
+6. **Session validation is critical** - Always call `validateSession()` before API calls
+7. **Type guards over assertions** - Use type guard functions, not `as` casts
+8. **OpenAPI types regenerate** - Run `npm run types` after backend schema changes
+9. **Client components need directive** - Add `"use client"` when using hooks/browser APIs
 
 ## Common Tasks
 

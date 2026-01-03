@@ -1,8 +1,8 @@
 "use client";
 
-import { OptionalTooltip } from "@/components/ui/optional-tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { OptionalTooltip } from "@/components/ui/optional-tooltip";
 import { cn } from "@/lib/util/utils";
 import { CircleAlert } from "lucide-react";
 import { FC, useState } from "react";
@@ -18,6 +18,7 @@ export const CurrencyInputWidget: FC<FormWidgetProps<number>> = ({
     errors,
     displayError = "message",
     disabled,
+    autoFocus,
 }) => {
     const hasErrors = errors && errors.length > 0;
     const [input, setInput] = useState("");
@@ -33,9 +34,12 @@ export const CurrencyInputWidget: FC<FormWidgetProps<number>> = ({
     };
 
     const handleBlur = () => {
-        const parsedValue = input ? parseFloat(input) : 0;
-        onChange(parsedValue);
-        setInput("");
+        // Only update if the user actually typed something, otherwise preserve original value
+        if (input) {
+            const parsedValue = parseFloat(input);
+            onChange(parsedValue);
+            setInput("");
+        }
         onBlur?.();
     };
 
@@ -58,6 +62,7 @@ export const CurrencyInputWidget: FC<FormWidgetProps<number>> = ({
                         $
                     </span>
                     <Input
+                        autoFocus={autoFocus}
                         id={label}
                         type="text"
                         value={displayValue}

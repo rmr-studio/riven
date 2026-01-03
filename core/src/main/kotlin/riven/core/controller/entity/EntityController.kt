@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import riven.core.models.entity.Entity
 import riven.core.models.request.entity.SaveEntityRequest
+import riven.core.models.response.entity.EntityImpactResponse
 import riven.core.models.response.entity.SaveEntityResponse
 import riven.core.service.entity.EntityService
 import java.util.*
@@ -102,10 +103,27 @@ class EntityController(
         @PathVariable organisationId: UUID,
         @PathVariable entityTypeId: UUID,
         @RequestBody request: SaveEntityRequest,
-        @RequestParam impactConfirmed: Boolean = false
     ): ResponseEntity<SaveEntityResponse> {
-        val response = entityService.saveEntity(organisationId, entityTypeId, request, impactConfirmed)
+        val response = entityService.saveEntity(organisationId, entityTypeId, request)
         return ResponseEntity.ok(response)
     }
 
+    @DeleteMapping("/organisation/{organisationId}/entity/{entityId}")
+    @Operation(
+        summary = "Deletes an entity instance",
+        description = "Deleted the specified entity instance within the organisation."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Entity instance deleted successfully"),
+        ApiResponse(responseCode = "401", description = "Unauthorized access"),
+        ApiResponse(responseCode = "404", description = "Organisation or entity not found")
+    )
+    fun deleteEntity(
+        @PathVariable organisationId: UUID,
+        @PathVariable entityId: UUID
+    ): ResponseEntity<EntityImpactResponse> {
+        entityService.deleteEntity(organisationId, entityId)
+        val response = entityService.deleteEntity(organisationId, entityId)
+        return ResponseEntity.ok(response)
+    }
 }

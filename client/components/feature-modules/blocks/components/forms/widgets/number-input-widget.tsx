@@ -18,7 +18,7 @@ export const NumberInputWidget: FC<FormWidgetProps<number | undefined>> = ({
     errors,
     displayError = "message",
     disabled,
-    autoFocus
+    autoFocus,
 }) => {
     const hasErrors = errors && errors.length > 0;
 
@@ -42,7 +42,7 @@ export const NumberInputWidget: FC<FormWidgetProps<number | undefined>> = ({
                         onChange={(e) =>
                             onChange(e.target.value ? parseFloat(e.target.value) : undefined)
                         }
-                        au
+                        autoFocus={autoFocus}
                         onBlur={onBlur}
                         placeholder={placeholder}
                         disabled={disabled}

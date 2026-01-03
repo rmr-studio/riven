@@ -10,6 +10,7 @@ import { DatePickerWidget } from "@/components/feature-modules/blocks/components
 import { DropdownWidget } from "@/components/feature-modules/blocks/components/forms/widgets/dropdown-widget";
 import { EmailInputWidget } from "@/components/feature-modules/blocks/components/forms/widgets/email-input-widget";
 import { FileUploadWidget } from "@/components/feature-modules/blocks/components/forms/widgets/file-upload-widget";
+import { MultiSelectWidget } from "@/components/feature-modules/blocks/components/forms/widgets/multi-select-widget";
 import { NumberInputWidget } from "@/components/feature-modules/blocks/components/forms/widgets/number-input-widget";
 import { PhoneInputWidget } from "@/components/feature-modules/blocks/components/forms/widgets/phone-input-widget";
 import { SliderWidget } from "@/components/feature-modules/blocks/components/forms/widgets/slider-widget";
@@ -31,7 +32,7 @@ export const entityFieldWidgetRegistry: Record<SchemaType, FC<FormWidgetProps>> 
     [SchemaType.PERCENTAGE]: NumberInputWidget, // will show % suffix
     [SchemaType.RATING]: SliderWidget,
     [SchemaType.SELECT]: DropdownWidget,
-    [SchemaType.MULTI_SELECT]: DropdownWidget, // TODO: Create MultiSelectWidget
+    [SchemaType.MULTI_SELECT]: MultiSelectWidget,
     [SchemaType.URL]: TextInputWidget, // with URL validation
     [SchemaType.LOCATION]: TextInputWidget, // TODO: Create LocationWidget (simple text for now)
     [SchemaType.FILE_ATTACHMENT]: FileUploadWidget,

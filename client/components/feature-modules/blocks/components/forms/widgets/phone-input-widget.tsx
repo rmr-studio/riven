@@ -1,11 +1,11 @@
 "use client";
 
-import { OptionalTooltip } from "@/components/ui/optional-tooltip";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { OptionalTooltip } from "@/components/ui/optional-tooltip";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { cn } from "@/lib/util/utils";
 import { CircleAlert } from "lucide-react";
-import { FC } from "react";
+import { FC, useCallback, useEffect, useRef } from "react";
 import { FormWidgetProps } from "../form-widget.types";
 
 export const PhoneInputWidget: FC<FormWidgetProps<string>> = ({
@@ -18,8 +18,52 @@ export const PhoneInputWidget: FC<FormWidgetProps<string>> = ({
     errors,
     displayError = "message",
     disabled,
+    autoFocus,
 }) => {
     const hasErrors = errors && errors.length > 0;
+    const containerRef = useRef<HTMLDivElement>(null);
+    const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+    // Handle blur with delayed check to support popover interactions
+    // When clicking the country select popover, focus moves outside the container
+    // but we don't want to trigger save until the popover interaction completes
+    const handleBlur = useCallback(
+        (e: React.FocusEvent) => {
+            // Clear any existing timeout
+            clearTimeout(blurTimeoutRef.current);
+
+            // Check if focus is moving within the container
+            const relatedTarget = e.relatedTarget as HTMLElement | null;
+            if (relatedTarget && containerRef.current?.contains(relatedTarget)) {
+                return;
+            }
+
+            // Delay blur check to allow popover to receive focus
+            blurTimeoutRef.current = setTimeout(() => {
+                const activeElement = document.activeElement;
+                const isWithinContainer = containerRef.current?.contains(activeElement);
+                // Check if focus is in a Radix popover (rendered in portal)
+                const isWithinPopover = activeElement?.closest(
+                    "[data-radix-popper-content-wrapper]"
+                );
+
+                if (!isWithinContainer && !isWithinPopover) {
+                    onBlur?.();
+                }
+            }, 50);
+        },
+        [onBlur]
+    );
+
+    // Cancel pending blur when focus returns to container
+    const handleFocus = useCallback(() => {
+        clearTimeout(blurTimeoutRef.current);
+    }, []);
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => clearTimeout(blurTimeoutRef.current);
+    }, []);
 
     return (
         <OptionalTooltip
@@ -33,15 +77,20 @@ export const PhoneInputWidget: FC<FormWidgetProps<string>> = ({
                     </Label>
                 )}
                 {description && <p className="text-sm text-muted-foreground">{description}</p>}
-                <div className="relative">
-                    <Input
+                <div
+                    ref={containerRef}
+                    className="relative"
+                    onBlur={handleBlur}
+                    onFocus={handleFocus}
+                >
+                    <PhoneInput
+                        defaultCountry="AU"
                         id={label}
-                        type="tel"
                         value={value || ""}
-                        onChange={(e) => onChange(e.target.value)}
-                        onBlur={onBlur}
-                        placeholder={placeholder || "+1 (555) 123-4567"}
+                        onChange={(value) => onChange(value)}
+                        placeholder={placeholder}
                         disabled={disabled}
+                        autoFocus={autoFocus}
                         className={cn(
                             hasErrors && "border-destructive focus-visible:ring-destructive"
                         )}

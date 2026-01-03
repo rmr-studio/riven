@@ -34,8 +34,8 @@ import java.util.*
 @Service
 class EntityTypeService(
     private val entityTypeRepository: EntityTypeRepository,
-    private val entityRelationshipService: EntityRelationshipService,
-    private val entityAttributeService: EntityAttributeService,
+    private val entityTypeRelationshipService: EntityTypeRelationshipService,
+    private val entityAttributeService: EntityTypeAttributeService,
     private val relationshipDiffService: EntityTypeRelationshipDiffService,
     private val impactAnalysisService: EntityTypeRelationshipImpactAnalysisService,
     private val authTokenService: AuthTokenService,
@@ -167,7 +167,7 @@ class EntityTypeService(
                 existing.relationships?.firstOrNull { it.id == id }.run {
                     // If new, just add new relationships
                     if (this == null) {
-                        entityRelationshipService.updateRelationships(
+                        entityTypeRelationshipService.updateRelationships(
                             organisationId,
                             diff = EntityTypeRelationshipDiff(
                                 added = listOf(definition),
@@ -209,7 +209,7 @@ class EntityTypeService(
                     }
 
                     // Proceed with updating relationships and modifying linked entities
-                    entityRelationshipService.updateRelationships(
+                    entityTypeRelationshipService.updateRelationships(
                         organisationId,
                         diff = EntityTypeRelationshipDiff(
                             added = emptyList(),
@@ -329,7 +329,7 @@ class EntityTypeService(
                     }
 
                     // Proceed with removing relationships and modifying linked entities
-                    entityRelationshipService.removeRelationships(
+                    entityTypeRelationshipService.removeRelationships(
                         organisationId,
                         listOf(
                             EntityTypeRelationshipDeleteRequest(
@@ -428,7 +428,7 @@ class EntityTypeService(
         }
 
         val affectedEntityTypes: Map<String, EntityType>? = existing.relationships?.let {
-            entityRelationshipService.removeRelationships(organisationId, it.map { relationship ->
+            entityTypeRelationshipService.removeRelationships(organisationId, it.map { relationship ->
                 EntityTypeRelationshipDeleteRequest(
                     relationship = relationship,
                     action = if (relationship.relationshipType == EntityTypeRelationshipType.ORIGIN)
@@ -482,5 +482,12 @@ class EntityTypeService(
      */
     fun getById(id: UUID): EntityTypeEntity {
         return ServiceUtil.findOrThrow { entityTypeRepository.findById(id) }
+    }
+
+    /**
+     * Get entity types by IDs.
+     */
+    fun getByIds(ids: Collection<UUID>): List<EntityTypeEntity> {
+        return ServiceUtil.findManyResults { entityTypeRepository.findAllById(ids) }
     }
 }

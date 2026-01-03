@@ -1,16 +1,53 @@
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnFilter, FilterOption } from "@/components/ui/data-table";
+import {
+    createAttributeRenderer,
+    createRelationshipRenderer,
+} from "@/components/ui/data-table/components/cells/edit-renderers";
+import { ColumnEditConfig } from "@/components/ui/data-table/data-table.types";
 import { IconCell } from "@/components/ui/icon/icon-cell";
-import { DataFormat, DataType, EntityPropertyType } from "@/lib/types/types";
+import { SchemaUUID } from "@/lib/interfaces/common.interface";
+import {
+    DataFormat,
+    DataType,
+    EntityPropertyType,
+    EntityRelationshipCardinality,
+    SchemaType,
+} from "@/lib/types/types";
+import { iconFormSchema } from "@/lib/util/form/common/icon.form";
+import { buildFieldSchema } from "@/lib/util/form/entity-instance-validation.util";
 import { toTitleCase } from "@/lib/util/utils";
-import { ColumnDef } from "@tanstack/react-table";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AccessorKeyColumnDef, Cell } from "@tanstack/react-table";
+import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 import { ReactNode } from "react";
+import { useForm } from "react-hook-form";
+import { isUUID } from "validator";
+import { z } from "zod";
 import {
     Entity,
+    EntityAttribute,
+    EntityLink,
+    EntityRelationshipDefinition,
     EntityType,
     EntityTypeAttributeColumn,
     isRelationshipPayload,
 } from "../../interface/entity.interface";
+
+export const entityReferenceFormSchema = z.array(
+    z
+        .object({
+            id: z.string().refine(isUUID, { message: "Invalid UUID" }),
+            organisationId: z.string().refine(isUUID, { message: "Invalid UUID" }),
+            sourceEntityId: z.string().refine(isUUID, { message: "Invalid UUID" }),
+            fieldId: z.string().refine(isUUID, { message: "Invalid UUID" }),
+            label: z.string().min(1, { message: "Label cannot be empty" }),
+            key: z.string().min(1, { message: "Key cannot be empty" }),
+        })
+        .extend(iconFormSchema.shape)
+);
 
 // Row type for entity instance data table
 // Discriminated union to safely handle both entity rows and draft rows
@@ -74,7 +111,7 @@ export function transformEntitiesToRows(entities: Entity[]): EntityRow[] {
 export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
     // Handle null/undefined
     if (value === null || value === undefined) {
-        return <span className="text-muted-foreground">—</span>;
+        return <span className="text-muted-foreground">-</span>;
     }
 
     const dataType = schema.type as DataType;
@@ -83,22 +120,6 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
     // STRING type formatting
     if (dataType === DataType.STRING) {
         const strValue = String(value);
-
-        if (dataFormat === DataFormat.EMAIL) {
-            return (
-                <a href={`mailto:${strValue}`} className="text-primary hover:underline">
-                    {strValue}
-                </a>
-            );
-        }
-
-        if (dataFormat === DataFormat.PHONE) {
-            return (
-                <a href={`tel:${strValue}`} className="text-primary hover:underline">
-                    {strValue}
-                </a>
-            );
-        }
 
         if (dataFormat === DataFormat.URL) {
             return (
@@ -158,16 +179,30 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
 
     // BOOLEAN type formatting
     if (dataType === DataType.BOOLEAN) {
-        return <Badge variant={value ? "default" : "secondary"}>{value ? "Yes" : "No"}</Badge>;
+        return (
+            <Badge variant={"secondary"} className="px-2 py-1 gap-2">
+                <Checkbox checked={Boolean(value)} disabled={true} />
+                <span>{value ? "Yes" : "No"}</span>
+            </Badge>
+        );
     }
 
-    // ARRAY type formatting
+    // ARRAY type formatting (multi-select enums, etc.)
     if (dataType === DataType.ARRAY) {
         if (Array.isArray(value)) {
+            if (value.length === 0) {
+                return <div className="text-muted-foreground flex grow h-full" />;
+            }
+
+            // Render each item as its own badge
             return (
-                <Badge variant="outline" className="font-mono">
-                    [{value.length} items]
-                </Badge>
+                <div className="flex flex-wrap gap-1">
+                    {value.map((item, idx) => (
+                        <Badge key={idx} variant="secondary" className="font-normal">
+                            {String(item)}
+                        </Badge>
+                    ))}
+                </div>
             );
         }
         return <Badge variant="outline">Array</Badge>;
@@ -182,17 +217,178 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
     return <span>{String(value)}</span>;
 }
 
+// ============================================================================
+// Value Equality Helpers (for edit change detection)
+// ============================================================================
+
+/**
+ * Normalize empty values for comparison
+ */
+function normalizeEmpty<T>(val: T): T | null {
+    if (
+        val === null ||
+        val === undefined ||
+        val === "" ||
+        (Array.isArray(val) && val.length === 0)
+    ) {
+        return null;
+    }
+    return val;
+}
+
+/**
+ * Compare arrays order-independently
+ */
+function arraysEqual(arr1: unknown[], arr2: unknown[]): boolean {
+    if (arr1.length !== arr2.length) return false;
+    const sorted1 = [...arr1].sort();
+    const sorted2 = [...arr2].sort();
+    return JSON.stringify(sorted1) === JSON.stringify(sorted2);
+}
+
+/**
+ * Creates an equality function for attribute values based on schema type
+ */
+export function createAttributeEqualityFn(
+    schema: SchemaUUID
+): (oldValue: unknown, newValue: unknown) => boolean {
+    const schemaType = schema.key;
+
+    return (value1: unknown, value2: unknown): boolean => {
+        const normalized1 = normalizeEmpty(value1);
+        const normalized2 = normalizeEmpty(value2);
+
+        // Both are empty - no change
+        if (normalized1 === null && normalized2 === null) {
+            return true;
+        }
+
+        // One is empty, other is not - changed
+        if (normalized1 === null || normalized2 === null) {
+            return false;
+        }
+
+        // For multi-select, compare arrays (order-independent)
+        if (
+            schemaType === SchemaType.MULTI_SELECT &&
+            Array.isArray(normalized1) &&
+            Array.isArray(normalized2)
+        ) {
+            return arraysEqual(normalized1, normalized2);
+        }
+
+        // For checkbox, ensure boolean comparison
+        if (schemaType === SchemaType.CHECKBOX) {
+            return Boolean(normalized1) === Boolean(normalized2);
+        }
+
+        // For numbers, handle string vs number comparison
+        if (
+            schemaType === SchemaType.NUMBER ||
+            schemaType === SchemaType.CURRENCY ||
+            schemaType === SchemaType.PERCENTAGE
+        ) {
+            const num1 =
+                typeof normalized1 === "string" ? parseFloat(normalized1) : (normalized1 as number);
+            const num2 =
+                typeof normalized2 === "string" ? parseFloat(normalized2) : (normalized2 as number);
+
+            // Handle NaN cases
+            if (isNaN(num1) && isNaN(num2)) return true;
+            if (isNaN(num1) || isNaN(num2)) return false;
+
+            return num1 === num2;
+        }
+
+        // For other types, use JSON.stringify comparison
+        return JSON.stringify(normalized1) === JSON.stringify(normalized2);
+    };
+}
+
+/**
+ * Creates an equality function for relationship values based on cardinality
+ */
+export function createRelationshipEqualityFn(
+    relationship: EntityRelationshipDefinition
+): (oldValue: EntityLink[], newValue: EntityLink[]) => boolean {
+    const isSingleSelect =
+        relationship.cardinality === EntityRelationshipCardinality.ONE_TO_ONE ||
+        relationship.cardinality === EntityRelationshipCardinality.MANY_TO_ONE;
+
+    return (value1: EntityLink[], value2: EntityLink[]): boolean => {
+        const normalized1 = normalizeEmpty(value1);
+        const normalized2 = normalizeEmpty(value2);
+
+        // Both are empty - no change
+        if (normalized1 === null && normalized2 === null) {
+            return true;
+        }
+
+        // One is empty, other is not - changed
+        if (normalized1 === null || normalized2 === null) {
+            return false;
+        }
+
+        // For single-select, simple string comparison
+        if (isSingleSelect) {
+            return JSON.stringify(normalized1[0]) === JSON.stringify(normalized2[0]);
+        }
+
+        // For multi-select, order-independent array comparison
+        if (Array.isArray(normalized1) && Array.isArray(normalized2)) {
+            return arraysEqual(normalized1, normalized2);
+        }
+
+        return JSON.stringify(normalized1) === JSON.stringify(normalized2);
+    };
+}
+
+// ============================================================================
+// Column Generation
+// ============================================================================
+
 /**
  * Generate columns from entity type schema
  */
-export function generateColumnsFromEntityType(entityType: EntityType): ColumnDef<EntityRow>[] {
-    const columns: ColumnDef<EntityRow>[] = [];
+export function generateColumnsFromEntityType(
+    entityType: EntityType,
+    options?: { enableEditing?: boolean }
+): AccessorKeyColumnDef<EntityRow>[] {
+    const columns: AccessorKeyColumnDef<EntityRow>[] = [];
 
     if (!entityType.schema.properties) {
         return columns;
     }
 
+    // Generate attribute columns
     Object.entries(entityType.schema.properties).forEach(([attributeId, schema]) => {
+        // Create edit config if editing is enabled
+        const editConfig: ColumnEditConfig<EntityRow, any, any> | undefined = options?.enableEditing
+            ? {
+                  enabled: true,
+                  createFormInstance: (cell: Cell<EntityRow, any>) => {
+                      const value = cell.getValue();
+
+                      // Build Zod schema for this attribute based on its type
+                      const fieldSchema = buildFieldSchema(schema);
+                      const formSchema = z.object({
+                          value: fieldSchema,
+                      });
+
+                      return useForm({
+                          resolver: zodResolver(formSchema) as any,
+                          defaultValues: {
+                              value: value ?? null,
+                          },
+                      });
+                  },
+                  render: createAttributeRenderer<EntityRow>(schema),
+                  parseValue: (val: any) => val,
+                  formatValue: (val: any) => val,
+                  isEqual: createAttributeEqualityFn(schema),
+              }
+            : undefined;
+
         columns.push({
             accessorKey: attributeId,
             header: (_) => {
@@ -217,15 +413,45 @@ export function generateColumnsFromEntityType(entityType: EntityType): ColumnDef
             },
             enableSorting: true,
             meta: {
-                schema,
-                required: schema.required,
-                unique: schema.unique,
-                protected: schema.protected,
+                edit: editConfig,
+                displayMeta: {
+                    required: schema.required,
+                    unique: schema.unique,
+                    protected: schema.protected,
+                },
             },
         });
     });
 
+    // Generate relationship columns
     entityType.relationships?.forEach((relationship) => {
+        // Create edit config if editing is enabled
+        const editConfig: ColumnEditConfig<EntityRow, EntityLink[], EntityLink[]> | undefined =
+            options?.enableEditing
+                ? {
+                      enabled: true,
+                      createFormInstance: (cell: Cell<EntityRow, EntityLink[]>) => {
+                          const value: EntityLink[] = cell.getValue() || [];
+
+                          const formSchema = z.object({
+                              value: entityReferenceFormSchema,
+                          });
+
+                          return useForm({
+                              resolver: zodResolver(formSchema),
+                              defaultValues: {
+                                  value: value,
+                              },
+                              mode: "onBlur",
+                          });
+                      },
+                      render: createRelationshipRenderer<EntityRow>(relationship),
+                      parseValue: (val: EntityLink[]) => val,
+                      formatValue: (val: EntityLink[]) => val,
+                      isEqual: createRelationshipEqualityFn(relationship),
+                  }
+                : undefined;
+
         columns.push({
             accessorKey: relationship.id,
             header: () => {
@@ -243,16 +469,52 @@ export function generateColumnsFromEntityType(entityType: EntityType): ColumnDef
                 );
             },
             cell: ({ row }) => {
-                return (
-                    <Badge variant="outline" className="font-mono">
-                        Relationships
-                    </Badge>
-                );
+                const value: EntityLink[] = row.getValue(relationship.id);
+                if (!value) return null;
+                if (Array.isArray(value)) {
+                    if (value.length === 0) {
+                        return null;
+                    }
+
+                    return (
+                        <div className="flex flex-wrap gap-1">
+                            {value.map((item: EntityLink) => {
+                                const { icon, label, fieldId, id, organisationId, key } = item;
+                                const { icon: type, colour } = icon;
+
+                                return (
+                                    <Link
+                                        href={`/dashboard/organisation/${organisationId}/entity/${key}/${id}`}
+                                        key={`${fieldId}-${id}`}
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <Badge
+                                            variant="secondary"
+                                            className="hover:bg-border font-normal group transition-all"
+                                        >
+                                            <IconCell
+                                                readonly
+                                                iconType={type}
+                                                colour={colour}
+                                                className="size-4 mr-2"
+                                            />
+                                            <span className="group-hover:underline">{label}</span>
+                                            <ArrowUpRight className="size-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        </Badge>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    );
+                }
+                return <span>{String(value)}</span>;
             },
             enableSorting: false,
             meta: {
-                schema: {
-                    type: "RELATIONSHIP",
+                edit: editConfig,
+                displayMeta: {
+                    required: relationship.required,
+                    protected: relationship.protected,
                 },
             },
         });
@@ -265,11 +527,12 @@ export function generateColumnsFromEntityType(entityType: EntityType): ColumnDef
  * Apply column ordering based on entity type columns array
  */
 export function applyColumnOrdering(
-    columns: ColumnDef<EntityRow>[],
+    columns: AccessorKeyColumnDef<EntityRow>[],
     columnsOrder: EntityTypeAttributeColumn[]
-): ColumnDef<EntityRow>[] {
-    const orderedColumns: ColumnDef<EntityRow>[] = [];
-    const columnMap = new Map(columns.map((col) => [col.accessorKey as string, col]));
+): AccessorKeyColumnDef<EntityRow>[] {
+    console.log(columns);
+    const orderedColumns: AccessorKeyColumnDef<EntityRow>[] = [];
+    const columnMap = new Map(columns.map((col) => [col["accessorKey"], col]));
 
     // Add columns in order array sequence
     columnsOrder.forEach((orderItem) => {
@@ -344,7 +607,7 @@ export function generateFiltersFromEntityType(
             // Use select filter for low-cardinality attributes
             if (uniqueValues.length > 0 && uniqueValues.length <= selectFilterThreshold) {
                 filters.push({
-                    column: attributeId as keyof EntityRow & string,
+                    column: attributeId,
                     type: "select",
                     label,
                     options: uniqueValues,
@@ -363,7 +626,7 @@ export function generateFiltersFromEntityType(
         // NUMBER type filters
         if (dataType === DataType.NUMBER) {
             filters.push({
-                column: attributeId as keyof EntityRow & string,
+                column: attributeId,
                 type: "number-range",
                 label,
             });
@@ -372,7 +635,7 @@ export function generateFiltersFromEntityType(
         // BOOLEAN type filters
         if (dataType === DataType.BOOLEAN) {
             filters.push({
-                column: attributeId as keyof EntityRow & string,
+                column: attributeId,
                 type: "boolean",
                 label,
             });
@@ -412,12 +675,16 @@ export function generateSearchConfigFromEntityType(
  */
 export function getEntityDisplayName(entity: Entity): string {
     // Get the identifier field value from the entity payload
-    const identifierValue = entity.payload[entity.identifierKey];
-
-    if (identifierValue !== null && identifierValue !== undefined) {
-        return String(identifierValue);
+    const identifierValue: EntityAttribute | null = entity.payload[entity.identifierKey];
+    if (!identifierValue) {
+        return `Entity ${entity.id.slice(0, 8)}...`;
     }
 
-    // Fallback to truncated entity ID
-    return `Entity ${entity.id.slice(0, 8)}...`;
+    const { payload } = identifierValue;
+    // An identifier value should always be of type ATTRIBUTE and be of SCHEMA TYPE STRING or NUMBER
+    if (isRelationshipPayload(payload)) {
+        return `Entity ${entity.id.slice(0, 8)}...`;
+    }
+
+    return String(payload.value);
 }

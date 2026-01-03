@@ -1,11 +1,11 @@
 "use client";
 
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { Table as TanStackTable, Row } from "@tanstack/react-table";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { DraggableRow } from "./draggable-row";
-import type { RowActionsConfig, ColumnResizingConfig } from "../data-table.types";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { Row, Table as TanStackTable } from "@tanstack/react-table";
 import { ReactNode, useMemo } from "react";
+import type { ColumnResizingConfig, RowActionsConfig } from "../data-table.types";
+import { DraggableRow } from "./draggable-row";
 
 interface DataTableBodyProps<TData> {
     table: TanStackTable<TData>;
@@ -19,6 +19,8 @@ interface DataTableBodyProps<TData> {
     disableDragForRow?: (row: Row<TData>) => boolean;
     emptyMessage?: string;
     finalColumnsCount: number;
+    enableInlineEdit?: boolean;
+    focusedCell?: { rowId: string; columnId: string } | null;
 }
 
 export function DataTableBody<TData>({
@@ -33,6 +35,8 @@ export function DataTableBody<TData>({
     disableDragForRow,
     emptyMessage = "No results.",
     finalColumnsCount,
+    enableInlineEdit,
+    focusedCell,
 }: DataTableBodyProps<TData>) {
     const rowIds = useMemo(() => {
         return table.getRowModel().rows.map((row) => row.id);
@@ -56,11 +60,7 @@ export function DataTableBody<TData>({
             <TableBody>
                 <TableRow>
                     <TableCell
-                        colSpan={
-                            finalColumnsCount +
-                            (enableDragDrop ? 1 : 0) +
-                            (rowActions?.enabled ? 1 : 0)
-                        }
+                        colSpan={finalColumnsCount}
                         className="h-24 text-center text-muted-foreground"
                     >
                         {emptyMessage}
@@ -91,6 +91,8 @@ export function DataTableBody<TData>({
                         disabled={addingNewEntry}
                         disableDragForRow={disableDragForRow}
                         isSelectionEnabled={isSelectionEnabled}
+                        enableInlineEdit={enableInlineEdit}
+                        focusedCell={focusedCell}
                     />
                 );
             })}

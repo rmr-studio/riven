@@ -1657,23 +1657,11 @@ class EntityValidationServiceTest {
         payload: Map<UUID, riven.core.models.entity.payload.EntityAttributePayload>,
         organisationId: UUID = this.organisationId
     ): EntityEntity {
-        // Convert EntityAttributePayload to JSON-compatible structure
-        val jsonPayload = payload.map { (key, value) ->
-            key.toString() to when (value) {
-                is EntityAttributePrimitivePayload -> mapOf(
-                    "type" to value.type.name,
-                    "value" to value.value,
-                    "schemaType" to value.schemaType.name
-                )
-
-                is EntityAttributeRelationPayloadReference -> mapOf(
-                    "type" to value.type.name,
-                    "relations" to value.relations
-                )
-
-                else -> mapOf(
-                    "type" to value.type.name
-                )
+        // Filter and convert to Map<String, EntityAttributePrimitivePayload>
+        val entityPayload = payload.mapNotNull { (key, value) ->
+            when (value) {
+                is EntityAttributePrimitivePayload -> key.toString() to value
+                else -> null
             }
         }.toMap()
 
@@ -1681,10 +1669,11 @@ class EntityValidationServiceTest {
             id = UUID.randomUUID(),
             organisationId = organisationId,
             typeId = typeId,
-            payload = jsonPayload,
+            payload = entityPayload,
             identifierKey = nameAttributeKey,
             iconType = IconType.FILE,
-            iconColour = IconColour.NEUTRAL
+            iconColour = IconColour.NEUTRAL,
+            typeKey = "test-entity-type"
         )
     }
 }

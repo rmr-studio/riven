@@ -356,8 +356,8 @@ CREATE TABLE IF NOT EXISTS public.entities
     "id"              UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
     "organisation_id" UUID    NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
     "type_id"         UUID    NOT NULL REFERENCES entity_types (id) ON DELETE RESTRICT,
-    "name"            TEXT,
     "archived"        BOOLEAN NOT NULL         DEFAULT FALSE,
+    "type_key"        TEXT    NOT NULL,                           -- Denormalized key from entity_type for easier access
     -- Duplicate key from entity_type for faster lookups without needing separate query
     "identifier_key"  UUID    NOT NULL,
     "payload"         JSONB   NOT NULL         DEFAULT '{}'::jsonb,
@@ -377,6 +377,24 @@ create index if not exists idx_entities_type_id
 create index if not exists idx_entities_organisation_id
     on entities (organisation_id)
     where archived = false;
+
+create index idx_entities_payload_gin on entities using gin (payload jsonb_path_ops) where archived = false and deleted_at is null;
+
+--Easy way to enforce unique fields per entity type. This table will store unique field values for entities.
+--When an entity is created or updated, the relevant unique fields will be deleted and re-inserted/updated here
+
+CREATE TABLE IF NOT EXISTS public.entities_unique_values
+(
+    "id"          UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
+    "type_id"     UUID    NOT NULL REFERENCES entity_types (id) ON DELETE CASCADE,
+    "entity_id"   UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
+    "field_id"    UUID    NOT NULL,
+    "field_value" TEXT    NOT NULL,
+    "archived"    BOOLEAN NOT NULL         DEFAULT FALSE,
+    "deleted_at"  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_unique_attribute_per_type
+        UNIQUE (type_id, field_id, field_value)
+);
 
 
 CREATE OR REPLACE FUNCTION sync_entity_identifier_key()
@@ -400,12 +418,7 @@ CREATE TRIGGER trg_sync_entity_identifier_key
     FOR EACH ROW
 EXECUTE FUNCTION sync_entity_identifier_key();
 
--- Indexes for entities
-drop index if exists idx_entities_organisation_id;
 
-
-
-CREATE INDEX idx_entities_payload_gin ON entities USING GIN (payload jsonb_path_ops);
 
 -- Function to update entity count in entity_types
 CREATE OR REPLACE FUNCTION public.update_entity_type_count()
@@ -437,33 +450,37 @@ CREATE OR REPLACE TRIGGER trg_update_entity_type_count
     FOR EACH ROW
 EXECUTE FUNCTION public.update_entity_type_count();
 
-CREATE INDEX idx_archived_entities_organisation_id ON archived_entities (organisation_id);
-CREATE INDEX idx_archived_entities_type_id ON archived_entities (type_id);
-
 -- =====================================================
 -- 3. ENTITY_RELATIONSHIPS TABLE
 -- =====================================================
+
 CREATE TABLE IF NOT EXISTS public.entity_relationships
 (
-    "id"               UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
-    "organisation_id"  UUID NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
-    "source_entity_id" UUID NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
-    "target_entity_id" UUID NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
-    "key"              TEXT NOT NULL,
-    "label"            TEXT,
-    "created_at"       TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "updated_at"       TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "created_by"       UUID REFERENCES users (id) ON DELETE SET NULL,
-    "updated_by"       UUID REFERENCES users (id) ON DELETE SET NULL,
+    "id"                    UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
+    "organisation_id"       UUID    NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
+    "source_entity_id"      UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
+    "target_entity_id"      UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
+    "relationship_field_id" UUID    NOT NULL,
+    "archived"              BOOLEAN NOT NULL         DEFAULT FALSE,
+    "deleted_at"            TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+    -- Additional metadata about the relationship
+    "created_at"            TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updated_at"            TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "created_by"            UUID    REFERENCES users (id) ON DELETE SET NULL,
+    "updated_by"            UUID    REFERENCES users (id) ON DELETE SET NULL,
 
-    -- Prevent duplicate relationships
-    UNIQUE (source_entity_id, target_entity_id, key)
+    UNIQUE (source_entity_id, relationship_field_id, target_entity_id)
 );
 
 -- Indexes for entity_relationships
-CREATE INDEX idx_entity_relationships_source_key ON entity_relationships (source_entity_id, key);
-CREATE INDEX idx_entity_relationships_target ON entity_relationships (target_entity_id);
-CREATE INDEX idx_entity_relationships_organisation ON entity_relationships (organisation_id);
+CREATE INDEX idx_entity_relationships_source ON entity_relationships (source_entity_id)
+    WHERE archived = false AND deleted_at IS NULL;
+CREATE INDEX idx_entity_relationships_target ON entity_relationships (target_entity_id)
+    WHERE archived = false AND deleted_at IS NULL;
+
+CREATE INDEX idx_entity_relationships_organisation ON entity_relationships (organisation_id)
+    WHERE archived = false AND deleted_at IS NULL;
+
 
 -- =====================================================
 -- 4. ROW LEVEL SECURITY (RLS) POLICIES

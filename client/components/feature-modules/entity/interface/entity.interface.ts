@@ -38,6 +38,8 @@ export const isRelationshipPayload = (
     return payload.type === EntityPropertyType.RELATIONSHIP;
 };
 
+
+
 export type CreateEntityTypeRequest = components["schemas"]["CreateEntityTypeRequest"];
 
 export enum RelationshipLimit {
@@ -56,7 +58,7 @@ export interface EntityRelationshipCandidate {
 export type {
     OverlapDetectionResult,
     OverlapResolution,
-    RelationshipOverlap
+    RelationshipOverlap,
 } from "../hooks/use-relationship-overlap-detection";
 
 export type EntityTypeImpactResponse = components["schemas"]["EntityTypeImpactResponse"];
@@ -97,7 +99,6 @@ export interface EntityTypeAttributeRow {
     bidirectional?: boolean;
 }
 
-
 /**
  * Props interface for relationship picker component
  * Used for selecting related entities in draft rows
@@ -121,3 +122,4 @@ export type EntityAttributeRelationPayload =
 export type SaveEntityRequest = components["schemas"]["SaveEntityRequest"];
 export type SaveEntityResponse = components["schemas"]["SaveEntityResponse"];
 export type EntityAttributeRequest = components["schemas"]["EntityAttributeRequest"];
+export type EntityLink = components["schemas"]["EntityLink"];

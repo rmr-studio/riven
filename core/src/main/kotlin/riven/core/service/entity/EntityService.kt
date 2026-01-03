@@ -1,5 +1,6 @@
 package riven.core.service.entity
 
+import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -11,15 +12,18 @@ import riven.core.enums.util.OperationType
 import riven.core.exceptions.SchemaValidationException
 import riven.core.models.common.Icon
 import riven.core.models.entity.Entity
+import riven.core.models.entity.EntityLink
 import riven.core.models.entity.payload.EntityAttributePayload
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.entity.payload.EntityAttributeRelationPayloadReference
 import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.request.entity.SaveEntityRequest
+import riven.core.models.response.entity.EntityImpactResponse
 import riven.core.models.response.entity.SaveEntityResponse
 import riven.core.repository.entity.EntityRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.entity.type.EntityTypeAttributeService
 import riven.core.service.entity.type.EntityTypeService
 import riven.core.util.ServiceUtil.findManyResults
 import riven.core.util.ServiceUtil.findOrThrow
@@ -33,7 +37,9 @@ import java.util.*
 class EntityService(
     private val entityRepository: EntityRepository,
     private val entityTypeService: EntityTypeService,
+    private val entityRelationshipService: EntityRelationshipService,
     private val entityValidationService: EntityValidationService,
+    private val entityAttributeService: EntityTypeAttributeService,
     private val authTokenService: AuthTokenService,
     private val activityService: ActivityService
 ) {
@@ -48,18 +54,27 @@ class EntityService(
                 "value" to payload.value,
                 "schemaType" to payload.schemaType.name
             )
+
             is EntityAttributeRelationPayloadReference -> mapOf(
                 "type" to payload.type.name,
                 "relations" to payload.relations
             )
+
             else -> mapOf(
                 "type" to payload.type.name
             )
         }
     }
 
-    fun getEntity(id: UUID): EntityEntity {
-        return findOrThrow { entityRepository.findById(id) }
+    @PostAuthorize("@organisationSecurity.hasOrg(returnObject.organisationId)")
+    fun getEntity(id: UUID): Entity {
+        val entity = findOrThrow { entityRepository.findById(id) }
+        val relationships = entityRelationshipService.findRelatedEntities(
+            entityId = id
+        )
+
+        return entity.toModel(relationships = relationships)
+
     }
 
     fun getEntitiesByIds(ids: Set<UUID>): List<EntityEntity> {
@@ -71,9 +86,19 @@ class EntityService(
         organisationId: UUID,
         typeId: UUID
     ): List<Entity> {
-        return findManyResults {
+        val entities = findManyResults {
             entityRepository.findByTypeId(typeId)
-        }.map { it.toModel(relationships = emptyMap()) }
+        }
+
+        require(entities.all { it.organisationId == organisationId }) { "One or more entities do not belong to the specified organisation" }
+        val relationships = entityRelationshipService.findRelatedEntities(
+            entityIds = entities.mapNotNull { it.id }.toSet()
+        )
+
+        return entities.map {
+            val id = requireNotNull(it.id)
+            it.toModel(relationships = relationships[id] ?: emptyMap())
+        }
     }
 
     @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
@@ -81,16 +106,28 @@ class EntityService(
         organisationId: UUID,
         typeIds: List<UUID>
     ): Map<UUID, List<Entity>> {
-        return findManyResults {
+        val entities = findManyResults {
             entityRepository.findByTypeIdIn(
                 typeIds = typeIds
             )
-        }.map { it.toModel(relationships = emptyMap()) }.groupBy { it.typeId }
+        }
+
+        require(entities.all { it.organisationId == organisationId }) { "One or more entities do not belong to the specified organisation" }
+
+        val relationships = entityRelationshipService.findRelatedEntities(
+            entityIds = entities.mapNotNull { it.id }.toSet()
+        )
+
+        return entities.map {
+            val id = requireNotNull(it.id)
+            it.toModel(relationships = relationships[id] ?: emptyMap())
+        }.groupBy { it.typeId }
 
     }
 
     /**
-     * Create a new entity with validation.
+     * Create or update an entity with validation.
+     * If request.id is provided, updates the existing entity; otherwise creates a new one.
      */
     @Transactional
     @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
@@ -98,38 +135,62 @@ class EntityService(
         organisationId: UUID,
         entityTypeId: UUID,
         request: SaveEntityRequest,
-        impactConfirmed: Boolean = false
     ): SaveEntityResponse {
         try {
             val (id: UUID?, payload: Map<UUID, EntityAttributeRequest>, icon: Icon?) = request
             val userId = authTokenService.getUserId()
-            val type: EntityTypeEntity = entityTypeService.getById(entityTypeId).also {
-                requireNotNull(it.id)
-            }
+            val type: EntityTypeEntity = entityTypeService.getById(entityTypeId)
+            val typeId = requireNotNull(type.id) { "Entity type ID cannot be null" }
 
+            // Check if this is an update (existing entity) or create (new entity)
             val prev: EntityEntity? = id?.let { findOrThrow { entityRepository.findById(it) } }
+
+
+            val attributePayload: Map<String, EntityAttributePrimitivePayload> = payload.mapNotNull { (key, value) ->
+                key.toString() to value.payload.let {
+                    when (it) {
+                        is EntityAttributePrimitivePayload -> it
+                        else -> return@mapNotNull null
+                    }
+                }
+            }.toMap()
+
+            val relationshipPayload: Map<UUID, List<UUID>> = payload.mapNotNull { (key, value) ->
+                when (val pl = value.payload) {
+                    is EntityAttributeRelationPayloadReference -> {
+                        key to pl.relations
+                    }
+
+                    else -> return@mapNotNull null
+                }
+            }.toMap()
+
             prev?.run {
-                if (!impactConfirmed) {
-                    // Determine if changes to Entity payload can cause breaking changes
-                    TODO()
-                }
+                require(this.organisationId == organisationId) { "Entity does not belong to the specified organisation" }
+                require(this.typeId == entityTypeId) { "Entity type cannot be changed" }
             }
 
-            val entity = EntityEntity(
-                organisationId = organisationId,
-                typeId = entityTypeId,
-                iconType = icon?.icon ?: type.iconType,
-                iconColour = icon?.colour ?: type.iconColour,
-                identifierKey = type.identifierKey,
-                payload = payload.map { it.key.toString() to toJsonPayload(it.value.payload) }.toMap(),
-            )
-
-            icon?.let {
-                entity.apply {
-                    this.iconType = it.icon
-                    this.iconColour = it.colour
+            // Either update the existing entity or create a new one
+            val entity = prev.let {
+                if (it != null) {
+                    return@let it.copy(
+                        iconType = icon?.icon ?: it.iconType,
+                        iconColour = icon?.colour ?: it.iconColour,
+                        payload = attributePayload,
+                    )
                 }
+
+                EntityEntity(
+                    organisationId = organisationId,
+                    typeId = entityTypeId,
+                    typeKey = type.key,
+                    iconType = icon?.icon ?: type.iconType,
+                    iconColour = icon?.colour ?: type.iconColour,
+                    identifierKey = type.identifierKey,
+                    payload = attributePayload,
+                )
             }
+
 
             // Validate payload against schema
             entityValidationService.validateEntity(entity, type).run {
@@ -139,9 +200,41 @@ class EntityService(
             }
 
             return entityRepository.save(entity).run {
+                val entityId = requireNotNull(this.id) { "Saved entity ID cannot be null" }
+
+                // Handle Unique Constraints
+                val uniqueAttributes = entityAttributeService.extractUniqueAttributes(type, payload)
+
+                // Check uniqueness constraints. Should any fail, an exception is thrown and the transaction rolled back.
+                // When updating, exclude the current entity from the conflict check.
+                val uniqueValuesToSave = uniqueAttributes
+                    .filterValues { it != null }
+                    .mapNotNull { (fieldId, value) ->
+                        if (value == null) return@mapNotNull null
+                        entityAttributeService.checkAttributeUniqueness(
+                            typeId = typeId,
+                            fieldId = fieldId,
+                            value = value.value,
+                            excludeEntityId = entityId
+                        )
+                        fieldId to value.value.toString()
+                    }
+                    .toMap()
+
+                // Use native SQL operations to avoid Hibernate session conflicts
+                entityAttributeService.saveUniqueValues(entityId, typeId, uniqueValuesToSave)
+
+
+                val relationshipResult: SaveRelationshipsResult = entityRelationshipService.saveRelationships(
+                    id = entityId,
+                    organisationId = organisationId,
+                    type = type,
+                    curr = relationshipPayload
+                )
+
                 activityService.logActivity(
                     activity = Activity.ENTITY,
-                    operation = OperationType.CREATE,
+                    operation = if (prev != null) OperationType.UPDATE else OperationType.CREATE,
                     userId = userId,
                     organisationId = organisationId,
                     entityId = this.id,
@@ -152,8 +245,25 @@ class EntityService(
                     )
                 )
 
+                // Fetch impacted entities with their updated relationships
+                val impactedEntities: Map<UUID, List<Entity>>? = if (relationshipResult.impactedEntityIds.isNotEmpty()) {
+                    val impactedEntityEntities = entityRepository.findAllById(relationshipResult.impactedEntityIds)
+                    val impactedRelationships = entityRelationshipService.findRelatedEntities(
+                        entityIds = relationshipResult.impactedEntityIds
+                    )
+                    impactedEntityEntities
+                        .map { impactedEntity ->
+                            val impactedId = requireNotNull(impactedEntity.id)
+                            impactedEntity.toModel(relationships = impactedRelationships[impactedId] ?: emptyMap())
+                        }
+                        .groupBy { it.typeId }
+                } else {
+                    null
+                }
+
                 SaveEntityResponse(
-                    entity = entity.toModel(relationships = emptyMap())
+                    entity = entity.toModel(relationships = relationshipResult.links),
+                    impactedEntities = impactedEntities
                 )
             }
         } catch (e: SchemaValidationException) {
@@ -169,14 +279,17 @@ class EntityService(
      * Delete an entity.
      */
     @Transactional
-    @PreAuthorize("@organisationSecurity.hasOrg(#id)")
-    fun deleteEntity(id: UUID) {
+    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
+    fun deleteEntity(organisationId: UUID, id: UUID): EntityImpactResponse {
         val userId = authTokenService.getUserId()
 
         val existing = findOrThrow { entityRepository.findById(id) }.apply {
             archived = true
             deletedAt = ZonedDateTime.now()
         }.run {
+            require(this.organisationId == organisationId) { "Entity does not belong to the specified organisation" }
+            entityAttributeService.archiveEntity(id)
+            entityRelationshipService.archiveEntity(id)
             entityRepository.save(this)
         }
 
@@ -184,13 +297,15 @@ class EntityService(
             activity = Activity.ENTITY,
             operation = OperationType.DELETE,
             userId = userId,
-            organisationId = existing.organisationId,
+            organisationId = organisationId,
             entityId = id,
             entityType = ApplicationEntityType.ENTITY,
             details = mapOf(
                 "typeId" to existing.typeId.toString()
             )
         )
+
+        TODO()
     }
 
 

@@ -57,6 +57,14 @@ export type AuthenticatedQueryResult<TData, TError = Error> = UseQueryResult<TDa
     isLoadingAuth: boolean;
 };
 
+export type AuthenticatedMultiQueryResult<TData, TError = Error> = {
+    data: TData;
+    isError: boolean;
+    isLoading: boolean;
+    error?: TError;
+    isLoadingAuth: boolean;
+};
+
 export interface DialogControl {
     open: boolean;
     setOpen: React.Dispatch<React.SetStateAction<boolean>>;

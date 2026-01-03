@@ -1,6 +1,6 @@
 import { useAuth } from "@/components/provider/auth-context";
-import { AuthenticatedQueryResult } from "@/lib/interfaces/interface";
-import { useQuery } from "@tanstack/react-query";
+import { AuthenticatedMultiQueryResult, AuthenticatedQueryResult } from "@/lib/interfaces/interface";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { Entity } from "../../interface/entity.interface";
 import { EntityService } from "../../service/entity.service";
 
@@ -24,5 +24,31 @@ export function useEntities(
     return {
         isLoadingAuth: loading,
         ...query,
+    };
+}
+
+export function useEntitiesFromManyTypes(
+    organisationId: string,
+    typeIds: string[]
+): AuthenticatedMultiQueryResult<Entity[]> {
+    const { session, loading } = useAuth();
+    const query = useQueries({
+        queries: typeIds.map((typeId) => ({
+            queryKey: ["entities", organisationId, typeId],
+            queryFn: () => EntityService.getEntitiesForType(session, organisationId, typeId),
+            enabled: !!session && !!organisationId,
+        })),
+        combine: (results) => {
+            return {
+                data: results.flatMap((r) => r.data ?? []),
+                isLoading: results.some((r) => r.isLoading),
+                isError: results.some((r) => r.isError),
+            };
+        },
+    });
+
+    return {
+        ...query,
+        isLoadingAuth: loading,
     };
 }

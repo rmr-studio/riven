@@ -11,6 +11,10 @@ export function uuid() {
     return v4();
 }
 
+export function exists<T>(value: T | undefined | null): value is T {
+    return value !== undefined && value !== null;
+}
+
 export function undefinedIfNull<T>(value: T | null): T | undefined {
     return value === null ? undefined : value;
 }

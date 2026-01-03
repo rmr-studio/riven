@@ -7,6 +7,7 @@ import {
     EntityAttributePrimitivePayload,
     EntityAttributeRelationPayloadReference,
     EntityAttributeRequest,
+    EntityLink,
     EntityType,
     SaveEntityRequest,
     SaveEntityResponse,
@@ -28,12 +29,6 @@ interface EntityDraftState {
 
     // React Hook Form instance
     form: UseFormReturn<Record<string, any>>;
-
-    // Draft values for persistence
-    draftValues: Record<string, any> | null;
-
-    // Timestamp for staleness detection
-    lastModifiedAt: number | null;
 }
 
 // Actions interface
@@ -41,17 +36,8 @@ interface EntityDraftActions {
     // Enter draft mode (initialize new entity draft)
     enterDraftMode: () => void;
 
-    // Exit draft mode (clear draft and reset form)
+    // Exit draft mode (reset form)
     exitDraftMode: () => void;
-
-    // Save draft to localStorage
-    saveDraft: (values: Record<string, any>) => void;
-
-    // Load draft from localStorage
-    loadDraft: () => Record<string, any> | null;
-
-    // Clear draft from localStorage
-    clearDraft: () => void;
 
     // Submit draft (create entity)
     submitDraft: () => Promise<SaveEntityResponse>;
@@ -93,8 +79,6 @@ export const createEntityDraftStore = (
     form: UseFormReturn<Record<string, any>>,
     saveMutation: (request: SaveEntityRequest) => Promise<SaveEntityResponse>
 ): StoreApi<EntityDraftStore> => {
-    const storageKey = `${organisationId}-entity-instance-draft-${entityType.key}`;
-
     // Build attribute metadata map once during initialization
     const attributeMetadataMap = buildAttributeMetadataMap(entityType);
 
@@ -106,8 +90,6 @@ export const createEntityDraftStore = (
             attributeMetadataMap,
             isDraftMode: false,
             form,
-            draftValues: null,
-            lastModifiedAt: null,
 
             enterDraftMode: () => {
                 // Build default values from entity type schema
@@ -117,70 +99,15 @@ export const createEntityDraftStore = (
                 form.reset(defaultValues);
 
                 // Enter draft mode
-                set({
-                    isDraftMode: true,
-                    lastModifiedAt: Date.now(),
-                });
+                set({ isDraftMode: true });
             },
 
             exitDraftMode: () => {
                 // Reset form
                 form.reset({});
 
-                // Clear draft from storage
-                get().clearDraft();
-
                 // Exit draft mode
-                set({
-                    isDraftMode: false,
-                    draftValues: null,
-                    lastModifiedAt: null,
-                });
-            },
-
-            saveDraft: (values) => {
-                try {
-                    const draft = { ...values, _timestamp: Date.now() };
-                    localStorage.setItem(storageKey, JSON.stringify(draft));
-                    set({
-                        draftValues: values,
-                        lastModifiedAt: Date.now(),
-                    });
-                } catch (error) {
-                    console.error("Failed to save draft:", error);
-                }
-            },
-
-            loadDraft: () => {
-                try {
-                    const stored = localStorage.getItem(storageKey);
-                    if (!stored) return null;
-
-                    const draft = JSON.parse(stored);
-                    const { _timestamp, ...values } = draft;
-
-                    // Check if draft is stale (older than 7 days)
-                    const isStale = Date.now() - _timestamp > 7 * 24 * 60 * 60 * 1000;
-                    if (isStale) {
-                        localStorage.removeItem(storageKey);
-                        return null;
-                    }
-
-                    set({ draftValues: values });
-                    return values;
-                } catch (error) {
-                    console.error("Failed to load draft:", error);
-                    return null;
-                }
-            },
-
-            clearDraft: () => {
-                try {
-                    localStorage.removeItem(storageKey);
-                    set({ draftValues: null });
-                } catch (error) {
-                    console.error("Failed to clear draft:", error);
-                }
+                set({ isDraftMode: false });
             },
 
             submitDraft: async () => {
@@ -224,10 +151,10 @@ export const createEntityDraftStore = (
                     } else if (metadata === EntityPropertyType.RELATIONSHIP) {
                         // Relationship - create relation payload
                         // Normalize to array of UUIDs
-                        const relations = Array.isArray(value) ? value : value ? [value] : [];
+                        const relations: EntityLink[] = value
 
                         const relationPayload: EntityAttributeRelationPayloadReference = {
-                            relations,
+                            relations: relations.map((rel) => rel.id),
                             type: EntityPropertyType.RELATIONSHIP,
                         };
 

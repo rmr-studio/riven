@@ -1,8 +1,8 @@
 "use client";
 
+import { Label } from "@/components/ui/label";
 import { OptionalTooltip } from "@/components/ui/optional-tooltip";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/util/utils";
 import { CircleAlert } from "lucide-react";
 import { FC } from "react";
@@ -18,6 +18,7 @@ export const TextAreaWidget: FC<FormWidgetProps<string>> = ({
     errors,
     displayError = "message",
     disabled,
+    autoFocus,
 }) => {
     const hasErrors = errors && errors.length > 0;
 
@@ -37,6 +38,7 @@ export const TextAreaWidget: FC<FormWidgetProps<string>> = ({
                     <Textarea
                         id={label}
                         value={value || ""}
+                        autoFocus={autoFocus}
                         onChange={(e) => onChange(e.target.value)}
                         onBlur={onBlur}
                         placeholder={placeholder}

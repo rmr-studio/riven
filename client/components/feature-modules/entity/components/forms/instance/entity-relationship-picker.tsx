@@ -1,56 +1,58 @@
 "use client";
 
-import { useAuth } from "@/components/provider/auth-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+} from "@/components/ui/command";
+import { IconCell } from "@/components/ui/icon/icon-cell";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EntityRelationshipCardinality } from "@/lib/types/types";
-import { useQueries } from "@tanstack/react-query";
-import { Loader2, X } from "lucide-react";
+import { uuid } from "@/lib/util/utils";
+import { Check, Loader2, X } from "lucide-react";
 import { useParams } from "next/navigation";
-import { FC, useMemo } from "react";
-import { useFormState } from "react-hook-form";
-import { useEntityDraft } from "../../../context/entity-provider";
+import { FC, useEffect, useMemo, useState } from "react";
 import { useEntityTypes } from "../../../hooks/query/type/use-entity-types";
-import { EntityRelationshipDefinition, EntityType } from "../../../interface/entity.interface";
-import { EntityService } from "../../../service/entity.service";
-import { getEntityDisplayName } from "../../tables/entity-table-utils";
+import { useEntitiesFromManyTypes } from "../../../hooks/query/use-entities";
+import {
+    Entity,
+    EntityLink,
+    EntityRelationshipDefinition,
+    EntityType,
+    isRelationshipPayload,
+} from "../../../interface/entity.interface";
 
 export interface EntityRelationshipPickerProps {
     relationship: EntityRelationshipDefinition;
     autoFocus?: boolean;
+    value: EntityLink[];
+    errors?: string[];
+    handleBlur: () => Promise<void>;
+    handleChange: (values: EntityLink[]) => void;
+    handleRemove: (entityId: string) => void;
 }
 
-export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ relationship, autoFocus }) => {
-    const { form } = useEntityDraft();
-    const { session } = useAuth();
+export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
+    relationship,
+    autoFocus,
+    value,
+    errors,
+    handleBlur,
+    handleChange,
+    handleRemove,
+}) => {
+    // Allows selecting a specific entity type instead of viewin all entities
+    const [selectedType, setSelectedType] = useState<string>("ALL");
+    const [popoverOpen, setPopoverOpen] = useState(false);
+
     const { organisationId } = useParams<{ organisationId: string }>();
-    const fieldName = relationship.id;
-    const value = form.watch(fieldName);
-
-    // Watch for validation errors on this specific field
-    const { errors: formErrors } = useFormState({
-        control: form.control,
-        name: fieldName,
-    });
-
-    // Extract error messages for this field
-    const fieldError = formErrors[fieldName];
-    const errors = fieldError?.message
-        ? [String(fieldError.message)]
-        : fieldError?.type
-          ? [String(fieldError.type)]
-          : undefined;
-
     const { data: entityTypes } = useEntityTypes(organisationId);
 
-    // Determine if single or multi select
     const isSingleSelect =
         relationship.cardinality === EntityRelationshipCardinality.ONE_TO_ONE ||
         relationship.cardinality === EntityRelationshipCardinality.MANY_TO_ONE;
@@ -65,45 +67,104 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ re
         );
     }, [entityTypes, relationship]);
 
-    // Load entities for all target types
-    const entitiesQueries = useQueries({
-        queries: types
-            .map((type) => type.id)
-            .map((typeId) => ({
-                queryKey: ["entities", organisationId, typeId],
-                queryFn: () => EntityService.getEntitiesForType(session, organisationId, typeId),
-                enabled: !!session && !!organisationId,
-            })),
-        combine: (results) => {
-            return {
-                data: results.flatMap((r) => r.data ?? []),
-                isLoading: results.some((r) => r.isLoading),
-                isError: results.some((r) => r.isError),
-            };
-        },
-    });
+    const {
+        data: entities = [],
+        isLoading,
+        isError,
+    } = useEntitiesFromManyTypes(
+        organisationId,
+        types.map((type) => type.id)
+    );
 
-    const handleChange = (newValue: any) => {
-        form.setValue(fieldName, newValue, {
-            shouldValidate: false,
-            shouldDirty: true,
-        });
-    };
+    const entityTypeKeyIdMap: Record<string, EntityType> = useMemo(() => {
+        return types.reduce((acc, type) => {
+            acc[type.id] = type;
+            return acc;
+        }, {} as Record<string, EntityType>);
+    }, [entityTypes]);
 
-    const handleBlur = async () => {
-        await form.trigger(fieldName);
-    };
+    // Group each queried entity by its type
+    const groupedEntities: Record<string, Entity[]> = useMemo(() => {
+        return entities.reduce((acc, entity) => {
+            const typeId = entity.typeId;
+            if (!acc[typeId]) {
+                acc[typeId] = [];
+            }
+            acc[typeId].push(entity);
+            return acc;
+        }, {} as Record<string, Entity[]>);
+    }, [entities, types]);
 
-    const handleRemove = (entityId: string) => {
-        if (isSingleSelect) {
-            handleChange(null);
-        } else {
-            const newValue = (value || []).filter((id: string) => id !== entityId);
-            handleChange(newValue);
+    const filteredEntities = useMemo(() => {
+        if (selectedType === "ALL") return entities;
+
+        return groupedEntities[selectedType] || [];
+    }, [groupedEntities, entities, selectedType]);
+
+    const selectedEntities = entities.filter((entity: Entity) =>
+        value.some((link) => entity.id === link.id)
+    );
+
+    const onSelectEntity = (entity: Entity) => {
+        // If entity is already selected, do un-select
+        if (value.some((link) => link.id === entity.id)) {
+            handleChange(value.filter((link) => link.id !== entity.id));
+            return;
         }
+
+        const type: EntityType | undefined = entityTypes?.find((et) => et.id === entity.typeId);
+        if (!type) return;
+
+        const label = getEntityLabel(entity);
+        if (!label) return;
+
+        const link: EntityLink = {
+            id: entity.id,
+            organisationId,
+            fieldId: relationship.id,
+            key: type.key,
+            sourceEntityId: uuid(), // Dummy sourceEntityId; will be replaced on save
+            icon: entity.icon ?? type.icon,
+            label,
+        };
+
+        if (isSingleSelect) {
+            handleChange([link]);
+            setPopoverOpen(false);
+            handleBlur();
+            return;
+        }
+
+        if (value.some((link) => link.id === entity.id)) return;
+
+        handleChange([...value, link]);
     };
 
-    if (entitiesQueries.isLoading) {
+    const onRemoveEntity = (id: string) => {
+        handleRemove(id);
+    };
+
+    const getEntityLabel = (entity: Entity): string | undefined => {
+        const payload = entity.payload[entity.identifierKey].payload;
+        if (isRelationshipPayload(payload)) return;
+        return String(payload.value);
+    };
+
+    const getTypeLabel = (typeId: string) => {
+        return entityTypeKeyIdMap[typeId]?.name.singular || "Unknown Type";
+    };
+
+    // Auto-open popover when autoFocus is true (e.g., in table cell edit mode)
+    useEffect(() => {
+        if (!popoverOpen && !isLoading && !isError)
+            if (autoFocus) {
+                // Small delay to ensure DOM is ready
+                const timer = setTimeout(() => setPopoverOpen(true), 0);
+                return () => clearTimeout(timer);
+            }
+    }, [autoFocus, isLoading, isError]);
+
+    if (isLoading) {
         return (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -112,121 +173,120 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({ re
         );
     }
 
-    if (entitiesQueries.isError) {
+    if (isError) {
         return <div className="text-sm text-destructive">Failed to load entities</div>;
     }
 
-    const entities = entitiesQueries.data || [];
-
-    // Single select rendering
-    if (isSingleSelect) {
-        return (
-            <div className="space-y-2 w-full min-w-0">
-
-                <Select
-                    value={value || undefined}
-                    onValueChange={handleChange}
-                    disabled={entities.length === 0}
-                >
-                    <SelectTrigger onBlur={handleBlur} autoFocus={autoFocus}>
-                        <SelectValue
-                            placeholder={
-                                entities.length === 0
-                                    ? "No entities available"
-                                    : `Select ${relationship.name.toLowerCase()}...`
-                            }
-                        />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {entities.map((entity) => (
-                            <SelectItem key={entity.id} value={entity.id}>
-                                {getEntityDisplayName(entity)}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                {errors && (
-                    <div className="space-y-1">
-                        {errors.map((error, idx) => (
-                            <p key={idx} className="text-sm text-destructive">
-                                {error}
-                            </p>
-                        ))}
-                    </div>
-                )}
-            </div>
-        );
-    }
-
-    // Multi-select rendering
-    const selectedEntities = entities.filter((e) => (value || []).includes(e.id));
-    const availableEntities = entities.filter((e) => !(value || []).includes(e.id));
-
     return (
-        <div className="space-y-2">
-            {/* Selected entities */}
-            {selectedEntities.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                    {selectedEntities.map((entity) => (
-                        <Badge key={entity.id} variant="secondary" className="gap-1">
-                            {getEntityDisplayName(entity)}
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-4 w-4 p-0 hover:bg-transparent"
-                                onClick={() => handleRemove(entity.id)}
-                            >
-                                <X className="h-3 w-3" />
-                            </Button>
-                        </Badge>
-                    ))}
-                </div>
-            )}
+        <div className="space-y-3">
+            <Popover
+                open={popoverOpen}
+                onOpenChange={async (isOpen) => {
+                    setPopoverOpen(isOpen);
+                    // Call onBlur when popover closes (handles both selection and click-outside)
+                    if (!isOpen) {
+                        await handleBlur();
+                    }
+                }}
+            >
+                <PopoverTrigger asChild>
+                    <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={popoverOpen}
+                        className="w-full justify-between"
+                    >
+                        <div className="flex flex-wrap gap-2">
+                            {selectedEntities?.map((entity) => (
+                                <Badge key={entity.id} variant="secondary" className="gap-1">
+                                    {getEntityLabel(entity)}
+                                    <div
+                                        onClick={() => onRemoveEntity(entity.id)}
+                                        className="ml-1 rounded-sm hover:text-destructive"
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </div>
+                                </Badge>
+                            ))}{" "}
+                            {(selectedEntities?.length || 0) === 0 && (
+                                <span className="text-sm text-muted-foreground">
+                                    Select entities...
+                                </span>
+                            )}
+                        </div>
+                    </Button>
+                </PopoverTrigger>
 
-            {/* Add entity selector */}
-            {availableEntities.length > 0 && (
-                <Select
-                    value=""
-                    onValueChange={(entityId) => {
-                        const newValue = [...(value || []), entityId];
-                        handleChange(newValue);
-                    }}
-                    disabled={entities.length === 0}
-                >
-                    <SelectTrigger onBlur={handleBlur} autoFocus={autoFocus}>
-                        <SelectValue
-                            placeholder={
-                                entities.length === 0
-                                    ? "No entities available"
-                                    : selectedEntities.length > 0
-                                    ? `Add another ${relationship.name.toLowerCase()}...`
-                                    : `Select ${relationship.name.toLowerCase()}...`
-                            }
-                        />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {availableEntities.map((entity) => (
-                            <SelectItem key={entity.id} value={entity.id}>
-                                {getEntityDisplayName(entity)}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            )}
+                <PopoverContent className="w-[360px] p-0 mt-2" align="end">
+                    <Command>
+                        {/* Tabs for filtering by entity type */}
 
-            {selectedEntities.length === 0 && availableEntities.length === 0 && (
-                <p className="text-sm text-muted-foreground">No entities available</p>
-            )}
+                        <Tabs value={selectedType} onValueChange={setSelectedType}>
+                            {/* Only show tab list if there are multiple types */}
+                            {types.length > 1 && (
+                                <TabsList>
+                                    <TabsTrigger value="ALL">All</TabsTrigger>
 
-            {errors && (
-                <div className="space-y-1">
-                    {errors.map((error, idx) => (
-                        <p key={idx} className="text-sm text-destructive">
-                            {error}
-                        </p>
-                    ))}
-                </div>
-            )}
+                                    {types.map((type) => (
+                                        <TabsTrigger key={type.id} value={type.id}>
+                                            {type.name.singular}
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                            )}
+                            <TabsContent value={selectedType} className="mt-2">
+                                <CommandInput placeholder="Search entities..." />
+                                <CommandEmpty>No entities found.</CommandEmpty>
+
+                                <CommandGroup>
+                                    {filteredEntities.map((entity) => {
+                                        const isSelected = value.some(
+                                            (link) => link.id === entity.id
+                                        );
+
+                                        const { icon, colour } = entity.icon ??
+                                            entityTypeKeyIdMap[entity.typeId]?.icon ?? {
+                                                icon: "FILE",
+                                                colour: "NEUTRAL",
+                                            };
+
+                                        return (
+                                            <CommandItem
+                                                key={entity.id}
+                                                value={getEntityLabel(entity)}
+                                                onSelect={() => onSelectEntity(entity)}
+                                            >
+                                                <div className="flex w-full items-center justify-between">
+                                                    <div className="flex items-center">
+                                                        <IconCell
+                                                            readonly
+                                                            iconType={icon}
+                                                            colour={colour}
+                                                            className="mr-2 size-6"
+                                                        />
+                                                        <div>
+                                                            <div>{getEntityLabel(entity)}</div>
+                                                            <div className="text-xs text-muted-foreground">
+                                                                {getTypeLabel(entity.typeId)}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {isSelected && (
+                                                        <Check className="h-4 w-4 opacity-100" />
+                                                    )}
+                                                </div>
+                                            </CommandItem>
+                                        );
+                                    })}
+                                </CommandGroup>
+                            </TabsContent>
+                        </Tabs>
+                    </Command>
+                </PopoverContent>
+            </Popover>
+
+            {errors && <p className="text-sm text-destructive">{errors}</p>}
         </div>
     );
 };

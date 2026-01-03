@@ -5,7 +5,6 @@ import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.common.ValidationScope
 import riven.core.enums.entity.validation.EntityTypeChangeType
-import riven.core.enums.entity.EntityPropertyType
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.validation.EntityTypeSchemaChange
@@ -34,18 +33,7 @@ class EntityValidationService(
         return schemaService.validate(
             schema = entityType.schema,
             // Only validate ATTRIBUTE properties in this context. Relationship validation is separate.
-            payload = entity.payload.mapNotNull { (key, value) ->
-                @Suppress("UNCHECKED_CAST")
-                val jsonMap = value as? Map<String, Any?> ?: return@mapNotNull null
-                val type = (jsonMap["type"] as? String)?.let { EntityPropertyType.valueOf(it) }
-
-                // Only validate ATTRIBUTE properties, skip RELATIONSHIP properties
-                if (type == EntityPropertyType.ATTRIBUTE) {
-                    key to jsonMap["value"]
-                } else {
-                    null
-                }
-            }.toMap(),
+            payload = entity.payload.mapValues { it.value.value },
             scope = ValidationScope.STRICT
         )
     }
@@ -146,10 +134,34 @@ class EntityValidationService(
                 }
 
                 // Detect required flag changes
+                /**
+                 * TODO - Eventually we would need to consider querying the current
+                 * data to instead just determine if this change can be automatically applied
+                 * without causing existing data to become invalid. (Ie. if all current entities have a value for this field)
+                 */
                 if (!oldField.required && newField.required) {
                     changes.add(
                         EntityTypeSchemaChange(
                             type = EntityTypeChangeType.FIELD_REQUIRED_ADDED,
+                            path = key.toString(),
+                            description = "Field '$key' changed from optional to required",
+                            breaking = true
+                        )
+                    )
+                }
+
+                // Detect unique flag changes
+                /**
+                 * TODO - Eventually we would need to consider querying the current
+                 * data to instead just determine if this change can be automatically applied
+                 * without causing existing data to become invalid. (Ie. if all existing values are unique)
+                 * We could then automatically perform the necessary data migration to enforce uniqueness
+                 * and move all data to the normalized unique table
+                 */
+                if (!oldField.unique && newField.unique) {
+                    changes.add(
+                        EntityTypeSchemaChange(
+                            type = EntityTypeChangeType.FIELD_UNIQUE_ADDED,
                             path = key.toString(),
                             description = "Field '$key' changed from optional to required",
                             breaking = true

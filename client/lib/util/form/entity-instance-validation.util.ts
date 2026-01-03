@@ -1,3 +1,4 @@
+import { entityReferenceFormSchema } from "@/components/feature-modules/entity/components/tables/entity-table-utils";
 import {
     EntityRelationshipDefinition,
     EntityType,
@@ -5,6 +6,7 @@ import {
 import { SchemaUUID } from "@/lib/interfaces/common.interface";
 import { DataFormat, DataType, EntityRelationshipCardinality, SchemaType } from "@/lib/types/types";
 import { z } from "zod";
+import { exists } from "../utils";
 import { attributeTypes } from "./schema.util";
 
 /**
@@ -77,15 +79,19 @@ function buildStringSchema(schema: SchemaUUID): z.ZodString {
     let stringSchema = z.string();
 
     const options = schema.options;
+    if (schema.required && !exists(options?.minLength)) {
+        stringSchema = stringSchema.min(1, `${schema.label || "Field"} is required`);
+    }
+
     if (options) {
         // Min/max length constraints
-        if (options.minLength !== undefined && options.minLength !== null) {
+        if (exists(options.minLength)) {
             stringSchema = stringSchema.min(
                 options.minLength,
                 `Must be at least ${options.minLength} characters`
             );
         }
-        if (options.maxLength !== undefined && options.maxLength !== null) {
+        if (exists(options.maxLength)) {
             stringSchema = stringSchema.max(
                 options.maxLength,
                 `Must be at most ${options.maxLength} characters`
@@ -93,7 +99,7 @@ function buildStringSchema(schema: SchemaUUID): z.ZodString {
         }
 
         // Regex pattern validation
-        if (options.regex) {
+        if (exists(options.regex)) {
             try {
                 const pattern = new RegExp(options.regex);
                 stringSchema = stringSchema.regex(pattern, `Must match pattern: ${options.regex}`);
@@ -103,7 +109,7 @@ function buildStringSchema(schema: SchemaUUID): z.ZodString {
         }
 
         // Enum validation for SELECT types
-        if (options.enum && options.enum.length > 0) {
+        if (exists(options.enum) && options.enum.length > 0) {
             // Zod enum requires at least 1 value, and values must be tuples
             const enumValues = options.enum as [string, ...string[]];
             stringSchema = z.enum(enumValues) as any;
@@ -141,10 +147,6 @@ function buildStringSchema(schema: SchemaUUID): z.ZodString {
         }
     }
 
-    if (schema.required) {
-        stringSchema = stringSchema.min(1, `${schema.label || "Field"} is required`);
-    }
-
     return stringSchema;
 }
 
@@ -165,11 +167,6 @@ function buildNumberSchema(schema: SchemaUUID): z.ZodNumber {
         }
         if (options.maximum !== undefined && options.maximum !== null) {
             numberSchema = numberSchema.max(options.maximum, `Must be at most ${options.maximum}`);
-        }
-
-        // Integer validation if specified
-        if (options.integer) {
-            numberSchema = numberSchema.int("Must be a whole number");
         }
     }
 
@@ -200,40 +197,34 @@ function buildArraySchema(schema: SchemaUUID): z.ZodArray<any> {
 /**
  * Build a Zod schema for relationship fields
  */
-export function buildRelationshipFieldSchema(
-    relationship: EntityRelationshipDefinition
-): z.ZodTypeAny {
+export function buildRelationshipFieldSchema(relationship: EntityRelationshipDefinition) {
     const isSingleSelect =
         relationship.cardinality === EntityRelationshipCardinality.ONE_TO_ONE ||
         relationship.cardinality === EntityRelationshipCardinality.MANY_TO_ONE;
 
-    let fieldSchema: z.ZodTypeAny;
+    let schema = entityReferenceFormSchema;
 
     if (isSingleSelect) {
         // Single entity ID
-        fieldSchema = z.string().uuid(`${relationship.name} must be a valid entity`);
-
-        if (!relationship.required) {
-            fieldSchema = fieldSchema.optional().nullable();
-        }
-    } else {
-        // Array of entity IDs
-        fieldSchema = z.array(z.string().uuid(`Each ${relationship.name} must be a valid entity`));
-
-        if (relationship.required) {
-            fieldSchema = fieldSchema.min(1, `At least one ${relationship.name} is required`);
-        } else {
-            fieldSchema = fieldSchema.optional().nullable();
-        }
+        schema = schema.max(1, `Only one ${relationship.name} can be selected`);
     }
 
-    return fieldSchema;
+    if (relationship.required) {
+        return schema.min(1, `At least one ${relationship.name} is required`);
+    }
+
+    return schema;
 }
 
 /**
  * Get default value for a schema field
  */
 export function getDefaultValueForSchema(schema: SchemaUUID): any {
+    // Check for custom default value in options first
+    if (schema.options?.default !== undefined && schema.options?.default !== null) {
+        return schema.options.default;
+    }
+
     const attributeType = attributeTypes[schema.key];
 
     switch (attributeType.type) {
@@ -259,20 +250,17 @@ export function getDefaultValueForSchema(schema: SchemaUUID): any {
 export function buildDefaultValuesFromEntityType(entityType: EntityType): Record<string, any> {
     const defaults: Record<string, any> = {};
 
-    // Set defaults for attributes
+    // Set defaults for attributes (uses options.default if available)
     if (entityType.schema.properties) {
         Object.entries(entityType.schema.properties).forEach(([id, schema]) => {
             defaults[id] = getDefaultValueForSchema(schema);
         });
     }
 
-    // Set defaults for relationships
+    // Set defaults for relationships (always empty arrays since entityReferenceFormSchema is array-based)
     if (entityType.relationships) {
         entityType.relationships.forEach((rel) => {
-            const isMulti =
-                rel.cardinality === EntityRelationshipCardinality.ONE_TO_MANY ||
-                rel.cardinality === EntityRelationshipCardinality.MANY_TO_MANY;
-            defaults[rel.id] = isMulti ? [] : null;
+            defaults[rel.id] = [];
         });
     }
 
