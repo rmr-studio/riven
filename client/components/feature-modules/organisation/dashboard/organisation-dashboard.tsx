@@ -1,18 +1,18 @@
 "use client";
 
-import { useOrganisationStore } from "@/components/feature-modules/organisation/provider/organisation-provider";
 import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-group";
 import { isResponseError } from "@/lib/util/error/error.util";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useOrganisation } from "../hooks/use-organisation";
+import { useCurrentOrganisation } from "../provider/organisation-provider";
 
 export const OrganisationDashboard = () => {
     const { data: organisation, isPending, error, isLoadingAuth } = useOrganisation();
 
     const router = useRouter();
-    const selectedOrganisationId = useOrganisationStore((store) => store.selectedOrganisationId);
-    const setSelectedOrganisation = useOrganisationStore((store) => store.setSelectedOrganisation);
+    
+    const {} = useCurrentOrganisation()
 
     useEffect(() => {
         // Query has finished, organisation has not been found. Redirect back to organisation view with associated error

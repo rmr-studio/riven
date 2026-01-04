@@ -11,6 +11,8 @@ type OrganisationActions = {
 
 export type OrganisationStore = OrganisationState & OrganisationActions;
 
+export type OrganisationStoreApi = ReturnType<typeof createOrganisationStore>;
+
 export const organisationInitState: OrganisationState = {
     selectedOrganisationId: undefined,
 };
@@ -19,10 +21,9 @@ export const createOrganisationStore = (initState: OrganisationState = organisat
     return createStore<OrganisationStore>()((set) => ({
         ...initState,
         setSelectedOrganisation: (organisation: Organisation) =>
-            set((state) => {
+            set(() => {
                 localStorage.setItem("selectedOrganisation", organisation.id);
                 return {
-                    ...state,
                     selectedOrganisationId: organisation.id,
                 };
             }),

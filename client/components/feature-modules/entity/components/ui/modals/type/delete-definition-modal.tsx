@@ -28,8 +28,8 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { FC, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useOrganisation } from "../../../../organisation/hooks/use-organisation";
-import { useDeleteDefinitionMutation } from "../../../hooks/mutation/type/use-delete-definition-mutation";
+import { useOrganisation } from "../../../../../organisation/hooks/use-organisation";
+import { useDeleteDefinitionMutation } from "../../../../hooks/mutation/type/use-delete-definition-mutation";
 import {
     DeleteAttributeDefinitionRequest,
     DeleteRelationshipDefinitionRequest,
@@ -37,7 +37,7 @@ import {
     EntityTypeDefinition,
     isAttributeDefinition,
     isRelationshipDefinition,
-} from "../../../interface/entity.interface";
+} from "../../../../interface/entity.interface";
 
 interface Props {
     dialog: DialogControl;

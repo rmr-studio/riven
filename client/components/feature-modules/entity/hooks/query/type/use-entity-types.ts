@@ -9,7 +9,7 @@ export function useEntityTypes(organisationId?: string): AuthenticatedQueryResul
     const query = useQuery({
         queryKey: ["entityTypes", organisationId],
         queryFn: async () => {
-            return await EntityTypeService.getEntityTypes(session, organisationId!!); // non-null assertion as enabled ensures organisationId is defined
+            return await EntityTypeService.getEntityTypes(session, organisationId!); // non-null assertion as enabled ensures organisationId is defined
         },
         staleTime: 5 * 60 * 1000, // 5 minutes
         enabled: !!session && !!organisationId && !loading,
@@ -26,13 +26,13 @@ export function useEntityTypes(organisationId?: string): AuthenticatedQueryResul
 
 export function useEntityTypeByKey(
     key: string,
-    organisationId: string
+    organisationId?: string
 ): AuthenticatedQueryResult<EntityType> {
     const { session, loading } = useAuth();
     const query = useQuery({
         queryKey: ["entityType", key, organisationId],
         queryFn: async () => {
-            return await EntityTypeService.getEntityTypeByKey(session, organisationId, key);
+            return await EntityTypeService.getEntityTypeByKey(session, organisationId!, key); // non-null assertion as enabled ensures organisationId is defined;
         },
         staleTime: 10 * 60 * 1000, // 10 minutes
         enabled: !!key && !!organisationId && !!session && !loading,

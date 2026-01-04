@@ -25,6 +25,7 @@ interface DraggableRowProps<TData> {
     enableInlineEdit?: boolean;
     isSelectionEnabled: boolean;
     focusedCell?: { rowId: string; columnId: string } | null;
+    alwaysShowActionHandles?: boolean;
 }
 
 function DraggableRowComponent<TData>({
@@ -38,6 +39,7 @@ function DraggableRowComponent<TData>({
     isSelectionEnabled,
     enableInlineEdit,
     focusedCell,
+    alwaysShowActionHandles = false,
 }: DraggableRowProps<TData>) {
     const isMounted = useDataTableStore<TData, boolean>((state) => state.isMounted);
 
@@ -64,7 +66,7 @@ function DraggableRowComponent<TData>({
         : undefined;
 
     const hasSelections = useDataTableStore<TData, boolean>((state) => state.hasSelections());
-    const isVisible = hasSelections || hoveredRowId === row.id;
+    const isVisible = alwaysShowActionHandles || hasSelections || hoveredRowId === row.id;
 
     return (
         <TableRow

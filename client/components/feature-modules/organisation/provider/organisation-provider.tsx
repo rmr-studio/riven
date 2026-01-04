@@ -1,17 +1,15 @@
 "use client";
 
-import { useProfile } from "@/components/feature-modules/user/hooks/useProfile";
-import { User } from "@/components/feature-modules/user/interface/user.interface";
 import {
     createOrganisationStore,
     type OrganisationStore,
+    type OrganisationStoreApi,
 } from "@/components/feature-modules/organisation/store/organisation.store";
-import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
+import { useProfile } from "@/components/feature-modules/user/hooks/useProfile";
+import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { useStore } from "zustand";
 
-type OrganisationStoreApi = ReturnType<typeof createOrganisationStore>;
-
-export const OrganisationsStoreContext = createContext<OrganisationStoreApi | undefined>(undefined);
+const OrganisationsStoreContext = createContext<OrganisationStoreApi | undefined>(undefined);
 
 export interface OrganisationsStoreProviderProps {
     children: ReactNode;
@@ -19,14 +17,12 @@ export interface OrganisationsStoreProviderProps {
 
 export const OrganisationsStoreProvider = ({ children }: OrganisationsStoreProviderProps) => {
     const { data: user } = useProfile();
-    const store = useRef<OrganisationStoreApi | undefined>(undefined);
+    const storeRef = useRef<OrganisationStoreApi | null>(null);
 
-    if (!store.current) {
-        store.current = createOrganisationStore();
-    }
+    // Compute initial organisation ID from localStorage and user data
+    const initialOrganisationId = useMemo(() => {
+        if (!user) return undefined;
 
-    useEffect(() => {
-        if (!user) return;
         const selectedOrganisationId = localStorage.getItem("selectedOrganisation");
         if (selectedOrganisationId) {
             const selectedOrganisation = user.memberships.find(
@@ -34,39 +30,49 @@ export const OrganisationsStoreProvider = ({ children }: OrganisationsStoreProvi
             )?.organisation;
 
             if (selectedOrganisation) {
-                store.current?.setState({
-                    selectedOrganisationId: selectedOrganisation.id,
-                });
-                return;
+                return selectedOrganisation.id;
             }
         }
 
-        getDefaultOrganisation(user);
+        // Fall back to first organisation
+        return user.memberships[0]?.organisation?.id;
     }, [user]);
 
-    const getDefaultOrganisation = (user: User) => {
-        const firstOrganisation = user.memberships[0]?.organisation;
-        if (firstOrganisation) {
-            store.current?.setState({
-                selectedOrganisationId: firstOrganisation.id,
+    // Create store only once
+    if (!storeRef.current) {
+        storeRef.current = createOrganisationStore();
+    }
+
+    // Update store when initial organisation ID changes
+    useEffect(() => {
+        if (initialOrganisationId && storeRef.current) {
+            storeRef.current.setState({
+                selectedOrganisationId: initialOrganisationId,
             });
         }
-    };
+    }, [initialOrganisationId]);
 
     return (
-        <OrganisationsStoreContext.Provider value={store.current}>
+        <OrganisationsStoreContext.Provider value={storeRef.current}>
             {children}
         </OrganisationsStoreContext.Provider>
     );
 };
 
-export const useOrganisationStore = <T,>(
-    selector: (store: OrganisationStore) => T
-): T | undefined => {
+const useOrganisationStoreState = <T,>(selector: (store: OrganisationStore) => T): T => {
     const context = useContext(OrganisationsStoreContext);
 
     if (!context) {
         throw new Error("useOrganisationStore must be used within a OrganisationsStoreProvider");
     }
+
     return useStore(context, selector);
+};
+
+export const useOrganisationStore = <T,>(selector: (store: OrganisationStore) => T): T => {
+    return useOrganisationStoreState(selector);
+};
+
+export const useCurrentOrganisation = () => {
+    return useOrganisationStoreState((store) => store);
 };

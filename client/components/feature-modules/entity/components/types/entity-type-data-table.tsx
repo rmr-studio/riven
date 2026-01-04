@@ -103,6 +103,7 @@ const EntityTypeDataTable: FC<Props> = ({ type, identifierKey, onEdit, onDelete 
                 <DataTable
                     columns={columns}
                     enableDragDrop
+                    alwaysShowActionHandles={true}
                     onReorder={handleFieldsReorder}
                     getRowId={(row) => row.id}
                     disableDragForRow={disableDragForRow}

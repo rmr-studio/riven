@@ -2,6 +2,7 @@
 
 import { useOrganisation } from "@/components/feature-modules/organisation/hooks/use-organisation";
 import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-group";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { isResponseError } from "@/lib/util/error/error.util";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -69,19 +70,24 @@ export const EntityDashboard = () => {
                 <BreadCrumbGroup items={trail} />
             </header>
             <section className="flex min-w-0 w-full">
-                <EntityTypeConfigurationProvider
-                    organisationId={organisationId}
-                    entityType={entityType}
-                >
-                    <EntityDraftProvider organisationId={organisationId} entityType={entityType}>
-                        <EntityDataTable
-                            entityType={entityType}
-                            entities={entities || []}
-                            loadingEntities={isPendingEntities || isLoadingAuth}
+                <TooltipProvider>
+                    <EntityTypeConfigurationProvider
+                        organisationId={organisationId}
+                        entityType={entityType}
+                    >
+                        <EntityDraftProvider
                             organisationId={organisationId}
-                        />
-                    </EntityDraftProvider>
-                </EntityTypeConfigurationProvider>
+                            entityType={entityType}
+                        >
+                            <EntityDataTable
+                                entityType={entityType}
+                                entities={entities || []}
+                                loadingEntities={isPendingEntities || isLoadingAuth}
+                                organisationId={organisationId}
+                            />
+                        </EntityDraftProvider>
+                    </EntityTypeConfigurationProvider>
+                </TooltipProvider>
             </section>
         </div>
     );

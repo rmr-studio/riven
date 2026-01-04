@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { Button } from "../button";
 import {
     DropdownMenu,
@@ -35,32 +34,22 @@ export const DashboardSidebar = () => {
     const pathName = usePathname();
     const router = useRouter();
     const { data, isPending, isLoadingAuth } = useProfile();
-    const [selectedOrganisation, setSelectedOrganisation] = useState<Organisation | null>(null);
 
-    const selectedOrganisationId = useOrganisationStore((store) => store.selectedOrganisationId); // Select specific state
-    const setSelectedOrganisationId = useOrganisationStore(
-        (store) => store.setSelectedOrganisation
-    );
+    const selectedOrganisationId = useOrganisationStore((store) => store.selectedOrganisationId);
+    const setSelectedOrganisation = useOrganisationStore((store) => store.setSelectedOrganisation);
 
     const { data: entityTypes, isLoading: isLoadingEntityTypes } =
         useEntityTypes(selectedOrganisationId);
 
     const loadingUser = isPending || isLoadingAuth;
 
-    useEffect(() => {
-        if (!data) return;
-
-        setSelectedOrganisation(
-            data?.memberships.find((m) => m.organisation?.id === selectedOrganisationId)
-                ?.organisation || null
-        );
-    }, [data, selectedOrganisationId]);
+    // Derive selected organisation from user data
+    const selectedOrganisation =
+        data?.memberships.find((m) => m.organisation?.id === selectedOrganisationId)
+            ?.organisation ?? null;
 
     const handleOrganisationSelection = (organisation: Organisation) => {
-        if (!setSelectedOrganisationId) return;
-
         setSelectedOrganisation(organisation);
-        setSelectedOrganisationId(organisation);
         router.push("/dashboard/organisation/" + organisation.id);
     };
 

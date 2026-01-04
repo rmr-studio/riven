@@ -175,6 +175,10 @@ export const useConfigFormState = () => {
     return useEntityTypeConfigurationStore((state) => state);
 };
 
+export const useConfigCurrentType = () => {
+    return useEntityTypeConfigurationStore((state) => state.entityType);
+}
+
 // Optimized hooks for common access patterns
 export const useConfigForm = () => {
     return useEntityTypeConfigurationStore((state) => state.form);

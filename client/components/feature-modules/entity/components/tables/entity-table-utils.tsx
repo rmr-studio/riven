@@ -5,6 +5,7 @@ import {
     createAttributeRenderer,
     createRelationshipRenderer,
 } from "@/components/ui/data-table/components/cells/edit-renderers";
+import { DEFAULT_COLUMN_WIDTH } from "@/components/ui/data-table/data-table";
 import { ColumnEditConfig } from "@/components/ui/data-table/data-table.types";
 import { IconCell } from "@/components/ui/icon/icon-cell";
 import { SchemaUUID } from "@/lib/interfaces/common.interface";
@@ -391,6 +392,7 @@ export function generateColumnsFromEntityType(
 
         columns.push({
             accessorKey: attributeId,
+            size: entityType.columns?.find((col) => col.key === attributeId)?.width ?? DEFAULT_COLUMN_WIDTH,
             header: (_) => {
                 const { icon, label } = schema;
                 const { icon: type, colour } = icon;
@@ -454,6 +456,7 @@ export function generateColumnsFromEntityType(
 
         columns.push({
             accessorKey: relationship.id,
+            size: entityType.columns?.find((col) => col.key === relationship.id)?.width ?? DEFAULT_COLUMN_WIDTH,
             header: () => {
                 const { icon, name } = relationship;
                 return (

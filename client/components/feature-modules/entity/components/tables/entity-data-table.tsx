@@ -1,19 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-    ColumnOrderingConfig,
-    ColumnResizingConfig,
-    DataTable,
-    DataTableProvider,
-} from "@/components/ui/data-table";
-import { DEFAULT_COLUMN_WIDTH } from "@/components/ui/data-table/data-table";
+import { ColumnResizingConfig, DataTable, DataTableProvider } from "@/components/ui/data-table";
 import { Form } from "@/components/ui/form";
 import { SchemaUUID } from "@/lib/interfaces/common.interface";
 import { ClassNameProps } from "@/lib/interfaces/interface";
 import { EntityPropertyType } from "@/lib/types/types";
 import { debounce } from "@/lib/util/debounce.util";
 import { cn } from "@/lib/util/utils";
+
 import { Row } from "@tanstack/react-table";
 import { Plus } from "lucide-react";
 import { FC, useCallback, useMemo, useRef } from "react";
@@ -36,8 +31,6 @@ import { EntityTypeHeader } from "../ui/entity-type-header";
 import { EntityTypeSaveButton } from "../ui/entity-type-save-button";
 import { EntityDraftRow } from "./entity-draft-row";
 import EntityActionBar from "./entity-table-action-bar";
-import { handleColumnOrderChange } from "./entity-table-order-handler";
-import { handleColumnResize } from "./entity-table-resize-handler";
 import {
     applyColumnOrdering,
     EntityRow,
@@ -75,6 +68,19 @@ export const EntityDataTable: FC<Props> = ({
         undefined,
         handleConflict
     );
+
+    const handleColumnResize = (entityType: EntityType, columnSizing: Record<string, number>) => {
+        // Update entity type columns sizing in form state
+        const updatedColumns = entityType.columns.map((col) => {
+            return {
+                ...col,
+                width: columnSizing[col.key] ?? col.width,
+            };
+        });
+        form.setValue("columns", updatedColumns, {
+            shouldDirty: true,
+        });
+    };
 
     // Transform entities to row data
     const rowData = useMemo(() => {
@@ -155,18 +161,6 @@ export const EntityDataTable: FC<Props> = ({
         () => ({
             enabled: true,
             columnResizeMode: "onChange" as const, // Live resizing during drag
-            defaultColumnSize: DEFAULT_COLUMN_WIDTH,
-        }),
-        []
-    );
-
-    // Column ordering configuration
-    const columnOrderingConfig: ColumnOrderingConfig = useMemo(
-        () => ({
-            enabled: true,
-            onColumnOrderChange: (columnOrder: string[]) => {
-                handleColumnOrderChange(entityType, columnOrder);
-            },
         }),
         []
     );
@@ -261,11 +255,13 @@ export const EntityDataTable: FC<Props> = ({
                 {/* Draft mode controls */}
                 <div>
                     <div className="flex justify-between">
-                        <EntityTypeHeader>
-                            <span className="text-sm text-muted-foreground">
-                                Manage your entities and their data
-                            </span>
-                        </EntityTypeHeader>
+                        <div className="flex flex-col gap-2">
+                            <EntityTypeHeader>
+                                <div className="text-sm text-muted-foreground">
+                                    Manage your entities and their data
+                                </div>
+                            </EntityTypeHeader>
+                        </div>
                         <div className="flex gap-2">
                             <EntityTypeSaveButton onSubmit={handleSubmit} />
 
@@ -290,9 +286,6 @@ export const EntityDataTable: FC<Props> = ({
                     onColumnWidthsChange={(columnSizing) =>
                         debouncedResizeHandler(entityType, columnSizing)
                     }
-                    onColumnOrderChange={(columnOrder) =>
-                        handleColumnOrderChange(entityType, columnOrder)
-                    }
                 >
                     <DataTable
                         columns={columns}
@@ -309,6 +302,7 @@ export const EntityDataTable: FC<Props> = ({
                             ),
                         }}
                         enableDragDrop
+                        alwaysShowActionHandles={true}
                         getRowId={(row) => row._entityId}
                         search={searchConfig}
                         filter={{
@@ -317,7 +311,6 @@ export const EntityDataTable: FC<Props> = ({
                             disabled: isDraftMode,
                         }}
                         columnResizing={columnResizingConfig}
-                        columnOrdering={columnOrderingConfig}
                         emptyMessage={emptyMessage}
                         className={cn(className)}
                         enableInlineEdit={true}

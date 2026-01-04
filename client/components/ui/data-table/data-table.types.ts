@@ -153,9 +153,6 @@ export interface RowActionsConfig<TData> {
 export interface ColumnResizingConfig {
     enabled: boolean;
     columnResizeMode?: "onChange" | "onEnd";
-    defaultColumnSize?: number;
-    initialColumnSizing?: Record<string, number>;
-    onColumnWidthsChange?: (columnSizing: Record<string, number>) => void;
 }
 
 export interface ColumnOrderingConfig {

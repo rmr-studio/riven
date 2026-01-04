@@ -3,8 +3,8 @@ import { Plus } from "lucide-react";
 import { FC, useEffect, useState } from "react";
 import { useConfigForm } from "../../context/configuration-provider";
 import { type EntityType, type EntityTypeDefinition } from "../../interface/entity.interface";
-import { AttributeFormModal } from "../modals/type/attribute-form-modal";
-import { DeleteDefinitionModal } from "../modals/type/delete-definition-modal";
+import { AttributeFormModal } from "../ui/modals/type/attribute-form-modal";
+import { DeleteDefinitionModal } from "../ui/modals/type/delete-definition-modal";
 import EntityTypeDataTable from "./entity-type-data-table";
 
 interface Props {

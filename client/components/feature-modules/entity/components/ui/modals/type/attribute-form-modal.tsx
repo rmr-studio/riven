@@ -16,9 +16,9 @@ import {
     EntityRelationshipDefinition,
     EntityType,
     isRelationshipDefinition,
-} from "../../../interface/entity.interface";
-import { SchemaForm } from "../../forms/type/attribute/schema-form";
-import { RelationshipAttributeForm } from "../../forms/type/relationship/relationship-form";
+} from "../../../../interface/entity.interface";
+import { SchemaForm } from "../../../forms/type/attribute/schema-form";
+import { RelationshipAttributeForm } from "../../../forms/type/relationship/relationship-form";
 
 interface Props {
     dialog: DialogControl;

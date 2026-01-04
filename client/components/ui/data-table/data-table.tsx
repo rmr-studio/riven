@@ -30,6 +30,7 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import {
+    AccessorKeyColumnDef,
     ColumnDef,
     getCoreRowModel,
     getFilteredRowModel,
@@ -57,7 +58,7 @@ import type {
 // ============================================================================
 
 export interface DataTableProps<TData, TValue> {
-    columns: ColumnDef<TData, TValue>[];
+    columns: AccessorKeyColumnDef<TData, TValue>[];
     enableDragDrop?: boolean;
     onReorder?: (data: TData[]) => void | boolean;
     getRowId?: (row: TData, index: number) => string;
@@ -83,6 +84,9 @@ export interface DataTableProps<TData, TValue> {
     onCellEdit?: (row: TData, columnId: string, newValue: any, oldValue: any) => Promise<boolean>;
     /** Edit mode trigger (click or doubleClick) */
     editMode?: "click" | "doubleClick";
+    /** Always show action handles (drag/select) even when not hovering */
+    alwaysShowActionHandles?: boolean;
+    defaultColumnWidth?: number;
 }
 
 export const DEFAULT_COLUMN_WIDTH = 250;
@@ -114,6 +118,8 @@ export function DataTable<TData, TValue>({
     enableInlineEdit = false,
     onCellEdit,
     editMode = "click",
+    defaultColumnWidth = DEFAULT_COLUMN_WIDTH,
+    alwaysShowActionHandles = false,
 }: DataTableProps<TData, TValue>) {
     // ========================================================================
     // Store State & Actions
@@ -170,37 +176,50 @@ export function DataTable<TData, TValue>({
     );
 
     // ========================================================================
-    // Selection Column
+    // Action Column (only added when drag-drop or selection is enabled)
     // ========================================================================
 
     const finalColumns = useMemo(() => {
-        if (!isSelectionEnabled && !enableDragDrop) {
+        // Check if any actions are enabled
+        const hasActions = enableDragDrop || isSelectionEnabled;
+
+        // If no actions, return columns as-is
+        if (!hasActions) {
             return columns;
         }
 
-        // Action Column includes selection/drag handle, row actions and expand button
+        // Calculate dynamic width based on enabled features (35px per icon)
+        const ACTION_ICON_WIDTH = 35;
+        let actionColumnWidth = 0;
+
+        if (enableDragDrop) actionColumnWidth += ACTION_ICON_WIDTH;
+        if (isSelectionEnabled) actionColumnWidth += ACTION_ICON_WIDTH;
+
+        // Action Column includes drag handle and/or selection checkbox
         const actionsColumn: ColumnDef<TData, TValue> = {
             id: "actions",
-            size: 80,
-            minSize: 80,
-            maxSize: 80,
+            size: actionColumnWidth,
+            minSize: actionColumnWidth,
+            maxSize: actionColumnWidth,
             enableResizing: false,
             enableSorting: false,
             enableHiding: false,
             header: ({ table }) => (
                 <div className="flex items-center justify-center">
-                    <Checkbox
-                        checked={table.getIsAllPageRowsSelected()}
-                        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                        aria-label="Select all"
-                        onClick={(e) => e.stopPropagation()}
-                    />
+                    {isSelectionEnabled && (
+                        <Checkbox
+                            checked={table.getIsAllPageRowsSelected()}
+                            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                            aria-label="Select all"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    )}
                 </div>
             ),
         };
 
         return [actionsColumn, ...columns];
-    }, [columns]);
+    }, [columns, enableDragDrop, isSelectionEnabled]);
 
     // ========================================================================
     // TanStack Table Configuration
@@ -283,7 +302,7 @@ export function DataTable<TData, TValue>({
         }),
         // Always set defaultColumn for sizing, but only enable resize interactions if columnResizing is enabled
         defaultColumn: {
-            size: columnResizing?.defaultColumnSize ?? 150,
+            size: defaultColumnWidth,
             minSize: 50,
             maxSize: 500,
         },
@@ -593,6 +612,7 @@ export function DataTable<TData, TValue>({
                     finalColumnsCount={finalColumns.length}
                     enableInlineEdit={enableInlineEdit}
                     focusedCell={focusedCell}
+                    alwaysShowActionHandles={alwaysShowActionHandles}
                 />
             </Table>
         </div>
