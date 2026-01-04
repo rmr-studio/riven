@@ -17,8 +17,8 @@ data class BlockEntity(
     @Column(name = "id", nullable = false, columnDefinition = "uuid")
     val id: UUID? = null,
 
-    @Column(name = "organisation_id", nullable = false)
-    val organisationId: UUID,
+    @Column(name = "workspace_id", nullable = false)
+    val workspaceId: UUID,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "type_id", nullable = false)
@@ -39,7 +39,7 @@ data class BlockEntity(
         val id = requireNotNull(this.id) { "BlockEntity ID cannot be null when converting to model" }
         return Block(
             id = id,
-            organisationId = this.organisationId,
+            workspaceId = this.workspaceId,
             type = this.type.toModel(),
             name = this.name,
             payload = this.payload,

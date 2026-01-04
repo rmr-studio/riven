@@ -1,29 +1,29 @@
-package riven.core.controller.organisation
+package riven.core.controller.workspace
 
 import io.swagger.v3.oas.annotations.tags.Tag
-import riven.core.enums.organisation.OrganisationRoles
-import riven.core.models.organisation.OrganisationInvite
-import riven.core.service.organisation.OrganisationInviteService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import riven.core.enums.workspace.WorkspaceRoles
+import riven.core.models.workspace.WorkspaceInvite
+import riven.core.service.workspace.WorkspaceInviteService
 import java.util.*
 
 @RestController
-@RequestMapping("/api/v1/organisation/invite")
-@Tag(name = "Organisation Invite Management", description = "Endpoints for managing organisation invitations")
+@RequestMapping("/api/v1/workspace/invite")
+@Tag(name = "Workspace Invite Management", description = "Endpoints for managing workspace invitations")
 class InviteController(
-    private val organisationInviteService: OrganisationInviteService
+    private val workspaceInviteService: WorkspaceInviteService
 ) {
 
-    @PostMapping("/organisation/{organisationId}/email/{email}/role/{role}")
-    fun inviteToOrganisation(
-        @PathVariable organisationId: UUID,
+    @PostMapping("/workspace/{workspaceId}/email/{email}/role/{role}")
+    fun inviteToWorkspace(
+        @PathVariable workspaceId: UUID,
         @PathVariable email: String,
-        @PathVariable role: OrganisationRoles
-    ): ResponseEntity<OrganisationInvite> {
-        val invitation: OrganisationInvite = organisationInviteService.createOrganisationInvitation(
-            organisationId = organisationId,
+        @PathVariable role: WorkspaceRoles
+    ): ResponseEntity<WorkspaceInvite> {
+        val invitation: WorkspaceInvite = workspaceInviteService.createWorkspaceInvitation(
+            workspaceId = workspaceId,
             email = email,
             role = role
         )
@@ -35,7 +35,7 @@ class InviteController(
     fun acceptInvite(
         @PathVariable inviteToken: String
     ): ResponseEntity<Unit> {
-        organisationInviteService.handleInvitationResponse(inviteToken, accepted = true)
+        workspaceInviteService.handleInvitationResponse(inviteToken, accepted = true)
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 
@@ -43,31 +43,31 @@ class InviteController(
     fun rejectInvite(
         @PathVariable inviteToken: String
     ): ResponseEntity<Unit> {
-        organisationInviteService.handleInvitationResponse(inviteToken, accepted = false)
+        workspaceInviteService.handleInvitationResponse(inviteToken, accepted = false)
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 
-    @GetMapping("/organisation/{organisationId}")
-    fun getOrganisationInvites(
-        @PathVariable organisationId: UUID
-    ): ResponseEntity<List<OrganisationInvite>> {
-        val invites: List<OrganisationInvite> = organisationInviteService.getOrganisationInvites(organisationId)
+    @GetMapping("/workspace/{workspaceId}")
+    fun getWorkspaceInvites(
+        @PathVariable workspaceId: UUID
+    ): ResponseEntity<List<WorkspaceInvite>> {
+        val invites: List<WorkspaceInvite> = workspaceInviteService.getWorkspaceInvites(workspaceId)
         return ResponseEntity.ok(invites)
     }
 
     @GetMapping("/user")
     fun getUserInvites(
-    ): ResponseEntity<List<OrganisationInvite>> {
-        val invites: List<OrganisationInvite> = organisationInviteService.getUserInvites()
+    ): ResponseEntity<List<WorkspaceInvite>> {
+        val invites: List<WorkspaceInvite> = workspaceInviteService.getUserInvites()
         return ResponseEntity.ok(invites)
     }
 
-    @DeleteMapping("/organisation/{organisationId}/invitation/{id}")
+    @DeleteMapping("/workspace/{workspaceId}/invitation/{id}")
     fun revokeInvite(
-        @PathVariable organisationId: UUID,
+        @PathVariable workspaceId: UUID,
         @PathVariable id: UUID
     ): ResponseEntity<Unit> {
-        organisationInviteService.revokeOrganisationInvite(organisationId, id)
+        workspaceInviteService.revokeWorkspaceInvite(workspaceId, id)
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 

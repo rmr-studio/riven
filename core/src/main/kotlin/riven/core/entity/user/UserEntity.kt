@@ -1,10 +1,10 @@
 package riven.core.entity.user
 
 import jakarta.persistence.*
-import riven.core.entity.organisation.OrganisationEntity
-import riven.core.entity.organisation.OrganisationMemberEntity
-import riven.core.entity.organisation.toDetails
-import riven.core.entity.organisation.toModel
+import riven.core.entity.workspace.WorkspaceEntity
+import riven.core.entity.workspace.WorkspaceMemberEntity
+import riven.core.entity.workspace.toDetails
+import riven.core.entity.workspace.toModel
 import riven.core.models.user.User
 import riven.core.models.user.UserDisplay
 import java.time.ZonedDateTime
@@ -39,13 +39,13 @@ data class UserEntity(
     ) var createdAt: ZonedDateTime = ZonedDateTime.now(),
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "default_organisation_id", referencedColumnName = "id", insertable = true, updatable = true)
-    var defaultOrganisation: OrganisationEntity? = null,
+    @JoinColumn(name = "default_workspace_id", referencedColumnName = "id", insertable = true, updatable = true)
+    var defaultWorkspace: WorkspaceEntity? = null,
 
     @Column(name = "updated_at", nullable = false) var updatedAt: ZonedDateTime = ZonedDateTime.now()
 ) {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    var organisations: MutableSet<OrganisationMemberEntity> = mutableSetOf()
+    var workspaces: MutableSet<WorkspaceMemberEntity> = mutableSetOf()
 
     @PrePersist
     fun onPrePersist() {
@@ -70,8 +70,8 @@ fun UserEntity.toModel(): User {
             phone = this.phone,
             name = this.name,
             avatarUrl = this.avatarUrl,
-            memberships = this.organisations.map { membership -> membership.toDetails(includeOrganisation = true) },
-            defaultOrganisation = this.defaultOrganisation?.toModel(includeMetadata = false),
+            memberships = this.workspaces.map { membership -> membership.toDetails(includeWorkspace = true) },
+            defaultWorkspace = this.defaultWorkspace?.toModel(includeMetadata = false),
         )
     }
 }

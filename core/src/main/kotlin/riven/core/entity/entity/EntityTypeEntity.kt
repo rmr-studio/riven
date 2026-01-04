@@ -25,10 +25,10 @@ import java.util.*
 @Table(
     name = "entity_types",
     indexes = [
-        Index(columnList = "organisation_id", name = "idx_entity_types_organisation_id"),
+        Index(columnList = "workspace_id", name = "idx_entity_types_workspace_id"),
     ],
     uniqueConstraints = [
-        UniqueConstraint(columnNames = ["organisation_id", "key"])
+        UniqueConstraint(columnNames = ["workspace_id", "key"])
     ]
 )
 data class EntityTypeEntity(
@@ -60,8 +60,8 @@ data class EntityTypeEntity(
     @Column(name = "description", nullable = true)
     var description: String? = null,
 
-    @Column(name = "organisation_id", columnDefinition = "uuid")
-    val organisationId: UUID? = null,
+    @Column(name = "workspace_id", columnDefinition = "uuid")
+    val workspaceId: UUID? = null,
 
     @Column(name = "protected", nullable = false)
     val protected: Boolean = false,
@@ -109,7 +109,7 @@ data class EntityTypeEntity(
             icon = Icon(this.iconType, this.iconColour),
             identifierKey = this.identifierKey,
             description = this.description,
-            organisationId = this.organisationId,
+            workspaceId = this.workspaceId,
             protected = this.protected,
             type = this.type,
             schema = this.schema,

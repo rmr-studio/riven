@@ -18,7 +18,7 @@ sealed interface ReferencePayload {
 
 @Schema(
     name = "EntityReference",
-    description = "Reference to one or more of an organisation's entities (e.g. teams, projects, clients)"
+    description = "Reference to one or more of an workspace's entities (e.g. teams, projects, clients)"
 )
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class EntityReference(

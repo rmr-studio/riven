@@ -15,14 +15,15 @@ enum class WorkspaceRoles(val authority: Int) {
             return entries.find { it.authority == authority }
         }
     }
-}
 
-fun WorkspaceRoles.hasHigherAuthorityThan(other: WorkspaceRoles, inclusive: Boolean = false): Boolean {
-    inclusive.let {
-        if (it) {
-            return this.authority >= other.authority
+    fun hasHigherAuthorityThan(other: WorkspaceRoles, inclusive: Boolean = false): Boolean {
+        inclusive.let {
+            if (it) {
+                return this.authority >= other.authority
+            }
+
+            return this.authority > other.authority
         }
-
-        return this.authority > other.authority
     }
 }
+

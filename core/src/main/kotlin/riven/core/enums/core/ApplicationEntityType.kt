@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema
     enumAsRef = true,
 )
 enum class ApplicationEntityType {
-    ORGANISATION,
+    WORKSPACE,
     BLOCK_TYPE,
     BLOCK,
     USER,

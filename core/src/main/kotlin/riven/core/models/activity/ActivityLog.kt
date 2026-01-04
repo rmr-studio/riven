@@ -10,7 +10,7 @@ import java.util.*
 data class ActivityLog(
     val id: UUID,
     val userId: UUID,
-    val organisationId: UUID,
+    val workspaceId: UUID,
     val activity: Activity,
     val operation: OperationType,
     val entityType: ApplicationEntityType,

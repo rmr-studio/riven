@@ -10,16 +10,16 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.test.context.bean.override.mockito.MockitoBean
-import riven.core.configuration.auth.OrganisationSecurity
+import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.block.BlockEntity
 import riven.core.enums.common.ValidationScope
-import riven.core.enums.organisation.OrganisationRoles
+import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.models.response.block.internal.CascadeRemovalResult
 import riven.core.models.response.block.internal.MovePreparationResult
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
-import riven.core.service.util.OrganisationRole
 import riven.core.service.util.WithUserPersona
+import riven.core.service.util.WorkspaceRole
 import riven.core.service.util.factory.block.BlockFactory
 import java.time.ZonedDateTime
 import java.util.*
@@ -29,16 +29,16 @@ import java.util.*
     email = "test@example.com",
     displayName = "Test User",
     roles = [
-        OrganisationRole(
-            organisationId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
-            role = OrganisationRoles.ADMIN
+        WorkspaceRole(
+            workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
+            role = WorkspaceRoles.ADMIN
         )
     ]
 )
 @SpringBootTest(
     classes = [
         AuthTokenService::class,
-        OrganisationSecurity::class,
+        WorkspaceSecurity::class,
         BlockEnvironmentServiceTest.TestConfig::class,
         BlockEnvironmentService::class
     ]
@@ -47,7 +47,7 @@ class BlockEnvironmentServiceTest {
 
     @Configuration
     @EnableMethodSecurity(prePostEnabled = true)
-    @Import(OrganisationSecurity::class)
+    @Import(WorkspaceSecurity::class)
     class TestConfig
 
     @MockitoBean
@@ -909,7 +909,7 @@ class BlockEnvironmentServiceTest {
 
         val layout = BlockFactory.createTreeLayoutEntity(
             id = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             version = 1
         )
 
@@ -920,7 +920,7 @@ class BlockEnvironmentServiceTest {
 
         val savedBlock = BlockFactory.createBlockEntity(
             id = realBlockId,
-            organisationId = orgId,
+            workspaceId = orgId,
             type = BlockFactory.createTypeEntity(orgId = orgId, key = "test_block")
         )
 
@@ -935,7 +935,7 @@ class BlockEnvironmentServiceTest {
 
         val request = BlockFactory.createSaveEnvironmentRequest(
             layoutId = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             operations = listOf(addOp),
             version = 2
         )
@@ -962,13 +962,13 @@ class BlockEnvironmentServiceTest {
 
         val layout = BlockFactory.createTreeLayoutEntity(
             id = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             version = 1
         )
 
         val existingBlock = BlockFactory.createBlockEntity(
             id = blockId,
-            organisationId = orgId,
+            workspaceId = orgId,
             type = BlockFactory.createTypeEntity(orgId = orgId, key = "test_block")
         )
 
@@ -985,7 +985,7 @@ class BlockEnvironmentServiceTest {
 
         val request = BlockFactory.createSaveEnvironmentRequest(
             layoutId = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             operations = listOf(updateOp),
             version = 2
         )
@@ -1007,7 +1007,7 @@ class BlockEnvironmentServiceTest {
 
         val layout = BlockFactory.createTreeLayoutEntity(
             id = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             version = 1
         )
 
@@ -1026,7 +1026,7 @@ class BlockEnvironmentServiceTest {
 
         val request = BlockFactory.createSaveEnvironmentRequest(
             layoutId = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             operations = listOf(removeOp),
             version = 2
         )
@@ -1049,7 +1049,7 @@ class BlockEnvironmentServiceTest {
 
         val layout = BlockFactory.createTreeLayoutEntity(
             id = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             version = 1
         )
 
@@ -1078,7 +1078,7 @@ class BlockEnvironmentServiceTest {
 
         val request = BlockFactory.createSaveEnvironmentRequest(
             layoutId = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             operations = listOf(moveOp),
             version = 2
         )
@@ -1100,7 +1100,7 @@ class BlockEnvironmentServiceTest {
 
         val layout = BlockFactory.createTreeLayoutEntity(
             id = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             version = 1
         )
 
@@ -1128,7 +1128,7 @@ class BlockEnvironmentServiceTest {
 
         val request = BlockFactory.createSaveEnvironmentRequest(
             layoutId = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             operations = listOf(reorderOp),
             version = 2
         )
@@ -1154,7 +1154,7 @@ class BlockEnvironmentServiceTest {
 
         val layout = BlockFactory.createTreeLayoutEntity(
             id = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             version = 1
         )
 
@@ -1170,7 +1170,7 @@ class BlockEnvironmentServiceTest {
 
         val savedBlock = BlockFactory.createBlockEntity(
             id = realBlockId,
-            organisationId = orgId,
+            workspaceId = orgId,
             type = BlockFactory.createTypeEntity(orgId = orgId, key = "test_block")
         )
 
@@ -1192,7 +1192,7 @@ class BlockEnvironmentServiceTest {
 
         val request = BlockFactory.createSaveEnvironmentRequest(
             layoutId = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             operations = listOf(addOp, updateOp),
             version = 2
         )
@@ -1217,7 +1217,7 @@ class BlockEnvironmentServiceTest {
 
         val layout = BlockFactory.createTreeLayoutEntity(
             id = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             version = 1
         )
 
@@ -1237,7 +1237,7 @@ class BlockEnvironmentServiceTest {
 
         val savedBlock = BlockFactory.createBlockEntity(
             id = realBlockId,
-            organisationId = orgId,
+            workspaceId = orgId,
             type = BlockFactory.createTypeEntity(orgId = orgId, key = "test_block")
         )
 
@@ -1259,7 +1259,7 @@ class BlockEnvironmentServiceTest {
 
         val request = BlockFactory.createSaveEnvironmentRequest(
             layoutId = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             operations = listOf(addOp, moveOp),
             version = 2
         )
@@ -1284,7 +1284,7 @@ class BlockEnvironmentServiceTest {
 
         val layout = BlockFactory.createTreeLayoutEntity(
             id = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             version = 1
         )
 
@@ -1305,13 +1305,13 @@ class BlockEnvironmentServiceTest {
 
         val savedParent = BlockFactory.createBlockEntity(
             id = realParentId,
-            organisationId = orgId,
+            workspaceId = orgId,
             type = BlockFactory.createTypeEntity(orgId = orgId, key = "test_block")
         )
 
         val savedChild = BlockFactory.createBlockEntity(
             id = realChildId,
-            organisationId = orgId,
+            workspaceId = orgId,
             type = BlockFactory.createTypeEntity(orgId = orgId, key = "test_block")
         )
 
@@ -1336,7 +1336,7 @@ class BlockEnvironmentServiceTest {
 
         val request = BlockFactory.createSaveEnvironmentRequest(
             layoutId = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             operations = listOf(parentAddOp, childAddOp),
             version = 2
         )
@@ -1364,7 +1364,7 @@ class BlockEnvironmentServiceTest {
 
         val layout = BlockFactory.createTreeLayoutEntity(
             id = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             version = 1
         )
 
@@ -1377,20 +1377,20 @@ class BlockEnvironmentServiceTest {
 
         val savedBlock1 = BlockFactory.createBlockEntity(
             id = realId1,
-            organisationId = orgId,
+            workspaceId = orgId,
             type = BlockFactory.createTypeEntity(orgId = orgId, key = "test_block")
         )
 
         val savedBlock2 = BlockFactory.createBlockEntity(
             id = realId2,
-            organisationId = orgId,
+            workspaceId = orgId,
             type = BlockFactory.createTypeEntity(orgId = orgId, key = "test_block")
         )
 
 
         val savedBlock3 = BlockFactory.createBlockEntity(
             id = realId3,
-            organisationId = orgId,
+            workspaceId = orgId,
             type = BlockFactory.createTypeEntity(orgId = orgId, key = "test_block")
         )
 
@@ -1406,7 +1406,7 @@ class BlockEnvironmentServiceTest {
 
         val request = BlockFactory.createSaveEnvironmentRequest(
             layoutId = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             operations = ops,
             version = 2
         )
@@ -1432,7 +1432,7 @@ class BlockEnvironmentServiceTest {
 
         val layout = BlockFactory.createTreeLayoutEntity(
             id = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             version = 1
         )
 
@@ -1440,7 +1440,7 @@ class BlockEnvironmentServiceTest {
 
         val request = BlockFactory.createSaveEnvironmentRequest(
             layoutId = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             operations = emptyList(),
             version = 2
         )
@@ -1461,7 +1461,7 @@ class BlockEnvironmentServiceTest {
 
         val layout = BlockFactory.createTreeLayoutEntity(
             id = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             version = 5
         )
 
@@ -1469,7 +1469,7 @@ class BlockEnvironmentServiceTest {
 
         val request = BlockFactory.createSaveEnvironmentRequest(
             layoutId = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             operations = emptyList(),
             version = 4 // Lower than layout version
         )
@@ -1494,7 +1494,7 @@ class BlockEnvironmentServiceTest {
 
         val layout = BlockFactory.createTreeLayoutEntity(
             id = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             version = 1
         )
 
@@ -1516,7 +1516,7 @@ class BlockEnvironmentServiceTest {
 
         val request = BlockFactory.createSaveEnvironmentRequest(
             layoutId = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             operations = listOf(removeOp),
             version = 2
         )
@@ -1538,7 +1538,7 @@ class BlockEnvironmentServiceTest {
 
         val layout = BlockFactory.createTreeLayoutEntity(
             id = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             version = 1
         )
 
@@ -1556,7 +1556,7 @@ class BlockEnvironmentServiceTest {
 
         val request = BlockFactory.createSaveEnvironmentRequest(
             layoutId = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             operations = listOf(addOp, removeOp),
             version = 2
         )
@@ -1591,7 +1591,7 @@ class BlockEnvironmentServiceTest {
 
         val layout = BlockFactory.createTreeLayoutEntity(
             id = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             version = 1
         )
 
@@ -1621,13 +1621,13 @@ class BlockEnvironmentServiceTest {
 
         val savedBlockA = BlockFactory.createBlockEntity(
             id = realIdA,
-            organisationId = orgId,
+            workspaceId = orgId,
             type = BlockFactory.createTypeEntity(orgId = orgId, key = "test_block")
         )
 
         val existingBlockB = BlockFactory.createBlockEntity(
             id = blockBId,
-            organisationId = orgId,
+            workspaceId = orgId,
             type = BlockFactory.createTypeEntity(orgId = orgId, key = "test_block")
         )
 
@@ -1659,7 +1659,7 @@ class BlockEnvironmentServiceTest {
 
         val request = BlockFactory.createSaveEnvironmentRequest(
             layoutId = layoutId,
-            organisationId = orgId,
+            workspaceId = orgId,
             operations = listOf(opA, opB, opC, opD),
             version = 2
         )

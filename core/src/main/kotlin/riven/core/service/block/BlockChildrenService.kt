@@ -1,6 +1,7 @@
 package riven.core.service.block
 
 import jakarta.transaction.Transactional
+import org.springframework.stereotype.Service
 import riven.core.entity.block.BlockChildEntity
 import riven.core.entity.block.BlockEntity
 import riven.core.models.block.display.BlockTypeNesting
@@ -12,13 +13,12 @@ import riven.core.models.response.block.internal.CascadeRemovalResult
 import riven.core.models.response.block.internal.MovePreparationResult
 import riven.core.repository.block.BlockChildrenRepository
 import riven.core.repository.block.BlockRepository
-import org.springframework.stereotype.Service
 import java.util.*
 
 /**
  * Manages *owned* parent→child block edges with slots & order.
  *
- * - Enforces: same-organisation, allowed types (via parent.type.nesting),
+ * - Enforces: same-workspace, allowed types (via parent.type.nesting),
  *   max children constraint, contiguous orderIndex per slot.
  * - Uses BlockChildEntity as the single source of truth for hierarchy.
  * - Constraint: child_id is globally unique - a child can only belong to ONE parent.
@@ -84,7 +84,7 @@ class BlockChildrenService(
                 }
             }
         }
-        
+
         val created = edgeRepository.save(
             BlockChildEntity(
                 id = null,
@@ -186,9 +186,9 @@ class BlockChildrenService(
      * Since child_id is globally unique, cycles are impossible in a strict tree.
      */
     private fun validateAttach(parent: BlockEntity, child: BlockEntity, nesting: BlockTypeNesting) {
-        // 1. Same organisation check
-        require(parent.organisationId == child.organisationId) {
-            "Cannot attach child from different organisation (parent: ${parent.organisationId}, child: ${child.organisationId})"
+        // 1. Same workspace check
+        require(parent.workspaceId == child.workspaceId) {
+            "Cannot attach child from different workspace (parent: ${parent.workspaceId}, child: ${child.workspaceId})"
         }
 
         require(parent.payload is BlockContentMetadata) {

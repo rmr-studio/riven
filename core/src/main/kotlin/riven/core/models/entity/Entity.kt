@@ -13,7 +13,7 @@ import java.util.*
  */
 data class Entity(
     val id: UUID,
-    val organisationId: UUID,
+    val workspaceId: UUID,
     val typeId: UUID,
 
     val payload: Map<UUID, EntityAttribute>,

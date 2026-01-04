@@ -1,7 +1,7 @@
 package riven.core.models.user
 
-import riven.core.models.organisation.MembershipDetails
-import riven.core.models.organisation.Organisation
+import riven.core.models.workspace.MembershipDetails
+import riven.core.models.workspace.Workspace
 import java.util.*
 
 data class User(
@@ -11,7 +11,7 @@ data class User(
     var phone: String? = null,
     var avatarUrl: String? = null,
     val memberships: List<MembershipDetails> = listOf(),
-    var defaultOrganisation: Organisation? = null
+    var defaultWorkspace: Workspace? = null
 )
 
 

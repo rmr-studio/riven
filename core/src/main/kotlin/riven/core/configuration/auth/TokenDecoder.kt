@@ -1,13 +1,13 @@
 package riven.core.configuration.auth
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import riven.core.enums.organisation.OrganisationRoles
 import org.springframework.core.convert.converter.Converter
 import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.stereotype.Component
+import riven.core.enums.workspace.WorkspaceRoles
 import java.util.*
 
 @Component
@@ -26,8 +26,8 @@ class CustomAuthenticationTokenConverter :
         // Extract custom organization roles
         val customClaims = extractCustomClaims(jwt)
         customClaims.roles.forEach { orgRole ->
-            // Create authority in format: ROLE_<ORGANISATION_ID>_<ROLE>
-            val authority = "ROLE_${orgRole.organisationId}_${orgRole.role.toString().uppercase()}"
+            // Create authority in format: ROLE_<workspace_id>_<ROLE>
+            val authority = "ROLE_${orgRole.workspaceId}_${orgRole.role.toString().uppercase()}"
             authorities.add(SimpleGrantedAuthority(authority))
         }
 
@@ -48,13 +48,13 @@ class CustomAuthenticationTokenConverter :
                     val roles = rolesRaw.mapNotNull { role ->
                         when (role) {
                             is Map<*, *> -> {
-                                val orgIdStr = role["organisation_id"]?.toString()
+                                val orgIdStr = role["workspace_id"]?.toString()
                                 val roleStr = role["role"]?.toString()
                                 if (orgIdStr != null && roleStr != null) {
                                     try {
-                                        OrganisationRole(
+                                        WorkspaceRole(
                                             UUID.fromString(orgIdStr),
-                                            OrganisationRoles.fromString(roleStr)
+                                            WorkspaceRoles.fromString(roleStr)
                                         )
                                     } catch (e: Exception) {
                                         null
@@ -76,20 +76,20 @@ class CustomAuthenticationTokenConverter :
     }
 }
 
-data class OrganisationRole(
-    @JsonProperty("organisation_id")
-    val organisationId: UUID,
-    val role: OrganisationRoles
+data class WorkspaceRole(
+    @JsonProperty("workspace_id")
+    val workspaceId: UUID,
+    val role: WorkspaceRoles
 )
 
 data class CustomClaims(
-    val roles: List<OrganisationRole> = emptyList()
+    val roles: List<WorkspaceRole> = emptyList()
 )
 
 data class CustomJwtPrincipal(
     val userId: String,
     val email: String?,
-    val organisationRoles: List<OrganisationRole>
+    val workspaceRoles: List<WorkspaceRole>
 ) {
     override fun toString(): String = userId
 }

@@ -57,7 +57,7 @@ object BlockFactory {
         key = key,
         displayName = "Contact",
         description = "Contact type",
-        organisationId = orgId,
+        workspaceId = orgId,
         system = false,
         version = version,
         strictness = strictness,
@@ -90,7 +90,7 @@ object BlockFactory {
         type: BlockTypeEntity,
     ): BlockEntity = BlockEntity(
         id = id,
-        organisationId = orgId,
+        workspaceId = orgId,
         type = type,
         name = "Test Block",
         payload = BlockContentMetadata(data = emptyMap(), meta = BlockMeta()),
@@ -129,7 +129,7 @@ object BlockFactory {
     ): Block = Block(
         id = id,
         name = name,
-        organisationId = orgId,
+        workspaceId = orgId,
         type = type,
         payload = payload,
         archived = archived
@@ -242,13 +242,13 @@ object BlockFactory {
     fun createTreeLayoutEntity(
         id: UUID? = UUID.randomUUID(),
         entityId: UUID = UUID.randomUUID(),
-        organisationId: UUID,
+        workspaceId: UUID,
         version: Int = 1,
         layout: TreeLayout = TreeLayout()
     ): BlockTreeLayoutEntity = BlockTreeLayoutEntity(
         id = id,
         entityId = entityId,
-        organisationId = organisationId,
+        workspaceId = workspaceId,
         version = version,
         layout = layout
     )
@@ -272,14 +272,14 @@ object BlockFactory {
      */
     fun createSaveEnvironmentRequest(
         layoutId: UUID,
-        organisationId: UUID,
+        workspaceId: UUID,
         operations: List<StructuralOperationRequest>,
         version: Int = 1,
         layout: TreeLayout = TreeLayout(),
         force: Boolean = false
     ): SaveEnvironmentRequest = SaveEnvironmentRequest(
         layoutId = layoutId,
-        organisationId = organisationId,
+        workspaceId = workspaceId,
         layout = layout,
         version = version,
         operations = operations,
@@ -299,7 +299,7 @@ object BlockFactory {
      */
     fun createBlockEntity(
         id: UUID = UUID.randomUUID(),
-        organisationId: UUID,
+        workspaceId: UUID,
         type: BlockTypeEntity
-    ): BlockEntity = createBlock(id = id, orgId = organisationId, type = type)
+    ): BlockEntity = createBlock(id = id, orgId = workspaceId, type = type)
 }

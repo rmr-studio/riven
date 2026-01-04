@@ -3,7 +3,7 @@ package riven.core.service.block
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
-import riven.core.configuration.auth.OrganisationSecurity
+import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.block.BlockTypeEntity
 import riven.core.enums.activity.Activity
 import riven.core.enums.block.node.SystemBlockTypes
@@ -26,7 +26,7 @@ class BlockTypeService(
     private val blockTypeRepository: BlockTypeRepository,
     private val authTokenService: AuthTokenService,
     private val activityService: ActivityService,
-    private val organisationSecurity: OrganisationSecurity,
+    private val workspaceSecurity: WorkspaceSecurity,
 ) {
     /**
      * Creates and publishes a new block type from the provided request and records an audit activity.
@@ -34,7 +34,7 @@ class BlockTypeService(
      * @param request Data for the new block type.
      * @return The saved BlockType model representing the published block type.
      */
-    @PreAuthorize("@organisationSecurity.hasOrg(#request.organisationId)")
+    @PreAuthorize("@workspaceSecurity.hasOrg(#request.workspaceId)")
     fun publishBlockType(request: CreateBlockTypeRequest): BlockType {
         authTokenService.getUserId().let { userId ->
             val entity = BlockTypeEntity.fromRequest(request)
@@ -43,7 +43,7 @@ class BlockTypeService(
                     activity = Activity.BLOCK_TYPE,
                     operation = OperationType.CREATE,
                     userId = userId,
-                    organisationId = request.organisationId,
+                    workspaceId = request.workspaceId,
                     entityId = this.id,
                     entityType = ApplicationEntityType.BLOCK_TYPE,
                     details = mapOf(
@@ -60,7 +60,7 @@ class BlockTypeService(
     /**
      * Create a new versioned BlockType row derived from the provided BlockType and record a creation activity.
      *
-     * This performs append-only versioning: a new entity is saved with an incremented version, sourceId set to the original entity's id, and archived set to false. Assumes a unique constraint on (organisation_id, key, version).
+     * This performs append-only versioning: a new entity is saved with an incremented version, sourceId set to the original entity's id, and archived set to false. Assumes a unique constraint on (workspace_id, key, version).
      *
      * @param type The BlockType containing the new values and the id of the existing version to fork from.
      */
@@ -69,12 +69,12 @@ class BlockTypeService(
         val userId = authTokenService.getUserId()
         val existing = findOrThrow { blockTypeRepository.findById(type.id) }
 
-        // Ensure a user is only updating a non-system organisation block type
-        val orgId = requireNotNull(existing.organisationId) { "Cannot update system block type" }
+        // Ensure a user is only updating a non-system workspace block type
+        val orgId = requireNotNull(existing.workspaceId) { "Cannot update system block type" }
 
-        // Assert that they have access to said organisation
-        if (!organisationSecurity.hasOrg(orgId)) {
-            throw AccessDeniedException("Unauthorized to update block type for organisation $orgId")
+        // Assert that they have access to said workspace
+        if (!workspaceSecurity.hasOrg(orgId)) {
+            throw AccessDeniedException("Unauthorized to update block type for workspace $orgId")
         }
 
         // compute next version number (could also query max)
@@ -85,7 +85,7 @@ class BlockTypeService(
             key = existing.key,
             displayName = type.name,
             description = type.description,
-            organisationId = existing.organisationId,
+            workspaceId = existing.workspaceId,
             system = existing.system,
             version = nextVersion,
             strictness = type.strictness,
@@ -101,7 +101,7 @@ class BlockTypeService(
                 activity = Activity.BLOCK_TYPE,
                 operation = OperationType.CREATE,
                 userId = userId,
-                organisationId = orgId,
+                workspaceId = orgId,
                 entityId = this.id,
                 entityType = ApplicationEntityType.BLOCK_TYPE,
                 details = mapOf(
@@ -126,12 +126,12 @@ class BlockTypeService(
     fun archiveBlockType(id: UUID, status: Boolean) {
         val userId = authTokenService.getUserId()
         val existing = findOrThrow { blockTypeRepository.findById(id) }
-        val orgId = requireNotNull(existing.organisationId)
+        val orgId = requireNotNull(existing.workspaceId)
 
 
-        organisationSecurity.hasOrg(orgId).run {
+        workspaceSecurity.hasOrg(orgId).run {
             if (!this) {
-                throw AccessDeniedException("Unauthorized to archive block type for organisation $orgId")
+                throw AccessDeniedException("Unauthorized to archive block type for workspace $orgId")
             }
         }
 
@@ -143,7 +143,7 @@ class BlockTypeService(
             operation = if (status) OperationType.ARCHIVE
             else OperationType.RESTORE,
             userId = userId,
-            organisationId = orgId,
+            workspaceId = orgId,
             entityId = existing.id,
             entityType = ApplicationEntityType.BLOCK_TYPE,
             details = mapOf(
@@ -172,43 +172,43 @@ class BlockTypeService(
     }
 
     /**
-     * Fetches block types for the given organisation, optionally including system block types.
+     * Fetches block types for the given workspace, optionally including system block types.
      *
      * @param includeSystemResults When `true`, include pre-defined system block types in the result.
-     * @return A list of block types for the organisation; includes system block types when `includeSystemResults` is `true`.
+     * @return A list of block types for the workspace; includes system block types when `includeSystemResults` is `true`.
      */
-    fun getBlockTypes(organisationId: UUID, includeSystemResults: Boolean = true): List<BlockType> {
+    fun getBlockTypes(workspaceId: UUID, includeSystemResults: Boolean = true): List<BlockType> {
         return findManyResults {
-            blockTypeRepository.findByOrganisationIdOrSystem(
-                organisationId,
+            blockTypeRepository.findByworkspaceIdOrSystem(
+                workspaceId,
                 includeSystemResults
             )
         }.map { it.toModel() }
     }
 
     /**
-     * Retrieve a block type entity by key, preferring an organisation-scoped version and falling back to a system-scoped version.
+     * Retrieve a block type entity by key, preferring an workspace-scoped version and falling back to a system-scoped version.
      *
      * @param key The unique key of the block type.
-     * @param organisationId The organisation UUID to prefer when searching; if null or no organisation-scoped match is found, a system-scoped block type is used.
+     * @param workspaceId The workspace UUID to prefer when searching; if null or no workspace-scoped match is found, a system-scoped block type is used.
      * @param version Optional specific version to fetch; when null the latest version is returned.
      * @return The matching BlockTypeEntity.
      * @throws NoSuchElementException If no matching block type is found for the given parameters.
      */
-    fun getByKey(key: String, organisationId: UUID?, version: Int?): BlockTypeEntity {
-        // Find from Organisation
-        if (organisationId != null) {
+    fun getByKey(key: String, workspaceId: UUID?, version: Int?): BlockTypeEntity {
+        // Find from Workspace
+        if (workspaceId != null) {
             if (version != null) {
                 findOrThrow {
-                    blockTypeRepository.findByOrganisationIdAndKeyAndVersion(
-                        organisationId,
+                    blockTypeRepository.findByworkspaceIdAndKeyAndVersion(
+                        workspaceId,
                         key,
                         version
                     )
                 }.let { return it }
             } else {
-                blockTypeRepository.findTopByOrganisationIdAndKeyOrderByVersionDesc(
-                    organisationId,
+                blockTypeRepository.findTopByworkspaceIdAndKeyOrderByVersionDesc(
+                    workspaceId,
                     key
                 ).orElse(null)?.let { return it }
             }

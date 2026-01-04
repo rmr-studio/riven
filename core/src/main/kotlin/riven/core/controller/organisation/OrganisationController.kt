@@ -1,90 +1,90 @@
-package riven.core.controller.organisation
+package riven.core.controller.workspace
 
 import io.swagger.v3.oas.annotations.tags.Tag
-import riven.core.enums.organisation.OrganisationRoles
-import riven.core.models.organisation.Organisation
-import riven.core.models.organisation.OrganisationMember
-import riven.core.models.organisation.request.OrganisationCreationRequest
-import riven.core.service.organisation.OrganisationService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import riven.core.enums.workspace.WorkspaceRoles
+import riven.core.models.workspace.Workspace
+import riven.core.models.workspace.WorkspaceMember
+import riven.core.models.workspace.request.WorkspaceCreationRequest
+import riven.core.service.workspace.WorkspaceService
 import java.util.*
 
 @RestController
-@RequestMapping("/api/v1/organisation")
-@Tag(name = "Organisation Management", description = "Endpoints for managing organisations and their members")
-class OrganisationController(
-    private val organisationService: OrganisationService
+@RequestMapping("/api/v1/workspace")
+@Tag(name = "Workspace Management", description = "Endpoints for managing workspaces and their members")
+class WorkspaceController(
+    private val workspaceService: WorkspaceService
 ) {
 
 
     /**
-     * Retrieves an organisation by its identifier.
+     * Retrieves an workspace by its identifier.
      *
-     * @param organisationId The UUID of the organisation to retrieve.
-     * @param includeMetadata If `true`, include additional organisation metadata in the response.
-     * @return The requested Organisation contained in the response body (HTTP 200).
+     * @param workspaceId The UUID of the workspace to retrieve.
+     * @param includeMetadata If `true`, include additional workspace metadata in the response.
+     * @return The requested Workspace contained in the response body (HTTP 200).
      */
-    @GetMapping("/{organisationId}")
-    fun getOrganisation(
-        @PathVariable organisationId: UUID,
+    @GetMapping("/{workspaceId}")
+    fun getWorkspace(
+        @PathVariable workspaceId: UUID,
         @RequestParam includeMetadata: Boolean = false
-    ): ResponseEntity<Organisation> {
-        val organisation: Organisation = this.organisationService.getOrganisationById(
-            organisationId = organisationId,
+    ): ResponseEntity<Workspace> {
+        val workspace: Workspace = this.workspaceService.getWorkspaceById(
+            workspaceId = workspaceId,
             includeMetadata = includeMetadata
         )
 
-        return ResponseEntity.ok(organisation)
+        return ResponseEntity.ok(workspace)
     }
 
     @PostMapping("/")
-    fun createOrganisation(@RequestBody organisation: OrganisationCreationRequest): ResponseEntity<Organisation> {
-        val createdOrganisation: Organisation = this.organisationService.createOrganisation(
-            organisation
+    fun createWorkspace(@RequestBody workspace: WorkspaceCreationRequest): ResponseEntity<Workspace> {
+        val createdWorkspace: Workspace = this.workspaceService.createWorkspace(
+            workspace
         )
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdOrganisation)
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdWorkspace)
     }
 
 
     @PutMapping("/")
-    fun updateOrganisation(
-        @RequestBody organisation: Organisation
-    ): ResponseEntity<Organisation> {
-        val updatedOrganisation: Organisation = this.organisationService.updateOrganisation(
-            organisation = organisation
+    fun updateWorkspace(
+        @RequestBody workspace: Workspace
+    ): ResponseEntity<Workspace> {
+        val updatedWorkspace: Workspace = this.workspaceService.updateWorkspace(
+            workspace = workspace
         )
 
-        return ResponseEntity.ok(updatedOrganisation)
+        return ResponseEntity.ok(updatedWorkspace)
     }
 
-    @DeleteMapping("/{organisationId}")
-    fun deleteOrganisation(
-        @PathVariable organisationId: UUID
+    @DeleteMapping("/{workspaceId}")
+    fun deleteWorkspace(
+        @PathVariable workspaceId: UUID
     ): ResponseEntity<Void> {
-        this.organisationService.deleteOrganisation(organisationId)
+        this.workspaceService.deleteWorkspace(workspaceId)
         return ResponseEntity.ok().build()
     }
 
-    @DeleteMapping("/{organisationId}/member")
-    fun removeMemberFromOrganisation(
-        @PathVariable organisationId: UUID,
-        @RequestBody member: OrganisationMember
+    @DeleteMapping("/{workspaceId}/member")
+    fun removeMemberFromWorkspace(
+        @PathVariable workspaceId: UUID,
+        @RequestBody member: WorkspaceMember
     ): ResponseEntity<Void> {
-        this.organisationService.removeMemberFromOrganisation(organisationId, member)
+        this.workspaceService.removeMemberFromWorkspace(workspaceId, member)
         return ResponseEntity.ok().build()
     }
 
-    @PutMapping("/{organisationId}/member/role/{role}")
+    @PutMapping("/{workspaceId}/member/role/{role}")
     fun updateMemberRole(
-        @PathVariable organisationId: UUID,
-        @PathVariable role: OrganisationRoles,
-        @RequestBody member: OrganisationMember
-    ): ResponseEntity<OrganisationMember> {
-        val updatedMember: OrganisationMember = this.organisationService.updateMemberRole(
-            organisationId = organisationId,
+        @PathVariable workspaceId: UUID,
+        @PathVariable role: WorkspaceRoles,
+        @RequestBody member: WorkspaceMember
+    ): ResponseEntity<WorkspaceMember> {
+        val updatedMember: WorkspaceMember = this.workspaceService.updateMemberRole(
+            workspaceId = workspaceId,
             member = member,
             role = role
         )

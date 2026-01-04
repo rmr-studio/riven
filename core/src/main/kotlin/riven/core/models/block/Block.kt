@@ -48,7 +48,7 @@ import java.util.*
 data class Block(
     val id: UUID,
     val name: String?,
-    val organisationId: UUID,
+    val workspaceId: UUID,
     val type: BlockType,
     @field:Schema(
         oneOf = [EntityReferenceMetadata::class, BlockReferenceMetadata::class, BlockContentMetadata::class],
@@ -63,7 +63,7 @@ data class Block(
     val archived: Boolean,
     // If there are any validation errors with this block's payload
     val validationErrors: List<String>? = null,
-    // Keep these hidden unless within an internal organisation context
+    // Keep these hidden unless within an internal workspace context
     override val createdAt: ZonedDateTime? = null,
     override val updatedAt: ZonedDateTime? = null,
     override val createdBy: UUID? = null,

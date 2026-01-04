@@ -8,10 +8,10 @@ import java.util.*
 
 data class BlockTreeLayout(
     val id: UUID,
-    val organisationId: UUID,
+    val workspaceId: UUID,
     val layout: TreeLayout,
     val version: Int = 1,
-    // Keep these hidden unless within an internal organisation context
+    // Keep these hidden unless within an internal workspace context
     override val createdAt: ZonedDateTime? = null,
     override val updatedAt: ZonedDateTime? = null,
     override val createdBy: UUID? = null,

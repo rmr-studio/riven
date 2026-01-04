@@ -17,7 +17,7 @@ data class BlockType(
     // Null implies no nesting allowed
     val nesting: BlockTypeNesting?,
     val description: String?,
-    val organisationId: UUID?,
+    val workspaceId: UUID?,
     val archived: Boolean,
     val strictness: ValidationScope,
     val system: Boolean,

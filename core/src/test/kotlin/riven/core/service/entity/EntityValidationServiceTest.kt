@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Configuration
 import org.springframework.test.context.bean.override.mockito.MockitoBean
-import riven.core.configuration.auth.OrganisationSecurity
+import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.common.IconColour
@@ -20,7 +20,7 @@ import riven.core.enums.core.DataFormat
 import riven.core.enums.core.DataType
 import riven.core.enums.entity.EntityCategory
 import riven.core.enums.entity.validation.EntityTypeChangeType
-import riven.core.enums.organisation.OrganisationRoles
+import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
@@ -28,14 +28,14 @@ import riven.core.models.entity.payload.EntityAttributeRelationPayloadReference
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.schema.SchemaService
-import riven.core.service.util.OrganisationRole
 import riven.core.service.util.WithUserPersona
+import riven.core.service.util.WorkspaceRole
 import java.util.*
 
 @SpringBootTest(
     classes = [
         AuthTokenService::class,
-        OrganisationSecurity::class,
+        WorkspaceSecurity::class,
         EntityValidationServiceTest.TestConfig::class,
         EntityValidationService::class,
         SchemaService::class,
@@ -47,9 +47,9 @@ import java.util.*
     email = "test@test.com",
     displayName = "Test User",
     roles = [
-        OrganisationRole(
-            organisationId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
-            role = OrganisationRoles.OWNER
+        WorkspaceRole(
+            workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
+            role = WorkspaceRoles.OWNER
         )
     ]
 )
@@ -59,7 +59,7 @@ class EntityValidationServiceTest {
     class TestConfig
 
     private val userId: UUID = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef0123456789")
-    private val organisationId: UUID = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef9876543210")
+    private val workspaceId: UUID = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef9876543210")
 
     @MockitoBean
     private lateinit var entityRelationshipRepository: EntityRelationshipRepository
@@ -1634,14 +1634,14 @@ class EntityValidationServiceTest {
     private fun createEntityType(
         schema: EntityTypeSchema,
         key: String = "test-entity-type",
-        organisationId: UUID = this.organisationId
+        workspaceId: UUID = this.workspaceId
     ): EntityTypeEntity {
         return EntityTypeEntity(
             id = UUID.randomUUID(),
             key = key,
             displayNameSingular = "Test Entity",
             displayNamePlural = "Test Entities",
-            organisationId = organisationId,
+            workspaceId = workspaceId,
             type = EntityCategory.STANDARD,
             schema = schema,
             columns = emptyList(),
@@ -1655,7 +1655,7 @@ class EntityValidationServiceTest {
     private fun createEntity(
         typeId: UUID,
         payload: Map<UUID, riven.core.models.entity.payload.EntityAttributePayload>,
-        organisationId: UUID = this.organisationId
+        workspaceId: UUID = this.workspaceId
     ): EntityEntity {
         // Filter and convert to Map<String, EntityAttributePrimitivePayload>
         val entityPayload = payload.mapNotNull { (key, value) ->
@@ -1667,7 +1667,7 @@ class EntityValidationServiceTest {
 
         return EntityEntity(
             id = UUID.randomUUID(),
-            organisationId = organisationId,
+            workspaceId = workspaceId,
             typeId = typeId,
             payload = entityPayload,
             identifierKey = nameAttributeKey,

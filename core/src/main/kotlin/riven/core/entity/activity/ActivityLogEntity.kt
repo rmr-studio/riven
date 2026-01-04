@@ -16,7 +16,7 @@ import java.util.*
     name = "activity_logs",
     indexes = [
         Index(columnList = "user_id"),
-        Index(columnList = "organisation_id"),
+        Index(columnList = "workspace_id"),
     ]
 )
 data class ActivityLogEntity(
@@ -36,8 +36,8 @@ data class ActivityLogEntity(
     @Column(name = "user_id", nullable = false)
     val userId: UUID,
 
-    @Column(name = "organisation_id", nullable = false)
-    val organisationId: UUID,
+    @Column(name = "workspace_id", nullable = false)
+    val workspaceId: UUID,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "entity_type", nullable = false)
@@ -61,7 +61,7 @@ data class ActivityLogEntity(
             activity = this.activity,
             operation = this.operation,
             userId = this.userId,
-            organisationId = this.organisationId,
+            workspaceId = this.workspaceId,
             entityType = this.entityType,
             entityId = this.entityId,
             details = this.details,

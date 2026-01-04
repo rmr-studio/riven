@@ -8,7 +8,7 @@ import java.util.*
 data class ArchivedEntity(
     val id: UUID,
     val archivedAt: ZonedDateTime,
-    val organisationId: UUID,
+    val workspaceId: UUID,
     val entityType: EntityType,
     val typeVersion: Int,
     val name: String?,

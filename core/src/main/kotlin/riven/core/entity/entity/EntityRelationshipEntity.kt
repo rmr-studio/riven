@@ -16,10 +16,10 @@ import java.util.*
         UniqueConstraint(columnNames = ["source_entity_id", "relationship_field_id", "target_entity_id"])
     ],
     indexes = [
-        Index(name = "idx_entity_relationships_source", columnList = "organisation_id, source_entity_id"),
-        Index(name = "idx_entity_relationships_target", columnList = "organisation_id, target_entity_id"),
-        Index(name = "idx_entity_relationships_target", columnList = "organisation_id, source_entity_type_id"),
-        Index(name = "idx_entity_relationships_target", columnList = "organisation_id, target_entity_type_id"),
+        Index(name = "idx_entity_relationships_source", columnList = "workspace_id, source_entity_id"),
+        Index(name = "idx_entity_relationships_target", columnList = "workspace_id, target_entity_id"),
+        Index(name = "idx_entity_relationships_target", columnList = "workspace_id, source_entity_type_id"),
+        Index(name = "idx_entity_relationships_target", columnList = "workspace_id, target_entity_type_id"),
     ]
 )
 data class EntityRelationshipEntity(
@@ -28,8 +28,8 @@ data class EntityRelationshipEntity(
     @Column(name = "id", nullable = false, columnDefinition = "uuid")
     val id: UUID? = null,
 
-    @Column(name = "organisation_id", nullable = false, columnDefinition = "uuid")
-    val organisationId: UUID,
+    @Column(name = "workspace_id", nullable = false, columnDefinition = "uuid")
+    val workspaceId: UUID,
 
     @Column(name = "source_entity_id", nullable = false, columnDefinition = "uuid")
     val sourceId: UUID,
@@ -62,7 +62,7 @@ data class EntityRelationshipEntity(
         val id = requireNotNull(this.id) { "EntityRelationshipEntity ID cannot be null" }
         return EntityRelationship(
             id = id,
-            organisationId = this.organisationId,
+            workspaceId = this.workspaceId,
             fieldId = this.fieldId,
             sourceEntityId = this.sourceId,
             targetEntityId = this.targetId,

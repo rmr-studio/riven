@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Configuration
 import org.springframework.test.context.bean.override.mockito.MockitoBean
-import riven.core.configuration.auth.OrganisationSecurity
+import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityRelationshipEntity
 import riven.core.entity.entity.EntityTypeEntity
@@ -18,21 +18,21 @@ import riven.core.enums.common.IconColour
 import riven.core.enums.common.IconType
 import riven.core.enums.common.SchemaType
 import riven.core.enums.core.DataType
-import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.enums.entity.EntityCategory
 import riven.core.enums.entity.EntityPropertyType
 import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.enums.entity.EntityTypeRelationshipType
-import riven.core.enums.organisation.OrganisationRoles
+import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.configuration.EntityTypeAttributeColumn
+import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityRepository
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.entity.type.EntityTypeService
-import riven.core.service.util.OrganisationRole
 import riven.core.service.util.WithUserPersona
+import riven.core.service.util.WorkspaceRole
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -49,7 +49,7 @@ import java.util.*
 @SpringBootTest(
     classes = [
         AuthTokenService::class,
-        OrganisationSecurity::class,
+        WorkspaceSecurity::class,
         EntityRelationshipServiceTest.TestConfig::class,
         EntityRelationshipService::class
     ]
@@ -59,9 +59,9 @@ import java.util.*
     email = "test@test.com",
     displayName = "Test User",
     roles = [
-        OrganisationRole(
-            organisationId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
-            role = OrganisationRoles.OWNER
+        WorkspaceRole(
+            workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
+            role = WorkspaceRoles.OWNER
         )
     ]
 )
@@ -71,7 +71,7 @@ class EntityRelationshipServiceTest {
     class TestConfig
 
     private val userId: UUID = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef0123456789")
-    private val organisationId: UUID = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef9876543210")
+    private val workspaceId: UUID = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef9876543210")
 
     @MockitoBean
     private lateinit var entityRelationshipRepository: EntityRelationshipRepository
@@ -194,7 +194,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships with empty map
             val result = entityRelationshipService.saveRelationships(
                 id = entityId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = companyEntityType,
                 curr = emptyMap()
             )
@@ -234,7 +234,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships
             val result = entityRelationshipService.saveRelationships(
                 id = entityId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = companyEntityType,
                 curr = mapOf(companyContactsRelId to listOf(contactId))
             )
@@ -280,7 +280,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships
             val result = entityRelationshipService.saveRelationships(
                 id = entityId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = companyEntityType,
                 curr = mapOf(companyContactsRelId to listOf(contact1Id, contact2Id, contact3Id))
             )
@@ -315,7 +315,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships
             val result = entityRelationshipService.saveRelationships(
                 id = entityId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = companyEntityType,
                 curr = mapOf(
                     companyContactsRelId to listOf(contactId),
@@ -364,7 +364,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships
             val result = entityRelationshipService.saveRelationships(
                 id = entityId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = companyEntityType,
                 curr = mapOf(companyContactsRelId to listOf(contactId))
             )
@@ -424,7 +424,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships
             entityRelationshipService.saveRelationships(
                 id = entityId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = companyEntityType,
                 curr = mapOf(companyContactsRelId to listOf(contact1Id, contact2Id))
             )
@@ -468,7 +468,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships from the REFERENCE side (contact -> company)
             val result = entityRelationshipService.saveRelationships(
                 id = contactId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = contactEntityType,
                 curr = mapOf(contactCompanyRelId to listOf(companyId))
             )
@@ -533,7 +533,7 @@ class EntityRelationshipServiceTest {
             // When: Contact 1 saves relationship to company
             entityRelationshipService.saveRelationships(
                 id = contact1Id,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = contactEntityType,
                 curr = mapOf(contactCompanyRelId to listOf(companyId))
             )
@@ -561,7 +561,7 @@ class EntityRelationshipServiceTest {
             // When: Contact 2 saves relationship to same company
             entityRelationshipService.saveRelationships(
                 id = contact2Id,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = contactEntityType,
                 curr = mapOf(contactCompanyRelId to listOf(companyId))
             )
@@ -658,7 +658,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships
             entityRelationshipService.saveRelationships(
                 id = taskId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = polymorphicType,
                 curr = mapOf(polymorphicRelId to listOf(contactId, projectId))
             )
@@ -699,10 +699,12 @@ class EntityRelationshipServiceTest {
                 .thenReturn(
                     listOf(
                         EntityRelationshipEntity(
-                            organisationId = organisationId,
+                            workspaceId = workspaceId,
                             sourceId = entityId,
                             targetId = existingContactId,
-                            fieldId = companyContactsRelId
+                            fieldId = companyContactsRelId,
+                            sourceTypeId = UUID.randomUUID(),
+                            targetTypeId = UUID.randomUUID()
                         )
                     )
                 )
@@ -728,7 +730,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships with both contacts
             entityRelationshipService.saveRelationships(
                 id = entityId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = companyEntityType,
                 curr = mapOf(companyContactsRelId to listOf(existingContactId, newContactId))
             )
@@ -756,10 +758,12 @@ class EntityRelationshipServiceTest {
                 .thenReturn(
                     listOf(
                         EntityRelationshipEntity(
-                            organisationId = organisationId,
+                            workspaceId = workspaceId,
                             sourceId = entityId,
                             targetId = contactId,
-                            fieldId = companyContactsRelId
+                            fieldId = companyContactsRelId,
+                            sourceTypeId = UUID.randomUUID(),
+                            targetTypeId = UUID.randomUUID()
                         )
                     )
                 )
@@ -785,7 +789,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships with contacts and new projects
             val result = entityRelationshipService.saveRelationships(
                 id = entityId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = companyEntityType,
                 curr = mapOf(
                     companyContactsRelId to listOf(contactId),
@@ -820,16 +824,20 @@ class EntityRelationshipServiceTest {
                 .thenReturn(
                     listOf(
                         EntityRelationshipEntity(
-                            organisationId = organisationId,
+                            workspaceId = workspaceId,
                             sourceId = entityId,
                             targetId = contact1Id,
-                            fieldId = companyContactsRelId
+                            fieldId = companyContactsRelId,
+                            sourceTypeId = UUID.randomUUID(),
+                            targetTypeId = UUID.randomUUID()
                         ),
                         EntityRelationshipEntity(
-                            organisationId = organisationId,
+                            workspaceId = workspaceId,
                             sourceId = entityId,
                             targetId = contact2Id,
-                            fieldId = companyContactsRelId
+                            fieldId = companyContactsRelId,
+                            sourceTypeId = UUID.randomUUID(),
+                            targetTypeId = UUID.randomUUID()
                         )
                     )
                 )
@@ -847,7 +855,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships with only contact1 (contact2 removed)
             entityRelationshipService.saveRelationships(
                 id = entityId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = companyEntityType,
                 curr = mapOf(companyContactsRelId to listOf(contact1Id))
             )
@@ -874,10 +882,12 @@ class EntityRelationshipServiceTest {
                 .thenReturn(
                     listOf(
                         EntityRelationshipEntity(
-                            organisationId = organisationId,
+                            workspaceId = workspaceId,
                             sourceId = entityId,
                             targetId = contactId,
-                            fieldId = companyContactsRelId
+                            fieldId = companyContactsRelId,
+                            sourceTypeId = UUID.randomUUID(),
+                            targetTypeId = UUID.randomUUID()
                         )
                     )
                 )
@@ -892,7 +902,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships with empty list (all contacts removed)
             val result = entityRelationshipService.saveRelationships(
                 id = entityId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = companyEntityType,
                 curr = mapOf(companyContactsRelId to emptyList())
             )
@@ -929,10 +939,12 @@ class EntityRelationshipServiceTest {
                 .thenReturn(
                     listOf(
                         EntityRelationshipEntity(
-                            organisationId = organisationId,
+                            workspaceId = workspaceId,
                             sourceId = contactId,
                             targetId = companyId,
-                            fieldId = contactCompanyRelId
+                            fieldId = contactCompanyRelId,
+                            sourceTypeId = UUID.randomUUID(),
+                            targetTypeId = UUID.randomUUID()
                         )
                     )
                 )
@@ -947,7 +959,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships with empty list (all companies removed from contact)
             val result = entityRelationshipService.saveRelationships(
                 id = contactId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = contactEntityType,
                 curr = mapOf(contactCompanyRelId to emptyList())
             )
@@ -984,16 +996,20 @@ class EntityRelationshipServiceTest {
                 .thenReturn(
                     listOf(
                         EntityRelationshipEntity(
-                            organisationId = organisationId,
+                            workspaceId = workspaceId,
                             sourceId = entityId,
                             targetId = contact1Id,
-                            fieldId = companyContactsRelId
+                            fieldId = companyContactsRelId,
+                            sourceTypeId = UUID.randomUUID(),
+                            targetTypeId = UUID.randomUUID()
                         ),
                         EntityRelationshipEntity(
-                            organisationId = organisationId,
+                            workspaceId = workspaceId,
                             sourceId = entityId,
                             targetId = contact2Id,
-                            fieldId = companyContactsRelId
+                            fieldId = companyContactsRelId,
+                            sourceTypeId = UUID.randomUUID(),
+                            targetTypeId = UUID.randomUUID()
                         )
                     )
                 )
@@ -1011,7 +1027,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships with no contacts field at all
             entityRelationshipService.saveRelationships(
                 id = entityId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = companyEntityType,
                 curr = emptyMap()
             )
@@ -1041,10 +1057,12 @@ class EntityRelationshipServiceTest {
                 .thenReturn(
                     listOf(
                         EntityRelationshipEntity(
-                            organisationId = organisationId,
+                            workspaceId = workspaceId,
                             sourceId = entityId,
                             targetId = oldContactId,
-                            fieldId = companyContactsRelId
+                            fieldId = companyContactsRelId,
+                            sourceTypeId = UUID.randomUUID(),
+                            targetTypeId = UUID.randomUUID()
                         )
                     )
                 )
@@ -1070,7 +1088,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships with new contact only
             entityRelationshipService.saveRelationships(
                 id = entityId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = companyEntityType,
                 curr = mapOf(companyContactsRelId to listOf(newContactId))
             )
@@ -1102,10 +1120,12 @@ class EntityRelationshipServiceTest {
                 .thenReturn(
                     listOf(
                         EntityRelationshipEntity(
-                            organisationId = organisationId,
+                            workspaceId = workspaceId,
                             sourceId = entityId,
                             targetId = contactId,
-                            fieldId = companyContactsRelId
+                            fieldId = companyContactsRelId,
+                            sourceTypeId = UUID.randomUUID(),
+                            targetTypeId = UUID.randomUUID()
                         )
                     )
                 )
@@ -1131,7 +1151,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships with only projects (contacts removed)
             entityRelationshipService.saveRelationships(
                 id = entityId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = companyEntityType,
                 curr = mapOf(companyProjectsRelId to listOf(projectId))
             )
@@ -1178,7 +1198,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships with both valid and invalid IDs
             val result = entityRelationshipService.saveRelationships(
                 id = entityId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = companyEntityType,
                 curr = mapOf(companyContactsRelId to listOf(validContactId, invalidContactId))
             )
@@ -1210,7 +1230,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships with unknown field ID
             val result = entityRelationshipService.saveRelationships(
                 id = entityId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = companyEntityType,
                 curr = mapOf(unknownFieldId to listOf(contactId))
             )
@@ -1231,10 +1251,12 @@ class EntityRelationshipServiceTest {
                 .thenReturn(
                     listOf(
                         EntityRelationshipEntity(
-                            organisationId = organisationId,
+                            workspaceId = workspaceId,
                             sourceId = entityId,
                             targetId = contactId,
-                            fieldId = companyContactsRelId
+                            fieldId = companyContactsRelId,
+                            sourceTypeId = UUID.randomUUID(),
+                            targetTypeId = UUID.randomUUID()
                         )
                     )
                 )
@@ -1249,7 +1271,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships with same data
             entityRelationshipService.saveRelationships(
                 id = entityId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = companyEntityType,
                 curr = mapOf(companyContactsRelId to listOf(contactId))
             )
@@ -1314,7 +1336,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships
             entityRelationshipService.saveRelationships(
                 id = documentId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = unidirectionalType,
                 curr = mapOf(uniRelId to listOf(contactId))
             )
@@ -1358,10 +1380,12 @@ class EntityRelationshipServiceTest {
                 .thenReturn(
                     listOf(
                         EntityRelationshipEntity(
-                            organisationId = organisationId,
+                            workspaceId = workspaceId,
                             sourceId = documentId,
                             targetId = contactId,
-                            fieldId = uniRelId
+                            fieldId = uniRelId,
+                            sourceTypeId = UUID.randomUUID(),
+                            targetTypeId = UUID.randomUUID()
                         )
                     )
                 )
@@ -1376,7 +1400,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships with empty list (removed)
             entityRelationshipService.saveRelationships(
                 id = documentId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = unidirectionalType,
                 curr = mapOf(uniRelId to emptyList())
             )
@@ -1433,7 +1457,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships
             val result = entityRelationshipService.saveRelationships(
                 id = entityId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = companyEntityType,
                 curr = mapOf(companyContactsRelId to listOf(contactId))
             )
@@ -1471,7 +1495,7 @@ class EntityRelationshipServiceTest {
             // When: Saving relationships
             val result = entityRelationshipService.saveRelationships(
                 id = entityId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 type = companyEntityType,
                 curr = mapOf(companyContactsRelId to listOf(contactId))
             )
@@ -1499,7 +1523,7 @@ class EntityRelationshipServiceTest {
             key = key,
             displayNameSingular = singularName,
             displayNamePlural = pluralName,
-            organisationId = organisationId,
+            workspaceId = workspaceId,
             type = EntityCategory.STANDARD,
             schema = Schema(
                 key = SchemaType.OBJECT,
@@ -1564,7 +1588,7 @@ class EntityRelationshipServiceTest {
     ): EntityEntity {
         return EntityEntity(
             id = id,
-            organisationId = organisationId,
+            workspaceId = workspaceId,
             typeId = typeId,
             typeKey = "test-entity-key",
             identifierKey = identifierKey,

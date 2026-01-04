@@ -19,7 +19,7 @@ import java.util.*
  */
 interface EntityLinkProjection {
     fun getId(): UUID
-    fun getOrganisationId(): UUID
+    fun getworkspaceId(): UUID
     fun getTypeKey(): String
     fun getFieldId(): UUID
     fun getSourceEntityId(): UUID
@@ -33,7 +33,7 @@ interface EntityLinkProjection {
  */
 fun EntityLinkProjection.toEntityLink(): EntityLink = EntityLink(
     id = getId(),
-    organisationId = getOrganisationId(),
+    workspaceId = getworkspaceId(),
     fieldId = getFieldId(),
     sourceEntityId = getSourceEntityId(),
     icon = Icon(
@@ -113,12 +113,12 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
         WHERE 
             (source_entity_id = ANY(:ids) 
             or target_entity_id = ANY(:ids)) 
-            AND organisation_id = :organisationId 
+            AND workspace_id = :workspaceId 
             AND archived = false
         RETURNING *
             """, nativeQuery = true
     )
-    fun archiveEntities(ids: Array<UUID>, organisationId: UUID): List<EntityRelationshipEntity>
+    fun archiveEntities(ids: Array<UUID>, workspaceId: UUID): List<EntityRelationshipEntity>
 
     /**
      * Find all entity links for a source entity by joining relationships with target entities.
@@ -133,7 +133,7 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
         value = """
             SELECT
                 e.id as id,
-                e.organisation_id as organisationId,
+                e.workspace_id as workspaceId,
                 r.relationship_field_id as fieldId,
                 r.source_entity_id as sourceEntityId,
                 e.icon_type as iconType,
@@ -148,11 +148,11 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
             WHERE r.source_entity_id = :sourceId
             AND r.archived = false
             AND e.archived = false
-            AND e.organisation_id = :organisationId
+            AND e.workspace_id = :workspaceId
         """,
         nativeQuery = true
     )
-    fun findEntityLinksBySourceId(sourceId: UUID, organisationId: UUID): List<EntityLinkProjection>
+    fun findEntityLinksBySourceId(sourceId: UUID, workspaceId: UUID): List<EntityLinkProjection>
 
     /**
      * Find all entity links for multiple source entities.
@@ -162,7 +162,7 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
         value = """
             SELECT
                 e.id as id,
-                e.organisation_id as organisationId,
+                e.workspace_id as workspaceId,
                 r.relationship_field_id as fieldId,
                 r.source_entity_id as sourceEntityId,
                 e.icon_type as iconType,
@@ -177,9 +177,9 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
             WHERE r.source_entity_id = ANY(:ids)
             AND r.archived = false
             AND e.archived = false
-            AND e.organisation_id = :organisationId
+            AND e.workspace_id = :workspaceId
         """,
         nativeQuery = true
     )
-    fun findEntityLinksBySourceIdIn(ids: Array<UUID>, organisationId: UUID): List<EntityLinkProjection>
+    fun findEntityLinksBySourceIdIn(ids: Array<UUID>, workspaceId: UUID): List<EntityLinkProjection>
 }

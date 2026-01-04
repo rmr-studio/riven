@@ -24,7 +24,7 @@ object EntityFactory {
      * @param key The unique key for the entity type. Defaults to "test_entity".
      * @param displayNameSingular Display name in singular form. Defaults to "Test Entity".
      * @param displayNamePlural Display name in plural form. Defaults to "Test Entities".
-     * @param organisationId The organisation UUID. Defaults to a newly generated UUID.
+     * @param workspaceId The workspace UUID. Defaults to a newly generated UUID.
      * @param type The entity category. Defaults to STANDARD.
      * @param schema The schema definition. Defaults to a simple schema with a name field.
      * @param relationships The list of relationship definitions. Defaults to null.
@@ -36,7 +36,7 @@ object EntityFactory {
         key: String = "test_entity",
         displayNameSingular: String = "Test Entity",
         displayNamePlural: String = "Test Entities",
-        organisationId: UUID = UUID.randomUUID(),
+        workspaceId: UUID = UUID.randomUUID(),
         type: EntityCategory = EntityCategory.STANDARD,
         schema: EntityTypeSchema = createSimpleSchema(),
         relationships: List<EntityRelationshipDefinition>? = null,
@@ -59,7 +59,7 @@ object EntityFactory {
             key = key,
             displayNameSingular = displayNameSingular,
             displayNamePlural = displayNamePlural,
-            organisationId = organisationId,
+            workspaceId = workspaceId,
             type = type,
             schema = schema,
             relationships = relationships,
@@ -137,26 +137,28 @@ object EntityFactory {
      * Creates an EntityRelationshipEntity (relationship instance) with the given parameters.
      *
      * @param id The relationship UUID. Defaults to a newly generated UUID.
-     * @param organisationId The organisation UUID. Defaults to a newly generated UUID.
+     * @param workspaceId The workspace UUID. Defaults to a newly generated UUID.
      * @param sourceId The source entity UUID. Defaults to a newly generated UUID.
      * @param targetId The target entity UUID. Defaults to a newly generated UUID.
-     * @param key The relationship key.
-     * @param label The human-readable label.
      * @return An EntityRelationshipEntity configured with the provided parameters.
      */
     fun createRelationshipEntity(
         id: UUID = UUID.randomUUID(),
-        organisationId: UUID = UUID.randomUUID(),
+        workspaceId: UUID = UUID.randomUUID(),
         sourceId: UUID = UUID.randomUUID(),
+        sourceTypeId: UUID = UUID.randomUUID(),
+        targetTypeId: UUID = UUID.randomUUID(),
         targetId: UUID = UUID.randomUUID(),
         fieldId: UUID = UUID.randomUUID()
     ): EntityRelationshipEntity {
         return EntityRelationshipEntity(
             id = id,
-            organisationId = organisationId,
+            workspaceId = workspaceId,
             sourceId = sourceId,
             targetId = targetId,
-            fieldId = fieldId
+            fieldId = fieldId,
+            sourceTypeId = sourceTypeId,
+            targetTypeId = targetTypeId
         )
     }
 

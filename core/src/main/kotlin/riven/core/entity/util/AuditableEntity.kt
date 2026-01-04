@@ -31,7 +31,7 @@ abstract class AuditableEntity {
     @LastModifiedBy
     @Column(name = "updated_by", columnDefinition = "uuid")
     var updatedBy: UUID? = null
-    
+
     /**
      * Populates `createdAt` with the current `ZonedDateTime` before the entity is persisted when it is not already set.
      *
@@ -45,8 +45,8 @@ abstract class AuditableEntity {
 }
 
 abstract class AuditableModel {
-    abstract val createdAt: ZonedDateTime?
-    abstract val updatedAt: ZonedDateTime?
-    abstract val createdBy: UUID?
-    abstract val updatedBy: UUID?
+    abstract var createdAt: ZonedDateTime?
+    abstract var updatedAt: ZonedDateTime?
+    abstract var createdBy: UUID?
+    abstract var updatedBy: UUID?
 }

@@ -24,7 +24,7 @@ import jakarta.persistence.Entity as JPAEntity
     name = "entities",
     indexes = [
         Index(name = "idx_entities_type_id", columnList = "type_id"),
-        Index(name = "idx_entities_organisation_id", columnList = "organisation_id"),
+        Index(name = "idx_entities_workspace_id", columnList = "workspace_id"),
     ]
 )
 data class EntityEntity(
@@ -33,8 +33,8 @@ data class EntityEntity(
     @Column(name = "id", nullable = false, columnDefinition = "uuid")
     val id: UUID? = null,
 
-    @Column(name = "organisation_id", nullable = false)
-    val organisationId: UUID,
+    @Column(name = "workspace_id", nullable = false)
+    val workspaceId: UUID,
 
     @Column(name = "type_id", nullable = false)
     val typeId: UUID,
@@ -87,7 +87,7 @@ data class EntityEntity(
 
         return Entity(
             id = id,
-            organisationId = this.organisationId,
+            workspaceId = this.workspaceId,
             typeId = this.typeId,
             payload = payload,
             identifierKey = this.identifierKey,

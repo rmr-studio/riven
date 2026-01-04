@@ -4,10 +4,13 @@
 
 Riven Core is a Spring Boot backend providing RESTful APIs for a multi-tenant SaaS platform with two primary systems:
 
-1. **Entity System** - Mutable schema-driven entity type management with bidirectional relationship orchestration, polymorphic support, and impact analysis
-2. **Block System** - Immutable versioned content composition framework with hierarchical tree structures and reference resolution
+1. **Entity System** - Mutable schema-driven entity type management with bidirectional relationship orchestration,
+   polymorphic support, and impact analysis
+2. **Block System** - Immutable versioned content composition framework with hierarchical tree structures and reference
+   resolution
 
-The backend handles schema validation, relationship synchronization, audit logging, and complex business logic for both systems.
+The backend handles schema validation, relationship synchronization, audit logging, and complex business logic for both
+systems.
 
 ## 2. Tech Stack
 
@@ -61,9 +64,9 @@ core/
 │   │   │   └── AuthTokenService.kt
 │   │   ├── activity/                  # Audit logging
 │   │   │   └── ActivityService.kt
-│   │   ├── organisation/              # Org management
-│   │   │   ├── OrganisationService.kt
-│   │   │   └── OrganisationInviteService.kt
+│   │   ├── workspace/              # Org management
+│   │   │   ├── WorkspaceService.kt
+│   │   │   └── WorkspaceInviteService.kt
 │   │   ├── user/                      # User services
 │   │   │   └── UserService.kt
 │   │   ├── schema/                    # JSON Schema validation
@@ -73,11 +76,11 @@ core/
 │   ├── repository/                     # JPA repositories (data access)
 │   │   ├── entity/
 │   │   ├── block/
-│   │   └── organisation/
+│   │   └── workspace/
 │   ├── entity/                         # JPA entities (database tables)
 │   │   ├── entity/
 │   │   ├── block/
-│   │   └── organisation/
+│   │   └── workspace/
 │   ├── models/                         # Domain models (DTOs) ⭐ PRIMARY FOCUS
 │   │   ├── entity/                    # Entity domain models
 │   │   │   ├── EntityType.kt
@@ -134,6 +137,7 @@ core/
 #### Entity System Services
 
 **EntityTypeService.kt** (486 lines) - Entity type lifecycle management
+
 - `publishEntityType()` - Creates new entity type with default schema
 - `updateEntityTypeConfiguration()` - Updates metadata (name, icon, description)
 - `saveEntityTypeDefinition()` - Adds/updates attributes or relationships
@@ -142,6 +146,7 @@ core/
 - `reorderEntityTypeColumns()` - Manages attribute/relationship display order
 
 **EntityRelationshipService.kt** (1,368 lines) - **LARGEST & MOST COMPLEX SERVICE**
+
 - Bidirectional relationship creation and synchronization
 - Cardinality enforcement (ONE_TO_ONE, ONE_TO_MANY, MANY_TO_ONE, MANY_TO_MANY)
 - Polymorphic relationship support (single relationship → multiple entity types)
@@ -149,12 +154,14 @@ core/
 - Inverse relationship validation and cascade operations
 
 **Key Responsibilities:**
+
 - `createRelationships()` - Creates ORIGIN relationships, cascades REFERENCE relationships
 - `updateRelationships()` - Modifies relationships using diff-based approach
 - `removeRelationships()` - Removes relationships with cascade removal of inverses
 - `validateRelationshipDefinitions()` - Comprehensive validation
 
 **Change Handlers:**
+
 - `handleInverseNameChange()` - Updates REFERENCE names when ORIGIN inverse name changes
 - `handleCardinalityChange()` - Updates inverse cardinality
 - `handleBidirectionalEnabled()` - Creates inverse REFERENCE relationships
@@ -162,38 +169,45 @@ core/
 - `handleBidirectionalTargetsChanged()` - Adds/removes specific inverses
 
 **Validation Methods:**
+
 - `validateRelationshipForCreateOrUpdate()` - Ensures bidirectional relationships properly configured
 - `validateRelationshipForDelete()` - Ensures no orphaned relationships
 - `validateNamingCollisions()` - Prevents duplicate relationship names
 - `validateOriginBidirectionalRelationship()` - Validates ORIGIN bidirectional config
 
 **Helper Methods:**
+
 - `resolveNameCollision()` - Generates unique names ("Inverse Name" → "Inverse Name 2")
 - `isUsingDefaultInverseName()` - Checks if REFERENCE uses default inverse name
 - `createInverseReferenceRelationships()` - Builds REFERENCE relationships for targets
 - `updateOriginForReferenceRelationship()` - Updates ORIGIN bidirectionalEntityTypeKeys
 
 **EntityTypeRelationshipImpactAnalysisService.kt** (199 lines) - Impact analysis
+
 - `analyze()` - Returns empty analysis (currently stubbed with TODO)
 - `analyzeModificationImpact()` - Detects data loss from cardinality/target changes
 - `analyseRelationRemovalImpact()` - Identifies affected entity types
 - `hasNotableImpacts()` - Determines if user confirmation needed
 
 **EntityTypeRelationshipDiffService.kt** (45 lines) - Diff computation
+
 - `calculateModification()` - Compares old vs. new relationship definitions
 - Identifies changes: name, cardinality, inverse name, target types, bidirectional status
 
 **EntityAttributeService.kt** (78 lines) - Attribute schema operations
+
 - `saveAttributeDefinition()` - Adds/updates attributes with schema validation
 - `removeAttributeDefinition()` - Removes attributes from schema
 - Performs breaking change detection before modifying schema
 
 **EntityService.kt** (221 lines) - Entity instance management
+
 - Create, read, update entities with schema validation
 - Delegates to EntityValidationService for payload validation
 - Records activity logs for audit trail
 
 **EntityValidationService.kt** (232 lines) - Schema validation
+
 - `validateEntity()` - Validates entity payload against entity type schema
 - `validateRelationshipEntity()` - Validates relationship constraints (TODO: incomplete)
 - `detectSchemaBreakingChanges()` - Identifies incompatible schema changes
@@ -202,6 +216,7 @@ core/
 #### Block System Services
 
 **BlockEnvironmentService.kt** (674 lines) - Block tree orchestration
+
 - `saveBlockEnvironment()` - Batch block operations with transactional safety
 - Supports operations: ADD, MOVE, REMOVE, REORDER, UPDATE
 - Cascade deletion handling
@@ -210,18 +225,21 @@ core/
 - ID mapping for block references
 
 **BlockService.kt** (346 lines) - Block instance management
+
 - `createBlock()` - Creates block with payload validation
 - Block CRUD operations
 - Parent-child link management via BlockChildrenService
 - Enforces nesting rules from BlockType
 
 **BlockTypeService.kt** (240 lines) - Block type versioning
+
 - `publishBlockType()` - Creates new block type (immutable)
 - `updateBlockType()` - Creates new version with copy-on-write pattern
 - System vs. organization block type handling
 - Activity logging for audit trail
 
 **BlockChildrenService.kt** (440 lines) - Hierarchy management
+
 - `listChildren()` - Returns ordered children
 - `getChildrenForBlocks()` - Batch fetch children
 - `addChild()` - Creates parent-child link with validation
@@ -231,12 +249,14 @@ core/
 - Validates nesting constraints from parent BlockType
 
 **BlockReferenceHydrationService.kt** (143 lines) - Reference resolution
+
 - `hydrateBlockReferences()` - Resolves entity/block references in batch
 - Handles EntityReferenceMetadata (links to entities)
 - Handles BlockReferenceMetadata (links to block trees)
 - Batch fetching for performance
 
 **BlockTreeLayoutService.kt** (90 lines) - Grid layout persistence
+
 - `fetchLayoutById()` - Retrieves layout by ID
 - `fetchLayoutForEntity()` - Gets entity's layout
 - `updateLayoutSnapshot()` - Persists layout changes
@@ -245,6 +265,7 @@ core/
 #### Cross-Cutting Services
 
 **SchemaService.kt** (368 lines) - JSON Schema validation
+
 - Uses networknt JSON Schema validator (SpecVersion.V201909)
 - `validate()` - Validates payload with ValidationScope (NONE, SOFT, STRICT)
 - `validateOrThrow()` - Throws on validation errors in STRICT mode
@@ -252,20 +273,23 @@ core/
 - Supports field format validation (dates, URIs, etc.)
 
 **AuthTokenService.kt** (67 lines) - JWT extraction
+
 - `getUserId()` - Extracts user ID from JWT "sub" claim
 - `getUserEmail()` - Extracts email from JWT claims
 - `getAllClaims()` - Returns all JWT claims
 - `getCurrentUserAuthorities()` - Gets user authorities for RBAC
 
 **ActivityService.kt** (82 lines) - Activity logging
+
 - `logActivity()` - Records single activity with details
 - `logActivities()` - Batch records multiple activities
 - Supports flexible JSON details for rich audit trails
 
-**OrganisationService.kt** (332 lines) - Organization lifecycle
-- `getOrganisationById()` - Retrieves org with optional metadata
-- `createOrganisation()` - Creates org and adds creator as first member
-- `updateOrganisation()` - Updates org properties
+**WorkspaceService.kt** (332 lines) - Organization lifecycle
+
+- `getWorkspaceById()` - Retrieves org with optional metadata
+- `createWorkspace()` - Creates org and adds creator as first member
+- `updateWorkspace()` - Updates org properties
 - Member management and role assignment
 
 ### 3.3 Service Dependency Graph
@@ -327,6 +351,7 @@ BlockReferenceHydrationService
 ### 4.1 Entity System Models
 
 **EntityType** - Mutable schema definition
+
 ```kotlin
 data class EntityType(
     val id: UUID,
@@ -345,6 +370,7 @@ data class EntityType(
 ```
 
 **EntityRelationshipDefinition** - Defines relationships between types
+
 ```kotlin
 data class EntityRelationshipDefinition(
     val id: UUID,
@@ -365,6 +391,7 @@ data class EntityRelationshipDefinition(
 ```
 
 **Entity** - Instance data
+
 ```kotlin
 data class Entity(
     val id: UUID,
@@ -379,6 +406,7 @@ data class Entity(
 ### 4.2 Relationship Analysis Models
 
 **EntityTypeRelationshipDiff** - Compares old vs. new states
+
 ```kotlin
 data class EntityTypeRelationshipDiff(
     val added: List<SaveRelationshipDefinitionRequest>,
@@ -388,6 +416,7 @@ data class EntityTypeRelationshipDiff(
 ```
 
 **EntityTypeRelationshipImpactAnalysis** - Impact of relationship changes
+
 ```kotlin
 data class EntityTypeRelationshipImpactAnalysis(
     val affectedEntityTypes: List<String>,      // Types impacted
@@ -398,6 +427,7 @@ data class EntityTypeRelationshipImpactAnalysis(
 ```
 
 **EntityTypeRelationshipModification** - What changed
+
 ```kotlin
 data class EntityTypeRelationshipModification(
     val previous: EntityRelationshipDefinition,  // Old state
@@ -409,6 +439,7 @@ data class EntityTypeRelationshipModification(
 ### 4.3 Block System Models
 
 **BlockType** - Immutable versioned content schema
+
 ```kotlin
 data class BlockType(
     val id: UUID,
@@ -427,6 +458,7 @@ data class BlockType(
 ```
 
 **Block** - Content instance
+
 ```kotlin
 data class Block(
     val id: UUID,
@@ -440,6 +472,7 @@ data class Block(
 ```
 
 **Metadata (Polymorphic Payload)** - Sealed interface
+
 ```kotlin
 sealed interface Metadata {
     val type: BlockMetadataType
@@ -472,6 +505,7 @@ data class BlockReferenceMetadata(
 ```
 
 **BlockTree** - Complete block hierarchy
+
 ```kotlin
 data class BlockTree(
     val root: Node                      // Polymorphic: ContentNode or ReferenceNode
@@ -495,6 +529,7 @@ data class ReferenceNode(
 ### 4.4 Schema Model (Generic)
 
 **Schema<T>** - Parameterized schema (UUID for entities, String for blocks)
+
 ```kotlin
 data class Schema<T>(
     val label: String?,
@@ -511,6 +546,7 @@ data class Schema<T>(
 ```
 
 **Type Aliases:**
+
 - `EntityTypeSchema = Schema<UUID>` (keys are UUIDs)
 - `BlockTypeSchema = Schema<String>` (keys are Strings)
 
@@ -558,6 +594,7 @@ data class Schema<T>(
 ### 6.3 Service Layer Patterns
 
 **Constructor Injection (Required)**
+
 ```kotlin
 @Service
 class EntityTypeService(
@@ -570,6 +607,7 @@ class EntityTypeService(
 ```
 
 **Transactional Boundaries**
+
 ```kotlin
 @Transactional
 fun publishEntityType(request: PublishEntityTypeRequest): EntityType {
@@ -578,6 +616,7 @@ fun publishEntityType(request: PublishEntityTypeRequest): EntityType {
 ```
 
 **Service Layer Responsibilities**
+
 - Services contain business logic (validation, orchestration, impact analysis)
 - Repositories are thin data access layers (no business logic)
 - Controllers delegate to services (thin controllers)
@@ -608,15 +647,16 @@ fun publishEntityType(request: PublishEntityTypeRequest): EntityType {
 
 ### 7.1 Mutable vs. Immutable Pattern
 
-| Aspect | EntityType | BlockType |
-|--------|-----------|-----------|
-| **Pattern** | Mutable (in-place updates) | Immutable (copy-on-write) |
-| **Updates** | Single row updated | New row created with version++ |
-| **Schema Keys** | UUID (attribute references) | String (type references) |
-| **Version Tracking** | Implicit (version counter) | Explicit (via sourceId link) |
-| **Rationale** | Entities need consistent schema evolution | Blocks preserve historical versions |
+| Aspect               | EntityType                                | BlockType                           |
+|----------------------|-------------------------------------------|-------------------------------------|
+| **Pattern**          | Mutable (in-place updates)                | Immutable (copy-on-write)           |
+| **Updates**          | Single row updated                        | New row created with version++      |
+| **Schema Keys**      | UUID (attribute references)               | String (type references)            |
+| **Version Tracking** | Implicit (version counter)                | Explicit (via sourceId link)        |
+| **Rationale**        | Entities need consistent schema evolution | Blocks preserve historical versions |
 
 **Example: EntityType Update**
+
 ```kotlin
 // Updating an entity type modifies the existing row
 entityType.schema = newSchema
@@ -625,6 +665,7 @@ entityTypeRepository.save(entityType)  // UPDATE operation
 ```
 
 **Example: BlockType Update**
+
 ```kotlin
 // Updating a block type creates a new version
 val newBlockType = blockType.copy(
@@ -640,16 +681,19 @@ blockTypeRepository.save(newBlockType)  // INSERT operation
 **Every relationship has an inverse automatically created and maintained.**
 
 **Relationship Types:**
+
 - **ORIGIN** - Source side of a bidirectional relationship (user-created)
 - **REFERENCE** - Inverse side (automatically created/updated by system)
 
 **Flow:**
+
 1. User creates ORIGIN relationship: `Client → Project` (ONE_TO_MANY)
 2. System automatically creates REFERENCE: `Project → Client` (MANY_TO_ONE)
 3. Cardinality inverses automatically: ONE_TO_MANY ↔ MANY_TO_ONE
 4. Changes to ORIGIN cascade to REFERENCE relationships
 
 **Example:**
+
 ```kotlin
 // User creates: Client → Projects (ONE_TO_MANY)
 EntityRelationshipDefinition(
@@ -674,6 +718,7 @@ EntityRelationshipDefinition(
 ```
 
 **Cardinality Inversion Rules:**
+
 - `ONE_TO_ONE` ↔ `ONE_TO_ONE`
 - `ONE_TO_MANY` ↔ `MANY_TO_ONE`
 - `MANY_TO_ONE` ↔ `ONE_TO_MANY`
@@ -684,6 +729,7 @@ EntityRelationshipDefinition(
 **A single relationship can target multiple entity types.**
 
 **Example:**
+
 ```kotlin
 // Project can be owned by either Client OR Partner
 EntityRelationshipDefinition(
@@ -703,6 +749,7 @@ EntityRelationshipDefinition(
 **Prevents conflicting relationships to the same target entity type.**
 
 **Example of Invalid Overlap:**
+
 ```kotlin
 // Invalid: Can't have both ONE_TO_ONE and ONE_TO_MANY to same target
 Client → Project (ONE_TO_ONE)   // First relationship
@@ -710,6 +757,7 @@ Client → Project (ONE_TO_MANY)  // Error: Overlap detected!
 ```
 
 **Validation in EntityRelationshipService:**
+
 - Checks for duplicate relationships (same source, target, cardinality)
 - Checks for incompatible cardinality combinations
 - Checks for naming collisions within entity type
@@ -719,16 +767,18 @@ Client → Project (ONE_TO_MANY)  // Error: Overlap detected!
 **When modifying/deleting relationships, impact analysis prevents data loss.**
 
 **Flow:**
+
 1. User initiates schema change (modify/delete relationship)
 2. Service performs dry-run via `EntityTypeRelationshipImpactAnalysisService.analyze()`
 3. If impact detected (data loss warnings, affected entities):
-   - Return `409 Conflict` with impact details
-   - Frontend displays warnings to user
+    - Return `409 Conflict` with impact details
+    - Frontend displays warnings to user
 4. User confirms understanding of consequences
 5. Service applies change with `impactConfirmed=true` flag
 6. Backend proceeds with destructive operation
 
 **Impact Analysis Triggers:**
+
 - Cardinality changes (e.g., MANY_TO_MANY → ONE_TO_ONE may delete relationships)
 - Target entity type removal from polymorphic relationship
 - Bidirectional relationship removal
@@ -741,6 +791,7 @@ Client → Project (ONE_TO_MANY)  // Error: Overlap detected!
 **BlockEnvironmentService orchestrates batch operations on block trees.**
 
 **Operation Types:**
+
 - `ADD` - Add new block to tree
 - `MOVE` - Change parent or reorder within parent
 - `REMOVE` - Delete block (cascade to children)
@@ -748,6 +799,7 @@ Client → Project (ONE_TO_MANY)  // Error: Overlap detected!
 - `UPDATE` - Modify block payload
 
 **Transaction Flow:**
+
 ```kotlin
 fun saveEnvironment(request: BlockEnvironmentRequest): SaveEnvironmentResponse {
     // 1. Validate all operations (nesting, references, etc.)
@@ -761,6 +813,7 @@ fun saveEnvironment(request: BlockEnvironmentRequest): SaveEnvironmentResponse {
 ```
 
 **Cascade Deletion:**
+
 - Deleting parent block automatically deletes all descendants
 - Handled by `BlockChildrenService.cascadeRemove()`
 - Uses recursive tree traversal
@@ -770,6 +823,7 @@ fun saveEnvironment(request: BlockEnvironmentRequest): SaveEnvironmentResponse {
 **Blocks with references (EntityReferenceMetadata, BlockReferenceMetadata) need hydration.**
 
 **Flow:**
+
 ```kotlin
 fun hydrateBlocks(rootBlockId: UUID): BlockTree {
     // 1. Fetch root block + all descendants
@@ -785,6 +839,7 @@ fun hydrateBlocks(rootBlockId: UUID): BlockTree {
 ```
 
 **Fetch Policies:**
+
 - `LAZY` - Fetch references only when explicitly requested
 - `EAGER` - Fetch references immediately during hydration
 
@@ -800,6 +855,7 @@ data class BlockTypeNesting(
 ```
 
 **Validation:**
+
 - Before creating parent-child link, check parent's nesting rules
 - If child type not in allowedTypes, reject operation
 - If max children exceeded, reject operation
@@ -811,7 +867,7 @@ data class BlockTypeNesting(
 ```kotlin
 activityService.logActivity(
     userId = userId,
-    organisationId = organisationId,
+    workspaceId = workspaceId,
     entityType = ApplicationEntityType.ENTITY_RELATIONSHIP,
     operation = OperationType.CREATE,
     details = mapOf(
@@ -825,9 +881,11 @@ activityService.logActivity(
 ```
 
 **Activity Types:**
+
 - `ENTITY_TYPE`, `ENTITY`, `BLOCK_TYPE`, `BLOCK`, `ENTITY_RELATIONSHIP`, etc.
 
 **Operation Types:**
+
 - `CREATE`, `UPDATE`, `DELETE`
 
 ## 8. Database Schema Highlights
@@ -835,43 +893,50 @@ activityService.logActivity(
 ### 8.1 Entity Tables
 
 **entity_types**
+
 - **Pattern:** Mutable (single row per type, updated in-place)
-- **Unique Constraint:** `(organisation_id, key)`
+- **Unique Constraint:** `(workspace_id, key)`
 - **JSONB Columns:** `schema`, `relationships`, `column_order`
 - **Denormalized:** `count` field (updated via triggers)
 - **Foreign Key:** `ON DELETE RESTRICT` if entities exist
 
 **entities**
+
 - **References:** `entity_types` with `ON DELETE RESTRICT`
 - **JSONB Column:** `payload` (validated against schema)
 - **Version Tracking:** `type_version` (schema version at creation)
 - **Soft Delete:** Moved to `archived_entities` table
 
 **entity_relationships**
+
 - **Links:** `source_entity_id` → `target_entity_id`
 - **References:** `relationship_key` (from EntityRelationshipDefinition)
 
 ### 8.2 Block Tables
 
 **block_types**
+
 - **Pattern:** Immutable (new version = new row)
-- **Unique Constraint:** `(organisation_id, key, version)`
+- **Unique Constraint:** `(workspace_id, key, version)`
 - **JSONB Columns:** `schema`, `display_structure`, `nesting`
 - **Version Tracking:** `source_id` (links to original type)
-- **System Types:** `organisation_id IS NULL`
+- **System Types:** `workspace_id IS NULL`
 
 **blocks**
+
 - **References:** `block_types` (foreign key)
 - **JSONB Column:** `payload` (polymorphic: content, entity refs, block refs)
 - **Soft Delete:** `archived` flag
 
 **block_children**
+
 - **Parent-Child Links:** `parent_id` → `child_id`
 - **Unique Constraint:** `child_id` (block has only one parent)
 - **Order Management:** `order_index` (maintains child order)
 - **Cascade Delete:** On parent removal
 
 **block_tree_layouts**
+
 - **Stores:** Gridstack layouts bound to entities
 - **JSONB Column:** `layout` (grid configuration)
 - **Foreign Key:** `entities` table
@@ -879,13 +944,14 @@ activityService.logActivity(
 ### 8.3 Row-Level Security (RLS)
 
 PostgreSQL RLS enforces multi-tenancy:
+
 ```sql
-CREATE POLICY "Users can view their own organisations" on organisations
+CREATE POLICY "Users can view their own workspaces" on workspaces
     FOR SELECT
     TO authenticated
     USING (
-        id IN (SELECT organisation_id
-               FROM organisation_members
+        id IN (SELECT workspace_id
+               FROM workspace_members
                WHERE user_id = auth.uid())
     );
 ```
@@ -893,49 +959,59 @@ CREATE POLICY "Users can view their own organisations" on organisations
 ## 9. Critical Development Gotchas
 
 ### 9.1 Mutable vs. Immutable
+
 - **EntityTypes** are mutable (updated in-place) - DON'T create new versions
 - **BlockTypes** are immutable (copy-on-write) - ALWAYS create new versions
 
 ### 9.2 Bidirectional Relationships
+
 - Creating relationship A→B automatically creates B→A inverse
 - Deleting ORIGIN relationship must cascade delete REFERENCE relationships
 - Cardinality changes must update inverse cardinality
 
 ### 9.3 Impact Analysis Required
+
 - Always analyze impact before destructive entity schema changes
 - Return `409 Conflict` if impact detected
 - Require `impactConfirmed=true` flag to proceed
 
 ### 9.4 Foreign Key Constraints
+
 - Can't delete entity type if entities exist (`ON DELETE RESTRICT`)
 - Must delete all entities first, or handle cascade properly
 
 ### 9.5 Schema Validation
+
 - Entity payload validated against `EntityTypeSchema` (JSON Schema Draft 2019-09)
 - Block payload validated against `BlockTypeSchema`
 - Validation strictness: NONE (allow invalid), SOFT (warn), STRICT (reject)
 
 ### 9.6 Transaction Boundaries
+
 - `BlockEnvironmentService.saveEnvironment()` is transactional
 - Failure rolls back ALL operations (atomic batch)
 - Don't mix transactional and non-transactional operations
 
 ### 9.7 Polymorphic Relationships
+
 - Single relationship can target multiple entity types
 - Creates inverse relationships in ALL target types
 - Removing one target doesn't affect others
 
 ### 9.8 Denormalized Counts
+
 - `entity_types.count` updated via database triggers
 - Don't manually update count field
 - Trigger fires on entity INSERT/DELETE
 
 ### 9.9 Naming Collisions
+
 - Relationship names must be unique within entity type
 - `EntityRelationshipService.resolveNameCollision()` handles auto-naming
 - Pattern: "Inverse Name" → "Inverse Name 2" → "Inverse Name 3"
 
 ### 9.10 TODO/Incomplete Features
+
 - `EntityValidationService.validateRelationshipEntity()` - Stub
 - `EntityTypeRelationshipImpactAnalysisService.analyze()` - Returns empty (stub)
 - Cardinality change data migration - TODO
@@ -944,6 +1020,7 @@ CREATE POLICY "Users can view their own organisations" on organisations
 ## 10. Critical Files Reference
 
 ### Entity System (Backend)
+
 - `service/entity/type/EntityRelationshipService.kt` (1,368 lines) - **MOST COMPLEX**
 - `service/entity/type/EntityTypeService.kt` (486 lines)
 - `service/entity/type/EntityTypeRelationshipImpactAnalysisService.kt` (199 lines)
@@ -957,6 +1034,7 @@ CREATE POLICY "Users can view their own organisations" on organisations
 - `models/entity/relationship/analysis/` (6 files)
 
 ### Block System (Backend)
+
 - `service/block/BlockEnvironmentService.kt` (674 lines) - **ORCHESTRATION**
 - `service/block/BlockService.kt` (346 lines)
 - `service/block/BlockTypeService.kt` (240 lines)
@@ -970,10 +1048,11 @@ CREATE POLICY "Users can view their own organisations" on organisations
 - `models/block/tree/` (3 files)
 
 ### Common/Supporting
+
 - `service/schema/SchemaService.kt` (368 lines)
 - `service/auth/AuthTokenService.kt` (67 lines)
 - `service/activity/ActivityService.kt` (82 lines)
-- `service/organisation/OrganisationService.kt` (332 lines)
+- `service/workspace/WorkspaceService.kt` (332 lines)
 - `models/common/validation/Schema.kt`
 - `schema.sql` (568 lines) - **AUTHORITATIVE DATABASE SCHEMA**
 - `build.gradle.kts` - Gradle configuration
@@ -982,6 +1061,7 @@ CREATE POLICY "Users can view their own organisations" on organisations
 ## 11. Maintenance
 
 When making significant changes, update this file:
+
 - **New dependencies** → Update Tech Stack section
 - **New services** → Update Architecture section
 - **New patterns** → Update Key Domain Concepts section

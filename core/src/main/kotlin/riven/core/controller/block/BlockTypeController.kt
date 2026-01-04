@@ -5,12 +5,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import riven.core.models.block.BlockType
-import riven.core.models.request.block.CreateBlockTypeRequest
-import riven.core.service.block.BlockTypeService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import riven.core.models.block.BlockType
+import riven.core.models.request.block.CreateBlockTypeRequest
+import riven.core.service.block.BlockTypeService
 import java.util.*
 
 @RestController
@@ -121,25 +121,25 @@ class BlockTypeController(
     }
 
     /**
-     * Retrieve all block types for the specified organisation.
+     * Retrieve all block types for the specified workspace.
      *
-     * @param organisationId The UUID of the organisation whose block types should be returned.
-     * @return A list of `BlockType` objects belonging to the organisation; an empty list if none exist.
+     * @param workspaceId The UUID of the workspace whose block types should be returned.
+     * @return A list of `BlockType` objects belonging to the workspace; an empty list if none exist.
      */
-    @GetMapping("/organisation/{organisationId}")
+    @GetMapping("/workspace/{workspaceId}")
     @Operation(
-        summary = "Get block types for organisation",
-        description = "Retrieves all block types associated with a specific organisation."
+        summary = "Get block types for workspace",
+        description = "Retrieves all block types associated with a specific workspace."
     )
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "Block types retrieved successfully"),
         ApiResponse(responseCode = "401", description = "Unauthorized access"),
-        ApiResponse(responseCode = "404", description = "No block types found for the organisation")
+        ApiResponse(responseCode = "404", description = "No block types found for the workspace")
     )
     fun getBlockTypes(
-        @PathVariable organisationId: UUID,
+        @PathVariable workspaceId: UUID,
     ): ResponseEntity<List<BlockType>> {
-        val blockTypes = blockTypeService.getBlockTypes(organisationId)
+        val blockTypes = blockTypeService.getBlockTypes(workspaceId)
         return ResponseEntity.ok(blockTypes)
     }
 }

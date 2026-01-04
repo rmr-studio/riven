@@ -5,7 +5,7 @@ import java.util.*
 
 data class SaveEnvironmentRequest(
     val layoutId: UUID,
-    val organisationId: UUID,
+    val workspaceId: UUID,
     val layout: TreeLayout,
     val version: Int,
     val operations: List<StructuralOperationRequest>,

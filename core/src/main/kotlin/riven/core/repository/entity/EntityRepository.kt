@@ -20,8 +20,8 @@ interface EntityRepository : JpaRepository<EntityEntity, UUID> {
     /**
      * Find all entities for an organization.
      */
-    @Query("SELECT e FROM EntityEntity e WHERE e.organisationId = :organisationId AND e.archived = false")
-    fun findByOrganisationId(organisationId: UUID): List<EntityEntity>
+    @Query("SELECT e FROM EntityEntity e WHERE e.workspaceId = :workspaceId AND e.archived = false")
+    fun findByworkspaceId(workspaceId: UUID): List<EntityEntity>
 
     @Query("SELECT e FROM EntityEntity e WHERE e.typeId = :typeId AND e.archived = false")
     fun findByTypeId(typeId: UUID): List<EntityEntity>
@@ -41,11 +41,11 @@ interface EntityRepository : JpaRepository<EntityEntity, UUID> {
         UPDATE entities
         SET archived = true, deleted_at = CURRENT_TIMESTAMP
         WHERE id = ANY(:ids)
-          AND organisation_id = :organisationId
+          AND workspace_id = :workspaceId
           AND archived = false
         RETURNING *
     """, nativeQuery = true
     )
-    fun archiveByIds(ids: Array<UUID>, organisationId: UUID): List<EntityEntity>
+    fun archiveByIds(ids: Array<UUID>, workspaceId: UUID): List<EntityEntity>
 
 }

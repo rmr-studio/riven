@@ -1,17 +1,17 @@
 package riven.core.service.user
 
 import io.github.oshai.kotlinlogging.KLogger
-import riven.core.entity.organisation.toEntity
+import org.springframework.security.access.AccessDeniedException
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.user.UserEntity
 import riven.core.entity.user.toModel
+import riven.core.entity.workspace.toEntity
 import riven.core.exceptions.NotFoundException
 import riven.core.models.user.User
 import riven.core.repository.user.UserRepository
 import riven.core.service.auth.AuthTokenService
 import riven.core.util.ServiceUtil.findOrThrow
-import org.springframework.security.access.AccessDeniedException
-import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
 @Service
@@ -75,7 +75,7 @@ class UserService(
             email = user.email
             phone = user.phone
             avatarUrl = user.avatarUrl
-            defaultOrganisation = user.defaultOrganisation?.toEntity()
+            defaultWorkspace = user.defaultWorkspace?.toEntity()
         }.run {
             repository.save(this)
             logger.info { "Updated user profile with ID: ${this.id}" }

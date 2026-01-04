@@ -23,7 +23,7 @@ class EntityTypeAttributeService(
 ) {
 
     fun saveAttributeDefinition(
-        organisationId: UUID,
+        workspaceId: UUID,
         type: EntityTypeEntity,
         request: SaveAttributeDefinitionRequest
     ) {

@@ -46,8 +46,8 @@ class EntityTypeService(
      * Create and publish a new entity type.
      */
     @Transactional
-    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
-    fun publishEntityType(organisationId: UUID, request: CreateEntityTypeRequest): EntityType {
+    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
+    fun publishEntityType(workspaceId: UUID, request: CreateEntityTypeRequest): EntityType {
         authTokenService.getUserId().let { userId ->
             val primaryId: UUID = UUID.randomUUID()
 
@@ -55,7 +55,7 @@ class EntityTypeService(
                 displayNameSingular = request.name.singular,
                 displayNamePlural = request.name.plural,
                 key = request.key,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 identifierKey = primaryId,
                 description = request.description,
                 iconType = request.icon.icon,
@@ -94,7 +94,7 @@ class EntityTypeService(
                     activity = Activity.ENTITY_TYPE,
                     operation = OperationType.CREATE,
                     userId = userId,
-                    organisationId = requireNotNull(it.organisationId) { "Cannot create system entity type" },
+                    workspaceId = requireNotNull(it.workspaceId) { "Cannot create system entity type" },
                     entityId = it.id,
                     entityType = ApplicationEntityType.ENTITY_TYPE,
                     details = mapOf(
@@ -119,13 +119,13 @@ class EntityTypeService(
      * When impactConfirmed=true: Proceeds with the update after user confirmation
      */
     @Transactional
-    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
+    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
     fun updateEntityTypeConfiguration(
-        organisationId: UUID,
+        workspaceId: UUID,
         type: EntityType
     ): EntityType {
         authTokenService.getUserId()
-        requireNotNull(type.organisationId) { "Cannot update system entity type" }
+        requireNotNull(type.workspaceId) { "Cannot update system entity type" }
         val existing: EntityTypeEntity = ServiceUtil.findOrThrow { entityTypeRepository.findById(type.id) }
 
         return existing.apply {
@@ -141,21 +141,21 @@ class EntityTypeService(
     }
 
     @Transactional
-    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
+    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
     fun saveEntityTypeDefinition(
-        organisationId: UUID,
+        workspaceId: UUID,
         request: SaveTypeDefinitionRequest,
         impactConfirmed: Boolean = false
     ): EntityTypeImpactResponse {
         val (index: Int?, definition) = request
         val existing =
-            ServiceUtil.findOrThrow { entityTypeRepository.findByOrganisationIdAndKey(organisationId, definition.key) }
+            ServiceUtil.findOrThrow { entityTypeRepository.findByworkspaceIdAndKey(workspaceId, definition.key) }
 
         val impactedEntityTypes = mutableMapOf<String, EntityType>()
 
         when (definition) {
             is SaveAttributeDefinitionRequest -> {
-                entityAttributeService.saveAttributeDefinition(organisationId, existing, definition).also {
+                entityAttributeService.saveAttributeDefinition(workspaceId, existing, definition).also {
                     impactedEntityTypes[existing.key] = existing.toModel()
                 }
             }
@@ -168,7 +168,7 @@ class EntityTypeService(
                     // If new, just add new relationships
                     if (this == null) {
                         entityTypeRelationshipService.updateRelationships(
-                            organisationId,
+                            workspaceId,
                             diff = EntityTypeRelationshipDiff(
                                 added = listOf(definition),
                                 modified = emptyList(),
@@ -189,7 +189,7 @@ class EntityTypeService(
 
                         // Calculate potential impact of relationship change
                         impactAnalysisService.analyze(
-                            organisationId,
+                            workspaceId,
                             existing,
                             diff = EntityTypeRelationshipDiff(
                                 added = emptyList(),
@@ -210,7 +210,7 @@ class EntityTypeService(
 
                     // Proceed with updating relationships and modifying linked entities
                     entityTypeRelationshipService.updateRelationships(
-                        organisationId,
+                        workspaceId,
                         diff = EntityTypeRelationshipDiff(
                             added = emptyList(),
                             modified = listOf(diff),
@@ -283,13 +283,13 @@ class EntityTypeService(
     }
 
     fun removeEntityTypeDefinition(
-        organisationId: UUID,
+        workspaceId: UUID,
         request: DeleteTypeDefinitionRequest,
         impactConfirmed: Boolean = false
     ): EntityTypeImpactResponse {
         val (definition) = request
         val existing =
-            ServiceUtil.findOrThrow { entityTypeRepository.findByOrganisationIdAndKey(organisationId, definition.key) }
+            ServiceUtil.findOrThrow { entityTypeRepository.findByworkspaceIdAndKey(workspaceId, definition.key) }
 
         val impactedEntityTypes = mutableMapOf<String, EntityType>()
 
@@ -304,7 +304,7 @@ class EntityTypeService(
                     if (!impactConfirmed) {
                         // Calculate potential impact of relationship removal
                         impactAnalysisService.analyze(
-                            organisationId,
+                            workspaceId,
                             existing,
                             diff = EntityTypeRelationshipDiff(
                                 added = emptyList(),
@@ -330,7 +330,7 @@ class EntityTypeService(
 
                     // Proceed with removing relationships and modifying linked entities
                     entityTypeRelationshipService.removeRelationships(
-                        organisationId,
+                        workspaceId,
                         listOf(
                             EntityTypeRelationshipDeleteRequest(
                                 relationship = this,
@@ -387,20 +387,20 @@ class EntityTypeService(
     }
 
 
-    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
+    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
     fun deleteEntityType(
-        organisationId: UUID,
+        workspaceId: UUID,
         key: String,
         impactConfirmed: Boolean = false
     ): EntityTypeImpactResponse {
         val userId = authTokenService.getUserId()
-        val existing = ServiceUtil.findOrThrow { entityTypeRepository.findByOrganisationIdAndKey(organisationId, key) }
-        requireNotNull(existing.organisationId) { "Cannot delete system entity type" }
+        val existing = ServiceUtil.findOrThrow { entityTypeRepository.findByworkspaceIdAndKey(workspaceId, key) }
+        requireNotNull(existing.workspaceId) { "Cannot delete system entity type" }
 
         existing.relationships?.let {
             if (!impactConfirmed) {
                 val impact = impactAnalysisService.analyze(
-                    organisationId,
+                    workspaceId,
                     existing,
                     diff = EntityTypeRelationshipDiff(
                         added = emptyList(),
@@ -428,7 +428,7 @@ class EntityTypeService(
         }
 
         val affectedEntityTypes: Map<String, EntityType>? = existing.relationships?.let {
-            entityTypeRelationshipService.removeRelationships(organisationId, it.map { relationship ->
+            entityTypeRelationshipService.removeRelationships(workspaceId, it.map { relationship ->
                 EntityTypeRelationshipDeleteRequest(
                     relationship = relationship,
                     action = if (relationship.relationshipType == EntityTypeRelationshipType.ORIGIN)
@@ -445,7 +445,7 @@ class EntityTypeService(
                 activity = Activity.ENTITY_TYPE,
                 operation = OperationType.DELETE,
                 userId = userId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 entityId = existing.id,
                 entityType = ApplicationEntityType.ENTITY_TYPE,
                 details = mapOf(
@@ -465,16 +465,16 @@ class EntityTypeService(
     /**
      * Get all entity types for an organization (including system types).
      */
-    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
-    fun getOrganisationEntityTypes(organisationId: UUID): List<EntityType> {
+    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
+    fun getWorkspaceEntityTypes(workspaceId: UUID): List<EntityType> {
         return ServiceUtil.findManyResults {
-            entityTypeRepository.findByOrganisationId(organisationId)
+            entityTypeRepository.findByworkspaceId(workspaceId)
         }.map { it.toModel() }
     }
 
-    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
-    fun getByKey(key: String, organisationId: UUID): EntityTypeEntity {
-        return ServiceUtil.findOrThrow { entityTypeRepository.findByOrganisationIdAndKey(organisationId, key) }
+    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
+    fun getByKey(key: String, workspaceId: UUID): EntityTypeEntity {
+        return ServiceUtil.findOrThrow { entityTypeRepository.findByworkspaceIdAndKey(workspaceId, key) }
     }
 
     /**

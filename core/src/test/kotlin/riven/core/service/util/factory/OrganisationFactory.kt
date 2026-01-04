@@ -1,47 +1,47 @@
 package riven.core.service.util.factory
 
-import riven.core.entity.organisation.OrganisationEntity
-import riven.core.entity.organisation.OrganisationInviteEntity
-import riven.core.entity.organisation.OrganisationMemberEntity
 import riven.core.entity.user.UserEntity
-import riven.core.enums.organisation.OrganisationInviteStatus
-import riven.core.enums.organisation.OrganisationRoles
+import riven.core.entity.workspace.WorkspaceEntity
+import riven.core.entity.workspace.WorkspaceInviteEntity
+import riven.core.entity.workspace.WorkspaceMemberEntity
+import riven.core.enums.workspace.WorkspaceInviteStatus
+import riven.core.enums.workspace.WorkspaceRoles
 import java.util.*
 
-object OrganisationFactory {
+object WorkspaceFactory {
 
     /**
-     * Creates an OrganisationEntity with the given id, name, and member set.
+     * Creates an WorkspaceEntity with the given id, name, and member set.
      *
-     * @param id The organisation UUID. Defaults to a newly generated UUID.
-     * @param name The organisation name. Defaults to "Test Organisation".
-     * @param members The mutable set of OrganisationMemberEntity to associate with the organisation. Defaults to an empty set.
-     * @return An OrganisationEntity configured with the provided id, name, and members.
+     * @param id The workspace UUID. Defaults to a newly generated UUID.
+     * @param name The workspace name. Defaults to "Test Workspace".
+     * @param members The mutable set of WorkspaceMemberEntity to associate with the workspace. Defaults to an empty set.
+     * @return An WorkspaceEntity configured with the provided id, name, and members.
      */
-    fun createOrganisation(
+    fun createWorkspace(
         id: UUID = UUID.randomUUID(),
-        name: String = "Test Organisation",
-        members: MutableSet<OrganisationMemberEntity> = mutableSetOf()
-    ) = OrganisationEntity(
+        name: String = "Test Workspace",
+        members: MutableSet<WorkspaceMemberEntity> = mutableSetOf()
+    ) = WorkspaceEntity(
         id = id,
         name = name,
     ).apply {
         this.members = members
     }
 
-    fun createOrganisationMember(
+    fun createWorkspaceMember(
         user: UserEntity,
-        organisationId: UUID,
-        role: OrganisationRoles = OrganisationRoles.MEMBER,
-    ): OrganisationMemberEntity {
+        workspaceId: UUID,
+        role: WorkspaceRoles = WorkspaceRoles.MEMBER,
+    ): WorkspaceMemberEntity {
         user.id.let {
             if (it == null) {
                 throw IllegalArgumentException("User ID must not be null")
             }
 
-            return OrganisationMemberEntity(
-                id = OrganisationMemberEntity.OrganisationMemberKey(
-                    organisationId = organisationId,
+            return WorkspaceMemberEntity(
+                id = WorkspaceMemberEntity.WorkspaceMemberKey(
+                    workspaceId = workspaceId,
                     userId = it
                 ),
                 role = role,
@@ -51,17 +51,17 @@ object OrganisationFactory {
         }
     }
 
-    fun createOrganisationInvite(
+    fun createWorkspaceInvite(
         email: String,
-        organisationId: UUID,
-        role: OrganisationRoles = OrganisationRoles.MEMBER,
-        token: String = OrganisationInviteEntity.generateSecureToken(),
+        workspaceId: UUID,
+        role: WorkspaceRoles = WorkspaceRoles.MEMBER,
+        token: String = WorkspaceInviteEntity.generateSecureToken(),
         invitedBy: UUID = UUID.randomUUID(),
-        status: OrganisationInviteStatus = OrganisationInviteStatus.PENDING
-    ) = OrganisationInviteEntity(
+        status: WorkspaceInviteStatus = WorkspaceInviteStatus.PENDING
+    ) = WorkspaceInviteEntity(
         id = UUID.randomUUID(),
         email = email,
-        organisationId = organisationId,
+        workspaceId = workspaceId,
         role = role,
         token = token,
         inviteStatus = status,
