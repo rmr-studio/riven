@@ -2,7 +2,6 @@ package riven.core.service.entity.type
 
 import org.springframework.stereotype.Service
 import riven.core.entity.entity.EntityTypeEntity
-import riven.core.entity.entity.EntityUniqueValueEntity
 import riven.core.enums.core.DataType
 import riven.core.exceptions.SchemaValidationException
 import riven.core.exceptions.UniqueConstraintViolationException
@@ -160,8 +159,8 @@ class EntityTypeAttributeService(
         }
     }
 
-    fun archiveEntity(id: UUID): Int {
-        return uniqueEntityValueRepository.archiveEntity(id)
+    fun archiveEntities(ids: Collection<UUID>): Int {
+        return uniqueEntityValueRepository.archiveEntities(ids)
     }
 
     fun archiveType(id: UUID): Int {

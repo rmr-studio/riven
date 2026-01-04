@@ -35,6 +35,7 @@ import {
 import { EntityTypeHeader } from "../ui/entity-type-header";
 import { EntityTypeSaveButton } from "../ui/entity-type-save-button";
 import { EntityDraftRow } from "./entity-draft-row";
+import EntityActionBar from "./entity-table-action-bar";
 import { handleColumnOrderChange } from "./entity-table-order-handler";
 import { handleColumnResize } from "./entity-table-resize-handler";
 import {
@@ -77,7 +78,14 @@ export const EntityDataTable: FC<Props> = ({
 
     // Transform entities to row data
     const rowData = useMemo(() => {
-        const rows = transformEntitiesToRows(entities);
+        // Sort entities by createdAt (oldest first) before transforming
+        const sortedEntities = [...entities].sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateA - dateB; // Ascending order (oldest first)
+        });
+
+        const rows = transformEntitiesToRows(sortedEntities);
 
         // Append draft row placeholder when in draft mode (at bottom)
         if (isDraftMode) {
@@ -292,10 +300,12 @@ export const EntityDataTable: FC<Props> = ({
                             enabled: true,
                             clearOnFilterChange: true,
                             actionComponent: ({ selectedRows, clearSelection }) => (
-                                <div className="flex gap-2">
-                                    <Button>Delete {selectedRows.length}</Button>
-                                    <Button>Export</Button>
-                                </div>
+                                <EntityActionBar
+                                    selectedRows={selectedRows}
+                                    clearSelection={clearSelection}
+                                    organisationId={organisationId}
+                                    entityTypeId={entityType.id}
+                                />
                             ),
                         }}
                         enableDragDrop

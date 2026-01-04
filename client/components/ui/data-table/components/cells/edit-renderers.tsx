@@ -49,7 +49,7 @@ export function createAttributeRenderer<TData>(
         // Trigger validation on blur
         const handleBlur = async () => {
             await form.trigger("value");
-            onSave();
+            await onSave();
         };
 
         if (!Widget) {

@@ -58,12 +58,8 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
     @Query("SELECT r FROM EntityRelationshipEntity r WHERE r.sourceId in :ids and r.archived = false")
     fun findBySourceIdIn(ids: Collection<UUID>): List<EntityRelationshipEntity>
 
-    /**
-     * Find all relationships where the given entity is the target.
-     */
-    fun findByTargetId(id: UUID): List<EntityRelationshipEntity>
-
-    fun findBySourceIdAndFieldId(sourceId: UUID, fieldId: UUID): EntityRelationshipEntity?
+    @Query("SELECT r FROM EntityRelationshipEntity r WHERE r.targetId in :ids and r.archived = false")
+    fun findByTargetIdIn(ids: Collection<UUID>): List<EntityRelationshipEntity>
 
     /**
      * Find all relationships with a specific fieldId where the given entity is the source.
@@ -107,9 +103,22 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
      */
     fun deleteAllBySourceIdAndFieldIdAndTargetIdIn(sourceId: UUID, fieldId: UUID, targetIds: Collection<UUID>)
 
+
     @Modifying
-    @Query("UPDATE EntityRelationshipEntity r SET r.archived = true, r.deletedAt = CURRENT_TIMESTAMP WHERE r.sourceId = :id or r.targetId = :id")
-    fun archiveEntity(id: UUID): Int
+    @Query(
+        """
+        UPDATE entity_relationships
+            SET archived = true, 
+            deleted_at = CURRENT_TIMESTAMP 
+        WHERE 
+            (source_entity_id = ANY(:ids) 
+            or target_entity_id = ANY(:ids)) 
+            AND organisation_id = :organisationId 
+            AND archived = false
+        RETURNING *
+            """, nativeQuery = true
+    )
+    fun archiveEntities(ids: Array<UUID>, organisationId: UUID): List<EntityRelationshipEntity>
 
     /**
      * Find all entity links for a source entity by joining relationships with target entities.
@@ -139,10 +148,11 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
             WHERE r.source_entity_id = :sourceId
             AND r.archived = false
             AND e.archived = false
+            AND e.organisation_id = :organisationId
         """,
         nativeQuery = true
     )
-    fun findEntityLinksBySourceId(sourceId: UUID): List<EntityLinkProjection>
+    fun findEntityLinksBySourceId(sourceId: UUID, organisationId: UUID): List<EntityLinkProjection>
 
     /**
      * Find all entity links for multiple source entities.
@@ -164,11 +174,12 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
                 ) as label
             FROM entity_relationships r
             JOIN entities e ON r.target_entity_id = e.id
-            WHERE r.source_entity_id IN :sourceIds
+            WHERE r.source_entity_id = ANY(:ids)
             AND r.archived = false
             AND e.archived = false
+            AND e.organisation_id = :organisationId
         """,
         nativeQuery = true
     )
-    fun findEntityLinksBySourceIdIn(sourceIds: Collection<UUID>): List<EntityLinkProjection>
+    fun findEntityLinksBySourceIdIn(ids: Array<UUID>, organisationId: UUID): List<EntityLinkProjection>
 }

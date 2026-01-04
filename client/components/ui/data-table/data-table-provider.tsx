@@ -372,3 +372,20 @@ export function useDerivedState<TData>(enableDragDrop: boolean, enableSelection:
         activeFilterCount: state.getActiveFilterCount(),
     }));
 }
+
+export function useCellSelectionOverview<TData>() {
+    return useDataTableStore<
+        TData,
+        {
+            selectedCount: number;
+            hasSelections: boolean;
+            selectedRows: TData[];
+            clearSelection: () => void;
+        }
+    >((state) => ({
+        selectedCount: state.getSelectedCount(),
+        hasSelections: state.hasSelections(),
+        selectedRows: state.getSelectedRows(),
+        clearSelection: state.clearSelection,
+    }));
+}

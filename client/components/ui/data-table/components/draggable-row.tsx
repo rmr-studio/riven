@@ -50,7 +50,6 @@ function DraggableRowComponent<TData>({
         useCellInteraction();
 
     const isDragDisabled = disableDragForRow?.(row) ?? false;
-    
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: row.id,
@@ -90,7 +89,6 @@ function DraggableRowComponent<TData>({
                             key={cell.id}
                             className={cn(
                                 "border-l border-l-accent/40 first:border-l-transparent flex items-center gap-2",
-                                row.getIsSelected() ? "bg-muted" : "bg-background",
                                 isVisible
                                     ? "opacity-100"
                                     : "opacity-0 group-hover:opacity-100 transition-opacity duration-300"

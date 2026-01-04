@@ -1,6 +1,7 @@
 package riven.core.repository.entity
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import riven.core.entity.entity.EntityEntity
 import java.util.*
@@ -33,4 +34,18 @@ interface EntityRepository : JpaRepository<EntityEntity, UUID> {
     """
     )
     fun findByTypeIdIn(typeIds: List<UUID>): List<EntityEntity>
+
+    @Modifying
+    @Query(
+        value = """
+        UPDATE entities
+        SET archived = true, deleted_at = CURRENT_TIMESTAMP
+        WHERE id = ANY(:ids)
+          AND organisation_id = :organisationId
+          AND archived = false
+        RETURNING *
+    """, nativeQuery = true
+    )
+    fun archiveByIds(ids: Array<UUID>, organisationId: UUID): List<EntityEntity>
+
 }

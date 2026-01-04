@@ -544,7 +544,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/entity/organisation/{organisationId}/entity/{entityId}": {
+    "/api/v1/entity/organisation/{organisationId}/entity": {
         parameters: {
             query?: never;
             header?: never;
@@ -1528,12 +1528,13 @@ export interface components {
         DeleteTypeDefinitionRequest: {
             definition: components["schemas"]["DeleteRelationshipDefinitionRequest"] | components["schemas"]["DeleteAttributeDefinitionRequest"];
         };
-        EntityImpactResponse: {
+        DeleteEntityResponse: {
             error?: string;
+            /** Format: int32 */
+            deletedCount: number;
             updatedEntities?: {
-                [key: string]: Record<string, never>;
+                [key: string]: components["schemas"]["Entity"][];
             };
-            impact?: Record<string, never>;
         };
     };
     responses: never;
@@ -2887,11 +2888,14 @@ export interface operations {
             header?: never;
             path: {
                 organisationId: string;
-                entityId: string;
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": string[];
+            };
+        };
         responses: {
             /** @description Entity instance deleted successfully */
             200: {
@@ -2899,7 +2903,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["EntityImpactResponse"];
+                    "*/*": components["schemas"]["DeleteEntityResponse"];
                 };
             };
             /** @description Unauthorized access */
@@ -2908,7 +2912,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["EntityImpactResponse"];
+                    "*/*": components["schemas"]["DeleteEntityResponse"];
                 };
             };
             /** @description Organisation or entity not found */
@@ -2917,7 +2921,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["EntityImpactResponse"];
+                    "*/*": components["schemas"]["DeleteEntityResponse"];
                 };
             };
         };

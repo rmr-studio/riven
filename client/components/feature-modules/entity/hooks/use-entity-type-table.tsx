@@ -1,5 +1,7 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EntityPropertyType } from "@/lib/types/types";
 import { toTitleCase } from "@/lib/util/utils";
 import { ColumnDef, Row } from "@tanstack/react-table";
@@ -56,14 +58,12 @@ export function useEntityTypeTable(
         icon: typeof Key;
         tooltip: string;
     }): ReactNode => (
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Icon className="size-4 text-muted-foreground" />
-                </TooltipTrigger>
-                <TooltipContent className="text-xs font-mono italic">{tooltip}</TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Icon className="size-4 text-muted-foreground" />
+            </TooltipTrigger>
+            <TooltipContent className="text-xs font-mono italic">{tooltip}</TooltipContent>
+        </Tooltip>
     );
 
     const getIndicatorIcons = (row: Row<EntityTypeAttributeRow>): ReactNode => {
