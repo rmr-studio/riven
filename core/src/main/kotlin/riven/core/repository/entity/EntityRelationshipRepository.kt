@@ -58,12 +58,8 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
     @Query("SELECT r FROM EntityRelationshipEntity r WHERE r.sourceId in :ids and r.archived = false")
     fun findBySourceIdIn(ids: Collection<UUID>): List<EntityRelationshipEntity>
 
-    /**
-     * Find all relationships where the given entity is the target.
-     */
-    fun findByTargetId(id: UUID): List<EntityRelationshipEntity>
-
-    fun findBySourceIdAndFieldId(sourceId: UUID, fieldId: UUID): EntityRelationshipEntity?
+    @Query("SELECT r FROM EntityRelationshipEntity r WHERE r.targetId in :ids and r.archived = false")
+    fun findByTargetIdIn(ids: Collection<UUID>): List<EntityRelationshipEntity>
 
     /**
      * Find all relationships with a specific fieldId where the given entity is the source.

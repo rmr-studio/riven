@@ -124,6 +124,14 @@ class EntityController(
         @RequestBody entityIds: List<UUID>,
     ): ResponseEntity<DeleteEntityResponse> {
         val response = entityService.deleteEntities(organisationId, entityIds)
+        if (response.error != null) {
+            return if (response.deletedCount == 0) {
+                ResponseEntity.status(404).body(response)
+            } else {
+                ResponseEntity.status(409).body(response)
+            }
+        }
+        
         return ResponseEntity.ok(response)
     }
 }

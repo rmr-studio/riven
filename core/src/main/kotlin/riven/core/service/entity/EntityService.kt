@@ -4,6 +4,7 @@ import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import riven.core.entity.activity.ActivityLogEntity
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.activity.Activity
@@ -293,15 +294,11 @@ class EntityService(
         }
 
         // Find all relationships where deleted entities are targets (to identify impacted entities)
-        val relationshipsToArchive = ids.flatMap { deletedId ->
-            entityRelationshipService.findByTargetId(deletedId)
-        }
-
-        // Extract unique source entity IDs that will be impacted
-        val impactedEntityIds = relationshipsToArchive
+        val impactedEntityIds: List<UUID> = entityRelationshipService.findByTargetIdIn(ids).flatMap { it.value }
             .map { it.sourceId }
             .toSet()
             .filter { !ids.contains(it) } // Exclude entities being deleted
+
 
         // Archive entities, their unique values, and relationships
         val deletedEntities = entityRepository.archiveByIds(ids.toTypedArray(), organisationId)
@@ -317,20 +314,22 @@ class EntityService(
         entityRelationshipService.archiveEntities(deletedRowIds, organisationId)
 
         // Log activity for each deleted entity
-        deletedEntities.forEach { entity ->
-            activityService.logActivity(
-                activity = Activity.ENTITY,
-                operation = OperationType.DELETE,
-                userId = userId,
-                organisationId = organisationId,
-                entityId = entity.id,
-                entityType = ApplicationEntityType.ENTITY,
-                details = mapOf(
-                    "typeId" to entity.typeId.toString(),
-                    "typeKey" to entity.typeKey
+        activityService.logActivities(
+            deletedEntities.map { entity ->
+                ActivityLogEntity(
+                    activity = Activity.ENTITY,
+                    operation = OperationType.DELETE,
+                    userId = userId,
+                    organisationId = organisationId,
+                    entityId = entity.id,
+                    entityType = ApplicationEntityType.ENTITY,
+                    details = mapOf(
+                        "typeId" to entity.typeId.toString(),
+                        "typeKey" to entity.typeKey
+                    )
                 )
-            )
-        }
+            }
+        )
 
         // Fetch impacted entities with their updated relationships
         val updatedEntities: Map<UUID, List<Entity>>? = if (impactedEntityIds.isNotEmpty()) {

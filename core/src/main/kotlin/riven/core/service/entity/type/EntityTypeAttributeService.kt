@@ -163,7 +163,7 @@ class EntityTypeAttributeService(
         return uniqueEntityValueRepository.archiveEntities(ids)
     }
 
-    fun archiveType(id: UUID, organisationId: UUID): Int {
+    fun archiveType(id: UUID): Int {
         return uniqueEntityValueRepository.archiveType(id)
     }
 }

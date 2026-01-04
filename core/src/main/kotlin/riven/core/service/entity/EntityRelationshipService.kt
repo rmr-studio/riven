@@ -337,8 +337,8 @@ class EntityRelationshipService(
      * Find all relationships where the given entity is the target.
      * Used to identify entities that will be impacted when a target entity is deleted.
      */
-    fun findByTargetId(targetId: UUID): List<EntityRelationshipEntity> {
-        return entityRelationshipRepository.findByTargetId(targetId)
+    fun findByTargetIdIn(ids: List<UUID>): Map<UUID, List<EntityRelationshipEntity>> {
+        return entityRelationshipRepository.findByTargetIdIn(ids).groupBy { it.targetId }
     }
 
     fun archiveEntities(ids: Collection<UUID>, organisationId: UUID): List<EntityRelationshipEntity> {
