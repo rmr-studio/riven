@@ -21,7 +21,11 @@ export function useDeleteEntityMutation(
             const ids = Object.values(entityIds).flat();
 
             if (ids.length === 0) {
-                return Promise.resolve({ deletedCount: 0, updatedEntityTypes: {} });
+                const response: DeleteEntityResponse = {
+                    deletedCount: 0,
+                    error: "No entities to delete",
+                };
+                return Promise.resolve(response);
             }
 
             return EntityService.deleteEntities(session, organisationId, ids);
@@ -31,7 +35,7 @@ export function useDeleteEntityMutation(
         },
         onError: (error: Error, variables: DeleteEntityRequest, context: unknown) => {
             options?.onError?.(error, variables, context);
-            toast.error(`Failed to delete entity type definition: ${error.message}`);
+            toast.error(`Failed to delete selected entities: ${error.message}`);
         },
         onSuccess: (
             response: DeleteEntityResponse,

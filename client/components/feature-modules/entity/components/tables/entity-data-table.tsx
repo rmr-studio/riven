@@ -78,7 +78,7 @@ export const EntityDataTable: FC<Props> = ({
 
     // Transform entities to row data
     const rowData = useMemo(() => {
-        // Sort entities by createdAt (newest first) before transforming
+        // Sort entities by createdAt (oldest first) before transforming
         const sortedEntities = [...entities].sort((a, b) => {
             const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
             const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
