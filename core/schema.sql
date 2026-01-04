@@ -485,7 +485,9 @@ CREATE TABLE IF NOT EXISTS public.entity_relationships
     "id"                    UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
     "organisation_id"       UUID    NOT NULL REFERENCES organisations (id) ON DELETE CASCADE,
     "source_entity_id"      UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
+    "source_entity_type_id" UUID    NOT NULL REFERENCES entity_types (id) ON DELETE RESTRICT,
     "target_entity_id"      UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
+    "target_entity_type_id" UUID    NOT NULL REFERENCES entity_types (id) ON DELETE RESTRICT,
     "relationship_field_id" UUID    NOT NULL,
     "archived"              BOOLEAN NOT NULL         DEFAULT FALSE,
     "deleted_at"            TIMESTAMP WITH TIME ZONE DEFAULT NULL,
@@ -499,13 +501,15 @@ CREATE TABLE IF NOT EXISTS public.entity_relationships
 );
 
 -- Indexes for entity_relationships
-CREATE INDEX idx_entity_relationships_source ON entity_relationships (source_entity_id)
+CREATE INDEX idx_entity_relationships_source ON entity_relationships (organisation_id, source_entity_id)
     WHERE archived = false AND deleted_at IS NULL;
-CREATE INDEX idx_entity_relationships_target ON entity_relationships (target_entity_id)
+CREATE INDEX idx_entity_relationships_target ON entity_relationships (organisation_id, target_entity_id)
+    WHERE archived = false AND deleted_at IS NULL;
+CREATE INDEX idx_entity_relationships_target ON entity_relationships (organisation_id, source_entity_type_id)
+    WHERE archived = false AND deleted_at IS NULL;
+CREATE INDEX idx_entity_relationships_target ON entity_relationships (organisation_id, target_entity_type_id)
     WHERE archived = false AND deleted_at IS NULL;
 
-CREATE INDEX idx_entity_relationships_organisation ON entity_relationships (organisation_id)
-    WHERE archived = false AND deleted_at IS NULL;
 
 
 -- =====================================================
