@@ -65,7 +65,7 @@ class EntityService(
         }
     }
 
-    @PostAuthorize("@workspaceSecurity.hasOrg(returnObject.workspaceId)")
+    @PostAuthorize("@workspaceSecurity.hasWorkspace(returnObject.workspaceId)")
     fun getEntity(id: UUID): Entity {
         val entity = findOrThrow { entityRepository.findById(id) }
         val relationships = entityRelationshipService.findRelatedEntities(
@@ -81,7 +81,7 @@ class EntityService(
         return findManyResults { entityRepository.findAllById(ids) }
     }
 
-    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun getEntitiesByTypeId(
         workspaceId: UUID,
         typeId: UUID
@@ -102,7 +102,7 @@ class EntityService(
         }
     }
 
-    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun getEntitiesByTypeIds(
         workspaceId: UUID,
         typeIds: List<UUID>
@@ -132,7 +132,7 @@ class EntityService(
      * If request.id is provided, updates the existing entity; otherwise creates a new one.
      */
     @Transactional
-    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun saveEntity(
         workspaceId: UUID,
         entityTypeId: UUID,
@@ -284,7 +284,7 @@ class EntityService(
 
 
     @Transactional
-    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun deleteEntities(workspaceId: UUID, ids: List<UUID>): DeleteEntityResponse {
         val userId = authTokenService.getUserId()
         if (ids.isEmpty()) {
@@ -301,7 +301,7 @@ class EntityService(
 
 
         // Archive entities, their unique values, and relationships
-        val deletedEntities = entityRepository.archiveByIds(ids.toTypedArray(), workspaceId)
+        val deletedEntities = entityRepository.deleteByIds(ids.toTypedArray(), workspaceId)
         val deletedRowIds = deletedEntities.mapNotNull { it.id }.toSet()
 
         if (deletedRowIds.isEmpty()) {
@@ -310,7 +310,7 @@ class EntityService(
             )
         }
 
-        entityAttributeService.archiveEntities(deletedRowIds)
+        entityAttributeService.deleteEntities(deletedRowIds)
         entityRelationshipService.archiveEntities(deletedRowIds, workspaceId)
 
         // Log activity for each deleted entity
@@ -359,7 +359,7 @@ class EntityService(
 
 
     /**
-     * Get all entities for an organization.
+     * Get all entities for an workspace.
      */
     fun getWorkspaceEntities(workspaceId: UUID): List<Entity> {
         return findManyResults {

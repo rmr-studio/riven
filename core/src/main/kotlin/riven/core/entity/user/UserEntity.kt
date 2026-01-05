@@ -2,11 +2,9 @@ package riven.core.entity.user
 
 import jakarta.persistence.*
 import riven.core.entity.workspace.WorkspaceEntity
-import riven.core.entity.workspace.WorkspaceMemberEntity
-import riven.core.entity.workspace.toDetails
-import riven.core.entity.workspace.toModel
 import riven.core.models.user.User
 import riven.core.models.user.UserDisplay
+import riven.core.models.workspace.WorkspaceMember
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -44,8 +42,6 @@ data class UserEntity(
 
     @Column(name = "updated_at", nullable = false) var updatedAt: ZonedDateTime = ZonedDateTime.now()
 ) {
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    var workspaces: MutableSet<WorkspaceMemberEntity> = mutableSetOf()
 
     @PrePersist
     fun onPrePersist() {
@@ -57,35 +53,35 @@ data class UserEntity(
     fun onPreUpdate() {
         updatedAt = ZonedDateTime.now()
     }
-}
 
-fun UserEntity.toModel(): User {
-    this.id.let {
-        if (it == null) {
-            throw IllegalArgumentException("UserEntity id cannot be null")
+    fun toModel(memberships: List<WorkspaceMember> = emptyList()): User {
+        this.id.let {
+            if (it == null) {
+                throw IllegalArgumentException("UserEntity id cannot be null")
+            }
+            return User(
+                id = it,
+                email = this.email,
+                phone = this.phone,
+                name = this.name,
+                avatarUrl = this.avatarUrl,
+                memberships = memberships,
+                defaultWorkspace = this.defaultWorkspace?.toModel(),
+            )
         }
-        return User(
-            id = it,
-            email = this.email,
-            phone = this.phone,
-            name = this.name,
-            avatarUrl = this.avatarUrl,
-            memberships = this.workspaces.map { membership -> membership.toDetails(includeWorkspace = true) },
-            defaultWorkspace = this.defaultWorkspace?.toModel(includeMetadata = false),
-        )
     }
 }
 
+/**
+ * Extension function to convert UserEntity to UserDisplay.
+ */
 fun UserEntity.toDisplay(): UserDisplay {
-    this.id.let {
-        if (it == null) {
-            throw IllegalArgumentException("UserEntity id cannot be null")
-        }
-        return UserDisplay(
-            id = it,
-            email = this.email,
-            name = this.name,
-            avatarUrl = this.avatarUrl,
-        )
-    }
+    val id = requireNotNull(this.id) { "UserEntity must have a non-null id" }
+    return UserDisplay(
+        id = id,
+        email = this.email,
+        name = this.name,
+        avatarUrl = this.avatarUrl
+    )
 }
+

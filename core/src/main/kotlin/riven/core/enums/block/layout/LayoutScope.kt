@@ -5,14 +5,14 @@ package riven.core.enums.block.layout
  */
 enum class LayoutScope {
     /**
-     * Default layout for the entire organization.
+     * Default layout for the entire workspace.
      * Used as fallback when no user-specific layout exists.
      */
-    ORGANIZATION,
+    WORKSPACE,
 
     /**
      * User-specific personalized layout.
-     * Overrides organization default for that specific user.
+     * Overrides workspace default for that specific user.
      */
     USER,
 

@@ -10,7 +10,7 @@ import java.util.*
     uniqueConstraints = [
         UniqueConstraint(
             name = "uq_unique_attribute_per_type",
-            columnNames = ["type_id", "field_id", "field_value", "archived"]
+            columnNames = ["type_id", "field_id", "field_value", "deleted"]
         )
     ]
 )
@@ -32,8 +32,8 @@ data class EntityUniqueValueEntity(
     @Column(name = "entity_id", nullable = false)
     val entityId: UUID,
 
-    @Column(name = "archived", nullable = false)
-    val archived: Boolean = false,
+    @Column(name = "deleted", nullable = false)
+    val deleted: Boolean = false,
 
     @Column(name = "deleted_at")
     val deletedAt: ZonedDateTime? = null

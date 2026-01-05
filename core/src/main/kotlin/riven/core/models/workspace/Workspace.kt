@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.entity.util.AuditableModel
+import riven.core.enums.workspace.WorkspaceDisplay
 import riven.core.enums.workspace.WorkspacePlan
 import java.time.ZonedDateTime
 import java.util.*
@@ -23,4 +24,12 @@ data class Workspace(
     override var updatedAt: ZonedDateTime? = null,
     override var createdBy: UUID? = null,
     override var updatedBy: UUID? = null,
-) : AuditableModel()
+) : AuditableModel() {
+
+    fun toDisplay(): WorkspaceDisplay =
+        WorkspaceDisplay(
+            id = requireNotNull(this.id) { "Workspace must have a non-null id" },
+            name = this.name,
+            avatarUrl = this.avatarUrl
+        )
+}

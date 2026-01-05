@@ -4,7 +4,6 @@ import jakarta.persistence.*
 import riven.core.entity.user.UserEntity
 import riven.core.entity.user.toDisplay
 import riven.core.enums.workspace.WorkspaceRoles
-import riven.core.models.workspace.MembershipDetails
 import riven.core.models.workspace.WorkspaceMember
 import java.time.ZonedDateTime
 import java.util.*
@@ -12,15 +11,26 @@ import java.util.*
 @Entity
 @Table(
     name = "workspace_members",
+    uniqueConstraints = [UniqueConstraint(
+        name = "uq_workspace_user",
+        columnNames = ["workspace_id", "user_id"]
+    )]
 )
 data class WorkspaceMemberEntity(
-    // User ID + Workspace ID as composite key
-    @EmbeddedId
-    val id: WorkspaceMemberKey,
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", columnDefinition = "UUID DEFAULT uuid_generate_v4()", nullable = false)
+    val id: UUID? = null,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, updatable = true)
     var role: WorkspaceRoles,
+
+    @Column(name = "workspace_id", nullable = false)
+    val workspaceId: UUID,
+
+    @Column(name = "user_id", nullable = false)
+    val userId: UUID,
 
     @Column(name = "member_since", nullable = false, updatable = false)
     val memberSince: ZonedDateTime = ZonedDateTime.now(),
@@ -38,46 +48,31 @@ data class WorkspaceMemberEntity(
     )
     var workspace: WorkspaceEntity? = null
 
-    @Embeddable
-    data class WorkspaceMemberKey(
-        @Column(name = "workspace_id", nullable = false)
-        val workspaceId: UUID,
+    fun toModel(): WorkspaceMember {
+        this.user.let { user ->
+            if (user == null) {
+                throw IllegalArgumentException("WorkspaceMemberEntity must have a non-null user")
+            }
 
-        @Column(name = "user_id", nullable = false)
-        val userId: UUID
-    )
-}
+            if (user.id == null) {
+                throw IllegalArgumentException("UserEntity must have a non-null id")
+            }
 
-fun WorkspaceMemberEntity.toModel(): WorkspaceMember {
-    this.user.let {
-        if (it == null) {
-            throw IllegalArgumentException("WorkspaceMemberEntity must have a non-null user")
+            this.workspace.let { workspace ->
+                if (workspace == null) {
+                    throw IllegalArgumentException("WorkspaceMemberEntity must have a non-null workspace")
+                }
+
+                return WorkspaceMember(
+                    user = user.toDisplay(),
+                    workspace = workspace.toModel(audit = false).toDisplay(),
+                    role = this.role,
+                    memberSince = this.memberSince,
+                )
+            }
         }
-
-        if (it.id == null) {
-            throw IllegalArgumentException("UserEntity must have a non-null id")
-        }
-
-        return WorkspaceMember(
-            user = it.toDisplay(),
-            membershipDetails = this.toDetails(),
-        )
     }
-}
 
-/**
- * Convert WorkspaceMemberEntity to MembershipDetails
- * This excludes user and workspace details and will be used to hold a user's membership info for their profile.
- */
-fun WorkspaceMemberEntity.toDetails(includeWorkspace: Boolean = false): MembershipDetails {
-    return MembershipDetails(
-        workspace = if (includeWorkspace) {
-            this.workspace?.toModel(includeMetadata = false)
-        } else {
-            null
-        },
-        role = role,
-        memberSince = memberSince,
-    )
+
 }
 

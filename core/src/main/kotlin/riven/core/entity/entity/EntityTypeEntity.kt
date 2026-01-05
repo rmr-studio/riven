@@ -89,8 +89,8 @@ data class EntityTypeEntity(
     @Column(name = "count", nullable = false)
     var entitiesCount: Long = 0L,
 
-    @Column(name = "archived", nullable = false, columnDefinition = "boolean default false")
-    var archived: Boolean = false,
+    @Column(name = "deleted", nullable = false, columnDefinition = "boolean default false")
+    var deleted: Boolean = false,
 
     @Column(name = "deleted_at", nullable = true)
     var deletedAt: Date? = null,

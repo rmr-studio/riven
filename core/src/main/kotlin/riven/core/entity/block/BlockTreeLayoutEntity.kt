@@ -9,19 +9,6 @@ import riven.core.models.block.tree.BlockTreeLayout
 import java.util.*
 
 
-/**
- * Entity for persisting block tree layouts with support for multiple layouts per block.
- *
- * Supports different layout scopes:
- * - ORGANIZATION: Default layout for all users in the org
- * - USER: Personalized layout for a specific user
- * - TEAM: Shared layout for a team/group
- *
- * Layout Resolution Priority:
- * 1. User-specific layout (if exists)
- * 2. Team layout (if user is in team and layout exists)
- * 3. Organization default layout
- */
 @Entity
 @Table(
     name = "block_tree_layouts",

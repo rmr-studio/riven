@@ -23,7 +23,7 @@ class CustomAuthenticationTokenConverter :
             authorities.add(SimpleGrantedAuthority("SCOPE_$s"))
         }
 
-        // Extract custom organization roles
+        // Extract custom workspace roles
         val customClaims = extractCustomClaims(jwt)
         customClaims.roles.forEach { orgRole ->
             // Create authority in format: ROLE_<workspace_id>_<ROLE>

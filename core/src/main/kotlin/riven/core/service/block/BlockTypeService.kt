@@ -34,7 +34,7 @@ class BlockTypeService(
      * @param request Data for the new block type.
      * @return The saved BlockType model representing the published block type.
      */
-    @PreAuthorize("@workspaceSecurity.hasOrg(#request.workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#request.workspaceId)")
     fun publishBlockType(request: CreateBlockTypeRequest): BlockType {
         authTokenService.getUserId().let { userId ->
             val entity = BlockTypeEntity.fromRequest(request)
@@ -60,7 +60,7 @@ class BlockTypeService(
     /**
      * Create a new versioned BlockType row derived from the provided BlockType and record a creation activity.
      *
-     * This performs append-only versioning: a new entity is saved with an incremented version, sourceId set to the original entity's id, and archived set to false. Assumes a unique constraint on (workspace_id, key, version).
+     * This performs append-only versioning: a new entity is saved with an incremented version, sourceId set to the original entity's id, and deleted set to false. Assumes a unique constraint on (workspace_id, key, version).
      *
      * @param type The BlockType containing the new values and the id of the existing version to fork from.
      */
@@ -73,7 +73,7 @@ class BlockTypeService(
         val orgId = requireNotNull(existing.workspaceId) { "Cannot update system block type" }
 
         // Assert that they have access to said workspace
-        if (!workspaceSecurity.hasOrg(orgId)) {
+        if (!workspaceSecurity.hasWorkspace(orgId)) {
             throw AccessDeniedException("Unauthorized to update block type for workspace $orgId")
         }
 
@@ -90,7 +90,7 @@ class BlockTypeService(
             version = nextVersion,
             strictness = type.strictness,
             schema = type.schema,
-            archived = false, // new version starts unarchived unless specified otherwise
+            deleted = false, // new version starts undeleted unless specified otherwise
             displayStructure = type.display,
             // Add this property to your entity (nullable) to record provenance.
             sourceId = existing.id
@@ -116,9 +116,9 @@ class BlockTypeService(
     /**
      * Archives or restores a block type and records the change as an activity.
      *
-     * Updates the archived flag of the block type identified by [id] to [status], persists the change,
+     * Updates the deleted flag of the block type identified by [id] to [status], persists the change,
      * and logs an ARCHIVE (when `status` is true) or RESTORE (when `status` is false) activity. If the
-     * block type already has the requested archived state, no changes or activity are made.
+     * block type already has the requested deleted state, no changes or activity are made.
      *
      * @param id The UUID of the block type to update.
      * @param status `true` to archive the block type, `false` to restore it.
@@ -129,14 +129,14 @@ class BlockTypeService(
         val orgId = requireNotNull(existing.workspaceId)
 
 
-        workspaceSecurity.hasOrg(orgId).run {
+        workspaceSecurity.hasWorkspace(orgId).run {
             if (!this) {
                 throw AccessDeniedException("Unauthorized to archive block type for workspace $orgId")
             }
         }
 
-        if (existing.archived == status) return
-        val updated = existing.copy(archived = status)
+        if (existing.deleted == status) return
+        val updated = existing.copy(deleted = status)
         blockTypeRepository.save(updated)
         activityService.logActivity(
             activity = Activity.BLOCK_TYPE,

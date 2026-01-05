@@ -10,14 +10,14 @@ import java.util.*
  */
 interface EntityTypeRepository : JpaRepository<EntityTypeEntity, UUID> {
 
-    @Query("SELECT et FROM EntityTypeEntity et WHERE et.id = :id AND et.archived = false")
+    @Query("SELECT et FROM EntityTypeEntity et WHERE et.id = :id AND et.deleted = false")
     override fun findById(id: UUID): Optional<EntityTypeEntity>
 
     fun findByworkspaceId(id: UUID): List<EntityTypeEntity>
 
 
     /**
-     * Find entity type by organization and key.
+     * Find entity type by workspace and key.
      * Returns the single matching entity type (mutable pattern - only one row per org+key).
      */
     fun findByworkspaceIdAndKey(

@@ -1,3 +1,6 @@
+DROP TABLE IF EXISTS "workspace_invites" CASCADE;
+DROP TABLE IF EXISTS "workspace_members" CASCADE;
+DROP TABLE IF EXISTS "workspaces" CASCADE;
 CREATE TABLE IF NOT EXISTS "workspaces"
 (
     "id"               UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
@@ -6,10 +9,14 @@ CREATE TABLE IF NOT EXISTS "workspaces"
     "default_currency" VARCHAR(3)       NOT NULL DEFAULT 'AUD',
     "avatar_url"       TEXT,
     "member_count"     INTEGER          NOT NULL DEFAULT 0,
+
     "created_at"       TIMESTAMP WITH TIME ZONE  DEFAULT CURRENT_TIMESTAMP,
     "updated_at"       TIMESTAMP WITH TIME ZONE  DEFAULT CURRENT_TIMESTAMP,
     "created_by"       UUID,
-    "updated_by"       UUID
+    "updated_by"       UUID,
+
+    "deleted"          BOOLEAN          NOT NULL DEFAULT FALSE,
+    "deleted_at"       TIMESTAMP WITH TIME ZONE  DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS "workspace_members"

@@ -46,8 +46,8 @@ data class EntityRelationshipEntity(
     @Column(name = "relationship_field_id", nullable = false, columnDefinition = "uuid")
     val fieldId: UUID,
 
-    @Column(name = "archived", nullable = false)
-    val archived: Boolean = false,
+    @Column(name = "deleted", nullable = false)
+    val deleted: Boolean = false,
 
     @Column(name = "deleted_at", columnDefinition = "timestamptz")
     val deletedAt: ZonedDateTime? = null

@@ -8,16 +8,7 @@ import riven.core.repository.block.BlockTreeLayoutRepository
 import riven.core.util.ServiceUtil.findOrThrow
 import java.util.*
 
-/**
- * Service for managing block tree layouts with support for multiple scopes.
- *
- * Each entity will have a layout consisting of many blocks.
- *
- * Handles layout resolution priority:
- * 1. User-specific layout (highest priority)
- * 2. Team layout
- * 3. Organization default layout (fallback)
- */
+
 @Service
 class BlockTreeLayoutService(
     private val layoutRepository: BlockTreeLayoutRepository,

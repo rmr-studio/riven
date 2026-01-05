@@ -42,7 +42,7 @@ class WorkspaceInviteService(
      * @throws IllegalArgumentException if `role` is `OWNER` or a pending invite for the email already exists.
      * @throws ConflictException if the email already belongs to an existing workspace member.
      */
-    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId) and @workspaceSecurity.hasOrgRoleOrHigher(#workspaceId, 'ADMIN')")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId) and @workspaceSecurity.hasWorkspaceRoleOrHigher(#workspaceId, 'ADMIN')")
     @Throws(AccessDeniedException::class, IllegalArgumentException::class)
     fun createWorkspaceInvitation(workspaceId: UUID, email: String, role: WorkspaceRoles): WorkspaceInvite {
 
@@ -52,7 +52,7 @@ class WorkspaceInviteService(
         }
 
         findManyResults {
-            workspaceMemberRepository.findByIdworkspaceId(workspaceId)
+            workspaceMemberRepository.findByWorkspaceId(workspaceId)
         }.run {
             // Assert that the email is not already a member of the workspace.
             if (this.any {
@@ -177,7 +177,7 @@ class WorkspaceInviteService(
      * @param workspaceId ID of the workspace whose invites are returned.
      * @return A list of WorkspaceInvite models for the workspace; empty if none exist.
      */
-    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun getWorkspaceInvites(workspaceId: UUID): List<WorkspaceInvite> {
         // Fetch all invites for the workspace
         return findManyResults { workspaceInviteRepository.findByworkspaceId(workspaceId) }
@@ -193,7 +193,7 @@ class WorkspaceInviteService(
      * @param id The UUID of the invitation to revoke.
      * @throws IllegalArgumentException if the invitation exists but is not in the PENDING state.
      */
-    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId) and @workspaceSecurity.hasOrgRoleOrHigher(#workspaceId, 'ADMIN')")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId) and @workspaceSecurity.hasWorkspaceRoleOrHigher(#workspaceId, 'ADMIN')")
     fun revokeWorkspaceInvite(workspaceId: UUID, id: UUID) {
         // Find the invite by ID
         findOrThrow { workspaceInviteRepository.findById(id) }.let { invite ->

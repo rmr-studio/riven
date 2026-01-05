@@ -129,7 +129,7 @@ CREATE TABLE if not exists public.block_types
     "display_structure" jsonb not NULL,                                                                             -- UI metadata for frontend display (ie. Form Structure, Display Component Rendering, etc)
     "strictness"        text  NOT NULL           default 'soft' check ( strictness in ('none', 'soft', 'strict') ), -- how strictly to enforce schema (none, soft (warn), strict (reject))
     "version"           integer                  DEFAULT 1,                                                         -- To handle updates to schema/display_structure over time to ensure that existing blocks are not broken,
-    "archived"          boolean                  DEFAULT FALSE,                                                     -- soft delete
+    "deleted"           boolean                  DEFAULT FALSE,                                                     -- soft delete
     "created_at"        timestamp with time zone default current_timestamp,
     "updated_at"        timestamp with time zone default current_timestamp,
     "created_by"        uuid,                                                                                       -- optional user id
@@ -176,7 +176,7 @@ create table if not exists public.blocks
     "type_id"      uuid REFERENCES block_types (id) NOT NULL, -- true if payload contains references to another block/entities
     "name"         text,                                      -- human-friendly title
     "payload"      jsonb                    DEFAULT '{}',     -- flexible content
-    "archived"     boolean                  DEFAULT false,    -- archives
+    "deleted"      boolean                  DEFAULT false,    -- archives
     "created_by"   uuid                             references public.users (id) ON DELETE SET NULL,
     "updated_by"   uuid                             references public.users (id) ON DELETE SET NULL,
     "created_at"   TIMESTAMP WITH TIME ZONE DEFAULT now(),
@@ -185,7 +185,7 @@ create table if not exists public.blocks
 
 CREATE INDEX IF NOT EXISTS idx_blocks_org ON public.blocks (workspace_id);
 CREATE INDEX IF NOT EXISTS idx_blocks_type ON public.blocks (type_id);
-CREATE INDEX IF NOT EXISTS idx_blocks_archived ON public.blocks (archived);
+CREATE INDEX IF NOT EXISTS idx_blocks_deleted ON public.blocks (deleted);
 
 -- RLS
 ALTER TABLE public.blocks
@@ -284,7 +284,7 @@ CREATE TABLE IF NOT EXISTS public.entity_types
     "count"                 INTEGER NOT NULL         DEFAULT 0,
     "relationships"         JSONB,
     "version"               INTEGER NOT NULL         DEFAULT 1,
-    "archived"              BOOLEAN NOT NULL         DEFAULT FALSE,
+    "deleted"               BOOLEAN NOT NULL         DEFAULT FALSE,
     "created_at"            TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "updated_at"            TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "created_by"            UUID,
@@ -304,7 +304,7 @@ CREATE TABLE IF NOT EXISTS public.entity_types
 
 create index if not exists idx_entity_types_workspace_id
     on entity_types (workspace_id)
-    where archived = false;
+    where deleted = false;
 
 -- =====================================================
 -- 2. ENTITIES TABLE
@@ -315,7 +315,7 @@ CREATE TABLE IF NOT EXISTS public.entities
     "id"             UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
     "workspace_id"   UUID    NOT NULL REFERENCES workspaces (id) ON DELETE CASCADE,
     "type_id"        UUID    NOT NULL REFERENCES entity_types (id) ON DELETE RESTRICT,
-    "archived"       BOOLEAN NOT NULL         DEFAULT FALSE,
+    "deleted"        BOOLEAN NOT NULL         DEFAULT FALSE,
     "type_key"       TEXT    NOT NULL,                           -- Denormalized key from entity_type for easier access
     -- Duplicate key from entity_type for faster lookups without needing separate query
     "identifier_key" UUID    NOT NULL,
@@ -331,13 +331,13 @@ CREATE TABLE IF NOT EXISTS public.entities
 
 create index if not exists idx_entities_type_id
     on entities (type_id)
-    where archived = false;
+    where deleted = false;
 
 create index if not exists idx_entities_workspace_id
     on entities (workspace_id)
-    where archived = false;
+    where deleted = false;
 
-create index idx_entities_payload_gin on entities using gin (payload jsonb_path_ops) where archived = false and deleted_at is null;
+create index idx_entities_payload_gin on entities using gin (payload jsonb_path_ops) where deleted = false and deleted_at is null;
 
 --Easy way to enforce unique fields per entity type. This table will store unique field values for entities.
 --When an entity is created or updated, the relevant unique fields will be deleted and re-inserted/updated here
@@ -349,10 +349,10 @@ CREATE TABLE IF NOT EXISTS public.entities_unique_values
     "entity_id"   UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
     "field_id"    UUID    NOT NULL,
     "field_value" TEXT    NOT NULL,
-    "archived"    BOOLEAN NOT NULL         DEFAULT FALSE,
+    "deleted"     BOOLEAN NOT NULL         DEFAULT FALSE,
     "deleted_at"  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_unique_attribute_per_type
-        UNIQUE (type_id, field_id, field_value, archived)
+        UNIQUE (type_id, field_id, field_value, deleted)
 );
 
 CREATE OR REPLACE FUNCTION sync_entity_identifier_key()
@@ -379,17 +379,17 @@ EXECUTE FUNCTION sync_entity_identifier_key();
 
 
 -- Function to update entity count in entity_types
--- Handles soft deletion via 'archived' field:
--- - INSERT: increment count (only if not archived)
+-- Handles soft deletion via 'deleted' field:
+-- - INSERT: increment count (only if not deleted)
 -- - UPDATE: decrement on archive, increment on restore
--- - DELETE: decrement only if not already archived (avoid double-decrement)
+-- - DELETE: decrement only if not already deleted (avoid double-decrement)
 CREATE OR REPLACE FUNCTION public.update_entity_type_count()
     RETURNS TRIGGER AS
 $$
 BEGIN
     IF (TG_OP = 'INSERT') THEN
-        -- Increment entity count on INSERT (only if not archived)
-        IF NEW.archived = false THEN
+        -- Increment entity count on INSERT (only if not deleted)
+        IF NEW.deleted = false THEN
             UPDATE public.entity_types
             SET count      = count + 1,
                 updated_at = now()
@@ -398,14 +398,14 @@ BEGIN
 
     ELSIF (TG_OP = 'UPDATE') THEN
         -- Handle archive status changes
-        IF OLD.archived = false AND NEW.archived = true THEN
-            -- Entity is being archived: decrement count
+        IF OLD.deleted = false AND NEW.deleted = true THEN
+            -- Entity is being deleted: decrement count
             UPDATE public.entity_types
             SET count      = count - 1,
                 updated_at = now()
             WHERE id = NEW.type_id;
 
-        ELSIF OLD.archived = true AND NEW.archived = false THEN
+        ELSIF OLD.deleted = true AND NEW.deleted = false THEN
             -- Entity is being restored: increment count
             UPDATE public.entity_types
             SET count      = count + 1,
@@ -414,9 +414,9 @@ BEGIN
         END IF;
 
     ELSIF (TG_OP = 'DELETE') THEN
-        -- Decrement entity count on DELETE (only if not already archived)
-        -- If archived, the count was already decremented during archiving
-        IF OLD.archived = false THEN
+        -- Decrement entity count on DELETE (only if not already deleted)
+        -- If deleted, the count was already decremented during archiving
+        IF OLD.deleted = false THEN
             UPDATE public.entity_types
             SET count      = count - 1,
                 updated_at = now()
@@ -428,9 +428,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger for INSERT, UPDATE (of archived field), and DELETE on entities
+-- Trigger for INSERT, UPDATE (of deleted field), and DELETE on entities
 CREATE OR REPLACE TRIGGER trg_update_entity_type_count
-    AFTER INSERT OR UPDATE OF archived OR DELETE
+    AFTER INSERT OR UPDATE OF deleted OR DELETE
     ON public.entities
     FOR EACH ROW
 EXECUTE FUNCTION public.update_entity_type_count();
@@ -448,7 +448,7 @@ CREATE TABLE IF NOT EXISTS public.entity_relationships
     "target_entity_id"      UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
     "target_entity_type_id" UUID    NOT NULL REFERENCES entity_types (id) ON DELETE RESTRICT,
     "relationship_field_id" UUID    NOT NULL,
-    "archived"              BOOLEAN NOT NULL         DEFAULT FALSE,
+    "deleted"               BOOLEAN NOT NULL         DEFAULT FALSE,
     "deleted_at"            TIMESTAMP WITH TIME ZONE DEFAULT NULL,
     -- Additional metadata about the relationship
     "created_at"            TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -461,13 +461,13 @@ CREATE TABLE IF NOT EXISTS public.entity_relationships
 
 -- Indexes for entity_relationships
 CREATE INDEX idx_entity_relationships_source ON entity_relationships (workspace_id, source_entity_id)
-    WHERE archived = false AND deleted_at IS NULL;
+    WHERE deleted = false AND deleted_at IS NULL;
 CREATE INDEX idx_entity_relationships_target ON entity_relationships (workspace_id, target_entity_id)
-    WHERE archived = false AND deleted_at IS NULL;
+    WHERE deleted = false AND deleted_at IS NULL;
 CREATE INDEX idx_entity_relationships_target ON entity_relationships (workspace_id, source_entity_type_id)
-    WHERE archived = false AND deleted_at IS NULL;
+    WHERE deleted = false AND deleted_at IS NULL;
 CREATE INDEX idx_entity_relationships_target ON entity_relationships (workspace_id, target_entity_type_id)
-    WHERE archived = false AND deleted_at IS NULL;
+    WHERE deleted = false AND deleted_at IS NULL;
 
 
 

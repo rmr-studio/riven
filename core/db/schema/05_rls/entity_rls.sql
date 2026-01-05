@@ -1,0 +1,97 @@
+-- =====================================================
+-- ENTITY ROW LEVEL SECURITY POLICIES
+-- =====================================================
+
+-- =====================================================
+-- ENTITY TYPES RLS
+-- =====================================================
+
+-- Enable RLS on entity_types
+ALTER TABLE entity_types
+    ENABLE ROW LEVEL SECURITY;
+
+-- Entity types can be selected by workspace members or if system (workspace_id IS NULL)
+CREATE POLICY "entity_types_select_by_org" ON entity_types
+    FOR SELECT TO authenticated
+    USING (
+    workspace_id IS NULL OR
+    workspace_id IN (SELECT workspace_id
+                     FROM workspace_members
+                     WHERE user_id = auth.uid())
+    );
+
+-- Entity types can be written by workspace members
+CREATE POLICY "entity_types_write_by_org" ON entity_types
+    FOR ALL TO authenticated
+    USING (
+    workspace_id IN (SELECT workspace_id
+                     FROM workspace_members
+                     WHERE user_id = auth.uid())
+    )
+    WITH CHECK (
+    workspace_id IN (SELECT workspace_id
+                     FROM workspace_members
+                     WHERE user_id = auth.uid())
+    );
+
+-- =====================================================
+-- ENTITIES RLS
+-- =====================================================
+
+-- Enable RLS on entities
+ALTER TABLE entities
+    ENABLE ROW LEVEL SECURITY;
+
+-- Entities can be selected by workspace members
+CREATE POLICY "entities_select_by_org" ON entities
+    FOR SELECT TO authenticated
+    USING (
+    workspace_id IN (SELECT workspace_id
+                     FROM workspace_members
+                     WHERE user_id = auth.uid())
+    );
+
+-- Entities can be written by workspace members
+CREATE POLICY "entities_write_by_org" ON entities
+    FOR ALL TO authenticated
+    USING (
+    workspace_id IN (SELECT workspace_id
+                     FROM workspace_members
+                     WHERE user_id = auth.uid())
+    )
+    WITH CHECK (
+    workspace_id IN (SELECT workspace_id
+                     FROM workspace_members
+                     WHERE user_id = auth.uid())
+    );
+
+-- =====================================================
+-- ENTITY RELATIONSHIPS RLS
+-- =====================================================
+
+-- Enable RLS on entity_relationships
+ALTER TABLE entity_relationships
+    ENABLE ROW LEVEL SECURITY;
+
+-- Entity relationships can be selected by workspace members
+CREATE POLICY "entity_relationships_select_by_org" ON entity_relationships
+    FOR SELECT TO authenticated
+    USING (
+    workspace_id IN (SELECT workspace_id
+                     FROM workspace_members
+                     WHERE user_id = auth.uid())
+    );
+
+-- Entity relationships can be written by workspace members
+CREATE POLICY "entity_relationships_write_by_org" ON entity_relationships
+    FOR ALL TO authenticated
+    USING (
+    workspace_id IN (SELECT workspace_id
+                     FROM workspace_members
+                     WHERE user_id = auth.uid())
+    )
+    WITH CHECK (
+    workspace_id IN (SELECT workspace_id
+                     FROM workspace_members
+                     WHERE user_id = auth.uid())
+    );

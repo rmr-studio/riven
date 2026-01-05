@@ -15,8 +15,8 @@ data class EntityRelationship(
     val sourceEntity: Entity? = null, // Can be hydrated if needed
     val targetEntityId: UUID,
     val targetEntity: Entity? = null,
-    override val createdAt: ZonedDateTime? = null,
-    override val updatedAt: ZonedDateTime? = null,
-    override val createdBy: UUID? = null,
-    override val updatedBy: UUID? = null
+    override var createdAt: ZonedDateTime? = null,
+    override var updatedAt: ZonedDateTime? = null,
+    override var createdBy: UUID? = null,
+    override var updatedBy: UUID? = null
 ) : AuditableModel()

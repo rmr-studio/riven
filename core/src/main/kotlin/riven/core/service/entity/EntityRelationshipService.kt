@@ -9,9 +9,9 @@ import riven.core.enums.entity.EntityTypeRelationshipType
 import riven.core.models.common.Icon
 import riven.core.models.entity.EntityLink
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
+import riven.core.projection.entity.toEntityLink
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityRepository
-import riven.core.repository.entity.toEntityLink
 import riven.core.service.entity.type.EntityTypeService
 import java.util.*
 
@@ -351,6 +351,6 @@ class EntityRelationshipService(
     }
 
     fun archiveEntities(ids: Collection<UUID>, workspaceId: UUID): List<EntityRelationshipEntity> {
-        return entityRelationshipRepository.archiveEntities(ids.toTypedArray(), workspaceId)
+        return entityRelationshipRepository.deleteEntities(ids.toTypedArray(), workspaceId)
     }
 }

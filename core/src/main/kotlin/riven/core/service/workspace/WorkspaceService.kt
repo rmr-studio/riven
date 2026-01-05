@@ -5,10 +5,8 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import riven.core.entity.user.toModel
 import riven.core.entity.workspace.WorkspaceEntity
 import riven.core.entity.workspace.WorkspaceMemberEntity
-import riven.core.entity.workspace.toModel
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.exceptions.NotFoundException
@@ -40,7 +38,7 @@ class WorkspaceService(
      * @throws NotFoundException If no workspace exists with the provided ID.
      */
     @Throws(NotFoundException::class)
-    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun getWorkspaceById(workspaceId: UUID, includeMetadata: Boolean = false): Workspace {
         return getEntityById(workspaceId).toModel(includeMetadata)
     }
@@ -53,7 +51,7 @@ class WorkspaceService(
      * @throws NotFoundException If no workspace exists with the provided id.
      */
     @Throws(NotFoundException::class)
-    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun getEntityById(workspaceId: UUID): WorkspaceEntity {
         return findOrThrow { workspaceRepository.findById(workspaceId) }
     }
@@ -78,40 +76,35 @@ class WorkspaceService(
                 avatarUrl = request.avatarUrl,
                 plan = request.plan,
                 defaultCurrency = currency,
-                businessNumber = request.businessNumber,
-                address = request.address,
-                taxId = request.taxId,
-                workspacePaymentDetails = request.payment,
             )
             workspaceRepository.save(entity).run {
-                val workspace = this.toModel(includeMetadata = false)
-                workspace.run {
-                    // Log the activity of creating an workspace
-                    activityService.logActivity(
-                        activity = riven.core.enums.activity.Activity.WORKSPACE,
-                        operation = riven.core.enums.util.OperationType.CREATE,
-                        userId = userId,
-                        workspaceId = this.id,
-                        entityType = ApplicationEntityType.WORKSPACE,
-                        entityId = this.id,
-                        details = mapOf(
-                            "workspaceId" to this.id.toString(),
-                            "name" to name
-                        )
+                val id = requireNotNull(this.id) { "WorkspaceEntity must have a non-null id after save" }
+                // Log the activity of creating an workspace
+                activityService.logActivity(
+                    activity = riven.core.enums.activity.Activity.WORKSPACE,
+                    operation = riven.core.enums.util.OperationType.CREATE,
+                    userId = userId,
+                    workspaceId = id,
+                    entityType = ApplicationEntityType.WORKSPACE,
+                    entityId = this.id,
+                    details = mapOf(
+                        "workspaceId" to id.toString(),
+                        "name" to name
                     )
+                )
 
-                    // Add the creator as the first member/owner of the workspace
-                    val key = WorkspaceMemberEntity.WorkspaceMemberKey(
-                        workspaceId = this.id,
-                        userId = userId
-                    )
+                // Add the creator as the first member/owner of the workspace
+                WorkspaceMemberEntity(
+                    workspaceId = id,
+                    userId = userId,
+                    role = WorkspaceRoles.OWNER
+                ).run {
+                    workspaceMemberRepository.save(this)
+                }
 
-                    WorkspaceMemberEntity(key, WorkspaceRoles.OWNER).run {
-                        workspaceMemberRepository.save(this)
-                    }
-
+                return this.toModel().also { workspace ->
                     // If this is the first workspace for the user, update their profile to make it their default
-                    userService.getUserFromSession().toModel().let {
+                    userService.getUserWithWorkspacesFromSession().let {
                         // Membership array should be empty until transaction is over. Meaning we can determine if this is the first workspace made by the user
                         // Can also manually specify for the workspace to become the new default
                         if (it.memberships.isEmpty() || request.isDefault) {
@@ -122,10 +115,7 @@ class WorkspaceService(
                             }
                         }
                     }
-
-                    return this
                 }
-
             }
         }
 
@@ -139,17 +129,13 @@ class WorkspaceService(
      * @param workspace The workspace model containing updated fields; must include a valid `id`.
      * @return The updated workspace model reflecting the persisted changes.
      */
-    @PreAuthorize("@workspaceSecurity.hasOrgRoleOrHigher(#workspace.id, 'ADMIN')")
+    @PreAuthorize("@workspaceSecurity.hasWorkspaceRoleOrHigher(#workspace.id, 'ADMIN')")
     fun updateWorkspace(workspace: Workspace): Workspace {
         authTokenService.getUserId().let { userId ->
             findOrThrow { workspaceRepository.findById(workspace.id) }.run {
                 val entity = this.apply {
                     avatarUrl = workspace.avatarUrl
                     name = workspace.name
-                    businessNumber = workspace.businessNumber
-                    address = workspace.address
-                    taxId = workspace.taxId
-                    workspacePaymentDetails = workspace.workspacePaymentDetails
                 }
 
                 workspaceRepository.save(entity).let { updatedEntity ->
@@ -179,12 +165,10 @@ class WorkspaceService(
      *
      * @param workspaceId The UUID of the workspace to delete.
      */
-    @PreAuthorize("@workspaceSecurity.hasOrgRoleOrHigher(#workspaceId, 'OWNER')")
+    @PreAuthorize("@workspaceSecurity.hasWorkspaceRoleOrHigher(#workspaceId, 'OWNER')")
     @Transactional
     fun deleteWorkspace(workspaceId: UUID) {
         authTokenService.getUserId().let { userId ->
-
-
             // Check if the workspace exists
             val workspace: WorkspaceEntity = findOrThrow { workspaceRepository.findById(workspaceId) }
 
@@ -248,7 +232,7 @@ class WorkspaceService(
         authTokenService.getUserId().let { userId ->
 
             // Assert that the removed member is not currently the owner of the workspace
-            if (member.membershipDetails.role == WorkspaceRoles.OWNER) {
+            if (member.role == WorkspaceRoles.OWNER) {
                 throw IllegalArgumentException("Cannot remove the owner of the workspace. Please transfer ownership first.")
             }
 
@@ -298,7 +282,7 @@ class WorkspaceService(
     ): WorkspaceMember {
         authTokenService.getUserId().let { userId ->
             // Ensure that if the new role is that of OWNER, that only the current owner can assign it
-            if (role == WorkspaceRoles.OWNER || member.membershipDetails.role == WorkspaceRoles.OWNER) {
+            if (role == WorkspaceRoles.OWNER || member.role == WorkspaceRoles.OWNER) {
                 throw IllegalArgumentException("Transfer of ownership must be done through a dedicated transfer ownership method.")
             }
 

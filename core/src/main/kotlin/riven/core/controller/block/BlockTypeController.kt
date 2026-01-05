@@ -72,30 +72,6 @@ class BlockTypeController(
         return ResponseEntity.ok().build()
     }
 
-    /**
-     * Sets the archive status for the block type identified by [blockTypeId].
-     *
-     * @param blockTypeId The UUID of the block type to archive or unarchive.
-     * @param status `true` to archive the block type, `false` to unarchive it.
-     * @return HTTP 204 No Content on success.
-     */
-    @PutMapping("/{blockTypeId}/archive/{status}")
-    @Operation(
-        summary = "Archive a block type",
-        description = "Archives a block type by its ID. The block type will still be visible to users currently using it but cannot be used in new blocks."
-    )
-    @ApiResponses(
-        ApiResponse(responseCode = "204", description = "Block type archived successfully"),
-        ApiResponse(responseCode = "401", description = "Unauthorized access"),
-        ApiResponse(responseCode = "404", description = "Block type not found")
-    )
-    fun updateArchiveStatusByBlockTypeId(
-        @PathVariable blockTypeId: UUID,
-        @PathVariable status: Boolean
-    ): ResponseEntity<Unit> {
-        blockTypeService.archiveBlockType(blockTypeId, status)
-        return ResponseEntity.noContent().build()
-    }
 
     /**
      * Retrieve a block type by its unique key.

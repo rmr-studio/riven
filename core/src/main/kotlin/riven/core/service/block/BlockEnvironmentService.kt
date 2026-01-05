@@ -42,7 +42,7 @@ class BlockEnvironmentService(
     private val logger: KLogger
 ) {
 
-    @PreAuthorize("@workspaceSecurity.hasOrg(#request.workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#request.workspaceId)")
     @Transactional
     fun saveBlockEnvironment(request: SaveEnvironmentRequest): SaveEnvironmentResponse {
         authTokenService.getUserId().let { userId ->
@@ -237,7 +237,7 @@ class BlockEnvironmentService(
      * @param entityType The type of entity (e.g., CLIENT, WORKSPACE)
      * @return BlockEnvironment with layout, trees, and entity data
      */
-    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun loadBlockEnvironment(
         entityId: UUID,
         type: ApplicationEntityType,
@@ -271,7 +271,7 @@ class BlockEnvironmentService(
         )
     }
 
-    @PreAuthorize("@workspaceSecurity.hasOrg(#request.workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#request.workspaceId)")
     fun hydrateEnvironment(request: HydrateBlocksRequest): Map<UUID, BlockHydrationResult> {
         val (references, workspaceId) = request
         return blockReferenceService.hydrateBlockReferences(references, workspaceId)
@@ -532,7 +532,7 @@ class BlockEnvironmentService(
                 type = blockTypeEntity,
                 name = blockData.name,
                 payload = blockData.payload,
-                archived = false
+                deleted = false
             )
 
             newBlocks.add(entity)

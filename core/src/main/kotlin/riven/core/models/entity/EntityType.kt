@@ -45,10 +45,10 @@ data class EntityType(
     // Configuration for how attributes are displayed in tabular/list views (ie. Column ordering, widths, etc)
     val columns: List<EntityTypeAttributeColumn>,
     val entitiesCount: Long = 0L,
-    override val createdAt: ZonedDateTime?,
-    override val updatedAt: ZonedDateTime?,
-    override val createdBy: UUID?,
-    override val updatedBy: UUID?
+    override var createdAt: ZonedDateTime?,
+    override var updatedAt: ZonedDateTime?,
+    override var createdBy: UUID?,
+    override var updatedBy: UUID?
 ) : AuditableModel() {
     val attributes: Pair<Int, Int>
         get() = Pair(schema.properties?.size ?: 0, relationships?.size ?: 0)

@@ -64,7 +64,7 @@ core/
 │   │   │   └── AuthTokenService.kt
 │   │   ├── activity/                  # Audit logging
 │   │   │   └── ActivityService.kt
-│   │   ├── workspace/              # Org management
+│   │   ├── workspace/              # Workspace management
 │   │   │   ├── WorkspaceService.kt
 │   │   │   └── WorkspaceInviteService.kt
 │   │   ├── user/                      # User services
@@ -235,7 +235,7 @@ core/
 
 - `publishBlockType()` - Creates new block type (immutable)
 - `updateBlockType()` - Creates new version with copy-on-write pattern
-- System vs. organization block type handling
+- System vs. workspace block type handling
 - Activity logging for audit trail
 
 **BlockChildrenService.kt** (440 lines) - Hierarchy management
@@ -285,11 +285,11 @@ core/
 - `logActivities()` - Batch records multiple activities
 - Supports flexible JSON details for rich audit trails
 
-**WorkspaceService.kt** (332 lines) - Organization lifecycle
+**WorkspaceService.kt** (332 lines) - Workspace lifecycle
 
-- `getWorkspaceById()` - Retrieves org with optional metadata
-- `createWorkspace()` - Creates org and adds creator as first member
-- `updateWorkspace()` - Updates org properties
+- `getWorkspaceById()`
+- `createWorkspace()`
+- `updateWorkspace()`
 - Member management and role assignment
 
 ### 3.3 Service Dependency Graph
@@ -452,7 +452,7 @@ data class BlockType(
     val display: BlockDisplay,          // Display and rendering hints
     val strictness: ValidationScope,    // NONE, SOFT, STRICT
     val system: Boolean,                // System vs. org-scoped
-    val archived: Boolean,
+    val deleted: Boolean,
     // Audit fields
 )
 ```
@@ -465,7 +465,7 @@ data class Block(
     val name: String?,
     val type: BlockType,
     val payload: Metadata,              // Polymorphic: see below
-    val archived: Boolean,
+    val deleted: Boolean,
     val validationErrors: List<String>?,
     // Audit fields
 )
@@ -711,9 +711,9 @@ EntityRelationshipDefinition(
     name = "Client",                    // Uses inverseName from ORIGIN
     relationshipType = REFERENCE,
     sourceEntityTypeKey = "project",
-    originRelationshipId = <origin-id>,
-    cardinality = MANY_TO_ONE,          // Inverted from ONE_TO_MANY
-    bidirectional = true
+    originRelationshipId = < origin -id >,
+cardinality = MANY_TO_ONE,          // Inverted from ONE_TO_MANY
+bidirectional = true
 )
 ```
 
@@ -905,7 +905,7 @@ activityService.logActivity(
 - **References:** `entity_types` with `ON DELETE RESTRICT`
 - **JSONB Column:** `payload` (validated against schema)
 - **Version Tracking:** `type_version` (schema version at creation)
-- **Soft Delete:** Moved to `archived_entities` table
+- **Soft Delete:** Moved to `deleted_entities` table
 
 **entity_relationships**
 
@@ -926,7 +926,7 @@ activityService.logActivity(
 
 - **References:** `block_types` (foreign key)
 - **JSONB Column:** `payload` (polymorphic: content, entity refs, block refs)
-- **Soft Delete:** `archived` flag
+- **Soft Delete:** `deleted` flag
 
 **block_children**
 
@@ -953,7 +953,7 @@ CREATE POLICY "Users can view their own workspaces" on workspaces
         id IN (SELECT workspace_id
                FROM workspace_members
                WHERE user_id = auth.uid())
-    );
+        );
 ```
 
 ## 9. Critical Development Gotchas

@@ -6,8 +6,7 @@ import java.util.*
 
 
 interface WorkspaceMemberRepository :
-    JpaRepository<WorkspaceMemberEntity, WorkspaceMemberEntity.WorkspaceMemberKey> {
-    fun deleteByIdworkspaceId(workspaceId: UUID)
-    fun findByIdUserId(userId: UUID): List<WorkspaceMemberEntity>
-    fun findByIdworkspaceId(workspaceId: UUID): List<WorkspaceMemberEntity>
+    JpaRepository<WorkspaceMemberEntity, UUID> {
+
+    fun findByWorkspaceId(workspaceId: UUID): List<WorkspaceMemberEntity>
 }

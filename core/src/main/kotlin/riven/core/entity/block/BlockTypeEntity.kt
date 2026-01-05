@@ -9,7 +9,9 @@ import riven.core.models.block.BlockType
 import riven.core.models.block.BlockTypeSchema
 import riven.core.models.block.display.BlockDisplay
 import riven.core.models.block.display.BlockTypeNesting
+import riven.core.models.common.SoftDeletable
 import riven.core.models.request.block.CreateBlockTypeRequest
+import java.time.ZonedDateTime
 import java.util.*
 
 /**
@@ -65,8 +67,11 @@ data class BlockTypeEntity(
     @Type(JsonBinaryType::class)
     val schema: BlockTypeSchema,
 
-    @Column(name = "archived", nullable = false, columnDefinition = "boolean default false")
-    var archived: Boolean = false,
+    @Column(name = "deleted", nullable = false, columnDefinition = "boolean default false")
+    override var deleted: Boolean = false,
+
+    @Column(name = "deleted_at", nullable = true)
+    override var deletedAt: ZonedDateTime? = null,
 
     @Column(name = "nesting", columnDefinition = "jsonb", nullable = true)
     @Type(JsonBinaryType::class)
@@ -75,7 +80,7 @@ data class BlockTypeEntity(
     @Column(name = "display_structure", columnDefinition = "jsonb", nullable = false)
     @Type(JsonBinaryType::class)
     val displayStructure: BlockDisplay,
-) : AuditableEntity() {
+) : AuditableEntity(), SoftDeletable {
     /**
      * Convert this entity into a domain BlockType model.
      *
@@ -94,7 +99,7 @@ data class BlockTypeEntity(
             workspaceId = this.workspaceId,
             system = this.system,
             schema = this.schema,
-            archived = this.archived,
+            deleted = this.deleted,
             strictness = this.strictness,
             nesting = this.nesting,
             display = this.displayStructure,
@@ -142,7 +147,7 @@ data class BlockTypeEntity(
                 version = model.version,
                 strictness = model.strictness,
                 schema = model.schema,
-                archived = model.archived,
+                deleted = model.deleted,
                 nesting = model.nesting,
                 displayStructure = model.display,
             )

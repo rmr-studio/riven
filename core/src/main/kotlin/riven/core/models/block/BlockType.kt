@@ -18,7 +18,7 @@ data class BlockType(
     val nesting: BlockTypeNesting?,
     val description: String?,
     val workspaceId: UUID?,
-    val archived: Boolean,
+    val deleted: Boolean,
     val strictness: ValidationScope,
     val system: Boolean,
     val schema: BlockTypeSchema,

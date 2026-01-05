@@ -58,8 +58,8 @@ data class EntityEntity(
     var iconType: IconType = IconType.FILE,
 
 
-    @Column("archived", nullable = false)
-    var archived: Boolean = false,
+    @Column("deleted", nullable = false)
+    var deleted: Boolean = false,
 
     @Column("deleted_at", nullable = true)
     var deletedAt: ZonedDateTime? = null,

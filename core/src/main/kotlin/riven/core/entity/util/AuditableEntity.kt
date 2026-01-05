@@ -44,9 +44,9 @@ abstract class AuditableEntity {
     }
 }
 
-abstract class AuditableModel {
-    abstract var createdAt: ZonedDateTime?
-    abstract var updatedAt: ZonedDateTime?
-    abstract var createdBy: UUID?
-    abstract var updatedBy: UUID?
+interface AuditableModel {
+    var createdAt: ZonedDateTime?
+    var updatedAt: ZonedDateTime?
+    var createdBy: UUID?
+    var updatedBy: UUID?
 }

@@ -147,7 +147,7 @@ class BlockTypeServiceTest {
         assertEquals(4, saved.version) // existing.version + 1
         assertEquals("Invoice Header v4", saved.displayName)
         assertEquals(ValidationScope.STRICT, saved.strictness)
-        assertFalse(saved.archived)
+        assertFalse(saved.deleted)
 
         verify(activityService).logActivity(
             activity = eq(riven.core.enums.activity.Activity.BLOCK_TYPE),
@@ -165,8 +165,8 @@ class BlockTypeServiceTest {
     // archiveBlockType: archive (DELETE op) and restore (UPDATE op)
     // ------------------------------------------------------------------
     @Test
-    fun `archiveBlockType sets archived true and logs ARCHIVED`() {
-        // Scenario: Archiving a type sets archived=true and logs DELETE
+    fun `archiveBlockType sets deleted true and logs deleted`() {
+        // Scenario: Archiving a type sets deleted=true and logs DELETE
 
         val type = BlockFactory.createType(
             orgId = orgId,
@@ -182,7 +182,7 @@ class BlockTypeServiceTest {
 
         val captor = argumentCaptor<BlockTypeEntity>()
         verify(blockTypeRepository).save(captor.capture())
-        assertTrue(captor.firstValue.archived)
+        assertTrue(captor.firstValue.deleted)
 
         verify(activityService).logActivity(
             activity = eq(riven.core.enums.activity.Activity.BLOCK_TYPE),
@@ -197,14 +197,14 @@ class BlockTypeServiceTest {
     }
 
     @Test
-    fun `archiveBlockType sets archived false and logs RESTORE`() {
-        // Scenario: Restoring a type sets archived=false and logs UPDATE
+    fun `archiveBlockType sets deleted false and logs RESTORE`() {
+        // Scenario: Restoring a type sets deleted=false and logs UPDATE
         val existing = BlockFactory.createType(
             orgId = orgId,
             key = "invoice_header",
             version = 3,
             strictness = ValidationScope.SOFT,
-            archived = true
+            deleted = true
         )
 
         whenever(blockTypeRepository.findById(existing.id!!)).thenReturn(Optional.of(existing))
@@ -214,7 +214,7 @@ class BlockTypeServiceTest {
 
         val captor = argumentCaptor<BlockTypeEntity>()
         verify(blockTypeRepository).save(captor.capture())
-        assertFalse(captor.firstValue.archived)
+        assertFalse(captor.firstValue.deleted)
 
         verify(activityService).logActivity(
             activity = eq(riven.core.enums.activity.Activity.BLOCK_TYPE),
@@ -236,7 +236,7 @@ class BlockTypeServiceTest {
             key = "invoice_header",
             version = 3,
             strictness = ValidationScope.SOFT,
-            archived = true
+            deleted = true
         )
 
         whenever(blockTypeRepository.findById(existing.id!!)).thenReturn(Optional.of(existing))

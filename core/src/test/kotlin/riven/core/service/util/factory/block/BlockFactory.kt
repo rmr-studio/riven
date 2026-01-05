@@ -47,7 +47,7 @@ object BlockFactory {
         schema: Schema<String> = Schema(
             key = SchemaType.OBJECT
         ),
-        archived: Boolean = false,
+        deleted: Boolean = false,
         nesting: BlockTypeNesting = BlockTypeNesting(
             max = null,
             allowedTypes = listOf("contact_card")
@@ -62,7 +62,7 @@ object BlockFactory {
         version = version,
         strictness = strictness,
         schema = schema,
-        archived = archived,
+        deleted = deleted,
         displayStructure = BlockDisplay(
             form = FormStructure(emptyMap()),
             render = BlockRenderStructure(
@@ -94,7 +94,7 @@ object BlockFactory {
         type = type,
         name = "Test Block",
         payload = BlockContentMetadata(data = emptyMap(), meta = BlockMeta()),
-        archived = false
+        deleted = false
     )
 
 
@@ -125,14 +125,14 @@ object BlockFactory {
         type: BlockType,
         name: String? = "Test Block",
         payload: BlockContentMetadata = BlockContentMetadata(data = emptyMap(), meta = BlockMeta()),
-        archived: Boolean = false
+        deleted: Boolean = false
     ): Block = Block(
         id = id,
         name = name,
         workspaceId = orgId,
         type = type,
         payload = payload,
-        archived = archived
+        deleted = deleted
     )
 
     /**

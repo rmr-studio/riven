@@ -6,10 +6,10 @@ import java.util.*
 
 interface BlockRepository : JpaRepository<BlockEntity, UUID> {
     /**
-     * Retrieves all non-archived blocks belonging to the specified workspace.
+     * Retrieves all non-deleted blocks belonging to the specified workspace.
      *
-     * @param workspaceId UUID of the workspace whose active (not archived) blocks should be returned.
-     * @return A list of BlockEntity instances for the workspace where `archived` is false.
+     * @param workspaceId UUID of the workspace whose active (not deleted) blocks should be returned.
+     * @return A list of BlockEntity instances for the workspace where `deleted` is false.
      */
-    fun findByworkspaceIdAndArchivedFalse(workspaceId: UUID): List<BlockEntity>
+    fun findByworkspaceIdAnddeletedFalse(workspaceId: UUID): List<BlockEntity>
 }

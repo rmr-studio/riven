@@ -1,7 +1,7 @@
 package riven.core.models.user
 
-import riven.core.models.workspace.MembershipDetails
 import riven.core.models.workspace.Workspace
+import riven.core.models.workspace.WorkspaceMember
 import java.util.*
 
 data class User(
@@ -10,9 +10,19 @@ data class User(
     var name: String,
     var phone: String? = null,
     var avatarUrl: String? = null,
-    val memberships: List<MembershipDetails> = listOf(),
+    val memberships: List<WorkspaceMember> = listOf(),
     var defaultWorkspace: Workspace? = null
-)
+) {
+    /**
+     * Convert User to UserDisplay (lightweight representation).
+     */
+    fun toDisplay(): UserDisplay = UserDisplay(
+        id = this.id,
+        email = this.email,
+        name = this.name,
+        avatarUrl = this.avatarUrl
+    )
+}
 
 
 

@@ -46,7 +46,7 @@ class EntityTypeService(
      * Create and publish a new entity type.
      */
     @Transactional
-    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun publishEntityType(workspaceId: UUID, request: CreateEntityTypeRequest): EntityType {
         authTokenService.getUserId().let { userId ->
             val primaryId: UUID = UUID.randomUUID()
@@ -119,7 +119,7 @@ class EntityTypeService(
      * When impactConfirmed=true: Proceeds with the update after user confirmation
      */
     @Transactional
-    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun updateEntityTypeConfiguration(
         workspaceId: UUID,
         type: EntityType
@@ -141,7 +141,7 @@ class EntityTypeService(
     }
 
     @Transactional
-    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun saveEntityTypeDefinition(
         workspaceId: UUID,
         request: SaveTypeDefinitionRequest,
@@ -387,7 +387,7 @@ class EntityTypeService(
     }
 
 
-    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun deleteEntityType(
         workspaceId: UUID,
         key: String,
@@ -463,16 +463,16 @@ class EntityTypeService(
 
 
     /**
-     * Get all entity types for an organization (including system types).
+     * Get all entity types for an workspace (including system types).
      */
-    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun getWorkspaceEntityTypes(workspaceId: UUID): List<EntityType> {
         return ServiceUtil.findManyResults {
             entityTypeRepository.findByworkspaceId(workspaceId)
         }.map { it.toModel() }
     }
 
-    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun getByKey(key: String, workspaceId: UUID): EntityTypeEntity {
         return ServiceUtil.findOrThrow { entityTypeRepository.findByworkspaceIdAndKey(workspaceId, key) }
     }

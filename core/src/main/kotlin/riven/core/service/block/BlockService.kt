@@ -34,11 +34,11 @@ class BlockService(
     private val activityService: ActivityService
 ) {
     // ---------- CREATE ----------
-    @PreAuthorize("@workspaceSecurity.hasOrg(#workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     @Transactional
     fun createBlock(workspaceId: UUID, request: CreateBlockRequest): BlockEntity {
         val (type, payload, name, parentId, index) = request
-        require(!type.archived) { "BlockType '${type.archived}' is archived" }
+        require(!type.deleted) { "BlockType '${type.deleted}' is deleted" }
 
         // 1) Validate ONLY content blocks
         val validatedMetadata: Metadata =
@@ -71,7 +71,7 @@ class BlockService(
             type = BlockTypeEntity.fromModel(type),
             name = name,
             payload = validatedMetadata,
-            archived = false
+            deleted = false
         ).run {
             blockRepository.save(this)
         }.also {
@@ -117,7 +117,7 @@ class BlockService(
 
 
     // ---------- UPDATE ----------
-    @PreAuthorize("@workspaceSecurity.hasOrg(#block.workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#block.workspaceId)")
     @Transactional
     fun updateBlock(block: Block): Block {
         val existing = blockRepository.findById(block.id).orElseThrow()
@@ -280,7 +280,7 @@ class BlockService(
 
 
     // ---------- ARCHIVE ----------
-    @PreAuthorize("@workspaceSecurity.hasOrg(#block.workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#block.workspaceId)")
     @Transactional
     fun archiveBlock(block: Block, status: Boolean) {
         val existing = blockRepository.findById(block.id).orElseThrow()
@@ -288,10 +288,10 @@ class BlockService(
             "Block does not belong to the specified workspace"
         }
 
-        if (existing.archived == status) return // No-op if already in desired state
+        if (existing.deleted == status) return // No-op if already in desired state
 
         val updated = existing.apply {
-            archived = status
+            deleted = status
         }
 
         blockRepository.save(updated)

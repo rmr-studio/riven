@@ -9,7 +9,7 @@ import java.util.*
 
 @Component
 class WorkspaceSecurity {
-    fun hasOrgRole(workspaceId: UUID, role: WorkspaceRoles): Boolean {
+    fun hasWorkspaceRole(workspaceId: UUID, role: WorkspaceRoles): Boolean {
         val authority: String = "ROLE_${workspaceId}_$role"
 
         SecurityContextHolder.getContext().authentication.let {
@@ -26,7 +26,7 @@ class WorkspaceSecurity {
 
     }
 
-    fun hasOrg(workspaceId: UUID): Boolean {
+    fun hasWorkspace(workspaceId: UUID): Boolean {
         SecurityContextHolder.getContext().authentication.let {
             if (it == null || !it.isAuthenticated) {
                 return false
@@ -39,7 +39,7 @@ class WorkspaceSecurity {
         }
     }
 
-    fun hasOrgRoleOrHigher(
+    fun hasWorkspaceRoleOrHigher(
         workspaceId: UUID,
         targetRole: WorkspaceRoles
     ): Boolean {
@@ -57,7 +57,7 @@ class WorkspaceSecurity {
         return WorkspaceRoles.fromString(claim.removePrefix("ROLE_${workspaceId}_")).authority >= targetRole.authority
     }
 
-    fun hasHigherOrgRole(
+    fun hasHigherWorkspaceRole(
         workspaceId: UUID,
         targetRole: WorkspaceRoles
     ): Boolean {
@@ -74,16 +74,16 @@ class WorkspaceSecurity {
 
         return WorkspaceRoles.fromString(claim.removePrefix("ROLE_${workspaceId}_")).authority > targetRole.authority
     }
-
+    
     /**
      * Allow permission to update a current member (ie. Updating role, or membership removal) under the following conditions:
      *  - The user is the owner of the workspace
      *  - The user is an admin and has a role higher than the member's role (ie. ADMIN can alter roles of MEMBER users, but not OWNER or ADMIN)
      */
     fun isUpdatingWorkspaceMember(workspaceId: UUID, user: WorkspaceMember): Boolean {
-        return this.hasOrgRole(workspaceId, WorkspaceRoles.OWNER) ||
-                (this.hasOrgRoleOrHigher(workspaceId, WorkspaceRoles.ADMIN) &&
-                        this.hasHigherOrgRole(workspaceId, user.membershipDetails.role))
+        return this.hasWorkspaceRole(workspaceId, WorkspaceRoles.OWNER) ||
+                (this.hasWorkspaceRoleOrHigher(workspaceId, WorkspaceRoles.ADMIN) &&
+                        this.hasHigherWorkspaceRole(workspaceId, user.role))
     }
 
     fun isUpdatingSelf(member: WorkspaceMember): Boolean {
