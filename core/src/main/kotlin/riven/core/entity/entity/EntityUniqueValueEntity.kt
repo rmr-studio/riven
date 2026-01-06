@@ -1,6 +1,7 @@
 package riven.core.entity.entity
 
 import jakarta.persistence.*
+import riven.core.models.common.SoftDeletable
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -33,8 +34,8 @@ data class EntityUniqueValueEntity(
     val entityId: UUID,
 
     @Column(name = "deleted", nullable = false)
-    val deleted: Boolean = false,
+    override var deleted: Boolean = false,
 
     @Column(name = "deleted_at")
-    val deletedAt: ZonedDateTime? = null
-)
+    override var deletedAt: ZonedDateTime? = null
+) : SoftDeletable

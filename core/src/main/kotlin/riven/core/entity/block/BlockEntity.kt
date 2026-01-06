@@ -48,7 +48,6 @@ data class BlockEntity(
             type = this.type.toModel(),
             name = this.name,
             payload = this.payload,
-            deleted = this.deleted,
             validationErrors = this.payload.meta.validationErrors.ifEmpty { null },
             createdAt = if (audit) this.createdAt else null,
             updatedAt = if (audit) this.updatedAt else null,

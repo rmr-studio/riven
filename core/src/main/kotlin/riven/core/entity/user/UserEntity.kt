@@ -1,7 +1,9 @@
 package riven.core.entity.user
 
 import jakarta.persistence.*
+import riven.core.entity.util.AuditableEntity
 import riven.core.entity.workspace.WorkspaceEntity
+import riven.core.models.common.SoftDeletable
 import riven.core.models.user.User
 import riven.core.models.user.UserDisplay
 import riven.core.models.workspace.WorkspaceMember
@@ -30,29 +32,19 @@ data class UserEntity(
     @Column(name = "avatar_url", nullable = true)
     var avatarUrl: String? = null,
 
-    @Column(
-        name = "created_at",
-        nullable = false,
-        updatable = false
-    ) var createdAt: ZonedDateTime = ZonedDateTime.now(),
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "default_workspace_id", referencedColumnName = "id", insertable = true, updatable = true)
     var defaultWorkspace: WorkspaceEntity? = null,
 
-    @Column(name = "updated_at", nullable = false) var updatedAt: ZonedDateTime = ZonedDateTime.now()
-) {
+    @Column(name = "deleted", nullable = true)
+    override var deleted: Boolean = false,
 
-    @PrePersist
-    fun onPrePersist() {
-        createdAt = ZonedDateTime.now()
-        updatedAt = ZonedDateTime.now()
-    }
+    @Column(name = "deleted_at", nullable = true)
+    override var deletedAt: ZonedDateTime? = null,
 
-    @PreUpdate
-    fun onPreUpdate() {
-        updatedAt = ZonedDateTime.now()
-    }
+    ) : AuditableEntity(), SoftDeletable {
+
 
     fun toModel(memberships: List<WorkspaceMember> = emptyList()): User {
         this.id.let {

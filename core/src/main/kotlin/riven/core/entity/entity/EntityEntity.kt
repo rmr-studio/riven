@@ -7,6 +7,7 @@ import riven.core.entity.util.AuditableEntity
 import riven.core.enums.common.IconColour
 import riven.core.enums.common.IconType
 import riven.core.models.common.Icon
+import riven.core.models.common.SoftDeletable
 import riven.core.models.entity.Entity
 import riven.core.models.entity.EntityLink
 import riven.core.models.entity.payload.EntityAttribute
@@ -59,11 +60,11 @@ data class EntityEntity(
 
 
     @Column("deleted", nullable = false)
-    var deleted: Boolean = false,
+    override var deleted: Boolean = false,
 
     @Column("deleted_at", nullable = true)
-    var deletedAt: ZonedDateTime? = null,
-) : AuditableEntity() {
+    override var deletedAt: ZonedDateTime? = null,
+) : AuditableEntity(), SoftDeletable {
 
 
     /**

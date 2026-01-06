@@ -1,6 +1,7 @@
 package riven.core.entity.block
 
 import jakarta.persistence.*
+import java.time.ZonedDateTime
 import java.util.*
 
 /**
@@ -34,5 +35,11 @@ data class BlockChildEntity(
 
     /* Blocks numerical position inside a `list` type parent block. Only applicable to List type blocks. */
     @Column(name = "order_index", nullable = true)
-    var orderIndex: Int? = null
-)
+    var orderIndex: Int? = null,
+
+    @Column(name = "deleted", nullable = false)
+    override var deleted: Boolean,
+
+    @Column(name = "deleted_at", nullable = true)
+    override var deletedAt: ZonedDateTime? = null,
+) : riven.core.models.common.SoftDeletable

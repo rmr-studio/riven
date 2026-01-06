@@ -16,4 +16,4 @@ data class BlockTreeLayout(
     override var updatedAt: ZonedDateTime? = null,
     override var createdBy: UUID? = null,
     override var updatedBy: UUID? = null,
-) : Serializable, AuditableModel()
+) : Serializable, AuditableModel

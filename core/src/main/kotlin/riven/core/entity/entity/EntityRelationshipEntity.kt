@@ -2,6 +2,7 @@ package riven.core.entity.entity
 
 import jakarta.persistence.*
 import riven.core.entity.util.AuditableEntity
+import riven.core.models.common.SoftDeletable
 import riven.core.models.entity.EntityRelationship
 import java.time.ZonedDateTime
 import java.util.*
@@ -47,13 +48,13 @@ data class EntityRelationshipEntity(
     val fieldId: UUID,
 
     @Column(name = "deleted", nullable = false)
-    val deleted: Boolean = false,
+    override var deleted: Boolean = false,
 
     @Column(name = "deleted_at", columnDefinition = "timestamptz")
-    val deletedAt: ZonedDateTime? = null
+    override var deletedAt: ZonedDateTime? = null
 
 
-) : AuditableEntity() {
+) : AuditableEntity(), SoftDeletable {
 
     /**
      * Convert this entity to a domain model.

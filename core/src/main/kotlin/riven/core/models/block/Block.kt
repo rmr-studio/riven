@@ -60,7 +60,6 @@ data class Block(
         ]
     )
     val payload: Metadata,
-    val deleted: Boolean,
     // If there are any validation errors with this block's payload
     val validationErrors: List<String>? = null,
     // Keep these hidden unless within an internal workspace context
@@ -68,5 +67,5 @@ data class Block(
     override var updatedAt: ZonedDateTime? = null,
     override var createdBy: UUID? = null,
     override var updatedBy: UUID? = null,
-) : Serializable, AuditableModel()
+) : Serializable, AuditableModel
 

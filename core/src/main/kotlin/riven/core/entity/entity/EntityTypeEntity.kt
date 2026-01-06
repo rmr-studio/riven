@@ -8,11 +8,13 @@ import riven.core.enums.common.IconColour
 import riven.core.enums.common.IconType
 import riven.core.enums.entity.EntityCategory
 import riven.core.models.common.Icon
+import riven.core.models.common.SoftDeletable
 import riven.core.models.common.display.DisplayName
 import riven.core.models.entity.EntityType
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.configuration.EntityTypeAttributeColumn
+import java.time.ZonedDateTime
 import java.util.*
 
 /**
@@ -90,11 +92,11 @@ data class EntityTypeEntity(
     var entitiesCount: Long = 0L,
 
     @Column(name = "deleted", nullable = false, columnDefinition = "boolean default false")
-    var deleted: Boolean = false,
+    override var deleted: Boolean = false,
 
     @Column(name = "deleted_at", nullable = true)
-    var deletedAt: Date? = null,
-) : AuditableEntity() {
+    override var deletedAt: ZonedDateTime? = null,
+) : AuditableEntity(), SoftDeletable {
 
     /**
      * Convert this entity to a domain model.
