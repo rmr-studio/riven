@@ -38,7 +38,7 @@ data class BlockChildEntity(
     var orderIndex: Int? = null,
 
     @Column(name = "deleted", nullable = false)
-    override var deleted: Boolean,
+    override var deleted: Boolean = false,
 
     @Column(name = "deleted_at", nullable = true)
     override var deletedAt: ZonedDateTime? = null,

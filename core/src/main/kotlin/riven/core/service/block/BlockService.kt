@@ -279,35 +279,10 @@ class BlockService(
     */
 
 
-    // ---------- ARCHIVE ----------
-    @PreAuthorize("@workspaceSecurity.hasWorkspace(#block.workspaceId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     @Transactional
-    fun archiveBlock(block: Block, status: Boolean) {
-        val existing = blockRepository.findById(block.id).orElseThrow()
-        require(existing.workspaceId == block.workspaceId) {
-            "Block does not belong to the specified workspace"
-        }
-
-        if (existing.deleted == status) return // No-op if already in desired state
-
-        val updated = existing.apply {
-            deleted = status
-        }
-
-        blockRepository.save(updated)
-
-        activityService.logActivity(
-            activity = riven.core.enums.activity.Activity.BLOCK,
-            operation = if (status) OperationType.ARCHIVE else OperationType.RESTORE,
-            userId = authTokenService.getUserId(),
-            workspaceId = updated.workspaceId,
-            entityType = ApplicationEntityType.BLOCK,
-            entityId = updated.id,
-            details = mapOf(
-                "blockId" to updated.id.toString(),
-                "archiveStatus" to status
-            )
-        )
+    fun deleteBlocks(workspaceId: UUID, blockIds: List<UUID>) {
+        TODO()
     }
 
     /**

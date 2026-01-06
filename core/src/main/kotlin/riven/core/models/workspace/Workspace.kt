@@ -24,7 +24,7 @@ data class Workspace(
     override var updatedAt: ZonedDateTime? = null,
     override var createdBy: UUID? = null,
     override var updatedBy: UUID? = null,
-) : AuditableModel() {
+) : AuditableModel {
 
     fun toDisplay(): WorkspaceDisplay =
         WorkspaceDisplay(

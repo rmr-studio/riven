@@ -38,12 +38,12 @@ data class WorkspaceEntity(
     var plan: WorkspacePlan = WorkspacePlan.FREE, // Default plan is FREE
 
     @Column(name = "deleted", nullable = false)
-    override var deleted: Boolean,
+    override var deleted: Boolean = false,
 
     @Column(name = "deleted_at", nullable = false)
-    override var deletedAt: ZonedDateTime?
+    override var deletedAt: ZonedDateTime? = null,
 
-) : AuditableEntity(), SoftDeletable {
+    ) : AuditableEntity(), SoftDeletable {
     fun toModel(audit: Boolean = true): Workspace {
         val id = requireNotNull(this.id) { "WorkspaceEntity must have a non-null id" }
         return Workspace(

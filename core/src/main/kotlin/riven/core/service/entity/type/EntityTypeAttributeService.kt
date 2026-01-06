@@ -160,10 +160,10 @@ class EntityTypeAttributeService(
     }
 
     fun deleteEntities(workspaceId: UUID, ids: Collection<UUID>): Int {
-        return uniqueEntityValueRepository.deleteEntities(ids)
+        return uniqueEntityValueRepository.deleteEntities(workspaceId, ids)
     }
 
     fun deleteType(workspaceId: UUID, typeId: UUID): Int {
-        return uniqueEntityValueRepository.deleteType(id)
+        return uniqueEntityValueRepository.deleteType(workspaceId, typeId)
     }
 }

@@ -68,24 +68,24 @@ class WorkspaceController(
         return ResponseEntity.ok().build()
     }
 
-    @DeleteMapping("/{workspaceId}/member")
+    @DeleteMapping("/{workspaceId}/member/{memberId}")
     fun removeMemberFromWorkspace(
         @PathVariable workspaceId: UUID,
-        @RequestBody member: WorkspaceMember
+        @PathVariable memberId: UUID
     ): ResponseEntity<Void> {
-        this.workspaceService.removeMemberFromWorkspace(workspaceId, member)
+        this.workspaceService.removeMemberFromWorkspace(workspaceId, memberId)
         return ResponseEntity.ok().build()
     }
 
-    @PutMapping("/{workspaceId}/member/role/{role}")
+    @PutMapping("/{workspaceId}/member/{memberId}/role/{role}")
     fun updateMemberRole(
         @PathVariable workspaceId: UUID,
-        @PathVariable role: WorkspaceRoles,
-        @RequestBody member: WorkspaceMember
+        @PathVariable memberId: UUID,
+        @PathVariable role: WorkspaceRoles
     ): ResponseEntity<WorkspaceMember> {
         val updatedMember: WorkspaceMember = this.workspaceService.updateMemberRole(
             workspaceId = workspaceId,
-            member = member,
+            memberId = memberId,
             role = role
         )
         return ResponseEntity.ok(updatedMember)

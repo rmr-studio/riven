@@ -1,6 +1,7 @@
 package riven.core.repository.block
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import riven.core.entity.block.BlockEntity
 import java.util.*
 
@@ -11,5 +12,6 @@ interface BlockRepository : JpaRepository<BlockEntity, UUID> {
      * @param workspaceId UUID of the workspace whose active (not deleted) blocks should be returned.
      * @return A list of BlockEntity instances for the workspace where `deleted` is false.
      */
-    fun findByworkspaceIdAnddeletedFalse(workspaceId: UUID): List<BlockEntity>
+    @Query("SELECT b FROM BlockEntity b WHERE b.workspaceId = :workspaceId AND b.deleted = false and b.deletedAt IS NULL")
+    fun findByWorkspaceId(workspaceId: UUID): List<BlockEntity>
 }

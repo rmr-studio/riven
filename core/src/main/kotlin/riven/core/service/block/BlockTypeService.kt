@@ -113,44 +113,8 @@ class BlockTypeService(
         }
     }
 
-    /**
-     * Archives or restores a block type and records the change as an activity.
-     *
-     * Updates the deleted flag of the block type identified by [id] to [status], persists the change,
-     * and logs an ARCHIVE (when `status` is true) or RESTORE (when `status` is false) activity. If the
-     * block type already has the requested deleted state, no changes or activity are made.
-     *
-     * @param id The UUID of the block type to update.
-     * @param status `true` to archive the block type, `false` to restore it.
-     */
-    fun archiveBlockType(id: UUID, status: Boolean) {
-        val userId = authTokenService.getUserId()
-        val existing = findOrThrow { blockTypeRepository.findById(id) }
-        val orgId = requireNotNull(existing.workspaceId)
-
-
-        workspaceSecurity.hasWorkspace(orgId).run {
-            if (!this) {
-                throw AccessDeniedException("Unauthorized to archive block type for workspace $orgId")
-            }
-        }
-
-        if (existing.deleted == status) return
-        val updated = existing.copy(deleted = status)
-        blockTypeRepository.save(updated)
-        activityService.logActivity(
-            activity = Activity.BLOCK_TYPE,
-            operation = if (status) OperationType.ARCHIVE
-            else OperationType.RESTORE,
-            userId = userId,
-            workspaceId = orgId,
-            entityId = existing.id,
-            entityType = ApplicationEntityType.BLOCK_TYPE,
-            details = mapOf(
-                "type" to existing.key,
-                "archiveStatus" to status
-            ),
-        )
+    fun deleteBlockType(workspaceId: UUID, typeId: UUID) {
+        TODO()
     }
 
     fun getSystemBlockType(type: SystemBlockTypes): BlockTypeEntity {

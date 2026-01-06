@@ -11,7 +11,9 @@ import java.time.ZonedDateTime
 import java.util.*
 
 @Entity
-@Table(name = "blocks")
+@Table(
+    name = "blocks"
+)
 data class BlockEntity(
 
     @Id

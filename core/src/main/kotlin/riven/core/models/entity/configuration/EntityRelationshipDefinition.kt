@@ -67,4 +67,4 @@ data class EntityRelationshipDefinition(
     override var updatedAt: ZonedDateTime?,
     override var createdBy: UUID?,
     override var updatedBy: UUID?
-) : AuditableModel()
+) : AuditableModel

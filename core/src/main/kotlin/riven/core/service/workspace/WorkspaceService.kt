@@ -19,6 +19,7 @@ import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.user.UserService
 import riven.core.util.ServiceUtil.findOrThrow
+import java.time.ZonedDateTime
 import java.util.*
 
 @Service
@@ -173,10 +174,14 @@ class WorkspaceService(
             val workspace: WorkspaceEntity = findOrThrow { workspaceRepository.findById(workspaceId) }
 
             // Delete all members associated with the workspace
-            workspaceMemberRepository.deleteByIdworkspaceId(workspaceId)
+
 
             // Delete the workspace itself
-            workspaceRepository.delete(workspace).run {
+            workspace.apply {
+                deleted = true
+                deletedAt = ZonedDateTime.now()
+            }.run {
+                workspaceRepository.save(this)
                 // Log the activity of deleting an workspace
                 activityService.logActivity(
                     activity = riven.core.enums.activity.Activity.WORKSPACE,
@@ -200,12 +205,13 @@ class WorkspaceService(
      */
     fun addMemberToWorkspace(workspaceId: UUID, userId: UUID, role: WorkspaceRoles): WorkspaceMember {
         // Create and save the new member entity
-        val key = WorkspaceMemberEntity.WorkspaceMemberKey(
-            workspaceId = workspaceId,
-            userId = userId
-        )
 
-        return WorkspaceMemberEntity(key, role).run {
+
+        return WorkspaceMemberEntity(
+            workspaceId = workspaceId,
+            userId = userId,
+            role = role
+        ).run {
             workspaceMemberRepository.save(this).let { entity ->
                 entity.toModel()
             }.also {
@@ -214,104 +220,75 @@ class WorkspaceService(
         }
     }
 
-    /**
-     * Remove a member from the specified workspace when the caller is authorized to do so.
-     *
-     * Removes the membership record and records an workspace-member deletion activity.
-     *
-     * @param workspaceId ID of the workspace to remove the member from.
-     * @param member The member to remove.
-     * @throws IllegalArgumentException if attempting to remove the workspace owner (ownership must be transferred first).
-     */
-    @PreAuthorize(
-        """
-           @workspaceSecurity.isUpdatingWorkspaceMember(#workspaceId, #member) or @workspaceSecurity.isUpdatingSelf(#member)
-        """
-    )
-    fun removeMemberFromWorkspace(workspaceId: UUID, member: WorkspaceMember) {
+
+    fun removeMemberFromWorkspace(workspaceId: UUID, memberId: UUID) {
         authTokenService.getUserId().let { userId ->
 
+
+            val member = findOrThrow { workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, memberId) }
+            val id = requireNotNull(member.id) { "User with ID $memberId does not exist." }
             // Assert that the removed member is not currently the owner of the workspace
             if (member.role == WorkspaceRoles.OWNER) {
                 throw IllegalArgumentException("Cannot remove the owner of the workspace. Please transfer ownership first.")
             }
 
-            WorkspaceMemberEntity.WorkspaceMemberKey(
-                workspaceId = workspaceId,
-                userId = member.user.id
-            ).run {
-                findOrThrow { workspaceMemberRepository.findById(this) }
-                workspaceMemberRepository.deleteById(this)
+            workspaceMemberRepository.deleteById(id).also {
                 activityService.logActivity(
                     activity = riven.core.enums.activity.Activity.WORKSPACE_MEMBER,
                     operation = riven.core.enums.util.OperationType.DELETE,
                     userId = userId,
                     workspaceId = workspaceId,
                     entityType = ApplicationEntityType.USER,
-                    entityId = member.user.id,
+                    entityId = id,
                     details = mapOf(
-                        "userId" to member.user.id.toString(),
+                        "userId" to id.toString(),
                         "workspaceId" to workspaceId.toString()
                     )
                 )
             }
         }
-
     }
 
-    /**
-     * Update a member's role within an workspace.
-     *
-     * This operation persists the new role for the specified member and logs the change. It does not allow assigning or removing the OWNER role; ownership transfers must use the dedicated transfer method.
-     *
-     * @param workspaceId The workspace's ID.
-     * @param member The member to update.
-     * @param role The new role to assign to the member.
-     * @return The updated workspace member model.
-     * @throws IllegalArgumentException If the new role or the member's current role is `OWNER`.
-     */
-    @PreAuthorize(
-        """
-        @workspaceSecurity.isUpdatingWorkspaceMember(#workspaceId, #member)
-        """
-    )
+
     fun updateMemberRole(
         workspaceId: UUID,
-        member: WorkspaceMember,
+        memberId: UUID,
         role: WorkspaceRoles
     ): WorkspaceMember {
         authTokenService.getUserId().let { userId ->
+
+            val member = findOrThrow { workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, memberId) }
+
             // Ensure that if the new role is that of OWNER, that only the current owner can assign it
             if (role == WorkspaceRoles.OWNER || member.role == WorkspaceRoles.OWNER) {
                 throw IllegalArgumentException("Transfer of ownership must be done through a dedicated transfer ownership method.")
             }
 
-            WorkspaceMemberEntity.WorkspaceMemberKey(
-                workspaceId = workspaceId,
-                userId = member.user.id
-            ).run {
-                findOrThrow { workspaceMemberRepository.findById(this) }.run {
-                    this.apply {
-                        this.role = role
-                    }
 
-                    workspaceMemberRepository.save(this)
-                    activityService.logActivity(
-                        activity = riven.core.enums.activity.Activity.WORKSPACE_MEMBER,
-                        operation = riven.core.enums.util.OperationType.UPDATE,
-                        userId = userId,
-                        workspaceId = workspaceId,
-                        entityType = ApplicationEntityType.USER,
-                        entityId = member.user.id,
-                        details = mapOf(
-                            "userId" to member.user.id.toString(),
-                            "workspaceId" to workspaceId.toString(),
-                            "role" to role.toString()
-                        )
-                    )
-                    return this.toModel()
-                }
+            member.apply {
+                this.role = role
             }
+
+            return workspaceMemberRepository.save(member).let {
+                requireNotNull(it.id)
+                it.toModel()
+            }.also {
+                activityService.logActivity(
+                    activity = riven.core.enums.activity.Activity.WORKSPACE_MEMBER,
+                    operation = riven.core.enums.util.OperationType.UPDATE,
+                    userId = userId,
+                    workspaceId = workspaceId,
+                    entityType = ApplicationEntityType.USER,
+                    entityId = memberId,
+                    details = mapOf(
+                        "userId" to memberId.toString(),
+                        "workspaceId" to workspaceId.toString(),
+                        "role" to role.toString()
+                    )
+                )
+            }
+
         }
     }
 }
+

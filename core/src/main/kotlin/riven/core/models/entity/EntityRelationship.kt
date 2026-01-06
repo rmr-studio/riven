@@ -19,4 +19,4 @@ data class EntityRelationship(
     override var updatedAt: ZonedDateTime? = null,
     override var createdBy: UUID? = null,
     override var updatedBy: UUID? = null
-) : AuditableModel()
+) : AuditableModel

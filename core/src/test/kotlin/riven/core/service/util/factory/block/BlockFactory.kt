@@ -125,15 +125,14 @@ object BlockFactory {
         type: BlockType,
         name: String? = "Test Block",
         payload: BlockContentMetadata = BlockContentMetadata(data = emptyMap(), meta = BlockMeta()),
-        deleted: Boolean = false
     ): Block = Block(
         id = id,
         name = name,
         workspaceId = orgId,
         type = type,
         payload = payload,
-        deleted = deleted
-    )
+
+        )
 
     /**
      * Creates a simple ContentNode for testing.

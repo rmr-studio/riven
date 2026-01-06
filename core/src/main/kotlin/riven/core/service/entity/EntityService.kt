@@ -310,7 +310,7 @@ class EntityService(
             )
         }
 
-        entityAttributeService.deleteEntities(deletedRowIds)
+        entityAttributeService.deleteEntities(workspaceId, deletedRowIds)
         entityRelationshipService.archiveEntities(deletedRowIds, workspaceId)
 
         // Log activity for each deleted entity

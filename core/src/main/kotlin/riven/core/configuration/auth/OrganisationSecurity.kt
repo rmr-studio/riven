@@ -74,7 +74,7 @@ class WorkspaceSecurity {
 
         return WorkspaceRoles.fromString(claim.removePrefix("ROLE_${workspaceId}_")).authority > targetRole.authority
     }
-    
+
     /**
      * Allow permission to update a current member (ie. Updating role, or membership removal) under the following conditions:
      *  - The user is the owner of the workspace
@@ -86,13 +86,13 @@ class WorkspaceSecurity {
                         this.hasHigherWorkspaceRole(workspaceId, user.role))
     }
 
-    fun isUpdatingSelf(member: WorkspaceMember): Boolean {
+    fun isUpdatingSelf(memberId: UUID): Boolean {
         return SecurityContextHolder.getContext().authentication.principal.let {
             if (it !is Jwt) {
                 return false
             }
 
             it.claims["sub"]
-        } == member.user.id.toString()
+        } == memberId.toString()
     }
 }

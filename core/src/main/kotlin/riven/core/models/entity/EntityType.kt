@@ -49,7 +49,7 @@ data class EntityType(
     override var updatedAt: ZonedDateTime?,
     override var createdBy: UUID?,
     override var updatedBy: UUID?
-) : AuditableModel() {
+) : AuditableModel {
     val attributes: Pair<Int, Int>
         get() = Pair(schema.properties?.size ?: 0, relationships?.size ?: 0)
 }
