@@ -40,12 +40,12 @@ import { AddBlockDialog } from "./add-block-dialog";
  * This is the generic wrapper that manages block environments for any entity type.
  */
 export interface EntityBlockEnvironmentProps {
-    /** UUID of the entity (client, organisation, etc.) */
+    /** UUID of the entity (client, workspace, etc.) */
     entityId: string;
-    /** Type of entity (CLIENT, ORGANISATION, PROJECT, INVOICE) */
+    /** Type of entity (CLIENT, WORKSPACE, PROJECT, INVOICE) */
     entityType: EntityType;
-    /** Organisation ID for the entity */
-    organisationId: string;
+    /** Workspace ID for the entity */
+    workspaceId: string;
     /** Optional toolbar component to render above the grid */
     renderToolbar?: () => React.ReactNode;
     /** Whether to show the default "Add Block" toolbar (default: true) */
@@ -70,20 +70,20 @@ export interface EntityBlockEnvironmentProps {
  * <EntityBlockEnvironment
  *   entityId={clientId}
  *   entityType={EntityType.CLIENT}
- *   organisationId={organisationId}
+ *   workspaceId={workspaceId}
  *   renderToolbar={() => <ClientToolbar />}
  * />
  */
 export const EntityBlockEnvironment: FC<EntityBlockEnvironmentProps> = ({
     entityId,
     entityType,
-    organisationId,
+    workspaceId,
     renderToolbar,
     showDefaultToolbar = true,
     renderWrapper,
     wrapElement,
 }) => {
-    const { environment, isLoading, error } = useEntityLayout(organisationId, entityId, entityType);
+    const { environment, isLoading, error } = useEntityLayout(workspaceId, entityId, entityType);
 
     const gridOptions = useMemo(() => {
         return environment?.layout?.layout
@@ -133,13 +133,13 @@ export const EntityBlockEnvironment: FC<EntityBlockEnvironmentProps> = ({
     const toolbar = renderToolbar ? (
         renderToolbar()
     ) : (
-        <EntityToolbar organisationId={organisationId} entityType={entityType} />
+        <EntityToolbar workspaceId={workspaceId} entityType={entityType} />
     );
 
     // Render the complete block environment with provider hierarchy
     const content = (
         <BlockEnvironmentProvider
-            organisationId={organisationId}
+            workspaceId={workspaceId}
             entityId={entityId}
             entityType={entityType}
             environment={environment}
@@ -181,11 +181,11 @@ export const EntityBlockEnvironment: FC<EntityBlockEnvironmentProps> = ({
  * and adding block types to the layout.
  */
 interface EntityToolbarProps {
-    organisationId: string;
+    workspaceId: string;
     entityType: EntityType;
 }
 
-const EntityToolbar: FC<EntityToolbarProps> = ({ organisationId, entityType }) => {
+const EntityToolbar: FC<EntityToolbarProps> = ({ workspaceId, entityType }) => {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [typePickerOpen, setTypePickerOpen] = useState(false);
     const [selectedBlockType, setSelectedBlockType] = useState<BlockType | null>(null);
@@ -199,7 +199,7 @@ const EntityToolbar: FC<EntityToolbarProps> = ({ organisationId, entityType }) =
 
     const { addTrackedBlock } = useTrackedEnvironment();
     const { environment } = useBlockEnvironment();
-    const { data: availableBlockTypes } = useBlockTypes(organisationId, entityType);
+    const { data: availableBlockTypes } = useBlockTypes(workspaceId, entityType);
 
     const handleBlockTypeSelect = (blockType: BlockType) => {
         // Check if this block type requires type selection
@@ -267,7 +267,7 @@ const EntityToolbar: FC<EntityToolbarProps> = ({ organisationId, entityType }) =
         options?: { entityType?: EntityType; allowedTypes?: string[] | null }
     ) => {
         // Create a new block instance from the selected type
-        const newBlock = createBlockInstanceFromType(blockType, organisationId, {
+        const newBlock = createBlockInstanceFromType(blockType, workspaceId, {
             name: blockType.name,
             entityType: options?.entityType,
             allowedTypes: options?.allowedTypes,
@@ -324,7 +324,7 @@ const EntityToolbar: FC<EntityToolbarProps> = ({ organisationId, entityType }) =
             <AddBlockDialog
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
-                organisationId={organisationId}
+                workspaceId={workspaceId}
                 entityType={entityType}
                 onBlockTypeSelect={handleBlockTypeSelect}
             />

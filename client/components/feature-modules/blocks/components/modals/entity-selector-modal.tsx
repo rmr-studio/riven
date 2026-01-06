@@ -23,7 +23,7 @@ interface EntitySelectorModalProps {
     onOpenChange: (open: boolean) => void;
     onSelect: (items: ReferenceItem[]) => void;
     entityType: EntityType;
-    organisationId: string;
+    workspaceId: string;
     multiSelect?: boolean; // Allow selecting multiple entities
     excludeIds?: string[]; // Entity IDs to exclude from list (for backwards compatibility)
     initialSelection?: ReferenceItem[]; // Pre-selected items
@@ -53,7 +53,7 @@ const ENTITY_ICONS = {
  *   open={isOpen}
  *   onOpenChange={setIsOpen}
  *   entityType="CLIENT"
- *   organisationId={orgId}
+ *   workspaceId={workspaceId}
  *   multiSelect={true}
  *   showAllEntities={true}
  *   initialSelection={currentItems}
@@ -66,7 +66,7 @@ const ENTITY_ICONS = {
  *   onOpenChange={setIsOpen}
 
  *   entityType="CLIENT"
- *   organisationId={orgId}
+ *   workspaceId={workspaceId}
  *   multiSelect={true}
  *   excludeIds={selectedIds}
  * />
@@ -76,7 +76,7 @@ export const EntitySelectorModal: FC<EntitySelectorModalProps> = ({
     onOpenChange,
     onSelect,
     entityType,
-    organisationId,
+    workspaceId,
     multiSelect = false,
     excludeIds = [],
     initialSelection = [],
@@ -105,7 +105,7 @@ export const EntitySelectorModal: FC<EntitySelectorModalProps> = ({
         isRefetching,
     } = useEntitySelector({
         entityType,
-        organisationId,
+        workspaceId,
         // Only exclude IDs if showAllEntities is false
         excludeIds: showAllEntities ? [] : excludeIds,
         enabled: open,

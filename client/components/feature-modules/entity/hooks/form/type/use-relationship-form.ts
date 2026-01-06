@@ -72,7 +72,7 @@ export interface UseEntityRelationshipFormReturn {
 }
 
 export function useEntityTypeRelationshipForm(
-    organisationId: string,
+    workspaceId: string,
     type: EntityType,
     open: boolean,
     onSave: () => void,
@@ -132,7 +132,7 @@ export function useEntityTypeRelationshipForm(
         }
     }, [open]);
 
-    const { mutateAsync: saveDefinition } = useSaveDefinitionMutation(organisationId, {
+    const { mutateAsync: saveDefinition } = useSaveDefinitionMutation(workspaceId, {
         onSuccess: () => {
             onSave();
         },

@@ -26,7 +26,7 @@ export interface UseEntityTypeFormReturn {
     handleSubmit: (values: NewEntityTypeFormValues) => Promise<void>;
 }
 
-export function useNewEntityTypeForm(organisationId: string): UseEntityTypeFormReturn {
+export function useNewEntityTypeForm(workspaceId: string): UseEntityTypeFormReturn {
     const [keyManuallyEdited, setKeyManuallyEdited] = useState(false);
     const router = useRouter();
 
@@ -61,10 +61,10 @@ export function useNewEntityTypeForm(organisationId: string): UseEntityTypeFormR
         await publishType(request);
     };
 
-    const { mutateAsync: publishType } = usePublishEntityTypeMutation(organisationId, {
+    const { mutateAsync: publishType } = usePublishEntityTypeMutation(workspaceId, {
         onSuccess: (response: EntityType) => {
             router.push(
-                `/dashboard/organisation/${organisationId}/entity/${response.key}/settings?tab=attributes`
+                `/dashboard/workspace/${workspaceId}/entity/${response.key}/settings?tab=attributes`
             );
         },
     });

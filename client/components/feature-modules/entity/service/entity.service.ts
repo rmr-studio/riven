@@ -15,18 +15,18 @@ export class EntityService {
      */
     static async saveEntity(
         session: Session | null,
-        organisationId: string,
+        workspaceId: string,
         entityTypeId: string,
         request: SaveEntityRequest
     ): Promise<SaveEntityResponse> {
         try {
             validateSession(session);
-            validateUuid(organisationId);
+            validateUuid(workspaceId);
             validateUuid(entityTypeId);
             const url = api();
 
             const response = await fetch(
-                `${url}/v1/entity/organisation/${organisationId}/type/${encodeURIComponent(
+                `${url}/v1/entity/workspace/${workspaceId}/type/${encodeURIComponent(
                     entityTypeId
                 )}`,
                 {
@@ -58,17 +58,17 @@ export class EntityService {
      */
     static async getEntitiesForType(
         session: Session | null,
-        organisationId: string,
+        workspaceId: string,
         typeId: string
     ): Promise<Entity[]> {
         try {
             validateSession(session);
-            validateUuid(organisationId);
+            validateUuid(workspaceId);
             validateUuid(typeId);
             const url = api();
 
             const response = await fetch(
-                `${url}/v1/entity/organisation/${organisationId}/type/${typeId}`,
+                `${url}/v1/entity/workspace/${workspaceId}/type/${typeId}`,
                 {
                     method: "GET",
                     headers: {
@@ -95,17 +95,17 @@ export class EntityService {
      */
     static async getEntitiesForTypes(
         session: Session | null,
-        organisationId: string,
+        workspaceId: string,
         typeIds: string[]
     ): Promise<Record<string, Entity[]>> {
         try {
             validateSession(session);
-            validateUuid(organisationId);
+            validateUuid(workspaceId);
             typeIds.forEach((id) => validateUuid(id));
             const url = api();
 
             const response = await fetch(
-                `${url}/v1/entity/organisation/${organisationId}?ids=${typeIds
+                `${url}/v1/entity/workspace/${workspaceId}?ids=${typeIds
                     .map((id) => encodeURIComponent(id))
                     .join(",")}`,
                 {
@@ -131,16 +131,16 @@ export class EntityService {
 
     static async deleteEntities(
         session: Session | null,
-        organisationId: string,
+        workspaceId: string,
         entityIds: string[]
     ): Promise<DeleteEntityResponse> {
         try {
             validateSession(session);
-            validateUuid(organisationId);
+            validateUuid(workspaceId);
             entityIds.forEach((id) => validateUuid(id));
             const url = api();
 
-            const response = await fetch(`${url}/v1/entity/organisation/${organisationId}`, {
+            const response = await fetch(`${url}/v1/entity/workspace/${workspaceId}`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",

@@ -1,10 +1,10 @@
 import { FCWC, Propless } from "@/lib/interfaces/interface";
-import { OrganisationsStoreProvider } from "../feature-modules/organisation/provider/organisation-provider";
+import { WorkspacesStoreProvider } from "../feature-modules/organisation/provider/workspace-provider";
 
 const StoreProviderWrapper: FCWC<Propless> = ({ children }) => {
     return (
         <>
-            <OrganisationsStoreProvider>{children}</OrganisationsStoreProvider>
+            <WorkspacesStoreProvider>{children}</WorkspacesStoreProvider>
         </>
     );
 };

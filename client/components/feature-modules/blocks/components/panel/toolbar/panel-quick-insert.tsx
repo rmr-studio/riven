@@ -13,8 +13,8 @@ import { BlockTypeSelectorList } from "../../shared/block-type-selector-list";
 
 interface PanelQuickInsertProps {
     searchRef: RefObject<HTMLInputElement | null>;
-    /** Organisation ID for fetching block types */
-    organisationId: string;
+    /** Workspace ID for fetching block types */
+    workspaceId: string;
     /** Entity type for contextual filtering */
     entityType?: EntityType;
     /** Optional filter: only show these block type keys (for block list restrictions) */
@@ -41,7 +41,7 @@ interface PanelQuickInsertProps {
  *   <PopoverContent>
  *     <PanelQuickInsert
  *       searchRef={searchRef}
- *       organisationId={organisationId}
+ *       workspaceId={workspaceId}
  *       allowedTypes={["note", "task", "text_block"]}
  *       onSelectBlockType={handleInsert}
  *       onShowAllOptions={openFullDialog}
@@ -52,14 +52,14 @@ interface PanelQuickInsertProps {
  */
 const PanelQuickInsert: FC<PanelQuickInsertProps> = ({
     searchRef,
-    organisationId,
+    workspaceId,
     entityType,
     allowedTypes = null,
     onSelectBlockType,
     onShowAllOptions,
     onOpenQuickActions,
 }) => {
-    const { data: blockTypes, isLoading, error } = useBlockTypes(organisationId, entityType);
+    const { data: blockTypes, isLoading, error } = useBlockTypes(workspaceId, entityType);
 
     return (
         <Command>

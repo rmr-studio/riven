@@ -23,26 +23,26 @@ export class LayoutService {
      */
     static async loadLayout(
         session: Session | null,
-        organisationId: string | undefined,
+        workspaceId: string | undefined,
         entityId: string | undefined,
         entityType: EntityType
     ): Promise<BlockEnvironment> {
         try {
-            if (!organisationId || !entityId) {
+            if (!workspaceId || !entityId) {
                 throw fromError({
-                    message: "Organisation ID and Entity ID are required to load layout",
+                    message: "Workspace ID and Entity ID are required to load layout",
                     status: 400,
                     error: "MISSING_PARAMETERS",
                 });
             }
 
-            validateUuid(organisationId);
+            validateUuid(workspaceId);
             validateUuid(entityId);
             validateSession(session);
 
             const url = api();
             const response = await fetch(
-                `${url}/v1/block/environment/organisation/${organisationId}/type/${entityType}/id/${entityId}`,
+                `${url}/v1/block/environment/workspace/${workspaceId}/type/${entityType}/id/${entityId}`,
                 {
                     method: "GET",
                     headers: {

@@ -41,7 +41,7 @@ export const entityReferenceFormSchema = z.array(
     z
         .object({
             id: z.string().refine(isUUID, { message: "Invalid UUID" }),
-            organisationId: z.string().refine(isUUID, { message: "Invalid UUID" }),
+            workspaceId: z.string().refine(isUUID, { message: "Invalid UUID" }),
             sourceEntityId: z.string().refine(isUUID, { message: "Invalid UUID" }),
             fieldId: z.string().refine(isUUID, { message: "Invalid UUID" }),
             label: z.string().min(1, { message: "Label cannot be empty" }),
@@ -482,12 +482,12 @@ export function generateColumnsFromEntityType(
                     return (
                         <div className="flex flex-wrap gap-1">
                             {value.map((item: EntityLink) => {
-                                const { icon, label, fieldId, id, organisationId, key } = item;
+                                const { icon, label, fieldId, id, workspaceId, key } = item;
                                 const { icon: type, colour } = icon;
 
                                 return (
                                     <Link
-                                        href={`/dashboard/organisation/${organisationId}/entity/${key}/${id}`}
+                                        href={`/dashboard/workspace/${workspaceId}/entity/${key}/${id}`}
                                         key={`${fieldId}-${id}`}
                                         onClick={(e) => e.stopPropagation()}
                                     >

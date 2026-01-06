@@ -17,8 +17,8 @@ import {
 
 // State interface
 interface EntityDraftState {
-    // Organization and entity type data
-    organisationId: string;
+    // Workspace and entity type data
+    workspaceId: string;
     entityType: EntityType;
 
     // Memoized map of attribute ID -> metadata for fast lookups
@@ -74,7 +74,7 @@ const buildAttributeMetadataMap = (entityType: EntityType): Map<string, EntityPr
 
 // Store factory (per-entity-type instances)
 export const createEntityDraftStore = (
-    organisationId: string,
+    workspaceId: string,
     entityType: EntityType,
     form: UseFormReturn<Record<string, any>>,
     saveMutation: (request: SaveEntityRequest) => Promise<SaveEntityResponse>
@@ -85,7 +85,7 @@ export const createEntityDraftStore = (
     return create<EntityDraftStore>()(
         subscribeWithSelector((set, get) => ({
             // Initial state
-            organisationId,
+            workspaceId,
             entityType,
             attributeMetadataMap,
             isDraftMode: false,

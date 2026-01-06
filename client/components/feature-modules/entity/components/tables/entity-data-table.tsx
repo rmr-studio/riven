@@ -45,7 +45,7 @@ export interface Props extends ClassNameProps {
     entityType: EntityType;
     entities: Entity[];
     loadingEntities?: boolean;
-    organisationId: string;
+    workspaceId: string;
 }
 
 // Internal component with draft mode hooks
@@ -54,7 +54,7 @@ export const EntityDataTable: FC<Props> = ({
     entities,
     loadingEntities,
     className,
-    organisationId,
+    workspaceId,
 }) => {
     const { isDraftMode, enterDraftMode } = useEntityDraft();
     const { form, handleSubmit } = useConfigFormState();
@@ -63,7 +63,7 @@ export const EntityDataTable: FC<Props> = ({
 
     // Update entity mutation for inline editing
     const { mutateAsync: saveEntity } = useSaveEntityMutation(
-        organisationId,
+        workspaceId,
         entityType.id,
         undefined,
         handleConflict
@@ -296,7 +296,7 @@ export const EntityDataTable: FC<Props> = ({
                                 <EntityActionBar
                                     selectedRows={selectedRows}
                                     clearSelection={clearSelection}
-                                    organisationId={organisationId}
+                                    workspaceId={workspaceId}
                                     entityTypeId={entityType.id}
                                 />
                             ),

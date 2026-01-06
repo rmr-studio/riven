@@ -49,7 +49,7 @@ export const EntityTypeHeader: FC<Props> = ({ children }) => {
 
                 <div className="flex items-center gap-2">{children}</div>
                 <div className="flex gap-1 items-center mt-1">
-                    <Link href={`/dashboard/organisation/${type.organisationId}/entity/${key}`}>
+                    <Link href={`/dashboard/workspace/${type.workspaceId}/entity/${key}`}>
                         <Button
                             variant={"secondary"}
                             className="relative p-1 h-6 mt-1 text-muted-foreground hover:text-primary hover:bg-primary/10"
@@ -60,7 +60,7 @@ export const EntityTypeHeader: FC<Props> = ({ children }) => {
                         </Button>
                     </Link>
                     <Link
-                        href={`/dashboard/organisation/${type.organisationId}/entity/${key}/settings`}
+                        href={`/dashboard/workspace/${type.workspaceId}/entity/${key}/settings`}
                     >
                         <Button
                             size={"xs"}

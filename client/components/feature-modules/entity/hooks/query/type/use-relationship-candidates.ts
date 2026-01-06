@@ -1,4 +1,4 @@
-import { useOrganisation } from "@/components/feature-modules/organisation/hooks/use-organisation";
+import { useWorkspace } from "@/components/feature-modules/organisation/hooks/use-workspace";
 import { EntityTypeRelationshipType } from "@/lib/types/types";
 import { EntityRelationshipCandidate, EntityType } from "../../../interface/entity.interface";
 import { useEntityTypes } from "./use-entity-types";
@@ -9,11 +9,11 @@ interface UseRelationshipCandidatesReturn {
 }
 
 /**
- * This hook will fetch all current relationships for every organisation entity type that is considered polymorphic. So is a viable candidate for a new entity type to be linked to.
+ * This hook will fetch all current relationships for every workspace entity type that is considered polymorphic. So is a viable candidate for a new entity type to be linked to.
  */
 export function useRelationshipCandidates(type: EntityType): UseRelationshipCandidatesReturn {
-    const { data: organisation } = useOrganisation();
-    const { data } = useEntityTypes(organisation?.id);
+    const { data: workspace } = useWorkspace();
+    const { data } = useEntityTypes(workspace?.id);
     if (!data)
         return {
             loading: true,

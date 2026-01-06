@@ -1,6 +1,6 @@
 "use client";
 
-import { useOrganisation } from "@/components/feature-modules/organisation/hooks/use-organisation";
+import { useWorkspace } from "@/components/feature-modules/organisation/hooks/use-workspace";
 import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-group";
 import { isResponseError } from "@/lib/util/error/error.util";
 import { useParams, useRouter } from "next/navigation";
@@ -10,29 +10,29 @@ import { useEntityTypeByKey } from "../../hooks/query/type/use-entity-types";
 import { EntityTypeOverview } from "../types/entity-type";
 
 export const EntityTypeOverviewDashboard = () => {
-    const { data: organisation } = useOrganisation();
-    const params = useParams<{ organisationId: string; key: string }>();
-    const { organisationId, key } = params;
+    const { data: workspace } = useWorkspace();
+    const params = useParams<{ workspaceId: string; key: string }>();
+    const { workspaceId, key } = params;
     const router = useRouter();
     const {
         data: entityType,
         isPending,
         error,
         isLoadingAuth,
-    } = useEntityTypeByKey(key, organisationId);
+    } = useEntityTypeByKey(key, workspaceId);
 
     useEffect(() => {
-        // Query has finished, organisation has not been found. Redirect back to organisation view with associated error
+        // Query has finished, workspace has not been found. Redirect back to workspace view with associated error
         if (!isPending && !entityType) {
             if (!error || !isResponseError(error)) {
-                router.push("/dashboard/organisation/");
+                router.push("/dashboard/workspace/");
                 return;
             }
 
             // Query has returned an ID we can use to route to a valid error message
             const responseError = error;
             router.push(
-                `/dashboard/organisation/${organisationId}/entity?error=${responseError.error}`
+                `/dashboard/workspace/${workspaceId}/entity?error=${responseError.error}`
             );
         }
     }, [isPending, isLoadingAuth, entityType, error, router]);
@@ -49,23 +49,23 @@ export const EntityTypeOverviewDashboard = () => {
 
     const trail: BreadCrumbTrail[] = [
         { label: "Home", href: "/dashboard" },
-        { label: "Organisations", href: "/dashboard/organisation", truncate: true },
+        { label: "Workspaces", href: "/dashboard/workspace", truncate: true },
         {
-            label: organisation?.name || "Organisation",
-            href: `/dashboard/organisation/${organisationId}`,
+            label: workspace?.name || "Workspace",
+            href: `/dashboard/workspace/${workspaceId}`,
             truncate: true,
         },
         {
             label: "Entities",
-            href: `/dashboard/organisation/${organisationId}/entity`,
+            href: `/dashboard/workspace/${workspaceId}/entity`,
         },
         {
             label: entityType.name.plural,
-            href: `/dashboard/organisation/${organisationId}/entity/${entityType.key}`,
+            href: `/dashboard/workspace/${workspaceId}/entity/${entityType.key}`,
         },
         {
             label: "Settings",
-            href: `/dashboard/organisation/${organisationId}/entity/${entityType.key}/settings`,
+            href: `/dashboard/workspace/${workspaceId}/entity/${entityType.key}/settings`,
         },
     ];
 
@@ -76,10 +76,10 @@ export const EntityTypeOverviewDashboard = () => {
             </header>
             <section>
                 <EntityTypeConfigurationProvider
-                    organisationId={organisationId}
+                    workspaceId={workspaceId}
                     entityType={entityType}
                 >
-                    <EntityTypeOverview organisationId={organisationId} entityType={entityType} />
+                    <EntityTypeOverview workspaceId={workspaceId} entityType={entityType} />
                 </EntityTypeConfigurationProvider>
             </section>
         </div>

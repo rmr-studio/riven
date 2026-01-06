@@ -13,14 +13,14 @@ import {
 export class EntityTypeService {
     static async getEntityTypes(
         session: Session | null,
-        organisationId: string
+        workspaceId: string
     ): Promise<EntityType[]> {
         try {
             validateSession(session);
-            validateUuid(organisationId);
+            validateUuid(workspaceId);
             const url = api();
 
-            const response = await fetch(`${url}/v1/entity/schema/organisation/${organisationId}`, {
+            const response = await fetch(`${url}/v1/entity/schema/workspace/${workspaceId}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -42,15 +42,15 @@ export class EntityTypeService {
 
     static async getEntityTypeByKey(
         session: Session | null,
-        organisationId: string,
+        workspaceId: string,
         key: string
     ): Promise<EntityType> {
         try {
             validateSession(session);
-            validateUuid(organisationId);
+            validateUuid(workspaceId);
             const url = api();
             const response = await fetch(
-                `${url}/v1/entity/schema/organisation/${organisationId}/key/${encodeURIComponent(
+                `${url}/v1/entity/schema/workspace/${workspaceId}/key/${encodeURIComponent(
                     key
                 )}`,
                 {
@@ -75,15 +75,15 @@ export class EntityTypeService {
 
     static async publishEntityType(
         session: Session | null,
-        organisationId: string,
+        workspaceId: string,
         request: CreateEntityTypeRequest
     ): Promise<EntityType> {
         try {
             validateSession(session);
-            validateUuid(organisationId);
+            validateUuid(workspaceId);
             const url = api();
 
-            const response = await fetch(`${url}/v1/entity/schema/organisation/${organisationId}`, {
+            const response = await fetch(`${url}/v1/entity/schema/workspace/${workspaceId}`, {
                 method: "POST",
                 body: JSON.stringify(request),
                 headers: {
@@ -105,15 +105,15 @@ export class EntityTypeService {
 
     static async saveEntityTypeConfiguration(
         session: Session | null,
-        organisationId: string,
+        workspaceId: string,
         entityType: EntityType
     ): Promise<EntityType> {
         try {
             validateSession(session);
-            validateUuid(organisationId);
+            validateUuid(workspaceId);
             const url = api();
             const response = await fetch(
-                `${url}/v1/entity/schema/organisation/${organisationId}/configuration`,
+                `${url}/v1/entity/schema/workspace/${workspaceId}/configuration`,
                 {
                     method: "PUT",
                     body: JSON.stringify(entityType),
@@ -141,13 +141,13 @@ export class EntityTypeService {
 
     static async removeEntityTypeDefinition(
         session: Session | null,
-        organisationId: string,
+        workspaceId: string,
         definition: DeleteTypeDefinitionRequest,
         impactConfirmed: boolean = false
     ): Promise<EntityTypeImpactResponse> {
         try {
             validateSession(session);
-            validateUuid(organisationId);
+            validateUuid(workspaceId);
             const url = api();
 
             const queryParams = new URLSearchParams({
@@ -155,7 +155,7 @@ export class EntityTypeService {
             });
 
             const response = await fetch(
-                `${url}/v1/entity/schema/organisation/${organisationId}/definition?${queryParams}`,
+                `${url}/v1/entity/schema/workspace/${workspaceId}/definition?${queryParams}`,
                 {
                     method: "DELETE",
                     body: JSON.stringify(definition),
@@ -184,13 +184,13 @@ export class EntityTypeService {
      */
     static async saveEntityTypeDefinition(
         session: Session | null,
-        organisationId: string,
+        workspaceId: string,
         definition: SaveTypeDefinitionRequest,
         impactConfirmed: boolean = false
     ): Promise<EntityTypeImpactResponse> {
         try {
             validateSession(session);
-            validateUuid(organisationId);
+            validateUuid(workspaceId);
             const url = api();
 
             const queryParams = new URLSearchParams({
@@ -198,7 +198,7 @@ export class EntityTypeService {
             });
 
             const response = await fetch(
-                `${url}/v1/entity/schema/organisation/${organisationId}/definition?${queryParams}`,
+                `${url}/v1/entity/schema/workspace/${workspaceId}/definition?${queryParams}`,
                 {
                     method: "POST",
                     body: JSON.stringify(definition),
@@ -224,13 +224,13 @@ export class EntityTypeService {
 
     static async deleteEntityType(
         session: Session | null,
-        organisationId: string,
+        workspaceId: string,
         entityTypeKey: string,
         impactConfirmed: boolean = false
     ): Promise<EntityTypeImpactResponse> {
         try {
             validateSession(session);
-            validateUuid(organisationId);
+            validateUuid(workspaceId);
             const url = api();
 
             const queryParams = new URLSearchParams({
@@ -238,7 +238,7 @@ export class EntityTypeService {
             });
 
             const response = await fetch(
-                `${url}/v1/entity/schema/organisation/${organisationId}/key/${encodeURIComponent(
+                `${url}/v1/entity/schema/workspace/${workspaceId}/key/${encodeURIComponent(
                     entityTypeKey
                 )}?${queryParams}`,
                 {

@@ -49,7 +49,7 @@ function isListBlockType(blockType: BlockType): boolean {
  * - Regular blocks → ContentNode
  *
  * @param blockType - The block type definition from the database
- * @param organisationId - UUID of the organization
+ * @param workspaceId - UUID of the workspace
  * @param options - Optional configuration for the new block instance
  * @returns A new BlockNode ready to be added to the environment
  *
@@ -59,24 +59,24 @@ function isListBlockType(blockType: BlockType): boolean {
  * const layoutType = await blockTypeService.getBlockTypeByKey('layout_container');
  * const newBlock = createBlockInstanceFromType(
  *   layoutType,
- *   organisationId,
+ *   workspaceId,
  *   { name: 'My Container', initialData: { title: 'Welcome' } }
  * );
  *
  * // Reference block
  * const entityRefType = await blockTypeService.getBlockTypeByKey('entity_reference');
- * const refBlock = createBlockInstanceFromType(entityRefType, organisationId);
+ * const refBlock = createBlockInstanceFromType(entityRefType, workspaceId);
  * // Returns a ReferenceNode with empty items array
  *
  * // List block
  * const listType = await blockTypeService.getBlockTypeByKey('block_list');
- * const listBlock = createBlockInstanceFromType(listType, organisationId);
+ * const listBlock = createBlockInstanceFromType(listType, workspaceId);
  * // Returns a ContentNode with listConfig populated
  * ```
  */
 export function createBlockInstanceFromType(
     blockType: BlockType,
-    organisationId: string,
+    workspaceId: string,
     options?: CreateBlockInstanceOptions
 ): BlockNode {
     // Use block type name as default if no custom name provided
@@ -96,7 +96,7 @@ export function createBlockInstanceFromType(
                 : name ?? blockType.name;
 
             return createReferenceNode({
-                organisationId,
+                workspaceId,
                 type: blockType,
                 name: blockName,
                 payload,
@@ -105,7 +105,7 @@ export function createBlockInstanceFromType(
             // Create block reference with empty item
             const payload = createBlockReferenceMetadata();
             return createReferenceNode({
-                organisationId,
+                workspaceId,
                 type: blockType,
                 name,
                 payload,
@@ -136,7 +136,7 @@ export function createBlockInstanceFromType(
 
         // Create content node with list configuration
         return createContentNode({
-            organisationId,
+            workspaceId,
             type: blockType,
             data,
             name,
@@ -161,7 +161,7 @@ export function createBlockInstanceFromType(
 
     // Create content node
     return createContentNode({
-        organisationId,
+        workspaceId,
         type: blockType,
         data,
         name,
@@ -249,14 +249,14 @@ function getDefaultValueForType(property: BlockSchema): unknown {
  * (e.g., initializing a template with multiple blocks).
  *
  * @param blockTypes - Array of block type definitions
- * @param organisationId - UUID of the organization
+ * @param workspaceId - UUID of the workspace
  * @param optionsMap - Optional map of block type keys to creation options
  * @returns Array of new BlockNodes
  *
  * @example
  * ```typescript
  * const types = [layoutType, listType, noteType];
- * const blocks = createBlockInstancesFromTypes(types, organisationId, {
+ * const blocks = createBlockInstancesFromTypes(types, workspaceId, {
  *   'layout_container': { name: 'Main Container' },
  *   'block_list': { name: 'Task List' }
  * });
@@ -264,11 +264,11 @@ function getDefaultValueForType(property: BlockSchema): unknown {
  */
 export function createBlockInstancesFromTypes(
     blockTypes: BlockType[],
-    organisationId: string,
+    workspaceId: string,
     optionsMap?: Record<string, CreateBlockInstanceOptions>
 ): BlockNode[] {
     return blockTypes.map((blockType) => {
         const options = optionsMap?.[blockType.key];
-        return createBlockInstanceFromType(blockType, organisationId, options);
+        return createBlockInstanceFromType(blockType, workspaceId, options);
     });
 }

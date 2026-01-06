@@ -1,6 +1,6 @@
 "use client";
 
-import { useOrganisation } from "@/components/feature-modules/organisation/hooks/use-organisation";
+import { useWorkspace } from "@/components/feature-modules/organisation/hooks/use-workspace";
 import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-group";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { isResponseError } from "@/lib/util/error/error.util";
@@ -13,33 +13,33 @@ import { useEntities } from "../../hooks/query/use-entities";
 import { EntityDataTable } from "../tables/entity-data-table";
 
 export const EntityDashboard = () => {
-    const { data: organisation } = useOrganisation();
-    const { organisationId, key: typeKey } = useParams<{ organisationId: string; key: string }>();
+    const { data: workspace } = useWorkspace();
+    const { workspaceId, key: typeKey } = useParams<{ workspaceId: string; key: string }>();
     const router = useRouter();
     const {
         data: entityType,
         isPending: isPendingEntityType,
         error: entityTypeError,
         isLoadingAuth,
-    } = useEntityTypeByKey(typeKey, organisationId);
+    } = useEntityTypeByKey(typeKey, workspaceId);
     const {
         data: entities,
         isPending: isPendingEntities,
         error: entitiesError,
-    } = useEntities(organisationId, entityType?.id);
+    } = useEntities(workspaceId, entityType?.id);
 
     useEffect(() => {
-        // Query has finished, organisation has not been found. Redirect back to organisation view with associated error
+        // Query has finished, workspace has not been found. Redirect back to workspace view with associated error
         if (!isPendingEntityType && !entityType) {
             if (!entityTypeError || !isResponseError(entityTypeError)) {
-                router.push("/dashboard/organisation/");
+                router.push("/dashboard/workspace/");
                 return;
             }
 
             // Query has returned an ID we can use to route to a valid error message
             const responseError = entityTypeError;
             router.push(
-                `/dashboard/organisation/${organisationId}/entity?error=${responseError.error}`
+                `/dashboard/workspace/${workspaceId}/entity?error=${responseError.error}`
             );
         }
     }, [isPendingEntityType, isLoadingAuth, entityType, entityTypeError, router]);
@@ -48,19 +48,19 @@ export const EntityDashboard = () => {
 
     const trail: BreadCrumbTrail[] = [
         { label: "Home", href: "/dashboard" },
-        { label: "Organisations", href: "/dashboard/organisation", truncate: true },
+        { label: "Workspaces", href: "/dashboard/workspace", truncate: true },
         {
-            label: organisation?.name || "Organisation",
-            href: `/dashboard/organisation/${organisationId}`,
+            label: workspace?.name || "Workspace",
+            href: `/dashboard/workspace/${workspaceId}`,
             truncate: true,
         },
         {
             label: "Entities",
-            href: `/dashboard/organisation/${organisationId}/entity`,
+            href: `/dashboard/workspace/${workspaceId}/entity`,
         },
         {
             label: entityType.name.plural,
-            href: `/dashboard/organisation/${organisationId}/entity/${entityType.key}`,
+            href: `/dashboard/workspace/${workspaceId}/entity/${entityType.key}`,
         },
     ];
 
@@ -72,18 +72,18 @@ export const EntityDashboard = () => {
             <section className="flex min-w-0 w-full">
                 <TooltipProvider>
                     <EntityTypeConfigurationProvider
-                        organisationId={organisationId}
+                        workspaceId={workspaceId}
                         entityType={entityType}
                     >
                         <EntityDraftProvider
-                            organisationId={organisationId}
+                            workspaceId={workspaceId}
                             entityType={entityType}
                         >
                             <EntityDataTable
                                 entityType={entityType}
                                 entities={entities || []}
                                 loadingEntities={isPendingEntities || isLoadingAuth}
-                                organisationId={organisationId}
+                                workspaceId={workspaceId}
                             />
                         </EntityDraftProvider>
                     </EntityTypeConfigurationProvider>

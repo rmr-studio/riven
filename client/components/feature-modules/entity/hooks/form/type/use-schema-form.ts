@@ -58,7 +58,7 @@ export interface useEntityTypeAttributeSchemaFormReturn {
 export type AttributeFormValues = z.infer<typeof attributeFormSchema>;
 
 export function useEntityTypeAttributeSchemaForm(
-    organisationId: string,
+    workspaceId: string,
     type: EntityType,
     open: boolean,
     onSave: () => void,
@@ -143,7 +143,7 @@ export function useEntityTypeAttributeSchemaForm(
         }
     }, [open]);
 
-    const { mutateAsync: saveDefinition } = useSaveDefinitionMutation(organisationId, {
+    const { mutateAsync: saveDefinition } = useSaveDefinitionMutation(workspaceId, {
         onSuccess: () => {
             onSave();
         },

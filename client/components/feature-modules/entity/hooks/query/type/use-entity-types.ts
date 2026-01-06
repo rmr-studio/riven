@@ -4,15 +4,15 @@ import { useQuery } from "@tanstack/react-query";
 import { type EntityType } from "../../../interface/entity.interface";
 import { EntityTypeService } from "../../../service/entity-type.service";
 
-export function useEntityTypes(organisationId?: string): AuthenticatedQueryResult<EntityType[]> {
+export function useEntityTypes(workspaceId?: string): AuthenticatedQueryResult<EntityType[]> {
     const { session, loading } = useAuth();
     const query = useQuery({
-        queryKey: ["entityTypes", organisationId],
+        queryKey: ["entityTypes", workspaceId],
         queryFn: async () => {
-            return await EntityTypeService.getEntityTypes(session, organisationId!); // non-null assertion as enabled ensures organisationId is defined
+            return await EntityTypeService.getEntityTypes(session, workspaceId!); // non-null assertion as enabled ensures workspaceId is defined
         },
         staleTime: 5 * 60 * 1000, // 5 minutes
-        enabled: !!session && !!organisationId && !loading,
+        enabled: !!session && !!workspaceId && !loading,
         refetchOnWindowFocus: false,
         refetchOnMount: false,
         gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
@@ -26,16 +26,16 @@ export function useEntityTypes(organisationId?: string): AuthenticatedQueryResul
 
 export function useEntityTypeByKey(
     key: string,
-    organisationId?: string
+    workspaceId?: string
 ): AuthenticatedQueryResult<EntityType> {
     const { session, loading } = useAuth();
     const query = useQuery({
-        queryKey: ["entityType", key, organisationId],
+        queryKey: ["entityType", key, workspaceId],
         queryFn: async () => {
-            return await EntityTypeService.getEntityTypeByKey(session, organisationId!, key); // non-null assertion as enabled ensures organisationId is defined;
+            return await EntityTypeService.getEntityTypeByKey(session, workspaceId!, key); // non-null assertion as enabled ensures workspaceId is defined;
         },
         staleTime: 10 * 60 * 1000, // 10 minutes
-        enabled: !!key && !!organisationId && !!session && !loading,
+        enabled: !!key && !!workspaceId && !!session && !loading,
         refetchOnWindowFocus: false,
         retry: 1,
         gcTime: 30 * 60 * 1000, // 30 minutes garbage collection

@@ -45,7 +45,7 @@ export function useBlockTypes(
             const types = await BlockTypeService.getBlockTypes(session, organisationId);
 
             // Filter out archived types
-            let filteredTypes = types.filter((type) => !type.archived);
+            let filteredTypes = types.filter((type) => !type.deleted);
 
             // Optionally include only system types
             if (!includeSystem) {

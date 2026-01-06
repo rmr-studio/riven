@@ -21,14 +21,14 @@ import { FC, useEffect, useMemo } from "react";
 import { EnumOptionsEditor } from "../../enum-options-editor";
 
 interface Props {
-    organisationId: string;
+    workspaceId: string;
     dialog: DialogControl;
     currentType: SchemaType;
     attribute?: EntityAttributeDefinition;
     type: EntityType;
 }
 
-export const SchemaForm: FC<Props> = ({ currentType, attribute, type, dialog, organisationId }) => {
+export const SchemaForm: FC<Props> = ({ currentType, attribute, type, dialog, workspaceId }) => {
     const { open, setOpen } = dialog;
 
     const onSave = () => {
@@ -40,7 +40,7 @@ export const SchemaForm: FC<Props> = ({ currentType, attribute, type, dialog, or
     };
 
     const { form, handleSubmit, handleReset } = useEntityTypeAttributeSchemaForm(
-        organisationId,
+        workspaceId,
         type,
         open,
         onSave,

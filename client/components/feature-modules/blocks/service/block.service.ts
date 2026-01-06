@@ -20,7 +20,7 @@ export class BlockService {
      *
      * @param session - User session for authentication
      * @param entities - Record of block UUIDs to hydrate with their entity reference requests
-     * @param organisationId - Organisation context for authorization
+     * @param workspaceId - Workspace context for authorization
      * @returns Promise<HydrateBlocksResponse> - Map of block ID to hydration result
      *
      * Backend API:
@@ -32,7 +32,7 @@ export class BlockService {
      * const results = await BlockService.hydrateBlocks(
      *   session,
      *   ["block-uuid-1", "block-uuid-2"],
-     *   "org-uuid"
+     *   "workspace-uuid"
      * );
      *
      * // Access results per block
@@ -43,7 +43,7 @@ export class BlockService {
     static async hydrateBlocks(
         session: Session | null,
         entities: Record<string, EntityReferenceHydrationRequest[]>,
-        organisationId: string
+        workspaceId: string
     ): Promise<HydrateBlockResponse> {
         try {
             // Validate inputs
@@ -56,13 +56,13 @@ export class BlockService {
             }
 
             validateSession(session);
-            validateUuid(organisationId);
+            validateUuid(workspaceId);
             Object.keys(entities).forEach(validateUuid);
 
             const url = api();
             const request: HydrateBlockRequest = {
                 references: entities,
-                organisationId,
+                workspaceId,
             };
 
             const response = await fetch(`${url}/v1/block/environment/hydrate`, {

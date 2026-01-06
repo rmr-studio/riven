@@ -34,12 +34,12 @@ import { EntityType } from "../../../interface/entity.interface";
 
 interface Props extends ChildNodeProps {
     entityTypes?: EntityType[];
-    organisationId: string;
+    workspaceId: string;
 }
 
-export const NewEntityTypeForm: FC<Props> = ({ entityTypes = [], organisationId, children }) => {
+export const NewEntityTypeForm: FC<Props> = ({ entityTypes = [], workspaceId, children }) => {
     const { form, keyManuallyEdited, setKeyManuallyEdited, handleSubmit } =
-        useNewEntityTypeForm(organisationId);
+        useNewEntityTypeForm(workspaceId);
 
     // Watch the pluralName field for dynamic title and key generation
     const pluralName = form.watch("pluralName");

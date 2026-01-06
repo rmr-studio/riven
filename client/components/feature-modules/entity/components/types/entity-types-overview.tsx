@@ -14,21 +14,21 @@ import { EntityType, EntityTypeImpactResponse } from "../../interface/entity.int
 import { NewEntityTypeForm } from "../forms/type/new-entity-type-form";
 
 interface Props {
-    organisationId: string;
+    workspaceId: string;
 }
 
-export const EntityTypesOverview: FC<Props> = ({ organisationId }) => {
+export const EntityTypesOverview: FC<Props> = ({ workspaceId }) => {
     const router = useRouter();
     const [impactModalOpen, setImpactModalOpen] = useState<boolean>(false);
 
-    const { data: types, isPending } = useEntityTypes(organisationId);
+    const { data: types, isPending } = useEntityTypes(workspaceId);
 
     const onImpactConfirmation = (impact: EntityTypeImpactResponse) => {
         // todo
         setImpactModalOpen(true);
     };
 
-    const { mutateAsync: deleteType } = useDeleteTypeMutation(organisationId, onImpactConfirmation);
+    const { mutateAsync: deleteType } = useDeleteTypeMutation(workspaceId, onImpactConfirmation);
 
     const onDelete = async (row: EntityType) => {
         await deleteType({ key: row.key });
@@ -106,7 +106,7 @@ export const EntityTypesOverview: FC<Props> = ({ organisationId }) => {
                         Modify and add entity types in your workspace
                     </p>
                 </div>
-                <NewEntityTypeForm organisationId={organisationId} entityTypes={types}>
+                <NewEntityTypeForm workspaceId={workspaceId} entityTypes={types}>
                     <Button>
                         <Plus className="h-4 w-4 mr-2" />
                         New Entity Type
@@ -145,7 +145,7 @@ export const EntityTypesOverview: FC<Props> = ({ organisationId }) => {
                     }}
                     onRowClick={(row) => {
                         router.push(
-                            `/dashboard/organisation/${organisationId}/entity/${row.original.key}`
+                            `/dashboard/workspace/${workspaceId}/entity/${row.original.key}`
                         );
                     }}
                     rowActions={{
@@ -157,7 +157,7 @@ export const EntityTypesOverview: FC<Props> = ({ organisationId }) => {
                                 icon: Edit,
                                 onClick: (row) => {
                                     router.push(
-                                        `/dashboard/organisation/${organisationId}/entity/${row.key}/settings`
+                                        `/dashboard/workspace/${workspaceId}/entity/${row.key}/settings`
                                     );
                                 },
                                 separator: true,

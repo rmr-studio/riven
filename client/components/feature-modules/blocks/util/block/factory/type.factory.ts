@@ -40,7 +40,7 @@ const createBaseBlockType = ({
     key,
     name,
     description,
-    organisationId,
+    workspaceId,
     schema,
     display,
     nesting,
@@ -48,7 +48,7 @@ const createBaseBlockType = ({
     key: string;
     name: string;
     description?: string;
-    organisationId?: string;
+    workspaceId?: string;
     schema: BlockSchema;
     display: BlockDisplay;
     nesting?: BlockTypeNesting | null;
@@ -58,7 +58,7 @@ const createBaseBlockType = ({
     version: 1,
     name,
     description,
-    organisationId,
+    organisationId: workspaceId,
     archived: false,
     strictness: "SOFT",
     system: false,
@@ -128,12 +128,12 @@ const layoutContainerSchema: BlockSchema = {
     },
 };
 
-export const createLayoutContainerBlockType = (organisationId?: string): BlockType =>
+export const createLayoutContainerBlockType = (workspaceId?: string): BlockType =>
     createBaseBlockType({
         key: "layout_container",
         name: "Layout Container",
         description: "Hosts nested blocks inside a grid-aware surface.",
-        organisationId,
+        workspaceId,
         schema: layoutContainerSchema,
         display: {
             form: {
@@ -197,12 +197,12 @@ const listSchema: BlockSchema = {
     },
 };
 
-export const createBlockListBlockType = (organisationId?: string): BlockType =>
+export const createBlockListBlockType = (workspaceId?: string): BlockType =>
     createBaseBlockType({
         key: "block_list",
         name: "Block List",
         description: "Renders a homogeneous list of owned child blocks.",
-        organisationId,
+        workspaceId,
         schema: listSchema,
         display: {
             form: {
@@ -261,12 +261,12 @@ const blockReferenceSchema: BlockSchema = {
     },
 };
 
-export const createBlockReferenceType = (organisationId?: string): BlockType =>
+export const createBlockReferenceType = (workspaceId?: string): BlockType =>
     createBaseBlockType({
         key: "block_reference",
         name: "Embedded Block Reference",
         description: "Embeds the contents of another block tree.",
-        organisationId,
+        workspaceId,
         schema: blockReferenceSchema,
         display: createBaseDisplay(blockReferenceComponent),
         nesting: null,
@@ -306,12 +306,12 @@ const entityReferenceSchema: BlockSchema = {
     },
 };
 
-export const createEntityReferenceListType = (organisationId?: string): BlockType =>
+export const createEntityReferenceListType = (workspaceId?: string): BlockType =>
     createBaseBlockType({
         key: "entity_reference_list",
         name: "Entity Reference List",
         description: "References a list of external entities.",
-        organisationId,
+        workspaceId,
         schema: entityReferenceSchema,
         display: createBaseDisplay(entityReferenceComponent),
         nesting: null,
@@ -358,12 +358,12 @@ const contentBlockListSchema: BlockSchema = {
     },
 };
 
-export const createContentBlockListType = (organisationId?: string): BlockType =>
+export const createContentBlockListType = (workspaceId?: string): BlockType =>
     createBaseBlockType({
         key: "content_block_list",
         name: "Content Block List",
         description: "Ordered list of content blocks with configurable ordering.",
-        organisationId,
+        workspaceId,
         schema: contentBlockListSchema,
         display: {
             form: {

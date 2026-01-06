@@ -31,7 +31,7 @@ import { EntityTypeMultiSelect } from "./entity-type-multi-select";
 import { RelationshipLink } from "./relationship-links";
 
 interface Props {
-    organisationId: string;
+    workspaceId: string;
     type: EntityType;
     relationship?: EntityRelationshipDefinition;
     dialog: DialogControl;
@@ -41,7 +41,7 @@ export const RelationshipAttributeForm: FC<Props> = ({
     type,
     relationship,
     dialog,
-    organisationId,
+    workspaceId,
 }) => {
     const { open, setOpen: onOpenChange } = dialog;
     const onSave = () => {
@@ -52,9 +52,9 @@ export const RelationshipAttributeForm: FC<Props> = ({
         onOpenChange(false);
     };
 
-    const { data: availableTypes = [] } = useEntityTypes(organisationId);
+    const { data: availableTypes = [] } = useEntityTypes(workspaceId);
     const { form, mode, handleSubmit, handleReset } = useEntityTypeRelationshipForm(
-        organisationId,
+        workspaceId,
         type,
         open,
         onSave,
@@ -140,8 +140,8 @@ export const RelationshipAttributeForm: FC<Props> = ({
             );
 
             // Navigate to target entity editor
-            const organisationId = window.location.pathname.split("/")[2];
-            window.location.href = `/organisation/${organisationId}/entity/type/${targetEntityKey}`;
+            const workspaceId = window.location.pathname.split("/")[2];
+            window.location.href = `/workspace/${workspaceId}/entity/type/${targetEntityKey}`;
         },
         [type?.key]
     );

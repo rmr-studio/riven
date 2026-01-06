@@ -1,4 +1,4 @@
-import { OrganisationInvite } from "@/components/feature-modules/organisation/interface/organisation.interface";
+import { WorkspaceInvite } from "@/components/feature-modules/organisation/interface/workspace.interface";
 import {
     Table,
     TableBody,
@@ -10,7 +10,7 @@ import {
 import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import React, { useMemo, useState } from "react";
 
-import { revokeInvite } from "@/components/feature-modules/organisation/service/organisation.service";
+import { revokeInvite } from "@/components/feature-modules/organisation/service/workspace.service";
 import { useAuth } from "@/components/provider/auth-context";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { DateCell, InviteActionsCell, RoleCell, StatusCell } from "./table";
 
 interface Props {
-    invites: OrganisationInvite[];
+    invites: WorkspaceInvite[];
 }
 
 export const InviteTable: React.FC<Props> = ({ invites }) => {
@@ -28,16 +28,16 @@ export const InviteTable: React.FC<Props> = ({ invites }) => {
     const queryClient = useQueryClient();
     const { session } = useAuth();
 
-    const onRevokeInvite = (invite: OrganisationInvite) => {
-        const { organisationId } = invite;
+    const onRevokeInvite = (invite: WorkspaceInvite) => {
+        const { workspaceId } = invite;
 
         return useMutation({
-            mutationFn: ({ id }: { id: string }) => revokeInvite(session, { organisationId, id }),
+            mutationFn: ({ id }: { id: string }) => revokeInvite(session, { workspaceId, id }),
             onSuccess: () => {
                 toast.success("Invitation revoked successfully!");
                 // Invalidate and refetch invites
                 queryClient.invalidateQueries({
-                    queryKey: ["organisation", organisationId],
+                    queryKey: ["workspace", workspaceId],
                 });
             },
             onError: () => {
@@ -46,7 +46,7 @@ export const InviteTable: React.FC<Props> = ({ invites }) => {
         });
     };
 
-    const columns = useMemo<ColumnDef<OrganisationInvite>[]>(
+    const columns = useMemo<ColumnDef<WorkspaceInvite>[]>(
         () => [
             {
                 accessorKey: "email",

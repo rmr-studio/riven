@@ -1,4 +1,4 @@
-import { useOrganisation } from "@/components/feature-modules/organisation/hooks/use-organisation";
+import { useWorkspace } from "@/components/feature-modules/organisation/hooks/use-workspace";
 import { AttributeTypeDropdown } from "@/components/ui/attribute-type-dropdown";
 import {
     Dialog,
@@ -31,7 +31,7 @@ export const AttributeFormModal: FC<Props> = ({ dialog, type, selectedAttribute 
     const isEditMode = Boolean(selectedAttribute);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [currentType, setCurrentType] = useState<SchemaType | "RELATIONSHIP">(SchemaType.TEXT);
-    const { data: organisation } = useOrganisation();
+    const { data: workspace } = useWorkspace();
 
     useEffect(() => {
         if (!selectedAttribute) {
@@ -54,7 +54,7 @@ export const AttributeFormModal: FC<Props> = ({ dialog, type, selectedAttribute 
         return !isRelationshipDefinition(selectedAttribute);
     }, [selectedAttribute]);
 
-    if (!organisation) {
+    if (!workspace) {
         return (
             <Dialog open={open} onOpenChange={onOpenChange}>
                 <DialogContent>
@@ -94,7 +94,7 @@ export const AttributeFormModal: FC<Props> = ({ dialog, type, selectedAttribute 
                         )}
                         {isRelationship ? (
                             <RelationshipAttributeForm
-                                organisationId={organisation.id}
+                                workspaceId={workspace.id}
                                 dialog={dialog}
                                 type={type}
                                 relationship={
@@ -103,7 +103,7 @@ export const AttributeFormModal: FC<Props> = ({ dialog, type, selectedAttribute 
                             />
                         ) : (
                             <SchemaForm
-                                organisationId={organisation.id}
+                                workspaceId={workspace.id}
                                 dialog={dialog}
                                 currentType={currentType as SchemaType}
                                 type={type}

@@ -12,8 +12,8 @@ export interface AddBlockDialogProps {
     open: boolean;
     /** Callback to change the open state */
     onOpenChange: (open: boolean) => void;
-    /** Organization ID to fetch block types for */
-    organisationId: string;
+    /** Workspace ID to fetch block types for */
+    workspaceId: string;
     /** Callback when a block type is selected */
     onBlockTypeSelect: (blockType: BlockType) => void;
 }
@@ -42,7 +42,7 @@ export interface AddBlockDialogProps {
  *     <AddBlockDialog
  *       open={dialogOpen}
  *       onOpenChange={setDialogOpen}
- *       organisationId={organisationId}
+ *       workspaceId={workspaceId}
  *       entityType={EntityType.CLIENT}
  *       onBlockTypeSelect={(type) => {
  *         setDialogOpen(false);
@@ -55,10 +55,10 @@ export interface AddBlockDialogProps {
 export const AddBlockDialog: FC<AddBlockDialogProps> = ({
     open,
     onOpenChange,
-    organisationId,
+    workspaceId,
     onBlockTypeSelect,
 }) => {
-    const { data: blockTypes, isLoading, error } = useBlockTypes(organisationId);
+    const { data: blockTypes, isLoading, error } = useBlockTypes(workspaceId);
 
     const handleSelect = (blockType: BlockType) => {
         onBlockTypeSelect(blockType);
