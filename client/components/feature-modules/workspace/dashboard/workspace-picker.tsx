@@ -1,19 +1,20 @@
 "use client";
 
 import { useProfile } from "@/components/feature-modules/user/hooks/useProfile";
-import { MembershipDetails } from "@/components/feature-modules/workspace/interface/workspace.interface";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { WorkspaceTile } from "../components/workspace-card";
+import { WorkspaceMember } from "../interface/workspace.interface";
 
 export const WorkspacePicker = () => {
     const { data: user, isPending } = useProfile();
 
     const [workspaceSearch, setWorkspaceSearch] = useState<string>("");
-    const [renderedWorkspaces, setRenderedWorkspaces] = useState<MembershipDetails[]>([]);
+    const [renderedWorkspaces, setRenderedWorkspaces] = useState<WorkspaceMember[]>([]);
     useEffect(() => {
         if (user?.memberships) {
             setRenderedWorkspaces(

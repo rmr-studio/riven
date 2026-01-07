@@ -12,7 +12,7 @@ export const WorkspaceDashboard = () => {
 
     const router = useRouter();
 
-    const {} = useCurrentWorkspace()
+    const { setSelectedWorkspace, selectedWorkspaceId } = useCurrentWorkspace();
 
     useEffect(() => {
         // Query has finished, workspace has not been found. Redirect back to workspace view with associated error
