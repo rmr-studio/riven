@@ -415,7 +415,7 @@ export function createEmptyEnvironment(workspaceId: string): EditorEnvironment {
         treeIndex: new Map(),
         metadata: {
             name: "Untitled Environment",
-            organisationId: workspaceId,
+            workspaceId: workspaceId,
             description: undefined,
             createdAt: timestamp,
             updatedAt: timestamp,
@@ -466,7 +466,7 @@ export const init = (
             metadata: {
                 name: "Untitled Environment",
                 description: undefined,
-                organisationId: workspaceId,
+                workspaceId: workspaceId,
                 createdAt: now(),
                 updatedAt: now(),
             },

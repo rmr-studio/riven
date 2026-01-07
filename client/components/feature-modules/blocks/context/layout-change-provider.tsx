@@ -161,7 +161,7 @@ export const LayoutChangeProvider: FC<PropsWithChildren> = ({ children }) => {
     const {
         layoutId,
         layout,
-        organisationId,
+        workspaceId,
         entityId,
         entityType,
         isInitialized,
@@ -239,7 +239,7 @@ export const LayoutChangeProvider: FC<PropsWithChildren> = ({ children }) => {
             }
 
             // // Update cache with new layout data instead of invalidating (more efficient)
-            // queryClient.setQueryData(["layout", organisationId, entityType, entityId], {
+            // queryClient.setQueryData(["layout", workspaceId, entityType, entityId], {
             //     layout: newLayout,
             //     version: newVersion || publishedVersion + 1,
             // });
@@ -513,7 +513,7 @@ export const LayoutChangeProvider: FC<PropsWithChildren> = ({ children }) => {
                 // Prepare save request with ALL changes
                 const saveRequest: SaveEnvironmentRequest = {
                     layoutId,
-                    organisationId,
+                    workspaceId,
                     layout: currentLayout,
                     version: nextVersion,
                     operations,
@@ -543,7 +543,7 @@ export const LayoutChangeProvider: FC<PropsWithChildren> = ({ children }) => {
         },
         [
             layoutId,
-            organisationId,
+            workspaceId,
             publishedVersion,
             saveGridLayout,
             getStructuralOperations,

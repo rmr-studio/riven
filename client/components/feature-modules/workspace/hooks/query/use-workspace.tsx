@@ -1,7 +1,7 @@
 import { useAuth } from "@/components/provider/auth-context";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-import { WorkspaceService } from "../service/workspace.service";
+import { WorkspaceService } from "../../service/workspace.service";
 
 export const useWorkspace = () => {
     const { session, loading } = useAuth();

@@ -10,7 +10,7 @@ export interface DeleteEntityTypeRequest {
 }
 
 export function useDeleteTypeMutation(
-    organisationId: string,
+    workspaceId: string,
     onImpactConfirmation: (impact: EntityTypeImpactResponse) => void,
     options?: UseMutationOptions<EntityTypeImpactResponse, Error, DeleteEntityTypeRequest>
 ) {
@@ -20,12 +20,7 @@ export function useDeleteTypeMutation(
     return useMutation({
         mutationFn: (request: DeleteEntityTypeRequest) => {
             const { key, impactConfirmed = false } = request;
-            return EntityTypeService.deleteEntityType(
-                session,
-                organisationId,
-                key,
-                impactConfirmed
-            );
+            return EntityTypeService.deleteEntityType(session, workspaceId, key, impactConfirmed);
         },
         onMutate: (data) => {
             options?.onMutate?.(data);
@@ -53,15 +48,15 @@ export function useDeleteTypeMutation(
 
             Object.entries(response.updatedEntityTypes).forEach(([key, entityType]) => {
                 // Update individual entity type query cache
-                queryClient.setQueryData(["entityType", key, organisationId], entityType);
+                queryClient.setQueryData(["entityType", key, workspaceId], entityType);
             });
 
             queryClient.invalidateQueries({
-                queryKey: ["entityType", variables.key, organisationId],
+                queryKey: ["entityType", variables.key, workspaceId],
             });
 
             // Update the entity types list in cache
-            queryClient.setQueryData<EntityType[]>(["entityTypes", organisationId], (oldData) => {
+            queryClient.setQueryData<EntityType[]>(["entityTypes", workspaceId], (oldData) => {
                 if (!response.updatedEntityTypes) return;
 
                 if (!oldData)

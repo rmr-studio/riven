@@ -9,7 +9,7 @@ export type WorkspaceInviteStatus = components["schemas"]["WorkspaceInvite"]["st
 export type WorkspacePlan = components["schemas"]["Workspace"]["plan"];
 
 // -- - 🔗 API Request Models ---
-export type WorkspaceCreationRequest = components["schemas"]["WorkspaceCreationRequest"];
+export type SaveWorkspaceRequest = components["schemas"]["SaveWorkspaceRequest"];
 
 // --- 📎 Path Parameters ---
 export type GetWorkspacePathParams = operations["getWorkspace"]["parameters"]["path"];

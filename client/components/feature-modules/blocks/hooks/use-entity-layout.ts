@@ -28,16 +28,16 @@ export interface UseEntityLayoutResult {
 }
 
 export const useEntityLayout = (
-    organisationId: string | undefined,
+    workspaceId: string | undefined,
     entityId: string | undefined,
     entityType: EntityType
 ): UseEntityLayoutResult => {
     const { session, loading: authLoading } = useAuth();
 
     const query = useQuery<BlockEnvironment, Error>({
-        queryKey: ["layout", organisationId, entityType, entityId],
-        queryFn: () => LayoutService.loadLayout(session, organisationId, entityId, entityType),
-        enabled: !!organisationId && !!entityId && !!session && !authLoading,
+        queryKey: ["layout", workspaceId, entityType, entityId],
+        queryFn: () => LayoutService.loadLayout(session, workspaceId, entityId, entityType),
+        enabled: !!workspaceId && !!entityId && !!session && !authLoading,
         staleTime: 30 * 1000, // 30 seconds
         refetchOnWindowFocus: true,
     });

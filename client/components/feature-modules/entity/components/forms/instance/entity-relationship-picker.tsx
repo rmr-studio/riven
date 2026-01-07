@@ -120,7 +120,7 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
 
         const link: EntityLink = {
             id: entity.id,
-            organisationId: workspaceId,
+            workspaceId: workspaceId,
             fieldId: relationship.id,
             key: type.key,
             sourceEntityId: uuid(), // Dummy sourceEntityId; will be replaced on save

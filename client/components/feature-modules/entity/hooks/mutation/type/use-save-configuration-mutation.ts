@@ -6,7 +6,7 @@ import { EntityType } from "../../../interface/entity.interface";
 import { EntityTypeService } from "../../../service/entity-type.service";
 
 export function useSaveEntityTypeConfiguration(
-    organisationId: string,
+    workspaceId: string,
     options?: UseMutationOptions<EntityType, Error, EntityType>
 ) {
     const queryClient = useQueryClient();
@@ -15,7 +15,7 @@ export function useSaveEntityTypeConfiguration(
 
     return useMutation({
         mutationFn: (type: EntityType) =>
-            EntityTypeService.saveEntityTypeConfiguration(session, organisationId, type),
+            EntityTypeService.saveEntityTypeConfiguration(session, workspaceId, type),
         onMutate: (data) => {
             options?.onMutate?.(data);
             submissionToastRef.current = toast.loading("Updating entity type...");
@@ -34,10 +34,10 @@ export function useSaveEntityTypeConfiguration(
             // Update cache for all entity types that were updated
 
             // Update individual entity type query cache
-            queryClient.setQueryData(["entityType", response.key, organisationId], response);
+            queryClient.setQueryData(["entityType", response.key, workspaceId], response);
 
             // Update the entity types list in cache
-            queryClient.setQueryData<EntityType[]>(["entityTypes", organisationId], (oldData) => {
+            queryClient.setQueryData<EntityType[]>(["entityTypes", workspaceId], (oldData) => {
                 if (!oldData) return [response];
 
                 // Replace all updated entity types in the list

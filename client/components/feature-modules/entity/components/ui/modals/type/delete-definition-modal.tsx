@@ -29,7 +29,7 @@ import { FC, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { useWorkspace } from "@/components/feature-modules/workspace/hooks/use-workspace";
+import { useWorkspace } from "@/components/feature-modules/workspace/hooks/query/use-workspace";
 import { useDeleteDefinitionMutation } from "../../../../hooks/mutation/type/use-delete-definition-mutation";
 import {
     DeleteAttributeDefinitionRequest,

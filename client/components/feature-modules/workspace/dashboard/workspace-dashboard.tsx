@@ -4,7 +4,7 @@ import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-gro
 import { isResponseError } from "@/lib/util/error/error.util";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useWorkspace } from "../hooks/use-workspace";
+import { useWorkspace } from "../hooks/query/use-workspace";
 import { useCurrentWorkspace } from "../provider/workspace-provider";
 
 export const WorkspaceDashboard = () => {

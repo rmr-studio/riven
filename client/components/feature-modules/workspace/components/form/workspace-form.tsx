@@ -24,6 +24,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { ClassNameProps } from "@/lib/interfaces/interface";
+import { WorkspacePlan } from "@/lib/types/types";
 import { cn, isValidCurrency } from "@/lib/util/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, SquareArrowUpRight } from "lucide-react";
@@ -36,7 +37,7 @@ const WorkspaceDetailsFormSchema = z.object({
     displayName: z
         .string({ required_error: "Display Name is required" })
         .min(3, "Display Name is too short"),
-    plan: z.enum(["FREE", "STARTUP", "SCALE", "ENTERPRISE"]),
+    plan: z.nativeEnum(WorkspacePlan),
     defaultCurrency: z.string().min(3).max(3).refine(isValidCurrency),
     avatarUrl: z.string().url().optional(),
     isDefault: z.boolean(),
@@ -66,7 +67,7 @@ export const WorkspaceForm: FC<Props> = ({
             displayName: workspace?.name || "",
             avatarUrl: workspace?.avatarUrl || undefined,
             isDefault: user?.memberships.length === 0,
-            plan: workspace?.plan || "FREE",
+            plan: workspace?.plan || WorkspacePlan.FREE,
             defaultCurrency: workspace?.defaultCurrency?.currencyCode || "AUD",
         },
     });

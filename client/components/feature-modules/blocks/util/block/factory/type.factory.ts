@@ -58,7 +58,7 @@ const createBaseBlockType = ({
     version: 1,
     name,
     description,
-    organisationId: workspaceId,
+    workspaceId: workspaceId,
     archived: false,
     strictness: "SOFT",
     system: false,

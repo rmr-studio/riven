@@ -20,22 +20,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workspace/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: operations["updateWorkspace"];
-        post: operations["createWorkspace"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/user/": {
         parameters: {
             query?: never;
@@ -142,6 +126,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["acceptInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspace/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["saveWorkspace"];
         delete?: never;
         options?: never;
         head?: never;
@@ -554,6 +554,16 @@ export interface components {
             /** Format: date-time */
             memberSince: string;
         };
+        User: {
+            /** Format: uuid */
+            id: string;
+            email: string;
+            name: string;
+            phone?: string;
+            avatarUrl?: string;
+            memberships: components["schemas"]["WorkspaceMember"][];
+            defaultWorkspace?: components["schemas"]["Workspace"];
+        };
         Workspace: {
             /** Format: uuid */
             id: string;
@@ -583,16 +593,6 @@ export interface components {
         };
         /** @enum {string} */
         WorkspacePlan: WorkspacePlan;
-        User: {
-            /** Format: uuid */
-            id: string;
-            email: string;
-            name: string;
-            phone?: string;
-            avatarUrl?: string;
-            memberships: components["schemas"]["WorkspaceMember"][];
-            defaultWorkspace?: components["schemas"]["Workspace"];
-        };
         /** @enum {string} */
         DataFormat: DataFormat;
         /** @enum {string} */
@@ -909,9 +909,10 @@ export interface components {
         };
         /** @enum {string} */
         WorkspaceInviteStatus: WorkspaceInviteStatus;
-        WorkspaceCreationRequest: {
+        SaveWorkspaceRequest: {
+            /** Format: uuid */
+            id?: string;
             name: string;
-            avatarUrl?: string;
             plan: components["schemas"]["WorkspacePlan"];
             defaultCurrency: string;
             isDefault: boolean;
@@ -1206,9 +1207,9 @@ export interface components {
         ListFilterLogicType: ListFilterLogicType;
         Metadata: {
             type: components["schemas"]["BlockMetadataType"];
+            meta: components["schemas"]["BlockMeta"];
             readonly: boolean;
             deletable: boolean;
-            meta: components["schemas"]["BlockMeta"];
         };
         Node: {
             warnings: string[];
@@ -1516,54 +1517,6 @@ export interface operations {
             };
         };
     };
-    updateWorkspace: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["Workspace"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Workspace"];
-                };
-            };
-        };
-    };
-    createWorkspace: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["WorkspaceCreationRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Workspace"];
-                };
-            };
-        };
-    };
     getCurrentUser: {
         parameters: {
             query?: never;
@@ -1812,6 +1765,34 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    saveWorkspace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    workspace: components["schemas"]["SaveWorkspaceRequest"];
+                    /** Format: binary */
+                    file?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Workspace"];
+                };
             };
         };
     };

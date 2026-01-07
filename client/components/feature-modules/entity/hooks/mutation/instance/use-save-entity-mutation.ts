@@ -6,7 +6,7 @@ import { Entity, SaveEntityRequest, SaveEntityResponse } from "../../../interfac
 import { EntityService } from "../../../service/entity.service";
 
 export function useSaveEntityMutation(
-    organisationId: string,
+    workspaceId: string,
     entityTypeId: string,
     options?: UseMutationOptions<SaveEntityResponse, Error, SaveEntityRequest>,
     onConflict?: (request: SaveEntityRequest, response: SaveEntityResponse) => void
@@ -17,7 +17,7 @@ export function useSaveEntityMutation(
 
     return useMutation({
         mutationFn: (payload: SaveEntityRequest) =>
-            EntityService.saveEntity(session, organisationId, entityTypeId, payload),
+            EntityService.saveEntity(session, workspaceId, entityTypeId, payload),
         onMutate: (data) => {
             options?.onMutate?.(data);
             const isUpdate = !!data.id;
@@ -42,7 +42,7 @@ export function useSaveEntityMutation(
             // Handle schema validation or impact confirmation errors
             if (response.errors) {
                 onConflict?.(variables, response);
-                return
+                return;
             }
 
             if (response.entity) {
@@ -51,7 +51,7 @@ export function useSaveEntityMutation(
 
                 // Update the entity in the cache for its entity type
                 queryClient.setQueryData<Entity[]>(
-                    ["entities", organisationId, entityTypeId],
+                    ["entities", workspaceId, entityTypeId],
                     (currentEntities) => {
                         if (!currentEntities) return [savedEntity];
 
@@ -76,7 +76,7 @@ export function useSaveEntityMutation(
                     Object.entries(response.impactedEntities).forEach(
                         ([impactedTypeId, impactedEntities]) => {
                             queryClient.setQueryData<Entity[]>(
-                                ["entities", organisationId, impactedTypeId],
+                                ["entities", workspaceId, impactedTypeId],
                                 (currentEntities) => {
                                     if (!currentEntities) return impactedEntities;
 

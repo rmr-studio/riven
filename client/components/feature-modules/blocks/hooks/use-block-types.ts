@@ -11,15 +11,15 @@ import { BlockTypeService } from "../service/block-type.service";
  * from the backend. It includes caching and automatic refetching capabilities
  * provided by React Query.
  *
- * @param organisationId - UUID of the organization
+ * @param workspaceId - UUID of the organization
  * @param entityType - Optional entity type to filter block types (client-side filtering for MVP)
  * @param includeSystem - Whether to include system block types (default: true)
  * @returns React Query result with block types, loading state, and error handling
  *
  * @example
  * ```typescript
- * function BlockSelector({ organisationId }) {
- *   const { blockTypes, isLoading, error } = useAvailableBlockTypes(organisationId);
+ * function BlockSelector({ workspaceId }) {
+ *   const { blockTypes, isLoading, error } = useAvailableBlockTypes(workspaceId);
  *
  *   if (isLoading) return <Skeleton />;
  *   if (error) return <Alert>Error loading block types</Alert>;
@@ -35,14 +35,14 @@ import { BlockTypeService } from "../service/block-type.service";
  * ```
  */
 export function useBlockTypes(
-    organisationId: string,
+    workspaceId: string,
     includeSystem: boolean = true
 ): AuthenticatedQueryResult<BlockType[]> {
     const { session, loading } = useAuth();
     const query = useQuery({
-        queryKey: ["blockTypes", organisationId, includeSystem],
+        queryKey: ["blockTypes", workspaceId, includeSystem],
         queryFn: async () => {
-            const types = await BlockTypeService.getBlockTypes(session, organisationId);
+            const types = await BlockTypeService.getBlockTypes(session, workspaceId);
 
             // Filter out archived types
             let filteredTypes = types.filter((type) => !type.deleted);
@@ -63,7 +63,7 @@ export function useBlockTypes(
         staleTime: 5 * 60 * 1000, // 5 minutes - block types don't change frequently
         gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
         refetchOnWindowFocus: false,
-        enabled: !!organisationId && !!session?.user.id, // Only run query if organisationId is provided, and user is authenticated
+        enabled: !!workspaceId && !!session?.user.id, // Only run query if workspaceId is provided, and user is authenticated
     });
 
     return {
@@ -76,26 +76,26 @@ export function useBlockTypes(
  * Hook to fetch a specific block type by its key.
  *
  * @param key - Unique key of the block type
- * @param organisationId - UUID of the organization
+ * @param workspaceId - UUID of the organization
  * @returns React Query result with the specific block type
  *
  * @example
  * ```typescript
- * const { blockType, isLoading } = useBlockTypeByKey('layout_container', organisationId);
+ * const { blockType, isLoading } = useBlockTypeByKey('layout_container', workspaceId);
  * ```
  */
 export function useBlockTypeByKey(
     key: string,
-    organisationId: string
+    workspaceId: string
 ): AuthenticatedQueryResult<BlockType> {
     const { session, loading } = useAuth();
     const query = useQuery({
-        queryKey: ["blockType", key, organisationId],
+        queryKey: ["blockType", key, workspaceId],
         queryFn: () => BlockTypeService.getBlockTypeByKey(session, key),
         staleTime: 10 * 60 * 1000,
         gcTime: 30 * 60 * 1000,
         refetchOnWindowFocus: false,
-        enabled: !!key && !!organisationId && !!session?.user.id,
+        enabled: !!key && !!workspaceId && !!session?.user.id,
     });
 
     return {

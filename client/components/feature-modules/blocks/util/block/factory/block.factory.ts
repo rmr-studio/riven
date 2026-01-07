@@ -146,7 +146,7 @@ export const createBlockBase = ({
 }): Block => ({
     id: id ?? uuid(),
     name,
-    organisationId: workspaceId,
+    workspaceId: workspaceId,
     type,
     payload,
     archived,
@@ -296,7 +296,7 @@ export const createBlockType = ({
     version: 1,
     name,
     description,
-    organisationId: workspaceId,
+    workspaceId: workspaceId,
     archived: false,
     strictness: BlockValidationScope.SOFT,
     system: false,

@@ -4,8 +4,8 @@ import { useAuth } from "@/components/provider/auth-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { createContext, useContext, useEffect, useMemo, useRef } from "react";
 import {
-    BlockNode,
     BlockHydrationResult,
+    BlockNode,
     EntityReferenceHydrationRequest,
     EntityReferenceMetadata,
     HydrateBlockResponse,
@@ -99,7 +99,7 @@ const collectReferenceBlocks = (
  * </BlockHydrationProvider>
  */
 export const BlockHydrationProvider: React.FC<BlockHydrationProviderProps> = ({ children }) => {
-    const { environment, organisationId } = useBlockEnvironment();
+    const { environment, workspaceId } = useBlockEnvironment();
     const { session, loading: authLoading } = useAuth();
     const queryClient = useQueryClient();
 
@@ -142,14 +142,14 @@ export const BlockHydrationProvider: React.FC<BlockHydrationProviderProps> = ({ 
             // Invalidate the entire hydration cache when IDs change
             // This ensures we don't have stale data with old temporary IDs
             queryClient.invalidateQueries({
-                queryKey: ["block-hydration", organisationId],
+                queryKey: ["block-hydration", workspaceId],
                 exact: false,
             });
         }
 
         // Update reference for next comparison
         previousBlockIdsRef.current = currentBlockIds;
-    }, [referenceBlocksMap, organisationId, queryClient]);
+    }, [referenceBlocksMap, workspaceId, queryClient]);
 
     /**
      * Build the hydration request payload.
@@ -184,8 +184,8 @@ export const BlockHydrationProvider: React.FC<BlockHydrationProviderProps> = ({ 
             })
             .sort();
 
-        return ["block-hydration", organisationId, blockKeys];
-    }, [hydrationRequest, organisationId]);
+        return ["block-hydration", workspaceId, blockKeys];
+    }, [hydrationRequest, workspaceId]);
 
     /**
      * Single batched React Query for all block hydrations.
@@ -198,7 +198,7 @@ export const BlockHydrationProvider: React.FC<BlockHydrationProviderProps> = ({ 
                 return {};
             }
 
-            return BlockService.hydrateBlocks(session, hydrationRequest, organisationId);
+            return BlockService.hydrateBlocks(session, hydrationRequest, workspaceId);
         },
         enabled: !!session && !authLoading && Object.keys(hydrationRequest).length > 0,
         staleTime: 5 * 60 * 1000, // 5 minutes

@@ -1,6 +1,6 @@
 "use client";
 
-import { useWorkspace } from "@/components/feature-modules/workspace/hooks/use-workspace";
+import { useWorkspace } from "@/components/feature-modules/workspace/hooks/query/use-workspace";
 import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-group";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { isResponseError } from "@/lib/util/error/error.util";

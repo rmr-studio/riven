@@ -1,50 +1,26 @@
 "use client";
 
-import { Workspace } from "@/components/feature-modules/workspace/interface/workspace.interface";
-import { updateWorkspace } from "@/components/feature-modules/workspace/service/workspace.service";
+import { SaveWorkspaceRequest } from "@/components/feature-modules/workspace/interface/workspace.interface";
+
 import { useAuth } from "@/components/provider/auth-context";
 import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-group";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { useWorkspace } from "../hooks/use-workspace";
-import { useWorkspaceRole } from "../hooks/use-workspace-role";
+import { useWorkspace } from "../hooks/query/use-workspace";
+
+import { useSaveWorkspaceMutation } from "../hooks/mutation/use-save-workspace-mutation";
 import { WorkspaceForm, WorkspaceFormDetails } from "./form/workspace-form";
 
 const EditWorkspace = () => {
     const { session, client } = useAuth();
     const { data: workspace } = useWorkspace();
-    const { role, hasRole, isLoading, error } = useWorkspaceRole();
-    const toastRef = useRef<string | number | undefined>(undefined);
+
     const router = useRouter();
     const [uploadedAvatar, setUploadedAvatar] = useState<Blob | null>(null);
-    const queryClient = useQueryClient();
-
-    const workspaceMutation = useMutation({
-        mutationFn: (workspace: Workspace) => updateWorkspace(session, workspace, uploadedAvatar),
-        onMutate: () => {
-            toastRef.current = toast.loading("Creating Workspace...");
-        },
-        onSuccess: (_) => {
-            toast.dismiss(toastRef.current);
-            toast.success("Workspace created successfully");
-
-            if (!workspace) {
-                router.push("/dashboard/workspace");
-                return;
-            }
-
-            // Update user profile with new workspace
-            queryClient.invalidateQueries({
-                queryKey: ["workspace", workspace.id],
-            });
-
+    const { mutateAsync: saveWorkspace } = useSaveWorkspaceMutation({
+        onSuccess() {
             router.push("/dashboard/workspace");
-        },
-        onError: (error) => {
-            toast.dismiss(toastRef.current);
-            toast.error(`Failed to create workspace: ${error.message}`);
         },
     });
 
@@ -59,18 +35,13 @@ const EditWorkspace = () => {
             return;
         }
 
-        const updatedWorkspace: Workspace = {
+        const request: SaveWorkspaceRequest = {
             ...workspace,
             ...values,
-            defaultCurrency: { currencyCode: values.defaultCurrency },
-            workspacePaymentDetails: {
-                ...values.payment,
-            },
-            customAttributes: values.customAttributes,
         };
 
         // Create the workspace
-        workspaceMutation.mutate(updatedWorkspace);
+        await saveWorkspace({ workspace: request, avatar: uploadedAvatar });
     };
 
     const trail: BreadCrumbTrail[] = [

@@ -2,8 +2,8 @@ import type {
     GetWorkspaceInvitesPathParams,
     InviteToWorkspacePathParams,
     RevokeInvitePathParams,
+    SaveWorkspaceRequest,
     Workspace,
-    WorkspaceCreationRequest,
     WorkspaceMember,
 } from "@/components/feature-modules/workspace/interface/workspace.interface";
 import { fromError, isResponseError } from "@/lib/util/error/error.util";
@@ -14,7 +14,7 @@ import { Session } from "@supabase/supabase-js";
 export class WorkspaceService {
     static async saveWorkspace(
         session: Session | null,
-        request: WorkspaceCreationRequest,
+        request: SaveWorkspaceRequest,
         uploadedAvatar: Blob | null = null
     ): Promise<Workspace> {
         try {

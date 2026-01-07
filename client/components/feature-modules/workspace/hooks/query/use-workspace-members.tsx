@@ -1,8 +1,8 @@
 import { useAuth } from "@/components/provider/auth-context";
 import { AuthenticatedQueryResult } from "@/lib/interfaces/interface";
 import { useQuery } from "@tanstack/react-query";
-import { WorkspaceMember } from "../interface/workspace.interface";
-import { WorkspaceService } from "../service/workspace.service";
+import { WorkspaceMember } from "../../interface/workspace.interface";
+import { WorkspaceService } from "../../service/workspace.service";
 
 export function useWorkspaceMembers(
     workspaceId?: string

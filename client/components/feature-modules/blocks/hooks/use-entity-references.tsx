@@ -73,7 +73,7 @@ export function UseEntityReferenceToolbar({
     readonly = false,
 }: UseReferenceBlockToolbarProps): UseReferenceBlockToolbarResult {
     const [entitySelectorOpen, setEntitySelectorOpen] = useState(false);
-    const { getBlock, organisationId } = useBlockEnvironment();
+    const { getBlock, workspaceId } = useBlockEnvironment();
     const { updateTrackedBlock } = useTrackedEnvironment();
     const queryClient = useQueryClient();
 
@@ -125,7 +125,7 @@ export function UseEntityReferenceToolbar({
         // Invalidate hydration cache to trigger re-fetch with new entities
         // Note: Invalidate at organisation level to catch the specific block
         queryClient.invalidateQueries({
-            queryKey: ["block-hydration", organisationId],
+            queryKey: ["block-hydration", workspaceId],
             exact: false,
         });
 
@@ -150,7 +150,7 @@ export function UseEntityReferenceToolbar({
             onOpenChange={setEntitySelectorOpen}
             onSelect={handleEntitySelect}
             entityType={entityType}
-            organisationId={organisationId}
+            workspaceId={workspaceId}
             multiSelect={multiSelect}
             initialSelection={currentItems}
             showAllEntities={true}

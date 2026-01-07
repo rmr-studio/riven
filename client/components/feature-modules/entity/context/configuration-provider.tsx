@@ -22,7 +22,7 @@ const EntityTypeConfigContext = createContext<EntityTypeConfigStoreApi | undefin
 
 export interface EntityTypeConfigurationProviderProps {
     children: ReactNode;
-    organisationId: string;
+    workspaceId: string;
     entityType: EntityType;
 }
 
@@ -34,7 +34,10 @@ const entityTypeFormSchema = z
             z.object({
                 key: z.string().min(1, "Ordering key is required").refine(isUUID),
                 type: z.nativeEnum(EntityPropertyType),
-                width: z.number().min(150, "Minimum width is 150").max(1000, "Maximum width is 1000"),
+                width: z
+                    .number()
+                    .min(150, "Minimum width is 150")
+                    .max(1000, "Maximum width is 1000"),
             })
         ),
     })
@@ -44,7 +47,7 @@ export type EntityTypeFormValues = z.infer<typeof entityTypeFormSchema>;
 
 export const EntityTypeConfigurationProvider = ({
     children,
-    organisationId,
+    workspaceId,
     entityType,
 }: EntityTypeConfigurationProviderProps) => {
     const storeRef = useRef<EntityTypeConfigStoreApi | null>(null);
@@ -67,7 +70,7 @@ export const EntityTypeConfigurationProvider = ({
     });
 
     // Create mutation function
-    const { mutateAsync: updateType } = useSaveEntityTypeConfiguration(organisationId, {
+    const { mutateAsync: updateType } = useSaveEntityTypeConfiguration(workspaceId, {
         onSuccess: () => {
             // These will be called from the store's handleSubmit
         },
@@ -77,7 +80,7 @@ export const EntityTypeConfigurationProvider = ({
     if (!storeRef.current) {
         storeRef.current = createEntityTypeConfigStore(
             entityType.key,
-            organisationId,
+            workspaceId,
             entityType,
             form,
             updateType
@@ -177,7 +180,7 @@ export const useConfigFormState = () => {
 
 export const useConfigCurrentType = () => {
     return useEntityTypeConfigurationStore((state) => state.entityType);
-}
+};
 
 // Optimized hooks for common access patterns
 export const useConfigForm = () => {

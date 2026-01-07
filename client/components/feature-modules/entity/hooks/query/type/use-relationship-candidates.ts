@@ -1,4 +1,4 @@
-import { useWorkspace } from "@/components/feature-modules/workspace/hooks/use-workspace";
+import { useWorkspace } from "@/components/feature-modules/workspace/hooks/query/use-workspace";
 import { EntityTypeRelationshipType } from "@/lib/types/types";
 import { EntityRelationshipCandidate, EntityType } from "../../../interface/entity.interface";
 import { useEntityTypes } from "./use-entity-types";

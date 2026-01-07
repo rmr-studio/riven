@@ -6,7 +6,7 @@ import { CreateEntityTypeRequest, EntityType } from "../../../interface/entity.i
 import { EntityTypeService } from "../../../service/entity-type.service";
 
 export function usePublishEntityTypeMutation(
-    organisationId: string,
+    workspaceId: string,
     options?: UseMutationOptions<EntityType, Error, CreateEntityTypeRequest>
 ) {
     const queryClient = useQueryClient();
@@ -15,7 +15,7 @@ export function usePublishEntityTypeMutation(
 
     return useMutation({
         mutationFn: (request: CreateEntityTypeRequest) =>
-            EntityTypeService.publishEntityType(session, organisationId, request),
+            EntityTypeService.publishEntityType(session, workspaceId, request),
         onMutate: (data) => {
             options?.onMutate?.(data);
             submissionToastRef.current = toast.loading("Creating entity type...");
@@ -33,10 +33,10 @@ export function usePublishEntityTypeMutation(
             toast.success(`Entity type created successfully!`);
 
             // Update the specific entity type in cache
-            queryClient.setQueryData(["entityType", response.key, organisationId], response);
+            queryClient.setQueryData(["entityType", response.key, workspaceId], response);
 
             // Update the entity types list in cache
-            queryClient.setQueryData<EntityType[]>(["entityTypes", organisationId], (oldData) => {
+            queryClient.setQueryData<EntityType[]>(["entityTypes", workspaceId], (oldData) => {
                 if (!oldData) return [response];
 
                 // Add new entity type to the list

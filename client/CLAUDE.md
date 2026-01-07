@@ -39,7 +39,7 @@ client/
 ├── app/                                    # Next.js App Router (file-based routing)
 │   ├── api/                               # API routes
 │   ├── dashboard/
-│   │   └── organisation/[organisationId]/  # Org-scoped routes
+│   │   └── organisation/[workspaceId]/  # Org-scoped routes
 │   │       ├── entity/[key]/              # Dynamic entity type routes
 │   │       ├── members/
 │   │       └── subscriptions/
@@ -144,12 +144,12 @@ export type EntityRelationshipDefinition = components["schemas"]["EntityRelation
 export class EntityTypeService {
     static async getEntityTypes(
         session: Session | null,
-        organisationId: string
+        workspaceId: string
     ): Promise<EntityType[]> {
         validateSession(session);
-        validateUuid(organisationId);
+        validateUuid(workspaceId);
 
-        const response = await fetch(`/api/organisations/${organisationId}/entity-types`, {
+        const response = await fetch(`/api/organisations/${workspaceId}/entity-types`, {
             headers: { Authorization: `Bearer ${session.access_token}` },
         });
 
@@ -170,7 +170,7 @@ export class EntityTypeService {
 
 ```typescript
 export function useSaveDefinitionMutation(
-    organisationId: string,
+    workspaceId: string,
     options?: UseMutationOptions<EntityTypeImpactResponse, Error, SaveTypeDefinitionRequest>
 ) {
     const queryClient = useQueryClient();
@@ -179,13 +179,13 @@ export function useSaveDefinitionMutation(
 
     return useMutation({
         mutationFn: (definition) =>
-            EntityTypeService.saveEntityTypeDefinition(session, organisationId, definition),
+            EntityTypeService.saveEntityTypeDefinition(session, workspaceId, definition),
         onMutate: () => {
             submissionToastRef.current = toast.loading("Saving...");
         },
         onSuccess: (response) => {
             toast.success("Saved successfully!", { id: submissionToastRef.current });
-            queryClient.setQueryData(["entityType", organisationId, response.key], response);
+            queryClient.setQueryData(["entityType", workspaceId, response.key], response);
         },
         onError: (error) => {
             toast.error(`Failed: ${error.message}`, { id: submissionToastRef.current });
@@ -208,7 +208,7 @@ export function useSaveDefinitionMutation(
 // Store factory for per-instance stores
 export const createEntityTypeConfigStore = (
     entityTypeKey: string,
-    organisationId: string,
+    workspaceId: string,
     entityType: EntityType,
     form: UseFormReturn<EntityTypeFormValues>,
     updateMutation: (type: EntityType) => Promise<EntityType>
@@ -371,7 +371,7 @@ export interface UseEntityRelationshipFormReturn {
 }
 
 export function useEntityTypeRelationshipForm(
-    organisationId: string,
+    workspaceId: string,
     type: EntityType,
     open: boolean,
     onSave: () => void,
@@ -385,7 +385,7 @@ export function useEntityTypeRelationshipForm(
         },
     });
 
-    const { mutateAsync: saveDefinition } = useSaveDefinitionMutation(organisationId, {
+    const { mutateAsync: saveDefinition } = useSaveDefinitionMutation(workspaceId, {
         onSuccess: () => onSave(),
     });
 
@@ -409,7 +409,7 @@ const EntityTypeConfigContext = createContext<EntityTypeConfigStoreApi | undefin
 
 export const EntityTypeConfigurationProvider = ({
     children,
-    organisationId,
+    workspaceId,
     entityType,
 }: EntityTypeConfigurationProviderProps) => {
     const storeRef = useRef<EntityTypeConfigStoreApi | null>(null);
@@ -423,13 +423,13 @@ export const EntityTypeConfigurationProvider = ({
     });
 
     // Create mutation function
-    const { mutateAsync: updateType } = useSaveEntityTypeConfiguration(organisationId);
+    const { mutateAsync: updateType } = useSaveEntityTypeConfiguration(workspaceId);
 
     // Create store only once per entity type
     if (!storeRef.current) {
         storeRef.current = createEntityTypeConfigStore(
             entityType.key,
-            organisationId,
+            workspaceId,
             entityType,
             form,
             updateType
@@ -579,7 +579,7 @@ interface EntityTypeImpactResponse {
 **Organisation-scoped resources:**
 
 -   All major features scoped to organisation ID
--   Route pattern: `/dashboard/organisation/[organisationId]/{feature}`
+-   Route pattern: `/dashboard/organisation/[workspaceId]/{feature}`
 -   Entity types, blocks, members isolated per org
 -   Subscription and usage tracking per org
 
