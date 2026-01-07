@@ -5,14 +5,15 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
 import riven.core.entity.workspace.WorkspaceEntity
 import riven.core.entity.workspace.WorkspaceMemberEntity
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.exceptions.NotFoundException
+import riven.core.models.request.workspace.SaveWorkspaceRequest
 import riven.core.models.workspace.Workspace
 import riven.core.models.workspace.WorkspaceMember
-import riven.core.models.workspace.request.WorkspaceCreationRequest
 import riven.core.repository.workspace.WorkspaceMemberRepository
 import riven.core.repository.workspace.WorkspaceRepository
 import riven.core.service.activity.ActivityService
@@ -62,22 +63,33 @@ class WorkspaceService(
      */
     @Throws(AccessDeniedException::class, IllegalArgumentException::class)
     @Transactional
-    fun createWorkspace(request: WorkspaceCreationRequest): Workspace {
+    fun saveWorkspace(request: SaveWorkspaceRequest, avatar: MultipartFile? = null): Workspace {
         // Gets the user ID from the auth token to act as the Workspace creator
         authTokenService.getUserId().let { userId ->
+            val currency: Currency = getCurrency(request.defaultCurrency)
+
             // Create and save the workspace entity
-            val currency: Currency = try {
-                Currency.getInstance(request.defaultCurrency.trim().uppercase())
-            } catch (e: IllegalArgumentException) {
-                throw IllegalArgumentException("Invalid currency code: ${request.defaultCurrency}")
+            val entity = request.id.let {
+                if (it == null) {
+                    return@let WorkspaceEntity(
+                        name = request.name,
+                        plan = request.plan,
+                        defaultCurrency = currency,
+                    )
+                }
+
+                findOrThrow { workspaceRepository.findById(it) }.apply {
+                    this.name = request.name
+                    this.plan = request.plan
+                    this.defaultCurrency = currency
+                }
             }
 
-            val entity = WorkspaceEntity(
-                name = request.name,
-                avatarUrl = request.avatarUrl,
-                plan = request.plan,
-                defaultCurrency = currency,
-            )
+            // Handle avatar upload and avatarUrl storage, if a file is provided
+            avatar?.let {
+                TODO()
+            }
+
             workspaceRepository.save(entity).run {
                 val id = requireNotNull(this.id) { "WorkspaceEntity must have a non-null id after save" }
                 // Log the activity of creating an workspace
@@ -94,17 +106,19 @@ class WorkspaceService(
                     )
                 )
 
-                // Add the creator as the first member/owner of the workspace
-                WorkspaceMemberEntity(
-                    workspaceId = id,
-                    userId = userId,
-                    role = WorkspaceRoles.OWNER
-                ).run {
-                    workspaceMemberRepository.save(this)
+                if (request.id == null) {
+                    // Add the creator as the first member/owner of the workspace
+                    WorkspaceMemberEntity(
+                        workspaceId = id,
+                        userId = userId,
+                        role = WorkspaceRoles.OWNER
+                    ).run {
+                        workspaceMemberRepository.save(this)
+                    }
+
                 }
 
                 return this.toModel().also { workspace ->
-                    // If this is the first workspace for the user, update their profile to make it their default
                     userService.getUserWithWorkspacesFromSession().let {
                         // Membership array should be empty until transaction is over. Meaning we can determine if this is the first workspace made by the user
                         // Can also manually specify for the workspace to become the new default
@@ -119,43 +133,13 @@ class WorkspaceService(
                 }
             }
         }
-
     }
 
-    /**
-     * Update an workspace's persisted fields and record the update activity.
-     *
-     * Logs an WORKSPACE UPDATE activity attributed to the caller.
-     *
-     * @param workspace The workspace model containing updated fields; must include a valid `id`.
-     * @return The updated workspace model reflecting the persisted changes.
-     */
-    @PreAuthorize("@workspaceSecurity.hasWorkspaceRoleOrHigher(#workspace.id, 'ADMIN')")
-    fun updateWorkspace(workspace: Workspace): Workspace {
-        authTokenService.getUserId().let { userId ->
-            findOrThrow { workspaceRepository.findById(workspace.id) }.run {
-                val entity = this.apply {
-                    avatarUrl = workspace.avatarUrl
-                    name = workspace.name
-                }
-
-                workspaceRepository.save(entity).let { updatedEntity ->
-                    // Log the activity of updating an workspace
-                    activityService.logActivity(
-                        activity = riven.core.enums.activity.Activity.WORKSPACE,
-                        operation = riven.core.enums.util.OperationType.UPDATE,
-                        userId = userId,
-                        workspaceId = requireNotNull(updatedEntity.id),
-                        entityType = ApplicationEntityType.WORKSPACE,
-                        entityId = updatedEntity.id,
-                        details = mapOf(
-                            "workspaceId" to updatedEntity.id.toString(),
-                            "name" to updatedEntity.name
-                        )
-                    )
-                    return updatedEntity.toModel()
-                }
-            }
+    private fun getCurrency(symbol: String): Currency {
+        return try {
+            Currency.getInstance(symbol.trim().uppercase())
+        } catch (_: IllegalArgumentException) {
+            throw IllegalArgumentException("Invalid currency code: ${symbol}")
         }
     }
 

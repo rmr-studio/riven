@@ -2,12 +2,14 @@ package riven.core.controller.workspace
 
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 import riven.core.enums.workspace.WorkspaceRoles
+import riven.core.models.request.workspace.SaveWorkspaceRequest
 import riven.core.models.workspace.Workspace
 import riven.core.models.workspace.WorkspaceMember
-import riven.core.models.workspace.request.WorkspaceCreationRequest
 import riven.core.service.workspace.WorkspaceService
 import java.util.*
 
@@ -39,25 +41,18 @@ class WorkspaceController(
         return ResponseEntity.ok(workspace)
     }
 
-    @PostMapping("/")
-    fun createWorkspace(@RequestBody workspace: WorkspaceCreationRequest): ResponseEntity<Workspace> {
-        val createdWorkspace: Workspace = this.workspaceService.createWorkspace(
+    @PostMapping("/", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun saveWorkspace(
+        @RequestPart("workspace", required = true) workspace: SaveWorkspaceRequest,
+        @RequestPart("file", required = false) file: MultipartFile
+
+
+    ): ResponseEntity<Workspace> {
+        val response: Workspace = this.workspaceService.saveWorkspace(
             workspace
         )
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdWorkspace)
-    }
-
-
-    @PutMapping("/")
-    fun updateWorkspace(
-        @RequestBody workspace: Workspace
-    ): ResponseEntity<Workspace> {
-        val updatedWorkspace: Workspace = this.workspaceService.updateWorkspace(
-            workspace = workspace
-        )
-
-        return ResponseEntity.ok(updatedWorkspace)
+        return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
 
     @DeleteMapping("/{workspaceId}")
