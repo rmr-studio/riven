@@ -8,11 +8,13 @@ import riven.core.enums.common.IconColour
 import riven.core.enums.common.IconType
 import riven.core.enums.entity.EntityCategory
 import riven.core.models.common.Icon
+import riven.core.models.common.SoftDeletable
 import riven.core.models.common.display.DisplayName
 import riven.core.models.entity.EntityType
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.configuration.EntityTypeAttributeColumn
+import java.time.ZonedDateTime
 import java.util.*
 
 /**
@@ -25,10 +27,10 @@ import java.util.*
 @Table(
     name = "entity_types",
     indexes = [
-        Index(columnList = "organisation_id", name = "idx_entity_types_organisation_id"),
+        Index(columnList = "workspace_id", name = "idx_entity_types_workspace_id"),
     ],
     uniqueConstraints = [
-        UniqueConstraint(columnNames = ["organisation_id", "key"])
+        UniqueConstraint(columnNames = ["workspace_id", "key"])
     ]
 )
 data class EntityTypeEntity(
@@ -60,8 +62,8 @@ data class EntityTypeEntity(
     @Column(name = "description", nullable = true)
     var description: String? = null,
 
-    @Column(name = "organisation_id", columnDefinition = "uuid")
-    val organisationId: UUID? = null,
+    @Column(name = "workspace_id", columnDefinition = "uuid")
+    val workspaceId: UUID? = null,
 
     @Column(name = "protected", nullable = false)
     val protected: Boolean = false,
@@ -89,12 +91,12 @@ data class EntityTypeEntity(
     @Column(name = "count", nullable = false)
     var entitiesCount: Long = 0L,
 
-    @Column(name = "archived", nullable = false, columnDefinition = "boolean default false")
-    var archived: Boolean = false,
+    @Column(name = "deleted", nullable = false, columnDefinition = "boolean default false")
+    override var deleted: Boolean = false,
 
     @Column(name = "deleted_at", nullable = true)
-    var deletedAt: Date? = null,
-) : AuditableEntity() {
+    override var deletedAt: ZonedDateTime? = null,
+) : AuditableEntity(), SoftDeletable {
 
     /**
      * Convert this entity to a domain model.
@@ -109,7 +111,7 @@ data class EntityTypeEntity(
             icon = Icon(this.iconType, this.iconColour),
             identifierKey = this.identifierKey,
             description = this.description,
-            organisationId = this.organisationId,
+            workspaceId = this.workspaceId,
             protected = this.protected,
             type = this.type,
             schema = this.schema,

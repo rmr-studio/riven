@@ -18,6 +18,7 @@ import riven.core.models.block.layout.Widget
 import riven.core.models.block.metadata.BlockReferenceMetadata
 import riven.core.models.block.metadata.EntityReferenceMetadata
 import riven.core.models.block.operation.*
+import riven.core.models.block.tree.*
 import riven.core.models.request.block.HydrateBlocksRequest
 import riven.core.models.request.block.OverwriteEnvironmentRequest
 import riven.core.models.request.block.SaveEnvironmentRequest
@@ -25,7 +26,6 @@ import riven.core.models.request.block.StructuralOperationRequest
 import riven.core.models.response.block.OverwriteEnvironmentResponse
 import riven.core.models.response.block.SaveEnvironmentResponse
 import riven.core.models.response.block.internal.BlockHydrationResult
-import riven.core.models.block.tree.*
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
 import java.util.*
@@ -42,7 +42,7 @@ class BlockEnvironmentService(
     private val logger: KLogger
 ) {
 
-    @PreAuthorize("@organisationSecurity.hasOrg(#request.organisationId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#request.workspaceId)")
     @Transactional
     fun saveBlockEnvironment(request: SaveEnvironmentRequest): SaveEnvironmentResponse {
         authTokenService.getUserId().let { userId ->
@@ -60,7 +60,7 @@ class BlockEnvironmentService(
             request.operations.map { operation ->
                 logBlockOperation(
                     userId = userId,
-                    organisationId = request.organisationId,
+                    workspaceId = request.workspaceId,
                     operation = operation
                 )
             }.run {
@@ -161,14 +161,14 @@ class BlockEnvironmentService(
 
     private fun logBlockOperation(
         userId: UUID,
-        organisationId: UUID,
+        workspaceId: UUID,
         operation: StructuralOperationRequest
     ): ActivityLogEntity {
         val operationData = operation.data // Assign to local variable for smart casting
 
         return ActivityLogEntity(
             userId = userId,
-            organisationId = organisationId,
+            workspaceId = workspaceId,
             activity = Activity.BLOCK_OPERATION,
             operation = when (operationData.type) {
                 BlockOperationType.ADD_BLOCK -> OperationType.CREATE
@@ -234,14 +234,14 @@ class BlockEnvironmentService(
      * Implements lazy initialization - creates default environment if none exists.
      *
      * @param entityId The ID of the entity (e.g., client ID)
-     * @param entityType The type of entity (e.g., CLIENT, ORGANISATION)
+     * @param entityType The type of entity (e.g., CLIENT, WORKSPACE)
      * @return BlockEnvironment with layout, trees, and entity data
      */
-    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun loadBlockEnvironment(
         entityId: UUID,
         type: ApplicationEntityType,
-        organisationId: UUID
+        workspaceId: UUID
     ): BlockEnvironment {
         // 1. Try to load existing layout, or create default if it doesn't exist
         val layoutEntity = try {
@@ -250,14 +250,14 @@ class BlockEnvironmentService(
             defaultEnvironmentService.createDefaultEnvironmentForEntity(
                 entityId = entityId,
                 entityType = type,
-                organisationId = organisationId
+                workspaceId = workspaceId
             )
             // Fetch the newly created layout
             blockTreeLayoutService.fetchLayoutForEntity(entityId)
         }
 
-        require(layoutEntity.organisationId == organisationId) {
-            "Layout organisation ID does not match requested organisation ID"
+        require(layoutEntity.workspaceId == workspaceId) {
+            "Layout workspace ID does not match requested workspace ID"
         }
 
         // 2. Build block trees from layout
@@ -271,10 +271,10 @@ class BlockEnvironmentService(
         )
     }
 
-    @PreAuthorize("@organisationSecurity.hasOrg(#request.organisationId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#request.workspaceId)")
     fun hydrateEnvironment(request: HydrateBlocksRequest): Map<UUID, BlockHydrationResult> {
-        val (references, organisationId) = request
-        return blockReferenceService.hydrateBlockReferences(references, organisationId)
+        val (references, workspaceId) = request
+        return blockReferenceService.hydrateBlockReferences(references, workspaceId)
     }
 
     /**
@@ -528,11 +528,11 @@ class BlockEnvironmentService(
 
             val entity = BlockEntity(
                 id = null, // Let DB generate new ID
-                organisationId = blockData.organisationId,
+                workspaceId = blockData.workspaceId,
                 type = blockTypeEntity,
                 name = blockData.name,
                 payload = blockData.payload,
-                archived = false
+                deleted = false
             )
 
             newBlocks.add(entity)

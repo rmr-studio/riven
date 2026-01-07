@@ -1,6 +1,7 @@
 package riven.core.entity.entity
 
 import jakarta.persistence.*
+import riven.core.models.common.SoftDeletable
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -10,7 +11,7 @@ import java.util.*
     uniqueConstraints = [
         UniqueConstraint(
             name = "uq_unique_attribute_per_type",
-            columnNames = ["type_id", "field_id", "field_value", "archived"]
+            columnNames = ["type_id", "field_id", "field_value", "deleted"]
         )
     ]
 )
@@ -32,9 +33,9 @@ data class EntityUniqueValueEntity(
     @Column(name = "entity_id", nullable = false)
     val entityId: UUID,
 
-    @Column(name = "archived", nullable = false)
-    val archived: Boolean = false,
+    @Column(name = "deleted", nullable = false)
+    override var deleted: Boolean = false,
 
     @Column(name = "deleted_at")
-    val deletedAt: ZonedDateTime? = null
-)
+    override var deletedAt: ZonedDateTime? = null
+) : SoftDeletable

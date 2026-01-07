@@ -5,17 +5,17 @@ import { Entity } from "../../interface/entity.interface";
 import { EntityService } from "../../service/entity.service";
 
 export function useEntities(
-    organisationId?: string,
+    workspaceId?: string,
     typeId?: string
 ): AuthenticatedQueryResult<Entity[]> {
     const { session, loading } = useAuth();
     const query = useQuery({
-        queryKey: ["entities", organisationId, typeId],
+        queryKey: ["entities", workspaceId, typeId],
         queryFn: async () => {
-            return await EntityService.getEntitiesForType(session, organisationId!!, typeId!!); // Non-null assertion as query is disabled when params are missing
+            return await EntityService.getEntitiesForType(session, workspaceId!!, typeId!!); // Non-null assertion as query is disabled when params are missing
         },
         staleTime: 5 * 60 * 1000, // 5 minutes
-        enabled: !!session && !!organisationId && !!typeId && !loading,
+        enabled: !!session && !!workspaceId && !!typeId && !loading,
         refetchOnWindowFocus: false,
         refetchOnMount: false,
         gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
@@ -28,15 +28,15 @@ export function useEntities(
 }
 
 export function useEntitiesFromManyTypes(
-    organisationId: string,
+    workspaceId: string,
     typeIds: string[]
 ): AuthenticatedMultiQueryResult<Entity[]> {
     const { session, loading } = useAuth();
     const query = useQueries({
         queries: typeIds.map((typeId) => ({
-            queryKey: ["entities", organisationId, typeId],
-            queryFn: () => EntityService.getEntitiesForType(session, organisationId, typeId),
-            enabled: !!session && !!organisationId,
+            queryKey: ["entities", workspaceId, typeId],
+            queryFn: () => EntityService.getEntitiesForType(session, workspaceId, typeId),
+            enabled: !!session && !!workspaceId,
         })),
         combine: (results) => {
             return {

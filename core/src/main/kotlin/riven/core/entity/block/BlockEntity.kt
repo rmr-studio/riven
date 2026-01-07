@@ -6,10 +6,14 @@ import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
 import riven.core.models.block.Block
 import riven.core.models.block.metadata.Metadata
+import riven.core.models.common.SoftDeletable
+import java.time.ZonedDateTime
 import java.util.*
 
 @Entity
-@Table(name = "blocks")
+@Table(
+    name = "blocks"
+)
 data class BlockEntity(
 
     @Id
@@ -17,8 +21,8 @@ data class BlockEntity(
     @Column(name = "id", nullable = false, columnDefinition = "uuid")
     val id: UUID? = null,
 
-    @Column(name = "organisation_id", nullable = false)
-    val organisationId: UUID,
+    @Column(name = "workspace_id", nullable = false)
+    val workspaceId: UUID,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "type_id", nullable = false)
@@ -31,19 +35,21 @@ data class BlockEntity(
     @Column(name = "payload", columnDefinition = "jsonb", nullable = false)
     var payload: Metadata,
 
-    @Column(name = "archived", columnDefinition = "boolean default false")
-    var archived: Boolean = false,
-) : AuditableEntity() {
+    @Column(name = "deleted", columnDefinition = "boolean default false")
+    override var deleted: Boolean = false,
+
+    @Column(name = "deleted_at", nullable = true)
+    override var deletedAt: ZonedDateTime? = null
+) : AuditableEntity(), SoftDeletable {
 
     fun toModel(audit: Boolean = false): Block {
         val id = requireNotNull(this.id) { "BlockEntity ID cannot be null when converting to model" }
         return Block(
             id = id,
-            organisationId = this.organisationId,
+            workspaceId = this.workspaceId,
             type = this.type.toModel(),
             name = this.name,
             payload = this.payload,
-            archived = this.archived,
             validationErrors = this.payload.meta.validationErrors.ifEmpty { null },
             createdAt = if (audit) this.createdAt else null,
             updatedAt = if (audit) this.updatedAt else null,

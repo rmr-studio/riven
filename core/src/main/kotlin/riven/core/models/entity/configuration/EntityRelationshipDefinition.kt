@@ -63,8 +63,8 @@ data class EntityRelationshipDefinition(
     var inverseName: String? = null, // Default Naming for Inverse Relationship Columns. Will populate `name` when creating an inverse relationship definition
 
     val protected: Boolean = false,
-    override val createdAt: ZonedDateTime?,
-    override val updatedAt: ZonedDateTime?,
-    override val createdBy: UUID?,
-    override val updatedBy: UUID?
-) : AuditableModel()
+    override var createdAt: ZonedDateTime?,
+    override var updatedAt: ZonedDateTime?,
+    override var createdBy: UUID?,
+    override var updatedBy: UUID?
+) : AuditableModel

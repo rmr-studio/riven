@@ -2,6 +2,7 @@ package riven.core.entity.entity
 
 import jakarta.persistence.*
 import riven.core.entity.util.AuditableEntity
+import riven.core.models.common.SoftDeletable
 import riven.core.models.entity.EntityRelationship
 import java.time.ZonedDateTime
 import java.util.*
@@ -16,9 +17,10 @@ import java.util.*
         UniqueConstraint(columnNames = ["source_entity_id", "relationship_field_id", "target_entity_id"])
     ],
     indexes = [
-        Index(name = "idx_entity_relationships_source", columnList = "source_entity_id"),
-        Index(name = "idx_entity_relationships_target", columnList = "target_entity_id"),
-        Index(name = "idx_entity_relationships_organisation", columnList = "organisation_id")
+        Index(name = "idx_entity_relationships_source", columnList = "workspace_id, source_entity_id"),
+        Index(name = "idx_entity_relationships_target", columnList = "workspace_id, target_entity_id"),
+        Index(name = "idx_entity_relationships_target", columnList = "workspace_id, source_entity_type_id"),
+        Index(name = "idx_entity_relationships_target", columnList = "workspace_id, target_entity_type_id"),
     ]
 )
 data class EntityRelationshipEntity(
@@ -27,26 +29,32 @@ data class EntityRelationshipEntity(
     @Column(name = "id", nullable = false, columnDefinition = "uuid")
     val id: UUID? = null,
 
-    @Column(name = "organisation_id", nullable = false, columnDefinition = "uuid")
-    val organisationId: UUID,
+    @Column(name = "workspace_id", nullable = false, columnDefinition = "uuid")
+    val workspaceId: UUID,
 
     @Column(name = "source_entity_id", nullable = false, columnDefinition = "uuid")
     val sourceId: UUID,
 
+    @Column(name = "source_entity_type_id", nullable = false, columnDefinition = "uuid")
+    val sourceTypeId: UUID,
+
     @Column(name = "target_entity_id", nullable = false, columnDefinition = "uuid")
     val targetId: UUID,
+
+    @Column(name = "target_entity_type_id", nullable = false, columnDefinition = "uuid")
+    val targetTypeId: UUID,
 
     @Column(name = "relationship_field_id", nullable = false, columnDefinition = "uuid")
     val fieldId: UUID,
 
-    @Column(name = "archived", nullable = false)
-    val archived: Boolean = false,
+    @Column(name = "deleted", nullable = false)
+    override var deleted: Boolean = false,
 
     @Column(name = "deleted_at", columnDefinition = "timestamptz")
-    val deletedAt: ZonedDateTime? = null
+    override var deletedAt: ZonedDateTime? = null
 
 
-) : AuditableEntity() {
+) : AuditableEntity(), SoftDeletable {
 
     /**
      * Convert this entity to a domain model.
@@ -55,7 +63,7 @@ data class EntityRelationshipEntity(
         val id = requireNotNull(this.id) { "EntityRelationshipEntity ID cannot be null" }
         return EntityRelationship(
             id = id,
-            organisationId = this.organisationId,
+            workspaceId = this.workspaceId,
             fieldId = this.fieldId,
             sourceEntityId = this.sourceId,
             targetEntityId = this.targetId,

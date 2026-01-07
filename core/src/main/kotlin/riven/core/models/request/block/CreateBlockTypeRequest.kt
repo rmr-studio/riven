@@ -18,6 +18,6 @@ data class CreateBlockTypeRequest(
     val schema: BlockTypeSchema,
     // The display configuration for rendering the block.
     val display: BlockDisplay,
-    // The ID of the organisation creating the block type.
-    val organisationId: UUID
+    // The ID of the workspace creating the block type.
+    val workspaceId: UUID
 )

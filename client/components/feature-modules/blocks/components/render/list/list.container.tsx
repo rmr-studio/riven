@@ -24,7 +24,7 @@ export const ListPanel: FC<Props> = ({ blockId, children, listControls }) => {
     const node = getBlock(blockId);
     if (!node) return children;
     const { block } = node;
-    const { organisationId, type } = block;
+    const { workspaceId, type } = block;
 
     // Create callback handlers for block toolbar
     const handleDelete = useCallback(
@@ -34,14 +34,14 @@ export const ListPanel: FC<Props> = ({ blockId, children, listControls }) => {
 
     const handleInsert = useCallback(
         (item: SlashMenuItem) => {
-            if (!type.nesting || !organisationId) return;
-            const newNode = createNodeFromSlashItem(item, organisationId);
+            if (!type.nesting || !workspaceId) return;
+            const newNode = createNodeFromSlashItem(item, workspaceId);
             if (!newNode) return;
 
             // TODO: Maybe adjust the insertion so it does not go through the same grid creation process
             addTrackedBlock(newNode, blockId, null);
         },
-        [type.nesting, organisationId, addTrackedBlock, blockId]
+        [type.nesting, workspaceId, addTrackedBlock, blockId]
     );
 
     // Check if this block is inside a list

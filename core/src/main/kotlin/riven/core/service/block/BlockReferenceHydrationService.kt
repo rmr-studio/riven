@@ -37,12 +37,12 @@ class BlockReferenceHydrationService(
      * 2. Fetching all entities and blocks in batched operations
      *
      * @param references The map of block IDs to their list of reference items to hydrate.
-     * @param organisationId The organisation context for authorization and filtering.
+     * @param workspaceId The workspace context for authorization and filtering.
      * @return A map from block ID to its hydration result.
      */
     fun hydrateBlockReferences(
         references: Map<UUID, List<EntityReferenceRequest>>,
-        organisationId: UUID
+        workspaceId: UUID
     ): Map<UUID, BlockHydrationResult> {
 
         // Collect all unique IDs by reference type for batch fetching

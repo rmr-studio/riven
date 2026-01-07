@@ -41,7 +41,7 @@ interface PanelToolbarProps {
     onInlineInsertClick?: () => void;
     onInlineMenuOpenChange?: (open: boolean) => void;
     inlineSearchRef?: RefObject<HTMLInputElement | null>;
-    organisationId: string;
+    workspaceId: string;
     allowedTypes?: string[] | null;
     onSelectBlockType?: (blockType: BlockType) => void;
     onOpenQuickActionsFromInline?: () => void;
@@ -65,7 +65,7 @@ const PanelToolbar: FC<PanelToolbarProps> = ({
     onInlineInsertClick,
     onInlineMenuOpenChange,
     inlineSearchRef,
-    organisationId,
+    workspaceId,
     allowedTypes,
     onSelectBlockType,
     onOpenQuickActionsFromInline,
@@ -173,7 +173,7 @@ const PanelToolbar: FC<PanelToolbarProps> = ({
                     <PopoverContent className="w-80 p-0" align="start">
                         <PanelQuickInsert
                             searchRef={inlineSearchRef}
-                            organisationId={organisationId}
+                            workspaceId={workspaceId}
                             // entityType={entityType}
                             allowedTypes={allowedTypes}
                             onSelectBlockType={onSelectBlockType}

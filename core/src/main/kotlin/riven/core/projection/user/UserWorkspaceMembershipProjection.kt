@@ -1,0 +1,47 @@
+package riven.core.projection.user
+
+import riven.core.enums.workspace.WorkspaceDisplay
+import riven.core.enums.workspace.WorkspaceRoles
+import riven.core.models.user.UserDisplay
+import riven.core.models.workspace.WorkspaceMember
+import java.time.ZonedDateTime
+import java.util.*
+
+/**
+ * Projection interface for workspace membership data from native query.
+ * Spring Data JPA automatically maps query columns to these getter methods.
+ *
+ * Used to fetch user workspace memberships in a single optimized query with JOIN.
+ */
+interface UserWorkspaceMembershipProjection {
+    fun getUserId(): UUID
+    fun getUserName(): String
+    fun getUserEmail(): String
+    fun getUserAvatarUrl(): String?
+    fun getWorkspaceId(): UUID
+    fun getWorkspaceName(): String
+    fun getWorkspaceAvatarUrl(): String?
+    fun getRole(): String
+    fun getMemberSince(): ZonedDateTime
+}
+
+/**
+ * Extension function to convert projection to WorkspaceMember domain model.
+ */
+fun UserWorkspaceMembershipProjection.toWorkspaceMember(): WorkspaceMember {
+    return WorkspaceMember(
+        workspace = WorkspaceDisplay(
+            id = getWorkspaceId(),
+            name = getWorkspaceName(),
+            avatarUrl = getWorkspaceAvatarUrl()
+        ),
+        user = UserDisplay(
+            id = getUserId(),
+            email = getUserEmail(),
+            name = getUserName(),
+            avatarUrl = getUserAvatarUrl()
+        ),
+        role = WorkspaceRoles.valueOf(getRole()),
+        memberSince = getMemberSince()
+    )
+}

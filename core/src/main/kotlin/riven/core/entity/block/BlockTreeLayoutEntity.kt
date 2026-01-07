@@ -6,28 +6,17 @@ import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
 import riven.core.models.block.layout.TreeLayout
 import riven.core.models.block.tree.BlockTreeLayout
+import riven.core.models.common.SoftDeletable
+import java.time.ZonedDateTime
 import java.util.*
 
 
-/**
- * Entity for persisting block tree layouts with support for multiple layouts per block.
- *
- * Supports different layout scopes:
- * - ORGANIZATION: Default layout for all users in the org
- * - USER: Personalized layout for a specific user
- * - TEAM: Shared layout for a team/group
- *
- * Layout Resolution Priority:
- * 1. User-specific layout (if exists)
- * 2. Team layout (if user is in team and layout exists)
- * 3. Organization default layout
- */
 @Entity
 @Table(
     name = "block_tree_layouts",
     indexes = [
         Index(name = "idx_block_tree_layouts_entity_id", columnList = "entity_id"),
-        Index(name = "idx_block_tree_layouts_organisation_id", columnList = "organisation_id"),
+        Index(name = "idx_block_tree_layouts_workspace_id", columnList = "workspace_id"),
     ]
 )
 data class BlockTreeLayoutEntity(
@@ -42,8 +31,8 @@ data class BlockTreeLayoutEntity(
     @Column(name = "entity_id", nullable = false, columnDefinition = "uuid")
     val entityId: UUID,
 
-    @Column(name = "organisation_id", nullable = false, columnDefinition = "uuid")
-    val organisationId: UUID,
+    @Column(name = "workspace_id", nullable = false, columnDefinition = "uuid")
+    val workspaceId: UUID,
 
     @Column(name = "version", nullable = false)
     var version: Int = 1,
@@ -55,12 +44,18 @@ data class BlockTreeLayoutEntity(
     @Type(JsonBinaryType::class)
     @Column(name = "layout", columnDefinition = "jsonb", nullable = false)
     var layout: TreeLayout,
-) : AuditableEntity() {
+
+    @Column(name = "deleted", columnDefinition = "boolean default false")
+    override var deleted: Boolean = false,
+
+    @Column(name = "deleted_at", nullable = true)
+    override var deletedAt: ZonedDateTime? = null,
+) : AuditableEntity(), SoftDeletable {
     fun toModel(audit: Boolean = false): BlockTreeLayout {
         val id = requireNotNull(this.id) { "BlockTreeLayoutEntity ID cannot be null when converting to model" }
         return BlockTreeLayout(
             id = id,
-            organisationId = this.organisationId,
+            workspaceId = this.workspaceId,
             layout = this.layout,
             version = this.version,
             createdAt = if (audit) this.createdAt else null,

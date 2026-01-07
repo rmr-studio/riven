@@ -32,7 +32,7 @@ const schema = z
                     .optional(),
                 archived: z.boolean().optional(),
                 type: z.string().optional(),
-                organisationId: z.string().optional(),
+                workspaceId: z.string().optional(),
             })
             .passthrough()
             .optional(),
@@ -54,7 +54,7 @@ const schema = z
 
 type Props = z.infer<typeof schema> & {
     client?: Pick<Client, "id" | "name" | "contact" | "company" | "archived" | "type"> & {
-        organisationId?: string;
+        workspaceId?: string;
     };
 };
 

@@ -9,7 +9,9 @@ import riven.core.models.block.BlockType
 import riven.core.models.block.BlockTypeSchema
 import riven.core.models.block.display.BlockDisplay
 import riven.core.models.block.display.BlockTypeNesting
+import riven.core.models.common.SoftDeletable
 import riven.core.models.request.block.CreateBlockTypeRequest
+import java.time.ZonedDateTime
 import java.util.*
 
 /**
@@ -23,10 +25,10 @@ import java.util.*
 @Table(
     name = "block_types",
     uniqueConstraints = [
-        UniqueConstraint(columnNames = ["organisation_id", "key"])
+        UniqueConstraint(columnNames = ["workspace_id", "key"])
     ],
     indexes = [
-        Index(name = "idx_block_types_organisation_id", columnList = "organisation_id")
+        Index(name = "idx_block_types_workspace_id", columnList = "workspace_id")
     ]
 )
 data class BlockTypeEntity(
@@ -48,8 +50,8 @@ data class BlockTypeEntity(
     @Column(name = "description", nullable = true)
     val description: String? = null,
 
-    @Column(name = "organisation_id", columnDefinition = "uuid")
-    val organisationId: UUID? = null,
+    @Column(name = "workspace_id", columnDefinition = "uuid")
+    val workspaceId: UUID? = null,
 
     @Column(name = "system", nullable = false)
     val system: Boolean = false,
@@ -65,8 +67,11 @@ data class BlockTypeEntity(
     @Type(JsonBinaryType::class)
     val schema: BlockTypeSchema,
 
-    @Column(name = "archived", nullable = false, columnDefinition = "boolean default false")
-    var archived: Boolean = false,
+    @Column(name = "deleted", nullable = false, columnDefinition = "boolean default false")
+    override var deleted: Boolean = false,
+
+    @Column(name = "deleted_at", nullable = true)
+    override var deletedAt: ZonedDateTime? = null,
 
     @Column(name = "nesting", columnDefinition = "jsonb", nullable = true)
     @Type(JsonBinaryType::class)
@@ -75,7 +80,7 @@ data class BlockTypeEntity(
     @Column(name = "display_structure", columnDefinition = "jsonb", nullable = false)
     @Type(JsonBinaryType::class)
     val displayStructure: BlockDisplay,
-) : AuditableEntity() {
+) : AuditableEntity(), SoftDeletable {
     /**
      * Convert this entity into a domain BlockType model.
      *
@@ -91,10 +96,10 @@ data class BlockTypeEntity(
             version = this.version,
             name = this.displayName,
             description = this.description,
-            organisationId = this.organisationId,
+            workspaceId = this.workspaceId,
             system = this.system,
             schema = this.schema,
-            archived = this.archived,
+            deleted = this.deleted,
             strictness = this.strictness,
             nesting = this.nesting,
             display = this.displayStructure,
@@ -110,7 +115,7 @@ data class BlockTypeEntity(
         /**
          * Creates a BlockTypeEntity from a CreateBlockTypeRequest.
          *
-         * Populates the entity's key, displayName, description, organisationId, strictness, schema, and displayStructure from the request and ensures `system` is set to `false` (system block types cannot be created via this method).
+         * Populates the entity's key, displayName, description, workspaceId, strictness, schema, and displayStructure from the request and ensures `system` is set to `false` (system block types cannot be created via this method).
          *
          * @param request The create request whose fields are used to populate the entity.
          * @return A BlockTypeEntity populated from the request with `system` set to `false`.
@@ -120,8 +125,8 @@ data class BlockTypeEntity(
                 key = request.key,
                 displayName = request.name,
                 description = request.description,
-                // Organisation should only be null for system types
-                organisationId = request.organisationId,
+                // Workspace should only be null for system types
+                workspaceId = request.workspaceId,
                 // System block types cannot be created via this method
                 system = false,
                 strictness = request.mode,
@@ -137,12 +142,12 @@ data class BlockTypeEntity(
                 sourceId = model.sourceId,
                 displayName = model.name,
                 description = model.description,
-                organisationId = model.organisationId,
+                workspaceId = model.workspaceId,
                 system = model.system,
                 version = model.version,
                 strictness = model.strictness,
                 schema = model.schema,
-                archived = model.archived,
+                deleted = model.deleted,
                 nesting = model.nesting,
                 displayStructure = model.display,
             )

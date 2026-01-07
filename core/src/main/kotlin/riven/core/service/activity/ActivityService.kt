@@ -21,7 +21,7 @@ class ActivityService(
         activity: Activity,
         operation: OperationType,
         userId: UUID,
-        organisationId: UUID,
+        workspaceId: UUID,
         entityType: ApplicationEntityType,
         entityId: UUID? = null,
         timestamp: ZonedDateTime = ZonedDateTime.now(),
@@ -30,7 +30,7 @@ class ActivityService(
         // Create database entry
         ActivityLogEntity(
             userId = userId,
-            organisationId = organisationId,
+            workspaceId = workspaceId,
             activity = activity,
             operation = operation,
             entityType = entityType,
@@ -57,7 +57,7 @@ class ActivityService(
         activity: Activity,
         operation: OperationType,
         userId: UUID,
-        organisationId: UUID,
+        workspaceId: UUID,
         entityType: ApplicationEntityType,
         entityId: UUID? = null,
         details: JsonObject,
@@ -68,7 +68,7 @@ class ActivityService(
             ActivityLogEntity(
                 id = UUID.randomUUID(),
                 userId = userId,
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 activity = activity,
                 operation = operation,
                 entityType = entityType,

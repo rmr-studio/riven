@@ -22,54 +22,54 @@ class EntityController(
     private val entityService: EntityService
 ) {
 
-    @GetMapping("organisation/{organisationId}")
+    @GetMapping("workspace/{workspaceId}")
     @Operation(
-        summary = "Get all entity types for an organisation for all provided type keys",
-        description = "Retrieves all entity associated with the specified organisation and specified entity types." +
+        summary = "Get all entity types for an workspace for all provided type keys",
+        description = "Retrieves all entity associated with the specified workspace and specified entity types." +
                 "This will also fetch all relevant linked entities."
     )
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "Entity types retrieved successfully"),
         ApiResponse(responseCode = "401", description = "Unauthorized access"),
-        ApiResponse(responseCode = "404", description = "Organisation not found")
+        ApiResponse(responseCode = "404", description = "Workspace not found")
     )
-    fun getEntityByTypeIdInForOrganisation(
-        @PathVariable organisationId: UUID,
+    fun getEntityByTypeIdInForWorkspace(
+        @PathVariable workspaceId: UUID,
         @RequestParam ids: List<UUID>
     ): ResponseEntity<Map<UUID, List<Entity>>> {
         val response = entityService.getEntitiesByTypeIds(
-            organisationId = organisationId,
+            workspaceId = workspaceId,
             typeIds = ids
         )
         return ResponseEntity.ok(response)
     }
 
-    @GetMapping("organisation/{organisationId}/type/{id}")
+    @GetMapping("workspace/{workspaceId}/type/{id}")
     @Operation(
-        summary = "Get all entity types for an organisation for a provided entity type",
-        description = "Retrieves all entity associated with the specified organisation and specified entity type." +
+        summary = "Get all entity types for an workspace for a provided entity type",
+        description = "Retrieves all entity associated with the specified workspace and specified entity type." +
                 "This will also fetch all relevant linked entities."
     )
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "Entity types retrieved successfully"),
         ApiResponse(responseCode = "401", description = "Unauthorized access"),
-        ApiResponse(responseCode = "404", description = "Organisation not found")
+        ApiResponse(responseCode = "404", description = "Workspace not found")
     )
-    fun getEntityByTypeIdForOrganisation(
-        @PathVariable organisationId: UUID,
+    fun getEntityByTypeIdForWorkspace(
+        @PathVariable workspaceId: UUID,
         @PathVariable id: UUID
     ): ResponseEntity<List<Entity>> {
         val response = entityService.getEntitiesByTypeId(
-            organisationId = organisationId,
+            workspaceId = workspaceId,
             typeId = id
         )
         return ResponseEntity.ok(response)
     }
 
-    @PostMapping("/organisation/{organisationId}/type/{entityTypeId}")
+    @PostMapping("/workspace/{workspaceId}/type/{entityTypeId}")
     @Operation(
         summary = "Saves an entity instance",
-        description = "Saves either a new entity, or an updated instance within the specified organisation."
+        description = "Saves either a new entity, or an updated instance within the specified workspace."
     )
     @ApiResponses(
         ApiResponse(
@@ -89,7 +89,7 @@ class EntityController(
             ]
         ),
         ApiResponse(responseCode = "401", description = "Unauthorized access"),
-        ApiResponse(responseCode = "404", description = "Organisation or entity type not found"),
+        ApiResponse(responseCode = "404", description = "Workspace or entity type not found"),
         ApiResponse(
             responseCode = "409", description = "Conflict of data or unconfirmed impacts", content = [
                 Content(
@@ -100,30 +100,30 @@ class EntityController(
         )
     )
     fun saveEntity(
-        @PathVariable organisationId: UUID,
+        @PathVariable workspaceId: UUID,
         @PathVariable entityTypeId: UUID,
         @RequestBody request: SaveEntityRequest,
     ): ResponseEntity<SaveEntityResponse> {
-        val response = entityService.saveEntity(organisationId, entityTypeId, request)
+        val response = entityService.saveEntity(workspaceId, entityTypeId, request)
         return ResponseEntity.ok(response)
     }
 
 
-    @DeleteMapping("/organisation/{organisationId}")
+    @DeleteMapping("/workspace/{workspaceId}")
     @Operation(
         summary = "Deletes an entity instance",
-        description = "Deleted the specified entity instance within the organisation."
+        description = "Deleted the specified entity instance within the workspace."
     )
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "Entity instance deleted successfully"),
         ApiResponse(responseCode = "401", description = "Unauthorized access"),
-        ApiResponse(responseCode = "404", description = "Organisation or entity not found")
+        ApiResponse(responseCode = "404", description = "Workspace or entity not found")
     )
     fun deleteEntity(
-        @PathVariable organisationId: UUID,
+        @PathVariable workspaceId: UUID,
         @RequestBody entityIds: List<UUID>,
     ): ResponseEntity<DeleteEntityResponse> {
-        val response = entityService.deleteEntities(organisationId, entityIds)
+        val response = entityService.deleteEntities(workspaceId, entityIds)
         if (response.error != null) {
             return if (response.deletedCount == 0) {
                 ResponseEntity.status(404).body(response)
@@ -131,7 +131,7 @@ class EntityController(
                 ResponseEntity.status(409).body(response)
             }
         }
-        
+
         return ResponseEntity.ok(response)
     }
 }

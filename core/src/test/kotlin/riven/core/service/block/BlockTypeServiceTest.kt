@@ -10,16 +10,16 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.test.context.bean.override.mockito.MockitoBean
-import riven.core.configuration.auth.OrganisationSecurity
+import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.block.BlockTypeEntity
 import riven.core.enums.common.ValidationScope
-import riven.core.enums.organisation.OrganisationRoles
+import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.models.request.block.CreateBlockTypeRequest
 import riven.core.repository.block.BlockTypeRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
-import riven.core.service.util.OrganisationRole
 import riven.core.service.util.WithUserPersona
+import riven.core.service.util.WorkspaceRole
 import riven.core.service.util.factory.block.BlockFactory
 import java.util.*
 
@@ -28,18 +28,18 @@ import java.util.*
     email = "email@email.com",
     displayName = "Jared Tucker",
     roles = [
-        OrganisationRole(
-            organisationId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
-            role = OrganisationRoles.ADMIN
+        WorkspaceRole(
+            workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
+            role = WorkspaceRoles.ADMIN
         )
     ]
 )
-@SpringBootTest(classes = [AuthTokenService::class, OrganisationSecurity::class, BlockTypeServiceTest.TestConfig::class, BlockTypeService::class])
+@SpringBootTest(classes = [AuthTokenService::class, WorkspaceSecurity::class, BlockTypeServiceTest.TestConfig::class, BlockTypeService::class])
 class BlockTypeServiceTest {
 
     @Configuration
     @EnableMethodSecurity(prePostEnabled = true)
-    @Import(OrganisationSecurity::class)
+    @Import(WorkspaceSecurity::class)
     class TestConfig
 
     @MockitoBean
@@ -76,7 +76,7 @@ class BlockTypeServiceTest {
             key = "invoice_header",
             name = "Invoice Header",
             description = "desc",
-            organisationId = orgId,
+            workspaceId = orgId,
             mode = ValidationScope.SOFT,
             schema = BlockFactory.generateSchema(),
             display = BlockFactory.generateDisplay()
@@ -87,7 +87,7 @@ class BlockTypeServiceTest {
             activity = eq(riven.core.enums.activity.Activity.BLOCK_TYPE),
             operation = eq(riven.core.enums.util.OperationType.CREATE),
             userId = any(),
-            organisationId = eq(orgId),
+            workspaceId = eq(orgId),
             entityType = any(),
             entityId = eq(saved.id),
             timestamp = any(),
@@ -100,7 +100,7 @@ class BlockTypeServiceTest {
         val persisted = captor.firstValue
         assertEquals("invoice_header", persisted.key)
         assertEquals("Invoice Header", persisted.displayName)
-        assertEquals(orgId, persisted.organisationId)
+        assertEquals(orgId, persisted.workspaceId)
         assertEquals(ValidationScope.SOFT, persisted.strictness)
     }
 
@@ -143,17 +143,17 @@ class BlockTypeServiceTest {
 
         assertNull(saved.id) // append-only (id assigned by DB)
         assertEquals(type.key, saved.key)
-        assertEquals(type.organisationId, saved.organisationId)
+        assertEquals(type.workspaceId, saved.workspaceId)
         assertEquals(4, saved.version) // existing.version + 1
         assertEquals("Invoice Header v4", saved.displayName)
         assertEquals(ValidationScope.STRICT, saved.strictness)
-        assertFalse(saved.archived)
+        assertFalse(saved.deleted)
 
         verify(activityService).logActivity(
             activity = eq(riven.core.enums.activity.Activity.BLOCK_TYPE),
             operation = eq(riven.core.enums.util.OperationType.CREATE),
             userId = any(),
-            organisationId = eq(requireNotNull(type.organisationId)),
+            workspaceId = eq(requireNotNull(type.workspaceId)),
             entityType = any(),
             entityId = any(),
             timestamp = any(),
@@ -161,97 +161,5 @@ class BlockTypeServiceTest {
         )
     }
 
-    // ------------------------------------------------------------------
-    // archiveBlockType: archive (DELETE op) and restore (UPDATE op)
-    // ------------------------------------------------------------------
-    @Test
-    fun `archiveBlockType sets archived true and logs ARCHIVED`() {
-        // Scenario: Archiving a type sets archived=true and logs DELETE
 
-        val type = BlockFactory.createType(
-            orgId = orgId,
-            key = "invoice_header",
-            version = 3,
-            strictness = ValidationScope.SOFT
-        )
-
-        whenever(blockTypeRepository.findById(type.id!!)).thenReturn(Optional.of(type))
-        whenever(blockTypeRepository.save(any())).thenAnswer { it.arguments[0] }
-
-        blockTypeService.archiveBlockType(type.id!!, true)
-
-        val captor = argumentCaptor<BlockTypeEntity>()
-        verify(blockTypeRepository).save(captor.capture())
-        assertTrue(captor.firstValue.archived)
-
-        verify(activityService).logActivity(
-            activity = eq(riven.core.enums.activity.Activity.BLOCK_TYPE),
-            operation = eq(riven.core.enums.util.OperationType.ARCHIVE),
-            userId = any(),
-            organisationId = eq(requireNotNull(type.organisationId)),
-            entityType = any(),
-            entityId = eq(type.id),
-            timestamp = any(),
-            details = any()
-        )
-    }
-
-    @Test
-    fun `archiveBlockType sets archived false and logs RESTORE`() {
-        // Scenario: Restoring a type sets archived=false and logs UPDATE
-        val existing = BlockFactory.createType(
-            orgId = orgId,
-            key = "invoice_header",
-            version = 3,
-            strictness = ValidationScope.SOFT,
-            archived = true
-        )
-
-        whenever(blockTypeRepository.findById(existing.id!!)).thenReturn(Optional.of(existing))
-        whenever(blockTypeRepository.save(any())).thenAnswer { it.arguments[0] }
-
-        blockTypeService.archiveBlockType(existing.id!!, false)
-
-        val captor = argumentCaptor<BlockTypeEntity>()
-        verify(blockTypeRepository).save(captor.capture())
-        assertFalse(captor.firstValue.archived)
-
-        verify(activityService).logActivity(
-            activity = eq(riven.core.enums.activity.Activity.BLOCK_TYPE),
-            operation = eq(riven.core.enums.util.OperationType.RESTORE),
-            userId = any(),
-            organisationId = eq(requireNotNull(existing.organisationId)),
-            entityType = any(),
-            entityId = eq(existing.id),
-            timestamp = any(),
-            details = any()
-        )
-    }
-
-    @Test
-    fun `archiveBlockType no-ops when status unchanged`() {
-        // Scenario: Calling archive with the current status does nothing
-        val existing = BlockFactory.createType(
-            orgId = orgId,
-            key = "invoice_header",
-            version = 3,
-            strictness = ValidationScope.SOFT,
-            archived = true
-        )
-
-        whenever(blockTypeRepository.findById(existing.id!!)).thenReturn(Optional.of(existing))
-        blockTypeService.archiveBlockType(existing.id!!, true)
-
-        verify(blockTypeRepository, never()).save(any())
-        verify(activityService, never()).logActivity(
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-        )
-    }
 }

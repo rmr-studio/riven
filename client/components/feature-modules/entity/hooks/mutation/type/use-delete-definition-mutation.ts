@@ -9,14 +9,14 @@ import {
 import { EntityTypeService } from "../../../service/entity-type.service";
 
 export function useDeleteDefinitionMutation(
-    organisationId: string,
+    workspaceId: string,
     options?: UseMutationOptions<EntityTypeImpactResponse, Error, DeleteTypeDefinitionRequest>
 ) {
     const queryClient = useQueryClient();
     const { session } = useAuth();
     return useMutation({
         mutationFn: (definition: DeleteTypeDefinitionRequest) =>
-            EntityTypeService.removeEntityTypeDefinition(session, organisationId, definition),
+            EntityTypeService.removeEntityTypeDefinition(session, workspaceId, definition),
         onMutate: (data) => {
             options?.onMutate?.(data);
         },
@@ -34,27 +34,24 @@ export function useDeleteDefinitionMutation(
             if (response.updatedEntityTypes) {
                 Object.entries(response.updatedEntityTypes).forEach(([key, entityType]) => {
                     // Update individual entity type query cache
-                    queryClient.setQueryData(["entityType", key, organisationId], entityType);
+                    queryClient.setQueryData(["entityType", key, workspaceId], entityType);
                 });
 
                 // Update the entity types list in cache
-                queryClient.setQueryData<EntityType[]>(
-                    ["entityTypes", organisationId],
-                    (oldData) => {
-                        if (!oldData) return Object.values(response.updatedEntityTypes!);
+                queryClient.setQueryData<EntityType[]>(["entityTypes", workspaceId], (oldData) => {
+                    if (!oldData) return Object.values(response.updatedEntityTypes!);
 
-                        // Create a map of updated entity types for efficient lookup
-                        const updatedTypesMap = new Map(
-                            Object.entries(response.updatedEntityTypes!).map(([key, type]) => [
-                                key,
-                                type,
-                            ])
-                        );
+                    // Create a map of updated entity types for efficient lookup
+                    const updatedTypesMap = new Map(
+                        Object.entries(response.updatedEntityTypes!).map(([key, type]) => [
+                            key,
+                            type,
+                        ])
+                    );
 
-                        // Replace all updated entity types in the list
-                        return oldData.map((et) => updatedTypesMap.get(et.key) ?? et);
-                    }
-                );
+                    // Replace all updated entity types in the list
+                    return oldData.map((et) => updatedTypesMap.get(et.key) ?? et);
+                });
             }
 
             return response;

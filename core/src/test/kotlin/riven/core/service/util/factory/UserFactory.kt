@@ -1,7 +1,6 @@
 package riven.core.service.util.factory
 
 import riven.core.entity.user.UserEntity
-import java.time.ZonedDateTime
 import java.util.*
 
 object UserFactory {
@@ -29,8 +28,8 @@ object UserFactory {
             email = email,
             phone = phone,
             avatarUrl = null,
-            createdAt = ZonedDateTime.now()
-        )
+
+            )
     }
 
 }

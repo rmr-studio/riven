@@ -18,7 +18,7 @@ interface Props {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     selectedRows: EntityRow[];
-    organisationId: string;
+    workspaceId: string;
     entityTypeId: string;
     onSuccess?: () => void;
 }
@@ -27,7 +27,7 @@ export const DeleteEntityModal: FC<Props> = ({
     open,
     onOpenChange,
     selectedRows,
-    organisationId,
+    workspaceId,
     entityTypeId,
     onSuccess,
 }) => {
@@ -40,7 +40,7 @@ export const DeleteEntityModal: FC<Props> = ({
 
     const entityCount = entityIds.length;
 
-    const { mutateAsync: deleteEntities } = useDeleteEntityMutation(organisationId, {
+    const { mutateAsync: deleteEntities } = useDeleteEntityMutation(workspaceId, {
         onMutate: () => {
             setIsDeleting(true);
         },

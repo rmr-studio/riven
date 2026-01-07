@@ -34,11 +34,11 @@ class BlockService(
     private val activityService: ActivityService
 ) {
     // ---------- CREATE ----------
-    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     @Transactional
-    fun createBlock(organisationId: UUID, request: CreateBlockRequest): BlockEntity {
+    fun createBlock(workspaceId: UUID, request: CreateBlockRequest): BlockEntity {
         val (type, payload, name, parentId, index) = request
-        require(!type.archived) { "BlockType '${type.archived}' is archived" }
+        require(!type.deleted) { "BlockType '${type.deleted}' is deleted" }
 
         // 1) Validate ONLY content blocks
         val validatedMetadata: Metadata =
@@ -67,11 +67,11 @@ class BlockService(
 
         return BlockEntity(
             id = null,
-            organisationId = organisationId,
+            workspaceId = workspaceId,
             type = BlockTypeEntity.fromModel(type),
             name = name,
             payload = validatedMetadata,
-            archived = false
+            deleted = false
         ).run {
             blockRepository.save(this)
         }.also {
@@ -80,7 +80,7 @@ class BlockService(
                 activity = riven.core.enums.activity.Activity.BLOCK,
                 operation = OperationType.CREATE,
                 userId = authTokenService.getUserId(),
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 entityType = ApplicationEntityType.BLOCK,
                 entityId = it.id,
                 details = mapOf(
@@ -117,12 +117,12 @@ class BlockService(
 
 
     // ---------- UPDATE ----------
-    @PreAuthorize("@organisationSecurity.hasOrg(#block.organisationId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#block.workspaceId)")
     @Transactional
     fun updateBlock(block: Block): Block {
         val existing = blockRepository.findById(block.id).orElseThrow()
-        require(existing.organisationId == block.organisationId) {
-            "Block does not belong to the specified organisation"
+        require(existing.workspaceId == block.workspaceId) {
+            "Block does not belong to the specified workspace"
         }
 
         require(existing.payload::class == block.payload::class) {
@@ -182,7 +182,7 @@ class BlockService(
             activity = riven.core.enums.activity.Activity.BLOCK,
             operation = OperationType.UPDATE,
             userId = authTokenService.getUserId(),
-            organisationId = saved.organisationId,
+            workspaceId = saved.workspaceId,
             entityType = ApplicationEntityType.BLOCK,
             entityId = saved.id,
             details = mapOf(
@@ -270,7 +270,7 @@ class BlockService(
             request.typeId != null -> blockTypeService.getById(request.typeId)
             request.typeKey != null -> blockTypeService.getByKey(
                 request.typeKey,
-                request.organisationId,
+                request.workspaceId,
                 request.typeVersion
             )
 
@@ -279,35 +279,10 @@ class BlockService(
     */
 
 
-    // ---------- ARCHIVE ----------
-    @PreAuthorize("@organisationSecurity.hasOrg(#block.organisationId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     @Transactional
-    fun archiveBlock(block: Block, status: Boolean) {
-        val existing = blockRepository.findById(block.id).orElseThrow()
-        require(existing.organisationId == block.organisationId) {
-            "Block does not belong to the specified organisation"
-        }
-
-        if (existing.archived == status) return // No-op if already in desired state
-
-        val updated = existing.apply {
-            archived = status
-        }
-
-        blockRepository.save(updated)
-
-        activityService.logActivity(
-            activity = riven.core.enums.activity.Activity.BLOCK,
-            operation = if (status) OperationType.ARCHIVE else OperationType.RESTORE,
-            userId = authTokenService.getUserId(),
-            organisationId = updated.organisationId,
-            entityType = ApplicationEntityType.BLOCK,
-            entityId = updated.id,
-            details = mapOf(
-                "blockId" to updated.id.toString(),
-                "archiveStatus" to status
-            )
-        )
+    fun deleteBlocks(workspaceId: UUID, blockIds: List<UUID>) {
+        TODO()
     }
 
     /**

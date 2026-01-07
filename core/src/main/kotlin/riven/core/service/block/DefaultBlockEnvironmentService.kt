@@ -41,22 +41,22 @@ class DefaultBlockEnvironmentService(
      * 3. Optional starter blocks (to be implemented)
      *
      * @param entityId The ID of the entity (e.g., client ID)
-     * @param entityType The type of entity (e.g., CLIENT, ORGANISATION)
-     * @param organisationId The organisation this entity belongs to
+     * @param entityType The type of entity (e.g., CLIENT, WORKSPACE)
+     * @param workspaceId The workspace this entity belongs to
      * @return The created BlockTreeLayout model
      */
     @Transactional
     fun createDefaultEnvironmentForEntity(
         entityId: UUID,
         entityType: ApplicationEntityType,
-        organisationId: UUID
+        workspaceId: UUID
     ): BlockTreeLayout {
-        val defaultLayout = buildDefaultLayoutForEntityType(organisationId, entityId, entityType)
+        val defaultLayout = buildDefaultLayoutForEntityType(workspaceId, entityId, entityType)
 
         // Persist layout entity
         val layoutEntity = BlockTreeLayoutEntity(
             entityId = entityId,
-            organisationId = organisationId,
+            workspaceId = workspaceId,
             layout = defaultLayout,
             version = 1
         )
@@ -72,13 +72,13 @@ class DefaultBlockEnvironmentService(
      * TODO: Add entity-specific layout templates
      */
     private fun buildDefaultLayoutForEntityType(
-        organisationId: UUID,
+        workspaceId: UUID,
         entityId: UUID,
         entityType: ApplicationEntityType
     ): TreeLayout {
         return when (entityType) {
 
-            ApplicationEntityType.ORGANISATION -> buildDefaultOrganisationLayout(entityId)
+            ApplicationEntityType.WORKSPACE -> buildDefaultWorkspaceLayout(entityId)
             ApplicationEntityType.USER -> buildDefaultUserLayout(entityId)
             ApplicationEntityType.ENTITY -> buildDefaultEntityLayout(entityId)
             else -> buildGenericDefaultLayout(entityId)
@@ -87,15 +87,15 @@ class DefaultBlockEnvironmentService(
 
 
     /**
-     * Builds default layout for ORGANISATION entities.
+     * Builds default layout for WORKSPACE entities.
      */
-    private fun buildDefaultOrganisationLayout(entityId: UUID): TreeLayout {
+    private fun buildDefaultWorkspaceLayout(entityId: UUID): TreeLayout {
         // Similar structure to client layout
         return buildGenericDefaultLayout(entityId)
     }
 
     /**
-     * Builds default layout for USER entities (ie. Members of an organisation).
+     * Builds default layout for USER entities (ie. Members of an workspace).
      * They would also have an associated Entity type. that may have direct relationship with
      * other entities. So we would need to add reference blocks for those relationships as well.
      */
@@ -139,7 +139,7 @@ class DefaultBlockEnvironmentService(
      *
      */
     private fun createEntityReferenceWidget(
-        organisationId: UUID,
+        workspaceId: UUID,
         entityId: UUID,
     ): Widget {
         val type: BlockTypeEntity = blockTypeService.getSystemBlockType(SystemBlockTypes.ENTITY_REFERENCE)
@@ -154,7 +154,7 @@ class DefaultBlockEnvironmentService(
         )
         val name = "Entity Overview"
         return blockService.createBlock(
-            organisationId,
+            workspaceId,
             CreateBlockRequest(
                 type = type.toModel(),
                 payload = payload,

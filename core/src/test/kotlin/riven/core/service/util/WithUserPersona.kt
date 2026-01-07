@@ -5,7 +5,6 @@ import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.crypto.MACSigner
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
-import riven.core.enums.organisation.OrganisationRoles
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtendWith
@@ -14,7 +13,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
-
+import riven.core.enums.workspace.WorkspaceRoles
 import java.time.Instant
 import java.util.*
 
@@ -36,7 +35,7 @@ object JwtTestUtil {
         id: String,
         email: String,
         displayName: String? = null,
-        roles: List<OrganisationRole> = emptyList(),
+        roles: List<WorkspaceRole> = emptyList(),
         customClaims: Map<String, Any> = emptyMap(),
         expirationSeconds: Long = 3600,
         issuer: String = "https://abc.supabase.co/auth/v1",
@@ -65,7 +64,7 @@ object JwtTestUtil {
             if (roles.isNotEmpty()) {
                 claimsBuilder.claim("app_metadata", mapOf("roles" to roles.map {
                     mapOf(
-                        "organisation_id" to it.organisationId,
+                        "workspace_id" to it.workspaceId,
                         "role" to it.role
                     )
                 }))
@@ -89,7 +88,7 @@ object JwtTestUtil {
 
 @Target(AnnotationTarget.ANNOTATION_CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class OrganisationRole(val organisationId: String, val role: OrganisationRoles)
+annotation class WorkspaceRole(val workspaceId: String, val role: WorkspaceRoles)
 
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
@@ -99,7 +98,7 @@ annotation class WithUserPersona(
     val userId: String,
     val email: String,
     val displayName: String = "",
-    val roles: Array<OrganisationRole> = [],
+    val roles: Array<WorkspaceRole> = [],
     val expirationSeconds: Long = 3600
 )
 
@@ -142,7 +141,7 @@ class WithUserPersonaExtension : BeforeEachCallback, AfterEachCallback {
 
             // Set JwtAuthenticationToken in SecurityContext
             val authorities = annotation.roles.map {
-                SimpleGrantedAuthority("ROLE_${it.organisationId}_${it.role.toString().uppercase(Locale.ROOT)}")
+                SimpleGrantedAuthority("ROLE_${it.workspaceId}_${it.role.toString().uppercase(Locale.ROOT)}")
             }
             val auth = JwtAuthenticationToken(jwt, authorities)
             SecurityContextHolder.getContext().authentication = auth

@@ -1,6 +1,6 @@
 "use client";
 
-import { useOrganisation } from "@/components/feature-modules/organisation/hooks/use-organisation";
+import { useWorkspace } from "@/components/feature-modules/workspace/hooks/query/use-workspace";
 import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-group";
 import { isResponseError } from "@/lib/util/error/error.util";
 import { useRouter } from "next/navigation";
@@ -8,39 +8,39 @@ import { useEffect } from "react";
 import { EntityTypesOverview } from "../types/entity-types-overview";
 
 const EntityTypesDashboard = () => {
-    const { data: organisation, isPending, error, isLoadingAuth } = useOrganisation();
+    const { data: workspace, isPending, error, isLoadingAuth } = useWorkspace();
     const router = useRouter();
 
     useEffect(() => {
-        // Query has finished, organisation has not been found. Redirect back to organisation view with associated error
-        if (!isPending && !isLoadingAuth && !organisation) {
+        // Query has finished, workspace has not been found. Redirect back to workspace view with associated error
+        if (!isPending && !isLoadingAuth && !workspace) {
             if (!error || !isResponseError(error)) {
-                router.push("/dashboard/organisation/");
+                router.push("/dashboard/workspace/");
                 return;
             }
 
             // Query has returned an ID we can use to route to a valid error message
             const responseError = error;
-            router.push(`/dashboard/organisation?error=${responseError.error}`);
+            router.push(`/dashboard/workspace?error=${responseError.error}`);
         }
-    }, [isPending, isLoadingAuth, organisation, error, router]);
+    }, [isPending, isLoadingAuth, workspace, error, router]);
 
     if (isPending || isLoadingAuth) {
         return <div>Loading...</div>;
     }
 
-    if (!organisation) return null;
+    if (!workspace) return null;
 
     const trail: BreadCrumbTrail[] = [
         { label: "Home", href: "/dashboard" },
-        { label: "Organisations", href: "/dashboard/organisation" },
+        { label: "Workspaces", href: "/dashboard/workspace" },
         {
-            label: organisation.name || "Organisation",
-            href: `/dashboard/organisation/${organisation.id}`,
+            label: workspace.name || "Workspace",
+            href: `/dashboard/workspace/${workspace.id}`,
         },
         {
             label: "Entities",
-            href: `/dashboard/organisation/${organisation.id}/entity`,
+            href: `/dashboard/workspace/${workspace.id}/entity`,
         },
     ];
 
@@ -51,7 +51,7 @@ const EntityTypesDashboard = () => {
                 <BreadCrumbGroup items={trail} />
             </header>
             <section>
-                <EntityTypesOverview organisationId={organisation.id} />
+                <EntityTypesOverview workspaceId={workspace.id} />
             </section>
         </div>
     );

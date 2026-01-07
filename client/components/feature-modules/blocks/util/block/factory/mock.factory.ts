@@ -14,16 +14,16 @@ import {
     DEFAULT_GRID_LAYOUT,
 } from "./type.factory";
 
-export function createProjectBlockNode(organisationId: string): BlockNode {
-    const projectType = createProjectOverviewType(organisationId);
-    const taskType = createTaskBlockType(organisationId);
-    const layoutType = createLayoutContainerBlockType(organisationId);
-    const listType = createBlockListBlockType(organisationId);
+export function createProjectBlockNode(workspaceId: string): BlockNode {
+    const projectType = createProjectOverviewType(workspaceId);
+    const taskType = createTaskBlockType(workspaceId);
+    const layoutType = createLayoutContainerBlockType(workspaceId);
+    const listType = createBlockListBlockType(workspaceId);
 
-    const taskNodes = createTaskNodes(organisationId, taskType);
+    const taskNodes = createTaskNodes(workspaceId, taskType);
 
     const taskListNode = createContentNode({
-        organisationId,
+        workspaceId,
         type: listType,
         name: "Active tasks",
         data: {
@@ -35,7 +35,7 @@ export function createProjectBlockNode(organisationId: string): BlockNode {
     });
 
     const layoutNode = createContentNode({
-        organisationId,
+        workspaceId,
         type: layoutType,
         name: "Project details",
         data: {
@@ -46,7 +46,7 @@ export function createProjectBlockNode(organisationId: string): BlockNode {
     });
 
     return createContentNode({
-        organisationId,
+        workspaceId,
         type: projectType,
         name: "Project health",
         data: {
@@ -58,11 +58,11 @@ export function createProjectBlockNode(organisationId: string): BlockNode {
     });
 }
 
-export function createNoteNode(organisationId: string, content?: string): BlockNode {
-    const noteType = createNoteBlockType(organisationId);
+export function createNoteNode(workspaceId: string, content?: string): BlockNode {
+    const noteType = createNoteBlockType(workspaceId);
 
     return createContentNode({
-        organisationId,
+        workspaceId,
         type: noteType,
         name: "Note",
         data: {
@@ -78,14 +78,14 @@ export function createNoteNode(organisationId: string, content?: string): BlockN
  * 1. Wildcard slots ("*") for dynamic child blocks
  * 2. Layout container holding multiple different block types
  */
-export function createLayoutContainerNode(organisationId: string): BlockNode {
-    const layoutType = createLayoutContainerBlockType(organisationId);
-    const noteType = createNoteBlockType(organisationId);
+export function createLayoutContainerNode(workspaceId: string): BlockNode {
+    const layoutType = createLayoutContainerBlockType(workspaceId);
+    const noteType = createNoteBlockType(workspaceId);
 
     // Create some nested blocks
     const nestedBlocks = [
         createContentNode({
-            organisationId,
+            workspaceId,
             type: noteType,
             name: "Welcome note",
             data: {
@@ -94,7 +94,7 @@ export function createLayoutContainerNode(organisationId: string): BlockNode {
             },
         }),
         createContentNode({
-            organisationId,
+            workspaceId,
             type: noteType,
             name: "Instructions",
             data: {
@@ -105,7 +105,7 @@ export function createLayoutContainerNode(organisationId: string): BlockNode {
     ];
 
     return createContentNode({
-        organisationId,
+        workspaceId,
         type: layoutType,
         name: "Getting Started",
         data: {
@@ -116,7 +116,7 @@ export function createLayoutContainerNode(organisationId: string): BlockNode {
     });
 }
 
-const createAddressBlockType = (organisationId: string): BlockType => {
+const createAddressBlockType = (workspaceId: string): BlockType => {
     const component: BlockComponentNode = {
         id: "addressCard",
         type: "ADDRESS_CARD",
@@ -149,8 +149,8 @@ const createAddressBlockType = (organisationId: string): BlockType => {
     return createBlockType({
         key: "postal_address",
         name: "Postal Address",
-        description: "Physical address for a contact or organisation.",
-        organisationId,
+        description: "Physical address for a contact or workspace.",
+        workspaceId,
         schema: {
             name: "Address",
             type: "OBJECT",
@@ -218,7 +218,7 @@ const createAddressBlockType = (organisationId: string): BlockType => {
     });
 };
 
-const createTaskBlockType = (organisationId: string): BlockType => {
+const createTaskBlockType = (workspaceId: string): BlockType => {
     const component: BlockComponentNode = {
         id: "task",
         type: "TEXT",
@@ -252,7 +252,7 @@ const createTaskBlockType = (organisationId: string): BlockType => {
         key: "project_task",
         name: "Project Task",
         description: "Individual task item for a project.",
-        organisationId,
+        workspaceId,
         schema: {
             name: "Task",
             type: "OBJECT",
@@ -300,7 +300,7 @@ const createTaskBlockType = (organisationId: string): BlockType => {
     });
 };
 
-const createNoteBlockType = (organisationId: string): BlockType => {
+const createNoteBlockType = (workspaceId: string): BlockType => {
     const component: BlockComponentNode = {
         id: "note",
         type: "TEXT",
@@ -329,7 +329,7 @@ const createNoteBlockType = (organisationId: string): BlockType => {
         key: "note",
         name: "Note",
         description: "Simple rich text note.",
-        organisationId,
+        workspaceId,
         schema: {
             name: "Note",
             type: "OBJECT",
@@ -354,7 +354,7 @@ const createNoteBlockType = (organisationId: string): BlockType => {
     });
 };
 
-const createProjectOverviewType = (organisationId: string): BlockType => {
+const createProjectOverviewType = (workspaceId: string): BlockType => {
     const component: BlockComponentNode = {
         id: "summary",
         type: "TEXT",
@@ -388,7 +388,7 @@ const createProjectOverviewType = (organisationId: string): BlockType => {
         key: "project_overview",
         name: "Project Overview",
         description: "High-level project summary block.",
-        organisationId,
+        workspaceId,
         schema: {
             name: "ProjectOverview",
             type: "OBJECT",
@@ -435,7 +435,7 @@ const createProjectOverviewType = (organisationId: string): BlockType => {
     });
 };
 
-const createTaskNodes = (organisationId: string, taskType: BlockType) => {
+const createTaskNodes = (workspaceId: string, taskType: BlockType) => {
     const tasks = [
         {
             title: "Wireframes",
@@ -459,7 +459,7 @@ const createTaskNodes = (organisationId: string, taskType: BlockType) => {
 
     return tasks.map((task) =>
         createContentNode({
-            organisationId,
+            workspaceId,
             type: taskType,
             data: task,
             name: task.title,
@@ -471,14 +471,14 @@ const createTaskNodes = (organisationId: string, taskType: BlockType) => {
  * Creates a content block list containing task items
  * Demonstrates manual ordering mode with drag-to-reorder
  */
-export function createTaskListNode(organisationId: string): BlockNode {
-    const listType = createContentBlockListType(organisationId);
-    const taskType = createTaskBlockType(organisationId);
+export function createTaskListNode(workspaceId: string): BlockNode {
+    const listType = createContentBlockListType(workspaceId);
+    const taskType = createTaskBlockType(workspaceId);
 
     // Create task items
     const tasks = [
         createContentNode({
-            organisationId,
+            workspaceId,
             type: taskType,
             data: {
                 title: "Design wireframes",
@@ -489,7 +489,7 @@ export function createTaskListNode(organisationId: string): BlockNode {
             name: "Design wireframes",
         }),
         createContentNode({
-            organisationId,
+            workspaceId,
             type: taskType,
             data: {
                 title: "Implement authentication",
@@ -500,7 +500,7 @@ export function createTaskListNode(organisationId: string): BlockNode {
             name: "Implement authentication",
         }),
         createContentNode({
-            organisationId,
+            workspaceId,
             type: taskType,
             data: {
                 title: "Write documentation",
@@ -527,7 +527,7 @@ export function createTaskListNode(organisationId: string): BlockNode {
     };
 
     return createContentNode({
-        organisationId,
+        workspaceId,
         type: listType,
         name: "Project Tasks",
         data: {

@@ -11,7 +11,7 @@ import { BlockTreeLayout } from "./layout.interface";
 export interface EditorEnvironmentMetadata {
     name: string;
     description?: string;
-    organisationId: string;
+    workspaceId: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -44,8 +44,8 @@ export interface EditorEnvironment {
 }
 
 export interface BlockEnvironmentProviderProps extends ChildNodeProps {
-    /** Organisation and entity context for the environment */
-    organisationId: string;
+    /** Workspace and entity context for the environment */
+    workspaceId: string;
     entityId: string;
     entityType: EntityType;
 
@@ -58,7 +58,7 @@ export interface BlockEnvironmentContextValue {
     environment: EditorEnvironment;
 
     // Entity Context
-    organisationId: string;
+    workspaceId: string;
     entityId: string;
     entityType: EntityType;
 

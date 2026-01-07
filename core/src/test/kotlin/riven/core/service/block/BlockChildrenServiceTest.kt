@@ -1,10 +1,5 @@
 package riven.core.service.block
 
-import riven.core.entity.block.BlockChildEntity
-import riven.core.models.block.display.BlockTypeNesting
-import riven.core.repository.block.BlockChildrenRepository
-import riven.core.repository.block.BlockRepository
-import riven.core.service.util.factory.block.BlockFactory
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -12,6 +7,11 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.kotlin.*
 import org.springframework.test.context.junit.jupiter.SpringExtension
+import riven.core.entity.block.BlockChildEntity
+import riven.core.models.block.display.BlockTypeNesting
+import riven.core.repository.block.BlockChildrenRepository
+import riven.core.repository.block.BlockRepository
+import riven.core.service.util.factory.block.BlockFactory
 import java.util.*
 
 /**
@@ -147,7 +147,7 @@ class BlockChildrenServiceTest {
     }
 
     @Test
-    fun `addChild throws when organisations do not match`() {
+    fun `addChild throws when workspaces do not match`() {
         val orgA = UUID.randomUUID()
         val orgB = UUID.randomUUID()
         val parentId = UUID.randomUUID()
@@ -168,7 +168,7 @@ class BlockChildrenServiceTest {
             service.addChild(child, parentId, 0, nesting)
         }
 
-        assertTrue(exception.message!!.contains("different organisation"))
+        assertTrue(exception.message!!.contains("different workspace"))
     }
 
     @Test

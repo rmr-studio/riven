@@ -75,60 +75,22 @@ export class BlockTypeService {
         }
     }
 
-    /**
-     * Update archive status on a block type
-     */
-    static async updateArchiveStatusByBlockTypeId(
-        session: Session | null,
-        blockTypeId: string,
-        status: string,
-        requestBody: BlockType
-    ): Promise<BlockType> {
-        try {
-            validateSession(session);
-            validateUuid(blockTypeId);
 
-            const url = api();
-
-            const response = await fetch(
-                `${url}/v1/block/schema/${blockTypeId}/archive/${encodeURIComponent(status)}`,
-                {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${session.access_token}`,
-                    },
-                    body: JSON.stringify(requestBody),
-                }
-            );
-
-            if (response.ok) return await response.json();
-
-            throw await handleError(
-                response,
-                (res) =>
-                    `Failed to update block type archive status: ${res.status} ${res.statusText}`
-            );
-        } catch (error) {
-            if (isResponseError(error)) throw error;
-            throw fromError(error);
-        }
-    }
 
     /**
-     * Get block types for an organisation
+     * Get block types for a workspace
      */
     static async getBlockTypes(
         session: Session | null,
-        organisationId: string
+        workspaceId: string
     ): Promise<GetBlockTypesResponse> {
         try {
-            validateUuid(organisationId);
+            validateUuid(workspaceId);
             validateSession(session);
 
             const url = api();
 
-            const response = await fetch(`${url}/v1/block/schema/organisation/${organisationId}`, {
+            const response = await fetch(`${url}/v1/block/schema/workspace/${workspaceId}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",

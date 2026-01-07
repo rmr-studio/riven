@@ -9,9 +9,9 @@ import riven.core.enums.entity.EntityTypeRelationshipType
 import riven.core.models.common.Icon
 import riven.core.models.entity.EntityLink
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
+import riven.core.projection.entity.toEntityLink
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityRepository
-import riven.core.repository.entity.toEntityLink
 import riven.core.service.entity.type.EntityTypeService
 import java.util.*
 
@@ -44,12 +44,13 @@ class EntityRelationshipService(
     @Transactional
     fun saveRelationships(
         id: UUID,
-        organisationId: UUID,
+        workspaceId: UUID,
         type: EntityTypeEntity,
         curr: Map<UUID, List<UUID>>,
     ): SaveRelationshipsResult {
         // Track all entities impacted by inverse relationship changes
         val impactedEntityIds = mutableSetOf<UUID>()
+        val sourceTypeId = requireNotNull(type.id) { "Entity type ID cannot be null when saving relationships" }
 
 
         // Extract current relationships from payload
@@ -119,10 +120,12 @@ class EntityRelationshipService(
                     if (!targetEntities.containsKey(targetId)) return@mapNotNull null
 
                     EntityRelationshipEntity(
-                        organisationId = organisationId,
+                        workspaceId = workspaceId,
                         sourceId = id,
                         targetId = targetId,
-                        fieldId = fieldId
+                        fieldId = fieldId,
+                        sourceTypeId = sourceTypeId,
+                        targetTypeId = requireNotNull(targetEntities[targetId]?.typeId) { "Target entity type ID cannot be null" }
                     )
                 }
 
@@ -133,10 +136,11 @@ class EntityRelationshipService(
                     val createdImpacted = createInverseRelationships(
                         definition = definition,
                         sourceEntityId = id,
+                        sourceEntityTypeId = sourceTypeId,
                         targetEntityIds = toAdd,
                         targetEntities = targetEntities,
                         targetEntityTypes = targetEntityTypes,
-                        organisationId = organisationId
+                        workspaceId = workspaceId
                     )
                     impactedEntityIds.addAll(createdImpacted)
                 }
@@ -149,7 +153,7 @@ class EntityRelationshipService(
                     id = targetId,
                     sourceEntityId = id,
                     fieldId = fieldId,
-                    organisationId = targetEntity.organisationId,
+                    workspaceId = targetEntity.workspaceId,
                     key = targetEntity.typeKey,
                     icon = Icon(
                         icon = targetEntity.iconType,
@@ -196,10 +200,11 @@ class EntityRelationshipService(
     private fun createInverseRelationships(
         definition: EntityRelationshipDefinition,
         sourceEntityId: UUID,
+        sourceEntityTypeId: UUID,
         targetEntityIds: Set<UUID>,
         targetEntities: Map<UUID?, EntityEntity>,
         targetEntityTypes: Map<UUID?, EntityTypeEntity>,
-        organisationId: UUID
+        workspaceId: UUID
     ): Set<UUID> {
         val impactedEntityIds = mutableSetOf<UUID>()
 
@@ -214,6 +219,8 @@ class EntityRelationshipService(
         // For each target type, find the inverse relationship definition
         for ((targetTypeId, entityIds) in targetsByType) {
             val targetType = targetEntityTypes[targetTypeId] ?: continue
+            val targetTypeId =
+                requireNotNull(targetType.id) { "Relationship definition ID cannot be null when creating inverse relationships" }
 
             // Find the inverse relationship definition
             val inverseDefinition = definition.relationshipType.let {
@@ -235,10 +242,12 @@ class EntityRelationshipService(
                 impactedEntityIds.add(targetEntityId)
 
                 EntityRelationshipEntity(
-                    organisationId = organisationId,
+                    workspaceId = workspaceId,
                     sourceId = targetEntityId,
                     targetId = sourceEntityId,
-                    fieldId = inverseDefinition.id
+                    fieldId = inverseDefinition.id,
+                    sourceTypeId = targetTypeId,
+                    targetTypeId = sourceEntityTypeId
                 )
             })
 
@@ -314,16 +323,16 @@ class EntityRelationshipService(
         return payload?.value?.toString() ?: entity.id.toString()
     }
 
-    fun findRelatedEntities(entityId: UUID, organisationId: UUID): Map<UUID, List<EntityLink>> {
-        return entityRelationshipRepository.findEntityLinksBySourceId(entityId, organisationId)
+    fun findRelatedEntities(entityId: UUID, workspaceId: UUID): Map<UUID, List<EntityLink>> {
+        return entityRelationshipRepository.findEntityLinksBySourceId(entityId, workspaceId)
             .groupBy { it.getFieldId() }
             .mapValues { (_, projections) ->
                 projections.map { it.toEntityLink() }
             }
     }
 
-    fun findRelatedEntities(entityIds: Set<UUID>, organisationId: UUID): Map<UUID, Map<UUID, List<EntityLink>>> {
-        return entityRelationshipRepository.findEntityLinksBySourceIdIn(entityIds.toTypedArray(), organisationId)
+    fun findRelatedEntities(entityIds: Set<UUID>, workspaceId: UUID): Map<UUID, Map<UUID, List<EntityLink>>> {
+        return entityRelationshipRepository.findEntityLinksBySourceIdIn(entityIds.toTypedArray(), workspaceId)
             .groupBy { it.getSourceEntityId() }
             .mapValues { (_, projections) ->
                 projections.groupBy { it.getFieldId() }
@@ -341,7 +350,7 @@ class EntityRelationshipService(
         return entityRelationshipRepository.findByTargetIdIn(ids).groupBy { it.targetId }
     }
 
-    fun archiveEntities(ids: Collection<UUID>, organisationId: UUID): List<EntityRelationshipEntity> {
-        return entityRelationshipRepository.archiveEntities(ids.toTypedArray(), organisationId)
+    fun archiveEntities(ids: Collection<UUID>, workspaceId: UUID): List<EntityRelationshipEntity> {
+        return entityRelationshipRepository.deleteEntities(ids.toTypedArray(), workspaceId)
     }
 }

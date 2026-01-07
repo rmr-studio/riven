@@ -23,7 +23,7 @@ class EntityTypeAttributeService(
 ) {
 
     fun saveAttributeDefinition(
-        organisationId: UUID,
+        workspaceId: UUID,
         type: EntityTypeEntity,
         request: SaveAttributeDefinitionRequest
     ) {
@@ -159,11 +159,11 @@ class EntityTypeAttributeService(
         }
     }
 
-    fun archiveEntities(ids: Collection<UUID>): Int {
-        return uniqueEntityValueRepository.archiveEntities(ids)
+    fun deleteEntities(workspaceId: UUID, ids: Collection<UUID>): Int {
+        return uniqueEntityValueRepository.deleteEntities(workspaceId, ids)
     }
 
-    fun archiveType(id: UUID): Int {
-        return uniqueEntityValueRepository.archiveType(id)
+    fun deleteType(workspaceId: UUID, typeId: UUID): Int {
+        return uniqueEntityValueRepository.deleteType(workspaceId, typeId)
     }
 }

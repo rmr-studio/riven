@@ -18,10 +18,10 @@ import { EntityTypesAttributes } from "./entity-type-attributes";
 
 interface EntityTypeOverviewProps {
     entityType: EntityType;
-    organisationId: string;
+    workspaceId: string;
 }
 
-export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, organisationId }) => {
+export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, workspaceId }) => {
     // Read tab query parameter from URL
     const router = useRouter();
     const pathname = usePathname();

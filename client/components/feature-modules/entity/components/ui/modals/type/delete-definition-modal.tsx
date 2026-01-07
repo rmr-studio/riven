@@ -28,8 +28,9 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { FC, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useOrganisation } from "../../../../organisation/hooks/use-organisation";
-import { useDeleteDefinitionMutation } from "../../../hooks/mutation/type/use-delete-definition-mutation";
+
+import { useWorkspace } from "@/components/feature-modules/workspace/hooks/query/use-workspace";
+import { useDeleteDefinitionMutation } from "../../../../hooks/mutation/type/use-delete-definition-mutation";
 import {
     DeleteAttributeDefinitionRequest,
     DeleteRelationshipDefinitionRequest,
@@ -37,7 +38,7 @@ import {
     EntityTypeDefinition,
     isAttributeDefinition,
     isRelationshipDefinition,
-} from "../../../interface/entity.interface";
+} from "../../../../interface/entity.interface";
 
 interface Props {
     dialog: DialogControl;
@@ -86,7 +87,7 @@ type DefinitionType = "ORIGIN_RELATIONSHIP" | "REFERENCE_RELATIONSHIP" | "SCHEMA
 
 export const DeleteDefinitionModal: FC<Props> = ({ dialog, type: entityType, definition }) => {
     const { open, setOpen: onOpenChange } = dialog;
-    const { data: organisation } = useOrganisation();
+    const { data: workspace } = useWorkspace();
     const [isDeleting, setIsDeleting] = useState(false);
 
     const form = useForm<DeleteDefinitionFormValues>({
@@ -109,7 +110,7 @@ export const DeleteDefinitionModal: FC<Props> = ({ dialog, type: entityType, def
     const type: DefinitionType = form.watch("type");
     const action: DeleteAction | undefined = form.watch("action");
 
-    const { mutateAsync: deleteDefinition } = useDeleteDefinitionMutation(organisation?.id || "", {
+    const { mutateAsync: deleteDefinition } = useDeleteDefinitionMutation(workspace?.id || "", {
         onMutate: () => {
             setIsDeleting(true);
         },
@@ -123,7 +124,7 @@ export const DeleteDefinitionModal: FC<Props> = ({ dialog, type: entityType, def
     });
 
     const onSubmit = async (values: DeleteDefinitionFormValues) => {
-        if (!definition || !organisation) return;
+        if (!definition || !workspace) return;
 
         const isRelationship = isRelationshipDefinition(definition.definition);
 
@@ -158,7 +159,7 @@ export const DeleteDefinitionModal: FC<Props> = ({ dialog, type: entityType, def
         });
     };
 
-    if (!organisation || !definition) return null;
+    if (!workspace || !definition) return null;
 
     const definitionLabel = isRelationshipDefinition(definition.definition)
         ? definition.definition.name || definition.id

@@ -20,14 +20,14 @@ const EntityDraftContext = createContext<EntityDraftStoreApi | undefined>(undefi
 
 export interface EntityDraftProviderProps {
     children: ReactNode;
-    organisationId: string;
+    workspaceId: string;
     entityType: EntityType;
     onEntityCreated?: (entity: Entity) => void;
 }
 
 export const EntityDraftProvider = ({
     children,
-    organisationId,
+    workspaceId,
     entityType,
     onEntityCreated,
 }: EntityDraftProviderProps) => {
@@ -53,7 +53,7 @@ export const EntityDraftProvider = ({
     });
 
     // Create mutation for entity creation
-    const { mutateAsync: saveEntity } = useSaveEntityMutation(organisationId, entityType.id, {
+    const { mutateAsync: saveEntity } = useSaveEntityMutation(workspaceId, entityType.id, {
         onSuccess: (response) => {
             // The mutation should already guard against a null entity, but :shrug:
             if (!response.entity) return;
@@ -63,7 +63,7 @@ export const EntityDraftProvider = ({
 
     // Create store only once per entity type
     if (!storeRef.current) {
-        storeRef.current = createEntityDraftStore(organisationId, entityType, form, saveEntity);
+        storeRef.current = createEntityDraftStore(workspaceId, entityType, form, saveEntity);
     }
 
     return (

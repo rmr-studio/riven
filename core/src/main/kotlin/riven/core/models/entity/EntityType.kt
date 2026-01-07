@@ -23,7 +23,7 @@ data class EntityType(
     val icon: Icon,
     val name: DisplayName,
     /**
-     * Each organisation will have a handful of system-generated default entity types to handle
+     * Each workspace will have a handful of system-generated default entity types to handle
      * core/common use cases, which cannot be deleted.
      * They should allow for modification of schema and other properties, but not deletion.
      * */
@@ -36,7 +36,7 @@ data class EntityType(
      */
     val identifierKey: UUID,
     val description: String?,
-    val organisationId: UUID?,
+    val workspaceId: UUID?,
     val type: EntityCategory,
     // Schema will always be created with a unique, non-nullable 'name' attribute
     // Each attribute in the schema will be uniquely identified with a UUID key
@@ -45,11 +45,11 @@ data class EntityType(
     // Configuration for how attributes are displayed in tabular/list views (ie. Column ordering, widths, etc)
     val columns: List<EntityTypeAttributeColumn>,
     val entitiesCount: Long = 0L,
-    override val createdAt: ZonedDateTime?,
-    override val updatedAt: ZonedDateTime?,
-    override val createdBy: UUID?,
-    override val updatedBy: UUID?
-) : AuditableModel() {
+    override var createdAt: ZonedDateTime?,
+    override var updatedAt: ZonedDateTime?,
+    override var createdBy: UUID?,
+    override var updatedBy: UUID?
+) : AuditableModel {
     val attributes: Pair<Int, Int>
         get() = Pair(schema.properties?.size ?: 0, relationships?.size ?: 0)
 }

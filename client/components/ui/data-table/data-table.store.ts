@@ -227,6 +227,8 @@ export interface CreateDataTableStoreOptions<TData> {
     initialData: TData[];
     /** Initial column sizing */
     initialColumnSizing?: Record<string, number>;
+    /** Initial column order */
+    initialColumnOrder?: string[];
     /** Callback for cell edit (returns true on success) */
     onCellEdit?: (row: TData, columnId: string, newValue: any, oldValue: any) => Promise<boolean>;
     /** Function to get unique row ID */

@@ -131,14 +131,14 @@ export const createBlockReferenceMetadata = (
 
 export const createBlockBase = ({
     id,
-    organisationId,
+    workspaceId,
     type,
     name,
     payload,
     archived = false,
 }: {
     id?: string;
-    organisationId: string;
+    workspaceId: string;
     type: BlockType;
     name?: string;
     payload: Metadata;
@@ -146,7 +146,7 @@ export const createBlockBase = ({
 }): Block => ({
     id: id ?? uuid(),
     name,
-    organisationId,
+    workspaceId: workspaceId,
     type,
     payload,
     archived,
@@ -155,7 +155,7 @@ export const createBlockBase = ({
 });
 
 export const createContentNode = ({
-    organisationId,
+    workspaceId,
     type,
     data,
     name,
@@ -164,7 +164,7 @@ export const createContentNode = ({
     payloadOverride,
     deletable = true,
 }: {
-    organisationId: string;
+    workspaceId: string;
     type: BlockType;
     data?: Record<string, unknown>;
     name?: string;
@@ -176,7 +176,7 @@ export const createContentNode = ({
     type: NodeType.CONTENT,
     block: createBlockBase({
         id,
-        organisationId,
+        workspaceId,
         type,
         name,
         payload: payloadOverride ?? createContentMetadata(data, undefined, deletable),
@@ -190,14 +190,14 @@ export const createContentNode = ({
  * Reference nodes are used to embed external entities or other block trees.
  */
 export const createReferenceNode = ({
-    organisationId,
+    workspaceId,
     type,
     name,
     id,
     payload,
     deletable = true,
 }: {
-    organisationId: string;
+    workspaceId: string;
     type: BlockType;
     name?: string;
     id?: string;
@@ -215,7 +215,7 @@ export const createReferenceNode = ({
         type: NodeType.REFERENCE,
         block: createBlockBase({
             id,
-            organisationId,
+            workspaceId,
             type,
             name,
             payload,
@@ -278,7 +278,7 @@ export const createBlockType = ({
     key,
     name,
     description,
-    organisationId,
+    workspaceId,
     schema,
     display,
     nesting,
@@ -286,7 +286,7 @@ export const createBlockType = ({
     key: string;
     name: string;
     description?: string;
-    organisationId: string;
+    workspaceId: string;
     schema: BlockSchema;
     display: BlockDisplay;
     nesting?: BlockTypeNesting | null;
@@ -296,7 +296,7 @@ export const createBlockType = ({
     version: 1,
     name,
     description,
-    organisationId,
+    workspaceId: workspaceId,
     archived: false,
     strictness: BlockValidationScope.SOFT,
     system: false,

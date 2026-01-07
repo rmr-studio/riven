@@ -50,8 +50,8 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
     const [selectedType, setSelectedType] = useState<string>("ALL");
     const [popoverOpen, setPopoverOpen] = useState(false);
 
-    const { organisationId } = useParams<{ organisationId: string }>();
-    const { data: entityTypes } = useEntityTypes(organisationId);
+    const { workspaceId } = useParams<{ workspaceId: string }>();
+    const { data: entityTypes } = useEntityTypes(workspaceId);
 
     const isSingleSelect =
         relationship.cardinality === EntityRelationshipCardinality.ONE_TO_ONE ||
@@ -72,7 +72,7 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
         isLoading,
         isError,
     } = useEntitiesFromManyTypes(
-        organisationId,
+        workspaceId,
         types.map((type) => type.id)
     );
 
@@ -120,7 +120,7 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
 
         const link: EntityLink = {
             id: entity.id,
-            organisationId,
+            workspaceId: workspaceId,
             fieldId: relationship.id,
             key: type.key,
             sourceEntityId: uuid(), // Dummy sourceEntityId; will be replaced on save

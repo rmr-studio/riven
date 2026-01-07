@@ -65,12 +65,12 @@ class EntityService(
         }
     }
 
-    @PostAuthorize("@organisationSecurity.hasOrg(returnObject.organisationId)")
+    @PostAuthorize("@workspaceSecurity.hasWorkspace(returnObject.workspaceId)")
     fun getEntity(id: UUID): Entity {
         val entity = findOrThrow { entityRepository.findById(id) }
         val relationships = entityRelationshipService.findRelatedEntities(
             entityId = id,
-            organisationId = entity.organisationId
+            workspaceId = entity.workspaceId
         )
 
         return entity.toModel(relationships = relationships)
@@ -81,19 +81,19 @@ class EntityService(
         return findManyResults { entityRepository.findAllById(ids) }
     }
 
-    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun getEntitiesByTypeId(
-        organisationId: UUID,
+        workspaceId: UUID,
         typeId: UUID
     ): List<Entity> {
         val entities = findManyResults {
             entityRepository.findByTypeId(typeId)
         }
 
-        require(entities.all { it.organisationId == organisationId }) { "One or more entities do not belong to the specified organisation" }
+        require(entities.all { it.workspaceId == workspaceId }) { "One or more entities do not belong to the specified workspace" }
         val relationships = entityRelationshipService.findRelatedEntities(
             entityIds = entities.mapNotNull { it.id }.toSet(),
-            organisationId = organisationId
+            workspaceId = workspaceId
         )
 
         return entities.map {
@@ -102,9 +102,9 @@ class EntityService(
         }
     }
 
-    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun getEntitiesByTypeIds(
-        organisationId: UUID,
+        workspaceId: UUID,
         typeIds: List<UUID>
     ): Map<UUID, List<Entity>> {
         val entities = findManyResults {
@@ -113,11 +113,11 @@ class EntityService(
             )
         }
 
-        require(entities.all { it.organisationId == organisationId }) { "One or more entities do not belong to the specified organisation" }
+        require(entities.all { it.workspaceId == workspaceId }) { "One or more entities do not belong to the specified workspace" }
 
         val relationships = entityRelationshipService.findRelatedEntities(
             entityIds = entities.mapNotNull { it.id }.toSet(),
-            organisationId = organisationId
+            workspaceId = workspaceId
         )
 
         return entities.map {
@@ -132,9 +132,9 @@ class EntityService(
      * If request.id is provided, updates the existing entity; otherwise creates a new one.
      */
     @Transactional
-    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun saveEntity(
-        organisationId: UUID,
+        workspaceId: UUID,
         entityTypeId: UUID,
         request: SaveEntityRequest,
     ): SaveEntityResponse {
@@ -168,7 +168,7 @@ class EntityService(
             }.toMap()
 
             prev?.run {
-                require(this.organisationId == organisationId) { "Entity does not belong to the specified organisation" }
+                require(this.workspaceId == workspaceId) { "Entity does not belong to the specified workspace" }
                 require(this.typeId == entityTypeId) { "Entity type cannot be changed" }
             }
 
@@ -183,7 +183,7 @@ class EntityService(
                 }
 
                 EntityEntity(
-                    organisationId = organisationId,
+                    workspaceId = workspaceId,
                     typeId = entityTypeId,
                     typeKey = type.key,
                     iconType = icon?.icon ?: type.iconType,
@@ -229,7 +229,7 @@ class EntityService(
 
                 val relationshipResult: SaveRelationshipsResult = entityRelationshipService.saveRelationships(
                     id = entityId,
-                    organisationId = organisationId,
+                    workspaceId = workspaceId,
                     type = type,
                     curr = relationshipPayload
                 )
@@ -238,7 +238,7 @@ class EntityService(
                     activity = Activity.ENTITY,
                     operation = if (prev != null) OperationType.UPDATE else OperationType.CREATE,
                     userId = userId,
-                    organisationId = organisationId,
+                    workspaceId = workspaceId,
                     entityId = this.id,
                     entityType = ApplicationEntityType.ENTITY,
                     details = mapOf(
@@ -253,7 +253,7 @@ class EntityService(
                         val impactedEntityEntities = entityRepository.findAllById(relationshipResult.impactedEntityIds)
                         val impactedRelationships = entityRelationshipService.findRelatedEntities(
                             entityIds = relationshipResult.impactedEntityIds,
-                            organisationId = organisationId
+                            workspaceId = workspaceId
                         )
                         impactedEntityEntities
                             .map { impactedEntity ->
@@ -284,8 +284,8 @@ class EntityService(
 
 
     @Transactional
-    @PreAuthorize("@organisationSecurity.hasOrg(#organisationId)")
-    fun deleteEntities(organisationId: UUID, ids: List<UUID>): DeleteEntityResponse {
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun deleteEntities(workspaceId: UUID, ids: List<UUID>): DeleteEntityResponse {
         val userId = authTokenService.getUserId()
         if (ids.isEmpty()) {
             return DeleteEntityResponse(
@@ -301,7 +301,7 @@ class EntityService(
 
 
         // Archive entities, their unique values, and relationships
-        val deletedEntities = entityRepository.archiveByIds(ids.toTypedArray(), organisationId)
+        val deletedEntities = entityRepository.deleteByIds(ids.toTypedArray(), workspaceId)
         val deletedRowIds = deletedEntities.mapNotNull { it.id }.toSet()
 
         if (deletedRowIds.isEmpty()) {
@@ -310,8 +310,8 @@ class EntityService(
             )
         }
 
-        entityAttributeService.archiveEntities(deletedRowIds)
-        entityRelationshipService.archiveEntities(deletedRowIds, organisationId)
+        entityAttributeService.deleteEntities(workspaceId, deletedRowIds)
+        entityRelationshipService.archiveEntities(deletedRowIds, workspaceId)
 
         // Log activity for each deleted entity
         activityService.logActivities(
@@ -320,7 +320,7 @@ class EntityService(
                     activity = Activity.ENTITY,
                     operation = OperationType.DELETE,
                     userId = userId,
-                    organisationId = organisationId,
+                    workspaceId = workspaceId,
                     entityId = entity.id,
                     entityType = ApplicationEntityType.ENTITY,
                     details = mapOf(
@@ -336,7 +336,7 @@ class EntityService(
             val impactedEntityEntities = entityRepository.findAllById(impactedEntityIds)
             val impactedRelationships = entityRelationshipService.findRelatedEntities(
                 entityIds = impactedEntityIds.toSet(),
-                organisationId = organisationId
+                workspaceId = workspaceId
             )
             impactedEntityEntities
                 .map { impactedEntity ->
@@ -359,11 +359,11 @@ class EntityService(
 
 
     /**
-     * Get all entities for an organization.
+     * Get all entities for an workspace.
      */
-    fun getOrganisationEntities(organisationId: UUID): List<Entity> {
+    fun getWorkspaceEntities(workspaceId: UUID): List<Entity> {
         return findManyResults {
-            entityRepository.findByOrganisationId(organisationId)
+            entityRepository.findByworkspaceId(workspaceId)
         }.map { it.toModel(relationships = emptyMap()) }
     }
 

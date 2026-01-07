@@ -11,14 +11,14 @@ import { EntityRow } from "./entity-table-utils";
 interface Props {
     selectedRows: EntityRow[];
     clearSelection: () => void;
-    organisationId: string;
+    workspaceId: string;
     entityTypeId: string;
 }
 
 const EntityActionBar: FC<Props> = ({
     selectedRows,
     clearSelection,
-    organisationId,
+    workspaceId,
     entityTypeId,
 }) => {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -59,7 +59,7 @@ const EntityActionBar: FC<Props> = ({
                 open={deleteModalOpen}
                 onOpenChange={setDeleteModalOpen}
                 selectedRows={selectedRows}
-                organisationId={organisationId}
+                workspaceId={workspaceId}
                 entityTypeId={entityTypeId}
                 onSuccess={handleDeleteSuccess}
             />

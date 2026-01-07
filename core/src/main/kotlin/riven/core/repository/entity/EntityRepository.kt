@@ -11,26 +11,26 @@ import java.util.*
  */
 interface EntityRepository : JpaRepository<EntityEntity, UUID> {
 
-    @Query("SELECT e FROM EntityEntity e WHERE e.id = :id AND e.archived = false")
+    @Query("SELECT e FROM EntityEntity e WHERE e.id = :id AND e.deleted = false")
     override fun findById(id: UUID): Optional<EntityEntity>
 
-    @Query("SELECT e FROM EntityEntity e WHERE e.id in :ids AND e.archived = false")
+    @Query("SELECT e FROM EntityEntity e WHERE e.id in :ids AND e.deleted = false")
     fun findByIdIn(ids: Collection<UUID>): List<EntityEntity>
 
     /**
-     * Find all entities for an organization.
+     * Find all entities for an workspace.
      */
-    @Query("SELECT e FROM EntityEntity e WHERE e.organisationId = :organisationId AND e.archived = false")
-    fun findByOrganisationId(organisationId: UUID): List<EntityEntity>
+    @Query("SELECT e FROM EntityEntity e WHERE e.workspaceId = :workspaceId AND e.deleted = false")
+    fun findByworkspaceId(workspaceId: UUID): List<EntityEntity>
 
-    @Query("SELECT e FROM EntityEntity e WHERE e.typeId = :typeId AND e.archived = false")
+    @Query("SELECT e FROM EntityEntity e WHERE e.typeId = :typeId AND e.deleted = false")
     fun findByTypeId(typeId: UUID): List<EntityEntity>
 
     @Query(
         """
        SELECT e FROM EntityEntity e 
             WHERE e.typeId in :typeIds 
-            AND e.archived = false 
+            AND e.deleted = false 
     """
     )
     fun findByTypeIdIn(typeIds: List<UUID>): List<EntityEntity>
@@ -39,13 +39,13 @@ interface EntityRepository : JpaRepository<EntityEntity, UUID> {
     @Query(
         value = """
         UPDATE entities
-        SET archived = true, deleted_at = CURRENT_TIMESTAMP
+        SET deleted = true, deleted_at = CURRENT_TIMESTAMP
         WHERE id = ANY(:ids)
-          AND organisation_id = :organisationId
-          AND archived = false
+          AND workspace_id = :workspaceId
+          AND deleted = false
         RETURNING *
     """, nativeQuery = true
     )
-    fun archiveByIds(ids: Array<UUID>, organisationId: UUID): List<EntityEntity>
+    fun deleteByIds(ids: Array<UUID>, workspaceId: UUID): List<EntityEntity>
 
 }

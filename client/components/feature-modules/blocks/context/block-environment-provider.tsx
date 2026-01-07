@@ -44,15 +44,15 @@ export const BlockEnvironmentContext = createContext<BlockEnvironmentContextValu
  * Provides state and helpers for the block environment editor.
  */
 export const BlockEnvironmentProvider: React.FC<BlockEnvironmentProviderProps> = ({
-    organisationId,
+    workspaceId,
     entityId,
     entityType,
     environment: { layout: blockLayout, trees: initialTrees },
     children,
 }) => {
     const initialEnvironment = useMemo(
-        () => init(organisationId, initialTrees),
-        [organisationId, initialTrees]
+        () => init(workspaceId, initialTrees),
+        [workspaceId, initialTrees]
     );
 
     const { environment: initialEnvState } = initialEnvironment;
@@ -606,8 +606,8 @@ export const BlockEnvironmentProvider: React.FC<BlockEnvironmentProviderProps> =
 
     /** Reset the environment back to an empty canvas. */
     const clear = useCallback((): void => {
-        setEnvironment(createEmptyEnvironment(organisationId));
-    }, [organisationId]);
+        setEnvironment(createEmptyEnvironment(workspaceId));
+    }, [workspaceId]);
 
     /**
      * Reorder a block to a specific index within its parent's children array.
@@ -667,7 +667,7 @@ export const BlockEnvironmentProvider: React.FC<BlockEnvironmentProviderProps> =
     const value = useMemo<BlockEnvironmentContextValue>(
         () => ({
             environment,
-            organisationId,
+            workspaceId,
             entityId,
             entityType,
             layout: blockLayout,
@@ -696,7 +696,7 @@ export const BlockEnvironmentProvider: React.FC<BlockEnvironmentProviderProps> =
         [
             environment,
             blockLayout,
-            organisationId,
+            workspaceId,
             entityId,
             entityType,
             layoutId,

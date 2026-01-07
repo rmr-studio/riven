@@ -21,6 +21,7 @@ interface DataTableBodyProps<TData> {
     finalColumnsCount: number;
     enableInlineEdit?: boolean;
     focusedCell?: { rowId: string; columnId: string } | null;
+    alwaysShowActionHandles?: boolean;
 }
 
 export function DataTableBody<TData>({
@@ -37,6 +38,7 @@ export function DataTableBody<TData>({
     finalColumnsCount,
     enableInlineEdit,
     focusedCell,
+    alwaysShowActionHandles = false,
 }: DataTableBodyProps<TData>) {
     const rowIds = useMemo(() => {
         return table.getRowModel().rows.map((row) => row.id);
@@ -93,6 +95,7 @@ export function DataTableBody<TData>({
                         isSelectionEnabled={isSelectionEnabled}
                         enableInlineEdit={enableInlineEdit}
                         focusedCell={focusedCell}
+                        alwaysShowActionHandles={alwaysShowActionHandles}
                     />
                 );
             })}

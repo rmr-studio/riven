@@ -1,8 +1,8 @@
 "use client";
 import { useEntityTypes } from "@/components/feature-modules/entity/hooks/query/type/use-entity-types";
-import { Organisation } from "@/components/feature-modules/organisation/interface/organisation.interface";
-import { useOrganisationStore } from "@/components/feature-modules/organisation/provider/organisation-provider";
 import { useProfile } from "@/components/feature-modules/user/hooks/useProfile";
+import { Workspace } from "@/components/feature-modules/workspace/interface/workspace.interface";
+import { useWorkspaceStore } from "@/components/feature-modules/workspace/provider/workspace-provider";
 import { SidebarGroupProps } from "@/lib/interfaces/interface";
 import { DropdownMenuGroup } from "@radix-ui/react-dropdown-menu";
 import {
@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { Button } from "../button";
 import {
     DropdownMenu,
@@ -35,44 +34,33 @@ export const DashboardSidebar = () => {
     const pathName = usePathname();
     const router = useRouter();
     const { data, isPending, isLoadingAuth } = useProfile();
-    const [selectedOrganisation, setSelectedOrganisation] = useState<Organisation | null>(null);
 
-    const selectedOrganisationId = useOrganisationStore((store) => store.selectedOrganisationId); // Select specific state
-    const setSelectedOrganisationId = useOrganisationStore(
-        (store) => store.setSelectedOrganisation
-    );
+    const selectedWorkspaceId = useWorkspaceStore((store) => store.selectedWorkspaceId);
+    const setSelectedWorkspace = useWorkspaceStore((store) => store.setSelectedWorkspace);
 
     const { data: entityTypes, isLoading: isLoadingEntityTypes } =
-        useEntityTypes(selectedOrganisationId);
+        useEntityTypes(selectedWorkspaceId);
 
     const loadingUser = isPending || isLoadingAuth;
 
-    useEffect(() => {
-        if (!data) return;
+    // Derive selected workspace from user data
+    const selectedWorkspace =
+        data?.memberships.find((m) => m.workspace?.id === selectedWorkspaceId)?.workspace ?? null;
 
-        setSelectedOrganisation(
-            data?.memberships.find((m) => m.organisation?.id === selectedOrganisationId)
-                ?.organisation || null
-        );
-    }, [data, selectedOrganisationId]);
-
-    const handleOrganisationSelection = (organisation: Organisation) => {
-        if (!setSelectedOrganisationId) return;
-
-        setSelectedOrganisation(organisation);
-        setSelectedOrganisationId(organisation);
-        router.push("/dashboard/organisation/" + organisation.id);
+    const handleWorkspaceSelection = (workspace: Workspace) => {
+        setSelectedWorkspace(workspace);
+        router.push("/dashboard/workspace/" + workspace.id);
     };
 
     const switcherOptions: Action[] = [
         {
-            title: "Create Organisation",
-            link: "/dashboard/organisation/new",
+            title: "Create Workspace",
+            link: "/dashboard/workspace/new",
             icon: PlusCircle,
         },
         {
-            title: "View All Organisations",
-            link: "/dashboard/organisation",
+            title: "View All Workspaces",
+            link: "/dashboard/workspace",
             icon: Building2,
         },
     ];
@@ -81,7 +69,7 @@ export const DashboardSidebar = () => {
         className: "size-4",
     };
 
-    const sidebarContent: SidebarGroupProps[] = selectedOrganisation
+    const sidebarContent: SidebarGroupProps[] = selectedWorkspace
         ? [
               {
                   title: "Overview",
@@ -89,10 +77,9 @@ export const DashboardSidebar = () => {
                       {
                           icon: <Building2 {...DEFAULT_ICON_CLASS_PROPS} />,
                           hidden: false,
-                          title: "Organisation",
-                          url: `/dashboard/organisation/${selectedOrganisation.id}`,
-                          isActive:
-                              pathName === `/dashboard/organisation/${selectedOrganisation.id}`,
+                          title: "Workspace",
+                          url: `/dashboard/workspace/${selectedWorkspace.id}`,
+                          isActive: pathName === `/dashboard/workspace/${selectedWorkspace.id}`,
                       },
                   ],
               },
@@ -115,7 +102,7 @@ export const DashboardSidebar = () => {
                                   <DropdownMenuItem
                                       onClick={() =>
                                           router.push(
-                                              `/dashboard/organisation/${selectedOrganisation.id}/entity`
+                                              `/dashboard/workspace/${selectedWorkspace.id}/entity`
                                           )
                                       }
                                   >
@@ -128,7 +115,7 @@ export const DashboardSidebar = () => {
                                   <DropdownMenuItem
                                       onClick={() =>
                                           router.push(
-                                              `/dashboard/organisation/${selectedOrganisation.id}/entity/environment`
+                                              `/dashboard/workspace/${selectedWorkspace.id}/entity/environment`
                                           )
                                       }
                                   >
@@ -162,7 +149,7 @@ export const DashboardSidebar = () => {
                                 ),
                                 hidden: false,
                                 title: entityType.name.plural,
-                                url: `/dashboard/organisation/${selectedOrganisation.id}/entity/${entityType.key}`,
+                                url: `/dashboard/workspace/${selectedWorkspace.id}/entity/${entityType.key}`,
                                 isActive: false,
                             })) ?? []),
                             ...(entityTypes && entityTypes.length > 5
@@ -171,7 +158,7 @@ export const DashboardSidebar = () => {
                                           icon: <Ellipsis {...DEFAULT_ICON_CLASS_PROPS} />,
                                           hidden: false,
                                           title: `See all ${entityTypes.length}`,
-                                          url: `/dashboard/organisation/${selectedOrganisation.id}/entity`,
+                                          url: `/dashboard/workspace/${selectedWorkspace.id}/entity`,
                                           isActive: false,
                                       },
                                   ]
@@ -186,18 +173,18 @@ export const DashboardSidebar = () => {
                           icon: <GitGraph {...DEFAULT_ICON_CLASS_PROPS} />,
                           hidden: false,
                           title: "Workflows",
-                          url: `/dashboard/organisation/${selectedOrganisation.id}/members`,
+                          url: `/dashboard/workspace/${selectedWorkspace.id}/members`,
                           isActive: pathName.startsWith(
-                              `/dashboard/organisation/${selectedOrganisation.id}/members`
+                              `/dashboard/workspace/${selectedWorkspace.id}/members`
                           ),
                       },
                       {
                           icon: <Workflow {...DEFAULT_ICON_CLASS_PROPS} />,
                           hidden: false,
                           title: "Automations",
-                          url: `/dashboard/organisation/${selectedOrganisation.id}/members`,
+                          url: `/dashboard/workspace/${selectedWorkspace.id}/members`,
                           isActive: pathName.startsWith(
-                              `/dashboard/organisation/${selectedOrganisation.id}/members`
+                              `/dashboard/workspace/${selectedWorkspace.id}/members`
                           ),
                       },
                   ],
@@ -210,9 +197,9 @@ export const DashboardSidebar = () => {
                                   icon: <Building2 {...DEFAULT_ICON_CLASS_PROPS} />,
                                   hidden: false,
                                   title: "Default Templates",
-                                  url: `/dashboard/organisation/${selectedOrganisation.id}/templates`,
+                                  url: `/dashboard/workspace/${selectedWorkspace.id}/templates`,
                                   isActive: pathName.startsWith(
-                                      `/dashboard/organisation/${selectedOrganisation.id}/templates`
+                                      `/dashboard/workspace/${selectedWorkspace.id}/templates`
                                   ),
                               },
                           ],
@@ -227,14 +214,14 @@ export const DashboardSidebar = () => {
                           icon: <TrendingUpDown {...DEFAULT_ICON_CLASS_PROPS} />,
                           hidden: false,
                           title: "Usage",
-                          url: `/dashboard/organisation/${selectedOrganisation.id}/usage`,
+                          url: `/dashboard/workspace/${selectedWorkspace.id}/usage`,
                           isActive: pathName.startsWith(`/dashboard/usage`),
                       },
                       {
                           icon: <CalendarHeart {...DEFAULT_ICON_CLASS_PROPS} />,
                           hidden: false,
                           title: "Subscription",
-                          url: `/dashboard/organisation/${selectedOrganisation.id}/subscriptions`,
+                          url: `/dashboard/workspace/${selectedWorkspace.id}/subscriptions`,
                           isActive: pathName.startsWith(`/dashboard/subscriptions`),
                       },
                   ],
@@ -246,10 +233,10 @@ export const DashboardSidebar = () => {
                       {
                           icon: <CogIcon {...DEFAULT_ICON_CLASS_PROPS} />,
                           hidden: false,
-                          title: "Organisation Settings",
-                          url: `/dashboard/organisation/${selectedOrganisation.id}/settings`,
+                          title: "Workspace Settings",
+                          url: `/dashboard/workspace/${selectedWorkspace.id}/settings`,
                           isActive: pathName.startsWith(
-                              `/dashboard/organisation/${selectedOrganisation.id}/settings`
+                              `/dashboard/workspace/${selectedWorkspace.id}/settings`
                           ),
                       },
                   ],
@@ -270,7 +257,7 @@ export const DashboardSidebar = () => {
                             <>
                                 <Link
                                     className="mt-3 w-auto flex-grow flex mx-4"
-                                    href={"/dashboard/organisation/new"}
+                                    href={"/dashboard/workspace/new"}
                                 >
                                     <Button
                                         variant={"outline"}
@@ -278,7 +265,7 @@ export const DashboardSidebar = () => {
                                         className="w-full cursor-pointer"
                                         size={"sm"}
                                     >
-                                        Create Organisation
+                                        Create Workspace
                                     </Button>
                                 </Link>
                                 <section className="mb-8">
@@ -287,11 +274,11 @@ export const DashboardSidebar = () => {
                                     </div>
                                     <div>
                                         <h1 className="text-content text-sm font-semibold text-center">
-                                            No Organisations Found
+                                            No Workspaces Found
                                         </h1>
                                         <p className="text-xs text-muted-foreground text-center">
-                                            You currently do not have any organisations. Create one
-                                            to get started.
+                                            You currently do not have any workspaces. Create one to
+                                            get started.
                                         </p>
                                     </div>
                                 </section>
@@ -301,15 +288,14 @@ export const DashboardSidebar = () => {
                     return (
                         <OptionSwitcher
                             additionalActions={switcherOptions}
-                            title={"Organisations"}
+                            title={"Workspaces"}
                             options={
-                                data.memberships
-                                    .map((org) => org.organisation)
-                                    .filter((org) => !!org) ?? []
+                                data.memberships.map((ws) => ws.workspace).filter((ws) => !!ws) ??
+                                []
                             }
-                            selectedOption={selectedOrganisation}
-                            handleOptionSelection={handleOrganisationSelection}
-                            render={(org) => <span>{org.name}</span>}
+                            selectedOption={selectedWorkspace}
+                            handleOptionSelection={handleWorkspaceSelection}
+                            render={(ws) => <span>{ws.name}</span>}
                         />
                     );
                 }

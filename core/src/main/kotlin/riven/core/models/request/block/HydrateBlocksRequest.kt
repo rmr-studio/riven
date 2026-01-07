@@ -12,13 +12,13 @@ import java.util.*
  * without fetching everything upfront during initial environment load.
  *
  * @param references A map where each key is a block ID and the value is a list of entity references associated to that block
- * @param organisationId The organisation context for authorization and filtering.
+ * @param workspaceId The workspace context for authorization and filtering.
  */
 data class HydrateBlocksRequest(
     @field:NotEmpty(message = "block references must not be empty")
     val references: Map<UUID, List<EntityReferenceRequest>>,
-    @field:NotNull(message = "organisationId is required")
-    var organisationId: UUID
+    @field:NotNull(message = "workspaceId is required")
+    var workspaceId: UUID
 )
 
 data class EntityReferenceRequest(

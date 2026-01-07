@@ -14,21 +14,21 @@ interface EntityOption {
 
 interface UseEntitySelectorParams {
     entityType: string;
-    organisationId: string;
+    workspaceId: string;
     excludeIds?: string[];
     enabled: boolean;
 }
 
 export const useEntitySelector = ({
     entityType,
-    organisationId,
+    workspaceId,
     excludeIds = [],
     enabled,
 }: UseEntitySelectorParams) => {
     const { session, loading } = useAuth();
 
     const query = useQuery({
-        queryKey: ["entities", entityType, organisationId, excludeIds],
+        queryKey: ["entities", entityType, workspaceId, excludeIds],
         queryFn: async (): Promise<EntityOption[]> => {
             if (!session) {
                 throw new Error("No session available");
@@ -38,7 +38,7 @@ export const useEntitySelector = ({
                 switch (entityType) {
                     case "CLIENT": {
                         const clients = await fetchOrganisationClients(session, {
-                            organisationId,
+                            workspaceId,
                         });
 
                         // Handle empty response as valid empty array
@@ -62,7 +62,7 @@ export const useEntitySelector = ({
                     // TODO: Add other entity types here
                     // case "PROJECT": {
                     //     const projects = await fetchOrganisationProjects(session, {
-                    //         organisationId,
+                    //         workspaceId,
                     //     });
                     //
                     //     if (!projects || projects.length === 0) {
@@ -89,7 +89,7 @@ export const useEntitySelector = ({
                 );
             }
         },
-        enabled: enabled && !!session && !!organisationId,
+        enabled: enabled && !!session && !!workspaceId,
         retry: (failureCount, error) => {
             // Don't retry on 4xx errors (client errors)
             if (isResponseError(error) && error.status >= 400 && error.status < 500) {

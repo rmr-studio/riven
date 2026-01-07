@@ -9,7 +9,7 @@ interface DeleteEntityRequest {
 }
 
 export function useDeleteEntityMutation(
-    organisationId: string,
+    workspaceId: string,
     options?: UseMutationOptions<DeleteEntityResponse, Error, DeleteEntityRequest>
 ) {
     const queryClient = useQueryClient();
@@ -28,7 +28,7 @@ export function useDeleteEntityMutation(
                 return Promise.resolve(response);
             }
 
-            return EntityService.deleteEntities(session, organisationId, ids);
+            return EntityService.deleteEntities(session, workspaceId, ids);
         },
         onMutate: (data) => {
             options?.onMutate?.(data);
@@ -56,26 +56,20 @@ export function useDeleteEntityMutation(
             const { entityIds } = variables;
             Object.entries(entityIds).forEach(([typeId, ids]) => {
                 const set = new Set(ids);
-                queryClient.setQueryData<Entity[]>(
-                    ["entities", organisationId, typeId],
-                    (oldData) => {
-                        if (!oldData) return oldData;
-                        return oldData.filter((entity) => !set.has(entity.id));
-                    }
-                );
+                queryClient.setQueryData<Entity[]>(["entities", workspaceId, typeId], (oldData) => {
+                    if (!oldData) return oldData;
+                    return oldData.filter((entity) => !set.has(entity.id));
+                });
             });
 
             // Adjust data cache for updated entities. Payload only includes entities that were updated as a result of deletion, grouped by their type IDs
             if (!updatedEntities) return;
             Object.entries(updatedEntities).forEach(([typeId, entities]) => {
-                queryClient.setQueryData<Entity[]>(
-                    ["entities", organisationId, typeId],
-                    (oldData) => {
-                        if (!oldData) return entities;
-                        const map = new Map(entities.map((entity) => [entity.id, entity]));
-                        return oldData.map((entity) => map.get(entity.id) ?? entity);
-                    }
-                );
+                queryClient.setQueryData<Entity[]>(["entities", workspaceId, typeId], (oldData) => {
+                    if (!oldData) return entities;
+                    const map = new Map(entities.map((entity) => [entity.id, entity]));
+                    return oldData.map((entity) => map.get(entity.id) ?? entity);
+                });
             });
         },
     });

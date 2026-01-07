@@ -17,7 +17,7 @@ interface Props {
  * Handles hydration and removal logic for singleton entity references.
  */
 export const EntityView: FC<Props> = ({ blockId, item }) => {
-    const { organisationId, getBlock } = useBlockEnvironment();
+    const { workspaceId, getBlock } = useBlockEnvironment();
     const { updateTrackedBlock } = useTrackedEnvironment();
     const { data: hydrationResult, isLoading, error } = useBlockHydration(blockId);
 

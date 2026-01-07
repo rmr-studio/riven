@@ -18,7 +18,7 @@ class EntityTypeRelationshipImpactAnalysisService(
     private val entityRepository: EntityRepository
 ) {
     fun analyze(
-        organisationId: UUID,
+        workspaceId: UUID,
         sourceEntityType: EntityTypeEntity,
         diff: EntityTypeRelationshipDiff
     ): EntityTypeRelationshipImpactAnalysis {
@@ -40,8 +40,8 @@ class EntityTypeRelationshipImpactAnalysisService(
 
         // Round up all entity types affected by the changes
         val entityTypeMap: Map<String, EntityTypeEntity> = entityTypeRepository
-            .findByOrganisationIdAndKeyIn(
-                organisationId,
+            .findByworkspaceIdAndKeyIn(
+                workspaceId,
                 diff.removed.map { it.relationship.sourceEntityTypeKey } +
                         diff.modified.filter { it.changes.any { change -> change.canCauseImpact() } }.flatMap {
                             listOf(

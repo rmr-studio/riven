@@ -60,6 +60,7 @@ export function DataTableProvider<TData>({
     children,
     initialData,
     initialColumnSizing,
+    initialColumnOrder,
     onReorder,
     onColumnWidthsChange,
     onColumnOrderChange,
@@ -76,6 +77,7 @@ export function DataTableProvider<TData>({
         storeRef.current = createDataTableStore<TData>({
             initialData,
             initialColumnSizing,
+            initialColumnOrder,
             getRowId,
             onCellEdit,
         });
@@ -85,6 +87,13 @@ export function DataTableProvider<TData>({
     useEffect(() => {
         storeRef.current?.getState().setTableData(initialData);
     }, [initialData]);
+
+    // Sync external column order changes to store
+    useEffect(() => {
+        if (initialColumnOrder && initialColumnOrder.length > 0) {
+            storeRef.current?.getState().setColumnOrder(initialColumnOrder);
+        }
+    }, [initialColumnOrder]);
 
     // Sync onCellEdit callback changes to store (prevents stale closures)
     useEffect(() => {

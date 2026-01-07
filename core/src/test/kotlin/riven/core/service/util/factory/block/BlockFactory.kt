@@ -47,7 +47,7 @@ object BlockFactory {
         schema: Schema<String> = Schema(
             key = SchemaType.OBJECT
         ),
-        archived: Boolean = false,
+        deleted: Boolean = false,
         nesting: BlockTypeNesting = BlockTypeNesting(
             max = null,
             allowedTypes = listOf("contact_card")
@@ -57,12 +57,12 @@ object BlockFactory {
         key = key,
         displayName = "Contact",
         description = "Contact type",
-        organisationId = orgId,
+        workspaceId = orgId,
         system = false,
         version = version,
         strictness = strictness,
         schema = schema,
-        archived = archived,
+        deleted = deleted,
         displayStructure = BlockDisplay(
             form = FormStructure(emptyMap()),
             render = BlockRenderStructure(
@@ -90,11 +90,11 @@ object BlockFactory {
         type: BlockTypeEntity,
     ): BlockEntity = BlockEntity(
         id = id,
-        organisationId = orgId,
+        workspaceId = orgId,
         type = type,
         name = "Test Block",
         payload = BlockContentMetadata(data = emptyMap(), meta = BlockMeta()),
-        archived = false
+        deleted = false
     )
 
 
@@ -125,15 +125,14 @@ object BlockFactory {
         type: BlockType,
         name: String? = "Test Block",
         payload: BlockContentMetadata = BlockContentMetadata(data = emptyMap(), meta = BlockMeta()),
-        archived: Boolean = false
     ): Block = Block(
         id = id,
         name = name,
-        organisationId = orgId,
+        workspaceId = orgId,
         type = type,
         payload = payload,
-        archived = archived
-    )
+
+        )
 
     /**
      * Creates a simple ContentNode for testing.
@@ -242,13 +241,13 @@ object BlockFactory {
     fun createTreeLayoutEntity(
         id: UUID? = UUID.randomUUID(),
         entityId: UUID = UUID.randomUUID(),
-        organisationId: UUID,
+        workspaceId: UUID,
         version: Int = 1,
         layout: TreeLayout = TreeLayout()
     ): BlockTreeLayoutEntity = BlockTreeLayoutEntity(
         id = id,
         entityId = entityId,
-        organisationId = organisationId,
+        workspaceId = workspaceId,
         version = version,
         layout = layout
     )
@@ -272,14 +271,14 @@ object BlockFactory {
      */
     fun createSaveEnvironmentRequest(
         layoutId: UUID,
-        organisationId: UUID,
+        workspaceId: UUID,
         operations: List<StructuralOperationRequest>,
         version: Int = 1,
         layout: TreeLayout = TreeLayout(),
         force: Boolean = false
     ): SaveEnvironmentRequest = SaveEnvironmentRequest(
         layoutId = layoutId,
-        organisationId = organisationId,
+        workspaceId = workspaceId,
         layout = layout,
         version = version,
         operations = operations,
@@ -299,7 +298,7 @@ object BlockFactory {
      */
     fun createBlockEntity(
         id: UUID = UUID.randomUUID(),
-        organisationId: UUID,
+        workspaceId: UUID,
         type: BlockTypeEntity
-    ): BlockEntity = createBlock(id = id, orgId = organisationId, type = type)
+    ): BlockEntity = createBlock(id = id, orgId = workspaceId, type = type)
 }

@@ -14,32 +14,32 @@ interface BlockTypeRepository : JpaRepository<BlockTypeEntity, UUID> {
     fun findByKey(key: String): Optional<BlockTypeEntity>
 
     /**
-     * Retrieve block types that belong to the specified organisation or are marked as system-wide.
+     * Retrieve block types that belong to the specified workspace or are marked as system-wide.
      *
-     * @param organisationId Organisation UUID to filter by; pass `null` to omit organisation-specific filtering.
+     * @param workspaceId Workspace UUID to filter by; pass `null` to omit workspace-specific filtering.
      * @param system When `true`, include block types that are marked as system-wide.
-     * @return `List<BlockTypeEntity>` containing entities that match the organisation ID or have the system flag, possibly empty.
+     * @return `List<BlockTypeEntity>` containing entities that match the workspace ID or have the system flag, possibly empty.
      */
-    fun findByOrganisationIdOrSystem(organisationId: UUID?, system: Boolean = true): List<BlockTypeEntity>
+    fun findByworkspaceIdOrSystem(workspaceId: UUID?, system: Boolean = true): List<BlockTypeEntity>
 
     /**
-     * Fetches the latest BlockTypeEntity for the given organisation and key.
+     * Fetches the latest BlockTypeEntity for the given workspace and key.
      *
-     * @param organisationId UUID of the organisation to match.
+     * @param workspaceId UUID of the workspace to match.
      * @param key Identifier of the block type.
-     * @return The BlockTypeEntity with the highest version for the organisation and key, or `null` if none exists.
+     * @return The BlockTypeEntity with the highest version for the workspace and key, or `null` if none exists.
      */
-    fun findTopByOrganisationIdAndKeyOrderByVersionDesc(organisationId: UUID, key: String): Optional<BlockTypeEntity>
+    fun findTopByworkspaceIdAndKeyOrderByVersionDesc(workspaceId: UUID, key: String): Optional<BlockTypeEntity>
 
     /**
-     * Finds a block type matching the specified organisation, key, and version.
+     * Finds a block type matching the specified workspace, key, and version.
      *
-     * @param organisationId The UUID of the organisation to which the block type belongs.
+     * @param workspaceId The UUID of the workspace to which the block type belongs.
      * @param key The block type's unique key.
      * @param version The exact version number to match.
      * @return An Optional containing the matching BlockTypeEntity if found, or empty otherwise.
      */
-    fun findByOrganisationIdAndKeyAndVersion(organisationId: UUID, key: String, version: Int): Optional<BlockTypeEntity>
+    fun findByworkspaceIdAndKeyAndVersion(workspaceId: UUID, key: String, version: Int): Optional<BlockTypeEntity>
 
     /**
      * Retrieve the latest system-wide BlockTypeEntity for the given key.

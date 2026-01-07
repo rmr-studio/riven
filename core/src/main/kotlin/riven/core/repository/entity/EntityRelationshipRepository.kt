@@ -4,45 +4,9 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import riven.core.entity.entity.EntityRelationshipEntity
-import riven.core.enums.common.IconColour
-import riven.core.enums.common.IconType
-import riven.core.models.common.Icon
-import riven.core.models.entity.EntityLink
+import riven.core.projection.entity.EntityLinkProjection
 import java.util.*
 
-/**
- * Projection interface for EntityLink native query results.
- * Spring Data JPA will automatically map the query columns to these methods.
- *
- * Note: This interface must only contain simple property accessors (getters).
- * Use the toEntityLink() extension function to convert to the domain model.
- */
-interface EntityLinkProjection {
-    fun getId(): UUID
-    fun getOrganisationId(): UUID
-    fun getTypeKey(): String
-    fun getFieldId(): UUID
-    fun getSourceEntityId(): UUID
-    fun getIconType(): String
-    fun getIconColour(): String
-    fun getLabel(): String
-}
-
-/**
- * Convert this projection to an EntityLink domain model.
- */
-fun EntityLinkProjection.toEntityLink(): EntityLink = EntityLink(
-    id = getId(),
-    organisationId = getOrganisationId(),
-    fieldId = getFieldId(),
-    sourceEntityId = getSourceEntityId(),
-    icon = Icon(
-        icon = IconType.valueOf(getIconType()),
-        colour = IconColour.valueOf(getIconColour())
-    ),
-    key = getTypeKey(),
-    label = getLabel()
-)
 
 /**
  * Repository for relationships between entities.
@@ -52,13 +16,13 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
     /**
      * Find all relationships where the given entity is the source.
      */
-    @Query("SELECT r FROM EntityRelationshipEntity r WHERE r.sourceId = :id and r.archived = false")
+    @Query("SELECT r FROM EntityRelationshipEntity r WHERE r.sourceId = :id and r.deleted = false")
     fun findBySourceId(id: UUID): List<EntityRelationshipEntity>
 
-    @Query("SELECT r FROM EntityRelationshipEntity r WHERE r.sourceId in :ids and r.archived = false")
+    @Query("SELECT r FROM EntityRelationshipEntity r WHERE r.sourceId in :ids and r.deleted = false")
     fun findBySourceIdIn(ids: Collection<UUID>): List<EntityRelationshipEntity>
 
-    @Query("SELECT r FROM EntityRelationshipEntity r WHERE r.targetId in :ids and r.archived = false")
+    @Query("SELECT r FROM EntityRelationshipEntity r WHERE r.targetId in :ids and r.deleted = false")
     fun findByTargetIdIn(ids: Collection<UUID>): List<EntityRelationshipEntity>
 
     /**
@@ -108,17 +72,17 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
     @Query(
         """
         UPDATE entity_relationships
-            SET archived = true, 
+            SET deleted = true, 
             deleted_at = CURRENT_TIMESTAMP 
         WHERE 
             (source_entity_id = ANY(:ids) 
             or target_entity_id = ANY(:ids)) 
-            AND organisation_id = :organisationId 
-            AND archived = false
+            AND workspace_id = :workspaceId 
+            AND deleted = false
         RETURNING *
             """, nativeQuery = true
     )
-    fun archiveEntities(ids: Array<UUID>, organisationId: UUID): List<EntityRelationshipEntity>
+    fun deleteEntities(ids: Array<UUID>, workspaceId: UUID): List<EntityRelationshipEntity>
 
     /**
      * Find all entity links for a source entity by joining relationships with target entities.
@@ -133,7 +97,7 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
         value = """
             SELECT
                 e.id as id,
-                e.organisation_id as organisationId,
+                e.workspace_id as workspaceId,
                 r.relationship_field_id as fieldId,
                 r.source_entity_id as sourceEntityId,
                 e.icon_type as iconType,
@@ -146,13 +110,13 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
             FROM entity_relationships r
             JOIN entities e ON r.target_entity_id = e.id
             WHERE r.source_entity_id = :sourceId
-            AND r.archived = false
-            AND e.archived = false
-            AND e.organisation_id = :organisationId
+            AND r.deleted = false
+            AND e.deleted = false
+            AND e.workspace_id = :workspaceId
         """,
         nativeQuery = true
     )
-    fun findEntityLinksBySourceId(sourceId: UUID, organisationId: UUID): List<EntityLinkProjection>
+    fun findEntityLinksBySourceId(sourceId: UUID, workspaceId: UUID): List<EntityLinkProjection>
 
     /**
      * Find all entity links for multiple source entities.
@@ -162,7 +126,7 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
         value = """
             SELECT
                 e.id as id,
-                e.organisation_id as organisationId,
+                e.workspace_id as workspaceId,
                 r.relationship_field_id as fieldId,
                 r.source_entity_id as sourceEntityId,
                 e.icon_type as iconType,
@@ -175,11 +139,11 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
             FROM entity_relationships r
             JOIN entities e ON r.target_entity_id = e.id
             WHERE r.source_entity_id = ANY(:ids)
-            AND r.archived = false
-            AND e.archived = false
-            AND e.organisation_id = :organisationId
+            AND r.deleted = false
+            AND e.deleted = false
+            AND e.workspace_id = :workspaceId
         """,
         nativeQuery = true
     )
-    fun findEntityLinksBySourceIdIn(ids: Array<UUID>, organisationId: UUID): List<EntityLinkProjection>
+    fun findEntityLinksBySourceIdIn(ids: Array<UUID>, workspaceId: UUID): List<EntityLinkProjection>
 }

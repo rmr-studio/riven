@@ -30,14 +30,14 @@ export const editorPanel = ({
             if (!node) return children;
 
             const { block } = node;
-            const { id, organisationId, type } = block;
+            const { id, workspaceId, type } = block;
 
             // Create callback handlers for block toolbar
             const handleDelete = () => removeBlock(id);
 
             const handleInsert = (item: SlashMenuItem) => {
-                if (!type.nesting || !organisationId) return;
-                const newNode = createNodeFromSlashItem(item, organisationId);
+                if (!type.nesting || !workspaceId) return;
+                const newNode = createNodeFromSlashItem(item, workspaceId);
                 if (!newNode) return;
                 insertBlock(newNode, id, null);
             };
@@ -74,18 +74,18 @@ export const editorPanel = ({
 
 export function createNodeFromSlashItem(
     item: SlashMenuItem,
-    organisationId: string
+    workspaceId: string
 ): BlockNode | null {
     switch (item.id) {
         case "LAYOUT_CONTAINER":
         case "LINE_ITEM":
-            return createLayoutContainerNode(organisationId);
+            return createLayoutContainerNode(workspaceId);
         case "TEXT":
         case "BLANK_NOTE":
-            return createNoteNode(organisationId);
+            return createNoteNode(workspaceId);
         case "PROJECT_OVERVIEW":
-            return createProjectBlockNode(organisationId);
+            return createProjectBlockNode(workspaceId);
         default:
-            return createNoteNode(organisationId, `New ${item.label}`);
+            return createNoteNode(workspaceId, `New ${item.label}`);
     }
 }

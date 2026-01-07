@@ -10,7 +10,7 @@ import java.util.*
  */
 data class EntityLink(
     val id: UUID,
-    val organisationId: UUID,
+    val workspaceId: UUID,
     val fieldId: UUID,
     val sourceEntityId: UUID,
     val icon: Icon,

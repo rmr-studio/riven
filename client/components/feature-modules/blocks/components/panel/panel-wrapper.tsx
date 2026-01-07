@@ -77,7 +77,7 @@ export const PanelWrapper: FC<Props> = ({
     const {
         getBlock,
         getChildren,
-        organisationId,
+        workspaceId,
         entityType: envEntityType,
     } = useBlockEnvironment();
     const { addTrackedBlock } = useTrackedEnvironment();
@@ -268,13 +268,13 @@ export const PanelWrapper: FC<Props> = ({
             }
 
             // Create and insert block directly
-            const newBlock = createBlockInstanceFromType(blockType, organisationId, {
+            const newBlock = createBlockInstanceFromType(blockType, workspaceId, {
                 name: blockType.name,
             });
 
             addTrackedBlock(newBlock, id);
         },
-        [allowInsert, organisationId, id, addTrackedBlock]
+        [allowInsert, workspaceId, id, addTrackedBlock]
     );
 
     /**
@@ -293,7 +293,7 @@ export const PanelWrapper: FC<Props> = ({
 
                 if (!entityType) return; // Required field
 
-                const newBlock = createBlockInstanceFromType(selectedBlockType, organisationId, {
+                const newBlock = createBlockInstanceFromType(selectedBlockType, workspaceId, {
                     name: selectedBlockType.name,
                     entityType,
                 });
@@ -304,7 +304,7 @@ export const PanelWrapper: FC<Props> = ({
             setSelectedBlockType(null);
             setTypePickerOpen(false);
         },
-        [selectedBlockType, organisationId, id, addTrackedBlock]
+        [selectedBlockType, workspaceId, id, addTrackedBlock]
     );
 
     const handleQuickSelect = useCallback(
@@ -493,7 +493,7 @@ export const PanelWrapper: FC<Props> = ({
                                     allowInsert ? handleInlineMenuOpenChange : undefined
                                 }
                                 inlineSearchRef={allowInsert ? inlineSearchRef : undefined}
-                                organisationId={organisationId}
+                                workspaceId={workspaceId}
                                 entityType={envEntityType}
                                 allowedTypes={allowedTypes}
                                 onSelectBlockType={allowInsert ? handleBlockTypeSelect : undefined}

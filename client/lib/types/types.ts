@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/workspace/{workspaceId}/member/{memberId}/role/{role}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateMemberRole"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/user/": {
         parameters: {
             query?: never;
@@ -28,39 +44,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/organisation/{organisationId}/member/role/{role}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: operations["updateMemberRole"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/organisation/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: operations["updateOrganisation"];
-        post: operations["createOrganisation"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/entity/schema/organisation/{organisationId}/configuration": {
+    "/api/v1/entity/schema/workspace/{workspaceId}/configuration": {
         parameters: {
             query?: never;
             header?: never;
@@ -70,7 +54,7 @@ export interface paths {
         get?: never;
         /**
          * Updates an existing entity type configuration
-         * @description Updates the data for an already existing entity type for the specified organisation.
+         * @description Updates the data for an already existing entity type for the specified workspace.
          */
         put: operations["updateEntityType"];
         post?: never;
@@ -100,7 +84,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/block/schema/{blockTypeId}/archive/{status}": {
+    "/api/v1/workspace/invite/workspace/{workspaceId}/email/{email}/role/{role}": {
         parameters: {
             query?: never;
             header?: never;
@@ -108,19 +92,15 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /**
-         * Archive a block type
-         * @description Archives a block type by its ID. The block type will still be visible to users currently using it but cannot be used in new blocks.
-         */
-        put: operations["updateArchiveStatusByBlockTypeId"];
-        post?: never;
+        put?: never;
+        post: operations["inviteToWorkspace"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/organisation/invite/reject/{inviteToken}": {
+    "/api/v1/workspace/invite/reject/{inviteToken}": {
         parameters: {
             query?: never;
             header?: never;
@@ -136,23 +116,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/organisation/invite/organisation/{organisationId}/email/{email}/role/{role}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["inviteToOrganisation"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/organisation/invite/accept/{inviteToken}": {
+    "/api/v1/workspace/invite/accept/{inviteToken}": {
         parameters: {
             query?: never;
             header?: never;
@@ -168,31 +132,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/entity/schema/organisation/{organisationId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get all entity types for an organisation
-         * @description Retrieves all entity types associated with the specified organisation.
-         */
-        get: operations["getEntityTypesForOrganisation"];
-        put?: never;
-        /**
-         * Create a new entity type
-         * @description Creates and publishes a new entity type for the specified organisation.
-         */
-        post: operations["createEntityType"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/entity/schema/organisation/{organisationId}/definition": {
+    "/api/v1/workspace/": {
         parameters: {
             query?: never;
             header?: never;
@@ -201,22 +141,14 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Add or update an attribute or relationship
-         * @description Adds or updates an attribute or relationship in the specified entity type for the given organisation.
-         */
-        post: operations["saveEntityTypeDefinition"];
-        /**
-         * Removes an attribute or relationship from an entity type
-         * @description Removes an attribute or relationship from the specified entity type for the given organisation.
-         */
-        delete: operations["deleteEntityTypeDefinition"];
+        post: operations["saveWorkspace"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/entity/organisation/{organisationId}/type/{entityTypeId}": {
+    "/api/v1/entity/workspace/{workspaceId}/type/{entityTypeId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -227,10 +159,58 @@ export interface paths {
         put?: never;
         /**
          * Saves an entity instance
-         * @description Saves either a new entity, or an updated instance within the specified organisation.
+         * @description Saves either a new entity, or an updated instance within the specified workspace.
          */
         post: operations["saveEntity"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entity/schema/workspace/{workspaceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get all entity types for an workspace
+         * @description Retrieves all entity types associated with the specified workspace.
+         */
+        get: operations["getEntityTypesForWorkspace"];
+        put?: never;
+        /**
+         * Create a new entity type
+         * @description Creates and publishes a new entity type for the specified workspace.
+         */
+        post: operations["createEntityType"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entity/schema/workspace/{workspaceId}/definition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add or update an attribute or relationship
+         * @description Adds or updates an attribute or relationship in the specified entity type for the given workspace.
+         */
+        post: operations["saveEntityTypeDefinition"];
+        /**
+         * Removes an attribute or relationship from an entity type
+         * @description Removes an attribute or relationship from the specified entity type for the given workspace.
+         */
+        delete: operations["deleteEntityTypeDefinition"];
         options?: never;
         head?: never;
         patch?: never;
@@ -316,6 +296,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspace/{workspaceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getWorkspace"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteWorkspace"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspace/invite/workspace/{workspaceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getWorkspaceInvites"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspace/invite/user": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getUserInvites"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/user/{userId}": {
         parameters: {
             query?: never;
@@ -340,55 +368,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/organisation/{organisationId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getOrganisation"];
-        put?: never;
-        post?: never;
-        delete: operations["deleteOrganisation"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/organisation/invite/user": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getUserInvites"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/organisation/invite/organisation/{organisationId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getOrganisationInvites"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/entity/schema/organisation/{organisationId}/key/{key}": {
+    "/api/v1/entity/workspace/{workspaceId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -396,15 +376,59 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get an entity type by key for an organisation
-         * @description Retrieves a specific entity type by its key associated with the specified organisation.
+         * Get all entity types for an workspace for all provided type keys
+         * @description Retrieves all entity associated with the specified workspace and specified entity types.This will also fetch all relevant linked entities.
          */
-        get: operations["getEntityTypeByKeyForOrganisation"];
+        get: operations["getEntityByTypeIdInForWorkspace"];
+        put?: never;
+        post?: never;
+        /**
+         * Deletes an entity instance
+         * @description Deleted the specified entity instance within the workspace.
+         */
+        delete: operations["deleteEntity"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entity/workspace/{workspaceId}/type/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get all entity types for an workspace for a provided entity type
+         * @description Retrieves all entity associated with the specified workspace and specified entity type.This will also fetch all relevant linked entities.
+         */
+        get: operations["getEntityByTypeIdForWorkspace"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entity/schema/workspace/{workspaceId}/key/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an entity type by key for an workspace
+         * @description Retrieves a specific entity type by its key associated with the specified workspace.
+         */
+        get: operations["getEntityTypeByKeyForWorkspace"];
         put?: never;
         post?: never;
         /**
          * Delete an entity type by key
-         * @description Deletes the specified entity type by its key for the given organisation.
+         * @description Deletes the specified entity type by its key for the given workspace.
          */
         delete: operations["deleteEntityTypeByKey"];
         options?: never;
@@ -412,7 +436,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/entity/organisation/{organisationId}": {
+    "/api/v1/block/schema/workspace/{workspaceId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -420,48 +444,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get all entity types for an organisation for all provided type keys
-         * @description Retrieves all entity associated with the specified organisation and specified entity types.This will also fetch all relevant linked entities.
-         */
-        get: operations["getEntityByTypeIdInForOrganisation"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/entity/organisation/{organisationId}/type/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get all entity types for an organisation for a provided entity type
-         * @description Retrieves all entity associated with the specified organisation and specified entity type.This will also fetch all relevant linked entities.
-         */
-        get: operations["getEntityByTypeIdForOrganisation"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/block/schema/organisation/{organisationId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get block types for organisation
-         * @description Retrieves all block types associated with a specific organisation.
+         * Get block types for workspace
+         * @description Retrieves all block types associated with a specific workspace.
          */
         get: operations["getBlockTypes"];
         put?: never;
@@ -492,7 +476,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/block/environment/organisation/{organisationId}/type/{type}/id/{entityId}": {
+    "/api/v1/block/environment/workspace/{workspaceId}/type/{type}/id/{entityId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -512,7 +496,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/organisation/{organisationId}/member": {
+    "/api/v1/workspace/{workspaceId}/member/{memberId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -522,13 +506,13 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["removeMemberFromOrganisation"];
+        delete: operations["removeMemberFromWorkspace"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/organisation/invite/organisation/{organisationId}/invitation/{id}": {
+    "/api/v1/workspace/invite/workspace/{workspaceId}/invitation/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -544,48 +528,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/entity/organisation/{organisationId}/entity": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Deletes an entity instance
-         * @description Deleted the specified entity instance within the organisation.
-         */
-        delete: operations["deleteEntity"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        Address: {
-            street: string;
-            city: string;
-            state: string;
-            postalCode: string;
-            country: string;
+        /** @enum {string} */
+        WorkspaceRoles: WorkspaceRoles;
+        UserDisplay: {
+            /** Format: uuid */
+            id: string;
+            email: string;
+            name: string;
+            avatarUrl?: string;
         };
-        MembershipDetails: {
-            organisation?: components["schemas"]["Organisation"];
-            role: components["schemas"]["OrganisationRoles"];
-            /** Format: date-time */
-            memberSince: string;
-        };
-        Organisation: {
+        WorkspaceDisplay: {
             /** Format: uuid */
             id: string;
             name: string;
-            plan: components["schemas"]["OrganisationPlan"];
+            avatarUrl?: string;
+        };
+        WorkspaceMember: {
+            workspace: components["schemas"]["WorkspaceDisplay"];
+            user: components["schemas"]["UserDisplay"];
+            role: components["schemas"]["WorkspaceRoles"];
+            /** Format: date-time */
+            memberSince: string;
+        };
+        User: {
+            /** Format: uuid */
+            id: string;
+            email: string;
+            name: string;
+            phone?: string;
+            avatarUrl?: string;
+            memberships: components["schemas"]["WorkspaceMember"][];
+            defaultWorkspace?: components["schemas"]["Workspace"];
+        };
+        Workspace: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            plan: components["schemas"]["WorkspacePlan"];
             defaultCurrency: {
                 currencyCode?: string;
                 /** Format: int32 */
@@ -597,65 +580,19 @@ export interface components {
                 defaultFractionDigits?: number;
             };
             avatarUrl?: string;
-            businessNumber?: string;
-            taxId?: string;
-            address?: components["schemas"]["Address"];
-            organisationPaymentDetails?: components["schemas"]["OrganisationPaymentDetails"];
             /** Format: int32 */
             memberCount: number;
             /** Format: date-time */
             createdAt?: string;
-            members: components["schemas"]["OrganisationMember"][];
-            invites: components["schemas"]["OrganisationInvite"][];
-        };
-        OrganisationInvite: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            organisationId: string;
-            email: string;
-            inviteToken: string;
-            /** Format: uuid */
-            invitedBy?: string;
             /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            expiresAt: string;
-            role: components["schemas"]["OrganisationRoles"];
-            status: components["schemas"]["OrganisationInviteStatus"];
-        };
-        /** @enum {string} */
-        OrganisationInviteStatus: OrganisationInviteStatus;
-        OrganisationMember: {
-            user: components["schemas"]["UserDisplay"];
-            membershipDetails: components["schemas"]["MembershipDetails"];
-        };
-        OrganisationPaymentDetails: {
-            bsb?: string;
-            accountNumber?: string;
-            accountName?: string;
-        };
-        /** @enum {string} */
-        OrganisationPlan: OrganisationPlan;
-        /** @enum {string} */
-        OrganisationRoles: OrganisationRoles;
-        User: {
+            updatedAt?: string;
             /** Format: uuid */
-            id: string;
-            email: string;
-            name: string;
-            phone?: string;
-            avatarUrl?: string;
-            memberships: components["schemas"]["MembershipDetails"][];
-            defaultOrganisation?: components["schemas"]["Organisation"];
-        };
-        UserDisplay: {
+            createdBy?: string;
             /** Format: uuid */
-            id: string;
-            email: string;
-            name: string;
-            avatarUrl?: string;
+            updatedBy?: string;
         };
+        /** @enum {string} */
+        WorkspacePlan: WorkspacePlan;
         /** @enum {string} */
         DataFormat: DataFormat;
         /** @enum {string} */
@@ -709,7 +646,7 @@ export interface components {
             identifierKey: string;
             description?: string;
             /** Format: uuid */
-            organisationId?: string;
+            workspaceId?: string;
             type: components["schemas"]["EntityCategory"];
             schema: components["schemas"]["SchemaUUID"];
             relationships?: components["schemas"]["EntityRelationshipDefinition"][];
@@ -841,8 +778,8 @@ export interface components {
             nesting?: components["schemas"]["BlockTypeNesting"];
             description?: string;
             /** Format: uuid */
-            organisationId?: string;
-            archived: boolean;
+            workspaceId?: string;
+            deleted: boolean;
             strictness: components["schemas"]["ValidationScope"];
             system: boolean;
             schema: components["schemas"]["SchemaString"];
@@ -954,18 +891,104 @@ export interface components {
         } & (Omit<components["schemas"]["Operand"], "kind"> & {
             value?: Record<string, never>;
         });
-        OrganisationCreationRequest: {
+        WorkspaceInvite: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            workspaceId: string;
+            email: string;
+            inviteToken: string;
+            /** Format: uuid */
+            invitedBy?: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+            role: components["schemas"]["WorkspaceRoles"];
+            status: components["schemas"]["WorkspaceInviteStatus"];
+        };
+        /** @enum {string} */
+        WorkspaceInviteStatus: WorkspaceInviteStatus;
+        SaveWorkspaceRequest: {
+            /** Format: uuid */
+            id?: string;
             name: string;
-            avatarUrl?: string;
-            plan: components["schemas"]["OrganisationPlan"];
+            plan: components["schemas"]["WorkspacePlan"];
             defaultCurrency: string;
             isDefault: boolean;
-            businessNumber?: string;
-            taxId?: string;
-            address: components["schemas"]["Address"];
-            payment?: components["schemas"]["OrganisationPaymentDetails"];
-            customAttributes: {
-                [key: string]: Record<string, never>;
+        };
+        EntityAttributePayload: {
+            type: components["schemas"]["EntityPropertyType"];
+        };
+        /** @description An attribute payload representing a primitive value with a defined schema type */
+        EntityAttributePrimitivePayload: WithRequired<components["schemas"]["EntityAttributePayload"], "type"> & {
+            value?: Record<string, never>;
+            schemaType: components["schemas"]["SchemaType"];
+        };
+        /** @description An attribute payload representing a relationship to another entity, with a full identifying link */
+        EntityAttributeRelationPayload: WithRequired<components["schemas"]["EntityAttributePayload"], "type"> & {
+            relations: components["schemas"]["EntityLink"][];
+        };
+        /** @description An attribute payload representing relationships to other entities by their IDs */
+        EntityAttributeRelationPayloadReference: WithRequired<components["schemas"]["EntityAttributePayload"], "type"> & {
+            relations: string[];
+        };
+        EntityAttributeRequest: {
+            payload: components["schemas"]["EntityAttributePrimitivePayload"] | components["schemas"]["EntityAttributeRelationPayloadReference"];
+        };
+        EntityLink: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            workspaceId: string;
+            /** Format: uuid */
+            fieldId: string;
+            /** Format: uuid */
+            sourceEntityId: string;
+            icon: components["schemas"]["Icon"];
+            key: string;
+            label: string;
+        };
+        SaveEntityRequest: {
+            /** Format: uuid */
+            id?: string;
+            payload: {
+                [key: string]: components["schemas"]["EntityAttributeRequest"];
+            };
+            icon?: components["schemas"]["Icon"];
+        };
+        Entity: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            workspaceId: string;
+            /** Format: uuid */
+            typeId: string;
+            payload: {
+                [key: string]: components["schemas"]["EntityAttribute"];
+            };
+            icon: components["schemas"]["Icon"];
+            validationErrors?: string[];
+            /** Format: uuid */
+            identifierKey: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            /** Format: uuid */
+            createdBy?: string;
+            /** Format: uuid */
+            updatedBy?: string;
+            identifier: string;
+        };
+        EntityAttribute: {
+            payload: components["schemas"]["EntityAttributePrimitivePayload"] | components["schemas"]["EntityAttributeRelationPayload"];
+        };
+        SaveEntityResponse: {
+            entity?: components["schemas"]["Entity"];
+            errors?: string[];
+            impactedEntities?: {
+                [key: string]: components["schemas"]["Entity"][];
             };
         };
         CreateEntityTypeRequest: {
@@ -1033,80 +1056,6 @@ export interface components {
             columnsRemoved: components["schemas"]["EntityImpactSummary"][];
             columnsModified: components["schemas"]["EntityImpactSummary"][];
         };
-        EntityAttributePayload: {
-            type: components["schemas"]["EntityPropertyType"];
-        };
-        /** @description An attribute payload representing a primitive value with a defined schema type */
-        EntityAttributePrimitivePayload: WithRequired<components["schemas"]["EntityAttributePayload"], "type"> & {
-            value?: Record<string, never>;
-            schemaType: components["schemas"]["SchemaType"];
-        };
-        /** @description An attribute payload representing a relationship to another entity, with a full identifying link */
-        EntityAttributeRelationPayload: WithRequired<components["schemas"]["EntityAttributePayload"], "type"> & {
-            relations: components["schemas"]["EntityLink"][];
-        };
-        /** @description An attribute payload representing relationships to other entities by their IDs */
-        EntityAttributeRelationPayloadReference: WithRequired<components["schemas"]["EntityAttributePayload"], "type"> & {
-            relations: string[];
-        };
-        EntityAttributeRequest: {
-            payload: components["schemas"]["EntityAttributePrimitivePayload"] | components["schemas"]["EntityAttributeRelationPayloadReference"];
-        };
-        EntityLink: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            organisationId: string;
-            /** Format: uuid */
-            fieldId: string;
-            /** Format: uuid */
-            sourceEntityId: string;
-            icon: components["schemas"]["Icon"];
-            key: string;
-            label: string;
-        };
-        SaveEntityRequest: {
-            /** Format: uuid */
-            id?: string;
-            payload: {
-                [key: string]: components["schemas"]["EntityAttributeRequest"];
-            };
-            icon?: components["schemas"]["Icon"];
-        };
-        Entity: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            organisationId: string;
-            /** Format: uuid */
-            typeId: string;
-            payload: {
-                [key: string]: components["schemas"]["EntityAttribute"];
-            };
-            icon: components["schemas"]["Icon"];
-            validationErrors?: string[];
-            /** Format: uuid */
-            identifierKey: string;
-            /** Format: date-time */
-            createdAt?: string;
-            /** Format: date-time */
-            updatedAt?: string;
-            /** Format: uuid */
-            createdBy?: string;
-            /** Format: uuid */
-            updatedBy?: string;
-            identifier: string;
-        };
-        EntityAttribute: {
-            payload: components["schemas"]["EntityAttributePrimitivePayload"] | components["schemas"]["EntityAttributeRelationPayload"];
-        };
-        SaveEntityResponse: {
-            entity?: components["schemas"]["Entity"];
-            errors?: string[];
-            impactedEntities?: {
-                [key: string]: components["schemas"]["Entity"][];
-            };
-        };
         CreateBlockTypeRequest: {
             key: string;
             name: string;
@@ -1115,17 +1064,16 @@ export interface components {
             schema: components["schemas"]["SchemaString"];
             display: components["schemas"]["BlockDisplay"];
             /** Format: uuid */
-            organisationId: string;
+            workspaceId: string;
         };
         Block: {
             /** Format: uuid */
             id: string;
             name?: string;
             /** Format: uuid */
-            organisationId: string;
+            workspaceId: string;
             type: components["schemas"]["BlockType"];
             payload: components["schemas"]["EntityReferenceMetadata"] | components["schemas"]["BlockReferenceMetadata"] | components["schemas"]["BlockContentMetadata"];
-            archived: boolean;
             validationErrors?: string[];
             /** Format: date-time */
             createdAt?: string;
@@ -1180,7 +1128,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             /** Format: uuid */
-            organisationId: string;
+            workspaceId: string;
             layout: components["schemas"]["TreeLayout"];
             /** Format: int32 */
             version: number;
@@ -1224,7 +1172,7 @@ export interface components {
             appendTo?: string;
             scroll?: boolean;
         };
-        /** @description Reference to one or more of an organisation's entities (e.g. teams, projects, clients) */
+        /** @description Reference to one or more of an workspace's entities (e.g. teams, projects, clients) */
         EntityReference: WithRequired<components["schemas"]["ReferencePayload"], "type"> & {
             reference?: components["schemas"]["ReferenceItemEntity"][];
         };
@@ -1259,9 +1207,9 @@ export interface components {
         ListFilterLogicType: ListFilterLogicType;
         Metadata: {
             type: components["schemas"]["BlockMetadataType"];
+            meta: components["schemas"]["BlockMeta"];
             readonly: boolean;
             deletable: boolean;
-            meta: components["schemas"]["BlockMeta"];
         };
         Node: {
             warnings: string[];
@@ -1274,7 +1222,7 @@ export interface components {
             /** Format: uuid */
             layoutId: string;
             /** Format: uuid */
-            organisationId: string;
+            workspaceId: string;
             /** Format: int32 */
             version: number;
             environment: components["schemas"]["BlockEnvironment"];
@@ -1438,7 +1386,7 @@ export interface components {
                 [key: string]: components["schemas"]["EntityReferenceRequest"][];
             };
             /** Format: uuid */
-            organisationId: string;
+            workspaceId: string;
         };
         BlockHydrationResult: {
             /** Format: uuid */
@@ -1488,7 +1436,7 @@ export interface components {
             /** Format: uuid */
             layoutId: string;
             /** Format: uuid */
-            organisationId: string;
+            workspaceId: string;
             layout: components["schemas"]["TreeLayout"];
             /** Format: int32 */
             version: number;
@@ -1525,9 +1473,6 @@ export interface components {
          * @enum {string}
          */
         ApplicationEntityType: ApplicationEntityType;
-        DeleteTypeDefinitionRequest: {
-            definition: components["schemas"]["DeleteRelationshipDefinitionRequest"] | components["schemas"]["DeleteAttributeDefinitionRequest"];
-        };
         DeleteEntityResponse: {
             error?: string;
             /** Format: int32 */
@@ -1535,6 +1480,9 @@ export interface components {
             updatedEntities?: {
                 [key: string]: components["schemas"]["Entity"][];
             };
+        };
+        DeleteTypeDefinitionRequest: {
+            definition: components["schemas"]["DeleteRelationshipDefinitionRequest"] | components["schemas"]["DeleteAttributeDefinitionRequest"];
         };
     };
     responses: never;
@@ -1545,6 +1493,30 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    updateMemberRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+                memberId: string;
+                role: components["schemas"]["WorkspaceRoles"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkspaceMember"];
+                };
+            };
+        };
+    };
     getCurrentUser: {
         parameters: {
             query?: never;
@@ -1643,87 +1615,12 @@ export interface operations {
             };
         };
     };
-    updateMemberRole: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                organisationId: string;
-                role: components["schemas"]["OrganisationRoles"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OrganisationMember"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["OrganisationMember"];
-                };
-            };
-        };
-    };
-    updateOrganisation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["Organisation"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Organisation"];
-                };
-            };
-        };
-    };
-    createOrganisation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OrganisationCreationRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Organisation"];
-                };
-            };
-        };
-    };
     updateEntityType: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                organisationId: string;
+                workspaceId: string;
             };
             cookie?: never;
         };
@@ -1807,38 +1704,27 @@ export interface operations {
             };
         };
     };
-    updateArchiveStatusByBlockTypeId: {
+    inviteToWorkspace: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                blockTypeId: string;
-                status: boolean;
+                workspaceId: string;
+                email: string;
+                role: components["schemas"]["WorkspaceRoles"];
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Block type archived successfully */
-            204: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
+                content: {
+                    "*/*": components["schemas"]["WorkspaceInvite"];
                 };
-                content?: never;
-            };
-            /** @description Block type not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };
@@ -1862,30 +1748,6 @@ export interface operations {
             };
         };
     };
-    inviteToOrganisation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                organisationId: string;
-                email: string;
-                role: components["schemas"]["OrganisationRoles"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["OrganisationInvite"];
-                };
-            };
-        };
-    };
     acceptInvite: {
         parameters: {
             query?: never;
@@ -1906,12 +1768,103 @@ export interface operations {
             };
         };
     };
-    getEntityTypesForOrganisation: {
+    saveWorkspace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    workspace: components["schemas"]["SaveWorkspaceRequest"];
+                    /** Format: binary */
+                    file?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Workspace"];
+                };
+            };
+        };
+    };
+    saveEntity: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                organisationId: string;
+                workspaceId: string;
+                entityTypeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveEntityRequest"];
+            };
+        };
+        responses: {
+            /** @description Entity instance saved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SaveEntityResponse"];
+                };
+            };
+            /** @description Invalid entity data provided */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SaveEntityResponse"];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SaveEntityResponse"];
+                };
+            };
+            /** @description Workspace or entity type not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SaveEntityResponse"];
+                };
+            };
+            /** @description Conflict of data or unconfirmed impacts */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SaveEntityResponse"];
+                };
+            };
+        };
+    };
+    getEntityTypesForWorkspace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
             };
             cookie?: never;
         };
@@ -1935,7 +1888,7 @@ export interface operations {
                     "*/*": components["schemas"]["EntityType"][];
                 };
             };
-            /** @description Organisation not found */
+            /** @description Workspace not found */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -1951,7 +1904,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                organisationId: string;
+                workspaceId: string;
             };
             cookie?: never;
         };
@@ -1997,7 +1950,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                organisationId: string;
+                workspaceId: string;
             };
             cookie?: never;
         };
@@ -2052,7 +2005,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                organisationId: string;
+                workspaceId: string;
             };
             cookie?: never;
         };
@@ -2096,69 +2049,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["EntityTypeImpactResponse"];
-                };
-            };
-        };
-    };
-    saveEntity: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                organisationId: string;
-                entityTypeId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SaveEntityRequest"];
-            };
-        };
-        responses: {
-            /** @description Entity instance saved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SaveEntityResponse"];
-                };
-            };
-            /** @description Invalid entity data provided */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SaveEntityResponse"];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["SaveEntityResponse"];
-                };
-            };
-            /** @description Organisation or entity type not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["SaveEntityResponse"];
-                };
-            };
-            /** @description Conflict of data or unconfirmed impacts */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SaveEntityResponse"];
                 };
             };
         };
@@ -2357,6 +2247,92 @@ export interface operations {
             };
         };
     };
+    getWorkspace: {
+        parameters: {
+            query?: {
+                includeMetadata?: boolean;
+            };
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Workspace"];
+                };
+            };
+        };
+    };
+    deleteWorkspace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getWorkspaceInvites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkspaceInvite"][];
+                };
+            };
+        };
+    };
+    getUserInvites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkspaceInvite"][];
+                };
+            };
+        };
+    };
     getUserById: {
         parameters: {
             query?: never;
@@ -2447,98 +2423,145 @@ export interface operations {
             };
         };
     };
-    getOrganisation: {
+    getEntityByTypeIdInForWorkspace: {
         parameters: {
-            query?: {
-                includeMetadata?: boolean;
+            query: {
+                ids: string[];
             };
             header?: never;
             path: {
-                organisationId: string;
+                workspaceId: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Entity types retrieved successfully */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Organisation"];
+                    "*/*": {
+                        [key: string]: components["schemas"]["Entity"][];
+                    };
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: components["schemas"]["Entity"][];
+                    };
+                };
+            };
+            /** @description Workspace not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: components["schemas"]["Entity"][];
+                    };
                 };
             };
         };
     };
-    deleteOrganisation: {
+    deleteEntity: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                organisationId: string;
+                workspaceId: string;
             };
             cookie?: never;
         };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
+        requestBody: {
+            content: {
+                "application/json": string[];
             };
         };
-    };
-    getUserInvites: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Entity instance deleted successfully */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["OrganisationInvite"][];
+                    "*/*": components["schemas"]["DeleteEntityResponse"];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DeleteEntityResponse"];
+                };
+            };
+            /** @description Workspace or entity not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DeleteEntityResponse"];
                 };
             };
         };
     };
-    getOrganisationInvites: {
+    getEntityByTypeIdForWorkspace: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                organisationId: string;
+                workspaceId: string;
+                id: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Entity types retrieved successfully */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["OrganisationInvite"][];
+                    "*/*": components["schemas"]["Entity"][];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Entity"][];
+                };
+            };
+            /** @description Workspace not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Entity"][];
                 };
             };
         };
     };
-    getEntityTypeByKeyForOrganisation: {
+    getEntityTypeByKeyForWorkspace: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                organisationId: string;
+                workspaceId: string;
                 key: string;
             };
             cookie?: never;
@@ -2581,7 +2604,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                organisationId: string;
+                workspaceId: string;
                 key: string;
             };
             cookie?: never;
@@ -2617,101 +2640,12 @@ export interface operations {
             };
         };
     };
-    getEntityByTypeIdInForOrganisation: {
-        parameters: {
-            query: {
-                ids: string[];
-            };
-            header?: never;
-            path: {
-                organisationId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Entity types retrieved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": {
-                        [key: string]: components["schemas"]["Entity"][];
-                    };
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": {
-                        [key: string]: components["schemas"]["Entity"][];
-                    };
-                };
-            };
-            /** @description Organisation not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": {
-                        [key: string]: components["schemas"]["Entity"][];
-                    };
-                };
-            };
-        };
-    };
-    getEntityByTypeIdForOrganisation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                organisationId: string;
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Entity types retrieved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Entity"][];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Entity"][];
-                };
-            };
-            /** @description Organisation not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["Entity"][];
-                };
-            };
-        };
-    };
     getBlockTypes: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                organisationId: string;
+                workspaceId: string;
             };
             cookie?: never;
         };
@@ -2735,7 +2669,7 @@ export interface operations {
                     "*/*": components["schemas"]["BlockType"][];
                 };
             };
-            /** @description No block types found for the organisation */
+            /** @description No block types found for the workspace */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2791,7 +2725,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                organisationId: string;
+                workspaceId: string;
                 type: components["schemas"]["ApplicationEntityType"];
                 entityId: string;
             };
@@ -2837,20 +2771,17 @@ export interface operations {
             };
         };
     };
-    removeMemberFromOrganisation: {
+    removeMemberFromWorkspace: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                organisationId: string;
+                workspaceId: string;
+                memberId: string;
             };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OrganisationMember"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
@@ -2866,7 +2797,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                organisationId: string;
+                workspaceId: string;
                 id: string;
             };
             cookie?: never;
@@ -2882,67 +2813,17 @@ export interface operations {
             };
         };
     };
-    deleteEntity: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                organisationId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": string[];
-            };
-        };
-        responses: {
-            /** @description Entity instance deleted successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["DeleteEntityResponse"];
-                };
-            };
-            /** @description Unauthorized access */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["DeleteEntityResponse"];
-                };
-            };
-            /** @description Organisation or entity not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["DeleteEntityResponse"];
-                };
-            };
-        };
-    };
 }
-export enum OrganisationInviteStatus {
-    PENDING = "PENDING",
-    ACCEPTED = "ACCEPTED",
-    DECLINED = "DECLINED",
-    EXPIRED = "EXPIRED"
+export enum WorkspaceRoles {
+    OWNER = "OWNER",
+    ADMIN = "ADMIN",
+    MEMBER = "MEMBER"
 }
-export enum OrganisationPlan {
+export enum WorkspacePlan {
     FREE = "FREE",
     STARTUP = "STARTUP",
     SCALE = "SCALE",
     ENTERPRISE = "ENTERPRISE"
-}
-export enum OrganisationRoles {
-    OWNER = "OWNER",
-    ADMIN = "ADMIN",
-    MEMBER = "MEMBER"
 }
 export enum DataFormat {
     DATE = "DATE",
@@ -4733,14 +4614,20 @@ export enum ValidationScope {
     STRICT = "STRICT",
     NONE = "NONE"
 }
+export enum WorkspaceInviteStatus {
+    PENDING = "PENDING",
+    ACCEPTED = "ACCEPTED",
+    DECLINED = "DECLINED",
+    EXPIRED = "EXPIRED"
+}
+type WithRequired<T, K extends keyof T> = T & {
+    [P in K]-?: T[P];
+};
 export enum DeleteAction {
     REMOVE_BIDIRECTIONAL = "REMOVE_BIDIRECTIONAL",
     REMOVE_ENTITY_TYPE = "REMOVE_ENTITY_TYPE",
     DELETE_RELATIONSHIP = "DELETE_RELATIONSHIP"
 }
-type WithRequired<T, K extends keyof T> = T & {
-    [P in K]-?: T[P];
-};
 export enum EntityTypeRequestDefinition {
     SAVE_RELATIONSHIP = "SAVE_RELATIONSHIP",
     SAVE_SCHEMA = "SAVE_SCHEMA",
@@ -4809,7 +4696,7 @@ export enum BlockOperationType {
     REORDER_BLOCK = "REORDER_BLOCK"
 }
 export enum ApplicationEntityType {
-    ORGANISATION = "ORGANISATION",
+    WORKSPACE = "WORKSPACE",
     BLOCK_TYPE = "BLOCK_TYPE",
     BLOCK = "BLOCK",
     USER = "USER",

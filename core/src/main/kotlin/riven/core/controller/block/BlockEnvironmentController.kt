@@ -63,7 +63,7 @@ class BlockEnvironmentController(
         return ResponseEntity.status(HttpStatus.OK).body(response)
     }
 
-    @GetMapping("organisation/{organisationId}/type/{type}/id/{entityId}")
+    @GetMapping("workspace/{workspaceId}/type/{type}/id/{entityId}")
     @Operation(
         summary = "Get Block Environment",
         description = "Retrieves the block environment for the specified entity. Creates a default layout if none exists (lazy initialization)."
@@ -75,11 +75,11 @@ class BlockEnvironmentController(
         ApiResponse(responseCode = "403", description = "Forbidden - insufficient permissions")
     )
     fun getBlockEnvironment(
-        @PathVariable organisationId: UUID,
+        @PathVariable workspaceId: UUID,
         @PathVariable type: ApplicationEntityType,
         @PathVariable entityId: UUID,
     ): ResponseEntity<BlockEnvironment> {
-        val environment = environmentService.loadBlockEnvironment(entityId, type, organisationId)
+        val environment = environmentService.loadBlockEnvironment(entityId, type, workspaceId)
         return ResponseEntity.ok(environment)
     }
 

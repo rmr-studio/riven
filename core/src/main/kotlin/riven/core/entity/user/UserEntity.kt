@@ -1,12 +1,12 @@
 package riven.core.entity.user
 
 import jakarta.persistence.*
-import riven.core.entity.organisation.OrganisationEntity
-import riven.core.entity.organisation.OrganisationMemberEntity
-import riven.core.entity.organisation.toDetails
-import riven.core.entity.organisation.toModel
+import riven.core.entity.util.AuditableEntity
+import riven.core.entity.workspace.WorkspaceEntity
+import riven.core.models.common.SoftDeletable
 import riven.core.models.user.User
 import riven.core.models.user.UserDisplay
+import riven.core.models.workspace.WorkspaceMember
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -32,60 +32,48 @@ data class UserEntity(
     @Column(name = "avatar_url", nullable = true)
     var avatarUrl: String? = null,
 
-    @Column(
-        name = "created_at",
-        nullable = false,
-        updatable = false
-    ) var createdAt: ZonedDateTime = ZonedDateTime.now(),
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "default_organisation_id", referencedColumnName = "id", insertable = true, updatable = true)
-    var defaultOrganisation: OrganisationEntity? = null,
+    @JoinColumn(name = "default_workspace_id", referencedColumnName = "id", insertable = true, updatable = true)
+    var defaultWorkspace: WorkspaceEntity? = null,
 
-    @Column(name = "updated_at", nullable = false) var updatedAt: ZonedDateTime = ZonedDateTime.now()
-) {
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    var organisations: MutableSet<OrganisationMemberEntity> = mutableSetOf()
+    @Column(name = "deleted", nullable = true)
+    override var deleted: Boolean = false,
 
-    @PrePersist
-    fun onPrePersist() {
-        createdAt = ZonedDateTime.now()
-        updatedAt = ZonedDateTime.now()
-    }
+    @Column(name = "deleted_at", nullable = true)
+    override var deletedAt: ZonedDateTime? = null,
 
-    @PreUpdate
-    fun onPreUpdate() {
-        updatedAt = ZonedDateTime.now()
-    }
-}
+    ) : AuditableEntity(), SoftDeletable {
 
-fun UserEntity.toModel(): User {
-    this.id.let {
-        if (it == null) {
-            throw IllegalArgumentException("UserEntity id cannot be null")
+
+    fun toModel(memberships: List<WorkspaceMember> = emptyList()): User {
+        this.id.let {
+            if (it == null) {
+                throw IllegalArgumentException("UserEntity id cannot be null")
+            }
+            return User(
+                id = it,
+                email = this.email,
+                phone = this.phone,
+                name = this.name,
+                avatarUrl = this.avatarUrl,
+                memberships = memberships,
+                defaultWorkspace = this.defaultWorkspace?.toModel(),
+            )
         }
-        return User(
-            id = it,
-            email = this.email,
-            phone = this.phone,
-            name = this.name,
-            avatarUrl = this.avatarUrl,
-            memberships = this.organisations.map { membership -> membership.toDetails(includeOrganisation = true) },
-            defaultOrganisation = this.defaultOrganisation?.toModel(includeMetadata = false),
-        )
     }
 }
 
+/**
+ * Extension function to convert UserEntity to UserDisplay.
+ */
 fun UserEntity.toDisplay(): UserDisplay {
-    this.id.let {
-        if (it == null) {
-            throw IllegalArgumentException("UserEntity id cannot be null")
-        }
-        return UserDisplay(
-            id = it,
-            email = this.email,
-            name = this.name,
-            avatarUrl = this.avatarUrl,
-        )
-    }
+    val id = requireNotNull(this.id) { "UserEntity must have a non-null id" }
+    return UserDisplay(
+        id = id,
+        email = this.email,
+        name = this.name,
+        avatarUrl = this.avatarUrl
+    )
 }
+

@@ -263,7 +263,7 @@ class EntityTypeRelationshipService(
 
     /**
      * This function will take in a list of entity type definitions that will be used to create new relationships
-     * and update the current ecosystem of entity types within the organisation.
+     * and update the current ecosystem of entity types within the workspace.
      *
      * It will handle:
      * 1. Validating all referenced entity types exist
@@ -275,21 +275,21 @@ class EntityTypeRelationshipService(
     @Transactional
     fun createRelationships(
         definitions: List<SaveRelationshipDefinitionRequest>,
-        organisationId: UUID
+        workspaceId: UUID
     ): List<EntityTypeEntity> {
         // Validate all associated entity types exist
         val entities = findAndValidateAssociatedEntityTypes(
             relationships = definitions.map { it.relationship },
-            organisationId = organisationId
+            workspaceId = workspaceId
         ).toMutableMap()
-        return this.createRelationships(entities, definitions, organisationId)
+        return this.createRelationships(entities, definitions, workspaceId)
     }
 
     @Transactional
     fun createRelationships(
         entityTypes: MutableMap<String, EntityTypeEntity>,
         definitions: List<SaveRelationshipDefinitionRequest>,
-        organisationId: UUID,
+        workspaceId: UUID,
         save: Boolean = true
     ): List<EntityTypeEntity> {
 // Track all relationship definitions for final validation (including created inverses)
@@ -330,7 +330,7 @@ class EntityTypeRelationshipService(
                 EntityTypeRelationshipType.ORIGIN -> {
                     val createdReferences = createInverseReferenceRelationships(
                         originRelationship = definition,
-                        organisationId = organisationId,
+                        workspaceId = workspaceId,
                         entityTypesByKey = entityTypes
                     )
                     allRelationshipDefinitions.addAll(createdReferences)
@@ -341,7 +341,7 @@ class EntityTypeRelationshipService(
                     updateOriginForReferenceRelationship(
                         referenceRelationship = definition,
                         key = key,
-                        organisationId = organisationId,
+                        workspaceId = workspaceId,
                         entityTypesByKey = entityTypes
                     )
                 }
@@ -371,13 +371,13 @@ class EntityTypeRelationshipService(
 
     @Transactional
     fun updateRelationships(
-        organisationId: UUID,
+        workspaceId: UUID,
         diff: EntityTypeRelationshipDiff
     ): Map<String, EntityTypeEntity> {
         // Load all target entity types
         val entityTypesMap: MutableMap<String, EntityTypeEntity> = findAndValidateAssociatedEntityTypes(
             relationships = diff.added.map { it.relationship } + diff.removed.map { it.relationship } + diff.modified.map { it.updated },
-            organisationId = organisationId
+            workspaceId = workspaceId
         ).toMutableMap()
 
         // Also load source entity types for modifications and removals
@@ -393,16 +393,16 @@ class EntityTypeRelationshipService(
         // Load source entity types that aren't already in the map
         val missingSourceKeys = sourceKeys - entityTypesMap.keys
         if (missingSourceKeys.isNotEmpty()) {
-            val sourceEntityTypes = entityTypeRepository.findByOrganisationIdAndKeyIn(
-                organisationId,
+            val sourceEntityTypes = entityTypeRepository.findByworkspaceIdAndKeyIn(
+                workspaceId,
                 missingSourceKeys.toList()
             )
             sourceEntityTypes.forEach { entityTypesMap[it.key] = it }
         }
 
-        createRelationships(entityTypesMap, diff.added, organisationId, save = false)
-        removeRelationships(entityTypesMap, organisationId, diff.removed, save = false)
-        modifyRelationships(entityTypesMap, organisationId, diff.modified, save = false)
+        createRelationships(entityTypesMap, diff.added, workspaceId, save = false)
+        removeRelationships(entityTypesMap, workspaceId, diff.removed, save = false)
+        modifyRelationships(entityTypesMap, workspaceId, diff.modified, save = false)
 
         // Save all affected entity types and validate relationship environment
         return entityTypeRepository.saveAll(entityTypesMap.values.toList())
@@ -444,15 +444,15 @@ class EntityTypeRelationshipService(
     }
 
     fun removeRelationships(
-        organisationId: UUID,
+        workspaceId: UUID,
         relationships: List<EntityTypeRelationshipDeleteRequest>,
     ): Map<String, EntityTypeEntity> {
         val entityTypesMap: MutableMap<String, EntityTypeEntity> = findAndValidateAssociatedEntityTypes(
             relationships = relationships.map { it.relationship },
-            organisationId = organisationId
+            workspaceId = workspaceId
         ).toMutableMap()
 
-        return removeRelationships(entityTypesMap, organisationId, relationships, save = true).associateBy { it.key }
+        return removeRelationships(entityTypesMap, workspaceId, relationships, save = true).associateBy { it.key }
             .also {
                 // Final validation to ensure environment integrity
                 val validationContexts = relationships.map { relDef ->
@@ -486,7 +486,7 @@ class EntityTypeRelationshipService(
      */
     private fun removeRelationships(
         entityTypes: MutableMap<String, EntityTypeEntity>,
-        organisationId: UUID,
+        workspaceId: UUID,
         relationships: List<EntityTypeRelationshipDeleteRequest>,
         save: Boolean = false
     ): List<EntityTypeEntity> {
@@ -501,13 +501,13 @@ class EntityTypeRelationshipService(
                     removeOriginRelationship(
                         originRelationship = request.relationship,
                         entityTypes = entityTypes,
-                        organisationId = organisationId
+                        workspaceId = workspaceId
                     )
                 }
 
                 EntityTypeRelationshipType.REFERENCE -> {
                     removeReferenceRelationship(
-                        organisationId = organisationId,
+                        workspaceId = workspaceId,
                         request = request,
                         entityTypes = entityTypes,
                     )
@@ -523,7 +523,7 @@ class EntityTypeRelationshipService(
                     activity = Activity.ENTITY_RELATIONSHIP,
                     operation = OperationType.DELETE,
                     userId = userId,
-                    organisationId = organisationId,
+                    workspaceId = workspaceId,
                     entityId = sourceEntityType.id,
                     entityType = ApplicationEntityType.ENTITY_TYPE,
                     details = mapOf(
@@ -560,7 +560,7 @@ class EntityTypeRelationshipService(
     private fun removeOriginRelationship(
         originRelationship: EntityRelationshipDefinition,
         entityTypes: MutableMap<String, EntityTypeEntity>,
-        organisationId: UUID
+        workspaceId: UUID
     ) {
         // Protected relationships check
         if (originRelationship.protected) {
@@ -590,7 +590,7 @@ class EntityTypeRelationshipService(
                     targetEntityTypeKey = targetKey,
                     originRelationshipId = originRelationship.id,
                     entityTypes = entityTypes,
-                    organisationId = organisationId
+                    workspaceId = workspaceId
                 )
             }
         }
@@ -609,9 +609,9 @@ class EntityTypeRelationshipService(
         targetEntityTypeKey: String,
         originRelationshipId: UUID,
         entityTypes: MutableMap<String, EntityTypeEntity>,
-        organisationId: UUID
+        workspaceId: UUID
     ) {
-        var targetEntityType = retrieveEntityType(targetEntityTypeKey, organisationId, entityTypes)
+        var targetEntityType = retrieveEntityType(targetEntityTypeKey, workspaceId, entityTypes)
         val targetRelationships = targetEntityType.relationships?.toMutableList() ?: mutableListOf()
 
         // Find and remove the REFERENCE relationship that points to this ORIGIN
@@ -636,7 +636,7 @@ class EntityTypeRelationshipService(
     private fun removeReferenceRelationship(
         request: EntityTypeRelationshipDeleteRequest,
         entityTypes: MutableMap<String, EntityTypeEntity>,
-        organisationId: UUID
+        workspaceId: UUID
     ) {
 
         val (referenceRelationship, type, action) = request
@@ -728,7 +728,7 @@ class EntityTypeRelationshipService(
                 // Remove entire relationship, and update all OTHER referencing relationships
                 this.removeRelationships(
                     // Recursive call back up to top level function, should delete the ORIGIN relationship and cascade appropriately
-                    entityTypes, organisationId, listOf(
+                    entityTypes, workspaceId, listOf(
                         EntityTypeRelationshipDeleteRequest(
                             relationship = originRelationshipDef,
                             type = sourceEntity,
@@ -776,18 +776,18 @@ class EntityTypeRelationshipService(
     }
 
     fun modifyRelationships(
-        organisationId: UUID,
+        workspaceId: UUID,
         diffs: List<EntityTypeRelationshipModification>,
         save: Boolean = false
     ): List<EntityTypeEntity> {
         val entityTypesMap: MutableMap<String, EntityTypeEntity> = findAndValidateAssociatedEntityTypes(
             relationships = diffs.flatMap { listOf(it.previous, it.updated) },
-            organisationId = organisationId
+            workspaceId = workspaceId
         ).toMutableMap()
 
         return modifyRelationships(
             entityTypes = entityTypesMap,
-            organisationId = organisationId,
+            workspaceId = workspaceId,
             diffs = diffs,
             save = save
         )
@@ -805,7 +805,7 @@ class EntityTypeRelationshipService(
      */
     private fun modifyRelationships(
         entityTypes: MutableMap<String, EntityTypeEntity>,
-        organisationId: UUID,
+        workspaceId: UUID,
         diffs: List<EntityTypeRelationshipModification>,
         save: Boolean = false
     ): List<EntityTypeEntity> {
@@ -826,7 +826,7 @@ class EntityTypeRelationshipService(
                     entityTypes = entityTypes,
                     previous = prev,
                     updated = updated,
-                    organisationId = organisationId
+                    workspaceId = workspaceId
                 )
             }
 
@@ -835,7 +835,7 @@ class EntityTypeRelationshipService(
                     entityTypes = entityTypes,
                     previous = prev,
                     updated = updated,
-                    organisationId = organisationId
+                    workspaceId = workspaceId
                 )
             }
 
@@ -843,7 +843,7 @@ class EntityTypeRelationshipService(
                 handleBidirectionalEnabled(
                     entityTypes = entityTypes,
                     updated = updated,
-                    organisationId = organisationId
+                    workspaceId = workspaceId
                 )
             }
 
@@ -851,7 +851,7 @@ class EntityTypeRelationshipService(
                 handleBidirectionalDisabled(
                     entityTypes = entityTypes,
                     previous = prev,
-                    organisationId = organisationId
+                    workspaceId = workspaceId
                 )
             }
 
@@ -860,7 +860,7 @@ class EntityTypeRelationshipService(
                     entityTypes = entityTypes,
                     previous = prev,
                     updated = updated,
-                    organisationId = organisationId
+                    workspaceId = workspaceId
                 )
             }
         }
@@ -906,7 +906,7 @@ class EntityTypeRelationshipService(
         entityTypes: MutableMap<String, EntityTypeEntity>,
         previous: EntityRelationshipDefinition,
         updated: EntityRelationshipDefinition,
-        organisationId: UUID
+        workspaceId: UUID
     ) {
         if (updated.relationshipType != EntityTypeRelationshipType.ORIGIN || !updated.bidirectional) {
             return
@@ -917,7 +917,7 @@ class EntityTypeRelationshipService(
         val targetKeys = updated.bidirectionalEntityTypeKeys ?: emptyList()
 
         targetKeys.forEach { targetKey ->
-            var targetEntityType = retrieveEntityType(targetKey, organisationId, entityTypes)
+            var targetEntityType = retrieveEntityType(targetKey, workspaceId, entityTypes)
             val relationships = targetEntityType.relationships?.toMutableList() ?: return@forEach
 
             // Find the REFERENCE relationship that points to this ORIGIN
@@ -956,13 +956,13 @@ class EntityTypeRelationshipService(
      */
     private fun retrieveEntityType(
         key: String,
-        organisationId: UUID,
+        workspaceId: UUID,
         entityTypes: MutableMap<String, EntityTypeEntity>,
         fallback: Boolean = true
     ): EntityTypeEntity {
         return entityTypes.getOrPut(key) {
             if (fallback) {
-                entityTypeRepository.findByOrganisationIdAndKey(organisationId, key)
+                entityTypeRepository.findByworkspaceIdAndKey(workspaceId, key)
                     .orElseThrow {
                         IllegalStateException("Entity type '$key' not found")
                     }
@@ -980,7 +980,7 @@ class EntityTypeRelationshipService(
         entityTypes: MutableMap<String, EntityTypeEntity>,
         previous: EntityRelationshipDefinition,
         updated: EntityRelationshipDefinition,
-        organisationId: UUID
+        workspaceId: UUID
     ) {
         // If this is a bidirectional ORIGIN relationship, update all inverse REFERENCE relationships
         if (updated.relationshipType == EntityTypeRelationshipType.ORIGIN && updated.bidirectional) {
@@ -988,7 +988,7 @@ class EntityTypeRelationshipService(
             val newInverseCardinality = updated.cardinality.invert()
 
             targetKeys.forEach { targetKey ->
-                val targetEntityType = retrieveEntityType(targetKey, organisationId, entityTypes)
+                val targetEntityType = retrieveEntityType(targetKey, workspaceId, entityTypes)
                 val relationships = targetEntityType.relationships?.toMutableList() ?: return@forEach
 
                 // Find and update the REFERENCE relationship
@@ -1027,7 +1027,7 @@ class EntityTypeRelationshipService(
     private fun handleBidirectionalEnabled(
         entityTypes: MutableMap<String, EntityTypeEntity>,
         updated: EntityRelationshipDefinition,
-        organisationId: UUID
+        workspaceId: UUID
     ) {
         require(updated.relationshipType == EntityTypeRelationshipType.ORIGIN) {
             "BIDIRECTIONAL_ENABLED can only be applied to ORIGIN relationships"
@@ -1044,7 +1044,7 @@ class EntityTypeRelationshipService(
         // Create inverse REFERENCE relationships for each target entity type
         createInverseReferenceRelationships(
             originRelationship = updated,
-            organisationId = organisationId,
+            workspaceId = workspaceId,
             entityTypesByKey = entityTypes
         )
     }
@@ -1055,7 +1055,7 @@ class EntityTypeRelationshipService(
     private fun handleBidirectionalDisabled(
         entityTypes: MutableMap<String, EntityTypeEntity>,
         previous: EntityRelationshipDefinition,
-        organisationId: UUID
+        workspaceId: UUID
     ) {
         if (previous.relationshipType != EntityTypeRelationshipType.ORIGIN) {
             return
@@ -1068,7 +1068,7 @@ class EntityTypeRelationshipService(
                 targetEntityTypeKey = targetKey,
                 originRelationshipId = previous.id,
                 entityTypes = entityTypes,
-                organisationId = organisationId
+                workspaceId = workspaceId
             )
         }
 
@@ -1087,7 +1087,7 @@ class EntityTypeRelationshipService(
         entityTypes: MutableMap<String, EntityTypeEntity>,
         previous: EntityRelationshipDefinition,
         updated: EntityRelationshipDefinition,
-        organisationId: UUID
+        workspaceId: UUID
     ) {
         if (updated.relationshipType != EntityTypeRelationshipType.ORIGIN) {
             return
@@ -1106,13 +1106,13 @@ class EntityTypeRelationshipService(
                 targetEntityTypeKey = targetKey,
                 originRelationshipId = updated.id,
                 entityTypes = entityTypes,
-                organisationId = organisationId
+                workspaceId = workspaceId
             )
         }
 
         // Add inverse relationships for added targets
         addedTargets.forEach { targetKey ->
-            var targetEntityType = retrieveEntityType(targetKey, organisationId, entityTypes)
+            var targetEntityType = retrieveEntityType(targetKey, workspaceId, entityTypes)
             // Build the inverse REFERENCE relationship
             val inverseRelationship = EntityTypeReferenceRelationshipBuilder(
                 origin = updated,
@@ -1213,7 +1213,7 @@ class EntityTypeRelationshipService(
      */
     private fun createInverseReferenceRelationships(
         originRelationship: EntityRelationshipDefinition,
-        organisationId: UUID,
+        workspaceId: UUID,
         entityTypesByKey: MutableMap<String, EntityTypeEntity>
     ): List<EntityRelationshipDefinition> {
         val createdReferences = mutableListOf<EntityRelationshipDefinition>()
@@ -1222,7 +1222,7 @@ class EntityTypeRelationshipService(
         }
 
         targetTypeKeys.forEach { targetKey ->
-            var targetEntityType = retrieveEntityType(targetKey, organisationId, entityTypesByKey)
+            var targetEntityType = retrieveEntityType(targetKey, workspaceId, entityTypesByKey)
 
             // Build the inverse REFERENCE relationship
             val inverseRelationship = EntityTypeReferenceRelationshipBuilder(
@@ -1246,7 +1246,7 @@ class EntityTypeRelationshipService(
     private fun updateOriginForReferenceRelationship(
         key: String,
         referenceRelationship: EntityRelationshipDefinition,
-        organisationId: UUID,
+        workspaceId: UUID,
         entityTypesByKey: MutableMap<String, EntityTypeEntity>
     ) {
         val originRelationshipId = requireNotNull(referenceRelationship.originRelationshipId) {
@@ -1257,7 +1257,7 @@ class EntityTypeRelationshipService(
             "REFERENCE relationship '${referenceRelationship.name}' must have entityTypeKeys pointing to origin entity type."
         }
 
-        var originEntityType = retrieveEntityType(originEntityTypeKey, organisationId, entityTypesByKey)
+        var originEntityType = retrieveEntityType(originEntityTypeKey, workspaceId, entityTypesByKey)
         val relationships = requireNotNull(originEntityType.relationships) {
             "Origin entity type '$originEntityTypeKey' does not have any relationships defined."
         }.toMutableList()
@@ -1336,7 +1336,7 @@ class EntityTypeRelationshipService(
      */
     private fun findAndValidateAssociatedEntityTypes(
         relationships: Collection<EntityRelationshipDefinition>,
-        organisationId: UUID
+        workspaceId: UUID
     ): Map<String, EntityTypeEntity> {
         // Fetch all referenced entity types to load from the database
         val referencedKeys = buildSet {
@@ -1355,7 +1355,7 @@ class EntityTypeRelationshipService(
         }
 
         val entityTypes = entityTypeRepository
-            .findByOrganisationIdAndKeyIn(organisationId, referencedKeys.toList())
+            .findByworkspaceIdAndKeyIn(workspaceId, referencedKeys.toList())
 
         val entityTypesByKey = entityTypes.associateBy { it.key }
 

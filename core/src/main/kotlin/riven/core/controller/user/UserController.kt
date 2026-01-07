@@ -5,11 +5,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
-import riven.core.entity.user.toModel
-import riven.core.models.user.User
-import riven.core.service.user.UserService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import riven.core.models.user.User
+import riven.core.service.user.UserService
 import java.util.*
 
 @RestController

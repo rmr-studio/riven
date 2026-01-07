@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Configuration
 import org.springframework.test.context.bean.override.mockito.MockitoBean
-import riven.core.configuration.auth.OrganisationSecurity
+import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.common.SchemaType
 import riven.core.enums.core.DataType
@@ -17,7 +17,7 @@ import riven.core.enums.entity.EntityCategory
 import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.enums.entity.EntityTypeRelationshipChangeType
 import riven.core.enums.entity.EntityTypeRelationshipType
-import riven.core.enums.organisation.OrganisationRoles
+import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDeleteRequest
@@ -30,15 +30,15 @@ import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
-import riven.core.service.util.OrganisationRole
 import riven.core.service.util.WithUserPersona
+import riven.core.service.util.WorkspaceRole
 import java.time.ZonedDateTime
 import java.util.*
 
 @SpringBootTest(
     classes = [
         AuthTokenService::class,
-        OrganisationSecurity::class,
+        WorkspaceSecurity::class,
         EntityTypeRelationshipServiceTest.TestConfig::class,
         EntityTypeRelationshipService::class
     ]
@@ -48,9 +48,9 @@ import java.util.*
     email = "test@test.com",
     displayName = "Test User",
     roles = [
-        OrganisationRole(
-            organisationId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
-            role = OrganisationRoles.OWNER
+        WorkspaceRole(
+            workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
+            role = WorkspaceRoles.OWNER
         )
     ]
 )
@@ -60,7 +60,7 @@ class EntityTypeRelationshipServiceTest {
     class TestConfig
 
     private val userId: UUID = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef0123456789")
-    private val organisationId: UUID = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef9876543210")
+    private val workspaceId: UUID = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef9876543210")
 
     @MockitoBean
     private lateinit var entityRelationshipRepository: EntityRelationshipRepository
@@ -135,7 +135,7 @@ class EntityTypeRelationshipServiceTest {
         )
 
         // Mock repository calls
-        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+        whenever(entityTypeRepository.findByworkspaceIdAndKeyIn(eq(workspaceId), any()))
             .thenReturn(listOf(companyEntityType, jobEntityType))
 
         whenever(entityTypeRepository.saveAll<EntityTypeEntity>(any()))
@@ -152,7 +152,7 @@ class EntityTypeRelationshipServiceTest {
                     relationship = jobOpeningsRelationship
                 )
             ),
-            organisationId = organisationId
+            workspaceId = workspaceId
         )
 
         // Verify Relationship was not added to job entity type
@@ -170,8 +170,8 @@ class EntityTypeRelationshipServiceTest {
         // Then: Only the source entity type is returned
 
         // Verify that we only looked up the referenced entity types for validation
-        verify(entityTypeRepository, times(1)).findByOrganisationIdAndKeyIn(
-            eq(organisationId),
+        verify(entityTypeRepository, times(1)).findByworkspaceIdAndKeyIn(
+            eq(workspaceId),
             argThat { arg -> arg.contains("job") }
         )
     }
@@ -204,13 +204,13 @@ class EntityTypeRelationshipServiceTest {
         )
 
         // Mock repository calls
-        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+        whenever(entityTypeRepository.findByworkspaceIdAndKeyIn(eq(workspaceId), any()))
             .thenReturn(listOf(companyEntityType, candidateEntityType, jobEntityType))
 
-        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("candidate")))
+        whenever(entityTypeRepository.findByworkspaceIdAndKey(eq(workspaceId), eq("candidate")))
             .thenReturn(Optional.of(candidateEntityType))
 
-        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("job")))
+        whenever(entityTypeRepository.findByworkspaceIdAndKey(eq(workspaceId), eq("job")))
             .thenReturn(Optional.of(jobEntityType))
 
         val savedEntityTypes = mutableListOf<EntityTypeEntity>()
@@ -230,7 +230,7 @@ class EntityTypeRelationshipServiceTest {
                     relationship = employeesRelationship
                 )
             ),
-            organisationId = organisationId
+            workspaceId = workspaceId
         )
 
         // Then: Both target entity types should have inverse REFERENCE relationships added
@@ -326,13 +326,13 @@ class EntityTypeRelationshipServiceTest {
         )
 
         // Mock repository calls
-        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+        whenever(entityTypeRepository.findByworkspaceIdAndKeyIn(eq(workspaceId), any()))
             .thenReturn(listOf(companyWithOrigin, jobEntity))
 
-        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("company")))
+        whenever(entityTypeRepository.findByworkspaceIdAndKey(eq(workspaceId), eq("company")))
             .thenReturn(Optional.of(companyWithOrigin))
 
-        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("job")))
+        whenever(entityTypeRepository.findByworkspaceIdAndKey(eq(workspaceId), eq("job")))
             .thenReturn(Optional.of(jobEntity))
 
         val savedEntityTypes = mutableListOf<EntityTypeEntity>()
@@ -352,7 +352,7 @@ class EntityTypeRelationshipServiceTest {
                     relationship = jobReferenceRelationship
                 )
             ),
-            organisationId = organisationId
+            workspaceId = workspaceId
         )
 
         // Then: The company's ORIGIN relationship should be updated to include job
@@ -417,7 +417,7 @@ class EntityTypeRelationshipServiceTest {
         )
 
         // Mock repository calls
-        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+        whenever(entityTypeRepository.findByworkspaceIdAndKeyIn(eq(workspaceId), any()))
             .thenReturn(listOf(companyEntityType, candidateEntityType, jobEntityType))
 
         // When/Then: Should throw validation error
@@ -430,7 +430,7 @@ class EntityTypeRelationshipServiceTest {
                         relationship = invalidRelationship
                     )
                 ),
-                organisationId = organisationId
+                workspaceId = workspaceId
             )
         }
 
@@ -489,10 +489,10 @@ class EntityTypeRelationshipServiceTest {
         )
 
         // Mock repository calls
-        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+        whenever(entityTypeRepository.findByworkspaceIdAndKeyIn(eq(workspaceId), any()))
             .thenReturn(listOf(companyWithId, jobEntityType))
 
-        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("job")))
+        whenever(entityTypeRepository.findByworkspaceIdAndKey(eq(workspaceId), eq("job")))
             .thenReturn(Optional.of(jobEntityType))
 
         val savedEntityTypes = mutableListOf<EntityTypeEntity>()
@@ -506,7 +506,7 @@ class EntityTypeRelationshipServiceTest {
         whenever(authTokenService.getUserId()).thenReturn(userId)
 
         // When: Updating relationships with additions
-        entityTypeRelationshipService.updateRelationships(organisationId, diff)
+        entityTypeRelationshipService.updateRelationships(workspaceId, diff)
 
         // Then: Both entity types should be saved with relationships
         Assertions.assertTrue(savedEntityTypes.size >= 2, "At least Company and Job should be updated")
@@ -593,10 +593,10 @@ class EntityTypeRelationshipServiceTest {
         )
 
         // Mock repository calls
-        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+        whenever(entityTypeRepository.findByworkspaceIdAndKeyIn(eq(workspaceId), any()))
             .thenReturn(listOf(companyWithRelationship, candidateWithRelationship))
 
-        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("candidate")))
+        whenever(entityTypeRepository.findByworkspaceIdAndKey(eq(workspaceId), eq("candidate")))
             .thenReturn(Optional.of(candidateWithRelationship))
 
         val savedEntityTypes = mutableListOf<EntityTypeEntity>()
@@ -610,7 +610,7 @@ class EntityTypeRelationshipServiceTest {
         whenever(authTokenService.getUserId()).thenReturn(userId)
 
         // When: Removing the ORIGIN relationship
-        entityTypeRelationshipService.updateRelationships(organisationId, diff)
+        entityTypeRelationshipService.updateRelationships(workspaceId, diff)
 
         // Then: Both relationships should be removed
         val updatedCompany = savedEntityTypes.find { it.key == "company" }
@@ -679,14 +679,14 @@ class EntityTypeRelationshipServiceTest {
         )
 
         // Mock repository calls
-        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+        whenever(entityTypeRepository.findByworkspaceIdAndKeyIn(eq(workspaceId), any()))
             .thenReturn(listOf(companyWithProtected, candidateEntityType))
 
         whenever(authTokenService.getUserId()).thenReturn(userId)
 
         // When/Then: Should throw exception
         val exception = Assertions.assertThrows(IllegalStateException::class.java) {
-            entityTypeRelationshipService.updateRelationships(organisationId, diff)
+            entityTypeRelationshipService.updateRelationships(workspaceId, diff)
         }
 
         Assertions.assertTrue(
@@ -772,10 +772,10 @@ class EntityTypeRelationshipServiceTest {
         )
 
         // Mock repository calls
-        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+        whenever(entityTypeRepository.findByworkspaceIdAndKeyIn(eq(workspaceId), any()))
             .thenReturn(listOf(companyWithRelationship, candidateWithRelationship))
 
-        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("candidate")))
+        whenever(entityTypeRepository.findByworkspaceIdAndKey(eq(workspaceId), eq("candidate")))
             .thenReturn(Optional.of(candidateWithRelationship))
 
         val savedEntityTypes = mutableListOf<EntityTypeEntity>()
@@ -787,7 +787,7 @@ class EntityTypeRelationshipServiceTest {
             }
 
         // When: Updating with INVERSE_NAME_CHANGED
-        entityTypeRelationshipService.updateRelationships(organisationId, diff)
+        entityTypeRelationshipService.updateRelationships(workspaceId, diff)
 
         // Then: Candidate's REFERENCE relationship should be updated to "Company"
         val updatedCandidate = savedEntityTypes.find { it.key == "candidate" }
@@ -875,10 +875,10 @@ class EntityTypeRelationshipServiceTest {
         )
 
         // Mock repository calls
-        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+        whenever(entityTypeRepository.findByworkspaceIdAndKeyIn(eq(workspaceId), any()))
             .thenReturn(listOf(companyWithRelationship, candidateWithRelationship))
 
-        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("candidate")))
+        whenever(entityTypeRepository.findByworkspaceIdAndKey(eq(workspaceId), eq("candidate")))
             .thenReturn(Optional.of(candidateWithRelationship))
 
         val savedEntityTypes = mutableListOf<EntityTypeEntity>()
@@ -890,7 +890,7 @@ class EntityTypeRelationshipServiceTest {
             }
 
         // When: Updating with INVERSE_NAME_CHANGED
-        entityTypeRelationshipService.updateRelationships(organisationId, diff)
+        entityTypeRelationshipService.updateRelationships(workspaceId, diff)
 
         // Then: Candidate's REFERENCE relationship should NOT be changed (it was manually renamed)
         val updatedCandidate = savedEntityTypes.find { it.key == "candidate" }
@@ -980,10 +980,10 @@ class EntityTypeRelationshipServiceTest {
         )
 
         // Mock repository calls
-        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+        whenever(entityTypeRepository.findByworkspaceIdAndKeyIn(eq(workspaceId), any()))
             .thenReturn(listOf(companyWithRelationship, candidateWithRelationship))
 
-        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("candidate")))
+        whenever(entityTypeRepository.findByworkspaceIdAndKey(eq(workspaceId), eq("candidate")))
             .thenReturn(Optional.of(candidateWithRelationship))
 
         val savedEntityTypes = mutableListOf<EntityTypeEntity>()
@@ -995,7 +995,7 @@ class EntityTypeRelationshipServiceTest {
             }
 
         // When: Updating with CARDINALITY_CHANGED
-        entityTypeRelationshipService.updateRelationships(organisationId, diff)
+        entityTypeRelationshipService.updateRelationships(workspaceId, diff)
 
         // Then: Candidate's REFERENCE relationship should have inverted cardinality
         val updatedCandidate = savedEntityTypes.find { it.key == "candidate" }
@@ -1067,10 +1067,10 @@ class EntityTypeRelationshipServiceTest {
         )
 
         // Mock repository calls
-        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+        whenever(entityTypeRepository.findByworkspaceIdAndKeyIn(eq(workspaceId), any()))
             .thenReturn(listOf(companyWithRelationship, jobWithNoRelationship))
 
-        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("job")))
+        whenever(entityTypeRepository.findByworkspaceIdAndKey(eq(workspaceId), eq("job")))
             .thenReturn(Optional.of(jobWithNoRelationship))
 
         val savedEntityTypes = mutableListOf<EntityTypeEntity>()
@@ -1082,7 +1082,7 @@ class EntityTypeRelationshipServiceTest {
             }
 
         // When: Enabling bidirectional
-        entityTypeRelationshipService.updateRelationships(organisationId, diff)
+        entityTypeRelationshipService.updateRelationships(workspaceId, diff)
 
         // Then: Job should have a new REFERENCE relationship
         val updatedJob = savedEntityTypes.find { it.key == "job" }
@@ -1146,12 +1146,12 @@ class EntityTypeRelationshipServiceTest {
         )
 
         // Mock repository calls
-        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+        whenever(entityTypeRepository.findByworkspaceIdAndKeyIn(eq(workspaceId), any()))
             .thenReturn(listOf(jobEntityType, companyWithRelationship))
 
         // When/Then: Should throw validation error
         val exception = Assertions.assertThrows(IllegalArgumentException::class.java) {
-            entityTypeRelationshipService.updateRelationships(organisationId, diff)
+            entityTypeRelationshipService.updateRelationships(workspaceId, diff)
         }
 
         Assertions.assertTrue(
@@ -1235,10 +1235,10 @@ class EntityTypeRelationshipServiceTest {
         )
 
         // Mock repository calls
-        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+        whenever(entityTypeRepository.findByworkspaceIdAndKeyIn(eq(workspaceId), any()))
             .thenReturn(listOf(companyWithRelationship, jobWithRelationship))
 
-        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("job")))
+        whenever(entityTypeRepository.findByworkspaceIdAndKey(eq(workspaceId), eq("job")))
             .thenReturn(Optional.of(jobWithRelationship))
 
         val savedEntityTypes = mutableListOf<EntityTypeEntity>()
@@ -1250,7 +1250,7 @@ class EntityTypeRelationshipServiceTest {
             }
 
         // When: Disabling bidirectional
-        entityTypeRelationshipService.updateRelationships(organisationId, diff)
+        entityTypeRelationshipService.updateRelationships(workspaceId, diff)
 
         // Then: Job's REFERENCE relationship should be removed
         val updatedJob = savedEntityTypes.find { it.key == "job" }
@@ -1339,10 +1339,10 @@ class EntityTypeRelationshipServiceTest {
         )
 
         // Mock repository calls
-        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+        whenever(entityTypeRepository.findByworkspaceIdAndKeyIn(eq(workspaceId), any()))
             .thenReturn(listOf(companyWithRelationship, candidateWithRelationship, jobWithNoRelationship))
 
-        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("job")))
+        whenever(entityTypeRepository.findByworkspaceIdAndKey(eq(workspaceId), eq("job")))
             .thenReturn(Optional.of(jobWithNoRelationship))
 
         val savedEntityTypes = mutableListOf<EntityTypeEntity>()
@@ -1354,7 +1354,7 @@ class EntityTypeRelationshipServiceTest {
             }
 
         // When: Changing bidirectional targets
-        entityTypeRelationshipService.updateRelationships(organisationId, diff)
+        entityTypeRelationshipService.updateRelationships(workspaceId, diff)
 
         // Then: Job should have a new REFERENCE relationship
         val updatedJob = savedEntityTypes.find { it.key == "job" }
@@ -1435,7 +1435,7 @@ class EntityTypeRelationshipServiceTest {
         )
 
         // Mock repository calls
-        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+        whenever(entityTypeRepository.findByworkspaceIdAndKeyIn(eq(workspaceId), any()))
             .thenReturn(listOf(companyWithRelationship, candidateWithRelationship))
 
         val savedEntityTypes = mutableListOf<EntityTypeEntity>()
@@ -1450,7 +1450,7 @@ class EntityTypeRelationshipServiceTest {
 
         // When: Removing the REFERENCE relationship with REMOVE_BIDIRECTIONAL action
         entityTypeRelationshipService.removeRelationships(
-            organisationId = organisationId,
+            workspaceId = workspaceId,
             relationships = listOf(
                 EntityTypeRelationshipDeleteRequest(
                     relationship = candidateReferenceRelationship,
@@ -1556,7 +1556,7 @@ class EntityTypeRelationshipServiceTest {
         )
 
         // Mock repository calls
-        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+        whenever(entityTypeRepository.findByworkspaceIdAndKeyIn(eq(workspaceId), any()))
             .thenReturn(listOf(companyWithRelationship, candidateWithRelationship))
 
         val savedEntityTypes = mutableListOf<EntityTypeEntity>()
@@ -1571,7 +1571,7 @@ class EntityTypeRelationshipServiceTest {
 
         // When: Removing the REFERENCE relationship with REMOVE_ENTITY_TYPE action
         entityTypeRelationshipService.removeRelationships(
-            organisationId = organisationId,
+            workspaceId = workspaceId,
             relationships = listOf(
                 EntityTypeRelationshipDeleteRequest(
                     relationship = candidateReferenceRelationship,
@@ -1704,13 +1704,13 @@ class EntityTypeRelationshipServiceTest {
         )
 
         // Mock repository calls
-        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+        whenever(entityTypeRepository.findByworkspaceIdAndKeyIn(eq(workspaceId), any()))
             .thenReturn(listOf(companyWithRelationship, candidateWithRelationship, jobWithRelationship))
 
-        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("candidate")))
+        whenever(entityTypeRepository.findByworkspaceIdAndKey(eq(workspaceId), eq("candidate")))
             .thenReturn(Optional.of(candidateWithRelationship))
 
-        whenever(entityTypeRepository.findByOrganisationIdAndKey(eq(organisationId), eq("job")))
+        whenever(entityTypeRepository.findByworkspaceIdAndKey(eq(workspaceId), eq("job")))
             .thenReturn(Optional.of(jobWithRelationship))
 
         val savedEntityTypes = mutableListOf<EntityTypeEntity>()
@@ -1725,7 +1725,7 @@ class EntityTypeRelationshipServiceTest {
 
         // When: Removing the REFERENCE relationship with DELETE_RELATIONSHIP action
         entityTypeRelationshipService.removeRelationships(
-            organisationId = organisationId,
+            workspaceId = workspaceId,
             relationships = listOf(
                 EntityTypeRelationshipDeleteRequest(
                     relationship = candidateReferenceRelationship,
@@ -1820,7 +1820,7 @@ class EntityTypeRelationshipServiceTest {
         )
 
         // Mock repository calls
-        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+        whenever(entityTypeRepository.findByworkspaceIdAndKeyIn(eq(workspaceId), any()))
             .thenReturn(listOf(companyWithRelationship, candidateWithRelationship))
 
         whenever(authTokenService.getUserId()).thenReturn(userId)
@@ -1828,7 +1828,7 @@ class EntityTypeRelationshipServiceTest {
         // When/Then: Should throw exception for any action
         val exception = Assertions.assertThrows(IllegalStateException::class.java) {
             entityTypeRelationshipService.removeRelationships(
-                organisationId = organisationId,
+                workspaceId = workspaceId,
                 relationships = listOf(
                     EntityTypeRelationshipDeleteRequest(
                         relationship = candidateReferenceRelationship,
@@ -1908,7 +1908,7 @@ class EntityTypeRelationshipServiceTest {
         )
 
         // Mock repository calls
-        whenever(entityTypeRepository.findByOrganisationIdAndKeyIn(eq(organisationId), any()))
+        whenever(entityTypeRepository.findByworkspaceIdAndKeyIn(eq(workspaceId), any()))
             .thenReturn(listOf(companyWithRelationship, candidateWithRelationship))
 
         val savedEntityTypes = mutableListOf<EntityTypeEntity>()
@@ -1923,7 +1923,7 @@ class EntityTypeRelationshipServiceTest {
 
         // When: Removing the only REFERENCE relationship with REMOVE_BIDIRECTIONAL
         entityTypeRelationshipService.removeRelationships(
-            organisationId = organisationId,
+            workspaceId = workspaceId,
             relationships = listOf(
                 EntityTypeRelationshipDeleteRequest(
                     relationship = candidateReferenceRelationship,
@@ -1965,7 +1965,7 @@ class EntityTypeRelationshipServiceTest {
             key = key,
             displayNameSingular = singularName,
             displayNamePlural = pluralName,
-            organisationId = organisationId,
+            workspaceId = workspaceId,
             type = EntityCategory.STANDARD,
             schema = Schema<UUID>(
                 key = SchemaType.OBJECT,

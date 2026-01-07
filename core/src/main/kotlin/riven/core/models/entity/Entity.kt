@@ -13,7 +13,7 @@ import java.util.*
  */
 data class Entity(
     val id: UUID,
-    val organisationId: UUID,
+    val workspaceId: UUID,
     val typeId: UUID,
 
     val payload: Map<UUID, EntityAttribute>,
@@ -24,11 +24,11 @@ data class Entity(
     val validationErrors: List<String>? = null,
     // A unique identifier key for the entity within its type, taken and synced from EntityType for easier lookup
     val identifierKey: UUID,
-    override val createdAt: ZonedDateTime? = null,
-    override val updatedAt: ZonedDateTime? = null,
-    override val createdBy: UUID? = null,
-    override val updatedBy: UUID? = null
-) : AuditableModel() {
+    override var createdAt: ZonedDateTime? = null,
+    override var updatedAt: ZonedDateTime? = null,
+    override var createdBy: UUID? = null,
+    override var updatedBy: UUID? = null
+) : AuditableModel {
     val identifier: String
         get() = this.payload[identifierKey].toString()
 }

@@ -5,7 +5,6 @@ enum class OperationType {
     UPDATE,
     DELETE,
     READ,
-    ARCHIVE,
     RESTORE;
 
     companion object {

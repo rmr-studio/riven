@@ -19,7 +19,7 @@ interface EntityUniqueValuesRepository : JpaRepository<EntityUniqueValueEntity, 
                 WHERE type_id = :typeId
                   AND field_id = :fieldId
                   AND field_value = :fieldValue
-                  AND archived = false
+                  AND deleted = false
                   AND (:excludeEntityId IS NULL OR entity_id <> :excludeEntityId)
             )
         """,
@@ -50,7 +50,7 @@ interface EntityUniqueValuesRepository : JpaRepository<EntityUniqueValueEntity, 
     @Modifying
     @Query(
         value = """
-            INSERT INTO entities_unique_values (id, type_id, entity_id, field_id, field_value, archived)
+            INSERT INTO entities_unique_values (id, type_id, entity_id, field_id, field_value, deleted)
             VALUES (:id, :typeId, :entityId, :fieldId, :fieldValue, false)
         """,
         nativeQuery = true
@@ -67,21 +67,27 @@ interface EntityUniqueValuesRepository : JpaRepository<EntityUniqueValueEntity, 
     @Query(
         value = """
             UPDATE entities_unique_values
-            SET archived = true, deleted_at = CURRENT_TIMESTAMP
-            WHERE entity_id in :ids and archived = false
+            SET deleted = true, deleted_at = CURRENT_TIMESTAMP
+            WHERE 
+                workspace_id = :workspaceId
+                AND entity_id in :ids 
+                AND deleted = false
         """,
         nativeQuery = true
     )
-    fun archiveEntities(ids: Collection<UUID>): Int
+    fun deleteEntities(workspaceId: UUID, ids: Collection<UUID>): Int
 
     @Modifying(clearAutomatically = true)
     @Query(
         value = """
             UPDATE entities_unique_values
-            SET archived = true, deleted_at = CURRENT_TIMESTAMP
-            WHERE type_id = :typeId AND archived = false
+            SET deleted = true, deleted_at = CURRENT_TIMESTAMP
+            WHERE 
+                workspace_id = :workspaceId
+                AND type_id = :typeId 
+                AND deleted = false
         """,
         nativeQuery = true
     )
-    fun archiveType(typeId: UUID): Int
+    fun deleteType(workspaceId: UUID, typeId: UUID): Int
 }

@@ -404,9 +404,9 @@ export const updateMetadata = (metadata: EditorEnvironmentMetadata): EditorEnvir
 };
 
 /**
- * Initialise an empty editor environment for the given organisation id.
+ * Initialise an empty editor environment for the given workspace id.
  */
-export function createEmptyEnvironment(organisationId: string): EditorEnvironment {
+export function createEmptyEnvironment(workspaceId: string): EditorEnvironment {
     const timestamp = now();
 
     return {
@@ -415,7 +415,7 @@ export function createEmptyEnvironment(organisationId: string): EditorEnvironmen
         treeIndex: new Map(),
         metadata: {
             name: "Untitled Environment",
-            organisationId,
+            workspaceId: workspaceId,
             description: undefined,
             createdAt: timestamp,
             updatedAt: timestamp,
@@ -431,12 +431,12 @@ export interface EnvironmentInitResult {
 }
 
 export const init = (
-    organisationId: string,
+    workspaceId: string,
     initialTrees: BlockTree[] = []
 ): EnvironmentInitResult => {
     if (!initialTrees || initialTrees.length === 0) {
         return {
-            environment: createEmptyEnvironment(organisationId),
+            environment: createEmptyEnvironment(workspaceId),
         };
     }
 
@@ -466,7 +466,7 @@ export const init = (
             metadata: {
                 name: "Untitled Environment",
                 description: undefined,
-                organisationId,
+                workspaceId: workspaceId,
                 createdAt: now(),
                 updatedAt: now(),
             },

@@ -9,8 +9,8 @@ interface EntityTypeConfigState {
     // Entity type identifier
     entityTypeKey: string;
 
-    // Organisation and entity type data
-    organisationId: string;
+    // Workspace and entity type data
+    workspaceId: string;
     entityType: EntityType;
 
     // React Hook Form instance (stored for cross-component access)
@@ -57,18 +57,18 @@ export type EntityTypeConfigStore = EntityTypeConfigState & EntityTypeConfigActi
 // Store factory (per-entity-type instances)
 export const createEntityTypeConfigStore = (
     entityTypeKey: string,
-    organisationId: string,
+    workspaceId: string,
     entityType: EntityType,
     form: UseFormReturn<EntityTypeFormValues>,
     updateMutation: (type: EntityType) => Promise<EntityType>
 ): StoreApi<EntityTypeConfigStore> => {
-    const storageKey = `${organisationId}-entity-type-draft-${entityTypeKey}`;
+    const storageKey = `${workspaceId}-entity-type-draft-${entityTypeKey}`;
 
     return create<EntityTypeConfigStore>()(
         subscribeWithSelector((set, get) => ({
             // Initial state
             entityTypeKey,
-            organisationId,
+            workspaceId,
             entityType,
             form,
             isDirty: false,
