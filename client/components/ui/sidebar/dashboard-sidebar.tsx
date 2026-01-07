@@ -1,8 +1,8 @@
 "use client";
 import { useEntityTypes } from "@/components/feature-modules/entity/hooks/query/type/use-entity-types";
-import { Workspace } from "@/components/feature-modules/organisation/interface/workspace.interface";
-import { useWorkspaceStore } from "@/components/feature-modules/organisation/provider/workspace-provider";
 import { useProfile } from "@/components/feature-modules/user/hooks/useProfile";
+import { Workspace } from "@/components/feature-modules/workspace/interface/workspace.interface";
+import { useWorkspaceStore } from "@/components/feature-modules/workspace/provider/workspace-provider";
 import { SidebarGroupProps } from "@/lib/interfaces/interface";
 import { DropdownMenuGroup } from "@radix-ui/react-dropdown-menu";
 import {
@@ -45,8 +45,7 @@ export const DashboardSidebar = () => {
 
     // Derive selected workspace from user data
     const selectedWorkspace =
-        data?.memberships.find((m) => m.workspace?.id === selectedWorkspaceId)
-            ?.workspace ?? null;
+        data?.memberships.find((m) => m.workspace?.id === selectedWorkspaceId)?.workspace ?? null;
 
     const handleWorkspaceSelection = (workspace: Workspace) => {
         setSelectedWorkspace(workspace);
@@ -80,8 +79,7 @@ export const DashboardSidebar = () => {
                           hidden: false,
                           title: "Workspace",
                           url: `/dashboard/workspace/${selectedWorkspace.id}`,
-                          isActive:
-                              pathName === `/dashboard/workspace/${selectedWorkspace.id}`,
+                          isActive: pathName === `/dashboard/workspace/${selectedWorkspace.id}`,
                       },
                   ],
               },
@@ -279,8 +277,8 @@ export const DashboardSidebar = () => {
                                             No Workspaces Found
                                         </h1>
                                         <p className="text-xs text-muted-foreground text-center">
-                                            You currently do not have any workspaces. Create one
-                                            to get started.
+                                            You currently do not have any workspaces. Create one to
+                                            get started.
                                         </p>
                                     </div>
                                 </section>
@@ -292,9 +290,8 @@ export const DashboardSidebar = () => {
                             additionalActions={switcherOptions}
                             title={"Workspaces"}
                             options={
-                                data.memberships
-                                    .map((ws) => ws.workspace)
-                                    .filter((ws) => !!ws) ?? []
+                                data.memberships.map((ws) => ws.workspace).filter((ws) => !!ws) ??
+                                []
                             }
                             selectedOption={selectedWorkspace}
                             handleOptionSelection={handleWorkspaceSelection}

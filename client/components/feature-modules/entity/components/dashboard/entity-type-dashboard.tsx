@@ -1,6 +1,6 @@
 "use client";
 
-import { useWorkspace } from "@/components/feature-modules/organisation/hooks/use-workspace";
+import { useWorkspace } from "@/components/feature-modules/workspace/hooks/use-workspace";
 import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-group";
 import { isResponseError } from "@/lib/util/error/error.util";
 import { useParams, useRouter } from "next/navigation";
@@ -31,9 +31,7 @@ export const EntityTypeOverviewDashboard = () => {
 
             // Query has returned an ID we can use to route to a valid error message
             const responseError = error;
-            router.push(
-                `/dashboard/workspace/${workspaceId}/entity?error=${responseError.error}`
-            );
+            router.push(`/dashboard/workspace/${workspaceId}/entity?error=${responseError.error}`);
         }
     }, [isPending, isLoadingAuth, entityType, error, router]);
 
@@ -75,10 +73,7 @@ export const EntityTypeOverviewDashboard = () => {
                 <BreadCrumbGroup items={trail} />
             </header>
             <section>
-                <EntityTypeConfigurationProvider
-                    workspaceId={workspaceId}
-                    entityType={entityType}
-                >
+                <EntityTypeConfigurationProvider workspaceId={workspaceId} entityType={entityType}>
                     <EntityTypeOverview workspaceId={workspaceId} entityType={entityType} />
                 </EntityTypeConfigurationProvider>
             </section>

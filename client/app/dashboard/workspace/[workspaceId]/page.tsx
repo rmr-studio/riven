@@ -1,4 +1,4 @@
-import { WorkspaceDashboard } from "@/components/feature-modules/organisation/dashboard/workspace-dashboard";
+import { WorkspaceDashboard } from "@/components/feature-modules/workspace/dashboard/workspace-dashboard";
 
 const Workspace = () => {
     return <WorkspaceDashboard />;

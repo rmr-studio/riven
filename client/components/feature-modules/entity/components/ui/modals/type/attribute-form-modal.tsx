@@ -1,4 +1,4 @@
-import { useWorkspace } from "@/components/feature-modules/organisation/hooks/use-workspace";
+import { useWorkspace } from "@/components/feature-modules/workspace/hooks/use-workspace";
 import { AttributeTypeDropdown } from "@/components/ui/attribute-type-dropdown";
 import {
     Dialog,

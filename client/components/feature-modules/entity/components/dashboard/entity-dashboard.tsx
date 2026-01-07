@@ -1,6 +1,6 @@
 "use client";
 
-import { useWorkspace } from "@/components/feature-modules/organisation/hooks/use-workspace";
+import { useWorkspace } from "@/components/feature-modules/workspace/hooks/use-workspace";
 import { BreadCrumbGroup, BreadCrumbTrail } from "@/components/ui/breadcrumb-group";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { isResponseError } from "@/lib/util/error/error.util";
@@ -38,9 +38,7 @@ export const EntityDashboard = () => {
 
             // Query has returned an ID we can use to route to a valid error message
             const responseError = entityTypeError;
-            router.push(
-                `/dashboard/workspace/${workspaceId}/entity?error=${responseError.error}`
-            );
+            router.push(`/dashboard/workspace/${workspaceId}/entity?error=${responseError.error}`);
         }
     }, [isPendingEntityType, isLoadingAuth, entityType, entityTypeError, router]);
 
@@ -75,10 +73,7 @@ export const EntityDashboard = () => {
                         workspaceId={workspaceId}
                         entityType={entityType}
                     >
-                        <EntityDraftProvider
-                            workspaceId={workspaceId}
-                            entityType={entityType}
-                        >
+                        <EntityDraftProvider workspaceId={workspaceId} entityType={entityType}>
                             <EntityDataTable
                                 entityType={entityType}
                                 entities={entities || []}

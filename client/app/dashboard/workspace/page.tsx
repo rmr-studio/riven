@@ -1,4 +1,4 @@
-import { WorkspacePicker } from "@/components/feature-modules/organisation/dashboard/workspace-picker";
+import { WorkspacePicker } from "@/components/feature-modules/workspace/dashboard/workspace-picker";
 
 const UserWorkspaces = () => {
     return (

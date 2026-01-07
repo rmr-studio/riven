@@ -1,4 +1,4 @@
-import WorkspaceMemberList from "@/components/feature-modules/organisation/components/team/workspace-members";
+import WorkspaceMemberList from "@/components/feature-modules/workspace/components/team/workspace-members";
 
 const page = () => {
     return <WorkspaceMemberList />;

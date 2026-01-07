@@ -28,7 +28,7 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { FC, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useOrganisation } from "../../../../../organisation/hooks/use-organisation";
+import { useOrganisation } from "../../../../../workspace/hooks/use-organisation";
 import { useDeleteDefinitionMutation } from "../../../../hooks/mutation/type/use-delete-definition-mutation";
 import {
     DeleteAttributeDefinitionRequest,

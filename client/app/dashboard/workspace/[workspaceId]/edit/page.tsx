@@ -1,4 +1,4 @@
-import EditWorkspace from "@/components/feature-modules/organisation/components/edit-workspace";
+import EditWorkspace from "@/components/feature-modules/workspace/components/edit-workspace";
 
 const EditWorkspacePage = () => {
     return <EditWorkspace />;
