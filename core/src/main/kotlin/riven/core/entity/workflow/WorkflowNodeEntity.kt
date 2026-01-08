@@ -25,6 +25,9 @@ data class WorkflowNodeEntity(
     @Column(name = "name", nullable = false)
     val name: String,
 
+    @Column(name = "version", nullable = false)
+    val version: Int = 1,
+
     @Type(JsonBinaryType::class)
     @Column(name = "description", columnDefinition = "jsonb")
     val description: String? = null,

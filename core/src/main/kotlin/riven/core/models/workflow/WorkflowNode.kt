@@ -6,4 +6,5 @@ import java.util.*
 interface WorkflowNode {
     val id: UUID
     val type: WorkflowNodeType
+    val version: Int
 }
