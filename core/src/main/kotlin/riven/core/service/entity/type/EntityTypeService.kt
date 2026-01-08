@@ -5,7 +5,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.activity.Activity
-import riven.core.enums.common.SchemaType
+import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.core.DataType
 import riven.core.enums.entity.EntityPropertyType

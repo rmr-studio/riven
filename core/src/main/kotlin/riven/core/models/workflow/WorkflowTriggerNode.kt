@@ -4,9 +4,9 @@ import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.enums.workflow.WorkflowTriggerType
 import java.util.*
 
-sealed interface WorkflowTrigger : WorkflowNode {
+interface WorkflowTriggerNode : WorkflowNode {
     override val id: UUID
     override val type: WorkflowNodeType
         get() = WorkflowNodeType.TRIGGER
-    val triggerType: WorkflowTriggerType
+    val subType: WorkflowTriggerType
 }

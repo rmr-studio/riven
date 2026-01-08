@@ -3,7 +3,7 @@ package riven.core.service.entity
 import org.springframework.stereotype.Service
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
-import riven.core.enums.common.ValidationScope
+import riven.core.enums.common.validation.ValidationScope
 import riven.core.enums.entity.validation.EntityTypeChangeType
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition

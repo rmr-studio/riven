@@ -1,4 +1,4 @@
-package riven.core.enums.common
+package riven.core.enums.common.validation
 
 enum class SchemaType {
     TEXT,

@@ -1,4 +1,4 @@
-package riven.core.enums.common
+package riven.core.enums.common.icon
 
 enum class IconColour {
     NEUTRAL,

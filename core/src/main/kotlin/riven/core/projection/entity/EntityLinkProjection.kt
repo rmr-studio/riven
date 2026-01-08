@@ -1,7 +1,7 @@
 package riven.core.projection.entity
 
-import riven.core.enums.common.IconColour
-import riven.core.enums.common.IconType
+import riven.core.enums.common.icon.IconColour
+import riven.core.enums.common.icon.IconType
 import riven.core.models.common.Icon
 import riven.core.models.entity.EntityLink
 import java.util.*

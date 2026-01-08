@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.entity.EntityTypeEntity
-import riven.core.enums.common.SchemaType
+import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.core.DataType
 import riven.core.enums.entity.EntityCategory
 import riven.core.enums.entity.EntityRelationshipCardinality

@@ -1,8 +1,8 @@
 package riven.core.models.entity.configuration
 
 import riven.core.entity.util.AuditableModel
-import riven.core.enums.common.IconColour
-import riven.core.enums.common.IconType
+import riven.core.enums.common.icon.IconColour
+import riven.core.enums.common.icon.IconType
 import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.enums.entity.EntityTypeRelationshipType
 import riven.core.models.common.Icon

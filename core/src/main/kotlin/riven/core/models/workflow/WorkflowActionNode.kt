@@ -4,10 +4,10 @@ import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeType
 import java.util.*
 
-sealed interface WorkflowAction : WorkflowNode {
+interface WorkflowActionNode : WorkflowNode {
     override val id: UUID
     override val type: WorkflowNodeType
         get() = WorkflowNodeType.ACTION
-    val actionType: WorkflowActionType
+    val subType: WorkflowActionType
 
 }

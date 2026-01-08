@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.networknt.schema.JsonSchemaFactory
 import com.networknt.schema.SpecVersion
 import org.springframework.stereotype.Service
-import riven.core.enums.common.ValidationScope
+import riven.core.enums.common.validation.ValidationScope
 import riven.core.enums.core.DataFormat
 import riven.core.enums.core.DataType
 import riven.core.exceptions.SchemaValidationException

@@ -2,9 +2,9 @@ package riven.core.enums.workflow
 
 enum class WorkflowNodeType {
     FUNCTION,
-    CONDITION,
-    LOOP,
+    CONTROL_FLOW,
+    HUMAN_INTERACTION,
     ACTION,
     TRIGGER,
-    DELAY
+    UTILITY,
 }
