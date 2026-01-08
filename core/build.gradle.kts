@@ -34,6 +34,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
+    // Workflow Execution
+    implementation("io.temporal:temporal-kotlin:1.32.1")
+
     // Security/JWT
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server:3.5.0")
