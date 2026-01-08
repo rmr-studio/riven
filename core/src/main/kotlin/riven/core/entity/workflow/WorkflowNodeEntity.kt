@@ -5,6 +5,7 @@ import jakarta.persistence.*
 import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
 import riven.core.enums.workflow.WorkflowNodeType
+import riven.core.models.workflow.WorkflowNode
 import java.util.*
 
 @Entity
@@ -33,4 +34,8 @@ data class WorkflowNodeEntity(
     val description: String? = null,
 
 
-    ) : AuditableEntity()
+    ) : AuditableEntity() {
+    fun toModel(): WorkflowNode {
+        TODO()
+    }
+}
