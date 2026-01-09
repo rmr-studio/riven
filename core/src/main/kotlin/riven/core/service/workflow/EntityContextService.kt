@@ -1,11 +1,15 @@
 package riven.core.service.workflow
 
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.models.entity.Entity
 import riven.core.models.entity.EntityType
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
+import riven.core.models.entity.payload.EntityAttributeRelationPayload
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
+import riven.core.service.entity.EntityRelationshipService
 import java.util.*
 
 /**
@@ -17,14 +21,18 @@ import java.util.*
 @Service
 class EntityContextService(
     private val entityRepository: EntityRepository,
-    private val entityTypeRepository: EntityTypeRepository
+    private val entityTypeRepository: EntityTypeRepository,
+    private val entityRelationshipService: EntityRelationshipService
 ) {
+    companion object {
+        private val logger = LoggerFactory.getLogger(EntityContextService::class.java)
+    }
 
     /**
-     * Builds expression context from entity data.
+     * Builds expression context from entity data without relationship traversal.
      *
      * Converts entity payload (UUID-keyed) to Map<String, Any?> (String-keyed) using schema labels.
-     * Primitive values are extracted; relationship fields return null (handled by buildContextWithRelationships).
+     * Primitive values are extracted; relationship fields return null.
      *
      * @param entityId ID of entity to convert
      * @param workspaceId Workspace ID for authorization
@@ -32,6 +40,44 @@ class EntityContextService(
      * @throws IllegalArgumentException if entity not found, entity type not found, or schema label missing
      */
     fun buildContext(entityId: UUID, workspaceId: UUID): Map<String, Any?> {
+        return buildContextWithRelationships(entityId, workspaceId, maxDepth = 0)
+    }
+
+    /**
+     * Builds expression context from entity data with recursive relationship traversal.
+     *
+     * Converts entity payload to Map<String, Any?> with schema labels, and recursively resolves
+     * relationships up to maxDepth. Prevents infinite cycles through depth limiting.
+     *
+     * @param entityId ID of entity to convert
+     * @param workspaceId Workspace ID for authorization
+     * @param maxDepth Maximum recursion depth for relationship traversal (default 3)
+     * @return Expression-compatible context map with nested relationship objects/lists
+     * @throws IllegalArgumentException if entity not found, entity type not found, or schema label missing
+     */
+    fun buildContextWithRelationships(
+        entityId: UUID,
+        workspaceId: UUID,
+        maxDepth: Int = 3
+    ): Map<String, Any?> {
+        return buildContextInternal(entityId, workspaceId, currentDepth = 0, maxDepth = maxDepth)
+    }
+
+    /**
+     * Internal recursive implementation of context building with depth tracking.
+     *
+     * @param entityId ID of entity to convert
+     * @param workspaceId Workspace ID for authorization
+     * @param currentDepth Current recursion depth
+     * @param maxDepth Maximum allowed recursion depth
+     * @return Context map with primitive and relationship values
+     */
+    private fun buildContextInternal(
+        entityId: UUID,
+        workspaceId: UUID,
+        currentDepth: Int,
+        maxDepth: Int
+    ): Map<String, Any?> {
         // Fetch entity
         val entityEntity = entityRepository.findById(entityId)
             .orElseThrow { IllegalArgumentException("Entity not found: $entityId") }
@@ -40,24 +86,41 @@ class EntityContextService(
         val entityTypeEntity = entityTypeRepository.findById(entityEntity.typeId)
             .orElseThrow { IllegalArgumentException("Entity type not found: ${entityEntity.typeId}") }
 
+        // Fetch relationships
+        val relationships = if (currentDepth < maxDepth) {
+            entityRelationshipService.findRelatedEntities(entityId, workspaceId)
+        } else {
+            emptyMap()
+        }
+
         // Convert to domain models
-        val entity = entityEntity.toModel(audit = false, relationships = emptyMap())
+        val entity = entityEntity.toModel(audit = false, relationships = relationships)
         val entityType = entityTypeEntity.toModel()
 
         // Build context from payload
-        return buildContextFromEntity(entity, entityType)
+        return buildContextFromEntity(entity, entityType, workspaceId, currentDepth, maxDepth)
     }
 
     /**
-     * Builds context map from entity and entity type.
+     * Builds context map from entity and entity type with relationship traversal.
      *
-     * Iterates entity payload, looks up schema labels for UUID keys, and extracts primitive values.
+     * Iterates entity payload, looks up schema labels for UUID keys, and extracts values.
+     * For relationships, recursively builds nested contexts based on cardinality.
      *
-     * @param entity Entity domain model
-     * @param entityType EntityType domain model with schema
+     * @param entity Entity domain model with relationships
+     * @param entityType EntityType domain model with schema and relationship definitions
+     * @param workspaceId Workspace ID for authorization
+     * @param currentDepth Current recursion depth
+     * @param maxDepth Maximum allowed recursion depth
      * @return Context map with string keys (labels) and values
      */
-    private fun buildContextFromEntity(entity: Entity, entityType: EntityType): Map<String, Any?> {
+    private fun buildContextFromEntity(
+        entity: Entity,
+        entityType: EntityType,
+        workspaceId: UUID,
+        currentDepth: Int,
+        maxDepth: Int
+    ): Map<String, Any?> {
         val context = mutableMapOf<String, Any?>()
 
         // Iterate entity payload (Map<UUID, EntityAttribute>)
@@ -71,7 +134,14 @@ class EntityContextService(
                 ?: throw IllegalArgumentException("Schema label missing for UUID: $uuid in entity type ${entityType.key}")
 
             // Extract value based on payload type
-            val value = extractValue(attribute.payload)
+            val value = extractValue(
+                payload = attribute.payload,
+                fieldUuid = uuid,
+                entityType = entityType,
+                workspaceId = workspaceId,
+                currentDepth = currentDepth,
+                maxDepth = maxDepth
+            )
 
             // Add to context
             context[label] = value
@@ -81,18 +151,80 @@ class EntityContextService(
     }
 
     /**
-     * Extracts value from entity attribute payload.
+     * Extracts value from entity attribute payload with relationship traversal.
      *
      * For primitive payloads, returns the JsonValue (Any?).
-     * For relationship payloads, returns null (relationships handled in Task 2).
+     * For relationship payloads, recursively builds contexts for related entities.
      *
      * @param payload EntityAttributePayload (primitive or relationship)
-     * @return Extracted primitive value or null for relationships
+     * @param fieldUuid UUID key of this field in entity payload
+     * @param entityType EntityType containing relationship definitions
+     * @param workspaceId Workspace ID for authorization
+     * @param currentDepth Current recursion depth
+     * @param maxDepth Maximum allowed recursion depth
+     * @return Extracted value (primitive, nested map, or list of maps)
      */
-    private fun extractValue(payload: riven.core.models.entity.payload.EntityAttributePayload): Any? {
+    private fun extractValue(
+        payload: riven.core.models.entity.payload.EntityAttributePayload,
+        fieldUuid: UUID,
+        entityType: EntityType,
+        workspaceId: UUID,
+        currentDepth: Int,
+        maxDepth: Int
+    ): Any? {
         return when (payload) {
             is EntityAttributePrimitivePayload -> payload.value
-            else -> null // Relationship payloads return null for now (Task 2 adds traversal)
+
+            is EntityAttributeRelationPayload -> {
+                // Check if depth exceeded
+                if (currentDepth >= maxDepth) {
+                    // Return entity IDs as strings for debugging
+                    return payload.relations.map { "entity:${it.id}" }
+                }
+
+                // Find relationship definition for this field
+                val relationshipDefinition = entityType.relationships?.find { it.id == fieldUuid }
+
+                if (relationshipDefinition == null) {
+                    logger.warn("Relationship definition not found for field $fieldUuid in entity type ${entityType.key}")
+                    return null
+                }
+
+                // Build nested contexts for related entities
+                val nestedContexts = payload.relations.mapNotNull { entityLink ->
+                    try {
+                        buildContextInternal(
+                            entityId = entityLink.id,
+                            workspaceId = workspaceId,
+                            currentDepth = currentDepth + 1,
+                            maxDepth = maxDepth
+                        )
+                    } catch (e: IllegalArgumentException) {
+                        // Related entity not found (stale relationship)
+                        logger.warn("Related entity not found: ${entityLink.id} for field $fieldUuid - ${e.message}")
+                        null
+                    }
+                }
+
+                // Return based on cardinality
+                when (relationshipDefinition.cardinality) {
+                    EntityRelationshipCardinality.ONE_TO_ONE,
+                    EntityRelationshipCardinality.MANY_TO_ONE -> {
+                        // Return single nested map (or null if empty)
+                        nestedContexts.firstOrNull()
+                    }
+
+                    EntityRelationshipCardinality.ONE_TO_MANY,
+                    EntityRelationshipCardinality.MANY_TO_MANY -> {
+                        // Return list of nested maps
+                        nestedContexts
+                    }
+                }
+            }
+
+            // EntityAttributeRelationPayloadReference should not appear in domain models
+            // but handle it gracefully by returning null
+            else -> null
         }
     }
 }
