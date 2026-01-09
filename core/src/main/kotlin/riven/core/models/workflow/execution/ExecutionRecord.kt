@@ -13,7 +13,7 @@ sealed interface ExecutionRecord {
     val status: WorkflowStatus
     val startedAt: ZonedDateTime
     val completedAt: ZonedDateTime?
-    val duration: Duration
+    val duration: Duration?
 
     // Execution Records
     // TODO: Replace with proper payload types

@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS "workflow_definitions"
     "workspace_id"         UUID REFERENCES workspaces (id) NOT NULL,
     "name"                 TEXT                            NOT NULL,
     "description"          TEXT,
-    "published_version_id" UUID REFERENCES workflow_definition_versions (id),
+    "published_version"    INTEGER,
     "status"               TEXT                            NOT NULL,
     "icon_type"            TEXT                            NOT NULL,
     "icon_colour"          TEXT                            NOT NULL,
@@ -23,8 +23,8 @@ CREATE TABLE IF NOT EXISTS "workflow_definition_versions"
 (
     "id"                     UUID PRIMARY KEY                          NOT NULL DEFAULT uuid_generate_v4(),
     "workspace_id"           UUID REFERENCES workspaces (id)           NOT NULL,
-    "version_number"         INTEGER                                   NOT NULL,
     "workflow_definition_id" UUID REFERENCES workflow_definitions (id) NOT NULL,
+    "version_number"         INTEGER                                   NOT NULL,
     "workflow"               JSONB                                     NOT NULL,
     "canvas"                 JSONB                                     NOT NULL,
     "updated_at"             TIMESTAMPTZ                               NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS "workflow_definition_versions"
     "deleted"                BOOLEAN                                   NOT NULL DEFAULT FALSE,
     "deleted_at"             TIMESTAMPTZ
 );
+
 
 DROP TABLE IF EXISTS "workflow_nodes" CASCADE;
 CREATE TABLE IF NOT EXISTS "workflow_nodes"

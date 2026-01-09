@@ -10,8 +10,8 @@ import java.util.*
 @Table(
     name = "workflow_edges",
     indexes = [
-        Index(name = "idx_workflow_edges_source_node_id", columnList = "workflow_id, source_node_id"),
-        Index(name = "idx_workflow_edges_target_node_id", columnList = "workflow_id, target_node_id"),
+        Index(name = "idx_workflow_edges_source_node_id", columnList = "workspace_id, source_node_id"),
+        Index(name = "idx_workflow_edges_target_node_id", columnList = "workspace_id, target_node_id"),
     ]
 )
 

@@ -61,7 +61,6 @@ data class WorkflowExecutionNodeEntity(
     fun toModel(node: WorkflowNodeEntity): WorkflowExecutionNodeRecord {
 
         val id = requireNotNull(this.id)
-        requireNotNull(node.id)
         return WorkflowExecutionNodeRecord(
             id = id,
             workspaceId = this.workspaceId,

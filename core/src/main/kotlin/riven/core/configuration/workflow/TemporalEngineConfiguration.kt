@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class TemporalEngineConfiguration(private val config: TemporalEngineConfigurationProperties) {
-    @Bean
+    @Bean(destroyMethod = "shutdown")
     fun workflowServiceStubs(): WorkflowServiceStubs {
         return WorkflowServiceStubs.newServiceStubs(
             WorkflowServiceStubsOptions.newBuilder()
@@ -15,5 +15,5 @@ class TemporalEngineConfiguration(private val config: TemporalEngineConfiguratio
                 .build()
         )
     }
-    
+
 }

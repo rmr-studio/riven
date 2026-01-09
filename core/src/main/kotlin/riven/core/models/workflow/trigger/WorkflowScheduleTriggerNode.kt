@@ -20,4 +20,10 @@ data class WorkflowScheduleTriggerNode(
 ) : WorkflowTriggerNode {
     override val subType: WorkflowTriggerType
         get() = WorkflowTriggerType.SCHEDULE
+
+    init {
+        require(cronExpression != null || interval != null) {
+            "Either cronExpression or interval must be provided for schedule trigger"
+        }
+    }
 }

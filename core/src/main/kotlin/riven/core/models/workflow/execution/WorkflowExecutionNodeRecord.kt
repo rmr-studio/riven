@@ -17,7 +17,7 @@ data class WorkflowExecutionNodeRecord(
     override val status: WorkflowStatus,
     override val startedAt: ZonedDateTime,
     override val completedAt: ZonedDateTime? = null,
-    override val duration: Duration,
+    override val duration: Duration? = null,
     val attempt: Int,
 
     override val input: Any?,

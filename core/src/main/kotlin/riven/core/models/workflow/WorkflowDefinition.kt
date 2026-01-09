@@ -22,6 +22,6 @@ data class WorkflowDefinition(
     override var createdAt: ZonedDateTime? = null,
     override var updatedAt: ZonedDateTime? = null,
     override var createdBy: UUID? = null,
-    override var updatedBy: UUID?
+    override var updatedBy: UUID? = null
 
 ) : AuditableModel

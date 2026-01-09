@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
-class TemporalNamespaceManager(
+class TemporalNamespaceManagerService(
     private val workflowServiceStubs: WorkflowServiceStubs
 ) {
 

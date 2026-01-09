@@ -35,8 +35,9 @@ data class WorkflowDefinitionEntity(
     @Column(name = "description", columnDefinition = "text", nullable = true)
     val description: String? = null,
 
-    @Column(name = "published_version_id", nullable = false, columnDefinition = "uuid")
-    val workflowVersionId: UUID,
+    @Column(name = "published_version", nullable = false, columnDefinition = "uuid")
+    val versionNumber: Int,
+
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -60,14 +61,18 @@ data class WorkflowDefinitionEntity(
     @Column(name = "deleted_at", columnDefinition = "timestamptz")
     override var deletedAt: ZonedDateTime? = null
 ) : AuditableEntity(), SoftDeletable {
-    fun toModel(workflow: WorkflowDefinitionVersion): WorkflowDefinition {
+    fun toModel(workflow: WorkflowDefinitionVersionEntity): WorkflowDefinition {
         val id = requireNotNull(this.id)
+        assert(this.versionNumber == workflow.versionNumber) {
+            "Workflow definition version number mismatch: entity(${this.versionNumber}) vs workflow(${workflow.versionNumber})"
+        }
+
         return WorkflowDefinition(
             id = id,
             workspaceId = this.workspaceId,
             name = this.name,
             description = this.description,
-            definition = workflow,
+            definition = workflow.toModel(),
             status = this.status,
             icon = Icon(
                 colour = this.iconColour,
