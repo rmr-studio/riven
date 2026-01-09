@@ -1,7 +1,6 @@
 package riven.core.models.workflow
 
 import riven.core.entity.util.AuditableModel
-import riven.core.models.common.SoftDeletable
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -17,7 +16,4 @@ data class WorkflowDefinitionVersion(
     override var updatedAt: ZonedDateTime? = null,
     override var createdBy: UUID? = null,
     override var updatedBy: UUID? = null,
-
-    override var deleted: Boolean = false,
-    override var deletedAt: ZonedDateTime? = null
-) : AuditableModel, SoftDeletable
+) : AuditableModel

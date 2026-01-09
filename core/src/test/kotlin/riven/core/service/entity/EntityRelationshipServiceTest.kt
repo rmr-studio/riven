@@ -1466,7 +1466,7 @@ class EntityRelationshipServiceTest {
             val entityLink = result.links[companyContactsRelId]?.first()
             assertNotNull(entityLink, "EntityLink should exist")
             assertEquals(contactId, entityLink!!.id)
-            assertEquals(IconType.USER, entityLink.icon.icon)
+            assertEquals(IconType.USER, entityLink.icon.type)
             assertEquals(IconColour.BLUE, entityLink.icon.colour)
             assertEquals("John Doe", entityLink.label)
         }

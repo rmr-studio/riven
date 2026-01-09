@@ -156,7 +156,7 @@ class EntityRelationshipService(
                     workspaceId = targetEntity.workspaceId,
                     key = targetEntity.typeKey,
                     icon = Icon(
-                        icon = targetEntity.iconType,
+                        type = targetEntity.iconType,
                         colour = targetEntity.iconColour
                     ),
                     label = extractIdentifierLabel(targetEntity)

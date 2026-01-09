@@ -1,12 +1,18 @@
 package riven.core.models.workflow.trigger
 
+import com.fasterxml.jackson.annotation.JsonTypeName
+import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import riven.core.enums.util.OperationType
 import riven.core.enums.workflow.WorkflowTriggerType
 import riven.core.models.workflow.WorkflowTriggerNode
 import java.util.*
 
+@JsonTypeName("entity_event_trigger")
+@JsonDeserialize(using = JsonDeserializer.None::class)
 data class WorkflowEntityEventTriggerNode(
     override val id: UUID,
+    override val version: Int = 1,
     val key: String,
     val operation: OperationType,
     val field: List<String> = emptyList(),

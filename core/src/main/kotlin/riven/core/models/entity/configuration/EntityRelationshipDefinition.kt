@@ -34,7 +34,7 @@ import java.util.*
 data class EntityRelationshipDefinition(
     val id: UUID,
     val icon: Icon = Icon(
-        icon = IconType.LINK,
+        type = IconType.LINK,
         colour = IconColour.NEUTRAL
     ),
 

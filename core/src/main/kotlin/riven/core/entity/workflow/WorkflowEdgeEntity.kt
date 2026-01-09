@@ -2,10 +2,19 @@ package riven.core.entity.workflow
 
 import jakarta.persistence.*
 import riven.core.entity.util.AuditableEntity
+import riven.core.models.common.SoftDeletable
+import java.time.ZonedDateTime
 import java.util.*
 
 @Entity
-@Table(name = "workflow_edge")
+@Table(
+    name = "workflow_edges",
+    indexes = [
+        Index(name = "idx_workflow_edges_source_node_id", columnList = "workflow_id, source_node_id"),
+        Index(name = "idx_workflow_edges_target_node_id", columnList = "workflow_id, target_node_id"),
+    ]
+)
+
 data class WorkflowEdgeEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -23,4 +32,10 @@ data class WorkflowEdgeEntity(
 
     @Column(name = "label", nullable = true)
     val label: String? = null,
-) : AuditableEntity()
+
+    @Column(name = "deleted", columnDefinition = "boolean default false")
+    override var deleted: Boolean = false,
+
+    @Column(name = "deleted_at", nullable = true)
+    override var deletedAt: ZonedDateTime? = null
+) : AuditableEntity(), SoftDeletable

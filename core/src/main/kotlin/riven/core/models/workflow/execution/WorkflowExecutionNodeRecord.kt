@@ -6,7 +6,7 @@ import java.time.Duration
 import java.time.ZonedDateTime
 import java.util.*
 
-data class WorkflowExecutionStepRecord(
+data class WorkflowExecutionNodeRecord(
     override val id: UUID,
     override val workspaceId: UUID,
     val executionId: UUID,

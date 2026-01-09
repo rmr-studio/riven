@@ -10,7 +10,7 @@ import java.time.ZonedDateTime
 import java.util.*
 
 @Entity
-@Table(name = "workflow_execution_records")
+@Table(name = "workflow_executions")
 data class WorkflowExecutionEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -43,7 +43,7 @@ data class WorkflowExecutionEntity(
     val startedAt: ZonedDateTime,
     @Column(name = "completed_at", columnDefinition = "timestamptz")
     val completedAt: ZonedDateTime?,
-    @Column(name = "duration", nullable = false, columnDefinition = "bigint")
+    @Column(name = "duration_ms", nullable = false, columnDefinition = "bigint")
     val durationMs: Long,
 
     @Type(JsonBinaryType::class)

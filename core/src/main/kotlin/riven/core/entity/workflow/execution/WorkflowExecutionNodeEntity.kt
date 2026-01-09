@@ -5,14 +5,14 @@ import jakarta.persistence.*
 import org.hibernate.annotations.Type
 import riven.core.entity.workflow.WorkflowNodeEntity
 import riven.core.enums.workflow.WorkflowStatus
-import riven.core.models.workflow.execution.WorkflowExecutionStepRecord
+import riven.core.models.workflow.execution.WorkflowExecutionNodeRecord
 import java.time.Duration
 import java.time.ZonedDateTime
 import java.util.*
 
 @Entity
-@Table(name = "workflow_step_execution_records")
-data class WorkflowExecutionStepEntity(
+@Table(name = "workflow_node_executions")
+data class WorkflowExecutionNodeEntity(
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -25,7 +25,7 @@ data class WorkflowExecutionStepEntity(
     @Column(name = "workflow_execution_id", nullable = false, columnDefinition = "uuid")
     val workflowExecutionId: UUID,
 
-    @Column(name = "node_id", nullable = false, columnDefinition = "uuid")
+    @Column(name = "workflow_node_id", nullable = false, columnDefinition = "uuid")
     val nodeId: UUID,
 
     @Column(name = "sequence_index", nullable = false, columnDefinition = "int")
@@ -39,7 +39,7 @@ data class WorkflowExecutionStepEntity(
     val startedAt: ZonedDateTime,
     @Column(name = "completed_at", columnDefinition = "timestamptz")
     val completedAt: ZonedDateTime?,
-    @Column(name = "duration", nullable = false, columnDefinition = "bigint")
+    @Column(name = "duration_ms", nullable = false, columnDefinition = "bigint")
     val durationMs: Long,
     @Column(name = "attempt", nullable = false)
     val attempt: Int,
@@ -58,11 +58,11 @@ data class WorkflowExecutionStepEntity(
 
 ) {
 
-    fun toModel(node: WorkflowNodeEntity): WorkflowExecutionStepRecord {
+    fun toModel(node: WorkflowNodeEntity): WorkflowExecutionNodeRecord {
 
         val id = requireNotNull(this.id)
         requireNotNull(node.id)
-        return WorkflowExecutionStepRecord(
+        return WorkflowExecutionNodeRecord(
             id = id,
             workspaceId = this.workspaceId,
             executionId = this.workflowExecutionId,

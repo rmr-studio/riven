@@ -33,7 +33,7 @@ fun EntityLinkProjection.toEntityLink(): EntityLink = EntityLink(
     fieldId = getFieldId(),
     sourceEntityId = getSourceEntityId(),
     icon = Icon(
-        icon = IconType.valueOf(getIconType()),
+        type = IconType.valueOf(getIconType()),
         colour = IconColour.valueOf(getIconColour())
     ),
     key = getTypeKey(),

@@ -40,7 +40,7 @@ data class Schema<T>(
     val label: String? = null,
     val key: SchemaType,
     val icon: Icon = Icon(
-        icon = IconType.LANDMARK,
+        type = IconType.LANDMARK,
         colour = IconColour.NEUTRAL
     ),
     val type: DataType = DataType.OBJECT,

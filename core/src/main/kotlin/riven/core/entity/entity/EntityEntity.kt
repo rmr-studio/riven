@@ -93,7 +93,7 @@ data class EntityEntity(
             payload = payload,
             identifierKey = this.identifierKey,
             icon = Icon(
-                icon = this.iconType,
+                type = this.iconType,
                 colour = this.iconColour
             ),
             createdAt = if (audit) this.createdAt else null,

@@ -18,7 +18,7 @@ data class Entity(
 
     val payload: Map<UUID, EntityAttribute>,
     val icon: Icon = Icon(
-        icon = IconType.FILE,
+        type = IconType.FILE,
         colour = IconColour.NEUTRAL
     ),
     val validationErrors: List<String>? = null,

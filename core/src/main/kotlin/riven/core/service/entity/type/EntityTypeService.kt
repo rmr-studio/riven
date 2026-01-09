@@ -58,7 +58,7 @@ class EntityTypeService(
                 workspaceId = workspaceId,
                 identifierKey = primaryId,
                 description = request.description,
-                iconType = request.icon.icon,
+                iconType = request.icon.type,
                 iconColour = request.icon.colour,
                 // Protected Entity Types cannot be modified or deleted by users. This will usually occur during an automatic setup process.
                 protected = false,
@@ -132,7 +132,7 @@ class EntityTypeService(
             displayNameSingular = type.name.singular
             displayNamePlural = type.name.plural
             description = type.description
-            iconType = type.icon.icon
+            iconType = type.icon.type
             iconColour = type.icon.colour
             columns = type.columns
         }.let {
