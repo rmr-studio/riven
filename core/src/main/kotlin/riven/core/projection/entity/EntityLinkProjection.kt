@@ -1,7 +1,7 @@
 package riven.core.projection.entity
 
-import riven.core.enums.common.IconColour
-import riven.core.enums.common.IconType
+import riven.core.enums.common.icon.IconColour
+import riven.core.enums.common.icon.IconType
 import riven.core.models.common.Icon
 import riven.core.models.entity.EntityLink
 import java.util.*
@@ -33,7 +33,7 @@ fun EntityLinkProjection.toEntityLink(): EntityLink = EntityLink(
     fieldId = getFieldId(),
     sourceEntityId = getSourceEntityId(),
     icon = Icon(
-        icon = IconType.valueOf(getIconType()),
+        type = IconType.valueOf(getIconType()),
         colour = IconColour.valueOf(getIconColour())
     ),
     key = getTypeKey(),

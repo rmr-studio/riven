@@ -1,8 +1,8 @@
 package riven.core.models.entity
 
 import riven.core.entity.util.AuditableModel
-import riven.core.enums.common.IconColour
-import riven.core.enums.common.IconType
+import riven.core.enums.common.icon.IconColour
+import riven.core.enums.common.icon.IconType
 import riven.core.models.common.Icon
 import riven.core.models.entity.payload.EntityAttribute
 import java.time.ZonedDateTime
@@ -18,7 +18,7 @@ data class Entity(
 
     val payload: Map<UUID, EntityAttribute>,
     val icon: Icon = Icon(
-        icon = IconType.FILE,
+        type = IconType.FILE,
         colour = IconColour.NEUTRAL
     ),
     val validationErrors: List<String>? = null,

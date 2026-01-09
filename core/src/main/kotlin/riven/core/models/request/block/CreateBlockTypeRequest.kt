@@ -1,6 +1,6 @@
 package riven.core.models.request.block
 
-import riven.core.enums.common.ValidationScope
+import riven.core.enums.common.validation.ValidationScope
 import riven.core.models.block.BlockTypeSchema
 import riven.core.models.block.display.BlockDisplay
 import java.util.*

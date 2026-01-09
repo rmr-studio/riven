@@ -4,7 +4,7 @@ import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
-import riven.core.enums.common.ValidationScope
+import riven.core.enums.common.validation.ValidationScope
 import riven.core.models.block.BlockType
 import riven.core.models.block.BlockTypeSchema
 import riven.core.models.block.display.BlockDisplay

@@ -1,6 +1,6 @@
 package riven.core.models.block
 
-import riven.core.enums.common.ValidationScope
+import riven.core.enums.common.validation.ValidationScope
 import riven.core.models.block.display.BlockDisplay
 import riven.core.models.block.display.BlockTypeNesting
 import riven.core.models.common.validation.Schema

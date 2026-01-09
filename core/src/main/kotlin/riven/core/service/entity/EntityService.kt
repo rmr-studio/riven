@@ -176,7 +176,7 @@ class EntityService(
             val entity = prev.let {
                 if (it != null) {
                     return@let it.copy(
-                        iconType = icon?.icon ?: it.iconType,
+                        iconType = icon?.type ?: it.iconType,
                         iconColour = icon?.colour ?: it.iconColour,
                         payload = attributePayload,
                     )
@@ -186,7 +186,7 @@ class EntityService(
                     workspaceId = workspaceId,
                     typeId = entityTypeId,
                     typeKey = type.key,
-                    iconType = icon?.icon ?: type.iconType,
+                    iconType = icon?.type ?: type.iconType,
                     iconColour = icon?.colour ?: type.iconColour,
                     identifierKey = type.identifierKey,
                     payload = attributePayload,

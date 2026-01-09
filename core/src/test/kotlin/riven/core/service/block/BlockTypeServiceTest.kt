@@ -12,7 +12,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.block.BlockTypeEntity
-import riven.core.enums.common.ValidationScope
+import riven.core.enums.common.validation.ValidationScope
 import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.models.request.block.CreateBlockTypeRequest
 import riven.core.repository.block.BlockTypeRepository

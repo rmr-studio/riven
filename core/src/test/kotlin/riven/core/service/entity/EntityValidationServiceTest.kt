@@ -13,9 +13,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
-import riven.core.enums.common.IconColour
-import riven.core.enums.common.IconType
-import riven.core.enums.common.SchemaType
+import riven.core.enums.common.icon.IconColour
+import riven.core.enums.common.icon.IconType
+import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.core.DataFormat
 import riven.core.enums.core.DataType
 import riven.core.enums.entity.EntityCategory

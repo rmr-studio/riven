@@ -5,8 +5,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import riven.core.enums.common.SchemaType
-import riven.core.enums.common.ValidationScope
+import riven.core.enums.common.validation.SchemaType
+import riven.core.enums.common.validation.ValidationScope
 import riven.core.enums.core.DataFormat
 import riven.core.enums.core.DataType
 import riven.core.exceptions.SchemaValidationException

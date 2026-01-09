@@ -1,9 +1,9 @@
 package riven.core.models.common.validation
 
-import riven.core.enums.common.IconColour
-import riven.core.enums.common.IconType
+import riven.core.enums.common.icon.IconColour
+import riven.core.enums.common.icon.IconType
 import riven.core.enums.common.OptionSortingType
-import riven.core.enums.common.SchemaType
+import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.core.DataFormat
 import riven.core.enums.core.DataType
 import riven.core.models.common.Icon
@@ -40,7 +40,7 @@ data class Schema<T>(
     val label: String? = null,
     val key: SchemaType,
     val icon: Icon = Icon(
-        icon = IconType.LANDMARK,
+        type = IconType.LANDMARK,
         colour = IconColour.NEUTRAL
     ),
     val type: DataType = DataType.OBJECT,

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping
 import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.deserializer.EntityAttributePayloadDeserializer
-import riven.core.enums.common.SchemaType
+import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.entity.EntityPropertyType
 import riven.core.models.common.json.JsonValue
 import riven.core.models.entity.EntityLink

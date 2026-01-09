@@ -14,9 +14,9 @@ import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityRelationshipEntity
 import riven.core.entity.entity.EntityTypeEntity
-import riven.core.enums.common.IconColour
-import riven.core.enums.common.IconType
-import riven.core.enums.common.SchemaType
+import riven.core.enums.common.icon.IconColour
+import riven.core.enums.common.icon.IconType
+import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.core.DataType
 import riven.core.enums.entity.EntityCategory
 import riven.core.enums.entity.EntityPropertyType
@@ -1466,7 +1466,7 @@ class EntityRelationshipServiceTest {
             val entityLink = result.links[companyContactsRelId]?.first()
             assertNotNull(entityLink, "EntityLink should exist")
             assertEquals(contactId, entityLink!!.id)
-            assertEquals(IconType.USER, entityLink.icon.icon)
+            assertEquals(IconType.USER, entityLink.icon.type)
             assertEquals(IconColour.BLUE, entityLink.icon.colour)
             assertEquals("John Doe", entityLink.label)
         }

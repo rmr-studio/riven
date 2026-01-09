@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.block.BlockChildEntity
 import riven.core.entity.block.BlockEntity
 import riven.core.entity.block.BlockTypeEntity
-import riven.core.enums.common.ValidationScope
+import riven.core.enums.common.validation.ValidationScope
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
 import riven.core.exceptions.SchemaValidationException
