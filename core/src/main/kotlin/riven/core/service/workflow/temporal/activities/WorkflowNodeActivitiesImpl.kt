@@ -9,12 +9,14 @@ import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.entity.workflow.execution.WorkflowExecutionNodeEntity
 import riven.core.models.workflow.WorkflowActionNode
+import riven.core.models.workflow.WorkflowControlNode
 import riven.core.models.workflow.temporal.NodeExecutionResult
 import riven.core.repository.workflow.WorkflowExecutionNodeRepository
 import riven.core.repository.workflow.WorkflowNodeRepository
 import riven.core.service.entity.EntityService
 import riven.core.service.workflow.EntityContextService
 import riven.core.service.workflow.ExpressionEvaluatorService
+import riven.core.service.workflow.ExpressionParserService
 import java.net.URI
 import java.time.ZonedDateTime
 import java.util.UUID
@@ -48,6 +50,7 @@ class WorkflowNodeActivitiesImpl(
     private val workflowExecutionNodeRepository: WorkflowExecutionNodeRepository,
     private val entityService: EntityService,
     private val expressionEvaluatorService: ExpressionEvaluatorService,
+    private val expressionParserService: ExpressionParserService,
     private val entityContextService: EntityContextService,
     private val webClientBuilder: WebClient.Builder
 ) : WorkflowNodeActivities {
@@ -357,6 +360,39 @@ class WorkflowNodeActivitiesImpl(
     }
 
     /**
+     * Executes a control flow node with standardized error handling.
+     *
+     * Similar to executeAction() but for CONTROL_FLOW nodes.
+     * Returns boolean result for branching logic.
+     *
+     * @param nodeId Node identifier for tracking
+     * @param controlName Human-readable control flow name for logging
+     * @param execution Lambda that performs the control logic and returns boolean
+     * @return NodeExecutionResult with boolean conditionResult in output
+     */
+    private fun executeControlAction(
+        nodeId: UUID,
+        controlName: String,
+        execution: () -> Boolean
+    ): NodeExecutionResult {
+        return try {
+            val result = execution()
+            NodeExecutionResult(
+                nodeId = nodeId,
+                status = "COMPLETED",
+                output = mapOf("conditionResult" to result)
+            )
+        } catch (e: Exception) {
+            log.error(e) { "Control flow $controlName failed: ${e.message}" }
+            NodeExecutionResult(
+                nodeId = nodeId,
+                status = "FAILED",
+                error = e.message ?: "Unknown error in $controlName"
+            )
+        }
+    }
+
+    /**
      * Executes an action with standardized error handling and result building.
      *
      * This is the core pattern for all action executors. It provides:
@@ -434,27 +470,59 @@ class WorkflowNodeActivitiesImpl(
     /**
      * Execute a CONTROL_FLOW node that evaluates conditional expressions.
      *
-     * V1: Stub implementation - returns success without actual expression evaluation.
-     * Future: Parse node config, evaluate expression, return boolean result
+     * Routes to specific control flow handlers based on subType.
+     * CONDITION is implemented using executeControlAction() pattern.
+     * Other control types (SWITCH, LOOP, etc.) are deferred to future phases.
      */
     private fun executeControlNode(config: Any, workspaceId: UUID): NodeExecutionResult {
-        log.info { "CONTROL node execution (v1 stub)" }
+        val controlNode = config as WorkflowControlNode
 
-        // V1: Return stub success
-        // Future implementation will:
-        // 1. Parse config to extract expression
-        // 2. Resolve entity context via entityContextService
-        // 3. Call expressionEvaluatorService.evaluate(expression, context)
-        // 4. Return boolean result as output
+        return when (controlNode.subType) {
+            riven.core.enums.workflow.WorkflowControlType.CONDITION -> {
+                // Get nodeId from the node config (will be overridden by caller)
+                val nodeId = controlNode.id
 
-        return NodeExecutionResult(
-            nodeId = UUID.randomUUID(), // Will be overridden
-            status = "COMPLETED",
-            output = mapOf(
-                "message" to "CONTROL_FLOW node executed (v1 stub - expression evaluation not implemented)",
-                "result" to true
-            )
-        )
+                executeControlAction(nodeId, "CONDITION") {
+                    // Config parsing - clear input contract
+                    val expression = extractConfigField(config, "expression") as String
+                    val contextEntityId = extractConfigField(config, "contextEntityId") as? String
+
+                    // Resolve entity context if provided
+                    val context: Map<String, Any?> = if (contextEntityId != null) {
+                        val entityId = UUID.fromString(contextEntityId)
+                        entityContextService.buildContext(entityId, workspaceId)
+                    } else {
+                        emptyMap()
+                    }
+
+                    // Parse and evaluate expression
+                    val ast = expressionParserService.parse(expression)
+                    val result = expressionEvaluatorService.evaluate(ast, context)
+
+                    // Validate boolean result
+                    if (result !is Boolean) {
+                        throw IllegalStateException("CONDITION expression must evaluate to boolean, got: ${result?.let { it::class.simpleName } ?: "null"}")
+                    }
+
+                    log.debug { "CONDITION evaluated: $expression -> $result (context: ${context.keys})" }
+
+                    // Return boolean for DAG branching
+                    result
+                }
+            }
+            riven.core.enums.workflow.WorkflowControlType.SWITCH,
+            riven.core.enums.workflow.WorkflowControlType.LOOP,
+            riven.core.enums.workflow.WorkflowControlType.PARALLEL,
+            riven.core.enums.workflow.WorkflowControlType.DELAY,
+            riven.core.enums.workflow.WorkflowControlType.MERGE -> {
+                log.info { "Skipping ${controlNode.subType} node (not implemented in Phase 4)" }
+                NodeExecutionResult(
+                    nodeId = controlNode.id,
+                    status = "SKIPPED",
+                    output = mapOf("reason" to "${controlNode.subType} not implemented in Phase 4")
+                )
+            }
+        }
     }
 
     /**
