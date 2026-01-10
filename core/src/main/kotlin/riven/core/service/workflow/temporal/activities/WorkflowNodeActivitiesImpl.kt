@@ -2,7 +2,9 @@ package riven.core.service.workflow.temporal.activities
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.temporal.activity.Activity
+import org.springframework.http.HttpMethod
 import org.springframework.stereotype.Component
+import org.springframework.web.reactive.function.client.WebClient
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.entity.workflow.execution.WorkflowExecutionNodeEntity
@@ -13,6 +15,7 @@ import riven.core.repository.workflow.WorkflowNodeRepository
 import riven.core.service.entity.EntityService
 import riven.core.service.workflow.EntityContextService
 import riven.core.service.workflow.ExpressionEvaluatorService
+import java.net.URI
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -45,8 +48,11 @@ class WorkflowNodeActivitiesImpl(
     private val workflowExecutionNodeRepository: WorkflowExecutionNodeRepository,
     private val entityService: EntityService,
     private val expressionEvaluatorService: ExpressionEvaluatorService,
-    private val entityContextService: EntityContextService
+    private val entityContextService: EntityContextService,
+    private val webClientBuilder: WebClient.Builder
 ) : WorkflowNodeActivities {
+
+    private val webClient: WebClient = webClientBuilder.build()
 
     override fun executeNode(nodeId: UUID, workspaceId: UUID): NodeExecutionResult {
         val startTime = ZonedDateTime.now()
@@ -303,6 +309,45 @@ class WorkflowNodeActivitiesImpl(
                 )
             }
 
+            riven.core.enums.workflow.WorkflowActionType.HTTP_REQUEST -> executeAction(nodeId, "HTTP_REQUEST") {
+                // Config parsing - clear input contract
+                val url = extractConfigField(config, "url") as String
+                val method = extractConfigField(config, "method") as String // GET, POST, PUT, DELETE
+                val headers = extractConfigField(config, "headers") as? Map<String, String> ?: emptyMap()
+                val body = extractConfigField(config, "body") as? Map<String, Any?>
+
+                // Validate URL (prevent SSRF)
+                validateUrl(url)
+
+                // Execute HTTP request (external service call)
+                val response = webClient
+                    .method(HttpMethod.valueOf(method))
+                    .uri(url)
+                    .headers { h ->
+                        headers.forEach { (key, value) ->
+                            if (!isSensitiveHeader(key)) {
+                                h.set(key, value)
+                            }
+                        }
+                    }
+                    .bodyValue(body ?: emptyMap<String, Any?>())
+                    .retrieve()
+                    .toEntity(String::class.java)
+                    .block() ?: throw RuntimeException("HTTP request returned null")
+
+                // Log without sensitive data
+                log.info { "HTTP_REQUEST: $method $url -> ${response.statusCode}" }
+
+                // Clear output contract
+                mapOf(
+                    "statusCode" to response.statusCode.value(),
+                    "headers" to response.headers.toSingleValueMap(),
+                    "body" to response.body,
+                    "url" to url,
+                    "method" to method
+                )
+            }
+
             else -> NodeExecutionResult(
                 nodeId = nodeId,
                 status = "FAILED",
@@ -461,5 +506,67 @@ class WorkflowNodeActivitiesImpl(
         )
 
         workflowExecutionNodeRepository.save(updated)
+    }
+
+    /**
+     * Validates URL to prevent SSRF attacks.
+     * Blocks localhost, private IPs, metadata endpoints.
+     *
+     * HTTP_REQUEST demonstrates the pattern for external integrations.
+     *
+     * Future SEND_SLACK_MESSAGE implementation:
+     *   WorkflowActionType.SEND_SLACK_MESSAGE -> executeAction(nodeId, "SEND_SLACK_MESSAGE") {
+     *     val config = parseActionConfig<SlackMessageConfig>(node.config)
+     *
+     *     // Call Slack SDK (wraps HTTP)
+     *     val response = slackClient.chat.postMessage {
+     *       channel(config.channel)
+     *       text(config.message)
+     *     }
+     *
+     *     // Return clear output
+     *     mapOf(
+     *       "messageId" to response.ts,
+     *       "channel" to response.channel,
+     *       "permalink" to response.permalink
+     *     )
+     *   }
+     *
+     * Same pattern applies to:
+     * - SEND_EMAIL (email provider SDK)
+     * - AI_PROMPT (OpenAI/Anthropic SDK)
+     * - SEND_SMS (Twilio SDK)
+     */
+    private fun validateUrl(url: String) {
+        val uri = URI(url)
+        val host = uri.host?.lowercase() ?: throw IllegalArgumentException("Invalid URL: no host")
+
+        // Block localhost
+        if (host in listOf("localhost", "127.0.0.1", "::1")) {
+            throw SecurityException("HTTP_REQUEST cannot target localhost")
+        }
+
+        // Block private IP ranges (basic check)
+        if (host.startsWith("10.") || host.startsWith("192.168.") || host.startsWith("172.")) {
+            throw SecurityException("HTTP_REQUEST cannot target private IP ranges")
+        }
+
+        // Block cloud metadata endpoints
+        if (host == "169.254.169.254") {
+            throw SecurityException("HTTP_REQUEST cannot target cloud metadata endpoints")
+        }
+    }
+
+    /**
+     * Identifies sensitive headers that should not be logged.
+     */
+    private fun isSensitiveHeader(headerName: String): Boolean {
+        return headerName.lowercase() in listOf(
+            "authorization",
+            "x-api-key",
+            "api-key",
+            "cookie",
+            "set-cookie"
+        )
     }
 }
