@@ -58,10 +58,11 @@ Plans:
 **Goal**: Implement workflow node action executors (entity CRUD, API calls, conditional branches)
 **Depends on**: Phase 3
 **Research**: Unlikely (CRUD operations follow existing entity service patterns)
-**Plans**: TBD
+**Status**: 🚧 IN PROGRESS (1/2 plans complete)
 
 Plans:
-- TBD
+- [x] 04-01: Entity CRUD action executors (2026-01-11) - CREATE/UPDATE/DELETE/QUERY with extensible executeAction pattern
+- [ ] 04-02: HTTP request actions and conditional control flow - TBD
 
 ### Phase 5: DAG Execution Coordinator
 **Goal**: Orchestrate workflow execution with topological sort and parallel node scheduling
