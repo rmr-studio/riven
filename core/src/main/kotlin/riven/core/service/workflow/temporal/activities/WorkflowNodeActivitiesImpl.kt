@@ -255,6 +255,54 @@ class WorkflowNodeActivitiesImpl(
                 )
             }
 
+            riven.core.enums.workflow.WorkflowActionType.DELETE_ENTITY -> executeAction(nodeId, "DELETE_ENTITY") {
+                // Parse inputs
+                val entityId = UUID.fromString(extractConfigField(config, "entityId") as String)
+
+                log.info { "Deleting entity: $entityId in workspace: $workspaceId" }
+
+                // Execute deletion via EntityService
+                val result = entityService.deleteEntities(workspaceId, listOf(entityId))
+
+                // Check for errors
+                if (result.error != null) {
+                    throw IllegalStateException("Failed to delete entity: ${result.error}")
+                }
+
+                // Return output
+                mapOf(
+                    "entityId" to entityId,
+                    "deleted" to true,
+                    "impactedEntities" to (result.updatedEntities?.size ?: 0)
+                )
+            }
+
+            riven.core.enums.workflow.WorkflowActionType.QUERY_ENTITY -> executeAction(nodeId, "QUERY_ENTITY") {
+                // Parse inputs
+                val entityId = UUID.fromString(extractConfigField(config, "entityId") as String)
+
+                log.info { "Querying entity: $entityId" }
+
+                // Fetch entity via EntityService
+                val entity = entityService.getEntity(entityId)
+
+                // Verify workspace access
+                if (entity.workspaceId != workspaceId) {
+                    throw SecurityException("Entity $entityId does not belong to workspace $workspaceId")
+                }
+
+                // Return output with full entity data
+                mapOf(
+                    "entityId" to entity.id,
+                    "entityTypeId" to entity.typeId,
+                    "payload" to entity.payload,
+                    "icon" to entity.icon,
+                    "identifier" to entity.identifier,
+                    "createdAt" to entity.createdAt,
+                    "updatedAt" to entity.updatedAt
+                )
+            }
+
             else -> NodeExecutionResult(
                 nodeId = nodeId,
                 status = "FAILED",
