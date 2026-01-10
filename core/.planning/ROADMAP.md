@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Expression System Foundation** - Parser and evaluator for SQL-like expressions
 - [x] **Phase 2: Entity Context Integration** - Resolve entity data for expression evaluation
-- [ ] **Phase 3: Temporal Workflow Engine** - Core workflow execution with Temporal activities
+- [~] **Phase 3: Temporal Workflow Engine** - Core workflow execution with Temporal activities (partial - Task 3 deferred)
 - [ ] **Phase 4: Action Executors** - Implement node action types (CRUD, API calls, conditionals)
 - [ ] **Phase 5: DAG Execution Coordinator** - Topological sort, node scheduling, state management
 - [ ] **Phase 6: Backend API Layer** - REST endpoints for workflow management
@@ -48,12 +48,11 @@ Plans:
 ### Phase 3: Temporal Workflow Engine
 **Goal**: Implement core Temporal workflow definitions and activities for workflow execution
 **Depends on**: Phase 2
-**Research**: Likely (Temporal SDK patterns, deterministic workflow requirements)
-**Research topics**: Temporal workflow patterns, activity design, signal handling, determinism rules for workflow code
-**Plans**: TBD
+**Research**: Completed (03-RESEARCH.md - Temporal SDK patterns, deterministic workflow requirements)
+**Status**: 🔄 PARTIAL COMPLETION (infrastructure operational, integration test deferred)
 
 Plans:
-- TBD
+- [~] 03-01: Temporal workflow and activity infrastructure (2026-01-10) - Tasks 1-2 complete (workflow/activity/API), Task 3 deferred (integration test)
 
 ### Phase 4: Action Executors
 **Goal**: Implement workflow node action executors (entity CRUD, API calls, conditional branches)
@@ -111,7 +110,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 |-------|----------------|--------|-----------|
 | 1. Expression System Foundation | 1/1 | ✅ Complete | 2026-01-10 |
 | 2. Entity Context Integration | 1/1 | ✅ Complete | 2026-01-10 |
-| 3. Temporal Workflow Engine | 0/TBD | Not started | - |
+| 3. Temporal Workflow Engine | 0.5/1 (partial) | 🔄 In progress | 2026-01-10 (partial) |
 | 4. Action Executors | 0/TBD | Not started | - |
 | 5. DAG Execution Coordinator | 0/TBD | Not started | - |
 | 6. Backend API Layer | 0/TBD | Not started | - |
