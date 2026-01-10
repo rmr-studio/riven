@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Expression System Foundation** - Parser and evaluator for SQL-like expressions
 - [x] **Phase 2: Entity Context Integration** - Resolve entity data for expression evaluation
 - [x] **Phase 3: Temporal Workflow Engine** - Core workflow execution with Temporal activities
-- [ ] **Phase 4: Action Executors** - Implement node action types (CRUD, API calls, conditionals)
+- [x] **Phase 4: Action Executors** - Implement node action types (CRUD, API calls, conditionals)
 - [ ] **Phase 5: DAG Execution Coordinator** - Topological sort, node scheduling, state management
 - [ ] **Phase 6: Backend API Layer** - REST endpoints for workflow management
 - [ ] **Phase 7: Error Handling & Retry Logic** - Temporal retry policies and error surfacing
@@ -58,11 +58,11 @@ Plans:
 **Goal**: Implement workflow node action executors (entity CRUD, API calls, conditional branches)
 **Depends on**: Phase 3
 **Research**: Unlikely (CRUD operations follow existing entity service patterns)
-**Status**: 🚧 IN PROGRESS (1/2 plans complete)
+**Status**: ✅ COMPLETED
 
 Plans:
 - [x] 04-01: Entity CRUD action executors (2026-01-11) - CREATE/UPDATE/DELETE/QUERY with extensible executeAction pattern
-- [ ] 04-02: HTTP request actions and conditional control flow - TBD
+- [x] 04-02: HTTP request actions and conditional control flow (2026-01-10) - HTTP_REQUEST with SSRF protection, CONDITION with expression evaluation, extensibility proven
 
 ### Phase 5: DAG Execution Coordinator
 **Goal**: Orchestrate workflow execution with topological sort and parallel node scheduling
