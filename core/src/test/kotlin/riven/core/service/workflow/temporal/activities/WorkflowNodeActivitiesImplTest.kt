@@ -21,6 +21,7 @@ import riven.core.service.entity.EntityService
 import riven.core.service.workflow.EntityContextService
 import riven.core.service.workflow.ExpressionEvaluatorService
 import riven.core.service.workflow.ExpressionParserService
+import riven.core.service.workflow.InputResolverService
 import java.util.*
 
 /**
@@ -41,6 +42,7 @@ class WorkflowNodeActivitiesImplTest {
     private lateinit var expressionParserService: ExpressionParserService
     private lateinit var entityContextService: EntityContextService
     private lateinit var webClientBuilder: WebClient.Builder
+    private lateinit var inputResolverService: InputResolverService
     private lateinit var activities: WorkflowNodeActivitiesImpl
 
     private val workspaceId = UUID.randomUUID()
@@ -58,10 +60,14 @@ class WorkflowNodeActivitiesImplTest {
         expressionParserService = mock()
         entityContextService = mock()
         webClientBuilder = mock()
+        inputResolverService = mock()
 
         // Mock WebClient.Builder to return a mock WebClient
         val mockWebClient: WebClient = mock()
         whenever(webClientBuilder.build()).thenReturn(mockWebClient)
+
+        // Mock InputResolverService to return inputs as-is (no templates)
+        whenever(inputResolverService.resolveAll(any(), any())).thenAnswer { it.arguments[0] }
 
         // Create activities instance with mocked dependencies
         activities = WorkflowNodeActivitiesImpl(
@@ -71,7 +77,8 @@ class WorkflowNodeActivitiesImplTest {
             expressionEvaluatorService = expressionEvaluatorService,
             expressionParserService = expressionParserService,
             entityContextService = entityContextService,
-            webClientBuilder = webClientBuilder
+            webClientBuilder = webClientBuilder,
+            inputResolverService = inputResolverService
         )
     }
 
