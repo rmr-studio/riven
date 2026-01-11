@@ -10,6 +10,8 @@ import riven.core.enums.workflow.WorkflowStatus
 import riven.core.entity.workflow.execution.WorkflowExecutionNodeEntity
 import riven.core.models.workflow.WorkflowActionNode
 import riven.core.models.workflow.WorkflowControlNode
+import riven.core.models.workflow.environment.NodeExecutionData
+import riven.core.models.workflow.environment.WorkflowExecutionContext
 import riven.core.models.workflow.temporal.NodeExecutionResult
 import riven.core.repository.workflow.WorkflowExecutionNodeRepository
 import riven.core.repository.workflow.WorkflowNodeRepository
@@ -18,6 +20,7 @@ import riven.core.service.workflow.EntityContextService
 import riven.core.service.workflow.ExpressionEvaluatorService
 import riven.core.service.workflow.ExpressionParserService
 import java.net.URI
+import java.time.Instant
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -79,6 +82,15 @@ class WorkflowNodeActivitiesImpl(
                 activityInfo.workflowId.substringAfter("execution-")
             )
 
+            // Initialize workflow execution context
+            // TODO: Phase 5 will pass context between nodes for sequential execution
+            val context = WorkflowExecutionContext(
+                workflowExecutionId = workflowExecutionId,
+                workspaceId = workspaceId,
+                metadata = emptyMap(),
+                dataRegistry = mutableMapOf()
+            )
+
             // Create execution record (RUNNING status)
             val executionNode = createExecutionNode(
                 workflowExecutionId = workflowExecutionId,
@@ -91,11 +103,11 @@ class WorkflowNodeActivitiesImpl(
             val result = when (node.type) {
                 WorkflowNodeType.ACTION -> {
                     log.info { "Executing ACTION node: ${node.name}" }
-                    executeActionNode(node.config, workspaceId, nodeId)
+                    executeActionNode(node.config, workspaceId, nodeId, node.name, context)
                 }
                 WorkflowNodeType.CONTROL_FLOW -> {
                     log.info { "Executing CONTROL_FLOW node: ${node.name}" }
-                    executeControlNode(node.config, workspaceId)
+                    executeControlNode(node.config, workspaceId, node.name, context)
                 }
                 WorkflowNodeType.TRIGGER -> {
                     log.info { "Skipping TRIGGER node: ${node.name} (triggers don't execute during workflow)" }
@@ -199,7 +211,13 @@ class WorkflowNodeActivitiesImpl(
      * @param nodeId Node identifier for result tracking
      * @return NodeExecutionResult with status, output, or error
      */
-    private fun executeActionNode(config: Any, workspaceId: UUID, nodeId: UUID): NodeExecutionResult {
+    private fun executeActionNode(
+        config: Any,
+        workspaceId: UUID,
+        nodeId: UUID,
+        nodeName: String,
+        context: WorkflowExecutionContext
+    ): NodeExecutionResult {
         // Cast config to WorkflowActionNode to access subType
         val actionNode = config as? WorkflowActionNode
             ?: return NodeExecutionResult(
@@ -212,7 +230,7 @@ class WorkflowNodeActivitiesImpl(
 
         // Route to specific action executor based on subType
         return when (actionNode.subType) {
-            riven.core.enums.workflow.WorkflowActionType.CREATE_ENTITY -> executeAction(nodeId, "CREATE_ENTITY") {
+            riven.core.enums.workflow.WorkflowActionType.CREATE_ENTITY -> executeAction(nodeId, nodeName, "CREATE_ENTITY", context) {
                 // Parse inputs from config
                 val entityTypeId = extractConfigField(config, "entityTypeId") as String
                 val payload = extractConfigField(config, "payload") as Map<*, *>
@@ -239,7 +257,7 @@ class WorkflowNodeActivitiesImpl(
                 )
             }
 
-            riven.core.enums.workflow.WorkflowActionType.UPDATE_ENTITY -> executeAction(nodeId, "UPDATE_ENTITY") {
+            riven.core.enums.workflow.WorkflowActionType.UPDATE_ENTITY -> executeAction(nodeId, nodeName, "UPDATE_ENTITY", context) {
                 // Parse inputs
                 val entityId = UUID.fromString(extractConfigField(config, "entityId") as String)
                 val payload = extractConfigField(config, "payload") as Map<*, *>
@@ -264,7 +282,7 @@ class WorkflowNodeActivitiesImpl(
                 )
             }
 
-            riven.core.enums.workflow.WorkflowActionType.DELETE_ENTITY -> executeAction(nodeId, "DELETE_ENTITY") {
+            riven.core.enums.workflow.WorkflowActionType.DELETE_ENTITY -> executeAction(nodeId, nodeName, "DELETE_ENTITY", context) {
                 // Parse inputs
                 val entityId = UUID.fromString(extractConfigField(config, "entityId") as String)
 
@@ -286,7 +304,7 @@ class WorkflowNodeActivitiesImpl(
                 )
             }
 
-            riven.core.enums.workflow.WorkflowActionType.QUERY_ENTITY -> executeAction(nodeId, "QUERY_ENTITY") {
+            riven.core.enums.workflow.WorkflowActionType.QUERY_ENTITY -> executeAction(nodeId, nodeName, "QUERY_ENTITY", context) {
                 // Parse inputs
                 val entityId = UUID.fromString(extractConfigField(config, "entityId") as String)
 
@@ -312,7 +330,7 @@ class WorkflowNodeActivitiesImpl(
                 )
             }
 
-            riven.core.enums.workflow.WorkflowActionType.HTTP_REQUEST -> executeAction(nodeId, "HTTP_REQUEST") {
+            riven.core.enums.workflow.WorkflowActionType.HTTP_REQUEST -> executeAction(nodeId, nodeName, "HTTP_REQUEST", context) {
                 // Config parsing - clear input contract
                 val url = extractConfigField(config, "url") as String
                 val method = extractConfigField(config, "method") as String // GET, POST, PUT, DELETE
@@ -364,26 +382,62 @@ class WorkflowNodeActivitiesImpl(
      *
      * Similar to executeAction() but for CONTROL_FLOW nodes.
      * Returns boolean result for branching logic.
+     * Captures output to data registry for debugging and flow tracking.
      *
      * @param nodeId Node identifier for tracking
+     * @param nodeName Node name for data registry key
      * @param controlName Human-readable control flow name for logging
+     * @param context Workflow execution context containing data registry
      * @param execution Lambda that performs the control logic and returns boolean
      * @return NodeExecutionResult with boolean conditionResult in output
      */
     private fun executeControlAction(
         nodeId: UUID,
+        nodeName: String,
         controlName: String,
+        context: WorkflowExecutionContext,
         execution: () -> Boolean
     ): NodeExecutionResult {
         return try {
             val result = execution()
+            val output = mapOf("conditionResult" to result)
+
+            // Capture output to data registry
+            val executionData = NodeExecutionData(
+                nodeId = nodeId,
+                nodeName = nodeName,
+                status = "COMPLETED",
+                output = output,
+                error = null,
+                executedAt = Instant.now()
+            )
+            context.dataRegistry[nodeName] = executionData
+
+            log.debug { "Captured output for node $nodeName: ${output.keys}" }
+            log.info { "Data registry now contains ${context.dataRegistry.size} node outputs" }
+
             NodeExecutionResult(
                 nodeId = nodeId,
                 status = "COMPLETED",
-                output = mapOf("conditionResult" to result)
+                output = output
             )
         } catch (e: Exception) {
             log.error(e) { "Control flow $controlName failed: ${e.message}" }
+
+            // Capture failure to data registry (for debugging)
+            val executionData = NodeExecutionData(
+                nodeId = nodeId,
+                nodeName = nodeName,
+                status = "FAILED",
+                output = null,
+                error = e.message ?: "Unknown error in $controlName",
+                executedAt = Instant.now()
+            )
+            context.dataRegistry[nodeName] = executionData
+
+            log.debug { "Captured failure for node $nodeName: ${e.message}" }
+            log.info { "Data registry now contains ${context.dataRegistry.size} node outputs" }
+
             NodeExecutionResult(
                 nodeId = nodeId,
                 status = "FAILED",
@@ -399,6 +453,7 @@ class WorkflowNodeActivitiesImpl(
      * - Consistent error handling across all action types
      * - Automatic conversion of exceptions to FAILED status
      * - Clear separation between business logic and error handling
+     * - Output capture to data registry for node-to-node data flow
      *
      * The execution lambda should:
      * 1. Parse configuration inputs
@@ -407,7 +462,7 @@ class WorkflowNodeActivitiesImpl(
      *
      * Example usage:
      * ```kotlin
-     * executeAction(nodeId, "SEND_EMAIL") {
+     * executeAction(nodeId, nodeName, "SEND_EMAIL", context) {
      *     val to = extractConfigField(config, "to") as String
      *     val subject = extractConfigField(config, "subject") as String
      *     val messageId = emailService.send(to, subject)
@@ -416,13 +471,17 @@ class WorkflowNodeActivitiesImpl(
      * ```
      *
      * @param nodeId Node identifier for tracking
+     * @param nodeName Node name for data registry key (e.g., "fetch_leads")
      * @param actionName Human-readable action name for logging
+     * @param context Workflow execution context containing data registry
      * @param execution Lambda that performs the action and returns output data
      * @return NodeExecutionResult with COMPLETED or FAILED status
      */
     private fun executeAction(
         nodeId: UUID,
+        nodeName: String,
         actionName: String,
+        context: WorkflowExecutionContext,
         execution: () -> Map<String, Any?>
     ): NodeExecutionResult {
         return try {
@@ -434,6 +493,20 @@ class WorkflowNodeActivitiesImpl(
             val duration = System.currentTimeMillis() - startTime
             log.info { "Action $actionName completed successfully in ${duration}ms" }
 
+            // Capture output to data registry
+            val executionData = NodeExecutionData(
+                nodeId = nodeId,
+                nodeName = nodeName,
+                status = "COMPLETED",
+                output = output,
+                error = null,
+                executedAt = Instant.now()
+            )
+            context.dataRegistry[nodeName] = executionData
+
+            log.debug { "Captured output for node $nodeName: ${output.keys}" }
+            log.info { "Data registry now contains ${context.dataRegistry.size} node outputs" }
+
             NodeExecutionResult(
                 nodeId = nodeId,
                 status = "COMPLETED",
@@ -441,6 +514,21 @@ class WorkflowNodeActivitiesImpl(
             )
         } catch (e: Exception) {
             log.error(e) { "Action $actionName failed: ${e.message}" }
+
+            // Capture failure to data registry (for debugging)
+            val executionData = NodeExecutionData(
+                nodeId = nodeId,
+                nodeName = nodeName,
+                status = "FAILED",
+                output = null,
+                error = e.message ?: "Unknown error in $actionName",
+                executedAt = Instant.now()
+            )
+            context.dataRegistry[nodeName] = executionData
+
+            log.debug { "Captured failure for node $nodeName: ${e.message}" }
+            log.info { "Data registry now contains ${context.dataRegistry.size} node outputs" }
+
             NodeExecutionResult(
                 nodeId = nodeId,
                 status = "FAILED",
@@ -474,7 +562,12 @@ class WorkflowNodeActivitiesImpl(
      * CONDITION is implemented using executeControlAction() pattern.
      * Other control types (SWITCH, LOOP, etc.) are deferred to future phases.
      */
-    private fun executeControlNode(config: Any, workspaceId: UUID): NodeExecutionResult {
+    private fun executeControlNode(
+        config: Any,
+        workspaceId: UUID,
+        nodeName: String,
+        context: WorkflowExecutionContext
+    ): NodeExecutionResult {
         val controlNode = config as WorkflowControlNode
 
         return when (controlNode.subType) {
@@ -482,7 +575,7 @@ class WorkflowNodeActivitiesImpl(
                 // Get nodeId from the node config (will be overridden by caller)
                 val nodeId = controlNode.id
 
-                executeControlAction(nodeId, "CONDITION") {
+                executeControlAction(nodeId, nodeName, "CONDITION", context) {
                     // Config parsing - clear input contract
                     val expression = extractConfigField(config, "expression") as String
                     val contextEntityId = extractConfigField(config, "contextEntityId") as? String
