@@ -73,8 +73,8 @@ Plans:
 
 Plans:
 - [x] 4.1-01: Data Registry & Output Capture (2026-01-11) - WorkflowExecutionContext with data registry, output capture in all executors
-- [ ] 4.1-02: Template-Based Input Resolution - Template engine to query dataRegistry
-- [ ] 4.1-03: Entity Evaluator Integration - Resolve entities in workflow execution context
+- [x] 4.1-02: Template-Based Input Resolution (2026-01-11) - TemplateParserService and InputResolverService enable {{ steps.name.output }} references
+- [ ] 4.1-03: Polymorphic Execution Refactor - Refactor to support polymorphic node execution
 
 ### Phase 5: DAG Execution Coordinator
 **Goal**: Orchestrate workflow execution with topological sort and parallel node scheduling
