@@ -20,6 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Entity Context Integration** - Resolve entity data for expression evaluation
 - [x] **Phase 3: Temporal Workflow Engine** - Core workflow execution with Temporal activities
 - [x] **Phase 4: Action Executors** - Implement node action types (CRUD, API calls, conditionals)
+- [ ] **Phase 4.1: Action Execution (INSERTED)** - Action execution
 - [ ] **Phase 5: DAG Execution Coordinator** - Topological sort, node scheduling, state management
 - [ ] **Phase 6: Backend API Layer** - REST endpoints for workflow management
 - [ ] **Phase 7: Error Handling & Retry Logic** - Temporal retry policies and error surfacing
@@ -64,9 +65,20 @@ Plans:
 - [x] 04-01: Entity CRUD action executors (2026-01-11) - CREATE/UPDATE/DELETE/QUERY with extensible executeAction pattern
 - [x] 04-02: HTTP request actions and conditional control flow (2026-01-10) - HTTP_REQUEST with SSRF protection, CONDITION with expression evaluation, extensibility proven
 
+### Phase 4.1: Action Execution (INSERTED)
+**Goal**: Implement data registry, input resolution, and entity evaluator for action execution
+**Depends on**: Phase 4
+**Research**: Completed (see 4.1-CONTEXT.md)
+**Status**: In progress
+
+Plans:
+- [x] 4.1-01: Data Registry & Output Capture (2026-01-11) - WorkflowExecutionContext with data registry, output capture in all executors
+- [ ] 4.1-02: Template-Based Input Resolution - Template engine to query dataRegistry
+- [ ] 4.1-03: Entity Evaluator Integration - Resolve entities in workflow execution context
+
 ### Phase 5: DAG Execution Coordinator
 **Goal**: Orchestrate workflow execution with topological sort and parallel node scheduling
-**Depends on**: Phase 4
+**Depends on**: Phase 4.1
 **Research**: Likely (DAG algorithms, concurrent execution patterns)
 **Research topics**: Topological sort algorithms, parallel execution strategies, state machine patterns for workflow orchestration
 **Plans**: TBD
@@ -105,14 +117,15 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 4.1 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Expression System Foundation | 1/1 | ✅ Complete | 2026-01-10 |
 | 2. Entity Context Integration | 1/1 | ✅ Complete | 2026-01-10 |
-| 3. Temporal Workflow Engine | 0.5/1 (partial) | 🔄 In progress | 2026-01-10 (partial) |
-| 4. Action Executors | 0/TBD | Not started | - |
+| 3. Temporal Workflow Engine | 1/1 | ✅ Complete | 2026-01-10 |
+| 4. Action Executors | 2/2 | ✅ Complete | 2026-01-11 |
+| 4.1. Action Execution (INSERTED) | 1/3 | 🔄 In progress | - |
 | 5. DAG Execution Coordinator | 0/TBD | Not started | - |
 | 6. Backend API Layer | 0/TBD | Not started | - |
 | 7. Error Handling & Retry Logic | 0/TBD | Not started | - |
