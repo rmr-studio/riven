@@ -19,6 +19,7 @@ import riven.core.service.entity.EntityService
 import riven.core.service.workflow.EntityContextService
 import riven.core.service.workflow.ExpressionEvaluatorService
 import riven.core.service.workflow.ExpressionParserService
+import riven.core.service.workflow.InputResolverService
 import java.net.URI
 import java.time.Instant
 import java.time.ZonedDateTime
@@ -55,7 +56,8 @@ class WorkflowNodeActivitiesImpl(
     private val expressionEvaluatorService: ExpressionEvaluatorService,
     private val expressionParserService: ExpressionParserService,
     private val entityContextService: EntityContextService,
-    private val webClientBuilder: WebClient.Builder
+    private val webClientBuilder: WebClient.Builder,
+    private val inputResolverService: InputResolverService
 ) : WorkflowNodeActivities {
 
     private val webClient: WebClient = webClientBuilder.build()
@@ -83,13 +85,16 @@ class WorkflowNodeActivitiesImpl(
             )
 
             // Initialize workflow execution context
-            // TODO: Phase 5 will pass context between nodes for sequential execution
+            // TODO: Phase 5 DAG coordinator will populate registry with prior node outputs
+            // and pass context between nodes for sequential execution
             val context = WorkflowExecutionContext(
                 workflowExecutionId = workflowExecutionId,
                 workspaceId = workspaceId,
                 metadata = emptyMap(),
                 dataRegistry = mutableMapOf()
             )
+
+            log.debug { "Initialized execution context for node $nodeId (registry: ${context.dataRegistry.size} entries)" }
 
             // Create execution record (RUNNING status)
             val executionNode = createExecutionNode(
@@ -232,8 +237,8 @@ class WorkflowNodeActivitiesImpl(
         return when (actionNode.subType) {
             riven.core.enums.workflow.WorkflowActionType.CREATE_ENTITY -> executeAction(nodeId, nodeName, "CREATE_ENTITY", context) {
                 // Parse inputs from config
-                val entityTypeId = extractConfigField(config, "entityTypeId") as String
-                val payload = extractConfigField(config, "payload") as Map<*, *>
+                val entityTypeId = extractConfigField(config, "entityTypeId", context) as String
+                val payload = extractConfigField(config, "payload", context) as Map<*, *>
 
                 // Execute business logic
                 val entityTypeUuid = UUID.fromString(entityTypeId)
@@ -259,8 +264,8 @@ class WorkflowNodeActivitiesImpl(
 
             riven.core.enums.workflow.WorkflowActionType.UPDATE_ENTITY -> executeAction(nodeId, nodeName, "UPDATE_ENTITY", context) {
                 // Parse inputs
-                val entityId = UUID.fromString(extractConfigField(config, "entityId") as String)
-                val payload = extractConfigField(config, "payload") as Map<*, *>
+                val entityId = UUID.fromString(extractConfigField(config, "entityId", context) as String)
+                val payload = extractConfigField(config, "payload", context) as Map<*, *>
 
                 // Get existing entity to determine type
                 val existingEntity = entityService.getEntity(entityId)
@@ -284,7 +289,7 @@ class WorkflowNodeActivitiesImpl(
 
             riven.core.enums.workflow.WorkflowActionType.DELETE_ENTITY -> executeAction(nodeId, nodeName, "DELETE_ENTITY", context) {
                 // Parse inputs
-                val entityId = UUID.fromString(extractConfigField(config, "entityId") as String)
+                val entityId = UUID.fromString(extractConfigField(config, "entityId", context) as String)
 
                 log.info { "Deleting entity: $entityId in workspace: $workspaceId" }
 
@@ -306,7 +311,7 @@ class WorkflowNodeActivitiesImpl(
 
             riven.core.enums.workflow.WorkflowActionType.QUERY_ENTITY -> executeAction(nodeId, nodeName, "QUERY_ENTITY", context) {
                 // Parse inputs
-                val entityId = UUID.fromString(extractConfigField(config, "entityId") as String)
+                val entityId = UUID.fromString(extractConfigField(config, "entityId", context) as String)
 
                 log.info { "Querying entity: $entityId" }
 
@@ -332,10 +337,10 @@ class WorkflowNodeActivitiesImpl(
 
             riven.core.enums.workflow.WorkflowActionType.HTTP_REQUEST -> executeAction(nodeId, nodeName, "HTTP_REQUEST", context) {
                 // Config parsing - clear input contract
-                val url = extractConfigField(config, "url") as String
-                val method = extractConfigField(config, "method") as String // GET, POST, PUT, DELETE
-                val headers = extractConfigField(config, "headers") as? Map<String, String> ?: emptyMap()
-                val body = extractConfigField(config, "body") as? Map<String, Any?>
+                val url = extractConfigField(config, "url", context) as String
+                val method = extractConfigField(config, "method", context) as String // GET, POST, PUT, DELETE
+                val headers = extractConfigField(config, "headers", context) as? Map<String, String> ?: emptyMap()
+                val body = extractConfigField(config, "body", context) as? Map<String, Any?>
 
                 // Validate URL (prevent SSRF)
                 validateUrl(url)
@@ -538,21 +543,76 @@ class WorkflowNodeActivitiesImpl(
     }
 
     /**
-     * Safely extracts a field from action configuration.
+     * Safely extracts a field from action configuration with template resolution.
      *
-     * This helper method provides type-safe configuration parsing for action executors.
-     * It handles common casting scenarios and provides clear error messages.
+     * This method provides type-safe configuration parsing for action executors
+     * with transparent template resolution. Templates like {{ steps.node.output }}
+     * are automatically resolved against the data registry before extraction.
      *
-     * @param config Action configuration object
+     * Resolution flow:
+     * 1. Resolve all templates in config using inputResolverService
+     * 2. Extract field from resolved config
+     * 3. Return resolved value (or throw if missing)
+     *
+     * @param config Action configuration object (WorkflowActionNode or Map)
      * @param fieldName Name of the field to extract
-     * @return Field value (caller must cast to expected type)
-     * @throws IllegalArgumentException if field is missing or invalid
+     * @param context Workflow execution context for template resolution
+     * @return Resolved field value (caller must cast to expected type)
+     * @throws IllegalArgumentException if field is missing or config is invalid
      */
-    private fun extractConfigField(config: Any, fieldName: String): Any {
-        // TODO: Implement proper config parsing based on actual WorkflowActionNode structure
-        // For now, this demonstrates the intended pattern
-        // The actual implementation will depend on how WorkflowActionNode stores its config
-        throw NotImplementedError("Config field extraction to be implemented based on WorkflowActionNode structure")
+    private fun extractConfigField(
+        config: Any,
+        fieldName: String,
+        context: WorkflowExecutionContext
+    ): Any {
+        log.debug { "Extracting field '$fieldName' from config with template resolution" }
+
+        // Convert config to Map for resolution
+        // WorkflowActionNode is stored as JSONB and deserialized as Map-like structure
+        val configMap = when (config) {
+            is Map<*, *> -> {
+                @Suppress("UNCHECKED_CAST")
+                config as Map<String, Any?>
+            }
+            is WorkflowActionNode -> {
+                // For WorkflowActionNode interface, we need to access properties reflectively
+                // since concrete implementations don't exist yet (see WorkflowNodeDeserializer TODOs)
+                // This will be updated when concrete action node classes are implemented
+                throw IllegalArgumentException(
+                    "WorkflowActionNode concrete classes not yet implemented. " +
+                            "Config must be provided as Map until concrete classes are created."
+                )
+            }
+            else -> {
+                throw IllegalArgumentException(
+                    "Invalid config type: ${config::class.simpleName}. Expected Map or WorkflowActionNode."
+                )
+            }
+        }
+
+        // Resolve templates in config
+        log.debug { "Resolving inputs for config fields: ${configMap.keys}" }
+        val resolvedConfig = try {
+            inputResolverService.resolveAll(configMap, context)
+        } catch (e: Exception) {
+            log.error(e) { "Template resolution failed for field '$fieldName': ${e.message}" }
+            throw IllegalArgumentException("Template resolution failed: ${e.message}", e)
+        }
+
+        // Log resolution results (sanitized for security)
+        val templateCount = configMap.values.count { it is String && it.contains("{{") }
+        if (templateCount > 0) {
+            log.debug { "Resolved $templateCount template references in config" }
+        }
+
+        // Extract field from resolved config
+        val value = resolvedConfig[fieldName]
+            ?: throw IllegalArgumentException(
+                "Required field '$fieldName' not found in config. Available fields: ${resolvedConfig.keys}"
+            )
+
+        log.debug { "Extracted field '$fieldName' (type: ${value::class.simpleName})" }
+        return value
     }
 
     /**
@@ -577,8 +637,8 @@ class WorkflowNodeActivitiesImpl(
 
                 executeControlAction(nodeId, nodeName, "CONDITION", context) {
                     // Config parsing - clear input contract
-                    val expression = extractConfigField(config, "expression") as String
-                    val contextEntityId = extractConfigField(config, "contextEntityId") as? String
+                    val expression = extractConfigField(config, "expression", context) as String
+                    val contextEntityId = extractConfigField(config, "contextEntityId", context) as? String
 
                     // Resolve entity context if provided
                     val context: Map<String, Any?> = if (contextEntityId != null) {
