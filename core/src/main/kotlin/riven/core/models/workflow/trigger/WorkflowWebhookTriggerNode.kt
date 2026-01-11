@@ -8,7 +8,9 @@ import riven.core.enums.common.http.RequestMethodType
 import riven.core.enums.workflow.WorkflowTriggerType
 import riven.core.models.common.http.Signature
 import riven.core.models.common.validation.Schema
+import riven.core.models.workflow.NodeExecutionServices
 import riven.core.models.workflow.WorkflowTriggerNode
+import riven.core.models.workflow.environment.WorkflowExecutionContext
 import java.util.*
 
 @JsonTypeName("webhook_trigger")
@@ -23,4 +25,13 @@ data class WorkflowWebhookTriggerNode(
 ) : WorkflowTriggerNode {
     override val subType: WorkflowTriggerType
         get() = WorkflowTriggerType.WEBHOOK
+
+    override fun execute(
+        context: WorkflowExecutionContext,
+        inputs: Map<String, Any?>,
+        services: NodeExecutionServices
+    ): Map<String, Any?> {
+        // Triggers are entry points, not executed during workflow
+        throw UnsupportedOperationException("TRIGGER nodes don't execute during workflow")
+    }
 }

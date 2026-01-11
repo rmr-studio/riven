@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import riven.core.enums.workflow.WorkflowNodeType
+import riven.core.models.workflow.environment.WorkflowExecutionContext
 import java.util.*
 
 /**
@@ -18,4 +19,13 @@ data class WorkflowFunctionNode(
 ) : WorkflowNode {
     override val type: WorkflowNodeType
         get() = WorkflowNodeType.FUNCTION
+
+    override fun execute(
+        context: WorkflowExecutionContext,
+        inputs: Map<String, Any?>,
+        services: NodeExecutionServices
+    ): Map<String, Any?> {
+        // TODO: Implement FUNCTION node execution in Phase 5+
+        throw UnsupportedOperationException("FUNCTION nodes not implemented in Phase 4.1")
+    }
 }
