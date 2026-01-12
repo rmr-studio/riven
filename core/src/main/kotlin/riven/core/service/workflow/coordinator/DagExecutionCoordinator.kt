@@ -177,7 +177,13 @@ class DagExecutionCoordinator(
         // 4. Initialize active node queue
         activeNodeQueue.initialize(nodes, edges)
 
-        // 5. Execution loop: process nodes in topological order with parallelism
+        // 5. Handle empty workflow (no nodes)
+        if (nodes.isEmpty()) {
+            // Return COMPLETED state directly (no nodes to execute)
+            return state.copy(phase = WorkflowExecutionPhase.COMPLETED)
+        }
+
+        // 6. Execution loop: process nodes in topological order with parallelism
         while (activeNodeQueue.hasMoreWork()) {
             // Get batch of ready nodes (all nodes with in-degree = 0)
             val readyNodes = activeNodeQueue.getReadyNodes()

@@ -69,6 +69,9 @@ class WorkflowNodeActivitiesImplTest {
         // Mock InputResolverService to return inputs as-is (no templates)
         whenever(inputResolverService.resolveAll(any(), any())).thenAnswer { it.arguments[0] }
 
+        // Mock DagExecutionCoordinator
+        val dagExecutionCoordinator: riven.core.service.workflow.coordinator.DagExecutionCoordinator = mock()
+
         // Create activities instance with mocked dependencies
         activities = WorkflowNodeActivitiesImpl(
             workflowNodeRepository = workflowNodeRepository,
@@ -78,7 +81,8 @@ class WorkflowNodeActivitiesImplTest {
             expressionParserService = expressionParserService,
             entityContextService = entityContextService,
             webClientBuilder = webClientBuilder,
-            inputResolverService = inputResolverService
+            inputResolverService = inputResolverService,
+            dagExecutionCoordinator = dagExecutionCoordinator
         )
     }
 
