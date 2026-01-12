@@ -59,8 +59,31 @@ class WorkflowExecutionWorkflowImpl : WorkflowExecutionWorkflow {
 
         val nodeResults = mutableListOf<NodeExecutionResult>()
 
-        // Simple sequential execution for v1
-        // Future enhancement: parallel execution based on DAG dependencies
+        // V1: Simple sequential execution (maintains backward compatibility)
+        // V2: Will use executeWorkflowWithCoordinator for parallel DAG execution
+        //
+        // Future pattern (Phase 5 complete):
+        // val nodes = activities.loadWorkflowNodes(input.workflowDefinitionId)
+        // val edges = activities.loadWorkflowEdges(input.workflowDefinitionId)
+        // val finalState = activities.executeWorkflowWithCoordinator(nodes, edges, input.workspaceId)
+        // return WorkflowExecutionResult(
+        //     executionId = input.workflowDefinitionId,
+        //     status = if (finalState.phase == WorkflowExecutionPhase.COMPLETED) "COMPLETED" else "FAILED",
+        //     nodeResults = finalState.completedNodes.map { nodeId ->
+        //         NodeExecutionResult(
+        //             nodeId = nodeId,
+        //             status = "COMPLETED",
+        //             output = finalState.getNodeOutput(nodeId)
+        //         )
+        //     }
+        // )
+        //
+        // This would provide:
+        // - Parallel execution of independent nodes
+        // - Automatic topological ordering
+        // - DAG validation before execution
+        // - State machine tracking throughout execution
+
         for (nodeId in input.nodeIds) {
             try {
                 logger.info("Executing node: $nodeId")

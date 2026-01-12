@@ -67,7 +67,8 @@ class WorkflowNodeActivitiesImpl(
     private val expressionParserService: ExpressionParserService,
     private val entityContextService: EntityContextService,
     private val webClientBuilder: WebClient.Builder,
-    private val inputResolverService: InputResolverService
+    private val inputResolverService: InputResolverService,
+    private val dagExecutionCoordinator: riven.core.service.workflow.coordinator.DagExecutionCoordinator
 ) : WorkflowNodeActivities {
 
     private val webClient: WebClient = webClientBuilder.build()
@@ -346,5 +347,59 @@ class WorkflowNodeActivitiesImpl(
         )
 
         workflowExecutionNodeRepository.save(updated)
+    }
+
+    override fun executeWorkflowWithCoordinator(
+        nodes: List<riven.core.models.workflow.WorkflowNode>,
+        edges: List<riven.core.models.workflow.WorkflowEdge>,
+        workspaceId: UUID
+    ): riven.core.models.workflow.coordinator.WorkflowState {
+        log.info { "Executing workflow with coordinator: ${nodes.size} nodes, ${edges.size} edges" }
+
+        // Get execution context from Temporal
+        val activityInfo = Activity.getExecutionContext().info
+        val workflowExecutionId = UUID.fromString(
+            activityInfo.workflowId.substringAfter("execution-")
+        )
+
+        // Initialize workflow execution context
+        val context = WorkflowExecutionContext(
+            workflowExecutionId = workflowExecutionId,
+            workspaceId = workspaceId,
+            metadata = emptyMap(),
+            dataRegistry = mutableMapOf()
+        )
+
+        // Create nodeExecutor that executes nodes synchronously
+        // Note: In v1, parallel execution is simulated via sequential processing
+        // Future enhancement: Use Temporal child workflows for true parallel execution
+        val nodeExecutor: (List<riven.core.models.workflow.WorkflowNode>) -> List<Pair<UUID, Any?>> = { readyNodes ->
+            log.info { "Executing batch of ${readyNodes.size} ready nodes" }
+
+            readyNodes.map { node ->
+                log.info { "Executing node ${node.id} (${node.type})" }
+
+                // Execute node using existing executeNode logic
+                val result = executeNode(node.id, workspaceId)
+
+                // Check if node failed
+                if (result.status == "FAILED") {
+                    throw RuntimeException("Node ${node.id} failed: ${result.error}")
+                }
+
+                // Return nodeId -> output mapping
+                node.id to result.output
+            }
+        }
+
+        // Delegate to coordinator for DAG orchestration
+        return try {
+            val finalState = dagExecutionCoordinator.executeWorkflow(nodes, edges, nodeExecutor)
+            log.info { "Workflow execution completed: ${finalState.phase}, ${finalState.completedNodes.size} nodes completed" }
+            finalState
+        } catch (e: Exception) {
+            log.error(e) { "Workflow execution failed: ${e.message}" }
+            throw e
+        }
     }
 }

@@ -37,4 +37,29 @@ interface WorkflowNodeActivities {
      */
     @ActivityMethod
     fun executeNode(nodeId: UUID, workspaceId: UUID): NodeExecutionResult
+
+    /**
+     * Execute workflow with DAG coordination for parallel node scheduling.
+     *
+     * This activity delegates to DagExecutionCoordinator for orchestration:
+     * 1. Validates DAG structure
+     * 2. Initializes state machine and active node queue
+     * 3. Executes nodes in topological order with maximum parallelism
+     * 4. Returns final WorkflowState with all outputs
+     *
+     * Note: Node execution happens synchronously within this activity (not via Temporal Async).
+     * The coordinator's parallel execution is simulated via sequential processing in v1.
+     * Future enhancement: Use Temporal child workflows for true parallel execution.
+     *
+     * @param nodes All workflow nodes
+     * @param edges All dependency edges
+     * @param workspaceId Workspace context
+     * @return Final workflow state with completion status and outputs
+     */
+    @ActivityMethod
+    fun executeWorkflowWithCoordinator(
+        nodes: List<riven.core.models.workflow.WorkflowNode>,
+        edges: List<riven.core.models.workflow.WorkflowEdge>,
+        workspaceId: UUID
+    ): riven.core.models.workflow.coordinator.WorkflowState
 }
