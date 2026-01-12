@@ -84,7 +84,7 @@ Plans:
 
 Plans:
 - [x] 5-01: Topological Sort & DAG Validation (2026-01-12) - Kahn's algorithm with cycle detection, comprehensive structural validation
-- [ ] 5-02: Active Node Queue & State Machine (TBD)
+- [x] 5-02: Active Node Queue & State Machine (2026-01-12) - In-degree tracked queue, immutable state machine with event-driven transitions
 - [ ] 5-03: Parallel Execution Coordinator (TBD)
 
 ### Phase 6: Backend API Layer
