@@ -16,6 +16,18 @@ private val log = KotlinLogging.logger {}
  * 3. **Property Traversal:** Navigate nested maps using remaining path segments
  * 4. **Graceful Degradation:** Return null for missing data, log warnings
  *
+ * ## Template Types
+ *
+ * **Exact Templates:** Entire string is a template
+ * - Input: `"{{ steps.fetch_leads.output.email }}"`
+ * - Returns resolved value as-is (any type)
+ *
+ * **Embedded Templates:** Templates within a larger string
+ * - Input: `"Welcome to {{ steps.user.name }}"`
+ * - Resolves each template and replaces it in the string
+ * - Returns final string with substitutions
+ * - Supports multiple templates: `"Hello {{ steps.user.name }}, you have {{ steps.inbox.count }} messages"`
+ *
  * ## Template Resolution Flow
  *
  * Given template: `{{ steps.fetch_leads.output.email }}`
@@ -104,9 +116,71 @@ class InputResolverService(
             return parsed.rawValue
         }
 
-        // Template - resolve from registry
+        // Handle embedded templates (e.g., "Welcome to {{steps.node.output}}")
+        if (parsed.isEmbeddedTemplate) {
+            return resolveEmbeddedTemplates(parsed, context)
+        }
+
+        // Single exact template - resolve from registry
         val path = parsed.path ?: return null
 
+        return resolveTemplatePath(path, context)
+    }
+
+    /**
+     * Resolve embedded templates within a larger string.
+     *
+     * Takes a string like "Welcome to {{steps.node.output}}, you have {{steps.other.count}} items"
+     * and replaces each template with its resolved value.
+     *
+     * @param parsed Parsed template containing embedded templates
+     * @param context Workflow execution context
+     * @return String with all templates replaced by resolved values, or null if any resolution fails
+     */
+    private fun resolveEmbeddedTemplates(
+        parsed: TemplateParserService.ParsedTemplate,
+        context: WorkflowExecutionContext
+    ): String? {
+        var result = parsed.templateString ?: return null
+
+        // Resolve each embedded template and replace in string
+        for (embeddedTemplate in parsed.embeddedTemplates.orEmpty()) {
+            val resolvedValue = resolveTemplatePath(embeddedTemplate.path, context)
+
+            // If resolution fails, return null (graceful degradation)
+            if (resolvedValue == null) {
+                log.warn { "Failed to resolve embedded template ${embeddedTemplate.placeholder} in string: ${parsed.templateString}" }
+                return null
+            }
+
+            // Convert resolved value to string and replace placeholder
+            val stringValue = when (resolvedValue) {
+                is String -> resolvedValue
+                is Number -> resolvedValue.toString()
+                is Boolean -> resolvedValue.toString()
+                else -> {
+                    log.warn { "Cannot convert ${resolvedValue::class.simpleName} to string for embedded template: ${embeddedTemplate.placeholder}" }
+                    resolvedValue.toString()
+                }
+            }
+
+            result = result.replace(embeddedTemplate.placeholder, stringValue)
+        }
+
+        return result
+    }
+
+    /**
+     * Resolve a template path from the data registry.
+     *
+     * @param path Path segments (e.g., ["steps", "fetch_leads", "output", "email"])
+     * @param context Workflow execution context
+     * @return Resolved value from registry, or null if not found
+     */
+    private fun resolveTemplatePath(
+        path: List<String>,
+        context: WorkflowExecutionContext
+    ): Any? {
         // Path must start with "steps" (only supported type in Phase 4.1)
         if (path.isEmpty() || path[0] != "steps") {
             throw IllegalArgumentException(
@@ -140,8 +214,16 @@ class InputResolverService(
         // Start traversal from node output
         var current: Any? = nodeData.output
 
-        // Traverse remaining path segments (skip "steps" and nodeName)
-        for (i in 2 until path.size) {
+        // Determine starting index for path traversal
+        // If path[2] is "output", skip it since we're already at nodeData.output
+        val startIndex = if (path.size > 2 && path[2] == "output") {
+            3 // Skip "steps", nodeName, and "output"
+        } else {
+            2 // Skip "steps" and nodeName
+        }
+
+        // Traverse remaining path segments
+        for (i in startIndex until path.size) {
             val segment = path[i]
 
             when (current) {

@@ -231,7 +231,7 @@ class InputResolverServiceTest {
         val resolved = resolver.resolveAll(config, context)
 
         assertEquals("user@example.com", resolved["to"])
-        assertEquals("Welcome {{ steps.fetch_user.output.name }}!", resolved["subject"]) // Embedded template not resolved
+        assertEquals("Welcome John Doe!", resolved["subject"]) // Embedded template resolved
     }
 
     @Test

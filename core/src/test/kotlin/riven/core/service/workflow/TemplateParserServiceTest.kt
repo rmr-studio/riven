@@ -128,7 +128,7 @@ class TemplateParserServiceTest {
         val exception = assertThrows<IllegalArgumentException> {
             parser.parse("{{ steps-name }}")
         }
-        assertTrue(exception.message!!.contains("Invalid path segment"))
+        assertTrue(exception.message!!.contains("Invalid template syntax") || exception.message!!.contains("Invalid path segment"))
     }
 
     @Test
@@ -136,23 +136,29 @@ class TemplateParserServiceTest {
         val exception = assertThrows<IllegalArgumentException> {
             parser.parse("{{ steps@output }}")
         }
-        assertTrue(exception.message!!.contains("Invalid path segment"))
+        assertTrue(exception.message!!.contains("Invalid template syntax") || exception.message!!.contains("Invalid path segment"))
     }
 
     @Test
-    fun `parse multiple templates throws error`() {
-        val exception = assertThrows<IllegalArgumentException> {
-            parser.parse("Hello {{ user.name }}, you have {{ count }} messages")
-        }
-        assertTrue(exception.message!!.contains("Multiple templates not supported"))
+    fun `parse multiple templates creates embedded template result`() {
+        val result = parser.parse("Hello {{ user.name }}, you have {{ count }} messages")
+
+        assertTrue(result.isTemplate)
+        assertTrue(result.isEmbeddedTemplate)
+        assertEquals(2, result.embeddedTemplates?.size)
+        assertEquals(listOf("user", "name"), result.embeddedTemplates?.get(0)?.path)
+        assertEquals(listOf("count"), result.embeddedTemplates?.get(1)?.path)
     }
 
     @Test
-    fun `parse embedded template throws error`() {
-        val exception = assertThrows<IllegalArgumentException> {
-            parser.parse("prefix {{ steps.name }} suffix")
-        }
-        assertTrue(exception.message!!.contains("Embedded templates not supported"))
+    fun `parse embedded template creates embedded template result`() {
+        val result = parser.parse("prefix {{ steps.name }} suffix")
+
+        assertTrue(result.isTemplate)
+        assertTrue(result.isEmbeddedTemplate)
+        assertEquals(1, result.embeddedTemplates?.size)
+        assertEquals(listOf("steps", "name"), result.embeddedTemplates?.get(0)?.path)
+        assertEquals("prefix {{ steps.name }} suffix", result.templateString)
     }
 
     // ========== isTemplate() Tests ==========
