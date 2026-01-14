@@ -1,6 +1,6 @@
 package riven.core.service.workflow
 
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Service
 import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.models.entity.Entity
@@ -22,11 +22,9 @@ import java.util.*
 class EntityContextService(
     private val entityRepository: EntityRepository,
     private val entityTypeRepository: EntityTypeRepository,
-    private val entityRelationshipService: EntityRelationshipService
+    private val entityRelationshipService: EntityRelationshipService,
+    private val logger: KLogger
 ) {
-    companion object {
-        private val logger = LoggerFactory.getLogger(EntityContextService::class.java)
-    }
 
     /**
      * Builds expression context from entity data without relationship traversal.

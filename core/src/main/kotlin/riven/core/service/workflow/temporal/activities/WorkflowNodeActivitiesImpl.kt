@@ -1,5 +1,6 @@
 package riven.core.service.workflow.temporal.activities
 
+import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.temporal.activity.Activity
 import org.springframework.stereotype.Component
@@ -20,8 +21,6 @@ import riven.core.service.workflow.InputResolverService
 import java.time.Instant
 import java.time.ZonedDateTime
 import java.util.UUID
-
-private val log = KotlinLogging.logger {}
 
 /**
  * Implementation of WorkflowNodeActivities as a Spring bean.
@@ -68,7 +67,8 @@ class WorkflowNodeActivitiesImpl(
     private val entityContextService: EntityContextService,
     private val webClientBuilder: WebClient.Builder,
     private val inputResolverService: InputResolverService,
-    private val dagExecutionCoordinator: riven.core.service.workflow.coordinator.DagExecutionCoordinator
+    private val dagExecutionCoordinator: riven.core.service.workflow.coordinator.DagExecutionCoordinator,
+    private val logger: KLogger
 ) : WorkflowNodeActivities {
 
     private val webClient: WebClient = webClientBuilder.build()
@@ -76,7 +76,7 @@ class WorkflowNodeActivitiesImpl(
     override fun executeNode(nodeId: UUID, workspaceId: UUID): NodeExecutionResult {
         val startTime = ZonedDateTime.now()
 
-        log.info { "Executing workflow node: $nodeId in workspace: $workspaceId" }
+        logger.info { "Executing workflow node: $nodeId in workspace: $workspaceId" }
 
         try {
             // Fetch node configuration
@@ -105,7 +105,7 @@ class WorkflowNodeActivitiesImpl(
                 dataRegistry = mutableMapOf()
             )
 
-            log.debug { "Initialized execution context for node $nodeId (registry: ${context.dataRegistry.size} entries)" }
+            logger.debug { "Initialized execution context for node $nodeId (registry: ${context.dataRegistry.size} entries)" }
 
             // Create execution record (RUNNING status)
             val executionNode = createExecutionNode(
@@ -150,7 +150,7 @@ class WorkflowNodeActivitiesImpl(
             // Polymorphic execution - no type switching!
             // Nodes implement their own execute() method
             // This enables easy addition of new node types (LOOP, SWITCH, PARALLEL, etc.)
-            log.info { "Executing ${node.type} node via polymorphic dispatch: ${node.name}" }
+            logger.info { "Executing ${node.type} node via polymorphic dispatch: ${node.name}" }
             val executionStart = System.currentTimeMillis()
 
             val result = executeAction(nodeId, node.name, node.type.name, context) {
@@ -158,7 +158,7 @@ class WorkflowNodeActivitiesImpl(
             }
 
             val duration = System.currentTimeMillis() - executionStart
-            log.info { "Node ${node.name} completed via execute() in ${duration}ms" }
+            logger.info { "Node ${node.name} completed via execute() in ${duration}ms" }
 
             // Update execution record (COMPLETED/FAILED status)
             updateExecutionNode(
@@ -170,11 +170,11 @@ class WorkflowNodeActivitiesImpl(
                 startTime = startTime
             )
 
-            log.info { "Node $nodeId completed with status: ${result.status}" }
+            logger.info { "Node $nodeId completed with status: ${result.status}" }
             return result
 
         } catch (e: Exception) {
-            log.error(e) { "Error executing node $nodeId: ${e.message}" }
+            logger.error(e) { "Error executing node $nodeId: ${e.message}" }
 
             // Try to persist error state (best effort)
             try {
@@ -199,7 +199,7 @@ class WorkflowNodeActivitiesImpl(
                     startTime = startTime
                 )
             } catch (persistError: Exception) {
-                log.error(persistError) { "Failed to persist error state for node $nodeId" }
+                logger.error(persistError) { "Failed to persist error state for node $nodeId" }
             }
 
             return NodeExecutionResult(
@@ -246,13 +246,13 @@ class WorkflowNodeActivitiesImpl(
         execution: () -> Map<String, Any?>
     ): NodeExecutionResult {
         return try {
-            log.info { "Executing $nodeType: $nodeName" }
+            logger.info { "Executing $nodeType: $nodeName" }
             val startTime = System.currentTimeMillis()
 
             val output = execution()
 
             val duration = System.currentTimeMillis() - startTime
-            log.info { "Node $nodeName completed successfully in ${duration}ms" }
+            logger.info { "Node $nodeName completed successfully in ${duration}ms" }
 
             // Capture output to data registry
             val executionData = NodeExecutionData(
@@ -265,8 +265,8 @@ class WorkflowNodeActivitiesImpl(
             )
             context.dataRegistry[nodeName] = executionData
 
-            log.debug { "Captured output for node $nodeName: ${output.keys}" }
-            log.info { "Data registry now contains ${context.dataRegistry.size} node outputs" }
+            logger.debug { "Captured output for node $nodeName: ${output.keys}" }
+            logger.info { "Data registry now contains ${context.dataRegistry.size} node outputs" }
 
             NodeExecutionResult(
                 nodeId = nodeId,
@@ -274,7 +274,7 @@ class WorkflowNodeActivitiesImpl(
                 output = output
             )
         } catch (e: Exception) {
-            log.error(e) { "$nodeType $nodeName failed: ${e.message}" }
+            logger.error(e) { "$nodeType $nodeName failed: ${e.message}" }
 
             // Capture failure to data registry (for debugging)
             val executionData = NodeExecutionData(
@@ -287,8 +287,8 @@ class WorkflowNodeActivitiesImpl(
             )
             context.dataRegistry[nodeName] = executionData
 
-            log.debug { "Captured failure for node $nodeName: ${e.message}" }
-            log.info { "Data registry now contains ${context.dataRegistry.size} node outputs" }
+            logger.debug { "Captured failure for node $nodeName: ${e.message}" }
+            logger.info { "Data registry now contains ${context.dataRegistry.size} node outputs" }
 
             NodeExecutionResult(
                 nodeId = nodeId,
@@ -354,7 +354,7 @@ class WorkflowNodeActivitiesImpl(
         edges: List<riven.core.models.workflow.WorkflowEdge>,
         workspaceId: UUID
     ): riven.core.models.workflow.coordinator.WorkflowState {
-        log.info { "Executing workflow with coordinator: ${nodes.size} nodes, ${edges.size} edges" }
+        logger.info { "Executing workflow with coordinator: ${nodes.size} nodes, ${edges.size} edges" }
 
         // Get execution context from Temporal
         val activityInfo = Activity.getExecutionContext().info
@@ -374,10 +374,10 @@ class WorkflowNodeActivitiesImpl(
         // Note: In v1, parallel execution is simulated via sequential processing
         // Future enhancement: Use Temporal child workflows for true parallel execution
         val nodeExecutor: (List<riven.core.models.workflow.WorkflowNode>) -> List<Pair<UUID, Any?>> = { readyNodes ->
-            log.info { "Executing batch of ${readyNodes.size} ready nodes" }
+            logger.info { "Executing batch of ${readyNodes.size} ready nodes" }
 
             readyNodes.map { node ->
-                log.info { "Executing node ${node.id} (${node.type})" }
+                logger.info { "Executing node ${node.id} (${node.type})" }
 
                 // Execute node using existing executeNode logic
                 val result = executeNode(node.id, workspaceId)
@@ -395,10 +395,10 @@ class WorkflowNodeActivitiesImpl(
         // Delegate to coordinator for DAG orchestration
         return try {
             val finalState = dagExecutionCoordinator.executeWorkflow(nodes, edges, nodeExecutor)
-            log.info { "Workflow execution completed: ${finalState.phase}, ${finalState.completedNodes.size} nodes completed" }
+            logger.info { "Workflow execution completed: ${finalState.phase}, ${finalState.completedNodes.size} nodes completed" }
             finalState
         } catch (e: Exception) {
-            log.error(e) { "Workflow execution failed: ${e.message}" }
+            logger.error(e) { "Workflow execution failed: ${e.message}" }
             throw e
         }
     }

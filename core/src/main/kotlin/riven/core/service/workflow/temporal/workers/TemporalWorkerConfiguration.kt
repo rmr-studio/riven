@@ -1,5 +1,6 @@
 package riven.core.service.workflow.temporal.workers
 
+import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.temporal.client.WorkflowClient
 import io.temporal.serviceclient.WorkflowServiceStubs
@@ -10,7 +11,6 @@ import org.springframework.context.annotation.Configuration
 import riven.core.service.workflow.temporal.activities.WorkflowNodeActivitiesImpl
 import riven.core.service.workflow.temporal.workflows.WorkflowExecutionWorkflowImpl
 
-private val log = KotlinLogging.logger {}
 
 /**
  * Spring configuration for Temporal workers.
@@ -34,7 +34,8 @@ private val log = KotlinLogging.logger {}
 @Configuration
 class TemporalWorkerConfiguration(
     private val workflowServiceStubs: WorkflowServiceStubs,
-    private val activities: WorkflowNodeActivitiesImpl
+    private val activities: WorkflowNodeActivitiesImpl,
+    private val logger: KLogger
 ) {
 
     companion object {
@@ -62,7 +63,7 @@ class TemporalWorkerConfiguration(
      */
     @Bean
     fun workerFactory(): WorkerFactory {
-        log.info { "Initializing Temporal WorkerFactory" }
+        logger.info { "Initializing Temporal WorkerFactory" }
 
         // Create WorkflowClient from service stubs
         val client = WorkflowClient.newInstance(workflowServiceStubs)
@@ -78,16 +79,16 @@ class TemporalWorkerConfiguration(
         worker.registerWorkflowImplementationTypes(
             WorkflowExecutionWorkflowImpl::class.java
         )
-        log.info { "Registered workflow: WorkflowExecutionWorkflow" }
+        logger.info { "Registered workflow: WorkflowExecutionWorkflow" }
 
         // Register activity implementations
         // Note: Passing Spring bean instance enables dependency injection
         worker.registerActivitiesImplementations(activities)
-        log.info { "Registered activities: WorkflowNodeActivities" }
+        logger.info { "Registered activities: WorkflowNodeActivities" }
 
         // Start workers (non-blocking - workers poll Temporal Service in background)
         factory.start()
-        log.info { "Temporal WorkerFactory started, listening on task queue: $WORKFLOW_EXECUTION_TASK_QUEUE" }
+        logger.info { "Temporal WorkerFactory started, listening on task queue: $WORKFLOW_EXECUTION_TASK_QUEUE" }
 
         // Store instance for shutdown
         workerFactoryInstance = factory
@@ -106,10 +107,10 @@ class TemporalWorkerConfiguration(
      */
     @PreDestroy
     fun shutdown() {
-        log.info { "Shutting down Temporal WorkerFactory" }
+        logger.info { "Shutting down Temporal WorkerFactory" }
         if (::workerFactoryInstance.isInitialized) {
             workerFactoryInstance.shutdown()
-            log.info { "Temporal WorkerFactory shutdown complete" }
+            logger.info { "Temporal WorkerFactory shutdown complete" }
         }
     }
 }

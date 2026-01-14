@@ -10,7 +10,7 @@ import riven.core.models.workflow.environment.WorkflowExecutionContext
 import java.net.URI
 import java.util.*
 
-private val log = KotlinLogging.logger {}
+private val logger = KotlinLogging.logger {}
 
 /**
  * Action node for making HTTP requests to external services.
@@ -102,7 +102,7 @@ data class HttpRequestActionNode(
             .block() ?: throw RuntimeException("HTTP request returned null")
 
         // Log without sensitive data
-        log.info { "HTTP_REQUEST: $method $url -> ${response.statusCode}" }
+        logger.info { "HTTP_REQUEST: $method $url -> ${response.statusCode}" }
 
         // Clear output contract
         return mapOf(

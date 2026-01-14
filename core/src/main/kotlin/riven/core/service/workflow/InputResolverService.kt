@@ -1,10 +1,8 @@
 package riven.core.service.workflow
 
-import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Service
 import riven.core.models.workflow.environment.WorkflowExecutionContext
-
-private val log = KotlinLogging.logger {}
 
 /**
  * Service for resolving template references against the workflow data registry.
@@ -14,7 +12,7 @@ private val log = KotlinLogging.logger {}
  * 1. **Template Detection:** Check if value is a String containing {{ }}
  * 2. **Registry Lookup:** First segment must be "steps", second is node name
  * 3. **Property Traversal:** Navigate nested maps using remaining path segments
- * 4. **Graceful Degradation:** Return null for missing data, log warnings
+ * 4. **Graceful Degradation:** Return null for missing data, logger warnings
  *
  * ## Template Types
  *
@@ -45,7 +43,7 @@ private val log = KotlinLogging.logger {}
  * - Invalid template syntax (parsing errors)
  * - First segment not "steps" (unsupported path type)
  *
- * **Warnings (log + return null):**
+ * **Warnings (logger + return null):**
  * - Node not found in registry (may not have executed yet)
  * - Property not found in node output (missing field)
  * - Type error (accessing property on non-map value)
@@ -89,7 +87,8 @@ private val log = KotlinLogging.logger {}
  */
 @Service
 class InputResolverService(
-    private val templateParserService: TemplateParserService
+    private val templateParserService: TemplateParserService,
+    private val logger: KLogger
 ) {
 
     /**
@@ -149,7 +148,7 @@ class InputResolverService(
 
             // If resolution fails, return null (graceful degradation)
             if (resolvedValue == null) {
-                log.warn { "Failed to resolve embedded template ${embeddedTemplate.placeholder} in string: ${parsed.templateString}" }
+                logger.warn { "Failed to resolve embedded template ${embeddedTemplate.placeholder} in string: ${parsed.templateString}" }
                 return null
             }
 
@@ -159,7 +158,7 @@ class InputResolverService(
                 is Number -> resolvedValue.toString()
                 is Boolean -> resolvedValue.toString()
                 else -> {
-                    log.warn { "Cannot convert ${resolvedValue::class.simpleName} to string for embedded template: ${embeddedTemplate.placeholder}" }
+                    logger.warn { "Cannot convert ${resolvedValue::class.simpleName} to string for embedded template: ${embeddedTemplate.placeholder}" }
                     resolvedValue.toString()
                 }
             }
@@ -201,13 +200,13 @@ class InputResolverService(
         // Lookup node in registry
         val nodeData = context.dataRegistry[nodeName]
         if (nodeData == null) {
-            log.warn { "Node '$nodeName' not found in registry. Available nodes: ${context.dataRegistry.keys}" }
+            logger.warn { "Node '$nodeName' not found in registry. Available nodes: ${context.dataRegistry.keys}" }
             return null
         }
 
         // Check if node execution succeeded
         if (nodeData.status != "COMPLETED") {
-            log.warn { "Node '$nodeName' did not complete successfully (status: ${nodeData.status}). Cannot resolve template." }
+            logger.warn { "Node '$nodeName' did not complete successfully (status: ${nodeData.status}). Cannot resolve template." }
             return null
         }
 
@@ -228,18 +227,18 @@ class InputResolverService(
 
             when (current) {
                 null -> {
-                    log.debug { "Cannot traverse segment '$segment' - current value is null. Path: $path" }
+                    logger.debug { "Cannot traverse segment '$segment' - current value is null. Path: $path" }
                     return null
                 }
                 is Map<*, *> -> {
                     current = current[segment]
                     if (current == null) {
-                        log.debug { "Property '$segment' not found in node '$nodeName' output. Path: $path" }
+                        logger.debug { "Property '$segment' not found in node '$nodeName' output. Path: $path" }
                         return null
                     }
                 }
                 else -> {
-                    log.warn { "Cannot access property '$segment' on non-map value (type: ${current!!::class.simpleName}). Path: $path" }
+                    logger.warn { "Cannot access property '$segment' on non-map value (type: ${current!!::class.simpleName}). Path: $path" }
                     return null
                 }
             }

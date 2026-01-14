@@ -1,5 +1,6 @@
 package riven.core.service.workflow
 
+import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.temporal.client.WorkflowClient
 import io.temporal.client.WorkflowOptions
@@ -24,8 +25,6 @@ import riven.core.service.workflow.temporal.workflows.WorkflowExecutionWorkflow
 import java.time.ZonedDateTime
 import java.util.UUID
 
-private val log = KotlinLogging.logger {}
-
 /**
  * Service for managing workflow executions.
  *
@@ -49,7 +48,8 @@ class WorkflowExecutionService(
     private val workflowDefinitionVersionRepository: WorkflowDefinitionVersionRepository,
     private val workflowExecutionRepository: WorkflowExecutionRepository,
     private val activityService: ActivityService,
-    private val authTokenService: AuthTokenService
+    private val authTokenService: AuthTokenService,
+    private val logger: KLogger
 ) {
 
     companion object {
@@ -81,7 +81,7 @@ class WorkflowExecutionService(
     fun startExecution(request: StartWorkflowExecutionRequest): Map<String, Any> {
         val userId = authTokenService.getUserId()
 
-        log.info { "Starting workflow execution for definition ${request.workflowDefinitionId} in workspace ${request.workspaceId}" }
+        logger.info { "Starting workflow execution for definition ${request.workflowDefinitionId} in workspace ${request.workspaceId}" }
 
         // Fetch workflow definition
         val workflowDefinition = workflowDefinitionRepository.findById(request.workflowDefinitionId)
@@ -102,7 +102,7 @@ class WorkflowExecutionService(
         // Extract node IDs from workflow (v1: simple extraction, future: topological sort)
         val nodeIds = extractNodeIds(workflowVersion.workflow)
 
-        log.info { "Workflow has ${nodeIds.size} nodes to execute" }
+        logger.info { "Workflow has ${nodeIds.size} nodes to execute" }
 
         // Create execution record (RUNNING status)
         val executionId = UUID.randomUUID()
@@ -132,7 +132,7 @@ class WorkflowExecutionService(
         val savedExecution = workflowExecutionRepository.save(executionEntity)
         val savedExecutionId = savedExecution.id!!
 
-        log.info { "Created execution record: $savedExecutionId" }
+        logger.info { "Created execution record: $savedExecutionId" }
 
         // Start Temporal workflow asynchronously
         try {
@@ -153,10 +153,10 @@ class WorkflowExecutionService(
             // Start asynchronously (returns immediately)
             WorkflowClient.start { workflowStub.execute(workflowInput) }
 
-            log.info { "Temporal workflow started: execution-$savedExecutionId" }
+            logger.info { "Temporal workflow started: execution-$savedExecutionId" }
 
         } catch (e: Exception) {
-            log.error(e) { "Failed to start Temporal workflow for execution $savedExecutionId" }
+            logger.error(e) { "Failed to start Temporal workflow for execution $savedExecutionId" }
 
             // Update execution status to FAILED
             val failedExecution = savedExecution.copy(
@@ -170,7 +170,7 @@ class WorkflowExecutionService(
             throw e
         }
 
-        // Log activity (using ENTITY as closest match for workflow execution)
+        // logger activity (using ENTITY as closest match for workflow execution)
         activityService.logActivity(
             activity = Activity.ENTITY,
             operation = OperationType.CREATE,
@@ -232,7 +232,7 @@ class WorkflowExecutionService(
         }
 
         // Fallback: return empty list
-        log.warn { "Could not extract node IDs from workflow, returning empty list" }
+        logger.warn { "Could not extract node IDs from workflow, returning empty list" }
         return emptyList()
     }
 }
