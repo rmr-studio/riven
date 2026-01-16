@@ -3,7 +3,7 @@ package riven.core.service.workflow.temporal.activities
 import io.temporal.activity.ActivityInterface
 import io.temporal.activity.ActivityMethod
 import riven.core.models.workflow.temporal.NodeExecutionResult
-import java.util.UUID
+import java.util.*
 
 /**
  * Temporal activity interface for executing workflow nodes.
@@ -17,7 +17,7 @@ import java.util.UUID
  * Activities are stateless (singleton instances handle concurrent executions).
  * All data must be passed via method parameters, not stored in instance fields.
  *
- * @see WorkflowNodeActivitiesImpl
+ * @see WorkflowNodeActivitiesService
  */
 @ActivityInterface
 interface WorkflowNodeActivities {

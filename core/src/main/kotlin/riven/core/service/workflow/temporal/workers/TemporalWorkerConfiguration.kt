@@ -1,14 +1,13 @@
 package riven.core.service.workflow.temporal.workers
 
 import io.github.oshai.kotlinlogging.KLogger
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.temporal.client.WorkflowClient
 import io.temporal.serviceclient.WorkflowServiceStubs
 import io.temporal.worker.WorkerFactory
 import jakarta.annotation.PreDestroy
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import riven.core.service.workflow.temporal.activities.WorkflowNodeActivitiesImpl
+import riven.core.service.workflow.temporal.activities.WorkflowNodeActivitiesService
 import riven.core.service.workflow.temporal.workflows.WorkflowExecutionWorkflowImpl
 
 
@@ -34,7 +33,7 @@ import riven.core.service.workflow.temporal.workflows.WorkflowExecutionWorkflowI
 @Configuration
 class TemporalWorkerConfiguration(
     private val workflowServiceStubs: WorkflowServiceStubs,
-    private val activities: WorkflowNodeActivitiesImpl,
+    private val activities: WorkflowNodeActivitiesService,
     private val logger: KLogger
 ) {
 

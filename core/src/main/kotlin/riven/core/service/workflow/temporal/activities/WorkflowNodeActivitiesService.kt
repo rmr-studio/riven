@@ -1,12 +1,12 @@
 package riven.core.service.workflow.temporal.activities
 
 import io.github.oshai.kotlinlogging.KLogger
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.temporal.activity.Activity
-import org.springframework.stereotype.Component
+import io.temporal.activity.ActivityInterface
+import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
-import riven.core.enums.workflow.WorkflowStatus
 import riven.core.entity.workflow.execution.WorkflowExecutionNodeEntity
+import riven.core.enums.workflow.WorkflowStatus
 import riven.core.models.workflow.NodeExecutionServices
 import riven.core.models.workflow.environment.NodeExecutionData
 import riven.core.models.workflow.environment.WorkflowExecutionContext
@@ -20,7 +20,7 @@ import riven.core.service.workflow.ExpressionParserService
 import riven.core.service.workflow.InputResolverService
 import java.time.Instant
 import java.time.ZonedDateTime
-import java.util.UUID
+import java.util.*
 
 /**
  * Implementation of WorkflowNodeActivities as a Spring bean.
@@ -57,8 +57,9 @@ import java.util.UUID
  * @property webClientBuilder HTTP client builder (injected into nodes)
  * @property inputResolverService Resolves template references
  */
-@Component
-class WorkflowNodeActivitiesImpl(
+@ActivityInterface
+@Service
+class WorkflowNodeActivitiesService(
     private val workflowNodeRepository: WorkflowNodeRepository,
     private val workflowExecutionNodeRepository: WorkflowExecutionNodeRepository,
     private val entityService: EntityService,
@@ -363,7 +364,7 @@ class WorkflowNodeActivitiesImpl(
         )
 
         // Initialize workflow execution context
-        val context = WorkflowExecutionContext(
+        WorkflowExecutionContext(
             workflowExecutionId = workflowExecutionId,
             workspaceId = workspaceId,
             metadata = emptyMap(),

@@ -1,26 +1,49 @@
 package riven.core.service.workflow
 
+import io.github.oshai.kotlinlogging.KLogger
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Configuration
+import org.springframework.test.context.bean.override.mockito.MockitoBean
+import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.models.workflow.environment.NodeExecutionData
 import riven.core.models.workflow.environment.WorkflowExecutionContext
+import riven.core.service.auth.AuthTokenService
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
+@SpringBootTest(
+    classes = [
+        AuthTokenService::class,
+        WorkspaceSecurity::class,
+        InputResolverServiceTest.TestConfig::class,
+        InputResolverService::class
+    ]
+)
 class InputResolverServiceTest {
 
     private lateinit var resolver: InputResolverService
     private lateinit var context: WorkflowExecutionContext
 
+    @Configuration
+    class TestConfig
+
+    @MockitoBean
+    private lateinit var templateParserService: TemplateParserService
+
+    @MockitoBean
+    private lateinit var logger: KLogger
+
+    @Autowired
+    private lateinit var inputResolverService: InputResolverService
+
     @BeforeEach
     fun setup() {
-        val parser = TemplateParserService()
-        resolver = InputResolverService(parser)
-
-        // Initialize context with empty registry
         context = WorkflowExecutionContext(
             workflowExecutionId = UUID.randomUUID(),
             workspaceId = UUID.randomUUID(),

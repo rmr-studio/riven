@@ -4,19 +4,13 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.*
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.web.reactive.function.client.WebClient
-import riven.core.entity.workflow.WorkflowNodeEntity
-import riven.core.enums.workflow.WorkflowActionType
-import riven.core.enums.workflow.WorkflowControlType
-import riven.core.enums.workflow.WorkflowNodeType
-import riven.core.models.entity.Entity
-import riven.core.models.request.entity.SaveEntityRequest
-import riven.core.models.response.entity.DeleteEntityResponse
-import riven.core.models.response.entity.SaveEntityResponse
-import riven.core.models.workflow.WorkflowActionNode
-import riven.core.models.workflow.WorkflowControlNode
+import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.repository.workflow.WorkflowExecutionNodeRepository
 import riven.core.repository.workflow.WorkflowNodeRepository
+import riven.core.service.auth.AuthTokenService
+import riven.core.service.entity.EntityRelationshipService
 import riven.core.service.entity.EntityService
 import riven.core.service.workflow.EntityContextService
 import riven.core.service.workflow.ExpressionEvaluatorService
@@ -33,6 +27,14 @@ import java.util.*
  * - Error handling patterns
  * - How to add new action types following the established pattern
  */
+@SpringBootTest(
+    classes = [
+        AuthTokenService::class,
+        WorkspaceSecurity::class,
+        WorkflowNodeActivitiesImplTest.TestConfig::class,
+        EntityRelationshipService::class
+    ]
+)
 class WorkflowNodeActivitiesImplTest {
 
     private lateinit var workflowNodeRepository: WorkflowNodeRepository
@@ -43,7 +45,7 @@ class WorkflowNodeActivitiesImplTest {
     private lateinit var entityContextService: EntityContextService
     private lateinit var webClientBuilder: WebClient.Builder
     private lateinit var inputResolverService: InputResolverService
-    private lateinit var activities: WorkflowNodeActivitiesImpl
+    private lateinit var activities: WorkflowNodeActivitiesService
 
     private val workspaceId = UUID.randomUUID()
     private val nodeId = UUID.randomUUID()
@@ -73,7 +75,7 @@ class WorkflowNodeActivitiesImplTest {
         val dagExecutionCoordinator: riven.core.service.workflow.coordinator.DagExecutionCoordinator = mock()
 
         // Create activities instance with mocked dependencies
-        activities = WorkflowNodeActivitiesImpl(
+        activities = WorkflowNodeActivitiesService(
             workflowNodeRepository = workflowNodeRepository,
             workflowExecutionNodeRepository = workflowExecutionNodeRepository,
             entityService = entityService,
