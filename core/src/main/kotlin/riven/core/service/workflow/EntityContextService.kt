@@ -15,6 +15,9 @@ import java.util.*
 /**
  * Service for converting entity data to expression-compatible context maps.
  *
+ * The entity context state is used to store data generated via actions executed by a node, and allows
+ * for subsequent nodes to reference that data in their own configurations using expressions.
+ *
  * Transforms UUID-keyed entity payloads into String-keyed maps using entity type schema labels,
  * enabling human-readable expressions like `status = 'active'` instead of UUID-based keys.
  */

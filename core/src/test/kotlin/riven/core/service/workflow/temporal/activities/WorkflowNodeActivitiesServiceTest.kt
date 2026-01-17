@@ -1,16 +1,21 @@
 package riven.core.service.workflow.temporal.activities
 
-import org.junit.jupiter.api.Assertions.*
+import io.github.oshai.kotlinlogging.KLogger
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.*
+import org.mockito.kotlin.any
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Configuration
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.web.reactive.function.client.WebClient
 import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.repository.workflow.WorkflowExecutionNodeRepository
 import riven.core.repository.workflow.WorkflowNodeRepository
 import riven.core.service.auth.AuthTokenService
-import riven.core.service.entity.EntityRelationshipService
 import riven.core.service.entity.EntityService
 import riven.core.service.workflow.EntityContextService
 import riven.core.service.workflow.ExpressionEvaluatorService
@@ -31,20 +36,44 @@ import java.util.*
     classes = [
         AuthTokenService::class,
         WorkspaceSecurity::class,
-        WorkflowNodeActivitiesImplTest.TestConfig::class,
-        EntityRelationshipService::class
+        WorkflowNodeActivitiesServiceTest.TestConfig::class,
+        WorkflowNodeActivitiesServiceTest::class
     ]
 )
-class WorkflowNodeActivitiesImplTest {
+class WorkflowNodeActivitiesServiceTest {
 
+    @Configuration
+    class TestConfig
+
+
+    @MockitoBean
     private lateinit var workflowNodeRepository: WorkflowNodeRepository
+
+    @MockitoBean
+    private lateinit var logger: KLogger
+
+    @MockitoBean
     private lateinit var workflowExecutionNodeRepository: WorkflowExecutionNodeRepository
+
+    @MockitoBean
     private lateinit var entityService: EntityService
+
+    @MockitoBean
     private lateinit var expressionEvaluatorService: ExpressionEvaluatorService
+
+    @MockitoBean
     private lateinit var expressionParserService: ExpressionParserService
+
+    @MockitoBean
     private lateinit var entityContextService: EntityContextService
+
+    @MockitoBean
     private lateinit var webClientBuilder: WebClient.Builder
+
+    @MockitoBean
     private lateinit var inputResolverService: InputResolverService
+
+    @Autowired
     private lateinit var activities: WorkflowNodeActivitiesService
 
     private val workspaceId = UUID.randomUUID()
@@ -54,15 +83,6 @@ class WorkflowNodeActivitiesImplTest {
 
     @BeforeEach
     fun setup() {
-        // Create mock dependencies
-        workflowNodeRepository = mock()
-        workflowExecutionNodeRepository = mock()
-        entityService = mock()
-        expressionEvaluatorService = mock()
-        expressionParserService = mock()
-        entityContextService = mock()
-        webClientBuilder = mock()
-        inputResolverService = mock()
 
         // Mock WebClient.Builder to return a mock WebClient
         val mockWebClient: WebClient = mock()
@@ -71,21 +91,6 @@ class WorkflowNodeActivitiesImplTest {
         // Mock InputResolverService to return inputs as-is (no templates)
         whenever(inputResolverService.resolveAll(any(), any())).thenAnswer { it.arguments[0] }
 
-        // Mock DagExecutionCoordinator
-        val dagExecutionCoordinator: riven.core.service.workflow.coordinator.DagExecutionCoordinator = mock()
-
-        // Create activities instance with mocked dependencies
-        activities = WorkflowNodeActivitiesService(
-            workflowNodeRepository = workflowNodeRepository,
-            workflowExecutionNodeRepository = workflowExecutionNodeRepository,
-            entityService = entityService,
-            expressionEvaluatorService = expressionEvaluatorService,
-            expressionParserService = expressionParserService,
-            entityContextService = entityContextService,
-            webClientBuilder = webClientBuilder,
-            inputResolverService = inputResolverService,
-            dagExecutionCoordinator = dagExecutionCoordinator
-        )
     }
 
     /**

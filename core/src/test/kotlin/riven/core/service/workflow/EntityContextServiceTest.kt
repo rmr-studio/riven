@@ -1,5 +1,6 @@
 package riven.core.service.workflow
 
+import io.github.oshai.kotlinlogging.KLogger
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -7,6 +8,11 @@ import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Configuration
+import org.springframework.test.context.bean.override.mockito.MockitoBean
+import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.common.icon.IconColour
@@ -18,23 +24,38 @@ import riven.core.models.common.validation.Schema
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
+import riven.core.service.auth.AuthTokenService
 import riven.core.service.entity.EntityRelationshipService
+import riven.core.service.entity.EntityRelationshipServiceTest
 import java.time.ZonedDateTime
 import java.util.*
 
-@ExtendWith(MockitoExtension::class)
+@SpringBootTest(
+    classes = [
+        AuthTokenService::class,
+        WorkspaceSecurity::class,
+        EntityContextServiceTest.TestConfig::class,
+        EntityContextService::class
+    ]
+)
 class EntityContextServiceTest {
 
-    @Mock
+    @Configuration
+    class TestConfig
+
+    @MockitoBean
+    private lateinit var logger: KLogger
+
+    @MockitoBean
     private lateinit var entityRepository: EntityRepository
 
-    @Mock
+    @MockitoBean
     private lateinit var entityTypeRepository: EntityTypeRepository
 
-    @Mock
+    @MockitoBean
     private lateinit var entityRelationshipService: EntityRelationshipService
 
-    @InjectMocks
+    @Autowired
     private lateinit var entityContextService: EntityContextService
 
     private val workspaceId = UUID.randomUUID()

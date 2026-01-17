@@ -22,18 +22,18 @@ import kotlin.test.assertNull
         AuthTokenService::class,
         WorkspaceSecurity::class,
         InputResolverServiceTest.TestConfig::class,
+        TemplateParserService::class,
         InputResolverService::class
     ]
 )
 class InputResolverServiceTest {
 
-    private lateinit var resolver: InputResolverService
     private lateinit var context: WorkflowExecutionContext
 
     @Configuration
     class TestConfig
 
-    @MockitoBean
+    @Autowired
     private lateinit var templateParserService: TemplateParserService
 
     @MockitoBean
@@ -66,7 +66,7 @@ class InputResolverServiceTest {
             executedAt = Instant.now()
         )
 
-        val result = resolver.resolve("{{ steps.fetch_leads.output.count }}", context)
+        val result = inputResolverService.resolve("{{ steps.fetch_leads.output.count }}", context)
 
         assertEquals(42, result)
     }
@@ -90,7 +90,7 @@ class InputResolverServiceTest {
             executedAt = Instant.now()
         )
 
-        val result = resolver.resolve("{{ steps.fetch_user.output.user.profile.name }}", context)
+        val result = inputResolverService.resolve("{{ steps.fetch_user.output.user.profile.name }}", context)
 
         assertEquals("John Doe", result)
     }
@@ -107,7 +107,7 @@ class InputResolverServiceTest {
             executedAt = Instant.now()
         )
 
-        val result = resolver.resolve("{{ steps.get_status.output.status }}", context)
+        val result = inputResolverService.resolve("{{ steps.get_status.output.status }}", context)
 
         assertEquals("active", result)
     }
@@ -116,21 +116,21 @@ class InputResolverServiceTest {
 
     @Test
     fun `resolve static string returns unchanged`() {
-        val result = resolver.resolve("static value", context)
+        val result = inputResolverService.resolve("static value", context)
 
         assertEquals("static value", result)
     }
 
     @Test
     fun `resolve non-string value returns unchanged`() {
-        assertEquals(42, resolver.resolve(42, context))
-        assertEquals(true, resolver.resolve(true, context))
-        assertEquals(3.14, resolver.resolve(3.14, context))
+        assertEquals(42, inputResolverService.resolve(42, context))
+        assertEquals(true, inputResolverService.resolve(true, context))
+        assertEquals(3.14, inputResolverService.resolve(3.14, context))
     }
 
     @Test
     fun `resolve null returns null`() {
-        assertNull(resolver.resolve(null, context))
+        assertNull(inputResolverService.resolve(null, context))
     }
 
     // ========== Missing Data Tests (Graceful Degradation) ==========
@@ -138,7 +138,7 @@ class InputResolverServiceTest {
     @Test
     fun `resolve template for missing node returns null`() {
         // Registry is empty - node doesn't exist
-        val result = resolver.resolve("{{ steps.missing_node.output }}", context)
+        val result = inputResolverService.resolve("{{ steps.missing_node.output }}", context)
 
         assertNull(result)
     }
@@ -155,7 +155,7 @@ class InputResolverServiceTest {
             executedAt = Instant.now()
         )
 
-        val result = resolver.resolve("{{ steps.fetch_leads.output.missing_field }}", context)
+        val result = inputResolverService.resolve("{{ steps.fetch_leads.output.missing_field }}", context)
 
         assertNull(result)
     }
@@ -172,7 +172,7 @@ class InputResolverServiceTest {
             executedAt = Instant.now()
         )
 
-        val result = resolver.resolve("{{ steps.failed_node.output }}", context)
+        val result = inputResolverService.resolve("{{ steps.failed_node.output }}", context)
 
         assertNull(result)
     }
@@ -189,7 +189,7 @@ class InputResolverServiceTest {
             executedAt = Instant.now()
         )
 
-        val result = resolver.resolve("{{ steps.fetch_user.output.user.email }}", context)
+        val result = inputResolverService.resolve("{{ steps.fetch_user.output.user.email }}", context)
 
         assertNull(result)
     }
@@ -206,7 +206,7 @@ class InputResolverServiceTest {
             executedAt = Instant.now()
         )
 
-        val result = resolver.resolve("{{ steps.fetch_data.output.value.nested }}", context)
+        val result = inputResolverService.resolve("{{ steps.fetch_data.output.value.nested }}", context)
 
         assertNull(result)
     }
@@ -216,7 +216,7 @@ class InputResolverServiceTest {
     @Test
     fun `resolve template without steps prefix throws error`() {
         val exception = assertThrows<IllegalArgumentException> {
-            resolver.resolve("{{ loop.item }}", context)
+            inputResolverService.resolve("{{ loop.item }}", context)
         }
         assertEquals("Template path must start with 'steps'. Got: loop", exception.message)
     }
@@ -224,7 +224,7 @@ class InputResolverServiceTest {
     @Test
     fun `resolve template with only steps segment throws error`() {
         val exception = assertThrows<IllegalArgumentException> {
-            resolver.resolve("{{ steps }}", context)
+            inputResolverService.resolve("{{ steps }}", context)
         }
         assert(exception.message!!.contains("must include node name"))
     }
@@ -251,7 +251,7 @@ class InputResolverServiceTest {
             "subject" to "Welcome {{ steps.fetch_user.output.name }}!"
         )
 
-        val resolved = resolver.resolveAll(config, context)
+        val resolved = inputResolverService.resolveAll(config, context)
 
         assertEquals("user@example.com", resolved["to"])
         assertEquals("Welcome John Doe!", resolved["subject"]) // Embedded template resolved
@@ -282,7 +282,7 @@ class InputResolverServiceTest {
             "static" to "value"
         )
 
-        val resolved = resolver.resolveAll(config, context)
+        val resolved = inputResolverService.resolveAll(config, context)
 
         @Suppress("UNCHECKED_CAST")
         val http = resolved["http"] as Map<String, Any?>
@@ -318,7 +318,7 @@ class InputResolverServiceTest {
             )
         )
 
-        val resolved = resolver.resolveAll(config, context)
+        val resolved = inputResolverService.resolveAll(config, context)
 
         @Suppress("UNCHECKED_CAST")
         val recipients = resolved["recipients"] as List<Any?>
@@ -335,7 +335,7 @@ class InputResolverServiceTest {
             "nested" to mapOf("key" to "value")
         )
 
-        val resolved = resolver.resolveAll(config, context)
+        val resolved = inputResolverService.resolveAll(config, context)
 
         assertEquals(config, resolved)
     }
@@ -348,7 +348,7 @@ class InputResolverServiceTest {
             "field2" to "static"
         )
 
-        val resolved = resolver.resolveAll(config, context)
+        val resolved = inputResolverService.resolveAll(config, context)
 
         assertNull(resolved["field1"])
         assertEquals("static", resolved["field2"])
