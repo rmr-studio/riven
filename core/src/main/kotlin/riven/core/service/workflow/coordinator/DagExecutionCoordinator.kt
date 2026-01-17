@@ -3,7 +3,13 @@ package riven.core.service.workflow.coordinator
 import org.springframework.stereotype.Service
 import riven.core.models.workflow.WorkflowEdge
 import riven.core.models.workflow.WorkflowNode
-import riven.core.models.workflow.coordinator.*
+import riven.core.models.workflow.engine.coordinator.AllNodesCompleted
+import riven.core.models.workflow.engine.coordinator.NodeCompleted
+import riven.core.models.workflow.engine.coordinator.NodesReady
+import riven.core.models.workflow.engine.coordinator.StateTransition
+import riven.core.models.workflow.engine.coordinator.WorkflowExecutionPhase
+import riven.core.models.workflow.engine.coordinator.WorkflowFailed
+import riven.core.models.workflow.engine.coordinator.WorkflowState
 import java.util.*
 
 /**

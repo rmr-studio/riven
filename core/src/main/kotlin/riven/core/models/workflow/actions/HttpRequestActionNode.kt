@@ -6,7 +6,7 @@ import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.NodeExecutionServices
 import riven.core.models.workflow.WorkflowActionNode
-import riven.core.models.workflow.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import java.net.URI
 import java.util.*
 
@@ -39,7 +39,7 @@ private val logger = KotlinLogging.logger {}
  * ```json
  * {
  *   "url": "https://api.example.com/users",
- *   "method": "POST",
+ *   "method": "POST",  
  *   "headers": {
  *     "Content-Type": "application/json",
  *     "X-API-Key": "{{ steps.get_api_key.output.key }}"

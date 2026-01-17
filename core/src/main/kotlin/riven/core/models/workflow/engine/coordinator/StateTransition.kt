@@ -1,6 +1,4 @@
-package riven.core.models.workflow.coordinator
-
-import java.util.*
+package riven.core.models.workflow.engine.coordinator
 
 /**
  * Pure state transition logic for workflow state machine.

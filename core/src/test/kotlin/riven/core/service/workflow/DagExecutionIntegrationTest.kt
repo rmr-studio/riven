@@ -4,11 +4,9 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.WorkflowEdge
 import riven.core.models.workflow.WorkflowNode
-import riven.core.models.workflow.coordinator.WorkflowExecutionPhase
-import riven.core.models.workflow.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.coordinator.WorkflowExecutionPhase
 import riven.core.service.workflow.coordinator.ActiveNodeQueue
 import riven.core.service.workflow.coordinator.DagExecutionCoordinator
 import riven.core.service.workflow.coordinator.DagValidator

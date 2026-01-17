@@ -2,7 +2,7 @@ package riven.core.service.workflow
 
 import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Service
-import riven.core.models.workflow.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 
 /**
  * Service for resolving template references against the workflow data registry.

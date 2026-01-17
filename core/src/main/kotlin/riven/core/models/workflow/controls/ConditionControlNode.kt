@@ -5,7 +5,7 @@ import riven.core.enums.workflow.WorkflowControlType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.NodeExecutionServices
 import riven.core.models.workflow.WorkflowControlNode
-import riven.core.models.workflow.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import java.util.*
 
 private val log = KotlinLogging.logger {}

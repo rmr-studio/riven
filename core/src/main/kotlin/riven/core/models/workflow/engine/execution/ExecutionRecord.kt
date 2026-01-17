@@ -1,4 +1,4 @@
-package riven.core.models.workflow.execution
+package riven.core.models.workflow.engine.execution
 
 import riven.core.enums.workflow.WorkflowStatus
 import java.time.Duration

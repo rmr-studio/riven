@@ -1,7 +1,6 @@
 package riven.core.service.workflow
 
 import io.github.oshai.kotlinlogging.KLogger
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.temporal.client.WorkflowClient
 import io.temporal.client.WorkflowOptions
 import org.springframework.stereotype.Service
@@ -13,15 +12,14 @@ import riven.core.enums.util.OperationType
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.enums.workflow.WorkflowTriggerType
 import riven.core.exceptions.NotFoundException
-import riven.core.models.common.json.JsonObject
 import riven.core.models.request.workflow.StartWorkflowExecutionRequest
-import riven.core.models.workflow.temporal.WorkflowExecutionInput
+import riven.core.models.workflow.engine.WorkflowExecutionInput
 import riven.core.repository.workflow.WorkflowDefinitionRepository
 import riven.core.repository.workflow.WorkflowDefinitionVersionRepository
 import riven.core.repository.workflow.WorkflowExecutionRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
-import riven.core.service.workflow.temporal.workflows.WorkflowExecutionWorkflow
+import riven.core.service.workflow.engine.WorkflowOrchestration
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -137,7 +135,7 @@ class WorkflowExecutionService(
         // Start Temporal workflow asynchronously
         try {
             val workflowStub = workflowClient.newWorkflowStub(
-                WorkflowExecutionWorkflow::class.java,
+                WorkflowOrchestration::class.java,
                 WorkflowOptions.newBuilder()
                     .setWorkflowId("execution-$savedExecutionId")
                     .setTaskQueue(WORKFLOW_EXECUTION_TASK_QUEUE)

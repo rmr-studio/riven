@@ -7,4 +7,4 @@ data class ThemeTokens(
     val variant: String? = null,                 // "default" | "muted" | "emphasis"
     val colorRole: String? = null,               // "info" | "warning" | "success" | ...
     val tone: String? = null                     // "light" | "dark" | "auto"
-)
+    )

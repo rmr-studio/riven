@@ -9,8 +9,8 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Configuration
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
-import riven.core.models.workflow.environment.NodeExecutionData
-import riven.core.models.workflow.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.environment.NodeExecutionData
+import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.service.auth.AuthTokenService
 import java.time.Instant
 import java.util.*

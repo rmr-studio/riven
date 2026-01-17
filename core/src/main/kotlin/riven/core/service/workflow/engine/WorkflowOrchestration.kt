@@ -1,9 +1,9 @@
-package riven.core.service.workflow.temporal.workflows
+package riven.core.service.workflow.engine
 
 import io.temporal.workflow.WorkflowInterface
 import io.temporal.workflow.WorkflowMethod
-import riven.core.models.workflow.temporal.WorkflowExecutionInput
-import riven.core.models.workflow.temporal.WorkflowExecutionResult
+import riven.core.models.workflow.engine.WorkflowExecutionInput
+import riven.core.models.workflow.engine.WorkflowExecutionResult
 
 /**
  * Temporal workflow interface for executing workflow definitions.
@@ -17,10 +17,10 @@ import riven.core.models.workflow.temporal.WorkflowExecutionResult
  *
  * All side effects (database operations, external API calls) MUST go through activities.
  *
- * @see WorkflowExecutionWorkflowImpl
+ * @see WorkflowOrchestrationService
  */
 @WorkflowInterface
-interface WorkflowExecutionWorkflow {
+interface WorkflowOrchestration {
 
     /**
      * Execute a workflow definition by orchestrating its nodes.

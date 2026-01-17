@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import riven.core.enums.workflow.WorkflowNodeType
-import riven.core.models.workflow.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import java.util.*
 
 /**

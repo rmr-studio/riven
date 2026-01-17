@@ -1,4 +1,4 @@
-package riven.core.service.workflow.temporal.workers
+package riven.core.configuration.workflow
 
 import io.github.oshai.kotlinlogging.KLogger
 import io.temporal.client.WorkflowClient
@@ -7,9 +7,8 @@ import io.temporal.worker.WorkerFactory
 import jakarta.annotation.PreDestroy
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import riven.core.service.workflow.temporal.activities.WorkflowNodeActivitiesService
-import riven.core.service.workflow.temporal.workflows.WorkflowExecutionWorkflowImpl
-
+import riven.core.service.workflow.engine.WorkflowOrchestrationService
+import riven.core.service.workflow.engine.coordinator.WorkflowCoordinationService
 
 /**
  * Spring configuration for Temporal workers.
@@ -33,7 +32,7 @@ import riven.core.service.workflow.temporal.workflows.WorkflowExecutionWorkflowI
 @Configuration
 class TemporalWorkerConfiguration(
     private val workflowServiceStubs: WorkflowServiceStubs,
-    private val activities: WorkflowNodeActivitiesService,
+    private val activities: WorkflowCoordinationService,
     private val logger: KLogger
 ) {
 
@@ -76,7 +75,7 @@ class TemporalWorkerConfiguration(
         // Register workflow implementations
         // Note: Workflow impl must have no-arg constructor (Temporal instantiates it)
         worker.registerWorkflowImplementationTypes(
-            WorkflowExecutionWorkflowImpl::class.java
+            WorkflowOrchestrationService::class.java
         )
         logger.info { "Registered workflow: WorkflowExecutionWorkflow" }
 

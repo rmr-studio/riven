@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.springframework.web.reactive.function.client.WebClient
 import riven.core.deserializer.WorkflowNodeDeserializer
 import riven.core.enums.workflow.WorkflowNodeType
-import riven.core.models.workflow.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.service.entity.EntityService
 import riven.core.service.workflow.EntityContextService
 import riven.core.service.workflow.ExpressionEvaluatorService
@@ -121,6 +121,8 @@ sealed interface WorkflowNode {
     val id: UUID
     val type: WorkflowNodeType
     val version: Int
+
+    val workspaceId: UUID
 
     /**
      * Execute this node with given context and resolved inputs.

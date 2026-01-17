@@ -1,8 +1,10 @@
-package riven.core.service.workflow.temporal.activities
+package riven.core.service.workflow.engine.coordinator
 
 import io.temporal.activity.ActivityInterface
 import io.temporal.activity.ActivityMethod
-import riven.core.models.workflow.temporal.NodeExecutionResult
+import riven.core.entity.workflow.WorkflowEdgeEntity
+import riven.core.entity.workflow.WorkflowNodeEntity
+import riven.core.models.workflow.engine.coordinator.WorkflowState
 import java.util.*
 
 /**
@@ -17,26 +19,10 @@ import java.util.*
  * Activities are stateless (singleton instances handle concurrent executions).
  * All data must be passed via method parameters, not stored in instance fields.
  *
- * @see WorkflowNodeActivitiesService
+ * @see WorkflowCoordinationService
  */
 @ActivityInterface
-interface WorkflowNodeActivities {
-
-    /**
-     * Execute a single workflow node.
-     *
-     * This activity:
-     * 1. Fetches the node configuration from database
-     * 2. Routes to appropriate handler based on node type (ACTION, CONTROL, TRIGGER)
-     * 3. Persists execution state to WorkflowExecutionNodeEntity
-     * 4. Returns result for workflow orchestration
-     *
-     * @param nodeId UUID of the workflow node to execute
-     * @param workspaceId UUID of the workspace context
-     * @return Execution result with status and output data
-     */
-    @ActivityMethod
-    fun executeNode(nodeId: UUID, workspaceId: UUID): NodeExecutionResult
+interface WorkflowCoordination {
 
     /**
      * Execute workflow with DAG coordination for parallel node scheduling.
@@ -58,8 +44,8 @@ interface WorkflowNodeActivities {
      */
     @ActivityMethod
     fun executeWorkflowWithCoordinator(
-        nodes: List<riven.core.models.workflow.WorkflowNode>,
-        edges: List<riven.core.models.workflow.WorkflowEdge>,
+        nodes: List<WorkflowNodeEntity>,
+        edges: List<WorkflowEdgeEntity>,
         workspaceId: UUID
-    ): riven.core.models.workflow.coordinator.WorkflowState
+    ): WorkflowState
 }

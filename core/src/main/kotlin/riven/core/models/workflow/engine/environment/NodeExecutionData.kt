@@ -1,5 +1,6 @@
-package riven.core.models.workflow.environment
+package riven.core.models.workflow.engine.environment
 
+import riven.core.enums.workflow.WorkflowStatus
 import java.time.Instant
 import java.util.UUID
 
@@ -25,7 +26,7 @@ import java.util.UUID
 data class NodeExecutionData(
     val nodeId: UUID,
     val nodeName: String,
-    val status: String,
+    val status: WorkflowStatus,
     val output: Map<String, Any?>?,
     val error: String?,
     val executedAt: Instant

@@ -1,6 +1,7 @@
 package riven.core.repository.workflow
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import riven.core.entity.workflow.WorkflowNodeEntity
 import java.util.UUID
@@ -29,4 +30,22 @@ interface WorkflowNodeRepository : JpaRepository<WorkflowNodeEntity, UUID> {
      * @return List of workflow nodes in the workspace
      */
     fun findByWorkspaceId(workspaceId: UUID): List<WorkflowNodeEntity>
+
+    /**
+     * Find workflow nodes by workspace and list of node IDs.
+     * Only returns non-deleted nodes.
+     *
+     * @param workspaceId Workspace context
+     * @param nodeIds List of node IDs to fetch
+     * @return List of workflow node entities
+     */
+    @Query(
+        """
+        SELECT n FROM WorkflowNodeEntity n
+        WHERE n.workspaceId = :workspaceId
+        AND n.id IN :nodeIds
+        AND n.deleted = false
+        """
+    )
+    fun findByWorkspaceIdAndIdIn(workspaceId: UUID, nodeIds: Collection<UUID>): List<WorkflowNodeEntity>
 }

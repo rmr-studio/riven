@@ -1,4 +1,4 @@
-package riven.core.models.workflow.coordinator
+package riven.core.models.workflow.engine.coordinator
 
 import java.util.*
 

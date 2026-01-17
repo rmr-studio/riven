@@ -1,27 +1,28 @@
-package riven.core.models.workflow.execution
+package riven.core.models.workflow.engine.execution
 
 import riven.core.enums.workflow.WorkflowStatus
-import riven.core.models.workflow.WorkflowNode
+import riven.core.enums.workflow.WorkflowTriggerType
 import java.time.Duration
 import java.time.ZonedDateTime
 import java.util.*
 
-data class WorkflowExecutionNodeRecord(
+data class WorkflowExecutionRecord(
     override val id: UUID,
     override val workspaceId: UUID,
-    val executionId: UUID,
-    val node: WorkflowNode,
+    val workflowDefinitionId: UUID,
+    val workflowVersionId: UUID,
 
-    val sequenceIndex: Int,
+    val engineWorkflowId: UUID,
+    val engineRunId: UUID,
 
     override val status: WorkflowStatus,
     override val startedAt: ZonedDateTime,
     override val completedAt: ZonedDateTime? = null,
     override val duration: Duration? = null,
-    val attempt: Int,
 
+    val triggerType: WorkflowTriggerType,
     override val input: Any?,
-    override val output: Any?,
-    override val error: Any?
 
+    override val error: Any?,
+    override val output: Any?
 ) : ExecutionRecord

@@ -1,4 +1,4 @@
-package riven.core.service.workflow.temporal.activities
+package riven.core.service.workflow.engine.coordinator
 
 import io.github.oshai.kotlinlogging.KLogger
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -21,6 +21,7 @@ import riven.core.service.workflow.EntityContextService
 import riven.core.service.workflow.ExpressionEvaluatorService
 import riven.core.service.workflow.ExpressionParserService
 import riven.core.service.workflow.InputResolverService
+import riven.core.service.workflow.coordinator.DagExecutionCoordinator
 import java.util.*
 
 /**
@@ -36,18 +37,20 @@ import java.util.*
     classes = [
         AuthTokenService::class,
         WorkspaceSecurity::class,
-        WorkflowNodeActivitiesServiceTest.TestConfig::class,
-        WorkflowNodeActivitiesServiceTest::class
+        WorkflowCoordinationServiceTest.TestConfig::class,
+        WorkflowCoordinationService::class,
     ]
 )
-class WorkflowNodeActivitiesServiceTest {
+class WorkflowCoordinationServiceTest {
 
     @Configuration
     class TestConfig
 
-
     @MockitoBean
     private lateinit var workflowNodeRepository: WorkflowNodeRepository
+
+    @MockitoBean
+    private lateinit var dagExecutionCoordinator: DagExecutionCoordinator
 
     @MockitoBean
     private lateinit var logger: KLogger
@@ -68,13 +71,13 @@ class WorkflowNodeActivitiesServiceTest {
     private lateinit var entityContextService: EntityContextService
 
     @MockitoBean
-    private lateinit var webClientBuilder: WebClient.Builder
-
-    @MockitoBean
     private lateinit var inputResolverService: InputResolverService
 
     @Autowired
-    private lateinit var activities: WorkflowNodeActivitiesService
+    private lateinit var activities: WorkflowCoordinationService
+
+    @MockitoBean
+    private lateinit var webClientBuilder: WebClient.Builder
 
     private val workspaceId = UUID.randomUUID()
     private val nodeId = UUID.randomUUID()

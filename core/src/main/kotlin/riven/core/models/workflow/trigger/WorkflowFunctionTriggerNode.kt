@@ -7,7 +7,7 @@ import riven.core.enums.workflow.WorkflowTriggerType
 import riven.core.models.common.validation.Schema
 import riven.core.models.workflow.NodeExecutionServices
 import riven.core.models.workflow.WorkflowTriggerNode
-import riven.core.models.workflow.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import java.util.*
 
 @JsonTypeName("function_trigger")

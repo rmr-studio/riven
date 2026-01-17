@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import riven.core.enums.workflow.WorkflowTriggerType
 import riven.core.models.workflow.NodeExecutionServices
 import riven.core.models.workflow.WorkflowTriggerNode
-import riven.core.models.workflow.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import java.time.Duration
 import java.util.*
 

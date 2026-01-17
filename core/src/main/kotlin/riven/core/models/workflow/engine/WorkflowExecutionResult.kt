@@ -1,5 +1,7 @@
-package riven.core.models.workflow.temporal
+package riven.core.models.workflow.engine
 
+import riven.core.enums.workflow.WorkflowStatus
+import riven.core.models.common.json.JsonValue
 import java.util.UUID
 
 /**
@@ -13,7 +15,7 @@ import java.util.UUID
  */
 data class WorkflowExecutionResult(
     val executionId: UUID,
-    val status: String,
+    val status: WorkflowStatus,
     val nodeResults: List<NodeExecutionResult>
 )
 
@@ -27,7 +29,7 @@ data class WorkflowExecutionResult(
  */
 data class NodeExecutionResult(
     val nodeId: UUID,
-    val status: String,
-    val output: Any? = null,
+    val status: WorkflowStatus,
+    val output: JsonValue = null,
     val error: String? = null
 )
