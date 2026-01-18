@@ -3,25 +3,25 @@ import { WaitlistForm } from "@/components/waitlist-form";
 export function Hero() {
   return (
     <section className="relative min-h-screen flex items-center">
-      <div className="container mx-auto px-4 py-20 lg:py-32">
-        <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
+      <div className="max-w-7xl mx-auto px-4 py-12 md:px-8 md:py-16 lg:px-12 lg:py-24">
+        <div className="flex flex-col gap-8 md:flex-row md:items-center md:gap-12 lg:gap-16">
           {/* Left: Copy + Form */}
-          <div className="flex flex-col gap-6 text-center lg:text-left">
+          <div className="flex-1 space-y-6">
             {/* Headline - HERO-01: 8 words or fewer, bold value prop */}
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+            <h1 className="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
               Build a CRM that{" "}
               <span className="text-primary">fits your business</span>
             </h1>
 
             {/* Subheadline - HERO-02: Who it's for + problem solved */}
-            <p className="text-lg text-muted-foreground sm:text-xl max-w-xl mx-auto lg:mx-0">
+            <p className="text-lg text-muted-foreground md:text-xl lg:text-2xl">
               Stop contorting your workflows to fit rigid tools. Riven adapts to
               how you actually work, not the other way around.
             </p>
 
             {/* Form - HERO-03 through HERO-07 */}
             <div className="mt-4">
-              <WaitlistForm className="max-w-md mx-auto lg:mx-0" />
+              <WaitlistForm />
               <p className="mt-3 text-sm text-muted-foreground">
                 Join the waitlist for early access. No spam, ever.
               </p>
@@ -29,7 +29,7 @@ export function Hero() {
           </div>
 
           {/* Right: Product Visual - HERO-08 */}
-          <div className="relative">
+          <div className="flex-1 relative md:max-w-md lg:max-w-lg">
             {/* Placeholder for product mockup/visual */}
             <div className="aspect-[4/3] rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-border flex items-center justify-center">
               <div className="text-center p-8">

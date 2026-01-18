@@ -66,19 +66,19 @@ const itemVariants = {
 
 export function Features() {
   return (
-    <section className="py-20 lg:py-32 bg-muted/30">
-      <div className="container mx-auto px-4">
+    <section className="px-4 py-12 md:px-8 md:py-16 lg:px-12 lg:py-24 bg-muted/30">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.1 }}
           variants={containerVariants}
-          className="text-center mb-16"
+          className="text-center mb-12 md:mb-16"
         >
           <motion.h2
             variants={itemVariants}
-            className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl mb-4"
+            className="text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl mb-4"
           >
             Built for how you actually work
           </motion.h2>
@@ -96,7 +96,7 @@ export function Features() {
           whileInView="visible"
           viewport={{ once: true, amount: 0.1 }}
           variants={containerVariants}
-          className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4"
+          className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8"
         >
           {features.map((feature, index) => (
             <motion.div
