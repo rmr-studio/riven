@@ -1,8 +1,8 @@
 package riven.core.service.workflow.coordinator
 
 import org.springframework.stereotype.Service
-import riven.core.models.workflow.WorkflowEdge
-import riven.core.models.workflow.WorkflowNode
+import riven.core.entity.workflow.WorkflowEdgeEntity
+import riven.core.models.workflow.node.WorkflowNode
 import java.util.*
 
 /**
@@ -75,7 +75,7 @@ import java.util.*
  * ```
  *
  * @see WorkflowNode
- * @see WorkflowEdge
+ * @see WorkflowEdgeEntity
  */
 @Service
 class TopologicalSorter {
@@ -114,13 +114,13 @@ class TopologicalSorter {
      * - Queue: O(V) worst case
      * - Result list: O(V)
      *
-     * @param nodes List of workflow nodes to sort
+     * @param nodes List of executable workflow nodes to sort
      * @param edges List of directed edges between nodes
      * @return Nodes in topologically sorted order (dependencies before dependents)
      * @throws IllegalStateException if a cycle is detected in the graph
      * @throws IllegalArgumentException if edges reference nodes not in the nodes list
      */
-    fun sort(nodes: List<WorkflowNode>, edges: List<WorkflowEdge>): List<WorkflowNode> {
+    fun sort(nodes: List<WorkflowNode>, edges: List<WorkflowEdgeEntity>): List<WorkflowNode> {
         if (nodes.isEmpty()) {
             return emptyList()
         }
@@ -174,7 +174,7 @@ class TopologicalSorter {
 
             throw IllegalStateException(
                 "Cycle detected in workflow graph: $unreachableCount nodes unreachable. " +
-                    "Unreachable node IDs: $unreachableIds"
+                        "Unreachable node IDs: $unreachableIds"
             )
         }
 
@@ -190,10 +190,10 @@ class TopologicalSorter {
      * @param edges List of directed edges
      * @return Map from node ID to list of successor node IDs
      */
-    private fun buildAdjacencyList(edges: List<WorkflowEdge>): Map<UUID, List<UUID>> {
+    private fun buildAdjacencyList(edges: List<WorkflowEdgeEntity>): Map<UUID, List<UUID>> {
         return edges
-            .groupBy { it.source.id }
-            .mapValues { (_, edgeList) -> edgeList.map { it.target.id } }
+            .groupBy { it.sourceNodeId }
+            .mapValues { (_, edgeList) -> edgeList.mapNotNull { it.targetNodeId } }
     }
 
     /**
@@ -206,13 +206,16 @@ class TopologicalSorter {
      * @param edges All workflow edges
      * @return Map from node ID to in-degree count
      */
-    private fun calculateInDegrees(nodes: List<WorkflowNode>, edges: List<WorkflowEdge>): MutableMap<UUID, Int> {
+    private fun calculateInDegrees(
+        nodes: List<WorkflowNode>,
+        edges: List<WorkflowEdgeEntity>
+    ): MutableMap<UUID, Int> {
         // Initialize all nodes with in-degree 0
         val inDegree = nodes.associate { it.id to 0 }.toMutableMap()
 
         // Count incoming edges for each node
         for (edge in edges) {
-            val targetId = edge.target.id
+            val targetId = edge.targetNodeId ?: continue
             inDegree[targetId] = inDegree[targetId]!! + 1
         }
 
@@ -226,16 +229,17 @@ class TopologicalSorter {
      * @param nodeMap Map of node IDs to nodes for fast lookup
      * @throws IllegalArgumentException if any edge references a non-existent node
      */
-    private fun validateEdges(edges: List<WorkflowEdge>, nodeMap: Map<UUID, WorkflowNode>) {
+    private fun validateEdges(edges: List<WorkflowEdgeEntity>, nodeMap: Map<UUID, WorkflowNode>) {
         for (edge in edges) {
-            if (edge.source.id !in nodeMap) {
+            if (edge.sourceNodeId !in nodeMap) {
                 throw IllegalArgumentException(
-                    "Edge source node ${edge.source.id} not found in node list"
+                    "Edge source node ${edge.sourceNodeId} not found in node list"
                 )
             }
-            if (edge.target.id !in nodeMap) {
+            val targetId = edge.targetNodeId ?: continue
+            if (targetId !in nodeMap) {
                 throw IllegalArgumentException(
-                    "Edge target node ${edge.target.id} not found in node list"
+                    "Edge target node $targetId not found in node list"
                 )
             }
         }

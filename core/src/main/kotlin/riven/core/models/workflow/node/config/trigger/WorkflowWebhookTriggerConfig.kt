@@ -1,4 +1,4 @@
-package riven.core.models.workflow.trigger
+package riven.core.models.workflow.node.config.trigger
 
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
@@ -8,21 +8,25 @@ import riven.core.enums.common.http.RequestMethodType
 import riven.core.enums.workflow.WorkflowTriggerType
 import riven.core.models.common.http.Signature
 import riven.core.models.common.validation.Schema
-import riven.core.models.workflow.NodeExecutionServices
-import riven.core.models.workflow.WorkflowTriggerNode
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
-import java.util.*
+import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.config.WorkflowTriggerConfig
 
-@JsonTypeName("webhook_trigger")
+/**
+ * Configuration for WEBHOOK trigger nodes.
+ *
+ * Triggers workflow execution when an HTTP webhook is received
+ * at the configured endpoint.
+ */
+@JsonTypeName("workflow_webhook_trigger")
 @JsonDeserialize(using = JsonDeserializer.None::class)
-data class WorkflowWebhookTriggerNode(
-    override val id: UUID,
+data class WorkflowWebhookTriggerConfig(
     override val version: Int = 1,
     val method: RequestMethodType,
     val authentication: AuthenticationType,
     val signature: Signature,
     val payloadSchema: Schema<String>
-) : WorkflowTriggerNode {
+) : WorkflowTriggerConfig {
     override val subType: WorkflowTriggerType
         get() = WorkflowTriggerType.WEBHOOK
 

@@ -1,15 +1,9 @@
 package riven.core.service.workflow.coordinator
 
 import org.springframework.stereotype.Service
-import riven.core.models.workflow.WorkflowEdge
-import riven.core.models.workflow.WorkflowNode
-import riven.core.models.workflow.engine.coordinator.AllNodesCompleted
-import riven.core.models.workflow.engine.coordinator.NodeCompleted
-import riven.core.models.workflow.engine.coordinator.NodesReady
-import riven.core.models.workflow.engine.coordinator.StateTransition
-import riven.core.models.workflow.engine.coordinator.WorkflowExecutionPhase
-import riven.core.models.workflow.engine.coordinator.WorkflowFailed
-import riven.core.models.workflow.engine.coordinator.WorkflowState
+import riven.core.entity.workflow.WorkflowEdgeEntity
+import riven.core.models.workflow.engine.coordinator.*
+import riven.core.models.workflow.node.WorkflowNode
 import java.util.*
 
 /**
@@ -124,7 +118,7 @@ class DagExecutionCoordinator(
      * ## Node Executor Contract
      *
      * The nodeExecutor lambda must:
-     * - Accept a list of WorkflowNode instances (ready for execution)
+     * - Accept a list of ExecutableNode instances (ready for execution)
      * - Execute them in parallel (e.g., Temporal Async.function + Promise.allOf)
      * - Return List<Pair<UUID, Any?>> mapping nodeId to output
      * - Propagate exceptions for failed nodes
@@ -153,7 +147,7 @@ class DagExecutionCoordinator(
      */
     fun executeWorkflow(
         nodes: List<WorkflowNode>,
-        edges: List<WorkflowEdge>,
+        edges: List<WorkflowEdgeEntity>,
         nodeExecutor: (List<WorkflowNode>) -> List<Pair<UUID, Any?>>
     ): WorkflowState {
         // 1. Validate DAG structure
@@ -199,7 +193,7 @@ class DagExecutionCoordinator(
                 val remainingNodes = activeNodeQueue.getRemainingNodes()
                 throw IllegalStateException(
                     "Deadlock detected: ${remainingNodes.size} nodes remaining with unsatisfied dependencies. " +
-                        "Node IDs: ${remainingNodes.joinToString(", ") { it.id.toString() }}"
+                            "Node IDs: ${remainingNodes.joinToString(", ") { it.id.toString() }}"
                 )
             }
 
@@ -236,7 +230,7 @@ class DagExecutionCoordinator(
         if (completedCount != nodes.size) {
             throw IllegalStateException(
                 "Incomplete execution: $completedCount of ${nodes.size} nodes completed. " +
-                    "This indicates a bug in the coordinator or queue logic."
+                        "This indicates a bug in the coordinator or queue logic."
             )
         }
 

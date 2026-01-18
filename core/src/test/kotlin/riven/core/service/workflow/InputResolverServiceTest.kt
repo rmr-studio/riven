@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Configuration
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
+import riven.core.enums.workflow.WorkflowStatus
 import riven.core.models.workflow.engine.environment.NodeExecutionData
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.service.auth.AuthTokenService
@@ -60,7 +61,7 @@ class InputResolverServiceTest {
         context.dataRegistry["fetch_leads"] = NodeExecutionData(
             nodeId = UUID.randomUUID(),
             nodeName = "fetch_leads",
-            status = "COMPLETED",
+            status = WorkflowStatus.COMPLETED,
             output = mapOf("count" to 42),
             error = null,
             executedAt = Instant.now()
@@ -77,7 +78,7 @@ class InputResolverServiceTest {
         context.dataRegistry["fetch_user"] = NodeExecutionData(
             nodeId = UUID.randomUUID(),
             nodeName = "fetch_user",
-            status = "COMPLETED",
+            status = WorkflowStatus.COMPLETED,
             output = mapOf(
                 "user" to mapOf(
                     "email" to "user@example.com",
@@ -101,7 +102,7 @@ class InputResolverServiceTest {
         context.dataRegistry["get_status"] = NodeExecutionData(
             nodeId = UUID.randomUUID(),
             nodeName = "get_status",
-            status = "COMPLETED",
+            status = WorkflowStatus.COMPLETED,
             output = mapOf("status" to "active"),
             error = null,
             executedAt = Instant.now()
@@ -149,7 +150,7 @@ class InputResolverServiceTest {
         context.dataRegistry["fetch_leads"] = NodeExecutionData(
             nodeId = UUID.randomUUID(),
             nodeName = "fetch_leads",
-            status = "COMPLETED",
+            status = WorkflowStatus.COMPLETED,
             output = mapOf("count" to 42),
             error = null,
             executedAt = Instant.now()
@@ -166,7 +167,7 @@ class InputResolverServiceTest {
         context.dataRegistry["failed_node"] = NodeExecutionData(
             nodeId = UUID.randomUUID(),
             nodeName = "failed_node",
-            status = "FAILED",
+            status = WorkflowStatus.FAILED,
             output = null,
             error = "Something went wrong",
             executedAt = Instant.now()
@@ -183,7 +184,7 @@ class InputResolverServiceTest {
         context.dataRegistry["fetch_user"] = NodeExecutionData(
             nodeId = UUID.randomUUID(),
             nodeName = "fetch_user",
-            status = "COMPLETED",
+            status = WorkflowStatus.COMPLETED,
             output = mapOf("user" to null),
             error = null,
             executedAt = Instant.now()
@@ -200,7 +201,7 @@ class InputResolverServiceTest {
         context.dataRegistry["fetch_data"] = NodeExecutionData(
             nodeId = UUID.randomUUID(),
             nodeName = "fetch_data",
-            status = "COMPLETED",
+            status = WorkflowStatus.COMPLETED,
             output = mapOf("value" to "primitive string"),
             error = null,
             executedAt = Instant.now()
@@ -237,7 +238,7 @@ class InputResolverServiceTest {
         context.dataRegistry["fetch_user"] = NodeExecutionData(
             nodeId = UUID.randomUUID(),
             nodeName = "fetch_user",
-            status = "COMPLETED",
+            status = WorkflowStatus.COMPLETED,
             output = mapOf(
                 "email" to "user@example.com",
                 "name" to "John Doe"
@@ -263,7 +264,7 @@ class InputResolverServiceTest {
         context.dataRegistry["fetch_config"] = NodeExecutionData(
             nodeId = UUID.randomUUID(),
             nodeName = "fetch_config",
-            status = "COMPLETED",
+            status = WorkflowStatus.COMPLETED,
             output = mapOf(
                 "url" to "https://api.example.com",
                 "token" to "secret123"
@@ -301,7 +302,7 @@ class InputResolverServiceTest {
         context.dataRegistry["fetch_emails"] = NodeExecutionData(
             nodeId = UUID.randomUUID(),
             nodeName = "fetch_emails",
-            status = "COMPLETED",
+            status = WorkflowStatus.COMPLETED,
             output = mapOf(
                 "primary" to "primary@example.com",
                 "secondary" to "secondary@example.com"

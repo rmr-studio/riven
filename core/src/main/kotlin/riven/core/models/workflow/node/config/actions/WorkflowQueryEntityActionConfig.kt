@@ -1,17 +1,20 @@
-package riven.core.models.workflow.actions
+package riven.core.models.workflow.node.config.actions
 
+import com.fasterxml.jackson.annotation.JsonTypeName
+import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.github.oshai.kotlinlogging.KotlinLogging
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeType
-import riven.core.models.workflow.NodeExecutionServices
-import riven.core.models.workflow.WorkflowActionNode
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.config.WorkflowActionConfig
 import java.util.*
 
 private val log = KotlinLogging.logger {}
 
 /**
- * Action node for querying/fetching entities.
+ * Configuration for QUERY_ENTITY action nodes.
  *
  * ## Configuration
  *
@@ -39,12 +42,13 @@ private val log = KotlinLogging.logger {}
  *
  * This action is commonly used to fetch entity data for use in subsequent steps.
  */
-data class QueryEntityActionNode(
-    override val id: UUID,
+@JsonTypeName("workflow_query_entity_action")
+@JsonDeserialize(using = JsonDeserializer.None::class)
+data class WorkflowQueryEntityActionConfig(
     override val version: Int,
     val name: String,
     val config: Map<String, Any?>
-) : WorkflowActionNode {
+) : WorkflowActionConfig {
 
     override val type: WorkflowNodeType
         get() = WorkflowNodeType.ACTION

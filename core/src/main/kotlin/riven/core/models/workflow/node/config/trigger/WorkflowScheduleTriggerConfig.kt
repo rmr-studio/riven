@@ -1,25 +1,30 @@
-package riven.core.models.workflow.trigger
+package riven.core.models.workflow.node.config.trigger
 
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import riven.core.enums.workflow.WorkflowTriggerType
-import riven.core.models.workflow.NodeExecutionServices
-import riven.core.models.workflow.WorkflowTriggerNode
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.config.WorkflowTriggerConfig
 import java.time.Duration
 import java.util.*
 
-@JsonTypeName("schedule_trigger")
+/**
+ * Configuration for SCHEDULE trigger nodes.
+ *
+ * Triggers workflow execution on a schedule defined by either
+ * a cron expression or a fixed interval.
+ */
+@JsonTypeName("workflow_schedule_trigger")
 @JsonDeserialize(using = JsonDeserializer.None::class)
-data class WorkflowScheduleTriggerNode(
-    override val id: UUID,
+data class WorkflowScheduleTriggerConfig(
     override val version: Int = 1,
     // Either a cron expression or an interval must be provided.
     val cronExpression: String? = null,
     val interval: Duration? = null,
     val timeZone: TimeZone
-) : WorkflowTriggerNode {
+) : WorkflowTriggerConfig {
     override val subType: WorkflowTriggerType
         get() = WorkflowTriggerType.SCHEDULE
 

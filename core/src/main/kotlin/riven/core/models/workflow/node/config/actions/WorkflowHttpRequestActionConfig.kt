@@ -1,19 +1,21 @@
-package riven.core.models.workflow.actions
+package riven.core.models.workflow.node.config.actions
 
+import com.fasterxml.jackson.annotation.JsonTypeName
+import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.http.HttpMethod
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeType
-import riven.core.models.workflow.NodeExecutionServices
-import riven.core.models.workflow.WorkflowActionNode
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.config.WorkflowActionConfig
 import java.net.URI
-import java.util.*
 
 private val logger = KotlinLogging.logger {}
 
 /**
- * Action node for making HTTP requests to external services.
+ * Configuration for HTTP_REQUEST action nodes.
  *
  * ## Configuration
  *
@@ -39,7 +41,7 @@ private val logger = KotlinLogging.logger {}
  * ```json
  * {
  *   "url": "https://api.example.com/users",
- *   "method": "POST",  
+ *   "method": "POST",
  *   "headers": {
  *     "Content-Type": "application/json",
  *     "X-API-Key": "{{ steps.get_api_key.output.key }}"
@@ -56,12 +58,13 @@ private val logger = KotlinLogging.logger {}
  * - SSRF validation prevents requests to localhost, private IPs, and metadata endpoints
  * - Sensitive headers (Authorization, API keys) are not logged
  */
-data class HttpRequestActionNode(
-    override val id: UUID,
+@JsonTypeName("workflow_http_request_action")
+@JsonDeserialize(using = JsonDeserializer.None::class)
+data class WorkflowHttpRequestActionConfig(
     override val version: Int,
     val name: String,
     val config: Map<String, Any?>
-) : WorkflowActionNode {
+) : WorkflowActionConfig {
 
     override val type: WorkflowNodeType
         get() = WorkflowNodeType.ACTION

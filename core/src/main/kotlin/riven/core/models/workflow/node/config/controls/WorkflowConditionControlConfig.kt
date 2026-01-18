@@ -1,17 +1,20 @@
-package riven.core.models.workflow.controls
+package riven.core.models.workflow.node.config.controls
 
+import com.fasterxml.jackson.annotation.JsonTypeName
+import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.github.oshai.kotlinlogging.KotlinLogging
 import riven.core.enums.workflow.WorkflowControlType
 import riven.core.enums.workflow.WorkflowNodeType
-import riven.core.models.workflow.NodeExecutionServices
-import riven.core.models.workflow.WorkflowControlNode
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.config.WorkflowControlConfig
 import java.util.*
 
 private val log = KotlinLogging.logger {}
 
 /**
- * Control flow node for conditional branching.
+ * Configuration for CONDITION control flow nodes.
  *
  * ## Configuration
  *
@@ -52,12 +55,13 @@ private val log = KotlinLogging.logger {}
  * - LOOP: Returns `iterations` count and `results` list
  * - PARALLEL: Returns `results` map of branch outputs
  */
-data class ConditionControlNode(
-    override val id: UUID,
+@JsonTypeName("workflow_condition_control")
+@JsonDeserialize(using = JsonDeserializer.None::class)
+data class WorkflowConditionControlConfig(
     override val version: Int,
     val name: String,
     val config: Map<String, Any?>
-) : WorkflowControlNode {
+) : WorkflowControlConfig {
 
     override val type: WorkflowNodeType
         get() = WorkflowNodeType.CONTROL_FLOW

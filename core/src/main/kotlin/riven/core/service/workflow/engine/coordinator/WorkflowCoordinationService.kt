@@ -6,21 +6,23 @@ import io.temporal.activity.ActivityInterface
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import riven.core.entity.workflow.WorkflowEdgeEntity
-import riven.core.entity.workflow.WorkflowNodeEntity
 import riven.core.entity.workflow.execution.WorkflowExecutionNodeEntity
 import riven.core.enums.workflow.WorkflowStatus
-import riven.core.models.workflow.NodeExecutionServices
-import riven.core.models.workflow.WorkflowNode
 import riven.core.models.workflow.engine.NodeExecutionResult
 import riven.core.models.workflow.engine.coordinator.WorkflowState
 import riven.core.models.workflow.engine.environment.NodeExecutionData
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.WorkflowNode
+import riven.core.models.workflow.node.config.actions.*
+import riven.core.models.workflow.node.config.controls.WorkflowConditionControlConfig
 import riven.core.repository.workflow.WorkflowExecutionNodeRepository
 import riven.core.service.entity.EntityService
 import riven.core.service.workflow.EntityContextService
 import riven.core.service.workflow.ExpressionEvaluatorService
 import riven.core.service.workflow.ExpressionParserService
 import riven.core.service.workflow.InputResolverService
+import riven.core.service.workflow.coordinator.DagExecutionCoordinator
 import java.time.Instant
 import java.time.ZonedDateTime
 import java.util.*
@@ -44,7 +46,6 @@ import java.util.*
  * - Failed executions stored in data registry for debugging
  * - Temporal RetryOptions handle retries automatically
  *
- * @property workflowNodeRepository Fetches node configuration from database
  * @property workflowExecutionNodeRepository Persists node execution state
  * @property entityService Handles entity CRUD operations (injected into nodes)
  * @property expressionEvaluatorService Evaluates expressions (injected into nodes)
@@ -63,14 +64,14 @@ class WorkflowCoordinationService(
     private val entityContextService: EntityContextService,
     private val webClientBuilder: WebClient.Builder,
     private val inputResolverService: InputResolverService,
-    private val dagExecutionCoordinator: riven.core.service.workflow.coordinator.DagExecutionCoordinator,
+    private val dagExecutionCoordinator: DagExecutionCoordinator,
     private val logger: KLogger
 ) : WorkflowCoordination {
 
     private val webClient: WebClient = webClientBuilder.build()
 
     override fun executeWorkflowWithCoordinator(
-        nodes: List<WorkflowNodeEntity>,
+        nodes: List<WorkflowNode>,
         edges: List<WorkflowEdgeEntity>,
         workspaceId: UUID
     ): WorkflowState {
@@ -90,6 +91,7 @@ class WorkflowCoordinationService(
             dataRegistry = mutableMapOf()
         )
 
+
         // Callback to execute a batch of ready nodes during workflow orchestration
         // Returns list of (nodeId, output) pairs
         val nodeExecutor: (List<WorkflowNode>) -> List<Pair<UUID, Any?>> = { readyNodes ->
@@ -102,7 +104,7 @@ class WorkflowCoordinationService(
                 logger.info { "Executing node ${node.id} (${node.type})" }
 
                 // Execute node using existing executeNode logic
-                val result = executeNode(node.id, workspaceId)
+                val result = executeNode(node, workspaceId)
 
                 // Check if node failed
                 if (result.status == WorkflowStatus.FAILED) {
@@ -127,8 +129,9 @@ class WorkflowCoordinationService(
 
     private fun executeNode(node: WorkflowNode, workspaceId: UUID): NodeExecutionResult {
         val startTime = ZonedDateTime.now()
+        val nodeId = node.id
 
-        logger.info { "Executing workflow node: $node.id in workspace: $workspaceId" }
+        logger.info { "Executing workflow node: $nodeId in workspace: $workspaceId" }
 
         try {
 
@@ -163,21 +166,16 @@ class WorkflowCoordinationService(
                 startTime = startTime
             )
 
-            // Get the WorkflowNode from config (deserialized polymorphic type)
-            val workflowNode = node.config as? WorkflowNode
-                ?: throw IllegalStateException("Node config is not a WorkflowNode: ${node.config::class.simpleName}")
-
             // Resolve inputs (templates → values)
-            // Convert WorkflowNode properties to Map for resolution
-            // For now, we'll use an empty map since concrete node classes hold their own config
-            // Phase 4.2 will properly map node config to input map
-            val configMap = when (workflowNode) {
-                is riven.core.models.workflow.actions.CreateEntityActionNode -> workflowNode.config
-                is riven.core.models.workflow.actions.UpdateEntityActionNode -> workflowNode.config
-                is riven.core.models.workflow.actions.DeleteEntityActionNode -> workflowNode.config
-                is riven.core.models.workflow.actions.QueryEntityActionNode -> workflowNode.config
-                is riven.core.models.workflow.actions.HttpRequestActionNode -> workflowNode.config
-                is riven.core.models.workflow.controls.ConditionControlNode -> workflowNode.config
+            // Convert WorkflowNodeConfig properties to Map for resolution
+            val configMap = when (val config = node.config) {
+                is WorkflowCreateEntityActionConfig -> config.config
+                is WorkflowUpdateEntityActionConfig -> config.config
+                is WorkflowDeleteEntityActionConfig -> config.config
+                is WorkflowQueryEntityActionConfig -> config.config
+                is WorkflowHttpRequestActionConfig -> config.config
+                is WorkflowConditionControlConfig -> config.config
+                //TODO: Add other node config types here and streamline mapping process
                 else -> emptyMap()
             }
 
@@ -196,13 +194,13 @@ class WorkflowCoordinationService(
             )
 
             // Polymorphic execution - no type switching!
-            // Nodes implement their own execute() method
+            // Nodes implement their own execute() method via config
             // This enables easy addition of new node types (LOOP, SWITCH, PARALLEL, etc.)
             logger.info { "Executing ${node.type} node via polymorphic dispatch: ${node.name}" }
             val executionStart = System.currentTimeMillis()
 
             val result = executeAction(nodeId, node.name, node.type.name, context) {
-                workflowNode.execute(context, resolvedInputs, services)
+                node.execute(context, resolvedInputs, services)
             }
 
             val duration = System.currentTimeMillis() - executionStart
@@ -211,7 +209,7 @@ class WorkflowCoordinationService(
             // Update execution record (COMPLETED/FAILED status)
             updateExecutionNode(
                 executionNode = executionNode,
-                status = if (result.status == "COMPLETED") WorkflowStatus.COMPLETED else WorkflowStatus.FAILED,
+                status = if (result.status == WorkflowStatus.COMPLETED) WorkflowStatus.COMPLETED else WorkflowStatus.FAILED,
                 output = result.output,
                 error = result.error,
                 completedTime = ZonedDateTime.now(),
@@ -231,7 +229,7 @@ class WorkflowCoordinationService(
                     activityInfo.workflowId.substringAfter("execution-")
                 )
 
-                val executionNode = createExecutionNode(
+                val executionNodeRecord = createExecutionNode(
                     workflowExecutionId = workflowExecutionId,
                     nodeId = nodeId,
                     workspaceId = workspaceId,
@@ -239,7 +237,7 @@ class WorkflowCoordinationService(
                 )
 
                 updateExecutionNode(
-                    executionNode = executionNode,
+                    executionNode = executionNodeRecord,
                     status = WorkflowStatus.FAILED,
                     output = null,
                     error = e.message,
@@ -252,7 +250,7 @@ class WorkflowCoordinationService(
 
             return NodeExecutionResult(
                 nodeId = nodeId,
-                status = "FAILED",
+                status = WorkflowStatus.FAILED,
                 error = e.message ?: "Unknown error"
             )
         }

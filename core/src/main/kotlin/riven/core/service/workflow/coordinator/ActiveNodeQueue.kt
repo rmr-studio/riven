@@ -1,8 +1,8 @@
 package riven.core.service.workflow.coordinator
 
 import org.springframework.stereotype.Service
-import riven.core.models.workflow.WorkflowEdge
-import riven.core.models.workflow.WorkflowNode
+import riven.core.entity.workflow.WorkflowEdgeEntity
+import riven.core.models.workflow.node.WorkflowNode
 import java.util.*
 
 /**
@@ -77,14 +77,14 @@ class ActiveNodeQueue {
     private val completedNodes = mutableSetOf<UUID>()
 
     /**
-     * Node lookup map for O(1) access: nodeId → WorkflowNode
+     * Node lookup map for O(1) access: nodeId → ExecutableNode
      */
     private val nodeMap = mutableMapOf<UUID, WorkflowNode>()
 
     /**
      * Edge adjacency list: sourceNodeId → outgoing edges
      */
-    private val adjacencyList = mutableMapOf<UUID, MutableList<WorkflowEdge>>()
+    private val adjacencyList = mutableMapOf<UUID, MutableList<WorkflowEdgeEntity>>()
 
     /**
      * Initializes the queue with workflow nodes and edges.
@@ -94,10 +94,10 @@ class ActiveNodeQueue {
      * 2. Calculates initial in-degree for each node
      * 3. Enqueues nodes with in-degree 0 (no dependencies)
      *
-     * @param nodes All workflow nodes in the DAG
+     * @param nodes All executable workflow nodes in the DAG
      * @param edges All dependency edges in the DAG
      */
-    fun initialize(nodes: List<WorkflowNode>, edges: List<WorkflowEdge>) {
+    fun initialize(nodes: List<WorkflowNode>, edges: List<WorkflowEdgeEntity>) {
         // Clear all state
         inDegreeMap.clear()
         readyQueue.clear()
@@ -114,11 +114,12 @@ class ActiveNodeQueue {
 
         // Calculate in-degree from edges
         edges.forEach { edge ->
+            val targetId = edge.targetNodeId ?: return@forEach
             // Increment target node's in-degree
-            inDegreeMap[edge.target.id] = (inDegreeMap[edge.target.id] ?: 0) + 1
+            inDegreeMap[targetId] = (inDegreeMap[targetId] ?: 0) + 1
 
             // Add edge to source node's adjacency list
-            adjacencyList[edge.source.id]?.add(edge)
+            adjacencyList[edge.sourceNodeId]?.add(edge)
         }
 
         // Enqueue all nodes with in-degree 0
@@ -171,7 +172,7 @@ class ActiveNodeQueue {
 
         // Decrement in-degree of successor nodes
         outgoingEdges.forEach { edge ->
-            val targetId = edge.target.id
+            val targetId = edge.targetNodeId ?: return@forEach
             val currentInDegree = inDegreeMap[targetId] ?: 0
 
             if (currentInDegree > 0) {

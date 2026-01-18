@@ -3,8 +3,8 @@ package riven.core.service.workflow.engine.coordinator
 import io.temporal.activity.ActivityInterface
 import io.temporal.activity.ActivityMethod
 import riven.core.entity.workflow.WorkflowEdgeEntity
-import riven.core.entity.workflow.WorkflowNodeEntity
 import riven.core.models.workflow.engine.coordinator.WorkflowState
+import riven.core.models.workflow.node.WorkflowNode
 import java.util.*
 
 /**
@@ -44,7 +44,7 @@ interface WorkflowCoordination {
      */
     @ActivityMethod
     fun executeWorkflowWithCoordinator(
-        nodes: List<WorkflowNodeEntity>,
+        nodes: List<WorkflowNode>,
         edges: List<WorkflowEdgeEntity>,
         workspaceId: UUID
     ): WorkflowState

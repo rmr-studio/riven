@@ -2,6 +2,7 @@ package riven.core.service.workflow
 
 import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Service
+import riven.core.enums.workflow.WorkflowStatus
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 
 /**
@@ -205,7 +206,7 @@ class InputResolverService(
         }
 
         // Check if node execution succeeded
-        if (nodeData.status != "COMPLETED") {
+        if (nodeData.status != WorkflowStatus.COMPLETED) {
             logger.warn { "Node '$nodeName' did not complete successfully (status: ${nodeData.status}). Cannot resolve template." }
             return null
         }
@@ -230,6 +231,7 @@ class InputResolverService(
                     logger.debug { "Cannot traverse segment '$segment' - current value is null. Path: $path" }
                     return null
                 }
+
                 is Map<*, *> -> {
                     current = current[segment]
                     if (current == null) {
@@ -237,6 +239,7 @@ class InputResolverService(
                         return null
                     }
                 }
+
                 else -> {
                     logger.warn { "Cannot access property '$segment' on non-map value (type: ${current!!::class.simpleName}). Path: $path" }
                     return null
@@ -261,7 +264,7 @@ class InputResolverService(
         config: Map<String, Any?>,
         context: WorkflowExecutionContext
     ): Map<String, Any?> {
-        return config.mapValues { (key, value) ->
+        return config.mapValues { (_, value) ->
             resolveValue(value, context)
         }
     }
@@ -286,12 +289,14 @@ class InputResolverService(
                     resolveValue(v, context)
                 }
             }
+
             is List<*> -> {
                 // Recursively resolve list items
                 value.map { item ->
                     resolveValue(item, context)
                 }
             }
+
             else -> value // Primitives, nulls, other types pass through
         }
     }

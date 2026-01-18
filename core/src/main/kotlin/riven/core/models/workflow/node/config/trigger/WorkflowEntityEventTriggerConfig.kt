@@ -1,24 +1,31 @@
-package riven.core.models.workflow.trigger
+package riven.core.models.workflow.node.config.trigger
 
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import riven.core.enums.util.OperationType
 import riven.core.enums.workflow.WorkflowTriggerType
-import riven.core.models.common.validation.Schema
-import riven.core.models.workflow.NodeExecutionServices
-import riven.core.models.workflow.WorkflowTriggerNode
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
-import java.util.*
+import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.config.WorkflowTriggerConfig
 
-@JsonTypeName("function_trigger")
+/**
+ * Configuration for ENTITY_EVENT trigger nodes.
+ *
+ * Triggers workflow execution when entity operations occur
+ * (CREATE, UPDATE, DELETE) on specified entity types.
+ */
+@JsonTypeName("workflow_entity_event_trigger")
 @JsonDeserialize(using = JsonDeserializer.None::class)
-data class WorkflowFunctionTriggerNode(
-    override val id: UUID,
+data class WorkflowEntityEventTriggerConfig(
     override val version: Int = 1,
-    val schema: Schema<String>
-) : WorkflowTriggerNode {
+    val key: String,
+    val operation: OperationType,
+    val field: List<String> = emptyList(),
+    val expressions: Any
+) : WorkflowTriggerConfig {
     override val subType: WorkflowTriggerType
-        get() = WorkflowTriggerType.FUNCTION
+        get() = WorkflowTriggerType.ENTITY_EVENT
 
     override fun execute(
         context: WorkflowExecutionContext,

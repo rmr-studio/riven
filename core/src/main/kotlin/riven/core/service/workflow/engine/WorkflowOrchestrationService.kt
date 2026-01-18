@@ -6,13 +6,13 @@ import io.temporal.common.RetryOptions
 import io.temporal.workflow.Workflow
 import org.springframework.stereotype.Service
 import riven.core.entity.workflow.WorkflowEdgeEntity
-import riven.core.entity.workflow.WorkflowNodeEntity
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.models.workflow.engine.NodeExecutionResult
 import riven.core.models.workflow.engine.WorkflowExecutionInput
 import riven.core.models.workflow.engine.WorkflowExecutionResult
 import riven.core.models.workflow.engine.coordinator.WorkflowExecutionPhase
 import riven.core.models.workflow.engine.coordinator.WorkflowState
+import riven.core.models.workflow.node.WorkflowNode
 import riven.core.repository.workflow.WorkflowEdgeRepository
 import riven.core.repository.workflow.WorkflowNodeRepository
 import riven.core.service.workflow.engine.coordinator.WorkflowCoordination
@@ -76,8 +76,8 @@ class WorkflowOrchestrationService(
 
         val (_: UUID, nodeIds: List<UUID>, workspaceId: UUID) = input
 
-        val nodes: List<WorkflowNodeEntity> =
-            workflowNodeRepository.findByWorkspaceIdAndIdIn(workspaceId, nodeIds)
+        val nodes: List<WorkflowNode> =
+            workflowNodeRepository.findByWorkspaceIdAndIdIn(workspaceId, nodeIds).map { it.toModel() }
         val edges: List<WorkflowEdgeEntity> =
             workflowEdgeRepository.findByWorkspaceIdAndNodeIds(workspaceId, nodeIds.toTypedArray())
 

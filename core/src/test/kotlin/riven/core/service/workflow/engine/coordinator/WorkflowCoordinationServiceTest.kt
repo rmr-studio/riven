@@ -9,12 +9,12 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.web.reactive.function.client.WebClient
 import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.repository.workflow.WorkflowExecutionNodeRepository
-import riven.core.repository.workflow.WorkflowNodeRepository
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.entity.EntityService
 import riven.core.service.workflow.EntityContextService
@@ -44,10 +44,16 @@ import java.util.*
 class WorkflowCoordinationServiceTest {
 
     @Configuration
-    class TestConfig
+    class TestConfig {
+        @Bean
+        fun webClientBuilder(): WebClient.Builder {
+            val mockWebClient: WebClient = mock()
+            val builder: WebClient.Builder = mock()
+            whenever(builder.build()).thenReturn(mockWebClient)
+            return builder
+        }
+    }
 
-    @MockitoBean
-    private lateinit var workflowNodeRepository: WorkflowNodeRepository
 
     @MockitoBean
     private lateinit var dagExecutionCoordinator: DagExecutionCoordinator
@@ -76,9 +82,6 @@ class WorkflowCoordinationServiceTest {
     @Autowired
     private lateinit var activities: WorkflowCoordinationService
 
-    @MockitoBean
-    private lateinit var webClientBuilder: WebClient.Builder
-
     private val workspaceId = UUID.randomUUID()
     private val nodeId = UUID.randomUUID()
     private val entityId = UUID.randomUUID()
@@ -86,14 +89,8 @@ class WorkflowCoordinationServiceTest {
 
     @BeforeEach
     fun setup() {
-
-        // Mock WebClient.Builder to return a mock WebClient
-        val mockWebClient: WebClient = mock()
-        whenever(webClientBuilder.build()).thenReturn(mockWebClient)
-
         // Mock InputResolverService to return inputs as-is (no templates)
         whenever(inputResolverService.resolveAll(any(), any())).thenAnswer { it.arguments[0] }
-
     }
 
     /**

@@ -1,10 +1,10 @@
 package riven.core.service.workflow.coordinator
 
 import org.springframework.stereotype.Service
+import riven.core.entity.workflow.WorkflowEdgeEntity
 import riven.core.enums.workflow.WorkflowControlType
-import riven.core.models.workflow.WorkflowControlNode
-import riven.core.models.workflow.WorkflowEdge
-import riven.core.models.workflow.WorkflowNode
+import riven.core.models.workflow.node.WorkflowNode
+import riven.core.models.workflow.node.config.WorkflowControlConfig
 import java.util.*
 
 /**
@@ -122,11 +122,11 @@ class DagValidator(
      * - valid = true and errors = [] if all checks pass
      * - valid = false and errors = [list of issues] if any checks fail
      *
-     * @param nodes List of workflow nodes to validate
+     * @param nodes List of executable workflow nodes to validate
      * @param edges List of directed edges between nodes
      * @return ValidationResult indicating validity and any errors found
      */
-    fun validate(nodes: List<WorkflowNode>, edges: List<WorkflowEdge>): ValidationResult {
+    fun validate(nodes: List<WorkflowNode>, edges: List<WorkflowEdgeEntity>): ValidationResult {
         val errors = mutableListOf<String>()
 
         // Empty graphs are valid (no-op workflows)
@@ -166,17 +166,18 @@ class DagValidator(
      * Validate that all edges reference nodes that exist in the node list.
      */
     private fun validateEdgeConsistency(
-        edges: List<WorkflowEdge>,
+        edges: List<WorkflowEdgeEntity>,
         nodeMap: Map<UUID, WorkflowNode>
     ): List<String> {
         val errors = mutableListOf<String>()
 
         for (edge in edges) {
-            if (edge.source.id !in nodeMap) {
-                errors.add("Edge ${edge.id} references non-existent source node ${edge.source.id}")
+            if (edge.sourceNodeId !in nodeMap) {
+                errors.add("Edge ${edge.id} references non-existent source node ${edge.sourceNodeId}")
             }
-            if (edge.target.id !in nodeMap) {
-                errors.add("Edge ${edge.id} references non-existent target node ${edge.target.id}")
+            val targetId = edge.targetNodeId ?: continue
+            if (targetId !in nodeMap) {
+                errors.add("Edge ${edge.id} references non-existent target node $targetId")
             }
         }
 
@@ -189,7 +190,7 @@ class DagValidator(
      * If topological sort succeeds, the graph is acyclic.
      * If it throws an exception, a cycle exists.
      */
-    private fun validateNoCycles(nodes: List<WorkflowNode>, edges: List<WorkflowEdge>): List<String> {
+    private fun validateNoCycles(nodes: List<WorkflowNode>, edges: List<WorkflowEdgeEntity>): List<String> {
         return try {
             topologicalSorter.sort(nodes, edges)
             emptyList() // No cycle detected
@@ -208,7 +209,7 @@ class DagValidator(
      */
     private fun validateConnectedComponents(
         nodes: List<WorkflowNode>,
-        edges: List<WorkflowEdge>,
+        edges: List<WorkflowEdgeEntity>,
         nodeMap: Map<UUID, WorkflowNode>
     ): List<String> {
         if (nodes.isEmpty()) return emptyList()
@@ -216,7 +217,8 @@ class DagValidator(
         // Calculate in-degrees to find start nodes
         val inDegree = nodes.associate { it.id to 0 }.toMutableMap()
         for (edge in edges) {
-            inDegree[edge.target.id] = inDegree[edge.target.id]!! + 1
+            val targetId = edge.targetNodeId ?: continue
+            inDegree[targetId] = inDegree[targetId]!! + 1
         }
 
         // Find start nodes (in-degree 0)
@@ -229,8 +231,8 @@ class DagValidator(
 
         // Build adjacency list for BFS traversal
         val adjacencyList = edges
-            .groupBy { it.source.id }
-            .mapValues { (_, edgeList) -> edgeList.map { it.target.id } }
+            .groupBy { it.sourceNodeId }
+            .mapValues { (_, edgeList) -> edgeList.mapNotNull { it.targetNodeId } }
 
         // BFS from all start nodes to find reachable nodes
         val visited = mutableSetOf<UUID>()
@@ -278,17 +280,18 @@ class DagValidator(
      */
     private fun validateNoOrphanedNodes(
         nodes: List<WorkflowNode>,
-        edges: List<WorkflowEdge>,
+        edges: List<WorkflowEdgeEntity>,
         nodeMap: Map<UUID, WorkflowNode>
     ): List<String> {
         // Calculate in-degrees
         val inDegree = nodes.associate { it.id to 0 }.toMutableMap()
         for (edge in edges) {
-            inDegree[edge.target.id] = inDegree[edge.target.id]!! + 1
+            val targetId = edge.targetNodeId ?: continue
+            inDegree[targetId] = inDegree[targetId]!! + 1
         }
 
         // Find nodes with in-degree 0 (potential start nodes or orphans)
-        val zeroInDegreeNodes = nodes.filter { inDegree[it.id] == 0 }
+        nodes.filter { inDegree[it.id] == 0 }
 
         // If there are multiple nodes with in-degree 0, they could be legitimate
         // start nodes (parallel entry points) or orphans. The connected components
@@ -308,19 +311,21 @@ class DagValidator(
      */
     private fun validateConditionalBranching(
         nodes: List<WorkflowNode>,
-        edges: List<WorkflowEdge>,
+        edges: List<WorkflowEdgeEntity>,
         nodeMap: Map<UUID, WorkflowNode>
     ): List<String> {
         val errors = mutableListOf<String>()
 
         // Build outgoing edge count for each node
         val outgoingEdgeCount = edges
-            .groupBy { it.source.id }
+            .groupBy { it.sourceNodeId }
             .mapValues { (_, edgeList) -> edgeList.size }
 
         // Check conditional nodes (control nodes with CONDITION subtype)
-        val conditionalNodes = nodes.filterIsInstance<WorkflowControlNode>()
-            .filter { it.subType == WorkflowControlType.CONDITION }
+        val conditionalNodes = nodes.filter { node ->
+            val config = node.config
+            config is WorkflowControlConfig && config.subType == WorkflowControlType.CONDITION
+        }
 
         for (node in conditionalNodes) {
             val edgeCount = outgoingEdgeCount[node.id] ?: 0
@@ -328,7 +333,7 @@ class DagValidator(
             if (edgeCount < 2) {
                 errors.add(
                     "Conditional node ${node.id} must have at least 2 outgoing edges " +
-                        "for true/false branches (found $edgeCount)"
+                            "for true/false branches (found $edgeCount)"
                 )
             }
         }

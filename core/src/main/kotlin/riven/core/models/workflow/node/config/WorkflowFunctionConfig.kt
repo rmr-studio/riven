@@ -1,22 +1,26 @@
-package riven.core.models.workflow
+package riven.core.models.workflow.node.config
 
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
-import java.util.*
+import riven.core.models.workflow.node.NodeExecutionServices
 
 /**
- * A function itself defines a closed set of operations that can be executed.
- * A workflow is composed of multiple functions that are orchestrated together to achieve a specific goal.
+ * Configuration for a FUNCTION category node.
+ *
+ * A function defines a closed set of operations that can be executed.
+ * A workflow is composed of multiple functions that are orchestrated
+ * together to achieve a specific goal.
+ *
+ * FUNCTION has no subtypes - it's a single concrete implementation.
  */
-@JsonTypeName("function_node")
+@JsonTypeName("function_config")
 @JsonDeserialize(using = JsonDeserializer.None::class)
-data class WorkflowFunctionNode(
-    override val id: UUID,
+data class WorkflowFunctionConfig(
     override val version: Int = 1
-) : WorkflowNode {
+) : WorkflowNodeConfig {
     override val type: WorkflowNodeType
         get() = WorkflowNodeType.FUNCTION
 

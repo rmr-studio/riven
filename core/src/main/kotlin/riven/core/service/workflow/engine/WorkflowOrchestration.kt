@@ -25,7 +25,7 @@ interface WorkflowOrchestration {
     /**
      * Execute a workflow definition by orchestrating its nodes.
      *
-     * This method receives the workflow input, orchestrates node execution via activities,
+     * This method receives the workflow input, orchesWorktrates node execution via activities,
      * and returns the aggregated results.
      *
      * @param input Workflow execution parameters (definition ID, nodes, workspace)

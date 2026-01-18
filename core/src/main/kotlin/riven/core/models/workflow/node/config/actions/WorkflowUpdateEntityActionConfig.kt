@@ -1,15 +1,18 @@
-package riven.core.models.workflow.actions
+package riven.core.models.workflow.node.config.actions
 
+import com.fasterxml.jackson.annotation.JsonTypeName
+import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.request.entity.SaveEntityRequest
-import riven.core.models.workflow.NodeExecutionServices
-import riven.core.models.workflow.WorkflowActionNode
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.config.WorkflowActionConfig
 import java.util.*
 
 /**
- * Action node for updating entities.
+ * Configuration for UPDATE_ENTITY action nodes.
  *
  * ## Configuration
  *
@@ -39,12 +42,13 @@ import java.util.*
  * }
  * ```
  */
-data class UpdateEntityActionNode(
-    override val id: UUID,
+@JsonTypeName("workflow_update_entity_action")
+@JsonDeserialize(using = JsonDeserializer.None::class)
+data class WorkflowUpdateEntityActionConfig(
     override val version: Int,
     val name: String,
     val config: Map<String, Any?>
-) : WorkflowActionNode {
+) : WorkflowActionConfig {
 
     override val type: WorkflowNodeType
         get() = WorkflowNodeType.ACTION
@@ -59,7 +63,7 @@ data class UpdateEntityActionNode(
     ): Map<String, Any?> {
         // Extract inputs (already resolved)
         val entityId = UUID.fromString(inputs["entityId"] as String)
-        val payload = inputs["payload"] as? Map<*, *> ?: emptyMap<Any, Any>()
+        inputs["payload"] as? Map<*, *> ?: emptyMap<Any, Any>()
 
         // Get existing entity to determine type
         val existingEntity = services.entityService.getEntity(entityId)

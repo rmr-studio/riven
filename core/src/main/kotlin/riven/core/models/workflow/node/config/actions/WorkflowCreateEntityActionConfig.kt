@@ -1,15 +1,18 @@
-package riven.core.models.workflow.actions
+package riven.core.models.workflow.node.config.actions
 
+import com.fasterxml.jackson.annotation.JsonTypeName
+import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.request.entity.SaveEntityRequest
-import riven.core.models.workflow.NodeExecutionServices
-import riven.core.models.workflow.WorkflowActionNode
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.config.WorkflowActionConfig
 import java.util.*
 
 /**
- * Action node for creating entities.
+ * Configuration for CREATE_ENTITY action nodes.
  *
  * ## Configuration
  *
@@ -41,12 +44,13 @@ import java.util.*
  *
  * Templates are resolved before execute() is called.
  */
-data class CreateEntityActionNode(
-    override val id: UUID,
+@JsonTypeName("workflow_create_entity_action")
+@JsonDeserialize(using = JsonDeserializer.None::class)
+data class WorkflowCreateEntityActionConfig(
     override val version: Int,
     val name: String,
     val config: Map<String, Any?>
-) : WorkflowActionNode {
+) : WorkflowActionConfig {
 
     override val type: WorkflowNodeType
         get() = WorkflowNodeType.ACTION
@@ -61,7 +65,7 @@ data class CreateEntityActionNode(
     ): Map<String, Any?> {
         // Extract inputs (already resolved by InputResolverService)
         val entityTypeId = UUID.fromString(inputs["entityTypeId"] as String)
-        val payload = inputs["payload"] as? Map<*, *> ?: emptyMap<Any, Any>()
+        inputs["payload"] as? Map<*, *> ?: emptyMap<Any, Any>()
 
         // Create entity via EntityService
         val saveRequest = SaveEntityRequest(

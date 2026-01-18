@@ -6,22 +6,30 @@ import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.common.SoftDeletable
-import riven.core.models.workflow.WorkflowNode
+import riven.core.models.workflow.node.WorkflowNode
+import riven.core.models.workflow.node.config.WorkflowNodeConfig
 import java.time.ZonedDateTime
 import java.util.*
 
 /**
  * JPA entity for storing workflow nodes with polymorphic configuration.
  *
- * The `config` field stores the complete WorkflowNode as JSONB, which is deserialized
- * to the correct concrete type (e.g., WorkflowScheduleTriggerNode) by WorkflowNodeDeserializer.
+ * The `config` field stores the [WorkflowNodeConfig] as JSONB, which is deserialized
+ * to the correct concrete type (e.g., ScheduleTriggerConfig) by WorkflowNodeConfigDeserializer.
  *
  * This entity uses immutable copy-on-write versioning pattern (like BlockTypeEntity):
  * - Creating: version=1, source_id=null
  * - Updating: Creates new row with version++, source_id points to original
  *
+ * ## Three-Layer Architecture
+ *
+ * 1. **WorkflowNodeConfig** - Pure configuration and execution logic (no ID)
+ * 2. **WorkflowNodeEntity** (this class) - JPA entity for persistence
+ * 3. **ExecutableNode** - Runtime DTO combining entity metadata with config
+ *
+ * @see WorkflowNodeConfig
  * @see WorkflowNode
- * @see riven.core.deserializer.WorkflowNodeDeserializer
+ * @see riven.core.deserializer.WorkflowNodeConfigDeserializer
  */
 @Entity
 @Table(
@@ -47,7 +55,7 @@ data class WorkflowNodeEntity(
     val id: UUID? = null,
 
     @Column(name = "workspace_id", nullable = false, columnDefinition = "uuid")
-    val workspaceId: UUID? = null,
+    val workspaceId: UUID,
 
     @Column(name = "key", nullable = false)
     val key: String,
@@ -70,7 +78,7 @@ data class WorkflowNodeEntity(
 
     @Type(JsonBinaryType::class)
     @Column(name = "config", columnDefinition = "jsonb", nullable = false)
-    val config: WorkflowNode,
+    val config: WorkflowNodeConfig,
 
     @Column(name = "system", nullable = false)
     val system: Boolean = false,
@@ -84,41 +92,46 @@ data class WorkflowNodeEntity(
 ) : AuditableEntity(), SoftDeletable {
 
     /**
-     * Converts this entity to a domain WorkflowNode model.
+     * Converts this entity to an [WorkflowNode] for runtime execution.
      *
-     * The config field contains the fully deserialized WorkflowNode subtype
-     * (e.g., WorkflowScheduleTriggerNode, WorkflowEntityEventTriggerNode, etc.)
-     * thanks to the WorkflowNodeDeserializer.
+     * The ExecutableNode combines entity metadata (id, workspaceId, key, name)
+     * with the config's execution logic, providing a complete runtime context.
      *
-     * @return The deserialized WorkflowNode with all type-specific properties
-     * @throws IllegalArgumentException if the entity's id is null
+     * @return An ExecutableNode ready for workflow execution
+     * @throws IllegalArgumentException if the entity's id or workspaceId is null
      */
     fun toModel(): WorkflowNode {
-        requireNotNull(this.id) { "WorkflowNodeEntity ID cannot be null when converting to model" }
+        val id = requireNotNull(this.id) { "WorkflowNodeEntity ID cannot be null when converting to ExecutableNode" }
 
-        // The config field already contains the correct concrete type!
-        // WorkflowNodeDeserializer has already routed to the correct class.
-        return this.config
+
+        return WorkflowNode(
+            id = id,
+            workspaceId = this.workspaceId,
+            key = this.key,
+            name = this.name,
+            description = this.description,
+            config = this.config
+        )
     }
 
     companion object {
         /**
-         * Creates a WorkflowNodeEntity from a WorkflowNode model.
+         * Creates a WorkflowNodeEntity from a WorkflowNodeConfig.
          *
          * @param workspaceId The workspace this node belongs to
          * @param key Unique identifier for this node within the workspace
          * @param name Human-readable name
          * @param description Optional description
-         * @param node The WorkflowNode model (will be serialized to config JSONB)
+         * @param config The WorkflowNodeConfig (will be serialized to JSONB)
          * @param system Whether this is a system node
          * @return A WorkflowNodeEntity ready to persist
          */
-        fun fromModel(
-            workspaceId: UUID?,
+        fun fromConfig(
+            workspaceId: UUID,
             key: String,
             name: String,
             description: String?,
-            node: WorkflowNode,
+            config: WorkflowNodeConfig,
             system: Boolean = false
         ): WorkflowNodeEntity {
             return WorkflowNodeEntity(
@@ -126,9 +139,9 @@ data class WorkflowNodeEntity(
                 key = key,
                 name = name,
                 description = description,
-                type = node.type,
-                version = node.version,
-                config = node, // Serialized to JSONB automatically
+                type = config.type,
+                version = config.version,
+                config = config,
                 system = system
             )
         }
@@ -137,18 +150,18 @@ data class WorkflowNodeEntity(
          * Creates a new version of an existing node (copy-on-write pattern).
          *
          * @param original The original WorkflowNodeEntity
-         * @param updatedNode The updated WorkflowNode model
+         * @param updatedConfig The updated WorkflowNodeConfig
          * @return A new WorkflowNodeEntity with incremented version and source_id set
          */
         fun createNewVersion(
             original: WorkflowNodeEntity,
-            updatedNode: WorkflowNode
+            updatedConfig: WorkflowNodeConfig
         ): WorkflowNodeEntity {
             return original.copy(
                 id = null, // New entity, let JPA generate new ID
                 version = original.version + 1,
                 sourceId = original.id, // Link back to original
-                config = updatedNode,
+                config = updatedConfig,
                 deleted = false,
                 deletedAt = null
             )

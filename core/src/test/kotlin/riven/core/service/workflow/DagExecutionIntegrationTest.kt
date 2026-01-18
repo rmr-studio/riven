@@ -4,14 +4,11 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import riven.core.models.workflow.WorkflowEdge
-import riven.core.models.workflow.WorkflowNode
+import riven.core.entity.workflow.WorkflowEdgeEntity
 import riven.core.models.workflow.engine.coordinator.WorkflowExecutionPhase
-import riven.core.service.workflow.coordinator.ActiveNodeQueue
-import riven.core.service.workflow.coordinator.DagExecutionCoordinator
-import riven.core.service.workflow.coordinator.DagValidator
-import riven.core.service.workflow.coordinator.TopologicalSorter
-import riven.core.service.workflow.coordinator.WorkflowValidationException
+import riven.core.models.workflow.node.WorkflowNode
+import riven.core.models.workflow.node.config.actions.WorkflowCreateEntityActionConfig
+import riven.core.service.workflow.coordinator.*
 import java.util.*
 
 /**
@@ -35,7 +32,7 @@ import java.util.*
  *
  * Each test:
  * 1. Creates WorkflowNode instances (mock nodes)
- * 2. Creates WorkflowEdge instances (dependencies)
+ * 2. Creates WorkflowEdgeEntity instances (dependencies)
  * 3. Defines nodeExecutor that tracks execution batches
  * 4. Calls coordinator.executeWorkflow()
  * 5. Asserts on execution order and parallelism
@@ -248,7 +245,7 @@ class DagExecutionIntegrationTest {
 
         assertTrue(
             exception.message?.contains("Cycle detected") == true ||
-                exception.message?.contains("unreachable") == true,
+                    exception.message?.contains("unreachable") == true,
             "Exception should mention cycle detection"
         )
     }
@@ -298,7 +295,12 @@ class DagExecutionIntegrationTest {
         val nodeB = createMockNode("B")
         val nodes = listOf(nodeA, nodeB)
         val edges = listOf(
-            WorkflowEdge(UUID.randomUUID(), source = nodeA, target = nodeB)
+            WorkflowEdgeEntity(
+                UUID.randomUUID(),
+                workspaceId = UUID.randomUUID(),
+                sourceNodeId = nodeA.id,
+                targetNodeId = nodeB.id
+            )
         )
 
         val nodeExecutor: (List<WorkflowNode>) -> List<Pair<UUID, Any?>> = { readyNodes ->
@@ -326,7 +328,7 @@ class DagExecutionIntegrationTest {
     @Test
     fun `test empty workflow executes successfully`() {
         val nodes = emptyList<WorkflowNode>()
-        val edges = emptyList<WorkflowEdge>()
+        val edges = emptyList<WorkflowEdgeEntity>()
 
         val nodeExecutor: (List<WorkflowNode>) -> List<Pair<UUID, Any?>> = { readyNodes ->
             readyNodes.map { it.id to mapOf("result" to "completed") }
@@ -345,15 +347,25 @@ class DagExecutionIntegrationTest {
     /**
      * Create linear DAG: A → B → C
      */
-    private fun createLinearDag(): Pair<List<WorkflowNode>, List<WorkflowEdge>> {
+    private fun createLinearDag(): Pair<List<WorkflowNode>, List<WorkflowEdgeEntity>> {
         val nodeA = createMockNode("A")
         val nodeB = createMockNode("B")
         val nodeC = createMockNode("C")
 
         val nodes = listOf(nodeA, nodeB, nodeC)
         val edges = listOf(
-            WorkflowEdge(UUID.randomUUID(), source = nodeA, target = nodeB),
-            WorkflowEdge(UUID.randomUUID(), source = nodeB, target = nodeC)
+            WorkflowEdgeEntity(
+                UUID.randomUUID(),
+                workspaceId = UUID.randomUUID(),
+                sourceNodeId = nodeA.id,
+                targetNodeId = nodeB.id
+            ),
+            WorkflowEdgeEntity(
+                UUID.randomUUID(),
+                workspaceId = UUID.randomUUID(),
+                sourceNodeId = nodeB.id,
+                targetNodeId = nodeC.id
+            )
         )
 
         return nodes to edges
@@ -367,18 +379,40 @@ class DagExecutionIntegrationTest {
      *    \ /
      *     D
      */
-    private fun createDiamondDag(): Pair<List<WorkflowNode>, List<WorkflowEdge>> {
+    private fun createDiamondDag(): Pair<List<WorkflowNode>, List<WorkflowEdgeEntity>> {
         val nodeA = createMockNode("A")
         val nodeB = createMockNode("B")
         val nodeC = createMockNode("C")
         val nodeD = createMockNode("D")
 
+        val workspaceId: UUID = UUID.randomUUID()
+
         val nodes = listOf(nodeA, nodeB, nodeC, nodeD)
         val edges = listOf(
-            WorkflowEdge(UUID.randomUUID(), source = nodeA, target = nodeB),
-            WorkflowEdge(UUID.randomUUID(), source = nodeA, target = nodeC),
-            WorkflowEdge(UUID.randomUUID(), source = nodeB, target = nodeD),
-            WorkflowEdge(UUID.randomUUID(), source = nodeC, target = nodeD)
+            WorkflowEdgeEntity(
+                UUID.randomUUID(),
+                workspaceId = workspaceId,
+                sourceNodeId = nodeA.id,
+                targetNodeId = nodeB.id
+            ),
+            WorkflowEdgeEntity(
+                UUID.randomUUID(),
+                workspaceId = workspaceId,
+                sourceNodeId = nodeA.id,
+                targetNodeId = nodeC.id
+            ),
+            WorkflowEdgeEntity(
+                UUID.randomUUID(),
+                workspaceId = workspaceId,
+                sourceNodeId = nodeB.id,
+                targetNodeId = nodeD.id
+            ),
+            WorkflowEdgeEntity(
+                UUID.randomUUID(),
+                workspaceId = workspaceId,
+                sourceNodeId = nodeC.id,
+                targetNodeId = nodeD.id
+            )
         )
 
         return nodes to edges
@@ -392,21 +426,53 @@ class DagExecutionIntegrationTest {
      *     \ | /
      *       E
      */
-    private fun createParallelDag(): Pair<List<WorkflowNode>, List<WorkflowEdge>> {
+    private fun createParallelDag(): Pair<List<WorkflowNode>, List<WorkflowEdgeEntity>> {
         val nodeA = createMockNode("A")
         val nodeB = createMockNode("B")
         val nodeC = createMockNode("C")
         val nodeD = createMockNode("D")
         val nodeE = createMockNode("E")
 
+        val workspaceId = UUID.randomUUID()
+
         val nodes = listOf(nodeA, nodeB, nodeC, nodeD, nodeE)
         val edges = listOf(
-            WorkflowEdge(UUID.randomUUID(), source = nodeA, target = nodeB),
-            WorkflowEdge(UUID.randomUUID(), source = nodeA, target = nodeC),
-            WorkflowEdge(UUID.randomUUID(), source = nodeA, target = nodeD),
-            WorkflowEdge(UUID.randomUUID(), source = nodeB, target = nodeE),
-            WorkflowEdge(UUID.randomUUID(), source = nodeC, target = nodeE),
-            WorkflowEdge(UUID.randomUUID(), source = nodeD, target = nodeE)
+            WorkflowEdgeEntity(
+                UUID.randomUUID(),
+                workspaceId = workspaceId,
+                sourceNodeId = nodeA.id,
+                targetNodeId = nodeB.id
+            ),
+            WorkflowEdgeEntity(
+                UUID.randomUUID(),
+                workspaceId = workspaceId,
+                sourceNodeId = nodeA.id,
+                targetNodeId = nodeC.id
+            ),
+            WorkflowEdgeEntity(
+                UUID.randomUUID(),
+                workspaceId = workspaceId,
+                sourceNodeId = nodeA.id,
+                targetNodeId = nodeD.id
+            ),
+            WorkflowEdgeEntity(
+                UUID.randomUUID(),
+                workspaceId = workspaceId,
+                sourceNodeId = nodeB.id,
+                targetNodeId = nodeE.id
+            ),
+            WorkflowEdgeEntity(
+                UUID.randomUUID(),
+                workspaceId = workspaceId,
+                sourceNodeId = nodeC.id,
+                targetNodeId = nodeE.id
+            ),
+            WorkflowEdgeEntity(
+                UUID.randomUUID(),
+                workspaceId = workspaceId,
+                sourceNodeId = nodeD.id,
+                targetNodeId = nodeE.id
+            )
         )
 
         return nodes to edges
@@ -415,16 +481,33 @@ class DagExecutionIntegrationTest {
     /**
      * Create cyclic DAG: A → B → C → A
      */
-    private fun createCyclicDag(): Pair<List<WorkflowNode>, List<WorkflowEdge>> {
+    private fun createCyclicDag(): Pair<List<WorkflowNode>, List<WorkflowEdgeEntity>> {
         val nodeA = createMockNode("A")
         val nodeB = createMockNode("B")
         val nodeC = createMockNode("C")
 
+        val workspaceId = UUID.randomUUID()
+
         val nodes = listOf(nodeA, nodeB, nodeC)
         val edges = listOf(
-            WorkflowEdge(UUID.randomUUID(), source = nodeA, target = nodeB),
-            WorkflowEdge(UUID.randomUUID(), source = nodeB, target = nodeC),
-            WorkflowEdge(UUID.randomUUID(), source = nodeC, target = nodeA) // Cycle
+            WorkflowEdgeEntity(
+                UUID.randomUUID(),
+                workspaceId = workspaceId,
+                sourceNodeId = nodeA.id,
+                targetNodeId = nodeB.id
+            ),
+            WorkflowEdgeEntity(
+                UUID.randomUUID(),
+                workspaceId = workspaceId,
+                sourceNodeId = nodeB.id,
+                targetNodeId = nodeC.id
+            ),
+            WorkflowEdgeEntity(
+                UUID.randomUUID(),
+                workspaceId = workspaceId,
+                sourceNodeId = nodeC.id,
+                targetNodeId = nodeA.id
+            ) // Cycle
         )
 
         return nodes to edges
@@ -433,16 +516,28 @@ class DagExecutionIntegrationTest {
     /**
      * Create disconnected DAG: A → B    C → D
      */
-    private fun createDisconnectedDag(): Pair<List<WorkflowNode>, List<WorkflowEdge>> {
+    private fun createDisconnectedDag(): Pair<List<WorkflowNode>, List<WorkflowEdgeEntity>> {
         val nodeA = createMockNode("A")
         val nodeB = createMockNode("B")
         val nodeC = createMockNode("C")
         val nodeD = createMockNode("D")
 
+        val workspaceId = UUID.randomUUID()
+
         val nodes = listOf(nodeA, nodeB, nodeC, nodeD)
         val edges = listOf(
-            WorkflowEdge(UUID.randomUUID(), source = nodeA, target = nodeB),
-            WorkflowEdge(UUID.randomUUID(), source = nodeC, target = nodeD) // Disconnected
+            WorkflowEdgeEntity(
+                UUID.randomUUID(),
+                workspaceId = workspaceId,
+                sourceNodeId = nodeA.id,
+                targetNodeId = nodeB.id
+            ),
+            WorkflowEdgeEntity(
+                UUID.randomUUID(),
+                workspaceId = workspaceId,
+                sourceNodeId = nodeC.id,
+                targetNodeId = nodeD.id
+            ) // Disconnected
         )
 
         return nodes to edges
@@ -455,14 +550,19 @@ class DagExecutionIntegrationTest {
      * The actual execution is mocked via nodeExecutor lambda.
      */
     private fun createMockNode(name: String): WorkflowNode {
-        return riven.core.models.workflow.actions.CreateEntityActionNode(
+        return WorkflowNode(
             id = UUID.randomUUID(),
-            version = 1,
             name = name,
-            config = mapOf(
-                "entityTypeId" to UUID.randomUUID().toString(),
-                "payload" to mapOf("name" to name)
-            )
+            config = WorkflowCreateEntityActionConfig(
+                version = 1,
+                name = "Create Entity Action for $name",
+                config = mapOf(
+                    "entityTypeId" to UUID.randomUUID().toString(),
+                    "payload" to mapOf("name" to name)
+                )
+            ),
+            workspaceId = UUID.randomUUID(),
+            key = name.lowercase()
         )
     }
 }
