@@ -16,6 +16,14 @@ This roadmap delivers a pre-launch landing page for Riven that communicates the 
 
 **Dependencies:** None (foundation phase)
 
+**Plans:** 4 plans
+
+Plans:
+- [ ] 01-01-PLAN.md - Install dependencies and establish design system
+- [ ] 01-02-PLAN.md - Set up providers and UI primitives (Button, Input)
+- [ ] 01-03-PLAN.md - Build form infrastructure (validation, API, mutation, WaitlistForm)
+- [ ] 01-04-PLAN.md - Create Hero section and compose landing page
+
 **Requirements:**
 - HERO-01: Bold headline communicates value prop in 8 words or fewer
 - HERO-02: Subheadline clarifies who it's for and what problem it solves
@@ -96,7 +104,7 @@ This roadmap delivers a pre-launch landing page for Riven that communicates the 
 
 | Phase | Status | Requirements | Completed |
 |-------|--------|--------------|-----------|
-| 1 - Hero + Infrastructure | Not Started | 16 | 0 |
+| 1 - Hero + Infrastructure | Planned | 16 | 0 |
 | 2 - Content Sections | Not Started | 10 | 0 |
 | 3 - Polish + Production | Not Started | 9 | 0 |
 
