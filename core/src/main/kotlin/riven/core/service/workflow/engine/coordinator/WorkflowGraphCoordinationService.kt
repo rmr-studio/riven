@@ -1,102 +1,39 @@
-package riven.core.service.workflow.coordinator
+package riven.core.service.workflow.engine.coordinator
 
 import org.springframework.stereotype.Service
 import riven.core.entity.workflow.WorkflowEdgeEntity
+import riven.core.models.common.json.JsonValue
 import riven.core.models.workflow.engine.coordinator.*
 import riven.core.models.workflow.node.WorkflowNode
 import java.util.*
 
 /**
- * DAG execution coordinator that orchestrates complete workflow execution.
- *
- * This service is the "brain" that connects all DAG execution components:
- * - DagValidator: Validates graph structure (cycles, connectivity)
- * - TopologicalSorter: Determines dependency order
- * - ActiveNodeQueue: Schedules ready nodes for parallel execution
- * - WorkflowState + StateTransition: Tracks orchestration progress
- *
- * ## Algorithm Overview (Kahn's + Active Queue + State Machine)
- *
- * The coordinator implements a modified Kahn's algorithm enhanced with active node queue
- * for parallel scheduling and state machine tracking:
- *
- * 1. **Validate DAG:** Ensure no cycles, all nodes reachable, edges consistent
- * 2. **Initialize state:** Create WorkflowState with INITIALIZING phase
- * 3. **Initialize queue:** Build in-degree map and enqueue ready nodes (in-degree = 0)
- * 4. **Execution loop:** While queue has more work:
- *    a. Get batch of ready nodes from queue
- *    b. Transition state: NodesReady event
- *    c. Execute ready nodes in parallel (via caller's nodeExecutor)
- *    d. Wait for all to complete
- *    e. For each completed node:
- *       - Transition state: NodeCompleted event with output
- *       - Mark node completed in queue (triggers successor in-degree decrement)
- *       - Update data registry with output
- * 5. **Complete:** Transition state to COMPLETED
- *
+ * This service manages and coordinates the internal graph, and orchestrates node execution
+
  * ## Usage with Temporal Async/Promise
- *
  * The coordinator delegates actual node execution to the caller via a nodeExecutor lambda.
  * This keeps the coordinator deterministic and enables Temporal parallel execution:
  *
- * ```kotlin
- * // In Temporal workflow (via activity):
- * val nodeExecutor: (List<WorkflowNode>) -> List<Pair<UUID, Any?>> = { readyNodes ->
- *     // Execute all ready nodes in parallel
- *     val promises = readyNodes.map { node ->
- *         Async.function { activities.executeNode(node.id, context) }
- *     }
+ * TODO. Need to add
+ * - Retry Policies
+ * - Error Recovery Workflows
+ * - Partial Completion Handling
+ * - Full Conditional Branching (ie. Switches, Loops, etc)
  *
- *     // Wait for all (deterministic)
- *     Promise.allOf(promises).get()
- *
- *     // Collect results: nodeId -> output
- *     readyNodes.zip(promises.map { it.get() }).map { (node, result) ->
- *         node.id to result.output
- *     }
- * }
- *
- * // Execute workflow via coordinator
- * val finalState = coordinator.executeWorkflow(nodes, edges, nodeExecutor)
- * ```
- *
- * ## Thread Safety
- *
- * **This service is ONLY safe for use within Temporal's single-threaded workflow context.**
- * Do NOT use in multi-threaded environments. The ActiveNodeQueue maintains mutable state
- * optimized for single-threaded deterministic execution.
- *
- * ## Error Handling
- *
- * The coordinator throws exceptions for:
- * - **WorkflowValidationException**: Invalid DAG structure (cycles, disconnected components)
- * - **IllegalStateException**: Incomplete execution (nodes remain with positive in-degree)
- * - **Node execution errors**: Propagated from nodeExecutor lambda
- *
- * In Phase 5 (v1), any node failure aborts the workflow. Phase 7 will add:
- * - Retry policies
- * - Error recovery workflows
- * - Partial completion handling
- *
- * ## Conditional Branching (v1 - Simple)
- *
- * Current implementation executes all outgoing edges from every node. Conditional nodes
- * return edge selection in their output, but v1 doesn't use that for branching yet.
- * Full conditional branching is Phase 7 work.
  *
  * @property dagValidator Validates DAG structure before execution
- * @property topologicalSorter Verifies execution order (used for pre-validation)
- * @property activeNodeQueue Manages parallel node scheduling with in-degree tracking
+ * @property workflowGraphTopologicalSorterService Verifies execution order (used for pre-validation)
+ * @property workflowGraphQueueManagementService Manages parallel node scheduling with in-degree tracking
  */
 @Service
-class DagExecutionCoordinator(
-    private val dagValidator: DagValidator,
-    private val topologicalSorter: TopologicalSorter,
-    private val activeNodeQueue: ActiveNodeQueue
+class WorkflowGraphCoordinationService(
+    private val dagValidator: WorkflowGraphValidationService,
+    private val workflowGraphTopologicalSorterService: WorkflowGraphTopologicalSorterService,
+    private val workflowGraphQueueManagementService: WorkflowGraphQueueManagementService
 ) {
 
     /**
-     * Execute DAG workflow with parallel node scheduling.
+     * Executes provided workflow graph
      *
      * This method orchestrates the complete workflow execution:
      * 1. Validates DAG structure (throws if invalid)
@@ -120,7 +57,7 @@ class DagExecutionCoordinator(
      * The nodeExecutor lambda must:
      * - Accept a list of ExecutableNode instances (ready for execution)
      * - Execute them in parallel (e.g., Temporal Async.function + Promise.allOf)
-     * - Return List<Pair<UUID, Any?>> mapping nodeId to output
+     * - Return a list of (nodeId, output) pairs for completed nodes
      * - Propagate exceptions for failed nodes
      *
      * ## State Machine
@@ -148,7 +85,7 @@ class DagExecutionCoordinator(
     fun executeWorkflow(
         nodes: List<WorkflowNode>,
         edges: List<WorkflowEdgeEntity>,
-        nodeExecutor: (List<WorkflowNode>) -> List<Pair<UUID, Any?>>
+        nodeExecutor: (List<WorkflowNode>) -> List<Pair<UUID, JsonValue>>
     ): WorkflowState {
         // 1. Validate DAG structure
         val validationResult = dagValidator.validate(nodes, edges)
@@ -160,7 +97,7 @@ class DagExecutionCoordinator(
 
         // 2. Verify topological order exists (redundant with validator but provides extra safety)
         try {
-            topologicalSorter.sort(nodes, edges)
+            workflowGraphTopologicalSorterService.sort(nodes, edges)
         } catch (e: IllegalStateException) {
             throw WorkflowValidationException("Topological sort failed: ${e.message}", e)
         }
@@ -175,7 +112,7 @@ class DagExecutionCoordinator(
         )
 
         // 4. Initialize active node queue
-        activeNodeQueue.initialize(nodes, edges)
+        workflowGraphQueueManagementService.initialize(nodes, edges)
 
         // 5. Handle empty workflow (no nodes)
         if (nodes.isEmpty()) {
@@ -184,13 +121,13 @@ class DagExecutionCoordinator(
         }
 
         // 6. Execution loop: process nodes in topological order with parallelism
-        while (activeNodeQueue.hasMoreWork()) {
+        while (workflowGraphQueueManagementService.hasMoreWork()) {
             // Get batch of ready nodes (all nodes with in-degree = 0)
-            val readyNodes = activeNodeQueue.getReadyNodes()
+            val readyNodes = workflowGraphQueueManagementService.getReadyNodes()
 
             if (readyNodes.isEmpty()) {
                 // No ready nodes but queue has more work = deadlock (shouldn't happen after validation)
-                val remainingNodes = activeNodeQueue.getRemainingNodes()
+                val remainingNodes = workflowGraphQueueManagementService.getRemainingNodes()
                 throw IllegalStateException(
                     "Deadlock detected: ${remainingNodes.size} nodes remaining with unsatisfied dependencies. " +
                             "Node IDs: ${remainingNodes.joinToString(", ") { it.id.toString() }}"
@@ -221,12 +158,12 @@ class DagExecutionCoordinator(
                 )
 
                 // Mark node completed in queue (decrements successor in-degrees, enqueues new ready nodes)
-                activeNodeQueue.markNodeCompleted(nodeId)
+                workflowGraphQueueManagementService.markNodeCompleted(nodeId)
             }
         }
 
         // 6. Verify all nodes completed
-        val completedCount = activeNodeQueue.getCompletedNodes().size
+        val completedCount = workflowGraphQueueManagementService.getCompletedNodes().size
         if (completedCount != nodes.size) {
             throw IllegalStateException(
                 "Incomplete execution: $completedCount of ${nodes.size} nodes completed. " +

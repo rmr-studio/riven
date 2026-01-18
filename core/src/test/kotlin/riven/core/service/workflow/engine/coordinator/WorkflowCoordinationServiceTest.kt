@@ -21,7 +21,6 @@ import riven.core.service.workflow.EntityContextService
 import riven.core.service.workflow.ExpressionEvaluatorService
 import riven.core.service.workflow.ExpressionParserService
 import riven.core.service.workflow.InputResolverService
-import riven.core.service.workflow.coordinator.DagExecutionCoordinator
 import java.util.*
 
 /**
@@ -56,7 +55,7 @@ class WorkflowCoordinationServiceTest {
 
 
     @MockitoBean
-    private lateinit var dagExecutionCoordinator: DagExecutionCoordinator
+    private lateinit var workflowGraphCoordinationService: WorkflowGraphCoordinationService
 
     @MockitoBean
     private lateinit var logger: KLogger

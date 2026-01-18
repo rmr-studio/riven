@@ -1,34 +1,30 @@
-package riven.core.service.workflow.coordinator
+package riven.core.service.workflow.engine.coordinator
 
 import org.springframework.stereotype.Service
 import riven.core.entity.workflow.WorkflowEdgeEntity
 import riven.core.enums.workflow.WorkflowControlType
+import riven.core.models.workflow.engine.coordinator.WorkflowGraphValidationResult
 import riven.core.models.workflow.node.WorkflowNode
 import riven.core.models.workflow.node.config.WorkflowControlConfig
 import java.util.*
 
 /**
- * DAG (Directed Acyclic Graph) structure validator for workflow graphs.
- *
  * This service validates the structural integrity of workflow graphs before execution,
  * ensuring they form a valid DAG with no cycles, disconnected components, or other
  * structural issues that would prevent correct execution.
  *
- * ## Validation Checks
+ * The service should check and validate the following requirements:
+ *  - No Cycles
+ *  - No Disconnected/Orphaned Nodes
+ *  - All edges provided reference valid nodes
+ *  - Conditional nodes have appropriate branching
  *
- * 1. **No cycles**: Graph must be acyclic (uses TopologicalSorter)
- * 2. **Connected components**: All nodes must be reachable from start nodes
- * 3. **No orphaned nodes**: Every non-start node must have at least one incoming edge
- * 4. **Edge consistency**: All edges must reference nodes that exist in the node list
- * 5. **Conditional branching**: Conditional nodes must have at least 2 outgoing edges
+ **/
+/**
  *
- * ## Example Scenarios
+ * VALIDATION EXAMPLES
  *
- * ### Valid Linear DAG
- * ```
- * A → B → C
- *
- * Result: ValidationResult(valid = true, errors = [])
+ * Result: WorkflowGraphValidationResult(valid = true, errors = [])
  * ```
  *
  * ### Valid Diamond DAG
@@ -39,14 +35,14 @@ import java.util.*
  *    \ /
  *     D
  *
- * Result: ValidationResult(valid = true, errors = [])
+ * Result: WorkflowGraphValidationResult(valid = true, errors = [])
  * ```
  *
  * ### Invalid: Cycle
  * ```
  * A → B → C → A
  *
- * Result: ValidationResult(
+ * Result: WorkflowGraphValidationResult(
  *   valid = false,
  *   errors = ["Cycle detected in workflow graph: 3 nodes unreachable..."]
  * )
@@ -56,7 +52,7 @@ import java.util.*
  * ```
  * A → B    C → D  (two separate graphs)
  *
- * Result: ValidationResult(
+ * Result: WorkflowGraphValidationResult(
  *   valid = false,
  *   errors = ["Disconnected components detected: 2 unreachable nodes (C, D)"]
  * )
@@ -66,7 +62,7 @@ import java.util.*
  * ```
  * A → B    C  (C has no incoming edges, not a start node)
  *
- * Result: ValidationResult(
+ * Result: WorkflowGraphValidationResult(
  *   valid = false,
  *   errors = ["Orphaned node detected: C (no incoming edges)"]
  * )
@@ -76,62 +72,39 @@ import java.util.*
  * ```
  * A (CONDITION) → B  (only one outgoing edge)
  *
- * Result: ValidationResult(
+ * Result: WorkflowGraphValidationResult(
  *   valid = false,
  *   errors = ["Conditional node A must have at least 2 outgoing edges for true/false branches"]
  * )
  * ```
- *
- * ## Usage in Workflow Execution
- *
- * ```kotlin
- * val result = dagValidator.validate(nodes, edges)
- * if (!result.valid) {
- *     throw WorkflowValidationException(result.errors.joinToString("; "))
- * }
- * // Proceed with execution
- * ```
- *
- * @property topologicalSorter Sorter for cycle detection
- */
+ **/
+
 @Service
-class DagValidator(
-    private val topologicalSorter: TopologicalSorter
+class WorkflowGraphValidationService(
+    private val workflowGraphTopologicalSorterService: WorkflowGraphTopologicalSorterService
 ) {
 
     /**
-     * Validate workflow graph structure.
-     *
-     * Performs comprehensive structural validation to ensure the workflow graph
-     * is a valid DAG that can be executed correctly.
-     *
+     * Validates the provided workflow graph structure.
      * This method returns all errors found rather than failing on the first error,
      * enabling users to fix multiple issues at once.
      *
-     * ## Validation Order
-     *
-     * 1. Edge consistency (fail fast if edges invalid)
-     * 2. Cycle detection (via topological sort)
-     * 3. Connected components
-     * 4. Orphaned nodes
-     * 5. Conditional branching
-     *
      * ## Return Value
      *
-     * Returns ValidationResult with:
+     * Returns WorkflowGraphValidationResult with:
      * - valid = true and errors = [] if all checks pass
      * - valid = false and errors = [list of issues] if any checks fail
      *
      * @param nodes List of executable workflow nodes to validate
      * @param edges List of directed edges between nodes
-     * @return ValidationResult indicating validity and any errors found
+     * @return WorkflowGraphValidationResult indicating validity and any errors found
      */
-    fun validate(nodes: List<WorkflowNode>, edges: List<WorkflowEdgeEntity>): ValidationResult {
+    fun validate(nodes: List<WorkflowNode>, edges: List<WorkflowEdgeEntity>): WorkflowGraphValidationResult {
         val errors = mutableListOf<String>()
 
         // Empty graphs are valid (no-op workflows)
         if (nodes.isEmpty()) {
-            return ValidationResult(valid = true, errors = emptyList())
+            return WorkflowGraphValidationResult(valid = true, errors = emptyList())
         }
 
         // Create node lookup map
@@ -141,7 +114,7 @@ class DagValidator(
         errors.addAll(validateEdgeConsistency(edges, nodeMap))
         if (errors.isNotEmpty()) {
             // Fail fast if edges are invalid - can't proceed with other checks
-            return ValidationResult(valid = false, errors = errors)
+            return WorkflowGraphValidationResult(valid = false, errors = errors)
         }
 
         // 2. Validate no cycles (using topological sort)
@@ -156,7 +129,7 @@ class DagValidator(
         // 5. Validate conditional node branching
         errors.addAll(validateConditionalBranching(nodes, edges, nodeMap))
 
-        return ValidationResult(
+        return WorkflowGraphValidationResult(
             valid = errors.isEmpty(),
             errors = errors
         )
@@ -192,7 +165,7 @@ class DagValidator(
      */
     private fun validateNoCycles(nodes: List<WorkflowNode>, edges: List<WorkflowEdgeEntity>): List<String> {
         return try {
-            topologicalSorter.sort(nodes, edges)
+            workflowGraphTopologicalSorterService.sort(nodes, edges)
             emptyList() // No cycle detected
         } catch (e: IllegalStateException) {
             // Cycle detected - extract error message from topological sorter
@@ -342,13 +315,4 @@ class DagValidator(
     }
 }
 
-/**
- * Result of DAG validation.
- *
- * @property valid True if the graph passed all validation checks
- * @property errors List of validation error messages (empty if valid)
- */
-data class ValidationResult(
-    val valid: Boolean,
-    val errors: List<String>
-)
+

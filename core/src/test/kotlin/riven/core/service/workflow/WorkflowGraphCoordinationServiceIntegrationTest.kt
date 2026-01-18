@@ -1,14 +1,15 @@
 package riven.core.service.workflow
 
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
 import riven.core.entity.workflow.WorkflowEdgeEntity
 import riven.core.models.workflow.engine.coordinator.WorkflowExecutionPhase
 import riven.core.models.workflow.node.WorkflowNode
 import riven.core.models.workflow.node.config.actions.WorkflowCreateEntityActionConfig
-import riven.core.service.workflow.coordinator.*
+import riven.core.service.workflow.engine.coordinator.*
 import java.util.*
 
 /**
@@ -36,32 +37,32 @@ import java.util.*
  * 3. Defines nodeExecutor that tracks execution batches
  * 4. Calls coordinator.executeWorkflow()
  * 5. Asserts on execution order and parallelism
- *
- * ## Implementation Note
- *
- * This test manually instantiates coordinator components instead of using @SpringBootTest
- * to avoid Spring context loading overhead and configuration complexity.
- */
-class DagExecutionIntegrationTest {
+ * */
+@SpringBootTest(
+    classes = [
+        WorkflowGraphCoordinationService::class,
+        WorkflowGraphTopologicalSorterService::class,
+        WorkflowGraphValidationService::class,
+        WorkflowGraphQueueManagementService::class
+    ]
+)
+class WorkflowGraphCoordinationServiceIntegrationTest {
 
-    private lateinit var dagExecutionCoordinator: DagExecutionCoordinator
-    private lateinit var topologicalSorter: TopologicalSorter
-    private lateinit var dagValidator: DagValidator
-    private lateinit var activeNodeQueue: ActiveNodeQueue
 
-    @BeforeEach
-    fun setup() {
-        // Manually instantiate components (no Spring context needed)
-        // Create fresh instances for each test to ensure isolation
-        topologicalSorter = TopologicalSorter()
-        activeNodeQueue = ActiveNodeQueue()
-        dagValidator = DagValidator(topologicalSorter)
-        dagExecutionCoordinator = DagExecutionCoordinator(
-            dagValidator,
-            topologicalSorter,
-            activeNodeQueue
-        )
-    }
+    @Autowired
+    private lateinit var workflowGraphCoordinationService: WorkflowGraphCoordinationService
+
+    @Autowired
+    private lateinit var workflowGraphTopologicalSorterService: WorkflowGraphTopologicalSorterService
+
+    @Autowired
+
+    private lateinit var workflowGraphValidationService: WorkflowGraphValidationService
+
+    @Autowired
+
+    private lateinit var workflowGraphQueueManagementService: WorkflowGraphQueueManagementService
+
 
     /**
      * Create a fresh coordinator for each test execution.
@@ -69,11 +70,11 @@ class DagExecutionIntegrationTest {
      * ActiveNodeQueue maintains mutable state, so we need fresh instances
      * to prevent test interference.
      */
-    private fun createCoordinator(): DagExecutionCoordinator {
-        return DagExecutionCoordinator(
-            DagValidator(TopologicalSorter()),
-            TopologicalSorter(),
-            ActiveNodeQueue()
+    private fun createCoordinator(): WorkflowGraphCoordinationService {
+        return WorkflowGraphCoordinationService(
+            WorkflowGraphValidationService(WorkflowGraphTopologicalSorterService()),
+            WorkflowGraphTopologicalSorterService(),
+            WorkflowGraphQueueManagementService()
         )
     }
 

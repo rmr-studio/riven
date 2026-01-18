@@ -1,4 +1,4 @@
-package riven.core.service.workflow.coordinator
+package riven.core.service.workflow.engine.coordinator
 
 import org.springframework.stereotype.Service
 import riven.core.entity.workflow.WorkflowEdgeEntity
@@ -12,43 +12,6 @@ import java.util.*
  * (in-degree) and maintaining a queue of nodes ready for execution. As nodes complete,
  * it decrements the in-degree of successor nodes and enqueues those that become ready.
  *
- * ## Usage Pattern
- *
- * ```kotlin
- * // Initialize with nodes and edges
- * queue.initialize(nodes, edges)
- *
- * // Get batch of ready nodes for parallel execution
- * val readyNodes = queue.getReadyNodes()  // Returns all currently ready nodes
- *
- * // Execute nodes in parallel (via Temporal Async.function)
- * readyNodes.forEach { node ->
- *     // Execute node...
- * }
- *
- * // Mark each completed node
- * queue.markNodeCompleted(nodeId)  // Decrements successors' in-degree, enqueues new ready nodes
- *
- * // Check if more work remains
- * if (queue.hasMoreWork()) {
- *     // Get next batch...
- * }
- * ```
- *
- * ## Key Insight
- *
- * The active node queue bridges topological sort (static dependency order) with runtime
- * execution (dynamic parallel scheduling). As nodes complete, we decrement the in-degree
- * of their successors and enqueue those that become ready (in-degree reaches 0).
- *
- * ## Thread Safety
- *
- * **This service is NOT thread-safe.** It is designed to be used within Temporal's
- * deterministic workflow context, which is single-threaded. Do not share instances
- * across threads or use in concurrent contexts.
- *
- * ## State Management
- *
  * The queue maintains mutable state:
  * - In-degree map: tracks remaining dependencies for each node
  * - Ready queue: FIFO queue of nodes with in-degree 0
@@ -59,7 +22,7 @@ import java.util.*
  * Call `initialize()` to reset all state before reuse.
  */
 @Service
-class ActiveNodeQueue {
+class WorkflowGraphQueueManagementService {
 
     /**
      * Mutable in-degree map: nodeId → remaining dependency count

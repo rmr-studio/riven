@@ -22,7 +22,6 @@ import riven.core.service.workflow.EntityContextService
 import riven.core.service.workflow.ExpressionEvaluatorService
 import riven.core.service.workflow.ExpressionParserService
 import riven.core.service.workflow.InputResolverService
-import riven.core.service.workflow.coordinator.DagExecutionCoordinator
 import java.time.Instant
 import java.time.ZonedDateTime
 import java.util.*
@@ -64,7 +63,7 @@ class WorkflowCoordinationService(
     private val entityContextService: EntityContextService,
     private val webClientBuilder: WebClient.Builder,
     private val inputResolverService: InputResolverService,
-    private val dagExecutionCoordinator: DagExecutionCoordinator,
+    private val workflowGraphCoordinationService: WorkflowGraphCoordinationService,
     private val logger: KLogger
 ) : WorkflowCoordination {
 
@@ -118,7 +117,7 @@ class WorkflowCoordinationService(
 
         // Delegate to coordinator for DAG orchestration
         return try {
-            val finalState = dagExecutionCoordinator.executeWorkflow(nodes, edges, nodeExecutor)
+            val finalState = workflowGraphCoordinationService.executeWorkflow(nodes, edges, nodeExecutor)
             logger.info { "Workflow execution completed: ${finalState.phase}, ${finalState.completedNodes.size} nodes completed" }
             finalState
         } catch (e: Exception) {

@@ -1,4 +1,4 @@
-package riven.core.service.workflow.coordinator
+package riven.core.service.workflow.engine.coordinator
 
 import org.springframework.stereotype.Service
 import riven.core.entity.workflow.WorkflowEdgeEntity
@@ -78,7 +78,7 @@ import java.util.*
  * @see WorkflowEdgeEntity
  */
 @Service
-class TopologicalSorter {
+class WorkflowGraphTopologicalSorterService {
 
     /**
      * Sort nodes in topological order using Kahn's algorithm.
