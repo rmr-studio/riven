@@ -10,18 +10,18 @@
 
 ```
 Phase: 1 of 3 (Hero + Infrastructure)
-Plan: 2 of 4 complete
+Plan: 3 of 4 complete
 Status: In progress
-Progress: [##........] 20%
+Progress: [###.......] 30%
 ```
 
-**Next Action:** Execute plan 01-03 (WaitlistForm component)
+**Next Action:** Execute plan 01-04 (Hero section composition)
 
 ## Phase Summary
 
 | Phase | Name | Status | Progress |
 |-------|------|--------|----------|
-| 1 | Hero + Infrastructure | In Progress | 2/4 plans |
+| 1 | Hero + Infrastructure | In Progress | 3/4 plans |
 | 2 | Content Sections | Pending | 0/? |
 | 3 | Polish + Production | Pending | 0/? |
 
@@ -30,10 +30,10 @@ Progress: [##........] 20%
 | Metric | Value |
 |--------|-------|
 | Total Requirements | 33 |
-| Completed | ~8 |
-| Completion Rate | ~24% |
+| Completed | ~12 |
+| Completion Rate | ~36% |
 | Current Phase | 1 |
-| Plans Executed | 2 |
+| Plans Executed | 3 |
 
 ## Accumulated Context
 
@@ -50,6 +50,9 @@ Progress: [##........] 20%
 | useState for QueryClient | SSR best practice, not useMemo | 01-02 |
 | Sonner bottom-center | Standard toast position with richColors | 01-02 |
 | Button lg size h-12 | Prominent CTA sizing for hero | 01-02 |
+| onBlur validation mode | Better UX than onChange (noisy) or onSubmit (late) | 01-03 |
+| Form replacement on success | Confirmation message instead of form reset | 01-03 |
+| API stub approach | Per PROJECT.md scope, user wires actual backend | 01-03 |
 
 ### Technical Decisions
 
@@ -61,11 +64,14 @@ Progress: [##........] 20%
 | forwardRef pattern | Required for all UI components (form integration) | 01-02 |
 | cva for variants | class-variance-authority for Button variants | 01-02 |
 | Provider pattern | use client directive for context providers | 01-02 |
+| zodResolver pattern | React Hook Form + Zod integration for validation | 01-03 |
+| useRef for toast ID | Enables loading -> success/error toast transition | 01-03 |
+| isSuccess state replacement | Replaces form with confirmation on success | 01-03 |
 
 ### TODOs
 
 - [x] Plan Phase 1
-- [ ] Execute Phase 1 (2/4 plans complete)
+- [ ] Execute Phase 1 (3/4 plans complete)
 - [ ] Plan Phase 2
 - [ ] Execute Phase 2
 - [ ] Plan Phase 3
@@ -82,15 +88,16 @@ Progress: [##........] 20%
 ## Session Continuity
 
 **Last Session:** 2026-01-18
-**Last Action:** Completed 01-02-PLAN.md (Providers + UI Components)
+**Last Action:** Completed 01-03-PLAN.md (WaitlistForm component)
 
 **Context for Next Session:**
-- Plan 01-02 complete: QueryProvider, Toaster, Button, Input ready
-- QueryProvider wraps app at landing/app/layout.tsx
-- Button at landing/components/ui/button.tsx with 6 variants
-- Input at landing/components/ui/input.tsx with focus states
-- Next: 01-03 (WaitlistForm) will compose Button + Input
-- Toast notifications ready via Sonner
+- Plan 01-03 complete: Full form infrastructure ready
+- Zod schema at landing/lib/validations.ts
+- API endpoint at landing/app/api/waitlist/route.ts (stub)
+- Mutation hook at landing/hooks/use-waitlist-mutation.ts
+- WaitlistForm at landing/components/waitlist-form.tsx
+- Next: 01-04 (Hero section) will compose WaitlistForm with headline/subline
+- All form states working: validation errors, loading spinner, success confirmation, error toast
 
 ---
 *State initialized: 2026-01-18*
