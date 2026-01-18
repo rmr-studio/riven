@@ -19,10 +19,10 @@ This roadmap delivers a pre-launch landing page for Riven that communicates the 
 **Plans:** 4 plans
 
 Plans:
-- [ ] 01-01-PLAN.md - Install dependencies and establish design system
-- [ ] 01-02-PLAN.md - Set up providers and UI primitives (Button, Input)
-- [ ] 01-03-PLAN.md - Build form infrastructure (validation, API, mutation, WaitlistForm)
-- [ ] 01-04-PLAN.md - Create Hero section and compose landing page
+- [x] 01-01-PLAN.md - Install dependencies and establish design system
+- [x] 01-02-PLAN.md - Set up providers and UI primitives (Button, Input)
+- [x] 01-03-PLAN.md - Build form infrastructure (validation, API, mutation, WaitlistForm)
+- [x] 01-04-PLAN.md - Create Hero section and compose landing page
 
 **Requirements:**
 - HERO-01: Bold headline communicates value prop in 8 words or fewer
@@ -55,6 +55,13 @@ Plans:
 **Goal:** Visitors who scroll understand the problem Riven solves and its key capabilities.
 
 **Dependencies:** Phase 1 (hero and form component exist for reuse)
+
+**Plans:** 3 plans
+
+Plans:
+- [ ] 02-01-PLAN.md - Create Pain Points section with CRM frustrations
+- [ ] 02-02-PLAN.md - Create Features section with benefit-focused cards and icons
+- [ ] 02-03-PLAN.md - Create Final CTA section with WaitlistForm reuse
 
 **Requirements:**
 - PAIN-01: Section header introduces the problem space
@@ -104,11 +111,11 @@ Plans:
 
 | Phase | Status | Requirements | Completed |
 |-------|--------|--------------|-----------|
-| 1 - Hero + Infrastructure | Planned | 16 | 0 |
-| 2 - Content Sections | Not Started | 10 | 0 |
+| 1 - Hero + Infrastructure | Complete | 16 | 16 |
+| 2 - Content Sections | Planned | 10 | 0 |
 | 3 - Polish + Production | Not Started | 9 | 0 |
 
-**Total:** 0/33 requirements complete
+**Total:** 16/33 requirements complete
 
 ---
 *Roadmap created: 2026-01-18*
