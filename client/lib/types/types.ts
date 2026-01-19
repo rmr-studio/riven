@@ -148,6 +148,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workflow/executions/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["startExecution"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/entity/workspace/{workspaceId}/type/{entityTypeId}": {
         parameters: {
             query?: never;
@@ -673,7 +689,7 @@ export interface components {
         /** @enum {string} */
         EntityTypeRelationshipType: EntityTypeRelationshipType;
         Icon: {
-            icon: components["schemas"]["IconType"];
+            type: components["schemas"]["IconType"];
             colour: components["schemas"]["IconColour"];
         };
         /** @enum {string} */
@@ -916,6 +932,12 @@ export interface components {
             plan: components["schemas"]["WorkspacePlan"];
             defaultCurrency: string;
             isDefault: boolean;
+        };
+        StartWorkflowExecutionRequest: {
+            /** Format: uuid */
+            workflowDefinitionId: string;
+            /** Format: uuid */
+            workspaceId: string;
         };
         EntityAttributePayload: {
             type: components["schemas"]["EntityPropertyType"];
@@ -1206,15 +1228,15 @@ export interface components {
         /** @enum {string} */
         ListFilterLogicType: ListFilterLogicType;
         Metadata: {
-            type: components["schemas"]["BlockMetadataType"];
             meta: components["schemas"]["BlockMeta"];
             readonly: boolean;
             deletable: boolean;
+            type: components["schemas"]["BlockMetadataType"];
         };
         Node: {
+            block: components["schemas"]["Block"];
             warnings: string[];
             type: components["schemas"]["NodeType"];
-            block: components["schemas"]["Block"];
         };
         /** @enum {string} */
         NodeType: NodeType;
@@ -1263,8 +1285,8 @@ export interface components {
             warning?: components["schemas"]["BlockReferenceWarning"];
         };
         ReferenceMetadata: WithRequired<components["schemas"]["Metadata"], "deletable" | "meta" | "readonly" | "type"> & {
-            path: string;
             fetchPolicy: components["schemas"]["BlockReferenceFetchPolicy"];
+            path: string;
         };
         /** @description Reference node containing a block with entity or block tree references */
         ReferenceNode: WithRequired<components["schemas"]["Node"], "block" | "type" | "warnings"> & {
@@ -1402,9 +1424,9 @@ export interface components {
             index?: number;
         };
         BlockOperation: {
-            type: components["schemas"]["BlockOperationType"];
             /** Format: uuid */
             blockId: string;
+            type: components["schemas"]["BlockOperationType"];
         };
         /**
          * @description Enumeration of possible block operation types for requests.
@@ -1792,6 +1814,32 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["Workspace"];
+                };
+            };
+        };
+    };
+    startExecution: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartWorkflowExecutionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: Record<string, never>;
+                    };
                 };
             };
         };
