@@ -23,6 +23,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4.1: Action Execution (INSERTED)** - Data registry, template resolution, polymorphic execution
 - [x] **Phase 5: DAG Execution Coordinator** - Topological sort, node scheduling, state management
 - [ ] **Phase 6: Backend API Layer** - REST endpoints for workflow management
+- [ ] **Phase 6.1: Execution Queue Management (INSERTED)** - Execution queue management
 - [ ] **Phase 7: Error Handling & Retry Logic** - Temporal retry policies and error surfacing
 - [ ] **Phase 8: End-to-End Testing** - Validate complete workflow lifecycle
 
@@ -98,9 +99,20 @@ Plans:
 - [ ] 06-02-PLAN.md — Workflow graph management APIs (nodes + edges with cascade deletion)
 - [ ] 06-03-PLAN.md — Workflow execution query APIs (execution history and status)
 
+### Phase 6.1: Execution Queue Management (INSERTED)
+**Goal**: Database-backed execution queue with tier-based concurrency limits for workflow dispatching
+**Depends on**: Phase 6
+**Research**: Completed (06.1-RESEARCH.md - ShedLock, SKIP LOCKED, Temporal multi-queue)
+**Plans**: 3 plans
+
+Plans:
+- [ ] 06.1-01-PLAN.md — ShedLock infrastructure and WorkspaceTier enum
+- [ ] 06.1-02-PLAN.md — ExecutionQueueEntity, repository, and queue service
+- [ ] 06.1-03-PLAN.md — Multi-queue workers, dispatcher service, queue integration
+
 ### Phase 7: Error Handling & Retry Logic
 **Goal**: Implement Temporal retry policies and error surfacing to execution records
-**Depends on**: Phase 6
+**Depends on**: Phase 6.1
 **Research**: Likely (Temporal retry policies, error handling patterns)
 **Research topics**: Temporal retry configuration, error propagation strategies, compensating transactions for failed workflows
 **Plans**: TBD
@@ -120,7 +132,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 4.1 → 5 → 6 → 7 → 8
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 4.1 → 5 → 6 → 6.1 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -131,5 +143,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 4.1 → 5 → 6 → 7 �
 | 4.1. Action Execution (INSERTED) | 3/3 | ✅ Complete | 2026-01-11 |
 | 5. DAG Execution Coordinator | 3/3 | ✅ Complete | 2026-01-12 |
 | 6. Backend API Layer | 0/3 | Not started | - |
+| 6.1. Execution Queue Management (INSERTED) | 0/3 | Not started | - |
 | 7. Error Handling & Retry Logic | 0/TBD | Not started | - |
 | 8. End-to-End Testing | 0/TBD | Not started | - |
