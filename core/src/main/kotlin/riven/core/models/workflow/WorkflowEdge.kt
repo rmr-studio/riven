@@ -1,5 +1,6 @@
 package riven.core.models.workflow
 
+import riven.core.models.workflow.node.WorkflowNode
 import java.util.*
 
 data class WorkflowEdge(

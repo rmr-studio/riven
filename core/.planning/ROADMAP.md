@@ -17,10 +17,11 @@ None
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Expression System Foundation** - Parser and evaluator for SQL-like expressions
-- [ ] **Phase 2: Entity Context Integration** - Resolve entity data for expression evaluation
-- [ ] **Phase 3: Temporal Workflow Engine** - Core workflow execution with Temporal activities
-- [ ] **Phase 4: Action Executors** - Implement node action types (CRUD, API calls, conditionals)
-- [ ] **Phase 5: DAG Execution Coordinator** - Topological sort, node scheduling, state management
+- [x] **Phase 2: Entity Context Integration** - Resolve entity data for expression evaluation
+- [x] **Phase 3: Temporal Workflow Engine** - Core workflow execution with Temporal activities
+- [x] **Phase 4: Action Executors** - Implement node action types (CRUD, API calls, conditionals)
+- [x] **Phase 4.1: Action Execution (INSERTED)** - Data registry, template resolution, polymorphic execution
+- [x] **Phase 5: DAG Execution Coordinator** - Topological sort, node scheduling, state management
 - [ ] **Phase 6: Backend API Layer** - REST endpoints for workflow management
 - [ ] **Phase 7: Error Handling & Retry Logic** - Temporal retry policies and error surfacing
 - [ ] **Phase 8: End-to-End Testing** - Validate complete workflow lifecycle
@@ -40,39 +41,51 @@ Plans:
 **Goal**: Enable expression evaluation against dynamic entity data with field traversal
 **Depends on**: Phase 1
 **Research**: Unlikely (entity system already exists, integration patterns clear)
-**Plans**: TBD
+**Status**: ✅ COMPLETED
 
 Plans:
-- TBD
+- [x] 02-01: Entity context provider with relationship traversal (2026-01-10) - EntityContextService with depth-limited recursion, cardinality-aware handling, comprehensive test coverage
 
 ### Phase 3: Temporal Workflow Engine
 **Goal**: Implement core Temporal workflow definitions and activities for workflow execution
 **Depends on**: Phase 2
-**Research**: Likely (Temporal SDK patterns, deterministic workflow requirements)
-**Research topics**: Temporal workflow patterns, activity design, signal handling, determinism rules for workflow code
-**Plans**: TBD
+**Research**: Completed (03-RESEARCH.md - Temporal SDK patterns, deterministic workflow requirements)
+**Status**: ✅ COMPLETED
 
 Plans:
-- TBD
+- [x] 03-01: Temporal workflow and activity infrastructure (2026-01-10) - Workflow orchestration, activity execution, REST API, integration tests
 
 ### Phase 4: Action Executors
 **Goal**: Implement workflow node action executors (entity CRUD, API calls, conditional branches)
 **Depends on**: Phase 3
 **Research**: Unlikely (CRUD operations follow existing entity service patterns)
-**Plans**: TBD
+**Status**: ✅ COMPLETED
 
 Plans:
-- TBD
+- [x] 04-01: Entity CRUD action executors (2026-01-11) - CREATE/UPDATE/DELETE/QUERY with extensible executeAction pattern
+- [x] 04-02: HTTP request actions and conditional control flow (2026-01-10) - HTTP_REQUEST with SSRF protection, CONDITION with expression evaluation, extensibility proven
+
+### Phase 4.1: Action Execution (INSERTED)
+**Goal**: Implement data registry, input resolution, and polymorphic execution for action execution
+**Depends on**: Phase 4
+**Research**: Completed (see 4.1-CONTEXT.md)
+**Status**: ✅ COMPLETED
+
+Plans:
+- [x] 4.1-01: Data Registry & Output Capture (2026-01-11) - WorkflowExecutionContext with data registry, output capture in all executors
+- [x] 4.1-02: Template-Based Input Resolution (2026-01-11) - TemplateParserService and InputResolverService enable {{ steps.name.output }} references
+- [x] 4.1-03: Polymorphic Execution Refactor (2026-01-11) - Nodes implement execute(), eliminated type switching, foundation for LOOP/SWITCH/PARALLEL
 
 ### Phase 5: DAG Execution Coordinator
 **Goal**: Orchestrate workflow execution with topological sort and parallel node scheduling
-**Depends on**: Phase 4
-**Research**: Likely (DAG algorithms, concurrent execution patterns)
-**Research topics**: Topological sort algorithms, parallel execution strategies, state machine patterns for workflow orchestration
-**Plans**: TBD
+**Depends on**: Phase 4.1
+**Research**: Completed (5-RESEARCH.md - Kahn's algorithm, state machine patterns)
+**Status**: ✅ COMPLETED
 
 Plans:
-- TBD
+- [x] 5-01: Topological Sort & DAG Validation (2026-01-12) - Kahn's algorithm with cycle detection, comprehensive structural validation
+- [x] 5-02: Active Node Queue & State Machine (2026-01-12) - In-degree tracked queue, immutable state machine with event-driven transitions
+- [x] 5-03: DAG Execution Coordinator (2026-01-12) - Parallel orchestration with Temporal integration, comprehensive integration testing
 
 ### Phase 6: Backend API Layer
 **Goal**: Expose REST APIs for workflow creation, update, retrieval, and execution triggering
@@ -105,15 +118,16 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 4.1 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Expression System Foundation | 1/1 | ✅ Complete | 2026-01-10 |
-| 2. Entity Context Integration | 0/TBD | Not started | - |
-| 3. Temporal Workflow Engine | 0/TBD | Not started | - |
-| 4. Action Executors | 0/TBD | Not started | - |
-| 5. DAG Execution Coordinator | 0/TBD | Not started | - |
+| 2. Entity Context Integration | 1/1 | ✅ Complete | 2026-01-10 |
+| 3. Temporal Workflow Engine | 1/1 | ✅ Complete | 2026-01-10 |
+| 4. Action Executors | 2/2 | ✅ Complete | 2026-01-11 |
+| 4.1. Action Execution (INSERTED) | 3/3 | ✅ Complete | 2026-01-11 |
+| 5. DAG Execution Coordinator | 3/3 | ✅ Complete | 2026-01-12 |
 | 6. Backend API Layer | 0/TBD | Not started | - |
 | 7. Error Handling & Retry Logic | 0/TBD | Not started | - |
 | 8. End-to-End Testing | 0/TBD | Not started | - |

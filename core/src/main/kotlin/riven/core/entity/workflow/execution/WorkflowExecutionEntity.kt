@@ -5,7 +5,8 @@ import jakarta.persistence.*
 import org.hibernate.annotations.Type
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.enums.workflow.WorkflowTriggerType
-import riven.core.models.workflow.execution.WorkflowExecutionRecord
+import riven.core.models.workflow.engine.execution.WorkflowExecutionRecord
+import java.time.Duration
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -70,7 +71,7 @@ data class WorkflowExecutionEntity(
             status = this.status,
             startedAt = this.startedAt,
             completedAt = this.completedAt,
-            duration = java.time.Duration.ofMillis(this.durationMs),
+            duration = Duration.ofMillis(this.durationMs),
             input = this.input,
             output = this.output,
             error = this.error,

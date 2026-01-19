@@ -5,12 +5,16 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import riven.core.enums.workflow.*
-import riven.core.models.workflow.*
-import riven.core.models.workflow.trigger.*
+import riven.core.models.workflow.node.config.*
+import riven.core.models.workflow.node.config.actions.*
+import riven.core.models.workflow.node.config.trigger.WorkflowEntityEventTriggerConfig
+import riven.core.models.workflow.node.config.trigger.WorkflowFunctionTriggerConfig
+import riven.core.models.workflow.node.config.trigger.WorkflowScheduleTriggerConfig
+import riven.core.models.workflow.node.config.trigger.WorkflowWebhookTriggerConfig
 import riven.core.util.getEnumFromField
 
 /**
- * Jackson deserializer for [WorkflowNode].
+ * Jackson deserializer for [WorkflowNodeConfig].
  *
  * Handles two-level discriminator:
  * 1. First level: `type` field (WorkflowNodeType) - determines node category
@@ -19,7 +23,6 @@ import riven.core.util.getEnumFromField
  * Example JSON:
  * ```json
  * {
- *   "id": "123e4567-e89b-12d3-a456-426614174000",
  *   "version": 1,
  *   "type": "TRIGGER",
  *   "subType": "SCHEDULE",
@@ -28,157 +31,161 @@ import riven.core.util.getEnumFromField
  * }
  * ```
  *
+ * Note: Unlike the previous WorkflowNode, WorkflowNodeConfig does NOT have an `id` field.
+ * The ID is managed by WorkflowNodeEntity and combined with config in ExecutableNode.
+ *
  * Based on the proven Block system pattern (see [MetadataDeserializer]).
  */
-class WorkflowNodeDeserializer : JsonDeserializer<WorkflowNode>() {
-    override fun deserialize(p: JsonParser, ctxt: DeserializationContext): WorkflowNode {
+class WorkflowNodeConfigDeserializer : JsonDeserializer<WorkflowNodeConfig>() {
+    override fun deserialize(p: JsonParser, ctxt: DeserializationContext): WorkflowNodeConfig {
         val node = p.codec.readTree<JsonNode>(p)
 
         // Level 1: Extract main category
         val nodeType = ctxt.getEnumFromField<WorkflowNodeType>(
             node,
             "type",
-            WorkflowNode::class.java
+            WorkflowNodeConfig::class.java
         )
 
         // Level 2: Route to category-specific handler
         return when (nodeType) {
-            WorkflowNodeType.TRIGGER -> deserializeTriggerNode(p, ctxt, node)
-            WorkflowNodeType.ACTION -> deserializeActionNode(p, ctxt, node)
-            WorkflowNodeType.CONTROL_FLOW -> deserializeControlNode(p, ctxt, node)
-            WorkflowNodeType.HUMAN_INTERACTION -> deserializeHumanNode(p, ctxt, node)
-            WorkflowNodeType.UTILITY -> deserializeUtilityNode(p, ctxt, node)
-            WorkflowNodeType.FUNCTION -> deserializeFunctionNode(p, ctxt, node)
+            WorkflowNodeType.TRIGGER -> deserializeTriggerConfig(p, ctxt, node)
+            WorkflowNodeType.ACTION -> deserializeActionConfig(p, ctxt, node)
+            WorkflowNodeType.CONTROL_FLOW -> deserializeControlConfig(p, ctxt, node)
+            WorkflowNodeType.HUMAN_INTERACTION -> deserializeHumanConfig(p, ctxt, node)
+            WorkflowNodeType.UTILITY -> deserializeUtilityConfig(p, ctxt, node)
+            WorkflowNodeType.FUNCTION -> deserializeFunctionConfig(p, ctxt, node)
         }
     }
 
     /**
-     * Deserializes TRIGGER category nodes.
+     * Deserializes TRIGGER category configs.
      * Routes to concrete trigger types: SCHEDULE, ENTITY_EVENT, WEBHOOK, FUNCTION.
      */
-    private fun deserializeTriggerNode(
+    private fun deserializeTriggerConfig(
         p: JsonParser,
         ctxt: DeserializationContext,
         node: JsonNode
-    ): WorkflowTriggerNode {
+    ): WorkflowTriggerConfig {
         val subType = ctxt.getEnumFromField<WorkflowTriggerType>(
             node,
             "subType",
-            WorkflowTriggerNode::class.java
+            WorkflowTriggerConfig::class.java
         )
 
         return when (subType) {
-            WorkflowTriggerType.ENTITY_EVENT -> p.codec.treeToValue(node, WorkflowEntityEventTriggerNode::class.java)
-            WorkflowTriggerType.SCHEDULE -> p.codec.treeToValue(node, WorkflowScheduleTriggerNode::class.java)
-            WorkflowTriggerType.WEBHOOK -> p.codec.treeToValue(node, WorkflowWebhookTriggerNode::class.java)
-            WorkflowTriggerType.FUNCTION -> p.codec.treeToValue(node, WorkflowFunctionTriggerNode::class.java)
+            WorkflowTriggerType.ENTITY_EVENT -> p.codec.treeToValue(node, WorkflowEntityEventTriggerConfig::class.java)
+            WorkflowTriggerType.SCHEDULE -> p.codec.treeToValue(node, WorkflowScheduleTriggerConfig::class.java)
+            WorkflowTriggerType.WEBHOOK -> p.codec.treeToValue(node, WorkflowWebhookTriggerConfig::class.java)
+            WorkflowTriggerType.FUNCTION -> p.codec.treeToValue(node, WorkflowFunctionTriggerConfig::class.java)
         }
     }
 
     /**
-     * Deserializes ACTION category nodes.
-     * TODO: Implement concrete action node classes and update routing.
+     * Deserializes ACTION category configs.
+     * Routes to concrete action types: CREATE_ENTITY, UPDATE_ENTITY, DELETE_ENTITY, QUERY_ENTITY, HTTP_REQUEST.
      */
-    private fun deserializeActionNode(
+    private fun deserializeActionConfig(
         p: JsonParser,
-        ctxt: DeserializationContext,
+        ctx: DeserializationContext,
         node: JsonNode
-    ): WorkflowActionNode {
-        val subType = ctxt.getEnumFromField<WorkflowActionType>(
+    ): WorkflowActionConfig {
+        val subType = ctx.getEnumFromField<WorkflowActionType>(
             node,
             "subType",
-            WorkflowActionNode::class.java
+            WorkflowActionConfig::class.java
         )
 
-        // TODO: Implement concrete action node classes
-        // For now, throw unsupported operation exception
-        return ctxt.reportInputMismatch(
-            WorkflowActionNode::class.java,
-            "Deserialization for ACTION subType '$subType' is not yet implemented. " +
-                    "Concrete action node classes need to be created."
-        )
+        return when (subType) {
+            WorkflowActionType.CREATE_ENTITY -> p.codec.treeToValue(node, WorkflowCreateEntityActionConfig::class.java)
+            WorkflowActionType.UPDATE_ENTITY -> p.codec.treeToValue(node, WorkflowUpdateEntityActionConfig::class.java)
+            WorkflowActionType.DELETE_ENTITY -> p.codec.treeToValue(node, WorkflowDeleteEntityActionConfig::class.java)
+            WorkflowActionType.QUERY_ENTITY -> p.codec.treeToValue(node, WorkflowQueryEntityActionConfig::class.java)
+            WorkflowActionType.HTTP_REQUEST -> p.codec.treeToValue(node, WorkflowHttpRequestActionConfig::class.java)
+            else -> TODO()
+        }
     }
 
     /**
-     * Deserializes CONTROL_FLOW category nodes.
-     * TODO: Implement concrete control flow node classes and update routing.
+     * Deserializes CONTROL_FLOW category configs.
+     * Routes to concrete control types: CONDITION (more in future phases).
      */
-    private fun deserializeControlNode(
+    private fun deserializeControlConfig(
         p: JsonParser,
-        ctxt: DeserializationContext,
+        ctx: DeserializationContext,
         node: JsonNode
-    ): WorkflowControlNode {
-        val subType = ctxt.getEnumFromField<WorkflowControlType>(
+    ): WorkflowControlConfig {
+        val subType = ctx.getEnumFromField<WorkflowControlType>(
             node,
             "subType",
-            WorkflowControlNode::class.java
+            WorkflowControlConfig::class.java
         )
 
-        // TODO: Implement concrete control flow node classes
-        return ctxt.reportInputMismatch(
-            WorkflowControlNode::class.java,
-            "Deserialization for CONTROL_FLOW subType '$subType' is not yet implemented. " +
-                    "Concrete control flow node classes need to be created."
-        )
+        return when (subType) {
+            WorkflowControlType.CONDITION -> p.codec.treeToValue(node, WorkflowControlConfig::class.java)
+            // TODO: Add SWITCH, LOOP, PARALLEL in Phase 5+
+            else -> ctx.reportInputMismatch(
+                WorkflowControlConfig::class.java,
+                "Deserialization for CONTROL_FLOW subType '$subType' is not yet implemented."
+            )
+        }
     }
 
     /**
-     * Deserializes HUMAN_INTERACTION category nodes.
-     * TODO: Implement concrete human interaction node classes and update routing.
+     * Deserializes HUMAN_INTERACTION category configs.
+     * TODO: Implement concrete human interaction config classes.
      */
-    private fun deserializeHumanNode(
+    private fun deserializeHumanConfig(
         p: JsonParser,
         ctxt: DeserializationContext,
         node: JsonNode
-    ): WorkflowHumanInteractionNode {
+    ): WorkflowHumanInteractionConfig {
         val subType = ctxt.getEnumFromField<WorkflowHumanInteractionType>(
             node,
             "subType",
-            WorkflowHumanInteractionNode::class.java
+            WorkflowHumanInteractionConfig::class.java
         )
 
-        // TODO: Implement concrete human interaction node classes
+        // TODO: Implement concrete human interaction config classes
         return ctxt.reportInputMismatch(
-            WorkflowHumanInteractionNode::class.java,
-            "Deserialization for HUMAN_INTERACTION subType '$subType' is not yet implemented. " +
-                    "Concrete human interaction node classes need to be created."
+            WorkflowHumanInteractionConfig::class.java,
+            "Deserialization for HUMAN_INTERACTION subType '$subType' is not yet implemented."
         )
     }
 
     /**
-     * Deserializes UTILITY category nodes.
-     * TODO: Implement concrete utility node classes and update routing.
+     * Deserializes UTILITY category configs.
+     * TODO: Implement concrete utility config classes.
      */
-    private fun deserializeUtilityNode(
+    private fun deserializeUtilityConfig(
         p: JsonParser,
         ctxt: DeserializationContext,
         node: JsonNode
-    ): WorkflowUtilityNode {
+    ): WorkflowUtilityConfig {
         val subType = ctxt.getEnumFromField<WorkflowUtilityActionType>(
             node,
             "subType",
-            WorkflowUtilityNode::class.java
+            WorkflowUtilityConfig::class.java
         )
 
-        // TODO: Implement concrete utility node classes
+        // TODO: Implement concrete utility config classes
         return ctxt.reportInputMismatch(
-            WorkflowUtilityNode::class.java,
-            "Deserialization for UTILITY subType '$subType' is not yet implemented. " +
-                    "Concrete utility node classes need to be created."
+            WorkflowUtilityConfig::class.java,
+            "Deserialization for UTILITY subType '$subType' is not yet implemented."
         )
     }
 
     /**
-     * Deserializes FUNCTION category nodes.
+     * Deserializes FUNCTION category configs.
      * FUNCTION has no subtypes - single concrete implementation.
      */
-    private fun deserializeFunctionNode(
+    private fun deserializeFunctionConfig(
         p: JsonParser,
         ctxt: DeserializationContext,
         node: JsonNode
-    ): WorkflowFunctionNode {
+    ): WorkflowFunctionConfig {
         // FUNCTION category has no subtypes
         // Return the single concrete implementation
-        return p.codec.treeToValue(node, WorkflowFunctionNode::class.java)
+        return p.codec.treeToValue(node, WorkflowFunctionConfig::class.java)
     }
 }

@@ -1,0 +1,39 @@
+spring:
+  datasource:
+    # Use H2 in-memory database for tests
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # Auto-create schema from entities
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+    show-sql: false  # Set to true for debugging
+
+  # Disable security for tests
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9999  # Dummy issuer for tests
+
+# Temporal configuration for tests (not used with TestWorkflowEnvironment)
+riven:
+  workflow:
+    engine:
+      target: localhost:7233  # Ignored by TestWorkflowEnvironment
+      namespace: default
+      enabled: true
+
+# Logging
+logging:
+  level:
+    riven.core: INFO
+    io.temporal: WARN
+    org.springframework: WARN
+    org.hibernate: WARN
