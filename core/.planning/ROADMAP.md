@@ -91,10 +91,12 @@ Plans:
 **Goal**: Expose REST APIs for workflow creation, update, retrieval, and execution triggering
 **Depends on**: Phase 5
 **Research**: Unlikely (REST API patterns established in codebase)
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- TBD
+- [ ] 06-01-PLAN.md — Workflow definition CRUD APIs (service + controller + tests)
+- [ ] 06-02-PLAN.md — Workflow graph management APIs (nodes + edges with cascade deletion)
+- [ ] 06-03-PLAN.md — Workflow execution query APIs (execution history and status)
 
 ### Phase 7: Error Handling & Retry Logic
 **Goal**: Implement Temporal retry policies and error surfacing to execution records
@@ -128,6 +130,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 4.1 → 5 → 6 → 7 �
 | 4. Action Executors | 2/2 | ✅ Complete | 2026-01-11 |
 | 4.1. Action Execution (INSERTED) | 3/3 | ✅ Complete | 2026-01-11 |
 | 5. DAG Execution Coordinator | 3/3 | ✅ Complete | 2026-01-12 |
-| 6. Backend API Layer | 0/TBD | Not started | - |
+| 6. Backend API Layer | 0/3 | Not started | - |
 | 7. Error Handling & Retry Logic | 0/TBD | Not started | - |
 | 8. End-to-End Testing | 0/TBD | Not started | - |
