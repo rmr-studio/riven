@@ -53,10 +53,19 @@ import java.util.*
  * @property inputResolverService Resolves template references
  */
 
-@ActivityInterface
+/**
+ * Spring-managed activity implementation for workflow coordination.
+ *
+ * This service is a Spring bean and can inject other Spring services.
+ * Temporal's Spring Boot starter will automatically register this as an activity.
+ *
+ * NOTE: The @ActivityInterface annotation belongs on the interface, not the implementation.
+ */
 @Service
 class WorkflowCoordinationService(
     private val workflowExecutionNodeRepository: WorkflowExecutionNodeRepository,
+    private val workflowNodeRepository: riven.core.repository.workflow.WorkflowNodeRepository,
+    private val workflowEdgeRepository: riven.core.repository.workflow.WorkflowEdgeRepository,
     private val entityService: EntityService,
     private val expressionEvaluatorService: ExpressionEvaluatorService,
     private val expressionParserService: ExpressionParserService,
@@ -70,11 +79,19 @@ class WorkflowCoordinationService(
     private val webClient: WebClient = webClientBuilder.build()
 
     override fun executeWorkflowWithCoordinator(
-        nodes: List<WorkflowNode>,
-        edges: List<WorkflowEdgeEntity>,
+        workflowDefinitionId: UUID,
+        nodeIds: List<UUID>,
         workspaceId: UUID
     ): WorkflowState {
-        logger.info { "Executing workflow with coordinator: ${nodes.size} nodes, ${edges.size} edges" }
+        logger.info { "Executing workflow with coordinator: definition=$workflowDefinitionId, nodes=${nodeIds.size}" }
+
+        // Fetch nodes and edges from database (this is an activity, so database access is allowed)
+        val nodes: List<WorkflowNode> =
+            workflowNodeRepository.findByWorkspaceIdAndIdIn(workspaceId, nodeIds).map { it.toModel() }
+        val edges: List<WorkflowEdgeEntity> =
+            workflowEdgeRepository.findByWorkspaceIdAndNodeIds(workspaceId, nodeIds.toTypedArray())
+
+        logger.info { "Fetched ${nodes.size} nodes and ${edges.size} edges from database" }
 
         // Get execution context from Temporal
         val activityInfo = Activity.getExecutionContext().info

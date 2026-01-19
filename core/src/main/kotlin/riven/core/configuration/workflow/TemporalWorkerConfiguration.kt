@@ -7,7 +7,7 @@ import io.temporal.worker.WorkerFactory
 import jakarta.annotation.PreDestroy
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import riven.core.service.workflow.engine.WorkflowOrchestrationService
+import riven.core.service.workflow.engine.WorkflowOrchestrationServiceImpl
 import riven.core.service.workflow.engine.coordinator.WorkflowCoordinationService
 
 /**
@@ -74,10 +74,11 @@ class TemporalWorkerConfiguration(
 
         // Register workflow implementations
         // Note: Workflow impl must have no-arg constructor (Temporal instantiates it)
+        // NOT a Spring bean - Temporal manages lifecycle
         worker.registerWorkflowImplementationTypes(
-            WorkflowOrchestrationService::class.java
+            WorkflowOrchestrationServiceImpl::class.java
         )
-        logger.info { "Registered workflow: WorkflowExecutionWorkflow" }
+        logger.info { "Registered workflow: WorkflowOrchestrationServiceImpl" }
 
         // Register activity implementations
         // Note: Passing Spring bean instance enables dependency injection

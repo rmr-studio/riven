@@ -26,6 +26,9 @@ data class WorkflowDefinitionVersionEntity(
     @Column(name = "workspace_id", nullable = false, columnDefinition = "uuid")
     val workspaceId: UUID,
 
+    @Column(name = "workflow_definition_id", nullable = false, columnDefinition = "uuid")
+    val workflowDefinitionId: UUID,
+
     @Column(name = "version_number", nullable = false)
     val versionNumber: Int,
 
@@ -43,7 +46,7 @@ data class WorkflowDefinitionVersionEntity(
     @Column(name = "deleted_at", columnDefinition = "timestamptz")
     override var deletedAt: java.time.ZonedDateTime? = null
 
-) : AuditableEntity(), SoftDeletable{
+) : AuditableEntity(), SoftDeletable {
     fun toModel(): WorkflowDefinitionVersion {
         return WorkflowDefinitionVersion(
             id = this.id!!,
