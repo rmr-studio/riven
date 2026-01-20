@@ -55,6 +55,8 @@ Recent decisions affecting current work:
 |----------|-----------|------|
 | Soft-delete for workflow definitions | Allows recovery, maintains referential integrity | 06-01 |
 | Metadata-only updates via updateWorkflow | Graph structure updates handled separately | 06-01 |
+| Cascade deletion on node delete | Deleting node must delete connected edges for graph consistency | 06-02 |
+| Immutable versioning for config changes | Config changes create new entity version, metadata updates in place | 06-02 |
 | Map return types for query responses | Flexibility for evolving response structure without DTOs | 06-03 |
 | Workspace verification in service layer | Better error messages, supports cross-workspace scenarios | 06-03 |
 
