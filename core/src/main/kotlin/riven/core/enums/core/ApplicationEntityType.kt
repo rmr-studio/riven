@@ -14,5 +14,7 @@ enum class ApplicationEntityType {
     USER,
     ENTITY,
     ENTITY_TYPE,
-    WORKFLOW_DEFINITION
+    WORKFLOW_DEFINITION,
+    WORKFLOW_NODE,
+    WORKFLOW_EDGE
 }
