@@ -16,6 +16,7 @@ import riven.core.models.request.workflow.StartWorkflowExecutionRequest
 import riven.core.models.workflow.engine.WorkflowExecutionInput
 import riven.core.repository.workflow.WorkflowDefinitionRepository
 import riven.core.repository.workflow.WorkflowDefinitionVersionRepository
+import riven.core.repository.workflow.WorkflowExecutionNodeRepository
 import riven.core.repository.workflow.WorkflowExecutionRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
@@ -45,6 +46,7 @@ class WorkflowExecutionService(
     private val workflowDefinitionRepository: WorkflowDefinitionRepository,
     private val workflowDefinitionVersionRepository: WorkflowDefinitionVersionRepository,
     private val workflowExecutionRepository: WorkflowExecutionRepository,
+    private val workflowExecutionNodeRepository: WorkflowExecutionNodeRepository,
     private val activityService: ActivityService,
     private val authTokenService: AuthTokenService,
     private val logger: KLogger
@@ -232,5 +234,147 @@ class WorkflowExecutionService(
         // Fallback: return empty list
         logger.warn { "Could not extract node IDs from workflow, returning empty list" }
         return emptyList()
+    }
+
+    // ============================================================================
+    // Query Methods
+    // ============================================================================
+
+    /**
+     * Get workflow execution by ID.
+     *
+     * Fetches a single execution with all details including input/output.
+     * Verifies workspace access before returning.
+     *
+     * @param id Execution ID
+     * @param workspaceId Workspace context for access verification
+     * @return Execution details as a map
+     * @throws NotFoundException if execution not found
+     * @throws SecurityException if execution doesn't belong to workspace
+     */
+    @Transactional(readOnly = true)
+    fun getExecutionById(id: UUID, workspaceId: UUID): Map<String, Any?> {
+        logger.info { "Getting execution by ID: $id for workspace: $workspaceId" }
+
+        val execution = workflowExecutionRepository.findById(id)
+            .orElseThrow { NotFoundException("Workflow execution not found: $id") }
+
+        // Verify workspace access
+        if (execution.workspaceId != workspaceId) {
+            throw SecurityException("Workflow execution $id does not belong to workspace $workspaceId")
+        }
+
+        return mapOf(
+            "executionId" to execution.id,
+            "workflowDefinitionId" to execution.workflowDefinitionId,
+            "workflowVersionId" to execution.workflowVersionId,
+            "status" to execution.status,
+            "startedAt" to execution.startedAt,
+            "completedAt" to execution.completedAt,
+            "durationMs" to execution.durationMs,
+            "triggerType" to execution.triggerType,
+            "input" to execution.input,
+            "output" to execution.output,
+            "error" to execution.error
+        )
+    }
+
+    /**
+     * List all executions for a workflow definition.
+     *
+     * Returns execution summaries ordered by most recent first.
+     * Verifies that all executions belong to the specified workspace.
+     *
+     * @param workflowDefinitionId Workflow definition ID
+     * @param workspaceId Workspace context for access verification
+     * @return List of execution summaries
+     */
+    @Transactional(readOnly = true)
+    fun listExecutionsForWorkflow(workflowDefinitionId: UUID, workspaceId: UUID): List<Map<String, Any?>> {
+        logger.info { "Listing executions for workflow: $workflowDefinitionId in workspace: $workspaceId" }
+
+        val executions = workflowExecutionRepository
+            .findByWorkflowDefinitionIdAndWorkspaceIdOrderByStartedAtDesc(workflowDefinitionId, workspaceId)
+
+        return executions.map { execution ->
+            mapOf(
+                "executionId" to execution.id,
+                "workflowDefinitionId" to execution.workflowDefinitionId,
+                "status" to execution.status,
+                "startedAt" to execution.startedAt,
+                "completedAt" to execution.completedAt,
+                "durationMs" to execution.durationMs
+            )
+        }
+    }
+
+    /**
+     * List all executions for a workspace.
+     *
+     * Returns execution summaries across all workflows, ordered by most recent first.
+     * Includes workflowDefinitionId for context.
+     *
+     * @param workspaceId Workspace context
+     * @return List of execution summaries
+     */
+    @Transactional(readOnly = true)
+    fun listExecutionsForWorkspace(workspaceId: UUID): List<Map<String, Any?>> {
+        logger.info { "Listing all executions for workspace: $workspaceId" }
+
+        val executions = workflowExecutionRepository.findByWorkspaceIdOrderByStartedAtDesc(workspaceId)
+
+        return executions.map { execution ->
+            mapOf(
+                "executionId" to execution.id,
+                "workflowDefinitionId" to execution.workflowDefinitionId,
+                "status" to execution.status,
+                "startedAt" to execution.startedAt,
+                "completedAt" to execution.completedAt,
+                "durationMs" to execution.durationMs
+            )
+        }
+    }
+
+    /**
+     * Get node-level execution details for a workflow execution.
+     *
+     * Returns the status and output for each node that was executed.
+     * Useful for debugging and understanding workflow execution flow.
+     *
+     * @param executionId Workflow execution ID
+     * @param workspaceId Workspace context for access verification
+     * @return List of node execution details
+     * @throws NotFoundException if execution not found
+     * @throws SecurityException if execution doesn't belong to workspace
+     */
+    @Transactional(readOnly = true)
+    fun getExecutionNodeDetails(executionId: UUID, workspaceId: UUID): List<Map<String, Any?>> {
+        logger.info { "Getting node details for execution: $executionId in workspace: $workspaceId" }
+
+        // Verify execution exists and belongs to workspace
+        val execution = workflowExecutionRepository.findById(executionId)
+            .orElseThrow { NotFoundException("Workflow execution not found: $executionId") }
+
+        if (execution.workspaceId != workspaceId) {
+            throw SecurityException("Workflow execution $executionId does not belong to workspace $workspaceId")
+        }
+
+        // Fetch node executions
+        val nodeExecutions = workflowExecutionNodeRepository
+            .findByWorkflowExecutionIdOrderBySequenceIndexAsc(executionId)
+
+        return nodeExecutions.map { nodeExecution ->
+            mapOf(
+                "nodeId" to nodeExecution.nodeId,
+                "sequenceIndex" to nodeExecution.sequenceIndex,
+                "status" to nodeExecution.status,
+                "startedAt" to nodeExecution.startedAt,
+                "completedAt" to nodeExecution.completedAt,
+                "durationMs" to nodeExecution.durationMs,
+                "attempt" to nodeExecution.attempt,
+                "output" to nodeExecution.output,
+                "error" to nodeExecution.error
+            )
+        }
     }
 }

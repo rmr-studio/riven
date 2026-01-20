@@ -38,4 +38,16 @@ interface WorkflowExecutionRepository : JpaRepository<WorkflowExecutionEntity, U
      * @return List of executions matching status
      */
     fun findByWorkspaceIdAndStatus(workspaceId: UUID, status: WorkflowStatus): List<WorkflowExecutionEntity>
+
+    /**
+     * Find all workflow executions for a specific workflow definition within a workspace.
+     *
+     * @param workflowDefinitionId Workflow definition ID
+     * @param workspaceId Workspace context for access verification
+     * @return List of executions ordered by started time descending
+     */
+    fun findByWorkflowDefinitionIdAndWorkspaceIdOrderByStartedAtDesc(
+        workflowDefinitionId: UUID,
+        workspaceId: UUID
+    ): List<WorkflowExecutionEntity>
 }
