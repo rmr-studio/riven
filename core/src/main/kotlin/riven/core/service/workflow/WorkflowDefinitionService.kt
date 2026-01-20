@@ -1,6 +1,6 @@
 package riven.core.service.workflow
 
-import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.KLogger
 import jakarta.transaction.Transactional
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PreAuthorize
@@ -23,8 +23,6 @@ import riven.core.util.ServiceUtil
 import java.time.ZonedDateTime
 import java.util.*
 
-private val log = KotlinLogging.logger {}
-
 /**
  * Service for managing workflow definition lifecycle.
  *
@@ -42,7 +40,8 @@ class WorkflowDefinitionService(
     private val workflowDefinitionRepository: WorkflowDefinitionRepository,
     private val workflowDefinitionVersionRepository: WorkflowDefinitionVersionRepository,
     private val activityService: ActivityService,
-    private val authTokenService: AuthTokenService
+    private val authTokenService: AuthTokenService,
+    private val logger: KLogger
 ) {
 
     /**
@@ -56,7 +55,7 @@ class WorkflowDefinitionService(
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun createWorkflow(workspaceId: UUID, request: CreateWorkflowDefinitionRequest): WorkflowDefinition {
         val userId = authTokenService.getUserId()
-        log.info { "Creating workflow definition '${request.name}' in workspace $workspaceId" }
+        logger.info { "Creating workflow definition '${request.name}' in workspace $workspaceId" }
 
         // Create workflow definition entity
         val definitionEntity = WorkflowDefinitionEntity(
@@ -103,7 +102,7 @@ class WorkflowDefinitionService(
             )
         )
 
-        log.info { "Created workflow definition $definitionId with version 1" }
+        logger.info { "Created workflow definition $definitionId with version 1" }
         return savedDefinition.toModel(savedVersion)
     }
 
@@ -118,7 +117,7 @@ class WorkflowDefinitionService(
      */
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun getWorkflowById(id: UUID, workspaceId: UUID): WorkflowDefinition {
-        log.debug { "Fetching workflow definition $id for workspace $workspaceId" }
+        logger.debug { "Fetching workflow definition $id for workspace $workspaceId" }
 
         val definition = ServiceUtil.findOrThrow {
             workflowDefinitionRepository.findById(id)
@@ -126,7 +125,7 @@ class WorkflowDefinitionService(
 
         // Verify workspace access
         if (definition.workspaceId != workspaceId) {
-            log.warn { "Workspace mismatch: workflow $id belongs to ${definition.workspaceId}, not $workspaceId" }
+            logger.warn { "Workspace mismatch: workflow $id belongs to ${definition.workspaceId}, not $workspaceId" }
             throw AccessDeniedException("Workflow definition does not belong to the specified workspace")
         }
 
@@ -152,7 +151,7 @@ class WorkflowDefinitionService(
      */
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun listWorkflowsForWorkspace(workspaceId: UUID): List<WorkflowDefinition> {
-        log.debug { "Listing workflow definitions for workspace $workspaceId" }
+        logger.debug { "Listing workflow definitions for workspace $workspaceId" }
 
         val definitions = workflowDefinitionRepository.findByWorkspaceId(workspaceId)
             .filter { !it.deleted }
@@ -188,7 +187,7 @@ class WorkflowDefinitionService(
         request: UpdateWorkflowDefinitionRequest
     ): WorkflowDefinition {
         val userId = authTokenService.getUserId()
-        log.info { "Updating workflow definition $id in workspace $workspaceId" }
+        logger.info { "Updating workflow definition $id in workspace $workspaceId" }
 
         val definition = ServiceUtil.findOrThrow {
             workflowDefinitionRepository.findById(id)
@@ -196,7 +195,7 @@ class WorkflowDefinitionService(
 
         // Verify workspace access
         if (definition.workspaceId != workspaceId) {
-            log.warn { "Workspace mismatch: workflow $id belongs to ${definition.workspaceId}, not $workspaceId" }
+            logger.warn { "Workspace mismatch: workflow $id belongs to ${definition.workspaceId}, not $workspaceId" }
             throw AccessDeniedException("Workflow definition does not belong to the specified workspace")
         }
 
@@ -242,7 +241,7 @@ class WorkflowDefinitionService(
             )
         )
 
-        log.info { "Updated workflow definition $id" }
+        logger.info { "Updated workflow definition $id" }
         return savedDefinition.toModel(version)
     }
 
@@ -260,7 +259,7 @@ class WorkflowDefinitionService(
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun deleteWorkflow(id: UUID, workspaceId: UUID) {
         val userId = authTokenService.getUserId()
-        log.info { "Deleting workflow definition $id in workspace $workspaceId" }
+        logger.info { "Deleting workflow definition $id in workspace $workspaceId" }
 
         val definition = ServiceUtil.findOrThrow {
             workflowDefinitionRepository.findById(id)
@@ -268,7 +267,7 @@ class WorkflowDefinitionService(
 
         // Verify workspace access
         if (definition.workspaceId != workspaceId) {
-            log.warn { "Workspace mismatch: workflow $id belongs to ${definition.workspaceId}, not $workspaceId" }
+            logger.warn { "Workspace mismatch: workflow $id belongs to ${definition.workspaceId}, not $workspaceId" }
             throw AccessDeniedException("Workflow definition does not belong to the specified workspace")
         }
 
@@ -298,6 +297,6 @@ class WorkflowDefinitionService(
             )
         )
 
-        log.info { "Soft-deleted workflow definition $id" }
+        logger.info { "Soft-deleted workflow definition $id" }
     }
 }

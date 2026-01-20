@@ -14,15 +14,18 @@ import riven.core.enums.workflow.WorkflowTriggerType
 import riven.core.exceptions.NotFoundException
 import riven.core.models.request.workflow.StartWorkflowExecutionRequest
 import riven.core.models.workflow.engine.WorkflowExecutionInput
+import riven.core.models.workflow.engine.execution.WorkflowExecutionNodeRecord
+import riven.core.models.workflow.engine.execution.WorkflowExecutionRecord
 import riven.core.repository.workflow.WorkflowDefinitionRepository
 import riven.core.repository.workflow.WorkflowDefinitionVersionRepository
 import riven.core.repository.workflow.WorkflowExecutionNodeRepository
 import riven.core.repository.workflow.WorkflowExecutionRepository
+import riven.core.repository.workflow.projection.ExecutionSummaryProjection
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.workflow.engine.WorkflowOrchestration
 import java.time.ZonedDateTime
-import java.util.UUID
+import java.util.*
 
 /**
  * Service for managing workflow executions.
@@ -97,7 +100,8 @@ class WorkflowExecutionService(
             .findByWorkflowDefinitionIdAndVersionNumber(
                 request.workflowDefinitionId,
                 workflowDefinition.versionNumber
-            ) ?: throw NotFoundException("Workflow version ${workflowDefinition.versionNumber} not found for definition ${request.workflowDefinitionId}")
+            )
+            ?: throw NotFoundException("Workflow version ${workflowDefinition.versionNumber} not found for definition ${request.workflowDefinitionId}")
 
         // Extract node IDs from workflow (v1: simple extraction, future: topological sort)
         val nodeIds = extractNodeIds(workflowVersion.workflow)
@@ -105,7 +109,7 @@ class WorkflowExecutionService(
         logger.info { "Workflow has ${nodeIds.size} nodes to execute" }
 
         // Create execution record (RUNNING status)
-        val executionId = UUID.randomUUID()
+        UUID.randomUUID()
         val engineWorkflowId = UUID.randomUUID()
         val engineRunId = UUID.randomUUID()
 
@@ -214,13 +218,13 @@ class WorkflowExecutionService(
             if (nodes != null) {
                 return nodes.mapNotNull { node ->
                     if (node is Map<*, *>) {
-                        val idValue = node["id"]
-                        when (idValue) {
+                        when (val idValue = node["id"]) {
                             is String -> try {
                                 UUID.fromString(idValue)
                             } catch (e: IllegalArgumentException) {
                                 null
                             }
+
                             is UUID -> idValue
                             else -> null
                         }
@@ -336,45 +340,48 @@ class WorkflowExecutionService(
     }
 
     /**
-     * Get node-level execution details for a workflow execution.
+     * Get execution summary including the execution record and all node executions
+     * with their associated workflow node definitions.
      *
-     * Returns the status and output for each node that was executed.
-     * Useful for debugging and understanding workflow execution flow.
+     * Uses a single JOIN query to fetch all related data efficiently.
      *
      * @param executionId Workflow execution ID
      * @param workspaceId Workspace context for access verification
-     * @return List of node execution details
+     * @return Pair of execution record and list of node execution records
      * @throws NotFoundException if execution not found
      * @throws SecurityException if execution doesn't belong to workspace
      */
     @Transactional(readOnly = true)
-    fun getExecutionNodeDetails(executionId: UUID, workspaceId: UUID): List<Map<String, Any?>> {
-        logger.info { "Getting node details for execution: $executionId in workspace: $workspaceId" }
+    fun getExecutionSummary(
+        executionId: UUID,
+        workspaceId: UUID
+    ): Pair<WorkflowExecutionRecord, List<WorkflowExecutionNodeRecord>> {
+        logger.info { "Getting execution summary for: $executionId in workspace: $workspaceId" }
 
-        // Verify execution exists and belongs to workspace
-        val execution = workflowExecutionRepository.findById(executionId)
-            .orElseThrow { NotFoundException("Workflow execution not found: $executionId") }
+        // Fetch execution with all node executions and nodes in a single JOIN query
+        val executionRecords: List<ExecutionSummaryProjection> =
+            workflowExecutionRepository.findExecutionWithNodesByExecutionId(executionId)
 
-        if (execution.workspaceId != workspaceId) {
+        if (executionRecords.isEmpty()) {
+            throw NotFoundException("Workflow execution not found: $executionId")
+        }
+
+        if (executionRecords.any {
+                (it.execution.workspaceId != workspaceId) || (it.executionNode.workspaceId != workspaceId) || (it.node?.workspaceId != workspaceId)
+            }) {
             throw SecurityException("Workflow execution $executionId does not belong to workspace $workspaceId")
         }
 
-        // Fetch node executions
-        val nodeExecutions = workflowExecutionNodeRepository
-            .findByWorkflowExecutionIdOrderBySequenceIndexAsc(executionId)
 
-        return nodeExecutions.map { nodeExecution ->
-            mapOf(
-                "nodeId" to nodeExecution.nodeId,
-                "sequenceIndex" to nodeExecution.sequenceIndex,
-                "status" to nodeExecution.status,
-                "startedAt" to nodeExecution.startedAt,
-                "completedAt" to nodeExecution.completedAt,
-                "durationMs" to nodeExecution.durationMs,
-                "attempt" to nodeExecution.attempt,
-                "output" to nodeExecution.output,
-                "error" to nodeExecution.error
-            )
-        }
+        return executionRecords.first().execution.toModel() to
+                executionRecords.map { projection ->
+                    val (_, record, node) = projection
+                    if (node == null) {
+                        logger.warn { "Workflow node entity is null for execution node ${record.id} in execution $executionId" }
+                    }
+
+                    record.toModel(node)
+                }
     }
+
 }

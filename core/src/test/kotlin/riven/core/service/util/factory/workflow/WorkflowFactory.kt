@@ -2,13 +2,17 @@ package riven.core.service.util.factory.workflow
 
 import riven.core.entity.workflow.WorkflowDefinitionEntity
 import riven.core.entity.workflow.WorkflowDefinitionVersionEntity
+import riven.core.entity.workflow.WorkflowNodeEntity
 import riven.core.entity.workflow.execution.WorkflowExecutionEntity
 import riven.core.entity.workflow.execution.WorkflowExecutionNodeEntity
 import riven.core.enums.common.icon.IconColour
 import riven.core.enums.common.icon.IconType
 import riven.core.enums.workflow.WorkflowDefinitionStatus
+import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.enums.workflow.WorkflowTriggerType
+import riven.core.models.workflow.node.config.WorkflowFunctionConfig
+import riven.core.models.workflow.node.config.WorkflowNodeConfig
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -142,6 +146,39 @@ object WorkflowFactory {
             error = error,
             input = input,
             output = output
+        )
+    }
+
+    /**
+     * Create a WorkflowNodeEntity for testing.
+     */
+    fun createNode(
+        id: UUID = UUID.randomUUID(),
+        workspaceId: UUID,
+        key: String = "test-node-${UUID.randomUUID().toString().take(8)}",
+        name: String = "Test Node",
+        description: String? = null,
+        type: WorkflowNodeType = WorkflowNodeType.FUNCTION,
+        version: Int = 1,
+        sourceId: UUID? = null,
+        config: WorkflowNodeConfig = WorkflowFunctionConfig(version = 1),
+        system: Boolean = false,
+        deleted: Boolean = false,
+        deletedAt: ZonedDateTime? = null
+    ): WorkflowNodeEntity {
+        return WorkflowNodeEntity(
+            id = id,
+            workspaceId = workspaceId,
+            key = key,
+            name = name,
+            description = description,
+            type = type,
+            version = version,
+            sourceId = sourceId,
+            config = config,
+            system = system,
+            deleted = deleted,
+            deletedAt = deletedAt
         )
     }
 }

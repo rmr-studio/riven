@@ -1,5 +1,6 @@
 package riven.core.controller.workflow
 
+import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -11,8 +12,6 @@ import org.springframework.web.bind.annotation.*
 import riven.core.models.request.workflow.StartWorkflowExecutionRequest
 import riven.core.service.workflow.WorkflowExecutionService
 import java.util.UUID
-
-private val log = KotlinLogging.logger {}
 
 /**
  * REST controller for workflow execution operations.
@@ -29,7 +28,8 @@ private val log = KotlinLogging.logger {}
 @RequestMapping("/api/v1/workflow/executions")
 @Tag(name = "Workflow Execution", description = "Endpoints for workflow execution management and observability")
 class WorkflowExecutionController(
-    private val workflowExecutionService: WorkflowExecutionService
+    private val workflowExecutionService: WorkflowExecutionService,
+    private val log: KLogger
 ) {
 
     /**
@@ -151,33 +151,70 @@ class WorkflowExecutionController(
     }
 
     /**
-     * Get node-level execution details.
+     * Get execution summary including node-level execution details.
      *
-     * Returns the execution status for each node in the workflow.
-     * Useful for debugging which nodes succeeded or failed.
+     * Returns the execution record along with the execution status for each node
+     * in the workflow. Useful for debugging which nodes succeeded or failed.
      *
      * @param id Execution ID
      * @param workspaceId Workspace context for access verification
-     * @return List of node execution details
+     * @return Execution summary with node execution details
      */
-    @GetMapping("/{id}/nodes")
+    @GetMapping("/{id}/summary")
     @PreAuthorize("isAuthenticated()")
     @Operation(
-        summary = "Get node-level execution details",
-        description = "Returns execution status for each node in the workflow"
+        summary = "Get execution summary with node details",
+        description = "Returns execution record and status for each node in the workflow"
     )
     @ApiResponses(
-        ApiResponse(responseCode = "200", description = "Node details retrieved successfully"),
+        ApiResponse(responseCode = "200", description = "Execution summary retrieved successfully"),
         ApiResponse(responseCode = "401", description = "Unauthorized access"),
         ApiResponse(responseCode = "404", description = "Execution not found")
     )
-    fun getNodeDetails(
+    fun getExecutionSummary(
         @PathVariable id: UUID,
         @RequestParam workspaceId: UUID
-    ): ResponseEntity<List<Map<String, Any?>>> {
-        log.info { "GET /api/v1/workflow/executions/$id/nodes - workspaceId: $workspaceId" }
+    ): ResponseEntity<Map<String, Any?>> {
+        log.info { "GET /api/v1/workflow/executions/$id/summary - workspaceId: $workspaceId" }
 
-        val response = workflowExecutionService.getExecutionNodeDetails(id, workspaceId)
+        val (executionRecord, nodeRecords) = workflowExecutionService.getExecutionSummary(id, workspaceId)
+
+        val response = mapOf(
+            "execution" to mapOf(
+                "id" to executionRecord.id,
+                "workspaceId" to executionRecord.workspaceId,
+                "workflowDefinitionId" to executionRecord.workflowDefinitionId,
+                "workflowVersionId" to executionRecord.workflowVersionId,
+                "status" to executionRecord.status,
+                "triggerType" to executionRecord.triggerType,
+                "startedAt" to executionRecord.startedAt,
+                "completedAt" to executionRecord.completedAt,
+                "duration" to executionRecord.duration,
+                "input" to executionRecord.input,
+                "output" to executionRecord.output,
+                "error" to executionRecord.error
+            ),
+            "nodeExecutions" to nodeRecords.map { nodeRecord ->
+                mapOf(
+                    "id" to nodeRecord.id,
+                    "node" to mapOf(
+                        "id" to nodeRecord.node.id,
+                        "key" to nodeRecord.node.key,
+                        "name" to nodeRecord.node.name,
+                        "type" to nodeRecord.node.type
+                    ),
+                    "sequenceIndex" to nodeRecord.sequenceIndex,
+                    "status" to nodeRecord.status,
+                    "startedAt" to nodeRecord.startedAt,
+                    "completedAt" to nodeRecord.completedAt,
+                    "duration" to nodeRecord.duration,
+                    "attempt" to nodeRecord.attempt,
+                    "input" to nodeRecord.input,
+                    "output" to nodeRecord.output,
+                    "error" to nodeRecord.error
+                )
+            }
+        )
 
         return ResponseEntity.ok(response)
     }
