@@ -31,7 +31,7 @@ private val log = KotlinLogging.logger {}
  */
 @RestController
 @RequestMapping("/api/v1/workflow/definitions")
-@Tag(name = "Workflow Definition Management", description = "Endpoints for managing workflow definitions and their metadata")
+@Tag(name = "workflow", description = "Workflow Definition and Metadata Management Endpoints")
 @PreAuthorize("isAuthenticated()")
 class WorkflowDefinitionController(
     private val workflowDefinitionService: WorkflowDefinitionService

@@ -17,7 +17,7 @@ import java.util.*
 
 @RestController
 @RequestMapping("/api/v1/entity")
-@Tag(name = "Entity Management", description = "Endpoints for managing entity instances and their associated data")
+@Tag(name = "entity", description = "Entity Instance and Metadata Management Endpoints")
 class EntityController(
     private val entityService: EntityService
 ) {

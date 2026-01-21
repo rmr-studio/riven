@@ -27,7 +27,7 @@ import java.util.*
  */
 @RestController
 @RequestMapping("/api/v1/workflow/executions")
-@Tag(name = "Workflow Execution", description = "Endpoints for workflow execution management and observability")
+@Tag(name = "workflow", description = "Workflow Execution Management Endpoints")
 class WorkflowExecutionController(
     private val workflowExecutionService: WorkflowExecutionService,
     private val log: KLogger

@@ -1,6 +1,6 @@
 package riven.core.controller.workflow
 
-import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.KLogger
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
@@ -18,8 +18,6 @@ import riven.core.models.workflow.node.WorkflowNode
 import riven.core.service.workflow.WorkflowGraphService
 import java.util.*
 
-private val log = KotlinLogging.logger {}
-
 /**
  * REST controller for workflow graph structure management.
  *
@@ -36,12 +34,13 @@ private val log = KotlinLogging.logger {}
 @RestController
 @RequestMapping("/api/v1/workflow/graph")
 @Tag(
-    name = "Workflow Graph Management",
-    description = "Endpoints for managing workflow graph structure (nodes and edges)"
+    name = "workflow",
+    description = "Workflow Graph Management Endpoints"
 )
 @PreAuthorize("isAuthenticated()")
 class WorkflowGraphController(
-    private val workflowGraphService: WorkflowGraphService
+    private val workflowGraphService: WorkflowGraphService,
+    private val logger: KLogger
 ) {
 
     // ------------------------------------------------------------------
@@ -69,7 +68,7 @@ class WorkflowGraphController(
         @PathVariable workspaceId: UUID,
         @RequestBody request: CreateWorkflowNodeRequest
     ): ResponseEntity<WorkflowNode> {
-        log.info { "POST /api/v1/workflow/graph/nodes/workspace/$workspaceId - name: ${request.name}" }
+        logger.info { "POST /api/v1/workflow/graph/nodes/workspace/$workspaceId - name: ${request.name}" }
 
         val node = workflowGraphService.createNode(workspaceId, request)
 
@@ -103,7 +102,7 @@ class WorkflowGraphController(
         @RequestParam workspaceId: UUID,
         @RequestBody request: UpdateWorkflowNodeRequest
     ): ResponseEntity<WorkflowNode> {
-        log.info { "PUT /api/v1/workflow/graph/nodes/$id?workspaceId=$workspaceId" }
+        logger.info { "PUT /api/v1/workflow/graph/nodes/$id?workspaceId=$workspaceId" }
 
         val node = workflowGraphService.updateNode(id, workspaceId, request)
 
@@ -134,7 +133,7 @@ class WorkflowGraphController(
         @PathVariable id: UUID,
         @RequestParam workspaceId: UUID
     ): ResponseEntity<Void> {
-        log.info { "DELETE /api/v1/workflow/graph/nodes/$id?workspaceId=$workspaceId" }
+        logger.info { "DELETE /api/v1/workflow/graph/nodes/$id?workspaceId=$workspaceId" }
 
         workflowGraphService.deleteNode(id, workspaceId)
 
@@ -166,7 +165,7 @@ class WorkflowGraphController(
         @PathVariable workspaceId: UUID,
         @RequestBody request: CreateWorkflowEdgeRequest
     ): ResponseEntity<WorkflowEdge> {
-        log.info { "POST /api/v1/workflow/graph/edges/workspace/$workspaceId - source: ${request.sourceNodeId}, target: ${request.targetNodeId}" }
+        logger.info { "POST /api/v1/workflow/graph/edges/workspace/$workspaceId - source: ${request.sourceNodeId}, target: ${request.targetNodeId}" }
 
         val edge = workflowGraphService.createEdge(workspaceId, request)
 
@@ -194,7 +193,7 @@ class WorkflowGraphController(
         @PathVariable id: UUID,
         @RequestParam workspaceId: UUID
     ): ResponseEntity<Void> {
-        log.info { "DELETE /api/v1/workflow/graph/edges/$id?workspaceId=$workspaceId" }
+        logger.info { "DELETE /api/v1/workflow/graph/edges/$id?workspaceId=$workspaceId" }
 
         workflowGraphService.deleteEdge(id, workspaceId)
 
@@ -229,7 +228,7 @@ class WorkflowGraphController(
         @PathVariable workflowDefinitionId: UUID,
         @RequestParam workspaceId: UUID
     ): ResponseEntity<WorkflowGraph> {
-        log.info { "GET /api/v1/workflow/graph/workflow/$workflowDefinitionId?workspaceId=$workspaceId" }
+        logger.info { "GET /api/v1/workflow/graph/workflow/$workflowDefinitionId?workspaceId=$workspaceId" }
 
         val graph = workflowGraphService.getWorkflowGraph(workflowDefinitionId, workspaceId)
 

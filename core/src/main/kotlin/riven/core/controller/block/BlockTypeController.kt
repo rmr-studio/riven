@@ -15,7 +15,7 @@ import java.util.*
 
 @RestController
 @RequestMapping("/api/v1/block/schema")
-@Tag(name = "Block Type Management", description = "Endpoints for managing block types and their configurations")
+@Tag(name = "block", description = "Block Type Management Endpoints")
 class BlockTypeController(
     private val blockTypeService: BlockTypeService
 ) {
