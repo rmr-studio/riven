@@ -36,29 +36,29 @@ class WorkflowExecutionController(
     /**
      * Start a workflow execution.
      *
-     * Triggers a Temporal workflow execution for the specified workflow definition.
-     * The workflow runs asynchronously - this endpoint returns immediately with
-     * execution details.
+     * Queues a workflow execution request for the specified workflow definition.
+     * The workflow is dispatched asynchronously when workspace capacity is available.
+     * This endpoint returns immediately with queue status.
      *
      * @param request Start execution request (workflowDefinitionId, workspaceId)
-     * @return Execution response with executionId, workflowId, status
+     * @return Response with queueId, status, and message
      */
     @PostMapping("/start")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Start a workflow execution")
+    @Operation(summary = "Queue a workflow execution")
     @ApiResponses(
-        ApiResponse(responseCode = "200", description = "Workflow execution started successfully"),
+        ApiResponse(responseCode = "202", description = "Workflow execution queued successfully"),
         ApiResponse(responseCode = "401", description = "Unauthorized access"),
         ApiResponse(responseCode = "404", description = "Workflow definition not found")
     )
     fun startExecution(
         @RequestBody request: StartWorkflowExecutionRequest
-    ): ResponseEntity<WorkflowExecutionRecord> {
+    ): ResponseEntity<Map<String, Any>> {
         log.info { "POST /api/v1/workflow/executions/start - workflowDefinitionId: ${request.workflowDefinitionId}, workspaceId: ${request.workspaceId}" }
 
         val response = workflowExecutionService.startExecution(request)
 
-        return ResponseEntity.ok(response)
+        return ResponseEntity.accepted().body(response)
     }
 
     /**
