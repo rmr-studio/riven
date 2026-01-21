@@ -13,12 +13,10 @@ import riven.core.enums.workflow.WorkflowStatus
 import riven.core.enums.workflow.WorkflowTriggerType
 import riven.core.exceptions.NotFoundException
 import riven.core.models.request.workflow.StartWorkflowExecutionRequest
+import riven.core.models.response.workflow.execution.WorkflowExecutionSummaryResponse
 import riven.core.models.workflow.engine.WorkflowExecutionInput
-import riven.core.models.workflow.engine.execution.WorkflowExecutionNodeRecord
 import riven.core.models.workflow.engine.execution.WorkflowExecutionRecord
 import riven.core.repository.workflow.WorkflowDefinitionRepository
-import riven.core.repository.workflow.WorkflowDefinitionVersionRepository
-import riven.core.repository.workflow.WorkflowExecutionNodeRepository
 import riven.core.repository.workflow.WorkflowExecutionRepository
 import riven.core.repository.workflow.projection.ExecutionSummaryProjection
 import riven.core.service.activity.ActivityService
@@ -37,8 +35,7 @@ import java.util.*
  * - Activity logging for audit trail
  *
  * @property workflowClient Temporal client for starting workflows
- * @property workflowDefinitionRepository Access to workflow definitions
- * @property workflowDefinitionVersionRepository Access to workflow versions (DAG structure)
+ * @property workflowDefinitionRepository Access to workflow definitions (with version JOIN)
  * @property workflowExecutionRepository Persistence for execution records
  * @property activityService Audit logging
  * @property authTokenService JWT extraction for user context
@@ -47,9 +44,7 @@ import java.util.*
 class WorkflowExecutionService(
     private val workflowClient: WorkflowClient,
     private val workflowDefinitionRepository: WorkflowDefinitionRepository,
-    private val workflowDefinitionVersionRepository: WorkflowDefinitionVersionRepository,
     private val workflowExecutionRepository: WorkflowExecutionRepository,
-    private val workflowExecutionNodeRepository: WorkflowExecutionNodeRepository,
     private val activityService: ActivityService,
     private val authTokenService: AuthTokenService,
     private val logger: KLogger
@@ -81,27 +76,20 @@ class WorkflowExecutionService(
      * @throws SecurityException if workflow doesn't belong to workspace
      */
     @Transactional
-    fun startExecution(request: StartWorkflowExecutionRequest): Map<String, Any> {
+    fun startExecution(request: StartWorkflowExecutionRequest): WorkflowExecutionRecord {
         val userId = authTokenService.getUserId()
 
         logger.info { "Starting workflow execution for definition ${request.workflowDefinitionId} in workspace ${request.workspaceId}" }
 
-        // Fetch workflow definition
-        val workflowDefinition = workflowDefinitionRepository.findById(request.workflowDefinitionId)
-            .orElseThrow { NotFoundException("Workflow definition not found: ${request.workflowDefinitionId}") }
+        // Fetch workflow definition with published version in a single JOIN query
+        val (workflowDefinition, workflowVersion) = workflowDefinitionRepository
+            .findDefinitionWithPublishedVersion(request.workflowDefinitionId)
+            ?: throw NotFoundException("Workflow definition not found: ${request.workflowDefinitionId}")
 
         // Verify workspace access
         if (workflowDefinition.workspaceId != request.workspaceId) {
             throw SecurityException("Workflow definition ${request.workflowDefinitionId} does not belong to workspace ${request.workspaceId}")
         }
-
-        // Fetch workflow version (contains DAG structure)
-        val workflowVersion = workflowDefinitionVersionRepository
-            .findByWorkflowDefinitionIdAndVersionNumber(
-                request.workflowDefinitionId,
-                workflowDefinition.versionNumber
-            )
-            ?: throw NotFoundException("Workflow version ${workflowDefinition.versionNumber} not found for definition ${request.workflowDefinitionId}")
 
         // Extract node IDs from workflow (v1: simple extraction, future: topological sort)
         val nodeIds = extractNodeIds(workflowVersion.workflow)
@@ -190,13 +178,7 @@ class WorkflowExecutionService(
             )
         )
 
-        // Return execution response
-        return mapOf(
-            "executionId" to savedExecutionId,
-            "workflowId" to "execution-$savedExecutionId",
-            "status" to "STARTED",
-            "nodeCount" to nodeIds.size
-        )
+        return savedExecution.toModel()
     }
 
     /**
@@ -257,7 +239,7 @@ class WorkflowExecutionService(
      * @throws SecurityException if execution doesn't belong to workspace
      */
     @Transactional(readOnly = true)
-    fun getExecutionById(id: UUID, workspaceId: UUID): Map<String, Any?> {
+    fun getExecutionById(id: UUID, workspaceId: UUID): WorkflowExecutionRecord {
         logger.info { "Getting execution by ID: $id for workspace: $workspaceId" }
 
         val execution = workflowExecutionRepository.findById(id)
@@ -268,19 +250,7 @@ class WorkflowExecutionService(
             throw SecurityException("Workflow execution $id does not belong to workspace $workspaceId")
         }
 
-        return mapOf(
-            "executionId" to execution.id,
-            "workflowDefinitionId" to execution.workflowDefinitionId,
-            "workflowVersionId" to execution.workflowVersionId,
-            "status" to execution.status,
-            "startedAt" to execution.startedAt,
-            "completedAt" to execution.completedAt,
-            "durationMs" to execution.durationMs,
-            "triggerType" to execution.triggerType,
-            "input" to execution.input,
-            "output" to execution.output,
-            "error" to execution.error
-        )
+        return execution.toModel()
     }
 
     /**
@@ -294,22 +264,12 @@ class WorkflowExecutionService(
      * @return List of execution summaries
      */
     @Transactional(readOnly = true)
-    fun listExecutionsForWorkflow(workflowDefinitionId: UUID, workspaceId: UUID): List<Map<String, Any?>> {
+    fun listExecutionsForWorkflow(workflowDefinitionId: UUID, workspaceId: UUID): List<WorkflowExecutionRecord> {
         logger.info { "Listing executions for workflow: $workflowDefinitionId in workspace: $workspaceId" }
 
-        val executions = workflowExecutionRepository
+        return workflowExecutionRepository
             .findByWorkflowDefinitionIdAndWorkspaceIdOrderByStartedAtDesc(workflowDefinitionId, workspaceId)
-
-        return executions.map { execution ->
-            mapOf(
-                "executionId" to execution.id,
-                "workflowDefinitionId" to execution.workflowDefinitionId,
-                "status" to execution.status,
-                "startedAt" to execution.startedAt,
-                "completedAt" to execution.completedAt,
-                "durationMs" to execution.durationMs
-            )
-        }
+            .map { it.toModel() }
     }
 
     /**
@@ -322,21 +282,9 @@ class WorkflowExecutionService(
      * @return List of execution summaries
      */
     @Transactional(readOnly = true)
-    fun listExecutionsForWorkspace(workspaceId: UUID): List<Map<String, Any?>> {
+    fun getWorkspaceExecutionRecords(workspaceId: UUID): List<WorkflowExecutionRecord> {
         logger.info { "Listing all executions for workspace: $workspaceId" }
-
-        val executions = workflowExecutionRepository.findByWorkspaceIdOrderByStartedAtDesc(workspaceId)
-
-        return executions.map { execution ->
-            mapOf(
-                "executionId" to execution.id,
-                "workflowDefinitionId" to execution.workflowDefinitionId,
-                "status" to execution.status,
-                "startedAt" to execution.startedAt,
-                "completedAt" to execution.completedAt,
-                "durationMs" to execution.durationMs
-            )
-        }
+        return workflowExecutionRepository.findByWorkspaceIdOrderByStartedAtDesc(workspaceId).map { it.toModel() }
     }
 
     /**
@@ -347,15 +295,14 @@ class WorkflowExecutionService(
      *
      * @param executionId Workflow execution ID
      * @param workspaceId Workspace context for access verification
-     * @return Pair of execution record and list of node execution records
-     * @throws NotFoundException if execution not found
-     * @throws SecurityException if execution doesn't belong to workspace
+     * @return Execution summary response with execution and node details
      */
+    @Throws(NotFoundException::class, SecurityException::class)
     @Transactional(readOnly = true)
     fun getExecutionSummary(
         executionId: UUID,
         workspaceId: UUID
-    ): Pair<WorkflowExecutionRecord, List<WorkflowExecutionNodeRecord>> {
+    ): WorkflowExecutionSummaryResponse {
         logger.info { "Getting execution summary for: $executionId in workspace: $workspaceId" }
 
         // Fetch execution with all node executions and nodes in a single JOIN query
@@ -367,21 +314,23 @@ class WorkflowExecutionService(
         }
 
         if (executionRecords.any {
-                (it.execution.workspaceId != workspaceId) || (it.executionNode.workspaceId != workspaceId) || (it.node?.workspaceId != workspaceId)
+                (it.execution.workspaceId != workspaceId) ||
+                (it.executionNode.workspaceId != workspaceId) ||
+                (it.node != null && it.node.workspaceId != workspaceId)
             }) {
             throw SecurityException("Workflow execution $executionId does not belong to workspace $workspaceId")
         }
 
-
-        return executionRecords.first().execution.toModel() to
-                executionRecords.map { projection ->
-                    val (_, record, node) = projection
-                    if (node == null) {
-                        logger.warn { "Workflow node entity is null for execution node ${record.id} in execution $executionId" }
-                    }
-
-                    record.toModel(node)
+        return WorkflowExecutionSummaryResponse(
+            execution = executionRecords.first().execution.toModel(),
+            nodes = executionRecords.map { projection ->
+                val (_, record, node) = projection
+                if (node == null) {
+                    logger.warn { "Workflow node entity is null for execution node ${record.id} in execution $executionId" }
                 }
-    }
 
+                record.toModel(node)
+            }
+        )
+    }
 }

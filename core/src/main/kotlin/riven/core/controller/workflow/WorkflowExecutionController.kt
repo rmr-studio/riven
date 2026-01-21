@@ -1,7 +1,6 @@
 package riven.core.controller.workflow
 
 import io.github.oshai.kotlinlogging.KLogger
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
@@ -10,8 +9,10 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import riven.core.models.request.workflow.StartWorkflowExecutionRequest
+import riven.core.models.response.workflow.execution.WorkflowExecutionSummaryResponse
+import riven.core.models.workflow.engine.execution.WorkflowExecutionRecord
 import riven.core.service.workflow.WorkflowExecutionService
-import java.util.UUID
+import java.util.*
 
 /**
  * REST controller for workflow execution operations.
@@ -52,7 +53,7 @@ class WorkflowExecutionController(
     )
     fun startExecution(
         @RequestBody request: StartWorkflowExecutionRequest
-    ): ResponseEntity<Map<String, Any>> {
+    ): ResponseEntity<WorkflowExecutionRecord> {
         log.info { "POST /api/v1/workflow/executions/start - workflowDefinitionId: ${request.workflowDefinitionId}, workspaceId: ${request.workspaceId}" }
 
         val response = workflowExecutionService.startExecution(request)
@@ -81,7 +82,7 @@ class WorkflowExecutionController(
     fun getExecution(
         @PathVariable id: UUID,
         @RequestParam workspaceId: UUID
-    ): ResponseEntity<Map<String, Any?>> {
+    ): ResponseEntity<WorkflowExecutionRecord> {
         log.info { "GET /api/v1/workflow/executions/$id - workspaceId: $workspaceId" }
 
         val response = workflowExecutionService.getExecutionById(id, workspaceId)
@@ -113,7 +114,7 @@ class WorkflowExecutionController(
     fun listWorkflowExecutions(
         @PathVariable workflowDefinitionId: UUID,
         @RequestParam workspaceId: UUID
-    ): ResponseEntity<List<Map<String, Any?>>> {
+    ): ResponseEntity<List<WorkflowExecutionRecord>> {
         log.info { "GET /api/v1/workflow/executions/workflow/$workflowDefinitionId - workspaceId: $workspaceId" }
 
         val response = workflowExecutionService.listExecutionsForWorkflow(workflowDefinitionId, workspaceId)
@@ -142,10 +143,10 @@ class WorkflowExecutionController(
     )
     fun listWorkspaceExecutions(
         @PathVariable workspaceId: UUID
-    ): ResponseEntity<List<Map<String, Any?>>> {
+    ): ResponseEntity<List<WorkflowExecutionRecord>> {
         log.info { "GET /api/v1/workflow/executions/workspace/$workspaceId" }
 
-        val response = workflowExecutionService.listExecutionsForWorkspace(workspaceId)
+        val response = workflowExecutionService.getWorkspaceExecutionRecords(workspaceId)
 
         return ResponseEntity.ok(response)
     }
@@ -174,48 +175,10 @@ class WorkflowExecutionController(
     fun getExecutionSummary(
         @PathVariable id: UUID,
         @RequestParam workspaceId: UUID
-    ): ResponseEntity<Map<String, Any?>> {
+    ): ResponseEntity<WorkflowExecutionSummaryResponse> {
         log.info { "GET /api/v1/workflow/executions/$id/summary - workspaceId: $workspaceId" }
 
-        val (executionRecord, nodeRecords) = workflowExecutionService.getExecutionSummary(id, workspaceId)
-
-        val response = mapOf(
-            "execution" to mapOf(
-                "id" to executionRecord.id,
-                "workspaceId" to executionRecord.workspaceId,
-                "workflowDefinitionId" to executionRecord.workflowDefinitionId,
-                "workflowVersionId" to executionRecord.workflowVersionId,
-                "status" to executionRecord.status,
-                "triggerType" to executionRecord.triggerType,
-                "startedAt" to executionRecord.startedAt,
-                "completedAt" to executionRecord.completedAt,
-                "duration" to executionRecord.duration,
-                "input" to executionRecord.input,
-                "output" to executionRecord.output,
-                "error" to executionRecord.error
-            ),
-            "nodeExecutions" to nodeRecords.map { nodeRecord ->
-                mapOf(
-                    "id" to nodeRecord.id,
-                    "node" to mapOf(
-                        "id" to nodeRecord.node.id,
-                        "key" to nodeRecord.node.key,
-                        "name" to nodeRecord.node.name,
-                        "type" to nodeRecord.node.type
-                    ),
-                    "sequenceIndex" to nodeRecord.sequenceIndex,
-                    "status" to nodeRecord.status,
-                    "startedAt" to nodeRecord.startedAt,
-                    "completedAt" to nodeRecord.completedAt,
-                    "duration" to nodeRecord.duration,
-                    "attempt" to nodeRecord.attempt,
-                    "input" to nodeRecord.input,
-                    "output" to nodeRecord.output,
-                    "error" to nodeRecord.error
-                )
-            }
-        )
-
+        val response = workflowExecutionService.getExecutionSummary(id, workspaceId)
         return ResponseEntity.ok(response)
     }
 }

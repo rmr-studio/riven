@@ -13,22 +13,19 @@ import org.springframework.context.annotation.Import
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
-import riven.core.entity.workflow.WorkflowNodeEntity
-import riven.core.entity.workflow.execution.WorkflowExecutionEntity
-import riven.core.entity.workflow.execution.WorkflowExecutionNodeEntity
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.enums.workflow.WorkflowTriggerType
+import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.exceptions.NotFoundException
 import riven.core.repository.workflow.WorkflowDefinitionRepository
-import riven.core.repository.workflow.WorkflowDefinitionVersionRepository
 import riven.core.repository.workflow.WorkflowExecutionNodeRepository
 import riven.core.repository.workflow.WorkflowExecutionRepository
+import riven.core.repository.workflow.projection.ExecutionSummaryProjection
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
 import riven.core.service.util.factory.workflow.WorkflowFactory
-import riven.core.enums.workspace.WorkspaceRoles
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -63,9 +60,6 @@ class WorkflowExecutionServiceTest {
 
     @MockitoBean
     private lateinit var workflowDefinitionRepository: WorkflowDefinitionRepository
-
-    @MockitoBean
-    private lateinit var workflowDefinitionVersionRepository: WorkflowDefinitionVersionRepository
 
     @MockitoBean
     private lateinit var workflowExecutionRepository: WorkflowExecutionRepository
@@ -119,16 +113,15 @@ class WorkflowExecutionServiceTest {
         val result = workflowExecutionService.getExecutionById(executionId, workspaceId)
 
         // Assert
-        assertEquals(executionId, result["executionId"])
-        assertEquals(workflowDefinitionId, result["workflowDefinitionId"])
-        assertEquals(workflowVersionId, result["workflowVersionId"])
-        assertEquals(WorkflowStatus.COMPLETED, result["status"])
-        assertEquals(startedAt, result["startedAt"])
-        assertEquals(completedAt, result["completedAt"])
-        assertEquals(5000L, result["durationMs"])
-        assertEquals(WorkflowTriggerType.FUNCTION, result["triggerType"])
-        assertNotNull(result["input"])
-        assertNotNull(result["output"])
+        assertEquals(executionId, result.id)
+        assertEquals(workflowDefinitionId, result.workflowDefinitionId)
+        assertEquals(workflowVersionId, result.workflowVersionId)
+        assertEquals(WorkflowStatus.COMPLETED, result.status)
+        assertEquals(startedAt, result.startedAt)
+        assertEquals(completedAt, result.completedAt)
+        assertEquals(WorkflowTriggerType.FUNCTION, result.triggerType)
+        assertNotNull(result.input)
+        assertNotNull(result.output)
     }
 
     @Test
@@ -185,9 +178,11 @@ class WorkflowExecutionServiceTest {
             )
         }
 
-        whenever(workflowExecutionRepository.findByWorkflowDefinitionIdAndWorkspaceIdOrderByStartedAtDesc(
-            workflowDefinitionId, workspaceId
-        )).thenReturn(executions)
+        whenever(
+            workflowExecutionRepository.findByWorkflowDefinitionIdAndWorkspaceIdOrderByStartedAtDesc(
+                workflowDefinitionId, workspaceId
+            )
+        ).thenReturn(executions)
 
         // Act
         val result = workflowExecutionService.listExecutionsForWorkflow(workflowDefinitionId, workspaceId)
@@ -195,10 +190,10 @@ class WorkflowExecutionServiceTest {
         // Assert
         assertEquals(3, result.size)
         result.forEach { execution ->
-            assertNotNull(execution["executionId"])
-            assertEquals(workflowDefinitionId, execution["workflowDefinitionId"])
-            assertNotNull(execution["status"])
-            assertNotNull(execution["startedAt"])
+            assertNotNull(execution.id)
+            assertEquals(workflowDefinitionId, execution.workflowDefinitionId)
+            assertNotNull(execution.status)
+            assertNotNull(execution.startedAt)
         }
     }
 
@@ -241,13 +236,13 @@ class WorkflowExecutionServiceTest {
             .thenReturn(executions)
 
         // Act
-        val result = workflowExecutionService.listExecutionsForWorkspace(workspaceId)
+        val result = workflowExecutionService.getWorkspaceExecutionRecords(workspaceId)
 
         // Assert
         assertEquals(3, result.size)
 
         // Verify different workflow definition IDs are included
-        val definitionIds = result.map { it["workflowDefinitionId"] }.toSet()
+        val definitionIds = result.map { it.workflowDefinitionId }.toSet()
         assertEquals(2, definitionIds.size)
         assertTrue(definitionIds.contains(workflowDef1))
         assertTrue(definitionIds.contains(workflowDef2))
@@ -275,8 +270,8 @@ class WorkflowExecutionServiceTest {
             completedAt = now
         )
 
-        // Create nodes and node executions
-        val nodesAndExecutions = (0 until 5).map { i ->
+        // Create nodes and node executions as projections
+        val projections = (0 until 5).map { i ->
             val nodeId = UUID.randomUUID()
             val node = WorkflowFactory.createNode(
                 id = nodeId,
@@ -296,16 +291,11 @@ class WorkflowExecutionServiceTest {
                 durationMs = 1000L * (i + 1),
                 output = mapOf("node" to "output-$i")
             )
-            Triple(execution, nodeExecution, node)
-        }
-
-        // Build JOIN query result: List<Array<Any?>> where each row is [execution, nodeExecution, node]
-        val joinResults: List<Array<Any?>> = nodesAndExecutions.map { (exec, nodeExec, node) ->
-            arrayOf<Any?>(exec, nodeExec, node)
+            ExecutionSummaryProjection(execution, nodeExecution, node)
         }
 
         whenever(workflowExecutionRepository.findExecutionWithNodesByExecutionId(executionId))
-            .thenReturn(joinResults)
+            .thenReturn(projections)
 
         // Act
         val (executionRecord, nodeRecords) = workflowExecutionService.getExecutionSummary(executionId, workspaceId)
@@ -321,8 +311,8 @@ class WorkflowExecutionServiceTest {
         nodeRecords.forEachIndexed { index, nodeRecord ->
             assertEquals(index, nodeRecord.sequenceIndex)
             assertEquals(WorkflowStatus.COMPLETED, nodeRecord.status)
-            assertEquals("Node $index", nodeRecord.node.name)
-            assertEquals("node-$index", nodeRecord.node.key)
+            assertEquals("Node $index", nodeRecord.node?.name)
+            assertEquals("node-$index", nodeRecord.node?.key)
             assertNotNull(nodeRecord.startedAt)
             assertNotNull(nodeRecord.completedAt)
             assertNotNull(nodeRecord.output)
@@ -330,34 +320,18 @@ class WorkflowExecutionServiceTest {
     }
 
     @Test
-    fun `getExecutionSummary_noNodeExecutions_returnsEmptyNodeList`() {
+    fun `getExecutionSummary_noNodeExecutions_throwsNotFoundException`() {
         // Arrange
         val executionId = UUID.randomUUID()
-        val now = ZonedDateTime.now()
 
-        val execution = WorkflowFactory.createExecution(
-            id = executionId,
-            workspaceId = workspaceId,
-            workflowDefinitionId = UUID.randomUUID(),
-            status = WorkflowStatus.RUNNING,
-            startedAt = now
-        )
-
-        // JOIN result with only execution, no node executions
-        val joinResults: List<Array<Any?>> = listOf(
-            arrayOf<Any?>(execution, null, null)
-        )
-
+        // When there are no node executions, the JOIN query returns an empty list
         whenever(workflowExecutionRepository.findExecutionWithNodesByExecutionId(executionId))
-            .thenReturn(joinResults)
+            .thenReturn(emptyList())
 
-        // Act
-        val (executionRecord, nodeRecords) = workflowExecutionService.getExecutionSummary(executionId, workspaceId)
-
-        // Assert
-        assertEquals(executionId, executionRecord.id)
-        assertEquals(WorkflowStatus.RUNNING, executionRecord.status)
-        assertTrue(nodeRecords.isEmpty())
+        // Act & Assert
+        assertThrows<NotFoundException> {
+            workflowExecutionService.getExecutionSummary(executionId, workspaceId)
+        }
     }
 
     @Test
@@ -378,6 +352,8 @@ class WorkflowExecutionServiceTest {
         // Arrange
         val executionId = UUID.randomUUID()
         val differentWorkspaceId = UUID.randomUUID()
+        val nodeId = UUID.randomUUID()
+        val now = ZonedDateTime.now()
 
         val execution = WorkflowFactory.createExecution(
             id = executionId,
@@ -385,12 +361,28 @@ class WorkflowExecutionServiceTest {
             workflowDefinitionId = UUID.randomUUID()
         )
 
-        val joinResults: List<Array<Any?>> = listOf(
-            arrayOf<Any?>(execution, null, null)
+        val nodeExecution = WorkflowFactory.createNodeExecution(
+            id = UUID.randomUUID(),
+            workspaceId = differentWorkspaceId,
+            workflowExecutionId = executionId,
+            nodeId = nodeId,
+            sequenceIndex = 0,
+            status = WorkflowStatus.COMPLETED,
+            startedAt = now.minusMinutes(5),
+            completedAt = now
         )
 
+        val node = WorkflowFactory.createNode(
+            id = nodeId,
+            workspaceId = differentWorkspaceId,
+            key = "test-node",
+            name = "Test Node"
+        )
+
+        val projections = listOf(ExecutionSummaryProjection(execution, nodeExecution, node))
+
         whenever(workflowExecutionRepository.findExecutionWithNodesByExecutionId(executionId))
-            .thenReturn(joinResults)
+            .thenReturn(projections)
 
         // Act & Assert
         assertThrows<SecurityException> {
@@ -399,7 +391,7 @@ class WorkflowExecutionServiceTest {
     }
 
     @Test
-    fun `getExecutionSummary_nodeDeleted_throwsNotFoundException`() {
+    fun `getExecutionSummary_nodeDeleted_returnsNullNodeInRecord`() {
         // Arrange
         val executionId = UUID.randomUUID()
         val nodeId = UUID.randomUUID()
@@ -422,17 +414,18 @@ class WorkflowExecutionServiceTest {
             completedAt = now
         )
 
-        // JOIN result with node execution but node is null (deleted)
-        val joinResults: List<Array<Any?>> = listOf(
-            arrayOf<Any?>(execution, nodeExecution, null)
-        )
+        // Projection with node execution but node is null (deleted)
+        val projections = listOf(ExecutionSummaryProjection(execution, nodeExecution, null))
 
         whenever(workflowExecutionRepository.findExecutionWithNodesByExecutionId(executionId))
-            .thenReturn(joinResults)
+            .thenReturn(projections)
 
-        // Act & Assert
-        assertThrows<NotFoundException> {
-            workflowExecutionService.getExecutionSummary(executionId, workspaceId)
-        }
+        // Act - service logs warning but does not throw
+        val (executionRecord, nodeRecords) = workflowExecutionService.getExecutionSummary(executionId, workspaceId)
+
+        // Assert
+        assertEquals(executionId, executionRecord.id)
+        assertEquals(1, nodeRecords.size)
+        assertNull(nodeRecords.first().node)
     }
 }
