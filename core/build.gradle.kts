@@ -40,6 +40,10 @@ dependencies {
     implementation("io.temporal:temporal-sdk:1.24.1")
     implementation("io.temporal:temporal-spring-boot-starter:1.31.0")
 
+    // Distributed Locking (ShedLock)
+    implementation("net.javacrumbs.shedlock:shedlock-spring:7.5.0")
+    implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.5.0")
+
     // Security/JWT
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server:3.5.0")
