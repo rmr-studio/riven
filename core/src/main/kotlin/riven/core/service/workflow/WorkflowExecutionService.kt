@@ -92,7 +92,7 @@ class WorkflowExecutionService(
         }
 
         // Extract node IDs from workflow (v1: simple extraction, future: topological sort)
-        val nodeIds = extractNodeIds(workflowVersion.workflow)
+        val nodeIds = workflowVersion.workflow.nodeIds
 
         logger.info { "Workflow has ${nodeIds.size} nodes to execute" }
 
@@ -138,7 +138,7 @@ class WorkflowExecutionService(
 
             val workflowInput = WorkflowExecutionInput(
                 workflowDefinitionId = request.workflowDefinitionId,
-                nodeIds = nodeIds,
+                nodeIds = nodeIds.toList(),
                 workspaceId = request.workspaceId
             )
 
@@ -180,48 +180,7 @@ class WorkflowExecutionService(
 
         return savedExecution.toModel()
     }
-
-    /**
-     * Extract node IDs from workflow definition.
-     *
-     * V1: Simple extraction assuming workflow structure has "nodes" array.
-     * Future: Implement topological sort based on edges for proper execution order.
-     *
-     * @param workflow Workflow definition JSONB data
-     * @return List of node UUIDs in execution order
-     */
-    @Suppress("UNCHECKED_CAST")
-    private fun extractNodeIds(workflow: Any): List<UUID> {
-        // V1: Assume workflow is Map with "nodes" array
-        // Future: Parse actual structure, perform topological sort
-
-        if (workflow is Map<*, *>) {
-            val nodes = workflow["nodes"] as? List<*>
-            if (nodes != null) {
-                return nodes.mapNotNull { node ->
-                    if (node is Map<*, *>) {
-                        when (val idValue = node["id"]) {
-                            is String -> try {
-                                UUID.fromString(idValue)
-                            } catch (e: IllegalArgumentException) {
-                                null
-                            }
-
-                            is UUID -> idValue
-                            else -> null
-                        }
-                    } else {
-                        null
-                    }
-                }
-            }
-        }
-
-        // Fallback: return empty list
-        logger.warn { "Could not extract node IDs from workflow, returning empty list" }
-        return emptyList()
-    }
-
+    
     // ============================================================================
     // Query Methods
     // ============================================================================
@@ -315,8 +274,8 @@ class WorkflowExecutionService(
 
         if (executionRecords.any {
                 (it.execution.workspaceId != workspaceId) ||
-                (it.executionNode.workspaceId != workspaceId) ||
-                (it.node != null && it.node.workspaceId != workspaceId)
+                        (it.executionNode.workspaceId != workspaceId) ||
+                        (it.node != null && it.node.workspaceId != workspaceId)
             }) {
             throw SecurityException("Workflow execution $executionId does not belong to workspace $workspaceId")
         }

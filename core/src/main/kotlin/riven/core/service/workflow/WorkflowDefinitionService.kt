@@ -15,11 +15,17 @@ import riven.core.exceptions.NotFoundException
 import riven.core.models.request.workflow.CreateWorkflowDefinitionRequest
 import riven.core.models.request.workflow.UpdateWorkflowDefinitionRequest
 import riven.core.models.workflow.WorkflowDefinition
+import riven.core.models.workflow.WorkflowEdge
+import riven.core.models.workflow.WorkflowGraph
+import riven.core.models.workflow.WorkflowGraphReference
+import riven.core.models.workflow.node.WorkflowNode
 import riven.core.repository.workflow.WorkflowDefinitionRepository
 import riven.core.repository.workflow.WorkflowDefinitionVersionRepository
+import riven.core.repository.workflow.WorkflowEdgeRepository
+import riven.core.repository.workflow.WorkflowNodeRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
-import riven.core.util.ServiceUtil
+import riven.core.util.ServiceUtil.findOrThrow
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -39,6 +45,8 @@ import java.util.*
 class WorkflowDefinitionService(
     private val workflowDefinitionRepository: WorkflowDefinitionRepository,
     private val workflowDefinitionVersionRepository: WorkflowDefinitionVersionRepository,
+    private val workflowNodeRepository: WorkflowNodeRepository,
+    private val workflowEdgeRepository: WorkflowEdgeRepository,
     private val activityService: ActivityService,
     private val authTokenService: AuthTokenService,
     private val logger: KLogger
@@ -79,7 +87,10 @@ class WorkflowDefinitionService(
             workspaceId = workspaceId,
             workflowDefinitionId = definitionId,
             versionNumber = 1,
-            workflow = emptyMap<String, Any>(),
+            workflow = WorkflowGraphReference(
+                nodeIds = setOf<UUID>(),
+                edgeIds = setOf<UUID>()
+            ),
             canvas = emptyMap<String, Any>(),
             deleted = false,
             deletedAt = null
@@ -119,7 +130,7 @@ class WorkflowDefinitionService(
     fun getWorkflowById(id: UUID, workspaceId: UUID): WorkflowDefinition {
         logger.debug { "Fetching workflow definition $id for workspace $workspaceId" }
 
-        val definition = ServiceUtil.findOrThrow {
+        val definition = findOrThrow {
             workflowDefinitionRepository.findById(id)
         }
 
@@ -140,7 +151,14 @@ class WorkflowDefinitionService(
             definition.versionNumber
         ) ?: throw NotFoundException("Workflow version not found")
 
-        return definition.toModel(version)
+        val nodes: List<WorkflowNode> =
+            workflowNodeRepository.findByWorkspaceIdAndIdIn(workspaceId, version.workflow.nodeIds).map { it.toModel() }
+        val edges: List<WorkflowEdge> =
+            workflowEdgeRepository.findByWorkspaceIdAndNodeIds(workspaceId, nodes.map { it.id }.toTypedArray()).let {
+                WorkflowEdge.createEdges(nodes, it)
+            }
+
+        return definition.toModel(version, WorkflowGraph(workflowDefinitionId = definition.id!!, nodes, edges))
     }
 
     /**
@@ -189,7 +207,7 @@ class WorkflowDefinitionService(
         val userId = authTokenService.getUserId()
         logger.info { "Updating workflow definition $id in workspace $workspaceId" }
 
-        val definition = ServiceUtil.findOrThrow {
+        val definition = findOrThrow {
             workflowDefinitionRepository.findById(id)
         }
 
@@ -261,7 +279,7 @@ class WorkflowDefinitionService(
         val userId = authTokenService.getUserId()
         logger.info { "Deleting workflow definition $id in workspace $workspaceId" }
 
-        val definition = ServiceUtil.findOrThrow {
+        val definition = findOrThrow {
             workflowDefinitionRepository.findById(id)
         }
 

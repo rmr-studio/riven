@@ -426,7 +426,7 @@ class WorkflowGraphService(
         ) ?: throw NotFoundException("Workflow version not found")
 
         // Extract node IDs from workflow structure
-        val nodeIds = extractNodeIdsFromWorkflow(version.workflow)
+        val nodeIds = version.workflow.nodeIds
 
         if (nodeIds.isEmpty()) {
             log.debug { "No nodes found in workflow $workflowDefinitionId" }
@@ -469,69 +469,5 @@ class WorkflowGraphService(
         )
     }
 
-    /**
-     * Extracts node IDs from the workflow JSONB structure.
-     *
-     * The workflow structure is expected to contain a "nodes" field with node ID references.
-     *
-     * @param workflow The workflow JSONB object
-     * @return Set of node IDs found in the workflow
-     */
-    @Suppress("UNCHECKED_CAST")
-    private fun extractNodeIdsFromWorkflow(workflow: Any): Set<UUID> {
-        if (workflow !is Map<*, *>) {
-            return emptySet()
-        }
 
-        val nodeIds = mutableSetOf<UUID>()
-
-        // Try to extract from "nodes" array
-        val nodes = workflow["nodes"]
-        if (nodes is List<*>) {
-            nodes.forEach { node ->
-                when (node) {
-                    is String -> {
-                        try {
-                            nodeIds.add(UUID.fromString(node))
-                        } catch (_: IllegalArgumentException) {
-                            // Not a valid UUID, skip
-                        }
-                    }
-                    is Map<*, *> -> {
-                        // Node might be an object with "id" field
-                        val idValue = node["id"]
-                        when (idValue) {
-                            is String -> {
-                                try {
-                                    nodeIds.add(UUID.fromString(idValue))
-                                } catch (_: IllegalArgumentException) {
-                                    // Not a valid UUID, skip
-                                }
-                            }
-                            is UUID -> nodeIds.add(idValue)
-                        }
-                    }
-                }
-            }
-        }
-
-        // Also try to extract from "nodeIds" array (alternate format)
-        val nodeIdsList = workflow["nodeIds"]
-        if (nodeIdsList is List<*>) {
-            nodeIdsList.forEach { id ->
-                when (id) {
-                    is String -> {
-                        try {
-                            nodeIds.add(UUID.fromString(id))
-                        } catch (_: IllegalArgumentException) {
-                            // Not a valid UUID, skip
-                        }
-                    }
-                    is UUID -> nodeIds.add(id)
-                }
-            }
-        }
-
-        return nodeIds
-    }
 }

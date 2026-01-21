@@ -21,10 +21,12 @@ import riven.core.enums.activity.Activity
 import riven.core.enums.util.OperationType
 import riven.core.enums.workflow.WorkflowDefinitionStatus
 import riven.core.enums.workflow.WorkflowNodeType
+import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.exceptions.NotFoundException
 import riven.core.models.request.workflow.CreateWorkflowEdgeRequest
 import riven.core.models.request.workflow.CreateWorkflowNodeRequest
 import riven.core.models.request.workflow.UpdateWorkflowNodeRequest
+import riven.core.models.workflow.WorkflowGraphReference
 import riven.core.models.workflow.node.config.WorkflowNodeConfig
 import riven.core.models.workflow.node.config.actions.WorkflowCreateEntityActionConfig
 import riven.core.repository.workflow.WorkflowDefinitionRepository
@@ -35,7 +37,6 @@ import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
-import riven.core.enums.workspace.WorkspaceRoles
 import java.util.*
 
 @WithUserPersona(
@@ -138,10 +139,10 @@ class WorkflowGraphServiceTest {
         // Verify repository call
         verify(workflowNodeRepository).save(argThat<WorkflowNodeEntity> {
             this.key == request.key &&
-            this.name == request.name &&
-            this.version == 1 &&
-            !this.system &&
-            !this.deleted
+                    this.name == request.name &&
+                    this.version == 1 &&
+                    !this.system &&
+                    !this.deleted
         })
 
         // Verify activity logging
@@ -197,8 +198,8 @@ class WorkflowGraphServiceTest {
         // Verify save was called (in-place update)
         verify(workflowNodeRepository).save(argThat<WorkflowNodeEntity> {
             this.name == "Updated Name" &&
-            this.description == "Updated Description" &&
-            this.version == 1 // No version increment
+                    this.description == "Updated Description" &&
+                    this.version == 1 // No version increment
         })
     }
 
@@ -313,7 +314,12 @@ class WorkflowGraphServiceTest {
         )
 
         whenever(workflowNodeRepository.findByWorkspaceIdAndId(workspaceId, nodeId)).thenReturn(existingNode)
-        whenever(workflowEdgeRepository.findByWorkspaceIdAndNodeId(workspaceId, nodeId)).thenReturn(listOf(edge1, edge2))
+        whenever(workflowEdgeRepository.findByWorkspaceIdAndNodeId(workspaceId, nodeId)).thenReturn(
+            listOf(
+                edge1,
+                edge2
+            )
+        )
         whenever(workflowEdgeRepository.save(any<WorkflowEdgeEntity>())).thenAnswer { invocation ->
             invocation.arguments[0] as WorkflowEdgeEntity
         }
@@ -439,9 +445,9 @@ class WorkflowGraphServiceTest {
         // Verify edge was saved
         verify(workflowEdgeRepository).save(argThat<WorkflowEdgeEntity> {
             this.sourceNodeId == sourceNodeId &&
-            this.targetNodeId == targetNodeId &&
-            this.label == "condition" &&
-            !this.deleted
+                    this.targetNodeId == targetNodeId &&
+                    this.label == "condition" &&
+                    !this.deleted
         })
 
         // Verify activity logging
@@ -591,28 +597,53 @@ class WorkflowGraphServiceTest {
             tags = emptyList()
         )
 
+        val node1 = createNodeEntity(
+            id = node1Id,
+            workspaceId = workspaceId,
+            key = "node1",
+            name = "Node 1",
+            config = createTestConfig()
+        )
+        val node2 = createNodeEntity(
+            id = node2Id,
+            workspaceId = workspaceId,
+            key = "node2",
+            name = "Node 2",
+            config = createTestConfig()
+        )
+        val node3 = createNodeEntity(
+            id = node3Id,
+            workspaceId = workspaceId,
+            key = "node3",
+            name = "Node 3",
+            config = createTestConfig()
+        )
+
+        val edge1 =
+            createEdgeEntity(id = edge1Id, workspaceId = workspaceId, sourceNodeId = node1Id, targetNodeId = node2Id)
+        val edge2 =
+            createEdgeEntity(id = edge2Id, workspaceId = workspaceId, sourceNodeId = node2Id, targetNodeId = node3Id)
+
+
         val version = WorkflowDefinitionVersionEntity(
             id = UUID.randomUUID(),
             workspaceId = workspaceId,
             workflowDefinitionId = workflowDefinitionId,
             versionNumber = 1,
-            workflow = mapOf("nodes" to listOf(
-                mapOf("id" to node1Id.toString()),
-                mapOf("id" to node2Id.toString()),
-                mapOf("id" to node3Id.toString())
-            )),
+            workflow = WorkflowGraphReference(
+                nodeIds = setOf(node1Id, node2Id, node3Id),
+                edgeIds = setOf(edge1Id, edge2Id)
+            ),
             canvas = emptyMap<String, Any>()
         )
 
-        val node1 = createNodeEntity(id = node1Id, workspaceId = workspaceId, key = "node1", name = "Node 1", config = createTestConfig())
-        val node2 = createNodeEntity(id = node2Id, workspaceId = workspaceId, key = "node2", name = "Node 2", config = createTestConfig())
-        val node3 = createNodeEntity(id = node3Id, workspaceId = workspaceId, key = "node3", name = "Node 3", config = createTestConfig())
-
-        val edge1 = createEdgeEntity(id = edge1Id, workspaceId = workspaceId, sourceNodeId = node1Id, targetNodeId = node2Id)
-        val edge2 = createEdgeEntity(id = edge2Id, workspaceId = workspaceId, sourceNodeId = node2Id, targetNodeId = node3Id)
-
         whenever(workflowDefinitionRepository.findById(workflowDefinitionId)).thenReturn(Optional.of(definition))
-        whenever(workflowDefinitionVersionRepository.findByWorkflowDefinitionIdAndVersionNumber(workflowDefinitionId, 1))
+        whenever(
+            workflowDefinitionVersionRepository.findByWorkflowDefinitionIdAndVersionNumber(
+                workflowDefinitionId,
+                1
+            )
+        )
             .thenReturn(version)
         whenever(workflowNodeRepository.findByWorkspaceIdAndIdIn(eq(workspaceId), any()))
             .thenReturn(listOf(node1, node2, node3))
@@ -650,12 +681,17 @@ class WorkflowGraphServiceTest {
             workspaceId = workspaceId,
             workflowDefinitionId = workflowDefinitionId,
             versionNumber = 1,
-            workflow = emptyMap<String, Any>(),
+            workflow = WorkflowGraphReference(setOf(), setOf()),
             canvas = emptyMap<String, Any>()
         )
 
         whenever(workflowDefinitionRepository.findById(workflowDefinitionId)).thenReturn(Optional.of(definition))
-        whenever(workflowDefinitionVersionRepository.findByWorkflowDefinitionIdAndVersionNumber(workflowDefinitionId, 1))
+        whenever(
+            workflowDefinitionVersionRepository.findByWorkflowDefinitionIdAndVersionNumber(
+                workflowDefinitionId,
+                1
+            )
+        )
             .thenReturn(version)
 
         // Act

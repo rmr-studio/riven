@@ -14,7 +14,9 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.web.reactive.function.client.WebClient
 import riven.core.configuration.auth.WorkspaceSecurity
+import riven.core.repository.workflow.WorkflowEdgeRepository
 import riven.core.repository.workflow.WorkflowExecutionNodeRepository
+import riven.core.repository.workflow.WorkflowNodeRepository
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.entity.EntityService
 import riven.core.service.workflow.EntityContextService
@@ -65,6 +67,12 @@ class WorkflowCoordinationServiceTest {
 
     @MockitoBean
     private lateinit var entityService: EntityService
+
+    @MockitoBean
+    private lateinit var workflowNodeRepository: WorkflowNodeRepository
+
+    @MockitoBean
+    private lateinit var workflowEdgeRepository: WorkflowEdgeRepository
 
     @MockitoBean
     private lateinit var expressionEvaluatorService: ExpressionEvaluatorService

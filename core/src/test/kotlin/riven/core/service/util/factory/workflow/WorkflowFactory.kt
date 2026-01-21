@@ -11,6 +11,7 @@ import riven.core.enums.workflow.WorkflowDefinitionStatus
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.enums.workflow.WorkflowTriggerType
+import riven.core.models.workflow.WorkflowGraphReference
 import riven.core.models.workflow.node.config.WorkflowFunctionConfig
 import riven.core.models.workflow.node.config.WorkflowNodeConfig
 import java.time.ZonedDateTime
@@ -60,7 +61,7 @@ object WorkflowFactory {
         workspaceId: UUID,
         workflowDefinitionId: UUID,
         versionNumber: Int = 1,
-        workflow: Any = emptyMap<String, Any>(),
+        workflow: WorkflowGraphReference = WorkflowGraphReference(nodeIds = setOf(), edgeIds = setOf()),
         canvas: Any = emptyMap<String, Any>(),
         deleted: Boolean = false,
         deletedAt: ZonedDateTime? = null

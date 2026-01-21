@@ -6,6 +6,8 @@ import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
 import riven.core.models.common.SoftDeletable
 import riven.core.models.workflow.WorkflowDefinitionVersion
+import riven.core.models.workflow.WorkflowGraph
+import riven.core.models.workflow.WorkflowGraphReference
 import java.util.*
 
 @Entity
@@ -34,7 +36,7 @@ data class WorkflowDefinitionVersionEntity(
 
     @Type(JsonBinaryType::class)
     @Column(name = "workflow", nullable = false, columnDefinition = "jsonb")
-    val workflow: Any,
+    val workflow: WorkflowGraphReference,
 
     @Type(JsonBinaryType::class)
     @Column(name = "canvas", nullable = false, columnDefinition = "jsonb")
@@ -47,11 +49,13 @@ data class WorkflowDefinitionVersionEntity(
     override var deletedAt: java.time.ZonedDateTime? = null
 
 ) : AuditableEntity(), SoftDeletable {
-    fun toModel(): WorkflowDefinitionVersion {
+    fun toModel(graph: WorkflowGraph? = null): WorkflowDefinitionVersion {
+        val id = requireNotNull(this.id) { "ID cannot be null" }
+
         return WorkflowDefinitionVersion(
-            id = this.id!!,
+            id = id,
             version = this.versionNumber,
-            workflow = this.workflow,
+            workflow = graph,
             canvas = this.canvas,
             createdAt = this.createdAt,
             updatedAt = this.updatedAt,

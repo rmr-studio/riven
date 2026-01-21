@@ -31,6 +31,8 @@ import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
 import riven.core.service.util.factory.workflow.WorkflowFactory
 import riven.core.enums.workspace.WorkspaceRoles
+import riven.core.repository.workflow.WorkflowEdgeRepository
+import riven.core.repository.workflow.WorkflowNodeRepository
 import java.util.*
 
 @WithUserPersona(
@@ -67,6 +69,12 @@ class WorkflowDefinitionServiceTest {
 
     @MockitoBean
     private lateinit var activityService: ActivityService
+
+    @MockitoBean
+    private lateinit var workflowNodeRepository: WorkflowNodeRepository
+
+    @MockitoBean
+    private lateinit var workflowEdgeRepository: WorkflowEdgeRepository
 
     @MockitoBean
     private lateinit var logger: KLogger
@@ -115,7 +123,9 @@ class WorkflowDefinitionServiceTest {
         )
 
         whenever(workflowDefinitionRepository.save(any<WorkflowDefinitionEntity>())).thenReturn(savedDefinition)
-        whenever(workflowDefinitionVersionRepository.save(any<WorkflowDefinitionVersionEntity>())).thenReturn(savedVersion)
+        whenever(workflowDefinitionVersionRepository.save(any<WorkflowDefinitionVersionEntity>())).thenReturn(
+            savedVersion
+        )
 
         // Act
         val result = workflowDefinitionService.createWorkflow(workspaceId, request)
