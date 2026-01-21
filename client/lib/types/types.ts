@@ -20,6 +20,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workflow/graph/nodes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update workflow node
+         * @description Updates workflow node metadata or configuration. Config changes create a new version.
+         */
+        put: operations["updateNode"];
+        post?: never;
+        /**
+         * Delete workflow node (cascades to connected edges)
+         * @description Soft-deletes a workflow node and all edges connected to it. This maintains graph consistency.
+         */
+        delete: operations["deleteNode"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/definitions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get workflow definition by ID
+         * @description Retrieves a workflow definition by its ID. Requires workspace access.
+         */
+        get: operations["getWorkflow"];
+        /**
+         * Update workflow definition metadata
+         * @description Updates workflow definition metadata (name, description, icon, tags). Does not modify workflow structure.
+         */
+        put: operations["updateWorkflow"];
+        post?: never;
+        /**
+         * Delete workflow definition
+         * @description Soft-deletes a workflow definition. The definition can be restored if needed.
+         */
+        delete: operations["deleteWorkflow"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/user/": {
         parameters: {
             query?: never;
@@ -142,6 +194,87 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["saveWorkspace"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/graph/nodes/workspace/{workspaceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a new workflow node
+         * @description Creates a new workflow node with the specified configuration in the workspace.
+         */
+        post: operations["createNode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/graph/edges/workspace/{workspaceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a new workflow edge
+         * @description Creates a new edge connecting two workflow nodes in the workspace.
+         */
+        post: operations["createEdge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/executions/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start a workflow execution */
+        post: operations["startExecution"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/definitions/workspace/{workspaceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all workflow definitions for workspace
+         * @description Retrieves all workflow definitions associated with the specified workspace.
+         */
+        get: operations["listWorkflows"];
+        put?: never;
+        /**
+         * Create a new workflow definition
+         * @description Creates a new workflow definition with an initial empty version in the specified workspace.
+         */
+        post: operations["createWorkflow"];
         delete?: never;
         options?: never;
         head?: never;
@@ -344,6 +477,103 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workflow/graph/workflow/{workflowDefinitionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get complete workflow graph (nodes and edges)
+         * @description Returns the complete DAG structure with all nodes and edges for the workflow definition.
+         */
+        get: operations["getWorkflowGraph"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/executions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get workflow execution by ID */
+        get: operations["getExecution"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/executions/{id}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get execution summary with node details
+         * @description Returns execution record and status for each node in the workflow
+         */
+        get: operations["getExecutionSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/executions/workspace/{workspaceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all executions for workspace
+         * @description Returns all workflow executions across all workflows in workspace
+         */
+        get: operations["listWorkspaceExecutions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow/executions/workflow/{workflowDefinitionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all executions for a workflow definition
+         * @description Returns execution history ordered by most recent first
+         */
+        get: operations["listWorkflowExecutions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/user/{userId}": {
         parameters: {
             query?: never;
@@ -528,6 +758,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workflow/graph/edges/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete workflow edge
+         * @description Soft-deletes a workflow edge. Does not affect connected nodes.
+         */
+        delete: operations["deleteEdge"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -553,6 +803,124 @@ export interface components {
             role: components["schemas"]["WorkspaceRoles"];
             /** Format: date-time */
             memberSince: string;
+        };
+        UpdateWorkflowNodeRequest: {
+            name?: string;
+            description?: string;
+            config?: components["schemas"]["WorkflowActionConfig"] | components["schemas"]["WorkflowControlConfig"] | components["schemas"]["WorkflowFunctionConfig"] | components["schemas"]["WorkflowHumanInteractionConfig"] | components["schemas"]["WorkflowTriggerConfig"] | components["schemas"]["WorkflowUtilityConfig"];
+        };
+        WorkflowActionConfig: WithRequired<components["schemas"]["WorkflowNodeConfig"], "type" | "version"> & {
+            subType: components["schemas"]["WorkflowActionType"];
+        };
+        /** @enum {string} */
+        WorkflowActionType: WorkflowActionType;
+        WorkflowControlConfig: WithRequired<components["schemas"]["WorkflowNodeConfig"], "type" | "version"> & {
+            subType: components["schemas"]["WorkflowControlType"];
+        };
+        /** @enum {string} */
+        WorkflowControlType: WorkflowControlType;
+        WorkflowFunctionConfig: WithRequired<components["schemas"]["WorkflowNodeConfig"], "type" | "version">;
+        WorkflowHumanInteractionConfig: WithRequired<components["schemas"]["WorkflowNodeConfig"], "type" | "version"> & {
+            subType: components["schemas"]["WorkflowHumanInteractionType"];
+        };
+        /** @enum {string} */
+        WorkflowHumanInteractionType: WorkflowHumanInteractionType;
+        WorkflowNodeConfig: {
+            type: components["schemas"]["WorkflowNodeType"];
+            /** Format: int32 */
+            version: number;
+        };
+        /** @enum {string} */
+        WorkflowNodeType: WorkflowNodeType;
+        WorkflowTriggerConfig: WithRequired<components["schemas"]["WorkflowNodeConfig"], "type" | "version"> & {
+            subType: components["schemas"]["WorkflowTriggerType"];
+        };
+        /** @enum {string} */
+        WorkflowTriggerType: WorkflowTriggerType;
+        /** @enum {string} */
+        WorkflowUtilityActionType: WorkflowUtilityActionType;
+        WorkflowUtilityConfig: WithRequired<components["schemas"]["WorkflowNodeConfig"], "type" | "version"> & {
+            subType: components["schemas"]["WorkflowUtilityActionType"];
+        };
+        WorkflowNode: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            workspaceId: string;
+            key: string;
+            name: string;
+            description?: string;
+            config: components["schemas"]["WorkflowActionConfig"] | components["schemas"]["WorkflowControlConfig"] | components["schemas"]["WorkflowFunctionConfig"] | components["schemas"]["WorkflowHumanInteractionConfig"] | components["schemas"]["WorkflowTriggerConfig"] | components["schemas"]["WorkflowUtilityConfig"];
+            type: components["schemas"]["WorkflowNodeType"];
+            /** Format: int32 */
+            version: number;
+        };
+        /** @enum {string} */
+        IconColour: IconColour;
+        /** @enum {string} */
+        IconType: IconType;
+        UpdateWorkflowDefinitionRequest: {
+            name?: string;
+            description?: string;
+            iconColour?: components["schemas"]["IconColour"];
+            iconType?: components["schemas"]["IconType"];
+            tags?: string[];
+        };
+        Icon: {
+            type: components["schemas"]["IconType"];
+            colour: components["schemas"]["IconColour"];
+        };
+        WorkflowDefinition: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            workspaceId: string;
+            name: string;
+            description?: string;
+            status: components["schemas"]["WorkflowDefinitionStatus"];
+            icon: components["schemas"]["Icon"];
+            tags: string[];
+            definition: components["schemas"]["WorkflowDefinitionVersion"];
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            /** Format: uuid */
+            createdBy?: string;
+            /** Format: uuid */
+            updatedBy?: string;
+        };
+        /** @enum {string} */
+        WorkflowDefinitionStatus: WorkflowDefinitionStatus;
+        WorkflowDefinitionVersion: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            version: number;
+            workflow?: components["schemas"]["WorkflowGraph"];
+            canvas: Record<string, never>;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            /** Format: uuid */
+            createdBy?: string;
+            /** Format: uuid */
+            updatedBy?: string;
+        };
+        WorkflowEdge: {
+            /** Format: uuid */
+            id: string;
+            label?: string;
+            source: components["schemas"]["WorkflowNode"];
+            target: components["schemas"]["WorkflowNode"];
+        };
+        WorkflowGraph: {
+            /** Format: uuid */
+            workflowDefinitionId: string;
+            nodes: components["schemas"]["WorkflowNode"][];
+            edges: components["schemas"]["WorkflowEdge"][];
+            root: components["schemas"]["WorkflowNode"];
         };
         User: {
             /** Format: uuid */
@@ -672,14 +1040,6 @@ export interface components {
         };
         /** @enum {string} */
         EntityTypeRelationshipType: EntityTypeRelationshipType;
-        Icon: {
-            icon: components["schemas"]["IconType"];
-            colour: components["schemas"]["IconColour"];
-        };
-        /** @enum {string} */
-        IconColour: IconColour;
-        /** @enum {string} */
-        IconType: IconType;
         /** @enum {string} */
         OptionSortingType: OptionSortingType;
         PairIntegerInteger: {
@@ -916,6 +1276,59 @@ export interface components {
             plan: components["schemas"]["WorkspacePlan"];
             defaultCurrency: string;
             isDefault: boolean;
+        };
+        CreateWorkflowNodeRequest: {
+            key: string;
+            name: string;
+            description?: string;
+            config: components["schemas"]["WorkflowActionConfig"] | components["schemas"]["WorkflowControlConfig"] | components["schemas"]["WorkflowFunctionConfig"] | components["schemas"]["WorkflowHumanInteractionConfig"] | components["schemas"]["WorkflowTriggerConfig"] | components["schemas"]["WorkflowUtilityConfig"];
+        };
+        CreateWorkflowEdgeRequest: {
+            /** Format: uuid */
+            sourceNodeId: string;
+            /** Format: uuid */
+            targetNodeId: string;
+            label?: string;
+        };
+        StartWorkflowExecutionRequest: {
+            /** Format: uuid */
+            workflowDefinitionId: string;
+            /** Format: uuid */
+            workspaceId: string;
+        };
+        WorkflowExecutionRecord: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            workspaceId: string;
+            /** Format: uuid */
+            workflowDefinitionId: string;
+            /** Format: uuid */
+            workflowVersionId: string;
+            /** Format: uuid */
+            engineWorkflowId: string;
+            /** Format: uuid */
+            engineRunId: string;
+            status: components["schemas"]["WorkflowStatus"];
+            /** Format: date-time */
+            startedAt: string;
+            /** Format: date-time */
+            completedAt?: string;
+            /** @example PT2H30M */
+            duration?: string;
+            triggerType: components["schemas"]["WorkflowTriggerType"];
+            input?: Record<string, never>;
+            error?: Record<string, never>;
+            output?: Record<string, never>;
+        };
+        /** @enum {string} */
+        WorkflowStatus: WorkflowStatus;
+        CreateWorkflowDefinitionRequest: {
+            name: string;
+            description?: string;
+            iconColour: components["schemas"]["IconColour"];
+            iconType: components["schemas"]["IconType"];
+            tags: string[];
         };
         EntityAttributePayload: {
             type: components["schemas"]["EntityPropertyType"];
@@ -1206,15 +1619,15 @@ export interface components {
         /** @enum {string} */
         ListFilterLogicType: ListFilterLogicType;
         Metadata: {
-            type: components["schemas"]["BlockMetadataType"];
             meta: components["schemas"]["BlockMeta"];
             readonly: boolean;
             deletable: boolean;
+            type: components["schemas"]["BlockMetadataType"];
         };
         Node: {
+            block: components["schemas"]["Block"];
             warnings: string[];
             type: components["schemas"]["NodeType"];
-            block: components["schemas"]["Block"];
         };
         /** @enum {string} */
         NodeType: NodeType;
@@ -1263,8 +1676,8 @@ export interface components {
             warning?: components["schemas"]["BlockReferenceWarning"];
         };
         ReferenceMetadata: WithRequired<components["schemas"]["Metadata"], "deletable" | "meta" | "readonly" | "type"> & {
-            path: string;
             fetchPolicy: components["schemas"]["BlockReferenceFetchPolicy"];
+            path: string;
         };
         /** @description Reference node containing a block with entity or block tree references */
         ReferenceNode: WithRequired<components["schemas"]["Node"], "block" | "type" | "warnings"> & {
@@ -1402,9 +1815,9 @@ export interface components {
             index?: number;
         };
         BlockOperation: {
-            type: components["schemas"]["BlockOperationType"];
             /** Format: uuid */
             blockId: string;
+            type: components["schemas"]["BlockOperationType"];
         };
         /**
          * @description Enumeration of possible block operation types for requests.
@@ -1468,6 +1881,33 @@ export interface components {
                 [key: string]: string;
             };
         };
+        WorkflowExecutionNodeRecord: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            workspaceId: string;
+            /** Format: uuid */
+            executionId: string;
+            node?: components["schemas"]["WorkflowNode"];
+            /** Format: int32 */
+            sequenceIndex: number;
+            status: components["schemas"]["WorkflowStatus"];
+            /** Format: date-time */
+            startedAt: string;
+            /** Format: date-time */
+            completedAt?: string;
+            /** @example PT2H30M */
+            duration?: string;
+            /** Format: int32 */
+            attempt: number;
+            input?: Record<string, never>;
+            output?: Record<string, never>;
+            error?: Record<string, never>;
+        };
+        WorkflowExecutionSummaryResponse: {
+            execution: components["schemas"]["WorkflowExecutionRecord"];
+            nodes: components["schemas"]["WorkflowExecutionNodeRecord"][];
+        };
         /**
          * @description Enumeration of possible entity types within the system.
          * @enum {string}
@@ -1514,6 +1954,230 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["WorkspaceMember"];
                 };
+            };
+        };
+    };
+    updateNode: {
+        parameters: {
+            query: {
+                workspaceId: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateWorkflowNodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Workflow node updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowNode"];
+                };
+            };
+            /** @description Invalid request data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowNode"];
+                };
+            };
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowNode"];
+                };
+            };
+            /** @description Workflow node not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowNode"];
+                };
+            };
+        };
+    };
+    deleteNode: {
+        parameters: {
+            query: {
+                workspaceId: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Workflow node and connected edges deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Workflow node not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getWorkflow: {
+        parameters: {
+            query: {
+                workspaceId: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Workflow definition retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowDefinition"];
+                };
+            };
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowDefinition"];
+                };
+            };
+            /** @description Workflow definition not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowDefinition"];
+                };
+            };
+        };
+    };
+    updateWorkflow: {
+        parameters: {
+            query: {
+                workspaceId: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateWorkflowDefinitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Workflow definition updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowDefinition"];
+                };
+            };
+            /** @description Invalid request data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowDefinition"];
+                };
+            };
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowDefinition"];
+                };
+            };
+            /** @description Workflow definition not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowDefinition"];
+                };
+            };
+        };
+    };
+    deleteWorkflow: {
+        parameters: {
+            query: {
+                workspaceId: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Workflow definition deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Workflow definition not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -1792,6 +2456,211 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["Workspace"];
+                };
+            };
+        };
+    };
+    createNode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWorkflowNodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Workflow node created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowNode"];
+                };
+            };
+            /** @description Invalid request data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowNode"];
+                };
+            };
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowNode"];
+                };
+            };
+        };
+    };
+    createEdge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWorkflowEdgeRequest"];
+            };
+        };
+        responses: {
+            /** @description Workflow edge created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowEdge"];
+                };
+            };
+            /** @description Invalid request data or nodes not found */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowEdge"];
+                };
+            };
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowEdge"];
+                };
+            };
+        };
+    };
+    startExecution: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartWorkflowExecutionRequest"];
+            };
+        };
+        responses: {
+            /** @description Workflow execution started successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowExecutionRecord"];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowExecutionRecord"];
+                };
+            };
+            /** @description Workflow definition not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowExecutionRecord"];
+                };
+            };
+        };
+    };
+    listWorkflows: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Workflow definitions retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowDefinition"][];
+                };
+            };
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowDefinition"][];
+                };
+            };
+        };
+    };
+    createWorkflow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWorkflowDefinitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Workflow definition created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowDefinition"];
+                };
+            };
+            /** @description Invalid request data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowDefinition"];
+                };
+            };
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowDefinition"];
                 };
             };
         };
@@ -2333,6 +3202,205 @@ export interface operations {
             };
         };
     };
+    getWorkflowGraph: {
+        parameters: {
+            query: {
+                workspaceId: string;
+            };
+            header?: never;
+            path: {
+                workflowDefinitionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Workflow graph retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowGraph"];
+                };
+            };
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowGraph"];
+                };
+            };
+            /** @description Workflow definition not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowGraph"];
+                };
+            };
+        };
+    };
+    getExecution: {
+        parameters: {
+            query: {
+                workspaceId: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Execution retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowExecutionRecord"];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowExecutionRecord"];
+                };
+            };
+            /** @description Execution not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowExecutionRecord"];
+                };
+            };
+        };
+    };
+    getExecutionSummary: {
+        parameters: {
+            query: {
+                workspaceId: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Execution summary retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowExecutionSummaryResponse"];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowExecutionSummaryResponse"];
+                };
+            };
+            /** @description Execution not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowExecutionSummaryResponse"];
+                };
+            };
+        };
+    };
+    listWorkspaceExecutions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Executions retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowExecutionRecord"][];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowExecutionRecord"][];
+                };
+            };
+        };
+    };
+    listWorkflowExecutions: {
+        parameters: {
+            query: {
+                workspaceId: string;
+            };
+            header?: never;
+            path: {
+                workflowDefinitionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Executions retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowExecutionRecord"][];
+                };
+            };
+            /** @description Unauthorized access */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowExecutionRecord"][];
+                };
+            };
+            /** @description Workflow definition not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowExecutionRecord"][];
+                };
+            };
+        };
+    };
     getUserById: {
         parameters: {
             query?: never;
@@ -2813,52 +3881,95 @@ export interface operations {
             };
         };
     };
+    deleteEdge: {
+        parameters: {
+            query: {
+                workspaceId: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Workflow edge deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Workflow edge not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
 }
 export enum WorkspaceRoles {
     OWNER = "OWNER",
     ADMIN = "ADMIN",
     MEMBER = "MEMBER"
 }
-export enum WorkspacePlan {
-    FREE = "FREE",
-    STARTUP = "STARTUP",
-    SCALE = "SCALE",
-    ENTERPRISE = "ENTERPRISE"
+type WithRequired<T, K extends keyof T> = T & {
+    [P in K]-?: T[P];
+};
+export enum WorkflowActionType {
+    CREATE_ENTITY = "CREATE_ENTITY",
+    UPDATE_ENTITY = "UPDATE_ENTITY",
+    DELETE_ENTITY = "DELETE_ENTITY",
+    QUERY_ENTITY = "QUERY_ENTITY",
+    LINK_ENTITY = "LINK_ENTITY",
+    INTEGRATION_REQUEST = "INTEGRATION_REQUEST",
+    HTTP_REQUEST = "HTTP_REQUEST",
+    SET_ENVIRONMENT_VARIABLE = "SET_ENVIRONMENT_VARIABLE",
+    MAP_DATA = "MAP_DATA"
 }
-export enum DataFormat {
-    DATE = "DATE",
-    DATETIME = "DATETIME",
-    EMAIL = "EMAIL",
-    PHONE = "PHONE",
-    CURRENCY = "CURRENCY",
-    URL = "URL",
-    PERCENTAGE = "PERCENTAGE"
+export enum WorkflowControlType {
+    CONDITION = "CONDITION",
+    SWITCH = "SWITCH",
+    LOOP = "LOOP",
+    PARALLEL = "PARALLEL",
+    DELAY = "DELAY",
+    MERGE = "MERGE"
 }
-export enum DataType {
-    STRING = "STRING",
-    NUMBER = "NUMBER",
-    BOOLEAN = "BOOLEAN",
-    OBJECT = "OBJECT",
-    ARRAY = "ARRAY",
-    NULL = "NULL"
+export enum WorkflowHumanInteractionType {
+    APPROVAL = "APPROVAL",
+    REVIEW = "REVIEW",
+    FEEDBACK = "FEEDBACK",
+    ASSIGNMENT = "ASSIGNMENT"
 }
-export enum EntityCategory {
-    STANDARD = "STANDARD",
-    RELATIONSHIP = "RELATIONSHIP"
+export enum WorkflowNodeType {
+    FUNCTION = "FUNCTION",
+    CONTROL_FLOW = "CONTROL_FLOW",
+    HUMAN_INTERACTION = "HUMAN_INTERACTION",
+    ACTION = "ACTION",
+    TRIGGER = "TRIGGER",
+    UTILITY = "UTILITY"
 }
-export enum EntityPropertyType {
-    ATTRIBUTE = "ATTRIBUTE",
-    RELATIONSHIP = "RELATIONSHIP"
+export enum WorkflowTriggerType {
+    ENTITY_EVENT = "ENTITY_EVENT",
+    SCHEDULE = "SCHEDULE",
+    FUNCTION = "FUNCTION",
+    WEBHOOK = "WEBHOOK"
 }
-export enum EntityRelationshipCardinality {
-    ONE_TO_ONE = "ONE_TO_ONE",
-    ONE_TO_MANY = "ONE_TO_MANY",
-    MANY_TO_ONE = "MANY_TO_ONE",
-    MANY_TO_MANY = "MANY_TO_MANY"
-}
-export enum EntityTypeRelationshipType {
-    REFERENCE = "REFERENCE",
-    ORIGIN = "ORIGIN"
+export enum WorkflowUtilityActionType {
+    LOG = "LOG",
+    NOTIFY = "NOTIFY",
+    VALIDATE = "VALIDATE",
+    THROW_ERROR = "THROW_ERROR"
 }
 export enum IconColour {
     NEUTRAL = "NEUTRAL",
@@ -4540,6 +5651,52 @@ export enum IconType {
     ZOOM_IN = "ZOOM_IN",
     ZOOM_OUT = "ZOOM_OUT"
 }
+export enum WorkflowDefinitionStatus {
+    DRAFT = "DRAFT",
+    ACTIVE = "ACTIVE",
+    PAUSED = "PAUSED"
+}
+export enum WorkspacePlan {
+    FREE = "FREE",
+    STARTUP = "STARTUP",
+    SCALE = "SCALE",
+    ENTERPRISE = "ENTERPRISE"
+}
+export enum DataFormat {
+    DATE = "DATE",
+    DATETIME = "DATETIME",
+    EMAIL = "EMAIL",
+    PHONE = "PHONE",
+    CURRENCY = "CURRENCY",
+    URL = "URL",
+    PERCENTAGE = "PERCENTAGE"
+}
+export enum DataType {
+    STRING = "STRING",
+    NUMBER = "NUMBER",
+    BOOLEAN = "BOOLEAN",
+    OBJECT = "OBJECT",
+    ARRAY = "ARRAY",
+    NULL = "NULL"
+}
+export enum EntityCategory {
+    STANDARD = "STANDARD",
+    RELATIONSHIP = "RELATIONSHIP"
+}
+export enum EntityPropertyType {
+    ATTRIBUTE = "ATTRIBUTE",
+    RELATIONSHIP = "RELATIONSHIP"
+}
+export enum EntityRelationshipCardinality {
+    ONE_TO_ONE = "ONE_TO_ONE",
+    ONE_TO_MANY = "ONE_TO_MANY",
+    MANY_TO_ONE = "MANY_TO_ONE",
+    MANY_TO_MANY = "MANY_TO_MANY"
+}
+export enum EntityTypeRelationshipType {
+    REFERENCE = "REFERENCE",
+    ORIGIN = "ORIGIN"
+}
 export enum OptionSortingType {
     MANUAL = "MANUAL",
     ALPHABETICAL = "ALPHABETICAL",
@@ -4620,9 +5777,13 @@ export enum WorkspaceInviteStatus {
     DECLINED = "DECLINED",
     EXPIRED = "EXPIRED"
 }
-type WithRequired<T, K extends keyof T> = T & {
-    [P in K]-?: T[P];
-};
+export enum WorkflowStatus {
+    PENDING = "PENDING",
+    RUNNING = "RUNNING",
+    COMPLETED = "COMPLETED",
+    FAILED = "FAILED",
+    CANCELED = "CANCELED"
+}
 export enum DeleteAction {
     REMOVE_BIDIRECTIONAL = "REMOVE_BIDIRECTIONAL",
     REMOVE_ENTITY_TYPE = "REMOVE_ENTITY_TYPE",
@@ -4701,5 +5862,8 @@ export enum ApplicationEntityType {
     BLOCK = "BLOCK",
     USER = "USER",
     ENTITY = "ENTITY",
-    ENTITY_TYPE = "ENTITY_TYPE"
+    ENTITY_TYPE = "ENTITY_TYPE",
+    WORKFLOW_DEFINITION = "WORKFLOW_DEFINITION",
+    WORKFLOW_NODE = "WORKFLOW_NODE",
+    WORKFLOW_EDGE = "WORKFLOW_EDGE"
 }
