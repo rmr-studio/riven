@@ -114,7 +114,7 @@ class ExecutionDispatcherService(
             // At capacity - release back to pending for later retry
             logger.info {
                 "Workspace ${item.workspaceId} at capacity ($activeCount/${tier.maxConcurrentWorkflows}), " +
-                "releasing item ${item.id} back to queue"
+                        "releasing item ${item.id} back to queue"
             }
             executionQueueService.releaseToPending(item)
             return
@@ -150,16 +150,11 @@ class ExecutionDispatcherService(
         // Extract node IDs from workflow graph reference
         val nodeIds = workflowVersion.workflow.nodeIds.toList()
 
-        // Create execution record
-        val engineWorkflowId = UUID.randomUUID()
-        val engineRunId = UUID.randomUUID()
-
         val executionEntity = WorkflowExecutionEntity(
             workspaceId = item.workspaceId,
             workflowDefinitionId = item.workflowDefinitionId,
             workflowVersionId = workflowVersion.id!!,
-            engineWorkflowId = engineWorkflowId,
-            engineRunId = engineRunId,
+
             status = WorkflowStatus.RUNNING,
             triggerType = WorkflowTriggerType.FUNCTION,
             startedAt = ZonedDateTime.now(),

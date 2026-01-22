@@ -12,7 +12,6 @@ import riven.core.models.request.workflow.StartWorkflowExecutionRequest
 import riven.core.models.response.workflow.execution.WorkflowExecutionSummaryResponse
 import riven.core.models.workflow.engine.execution.WorkflowExecutionRecord
 import riven.core.models.workflow.engine.queue.ExecutionQueueRequest
-import riven.core.repository.workflow.WorkflowDefinitionRepository
 import riven.core.repository.workflow.WorkflowExecutionRepository
 import riven.core.repository.workflow.projection.ExecutionSummaryProjection
 import riven.core.service.activity.ActivityService
@@ -32,7 +31,6 @@ import java.util.*
  * which processes the queue with tier-based capacity checking.
  *
  * @property executionQueueService Queue service for enqueuing execution requests
- * @property workflowDefinitionRepository Access to workflow definitions (with version JOIN)
  * @property workflowExecutionRepository Persistence for execution records
  * @property activityService Audit logging
  * @property authTokenService JWT extraction for user context
@@ -40,7 +38,6 @@ import java.util.*
 @Service
 class WorkflowExecutionService(
     private val executionQueueService: ExecutionQueueService,
-    private val workflowDefinitionRepository: WorkflowDefinitionRepository,
     private val workflowExecutionRepository: WorkflowExecutionRepository,
     private val activityService: ActivityService,
     private val authTokenService: AuthTokenService,
@@ -98,7 +95,7 @@ class WorkflowExecutionService(
 
         return request.toModel()
     }
-    
+
     // ============================================================================
     // Query Methods
     // ============================================================================
@@ -184,7 +181,7 @@ class WorkflowExecutionService(
 
         // Fetch execution with all node executions and nodes in a single JOIN query
         val executionRecords: List<ExecutionSummaryProjection> =
-            workflowExecutionRepository.findExecutionWithNodesByExecutionId(executionId)
+            workflowExecutionRepository.findExecutionWithNodesByExecutionId(workspaceId, executionId)
 
         if (executionRecords.isEmpty()) {
             throw NotFoundException("Workflow execution not found: $executionId")
