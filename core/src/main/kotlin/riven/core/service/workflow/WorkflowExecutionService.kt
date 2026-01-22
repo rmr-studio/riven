@@ -68,12 +68,12 @@ class WorkflowExecutionService(
         logger.info { "Queueing workflow execution for definition ${request.workflowDefinitionId} in workspace ${request.workspaceId}" }
 
         // Enqueue execution request (validation happens in queue service)
-        val request: ExecutionQueueEntity = executionQueueService.enqueue(
+        val queueItem: ExecutionQueueEntity = executionQueueService.enqueue(
             workspaceId = request.workspaceId,
             workflowDefinitionId = request.workflowDefinitionId
         )
 
-        val id = requireNotNull(request.id)
+        val id = requireNotNull(queueItem.id)
 
 
         logger.info { "Enqueued execution: queueId=$id" }
@@ -83,17 +83,17 @@ class WorkflowExecutionService(
             activity = Activity.ENTITY,
             operation = OperationType.CREATE,
             userId = userId,
-            workspaceId = request.workspaceId,
+            workspaceId = queueItem.workspaceId,
             entityType = ApplicationEntityType.ENTITY,
             entityId = id,
             details = mapOf(
                 "type" to "workflow_execution_queued",
                 "queueId" to id.toString(),
-                "workflowDefinitionId" to request.workflowDefinitionId.toString()
+                "workflowDefinitionId" to queueItem.workflowDefinitionId.toString()
             )
         )
 
-        return request.toModel()
+        return queueItem.toModel()
     }
 
     // ============================================================================

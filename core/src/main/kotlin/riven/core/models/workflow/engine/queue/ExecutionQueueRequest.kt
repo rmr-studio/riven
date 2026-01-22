@@ -8,6 +8,7 @@ data class ExecutionQueueRequest(
     val id: UUID,
     val workspaceId: UUID,
     val workflowDefinitionId: UUID,
+    val executionId: UUID?,
     val status: ExecutionQueueStatus,
     val createdAt: ZonedDateTime,
     val claimedAt: ZonedDateTime?,

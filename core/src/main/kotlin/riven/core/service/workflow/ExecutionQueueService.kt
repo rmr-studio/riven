@@ -122,6 +122,23 @@ class ExecutionQueueService(
     }
 
     /**
+     * Set the execution ID on a queue item.
+     *
+     * Called by dispatcher after creating/loading a WorkflowExecutionEntity
+     * but before starting the Temporal workflow. This ensures the execution
+     * can be reused on retry if Temporal start fails.
+     *
+     * @param entity Entity to update
+     * @param executionId The workflow execution ID to associate
+     * @return Updated entity
+     */
+    @Transactional
+    fun setExecutionId(entity: ExecutionQueueEntity, executionId: UUID): ExecutionQueueEntity {
+        entity.executionId = executionId
+        return executionQueueRepository.save(entity)
+    }
+
+    /**
      * Release a claimed item back to pending (for retry).
      *
      * Used when dispatch fails but retry is possible.
@@ -143,6 +160,7 @@ class ExecutionQueueService(
      * @param workspaceId Workspace to query
      * @return Number of pending executions
      */
+    @Transactional(readOnly = true)
     fun getPendingCount(workspaceId: UUID): Int {
         return executionQueueRepository.countByWorkspaceIdAndStatus(
             workspaceId,

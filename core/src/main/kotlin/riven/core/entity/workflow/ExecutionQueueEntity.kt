@@ -36,6 +36,9 @@ data class ExecutionQueueEntity(
     @Column(name = "workflow_definition_id", nullable = false, columnDefinition = "uuid")
     val workflowDefinitionId: UUID,
 
+    @Column(name = "execution_id", columnDefinition = "uuid")
+    var executionId: UUID? = null,
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     var status: ExecutionQueueStatus = ExecutionQueueStatus.PENDING,
@@ -65,6 +68,7 @@ data class ExecutionQueueEntity(
             id = id,
             workspaceId = this.workspaceId,
             workflowDefinitionId = this.workflowDefinitionId,
+            executionId = this.executionId,
             status = this.status,
             createdAt = this.createdAt,
             claimedAt = this.claimedAt,
