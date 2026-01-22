@@ -21,7 +21,7 @@ interface EntityRepository : JpaRepository<EntityEntity, UUID> {
      * Find all entities for an workspace.
      */
     @Query("SELECT e FROM EntityEntity e WHERE e.workspaceId = :workspaceId AND e.deleted = false")
-    fun findByworkspaceId(workspaceId: UUID): List<EntityEntity>
+    fun findByWorkspaceId(workspaceId: UUID): List<EntityEntity>
 
     @Query("SELECT e FROM EntityEntity e WHERE e.typeId = :typeId AND e.deleted = false")
     fun findByTypeId(typeId: UUID): List<EntityEntity>

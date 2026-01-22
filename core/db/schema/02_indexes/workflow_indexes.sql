@@ -8,3 +8,5 @@ CREATE INDEX idx_workflow_nodes_key ON workflow_nodes (workspace_id, key) where 
 
 CREATE INDEX idx_workflow_edges_source_id ON workflow_edges (workspace_id, source_node_id) where deleted = FALSE AND deleted_at IS NULL;
 CREATE INDEX idx_workflow_edges_target_id ON workflow_edges (workspace_id, target_node_id) where deleted = FALSE AND deleted_at IS NULL;
+
+CREATE INDEX idx_execution_queue_workspace ON workflow_execution_queue (workspace_id, status);

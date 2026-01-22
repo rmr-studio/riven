@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*
 import riven.core.models.request.workflow.StartWorkflowExecutionRequest
 import riven.core.models.response.workflow.execution.WorkflowExecutionSummaryResponse
 import riven.core.models.workflow.engine.execution.WorkflowExecutionRecord
+import riven.core.models.workflow.engine.queue.ExecutionQueueRequest
 import riven.core.service.workflow.WorkflowExecutionService
 import java.util.*
 
@@ -27,7 +28,8 @@ import java.util.*
  */
 @RestController
 @RequestMapping("/api/v1/workflow/executions")
-@Tag(name = "Workflow Execution", description = "Endpoints for workflow execution management and observability")
+@PreAuthorize("isAuthenticated()")
+@Tag(name = "workflow")
 class WorkflowExecutionController(
     private val workflowExecutionService: WorkflowExecutionService,
     private val log: KLogger
@@ -36,29 +38,28 @@ class WorkflowExecutionController(
     /**
      * Start a workflow execution.
      *
-     * Triggers a Temporal workflow execution for the specified workflow definition.
-     * The workflow runs asynchronously - this endpoint returns immediately with
-     * execution details.
+     * Queues a workflow execution request for the specified workflow definition.
+     * The workflow is dispatched asynchronously when workspace capacity is available.
+     * This endpoint returns immediately with queue status.
      *
      * @param request Start execution request (workflowDefinitionId, workspaceId)
-     * @return Execution response with executionId, workflowId, status
+     * @return Response with queueId, status, and message
      */
     @PostMapping("/start")
-    @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Start a workflow execution")
+    @Operation(summary = "Queue a workflow execution")
     @ApiResponses(
-        ApiResponse(responseCode = "200", description = "Workflow execution started successfully"),
+        ApiResponse(responseCode = "202", description = "Workflow execution queued successfully"),
         ApiResponse(responseCode = "401", description = "Unauthorized access"),
         ApiResponse(responseCode = "404", description = "Workflow definition not found")
     )
     fun startExecution(
         @RequestBody request: StartWorkflowExecutionRequest
-    ): ResponseEntity<WorkflowExecutionRecord> {
+    ): ResponseEntity<ExecutionQueueRequest> {
         log.info { "POST /api/v1/workflow/executions/start - workflowDefinitionId: ${request.workflowDefinitionId}, workspaceId: ${request.workspaceId}" }
 
         val response = workflowExecutionService.startExecution(request)
 
-        return ResponseEntity.ok(response)
+        return ResponseEntity.accepted().body(response)
     }
 
     /**
@@ -72,7 +73,6 @@ class WorkflowExecutionController(
      * @return Execution details
      */
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get workflow execution by ID")
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "Execution retrieved successfully"),
@@ -101,7 +101,6 @@ class WorkflowExecutionController(
      * @return List of execution summaries
      */
     @GetMapping("/workflow/{workflowDefinitionId}")
-    @PreAuthorize("isAuthenticated()")
     @Operation(
         summary = "List all executions for a workflow definition",
         description = "Returns execution history ordered by most recent first"
@@ -132,7 +131,6 @@ class WorkflowExecutionController(
      * @return List of execution summaries
      */
     @GetMapping("/workspace/{workspaceId}")
-    @PreAuthorize("isAuthenticated()")
     @Operation(
         summary = "List all executions for workspace",
         description = "Returns all workflow executions across all workflows in workspace"
@@ -162,7 +160,6 @@ class WorkflowExecutionController(
      * @return Execution summary with node execution details
      */
     @GetMapping("/{id}/summary")
-    @PreAuthorize("isAuthenticated()")
     @Operation(
         summary = "Get execution summary with node details",
         description = "Returns execution record and status for each node in the workflow"

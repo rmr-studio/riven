@@ -14,7 +14,7 @@ import java.util.*
 @RestController
 @RequestMapping("/api/v1/user")
 @SecurityRequirement(name = "bearerAuth")
-@Tag(name = "User Management", description = "Endpoints for managing user profiles and details")
+@Tag(name = "user")
 class UserController(
     private val profileService: UserService
 ) {

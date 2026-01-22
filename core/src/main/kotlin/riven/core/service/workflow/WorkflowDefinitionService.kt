@@ -13,7 +13,9 @@ import riven.core.enums.util.OperationType
 import riven.core.enums.workflow.WorkflowDefinitionStatus
 import riven.core.exceptions.NotFoundException
 import riven.core.models.request.workflow.CreateWorkflowDefinitionRequest
+import riven.core.models.request.workflow.SaveWorkflowDefinitionRequest
 import riven.core.models.request.workflow.UpdateWorkflowDefinitionRequest
+import riven.core.models.response.workflow.SaveWorkflowDefinitionResponse
 import riven.core.models.workflow.WorkflowDefinition
 import riven.core.models.workflow.WorkflowEdge
 import riven.core.models.workflow.WorkflowGraph
@@ -118,6 +120,49 @@ class WorkflowDefinitionService(
     }
 
     /**
+     * Saves a workflow definition (create or update).
+     *
+     * If [SaveWorkflowDefinitionRequest.id] is null, creates a new workflow definition.
+     * If [SaveWorkflowDefinitionRequest.id] is provided, updates the existing workflow definition.
+     *
+     * For updates, only metadata is updated (name, description, icon, tags).
+     * Workflow/canvas structure is managed separately.
+     *
+     * @param workspaceId The workspace to save the workflow in
+     * @param request The save request containing workflow data
+     * @return Response containing the saved workflow definition and created flag
+     * @throws NotFoundException if updating and the workflow is not found
+     * @throws AccessDeniedException if updating and the workflow belongs to a different workspace
+     */
+    @Transactional
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun saveWorkflow(workspaceId: UUID, request: SaveWorkflowDefinitionRequest): SaveWorkflowDefinitionResponse {
+        return if (request.id == null) {
+            // Create new workflow
+            val createRequest = CreateWorkflowDefinitionRequest(
+                name = request.name,
+                description = request.description,
+                iconColour = request.iconColour,
+                iconType = request.iconType,
+                tags = request.tags
+            )
+            val definition = createWorkflow(workspaceId, createRequest)
+            SaveWorkflowDefinitionResponse(definition = definition, created = true)
+        } else {
+            // Update existing workflow
+            val updateRequest = UpdateWorkflowDefinitionRequest(
+                name = request.name,
+                description = request.description,
+                iconColour = request.iconColour,
+                iconType = request.iconType,
+                tags = request.tags
+            )
+            val definition = updateWorkflow(request.id, workspaceId, updateRequest)
+            SaveWorkflowDefinitionResponse(definition = definition, created = false)
+        }
+    }
+
+    /**
      * Retrieves a workflow definition by ID.
      *
      * @param id The workflow definition ID
@@ -172,8 +217,6 @@ class WorkflowDefinitionService(
         logger.debug { "Listing workflow definitions for workspace $workspaceId" }
 
         val definitions = workflowDefinitionRepository.findByWorkspaceId(workspaceId)
-            .filter { !it.deleted }
-
         return definitions.map { definition ->
             val version = workflowDefinitionVersionRepository.findByWorkflowDefinitionIdAndVersionNumber(
                 definition.id!!,

@@ -363,7 +363,7 @@ class EntityService(
      */
     fun getWorkspaceEntities(workspaceId: UUID): List<Entity> {
         return findManyResults {
-            entityRepository.findByworkspaceId(workspaceId)
+            entityRepository.findByWorkspaceId(workspaceId)
         }.map { it.toModel(relationships = emptyMap()) }
     }
 

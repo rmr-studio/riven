@@ -11,10 +11,7 @@ data class WorkflowExecutionRecord(
     override val workspaceId: UUID,
     val workflowDefinitionId: UUID,
     val workflowVersionId: UUID,
-
-    val engineWorkflowId: UUID,
-    val engineRunId: UUID,
-
+    
     override val status: WorkflowStatus,
     override val startedAt: ZonedDateTime,
     override val completedAt: ZonedDateTime? = null,
