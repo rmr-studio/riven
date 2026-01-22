@@ -4,9 +4,6 @@ import io.github.oshai.kotlinlogging.KLogger
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
-import riven.core.entity.workflow.ExecutionQueueEntity
-import riven.core.repository.workflow.ExecutionQueueRepository
 
 /**
  * Service that processes the execution queue and dispatches to Temporal.
@@ -28,9 +25,8 @@ import riven.core.repository.workflow.ExecutionQueueRepository
  */
 @Service
 class ExecutionDispatcherService(
-    private val executionQueueRepository: ExecutionQueueRepository,
     private val executionQueueService: ExecutionQueueService,
-    private val executionItemProcessor: ExecutionItemProcessor,
+    private val executionQueueProcessorService: ExecutionQueueProcessorService,
     private val logger: KLogger
 ) {
 
@@ -58,7 +54,7 @@ class ExecutionDispatcherService(
         lockAtLeastFor = "10s"
     )
     fun processQueue() {
-        val pending = claimBatch()
+        val pending = executionQueueProcessorService.claimBatch(BATCH_SIZE)
 
         if (pending.isEmpty()) {
             return
@@ -68,20 +64,10 @@ class ExecutionDispatcherService(
 
         for (item in pending) {
             // Each item processed in its own transaction (REQUIRES_NEW)
-            executionItemProcessor.processItem(item)
+            executionQueueProcessorService.processItem(item)
         }
     }
 
-    /**
-     * Claim a batch of pending executions.
-     *
-     * Runs in its own transaction to atomically claim rows via SKIP LOCKED.
-     * Lock is released when this method returns, before processing begins.
-     */
-    @Transactional
-    fun claimBatch(): List<ExecutionQueueEntity> {
-        return executionQueueRepository.claimPendingExecutions(BATCH_SIZE)
-    }
 
     /**
      * Recover stale claimed items.

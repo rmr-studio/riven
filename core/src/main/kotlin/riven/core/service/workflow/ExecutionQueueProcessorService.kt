@@ -12,13 +12,16 @@ import riven.core.entity.workflow.execution.WorkflowExecutionEntity
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.enums.workflow.WorkflowTriggerType
 import riven.core.enums.workspace.WorkspaceTier
+import riven.core.models.common.json.JsonValue
 import riven.core.models.workflow.engine.WorkflowExecutionInput
+import riven.core.repository.workflow.ExecutionQueueRepository
 import riven.core.repository.workflow.WorkflowDefinitionRepository
 import riven.core.repository.workflow.WorkflowDefinitionVersionRepository
 import riven.core.repository.workflow.WorkflowExecutionRepository
 import riven.core.repository.workspace.WorkspaceRepository
 import riven.core.service.workflow.engine.WorkflowOrchestration
 import java.time.ZonedDateTime
+import java.util.*
 
 /**
  * Processes individual queue items in isolated transactions.
@@ -30,15 +33,27 @@ import java.time.ZonedDateTime
  * - Long-running dispatches don't block the entire batch
  */
 @Service
-class ExecutionItemProcessor(
+class ExecutionQueueProcessorService(
     private val executionQueueService: ExecutionQueueService,
     private val workflowExecutionRepository: WorkflowExecutionRepository,
     private val workflowDefinitionRepository: WorkflowDefinitionRepository,
+    private val executionQueueRepository: ExecutionQueueRepository,
     private val workflowDefinitionVersionRepository: WorkflowDefinitionVersionRepository,
     private val workspaceRepository: WorkspaceRepository,
     private val workflowClient: WorkflowClient,
     private val logger: KLogger
 ) {
+
+    /**
+     * Claim a batch of pending executions.
+     *
+     * Runs in its own transaction to atomically claim rows via SKIP LOCKED.
+     * Lock is released when this method returns, before processing begins.
+     */
+    @Transactional
+    fun claimBatch(size: Int): List<ExecutionQueueEntity> {
+        return executionQueueRepository.claimPendingExecutions(size)
+    }
 
     companion object {
         /** Maximum dispatch attempts before marking FAILED */
@@ -125,13 +140,14 @@ class ExecutionItemProcessor(
         val nodeIds = workflowVersion.workflow.nodeIds.toList()
 
         // Get or create workflow execution entity
-        val (savedExecution, savedExecutionId) = getOrCreateExecution(item, workflowVersion.id!!)
+        val record = getOrCreateExecution(item, workflowVersion.id!!)
+        val id = requireNotNull(record.id)
 
         // Persist execution ID to queue item before starting Temporal workflow.
         // This ensures the execution can be reused on retry if Temporal start fails.
         // Always update if different (handles case where previous execution was deleted).
-        if (item.executionId != savedExecutionId) {
-            executionQueueService.setExecutionId(item, savedExecutionId)
+        if (item.executionId != id) {
+            executionQueueService.setExecutionId(item, id)
         }
 
         // Start Temporal workflow
@@ -139,7 +155,7 @@ class ExecutionItemProcessor(
             val workflowStub = workflowClient.newWorkflowStub(
                 WorkflowOrchestration::class.java,
                 WorkflowOptions.newBuilder()
-                    .setWorkflowId("execution-$savedExecutionId")
+                    .setWorkflowId("execution-$id")
                     .setTaskQueue(TemporalWorkerConfiguration.WORKFLOWS_DEFAULT_QUEUE)
                     .build()
             )
@@ -155,7 +171,7 @@ class ExecutionItemProcessor(
             // Mark queue item as dispatched
             executionQueueService.markDispatched(item)
 
-            logger.info { "Dispatched execution $savedExecutionId for queue item ${item.id}" }
+            logger.info { "Dispatched execution $id for queue item ${item.id}" }
 
         } catch (e: Exception) {
             logger.error(e) { "Failed to start Temporal workflow for queue item ${item.id}" }
@@ -163,7 +179,7 @@ class ExecutionItemProcessor(
             // Delete the execution record to avoid orphaned records.
             // The queue item still has the executionId, but it will be cleared
             // or a new execution created on retry depending on recovery logic.
-            workflowExecutionRepository.deleteById(savedExecutionId)
+            workflowExecutionRepository.deleteById(id)
 
             throw e // Re-throw to trigger error handling
         }
@@ -180,7 +196,7 @@ class ExecutionItemProcessor(
     private fun getOrCreateExecution(
         item: ExecutionQueueEntity,
         workflowVersionId: UUID
-    ): Pair<WorkflowExecutionEntity, UUID> {
+    ): WorkflowExecutionEntity {
         val existingExecutionId = item.executionId
 
         if (existingExecutionId != null) {
@@ -192,10 +208,10 @@ class ExecutionItemProcessor(
                     status = WorkflowStatus.RUNNING,
                     startedAt = ZonedDateTime.now(),
                     completedAt = null,
-                    error = emptyMap()
+                    error = emptyMap<String, JsonValue>()
                 )
-                val saved = workflowExecutionRepository.save(updatedExecution)
-                return Pair(saved, saved.id!!)
+                return workflowExecutionRepository.save(updatedExecution)
+
             }
             // Execution was deleted or not found - fall through to create new
             logger.warn { "Execution $existingExecutionId not found for queue item ${item.id}, creating new" }
@@ -217,8 +233,8 @@ class ExecutionItemProcessor(
             output = null
         )
 
-        val savedExecution = workflowExecutionRepository.save(executionEntity)
-        return Pair(savedExecution, savedExecution.id!!)
+        return workflowExecutionRepository.save(executionEntity)
+
     }
 
     /**
