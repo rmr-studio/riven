@@ -1,5 +1,5 @@
 
-# WorkflowNode
+# SaveWorkflowDefinitionRequest
 
 
 ## Properties
@@ -7,30 +7,26 @@
 Name | Type
 ------------ | -------------
 `id` | string
-`workspaceId` | string
-`key` | string
 `name` | string
 `description` | string
-`config` | [SaveWorkflowNodeRequestConfig](SaveWorkflowNodeRequestConfig.md)
-`type` | [WorkflowNodeType](WorkflowNodeType.md)
-`version` | number
+`iconColour` | [IconColour](IconColour.md)
+`iconType` | [IconType](IconType.md)
+`tags` | Array&lt;string&gt;
 
 ## Example
 
 ```typescript
-import type { WorkflowNode } from ''
+import type { SaveWorkflowDefinitionRequest } from ''
 
 // TODO: Update the object below with actual values
 const example = {
   "id": null,
-  "workspaceId": null,
-  "key": null,
   "name": null,
   "description": null,
-  "config": null,
-  "type": null,
-  "version": null,
-} satisfies WorkflowNode
+  "iconColour": null,
+  "iconType": null,
+  "tags": null,
+} satisfies SaveWorkflowDefinitionRequest
 
 console.log(example)
 
@@ -39,7 +35,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkflowNode
+const exampleParsed = JSON.parse(exampleJSON) as SaveWorkflowDefinitionRequest
 console.log(exampleParsed)
 ```
 

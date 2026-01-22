@@ -60,18 +60,6 @@ export interface WorkflowExecutionRecord {
     workflowVersionId: string;
     /**
      * 
-     * @type {string}
-     * @memberof WorkflowExecutionRecord
-     */
-    engineWorkflowId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof WorkflowExecutionRecord
-     */
-    engineRunId: string;
-    /**
-     * 
      * @type {WorkflowStatus}
      * @memberof WorkflowExecutionRecord
      */
@@ -130,8 +118,6 @@ export function instanceOfWorkflowExecutionRecord(value: object): value is Workf
     if (!('workspaceId' in value) || value['workspaceId'] === undefined) return false;
     if (!('workflowDefinitionId' in value) || value['workflowDefinitionId'] === undefined) return false;
     if (!('workflowVersionId' in value) || value['workflowVersionId'] === undefined) return false;
-    if (!('engineWorkflowId' in value) || value['engineWorkflowId'] === undefined) return false;
-    if (!('engineRunId' in value) || value['engineRunId'] === undefined) return false;
     if (!('status' in value) || value['status'] === undefined) return false;
     if (!('startedAt' in value) || value['startedAt'] === undefined) return false;
     if (!('triggerType' in value) || value['triggerType'] === undefined) return false;
@@ -152,8 +138,6 @@ export function WorkflowExecutionRecordFromJSONTyped(json: any, ignoreDiscrimina
         'workspaceId': json['workspaceId'],
         'workflowDefinitionId': json['workflowDefinitionId'],
         'workflowVersionId': json['workflowVersionId'],
-        'engineWorkflowId': json['engineWorkflowId'],
-        'engineRunId': json['engineRunId'],
         'status': WorkflowStatusFromJSON(json['status']),
         'startedAt': (new Date(json['startedAt'])),
         'completedAt': json['completedAt'] == null ? undefined : (new Date(json['completedAt'])),
@@ -180,8 +164,6 @@ export function WorkflowExecutionRecordToJSONTyped(value?: WorkflowExecutionReco
         'workspaceId': value['workspaceId'],
         'workflowDefinitionId': value['workflowDefinitionId'],
         'workflowVersionId': value['workflowVersionId'],
-        'engineWorkflowId': value['engineWorkflowId'],
-        'engineRunId': value['engineRunId'],
         'status': WorkflowStatusToJSON(value['status']),
         'startedAt': value['startedAt'].toISOString(),
         'completedAt': value['completedAt'] == null ? value['completedAt'] : value['completedAt'].toISOString(),

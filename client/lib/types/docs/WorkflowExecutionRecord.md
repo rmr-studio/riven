@@ -10,8 +10,6 @@ Name | Type
 `workspaceId` | string
 `workflowDefinitionId` | string
 `workflowVersionId` | string
-`engineWorkflowId` | string
-`engineRunId` | string
 `status` | [WorkflowStatus](WorkflowStatus.md)
 `startedAt` | Date
 `completedAt` | Date
@@ -32,8 +30,6 @@ const example = {
   "workspaceId": null,
   "workflowDefinitionId": null,
   "workflowVersionId": null,
-  "engineWorkflowId": null,
-  "engineRunId": null,
   "status": null,
   "startedAt": null,
   "completedAt": null,

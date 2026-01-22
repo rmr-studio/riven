@@ -15,32 +15,34 @@
 
 import * as runtime from '../runtime';
 import type {
-  CreateWorkflowDefinitionRequest,
   CreateWorkflowEdgeRequest,
-  CreateWorkflowNodeRequest,
+  ExecutionQueueRequest,
+  SaveWorkflowDefinitionRequest,
+  SaveWorkflowDefinitionResponse,
+  SaveWorkflowNodeRequest,
+  SaveWorkflowNodeResponse,
   StartWorkflowExecutionRequest,
-  UpdateWorkflowDefinitionRequest,
-  UpdateWorkflowNodeRequest,
   WorkflowDefinition,
   WorkflowEdge,
   WorkflowExecutionRecord,
   WorkflowExecutionSummaryResponse,
   WorkflowGraph,
-  WorkflowNode,
 } from '../models/index';
 import {
-    CreateWorkflowDefinitionRequestFromJSON,
-    CreateWorkflowDefinitionRequestToJSON,
     CreateWorkflowEdgeRequestFromJSON,
     CreateWorkflowEdgeRequestToJSON,
-    CreateWorkflowNodeRequestFromJSON,
-    CreateWorkflowNodeRequestToJSON,
+    ExecutionQueueRequestFromJSON,
+    ExecutionQueueRequestToJSON,
+    SaveWorkflowDefinitionRequestFromJSON,
+    SaveWorkflowDefinitionRequestToJSON,
+    SaveWorkflowDefinitionResponseFromJSON,
+    SaveWorkflowDefinitionResponseToJSON,
+    SaveWorkflowNodeRequestFromJSON,
+    SaveWorkflowNodeRequestToJSON,
+    SaveWorkflowNodeResponseFromJSON,
+    SaveWorkflowNodeResponseToJSON,
     StartWorkflowExecutionRequestFromJSON,
     StartWorkflowExecutionRequestToJSON,
-    UpdateWorkflowDefinitionRequestFromJSON,
-    UpdateWorkflowDefinitionRequestToJSON,
-    UpdateWorkflowNodeRequestFromJSON,
-    UpdateWorkflowNodeRequestToJSON,
     WorkflowDefinitionFromJSON,
     WorkflowDefinitionToJSON,
     WorkflowEdgeFromJSON,
@@ -51,23 +53,11 @@ import {
     WorkflowExecutionSummaryResponseToJSON,
     WorkflowGraphFromJSON,
     WorkflowGraphToJSON,
-    WorkflowNodeFromJSON,
-    WorkflowNodeToJSON,
 } from '../models/index';
 
 export interface CreateEdgeRequest {
     workspaceId: string;
     createWorkflowEdgeRequest: CreateWorkflowEdgeRequest;
-}
-
-export interface CreateNodeRequest {
-    workspaceId: string;
-    createWorkflowNodeRequest: CreateWorkflowNodeRequest;
-}
-
-export interface CreateWorkflowRequest {
-    workspaceId: string;
-    createWorkflowDefinitionRequest: CreateWorkflowDefinitionRequest;
 }
 
 export interface DeleteEdgeRequest {
@@ -118,20 +108,18 @@ export interface ListWorkspaceExecutionsRequest {
     workspaceId: string;
 }
 
+export interface SaveNodeRequest {
+    workspaceId: string;
+    saveWorkflowNodeRequest: SaveWorkflowNodeRequest;
+}
+
+export interface SaveWorkflowRequest {
+    workspaceId: string;
+    saveWorkflowDefinitionRequest: SaveWorkflowDefinitionRequest;
+}
+
 export interface StartExecutionRequest {
     startWorkflowExecutionRequest: StartWorkflowExecutionRequest;
-}
-
-export interface UpdateNodeRequest {
-    id: string;
-    workspaceId: string;
-    updateWorkflowNodeRequest: UpdateWorkflowNodeRequest;
-}
-
-export interface UpdateWorkflowRequest {
-    id: string;
-    workspaceId: string;
-    updateWorkflowDefinitionRequest: UpdateWorkflowDefinitionRequest;
 }
 
 /**
@@ -193,120 +181,6 @@ export class WorkflowApi extends runtime.BaseAPI {
      */
     async createEdge(requestParameters: CreateEdgeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkflowEdge> {
         const response = await this.createEdgeRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Creates a new workflow node with the specified configuration in the workspace.
-     * Create a new workflow node
-     */
-    async createNodeRaw(requestParameters: CreateNodeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkflowNode>> {
-        if (requestParameters['workspaceId'] == null) {
-            throw new runtime.RequiredError(
-                'workspaceId',
-                'Required parameter "workspaceId" was null or undefined when calling createNode().'
-            );
-        }
-
-        if (requestParameters['createWorkflowNodeRequest'] == null) {
-            throw new runtime.RequiredError(
-                'createWorkflowNodeRequest',
-                'Required parameter "createWorkflowNodeRequest" was null or undefined when calling createNode().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-
-        let urlPath = `/api/v1/workflow/graph/nodes/workspace/{workspaceId}`;
-        urlPath = urlPath.replace(`{${"workspaceId"}}`, encodeURIComponent(String(requestParameters['workspaceId'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: CreateWorkflowNodeRequestToJSON(requestParameters['createWorkflowNodeRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => WorkflowNodeFromJSON(jsonValue));
-    }
-
-    /**
-     * Creates a new workflow node with the specified configuration in the workspace.
-     * Create a new workflow node
-     */
-    async createNode(requestParameters: CreateNodeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkflowNode> {
-        const response = await this.createNodeRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Creates a new workflow definition with an initial empty version in the specified workspace.
-     * Create a new workflow definition
-     */
-    async createWorkflowRaw(requestParameters: CreateWorkflowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkflowDefinition>> {
-        if (requestParameters['workspaceId'] == null) {
-            throw new runtime.RequiredError(
-                'workspaceId',
-                'Required parameter "workspaceId" was null or undefined when calling createWorkflow().'
-            );
-        }
-
-        if (requestParameters['createWorkflowDefinitionRequest'] == null) {
-            throw new runtime.RequiredError(
-                'createWorkflowDefinitionRequest',
-                'Required parameter "createWorkflowDefinitionRequest" was null or undefined when calling createWorkflow().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-
-        let urlPath = `/api/v1/workflow/definitions/workspace/{workspaceId}`;
-        urlPath = urlPath.replace(`{${"workspaceId"}}`, encodeURIComponent(String(requestParameters['workspaceId'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: CreateWorkflowDefinitionRequestToJSON(requestParameters['createWorkflowDefinitionRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => WorkflowDefinitionFromJSON(jsonValue));
-    }
-
-    /**
-     * Creates a new workflow definition with an initial empty version in the specified workspace.
-     * Create a new workflow definition
-     */
-    async createWorkflow(requestParameters: CreateWorkflowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkflowDefinition> {
-        const response = await this.createWorkflowRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -864,9 +738,123 @@ export class WorkflowApi extends runtime.BaseAPI {
     }
 
     /**
-     * Start a workflow execution
+     * Saves a workflow node - creates new if id is null, updates existing if id is provided. Config changes on update create a new version.
+     * Save a workflow node
      */
-    async startExecutionRaw(requestParameters: StartExecutionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkflowExecutionRecord>> {
+    async saveNodeRaw(requestParameters: SaveNodeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SaveWorkflowNodeResponse>> {
+        if (requestParameters['workspaceId'] == null) {
+            throw new runtime.RequiredError(
+                'workspaceId',
+                'Required parameter "workspaceId" was null or undefined when calling saveNode().'
+            );
+        }
+
+        if (requestParameters['saveWorkflowNodeRequest'] == null) {
+            throw new runtime.RequiredError(
+                'saveWorkflowNodeRequest',
+                'Required parameter "saveWorkflowNodeRequest" was null or undefined when calling saveNode().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/api/v1/workflow/graph/workspace/{workspaceId}/node`;
+        urlPath = urlPath.replace(`{${"workspaceId"}}`, encodeURIComponent(String(requestParameters['workspaceId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: SaveWorkflowNodeRequestToJSON(requestParameters['saveWorkflowNodeRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SaveWorkflowNodeResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Saves a workflow node - creates new if id is null, updates existing if id is provided. Config changes on update create a new version.
+     * Save a workflow node
+     */
+    async saveNode(requestParameters: SaveNodeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SaveWorkflowNodeResponse> {
+        const response = await this.saveNodeRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Saves a workflow definition - creates new if id is null, updates existing if id is provided. Only metadata is updated on existing definitions.
+     * Save a workflow definition
+     */
+    async saveWorkflowRaw(requestParameters: SaveWorkflowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SaveWorkflowDefinitionResponse>> {
+        if (requestParameters['workspaceId'] == null) {
+            throw new runtime.RequiredError(
+                'workspaceId',
+                'Required parameter "workspaceId" was null or undefined when calling saveWorkflow().'
+            );
+        }
+
+        if (requestParameters['saveWorkflowDefinitionRequest'] == null) {
+            throw new runtime.RequiredError(
+                'saveWorkflowDefinitionRequest',
+                'Required parameter "saveWorkflowDefinitionRequest" was null or undefined when calling saveWorkflow().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/api/v1/workflow/definitions/workspace/{workspaceId}`;
+        urlPath = urlPath.replace(`{${"workspaceId"}}`, encodeURIComponent(String(requestParameters['workspaceId'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: SaveWorkflowDefinitionRequestToJSON(requestParameters['saveWorkflowDefinitionRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SaveWorkflowDefinitionResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Saves a workflow definition - creates new if id is null, updates existing if id is provided. Only metadata is updated on existing definitions.
+     * Save a workflow definition
+     */
+    async saveWorkflow(requestParameters: SaveWorkflowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SaveWorkflowDefinitionResponse> {
+        const response = await this.saveWorkflowRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Queue a workflow execution
+     */
+    async startExecutionRaw(requestParameters: StartExecutionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ExecutionQueueRequest>> {
         if (requestParameters['startWorkflowExecutionRequest'] == null) {
             throw new runtime.RequiredError(
                 'startWorkflowExecutionRequest',
@@ -899,150 +887,14 @@ export class WorkflowApi extends runtime.BaseAPI {
             body: StartWorkflowExecutionRequestToJSON(requestParameters['startWorkflowExecutionRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => WorkflowExecutionRecordFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ExecutionQueueRequestFromJSON(jsonValue));
     }
 
     /**
-     * Start a workflow execution
+     * Queue a workflow execution
      */
-    async startExecution(requestParameters: StartExecutionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkflowExecutionRecord> {
+    async startExecution(requestParameters: StartExecutionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ExecutionQueueRequest> {
         const response = await this.startExecutionRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Updates workflow node metadata or configuration. Config changes create a new version.
-     * Update workflow node
-     */
-    async updateNodeRaw(requestParameters: UpdateNodeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkflowNode>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling updateNode().'
-            );
-        }
-
-        if (requestParameters['workspaceId'] == null) {
-            throw new runtime.RequiredError(
-                'workspaceId',
-                'Required parameter "workspaceId" was null or undefined when calling updateNode().'
-            );
-        }
-
-        if (requestParameters['updateWorkflowNodeRequest'] == null) {
-            throw new runtime.RequiredError(
-                'updateWorkflowNodeRequest',
-                'Required parameter "updateWorkflowNodeRequest" was null or undefined when calling updateNode().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['workspaceId'] != null) {
-            queryParameters['workspaceId'] = requestParameters['workspaceId'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-
-        let urlPath = `/api/v1/workflow/graph/nodes/{id}`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: UpdateWorkflowNodeRequestToJSON(requestParameters['updateWorkflowNodeRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => WorkflowNodeFromJSON(jsonValue));
-    }
-
-    /**
-     * Updates workflow node metadata or configuration. Config changes create a new version.
-     * Update workflow node
-     */
-    async updateNode(requestParameters: UpdateNodeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkflowNode> {
-        const response = await this.updateNodeRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Updates workflow definition metadata (name, description, icon, tags). Does not modify workflow structure.
-     * Update workflow definition metadata
-     */
-    async updateWorkflowRaw(requestParameters: UpdateWorkflowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkflowDefinition>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling updateWorkflow().'
-            );
-        }
-
-        if (requestParameters['workspaceId'] == null) {
-            throw new runtime.RequiredError(
-                'workspaceId',
-                'Required parameter "workspaceId" was null or undefined when calling updateWorkflow().'
-            );
-        }
-
-        if (requestParameters['updateWorkflowDefinitionRequest'] == null) {
-            throw new runtime.RequiredError(
-                'updateWorkflowDefinitionRequest',
-                'Required parameter "updateWorkflowDefinitionRequest" was null or undefined when calling updateWorkflow().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['workspaceId'] != null) {
-            queryParameters['workspaceId'] = requestParameters['workspaceId'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-
-        let urlPath = `/api/v1/workflow/definitions/{id}`;
-        urlPath = urlPath.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: UpdateWorkflowDefinitionRequestToJSON(requestParameters['updateWorkflowDefinitionRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => WorkflowDefinitionFromJSON(jsonValue));
-    }
-
-    /**
-     * Updates workflow definition metadata (name, description, icon, tags). Does not modify workflow structure.
-     * Update workflow definition metadata
-     */
-    async updateWorkflow(requestParameters: UpdateWorkflowRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkflowDefinition> {
-        const response = await this.updateWorkflowRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

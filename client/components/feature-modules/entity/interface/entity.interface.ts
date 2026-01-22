@@ -1,18 +1,57 @@
 import { Icon, SchemaUUID } from "@/lib/interfaces/common.interface";
 import {
-    components,
+    CreateEntityTypeRequest,
     DataType,
+    DeleteAttributeDefinitionRequest,
+    DeleteEntityResponse,
+    DeleteRelationshipDefinitionRequest,
+    DeleteTypeDefinitionRequest,
+    Entity,
+    EntityAttribute,
+    EntityAttributePayload,
+    EntityAttributePrimitivePayload,
+    EntityAttributeRelationPayload,
+    EntityAttributeRelationPayloadReference,
+    EntityAttributeRequest,
+    EntityLink,
     EntityPropertyType,
     EntityRelationshipCardinality,
+    EntityRelationshipDefinition,
+    EntityType,
+    EntityTypeAttributeColumn,
+    EntityTypeImpactResponse,
+    SaveAttributeDefinitionRequest,
+    SaveEntityRequest,
+    SaveEntityResponse,
+    SaveRelationshipDefinitionRequest,
+    SaveTypeDefinitionRequest,
     SchemaType,
-} from "@/lib/types/types";
+} from "@/lib/types";
 
-export type EntityType = components["schemas"]["EntityType"];
-export type EntityTypeAttributeColumn = components["schemas"]["EntityTypeAttributeColumn"];
-export type Entity = components["schemas"]["Entity"];
-export type EntityRelationshipDefinition = components["schemas"]["EntityRelationshipDefinition"];
-export type EntityAttributePayload = components["schemas"]["EntityAttributePayload"];
-export type EntityAttribute = components["schemas"]["EntityAttribute"];
+export type {
+    CreateEntityTypeRequest,
+    DeleteAttributeDefinitionRequest,
+    DeleteEntityResponse,
+    DeleteRelationshipDefinitionRequest,
+    DeleteTypeDefinitionRequest,
+    Entity,
+    EntityAttribute,
+    EntityAttributePayload,
+    EntityAttributePrimitivePayload,
+    EntityAttributeRelationPayload,
+    EntityAttributeRelationPayloadReference,
+    EntityAttributeRequest,
+    EntityLink,
+    EntityRelationshipDefinition,
+    EntityType,
+    EntityTypeAttributeColumn,
+    EntityTypeImpactResponse,
+    SaveAttributeDefinitionRequest,
+    SaveEntityRequest,
+    SaveEntityResponse,
+    SaveRelationshipDefinitionRequest,
+    SaveTypeDefinitionRequest,
+};
 
 export interface EntityTypeDefinition {
     id: string;
@@ -35,10 +74,8 @@ export const isAttributeDefinition = (
 export const isRelationshipPayload = (
     payload: EntityAttributePayload
 ): payload is EntityAttributeRelationPayload => {
-    return payload.type === EntityPropertyType.RELATIONSHIP;
+    return payload.type === EntityPropertyType.Relationship;
 };
-
-export type CreateEntityTypeRequest = components["schemas"]["CreateEntityTypeRequest"];
 
 export enum RelationshipLimit {
     SINGULAR,
@@ -58,22 +95,6 @@ export type {
     OverlapResolution,
     RelationshipOverlap,
 } from "../hooks/use-relationship-overlap-detection";
-
-export type EntityTypeImpactResponse = components["schemas"]["EntityTypeImpactResponse"];
-
-export type SaveTypeDefinitionRequest = components["schemas"]["SaveTypeDefinitionRequest"];
-export type SaveRelationshipDefinitionRequest =
-    components["schemas"]["SaveRelationshipDefinitionRequest"];
-export type SaveAttributeDefinitionRequest =
-    components["schemas"]["SaveAttributeDefinitionRequest"];
-
-export type DeleteTypeDefinitionRequest = components["schemas"]["DeleteTypeDefinitionRequest"];
-export type DeleteAttributeDefinitionRequest =
-    components["schemas"]["DeleteAttributeDefinitionRequest"];
-export type DeleteRelationshipDefinitionRequest =
-    components["schemas"]["DeleteRelationshipDefinitionRequest"];
-
-export type DeleteEntityResponse = components["schemas"]["DeleteEntityResponse"];
 
 export interface EntityAttributeDefinition {
     id: string;
@@ -111,15 +132,3 @@ export interface RelationshipPickerProps {
     errors?: string[];
     disabled?: boolean;
 }
-
-export type EntityAttributePrimitivePayload =
-    components["schemas"]["EntityAttributePrimitivePayload"];
-export type EntityAttributeRelationPayloadReference =
-    components["schemas"]["EntityAttributeRelationPayloadReference"];
-
-export type EntityAttributeRelationPayload =
-    components["schemas"]["EntityAttributeRelationPayload"];
-export type SaveEntityRequest = components["schemas"]["SaveEntityRequest"];
-export type SaveEntityResponse = components["schemas"]["SaveEntityResponse"];
-export type EntityAttributeRequest = components["schemas"]["EntityAttributeRequest"];
-export type EntityLink = components["schemas"]["EntityLink"];

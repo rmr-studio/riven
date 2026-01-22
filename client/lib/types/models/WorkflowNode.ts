@@ -20,13 +20,13 @@ import {
     WorkflowNodeTypeToJSON,
     WorkflowNodeTypeToJSONTyped,
 } from './WorkflowNodeType';
-import type { UpdateWorkflowNodeRequestConfig } from './UpdateWorkflowNodeRequestConfig';
+import type { SaveWorkflowNodeRequestConfig } from './SaveWorkflowNodeRequestConfig';
 import {
-    UpdateWorkflowNodeRequestConfigFromJSON,
-    UpdateWorkflowNodeRequestConfigFromJSONTyped,
-    UpdateWorkflowNodeRequestConfigToJSON,
-    UpdateWorkflowNodeRequestConfigToJSONTyped,
-} from './UpdateWorkflowNodeRequestConfig';
+    SaveWorkflowNodeRequestConfigFromJSON,
+    SaveWorkflowNodeRequestConfigFromJSONTyped,
+    SaveWorkflowNodeRequestConfigToJSON,
+    SaveWorkflowNodeRequestConfigToJSONTyped,
+} from './SaveWorkflowNodeRequestConfig';
 
 /**
  * 
@@ -66,10 +66,10 @@ export interface WorkflowNode {
     description?: string;
     /**
      * 
-     * @type {UpdateWorkflowNodeRequestConfig}
+     * @type {SaveWorkflowNodeRequestConfig}
      * @memberof WorkflowNode
      */
-    config: UpdateWorkflowNodeRequestConfig;
+    config: SaveWorkflowNodeRequestConfig;
     /**
      * 
      * @type {WorkflowNodeType}
@@ -115,7 +115,7 @@ export function WorkflowNodeFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'key': json['key'],
         'name': json['name'],
         'description': json['description'] == null ? undefined : json['description'],
-        'config': UpdateWorkflowNodeRequestConfigFromJSON(json['config']),
+        'config': SaveWorkflowNodeRequestConfigFromJSON(json['config']),
         'type': WorkflowNodeTypeFromJSON(json['type']),
         'version': json['version'],
     };
@@ -137,7 +137,7 @@ export function WorkflowNodeToJSONTyped(value?: WorkflowNode | null, ignoreDiscr
         'key': value['key'],
         'name': value['name'],
         'description': value['description'],
-        'config': UpdateWorkflowNodeRequestConfigToJSON(value['config']),
+        'config': SaveWorkflowNodeRequestConfigToJSON(value['config']),
         'type': WorkflowNodeTypeToJSON(value['type']),
         'version': value['version'],
     };

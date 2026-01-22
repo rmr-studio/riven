@@ -5,8 +5,6 @@ All URIs are relative to *http://localhost:8081*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**createEdge**](WorkflowApi.md#createedge) | **POST** /api/v1/workflow/graph/edges/workspace/{workspaceId} | Create a new workflow edge |
-| [**createNode**](WorkflowApi.md#createnode) | **POST** /api/v1/workflow/graph/nodes/workspace/{workspaceId} | Create a new workflow node |
-| [**createWorkflow**](WorkflowApi.md#createworkflow) | **POST** /api/v1/workflow/definitions/workspace/{workspaceId} | Create a new workflow definition |
 | [**deleteEdge**](WorkflowApi.md#deleteedge) | **DELETE** /api/v1/workflow/graph/edges/{id} | Delete workflow edge |
 | [**deleteNode**](WorkflowApi.md#deletenode) | **DELETE** /api/v1/workflow/graph/nodes/{id} | Delete workflow node (cascades to connected edges) |
 | [**deleteWorkflow**](WorkflowApi.md#deleteworkflow) | **DELETE** /api/v1/workflow/definitions/{id} | Delete workflow definition |
@@ -17,9 +15,9 @@ All URIs are relative to *http://localhost:8081*
 | [**listWorkflowExecutions**](WorkflowApi.md#listworkflowexecutions) | **GET** /api/v1/workflow/executions/workflow/{workflowDefinitionId} | List all executions for a workflow definition |
 | [**listWorkflows**](WorkflowApi.md#listworkflows) | **GET** /api/v1/workflow/definitions/workspace/{workspaceId} | List all workflow definitions for workspace |
 | [**listWorkspaceExecutions**](WorkflowApi.md#listworkspaceexecutions) | **GET** /api/v1/workflow/executions/workspace/{workspaceId} | List all executions for workspace |
-| [**startExecution**](WorkflowApi.md#startexecution) | **POST** /api/v1/workflow/executions/start | Start a workflow execution |
-| [**updateNode**](WorkflowApi.md#updatenode) | **PUT** /api/v1/workflow/graph/nodes/{id} | Update workflow node |
-| [**updateWorkflow**](WorkflowApi.md#updateworkflow) | **PUT** /api/v1/workflow/definitions/{id} | Update workflow definition metadata |
+| [**saveNode**](WorkflowApi.md#savenode) | **POST** /api/v1/workflow/graph/workspace/{workspaceId}/node | Save a workflow node |
+| [**saveWorkflow**](WorkflowApi.md#saveworkflow) | **POST** /api/v1/workflow/definitions/workspace/{workspaceId} | Save a workflow definition |
+| [**startExecution**](WorkflowApi.md#startexecution) | **POST** /api/v1/workflow/executions/start | Queue a workflow execution |
 
 
 
@@ -94,158 +92,6 @@ example().catch(console.error);
 |-------------|-------------|------------------|
 | **201** | Workflow edge created successfully |  -  |
 | **400** | Invalid request data or nodes not found |  -  |
-| **401** | Unauthorized - authentication required |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-
-## createNode
-
-> WorkflowNode createNode(workspaceId, createWorkflowNodeRequest)
-
-Create a new workflow node
-
-Creates a new workflow node with the specified configuration in the workspace.
-
-### Example
-
-```ts
-import {
-  Configuration,
-  WorkflowApi,
-} from '';
-import type { CreateNodeRequest } from '';
-
-async function example() {
-  console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
-    // Configure HTTP bearer authorization: bearerAuth
-    accessToken: "YOUR BEARER TOKEN",
-  });
-  const api = new WorkflowApi(config);
-
-  const body = {
-    // string
-    workspaceId: 38400000-8cf0-11bd-b23e-10b96e4ef00d,
-    // CreateWorkflowNodeRequest
-    createWorkflowNodeRequest: ...,
-  } satisfies CreateNodeRequest;
-
-  try {
-    const data = await api.createNode(body);
-    console.log(data);
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-// Run the test
-example().catch(console.error);
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **workspaceId** | `string` |  | [Defaults to `undefined`] |
-| **createWorkflowNodeRequest** | [CreateWorkflowNodeRequest](CreateWorkflowNodeRequest.md) |  | |
-
-### Return type
-
-[**WorkflowNode**](WorkflowNode.md)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: `application/json`
-- **Accept**: `*/*`
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **201** | Workflow node created successfully |  -  |
-| **400** | Invalid request data |  -  |
-| **401** | Unauthorized - authentication required |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-
-## createWorkflow
-
-> WorkflowDefinition createWorkflow(workspaceId, createWorkflowDefinitionRequest)
-
-Create a new workflow definition
-
-Creates a new workflow definition with an initial empty version in the specified workspace.
-
-### Example
-
-```ts
-import {
-  Configuration,
-  WorkflowApi,
-} from '';
-import type { CreateWorkflowRequest } from '';
-
-async function example() {
-  console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
-    // Configure HTTP bearer authorization: bearerAuth
-    accessToken: "YOUR BEARER TOKEN",
-  });
-  const api = new WorkflowApi(config);
-
-  const body = {
-    // string
-    workspaceId: 38400000-8cf0-11bd-b23e-10b96e4ef00d,
-    // CreateWorkflowDefinitionRequest
-    createWorkflowDefinitionRequest: ...,
-  } satisfies CreateWorkflowRequest;
-
-  try {
-    const data = await api.createWorkflow(body);
-    console.log(data);
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-// Run the test
-example().catch(console.error);
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **workspaceId** | `string` |  | [Defaults to `undefined`] |
-| **createWorkflowDefinitionRequest** | [CreateWorkflowDefinitionRequest](CreateWorkflowDefinitionRequest.md) |  | |
-
-### Return type
-
-[**WorkflowDefinition**](WorkflowDefinition.md)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: `application/json`
-- **Accept**: `*/*`
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **201** | Workflow definition created successfully |  -  |
-| **400** | Invalid request data |  -  |
 | **401** | Unauthorized - authentication required |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
@@ -1001,11 +847,165 @@ example().catch(console.error);
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
+## saveNode
+
+> SaveWorkflowNodeResponse saveNode(workspaceId, saveWorkflowNodeRequest)
+
+Save a workflow node
+
+Saves a workflow node - creates new if id is null, updates existing if id is provided. Config changes on update create a new version.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  WorkflowApi,
+} from '';
+import type { SaveNodeRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearerAuth
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new WorkflowApi(config);
+
+  const body = {
+    // string
+    workspaceId: 38400000-8cf0-11bd-b23e-10b96e4ef00d,
+    // SaveWorkflowNodeRequest
+    saveWorkflowNodeRequest: ...,
+  } satisfies SaveNodeRequest;
+
+  try {
+    const data = await api.saveNode(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
+| **saveWorkflowNodeRequest** | [SaveWorkflowNodeRequest](SaveWorkflowNodeRequest.md) |  | |
+
+### Return type
+
+[**SaveWorkflowNodeResponse**](SaveWorkflowNodeResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `*/*`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Workflow node saved successfully |  -  |
+| **400** | Invalid request data |  -  |
+| **401** | Unauthorized - authentication required |  -  |
+| **404** | Workflow node not found (for updates) |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## saveWorkflow
+
+> SaveWorkflowDefinitionResponse saveWorkflow(workspaceId, saveWorkflowDefinitionRequest)
+
+Save a workflow definition
+
+Saves a workflow definition - creates new if id is null, updates existing if id is provided. Only metadata is updated on existing definitions.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  WorkflowApi,
+} from '';
+import type { SaveWorkflowRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearerAuth
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new WorkflowApi(config);
+
+  const body = {
+    // string
+    workspaceId: 38400000-8cf0-11bd-b23e-10b96e4ef00d,
+    // SaveWorkflowDefinitionRequest
+    saveWorkflowDefinitionRequest: ...,
+  } satisfies SaveWorkflowRequest;
+
+  try {
+    const data = await api.saveWorkflow(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
+| **saveWorkflowDefinitionRequest** | [SaveWorkflowDefinitionRequest](SaveWorkflowDefinitionRequest.md) |  | |
+
+### Return type
+
+[**SaveWorkflowDefinitionResponse**](SaveWorkflowDefinitionResponse.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `*/*`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Workflow definition saved successfully |  -  |
+| **400** | Invalid request data |  -  |
+| **401** | Unauthorized - authentication required |  -  |
+| **404** | Workflow definition not found (for updates) |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
 ## startExecution
 
-> WorkflowExecutionRecord startExecution(startWorkflowExecutionRequest)
+> ExecutionQueueRequest startExecution(startWorkflowExecutionRequest)
 
-Start a workflow execution
+Queue a workflow execution
 
 ### Example
 
@@ -1050,7 +1050,7 @@ example().catch(console.error);
 
 ### Return type
 
-[**WorkflowExecutionRecord**](WorkflowExecutionRecord.md)
+[**ExecutionQueueRequest**](ExecutionQueueRequest.md)
 
 ### Authorization
 
@@ -1065,168 +1065,8 @@ example().catch(console.error);
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | Workflow execution started successfully |  -  |
+| **202** | Workflow execution queued successfully |  -  |
 | **401** | Unauthorized access |  -  |
-| **404** | Workflow definition not found |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-
-## updateNode
-
-> WorkflowNode updateNode(id, workspaceId, updateWorkflowNodeRequest)
-
-Update workflow node
-
-Updates workflow node metadata or configuration. Config changes create a new version.
-
-### Example
-
-```ts
-import {
-  Configuration,
-  WorkflowApi,
-} from '';
-import type { UpdateNodeRequest } from '';
-
-async function example() {
-  console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
-    // Configure HTTP bearer authorization: bearerAuth
-    accessToken: "YOUR BEARER TOKEN",
-  });
-  const api = new WorkflowApi(config);
-
-  const body = {
-    // string
-    id: 38400000-8cf0-11bd-b23e-10b96e4ef00d,
-    // string
-    workspaceId: 38400000-8cf0-11bd-b23e-10b96e4ef00d,
-    // UpdateWorkflowNodeRequest
-    updateWorkflowNodeRequest: ...,
-  } satisfies UpdateNodeRequest;
-
-  try {
-    const data = await api.updateNode(body);
-    console.log(data);
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-// Run the test
-example().catch(console.error);
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **id** | `string` |  | [Defaults to `undefined`] |
-| **workspaceId** | `string` |  | [Defaults to `undefined`] |
-| **updateWorkflowNodeRequest** | [UpdateWorkflowNodeRequest](UpdateWorkflowNodeRequest.md) |  | |
-
-### Return type
-
-[**WorkflowNode**](WorkflowNode.md)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: `application/json`
-- **Accept**: `*/*`
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Workflow node updated successfully |  -  |
-| **400** | Invalid request data |  -  |
-| **401** | Unauthorized - authentication required |  -  |
-| **404** | Workflow node not found |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-
-## updateWorkflow
-
-> WorkflowDefinition updateWorkflow(id, workspaceId, updateWorkflowDefinitionRequest)
-
-Update workflow definition metadata
-
-Updates workflow definition metadata (name, description, icon, tags). Does not modify workflow structure.
-
-### Example
-
-```ts
-import {
-  Configuration,
-  WorkflowApi,
-} from '';
-import type { UpdateWorkflowRequest } from '';
-
-async function example() {
-  console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
-    // Configure HTTP bearer authorization: bearerAuth
-    accessToken: "YOUR BEARER TOKEN",
-  });
-  const api = new WorkflowApi(config);
-
-  const body = {
-    // string
-    id: 38400000-8cf0-11bd-b23e-10b96e4ef00d,
-    // string
-    workspaceId: 38400000-8cf0-11bd-b23e-10b96e4ef00d,
-    // UpdateWorkflowDefinitionRequest
-    updateWorkflowDefinitionRequest: ...,
-  } satisfies UpdateWorkflowRequest;
-
-  try {
-    const data = await api.updateWorkflow(body);
-    console.log(data);
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-// Run the test
-example().catch(console.error);
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **id** | `string` |  | [Defaults to `undefined`] |
-| **workspaceId** | `string` |  | [Defaults to `undefined`] |
-| **updateWorkflowDefinitionRequest** | [UpdateWorkflowDefinitionRequest](UpdateWorkflowDefinitionRequest.md) |  | |
-
-### Return type
-
-[**WorkflowDefinition**](WorkflowDefinition.md)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
-- **Content-Type**: `application/json`
-- **Accept**: `*/*`
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Workflow definition updated successfully |  -  |
-| **400** | Invalid request data |  -  |
-| **401** | Unauthorized - authentication required |  -  |
 | **404** | Workflow definition not found |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)

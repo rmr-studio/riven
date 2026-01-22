@@ -1,6 +1,6 @@
-import { fromError, isResponseError } from "@/lib/util/error/error.util";
-import { handleError, validateSession, validateUuid } from "@/lib/util/service/service.util";
-import { api } from "@/lib/util/utils";
+import { createEntityApi } from "@/lib/api/entity-api";
+import { ResponseError } from "@/lib/types";
+import { validateSession, validateUuid } from "@/lib/util/service/service.util";
 import { Session } from "@supabase/supabase-js";
 import {
     CreateEntityTypeRequest,
@@ -15,29 +15,10 @@ export class EntityTypeService {
         session: Session | null,
         workspaceId: string
     ): Promise<EntityType[]> {
-        try {
-            validateSession(session);
-            validateUuid(workspaceId);
-            const url = api();
-
-            const response = await fetch(`${url}/v1/entity/schema/workspace/${workspaceId}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${session.access_token}`,
-                },
-            });
-
-            if (response.ok) return await response.json();
-
-            throw await handleError(
-                response,
-                (res) => `Failed to fetch entity types: ${res.status} ${res.statusText}`
-            );
-        } catch (error) {
-            if (isResponseError(error)) throw error;
-            throw fromError(error);
-        }
+        validateSession(session);
+        validateUuid(workspaceId);
+        const api = createEntityApi(session!);
+        return api.getEntityTypesForWorkspace({ workspaceId });
     }
 
     static async getEntityTypeByKey(
@@ -45,32 +26,10 @@ export class EntityTypeService {
         workspaceId: string,
         key: string
     ): Promise<EntityType> {
-        try {
-            validateSession(session);
-            validateUuid(workspaceId);
-            const url = api();
-            const response = await fetch(
-                `${url}/v1/entity/schema/workspace/${workspaceId}/key/${encodeURIComponent(
-                    key
-                )}`,
-                {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${session.access_token}`,
-                    },
-                }
-            );
-
-            if (response.ok) return await response.json();
-            throw await handleError(
-                response,
-                (res) => `Failed to fetch entity type by key: ${res.status} ${res.statusText}`
-            );
-        } catch (error) {
-            if (isResponseError(error)) throw error;
-            throw fromError(error);
-        }
+        validateSession(session);
+        validateUuid(workspaceId);
+        const api = createEntityApi(session!);
+        return api.getEntityTypeByKeyForWorkspace({ workspaceId, key });
     }
 
     static async publishEntityType(
@@ -78,29 +37,10 @@ export class EntityTypeService {
         workspaceId: string,
         request: CreateEntityTypeRequest
     ): Promise<EntityType> {
-        try {
-            validateSession(session);
-            validateUuid(workspaceId);
-            const url = api();
-
-            const response = await fetch(`${url}/v1/entity/schema/workspace/${workspaceId}`, {
-                method: "POST",
-                body: JSON.stringify(request),
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${session.access_token}`,
-                },
-            });
-
-            if (response.ok) return await response.json();
-            throw await handleError(
-                response,
-                (res) => `Failed to fetch entity type by key: ${res.status} ${res.statusText}`
-            );
-        } catch (error) {
-            if (isResponseError(error)) throw error;
-            throw fromError(error);
-        }
+        validateSession(session);
+        validateUuid(workspaceId);
+        const api = createEntityApi(session!);
+        return api.createEntityType({ workspaceId, createEntityTypeRequest: request });
     }
 
     static async saveEntityTypeConfiguration(
@@ -108,35 +48,10 @@ export class EntityTypeService {
         workspaceId: string,
         entityType: EntityType
     ): Promise<EntityType> {
-        try {
-            validateSession(session);
-            validateUuid(workspaceId);
-            const url = api();
-            const response = await fetch(
-                `${url}/v1/entity/schema/workspace/${workspaceId}/configuration`,
-                {
-                    method: "PUT",
-                    body: JSON.stringify(entityType),
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${session.access_token}`,
-                    },
-                }
-            );
-
-            // Both 200 (success) and 409 (conflict with impact) return UpdateEntityTypeResponse
-            if (response.ok) {
-                return await response.json();
-            }
-
-            throw await handleError(
-                response,
-                (res) => `Failed to update entity type: ${res.status} ${res.statusText}`
-            );
-        } catch (error) {
-            if (isResponseError(error)) throw error;
-            throw fromError(error);
-        }
+        validateSession(session);
+        validateUuid(workspaceId);
+        const api = createEntityApi(session!);
+        return api.updateEntityType({ workspaceId, entityType });
     }
 
     static async removeEntityTypeDefinition(
@@ -145,37 +60,21 @@ export class EntityTypeService {
         definition: DeleteTypeDefinitionRequest,
         impactConfirmed: boolean = false
     ): Promise<EntityTypeImpactResponse> {
+        validateSession(session);
+        validateUuid(workspaceId);
+        const api = createEntityApi(session!);
+
         try {
-            validateSession(session);
-            validateUuid(workspaceId);
-            const url = api();
-
-            const queryParams = new URLSearchParams({
-                impactConfirmed: String(impactConfirmed),
+            return await api.deleteEntityTypeDefinition({
+                workspaceId,
+                deleteTypeDefinitionRequest: definition,
+                impactConfirmed,
             });
-
-            const response = await fetch(
-                `${url}/v1/entity/schema/workspace/${workspaceId}/definition?${queryParams}`,
-                {
-                    method: "DELETE",
-                    body: JSON.stringify(definition),
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${session.access_token}`,
-                    },
-                }
-            );
-
-            // Both 200 (success) and 409 (conflict with impact) return EntityTypeImpactResponse
-            if (response.ok || response.status === 409) return await response.json();
-
-            throw await handleError(
-                response,
-                (res) => `Failed to delete entity type definition: ${res.status} ${res.statusText}`
-            );
         } catch (error) {
-            if (isResponseError(error)) throw error;
-            throw fromError(error);
+            if (error instanceof ResponseError && error.response.status === 409) {
+                return await error.response.json();
+            }
+            throw error;
         }
     }
 
@@ -188,37 +87,21 @@ export class EntityTypeService {
         definition: SaveTypeDefinitionRequest,
         impactConfirmed: boolean = false
     ): Promise<EntityTypeImpactResponse> {
+        validateSession(session);
+        validateUuid(workspaceId);
+        const api = createEntityApi(session!);
+
         try {
-            validateSession(session);
-            validateUuid(workspaceId);
-            const url = api();
-
-            const queryParams = new URLSearchParams({
-                impactConfirmed: String(impactConfirmed),
+            return await api.saveEntityTypeDefinition({
+                workspaceId,
+                saveTypeDefinitionRequest: definition,
+                impactConfirmed,
             });
-
-            const response = await fetch(
-                `${url}/v1/entity/schema/workspace/${workspaceId}/definition?${queryParams}`,
-                {
-                    method: "POST",
-                    body: JSON.stringify(definition),
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${session.access_token}`,
-                    },
-                }
-            );
-
-            // Both 200 (success) and 409 (conflict with impact) return EntityTypeImpactResponse
-            if (response.ok || response.status === 409) return await response.json();
-
-            throw await handleError(
-                response,
-                (res) => `Failed to save entity type definition: ${res.status} ${res.statusText}`
-            );
         } catch (error) {
-            if (isResponseError(error)) throw error;
-            throw fromError(error);
+            if (error instanceof ResponseError && error.response.status === 409) {
+                return await error.response.json();
+            }
+            throw error;
         }
     }
 
@@ -228,38 +111,21 @@ export class EntityTypeService {
         entityTypeKey: string,
         impactConfirmed: boolean = false
     ): Promise<EntityTypeImpactResponse> {
+        validateSession(session);
+        validateUuid(workspaceId);
+        const api = createEntityApi(session!);
+
         try {
-            validateSession(session);
-            validateUuid(workspaceId);
-            const url = api();
-
-            const queryParams = new URLSearchParams({
-                impactConfirmed: String(impactConfirmed),
+            return await api.deleteEntityTypeByKey({
+                workspaceId,
+                key: entityTypeKey,
+                impactConfirmed,
             });
-
-            const response = await fetch(
-                `${url}/v1/entity/schema/workspace/${workspaceId}/key/${encodeURIComponent(
-                    entityTypeKey
-                )}?${queryParams}`,
-                {
-                    method: "DELETE",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${session.access_token}`,
-                    },
-                }
-            );
-
-            // Both 200 (success) and 409 (conflict with impact) return DeleteEntityTypeResponse
-            if (response.ok || response.status === 409) return await response.json();
-
-            throw await handleError(
-                response,
-                (res) => `Failed to delete entity type: ${res.status} ${res.statusText}`
-            );
         } catch (error) {
-            if (isResponseError(error)) throw error;
-            throw fromError(error);
+            if (error instanceof ResponseError && error.response.status === 409) {
+                return await error.response.json();
+            }
+            throw error;
         }
     }
 }

@@ -1,6 +1,6 @@
-import { fromError, isResponseError } from "@/lib/util/error/error.util";
-import { handleError, validateSession, validateUuid } from "@/lib/util/service/service.util";
-import { api } from "@/lib/util/utils";
+import { validateSession, validateUuid } from "@/lib/util/service/service.util";
+import { createEntityApi } from "@/lib/api/entity-api";
+import { ResponseError } from "@/lib/types";
 import { Session } from "@supabase/supabase-js";
 import {
     DeleteEntityResponse,
@@ -19,37 +19,26 @@ export class EntityService {
         entityTypeId: string,
         request: SaveEntityRequest
     ): Promise<SaveEntityResponse> {
+        validateSession(session);
+        validateUuid(workspaceId);
+        validateUuid(entityTypeId);
+        const api = createEntityApi(session!);
+
         try {
-            validateSession(session);
-            validateUuid(workspaceId);
-            validateUuid(entityTypeId);
-            const url = api();
-
-            const response = await fetch(
-                `${url}/v1/entity/workspace/${workspaceId}/type/${encodeURIComponent(
-                    entityTypeId
-                )}`,
-                {
-                    method: "POST",
-                    body: JSON.stringify(request),
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${session.access_token}`,
-                    },
-                }
-            );
-
-            // A payload of validation errors and impact errors are also returned with 400 and 409 status codes
-            if (response.ok || response.status === 400 || response.status === 409)
-                return await response.json();
-
-            throw await handleError(
-                response,
-                (res) => `Failed to create entity instance: ${res.status} ${res.statusText}`
-            );
+            return await api.saveEntity({
+                workspaceId,
+                entityTypeId,
+                saveEntityRequest: request,
+            });
         } catch (error) {
-            if (isResponseError(error)) throw error;
-            throw fromError(error);
+            // Both 400 (validation) and 409 (impact) return SaveEntityResponse payload
+            if (
+                error instanceof ResponseError &&
+                (error.response.status === 400 || error.response.status === 409)
+            ) {
+                return await error.response.json();
+            }
+            throw error;
         }
     }
 
@@ -61,33 +50,11 @@ export class EntityService {
         workspaceId: string,
         typeId: string
     ): Promise<Entity[]> {
-        try {
-            validateSession(session);
-            validateUuid(workspaceId);
-            validateUuid(typeId);
-            const url = api();
-
-            const response = await fetch(
-                `${url}/v1/entity/workspace/${workspaceId}/type/${typeId}`,
-                {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${session.access_token}`,
-                    },
-                }
-            );
-
-            if (response.ok) return await response.json();
-
-            throw await handleError(
-                response,
-                (res) => `Failed to fetch entity instances: ${res.status} ${res.statusText}`
-            );
-        } catch (error) {
-            if (isResponseError(error)) throw error;
-            throw fromError(error);
-        }
+        validateSession(session);
+        validateUuid(workspaceId);
+        validateUuid(typeId);
+        const api = createEntityApi(session!);
+        return api.getEntityByTypeIdForWorkspace({ workspaceId, id: typeId });
     }
 
     /**
@@ -98,35 +65,11 @@ export class EntityService {
         workspaceId: string,
         typeIds: string[]
     ): Promise<Record<string, Entity[]>> {
-        try {
-            validateSession(session);
-            validateUuid(workspaceId);
-            typeIds.forEach((id) => validateUuid(id));
-            const url = api();
-
-            const response = await fetch(
-                `${url}/v1/entity/workspace/${workspaceId}?ids=${typeIds
-                    .map((id) => encodeURIComponent(id))
-                    .join(",")}`,
-                {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${session.access_token}`,
-                    },
-                }
-            );
-
-            if (response.ok) return await response.json();
-
-            throw await handleError(
-                response,
-                (res) => `Failed to fetch entity instances: ${res.status} ${res.statusText}`
-            );
-        } catch (error) {
-            if (isResponseError(error)) throw error;
-            throw fromError(error);
-        }
+        validateSession(session);
+        validateUuid(workspaceId);
+        typeIds.forEach((id) => validateUuid(id));
+        const api = createEntityApi(session!);
+        return api.getEntityByTypeIdInForWorkspace({ workspaceId, ids: typeIds });
     }
 
     static async deleteEntities(
@@ -134,30 +77,10 @@ export class EntityService {
         workspaceId: string,
         entityIds: string[]
     ): Promise<DeleteEntityResponse> {
-        try {
-            validateSession(session);
-            validateUuid(workspaceId);
-            entityIds.forEach((id) => validateUuid(id));
-            const url = api();
-
-            const response = await fetch(`${url}/v1/entity/workspace/${workspaceId}`, {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${session.access_token}`,
-                },
-                body: JSON.stringify(entityIds),
-            });
-
-            if (response.ok) return await response.json();
-
-            throw await handleError(
-                response,
-                (res) => `Failed to delete entity instances: ${res.status} ${res.statusText}`
-            );
-        } catch (error) {
-            if (isResponseError(error)) throw error;
-            throw fromError(error);
-        }
+        validateSession(session);
+        validateUuid(workspaceId);
+        entityIds.forEach((id) => validateUuid(id));
+        const api = createEntityApi(session!);
+        return api.deleteEntity({ workspaceId, requestBody: entityIds });
     }
 }
