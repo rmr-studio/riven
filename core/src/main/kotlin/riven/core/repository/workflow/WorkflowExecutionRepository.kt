@@ -75,10 +75,11 @@ interface WorkflowExecutionRepository : JpaRepository<WorkflowExecutionEntity, U
         LEFT JOIN WorkflowExecutionNodeEntity ne ON ne.workflowExecutionId = e.id
         LEFT JOIN WorkflowNodeEntity n ON n.id = ne.nodeId AND n.deleted = false
         WHERE e.id = :executionId
+           AND e.workspaceId = :workspaceId
         ORDER BY ne.sequenceIndex ASC
         """
     )
-    fun findExecutionWithNodesByExecutionId(executionId: UUID): List<ExecutionSummaryProjection>
+    fun findExecutionWithNodesByExecutionId(workspaceId: UUID, executionId: UUID): List<ExecutionSummaryProjection>
 
     /**
      * Count active workflow executions for a workspace.

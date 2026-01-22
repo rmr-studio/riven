@@ -6,6 +6,8 @@ import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.workflow.ExecutionQueueEntity
 import riven.core.enums.workflow.ExecutionQueueStatus
 import riven.core.exceptions.NotFoundException
+import riven.core.models.common.json.JsonObject
+import riven.core.models.workflow.engine.queue.ExecutionQueueRequest
 import riven.core.repository.workflow.ExecutionQueueRepository
 import riven.core.repository.workflow.WorkflowDefinitionRepository
 import java.time.ZonedDateTime
@@ -37,7 +39,7 @@ class ExecutionQueueService(
      *
      * @param workspaceId Workspace context
      * @param workflowDefinitionId Workflow to execute
-     * @param input Optional input parameters
+     * @param params Optional input parameters
      * @return Created queue entity with ID
      * @throws NotFoundException if workflow definition not found
      * @throws SecurityException if workflow doesn't belong to workspace
@@ -46,7 +48,7 @@ class ExecutionQueueService(
     fun enqueue(
         workspaceId: UUID,
         workflowDefinitionId: UUID,
-        input: Map<String, Any>? = null
+        params: JsonObject? = null
     ): ExecutionQueueEntity {
         logger.info { "Enqueueing workflow execution: definition=$workflowDefinitionId, workspace=$workspaceId" }
 
@@ -63,7 +65,6 @@ class ExecutionQueueService(
             workflowDefinitionId = workflowDefinitionId,
             status = ExecutionQueueStatus.PENDING,
             createdAt = ZonedDateTime.now(),
-            input = input
         )
 
         val saved = executionQueueRepository.save(queueEntity)

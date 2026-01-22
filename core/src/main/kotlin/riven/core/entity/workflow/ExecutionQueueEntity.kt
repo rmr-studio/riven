@@ -2,8 +2,10 @@ package riven.core.entity.workflow
 
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
+import kotlinx.serialization.json.JsonObject
 import org.hibernate.annotations.Type
 import riven.core.enums.workflow.ExecutionQueueStatus
+import riven.core.models.workflow.engine.queue.ExecutionQueueRequest
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -49,11 +51,26 @@ data class ExecutionQueueEntity(
 
     @Type(JsonBinaryType::class)
     @Column(name = "input", columnDefinition = "jsonb")
-    val input: Any? = null,
+    val input: JsonObject? = null,
 
-    @Column(name = "attempt_count", nullable = false)
+    @Column(name = "attempts", nullable = false)
     var attemptCount: Int = 0,
 
     @Column(name = "last_error", columnDefinition = "text")
     var lastError: String? = null
-)
+){
+    fun toModel(): ExecutionQueueRequest{
+        val id = requireNotNull(this.id)
+        return ExecutionQueueRequest(
+            id = id,
+            workspaceId = this.workspaceId,
+            workflowDefinitionId = this.workflowDefinitionId,
+            status = this.status,
+            createdAt = this.createdAt,
+            claimedAt = this.claimedAt,
+            dispatchedAt = this.dispatchedAt,
+            attemptCount = this.attemptCount,
+            lastError = this.lastError
+        )
+    }
+}

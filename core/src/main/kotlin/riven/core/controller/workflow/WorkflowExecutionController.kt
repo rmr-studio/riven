@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*
 import riven.core.models.request.workflow.StartWorkflowExecutionRequest
 import riven.core.models.response.workflow.execution.WorkflowExecutionSummaryResponse
 import riven.core.models.workflow.engine.execution.WorkflowExecutionRecord
+import riven.core.models.workflow.engine.queue.ExecutionQueueRequest
 import riven.core.service.workflow.WorkflowExecutionService
 import java.util.*
 
@@ -27,7 +28,8 @@ import java.util.*
  */
 @RestController
 @RequestMapping("/api/v1/workflow/executions")
-@Tag(name = "workflow", description = "Workflow Execution Management Endpoints")
+@PreAuthorize("isAuthenticated()")
+@Tag(name = "workflow")
 class WorkflowExecutionController(
     private val workflowExecutionService: WorkflowExecutionService,
     private val log: KLogger
@@ -44,7 +46,6 @@ class WorkflowExecutionController(
      * @return Response with queueId, status, and message
      */
     @PostMapping("/start")
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Queue a workflow execution")
     @ApiResponses(
         ApiResponse(responseCode = "202", description = "Workflow execution queued successfully"),
@@ -53,7 +54,7 @@ class WorkflowExecutionController(
     )
     fun startExecution(
         @RequestBody request: StartWorkflowExecutionRequest
-    ): ResponseEntity<Map<String, Any>> {
+    ): ResponseEntity<ExecutionQueueRequest> {
         log.info { "POST /api/v1/workflow/executions/start - workflowDefinitionId: ${request.workflowDefinitionId}, workspaceId: ${request.workspaceId}" }
 
         val response = workflowExecutionService.startExecution(request)
@@ -72,7 +73,6 @@ class WorkflowExecutionController(
      * @return Execution details
      */
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get workflow execution by ID")
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "Execution retrieved successfully"),
@@ -101,7 +101,6 @@ class WorkflowExecutionController(
      * @return List of execution summaries
      */
     @GetMapping("/workflow/{workflowDefinitionId}")
-    @PreAuthorize("isAuthenticated()")
     @Operation(
         summary = "List all executions for a workflow definition",
         description = "Returns execution history ordered by most recent first"
@@ -132,7 +131,6 @@ class WorkflowExecutionController(
      * @return List of execution summaries
      */
     @GetMapping("/workspace/{workspaceId}")
-    @PreAuthorize("isAuthenticated()")
     @Operation(
         summary = "List all executions for workspace",
         description = "Returns all workflow executions across all workflows in workspace"
@@ -162,7 +160,6 @@ class WorkflowExecutionController(
      * @return Execution summary with node execution details
      */
     @GetMapping("/{id}/summary")
-    @PreAuthorize("isAuthenticated()")
     @Operation(
         summary = "Get execution summary with node details",
         description = "Returns execution record and status for each node in the workflow"

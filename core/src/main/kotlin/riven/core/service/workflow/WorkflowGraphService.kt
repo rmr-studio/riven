@@ -13,7 +13,9 @@ import riven.core.enums.util.OperationType
 import riven.core.exceptions.NotFoundException
 import riven.core.models.request.workflow.CreateWorkflowEdgeRequest
 import riven.core.models.request.workflow.CreateWorkflowNodeRequest
+import riven.core.models.request.workflow.SaveWorkflowNodeRequest
 import riven.core.models.request.workflow.UpdateWorkflowNodeRequest
+import riven.core.models.response.workflow.SaveWorkflowNodeResponse
 import riven.core.models.workflow.WorkflowEdge
 import riven.core.models.workflow.WorkflowGraph
 import riven.core.models.workflow.node.WorkflowNode
@@ -102,6 +104,50 @@ class WorkflowGraphService(
     }
 
     /**
+     * Saves a workflow node (create or update).
+     *
+     * If [SaveWorkflowNodeRequest.id] is null, creates a new node.
+     * If [SaveWorkflowNodeRequest.id] is provided, updates the existing node.
+     *
+     * For updates:
+     * - Metadata updates (name, description) are applied in place
+     * - Config updates trigger creation of a new version (immutable pattern)
+     *
+     * @param workspaceId The workspace to save the node in
+     * @param request The save request containing node data
+     * @return Response containing the saved node and created flag
+     * @throws NotFoundException if updating and the node is not found
+     * @throws AccessDeniedException if updating and the node belongs to a different workspace
+     * @throws IllegalArgumentException if creating and key is not provided
+     */
+    @Transactional
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun saveNode(workspaceId: UUID, request: SaveWorkflowNodeRequest): SaveWorkflowNodeResponse {
+        return if (request.id == null) {
+            // Create new node
+            val key = requireNotNull(request.key) { "Key is required when creating a new workflow node" }
+
+            val createRequest = CreateWorkflowNodeRequest(
+                key = key,
+                name = request.name,
+                description = request.description,
+                config = request.config
+            )
+            val node = createNode(workspaceId, createRequest)
+            SaveWorkflowNodeResponse(node = node, created = true)
+        } else {
+            // Update existing node
+            val updateRequest = UpdateWorkflowNodeRequest(
+                name = request.name,
+                description = request.description,
+                config = request.config
+            )
+            val node = updateNode(request.id, workspaceId, updateRequest)
+            SaveWorkflowNodeResponse(node = node, created = false)
+        }
+    }
+
+    /**
      * Updates an existing workflow node.
      *
      * Metadata updates (name, description) are applied in place.
@@ -154,6 +200,16 @@ class WorkflowGraphService(
 
             savedNode = workflowNodeRepository.save(newVersionNode)
             isNewVersion = true
+
+            // Cascade update edges to reference the new node version
+            val oldNodeId = existingNode.id!!
+            val newNodeId = savedNode.id!!
+            val sourceUpdates = workflowEdgeRepository.updateSourceNodeId(oldNodeId, newNodeId)
+            val targetUpdates = workflowEdgeRepository.updateTargetNodeId(oldNodeId, newNodeId)
+
+            if (sourceUpdates > 0 || targetUpdates > 0) {
+                log.info { "Migrated ${sourceUpdates + targetUpdates} edges to new node version $newNodeId (source: $sourceUpdates, target: $targetUpdates)" }
+            }
         } else {
             // Metadata only update - apply in place
             val updatedNode = existingNode.copy(

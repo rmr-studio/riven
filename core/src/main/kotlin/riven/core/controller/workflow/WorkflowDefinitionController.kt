@@ -1,21 +1,19 @@
 package riven.core.controller.workflow
 
-import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.KLogger
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
-import riven.core.models.request.workflow.CreateWorkflowDefinitionRequest
-import riven.core.models.request.workflow.UpdateWorkflowDefinitionRequest
+import riven.core.models.request.workflow.SaveWorkflowDefinitionRequest
+import riven.core.models.response.workflow.SaveWorkflowDefinitionResponse
 import riven.core.models.workflow.WorkflowDefinition
 import riven.core.service.workflow.WorkflowDefinitionService
 import java.util.*
 
-private val log = KotlinLogging.logger {}
 
 /**
  * REST controller for workflow definition management.
@@ -31,38 +29,43 @@ private val log = KotlinLogging.logger {}
  */
 @RestController
 @RequestMapping("/api/v1/workflow/definitions")
-@Tag(name = "workflow", description = "Workflow Definition and Metadata Management Endpoints")
+@Tag(name = "workflow")
 @PreAuthorize("isAuthenticated()")
 class WorkflowDefinitionController(
-    private val workflowDefinitionService: WorkflowDefinitionService
+    private val workflowDefinitionService: WorkflowDefinitionService,
+    private val logger: KLogger
 ) {
 
     /**
-     * Create a new workflow definition.
+     * Save a workflow definition (create or update).
      *
-     * @param workspaceId The workspace to create the workflow in
-     * @param request The creation request containing name, description, icon, and tags
-     * @return The created workflow definition with HTTP 201 Created
+     * If request.id is null, creates a new workflow definition with an initial empty version.
+     * If request.id is provided, updates the existing workflow definition metadata.
+     *
+     * @param workspaceId The workspace to save the workflow in
+     * @param request The save request containing workflow data
+     * @return The saved workflow definition
      */
     @PostMapping("/workspace/{workspaceId}")
     @Operation(
-        summary = "Create a new workflow definition",
-        description = "Creates a new workflow definition with an initial empty version in the specified workspace."
+        summary = "Save a workflow definition",
+        description = "Saves a workflow definition - creates new if id is null, updates existing if id is provided. Only metadata is updated on existing definitions."
     )
     @ApiResponses(
-        ApiResponse(responseCode = "201", description = "Workflow definition created successfully"),
+        ApiResponse(responseCode = "200", description = "Workflow definition saved successfully"),
         ApiResponse(responseCode = "400", description = "Invalid request data"),
-        ApiResponse(responseCode = "401", description = "Unauthorized - authentication required")
+        ApiResponse(responseCode = "401", description = "Unauthorized - authentication required"),
+        ApiResponse(responseCode = "404", description = "Workflow definition not found (for updates)")
     )
-    fun createWorkflow(
+    fun saveWorkflow(
         @PathVariable workspaceId: UUID,
-        @RequestBody request: CreateWorkflowDefinitionRequest
-    ): ResponseEntity<WorkflowDefinition> {
-        log.info { "POST /api/v1/workflow/definitions/workspace/$workspaceId - name: ${request.name}" }
+        @RequestBody request: SaveWorkflowDefinitionRequest
+    ): ResponseEntity<SaveWorkflowDefinitionResponse> {
+        logger.info { "POST /api/v1/workflow/definitions/workspace/$workspaceId - id: ${request.id}, name: ${request.name}" }
 
-        val workflow = workflowDefinitionService.createWorkflow(workspaceId, request)
+        val response = workflowDefinitionService.saveWorkflow(workspaceId, request)
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(workflow)
+        return ResponseEntity.ok(response)
     }
 
     /**
@@ -86,7 +89,7 @@ class WorkflowDefinitionController(
         @PathVariable id: UUID,
         @RequestParam workspaceId: UUID
     ): ResponseEntity<WorkflowDefinition> {
-        log.info { "GET /api/v1/workflow/definitions/$id?workspaceId=$workspaceId" }
+        logger.info { "GET /api/v1/workflow/definitions/$id?workspaceId=$workspaceId" }
 
         val workflow = workflowDefinitionService.getWorkflowById(id, workspaceId)
 
@@ -111,45 +114,11 @@ class WorkflowDefinitionController(
     fun listWorkflows(
         @PathVariable workspaceId: UUID
     ): ResponseEntity<List<WorkflowDefinition>> {
-        log.info { "GET /api/v1/workflow/definitions/workspace/$workspaceId" }
+        logger.info { "GET /api/v1/workflow/definitions/workspace/$workspaceId" }
 
         val workflows = workflowDefinitionService.listWorkflowsForWorkspace(workspaceId)
 
         return ResponseEntity.ok(workflows)
-    }
-
-    /**
-     * Update workflow definition metadata.
-     *
-     * Updates only the provided fields (name, description, icon, tags).
-     * Does NOT update workflow/canvas structure.
-     *
-     * @param id The workflow definition ID
-     * @param workspaceId The workspace ID for access verification
-     * @param request The update request with optional fields
-     * @return The updated workflow definition
-     */
-    @PutMapping("/{id}")
-    @Operation(
-        summary = "Update workflow definition metadata",
-        description = "Updates workflow definition metadata (name, description, icon, tags). Does not modify workflow structure."
-    )
-    @ApiResponses(
-        ApiResponse(responseCode = "200", description = "Workflow definition updated successfully"),
-        ApiResponse(responseCode = "400", description = "Invalid request data"),
-        ApiResponse(responseCode = "401", description = "Unauthorized - authentication required"),
-        ApiResponse(responseCode = "404", description = "Workflow definition not found")
-    )
-    fun updateWorkflow(
-        @PathVariable id: UUID,
-        @RequestParam workspaceId: UUID,
-        @RequestBody request: UpdateWorkflowDefinitionRequest
-    ): ResponseEntity<WorkflowDefinition> {
-        log.info { "PUT /api/v1/workflow/definitions/$id?workspaceId=$workspaceId" }
-
-        val workflow = workflowDefinitionService.updateWorkflow(id, workspaceId, request)
-
-        return ResponseEntity.ok(workflow)
     }
 
     /**
@@ -175,7 +144,7 @@ class WorkflowDefinitionController(
         @PathVariable id: UUID,
         @RequestParam workspaceId: UUID
     ): ResponseEntity<Void> {
-        log.info { "DELETE /api/v1/workflow/definitions/$id?workspaceId=$workspaceId" }
+        logger.info { "DELETE /api/v1/workflow/definitions/$id?workspaceId=$workspaceId" }
 
         workflowDefinitionService.deleteWorkflow(id, workspaceId)
 

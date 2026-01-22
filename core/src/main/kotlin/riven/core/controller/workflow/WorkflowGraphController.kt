@@ -10,11 +10,10 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import riven.core.models.request.workflow.CreateWorkflowEdgeRequest
-import riven.core.models.request.workflow.CreateWorkflowNodeRequest
-import riven.core.models.request.workflow.UpdateWorkflowNodeRequest
+import riven.core.models.request.workflow.SaveWorkflowNodeRequest
+import riven.core.models.response.workflow.SaveWorkflowNodeResponse
 import riven.core.models.workflow.WorkflowEdge
 import riven.core.models.workflow.WorkflowGraph
-import riven.core.models.workflow.node.WorkflowNode
 import riven.core.service.workflow.WorkflowGraphService
 import java.util.*
 
@@ -33,10 +32,7 @@ import java.util.*
  */
 @RestController
 @RequestMapping("/api/v1/workflow/graph")
-@Tag(
-    name = "workflow",
-    description = "Workflow Graph Management Endpoints"
-)
+@Tag(name = "workflow")
 @PreAuthorize("isAuthenticated()")
 class WorkflowGraphController(
     private val workflowGraphService: WorkflowGraphService,
@@ -48,65 +44,39 @@ class WorkflowGraphController(
     // ------------------------------------------------------------------
 
     /**
-     * Create a new workflow node.
+     * Save a workflow node (create or update).
      *
-     * @param workspaceId The workspace to create the node in
-     * @param request The creation request containing key, name, description, and config
-     * @return The created workflow node with HTTP 201 Created
+     * If request.id is null, creates a new node (key is required).
+     * If request.id is provided, updates the existing node.
+     *
+     * For updates:
+     * - Metadata updates (name, description) are applied in place
+     * - Config updates trigger creation of a new version (immutable pattern)
+     *
+     * @param workspaceId The workspace to save the node in
+     * @param request The save request containing node data
+     * @return The saved workflow node
      */
-    @PostMapping("/nodes/workspace/{workspaceId}")
+    @PostMapping("/workspace/{workspaceId}/node")
     @Operation(
-        summary = "Create a new workflow node",
-        description = "Creates a new workflow node with the specified configuration in the workspace."
+        summary = "Save a workflow node",
+        description = "Saves a workflow node - creates new if id is null, updates existing if id is provided. Config changes on update create a new version."
     )
     @ApiResponses(
-        ApiResponse(responseCode = "201", description = "Workflow node created successfully"),
-        ApiResponse(responseCode = "400", description = "Invalid request data"),
-        ApiResponse(responseCode = "401", description = "Unauthorized - authentication required")
-    )
-    fun createNode(
-        @PathVariable workspaceId: UUID,
-        @RequestBody request: CreateWorkflowNodeRequest
-    ): ResponseEntity<WorkflowNode> {
-        logger.info { "POST /api/v1/workflow/graph/nodes/workspace/$workspaceId - name: ${request.name}" }
-
-        val node = workflowGraphService.createNode(workspaceId, request)
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(node)
-    }
-
-    /**
-     * Update a workflow node.
-     *
-     * Metadata updates (name, description) are applied in place.
-     * Config updates trigger creation of a new version (immutable pattern).
-     *
-     * @param id The node ID to update
-     * @param workspaceId The workspace ID for access verification
-     * @param request The update request with optional fields
-     * @return The updated workflow node
-     */
-    @PutMapping("/nodes/{id}")
-    @Operation(
-        summary = "Update workflow node",
-        description = "Updates workflow node metadata or configuration. Config changes create a new version."
-    )
-    @ApiResponses(
-        ApiResponse(responseCode = "200", description = "Workflow node updated successfully"),
+        ApiResponse(responseCode = "200", description = "Workflow node saved successfully"),
         ApiResponse(responseCode = "400", description = "Invalid request data"),
         ApiResponse(responseCode = "401", description = "Unauthorized - authentication required"),
-        ApiResponse(responseCode = "404", description = "Workflow node not found")
+        ApiResponse(responseCode = "404", description = "Workflow node not found (for updates)")
     )
-    fun updateNode(
-        @PathVariable id: UUID,
-        @RequestParam workspaceId: UUID,
-        @RequestBody request: UpdateWorkflowNodeRequest
-    ): ResponseEntity<WorkflowNode> {
-        logger.info { "PUT /api/v1/workflow/graph/nodes/$id?workspaceId=$workspaceId" }
+    fun saveNode(
+        @PathVariable workspaceId: UUID,
+        @RequestBody request: SaveWorkflowNodeRequest
+    ): ResponseEntity<SaveWorkflowNodeResponse> {
+        logger.info { "POST /api/v1/workflow/graph/workspace/$workspaceId/node - id: ${request.id}, name: ${request.name}" }
 
-        val node = workflowGraphService.updateNode(id, workspaceId, request)
+        val response = workflowGraphService.saveNode(workspaceId, request)
 
-        return ResponseEntity.ok(node)
+        return ResponseEntity.ok(response)
     }
 
     /**

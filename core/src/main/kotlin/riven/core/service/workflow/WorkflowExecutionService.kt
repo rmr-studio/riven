@@ -3,6 +3,7 @@ package riven.core.service.workflow
 import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import riven.core.entity.workflow.ExecutionQueueEntity
 import riven.core.enums.activity.Activity
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
@@ -10,6 +11,7 @@ import riven.core.exceptions.NotFoundException
 import riven.core.models.request.workflow.StartWorkflowExecutionRequest
 import riven.core.models.response.workflow.execution.WorkflowExecutionSummaryResponse
 import riven.core.models.workflow.engine.execution.WorkflowExecutionRecord
+import riven.core.models.workflow.engine.queue.ExecutionQueueRequest
 import riven.core.repository.workflow.WorkflowDefinitionRepository
 import riven.core.repository.workflow.WorkflowExecutionRepository
 import riven.core.repository.workflow.projection.ExecutionSummaryProjection
@@ -63,24 +65,21 @@ class WorkflowExecutionService(
      * @throws SecurityException if workflow doesn't belong to workspace
      */
     @Transactional
-    fun startExecution(request: StartWorkflowExecutionRequest): Map<String, Any> {
+    fun startExecution(request: StartWorkflowExecutionRequest): ExecutionQueueRequest {
         val userId = authTokenService.getUserId()
 
         logger.info { "Queueing workflow execution for definition ${request.workflowDefinitionId} in workspace ${request.workspaceId}" }
 
         // Enqueue execution request (validation happens in queue service)
-        val queueItem = executionQueueService.enqueue(
+        val request: ExecutionQueueEntity = executionQueueService.enqueue(
             workspaceId = request.workspaceId,
-            workflowDefinitionId = request.workflowDefinitionId,
-            input = mapOf(
-                "workflowDefinitionId" to request.workflowDefinitionId,
-                "workspaceId" to request.workspaceId
-            )
+            workflowDefinitionId = request.workflowDefinitionId
         )
 
-        val queueId = queueItem.id!!
+        val id = requireNotNull(request.id)
 
-        logger.info { "Enqueued execution: queueId=$queueId" }
+
+        logger.info { "Enqueued execution: queueId=$id" }
 
         // Log activity (using ENTITY as closest match for workflow execution)
         activityService.logActivity(
@@ -89,19 +88,15 @@ class WorkflowExecutionService(
             userId = userId,
             workspaceId = request.workspaceId,
             entityType = ApplicationEntityType.ENTITY,
-            entityId = queueId,
+            entityId = id,
             details = mapOf(
                 "type" to "workflow_execution_queued",
-                "queueId" to queueId.toString(),
+                "queueId" to id.toString(),
                 "workflowDefinitionId" to request.workflowDefinitionId.toString()
             )
         )
 
-        return mapOf(
-            "queueId" to queueId,
-            "status" to "QUEUED",
-            "message" to "Workflow execution queued. Will start when capacity available."
-        )
+        return request.toModel()
     }
     
     // ============================================================================
