@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS "workflow_definition_versions"
 );
 
 
+
 DROP TABLE IF EXISTS "workflow_nodes" CASCADE;
 CREATE TABLE IF NOT EXISTS "workflow_nodes"
 (
@@ -87,7 +88,21 @@ CREATE TABLE IF NOT EXISTS "workflow_executions"
     "output"                         JSONB
 );
 
-
+DROP TABLE IF EXISTS "workflow_execution_queue" CASCADE;
+CREATE TABLE IF NOT EXISTS "workflow_execution_queue"
+(
+    "id"                     UUID PRIMARY KEY                                            NOT NULL DEFAULT uuid_generate_v4(),
+    "workspace_id"           UUID REFERENCES workspaces (id) ON DELETE CASCADE           NOT NULL,
+    "workflow_definition_id" UUID REFERENCES workflow_definitions (id) ON DELETE CASCADE NOT NULL,
+    "execution_id"           UUID                                                        REFERENCES workflow_executions (id) ON DELETE SET NULL,
+    "status"                 TEXT                                                        NOT NULL DEFAULT 'PENDING',
+    "created_at"             TIMESTAMPTZ                                                 NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "claimed_at"             TIMESTAMPTZ,
+    "dispatched_at"          TIMESTAMPTZ,
+    "input"                  JSONB,
+    "attempts"               INTEGER                                                     NOT NULL DEFAULT 0,
+    "last_error"             TEXT
+);
 
 -- Tracks each workflow node execution during a workflow run.
 -- Stores input/output payloads per node execution.

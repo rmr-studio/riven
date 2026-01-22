@@ -594,3 +594,45 @@ create policy "Allow auth admin to read workspace member roles" ON public.worksp
     to supabase_auth_admin
     using (true);
 
+
+-- =====================================================
+-- WORKFLOW EXECUTION QUEUE
+-- =====================================================
+-- Execution Queue table for durable workflow request queuing
+-- Supports concurrent consumers via FOR UPDATE SKIP LOCKED
+CREATE TABLE IF NOT EXISTS public.workflow_execution_queue (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    workflow_definition_id UUID NOT NULL REFERENCES workflow_definitions(id) ON DELETE CASCADE,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING'
+        CHECK (status IN ('PENDING', 'CLAIMED', 'DISPATCHED', 'FAILED')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    claimed_at TIMESTAMPTZ,
+    dispatched_at TIMESTAMPTZ,
+    input JSONB,
+    attempt_count INTEGER NOT NULL DEFAULT 0,
+    last_error TEXT
+);
+
+-- Partial index for efficient queue polling (pending items by age)
+CREATE INDEX IF NOT EXISTS idx_execution_queue_pending
+    ON workflow_execution_queue (status, created_at)
+    WHERE status = 'PENDING';
+
+-- Index for workspace-scoped queries
+CREATE INDEX IF NOT EXISTS idx_execution_queue_workspace
+    ON workflow_execution_queue (workspace_id, status);
+
+-- =====================================================
+-- SHEDLOCK TABLE FOR DISTRIBUTED SCHEDULER LOCKING
+-- =====================================================
+
+-- ShedLock table for distributed scheduler locking
+-- Ensures scheduled tasks only run on one instance at a time
+CREATE TABLE IF NOT EXISTS public.shedlock (
+    name VARCHAR(64) PRIMARY KEY,
+    lock_until TIMESTAMP(3) NOT NULL,
+    locked_at TIMESTAMP(3) NOT NULL,
+    locked_by VARCHAR(255) NOT NULL
+);
+

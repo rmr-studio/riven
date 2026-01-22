@@ -59,7 +59,7 @@ class WorkflowExecutionServiceTest {
     private lateinit var workflowClient: WorkflowClient
 
     @MockitoBean
-    private lateinit var workflowDefinitionRepository: WorkflowDefinitionRepository
+    private lateinit var workflowExecutionQueueService: ExecutionQueueService
 
     @MockitoBean
     private lateinit var workflowExecutionRepository: WorkflowExecutionRepository

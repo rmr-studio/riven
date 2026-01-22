@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import riven.core.service.workflow.engine.WorkflowOrchestrationServiceImpl
 import riven.core.service.workflow.engine.coordinator.WorkflowCoordinationService
+import java.util.UUID
 
 /**
  * Spring configuration for Temporal workers.
@@ -16,15 +17,19 @@ import riven.core.service.workflow.engine.coordinator.WorkflowCoordinationServic
  * This configuration:
  * 1. Creates a WorkflowClient from existing WorkflowServiceStubs bean
  * 2. Creates a WorkerFactory
- * 3. Creates a Worker for task queue "workflow-execution-queue"
- * 4. Registers workflow implementations (WorkflowExecutionWorkflowImpl)
- * 5. Registers activity implementations (WorkflowNodeActivitiesImpl Spring bean)
+ * 3. Creates workers for multiple task queues (default, external-api, per-workspace)
+ * 4. Registers workflow implementations (WorkflowOrchestrationServiceImpl)
+ * 5. Registers activity implementations (WorkflowCoordinationService Spring bean)
  * 6. Starts the worker factory
  * 7. Provides graceful shutdown via @PreDestroy
  *
- * CRITICAL: Task queue name "workflow-execution-queue" MUST match the queue name
- * used when starting workflows in WorkflowExecutionService. Mismatch causes
- * "No worker found" errors.
+ * Queue naming convention:
+ * - workflows.default: System/internal workflows (V1: all workspace workflows routed here)
+ * - activities.external-api: External API activities (isolation for rate-limited APIs)
+ * - workflow.workspace.{uuid}: Per-workspace queues (future: tenant isolation)
+ *
+ * V1 Approach: All workspaces use WORKFLOWS_DEFAULT_QUEUE for simplicity.
+ * Future: Per-workspace queue registration when workspace capacity/isolation needed.
  *
  * @property workflowServiceStubs Existing bean from TemporalEngineConfiguration
  * @property activities Autowired Spring bean with injected dependencies
@@ -38,11 +43,32 @@ class TemporalWorkerConfiguration(
 
     companion object {
         /**
-         * Task queue name for workflow execution.
+         * Default queue for system/internal workflows.
          *
-         * MUST match the queue name used in WorkflowOptions when starting workflows.
+         * V1: All workspace workflow executions are routed through this queue.
+         * Future: Per-workspace queues for tenant isolation.
          */
-        const val WORKFLOW_EXECUTION_TASK_QUEUE = "workflow-execution-queue"
+        const val WORKFLOWS_DEFAULT_QUEUE = "workflows.default"
+
+        /**
+         * Queue for external API activities (isolation).
+         *
+         * Separates external API calls from internal workflows to:
+         * - Prevent rate-limited APIs from blocking other work
+         * - Allow independent scaling of API activity workers
+         */
+        const val ACTIVITIES_EXTERNAL_API_QUEUE = "activities.external-api"
+
+        /**
+         * Generate task queue name for a workspace.
+         *
+         * Currently not used (V1 uses default queue), but provides
+         * naming convention for future per-workspace queue support.
+         *
+         * @param workspaceId Workspace UUID
+         * @return Queue name in format "workflow.workspace.{uuid}"
+         */
+        fun workspaceQueue(workspaceId: UUID): String = "workflow.workspace.$workspaceId"
     }
 
     private lateinit var workerFactoryInstance: WorkerFactory
@@ -69,8 +95,8 @@ class TemporalWorkerConfiguration(
         // Create WorkerFactory
         val factory = WorkerFactory.newInstance(client)
 
-        // Create worker for specific task queue
-        val worker = factory.newWorker(WORKFLOW_EXECUTION_TASK_QUEUE)
+        // Create worker for default queue (V1: all workflows use this queue)
+        val worker = factory.newWorker(WORKFLOWS_DEFAULT_QUEUE)
 
         // Register workflow implementations
         // Note: Workflow impl must have no-arg constructor (Temporal instantiates it)
@@ -87,7 +113,7 @@ class TemporalWorkerConfiguration(
 
         // Start workers (non-blocking - workers poll Temporal Service in background)
         factory.start()
-        logger.info { "Temporal WorkerFactory started, listening on task queue: $WORKFLOW_EXECUTION_TASK_QUEUE" }
+        logger.info { "Temporal WorkerFactory started, listening on task queue: $WORKFLOWS_DEFAULT_QUEUE" }
 
         // Store instance for shutdown
         workerFactoryInstance = factory
