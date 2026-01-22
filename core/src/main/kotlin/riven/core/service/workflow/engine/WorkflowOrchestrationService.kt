@@ -41,6 +41,10 @@ class WorkflowOrchestrationServiceImpl : WorkflowOrchestration {
      *
      * Created once as class field (best practice - avoid creating per invocation).
      * Activities handle all non-deterministic operations (DB, HTTP, randomness).
+     *
+     * Note: Retry values are hardcoded here because WorkflowOrchestrationServiceImpl is not a Spring bean.
+     * Values match application.yml riven.workflow.retry.default.* for consistency.
+     * To make configurable: pass via workflow input or use local activity to fetch config.
      */
     private val nodeExecutionCoordinator: WorkflowCoordination = Workflow.newActivityStub(
         WorkflowCoordination::class.java,
@@ -51,10 +55,16 @@ class WorkflowOrchestrationServiceImpl : WorkflowOrchestration {
                     .setMaximumAttempts(3)
                     .setInitialInterval(Duration.ofSeconds(1))
                     .setBackoffCoefficient(2.0)
-                    .setMaximumInterval(Duration.ofMinutes(1))
+                    .setMaximumInterval(Duration.ofSeconds(30))  // Reduced from 1 min for faster retry cycles
+                    .setDoNotRetry(
+                        // Non-retryable error types (matches WorkflowErrorType enum names)
+                        "HTTP_CLIENT_ERROR",      // 4xx HTTP errors - client data won't change
+                        "VALIDATION_ERROR",       // Schema/input validation - deterministic failure
+                        "CONTROL_FLOW_ERROR",     // CONDITION node deterministic failure
+                        "SECURITY_ERROR"          // Auth/authz errors - credentials won't change
+                    )
                     .build()
             )
-            
             .build()
     )
 
