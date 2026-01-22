@@ -27,7 +27,8 @@ import java.util.*
  */
 @RestController
 @RequestMapping("/api/v1/workflow/executions")
-@Tag(name = "workflow", description = "Workflow Execution Management Endpoints")
+@PreAuthorize("isAuthenticated()")
+@Tag(name = "workflow")
 class WorkflowExecutionController(
     private val workflowExecutionService: WorkflowExecutionService,
     private val log: KLogger
@@ -44,7 +45,6 @@ class WorkflowExecutionController(
      * @return Execution response with executionId, workflowId, status
      */
     @PostMapping("/start")
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Start a workflow execution")
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "Workflow execution started successfully"),
@@ -72,7 +72,6 @@ class WorkflowExecutionController(
      * @return Execution details
      */
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get workflow execution by ID")
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "Execution retrieved successfully"),
@@ -101,7 +100,6 @@ class WorkflowExecutionController(
      * @return List of execution summaries
      */
     @GetMapping("/workflow/{workflowDefinitionId}")
-    @PreAuthorize("isAuthenticated()")
     @Operation(
         summary = "List all executions for a workflow definition",
         description = "Returns execution history ordered by most recent first"
@@ -132,7 +130,6 @@ class WorkflowExecutionController(
      * @return List of execution summaries
      */
     @GetMapping("/workspace/{workspaceId}")
-    @PreAuthorize("isAuthenticated()")
     @Operation(
         summary = "List all executions for workspace",
         description = "Returns all workflow executions across all workflows in workspace"
@@ -162,7 +159,6 @@ class WorkflowExecutionController(
      * @return Execution summary with node execution details
      */
     @GetMapping("/{id}/summary")
-    @PreAuthorize("isAuthenticated()")
     @Operation(
         summary = "Get execution summary with node details",
         description = "Returns execution record and status for each node in the workflow"

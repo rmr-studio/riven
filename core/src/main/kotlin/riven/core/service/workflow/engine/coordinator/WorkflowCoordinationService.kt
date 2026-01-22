@@ -2,7 +2,6 @@ package riven.core.service.workflow.engine.coordinator
 
 import io.github.oshai.kotlinlogging.KLogger
 import io.temporal.activity.Activity
-import io.temporal.activity.ActivityInterface
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import riven.core.entity.workflow.WorkflowEdgeEntity

@@ -1,6 +1,7 @@
 package riven.core.repository.workflow
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import riven.core.entity.workflow.WorkflowEdgeEntity
 import java.util.UUID
@@ -43,4 +44,40 @@ interface WorkflowEdgeRepository : JpaRepository<WorkflowEdgeEntity, UUID> {
         """
     )
     fun findByWorkspaceIdAndNodeId(workspaceId: UUID, nodeId: UUID): List<WorkflowEdgeEntity>
+
+    /**
+     * Bulk update edges to migrate source node references from old ID to new ID.
+     * Used when a node is versioned (immutable pattern) to keep edges pointing to current version.
+     *
+     * @param oldId The old node ID being replaced
+     * @param newId The new node ID to reference
+     * @return Number of edges updated
+     */
+    @Modifying
+    @Query(
+        """
+        UPDATE WorkflowEdgeEntity e
+        SET e.sourceNodeId = :newId
+        WHERE e.sourceNodeId = :oldId AND e.deleted = false
+        """
+    )
+    fun updateSourceNodeId(oldId: UUID, newId: UUID): Int
+
+    /**
+     * Bulk update edges to migrate target node references from old ID to new ID.
+     * Used when a node is versioned (immutable pattern) to keep edges pointing to current version.
+     *
+     * @param oldId The old node ID being replaced
+     * @param newId The new node ID to reference
+     * @return Number of edges updated
+     */
+    @Modifying
+    @Query(
+        """
+        UPDATE WorkflowEdgeEntity e
+        SET e.targetNodeId = :newId
+        WHERE e.targetNodeId = :oldId AND e.deleted = false
+        """
+    )
+    fun updateTargetNodeId(oldId: UUID, newId: UUID): Int
 }

@@ -5,7 +5,7 @@ import io.temporal.client.WorkflowClient
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.mockito.kotlin.*
+import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Configuration
@@ -294,7 +294,7 @@ class WorkflowExecutionServiceTest {
             ExecutionSummaryProjection(execution, nodeExecution, node)
         }
 
-        whenever(workflowExecutionRepository.findExecutionWithNodesByExecutionId(executionId))
+        whenever(workflowExecutionRepository.findExecutionWithNodesByExecutionId(workspaceId, executionId))
             .thenReturn(projections)
 
         // Act
@@ -325,7 +325,7 @@ class WorkflowExecutionServiceTest {
         val executionId = UUID.randomUUID()
 
         // When there are no node executions, the JOIN query returns an empty list
-        whenever(workflowExecutionRepository.findExecutionWithNodesByExecutionId(executionId))
+        whenever(workflowExecutionRepository.findExecutionWithNodesByExecutionId(workspaceId, executionId))
             .thenReturn(emptyList())
 
         // Act & Assert
@@ -338,7 +338,7 @@ class WorkflowExecutionServiceTest {
     fun `getExecutionSummary_executionNotFound_throwsNotFoundException`() {
         // Arrange
         val executionId = UUID.randomUUID()
-        whenever(workflowExecutionRepository.findExecutionWithNodesByExecutionId(executionId))
+        whenever(workflowExecutionRepository.findExecutionWithNodesByExecutionId(workspaceId, executionId))
             .thenReturn(emptyList())
 
         // Act & Assert
@@ -381,7 +381,7 @@ class WorkflowExecutionServiceTest {
 
         val projections = listOf(ExecutionSummaryProjection(execution, nodeExecution, node))
 
-        whenever(workflowExecutionRepository.findExecutionWithNodesByExecutionId(executionId))
+        whenever(workflowExecutionRepository.findExecutionWithNodesByExecutionId(workspaceId, executionId))
             .thenReturn(projections)
 
         // Act & Assert
@@ -417,7 +417,7 @@ class WorkflowExecutionServiceTest {
         // Projection with node execution but node is null (deleted)
         val projections = listOf(ExecutionSummaryProjection(execution, nodeExecution, null))
 
-        whenever(workflowExecutionRepository.findExecutionWithNodesByExecutionId(executionId))
+        whenever(workflowExecutionRepository.findExecutionWithNodesByExecutionId(workspaceId, executionId))
             .thenReturn(projections)
 
         // Act - service logs warning but does not throw

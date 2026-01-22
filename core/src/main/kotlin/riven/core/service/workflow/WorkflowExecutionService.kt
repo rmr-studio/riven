@@ -96,17 +96,11 @@ class WorkflowExecutionService(
 
         logger.info { "Workflow has ${nodeIds.size} nodes to execute" }
 
-        // Create execution record (RUNNING status)
-        UUID.randomUUID()
-        val engineWorkflowId = UUID.randomUUID()
-        val engineRunId = UUID.randomUUID()
 
         val executionEntity = WorkflowExecutionEntity(
             workspaceId = request.workspaceId,
             workflowDefinitionId = request.workflowDefinitionId,
             workflowVersionId = workflowVersion.id!!,
-            engineWorkflowId = engineWorkflowId,
-            engineRunId = engineRunId,
             status = WorkflowStatus.RUNNING,
             triggerType = WorkflowTriggerType.FUNCTION, // v1: treat manual triggers as FUNCTION
             startedAt = ZonedDateTime.now(),
@@ -180,7 +174,7 @@ class WorkflowExecutionService(
 
         return savedExecution.toModel()
     }
-    
+
     // ============================================================================
     // Query Methods
     // ============================================================================
@@ -266,7 +260,7 @@ class WorkflowExecutionService(
 
         // Fetch execution with all node executions and nodes in a single JOIN query
         val executionRecords: List<ExecutionSummaryProjection> =
-            workflowExecutionRepository.findExecutionWithNodesByExecutionId(executionId)
+            workflowExecutionRepository.findExecutionWithNodesByExecutionId(workspaceId, executionId)
 
         if (executionRecords.isEmpty()) {
             throw NotFoundException("Workflow execution not found: $executionId")

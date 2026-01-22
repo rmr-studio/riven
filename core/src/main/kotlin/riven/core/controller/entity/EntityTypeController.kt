@@ -17,7 +17,7 @@ import java.util.*
 
 @RestController
 @RequestMapping("/api/v1/entity/schema")
-@Tag(name = "entity", description = "Entity Type Management Endpoints")
+@Tag(name = "entity")
 class EntityTypeController(
     private val entityTypeService: EntityTypeService
 ) {

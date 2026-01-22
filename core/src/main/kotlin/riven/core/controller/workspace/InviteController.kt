@@ -11,7 +11,7 @@ import java.util.*
 
 @RestController
 @RequestMapping("/api/v1/workspace/invite")
-@Tag(name = "workspace", description = "Workspace Invite Management Endpoints")
+@Tag(name = "workspace")
 class InviteController(
     private val workspaceInviteService: WorkspaceInviteService
 ) {
