@@ -26,11 +26,6 @@ data class WorkflowExecutionEntity(
     @Column(name = "workflow_definition_version_id", nullable = false, columnDefinition = "uuid")
     val workflowVersionId: UUID,
 
-    @Column(name = "engine_workflow_id", nullable = false, columnDefinition = "uuid")
-    val engineWorkflowId: UUID,
-    @Column(name = "engine_run_id", nullable = false, columnDefinition = "uuid")
-    val engineRunId: UUID,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     val status: WorkflowStatus,
@@ -66,8 +61,6 @@ data class WorkflowExecutionEntity(
             workspaceId = this.workspaceId,
             workflowDefinitionId = this.workflowDefinitionId,
             workflowVersionId = this.workflowVersionId,
-            engineWorkflowId = this.engineWorkflowId,
-            engineRunId = this.engineRunId,
             status = this.status,
             startedAt = this.startedAt,
             completedAt = this.completedAt,

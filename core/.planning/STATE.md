@@ -4,24 +4,24 @@
 
 See: .planning/PROJECT.md (updated 2026-01-09)
 
-**Core value:** End-to-end workflow lifecycle: create graph → save → execute via Temporal → see results
-**Current focus:** Phase 4 — Action Executors (Complete)
+**Core value:** End-to-end workflow lifecycle: create graph -> save -> execute via Temporal -> see results
+**Current focus:** Phase 6 - Backend API Layer (Complete)
 
 ## Current Position
 
-Phase: 5 of 8 (DAG Execution Coordinator)
+Phase: 6 of 8 (Backend API Layer)
 Plan: 3 of 3 in current phase
 Status: Phase complete
-Last activity: 2026-01-12 — Completed 5-03-PLAN.md
+Last activity: 2026-01-20 - Completed 06-03-PLAN.md
 
-Progress: █████████░░░░░░░ 56% (5 phases complete)
+Progress: ██████████████░░ 87% (14 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11 (all fully complete)
-- Average duration: ~37 minutes (0.62 hours)
-- Total execution time: 6.81 hours
+- Total plans completed: 14 (all fully complete)
+- Average duration: ~32 minutes (0.53 hours)
+- Total execution time: 7.07 hours
 
 **By Phase:**
 
@@ -33,23 +33,32 @@ Progress: █████████░░░░░░░ 56% (5 phases complet
 | 4 - Action Executors | 2 | 0.88h | 0.44h |
 | 4.1 - Action Execution | 3 | 0.72h | 0.24h |
 | 5 - DAG Execution Coordinator | 3 | 0.37h | 0.12h |
+| 6 - Backend API Layer | 3 | 0.17h | 0.06h |
 
 **Recent Trend:**
-- Last 5 plans: 4.1-02 (0.25h), 4.1-03 (0.37h), 5-01 (0.07h), 5-02 (0.05h), 5-03 (0.25h)
-- Trend: Excellent velocity maintained, Phase 5 complete with strong execution
+- Last 5 plans: 5-02 (0.05h), 5-03 (0.25h), 6-01 (0.09h), 6-02 (N/A), 6-03 (0.08h)
+- Trend: Excellent velocity maintained, Phase 6 complete
 
 ## Accumulated Context
 
 ### Roadmap Evolution
 
 - Phase 4.1 inserted after Phase 4: Action Execution (URGENT) - 2026-01-11
+- Phase 6.1 inserted after Phase 6: Execution Queue Management (URGENT) - 2026-01-19
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-(None yet)
+| Decision | Rationale | Plan |
+|----------|-----------|------|
+| Soft-delete for workflow definitions | Allows recovery, maintains referential integrity | 06-01 |
+| Metadata-only updates via updateWorkflow | Graph structure updates handled separately | 06-01 |
+| Cascade deletion on node delete | Deleting node must delete connected edges for graph consistency | 06-02 |
+| Immutable versioning for config changes | Config changes create new entity version, metadata updates in place | 06-02 |
+| Map return types for query responses | Flexibility for evolving response structure without DTOs | 06-03 |
+| Workspace verification in service layer | Better error messages, supports cross-workspace scenarios | 06-03 |
 
 ### Deferred Issues
 
@@ -61,7 +70,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-12T06:15:00Z
-Stopped at: Completed 5-03-PLAN.md (DAG Execution Coordinator)
+Last session: 2026-01-20
+Stopped at: Completed 06-03-PLAN.md (Workflow Execution Query API)
 Resume file: N/A
-Next action: Phase 5 complete — Ready for Phase 6: Backend API Layer
+Next action: Begin Phase 6.1 - Execution Queue Management

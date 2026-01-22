@@ -1,21 +1,21 @@
 DROP TABLE IF EXISTS "workflow_definitions" CASCADE;
 CREATE TABLE IF NOT EXISTS "workflow_definitions"
 (
-    "id"                   UUID PRIMARY KEY                NOT NULL DEFAULT uuid_generate_v4(),
-    "workspace_id"         UUID REFERENCES workspaces (id) NOT NULL,
-    "name"                 TEXT                            NOT NULL,
-    "description"          TEXT,
-    "published_version"    INTEGER,
-    "status"               TEXT                            NOT NULL,
-    "icon_type"            TEXT                            NOT NULL,
-    "icon_colour"          TEXT                            NOT NULL,
-    "tags"                 JSONB                           NOT NULL DEFAULT '[]'::JSONB,
-    "updated_at"           TIMESTAMPTZ                     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "created_at"           TIMESTAMPTZ                     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_by"           UUID,
-    "created_by"           UUID,
-    "deleted"              BOOLEAN                         NOT NULL DEFAULT FALSE,
-    "deleted_at"           TIMESTAMPTZ
+    "id"                UUID PRIMARY KEY                NOT NULL DEFAULT uuid_generate_v4(),
+    "workspace_id"      UUID REFERENCES workspaces (id) NOT NULL,
+    "name"              TEXT                            NOT NULL,
+    "description"       TEXT,
+    "published_version" INTEGER,
+    "status"            TEXT                            NOT NULL,
+    "icon_type"         TEXT                            NOT NULL,
+    "icon_colour"       TEXT                            NOT NULL,
+    "tags"              JSONB                           NOT NULL DEFAULT '[]'::JSONB,
+    "updated_at"        TIMESTAMPTZ                     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at"        TIMESTAMPTZ                     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_by"        UUID,
+    "created_by"        UUID,
+    "deleted"           BOOLEAN                         NOT NULL DEFAULT FALSE,
+    "deleted_at"        TIMESTAMPTZ
 );
 
 DROP TABLE IF EXISTS "workflow_definition_versions" CASCADE;
@@ -77,8 +77,6 @@ CREATE TABLE IF NOT EXISTS "workflow_executions"
     "workspace_id"                   UUID REFERENCES workspaces (id)                   NOT NULL,
     "workflow_definition_id"         UUID REFERENCES workflow_definitions (id)         NOT NULL,
     "workflow_definition_version_id" UUID REFERENCES workflow_definition_versions (id) NOT NULL,
-    "engine_workflow_id"             UUID,
-    "engine_run_id"                  UUID,
     "status"                         TEXT                                              NOT NULL,
     "trigger_type"                   TEXT                                              NOT NULL,
     "started_at"                     TIMESTAMPTZ                                       NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -88,6 +86,8 @@ CREATE TABLE IF NOT EXISTS "workflow_executions"
     "input"                          JSONB,
     "output"                         JSONB
 );
+
+
 
 -- Tracks each workflow node execution during a workflow run.
 -- Stores input/output payloads per node execution.

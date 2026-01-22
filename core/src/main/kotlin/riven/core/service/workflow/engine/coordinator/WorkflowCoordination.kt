@@ -2,9 +2,7 @@ package riven.core.service.workflow.engine.coordinator
 
 import io.temporal.activity.ActivityInterface
 import io.temporal.activity.ActivityMethod
-import riven.core.entity.workflow.WorkflowEdgeEntity
 import riven.core.models.workflow.engine.coordinator.WorkflowState
-import riven.core.models.workflow.node.WorkflowNode
 import java.util.*
 
 /**
@@ -27,25 +25,27 @@ interface WorkflowCoordination {
     /**
      * Execute workflow with DAG coordination for parallel node scheduling.
      *
-     * This activity delegates to DagExecutionCoordinator for orchestration:
-     * 1. Validates DAG structure
-     * 2. Initializes state machine and active node queue
-     * 3. Executes nodes in topological order with maximum parallelism
-     * 4. Returns final WorkflowState with all outputs
+     * This activity:
+     * 1. Fetches nodes and edges from database
+     * 2. Delegates to DagExecutionCoordinator for orchestration
+     * 3. Validates DAG structure
+     * 4. Initializes state machine and active node queue
+     * 5. Executes nodes in topological order with maximum parallelism
+     * 6. Returns final WorkflowState with all outputs
      *
      * Note: Node execution happens synchronously within this activity (not via Temporal Async).
      * The coordinator's parallel execution is simulated via sequential processing in v1.
      * Future enhancement: Use Temporal child workflows for true parallel execution.
      *
-     * @param nodes All workflow nodes
-     * @param edges All dependency edges
+     * @param workflowDefinitionId The workflow definition ID
+     * @param nodeIds List of node IDs to execute
      * @param workspaceId Workspace context
      * @return Final workflow state with completion status and outputs
      */
     @ActivityMethod
     fun executeWorkflowWithCoordinator(
-        nodes: List<WorkflowNode>,
-        edges: List<WorkflowEdgeEntity>,
+        workflowDefinitionId: UUID,
+        nodeIds: List<UUID>,
         workspaceId: UUID
     ): WorkflowState
 }

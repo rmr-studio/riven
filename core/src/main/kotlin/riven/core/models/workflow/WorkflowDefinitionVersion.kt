@@ -7,8 +7,8 @@ import java.util.*
 data class WorkflowDefinitionVersion(
     val id: UUID,
     val version: Int,
-    // Workflow traversal graph
-    val workflow: Any,
+    // Workflow traversal graph -> Should be populated for singleton queries, null for list queries
+    val workflow: WorkflowGraph? = null,
     // Visual representation of the workflow for UI
     val canvas: Any,
 

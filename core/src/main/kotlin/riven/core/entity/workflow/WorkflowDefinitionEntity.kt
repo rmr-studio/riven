@@ -10,7 +10,7 @@ import riven.core.enums.workflow.WorkflowDefinitionStatus
 import riven.core.models.common.Icon
 import riven.core.models.common.SoftDeletable
 import riven.core.models.workflow.WorkflowDefinition
-import riven.core.models.workflow.WorkflowDefinitionVersion
+import riven.core.models.workflow.WorkflowGraph
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -61,7 +61,10 @@ data class WorkflowDefinitionEntity(
     @Column(name = "deleted_at", columnDefinition = "timestamptz")
     override var deletedAt: ZonedDateTime? = null
 ) : AuditableEntity(), SoftDeletable {
-    fun toModel(workflow: WorkflowDefinitionVersionEntity): WorkflowDefinition {
+    fun toModel(
+        workflow: WorkflowDefinitionVersionEntity,
+        graph: WorkflowGraph? = null
+    ): WorkflowDefinition {
         val id = requireNotNull(this.id)
         assert(this.versionNumber == workflow.versionNumber) {
             "Workflow definition version number mismatch: entity(${this.versionNumber}) vs workflow(${workflow.versionNumber})"
@@ -72,7 +75,7 @@ data class WorkflowDefinitionEntity(
             workspaceId = this.workspaceId,
             name = this.name,
             description = this.description,
-            definition = workflow.toModel(),
+            definition = workflow.toModel(graph),
             status = this.status,
             icon = Icon(
                 colour = this.iconColour,

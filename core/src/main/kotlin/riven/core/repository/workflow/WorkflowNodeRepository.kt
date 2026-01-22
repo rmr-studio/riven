@@ -48,4 +48,21 @@ interface WorkflowNodeRepository : JpaRepository<WorkflowNodeEntity, UUID> {
         """
     )
     fun findByWorkspaceIdAndIdIn(workspaceId: UUID, nodeIds: Collection<UUID>): List<WorkflowNodeEntity>
+
+    /**
+     * Find a non-deleted workflow node by workspace and ID.
+     *
+     * @param workspaceId Workspace context
+     * @param id Node ID
+     * @return The workflow node entity if found and not deleted
+     */
+    @Query(
+        """
+        SELECT n FROM WorkflowNodeEntity n
+        WHERE n.workspaceId = :workspaceId
+        AND n.id = :id
+        AND n.deleted = false
+        """
+    )
+    fun findByWorkspaceIdAndId(workspaceId: UUID, id: UUID): WorkflowNodeEntity?
 }

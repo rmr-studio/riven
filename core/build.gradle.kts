@@ -38,6 +38,7 @@ dependencies {
     // Workflow Execution
     implementation("io.temporal:temporal-kotlin:1.32.1")
     implementation("io.temporal:temporal-sdk:1.24.1")
+    implementation("io.temporal:temporal-spring-boot-starter:1.31.0")
 
     // Security/JWT
     implementation("org.springframework.boot:spring-boot-starter-security")

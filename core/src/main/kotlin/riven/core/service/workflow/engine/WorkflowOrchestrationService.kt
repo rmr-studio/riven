@@ -1,32 +1,23 @@
 package riven.core.service.workflow.engine
 
-import io.temporal.activity.ActivityInterface
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
 import io.temporal.workflow.Workflow
-import org.springframework.stereotype.Service
-import riven.core.entity.workflow.WorkflowEdgeEntity
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.models.workflow.engine.NodeExecutionResult
 import riven.core.models.workflow.engine.WorkflowExecutionInput
 import riven.core.models.workflow.engine.WorkflowExecutionResult
 import riven.core.models.workflow.engine.coordinator.WorkflowExecutionPhase
-import riven.core.models.workflow.engine.coordinator.WorkflowState
-import riven.core.models.workflow.node.WorkflowNode
-import riven.core.repository.workflow.WorkflowEdgeRepository
-import riven.core.repository.workflow.WorkflowNodeRepository
 import riven.core.service.workflow.engine.coordinator.WorkflowCoordination
 import java.time.Duration
-import java.util.*
 
 /**
  * Implementation of WorkflowExecutionWorkflow for deterministic workflow orchestration.
  *
  * This workflow:
  * 1. Receives workflow execution input
- * 2. Iterates through nodes in topological order (simple sequential for v1)
- * 3. Delegates node execution to WorkflowNodeActivities
- * 4. Collects results and returns aggregated outcome
+ * 2. Delegates to WorkflowCoordination activity for DAG execution
+ * 3. Returns aggregated execution results
  *
  * DETERMINISM RULES ENFORCED:
  * - Uses Workflow.getLogger() instead of standard logging
@@ -34,17 +25,16 @@ import java.util.*
  * - Uses Workflow.currentTimeMillis() if timestamps needed
  * - NO direct database calls - all DB operations via activities
  * - NO HTTP requests - all external calls via activities
+ * - NO Spring bean injection - workflow must be stateless and deterministic
  *
  * Activity options configured with:
  * - StartToCloseTimeout: 5 minutes (MANDATORY)
  * - RetryOptions: Max 3 attempts with exponential backoff
+ *
+ * NOTE: This class is NOT a Spring bean. It is registered with Temporal's worker
+ * via Spring Boot's auto-discovery mechanism (spring.temporal.workers-auto-discovery).
  */
-@ActivityInterface
-@Service
-class WorkflowOrchestrationService(
-    private val workflowNodeRepository: WorkflowNodeRepository,
-    private val workflowEdgeRepository: WorkflowEdgeRepository
-) : WorkflowOrchestration {
+class WorkflowOrchestrationServiceImpl : WorkflowOrchestration {
 
     /**
      * Activity stub for executing workflow nodes.
@@ -64,27 +54,21 @@ class WorkflowOrchestrationService(
                     .setMaximumInterval(Duration.ofMinutes(1))
                     .build()
             )
+            
             .build()
     )
 
-    private val logger = Workflow.getLogger(WorkflowOrchestrationService::class.java)
+    private val logger = Workflow.getLogger(WorkflowOrchestrationServiceImpl::class.java)
 
     override fun execute(input: WorkflowExecutionInput): WorkflowExecutionResult {
         logger.info("Starting workflow execution for definition: ${input.workflowDefinitionId}, nodes: ${input.nodeIds.size}")
 
-        mutableListOf<NodeExecutionResult>()
-
-        val (_: UUID, nodeIds: List<UUID>, workspaceId: UUID) = input
-
-        val nodes: List<WorkflowNode> =
-            workflowNodeRepository.findByWorkspaceIdAndIdIn(workspaceId, nodeIds).map { it.toModel() }
-        val edges: List<WorkflowEdgeEntity> =
-            workflowEdgeRepository.findByWorkspaceIdAndNodeIds(workspaceId, nodeIds.toTypedArray())
-
-        val result: WorkflowState = nodeExecutionCoordinator.executeWorkflowWithCoordinator(
-            nodes = nodes,
-            edges = edges,
-            workspaceId = workspaceId
+        // Delegate to activity for all database operations and node execution
+        // Activity will fetch nodes, edges, and execute the workflow DAG
+        val result = nodeExecutionCoordinator.executeWorkflowWithCoordinator(
+            workflowDefinitionId = input.workflowDefinitionId,
+            nodeIds = input.nodeIds,
+            workspaceId = input.workspaceId
         )
 
         return WorkflowExecutionResult(
