@@ -165,11 +165,20 @@ class WorkflowExecutionService(
      * Get execution summary including the execution record and all node executions
      * with their associated workflow node definitions.
      *
+     * Error details are surfaced in the error fields of both execution and node records:
+     * - execution.error: WorkflowExecutionError (when workflow fails, contains summary and final error)
+     * - node.error: NodeExecutionError (when node fails, includes errorType, message, retry history)
+     *
+     * The error objects are stored as JSONB in PostgreSQL and automatically serialized
+     * to JSON in API responses via Hypersistence Utils JsonBinaryType.
+     *
      * Uses a single JOIN query to fetch all related data efficiently.
      *
      * @param executionId Workflow execution ID
      * @param workspaceId Workspace context for access verification
      * @return Execution summary response with execution and node details
+     * @throws NotFoundException if execution not found
+     * @throws SecurityException if execution doesn't belong to workspace
      */
     @Throws(NotFoundException::class, SecurityException::class)
     @Transactional(readOnly = true)

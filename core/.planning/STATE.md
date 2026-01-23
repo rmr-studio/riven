@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-09)
 
 **Core value:** End-to-end workflow lifecycle: create graph -> save -> execute via Temporal -> see results
-**Current focus:** Phase 6.1 - Execution Queue Management (Complete)
+**Current focus:** Phase 7 - Error Handling & Retry Logic (COMPLETE)
 
 ## Current Position
 
-Phase: 6.1 of 8 (Execution Queue Management)
-Plan: 3 of 3 in current phase (COMPLETE)
+Phase: 7 of 8 (Error Handling & Retry Logic)
+Plan: 3 of 3 in current phase
 Status: Phase complete
-Last activity: 2026-01-21 - Completed 06.1-03-PLAN.md
+Last activity: 2026-01-22 - Completed 07-03-PLAN.md
 
-Progress: █████████████████ 100% (17 plans complete)
+Progress: ████████████████████ 100% (20 of 20 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 17 (all fully complete)
-- Average duration: ~27 minutes (0.45 hours)
-- Total execution time: 7.25 hours
+- Total plans completed: 20 (all fully complete)
+- Average duration: ~22 minutes (0.37 hours)
+- Total execution time: 7.41 hours
 
 **By Phase:**
 
@@ -35,9 +35,10 @@ Progress: █████████████████ 100% (17 plans com
 | 5 - DAG Execution Coordinator | 3 | 0.37h | 0.12h |
 | 6 - Backend API Layer | 3 | 0.17h | 0.06h |
 | 6.1 - Execution Queue Management | 3 | 0.18h | 0.06h |
+| 7 - Error Handling & Retry Logic | 3 | 0.13h | 0.04h |
 
 **Recent Trend:**
-- Last 5 plans: 6-03 (0.08h), 6.1-01 (0.07h), 6.1-02 (0.05h), 6.1-03 (0.08h)
+- Last 5 plans: 6.1-03 (0.08h), 07-01 (0.03h), 07-02 (0.05h), 07-03 (0.05h)
 - Trend: Excellent velocity maintained
 
 ## Accumulated Context
@@ -46,6 +47,7 @@ Progress: █████████████████ 100% (17 plans com
 
 - Phase 4.1 inserted after Phase 4: Action Execution (URGENT) - 2026-01-11
 - Phase 6.1 inserted after Phase 6: Execution Queue Management (URGENT) - 2026-01-19
+- Phase 7.1 inserted after Phase 7: Node Configuration Development (URGENT) - 2026-01-22
 
 ### Decisions
 
@@ -66,6 +68,12 @@ Recent decisions affecting current work:
 | Stale claim recovery with 5min default | Crash protection for stuck CLAIMED items | 06.1-02 |
 | V1 uses default queue for all workspaces | Simplicity for initial release, per-workspace queues deferred | 06.1-03 |
 | 202 Accepted for queue-based execution | Indicates asynchronous processing to client | 06.1-03 |
+| Enum property for retryable classification | Simpler than method, evaluable at compile time | 07-01 |
+| Non-retryable HTTP codes: 400, 401, 403, 404, 422 | Client errors won't succeed on retry | 07-01 |
+| Kotlin object for WorkflowErrorClassifier | Direct calls without Spring injection, testable | 07-02 |
+| Hardcoded retry values in workflow | Not a Spring bean, cannot inject ConfigurationProperties | 07-02 |
+| Computed properties over methods for error helpers | Lightweight derived values, Kotlin-idiomatic | 07-03 |
+| Direct object testing for stateless utilities | No Spring context or mocking needed for Kotlin objects | 07-03 |
 
 ### Deferred Issues
 
@@ -77,7 +85,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-21
-Stopped at: Completed 06.1-03-PLAN.md (Execution Dispatcher Service)
+Last session: 2026-01-22
+Stopped at: Completed 07-03-PLAN.md (Error Recovery)
 Resume file: N/A
-Next action: Begin next phase (Phase 7 or as defined in ROADMAP.md)
+Next action: Phase 7 complete. Ready for Phase 8 (Monitoring & Observability) or new phase planning.

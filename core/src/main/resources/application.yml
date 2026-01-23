@@ -33,6 +33,23 @@ riven:
   workflow:
     engine:
       target: ${TEMPORAL_SERVER_ADDRESS}
+    retry:
+      default:
+        max-attempts: 3
+        initial-interval-seconds: 1
+        backoff-coefficient: 2.0
+        max-interval-seconds: 30
+      http-action:
+        max-attempts: 3
+        initial-interval-seconds: 2
+        backoff-coefficient: 2.0
+        max-interval-seconds: 60
+        non-retryable-status-codes: [400, 401, 403, 404, 422]
+      crud-action:
+        max-attempts: 2
+        initial-interval-seconds: 1
+        backoff-coefficient: 2.0
+        max-interval-seconds: 10
 springdoc:
   api-docs:
     path: /docs/v3/api-docs
