@@ -1,5 +1,6 @@
 import { createEntityApi } from "@/lib/api/entity-api";
-import { ResponseError } from "@/lib/types";
+import { ResponseError as OpenApiResponseError } from "@/lib/types";
+import { normalizeApiError } from "@/lib/util/error/error.util";
 import { validateSession, validateUuid } from "@/lib/util/service/service.util";
 import { Session } from "@supabase/supabase-js";
 import {
@@ -18,7 +19,12 @@ export class EntityTypeService {
         validateSession(session);
         validateUuid(workspaceId);
         const api = createEntityApi(session!);
-        return api.getEntityTypesForWorkspace({ workspaceId });
+
+        try {
+            return await api.getEntityTypesForWorkspace({ workspaceId });
+        } catch (error) {
+            throw await normalizeApiError(error);
+        }
     }
 
     static async getEntityTypeByKey(
@@ -29,7 +35,12 @@ export class EntityTypeService {
         validateSession(session);
         validateUuid(workspaceId);
         const api = createEntityApi(session!);
-        return api.getEntityTypeByKeyForWorkspace({ workspaceId, key });
+
+        try {
+            return await api.getEntityTypeByKeyForWorkspace({ workspaceId, key });
+        } catch (error) {
+            throw await normalizeApiError(error);
+        }
     }
 
     static async publishEntityType(
@@ -40,7 +51,12 @@ export class EntityTypeService {
         validateSession(session);
         validateUuid(workspaceId);
         const api = createEntityApi(session!);
-        return api.createEntityType({ workspaceId, createEntityTypeRequest: request });
+
+        try {
+            return await api.createEntityType({ workspaceId, createEntityTypeRequest: request });
+        } catch (error) {
+            throw await normalizeApiError(error);
+        }
     }
 
     static async saveEntityTypeConfiguration(
@@ -51,7 +67,12 @@ export class EntityTypeService {
         validateSession(session);
         validateUuid(workspaceId);
         const api = createEntityApi(session!);
-        return api.updateEntityType({ workspaceId, entityType });
+
+        try {
+            return await api.updateEntityType({ workspaceId, entityType });
+        } catch (error) {
+            throw await normalizeApiError(error);
+        }
     }
 
     static async removeEntityTypeDefinition(
@@ -71,10 +92,11 @@ export class EntityTypeService {
                 impactConfirmed,
             });
         } catch (error) {
-            if (error instanceof ResponseError && error.response.status === 409) {
+            // Handle impact confirmation flow (409 returns impact details)
+            if (error instanceof OpenApiResponseError && error.response.status === 409) {
                 return await error.response.json();
             }
-            throw error;
+            throw await normalizeApiError(error);
         }
     }
 
@@ -98,10 +120,11 @@ export class EntityTypeService {
                 impactConfirmed,
             });
         } catch (error) {
-            if (error instanceof ResponseError && error.response.status === 409) {
+            // Handle impact confirmation flow (409 returns impact details)
+            if (error instanceof OpenApiResponseError && error.response.status === 409) {
                 return await error.response.json();
             }
-            throw error;
+            throw await normalizeApiError(error);
         }
     }
 
@@ -122,10 +145,11 @@ export class EntityTypeService {
                 impactConfirmed,
             });
         } catch (error) {
-            if (error instanceof ResponseError && error.response.status === 409) {
+            // Handle impact confirmation flow (409 returns impact details)
+            if (error instanceof OpenApiResponseError && error.response.status === 409) {
                 return await error.response.json();
             }
-            throw error;
+            throw await normalizeApiError(error);
         }
     }
 }
