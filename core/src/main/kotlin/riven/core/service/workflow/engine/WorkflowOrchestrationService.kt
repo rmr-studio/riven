@@ -113,7 +113,7 @@ class WorkflowOrchestrationService(
 
         // Build and return result
         return WorkflowExecutionResult(
-            executionId = input.workflowDefinitionId,
+            executionId = executionId,
             status = finalStatus,
             nodeResults = coordinationResult?.completedNodes?.map { nodeId ->
                 NodeExecutionResult(
