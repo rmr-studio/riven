@@ -154,19 +154,27 @@ class WorkflowCoordinationService(
 
         logger.info { "Executing workflow node: $nodeId in workspace: $workspaceId" }
 
+        // Verify workspace access (before creating execution record)
+        if (node.workspaceId != workspaceId) {
+            throw SecurityException("Node $nodeId does not belong to workspace $workspaceId")
+        }
+
+        // Get execution context from Temporal (needed for execution record)
+        val activityInfo = Activity.getExecutionContext().info
+        val workflowExecutionId = UUID.fromString(
+            activityInfo.workflowId.substringAfter("execution-")
+        )
+
+        // Create execution record BEFORE try block to ensure single record
+        // This record is reused in both success and error paths
+        val executionNode = createExecutionNode(
+            workflowExecutionId = workflowExecutionId,
+            nodeId = nodeId,
+            workspaceId = workspaceId,
+            startTime = startTime
+        )
+
         try {
-
-            // Verify workspace access
-            if (node.workspaceId != workspaceId) {
-                throw SecurityException("Node $nodeId does not belong to workspace $workspaceId")
-            }
-
-            // Get execution context from Temporal
-            val activityInfo = Activity.getExecutionContext().info
-            val workflowExecutionId = UUID.fromString(
-                activityInfo.workflowId.substringAfter("execution-")
-            )
-
             // Initialize workflow execution context
             // TODO: Phase 5 DAG coordinator will populate registry with prior node outputs
             // and pass context between nodes for sequential execution
@@ -178,14 +186,6 @@ class WorkflowCoordinationService(
             )
 
             logger.debug { "Initialized execution context for node $nodeId (registry: ${context.dataRegistry.size} entries)" }
-
-            // Create execution record (RUNNING status)
-            val executionNode = createExecutionNode(
-                workflowExecutionId = workflowExecutionId,
-                nodeId = nodeId,
-                workspaceId = workspaceId,
-                startTime = startTime
-            )
 
             // Resolve inputs (templates → values)
             // Convert WorkflowNodeConfig properties to Map for resolution
@@ -247,17 +247,12 @@ class WorkflowCoordinationService(
             logger.error(e) { "Error executing node $nodeId (attempt $attempt): ${e.message}" }
 
             // Try to persist error state (best effort)
+            // Reuse executionNode created before the try block to avoid duplicates
             try {
-                val activityInfo = Activity.getExecutionContext().info
-                val workflowExecutionId = UUID.fromString(
-                    activityInfo.workflowId.substringAfter("execution-")
-                )
-
                 // Classify error using utility
                 val errorType = WorkflowErrorClassifier.classifyError(e, node.type)
 
                 // Build retry attempt record
-                // Note: startTime is defined at line 146 (method start) and is in scope here
                 val retryAttempt = RetryAttempt(
                     attemptNumber = attempt,
                     timestamp = ZonedDateTime.now(),
@@ -276,15 +271,9 @@ class WorkflowCoordinationService(
                     stackTrace = e.stackTraceToString().take(10240)  // Truncate to 10KB
                 )
 
-                val executionNodeRecord = createExecutionNode(
-                    workflowExecutionId = workflowExecutionId,
-                    nodeId = nodeId,
-                    workspaceId = workspaceId,
-                    startTime = startTime
-                )
-
+                // Update existing execution node (created before try block)
                 updateExecutionNodeWithError(
-                    executionNode = executionNodeRecord,
+                    executionNode = executionNode,
                     error = errorDetails,
                     completedTime = ZonedDateTime.now(),
                     startTime = startTime

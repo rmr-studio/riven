@@ -20,12 +20,12 @@ object WorkflowErrorClassifier {
     /**
      * Classifies an exception into a WorkflowErrorType.
      *
-     * Classification rules:
+     * Classification rules (order matters - node type checked before exception type):
      * - HTTP 4xx -> HTTP_CLIENT_ERROR (non-retryable: client error, data won't change)
      * - HTTP 5xx -> HTTP_SERVER_ERROR (retryable: server issue, transient)
+     * - CONTROL_FLOW node + any error -> CONTROL_FLOW_ERROR (non-retryable: deterministic)
      * - IllegalArgumentException, SchemaValidationException -> VALIDATION_ERROR (non-retryable)
      * - SecurityException -> SECURITY_ERROR (non-retryable)
-     * - CONTROL_FLOW node + any error -> CONTROL_FLOW_ERROR (non-retryable: deterministic)
      * - All other exceptions -> EXECUTION_ERROR (retryable: assume transient)
      *
      * @param e The exception to classify
@@ -42,6 +42,11 @@ object WorkflowErrorClassifier {
             e is WebClientResponseException && e.statusCode.is5xxServerError ->
                 WorkflowErrorType.HTTP_SERVER_ERROR
 
+            // CONTROL_FLOW nodes - deterministic evaluation, non-retryable
+            // Checked before exception type so CONTROL_FLOW context takes precedence
+            nodeType == WorkflowNodeType.CONTROL_FLOW ->
+                WorkflowErrorType.CONTROL_FLOW_ERROR
+
             // Validation errors - non-retryable
             e is IllegalArgumentException || e is SchemaValidationException ->
                 WorkflowErrorType.VALIDATION_ERROR
@@ -49,10 +54,6 @@ object WorkflowErrorClassifier {
             // Security errors - non-retryable
             e is SecurityException ->
                 WorkflowErrorType.SECURITY_ERROR
-
-            // CONTROL_FLOW nodes - deterministic evaluation, non-retryable
-            nodeType == WorkflowNodeType.CONTROL_FLOW ->
-                WorkflowErrorType.CONTROL_FLOW_ERROR
 
             // Default - assume transient, retryable
             else ->

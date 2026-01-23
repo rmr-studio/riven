@@ -251,9 +251,9 @@ class WorkflowErrorClassifierTest {
 
             val errorType = WorkflowErrorClassifier.classifyError(exception, WorkflowNodeType.CONTROL_FLOW)
 
-            // Note: Current implementation checks IllegalArgumentException before nodeType,
-            // so this will actually be VALIDATION_ERROR. This test documents actual behavior.
-            assertEquals(WorkflowErrorType.VALIDATION_ERROR, errorType)
+            // CONTROL_FLOW node context takes precedence over exception type
+            assertEquals(WorkflowErrorType.CONTROL_FLOW_ERROR, errorType)
+            assertFalse(errorType.retryable, "Control flow errors should not be retryable")
         }
     }
 

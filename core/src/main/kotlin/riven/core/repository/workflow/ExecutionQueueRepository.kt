@@ -79,4 +79,15 @@ interface ExecutionQueueRepository : JpaRepository<ExecutionQueueEntity, UUID> {
         nativeQuery = true
     )
     fun findStaleClaimedItems(@Param("minutesAgo") minutesAgo: Int): List<ExecutionQueueEntity>
+
+    /**
+     * Find queue item by execution ID.
+     *
+     * Used by WorkflowCompletionActivity to update queue status after workflow completes.
+     * No locking needed - targets specific record by unique execution_id.
+     *
+     * @param executionId The workflow execution UUID
+     * @return Queue item if found, null otherwise
+     */
+    fun findByExecutionId(executionId: UUID): ExecutionQueueEntity?
 }
