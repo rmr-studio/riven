@@ -6,7 +6,7 @@ import SmartSimpleBrilliant from "@/components/feature-modules/landing/component
 import YourWorkInSync from "@/components/feature-modules/landing/components/bento-chat";
 import NumbersThatSpeak from "@/components/feature-modules/landing/components/bento-graph";
 import EffortlessIntegration from "@/components/feature-modules/landing/components/bento-integration";
-import CTASection from "@/components/feature-modules/landing/components/cta";
+import CTASection from "@/components/feature-modules/landing/components/CTA";
 import FAQSection from "@/components/feature-modules/landing/components/faq";
 import DocumentationSection from "@/components/feature-modules/landing/components/Features";
 import FooterSection from "@/components/feature-modules/landing/components/Footer";

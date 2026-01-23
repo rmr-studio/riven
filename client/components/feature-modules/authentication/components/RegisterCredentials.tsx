@@ -1,6 +1,5 @@
 "use client";
 
-import { SocialProviders } from "@/components/feature-modules/authentication/interface/auth.interface";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -12,6 +11,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { OAuthProvider } from "@/lib/auth";
 import Link from "next/link";
 import { FC, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
@@ -22,7 +22,7 @@ import ThirdParty from "./ThirdPartyAuth";
 interface CredentialRegistrationProps {
     registrationForm: UseFormReturn<Registration>;
     handleSubmission: (values: Registration) => void;
-    socialProviderAuthentication: (provider: SocialProviders) => Promise<void>;
+    socialProviderAuthentication: (provider: OAuthProvider) => Promise<void>;
 }
 
 const RegisterCredentials: FC<CredentialRegistrationProps> = ({
