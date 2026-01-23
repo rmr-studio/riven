@@ -1,4 +1,4 @@
-import { Session } from "@supabase/supabase-js";
+import { Session } from "@/lib/auth";
 import {} from "uuid";
 import { isUUID } from "validator";
 import { fromError, ResponseError } from "../error/error.util";

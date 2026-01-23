@@ -20,10 +20,14 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Integration
 
-- [ ] **INTG-01**: AuthProvider refactored to use provider factory instead of direct Supabase client
-- [ ] **INTG-02**: useAuth() hook API unchanged (session, user, loading) — existing consumers work without modification
-- [ ] **INTG-03**: Login component uses abstracted auth interface
-- [ ] **INTG-04**: Register component uses abstracted auth interface
+- [x] **INTG-01**: AuthProvider refactored to use provider factory instead of direct Supabase client
+- [x] **INTG-02**: useAuth() hook API unchanged (session, user, loading) — existing consumers work without modification
+- [x] **INTG-03**: Login component uses abstracted auth interface
+- [x] **INTG-04**: Register component uses abstracted auth interface
+
+### Service Layer
+
+- [x] **SRVC-01**: All service files use domain Session type instead of Supabase Session
 
 ## v2 Requirements
 
@@ -57,16 +61,17 @@ Deferred to future release. Tracked but not in current roadmap.
 | INTF-03 | Phase 1 | Complete |
 | ADPT-01 | Phase 2 | Complete |
 | ADPT-02 | Phase 2 | Complete |
-| INTG-01 | Phase 3 | Pending |
-| INTG-02 | Phase 3 | Pending |
-| INTG-03 | Phase 3 | Pending |
-| INTG-04 | Phase 3 | Pending |
+| INTG-01 | Phase 3 | Complete |
+| INTG-02 | Phase 3 | Complete |
+| INTG-03 | Phase 3 | Complete |
+| INTG-04 | Phase 3 | Complete |
+| SRVC-01 | Phase 4 | Complete |
 
 **Coverage:**
-- v1 requirements: 9 total
-- Mapped to phases: 9
+- v1 requirements: 10 total
+- Mapped to phases: 10
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-23*
-*Last updated: 2026-01-23 after Phase 2 completion*
+*Last updated: 2026-01-23 after Phase 4 completion*

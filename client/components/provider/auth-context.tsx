@@ -1,31 +1,48 @@
 "use client";
 
-import { createClient } from "@/lib/util/supabase/client";
-import { Session } from "@supabase/supabase-js";
+import {
+    createAuthProvider,
+    AuthProvider as IAuthProvider,
+    Session,
+    User,
+} from "@/lib/auth";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 interface AuthContextType {
     session: Session | null;
-    user: Session["user"] | null;
-    client?: ReturnType<typeof createClient>;
+    user: User | null;
     loading: boolean;
+    signIn: IAuthProvider["signIn"];
+    signUp: IAuthProvider["signUp"];
+    signOut: IAuthProvider["signOut"];
+    signInWithOAuth: IAuthProvider["signInWithOAuth"];
+    verifyOtp: IAuthProvider["verifyOtp"];
+    resendOtp: IAuthProvider["resendOtp"];
 }
+
+const throwIfOutsideProvider = (): never => {
+    throw new Error("useAuth must be used within AuthProvider");
+};
 
 const AuthContext = createContext<AuthContextType>({
     session: null,
     user: null,
-    client: undefined,
     loading: true,
+    signIn: throwIfOutsideProvider,
+    signUp: throwIfOutsideProvider,
+    signOut: throwIfOutsideProvider,
+    signInWithOAuth: throwIfOutsideProvider,
+    verifyOtp: throwIfOutsideProvider,
+    resendOtp: throwIfOutsideProvider,
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const client = useMemo(() => createClient(), []);
-    const [isloading, setIsLoading] = useState(true);
+    const provider = useMemo(() => createAuthProvider(), []);
+    const [isLoading, setIsLoading] = useState(true);
     const [session, setSession] = useState<Session | null>(null);
 
     useEffect(() => {
-        const { data: subscription } = client.auth.onAuthStateChange((_, newSession) => {
-            console.log("Auth state changed:", newSession);
+        const subscription = provider.onAuthStateChange((_, newSession) => {
             setIsLoading(false);
             if (!newSession) {
                 setSession(null);
@@ -38,21 +55,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
         });
 
-        return () => subscription.subscription.unsubscribe();
-    }, [client]);
+        return () => subscription.unsubscribe();
+    }, [provider]);
 
-    return (
-        <AuthContext.Provider
-            value={{
-                session,
-                user: session?.user ?? null,
-                client: client,
-                loading: isloading,
-            }}
-        >
-            {children}
-        </AuthContext.Provider>
+    const value: AuthContextType = useMemo(
+        () => ({
+            session,
+            user: session?.user ?? null,
+            loading: isLoading,
+            signIn: provider.signIn.bind(provider),
+            signUp: provider.signUp.bind(provider),
+            signOut: provider.signOut.bind(provider),
+            signInWithOAuth: provider.signInWithOAuth.bind(provider),
+            verifyOtp: provider.verifyOtp.bind(provider),
+            resendOtp: provider.resendOtp.bind(provider),
+        }),
+        [session, isLoading, provider]
     );
+
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
