@@ -7,8 +7,10 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
-import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.NodeServiceProvider
+import riven.core.models.workflow.node.service
 import riven.core.models.workflow.node.config.WorkflowActionConfig
+import riven.core.service.entity.EntityService
 import java.util.*
 
 private val log = KotlinLogging.logger {}
@@ -57,15 +59,18 @@ data class WorkflowDeleteEntityActionConfig(
     override fun execute(
         context: WorkflowExecutionContext,
         inputs: Map<String, Any?>,
-        services: NodeExecutionServices
+        services: NodeServiceProvider
     ): Map<String, Any?> {
         // Extract inputs (already resolved)
         val entityId = UUID.fromString(inputs["entityId"] as String)
 
         log.info { "Deleting entity: $entityId in workspace: ${context.workspaceId}" }
 
+        // Get EntityService on-demand
+        val entityService = services.service<EntityService>()
+
         // Execute deletion via EntityService
-        val result = services.entityService.deleteEntities(
+        val result = entityService.deleteEntities(
             context.workspaceId,
             listOf(entityId)
         )

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
-import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.NodeServiceProvider
 
 /**
  * Configuration for a FUNCTION category node.
@@ -27,7 +27,7 @@ data class WorkflowFunctionConfig(
     override fun execute(
         context: WorkflowExecutionContext,
         inputs: Map<String, Any?>,
-        services: NodeExecutionServices
+        services: NodeServiceProvider
     ): Map<String, Any?> {
         // TODO: Implement FUNCTION node execution in Phase 5+
         throw UnsupportedOperationException("FUNCTION nodes not implemented in Phase 4.1")

@@ -55,7 +55,24 @@ class WorkflowNodeConfigDeserializer : JsonDeserializer<WorkflowNodeConfig>() {
             WorkflowNodeType.HUMAN_INTERACTION -> deserializeHumanConfig(p, ctxt, node)
             WorkflowNodeType.UTILITY -> deserializeUtilityConfig(p, ctxt, node)
             WorkflowNodeType.FUNCTION -> deserializeFunctionConfig(p, ctxt, node)
+            WorkflowNodeType.PARSE -> deserializeParseConfig(p, ctxt, node)
         }
+    }
+
+    /**
+     * Deserializes PARSE category configs.
+     * TODO: Implement concrete parse config classes.
+     */
+    private fun deserializeParseConfig(
+        p: JsonParser,
+        ctxt: DeserializationContext,
+        node: JsonNode
+    ): WorkflowParseConfig {
+        // TODO: Implement concrete parse config classes
+        return ctxt.reportInputMismatch(
+            WorkflowParseConfig::class.java,
+            "Deserialization for PARSE category is not yet implemented."
+        )
     }
 
     /**

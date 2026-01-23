@@ -7,8 +7,10 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
-import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
+import riven.core.models.workflow.node.service
+import riven.core.service.entity.EntityService
 import java.util.*
 
 private val log = KotlinLogging.logger {}
@@ -59,15 +61,18 @@ data class WorkflowQueryEntityActionConfig(
     override fun execute(
         context: WorkflowExecutionContext,
         inputs: Map<String, Any?>,
-        services: NodeExecutionServices
+        services: NodeServiceProvider
     ): Map<String, Any?> {
         // Extract inputs (already resolved)
         val entityId = UUID.fromString(inputs["entityId"] as String)
 
         log.info { "Querying entity: $entityId" }
 
+        // Get EntityService on-demand
+        val entityService: EntityService = services.service<EntityService>()
+
         // Fetch entity via EntityService
-        val entity = services.entityService.getEntity(entityId)
+        val entity = entityService.getEntity(entityId)
 
         // Verify workspace access
         if (entity.workspaceId != context.workspaceId) {

@@ -7,7 +7,11 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import riven.core.enums.workflow.WorkflowControlType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
-import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.NodeServiceProvider
+import riven.core.models.workflow.node.service
+import riven.core.service.workflow.EntityContextService
+import riven.core.service.workflow.ExpressionEvaluatorService
+import riven.core.service.workflow.ExpressionParserService
 import riven.core.models.workflow.node.config.WorkflowControlConfig
 import java.util.*
 
@@ -72,23 +76,28 @@ data class WorkflowConditionControlConfig(
     override fun execute(
         context: WorkflowExecutionContext,
         inputs: Map<String, Any?>,
-        services: NodeExecutionServices
+        services: NodeServiceProvider
     ): Map<String, Any?> {
         // Extract inputs (already resolved)
         val expression = inputs["expression"] as String
         val contextEntityId = inputs["contextEntityId"] as? String
 
+        // Get services on-demand
+        val entityContextService = services.service<EntityContextService>()
+        val expressionParserService = services.service<ExpressionParserService>()
+        val expressionEvaluatorService = services.service<ExpressionEvaluatorService>()
+
         // Resolve entity context if provided
         val evaluationContext: Map<String, Any?> = if (contextEntityId != null) {
             val entityId = UUID.fromString(contextEntityId)
-            services.entityContextService.buildContext(entityId, context.workspaceId)
+            entityContextService.buildContext(entityId, context.workspaceId)
         } else {
             emptyMap()
         }
 
         // Parse and evaluate expression
-        val ast = services.expressionParserService.parse(expression)
-        val result = services.expressionEvaluatorService.evaluate(ast, evaluationContext)
+        val ast = expressionParserService.parse(expression)
+        val result = expressionEvaluatorService.evaluate(ast, evaluationContext)
 
         // Validate boolean result
         if (result !is Boolean) {

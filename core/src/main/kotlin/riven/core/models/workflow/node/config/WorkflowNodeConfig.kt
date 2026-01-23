@@ -5,7 +5,7 @@ import riven.core.deserializer.WorkflowNodeConfigDeserializer
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.common.json.JsonObject
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
-import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.NodeServiceProvider
 
 /**
  * Extensible configuration interface for workflow nodes.
@@ -31,13 +31,13 @@ sealed interface WorkflowNodeConfig {
      *
      * @param context Workflow execution context with data registry
      * @param inputs Resolved inputs (templates already converted to values)
-     * @param services Dependencies needed for execution (EntityService, WebClient, etc.)
+     * @param services Service provider for on-demand access to Spring services
      * @return Execution output map (structure varies by node type)
      * @throws Exception on execution failure (caught by activity implementation)
      */
     fun execute(
         context: WorkflowExecutionContext,
         inputs: JsonObject,
-        services: NodeExecutionServices
+        services: NodeServiceProvider
     ): JsonObject
 }

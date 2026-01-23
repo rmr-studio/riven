@@ -12,16 +12,12 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.test.context.bean.override.mockito.MockitoBean
-import org.springframework.web.reactive.function.client.WebClient
 import riven.core.configuration.auth.WorkspaceSecurity
+import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.repository.workflow.WorkflowEdgeRepository
 import riven.core.repository.workflow.WorkflowExecutionNodeRepository
 import riven.core.repository.workflow.WorkflowNodeRepository
 import riven.core.service.auth.AuthTokenService
-import riven.core.service.entity.EntityService
-import riven.core.service.workflow.EntityContextService
-import riven.core.service.workflow.ExpressionEvaluatorService
-import riven.core.service.workflow.ExpressionParserService
 import riven.core.service.workflow.InputResolverService
 import java.util.*
 
@@ -45,16 +41,7 @@ import java.util.*
 class WorkflowCoordinationServiceTest {
 
     @Configuration
-    class TestConfig {
-        @Bean
-        fun webClientBuilder(): WebClient.Builder {
-            val mockWebClient: WebClient = mock()
-            val builder: WebClient.Builder = mock()
-            whenever(builder.build()).thenReturn(mockWebClient)
-            return builder
-        }
-    }
-
+    class TestConfig
 
     @MockitoBean
     private lateinit var workflowGraphCoordinationService: WorkflowGraphCoordinationService
@@ -66,22 +53,13 @@ class WorkflowCoordinationServiceTest {
     private lateinit var workflowExecutionNodeRepository: WorkflowExecutionNodeRepository
 
     @MockitoBean
-    private lateinit var entityService: EntityService
-
-    @MockitoBean
     private lateinit var workflowNodeRepository: WorkflowNodeRepository
 
     @MockitoBean
     private lateinit var workflowEdgeRepository: WorkflowEdgeRepository
 
     @MockitoBean
-    private lateinit var expressionEvaluatorService: ExpressionEvaluatorService
-
-    @MockitoBean
-    private lateinit var expressionParserService: ExpressionParserService
-
-    @MockitoBean
-    private lateinit var entityContextService: EntityContextService
+    private lateinit var nodeServiceProvider: NodeServiceProvider
 
     @MockitoBean
     private lateinit var inputResolverService: InputResolverService

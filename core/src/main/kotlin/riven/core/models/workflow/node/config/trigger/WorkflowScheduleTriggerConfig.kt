@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import riven.core.enums.workflow.WorkflowTriggerType
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
-import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowTriggerConfig
 import java.time.Duration
 import java.util.*
@@ -37,7 +37,7 @@ data class WorkflowScheduleTriggerConfig(
     override fun execute(
         context: WorkflowExecutionContext,
         inputs: Map<String, Any?>,
-        services: NodeExecutionServices
+        services: NodeServiceProvider
     ): Map<String, Any?> {
         // Triggers are entry points, not executed during workflow
         throw UnsupportedOperationException("TRIGGER nodes don't execute during workflow")

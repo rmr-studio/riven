@@ -83,7 +83,7 @@ class WorkflowTestConfiguration {
  *
  * ### Real Node Execution
  * - Nodes execute via config.execute(context, inputs, services)
- * - NodeExecutionServices provides entity operations, HTTP client, expression eval
+ * - NodeServiceProvider provides on-demand access to entity operations, HTTP client, expression eval
  * - Error handling propagates through execution chain
  * - Failed nodes stop workflow execution
  *

@@ -5,9 +5,12 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeType
+import riven.core.models.common.json.JsonObject
 import riven.core.models.request.entity.SaveEntityRequest
+import riven.core.service.entity.EntityService
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
-import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.NodeServiceProvider
+import riven.core.models.workflow.node.service
 import riven.core.models.workflow.node.config.WorkflowActionConfig
 import java.util.*
 
@@ -49,7 +52,7 @@ import java.util.*
 data class WorkflowCreateEntityActionConfig(
     override val version: Int,
     val name: String,
-    val config: Map<String, Any?>
+    val config: JsonObject
 ) : WorkflowActionConfig {
 
     override val type: WorkflowNodeType
@@ -60,12 +63,15 @@ data class WorkflowCreateEntityActionConfig(
 
     override fun execute(
         context: WorkflowExecutionContext,
-        inputs: Map<String, Any?>,
-        services: NodeExecutionServices
-    ): Map<String, Any?> {
+        inputs: JsonObject,
+        services: NodeServiceProvider
+    ): JsonObject {
         // Extract inputs (already resolved by InputResolverService)
         val entityTypeId = UUID.fromString(inputs["entityTypeId"] as String)
         inputs["payload"] as? Map<*, *> ?: emptyMap<Any, Any>()
+
+        // Get EntityService on-demand
+        val entityService = services.service<EntityService>()
 
         // Create entity via EntityService
         val saveRequest = SaveEntityRequest(
@@ -74,7 +80,7 @@ data class WorkflowCreateEntityActionConfig(
             icon = null // TODO: Handle Icon type in Phase 4.2
         )
 
-        val result = services.entityService.saveEntity(
+        val result = entityService.saveEntity(
             context.workspaceId,
             entityTypeId,
             saveRequest

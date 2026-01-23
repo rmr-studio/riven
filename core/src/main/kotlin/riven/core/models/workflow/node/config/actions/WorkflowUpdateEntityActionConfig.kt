@@ -6,8 +6,10 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.request.entity.SaveEntityRequest
+import riven.core.service.entity.EntityService
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
-import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.NodeServiceProvider
+import riven.core.models.workflow.node.service
 import riven.core.models.workflow.node.config.WorkflowActionConfig
 import java.util.*
 
@@ -59,14 +61,17 @@ data class WorkflowUpdateEntityActionConfig(
     override fun execute(
         context: WorkflowExecutionContext,
         inputs: Map<String, Any?>,
-        services: NodeExecutionServices
+        services: NodeServiceProvider
     ): Map<String, Any?> {
         // Extract inputs (already resolved)
         val entityId = UUID.fromString(inputs["entityId"] as String)
         inputs["payload"] as? Map<*, *> ?: emptyMap<Any, Any>()
 
+        // Get EntityService on-demand
+        val entityService = services.service<EntityService>()
+
         // Get existing entity to determine type
-        val existingEntity = services.entityService.getEntity(entityId)
+        val existingEntity = entityService.getEntity(entityId)
 
         // Update entity via EntityService
         val saveRequest = SaveEntityRequest(
@@ -75,7 +80,7 @@ data class WorkflowUpdateEntityActionConfig(
             icon = null // TODO: Handle Icon type in Phase 4.2
         )
 
-        val result = services.entityService.saveEntity(
+        val result = entityService.saveEntity(
             context.workspaceId,
             existingEntity.typeId,
             saveRequest

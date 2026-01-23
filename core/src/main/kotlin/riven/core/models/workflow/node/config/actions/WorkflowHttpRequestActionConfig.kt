@@ -8,7 +8,9 @@ import org.springframework.http.HttpMethod
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
-import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.NodeServiceProvider
+import riven.core.models.workflow.node.service
+import org.springframework.web.reactive.function.client.WebClient
 import riven.core.models.workflow.node.config.WorkflowActionConfig
 import java.net.URI
 
@@ -75,7 +77,7 @@ data class WorkflowHttpRequestActionConfig(
     override fun execute(
         context: WorkflowExecutionContext,
         inputs: Map<String, Any?>,
-        services: NodeExecutionServices
+        services: NodeServiceProvider
     ): Map<String, Any?> {
         // Extract inputs (already resolved)
         val url = inputs["url"] as String
@@ -86,8 +88,11 @@ data class WorkflowHttpRequestActionConfig(
         // Validate URL (prevent SSRF)
         validateUrl(url)
 
+        // Get WebClient on-demand
+        val webClient = services.service<WebClient>()
+
         // Execute HTTP request (external service call)
-        val response = services.webClient
+        val response = webClient
             .method(HttpMethod.valueOf(method))
             .uri(url)
             .headers { h ->
