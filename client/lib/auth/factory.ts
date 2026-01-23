@@ -12,7 +12,7 @@ let cachedProvider: AuthProvider | null = null;
 /**
  * Creates or returns the cached auth provider instance.
  *
- * Reads AUTH_PROVIDER env var to determine which adapter to use.
+ * Reads NEXT_PUBLIC_AUTH_PROVIDER env var to determine which adapter to use.
  * Currently supports: "supabase"
  *
  * @returns The configured AuthProvider instance
@@ -29,11 +29,11 @@ export function createAuthProvider(): AuthProvider {
         return cachedProvider;
     }
 
-    const providerType = process.env.AUTH_PROVIDER;
+    const providerType = process.env.NEXT_PUBLIC_AUTH_PROVIDER;
 
     if (!providerType) {
         throw new Error(
-            "AUTH_PROVIDER environment variable is not set. Please set it to one of: supabase"
+            "NEXT_PUBLIC_AUTH_PROVIDER environment variable is not set. Please set it to one of: supabase"
         );
     }
 

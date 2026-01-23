@@ -23,7 +23,7 @@ export interface Session {
  */
 export interface User {
     id: string;
-    email: string;
+    email?: string;
     metadata: Record<string, unknown>; // Provider-specific data
 }
 

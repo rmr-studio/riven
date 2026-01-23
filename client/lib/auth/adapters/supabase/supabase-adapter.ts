@@ -189,23 +189,16 @@ export class SupabaseAuthAdapter implements AuthProvider {
             throw mapSupabaseError(error);
         }
 
-        // Check for obfuscated user (email already exists)
-        // Supabase returns empty user_metadata for existing emails when
-        // "email confirmations" and "user cannot sign up twice" are enabled
-        if (data.user && Object.keys(data.user.user_metadata).length === 0) {
-            throw new AuthError(
-                "An account with this email already exists",
-                AuthErrorCode.EMAIL_TAKEN,
-                "Try signing in instead"
-            );
-        }
-
-        // Session may be null if email confirmation is required
+        // Session is null when email confirmation is required.
+        // We use a neutral message that doesn't reveal whether the email
+        // already exists (prevents user enumeration attacks).
+        // If the user already exists, Supabase sends no email but we
+        // respond identically. Users can use resendOtp() if needed.
         if (!data.session) {
             throw new AuthError(
-                "Account created. Please check your email to confirm.",
+                "Please check your email to continue",
                 AuthErrorCode.EMAIL_NOT_CONFIRMED,
-                "A confirmation email has been sent"
+                "If an account exists for this email, we've sent a confirmation link"
             );
         }
 
