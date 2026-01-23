@@ -2,15 +2,20 @@ package riven.core.service.workflow.engine.coordinator
 
 import io.github.oshai.kotlinlogging.KLogger
 import io.temporal.activity.Activity
+import io.temporal.failure.ApplicationFailure
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientResponseException
 import riven.core.entity.workflow.WorkflowEdgeEntity
 import riven.core.entity.workflow.execution.WorkflowExecutionNodeEntity
+import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.models.workflow.engine.NodeExecutionResult
 import riven.core.models.workflow.engine.coordinator.WorkflowState
 import riven.core.models.workflow.engine.environment.NodeExecutionData
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.error.NodeExecutionError
+import riven.core.models.workflow.engine.error.RetryAttempt
 import riven.core.models.workflow.node.NodeExecutionServices
 import riven.core.models.workflow.node.WorkflowNode
 import riven.core.models.workflow.node.config.actions.*
@@ -21,6 +26,7 @@ import riven.core.service.workflow.EntityContextService
 import riven.core.service.workflow.ExpressionEvaluatorService
 import riven.core.service.workflow.ExpressionParserService
 import riven.core.service.workflow.InputResolverService
+import riven.core.service.workflow.engine.error.WorkflowErrorClassifier
 import java.time.Instant
 import java.time.ZonedDateTime
 import java.util.*
@@ -148,19 +154,27 @@ class WorkflowCoordinationService(
 
         logger.info { "Executing workflow node: $nodeId in workspace: $workspaceId" }
 
+        // Verify workspace access (before creating execution record)
+        if (node.workspaceId != workspaceId) {
+            throw SecurityException("Node $nodeId does not belong to workspace $workspaceId")
+        }
+
+        // Get execution context from Temporal (needed for execution record)
+        val activityInfo = Activity.getExecutionContext().info
+        val workflowExecutionId = UUID.fromString(
+            activityInfo.workflowId.substringAfter("execution-")
+        )
+
+        // Create execution record BEFORE try block to ensure single record
+        // This record is reused in both success and error paths
+        val executionNode = createExecutionNode(
+            workflowExecutionId = workflowExecutionId,
+            nodeId = nodeId,
+            workspaceId = workspaceId,
+            startTime = startTime
+        )
+
         try {
-
-            // Verify workspace access
-            if (node.workspaceId != workspaceId) {
-                throw SecurityException("Node $nodeId does not belong to workspace $workspaceId")
-            }
-
-            // Get execution context from Temporal
-            val activityInfo = Activity.getExecutionContext().info
-            val workflowExecutionId = UUID.fromString(
-                activityInfo.workflowId.substringAfter("execution-")
-            )
-
             // Initialize workflow execution context
             // TODO: Phase 5 DAG coordinator will populate registry with prior node outputs
             // and pass context between nodes for sequential execution
@@ -172,14 +186,6 @@ class WorkflowCoordinationService(
             )
 
             logger.debug { "Initialized execution context for node $nodeId (registry: ${context.dataRegistry.size} entries)" }
-
-            // Create execution record (RUNNING status)
-            val executionNode = createExecutionNode(
-                workflowExecutionId = workflowExecutionId,
-                nodeId = nodeId,
-                workspaceId = workspaceId,
-                startTime = startTime
-            )
 
             // Resolve inputs (templates → values)
             // Convert WorkflowNodeConfig properties to Map for resolution
@@ -235,27 +241,40 @@ class WorkflowCoordinationService(
             return result
 
         } catch (e: Exception) {
-            logger.error(e) { "Error executing node $nodeId: ${e.message}" }
+            // Get current attempt from Temporal activity context
+            val attempt = Activity.getExecutionContext().info.attempt
+
+            logger.error(e) { "Error executing node $nodeId (attempt $attempt): ${e.message}" }
 
             // Try to persist error state (best effort)
+            // Reuse executionNode created before the try block to avoid duplicates
             try {
-                val activityInfo = Activity.getExecutionContext().info
-                val workflowExecutionId = UUID.fromString(
-                    activityInfo.workflowId.substringAfter("execution-")
+                // Classify error using utility
+                val errorType = WorkflowErrorClassifier.classifyError(e, node.type)
+
+                // Build retry attempt record
+                val retryAttempt = RetryAttempt(
+                    attemptNumber = attempt,
+                    timestamp = ZonedDateTime.now(),
+                    errorType = errorType,
+                    errorMessage = e.message ?: "Unknown error",
+                    durationMs = java.time.Duration.between(startTime, ZonedDateTime.now()).toMillis()
                 )
 
-                val executionNodeRecord = createExecutionNode(
-                    workflowExecutionId = workflowExecutionId,
-                    nodeId = nodeId,
-                    workspaceId = workspaceId,
-                    startTime = startTime
+                // Build structured error
+                val errorDetails = NodeExecutionError(
+                    errorType = errorType,
+                    message = e.message ?: "Unknown error",
+                    httpStatusCode = (e as? WebClientResponseException)?.statusCode?.value(),
+                    retryAttempts = listOf(retryAttempt),
+                    isFinal = !errorType.retryable || attempt >= 3,
+                    stackTrace = e.stackTraceToString().take(10240)  // Truncate to 10KB
                 )
 
-                updateExecutionNode(
-                    executionNode = executionNodeRecord,
-                    status = WorkflowStatus.FAILED,
-                    output = null,
-                    error = e.message,
+                // Update existing execution node (created before try block)
+                updateExecutionNodeWithError(
+                    executionNode = executionNode,
+                    error = errorDetails,
                     completedTime = ZonedDateTime.now(),
                     startTime = startTime
                 )
@@ -263,11 +282,8 @@ class WorkflowCoordinationService(
                 logger.error(persistError) { "Failed to persist error state for node $nodeId" }
             }
 
-            return NodeExecutionResult(
-                nodeId = nodeId,
-                status = WorkflowStatus.FAILED,
-                error = e.message ?: "Unknown error"
-            )
+            // Classify and throw ApplicationFailure for Temporal retry handling
+            classifyAndThrowError(e, nodeId, node.name, node.type, attempt)
         }
     }
 
@@ -406,5 +422,68 @@ class WorkflowCoordinationService(
         workflowExecutionNodeRepository.save(updated)
     }
 
+    /**
+     * Update WorkflowExecutionNodeEntity with structured error details.
+     *
+     * This method stores the full NodeExecutionError structure in the error column,
+     * enabling rich error information including retry history and stack traces.
+     */
+    private fun updateExecutionNodeWithError(
+        executionNode: WorkflowExecutionNodeEntity,
+        error: NodeExecutionError,
+        completedTime: ZonedDateTime,
+        startTime: ZonedDateTime
+    ) {
+        val durationMs = java.time.Duration.between(startTime, completedTime).toMillis()
 
+        val updated = executionNode.copy(
+            status = WorkflowStatus.FAILED,
+            completedAt = completedTime,
+            durationMs = durationMs,
+            output = null,
+            error = error  // Now stores structured NodeExecutionError
+        )
+
+        workflowExecutionNodeRepository.save(updated)
+    }
+
+    /**
+     * Classifies an exception and throws appropriate ApplicationFailure.
+     *
+     * Uses WorkflowErrorClassifier for classification logic.
+     * Temporal uses the ApplicationFailure "type" parameter to match against doNotRetry list.
+     *
+     * @param e The exception that occurred
+     * @param nodeId UUID of the failing node
+     * @param nodeName Human-readable node name
+     * @param nodeType Type of node (affects classification for CONTROL_FLOW)
+     * @param attempt Current retry attempt number
+     * @throws ApplicationFailure always (return type is Nothing)
+     */
+    private fun classifyAndThrowError(
+        e: Exception,
+        nodeId: UUID,
+        nodeName: String,
+        nodeType: WorkflowNodeType,
+        attempt: Int
+    ): Nothing {
+        val (errorType, message) = WorkflowErrorClassifier.classifyErrorWithMessage(e, nodeType)
+
+        logger.error(e) { "Node $nodeName failed (attempt $attempt): $message [${errorType.name}]" }
+
+        // Throw ApplicationFailure with error type as the "type" parameter
+        // Temporal uses this to match against doNotRetry list in WorkflowOrchestrationService
+        if (errorType.retryable) {
+            throw ApplicationFailure.newFailureWithCause(
+                message,
+                errorType.name,  // Must match doNotRetry strings
+                e
+            )
+        } else {
+            throw ApplicationFailure.newNonRetryableFailure(
+                message,
+                errorType.name
+            )
+        }
+    }
 }

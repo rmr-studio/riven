@@ -13,7 +13,7 @@ import { useSaveWorkspaceMutation } from "../hooks/mutation/use-save-workspace-m
 import { WorkspaceForm, WorkspaceFormDetails } from "./form/workspace-form";
 
 const EditWorkspace = () => {
-    const { session, client } = useAuth();
+    const { session } = useAuth();
     const { data: workspace } = useWorkspace();
 
     const router = useRouter();
@@ -25,7 +25,7 @@ const EditWorkspace = () => {
     });
 
     const handleSubmission = async (values: WorkspaceFormDetails) => {
-        if (!session || !client) {
+        if (!session) {
             toast.error("No active session found");
             return;
         }

@@ -1,5 +1,5 @@
 import { EntityApi, Configuration } from "@/lib/types";
-import { Session } from "@supabase/supabase-js";
+import { Session } from "@/lib/auth";
 
 /**
  * Creates an EntityApi instance configured with session-based authentication.

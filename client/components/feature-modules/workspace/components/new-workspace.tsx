@@ -10,7 +10,7 @@ import { useSaveWorkspaceMutation } from "../hooks/mutation/use-save-workspace-m
 import { WorkspaceForm, WorkspaceFormDetails } from "./form/workspace-form";
 
 const NewWorkspace = () => {
-    const { session, client } = useAuth();
+    const { session } = useAuth();
     const router = useRouter();
     const { mutateAsync: saveWorkspace } = useSaveWorkspaceMutation({
         onSuccess() {
@@ -21,7 +21,7 @@ const NewWorkspace = () => {
     const [uploadedAvatar, setUploadedAvatar] = useState<Blob | null>(null);
 
     const handleSubmission = async (values: WorkspaceFormDetails) => {
-        if (!session || !client) {
+        if (!session) {
             toast.error("No active session found");
             return;
         }

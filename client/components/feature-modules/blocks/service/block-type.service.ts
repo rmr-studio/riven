@@ -6,7 +6,7 @@ import {
 import { fromError, isResponseError } from "@/lib/util/error/error.util";
 import { handleError, validateSession, validateUuid } from "@/lib/util/service/service.util";
 import { api } from "@/lib/util/utils";
-import { Session } from "@supabase/supabase-js";
+import { Session } from "@/lib/auth";
 
 export class BlockTypeService {
     /**

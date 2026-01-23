@@ -1,7 +1,7 @@
 import { validateSession, validateUuid } from "@/lib/util/service/service.util";
 import { createEntityApi } from "@/lib/api/entity-api";
 import { ResponseError } from "@/lib/types";
-import { Session } from "@supabase/supabase-js";
+import { Session } from "@/lib/auth";
 import {
     DeleteEntityResponse,
     Entity,
@@ -22,7 +22,7 @@ export class EntityService {
         validateSession(session);
         validateUuid(workspaceId);
         validateUuid(entityTypeId);
-        const api = createEntityApi(session!);
+        const api = createEntityApi(session);
 
         try {
             return await api.saveEntity({

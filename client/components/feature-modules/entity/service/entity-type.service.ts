@@ -2,7 +2,7 @@ import { createEntityApi } from "@/lib/api/entity-api";
 import { ResponseError as OpenApiResponseError } from "@/lib/types";
 import { normalizeApiError } from "@/lib/util/error/error.util";
 import { validateSession, validateUuid } from "@/lib/util/service/service.util";
-import { Session } from "@supabase/supabase-js";
+import { Session } from "@/lib/auth";
 import {
     CreateEntityTypeRequest,
     DeleteTypeDefinitionRequest,

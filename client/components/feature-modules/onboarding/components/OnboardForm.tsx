@@ -39,7 +39,7 @@ const userOnboardDetailsSchema = z.object({
 export type UserOnboard = z.infer<typeof userOnboardDetailsSchema>;
 
 export const OnboardForm: FC<Propless> = () => {
-    const { client, session } = useAuth();
+    const { session } = useAuth();
     const { data: user } = useProfile();
     const queryClient = useQueryClient();
     const [uploadedAvatar, setUploadedAvatar] = useState<Blob | null>(null);
@@ -88,7 +88,7 @@ export const OnboardForm: FC<Propless> = () => {
     });
 
     const handleSubmission = async (values: UserOnboard) => {
-        if (!user || !client) return;
+        if (!user || !session) return;
         // Update User Profile
         const updatedUser: User = {
             ...user,

@@ -1,14 +1,12 @@
 "use client";
 
-import {
-    AuthResponse,
-    RegistrationConfirmation,
-} from "@/components/feature-modules/authentication/interface/auth.interface";
+import { RegistrationConfirmation } from "@/components/feature-modules/authentication/interface/auth.interface";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader } from "@/components/ui/card";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { FormOTPInput } from "@/components/ui/forms/form-otp-input";
 import { Separator } from "@/components/ui/separator";
+import { getAuthErrorMessage, isAuthError } from "@/lib/auth";
 import { FormOTP, OTPFormSchema } from "@/lib/util/form/form.util";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft } from "lucide-react";
@@ -19,8 +17,8 @@ import { toast } from "sonner";
 import { Registration } from "./Register";
 
 interface RegisterConfirmationProps {
-    confirmEmailSignupWithOTP: (userDetails: RegistrationConfirmation) => Promise<AuthResponse>;
-    handleResendOTP: (email: string) => Promise<AuthResponse>;
+    confirmEmailSignupWithOTP: (userDetails: RegistrationConfirmation) => Promise<void>;
+    handleResendOTP: (email: string) => Promise<void>;
     visibilityCallback: (visible: boolean) => void;
     formControl: Control<Registration>;
 }
@@ -52,15 +50,18 @@ const RegisterConfirmation: FC<RegisterConfirmationProps> = ({
 
         const resendToast = toast.loading("Resending OTP...");
 
-        const response = await handleResendOTP(formDetails.email);
-        toast.dismiss(resendToast);
-
-        if (!response.ok || response.error) {
-            toast.error(response.error?.message ?? "Failed to resend OTP");
-            return;
+        try {
+            await handleResendOTP(formDetails.email);
+            toast.dismiss(resendToast);
+            toast.success("OTP Sent Successfully");
+        } catch (error) {
+            toast.dismiss(resendToast);
+            if (isAuthError(error)) {
+                toast.error(getAuthErrorMessage(error.code));
+            } else {
+                toast.error("Failed to resend OTP");
+            }
         }
-
-        toast.success("OTP Sent Successfully");
     };
 
     const handleSubmission = async (values: FormOTP): Promise<void> => {
@@ -73,24 +74,22 @@ const RegisterConfirmation: FC<RegisterConfirmationProps> = ({
             otp: values.otp,
         };
 
-        const response = confirmEmailSignupWithOTP(credentialValidation).then((res) => {
-            if (!res.ok) {
-                throw new Error(res?.error?.message ?? "Failed to verify OTP");
-            }
-            return res;
-        });
+        const verifyToast = toast.loading("Verifying OTP...");
 
-        toast.promise(response, {
-            loading: "Verifying OTP...",
-            success: () => {
-                router.push("/dashboard");
-                return "OTP Verified Successfully";
-            },
-            error: (error) => {
-                setOtpVerifyError(true);
-                return error.message;
-            },
-        });
+        try {
+            await confirmEmailSignupWithOTP(credentialValidation);
+            toast.dismiss(verifyToast);
+            toast.success("OTP Verified Successfully");
+            router.push("/dashboard");
+        } catch (error) {
+            toast.dismiss(verifyToast);
+            setOtpVerifyError(true);
+            if (isAuthError(error)) {
+                toast.error(getAuthErrorMessage(error.code));
+            } else {
+                toast.error("Failed to verify OTP");
+            }
+        }
     };
 
     return (

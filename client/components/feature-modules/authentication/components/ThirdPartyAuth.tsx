@@ -1,8 +1,8 @@
 "use client";
 
-import { SocialProviders } from "@/components/feature-modules/authentication/interface/auth.interface";
 import { Button } from "@/components/ui/button";
 import { ClassNameProps } from "@/lib/interfaces/interface";
+import { OAuthProvider } from "@/lib/auth";
 import { cn } from "@/lib/util/utils";
 import React from "react";
 import { FaGoogle } from "react-icons/fa";
@@ -10,7 +10,7 @@ import { FaGoogle } from "react-icons/fa";
 interface ThirdPartyProps extends ClassNameProps {
     iconClass?: string;
     text?: string;
-    socialProviderAuthentication: (provider: SocialProviders) => Promise<void>;
+    socialProviderAuthentication: (provider: OAuthProvider) => Promise<void>;
 }
 
 const ThirdParty: React.FC<ThirdPartyProps> = ({
@@ -18,7 +18,7 @@ const ThirdParty: React.FC<ThirdPartyProps> = ({
     iconClass,
     socialProviderAuthentication,
 }) => {
-    const handleAuth = async (provider: SocialProviders) => {
+    const handleAuth = async (provider: OAuthProvider) => {
         try {
             await socialProviderAuthentication(provider);
         } catch (error) {
@@ -35,7 +35,7 @@ const ThirdParty: React.FC<ThirdPartyProps> = ({
             </div>
             <section className=" space-y-2">
                 <Button
-                    onClick={async () => await handleAuth("google")}
+                    onClick={async () => await handleAuth(OAuthProvider.Google)}
                     variant={"outline"}
                     className="w-full relative"
                 >

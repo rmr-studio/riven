@@ -3,9 +3,9 @@ import {
     UpdateUserProfileRequest,
     UpdateUserProfileResponse,
 } from "@/components/feature-modules/user/interface/user.interface";
+import { Session } from "@/lib/auth";
 import { fromError, isResponseError } from "@/lib/util/error/error.util";
 import { api } from "@/lib/util/utils";
-import { Session } from "@supabase/supabase-js";
 
 /**
  * Will fetch the Current authenticated user's detailed profile from the

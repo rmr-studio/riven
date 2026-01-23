@@ -77,7 +77,7 @@ class CustomAuthenticationTokenConverter :
 }
 
 data class WorkspaceRole(
-    @JsonProperty("workspace_id")
+    @param:JsonProperty("workspace_id")
     val workspaceId: UUID,
     val role: WorkspaceRoles
 )
