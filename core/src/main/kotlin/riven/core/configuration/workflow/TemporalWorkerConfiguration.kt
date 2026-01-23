@@ -7,9 +7,10 @@ import io.temporal.worker.WorkerFactory
 import jakarta.annotation.PreDestroy
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import riven.core.service.workflow.engine.WorkflowOrchestrationServiceImpl
+import riven.core.service.workflow.engine.WorkflowOrchestration
+import riven.core.service.workflow.engine.WorkflowOrchestrationService
 import riven.core.service.workflow.engine.coordinator.WorkflowCoordinationService
-import java.util.UUID
+import java.util.*
 
 /**
  * Spring configuration for Temporal workers.
@@ -38,6 +39,7 @@ import java.util.UUID
 class TemporalWorkerConfiguration(
     private val workflowServiceStubs: WorkflowServiceStubs,
     private val activities: WorkflowCoordinationService,
+    private val retryProperties: WorkflowRetryConfigurationProperties,
     private val logger: KLogger
 ) {
 
@@ -98,13 +100,15 @@ class TemporalWorkerConfiguration(
         // Create worker for default queue (V1: all workflows use this queue)
         val worker = factory.newWorker(WORKFLOWS_DEFAULT_QUEUE)
 
-        // Register workflow implementations
-        // Note: Workflow impl must have no-arg constructor (Temporal instantiates it)
-        // NOT a Spring bean - Temporal manages lifecycle
-        worker.registerWorkflowImplementationTypes(
-            WorkflowOrchestrationServiceImpl::class.java
-        )
-        logger.info { "Registered workflow: WorkflowOrchestrationServiceImpl" }
+        // Register workflow implementations via factory pattern
+        // This allows injecting configuration from Spring into workflow instances
+        // NOT a Spring bean - Temporal manages lifecycle, but config comes from Spring
+        worker.registerWorkflowImplementationFactory(
+            WorkflowOrchestration::class.java
+        ) {
+            WorkflowOrchestrationService(retryProperties.default)
+        }
+        logger.info { "Registered workflow: WorkflowOrchestrationService with retry config: ${retryProperties.default}" }
 
         // Register activity implementations
         // Note: Passing Spring bean instance enables dependency injection

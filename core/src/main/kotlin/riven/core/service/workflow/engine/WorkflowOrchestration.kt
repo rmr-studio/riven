@@ -17,7 +17,7 @@ import riven.core.models.workflow.engine.WorkflowExecutionResult
  *
  * All side effects (database operations, external API calls) MUST go through activities.
  *
- * @see WorkflowOrchestrationServiceImpl
+ * @see WorkflowOrchestrationService
  */
 @WorkflowInterface
 interface WorkflowOrchestration {

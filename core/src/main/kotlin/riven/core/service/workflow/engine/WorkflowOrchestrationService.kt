@@ -3,6 +3,7 @@ package riven.core.service.workflow.engine
 import io.temporal.activity.ActivityOptions
 import io.temporal.common.RetryOptions
 import io.temporal.workflow.Workflow
+import riven.core.configuration.workflow.RetryConfig
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.models.workflow.engine.NodeExecutionResult
 import riven.core.models.workflow.engine.WorkflowExecutionInput
@@ -25,16 +26,21 @@ import java.time.Duration
  * - Uses Workflow.currentTimeMillis() if timestamps needed
  * - NO direct database calls - all DB operations via activities
  * - NO HTTP requests - all external calls via activities
- * - NO Spring bean injection - workflow must be stateless and deterministic
+ * - NO Spring bean injection - configuration injected via Temporal's workflow factory
  *
  * Activity options configured with:
  * - StartToCloseTimeout: 5 minutes (MANDATORY)
- * - RetryOptions: Max 3 attempts with exponential backoff
+ * - RetryOptions: Configured via WorkflowRetryConfigurationProperties from application.yml
  *
- * NOTE: This class is NOT a Spring bean. It is registered with Temporal's worker
- * via Spring Boot's auto-discovery mechanism (spring.temporal.workers-auto-discovery).
+ * NOTE: This class is NOT a Spring bean. It is instantiated by Temporal's worker
+ * via registerWorkflowImplementationFactory in TemporalWorkerConfiguration.
+ *
+ * @param retryConfig Retry configuration injected via workflow factory from application.yml
  */
-class WorkflowOrchestrationServiceImpl : WorkflowOrchestration {
+class WorkflowOrchestrationService(
+
+    private val retryConfig: RetryConfig // Locally injected via [TemporalWorkerConfiguration.kt]
+) : WorkflowOrchestration {
 
     /**
      * Activity stub for executing workflow nodes.
@@ -42,9 +48,8 @@ class WorkflowOrchestrationServiceImpl : WorkflowOrchestration {
      * Created once as class field (best practice - avoid creating per invocation).
      * Activities handle all non-deterministic operations (DB, HTTP, randomness).
      *
-     * Note: Retry values are hardcoded here because WorkflowOrchestrationServiceImpl is not a Spring bean.
-     * Values match application.yml riven.workflow.retry.default.* for consistency.
-     * To make configurable: pass via workflow input or use local activity to fetch config.
+     * Retry configuration is injected via Temporal's workflow factory pattern,
+     * sourcing values from application.yml (riven.workflow.retry.default.*).
      */
     private val nodeExecutionCoordinator: WorkflowCoordination = Workflow.newActivityStub(
         WorkflowCoordination::class.java,
@@ -52,10 +57,10 @@ class WorkflowOrchestrationServiceImpl : WorkflowOrchestration {
             .setStartToCloseTimeout(Duration.ofMinutes(5))  // MANDATORY timeout
             .setRetryOptions(
                 RetryOptions.newBuilder()
-                    .setMaximumAttempts(3)
-                    .setInitialInterval(Duration.ofSeconds(1))
-                    .setBackoffCoefficient(2.0)
-                    .setMaximumInterval(Duration.ofSeconds(30))  // Reduced from 1 min for faster retry cycles
+                    .setMaximumAttempts(retryConfig.maxAttempts)
+                    .setInitialInterval(Duration.ofSeconds(retryConfig.initialIntervalSeconds))
+                    .setBackoffCoefficient(retryConfig.backoffCoefficient)
+                    .setMaximumInterval(Duration.ofSeconds(retryConfig.maxIntervalSeconds))
                     .setDoNotRetry(
                         // Non-retryable error types (matches WorkflowErrorType enum names)
                         "HTTP_CLIENT_ERROR",      // 4xx HTTP errors - client data won't change
@@ -68,7 +73,7 @@ class WorkflowOrchestrationServiceImpl : WorkflowOrchestration {
             .build()
     )
 
-    private val logger = Workflow.getLogger(WorkflowOrchestrationServiceImpl::class.java)
+    private val logger = Workflow.getLogger(WorkflowOrchestrationService::class.java)
 
     override fun execute(input: WorkflowExecutionInput): WorkflowExecutionResult {
         logger.info("Starting workflow execution for definition: ${input.workflowDefinitionId}, nodes: ${input.nodeIds.size}")
