@@ -58,14 +58,14 @@ data class WorkflowExecutionNodeEntity(
 
 ) {
 
-    fun toModel(node: WorkflowNodeEntity): WorkflowExecutionNodeRecord {
+    fun toModel(node: WorkflowNodeEntity? = null): WorkflowExecutionNodeRecord {
 
         val id = requireNotNull(this.id)
         return WorkflowExecutionNodeRecord(
             id = id,
             workspaceId = this.workspaceId,
             executionId = this.workflowExecutionId,
-            node = node.toModel(),
+            node = node?.toModel(),
             sequenceIndex = this.sequenceIndex,
             status = this.status,
             startedAt = this.startedAt,

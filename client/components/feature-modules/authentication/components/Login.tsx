@@ -1,10 +1,6 @@
 "use client";
 
-import {
-    AuthenticationCredentials,
-    AuthResponse,
-    SocialProviders,
-} from "@/components/feature-modules/authentication/interface/auth.interface";
+import { useAuth } from "@/components/provider/auth-context";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -16,7 +12,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { createClient } from "@/lib/util/supabase/client";
+import { getAuthErrorMessage, isAuthError, OAuthProvider } from "@/lib/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -35,7 +31,7 @@ type Login = z.infer<typeof loginSchema>;
 
 const LoginForm: FC = () => {
     const router = useRouter();
-    const client = createClient();
+    const { signIn, signInWithOAuth } = useAuth();
 
     const loginForm: UseFormReturn<Login> = useForm<Login>({
         resolver: zodResolver(loginSchema),
@@ -45,58 +41,33 @@ const LoginForm: FC = () => {
         },
     });
 
-    const loginWithEmailPasswordCredentials = async (
-        credentials: AuthenticationCredentials
-    ): Promise<AuthResponse> => {
-        const { email, password } = credentials;
-        const { error } = await client.auth.signInWithPassword({
-            email,
-            password,
-        });
-
-        return {
-            ok: error === null,
-            error: error || undefined,
-        };
-    };
-
-    const authenticateWithSocialProvider = async (provider: SocialProviders): Promise<void> => {
-        const { data } = await client.auth.signInWithOAuth({
-            provider,
-            options: {
+    const authenticateWithSocialProvider = async (provider: OAuthProvider): Promise<void> => {
+        try {
+            await signInWithOAuth(provider, {
                 redirectTo: `${process.env.NEXT_PUBLIC_HOSTED_URL}api/auth/token/callback`,
-                queryParams: {
-                    access_type: "offline",
-                    prompt: "consent",
-                },
-            },
-        });
-
-        if (data.url) {
-            window.location.href = data.url;
+            });
+            // Note: signInWithOAuth handles the redirect internally
+        } catch (error) {
+            if (isAuthError(error)) {
+                toast.error(getAuthErrorMessage(error.code));
+            } else {
+                toast.error("OAuth sign-in failed");
+            }
         }
     };
 
     const handleLoginSubmission = async (values: Login) => {
-        const response = () =>
-            loginWithEmailPasswordCredentials(values).then((res) => {
-                if (!res.ok) {
-                    throw new Error(
-                        res?.error?.message ?? "You have entered an invalid email or password"
-                    );
-                }
-            });
-
-        toast.promise(response, {
-            loading: "Logging in...",
-            success() {
-                router.push("/dashboard");
-                return "Logged in successfully";
-            },
-            error(err) {
-                return err.message;
-            },
-        });
+        try {
+            await signIn({ type: "password", email: values.email, password: values.password });
+            toast.success("Logged in successfully");
+            router.push("/dashboard");
+        } catch (error) {
+            if (isAuthError(error)) {
+                toast.error(getAuthErrorMessage(error.code));
+            } else {
+                toast.error("An unexpected error occurred");
+            }
+        }
     };
 
     return (

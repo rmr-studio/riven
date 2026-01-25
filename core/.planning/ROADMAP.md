@@ -22,8 +22,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Action Executors** - Implement node action types (CRUD, API calls, conditionals)
 - [x] **Phase 4.1: Action Execution (INSERTED)** - Data registry, template resolution, polymorphic execution
 - [x] **Phase 5: DAG Execution Coordinator** - Topological sort, node scheduling, state management
-- [ ] **Phase 6: Backend API Layer** - REST endpoints for workflow management
-- [ ] **Phase 7: Error Handling & Retry Logic** - Temporal retry policies and error surfacing
+- [x] **Phase 6: Backend API Layer** - REST endpoints for workflow management
+- [x] **Phase 6.1: Execution Queue Management (INSERTED)** - Execution queue management
+- [x] **Phase 7: Error Handling & Retry Logic** - Temporal retry policies and error surfacing
+- [ ] **Phase 7.1: Node Configuration Development (INSERTED)** - Node configuration development
 - [ ] **Phase 8: End-to-End Testing** - Validate complete workflow lifecycle
 
 ## Phase Details
@@ -91,20 +93,43 @@ Plans:
 **Goal**: Expose REST APIs for workflow creation, update, retrieval, and execution triggering
 **Depends on**: Phase 5
 **Research**: Unlikely (REST API patterns established in codebase)
-**Plans**: TBD
+**Status**: ✅ COMPLETED
 
 Plans:
-- TBD
+- [x] 06-01: Workflow definition CRUD APIs (2026-01-20) - WorkflowDefinitionService (303 lines), WorkflowDefinitionController (184 lines), 9 unit tests
+- [x] 06-02: Workflow graph management APIs (2026-01-20) - WorkflowGraphService (537 lines), WorkflowGraphController (238 lines), cascade deletion, 15 tests
+- [x] 06-03: Workflow execution query APIs (2026-01-20) - Extended WorkflowExecutionService with 4 query methods, 4 GET endpoints, 8 tests
+
+### Phase 6.1: Execution Queue Management (INSERTED)
+**Goal**: Database-backed execution queue with tier-based concurrency limits for workflow dispatching
+**Depends on**: Phase 6
+**Research**: Completed (06.1-RESEARCH.md - ShedLock, SKIP LOCKED, Temporal multi-queue)
+**Status**: ✅ COMPLETED
+
+Plans:
+- [x] 06.1-01: ShedLock infrastructure and WorkspaceTier enum (2026-01-21)
+- [x] 06.1-02: ExecutionQueueEntity, repository, and queue service (2026-01-21)
+- [x] 06.1-03: Multi-queue workers, dispatcher service, queue integration (2026-01-21)
 
 ### Phase 7: Error Handling & Retry Logic
 **Goal**: Implement Temporal retry policies and error surfacing to execution records
-**Depends on**: Phase 6
-**Research**: Likely (Temporal retry policies, error handling patterns)
-**Research topics**: Temporal retry configuration, error propagation strategies, compensating transactions for failed workflows
-**Plans**: TBD
+**Depends on**: Phase 6.1
+**Research**: Completed (07-RESEARCH.md - Temporal RetryOptions, ApplicationFailure, error classification)
+**Status**: ✅ COMPLETED
 
 Plans:
-- TBD
+- [x] 07-01: Retry configuration infrastructure and structured error models (2026-01-22)
+- [x] 07-02: Error classification and Temporal ApplicationFailure integration (2026-01-22)
+- [x] 07-03: Error surfacing in API responses and unit tests (2026-01-22)
+
+### Phase 7.1: Node Configuration Development (INSERTED)
+**Goal**: Node configuration development
+**Depends on**: Phase 7
+**Research**: TBD
+**Status**: Not started
+
+Plans:
+- TBD (run /gsd:plan-phase 7.1 to break down)
 
 ### Phase 8: End-to-End Testing
 **Goal**: Validate complete workflow lifecycle from API definition through execution to entity modifications
@@ -118,7 +143,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 4.1 → 5 → 6 → 7 → 8
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 4.1 → 5 → 6 → 6.1 → 7 → 7.1 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -128,6 +153,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 4.1 → 5 → 6 → 7 �
 | 4. Action Executors | 2/2 | ✅ Complete | 2026-01-11 |
 | 4.1. Action Execution (INSERTED) | 3/3 | ✅ Complete | 2026-01-11 |
 | 5. DAG Execution Coordinator | 3/3 | ✅ Complete | 2026-01-12 |
-| 6. Backend API Layer | 0/TBD | Not started | - |
-| 7. Error Handling & Retry Logic | 0/TBD | Not started | - |
+| 6. Backend API Layer | 3/3 | ✅ Complete | 2026-01-20 |
+| 6.1. Execution Queue Management (INSERTED) | 3/3 | ✅ Complete | 2026-01-21 |
+| 7. Error Handling & Retry Logic | 3/3 | ✅ Complete | 2026-01-22 |
+| 7.1. Node Configuration Development (INSERTED) | 0/TBD | Not started | - |
 | 8. End-to-End Testing | 0/TBD | Not started | - |

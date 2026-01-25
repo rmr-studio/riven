@@ -21,10 +21,7 @@ import java.util.*
 
 @RestController
 @RequestMapping("/api/v1/block/environment")
-@Tag(
-    name = "Block Environment Management",
-    description = "Endpoints for managing block environments, layouts and all block related operations"
-)
+@Tag(name = "block")
 class BlockEnvironmentController(
     private val environmentService: BlockEnvironmentService,
 ) {

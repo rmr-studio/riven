@@ -15,7 +15,7 @@ import java.util.*
 
 @RestController
 @RequestMapping("/api/v1/workspace")
-@Tag(name = "Workspace Management", description = "Endpoints for managing workspaces and their members")
+@Tag(name = "workspace")
 class WorkspaceController(
     private val workspaceService: WorkspaceService
 ) {

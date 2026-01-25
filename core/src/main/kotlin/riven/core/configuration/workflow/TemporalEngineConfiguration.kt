@@ -17,7 +17,7 @@ class TemporalEngineConfiguration(private val config: TemporalEngineConfiguratio
         )
     }
 
-    @Bean(destroyMethod = "close")
+    @Bean()
     fun workflowClient(workflowServiceStubs: WorkflowServiceStubs): WorkflowClient {
         return WorkflowClient.newInstance(workflowServiceStubs)
     }

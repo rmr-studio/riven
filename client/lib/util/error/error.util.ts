@@ -1,3 +1,5 @@
+import { ResponseError as OpenApiResponseError } from "@/lib/types";
+
 export interface ResponseError extends Error {
     status: number;
     error: string;
@@ -118,4 +120,40 @@ export function isResponseError(error: unknown): error is ResponseError {
         "error" in error &&
         "message" in error
     );
+}
+
+/**
+ * Normalizes OpenAPI client errors to the app's ResponseError format.
+ * The backend returns ErrorResponse with { statusCode, error, message, stackTrace }
+ */
+export async function normalizeApiError(error: unknown): Promise<never> {
+    // Handle OpenAPI-generated ResponseError
+    if (error instanceof OpenApiResponseError) {
+        const response = error.response;
+
+        try {
+            const body = await response.json();
+            // Map backend ErrorResponse to frontend ResponseError
+            throw Object.assign(new Error(body.message), {
+                name: "ResponseError",
+                status: body.statusCode ?? response.status,
+                error: body.error ?? "API_ERROR",
+                message: body.message ?? "An unexpected error occurred",
+                stackTrace: body.stackTrace,
+            }) as ResponseError;
+        } catch (parseError) {
+            // If JSON parsing fails, create error from response metadata
+            if (isResponseError(parseError)) throw parseError;
+
+            throw Object.assign(new Error(response.statusText), {
+                name: "ResponseError",
+                status: response.status,
+                error: "API_ERROR",
+                message: response.statusText || "An unexpected error occurred",
+            }) as ResponseError;
+        }
+    }
+
+    // Handle other errors using existing fromError
+    throw fromError(error);
 }

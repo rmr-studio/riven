@@ -10,6 +10,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { isAuthError } from "@/lib/auth";
+import { getAuthErrorMessage } from "@/lib/auth/error-messages";
 import { getInitials } from "@/lib/util/utils";
 
 import {
@@ -24,6 +26,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FC } from "react";
 import { FaGithub } from "react-icons/fa";
+import { toast } from "sonner";
 import { useAuth } from "../../../provider/auth-context";
 
 interface Props {
@@ -32,17 +35,19 @@ interface Props {
 
 export const UserProfileDropdown: FC<Props> = ({ user }) => {
     const { name } = user;
-    const { client } = useAuth();
+    const { signOut } = useAuth();
     const router = useRouter();
 
     const handleLogout = async () => {
-        if (!client) return;
-
         try {
-            await client.auth.signOut();
+            await signOut();
             router.push("/");
         } catch (error) {
-            console.error("Logout failed:", error);
+            if (isAuthError(error)) {
+                toast.error(getAuthErrorMessage(error.code));
+            } else {
+                console.error("Logout failed:", error);
+            }
         }
     };
 

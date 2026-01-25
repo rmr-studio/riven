@@ -4,24 +4,24 @@
 
 See: .planning/PROJECT.md (updated 2026-01-09)
 
-**Core value:** End-to-end workflow lifecycle: create graph → save → execute via Temporal → see results
-**Current focus:** Phase 4 — Action Executors (Complete)
+**Core value:** End-to-end workflow lifecycle: create graph -> save -> execute via Temporal -> see results
+**Current focus:** Phase 7 - Error Handling & Retry Logic (COMPLETE)
 
 ## Current Position
 
-Phase: 5 of 8 (DAG Execution Coordinator)
+Phase: 7 of 8 (Error Handling & Retry Logic)
 Plan: 3 of 3 in current phase
 Status: Phase complete
-Last activity: 2026-01-12 — Completed 5-03-PLAN.md
+Last activity: 2026-01-22 - Completed 07-03-PLAN.md
 
-Progress: █████████░░░░░░░ 56% (5 phases complete)
+Progress: ████████████████████ 100% (20 of 20 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11 (all fully complete)
-- Average duration: ~37 minutes (0.62 hours)
-- Total execution time: 6.81 hours
+- Total plans completed: 20 (all fully complete)
+- Average duration: ~22 minutes (0.37 hours)
+- Total execution time: 7.41 hours
 
 **By Phase:**
 
@@ -33,23 +33,47 @@ Progress: █████████░░░░░░░ 56% (5 phases complet
 | 4 - Action Executors | 2 | 0.88h | 0.44h |
 | 4.1 - Action Execution | 3 | 0.72h | 0.24h |
 | 5 - DAG Execution Coordinator | 3 | 0.37h | 0.12h |
+| 6 - Backend API Layer | 3 | 0.17h | 0.06h |
+| 6.1 - Execution Queue Management | 3 | 0.18h | 0.06h |
+| 7 - Error Handling & Retry Logic | 3 | 0.13h | 0.04h |
 
 **Recent Trend:**
-- Last 5 plans: 4.1-02 (0.25h), 4.1-03 (0.37h), 5-01 (0.07h), 5-02 (0.05h), 5-03 (0.25h)
-- Trend: Excellent velocity maintained, Phase 5 complete with strong execution
+- Last 5 plans: 6.1-03 (0.08h), 07-01 (0.03h), 07-02 (0.05h), 07-03 (0.05h)
+- Trend: Excellent velocity maintained
 
 ## Accumulated Context
 
 ### Roadmap Evolution
 
 - Phase 4.1 inserted after Phase 4: Action Execution (URGENT) - 2026-01-11
+- Phase 6.1 inserted after Phase 6: Execution Queue Management (URGENT) - 2026-01-19
+- Phase 7.1 inserted after Phase 7: Node Configuration Development (URGENT) - 2026-01-22
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-(None yet)
+| Decision | Rationale | Plan |
+|----------|-----------|------|
+| Soft-delete for workflow definitions | Allows recovery, maintains referential integrity | 06-01 |
+| Metadata-only updates via updateWorkflow | Graph structure updates handled separately | 06-01 |
+| Cascade deletion on node delete | Deleting node must delete connected edges for graph consistency | 06-02 |
+| Immutable versioning for config changes | Config changes create new entity version, metadata updates in place | 06-02 |
+| Map return types for query responses | Flexibility for evolving response structure without DTOs | 06-03 |
+| Workspace verification in service layer | Better error messages, supports cross-workspace scenarios | 06-03 |
+| ShedLock for distributed scheduler locking | Ensures scheduled tasks only run on one instance | 06.1-01 |
+| FIFO ordering via created_at ASC | Predictable queue behavior for workflow execution | 06.1-02 |
+| SKIP LOCKED for concurrent claiming | Multiple dispatchers can claim items without blocking | 06.1-02 |
+| Stale claim recovery with 5min default | Crash protection for stuck CLAIMED items | 06.1-02 |
+| V1 uses default queue for all workspaces | Simplicity for initial release, per-workspace queues deferred | 06.1-03 |
+| 202 Accepted for queue-based execution | Indicates asynchronous processing to client | 06.1-03 |
+| Enum property for retryable classification | Simpler than method, evaluable at compile time | 07-01 |
+| Non-retryable HTTP codes: 400, 401, 403, 404, 422 | Client errors won't succeed on retry | 07-01 |
+| Kotlin object for WorkflowErrorClassifier | Direct calls without Spring injection, testable | 07-02 |
+| Hardcoded retry values in workflow | Not a Spring bean, cannot inject ConfigurationProperties | 07-02 |
+| Computed properties over methods for error helpers | Lightweight derived values, Kotlin-idiomatic | 07-03 |
+| Direct object testing for stateless utilities | No Spring context or mocking needed for Kotlin objects | 07-03 |
 
 ### Deferred Issues
 
@@ -61,7 +85,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-12T06:15:00Z
-Stopped at: Completed 5-03-PLAN.md (DAG Execution Coordinator)
+Last session: 2026-01-22
+Stopped at: Completed 07-03-PLAN.md (Error Recovery)
 Resume file: N/A
-Next action: Phase 5 complete — Ready for Phase 6: Backend API Layer
+Next action: Phase 7 complete. Ready for Phase 8 (Monitoring & Observability) or new phase planning.

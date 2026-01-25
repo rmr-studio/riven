@@ -10,7 +10,7 @@ data class WorkflowExecutionNodeRecord(
     override val id: UUID,
     override val workspaceId: UUID,
     val executionId: UUID,
-    val node: WorkflowNode,
+    val node: WorkflowNode? = null,
 
     val sequenceIndex: Int,
 

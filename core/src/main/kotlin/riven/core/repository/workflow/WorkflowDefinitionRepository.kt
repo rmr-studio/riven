@@ -1,9 +1,11 @@
 package riven.core.repository.workflow
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import riven.core.entity.workflow.WorkflowDefinitionEntity
-import java.util.UUID
+import riven.core.repository.workflow.projection.WorkflowDefinitionWithVersionProjection
+import java.util.*
 
 /**
  * Repository for accessing WorkflowDefinitionEntity instances.
@@ -19,14 +21,33 @@ interface WorkflowDefinitionRepository : JpaRepository<WorkflowDefinitionEntity,
      * @param workspaceId Workspace context
      * @return List of workflow definitions in the workspace
      */
+    @Query(
+        """
+        SELECT d
+        FROM WorkflowDefinitionEntity d
+        WHERE d.workspaceId = :workspaceId
+        AND d.deleted = false
+        AND d.deletedAt IS NULL
+        """
+    )
     fun findByWorkspaceId(workspaceId: UUID): List<WorkflowDefinitionEntity>
 
+
     /**
-     * Find a workflow definition by workspace and name.
+     * Find a workflow definition with its published version in a single JOIN query.
      *
-     * @param workspaceId Workspace context
-     * @param name Workflow definition name
-     * @return The workflow definition if found
+     * @param definitionId Workflow definition ID
+     * @return Projection containing both the definition and its published version, or null if not found
      */
-    fun findByWorkspaceIdAndName(workspaceId: UUID, name: String): WorkflowDefinitionEntity?
+    @Query(
+        """
+        SELECT new riven.core.repository.workflow.projection.WorkflowDefinitionWithVersionProjection(d, v)
+        FROM WorkflowDefinitionEntity d
+        JOIN WorkflowDefinitionVersionEntity v
+            ON v.workflowDefinitionId = d.id
+            AND v.versionNumber = d.versionNumber
+        WHERE d.id = :definitionId
+        """
+    )
+    fun findDefinitionWithPublishedVersion(definitionId: UUID): WorkflowDefinitionWithVersionProjection?
 }

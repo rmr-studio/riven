@@ -1,14 +1,9 @@
 "use client";
 
-import {
-    AuthenticationCredentials,
-    AuthResponse,
-    RegistrationConfirmation,
-    SocialProviders,
-} from "@/components/feature-modules/authentication/interface/auth.interface";
-import { createClient } from "@/lib/util/supabase/client";
+import { RegistrationConfirmation } from "@/components/feature-modules/authentication/interface/auth.interface";
+import { useAuth } from "@/components/provider/auth-context";
+import { getAuthErrorMessage, isAuthError, OAuthProvider } from "@/lib/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AuthError, User } from "@supabase/supabase-js";
 import { FC, useState } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
@@ -53,128 +48,67 @@ const RegisterForm: FC = () => {
     });
 
     const [accountCreated, setAccountCreated] = useState<boolean>(false);
-    const client = createClient();
+    const { signIn, signUp, verifyOtp, resendOtp, signInWithOAuth } = useAuth();
 
     const registerWithEmailPasswordCredentials = async (
-        credentials: AuthenticationCredentials
-    ): Promise<AuthResponse> => {
-        const { data, error } = await client.auth.signUp({
-            ...credentials,
-        });
-
-        // Check for any initial server errors during registration
-        if (error) {
-            if (process.env.NODE_ENV === "development") console.error(error);
-            return {
-                ok: false,
-                error,
-            };
-        }
-
-        // Check if the user is obfuscated (ie. email has already been registered to another account)
-        if (isUserObfuscated(data.user)) {
-            return {
-                ok: false,
-                error: new AuthError("An account with this email already exists."),
-            };
-        }
-
-        //Return a successful registration response
-        return {
-            ok: true,
-        };
+        email: string,
+        password: string
+    ): Promise<void> => {
+        // signUp throws AuthError on failure (including EMAIL_TAKEN for obfuscated users)
+        await signUp({ email, password });
     };
 
     const confirmEmailSignupWithOTP = async (
         userDetails: RegistrationConfirmation
-    ): Promise<AuthResponse> => {
+    ): Promise<void> => {
         const { otp, email, password } = userDetails;
-        // Attempt email confirmation with provided OTP
-        const { error } = await client.auth.verifyOtp({
+
+        // Verify the OTP
+        await verifyOtp({
             email,
             token: otp,
             type: "signup",
         });
 
-        if (error) {
-            return {
-                ok: false,
-                error,
-            };
-        }
-
-        // Attempt user sign in with provided credentials
-        const { error: signInError } = await client.auth.signInWithPassword({
-            email,
-            password,
-        });
-
-        return {
-            ok: signInError === null,
-            error: signInError || undefined,
-        };
+        // Auto sign-in after verification
+        await signIn({ type: "password", email, password });
     };
 
-    const handleResendOTP = async (email: string): Promise<AuthResponse> => {
-        const { error } = await client.auth.resend({
+    const handleResendOTP = async (email: string): Promise<void> => {
+        await resendOtp({
+            email,
             type: "signup",
-            email,
         });
-
-        // Deal with any errors that may have occurred during the OTP resend process
-        if (error) {
-            if (process.env.NODE_ENV === "development") console.error(error);
-
-            return {
-                ok: false,
-                error: error,
-            };
-        }
-
-        // Return a successful registration response
-        return {
-            ok: true,
-        };
     };
 
-    const authenticateWithSocialProvider = async (provider: SocialProviders): Promise<void> => {
-        const { data } = await client.auth.signInWithOAuth({
-            provider,
-            options: {
+    const authenticateWithSocialProvider = async (provider: OAuthProvider): Promise<void> => {
+        try {
+            await signInWithOAuth(provider, {
                 redirectTo: `${process.env.NEXT_PUBLIC_HOSTED_URL}api/auth/token/callback`,
-                queryParams: {
-                    access_type: "offline",
-                    prompt: "consent",
-                },
-            },
-        });
-
-        if (data.url) {
-            window.location.href = data.url;
+            });
+        } catch (error) {
+            if (isAuthError(error)) {
+                toast.error(getAuthErrorMessage(error.code));
+            } else {
+                toast.error("OAuth sign-in failed");
+            }
         }
     };
 
     const handleSubmission = async (values: Registration) => {
         const { email, password } = values;
 
-        // Call Supabase Signin Callback and reject if error
-        const response = () =>
-            registerWithEmailPasswordCredentials({ email, password }).then((res) => {
-                if (!res.ok) {
-                    throw new Error(res?.error?.message ?? "Failed to create account");
-                }
-            });
-
-        toast.promise(response, {
-            loading: "Creating Account...",
-            success: () => {
-                setAccountCreated(true);
-                return "Account Created Successfully";
-            },
-            error: (error) => {
-                return error.message;
-            },
-        });
+        try {
+            await registerWithEmailPasswordCredentials(email, password);
+            toast.success("Account Created Successfully");
+            setAccountCreated(true);
+        } catch (error) {
+            if (isAuthError(error)) {
+                toast.error(getAuthErrorMessage(error.code));
+            } else {
+                toast.error("Failed to create account");
+            }
+        }
     };
 
     return !accountCreated ? (
@@ -191,11 +125,6 @@ const RegisterForm: FC = () => {
             formControl={registrationForm.control}
         />
     );
-};
-
-// Helper function to check if user is obfuscated
-const isUserObfuscated = (user: User | null): boolean => {
-    return !user || Object.keys(user.user_metadata).length === 0;
 };
 
 export default RegisterForm;
