@@ -74,6 +74,36 @@ export interface SignUpCredentials {
 }
 
 // ============================================================================
+// Sign Up Result Types
+// ============================================================================
+
+/**
+ * Confirmation method after sign up.
+ * - 'otp': User enters a code from email (stays in-app)
+ * - 'link': User clicks a confirmation link in email (redirect-based)
+ */
+export type ConfirmationType = "otp" | "link";
+
+/**
+ * Options for sign-up behavior.
+ */
+export interface SignUpOptions {
+    /**
+     * How the user should confirm their email.
+     * Defaults to 'link' for backward compatibility.
+     */
+    confirmationType?: ConfirmationType;
+}
+
+/**
+ * Result of a sign-up operation.
+ * Discriminated union allows handling both immediate auth and confirmation flows.
+ */
+export type SignUpResult =
+    | { status: "authenticated"; session: Session }
+    | { status: "confirmation_required"; confirmationType: ConfirmationType };
+
+// ============================================================================
 // OAuth Types
 // ============================================================================
 
@@ -122,6 +152,7 @@ export interface OtpResendParams {
  * Events emitted when authentication state changes.
  */
 export type AuthChangeEvent =
+    | "INITIAL_SESSION"
     | "SIGNED_IN"
     | "SIGNED_OUT"
     | "TOKEN_REFRESHED"
