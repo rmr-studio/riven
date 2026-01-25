@@ -43,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         const subscription = provider.onAuthStateChange((_, newSession) => {
+            console.log(newSession)
             setIsLoading(false);
             if (!newSession) {
                 setSession(null);

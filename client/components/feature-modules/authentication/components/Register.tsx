@@ -53,9 +53,13 @@ const RegisterForm: FC = () => {
     const registerWithEmailPasswordCredentials = async (
         email: string,
         password: string
-    ): Promise<void> => {
-        // signUp throws AuthError on failure (including EMAIL_TAKEN for obfuscated users)
-        await signUp({ email, password });
+    ): Promise<boolean> => {
+        // signUp returns a result indicating auth status or confirmation requirement
+        const result = await signUp({ email, password }, { confirmationType: "otp" });
+
+        // Return true if confirmation is required (user needs to enter OTP)
+        // Return false if user is already authenticated (no confirmation needed)
+        return result.status === "confirmation_required";
     };
 
     const confirmEmailSignupWithOTP = async (
@@ -99,9 +103,17 @@ const RegisterForm: FC = () => {
         const { email, password } = values;
 
         try {
-            await registerWithEmailPasswordCredentials(email, password);
-            toast.success("Account Created Successfully");
-            setAccountCreated(true);
+            const requiresConfirmation = await registerWithEmailPasswordCredentials(email, password);
+
+            if (requiresConfirmation) {
+                // User needs to confirm email via OTP
+                toast.success("Please check your email for a confirmation code");
+                setAccountCreated(true);
+            } else {
+                // User is already authenticated (email confirmation disabled)
+                toast.success("Account Created Successfully");
+                // Note: Auth state change will trigger navigation via context
+            }
         } catch (error) {
             if (isAuthError(error)) {
                 toast.error(getAuthErrorMessage(error.code));
