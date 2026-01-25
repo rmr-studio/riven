@@ -13,6 +13,12 @@
 # testing
 /coverage
 
+.planning/*
+!.planning/
+!.planning/codebase/
+!.planning/codebase/**
+
+
 # next.js
 /.next/
 /out/

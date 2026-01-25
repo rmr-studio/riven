@@ -34,7 +34,7 @@ export class WorkspaceService {
                 formData.append("file", uploadedAvatar);
             }
 
-            const response = await fetch(url, {
+            const response = await fetch(`${url}/v1/workspace/`, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${session?.access_token}`,

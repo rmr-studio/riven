@@ -88,7 +88,7 @@ export const WorkspaceForm: FC<Props> = ({
 
     return (
         <div className="flex flex-col md:flex-row p-2 min-h-[100dvh]">
-            <section className={cn("w-full md:w-2/5", className)}>
+            <section className={cn("w-full lg:w-2/5", className)}>
                 <header>{renderHeader()}</header>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -267,7 +267,7 @@ export const WorkspaceForm: FC<Props> = ({
                     </form>
                 </Form>
             </section>
-            <section className="flex flex-grow flex-col relative bg-accent rounded-sm">
+            <section className="hidden lg:flex flex-grow flex-col relative bg-accent rounded-sm">
                 <div className="sticky top-8">
                     <WorkspaceFormPreview data={form.watch()} />
                 </div>

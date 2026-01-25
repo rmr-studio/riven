@@ -12,8 +12,8 @@ This roadmap delivers a visual workflow builder integrated into Riven's workspac
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation & Canvas** - XYFlow integration with Zustand state management and basic canvas interactions
-- [ ] **Phase 2: Node Library** - Sidebar with draggable node types organized by category
+- [x] **Phase 1: Foundation & Canvas** - XYFlow integration with Zustand state management and basic canvas interactions
+- [x] **Phase 2: Node Library** - Sidebar with draggable node types organized by category
 - [ ] **Phase 3: Node Types & Configuration** - Trigger, action, and condition nodes with entity-aware configuration
 - [ ] **Phase 4: Connections** - Edge creation with validation and cycle prevention
 - [ ] **Phase 5: Selection & Visual Feedback** - Multi-select, deletion, and visual status indicators
@@ -31,10 +31,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can zoom the canvas with mouse wheel
   4. User can see nodes render on the canvas when added programmatically
   5. Workflow state (nodes, positions) is managed in Zustand store, not just React Flow internal state
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 01-01: TBD
+- [x] 01-01-PLAN.md — Workflow module structure, Zustand store, and context provider
+- [x] 01-02-PLAN.md — Canvas component with React Flow, background, minimap, and controls
+- [x] 01-03-PLAN.md — Custom node components with type-specific styling
+- [x] 01-04-PLAN.md — Page routes and end-to-end integration
 
 ### Phase 2: Node Library
 **Goal**: Users can discover and add nodes to the canvas through the sidebar
@@ -44,10 +47,11 @@ Plans:
   1. User sees a sidebar displaying available node types organized by category (Triggers, Actions, Conditions)
   2. User can drag a node from the sidebar onto the canvas to create an instance
   3. User can click a node in the sidebar to add it to the center of the canvas
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: TBD
+- [x] 02-01-PLAN.md — Node library sidebar with search, categories, and draggable items
+- [x] 02-02-PLAN.md — Canvas drop handlers and sidebar integration
 
 ### Phase 3: Node Types & Configuration
 **Goal**: Users can configure workflow nodes with entity-aware settings
@@ -116,8 +120,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Canvas | 0/? | Not started | - |
-| 2. Node Library | 0/? | Not started | - |
+| 1. Foundation & Canvas | 4/4 | ✓ Complete | 2026-01-25 |
+| 2. Node Library | 2/2 | ✓ Complete | 2026-01-26 |
 | 3. Node Types & Configuration | 0/? | Not started | - |
 | 4. Connections | 0/? | Not started | - |
 | 5. Selection & Visual Feedback | 0/? | Not started | - |
@@ -125,4 +129,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 ---
 *Roadmap created: 2026-01-20*
+*Phase 1 planned: 2026-01-25*
+*Phase 1 completed: 2026-01-25*
+*Phase 2 planned: 2026-01-25*
+*Phase 2 completed: 2026-01-26*
 *Milestone: v0.1 (Workflow Builder Foundation Pre-release)*

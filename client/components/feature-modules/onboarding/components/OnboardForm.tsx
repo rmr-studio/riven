@@ -119,7 +119,7 @@ export const OnboardForm: FC<Propless> = () => {
                     <TextSeparator>
                         <span className="text-[1rem] leading-1 font-semibold">Your details</span>
                     </TextSeparator>
-                    <div className="flex flex-col lg:flex-row md:space-x-4">
+                    <div className="flex flex-col md:space-x-4">
                         <FormLabel className="pb-0 md:hidden font-semibold">
                             Profile Picture
                         </FormLabel>
