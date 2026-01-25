@@ -20,6 +20,8 @@ import {
   User,
   SignInCredentials,
   SignUpCredentials,
+  SignUpOptions,
+  SignUpResult,
   OAuthProvider,
   OAuthOptions,
   OtpVerificationParams,
@@ -64,9 +66,10 @@ export interface AuthProvider {
 
   /**
    * Sign up a new user with email and password.
+   * @returns SignUpResult indicating whether user is authenticated or needs confirmation
    * @throws {AuthError} On registration failure (e.g., email taken)
    */
-  signUp(credentials: SignUpCredentials): Promise<Session>;
+  signUp(credentials: SignUpCredentials, options?: SignUpOptions): Promise<SignUpResult>;
 
   /**
    * Sign out the current user.

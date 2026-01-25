@@ -3,14 +3,15 @@
  * Translates between Supabase SDK and domain types.
  */
 
-import { createBrowserClient } from '@supabase/ssr';
-import { SupabaseClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { AuthProvider } from '../../auth-provider.interface';
 import {
   Session,
   User,
   SignInCredentials,
   SignUpCredentials,
+  SignUpOptions,
+  SignUpResult,
   OAuthProvider,
   OAuthOptions,
   OtpVerificationParams,
@@ -47,7 +48,7 @@ export class SupabaseAuthAdapter implements AuthProvider {
       );
     }
 
-    this.client = createBrowserClient(url, key, {
+    this.client = createClient(url, key, {
       auth: {
         autoRefreshToken: true,
         persistSession: true,
@@ -114,7 +115,20 @@ export class SupabaseAuthAdapter implements AuthProvider {
       // Map Supabase event to domain event (filter unsupported)
       const domainEvent = mapAuthChangeEvent(supabaseEvent);
       if (!domainEvent) {
-        return; // Skip unmapped events (INITIAL_SESSION, MFA events)
+        return;
+      }
+
+      // INITIAL_SESSION handles authentication state on page load
+      if (domainEvent === 'INITIAL_SESSION') {
+        if (!supabaseSession) {
+          callback(domainEvent, null);
+          return;
+        }
+
+        const session = mapSupabaseSession(supabaseSession);
+        callback(domainEvent, session);
+
+        return;
       }
 
       const session = supabaseSession ? mapSupabaseSession(supabaseSession) : null;
@@ -177,9 +191,12 @@ export class SupabaseAuthAdapter implements AuthProvider {
 
   /**
    * Sign up a new user with email and password.
+   * @returns SignUpResult indicating whether user is authenticated or needs confirmation
    * @throws {AuthError} On registration failure (e.g., email taken)
    */
-  async signUp(credentials: SignUpCredentials): Promise<Session> {
+  async signUp(credentials: SignUpCredentials, options?: SignUpOptions): Promise<SignUpResult> {
+    const confirmationType = options?.confirmationType ?? 'link';
+
     const { data, error } = await this.client.auth.signUp({
       email: credentials.email,
       password: credentials.password,
@@ -189,20 +206,23 @@ export class SupabaseAuthAdapter implements AuthProvider {
       throw mapSupabaseError(error);
     }
 
-    // Session is null when email confirmation is required.
-    // We use a neutral message that doesn't reveal whether the email
-    // already exists (prevents user enumeration attacks).
-    // If the user already exists, Supabase sends no email but we
-    // respond identically. Users can use resendOtp() if needed.
-    if (!data.session) {
-      throw new AuthError(
-        'Please check your email to continue',
-        AuthErrorCode.EMAIL_NOT_CONFIRMED,
-        "If an account exists for this email, we've sent a confirmation link",
-      );
+    // Session returned means email confirmation is disabled or user is auto-confirmed
+    if (data.session) {
+      return {
+        status: 'authenticated',
+        session: mapSupabaseSession(data.session),
+      };
     }
 
-    return mapSupabaseSession(data.session);
+    // No session means confirmation is required.
+    // For OTP flow: Supabase sends OTP code via email
+    // For link flow: Supabase sends confirmation link via email
+    // Note: If user already exists (obfuscated), Supabase sends no email
+    // but we respond identically to prevent user enumeration.
+    return {
+      status: 'confirmation_required',
+      confirmationType,
+    };
   }
 
   /**

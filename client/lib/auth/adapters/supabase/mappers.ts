@@ -58,6 +58,8 @@ export function mapAuthChangeEvent(event: string): AuthChangeEvent | null {
       return 'USER_UPDATED';
     case 'PASSWORD_RECOVERY':
       return 'PASSWORD_RECOVERY';
+    case 'INITIAL_SESSION':
+      return 'INITIAL_SESSION';
     default:
       // INITIAL_SESSION, MFA events, etc. are filtered
       return null;

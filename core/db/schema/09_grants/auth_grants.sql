@@ -22,3 +22,4 @@ CREATE POLICY "Allow auth admin to read workspace member roles" ON public.worksp
     AS PERMISSIVE FOR SELECT
     TO supabase_auth_admin
     USING (TRUE);
+    
