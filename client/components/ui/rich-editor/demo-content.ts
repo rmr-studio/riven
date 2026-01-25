@@ -1,6 +1,6 @@
-import { id } from "date-fns/locale"
+import { id } from 'date-fns/locale';
 
-import { ContainerNode, EditorNode, TextNode } from "./types"
+import { ContainerNode, EditorNode, TextNode } from './types';
 
 /**
  * Creates comprehensive demo content showcasing all editor features.
@@ -21,17 +21,15 @@ import { ContainerNode, EditorNode, TextNode } from "./types"
  * };
  * ```
  */
-export function createDemoContent(
-  timestamp: number = 1000000000000
-): EditorNode[] {
+export function createDemoContent(timestamp: number = 1000000000000): EditorNode[] {
   return [
     // ========================================
     // HERO SECTION
     // ========================================
     {
       id: `h1-${timestamp}-1`,
-      type: "h1",
-      content: "✨ Rich Text Editor",
+      type: 'h1',
+      content: '✨ Rich Text Editor',
       attributes: {},
     } as TextNode,
 
@@ -40,130 +38,128 @@ export function createDemoContent(
     // ========================================
     {
       id: `blockquote-${timestamp}-version-1`,
-      type: "blockquote",
+      type: 'blockquote',
       children: [
         {
-          content: "🎉 Version 0.2.0 - Exciting New Features!",
+          content: '🎉 Version 0.2.0 - Exciting New Features!',
           bold: true,
-          className: "text-green-600 dark:text-green-400 text-lg",
+          className: 'text-green-600 dark:text-green-400 text-lg',
         },
-        { content: " ", italic: true },
+        { content: ' ', italic: true },
         {
-          content:
-            "Major improvements to usability, new Notion-style features, and much more!",
+          content: 'Major improvements to usability, new Notion-style features, and much more!',
           italic: true,
         },
       ],
       attributes: {
         className:
-          "bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-l-4 border-green-500",
+          'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-l-4 border-green-500',
       },
     } as TextNode,
 
     {
       id: `h2-${timestamp}-version-2`,
-      type: "h2",
+      type: 'h2',
       content: "🆕 What's New in v0.2.0",
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-version-3a`,
-      type: "p",
+      type: 'p',
       content:
-        "Quick-start your content with beautiful pre-designed templates. Switch between templates instantly and customize to your needs:",
+        'Quick-start your content with beautiful pre-designed templates. Switch between templates instantly and customize to your needs:',
       attributes: {},
     } as TextNode,
 
     {
       id: `li-${timestamp}-version-3c-1`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Blog template", bold: true },
-        { content: " - Perfect for articles and blog posts", bold: false },
+        { content: '✅ Blog template', bold: true },
+        { content: ' - Perfect for articles and blog posts', bold: false },
       ],
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-version-3c-2`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Gallery template", bold: true },
-        { content: " - Showcase photos and portfolio work", bold: false },
+        { content: '✅ Gallery template', bold: true },
+        { content: ' - Showcase photos and portfolio work', bold: false },
       ],
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-version-3c-3`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Halloween template", bold: true },
-        { content: " - Festive seasonal design", bold: false },
+        { content: '✅ Halloween template', bold: true },
+        { content: ' - Festive seasonal design', bold: false },
       ],
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-version-3c-4`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Instant switch", bold: true },
-        { content: " - Change templates with one click", bold: false },
+        { content: '✅ Instant switch', bold: true },
+        { content: ' - Change templates with one click', bold: false },
       ],
       attributes: {},
     } as TextNode,
 
     {
       id: `h4-${timestamp}-version-3d`,
-      type: "h3",
-      content: "📝 Blog Template",
+      type: 'h3',
+      content: '📝 Blog Template',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-version-3e`,
-      type: "p",
-      content:
-        "Professional blog post layout with metadata, sections, and beautiful typography:",
+      type: 'p',
+      content: 'Professional blog post layout with metadata, sections, and beautiful typography:',
       attributes: {},
     } as TextNode,
 
     {
       id: `h4-${timestamp}-version-3g`,
-      type: "h3",
-      content: "🖼️ Gallery Template",
+      type: 'h3',
+      content: '🖼️ Gallery Template',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-version-3h`,
-      type: "p",
+      type: 'p',
       content:
-        "Perfect for photographers and artists - showcase your work in stunning image collections:",
+        'Perfect for photographers and artists - showcase your work in stunning image collections:',
       attributes: {},
     } as TextNode,
 
     {
       id: `h3-${timestamp}-version-4`,
-      type: "h3",
-      content: "🎨 Notion-Style Mode",
+      type: 'h3',
+      content: '🎨 Notion-Style Mode',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-version-4a`,
-      type: "p",
+      type: 'p',
       content:
-        "Toggle between classic rich editor mode and Notion-style mode with cover images and enhanced first-block styling:",
+        'Toggle between classic rich editor mode and Notion-style mode with cover images and enhanced first-block styling:',
       attributes: {},
     } as TextNode,
 
     {
       id: `li-${timestamp}-version-4b-1`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Cover images", bold: true },
+        { content: '✅ Cover images', bold: true },
         {
-          content: " - Add beautiful header images to your documents",
+          content: ' - Add beautiful header images to your documents',
           bold: false,
         },
       ],
@@ -171,11 +167,11 @@ export function createDemoContent(
     } as TextNode,
     {
       id: `li-${timestamp}-version-4b-2`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ First-block styling", bold: true },
+        { content: '✅ First-block styling', bold: true },
         {
-          content: " - Automatic large heading for document titles",
+          content: ' - Automatic large heading for document titles',
           bold: false,
         },
       ],
@@ -183,18 +179,18 @@ export function createDemoContent(
     } as TextNode,
     {
       id: `li-${timestamp}-version-4b-3`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Drag to reposition", bold: true },
-        { content: " - Adjust cover image position with slider", bold: false },
+        { content: '✅ Drag to reposition', bold: true },
+        { content: ' - Adjust cover image position with slider', bold: false },
       ],
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-version-4b-4`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Upload or remove", bold: true },
+        { content: '✅ Upload or remove', bold: true },
         { content: " - Full control over your document's cover", bold: false },
       ],
       attributes: {},
@@ -202,114 +198,114 @@ export function createDemoContent(
 
     {
       id: `h3-${timestamp}-version-5`,
-      type: "h3",
-      content: "🖼️ Free-Floating Images",
+      type: 'h3',
+      content: '🖼️ Free-Floating Images',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-version-5a`,
-      type: "p",
+      type: 'p',
       content:
-        "New free image mode lets you place images anywhere on the canvas with full positioning control:",
+        'New free image mode lets you place images anywhere on the canvas with full positioning control:',
       attributes: {},
     } as TextNode,
 
     {
       id: `li-${timestamp}-version-5b-1`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Drag anywhere", bold: true },
-        { content: " - Position images freely on the canvas", bold: false },
+        { content: '✅ Drag anywhere', bold: true },
+        { content: ' - Position images freely on the canvas', bold: false },
       ],
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-version-5b-2`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Resize handles", bold: true },
-        { content: " - Adjust image size with visual handles", bold: false },
+        { content: '✅ Resize handles', bold: true },
+        { content: ' - Adjust image size with visual handles', bold: false },
       ],
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-version-5b-3`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Z-index control", bold: true },
-        { content: " - Layer images in front or behind", bold: false },
+        { content: '✅ Z-index control', bold: true },
+        { content: ' - Layer images in front or behind', bold: false },
       ],
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-version-5b-4`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Perfect for layouts", bold: true },
-        { content: " - Create magazine-style designs", bold: false },
+        { content: '✅ Perfect for layouts', bold: true },
+        { content: ' - Create magazine-style designs', bold: false },
       ],
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-version-5c`,
-      type: "p",
+      type: 'p',
       children: [
-        { content: "To add a free-floating image, click on the ", bold: false },
+        { content: 'To add a free-floating image, click on the ', bold: false },
         {
-          content: "plus icon (➕)",
+          content: 'plus icon (➕)',
           bold: true,
-          className: "text-blue-600 dark:text-blue-400",
+          className: 'text-blue-600 dark:text-blue-400',
         },
-        { content: " in the editor toolbar and choose ", bold: false },
+        { content: ' in the editor toolbar and choose ', bold: false },
         {
-          content: "Free Movement Image",
+          content: 'Free Movement Image',
           bold: true,
-          className: "text-purple-600 dark:text-purple-400",
+          className: 'text-purple-600 dark:text-purple-400',
         },
-        { content: " from the insert component dialog:", bold: false },
+        { content: ' from the insert component dialog:', bold: false },
       ],
       attributes: {},
     } as TextNode,
 
     {
       id: `h3-${timestamp}-version-6`,
-      type: "h3",
-      content: "📝 Simplified List Items",
+      type: 'h3',
+      content: '📝 Simplified List Items',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-version-6a`,
-      type: "p",
-      content: "List handling is now much simpler and more intuitive:",
+      type: 'p',
+      content: 'List handling is now much simpler and more intuitive:',
       attributes: {},
     } as TextNode,
 
     {
       id: `li-${timestamp}-version-6b-1`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Simple li elements", bold: true },
-        { content: " - No complex nested structures", bold: false },
+        { content: '✅ Simple li elements', bold: true },
+        { content: ' - No complex nested structures', bold: false },
       ],
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-version-6b-2`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Bulleted (li) and numbered (ol)", bold: true },
-        { content: " - Two simple types", bold: false },
+        { content: '✅ Bulleted (li) and numbered (ol)', bold: true },
+        { content: ' - Two simple types', bold: false },
       ],
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-version-6b-3`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Auto-convert", bold: true },
+        { content: '✅ Auto-convert', bold: true },
         {
           content: " - Type '- ' for bullets or '1. ' for numbers",
           bold: false,
@@ -319,29 +315,29 @@ export function createDemoContent(
     } as TextNode,
     {
       id: `li-${timestamp}-version-6b-4`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Easy exit", bold: true },
-        { content: " - Press Enter on empty item to exit list", bold: false },
+        { content: '✅ Easy exit', bold: true },
+        { content: ' - Press Enter on empty item to exit list', bold: false },
       ],
       attributes: {},
     } as TextNode,
 
     {
       id: `h3-${timestamp}-version-7`,
-      type: "h3",
-      content: "🐛 Bug Fixes & Improvements",
+      type: 'h3',
+      content: '🐛 Bug Fixes & Improvements',
       attributes: {},
     } as TextNode,
 
     {
       id: `li-${timestamp}-version-7a-1`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Mobile drag & drop", bold: true },
+        { content: '✅ Mobile drag & drop', bold: true },
         {
           content:
-            " - Full touch support for dragging blocks on mobile devices with visual feedback",
+            ' - Full touch support for dragging blocks on mobile devices with visual feedback',
           bold: false,
         },
       ],
@@ -349,11 +345,11 @@ export function createDemoContent(
     } as TextNode,
     {
       id: `li-${timestamp}-version-7a-2`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Selection improvements", bold: true },
+        { content: '✅ Selection improvements', bold: true },
         {
-          content: " - Fixed text selection and cursor positioning bugs",
+          content: ' - Fixed text selection and cursor positioning bugs',
           bold: false,
         },
       ],
@@ -361,29 +357,29 @@ export function createDemoContent(
     } as TextNode,
     {
       id: `li-${timestamp}-version-7a-3`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Better image handling", bold: true },
-        { content: " - Improved upload and display logic", bold: false },
+        { content: '✅ Better image handling', bold: true },
+        { content: ' - Improved upload and display logic', bold: false },
       ],
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-version-7a-4`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Video block updates", bold: true },
-        { content: " - Enhanced video embedding and playback", bold: false },
+        { content: '✅ Video block updates', bold: true },
+        { content: ' - Enhanced video embedding and playback', bold: false },
       ],
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-version-7a-5`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Component modal", bold: true },
+        { content: '✅ Component modal', bold: true },
         {
-          content: " - New insert components dialog for quick access",
+          content: ' - New insert components dialog for quick access',
           bold: false,
         },
       ],
@@ -391,11 +387,11 @@ export function createDemoContent(
     } as TextNode,
     {
       id: `li-${timestamp}-version-7a-6`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Performance optimizations", bold: true },
+        { content: '✅ Performance optimizations', bold: true },
         {
-          content: " - Faster rendering and smoother interactions",
+          content: ' - Faster rendering and smoother interactions',
           bold: false,
         },
       ],
@@ -404,72 +400,71 @@ export function createDemoContent(
 
     {
       id: `p-${timestamp}-version-8a`,
-      type: "p",
-      content:
-        "Comprehensive table support with drag-and-drop, resizing, and markdown import:",
+      type: 'p',
+      content: 'Comprehensive table support with drag-and-drop, resizing, and markdown import:',
       attributes: {},
     } as TextNode,
 
     {
       id: `li-${timestamp}-version-8b-1`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Create tables", bold: true },
-        { content: " with custom rows and columns", bold: false },
+        { content: '✅ Create tables', bold: true },
+        { content: ' with custom rows and columns', bold: false },
       ],
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-version-8b-2`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Drag & resize", bold: true },
-        { content: " columns and rows", bold: false },
+        { content: '✅ Drag & resize', bold: true },
+        { content: ' columns and rows', bold: false },
       ],
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-version-8b-3`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "✅ Import markdown", bold: true },
-        { content: " tables from any source", bold: false },
+        { content: '✅ Import markdown', bold: true },
+        { content: ' tables from any source', bold: false },
       ],
       attributes: {},
     } as TextNode,
 
     {
       id: `table-wrapper-${timestamp}-version-8`,
-      type: "container",
+      type: 'container',
       children: [
         {
           id: `table-${timestamp}-version-7`,
-          type: "table",
+          type: 'table',
           children: [
             {
               id: `thead-${timestamp}-version-7`,
-              type: "thead",
+              type: 'thead',
               children: [
                 {
                   id: `tr-header-${timestamp}-version-7`,
-                  type: "tr",
+                  type: 'tr',
                   children: [
                     {
                       id: `th-${timestamp}-version-7-0`,
-                      type: "th",
-                      content: "Feature",
+                      type: 'th',
+                      content: 'Feature',
                       attributes: {},
                     } as TextNode,
                     {
                       id: `th-${timestamp}-version-7-1`,
-                      type: "th",
-                      content: "Status",
+                      type: 'th',
+                      content: 'Status',
                       attributes: {},
                     } as TextNode,
                     {
                       id: `th-${timestamp}-version-7-2`,
-                      type: "th",
-                      content: "Version",
+                      type: 'th',
+                      content: 'Version',
                       attributes: {},
                     } as TextNode,
                   ],
@@ -480,28 +475,28 @@ export function createDemoContent(
             },
             {
               id: `tbody-${timestamp}-version-7`,
-              type: "tbody",
+              type: 'tbody',
               children: [
                 {
                   id: `tr-${timestamp}-version-7-0`,
-                  type: "tr",
+                  type: 'tr',
                   children: [
                     {
                       id: `td-${timestamp}-version-7-0-0`,
-                      type: "td",
-                      content: "Table Support",
+                      type: 'td',
+                      content: 'Table Support',
                       attributes: {},
                     } as TextNode,
                     {
                       id: `td-${timestamp}-version-7-0-1`,
-                      type: "td",
-                      content: "✅ Released",
+                      type: 'td',
+                      content: '✅ Released',
                       attributes: {},
                     } as TextNode,
                     {
                       id: `td-${timestamp}-version-7-0-2`,
-                      type: "td",
-                      content: "0.1.0",
+                      type: 'td',
+                      content: '0.1.0',
                       attributes: {},
                     } as TextNode,
                   ],
@@ -509,24 +504,24 @@ export function createDemoContent(
                 },
                 {
                   id: `tr-${timestamp}-version-7-1`,
-                  type: "tr",
+                  type: 'tr',
                   children: [
                     {
                       id: `td-${timestamp}-version-7-1-0`,
-                      type: "td",
-                      content: "Multi-Select Images",
+                      type: 'td',
+                      content: 'Multi-Select Images',
                       attributes: {},
                     } as TextNode,
                     {
                       id: `td-${timestamp}-version-7-1-1`,
-                      type: "td",
-                      content: "✅ Released",
+                      type: 'td',
+                      content: '✅ Released',
                       attributes: {},
                     } as TextNode,
                     {
                       id: `td-${timestamp}-version-7-1-2`,
-                      type: "td",
-                      content: "0.1.0",
+                      type: 'td',
+                      content: '0.1.0',
                       attributes: {},
                     } as TextNode,
                   ],
@@ -534,24 +529,24 @@ export function createDemoContent(
                 },
                 {
                   id: `tr-${timestamp}-version-7-2`,
-                  type: "tr",
+                  type: 'tr',
                   children: [
                     {
                       id: `td-${timestamp}-version-7-2-0`,
-                      type: "td",
-                      content: "Enhanced Drag & Drop",
+                      type: 'td',
+                      content: 'Enhanced Drag & Drop',
                       attributes: {},
                     } as TextNode,
                     {
                       id: `td-${timestamp}-version-7-2-1`,
-                      type: "td",
-                      content: "✅ Released",
+                      type: 'td',
+                      content: '✅ Released',
                       attributes: {},
                     } as TextNode,
                     {
                       id: `td-${timestamp}-version-7-2-2`,
-                      type: "td",
-                      content: "0.1.0",
+                      type: 'td',
+                      content: '0.1.0',
                       attributes: {},
                     } as TextNode,
                   ],
@@ -569,47 +564,45 @@ export function createDemoContent(
 
     {
       id: `h3-${timestamp}-version-8`,
-      type: "h3",
-      content: "🖼️ Multi-Select Images (from v0.1.0)",
+      type: 'h3',
+      content: '🖼️ Multi-Select Images (from v0.1.0)',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-version-9`,
-      type: "p",
-      content:
-        "Ctrl+Click to select multiple images, then group, reverse, or extract them.",
+      type: 'p',
+      content: 'Ctrl+Click to select multiple images, then group, reverse, or extract them.',
       attributes: {},
     } as TextNode,
 
     {
       id: `h3-${timestamp}-version-10`,
-      type: "h3",
-      content: "🎯 Enhanced Drag & Drop (from v0.1.0)",
+      type: 'h3',
+      content: '🎯 Enhanced Drag & Drop (from v0.1.0)',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-version-11`,
-      type: "p",
+      type: 'p',
       content:
-        "Improved drag & drop for tables, containers, and image grids with smart drop zones and visual feedback.",
+        'Improved drag & drop for tables, containers, and image grids with smart drop zones and visual feedback.',
       attributes: {},
     } as TextNode,
 
     {
       id: `blockquote-${timestamp}-version-21a`,
-      type: "blockquote",
+      type: 'blockquote',
       children: [
         {
-          content: "🤝 Collaboration Welcome! ",
+          content: '🤝 Collaboration Welcome! ',
           bold: true,
-          className: "text-blue-600 dark:text-blue-400",
+          className: 'text-blue-600 dark:text-blue-400',
         },
-        { content: " ", italic: true },
+        { content: ' ', italic: true },
         {
-          content:
-            "I'm facing a lot of time constraints, so collaboration is much appreciated! ",
+          content: "I'm facing a lot of time constraints, so collaboration is much appreciated! ",
           italic: true,
         },
         {
@@ -626,66 +619,65 @@ export function createDemoContent(
       ],
       attributes: {
         className:
-          "bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-l-4 border-blue-500",
+          'bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-l-4 border-blue-500',
       },
     } as TextNode,
 
     {
       id: `p-${timestamp}-version-22`,
-      type: "p",
-      content: "---",
+      type: 'p',
+      content: '---',
       attributes: {
-        className: "text-center text-muted-foreground my-8",
+        className: 'text-center text-muted-foreground my-8',
       },
     } as TextNode,
 
     {
       id: `p-${timestamp}-2`,
-      type: "p",
+      type: 'p',
       children: [
-        { content: "A ", bold: false },
+        { content: 'A ', bold: false },
         {
-          content: "modern block-based rich text editor",
+          content: 'modern block-based rich text editor',
           bold: true,
-          className: "text-blue-600 dark:text-blue-400",
+          className: 'text-blue-600 dark:text-blue-400',
         },
-        { content: " built entirely with ", bold: false },
+        { content: ' built entirely with ', bold: false },
         {
-          content: "Tailwind CSS",
+          content: 'Tailwind CSS',
           bold: true,
-          className: "text-cyan-600 dark:text-cyan-400",
+          className: 'text-cyan-600 dark:text-cyan-400',
         },
-        { content: " and ", bold: false },
+        { content: ' and ', bold: false },
         {
-          content: "shadcn/ui",
+          content: 'shadcn/ui',
           bold: true,
-          className: "text-purple-600 dark:text-purple-400",
+          className: 'text-purple-600 dark:text-purple-400',
         },
-        { content: ".", bold: false },
+        { content: '.', bold: false },
       ],
       attributes: {},
     } as TextNode,
 
     {
       id: `blockquote-${timestamp}-3`,
-      type: "blockquote",
+      type: 'blockquote',
       children: [
-        { content: "💡 Quick Tip: ", bold: true },
-        { content: "This entire document is editable! ", italic: true },
+        { content: '💡 Quick Tip: ', bold: true },
+        { content: 'This entire document is editable! ', italic: true },
         {
-          content:
-            "Select any text to format it, drag blocks to reorder them, and press ",
+          content: 'Select any text to format it, drag blocks to reorder them, and press ',
           italic: true,
         },
-        { content: "Shift+Enter", elementType: "code", bold: true },
+        { content: 'Shift+Enter', elementType: 'code', bold: true },
         {
-          content: " to create nested blocks. Have fun exploring!",
+          content: ' to create nested blocks. Have fun exploring!',
           italic: true,
         },
       ],
       attributes: {
         style:
-          "background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1)); border-left: 4px solid rgb(59, 130, 246);",
+          'background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1)); border-left: 4px solid rgb(59, 130, 246);',
       },
     } as TextNode,
 
@@ -694,18 +686,18 @@ export function createDemoContent(
     // ========================================
     {
       id: `blockquote-${timestamp}-9`,
-      type: "blockquote",
+      type: 'blockquote',
       children: [
         {
-          content: "⚠️ IMPORTANT NOTE: ",
+          content: '⚠️ IMPORTANT NOTE: ',
           bold: true,
-          className: "text-red-600 dark:text-red-400",
+          className: 'text-red-600 dark:text-red-400',
         },
-        { content: "For transparency, the ", italic: true },
-        { content: "code supports everything", italic: true, bold: true },
+        { content: 'For transparency, the ', italic: true },
+        { content: 'code supports everything', italic: true, bold: true },
         {
           content:
-            " mentioned in this document (gradients, shadows, borders, custom styles, etc.), but ",
+            ' mentioned in this document (gradients, shadows, borders, custom styles, etc.), but ',
           italic: true,
         },
         {
@@ -715,22 +707,22 @@ export function createDemoContent(
         },
         {
           content:
-            ". You can still apply them programmatically through the JSON structure or by typing Tailwind classes in the Custom Class Popover. ",
+            '. You can still apply them programmatically through the JSON structure or by typing Tailwind classes in the Custom Class Popover. ',
           italic: true,
         },
         {
-          content: "Any collaboration is much appreciated! ",
+          content: 'Any collaboration is much appreciated! ',
           italic: true,
           bold: true,
-          className: "text-green-600 dark:text-green-400",
+          className: 'text-green-600 dark:text-green-400',
         },
         {
-          content: "Feel free to contribute UI components for these features.",
+          content: 'Feel free to contribute UI components for these features.',
           italic: true,
         },
       ],
       attributes: {
-        className: "bg-red-50 dark:bg-red-900/20 border-l-4 border-red-600",
+        className: 'bg-red-50 dark:bg-red-900/20 border-l-4 border-red-600',
       },
     } as TextNode,
 
@@ -739,38 +731,38 @@ export function createDemoContent(
     // ========================================
     {
       id: `h2-${timestamp}-10`,
-      type: "h2",
-      content: "✨ Text Formatting",
+      type: 'h2',
+      content: '✨ Text Formatting',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-11`,
-      type: "p",
+      type: 'p',
       content:
-        "Select any text and use the toolbar to apply rich formatting. The editor supports all standard text styles:",
+        'Select any text and use the toolbar to apply rich formatting. The editor supports all standard text styles:',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-12`,
-      type: "p",
+      type: 'p',
       children: [
-        { content: "You can make text ", bold: false },
-        { content: "bold", bold: true },
-        { content: ", ", bold: false },
-        { content: "italic", italic: true },
-        { content: ", ", bold: false },
-        { content: "underlined", underline: true },
-        { content: ", or even ", bold: false },
+        { content: 'You can make text ', bold: false },
+        { content: 'bold', bold: true },
+        { content: ', ', bold: false },
+        { content: 'italic', italic: true },
+        { content: ', ', bold: false },
+        { content: 'underlined', underline: true },
+        { content: ', or even ', bold: false },
         {
-          content: "combine all three styles",
+          content: 'combine all three styles',
           bold: true,
           italic: true,
           underline: true,
         },
         {
-          content: " together! Mix and match to create beautiful content.",
+          content: ' together! Mix and match to create beautiful content.',
           bold: false,
         },
       ],
@@ -782,54 +774,54 @@ export function createDemoContent(
     // ========================================
     {
       id: `h2-${timestamp}-20`,
-      type: "h2",
-      content: "📋 Block Types",
+      type: 'h2',
+      content: '📋 Block Types',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-21`,
-      type: "p",
+      type: 'p',
       content:
-        "The editor supports multiple block types. Each block can be changed using the type selector in the toolbar:",
+        'The editor supports multiple block types. Each block can be changed using the type selector in the toolbar:',
       attributes: {},
     } as TextNode,
 
     {
       id: `h1-${timestamp}-22`,
-      type: "h1",
-      content: "Heading 1 - The largest heading",
+      type: 'h1',
+      content: 'Heading 1 - The largest heading',
       attributes: {},
     } as TextNode,
 
     {
       id: `h2-${timestamp}-23`,
-      type: "h2",
-      content: "Heading 2 - Major sections",
+      type: 'h2',
+      content: 'Heading 2 - Major sections',
       attributes: {},
     } as TextNode,
 
     {
       id: `h3-${timestamp}-24`,
-      type: "h3",
-      content: "Heading 3 - Subsections",
+      type: 'h3',
+      content: 'Heading 3 - Subsections',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-25`,
-      type: "p",
+      type: 'p',
       content:
-        "Paragraph - The standard block type for regular text content. Perfect for body text and descriptions.",
+        'Paragraph - The standard block type for regular text content. Perfect for body text and descriptions.',
       attributes: {},
     } as TextNode,
 
     {
       id: `blockquote-${timestamp}-26`,
-      type: "blockquote",
+      type: 'blockquote',
       children: [
         {
-          content: "Blockquote - ",
+          content: 'Blockquote - ',
           italic: true,
           bold: true,
         },
@@ -844,7 +836,7 @@ export function createDemoContent(
 
     {
       id: `code-${timestamp}-27`,
-      type: "code",
+      type: 'code',
       content: `// Code Block - For displaying code with proper formatting
 function greet(name: string) {
   return \`Hello, \${name}! Welcome to Mina Rich Editor.\`;
@@ -860,98 +852,98 @@ console.log(message);`,
     // ========================================
     {
       id: `h2-${timestamp}-30`,
-      type: "h2",
-      content: "📝 Lists - Ordered & Unordered",
+      type: 'h2',
+      content: '📝 Lists - Ordered & Unordered',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-31`,
-      type: "p",
+      type: 'p',
       content:
-        "Create ordered lists (numbered) or unordered lists (bullet points) for organized content:",
+        'Create ordered lists (numbered) or unordered lists (bullet points) for organized content:',
       attributes: {},
     } as TextNode,
 
     {
       id: `h3-${timestamp}-32`,
-      type: "h3",
-      content: "Ordered List Example (ol)",
+      type: 'h3',
+      content: 'Ordered List Example (ol)',
       attributes: {},
     } as TextNode,
 
     {
       id: `li-${timestamp}-33-1`,
-      type: "ol",
-      content: "First item - Automatically numbered",
+      type: 'ol',
+      content: 'First item - Automatically numbered',
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-33-2`,
-      type: "ol",
-      content: "Second item - Numbers increment automatically",
+      type: 'ol',
+      content: 'Second item - Numbers increment automatically',
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-33-3`,
-      type: "ol",
-      content: "Third item - Perfect for step-by-step instructions",
+      type: 'ol',
+      content: 'Third item - Perfect for step-by-step instructions',
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-33-4`,
-      type: "ol",
+      type: 'ol',
       children: [
-        { content: "You can even add ", bold: false },
-        { content: "formatting", bold: true },
-        { content: " to list items!", italic: true },
+        { content: 'You can even add ', bold: false },
+        { content: 'formatting', bold: true },
+        { content: ' to list items!', italic: true },
       ],
       attributes: {},
     } as TextNode,
 
     {
       id: `h3-${timestamp}-34`,
-      type: "h3",
-      content: "Unordered List Example (ul)",
+      type: 'h3',
+      content: 'Unordered List Example (ul)',
       attributes: {},
     } as TextNode,
 
     {
       id: `li-${timestamp}-35-1`,
-      type: "li",
-      content: "Bullet point item",
+      type: 'li',
+      content: 'Bullet point item',
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-35-2`,
-      type: "li",
-      content: "Another bullet point",
+      type: 'li',
+      content: 'Another bullet point',
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-35-3`,
-      type: "li",
-      content: "Great for feature lists",
+      type: 'li',
+      content: 'Great for feature lists',
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-35-4`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "Supports ", bold: false },
+        { content: 'Supports ', bold: false },
         {
-          content: "rich text formatting",
+          content: 'rich text formatting',
           bold: true,
-          className: "text-blue-600 dark:text-blue-400",
+          className: 'text-blue-600 dark:text-blue-400',
         },
-        { content: " too!", bold: false },
+        { content: ' too!', bold: false },
       ],
       attributes: {},
     } as TextNode,
 
     {
       id: `code-${timestamp}-36`,
-      type: "code",
+      type: 'code',
       content: `// Simple list structure - no container needed!
 // Ordered list items (numbered)
 { id: 'item-1', type: 'ol', content: 'First item' },
@@ -976,39 +968,39 @@ console.log(message);`,
     // ========================================
     {
       id: `h2-${timestamp}-40`,
-      type: "h2",
-      content: "🎨 Inline Element Types",
+      type: 'h2',
+      content: '🎨 Inline Element Types',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-41`,
-      type: "p",
+      type: 'p',
       content:
-        "Apply heading styles inline within paragraphs. Select text and choose from the element type dropdown to mix different text sizes and styles:",
+        'Apply heading styles inline within paragraphs. Select text and choose from the element type dropdown to mix different text sizes and styles:',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-42`,
-      type: "p",
+      type: 'p',
       children: [
-        { content: "This paragraph contains ", bold: false },
-        { content: "H1 styled text", elementType: "h1" },
-        { content: " and ", bold: false },
-        { content: "H2 styled text", elementType: "h2" },
-        { content: " and ", bold: false },
-        { content: "H3 styled text", elementType: "h3" },
-        { content: " all mixed together, plus ", bold: false },
-        { content: "inline code", elementType: "code" },
-        { content: " support for technical content!", bold: false },
+        { content: 'This paragraph contains ', bold: false },
+        { content: 'H1 styled text', elementType: 'h1' },
+        { content: ' and ', bold: false },
+        { content: 'H2 styled text', elementType: 'h2' },
+        { content: ' and ', bold: false },
+        { content: 'H3 styled text', elementType: 'h3' },
+        { content: ' all mixed together, plus ', bold: false },
+        { content: 'inline code', elementType: 'code' },
+        { content: ' support for technical content!', bold: false },
       ],
       attributes: {},
     } as TextNode,
 
     {
       id: `code-${timestamp}-44`,
-      type: "code",
+      type: 'code',
       content: `// Inline element types structure
 const richParagraph = {
   type: 'p',
@@ -1024,46 +1016,45 @@ const richParagraph = {
 
     {
       id: `blockquote-${timestamp}-45`,
-      type: "blockquote",
+      type: 'blockquote',
       children: [
         {
-          content: "🤔 Wait, the block above looks a bit weird, right? ",
+          content: '🤔 Wait, the block above looks a bit weird, right? ',
           italic: true,
         },
         {
-          content:
-            "Oh! I wish I could add custom classes using normal Tailwind... ",
+          content: 'Oh! I wish I could add custom classes using normal Tailwind... ',
           italic: true,
           bold: true,
         },
         {
-          content: "Actually, you can! ",
+          content: 'Actually, you can! ',
           italic: true,
-          className: "text-green-600 dark:text-green-400",
+          className: 'text-green-600 dark:text-green-400',
         },
-        { content: "Select your text, then click the ", italic: true },
-        { content: "pencil ✏️ smart icon", italic: true, bold: true },
+        { content: 'Select your text, then click the ', italic: true },
+        { content: 'pencil ✏️ smart icon', italic: true, bold: true },
         {
-          content: ", and type your class or select from preset classes!",
+          content: ', and type your class or select from preset classes!',
           italic: true,
         },
       ],
       attributes: {
         className:
-          "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-l-4 border-amber-600",
+          'bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-l-4 border-amber-600',
       },
     } as TextNode,
 
     {
       id: `h3-${timestamp}-46`,
-      type: "h3",
-      content: "✏️ Custom Class Smart Icon",
+      type: 'h3',
+      content: '✏️ Custom Class Smart Icon',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-47`,
-      type: "p",
+      type: 'p',
       content:
         "After selecting text, you'll see a smart pencil icon appear. Click it to access the Custom Class Popover where you can apply any Tailwind CSS class or choose from presets:",
       attributes: {},
@@ -1071,26 +1062,26 @@ const richParagraph = {
 
     {
       id: `h3-${timestamp}-49`,
-      type: "h3",
-      content: "🎨 Custom Class Popover",
+      type: 'h3',
+      content: '🎨 Custom Class Popover',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-50`,
-      type: "p",
+      type: 'p',
       content:
-        "The Custom Class Popover gives you complete control over text styling with preset Tailwind classes organized by category:",
+        'The Custom Class Popover gives you complete control over text styling with preset Tailwind classes organized by category:',
       attributes: {},
     } as TextNode,
 
     {
       id: `li-${timestamp}-52-1`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "Text Colors", bold: true },
+        { content: 'Text Colors', bold: true },
         {
-          content: " - All Tailwind color shades (red, blue, green, etc.)",
+          content: ' - All Tailwind color shades (red, blue, green, etc.)',
           bold: false,
         },
       ],
@@ -1098,27 +1089,27 @@ const richParagraph = {
     } as TextNode,
     {
       id: `li-${timestamp}-52-2`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "Background Colors", bold: true },
-        { content: " - Full palette of background colors", bold: false },
+        { content: 'Background Colors', bold: true },
+        { content: ' - Full palette of background colors', bold: false },
       ],
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-52-3`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "Font Sizes", bold: true },
-        { content: " - From xs to 9xl", bold: false },
+        { content: 'Font Sizes', bold: true },
+        { content: ' - From xs to 9xl', bold: false },
       ],
       attributes: {},
     } as TextNode,
     {
       id: `li-${timestamp}-52-4`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "Search Functionality", bold: true },
+        { content: 'Search Functionality', bold: true },
         {
           content: " - Quick class lookup (e.g., 'text', 'bg', 'flex')",
           bold: false,
@@ -1128,70 +1119,66 @@ const richParagraph = {
     } as TextNode,
     {
       id: `li-${timestamp}-52-5`,
-      type: "li",
+      type: 'li',
       children: [
-        { content: "Custom Input", bold: true },
-        { content: " - Type any Tailwind class manually", bold: false },
+        { content: 'Custom Input', bold: true },
+        { content: ' - Type any Tailwind class manually', bold: false },
       ],
       attributes: {},
     } as TextNode,
 
     {
       id: `h3-${timestamp}-53`,
-      type: "h3",
-      content: "✨ Much Better Results!",
+      type: 'h3',
+      content: '✨ Much Better Results!',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-54`,
-      type: "p",
-      content:
-        "With custom classes, you can create stunning text effects and perfect typography:",
+      type: 'p',
+      content: 'With custom classes, you can create stunning text effects and perfect typography:',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-56`,
-      type: "p",
+      type: 'p',
       children: [
         { content: "Now let's recreate that beautiful text! ", bold: false },
-        { content: "This paragraph contains ", bold: false },
+        { content: 'This paragraph contains ', bold: false },
         {
-          content: "H1 styled text",
-          elementType: "h1",
-          className:
-            "bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent",
+          content: 'H1 styled text',
+          elementType: 'h1',
+          className: 'bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent',
         },
-        { content: " and ", bold: false },
+        { content: ' and ', bold: false },
         {
-          content: "H2 styled text",
-          elementType: "h2",
-          className:
-            "bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent",
+          content: 'H2 styled text',
+          elementType: 'h2',
+          className: 'bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent',
         },
-        { content: " and ", bold: false },
+        { content: ' and ', bold: false },
         {
-          content: "H3 styled text",
-          elementType: "h3",
-          className:
-            "bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent",
+          content: 'H3 styled text',
+          elementType: 'h3',
+          className: 'bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent',
         },
-        { content: " all mixed together, plus ", bold: false },
+        { content: ' all mixed together, plus ', bold: false },
         {
-          content: "inline code",
-          elementType: "code",
+          content: 'inline code',
+          elementType: 'code',
           className:
-            "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded",
+            'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded',
         },
-        { content: " support for technical content!", bold: false },
+        { content: ' support for technical content!', bold: false },
       ],
       attributes: {},
     } as TextNode,
 
     {
       id: `code-${timestamp}-57`,
-      type: "code",
+      type: 'code',
       content: `// Custom classes with inline element types
 const styledText = {
   type: 'p',
@@ -1214,32 +1201,31 @@ const styledText = {
 
     {
       id: `blockquote-${timestamp}-58`,
-      type: "blockquote",
+      type: 'blockquote',
       children: [
-        { content: "💡 Pro Tip: ", bold: true },
-        { content: "You can apply ", italic: true },
+        { content: '💡 Pro Tip: ', bold: true },
+        { content: 'You can apply ', italic: true },
         {
-          content: "any Tailwind class",
+          content: 'any Tailwind class',
           italic: true,
           bold: true,
-          className: "text-blue-600 dark:text-blue-400",
+          className: 'text-blue-600 dark:text-blue-400',
         },
         {
           content:
-            " including gradients, shadows, borders, spacing, and more! The Custom Class Popover is your gateway to ",
+            ' including gradients, shadows, borders, spacing, and more! The Custom Class Popover is your gateway to ',
           italic: true,
         },
         {
-          content: "unlimited styling possibilities",
+          content: 'unlimited styling possibilities',
           italic: true,
           bold: true,
-          className:
-            "bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent",
+          className: 'bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent',
         },
-        { content: ".", italic: true },
+        { content: '.', italic: true },
       ],
       attributes: {
-        className: "bg-blue-50 dark:bg-blue-900/20 border-blue-600",
+        className: 'bg-blue-50 dark:bg-blue-900/20 border-blue-600',
       },
     } as TextNode,
 
@@ -1248,114 +1234,114 @@ const styledText = {
     // ========================================
     {
       id: `h2-${timestamp}-50`,
-      type: "h2",
-      content: "🎨 Color Customization",
+      type: 'h2',
+      content: '🎨 Color Customization',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-51`,
-      type: "p",
+      type: 'p',
       content:
-        "The editor includes a powerful color picker with preset colors and custom color selection. Apply colors to any selected text:",
+        'The editor includes a powerful color picker with preset colors and custom color selection. Apply colors to any selected text:',
       attributes: {},
     } as TextNode,
 
     {
       id: `h3-${timestamp}-52`,
-      type: "h3",
-      content: "Preset Colors",
+      type: 'h3',
+      content: 'Preset Colors',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-53`,
-      type: "p",
+      type: 'p',
       children: [
         {
-          content: "Red ",
+          content: 'Red ',
           bold: true,
-          className: "text-red-600 dark:text-red-400",
+          className: 'text-red-600 dark:text-red-400',
         },
         {
-          content: "Orange ",
+          content: 'Orange ',
           bold: true,
-          className: "text-orange-600 dark:text-orange-400",
+          className: 'text-orange-600 dark:text-orange-400',
         },
         {
-          content: "Amber ",
+          content: 'Amber ',
           bold: true,
-          className: "text-amber-600 dark:text-amber-400",
+          className: 'text-amber-600 dark:text-amber-400',
         },
         {
-          content: "Yellow ",
+          content: 'Yellow ',
           bold: true,
-          className: "text-yellow-600 dark:text-yellow-400",
+          className: 'text-yellow-600 dark:text-yellow-400',
         },
         {
-          content: "Lime ",
+          content: 'Lime ',
           bold: true,
-          className: "text-lime-600 dark:text-lime-400",
+          className: 'text-lime-600 dark:text-lime-400',
         },
         {
-          content: "Green ",
+          content: 'Green ',
           bold: true,
-          className: "text-green-600 dark:text-green-400",
+          className: 'text-green-600 dark:text-green-400',
         },
         {
-          content: "Emerald ",
+          content: 'Emerald ',
           bold: true,
-          className: "text-emerald-600 dark:text-emerald-400",
+          className: 'text-emerald-600 dark:text-emerald-400',
         },
         {
-          content: "Teal ",
+          content: 'Teal ',
           bold: true,
-          className: "text-teal-600 dark:text-teal-400",
+          className: 'text-teal-600 dark:text-teal-400',
         },
         {
-          content: "Cyan ",
+          content: 'Cyan ',
           bold: true,
-          className: "text-cyan-600 dark:text-cyan-400",
+          className: 'text-cyan-600 dark:text-cyan-400',
         },
         {
-          content: "Sky ",
+          content: 'Sky ',
           bold: true,
-          className: "text-sky-600 dark:text-sky-400",
+          className: 'text-sky-600 dark:text-sky-400',
         },
         {
-          content: "Blue ",
+          content: 'Blue ',
           bold: true,
-          className: "text-blue-600 dark:text-blue-400",
+          className: 'text-blue-600 dark:text-blue-400',
         },
         {
-          content: "Indigo ",
+          content: 'Indigo ',
           bold: true,
-          className: "text-indigo-600 dark:text-indigo-400",
+          className: 'text-indigo-600 dark:text-indigo-400',
         },
         {
-          content: "Violet ",
+          content: 'Violet ',
           bold: true,
-          className: "text-violet-600 dark:text-violet-400",
+          className: 'text-violet-600 dark:text-violet-400',
         },
         {
-          content: "Purple ",
+          content: 'Purple ',
           bold: true,
-          className: "text-purple-600 dark:text-purple-400",
+          className: 'text-purple-600 dark:text-purple-400',
         },
         {
-          content: "Fuchsia ",
+          content: 'Fuchsia ',
           bold: true,
-          className: "text-fuchsia-600 dark:text-fuchsia-400",
+          className: 'text-fuchsia-600 dark:text-fuchsia-400',
         },
         {
-          content: "Pink ",
+          content: 'Pink ',
           bold: true,
-          className: "text-pink-600 dark:text-pink-400",
+          className: 'text-pink-600 dark:text-pink-400',
         },
         {
-          content: "Rose",
+          content: 'Rose',
           bold: true,
-          className: "text-rose-600 dark:text-rose-400",
+          className: 'text-rose-600 dark:text-rose-400',
         },
       ],
       attributes: {},
@@ -1363,34 +1349,34 @@ const styledText = {
 
     {
       id: `h3-${timestamp}-54`,
-      type: "h3",
-      content: "Custom Colors",
+      type: 'h3',
+      content: 'Custom Colors',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-55`,
-      type: "p",
+      type: 'p',
       children: [
-        { content: "You can also use ", bold: false },
+        { content: 'You can also use ', bold: false },
         {
-          content: "custom hex colors",
+          content: 'custom hex colors',
           bold: true,
-          styles: { color: "#FF6B6B" },
+          styles: { color: '#FF6B6B' },
         },
-        { content: " or ", bold: false },
+        { content: ' or ', bold: false },
         {
-          content: "RGB values",
+          content: 'RGB values',
           bold: true,
-          styles: { color: "#4ECDC4" },
+          styles: { color: '#4ECDC4' },
         },
-        { content: " or even ", bold: false },
+        { content: ' or even ', bold: false },
         {
-          content: "gradient effects",
+          content: 'gradient effects',
           bold: true,
-          styles: { color: "#95E1D3" },
+          styles: { color: '#95E1D3' },
         },
-        { content: " by using the color picker!", bold: false },
+        { content: ' by using the color picker!', bold: false },
       ],
       attributes: {},
     } as TextNode,
@@ -1400,54 +1386,54 @@ const styledText = {
     // ========================================
     {
       id: `h2-${timestamp}-60`,
-      type: "h2",
-      content: "📏 Font Size Control",
+      type: 'h2',
+      content: '📏 Font Size Control',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-61`,
-      type: "p",
+      type: 'p',
       content:
-        "Adjust font sizes for any selected text. Choose from preset sizes or enter a custom value:",
+        'Adjust font sizes for any selected text. Choose from preset sizes or enter a custom value:',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-62`,
-      type: "p",
+      type: 'p',
       children: [
         {
-          content: "Tiny text (12px) ",
-          styles: { fontSize: "12px" },
+          content: 'Tiny text (12px) ',
+          styles: { fontSize: '12px' },
         },
         {
-          content: "Small text (14px) ",
-          styles: { fontSize: "14px" },
+          content: 'Small text (14px) ',
+          styles: { fontSize: '14px' },
         },
         {
-          content: "Normal text (16px) ",
-          styles: { fontSize: "16px" },
+          content: 'Normal text (16px) ',
+          styles: { fontSize: '16px' },
         },
         {
-          content: "Large text (20px) ",
+          content: 'Large text (20px) ',
           bold: true,
-          styles: { fontSize: "20px" },
+          styles: { fontSize: '20px' },
         },
         {
-          content: "Extra Large (24px) ",
+          content: 'Extra Large (24px) ',
           bold: true,
-          styles: { fontSize: "24px" },
+          styles: { fontSize: '24px' },
         },
         {
-          content: "Huge (32px) ",
+          content: 'Huge (32px) ',
           bold: true,
-          styles: { fontSize: "32px" },
+          styles: { fontSize: '32px' },
         },
         {
-          content: "Massive (48px)",
+          content: 'Massive (48px)',
           bold: true,
-          styles: { fontSize: "48px" },
+          styles: { fontSize: '48px' },
         },
       ],
       attributes: {},
@@ -1458,60 +1444,60 @@ const styledText = {
     // ========================================
     {
       id: `h2-${timestamp}-70`,
-      type: "h2",
-      content: "🎨 Background Colors",
+      type: 'h2',
+      content: '🎨 Background Colors',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-71`,
-      type: "p",
+      type: 'p',
       content:
-        "Apply background colors to entire blocks using preset Tailwind colors or custom colors. Perfect for highlighting important sections:",
+        'Apply background colors to entire blocks using preset Tailwind colors or custom colors. Perfect for highlighting important sections:',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-72`,
-      type: "p",
-      content: "This block has a blue background!",
+      type: 'p',
+      content: 'This block has a blue background!',
       attributes: {
-        className: "bg-blue-100 dark:bg-blue-900/30 p-4 rounded-lg",
+        className: 'bg-blue-100 dark:bg-blue-900/30 p-4 rounded-lg',
       },
     } as TextNode,
 
     {
       id: `p-${timestamp}-73`,
-      type: "p",
-      content: "This block has a green background with rounded corners!",
+      type: 'p',
+      content: 'This block has a green background with rounded corners!',
       attributes: {
-        className: "bg-green-100 dark:bg-green-900/30 p-4 rounded-lg",
+        className: 'bg-green-100 dark:bg-green-900/30 p-4 rounded-lg',
       },
     } as TextNode,
 
     {
       id: `p-${timestamp}-74`,
-      type: "p",
-      content: "This block has a custom gradient background!",
+      type: 'p',
+      content: 'This block has a custom gradient background!',
       attributes: {
         style:
-          "background: linear-gradient(135deg, rgba(147, 51, 234, 0.2), rgba(59, 130, 246, 0.2)); padding: 1rem; border-radius: 0.5rem;",
+          'background: linear-gradient(135deg, rgba(147, 51, 234, 0.2), rgba(59, 130, 246, 0.2)); padding: 1rem; border-radius: 0.5rem;',
       },
     } as TextNode,
 
     {
       id: `blockquote-${timestamp}-75`,
-      type: "blockquote",
+      type: 'blockquote',
       children: [
-        { content: "💡 Pro Tip: ", bold: true },
+        { content: '💡 Pro Tip: ', bold: true },
         {
           content:
-            "Background colors work with any block type including headings, paragraphs, quotes, and code blocks!",
+            'Background colors work with any block type including headings, paragraphs, quotes, and code blocks!',
           italic: true,
         },
       ],
       attributes: {
-        className: "bg-purple-100 dark:bg-purple-900/30 border-purple-600",
+        className: 'bg-purple-100 dark:bg-purple-900/30 border-purple-600',
       },
     } as TextNode,
 
@@ -1520,68 +1506,68 @@ const styledText = {
     // ========================================
     {
       id: `h2-${timestamp}-80`,
-      type: "h2",
-      content: "🔗 Link Support",
+      type: 'h2',
+      content: '🔗 Link Support',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-81`,
-      type: "p",
+      type: 'p',
       content:
-        "Create beautiful, clickable links with the modern link popover. Select text and add a URL to make it interactive:",
+        'Create beautiful, clickable links with the modern link popover. Select text and add a URL to make it interactive:',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-82`,
-      type: "p",
+      type: 'p',
       children: [
-        { content: "You can create clickable links like ", bold: false },
+        { content: 'You can create clickable links like ', bold: false },
         {
-          content: "this example link",
+          content: 'this example link',
           bold: true,
           underline: true,
-          href: "https://example.com/",
-          className: "text-blue-600 dark:text-blue-400",
+          href: 'https://example.com/',
+          className: 'text-blue-600 dark:text-blue-400',
         },
-        { content: " or ", bold: false },
+        { content: ' or ', bold: false },
         {
-          content: "another link",
+          content: 'another link',
           bold: true,
           underline: true,
-          href: "https://example.com/page",
-          className: "text-purple-600 dark:text-purple-400",
+          href: 'https://example.com/page',
+          className: 'text-purple-600 dark:text-purple-400',
         },
-        { content: " anywhere in your content!", bold: false },
+        { content: ' anywhere in your content!', bold: false },
       ],
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-84`,
-      type: "p",
+      type: 'p',
       children: [
-        { content: "Multiple links: ", bold: true },
+        { content: 'Multiple links: ', bold: true },
         {
-          content: "Link One",
-          href: "https://example.com/one",
+          content: 'Link One',
+          href: 'https://example.com/one',
           underline: true,
-          className: "text-gray-800 dark:text-gray-200",
+          className: 'text-gray-800 dark:text-gray-200',
         },
-        { content: " • ", bold: false },
+        { content: ' • ', bold: false },
         {
-          content: "Link Two",
-          href: "https://example.com/two",
+          content: 'Link Two',
+          href: 'https://example.com/two',
           underline: true,
-          className: "text-blue-600 dark:text-blue-400",
+          className: 'text-blue-600 dark:text-blue-400',
         },
-        { content: " • ", bold: false },
+        { content: ' • ', bold: false },
         {
-          content: "Link Three",
-          href: "https://example.com/three",
+          content: 'Link Three',
+          href: 'https://example.com/three',
           underline: true,
-          className: "text-purple-600 dark:text-purple-400",
+          className: 'text-purple-600 dark:text-purple-400',
         },
       ],
       attributes: {},
@@ -1592,27 +1578,27 @@ const styledText = {
     // ========================================
     {
       id: `h2-${timestamp}-90`,
-      type: "h2",
-      content: "🖼️ Image Support",
+      type: 'h2',
+      content: '🖼️ Image Support',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-91`,
-      type: "p",
+      type: 'p',
       content:
-        "Upload and manage images with ease. The editor supports single images, grid layouts, and drag-and-drop reordering:",
+        'Upload and manage images with ease. The editor supports single images, grid layouts, and drag-and-drop reordering:',
       attributes: {},
     } as TextNode,
 
     {
       id: `blockquote-${timestamp}-97`,
-      type: "blockquote",
+      type: 'blockquote',
       children: [
-        { content: "💡 Image Features: ", bold: true },
+        { content: '💡 Image Features: ', bold: true },
         {
           content:
-            "Drag to reorder • Click to upload • Add captions • Responsive grid layout • Support for multiple formats (jpg, png, gif, webp)",
+            'Drag to reorder • Click to upload • Add captions • Responsive grid layout • Support for multiple formats (jpg, png, gif, webp)',
           italic: true,
         },
       ],
@@ -1624,20 +1610,20 @@ const styledText = {
     // ========================================
     {
       id: `h2-${timestamp}-100`,
-      type: "h2",
-      content: "🪆 Nested Blocks",
+      type: 'h2',
+      content: '🪆 Nested Blocks',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-101`,
-      type: "p",
+      type: 'p',
       children: [
-        { content: "Press ", bold: false },
-        { content: "Shift+Enter", elementType: "code", bold: true },
+        { content: 'Press ', bold: false },
+        { content: 'Shift+Enter', elementType: 'code', bold: true },
         {
           content:
-            " to create nested blocks. Maximum nesting level is 1. Great for grouping related content together:",
+            ' to create nested blocks. Maximum nesting level is 1. Great for grouping related content together:',
           bold: false,
         },
       ],
@@ -1646,40 +1632,39 @@ const styledText = {
 
     {
       id: `container-${timestamp}-102`,
-      type: "container",
+      type: 'container',
       children: [
         {
           id: `p-${timestamp}-103`,
-          type: "p",
+          type: 'p',
           children: [
-            { content: "📦 This is a ", bold: false },
+            { content: '📦 This is a ', bold: false },
             {
-              content: "nested container",
+              content: 'nested container',
               bold: true,
-              className: "text-blue-600 dark:text-blue-400",
+              className: 'text-blue-600 dark:text-blue-400',
             },
             {
-              content:
-                "! It groups related content together and can contain any block type.",
+              content: '! It groups related content together and can contain any block type.',
               bold: false,
             },
           ],
           attributes: {
-            className: "bg-blue-50 dark:bg-blue-900/20 p-3 rounded",
+            className: 'bg-blue-50 dark:bg-blue-900/20 p-3 rounded',
           },
         } as TextNode,
 
         {
           id: `p-${timestamp}-104`,
-          type: "p",
+          type: 'p',
           content:
-            "Each nested block maintains its own formatting, type, and attributes. You can have paragraphs, headings, code, lists, and more!",
+            'Each nested block maintains its own formatting, type, and attributes. You can have paragraphs, headings, code, lists, and more!',
           attributes: {},
         } as TextNode,
 
         {
           id: `code-${timestamp}-105`,
-          type: "code",
+          type: 'code',
           content: `// Code blocks work perfectly in nested containers
 const nestedBlock = {
   type: 'container',
@@ -1694,14 +1679,14 @@ const nestedBlock = {
 
         {
           id: `blockquote-${timestamp}-106`,
-          type: "blockquote",
+          type: 'blockquote',
           children: [
             {
-              content: "Even blockquotes work in nested containers! ",
+              content: 'Even blockquotes work in nested containers! ',
               italic: true,
             },
             {
-              content: "Perfect for organizing complex content hierarchically.",
+              content: 'Perfect for organizing complex content hierarchically.',
               italic: true,
               bold: true,
             },
@@ -1711,26 +1696,26 @@ const nestedBlock = {
 
         {
           id: `li-${timestamp}-107-1`,
-          type: "li",
-          content: "Nested lists are supported",
+          type: 'li',
+          content: 'Nested lists are supported',
           attributes: {},
         } as TextNode,
         {
           id: `li-${timestamp}-107-2`,
-          type: "li",
-          content: "Drag handles work in nested blocks too",
+          type: 'li',
+          content: 'Drag handles work in nested blocks too',
           attributes: {},
         } as TextNode,
         {
           id: `li-${timestamp}-107-3`,
-          type: "li",
-          content: "All formatting features available",
+          type: 'li',
+          content: 'All formatting features available',
           attributes: {},
         } as TextNode,
       ],
       attributes: {
         style:
-          "border: 2px dashed rgba(59, 130, 246, 0.3); padding: 1rem; border-radius: 0.5rem; background: rgba(59, 130, 246, 0.05);",
+          'border: 2px dashed rgba(59, 130, 246, 0.3); padding: 1rem; border-radius: 0.5rem; background: rgba(59, 130, 246, 0.05);',
       },
     } as ContainerNode,
 
@@ -1739,57 +1724,57 @@ const nestedBlock = {
     // ========================================
     {
       id: `h2-${timestamp}-110`,
-      type: "h2",
-      content: "🎯 Drag & Drop",
+      type: 'h2',
+      content: '🎯 Drag & Drop',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-111`,
-      type: "p",
+      type: 'p',
       content:
-        "Every block has a drag handle (⋮⋮). Click and drag to reorder blocks, swap images in grids, or reorganize your entire document:",
+        'Every block has a drag handle (⋮⋮). Click and drag to reorder blocks, swap images in grids, or reorganize your entire document:',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-112`,
-      type: "p",
-      content: "🎪 Try dragging this block!",
+      type: 'p',
+      content: '🎪 Try dragging this block!',
       attributes: {
         className:
-          "bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 p-4 rounded-lg",
+          'bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 p-4 rounded-lg',
       },
     } as TextNode,
 
     {
       id: `p-${timestamp}-113`,
-      type: "p",
-      content: "🎨 Or drag this one!",
+      type: 'p',
+      content: '🎨 Or drag this one!',
       attributes: {
         className:
-          "bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30 p-4 rounded-lg",
+          'bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30 p-4 rounded-lg',
       },
     } as TextNode,
 
     {
       id: `p-${timestamp}-114`,
-      type: "p",
-      content: "🚀 Drag and drop works everywhere!",
+      type: 'p',
+      content: '🚀 Drag and drop works everywhere!',
       attributes: {
         className:
-          "bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 p-4 rounded-lg",
+          'bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 p-4 rounded-lg',
       },
     } as TextNode,
 
     {
       id: `blockquote-${timestamp}-115`,
-      type: "blockquote",
+      type: 'blockquote',
       children: [
-        { content: "💡 Drag & Drop Features: ", bold: true },
+        { content: '💡 Drag & Drop Features: ', bold: true },
         {
           content:
-            "Reorder any block • Swap images in grids • Move blocks in and out of containers • Visual feedback during drag • Auto-scroll support",
+            'Reorder any block • Swap images in grids • Move blocks in and out of containers • Visual feedback during drag • Auto-scroll support',
           italic: true,
         },
       ],
@@ -1801,62 +1786,61 @@ const nestedBlock = {
     // ========================================
     {
       id: `h2-${timestamp}-120`,
-      type: "h2",
-      content: "✨ Custom Tailwind Classes",
+      type: 'h2',
+      content: '✨ Custom Tailwind Classes',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-121`,
-      type: "p",
+      type: 'p',
       content:
-        "Apply any Tailwind CSS class to your text. This is where the editor truly shines - unlimited customization with the full power of Tailwind:",
+        'Apply any Tailwind CSS class to your text. This is where the editor truly shines - unlimited customization with the full power of Tailwind:',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-122`,
-      type: "p",
+      type: 'p',
       children: [
-        { content: "Add ", bold: false },
+        { content: 'Add ', bold: false },
         {
-          content: "gradients",
+          content: 'gradients',
           bold: true,
-          className:
-            "bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent",
+          className: 'bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent',
         },
-        { content: ", ", bold: false },
+        { content: ', ', bold: false },
         {
-          content: "shadows",
+          content: 'shadows',
           bold: true,
-          className: "drop-shadow-lg text-blue-600",
+          className: 'drop-shadow-lg text-blue-600',
         },
-        { content: ", ", bold: false },
+        { content: ', ', bold: false },
         {
-          content: "borders",
+          content: 'borders',
           bold: true,
-          className: "border-2 border-green-600 px-2 rounded",
+          className: 'border-2 border-green-600 px-2 rounded',
         },
-        { content: ", ", bold: false },
+        { content: ', ', bold: false },
         {
-          content: "backgrounds",
+          content: 'backgrounds',
           bold: true,
-          className: "bg-yellow-200 dark:bg-yellow-800 px-2 py-1 rounded",
+          className: 'bg-yellow-200 dark:bg-yellow-800 px-2 py-1 rounded',
         },
-        { content: ", and ", bold: false },
+        { content: ', and ', bold: false },
         {
-          content: "any Tailwind class",
+          content: 'any Tailwind class',
           bold: true,
-          className: "ring-2 ring-purple-600 ring-offset-2 px-2 rounded",
+          className: 'ring-2 ring-purple-600 ring-offset-2 px-2 rounded',
         },
-        { content: "!", bold: false },
+        { content: '!', bold: false },
       ],
       attributes: {},
     } as TextNode,
 
     {
       id: `code-${timestamp}-123`,
-      type: "code",
+      type: 'code',
       content: `// Custom classes in the data structure
 const styledText = {
   content: 'Gradient text',
@@ -1871,22 +1855,22 @@ const styledText = {
     // ========================================
     {
       id: `h2-${timestamp}-130`,
-      type: "h2",
-      content: "📤 HTML Export",
+      type: 'h2',
+      content: '📤 HTML Export',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-131`,
-      type: "p",
+      type: 'p',
       content:
-        "Export your entire document to clean, semantic HTML with all Tailwind classes preserved. Perfect for blogs, documentation, and content management:",
+        'Export your entire document to clean, semantic HTML with all Tailwind classes preserved. Perfect for blogs, documentation, and content management:',
       attributes: {},
     } as TextNode,
 
     {
       id: `code-${timestamp}-132`,
-      type: "code",
+      type: 'code',
       content: `import { serializeToHtml } from '@/lib/utils/serialize-to-html';
 import { useEditor } from '@/lib';
 
@@ -1911,42 +1895,41 @@ function MyComponent() {
     // ========================================
     {
       id: `h2-${timestamp}-140`,
-      type: "h2",
-      content: "⌨️ Keyboard Shortcuts",
+      type: 'h2',
+      content: '⌨️ Keyboard Shortcuts',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-141`,
-      type: "p",
-      content:
-        "Master these keyboard shortcuts for a blazing-fast editing experience:",
+      type: 'p',
+      content: 'Master these keyboard shortcuts for a blazing-fast editing experience:',
       attributes: {},
     } as TextNode,
 
     {
       id: `container-${timestamp}-142`,
-      type: "container",
+      type: 'container',
       attributes: {
-        listType: "ul",
+        listType: 'ul',
       },
       children: [
         {
           id: `li-${timestamp}-142-1`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "Enter", elementType: "code", bold: true },
-            { content: " - Create new block after current one", bold: false },
+            { content: 'Enter', elementType: 'code', bold: true },
+            { content: ' - Create new block after current one', bold: false },
           ],
           attributes: {},
         } as TextNode,
         {
           id: `li-${timestamp}-142-2`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "Shift + Enter", elementType: "code", bold: true },
+            { content: 'Shift + Enter', elementType: 'code', bold: true },
             {
-              content: " - Create nested block or add to existing container",
+              content: ' - Create nested block or add to existing container',
               bold: false,
             },
           ],
@@ -1954,29 +1937,29 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-142-3`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "Ctrl/Cmd + A", elementType: "code", bold: true },
-            { content: " - Select all content for copying", bold: false },
+            { content: 'Ctrl/Cmd + A', elementType: 'code', bold: true },
+            { content: ' - Select all content for copying', bold: false },
           ],
           attributes: {},
         } as TextNode,
         {
           id: `li-${timestamp}-142-4`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "Backspace/Delete", elementType: "code", bold: true },
-            { content: " - Delete current block (when empty)", bold: false },
+            { content: 'Backspace/Delete', elementType: 'code', bold: true },
+            { content: ' - Delete current block (when empty)', bold: false },
           ],
           attributes: {},
         } as TextNode,
         {
           id: `li-${timestamp}-142-5`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "Ctrl/Cmd + B", elementType: "code", bold: true },
+            { content: 'Ctrl/Cmd + B', elementType: 'code', bold: true },
             {
-              content: " - Toggle bold formatting on selected text",
+              content: ' - Toggle bold formatting on selected text',
               bold: false,
             },
           ],
@@ -1984,11 +1967,11 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-142-6`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "Ctrl/Cmd + I", elementType: "code", bold: true },
+            { content: 'Ctrl/Cmd + I', elementType: 'code', bold: true },
             {
-              content: " - Toggle italic formatting on selected text",
+              content: ' - Toggle italic formatting on selected text',
               bold: false,
             },
           ],
@@ -1996,11 +1979,11 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-142-7`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "Ctrl/Cmd + U", elementType: "code", bold: true },
+            { content: 'Ctrl/Cmd + U', elementType: 'code', bold: true },
             {
-              content: " - Toggle underline formatting on selected text",
+              content: ' - Toggle underline formatting on selected text',
               bold: false,
             },
           ],
@@ -2008,23 +1991,23 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-142-8`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "Ctrl/Cmd + Z", elementType: "code", bold: true },
-            { content: " - Undo last action", bold: false },
+            { content: 'Ctrl/Cmd + Z', elementType: 'code', bold: true },
+            { content: ' - Undo last action', bold: false },
           ],
           attributes: {},
         } as TextNode,
         {
           id: `li-${timestamp}-142-9`,
-          type: "li",
+          type: 'li',
           children: [
             {
-              content: "Ctrl/Cmd + Shift + Z",
-              elementType: "code",
+              content: 'Ctrl/Cmd + Shift + Z',
+              elementType: 'code',
               bold: true,
             },
-            { content: " - Redo last undone action", bold: false },
+            { content: ' - Redo last undone action', bold: false },
           ],
           attributes: {},
         } as TextNode,
@@ -2036,25 +2019,25 @@ function MyComponent() {
     // ========================================
     {
       id: `h2-${timestamp}-150`,
-      type: "h2",
-      content: "🎯 Complete Feature List",
+      type: 'h2',
+      content: '🎯 Complete Feature List',
       attributes: {},
     } as TextNode,
 
     {
       id: `container-${timestamp}-151`,
-      type: "container",
+      type: 'container',
       attributes: {
-        listType: "ul",
+        listType: 'ul',
       },
       children: [
         {
           id: `li-${timestamp}-151-1`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ Block-Based Architecture", bold: true },
+            { content: '✅ Block-Based Architecture', bold: true },
             {
-              content: " - Each element is an independent, draggable block",
+              content: ' - Each element is an independent, draggable block',
               bold: false,
             },
           ],
@@ -2062,11 +2045,11 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-151-2`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ Rich Text Formatting", bold: true },
+            { content: '✅ Rich Text Formatting', bold: true },
             {
-              content: " - Bold, italic, underline, and combinations",
+              content: ' - Bold, italic, underline, and combinations',
               bold: false,
             },
           ],
@@ -2074,11 +2057,11 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-151-3`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ Multiple Block Types", bold: true },
+            { content: '✅ Multiple Block Types', bold: true },
             {
-              content: " - h1-h6, paragraph, code, blockquote, lists (ol/ul)",
+              content: ' - h1-h6, paragraph, code, blockquote, lists (ol/ul)',
               bold: false,
             },
           ],
@@ -2086,20 +2069,20 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-151-4`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ Inline Element Types", bold: true },
-            { content: " - Mix heading styles within paragraphs", bold: false },
+            { content: '✅ Inline Element Types', bold: true },
+            { content: ' - Mix heading styles within paragraphs', bold: false },
           ],
           attributes: {},
         } as TextNode,
         {
           id: `li-${timestamp}-151-5`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ Color Support", bold: true },
+            { content: '✅ Color Support', bold: true },
             {
-              content: " - Preset Tailwind colors + custom hex/RGB colors",
+              content: ' - Preset Tailwind colors + custom hex/RGB colors',
               bold: false,
             },
           ],
@@ -2107,21 +2090,20 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-151-6`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ Font Size Control", bold: true },
-            { content: " - Preset sizes + custom pixel values", bold: false },
+            { content: '✅ Font Size Control', bold: true },
+            { content: ' - Preset sizes + custom pixel values', bold: false },
           ],
           attributes: {},
         } as TextNode,
         {
           id: `li-${timestamp}-151-7`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ Background Colors", bold: true },
+            { content: '✅ Background Colors', bold: true },
             {
-              content:
-                " - Apply backgrounds to any block with presets or custom colors",
+              content: ' - Apply backgrounds to any block with presets or custom colors',
               bold: false,
             },
           ],
@@ -2129,11 +2111,11 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-151-8`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ Link Support", bold: true },
+            { content: '✅ Link Support', bold: true },
             {
-              content: " - Beautiful link popover with URL management",
+              content: ' - Beautiful link popover with URL management',
               bold: false,
             },
           ],
@@ -2141,11 +2123,11 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-151-9`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ Image Upload", bold: true },
+            { content: '✅ Image Upload', bold: true },
             {
-              content: " - Single images and grid layouts with drag-to-reorder",
+              content: ' - Single images and grid layouts with drag-to-reorder',
               bold: false,
             },
           ],
@@ -2153,11 +2135,11 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-151-10`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ Nested Blocks", bold: true },
+            { content: '✅ Nested Blocks', bold: true },
             {
-              content: " - Create containers for organizing related content",
+              content: ' - Create containers for organizing related content',
               bold: false,
             },
           ],
@@ -2165,11 +2147,11 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-151-11`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ Drag & Drop", bold: true },
+            { content: '✅ Drag & Drop', bold: true },
             {
-              content: " - Reorder blocks, swap images, reorganize everything",
+              content: ' - Reorder blocks, swap images, reorganize everything',
               bold: false,
             },
           ],
@@ -2177,12 +2159,11 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-151-12`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ Custom Tailwind Classes", bold: true },
+            { content: '✅ Custom Tailwind Classes', bold: true },
             {
-              content:
-                " - Unlimited styling possibilities with full Tailwind support",
+              content: ' - Unlimited styling possibilities with full Tailwind support',
               bold: false,
             },
           ],
@@ -2190,11 +2171,11 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-151-13`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ HTML Export", bold: true },
+            { content: '✅ HTML Export', bold: true },
             {
-              content: " - Clean, semantic HTML with preserved styling",
+              content: ' - Clean, semantic HTML with preserved styling',
               bold: false,
             },
           ],
@@ -2202,11 +2183,11 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-151-14`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ TypeScript-First", bold: true },
+            { content: '✅ TypeScript-First', bold: true },
             {
-              content: " - Fully typed API with excellent IntelliSense",
+              content: ' - Fully typed API with excellent IntelliSense',
               bold: false,
             },
           ],
@@ -2214,11 +2195,11 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-151-15`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ Immutable State", bold: true },
+            { content: '✅ Immutable State', bold: true },
             {
-              content: " - Built with reducers for predictable updates",
+              content: ' - Built with reducers for predictable updates',
               bold: false,
             },
           ],
@@ -2226,11 +2207,11 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-151-16`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ Undo/Redo", bold: true },
+            { content: '✅ Undo/Redo', bold: true },
             {
-              content: " - Full history management for all actions",
+              content: ' - Full history management for all actions',
               bold: false,
             },
           ],
@@ -2238,11 +2219,11 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-151-17`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ Read-Only Mode", bold: true },
+            { content: '✅ Read-Only Mode', bold: true },
             {
-              content: " - Perfect for displaying published content",
+              content: ' - Perfect for displaying published content',
               bold: false,
             },
           ],
@@ -2250,11 +2231,11 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-151-18`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ Dark Mode", bold: true },
+            { content: '✅ Dark Mode', bold: true },
             {
-              content: " - Beautiful themes that work everywhere",
+              content: ' - Beautiful themes that work everywhere',
               bold: false,
             },
           ],
@@ -2262,11 +2243,11 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-151-19`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ Keyboard Shortcuts", bold: true },
+            { content: '✅ Keyboard Shortcuts', bold: true },
             {
-              content: " - Efficient editing with common shortcuts",
+              content: ' - Efficient editing with common shortcuts',
               bold: false,
             },
           ],
@@ -2274,12 +2255,11 @@ function MyComponent() {
         } as TextNode,
         {
           id: `li-${timestamp}-151-20`,
-          type: "li",
+          type: 'li',
           children: [
-            { content: "✅ Context Menu", bold: true },
+            { content: '✅ Context Menu', bold: true },
             {
-              content:
-                " - Right-click for quick actions (duplicate, delete, move)",
+              content: ' - Right-click for quick actions (duplicate, delete, move)',
               bold: false,
             },
           ],
@@ -2293,21 +2273,21 @@ function MyComponent() {
     // ========================================
     {
       id: `h2-${timestamp}-160`,
-      type: "h2",
-      content: "🚀 Quick Start",
+      type: 'h2',
+      content: '🚀 Quick Start',
       attributes: {},
     } as TextNode,
 
     {
       id: `h3-${timestamp}-161`,
-      type: "h3",
-      content: "Installation",
+      type: 'h3',
+      content: 'Installation',
       attributes: {},
     } as TextNode,
 
     {
       id: `code-${timestamp}-162`,
-      type: "code",
+      type: 'code',
       content: `
 # Clone the repository      
 git clone https://github.com/Mina-Massoud/mina-rich-editor.git
@@ -2320,14 +2300,14 @@ npm run dev`,
 
     {
       id: `h3-${timestamp}-163`,
-      type: "h3",
-      content: "Basic Usage",
+      type: 'h3',
+      content: 'Basic Usage',
       attributes: {},
     } as TextNode,
 
     {
       id: `code-${timestamp}-164`,
-      type: "code",
+      type: 'code',
       content: `import { EditorProvider } from '@/lib';
 import { SimpleEditor } from '@/components/SimpleEditor';
 
@@ -2343,14 +2323,14 @@ export default function App() {
 
     {
       id: `h3-${timestamp}-165`,
-      type: "h3",
-      content: "Read-Only Mode",
+      type: 'h3',
+      content: 'Read-Only Mode',
       attributes: {},
     } as TextNode,
 
     {
       id: `code-${timestamp}-166`,
-      type: "code",
+      type: 'code',
       content: `// Display content without editing
 <SimpleEditor readOnly={true} />`,
       attributes: {},
@@ -2358,14 +2338,14 @@ export default function App() {
 
     {
       id: `h3-${timestamp}-167`,
-      type: "h3",
-      content: "With Initial Content",
+      type: 'h3',
+      content: 'With Initial Content',
       attributes: {},
     } as TextNode,
 
     {
       id: `code-${timestamp}-168`,
-      type: "code",
+      type: 'code',
       content: `import { createDemoContent } from '@/lib/demo-content';
 
 const initialContent = {
@@ -2386,24 +2366,23 @@ const initialContent = {
     // ========================================
     {
       id: `h2-${timestamp}-200`,
-      type: "h2",
-      content: "🎨 Start Creating!",
+      type: 'h2',
+      content: '🎨 Start Creating!',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-201`,
-      type: "p",
+      type: 'p',
       children: [
-        { content: "👉 ", bold: false },
+        { content: '👉 ', bold: false },
         {
-          content: "Select any text",
+          content: 'Select any text',
           bold: true,
-          className: "text-blue-600 dark:text-blue-400",
+          className: 'text-blue-600 dark:text-blue-400',
         },
         {
-          content:
-            " and use the toolbar to format it with bold, italic, colors, fonts, and more",
+          content: ' and use the toolbar to format it with bold, italic, colors, fonts, and more',
           bold: false,
         },
       ],
@@ -2412,34 +2391,34 @@ const initialContent = {
 
     {
       id: `p-${timestamp}-202`,
-      type: "p",
+      type: 'p',
       children: [
-        { content: "👉 Press ", bold: false },
-        { content: "Enter", elementType: "code" },
-        { content: " to create new blocks at any time", bold: false },
+        { content: '👉 Press ', bold: false },
+        { content: 'Enter', elementType: 'code' },
+        { content: ' to create new blocks at any time', bold: false },
       ],
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-203`,
-      type: "p",
+      type: 'p',
       children: [
-        { content: "👉 Press ", bold: false },
-        { content: "Shift+Enter", elementType: "code" },
-        { content: " for nested blocks and hierarchical content", bold: false },
+        { content: '👉 Press ', bold: false },
+        { content: 'Shift+Enter', elementType: 'code' },
+        { content: ' for nested blocks and hierarchical content', bold: false },
       ],
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-204`,
-      type: "p",
+      type: 'p',
       children: [
-        { content: "👉 Use the ", bold: false },
-        { content: "drag handles (⋮⋮)", bold: true },
+        { content: '👉 Use the ', bold: false },
+        { content: 'drag handles (⋮⋮)', bold: true },
         {
-          content: " to reorder blocks and reorganize your document",
+          content: ' to reorder blocks and reorganize your document',
           bold: false,
         },
       ],
@@ -2448,12 +2427,12 @@ const initialContent = {
 
     {
       id: `p-${timestamp}-205`,
-      type: "p",
+      type: 'p',
       children: [
-        { content: "👉 Toggle ", bold: false },
-        { content: "View Only", bold: true },
+        { content: '👉 Toggle ', bold: false },
+        { content: 'View Only', bold: true },
         {
-          content: " mode in the top-right to see the read-only version",
+          content: ' mode in the top-right to see the read-only version',
           bold: false,
         },
       ],
@@ -2462,12 +2441,12 @@ const initialContent = {
 
     {
       id: `p-${timestamp}-206`,
-      type: "p",
+      type: 'p',
       children: [
-        { content: "👉 Switch to ", bold: false },
-        { content: "Dark Mode", bold: true },
+        { content: '👉 Switch to ', bold: false },
+        { content: 'Dark Mode', bold: true },
         {
-          content: " using the theme toggle for a different experience",
+          content: ' using the theme toggle for a different experience',
           bold: false,
         },
       ],
@@ -2476,39 +2455,39 @@ const initialContent = {
 
     {
       id: `p-${timestamp}-207`,
-      type: "p",
+      type: 'p',
       children: [
-        { content: "👉 Check the ", bold: false },
-        { content: "debug panel below", bold: true },
-        { content: " to see JSON structure and export HTML", bold: false },
+        { content: '👉 Check the ', bold: false },
+        { content: 'debug panel below', bold: true },
+        { content: ' to see JSON structure and export HTML', bold: false },
       ],
       attributes: {},
     } as TextNode,
 
     {
       id: `blockquote-${timestamp}-208`,
-      type: "blockquote",
+      type: 'blockquote',
       children: [
-        { content: "🚀 Pro Tip: ", bold: true },
+        { content: '🚀 Pro Tip: ', bold: true },
         {
-          content: "This is your living documentation! ",
+          content: 'This is your living documentation! ',
           italic: true,
         },
         {
           content:
-            "Feel free to edit, experiment, delete sections, add your own content, and explore all features. ",
+            'Feel free to edit, experiment, delete sections, add your own content, and explore all features. ',
           italic: true,
         },
         {
           content:
-            "The editor is designed to be intuitive and powerful - discover features as you use it!",
+            'The editor is designed to be intuitive and powerful - discover features as you use it!',
           italic: true,
           bold: true,
         },
       ],
       attributes: {
         className:
-          "bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 border-l-4 border-green-600",
+          'bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 border-l-4 border-green-600',
       },
     } as TextNode,
 
@@ -2517,38 +2496,37 @@ const initialContent = {
     // ========================================
     {
       id: `h2-${timestamp}-210`,
-      type: "h2",
-      content: "💖 Thank You!",
+      type: 'h2',
+      content: '💖 Thank You!',
       attributes: {},
     } as TextNode,
 
     {
       id: `p-${timestamp}-211`,
-      type: "p",
+      type: 'p',
       children: [
-        { content: "Thank you for trying this ", bold: false },
+        { content: 'Thank you for trying this ', bold: false },
         {
-          content: "Rich Text Editor",
+          content: 'Rich Text Editor',
           bold: true,
-          className: "text-purple-600 dark:text-purple-400",
+          className: 'text-purple-600 dark:text-purple-400',
         },
-        { content: "! This is a ", bold: false },
-        { content: "modern block-based editor", bold: true },
-        { content: " built entirely with ", bold: false },
+        { content: '! This is a ', bold: false },
+        { content: 'modern block-based editor', bold: true },
+        { content: ' built entirely with ', bold: false },
         {
-          content: "Tailwind CSS",
+          content: 'Tailwind CSS',
           bold: true,
-          className: "text-cyan-600 dark:text-cyan-400",
+          className: 'text-cyan-600 dark:text-cyan-400',
         },
-        { content: " and ", bold: false },
+        { content: ' and ', bold: false },
         {
-          content: "shadcn/ui",
+          content: 'shadcn/ui',
           bold: true,
-          className: "text-purple-600 dark:text-purple-400",
+          className: 'text-purple-600 dark:text-purple-400',
         },
         {
-          content:
-            ". If you find it useful, feel free to share it with other developers!",
+          content: '. If you find it useful, feel free to share it with other developers!',
           bold: false,
         },
       ],
@@ -2557,17 +2535,17 @@ const initialContent = {
 
     {
       id: `blockquote-${timestamp}-213`,
-      type: "blockquote",
+      type: 'blockquote',
       children: [
         {
-          content: "Built with ❤️ using modern web technologies",
+          content: 'Built with ❤️ using modern web technologies',
           italic: true,
         },
       ],
       attributes: {
         style:
-          "background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(236, 72, 153, 0.1)); border-left: 4px solid rgb(147, 51, 234); text-align: center;",
+          'background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(236, 72, 153, 0.1)); border-left: 4px solid rgb(147, 51, 234); text-align: center;',
       },
     } as TextNode,
-  ]
+  ];
 }

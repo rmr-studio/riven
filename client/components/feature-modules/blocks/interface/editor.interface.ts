@@ -2,29 +2,29 @@
 /*                              Type Definitions                              */
 /* -------------------------------------------------------------------------- */
 
-import { ChildNodeProps } from "@/lib/interfaces/interface";
-import { EntityType } from "@/lib/types/types";
-import { BlockEnvironment, BlockNode, BlockTree } from "./block.interface";
-import { BlockTreeLayout } from "./layout.interface";
+import { ChildNodeProps } from '@/lib/interfaces/interface';
+import { EntityType } from '@/lib/types/types';
+import { BlockEnvironment, BlockNode, BlockTree } from './block.interface';
+import { BlockTreeLayout } from './layout.interface';
 
 /** Metadata describing the environment itself. */
 export interface EditorEnvironmentMetadata {
-    name: string;
-    description?: string;
-    workspaceId: string;
-    createdAt: string;
-    updatedAt: string;
+  name: string;
+  description?: string;
+  workspaceId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface DetachResult {
-    success: boolean;
-    root: BlockNode;
-    detachedNode: BlockNode | null;
+  success: boolean;
+  root: BlockNode;
+  detachedNode: BlockNode | null;
 }
 
 export interface InsertResult<T> {
-    payload: T;
-    success: boolean;
+  payload: T;
+  success: boolean;
 }
 
 /**
@@ -35,73 +35,73 @@ export interface InsertResult<T> {
  * - `layouts` and `uiMetadata` store per-block editor state.
  */
 export interface EditorEnvironment {
-    trees: BlockTree[];
-    metadata: EditorEnvironmentMetadata;
-    // Lookup for parent IDs (null for top-level)
-    hierarchy: Map<string, string | null>;
-    // Lookup for which root a node belongs to
-    treeIndex: Map<string, string>;
+  trees: BlockTree[];
+  metadata: EditorEnvironmentMetadata;
+  // Lookup for parent IDs (null for top-level)
+  hierarchy: Map<string, string | null>;
+  // Lookup for which root a node belongs to
+  treeIndex: Map<string, string>;
 }
 
 export interface BlockEnvironmentProviderProps extends ChildNodeProps {
-    /** Workspace and entity context for the environment */
-    workspaceId: string;
-    entityId: string;
-    entityType: EntityType;
+  /** Workspace and entity context for the environment */
+  workspaceId: string;
+  entityId: string;
+  entityType: EntityType;
 
-    /** Initial block environment to load */
-    environment: BlockEnvironment;
+  /** Initial block environment to load */
+  environment: BlockEnvironment;
 }
 
 /** Context contract exposed to consumers. */
 export interface BlockEnvironmentContextValue {
-    environment: EditorEnvironment;
+  environment: EditorEnvironment;
 
-    // Entity Context
-    workspaceId: string;
-    entityId: string;
-    entityType: EntityType;
+  // Entity Context
+  workspaceId: string;
+  entityId: string;
+  entityType: EntityType;
 
-    /** Full layout object with metadata */
-    layout: BlockTreeLayout;
+  /** Full layout object with metadata */
+  layout: BlockTreeLayout;
 
-    /** Layout ID for persistence operations */
-    layoutId?: string;
-    isInitialized: boolean;
-    setIsInitialized(value: boolean): void;
-    addBlock(tree: BlockNode, parentId?: string | null): string;
-    removeBlock(blockId: string): void;
-    updateBlock(blockId: string, updatedContent: BlockNode): void;
+  /** Layout ID for persistence operations */
+  layoutId?: string;
+  isInitialized: boolean;
+  setIsInitialized(value: boolean): void;
+  addBlock(tree: BlockNode, parentId?: string | null): string;
+  removeBlock(blockId: string): void;
+  updateBlock(blockId: string, updatedContent: BlockNode): void;
 
-    getBlock(blockId: string): BlockNode | undefined;
-    getTrees(): BlockTree[];
+  getBlock(blockId: string): BlockNode | undefined;
+  getTrees(): BlockTree[];
 
-    insertBlock(child: BlockNode, parentId: string, index: number | null): string;
-    moveBlock(blockId: string, targetParentId: string | null): void;
+  insertBlock(child: BlockNode, parentId: string, index: number | null): string;
+  moveBlock(blockId: string, targetParentId: string | null): void;
 
-    // Parent Retrieval
-    getParentId(blockId: string): string | null;
-    /**
-     * Retrieves the parent block of a given block ID.
-     * Note: The children of the parent block will NOT be populated.
-     * @param blockId The ID of the block whose parent is to be retrieved.
-     * @returns The parent BlockNode, or null if it has no parent.
-     */
-    getParent(blockId: string): BlockNode | null;
+  // Parent Retrieval
+  getParentId(blockId: string): string | null;
+  /**
+   * Retrieves the parent block of a given block ID.
+   * Note: The children of the parent block will NOT be populated.
+   * @param blockId The ID of the block whose parent is to be retrieved.
+   * @returns The parent BlockNode, or null if it has no parent.
+   */
+  getParent(blockId: string): BlockNode | null;
 
-    // Children Retrieval
-    getChildren(blockId: string): string[];
-    getDescendants(blockId: string): Record<string, string>;
-    isDescendantOf(blockId: string, ancestorId: string): boolean;
-    updateHierarchy(blockId: string, newParentId: string | null): void;
+  // Children Retrieval
+  getChildren(blockId: string): string[];
+  getDescendants(blockId: string): Record<string, string>;
+  isDescendantOf(blockId: string, ancestorId: string): boolean;
+  updateHierarchy(blockId: string, newParentId: string | null): void;
 
-    reorderBlock(blockId: string, parentId: string, targetIndex: number): void;
+  reorderBlock(blockId: string, parentId: string, targetIndex: number): void;
 
-    clear(): void;
+  clear(): void;
 
-    /** Replace the entire environment with a snapshot (used when discarding changes). */
-    hydrateEnvironment(snapshot: EditorEnvironment): void;
+  /** Replace the entire environment with a snapshot (used when discarding changes). */
+  hydrateEnvironment(snapshot: EditorEnvironment): void;
 
-    /** Capture the current environment state as a detached snapshot. */
-    getEnvironmentSnapshot(): EditorEnvironment;
+  /** Capture the current environment state as a detached snapshot. */
+  getEnvironmentSnapshot(): EditorEnvironment;
 }

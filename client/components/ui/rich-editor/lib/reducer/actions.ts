@@ -5,8 +5,8 @@ import {
   EditorState,
   NodeAttributes,
   SelectionInfo,
-} from "../../types"
-import { InsertPosition } from "../../utils/tree-operations"
+} from '../../types';
+import { InsertPosition } from '../../utils/tree-operations';
 
 /**
  * Updates a node's properties by ID.
@@ -27,11 +27,11 @@ import { InsertPosition } from "../../utils/tree-operations"
  * ```
  */
 export interface UpdateNodeAction {
-  type: "UPDATE_NODE"
+  type: 'UPDATE_NODE';
   payload: {
-    id: string
-    updates: Partial<EditorNode>
-  }
+    id: string;
+    updates: Partial<EditorNode>;
+  };
 }
 
 /**
@@ -50,12 +50,12 @@ export interface UpdateNodeAction {
  * ```
  */
 export interface UpdateAttributesAction {
-  type: "UPDATE_ATTRIBUTES"
+  type: 'UPDATE_ATTRIBUTES';
   payload: {
-    id: string
-    attributes: NodeAttributes
-    merge?: boolean // If true, merges with existing attributes; if false, replaces them
-  }
+    id: string;
+    attributes: NodeAttributes;
+    merge?: boolean; // If true, merges with existing attributes; if false, replaces them
+  };
 }
 
 /**
@@ -73,11 +73,11 @@ export interface UpdateAttributesAction {
  * ```
  */
 export interface UpdateContentAction {
-  type: "UPDATE_CONTENT"
+  type: 'UPDATE_CONTENT';
   payload: {
-    id: string
-    content: string
-  }
+    id: string;
+    content: string;
+  };
 }
 
 /**
@@ -92,10 +92,10 @@ export interface UpdateContentAction {
  * ```
  */
 export interface DeleteNodeAction {
-  type: "DELETE_NODE"
+  type: 'DELETE_NODE';
   payload: {
-    id: string
-  }
+    id: string;
+  };
 }
 
 /**
@@ -114,12 +114,12 @@ export interface DeleteNodeAction {
  * ```
  */
 export interface InsertNodeAction {
-  type: "INSERT_NODE"
+  type: 'INSERT_NODE';
   payload: {
-    node: EditorNode
-    targetId: string
-    position: InsertPosition
-  }
+    node: EditorNode;
+    targetId: string;
+    position: InsertPosition;
+  };
 }
 
 /**
@@ -138,12 +138,12 @@ export interface InsertNodeAction {
  * ```
  */
 export interface MoveNodeAction {
-  type: "MOVE_NODE"
+  type: 'MOVE_NODE';
   payload: {
-    nodeId: string
-    targetId: string
-    position: InsertPosition
-  }
+    nodeId: string;
+    targetId: string;
+    position: InsertPosition;
+  };
 }
 
 /**
@@ -161,11 +161,11 @@ export interface MoveNodeAction {
  * ```
  */
 export interface SwapNodesAction {
-  type: "SWAP_NODES"
+  type: 'SWAP_NODES';
   payload: {
-    nodeId1: string
-    nodeId2: string
-  }
+    nodeId1: string;
+    nodeId2: string;
+  };
 }
 
 /**
@@ -183,11 +183,11 @@ export interface SwapNodesAction {
  * ```
  */
 export interface DuplicateNodeAction {
-  type: "DUPLICATE_NODE"
+  type: 'DUPLICATE_NODE';
   payload: {
-    id: string
-    newId?: string
-  }
+    id: string;
+    newId?: string;
+  };
 }
 
 /**
@@ -203,10 +203,10 @@ export interface DuplicateNodeAction {
  * ```
  */
 export interface ReplaceContainerAction {
-  type: "REPLACE_CONTAINER"
+  type: 'REPLACE_CONTAINER';
   payload: {
-    container: ContainerNode
-  }
+    container: ContainerNode;
+  };
 }
 
 /**
@@ -218,7 +218,7 @@ export interface ReplaceContainerAction {
  * ```
  */
 export interface ResetAction {
-  type: "RESET"
+  type: 'RESET';
 }
 
 /**
@@ -234,10 +234,10 @@ export interface ResetAction {
  * ```
  */
 export interface SetStateAction {
-  type: "SET_STATE"
+  type: 'SET_STATE';
   payload: {
-    state: EditorState
-  }
+    state: EditorState;
+  };
 }
 
 /**
@@ -258,57 +258,57 @@ export interface SetStateAction {
  * ```
  */
 export interface BatchAction {
-  type: "BATCH"
+  type: 'BATCH';
   payload: {
-    actions: EditorAction[]
-  }
+    actions: EditorAction[];
+  };
 }
 
 /**
  * SET_ACTIVE_NODE action - sets the currently active/focused node
  */
 export interface SetActiveNodeAction {
-  type: "SET_ACTIVE_NODE"
+  type: 'SET_ACTIVE_NODE';
   payload: {
-    nodeId: string | null
-  }
+    nodeId: string | null;
+  };
 }
 
 /**
  * SET_SELECTION action - updates selection state
  */
 export interface SetSelectionAction {
-  type: "SET_SELECTION"
+  type: 'SET_SELECTION';
   payload: {
-    hasSelection: boolean
-  }
+    hasSelection: boolean;
+  };
 }
 
 /**
  * INCREMENT_SELECTION_KEY action - triggers re-render for selection changes
  */
 export interface IncrementSelectionKeyAction {
-  type: "INCREMENT_SELECTION_KEY"
+  type: 'INCREMENT_SELECTION_KEY';
 }
 
 /**
  * SET_CURRENT_SELECTION action - updates the current selection info with formatting states
  */
 export interface SetCurrentSelectionAction {
-  type: "SET_CURRENT_SELECTION"
+  type: 'SET_CURRENT_SELECTION';
   payload: {
-    selection: SelectionInfo | null
-  }
+    selection: SelectionInfo | null;
+  };
 }
 
 /**
  * TOGGLE_FORMAT action - toggles a format style on the current selection
  */
 export interface ToggleFormatAction {
-  type: "TOGGLE_FORMAT"
+  type: 'TOGGLE_FORMAT';
   payload: {
-    format: "bold" | "italic" | "underline" | "strikethrough" | "code"
-  }
+    format: 'bold' | 'italic' | 'underline' | 'strikethrough' | 'code';
+  };
 }
 
 /**
@@ -316,119 +316,110 @@ export interface ToggleFormatAction {
  * Note: 'code' is excluded - use toggleFormat('code') for inline code formatting
  */
 export interface ApplyInlineElementTypeAction {
-  type: "APPLY_INLINE_ELEMENT_TYPE"
+  type: 'APPLY_INLINE_ELEMENT_TYPE';
   payload: {
-    elementType:
-      | "p"
-      | "h1"
-      | "h2"
-      | "h3"
-      | "h4"
-      | "h5"
-      | "h6"
-      | "li"
-      | "blockquote"
-  }
+    elementType: 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'li' | 'blockquote';
+  };
 }
 
 /**
  * APPLY_CUSTOM_CLASS action - applies custom Tailwind class to selected text
  */
 export interface ApplyCustomClassAction {
-  type: "APPLY_CUSTOM_CLASS"
+  type: 'APPLY_CUSTOM_CLASS';
   payload: {
-    className: string
-  }
+    className: string;
+  };
 }
 
 /**
  * APPLY_INLINE_STYLE action - applies inline CSS style to selected text
  */
 export interface ApplyInlineStyleAction {
-  type: "APPLY_INLINE_STYLE"
+  type: 'APPLY_INLINE_STYLE';
   payload: {
-    property: string // e.g., 'fontSize', 'color'
-    value: string // e.g., '24px', '#ff0000'
-  }
+    property: string; // e.g., 'fontSize', 'color'
+    value: string; // e.g., '24px', '#ff0000'
+  };
 }
 
 /**
  * APPLY_LINK action - applies link href to selected text
  */
 export interface ApplyLinkAction {
-  type: "APPLY_LINK"
+  type: 'APPLY_LINK';
   payload: {
-    href: string
-  }
+    href: string;
+  };
 }
 
 /**
  * REMOVE_LINK action - removes link from selected text
  */
 export interface RemoveLinkAction {
-  type: "REMOVE_LINK"
+  type: 'REMOVE_LINK';
 }
 
 /**
  * SELECT_ALL_BLOCKS action - marks all blocks as selected
  */
 export interface SelectAllBlocksAction {
-  type: "SELECT_ALL_BLOCKS"
+  type: 'SELECT_ALL_BLOCKS';
 }
 
 /**
  * CLEAR_BLOCK_SELECTION action - clears all block selections
  */
 export interface ClearBlockSelectionAction {
-  type: "CLEAR_BLOCK_SELECTION"
+  type: 'CLEAR_BLOCK_SELECTION';
 }
 
 /**
  * DELETE_SELECTED_BLOCKS action - deletes all selected blocks
  */
 export interface DeleteSelectedBlocksAction {
-  type: "DELETE_SELECTED_BLOCKS"
+  type: 'DELETE_SELECTED_BLOCKS';
 }
 
 /**
  * UNDO action - moves back one step in history
  */
 export interface UndoAction {
-  type: "UNDO"
+  type: 'UNDO';
 }
 
 /**
  * REDO action - moves forward one step in history
  */
 export interface RedoAction {
-  type: "REDO"
+  type: 'REDO';
 }
 
 /**
  * SET_COVER_IMAGE action - sets or updates the cover image
  */
 export interface SetCoverImageAction {
-  type: "SET_COVER_IMAGE"
+  type: 'SET_COVER_IMAGE';
   payload: {
-    coverImage: CoverImage
-  }
+    coverImage: CoverImage;
+  };
 }
 
 /**
  * REMOVE_COVER_IMAGE action - removes the cover image
  */
 export interface RemoveCoverImageAction {
-  type: "REMOVE_COVER_IMAGE"
+  type: 'REMOVE_COVER_IMAGE';
 }
 
 /**
  * UPDATE_COVER_IMAGE_POSITION action - updates the vertical position of the cover image
  */
 export interface UpdateCoverImagePositionAction {
-  type: "UPDATE_COVER_IMAGE_POSITION"
+  type: 'UPDATE_COVER_IMAGE_POSITION';
   payload: {
-    position: number
-  }
+    position: number;
+  };
 }
 
 /**
@@ -464,7 +455,7 @@ export type EditorAction =
   | RedoAction
   | SetCoverImageAction
   | RemoveCoverImageAction
-  | UpdateCoverImagePositionAction
+  | UpdateCoverImagePositionAction;
 
 /**
  * Action creator helpers for type-safe action creation.
@@ -474,7 +465,7 @@ export const EditorActions = {
    * Creates an UPDATE_NODE action.
    */
   updateNode: (id: string, updates: Partial<EditorNode>): UpdateNodeAction => ({
-    type: "UPDATE_NODE",
+    type: 'UPDATE_NODE',
     payload: { id, updates },
   }),
 
@@ -484,9 +475,9 @@ export const EditorActions = {
   updateAttributes: (
     id: string,
     attributes: NodeAttributes,
-    merge = true
+    merge = true,
   ): UpdateAttributesAction => ({
-    type: "UPDATE_ATTRIBUTES",
+    type: 'UPDATE_ATTRIBUTES',
     payload: { id, attributes, merge },
   }),
 
@@ -494,7 +485,7 @@ export const EditorActions = {
    * Creates an UPDATE_CONTENT action.
    */
   updateContent: (id: string, content: string): UpdateContentAction => ({
-    type: "UPDATE_CONTENT",
+    type: 'UPDATE_CONTENT',
     payload: { id, content },
   }),
 
@@ -502,31 +493,23 @@ export const EditorActions = {
    * Creates a DELETE_NODE action.
    */
   deleteNode: (id: string): DeleteNodeAction => ({
-    type: "DELETE_NODE",
+    type: 'DELETE_NODE',
     payload: { id },
   }),
 
   /**
    * Creates an INSERT_NODE action.
    */
-  insertNode: (
-    node: EditorNode,
-    targetId: string,
-    position: InsertPosition
-  ): InsertNodeAction => ({
-    type: "INSERT_NODE",
+  insertNode: (node: EditorNode, targetId: string, position: InsertPosition): InsertNodeAction => ({
+    type: 'INSERT_NODE',
     payload: { node, targetId, position },
   }),
 
   /**
    * Creates a MOVE_NODE action.
    */
-  moveNode: (
-    nodeId: string,
-    targetId: string,
-    position: InsertPosition
-  ): MoveNodeAction => ({
-    type: "MOVE_NODE",
+  moveNode: (nodeId: string, targetId: string, position: InsertPosition): MoveNodeAction => ({
+    type: 'MOVE_NODE',
     payload: { nodeId, targetId, position },
   }),
 
@@ -534,7 +517,7 @@ export const EditorActions = {
    * Creates a SWAP_NODES action.
    */
   swapNodes: (nodeId1: string, nodeId2: string): SwapNodesAction => ({
-    type: "SWAP_NODES",
+    type: 'SWAP_NODES',
     payload: { nodeId1, nodeId2 },
   }),
 
@@ -542,7 +525,7 @@ export const EditorActions = {
    * Creates a DUPLICATE_NODE action.
    */
   duplicateNode: (id: string, newId?: string): DuplicateNodeAction => ({
-    type: "DUPLICATE_NODE",
+    type: 'DUPLICATE_NODE',
     payload: { id, newId },
   }),
 
@@ -550,7 +533,7 @@ export const EditorActions = {
    * Creates a REPLACE_CONTAINER action.
    */
   replaceContainer: (container: ContainerNode): ReplaceContainerAction => ({
-    type: "REPLACE_CONTAINER",
+    type: 'REPLACE_CONTAINER',
     payload: { container },
   }),
 
@@ -558,14 +541,14 @@ export const EditorActions = {
    * Creates a RESET action.
    */
   reset: (): ResetAction => ({
-    type: "RESET",
+    type: 'RESET',
   }),
 
   /**
    * Creates a SET_STATE action.
    */
   setState: (state: EditorState): SetStateAction => ({
-    type: "SET_STATE",
+    type: 'SET_STATE',
     payload: { state },
   }),
 
@@ -573,7 +556,7 @@ export const EditorActions = {
    * Creates a BATCH action.
    */
   batch: (actions: EditorAction[]): BatchAction => ({
-    type: "BATCH",
+    type: 'BATCH',
     payload: { actions },
   }),
 
@@ -581,7 +564,7 @@ export const EditorActions = {
    * Creates a SET_ACTIVE_NODE action.
    */
   setActiveNode: (nodeId: string | null): SetActiveNodeAction => ({
-    type: "SET_ACTIVE_NODE",
+    type: 'SET_ACTIVE_NODE',
     payload: { nodeId },
   }),
 
@@ -589,7 +572,7 @@ export const EditorActions = {
    * Creates a SET_SELECTION action.
    */
   setSelection: (hasSelection: boolean): SetSelectionAction => ({
-    type: "SET_SELECTION",
+    type: 'SET_SELECTION',
     payload: { hasSelection },
   }),
 
@@ -597,16 +580,14 @@ export const EditorActions = {
    * Creates an INCREMENT_SELECTION_KEY action.
    */
   incrementSelectionKey: (): IncrementSelectionKeyAction => ({
-    type: "INCREMENT_SELECTION_KEY",
+    type: 'INCREMENT_SELECTION_KEY',
   }),
 
   /**
    * Creates a SET_CURRENT_SELECTION action.
    */
-  setCurrentSelection: (
-    selection: SelectionInfo | null
-  ): SetCurrentSelectionAction => ({
-    type: "SET_CURRENT_SELECTION",
+  setCurrentSelection: (selection: SelectionInfo | null): SetCurrentSelectionAction => ({
+    type: 'SET_CURRENT_SELECTION',
     payload: { selection },
   }),
 
@@ -614,9 +595,9 @@ export const EditorActions = {
    * Creates a TOGGLE_FORMAT action.
    */
   toggleFormat: (
-    format: "bold" | "italic" | "underline" | "strikethrough" | "code"
+    format: 'bold' | 'italic' | 'underline' | 'strikethrough' | 'code',
   ): ToggleFormatAction => ({
-    type: "TOGGLE_FORMAT",
+    type: 'TOGGLE_FORMAT',
     payload: { format },
   }),
 
@@ -625,18 +606,9 @@ export const EditorActions = {
    * Note: 'code' is excluded - use toggleFormat('code') for inline code formatting
    */
   applyInlineElementType: (
-    elementType:
-      | "p"
-      | "h1"
-      | "h2"
-      | "h3"
-      | "h4"
-      | "h5"
-      | "h6"
-      | "li"
-      | "blockquote"
+    elementType: 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'li' | 'blockquote',
   ): ApplyInlineElementTypeAction => ({
-    type: "APPLY_INLINE_ELEMENT_TYPE",
+    type: 'APPLY_INLINE_ELEMENT_TYPE',
     payload: { elementType },
   }),
 
@@ -644,18 +616,15 @@ export const EditorActions = {
    * Creates an APPLY_CUSTOM_CLASS action.
    */
   applyCustomClass: (className: string): ApplyCustomClassAction => ({
-    type: "APPLY_CUSTOM_CLASS",
+    type: 'APPLY_CUSTOM_CLASS',
     payload: { className },
   }),
 
   /**
    * Creates an APPLY_INLINE_STYLE action.
    */
-  applyInlineStyle: (
-    property: string,
-    value: string
-  ): ApplyInlineStyleAction => ({
-    type: "APPLY_INLINE_STYLE",
+  applyInlineStyle: (property: string, value: string): ApplyInlineStyleAction => ({
+    type: 'APPLY_INLINE_STYLE',
     payload: { property, value },
   }),
 
@@ -663,7 +632,7 @@ export const EditorActions = {
    * Creates an APPLY_LINK action.
    */
   applyLink: (href: string): ApplyLinkAction => ({
-    type: "APPLY_LINK",
+    type: 'APPLY_LINK',
     payload: { href },
   }),
 
@@ -671,49 +640,49 @@ export const EditorActions = {
    * Creates a REMOVE_LINK action.
    */
   removeLink: (): RemoveLinkAction => ({
-    type: "REMOVE_LINK",
+    type: 'REMOVE_LINK',
   }),
 
   /**
    * Creates a SELECT_ALL_BLOCKS action.
    */
   selectAllBlocks: (): SelectAllBlocksAction => ({
-    type: "SELECT_ALL_BLOCKS",
+    type: 'SELECT_ALL_BLOCKS',
   }),
 
   /**
    * Creates a CLEAR_BLOCK_SELECTION action.
    */
   clearBlockSelection: (): ClearBlockSelectionAction => ({
-    type: "CLEAR_BLOCK_SELECTION",
+    type: 'CLEAR_BLOCK_SELECTION',
   }),
 
   /**
    * Creates a DELETE_SELECTED_BLOCKS action.
    */
   deleteSelectedBlocks: (): DeleteSelectedBlocksAction => ({
-    type: "DELETE_SELECTED_BLOCKS",
+    type: 'DELETE_SELECTED_BLOCKS',
   }),
 
   /**
    * Creates an UNDO action.
    */
   undo: (): UndoAction => ({
-    type: "UNDO",
+    type: 'UNDO',
   }),
 
   /**
    * Creates a REDO action.
    */
   redo: (): RedoAction => ({
-    type: "REDO",
+    type: 'REDO',
   }),
 
   /**
    * Creates a SET_COVER_IMAGE action.
    */
   setCoverImage: (coverImage: CoverImage): SetCoverImageAction => ({
-    type: "SET_COVER_IMAGE",
+    type: 'SET_COVER_IMAGE',
     payload: { coverImage },
   }),
 
@@ -721,16 +690,14 @@ export const EditorActions = {
    * Creates a REMOVE_COVER_IMAGE action.
    */
   removeCoverImage: (): RemoveCoverImageAction => ({
-    type: "REMOVE_COVER_IMAGE",
+    type: 'REMOVE_COVER_IMAGE',
   }),
 
   /**
    * Creates an UPDATE_COVER_IMAGE_POSITION action.
    */
-  updateCoverImagePosition: (
-    position: number
-  ): UpdateCoverImagePositionAction => ({
-    type: "UPDATE_COVER_IMAGE_POSITION",
+  updateCoverImagePosition: (position: number): UpdateCoverImagePositionAction => ({
+    type: 'UPDATE_COVER_IMAGE_POSITION',
     payload: { position },
   }),
-}
+};

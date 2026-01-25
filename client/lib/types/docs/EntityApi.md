@@ -1,22 +1,20 @@
 # EntityApi
 
-All URIs are relative to *http://localhost:8081*
+All URIs are relative to _http://localhost:8081_
 
-| Method | HTTP request | Description |
-|------------- | ------------- | -------------|
-| [**createEntityType**](EntityApi.md#createentitytypeoperation) | **POST** /api/v1/entity/schema/workspace/{workspaceId} | Create a new entity type |
-| [**deleteEntity**](EntityApi.md#deleteentity) | **DELETE** /api/v1/entity/workspace/{workspaceId} | Deletes an entity instance |
-| [**deleteEntityTypeByKey**](EntityApi.md#deleteentitytypebykey) | **DELETE** /api/v1/entity/schema/workspace/{workspaceId}/key/{key} | Delete an entity type by key |
-| [**deleteEntityTypeDefinition**](EntityApi.md#deleteentitytypedefinition) | **DELETE** /api/v1/entity/schema/workspace/{workspaceId}/definition | Removes an attribute or relationship from an entity type |
-| [**getEntityByTypeIdForWorkspace**](EntityApi.md#getentitybytypeidforworkspace) | **GET** /api/v1/entity/workspace/{workspaceId}/type/{id} | Get all entity types for an workspace for a provided entity type |
-| [**getEntityByTypeIdInForWorkspace**](EntityApi.md#getentitybytypeidinforworkspace) | **GET** /api/v1/entity/workspace/{workspaceId} | Get all entity types for an workspace for all provided type keys |
-| [**getEntityTypeByKeyForWorkspace**](EntityApi.md#getentitytypebykeyforworkspace) | **GET** /api/v1/entity/schema/workspace/{workspaceId}/key/{key} | Get an entity type by key for an workspace |
-| [**getEntityTypesForWorkspace**](EntityApi.md#getentitytypesforworkspace) | **GET** /api/v1/entity/schema/workspace/{workspaceId} | Get all entity types for an workspace |
-| [**saveEntity**](EntityApi.md#saveentityoperation) | **POST** /api/v1/entity/workspace/{workspaceId}/type/{entityTypeId} | Saves an entity instance |
-| [**saveEntityTypeDefinition**](EntityApi.md#saveentitytypedefinition) | **POST** /api/v1/entity/schema/workspace/{workspaceId}/definition | Add or update an attribute or relationship |
-| [**updateEntityType**](EntityApi.md#updateentitytype) | **PUT** /api/v1/entity/schema/workspace/{workspaceId}/configuration | Updates an existing entity type configuration |
-
-
+| Method                                                                              | HTTP request                                                        | Description                                                      |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [**createEntityType**](EntityApi.md#createentitytypeoperation)                      | **POST** /api/v1/entity/schema/workspace/{workspaceId}              | Create a new entity type                                         |
+| [**deleteEntity**](EntityApi.md#deleteentity)                                       | **DELETE** /api/v1/entity/workspace/{workspaceId}                   | Deletes an entity instance                                       |
+| [**deleteEntityTypeByKey**](EntityApi.md#deleteentitytypebykey)                     | **DELETE** /api/v1/entity/schema/workspace/{workspaceId}/key/{key}  | Delete an entity type by key                                     |
+| [**deleteEntityTypeDefinition**](EntityApi.md#deleteentitytypedefinition)           | **DELETE** /api/v1/entity/schema/workspace/{workspaceId}/definition | Removes an attribute or relationship from an entity type         |
+| [**getEntityByTypeIdForWorkspace**](EntityApi.md#getentitybytypeidforworkspace)     | **GET** /api/v1/entity/workspace/{workspaceId}/type/{id}            | Get all entity types for an workspace for a provided entity type |
+| [**getEntityByTypeIdInForWorkspace**](EntityApi.md#getentitybytypeidinforworkspace) | **GET** /api/v1/entity/workspace/{workspaceId}                      | Get all entity types for an workspace for all provided type keys |
+| [**getEntityTypeByKeyForWorkspace**](EntityApi.md#getentitytypebykeyforworkspace)   | **GET** /api/v1/entity/schema/workspace/{workspaceId}/key/{key}     | Get an entity type by key for an workspace                       |
+| [**getEntityTypesForWorkspace**](EntityApi.md#getentitytypesforworkspace)           | **GET** /api/v1/entity/schema/workspace/{workspaceId}               | Get all entity types for an workspace                            |
+| [**saveEntity**](EntityApi.md#saveentityoperation)                                  | **POST** /api/v1/entity/workspace/{workspaceId}/type/{entityTypeId} | Saves an entity instance                                         |
+| [**saveEntityTypeDefinition**](EntityApi.md#saveentitytypedefinition)               | **POST** /api/v1/entity/schema/workspace/{workspaceId}/definition   | Add or update an attribute or relationship                       |
+| [**updateEntityType**](EntityApi.md#updateentitytype)                               | **PUT** /api/v1/entity/schema/workspace/{workspaceId}/configuration | Updates an existing entity type configuration                    |
 
 ## createEntityType
 
@@ -37,7 +35,7 @@ import type { CreateEntityTypeOperationRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -64,11 +62,10 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **workspaceId** | `string` |  | [Defaults to `undefined`] |
-| **createEntityTypeRequest** | [CreateEntityTypeRequest](CreateEntityTypeRequest.md) |  | |
+| Name                        | Type                                                  | Description | Notes                     |
+| --------------------------- | ----------------------------------------------------- | ----------- | ------------------------- |
+| **workspaceId**             | `string`                                              |             | [Defaults to `undefined`] |
+| **createEntityTypeRequest** | [CreateEntityTypeRequest](CreateEntityTypeRequest.md) |             |                           |
 
 ### Return type
 
@@ -83,16 +80,15 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-
 ### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **201** | Entity type created successfully |  -  |
-| **400** | Invalid request data |  -  |
-| **401** | Unauthorized access |  -  |
+
+| Status code | Description                      | Response headers |
+| ----------- | -------------------------------- | ---------------- |
+| **201**     | Entity type created successfully | -                |
+| **400**     | Invalid request data             | -                |
+| **401**     | Unauthorized access              | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## deleteEntity
 
@@ -113,7 +109,7 @@ import type { DeleteEntityRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -140,11 +136,10 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **workspaceId** | `string` |  | [Defaults to `undefined`] |
-| **requestBody** | `Array<string>` |  | |
+| Name            | Type            | Description | Notes                     |
+| --------------- | --------------- | ----------- | ------------------------- |
+| **workspaceId** | `string`        |             | [Defaults to `undefined`] |
+| **requestBody** | `Array<string>` |             |                           |
 
 ### Return type
 
@@ -159,16 +154,15 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-
 ### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Entity instance deleted successfully |  -  |
-| **401** | Unauthorized access |  -  |
-| **404** | Workspace or entity not found |  -  |
+
+| Status code | Description                          | Response headers |
+| ----------- | ------------------------------------ | ---------------- |
+| **200**     | Entity instance deleted successfully | -                |
+| **401**     | Unauthorized access                  | -                |
+| **404**     | Workspace or entity not found        | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## deleteEntityTypeByKey
 
@@ -189,7 +183,7 @@ import type { DeleteEntityTypeByKeyRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -218,12 +212,11 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **workspaceId** | `string` |  | [Defaults to `undefined`] |
-| **key** | `string` |  | [Defaults to `undefined`] |
-| **impactConfirmed** | `boolean` |  | [Optional] [Defaults to `undefined`] |
+| Name                | Type      | Description | Notes                                |
+| ------------------- | --------- | ----------- | ------------------------------------ |
+| **workspaceId**     | `string`  |             | [Defaults to `undefined`]            |
+| **key**             | `string`  |             | [Defaults to `undefined`]            |
+| **impactConfirmed** | `boolean` |             | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -238,16 +231,15 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-
 ### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Entity type deleted successfully |  -  |
-| **401** | Unauthorized access |  -  |
-| **404** | Entity type not found |  -  |
+
+| Status code | Description                      | Response headers |
+| ----------- | -------------------------------- | ---------------- |
+| **200**     | Entity type deleted successfully | -                |
+| **401**     | Unauthorized access              | -                |
+| **404**     | Entity type not found            | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## deleteEntityTypeDefinition
 
@@ -268,7 +260,7 @@ import type { DeleteEntityTypeDefinitionRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -297,12 +289,11 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **workspaceId** | `string` |  | [Defaults to `undefined`] |
-| **deleteTypeDefinitionRequest** | [DeleteTypeDefinitionRequest](DeleteTypeDefinitionRequest.md) |  | |
-| **impactConfirmed** | `boolean` |  | [Optional] [Defaults to `undefined`] |
+| Name                            | Type                                                          | Description | Notes                                |
+| ------------------------------- | ------------------------------------------------------------- | ----------- | ------------------------------------ |
+| **workspaceId**                 | `string`                                                      |             | [Defaults to `undefined`]            |
+| **deleteTypeDefinitionRequest** | [DeleteTypeDefinitionRequest](DeleteTypeDefinitionRequest.md) |             |                                      |
+| **impactConfirmed**             | `boolean`                                                     |             | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -317,17 +308,16 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-
 ### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Entity type definition removed successfully |  -  |
-| **409** | Conflict due to cascading impacts on existing entities as a result of aforementioned changes |  -  |
-| **400** | Invalid request data |  -  |
-| **401** | Unauthorized access |  -  |
+
+| Status code | Description                                                                                  | Response headers |
+| ----------- | -------------------------------------------------------------------------------------------- | ---------------- |
+| **200**     | Entity type definition removed successfully                                                  | -                |
+| **409**     | Conflict due to cascading impacts on existing entities as a result of aforementioned changes | -                |
+| **400**     | Invalid request data                                                                         | -                |
+| **401**     | Unauthorized access                                                                          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## getEntityByTypeIdForWorkspace
 
@@ -348,7 +338,7 @@ import type { GetEntityByTypeIdForWorkspaceRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -375,11 +365,10 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **workspaceId** | `string` |  | [Defaults to `undefined`] |
-| **id** | `string` |  | [Defaults to `undefined`] |
+| Name            | Type     | Description | Notes                     |
+| --------------- | -------- | ----------- | ------------------------- |
+| **workspaceId** | `string` |             | [Defaults to `undefined`] |
+| **id**          | `string` |             | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -394,16 +383,15 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-
 ### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Entity types retrieved successfully |  -  |
-| **401** | Unauthorized access |  -  |
-| **404** | Workspace not found |  -  |
+
+| Status code | Description                         | Response headers |
+| ----------- | ----------------------------------- | ---------------- |
+| **200**     | Entity types retrieved successfully | -                |
+| **401**     | Unauthorized access                 | -                |
+| **404**     | Workspace not found                 | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## getEntityByTypeIdInForWorkspace
 
@@ -424,7 +412,7 @@ import type { GetEntityByTypeIdInForWorkspaceRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -451,11 +439,10 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **workspaceId** | `string` |  | [Defaults to `undefined`] |
-| **ids** | `Array<string>` |  | |
+| Name            | Type            | Description | Notes                     |
+| --------------- | --------------- | ----------- | ------------------------- |
+| **workspaceId** | `string`        |             | [Defaults to `undefined`] |
+| **ids**         | `Array<string>` |             |                           |
 
 ### Return type
 
@@ -470,16 +457,15 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-
 ### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Entity types retrieved successfully |  -  |
-| **401** | Unauthorized access |  -  |
-| **404** | Workspace not found |  -  |
+
+| Status code | Description                         | Response headers |
+| ----------- | ----------------------------------- | ---------------- |
+| **200**     | Entity types retrieved successfully | -                |
+| **401**     | Unauthorized access                 | -                |
+| **404**     | Workspace not found                 | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## getEntityTypeByKeyForWorkspace
 
@@ -500,7 +486,7 @@ import type { GetEntityTypeByKeyForWorkspaceRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -527,11 +513,10 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **workspaceId** | `string` |  | [Defaults to `undefined`] |
-| **key** | `string` |  | [Defaults to `undefined`] |
+| Name            | Type     | Description | Notes                     |
+| --------------- | -------- | ----------- | ------------------------- |
+| **workspaceId** | `string` |             | [Defaults to `undefined`] |
+| **key**         | `string` |             | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -546,16 +531,15 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-
 ### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Entity type retrieved successfully |  -  |
-| **401** | Unauthorized access |  -  |
-| **404** | Entity type not found |  -  |
+
+| Status code | Description                        | Response headers |
+| ----------- | ---------------------------------- | ---------------- |
+| **200**     | Entity type retrieved successfully | -                |
+| **401**     | Unauthorized access                | -                |
+| **404**     | Entity type not found              | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## getEntityTypesForWorkspace
 
@@ -576,7 +560,7 @@ import type { GetEntityTypesForWorkspaceRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -601,10 +585,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **workspaceId** | `string` |  | [Defaults to `undefined`] |
+| Name            | Type     | Description | Notes                     |
+| --------------- | -------- | ----------- | ------------------------- |
+| **workspaceId** | `string` |             | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -619,16 +602,15 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-
 ### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Entity types retrieved successfully |  -  |
-| **401** | Unauthorized access |  -  |
-| **404** | Workspace not found |  -  |
+
+| Status code | Description                         | Response headers |
+| ----------- | ----------------------------------- | ---------------- |
+| **200**     | Entity types retrieved successfully | -                |
+| **401**     | Unauthorized access                 | -                |
+| **404**     | Workspace not found                 | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## saveEntity
 
@@ -649,7 +631,7 @@ import type { SaveEntityOperationRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -678,12 +660,11 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **workspaceId** | `string` |  | [Defaults to `undefined`] |
-| **entityTypeId** | `string` |  | [Defaults to `undefined`] |
-| **saveEntityRequest** | [SaveEntityRequest](SaveEntityRequest.md) |  | |
+| Name                  | Type                                      | Description | Notes                     |
+| --------------------- | ----------------------------------------- | ----------- | ------------------------- |
+| **workspaceId**       | `string`                                  |             | [Defaults to `undefined`] |
+| **entityTypeId**      | `string`                                  |             | [Defaults to `undefined`] |
+| **saveEntityRequest** | [SaveEntityRequest](SaveEntityRequest.md) |             |                           |
 
 ### Return type
 
@@ -698,18 +679,17 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `application/json`, `*/*`
 
-
 ### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Entity instance saved successfully |  -  |
-| **400** | Invalid entity data provided |  -  |
-| **401** | Unauthorized access |  -  |
-| **404** | Workspace or entity type not found |  -  |
-| **409** | Conflict of data or unconfirmed impacts |  -  |
+
+| Status code | Description                             | Response headers |
+| ----------- | --------------------------------------- | ---------------- |
+| **200**     | Entity instance saved successfully      | -                |
+| **400**     | Invalid entity data provided            | -                |
+| **401**     | Unauthorized access                     | -                |
+| **404**     | Workspace or entity type not found      | -                |
+| **409**     | Conflict of data or unconfirmed impacts | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## saveEntityTypeDefinition
 
@@ -730,7 +710,7 @@ import type { SaveEntityTypeDefinitionRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -759,12 +739,11 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **workspaceId** | `string` |  | [Defaults to `undefined`] |
-| **saveTypeDefinitionRequest** | [SaveTypeDefinitionRequest](SaveTypeDefinitionRequest.md) |  | |
-| **impactConfirmed** | `boolean` |  | [Optional] [Defaults to `undefined`] |
+| Name                          | Type                                                      | Description | Notes                                |
+| ----------------------------- | --------------------------------------------------------- | ----------- | ------------------------------------ |
+| **workspaceId**               | `string`                                                  |             | [Defaults to `undefined`]            |
+| **saveTypeDefinitionRequest** | [SaveTypeDefinitionRequest](SaveTypeDefinitionRequest.md) |             |                                      |
+| **impactConfirmed**           | `boolean`                                                 |             | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -779,17 +758,16 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-
 ### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Entity type definition saved successfully |  -  |
-| **409** | Conflict due to cascading impacts on existing entities as a result of aforementioned changes |  -  |
-| **400** | Invalid request data |  -  |
-| **401** | Unauthorized access |  -  |
+
+| Status code | Description                                                                                  | Response headers |
+| ----------- | -------------------------------------------------------------------------------------------- | ---------------- |
+| **200**     | Entity type definition saved successfully                                                    | -                |
+| **409**     | Conflict due to cascading impacts on existing entities as a result of aforementioned changes | -                |
+| **400**     | Invalid request data                                                                         | -                |
+| **401**     | Unauthorized access                                                                          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## updateEntityType
 
@@ -810,7 +788,7 @@ import type { UpdateEntityTypeRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -837,11 +815,10 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **workspaceId** | `string` |  | [Defaults to `undefined`] |
-| **entityType** | [EntityType](EntityType.md) |  | |
+| Name            | Type                        | Description | Notes                     |
+| --------------- | --------------------------- | ----------- | ------------------------- |
+| **workspaceId** | `string`                    |             | [Defaults to `undefined`] |
+| **entityType**  | [EntityType](EntityType.md) |             |                           |
 
 ### Return type
 
@@ -856,13 +833,12 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-
 ### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Entity type updated successfully |  -  |
-| **400** | Invalid request data |  -  |
-| **401** | Unauthorized access |  -  |
+
+| Status code | Description                      | Response headers |
+| ----------- | -------------------------------- | ---------------- |
+| **200**     | Entity type updated successfully | -                |
+| **400**     | Invalid request data             | -                |
+| **401**     | Unauthorized access              | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-

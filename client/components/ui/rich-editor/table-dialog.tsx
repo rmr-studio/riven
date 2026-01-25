@@ -1,10 +1,10 @@
-"use client"
+'use client';
 
-import React, { useState } from "react"
-import { AlertCircle, Table } from "lucide-react"
+import React, { useState } from 'react';
+import { AlertCircle, Table } from 'lucide-react';
 
-import { Button } from "../button"
-import { Checkbox } from "../checkbox"
+import { Button } from '../button';
+import { Checkbox } from '../checkbox';
 import {
   Dialog,
   DialogContent,
@@ -12,21 +12,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../dialog"
-import { Input } from "../input"
-import { Label } from "../label"
-import { Textarea } from "../textarea"
-import { StructuralNode } from "./types"
-import {
-  isMarkdownTable,
-  parseMarkdownTable,
-} from "./utils/markdown-table-parser"
+} from '../dialog';
+import { Input } from '../input';
+import { Label } from '../label';
+import { Textarea } from '../textarea';
+import { StructuralNode } from './types';
+import { isMarkdownTable, parseMarkdownTable } from './utils/markdown-table-parser';
 
 interface TableDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onCreateTable: (rows: number, cols: number) => void
-  onImportMarkdown: (table: StructuralNode) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreateTable: (rows: number, cols: number) => void;
+  onImportMarkdown: (table: StructuralNode) => void;
 }
 
 export function TableDialog({
@@ -35,43 +32,43 @@ export function TableDialog({
   onCreateTable,
   onImportMarkdown,
 }: TableDialogProps) {
-  const [rows, setRows] = useState(3)
-  const [cols, setCols] = useState(3)
-  const [useMarkdown, setUseMarkdown] = useState(false)
-  const [markdownText, setMarkdownText] = useState("")
-  const [error, setError] = useState<string | null>(null)
+  const [rows, setRows] = useState(3);
+  const [cols, setCols] = useState(3);
+  const [useMarkdown, setUseMarkdown] = useState(false);
+  const [markdownText, setMarkdownText] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const handleCreate = () => {
     if (useMarkdown) {
       // Parse and import markdown
-      const result = parseMarkdownTable(markdownText)
+      const result = parseMarkdownTable(markdownText);
       if (result.success && result.table) {
-        onImportMarkdown(result.table)
-        onOpenChange(false)
+        onImportMarkdown(result.table);
+        onOpenChange(false);
         // Reset
-        setMarkdownText("")
-        setUseMarkdown(false)
-        setError(null)
+        setMarkdownText('');
+        setUseMarkdown(false);
+        setError(null);
       } else {
-        setError(result.error || "Failed to parse markdown table")
+        setError(result.error || 'Failed to parse markdown table');
       }
     } else {
       // Create empty table
       if (rows > 0 && cols > 0 && rows <= 20 && cols <= 10) {
-        onCreateTable(rows, cols)
-        onOpenChange(false)
+        onCreateTable(rows, cols);
+        onOpenChange(false);
         // Reset to defaults
-        setRows(3)
-        setCols(3)
-        setError(null)
+        setRows(3);
+        setCols(3);
+        setError(null);
       }
     }
-  }
+  };
 
   const handleMarkdownChange = (value: string) => {
-    setMarkdownText(value)
-    setError(null)
-  }
+    setMarkdownText(value);
+    setError(null);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -81,9 +78,7 @@ export function TableDialog({
             <Table className="h-5 w-5" />
             Create Table
           </DialogTitle>
-          <DialogDescription>
-            Create a new table or import from markdown
-          </DialogDescription>
+          <DialogDescription>Create a new table or import from markdown</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           {/* Markdown checkbox */}
@@ -92,8 +87,8 @@ export function TableDialog({
               id="markdown"
               checked={useMarkdown}
               onCheckedChange={(checked: boolean) => {
-                setUseMarkdown(checked as boolean)
-                setError(null)
+                setUseMarkdown(checked as boolean);
+                setError(null);
               }}
             />
             <Label
@@ -119,15 +114,14 @@ export function TableDialog({
                   onChange={(e) => handleMarkdownChange(e.target.value)}
                   className="max-h-[400px] min-h-[150px] font-mono text-xs"
                 />
-                <div className="text-muted-foreground text-xs">
-                  Paste your markdown table above. Must include header and
-                  separator rows.
+                <div className="text-xs text-muted-foreground">
+                  Paste your markdown table above. Must include header and separator rows.
                 </div>
               </div>
 
               {/* Error message */}
               {error && (
-                <div className="text-destructive bg-destructive/10 flex items-start gap-2 rounded p-2 text-xs">
+                <div className="flex items-start gap-2 rounded bg-destructive/10 p-2 text-xs text-destructive">
                   <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -164,7 +158,7 @@ export function TableDialog({
                   className="col-span-3"
                 />
               </div>
-              <div className="text-muted-foreground px-1 text-xs">
+              <div className="px-1 text-xs text-muted-foreground">
                 Maximum: 20 rows × 10 columns
               </div>
             </>
@@ -182,10 +176,10 @@ export function TableDialog({
                 : rows <= 0 || cols <= 0 || rows > 20 || cols > 10
             }
           >
-            {useMarkdown ? "Import Table" : "Create Table"}
+            {useMarkdown ? 'Import Table' : 'Create Table'}
           </Button>
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

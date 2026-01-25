@@ -11,31 +11,31 @@
  * - Supports single and multi-select modes
  */
 
-import { EntityType } from "@/lib/types/types";
-import { useQueryClient } from "@tanstack/react-query";
-import { Users } from "lucide-react";
-import { useState } from "react";
-import { EntitySelectorModal } from "../components/modals/entity-selector-modal";
-import { CustomToolbarAction } from "../components/panel/toolbar/panel-toolbar";
-import { useBlockEnvironment } from "../context/block-environment-provider";
-import { useTrackedEnvironment } from "../context/tracked-environment-provider";
+import { EntityType } from '@/lib/types/types';
+import { useQueryClient } from '@tanstack/react-query';
+import { Users } from 'lucide-react';
+import { useState } from 'react';
+import { EntitySelectorModal } from '../components/modals/entity-selector-modal';
+import { CustomToolbarAction } from '../components/panel/toolbar/panel-toolbar';
+import { useBlockEnvironment } from '../context/block-environment-provider';
+import { useTrackedEnvironment } from '../context/tracked-environment-provider';
 import {
-    EntityReferenceMetadata,
-    isEntityReferenceMetadata,
-    ReferenceItem,
-} from "../interface/block.interface";
+  EntityReferenceMetadata,
+  isEntityReferenceMetadata,
+  ReferenceItem,
+} from '../interface/block.interface';
 
 export interface UseReferenceBlockToolbarProps {
-    blockId: string;
-    readonly?: boolean;
-    entityType: EntityType;
-    currentItems?: ReferenceItem[]; // Currently selected items
-    multiSelect?: boolean;
+  blockId: string;
+  readonly?: boolean;
+  entityType: EntityType;
+  currentItems?: ReferenceItem[]; // Currently selected items
+  multiSelect?: boolean;
 }
 
 export interface UseReferenceBlockToolbarResult {
-    customActions: CustomToolbarAction[];
-    modal: React.ReactNode;
+  customActions: CustomToolbarAction[];
+  modal: React.ReactNode;
 }
 
 /**
@@ -66,99 +66,99 @@ export interface UseReferenceBlockToolbarResult {
  * );
  */
 export function UseEntityReferenceToolbar({
-    blockId,
-    entityType,
-    currentItems = [],
-    multiSelect = true,
-    readonly = false,
+  blockId,
+  entityType,
+  currentItems = [],
+  multiSelect = true,
+  readonly = false,
 }: UseReferenceBlockToolbarProps): UseReferenceBlockToolbarResult {
-    const [entitySelectorOpen, setEntitySelectorOpen] = useState(false);
-    const { getBlock, workspaceId } = useBlockEnvironment();
-    const { updateTrackedBlock } = useTrackedEnvironment();
-    const queryClient = useQueryClient();
+  const [entitySelectorOpen, setEntitySelectorOpen] = useState(false);
+  const { getBlock, workspaceId } = useBlockEnvironment();
+  const { updateTrackedBlock } = useTrackedEnvironment();
+  const queryClient = useQueryClient();
 
-    if (readonly) {
-        return {
-            customActions: [],
-            modal: null,
-        };
+  if (readonly) {
+    return {
+      customActions: [],
+      modal: null,
+    };
+  }
+
+  // Handle entity selection
+  const handleEntitySelect = (items: ReferenceItem[]) => {
+    const block = getBlock(blockId);
+    if (!block) return;
+
+    const { payload } = block.block;
+    if (payload.readonly) {
+      return;
     }
 
-    // Handle entity selection
-    const handleEntitySelect = (items: ReferenceItem[]) => {
-        const block = getBlock(blockId);
-        if (!block) return;
+    // Ensure block is an entity reference
+    if (!isEntityReferenceMetadata(payload)) return;
 
-        const { payload } = block.block;
-        if (payload.readonly) {
-            return;
-        }
+    // Validate entity types if listType is set
+    if (payload.listType) {
+      const invalidItems = items.filter((item) => item.type !== payload.listType);
+      if (invalidItems.length > 0) {
+        console.error(
+          `Cannot add entities of type ${invalidItems[0].type} to a ${payload.listType} reference block`,
+        );
+        return;
+      }
+    }
 
-        // Ensure block is an entity reference
-        if (!isEntityReferenceMetadata(payload)) return;
-
-        // Validate entity types if listType is set
-        if (payload.listType) {
-            const invalidItems = items.filter((item) => item.type !== payload.listType);
-            if (invalidItems.length > 0) {
-                console.error(
-                    `Cannot add entities of type ${invalidItems[0].type} to a ${payload.listType} reference block`
-                );
-                return;
-            }
-        }
-
-        // Update block metadata with new items
-        const updatedPayload: EntityReferenceMetadata = {
-            ...payload,
-            items,
-        };
-
-        updateTrackedBlock(blockId, {
-            ...block,
-            block: {
-                ...block.block,
-                payload: updatedPayload,
-            },
-        });
-
-        // Invalidate hydration cache to trigger re-fetch with new entities
-        // Note: Invalidate at organisation level to catch the specific block
-        queryClient.invalidateQueries({
-            queryKey: ["block-hydration", workspaceId],
-            exact: false,
-        });
-
-        setEntitySelectorOpen(false);
+    // Update block metadata with new items
+    const updatedPayload: EntityReferenceMetadata = {
+      ...payload,
+      items,
     };
 
-    // Create custom toolbar action
-    const customActions: CustomToolbarAction[] = [
-        {
-            id: "select-entities",
-            icon: <Users className="size-3.5" />,
-            label: "Select entities",
-            onClick: () => setEntitySelectorOpen(true),
-            badge: currentItems.length > 0 ? currentItems.length : undefined,
-        },
-    ];
+    updateTrackedBlock(blockId, {
+      ...block,
+      block: {
+        ...block.block,
+        payload: updatedPayload,
+      },
+    });
 
-    // Create modal with all entities shown (allows toggling selection on/off)
-    const modal = (
-        <EntitySelectorModal
-            open={entitySelectorOpen}
-            onOpenChange={setEntitySelectorOpen}
-            onSelect={handleEntitySelect}
-            entityType={entityType}
-            workspaceId={workspaceId}
-            multiSelect={multiSelect}
-            initialSelection={currentItems}
-            showAllEntities={true}
-        />
-    );
+    // Invalidate hydration cache to trigger re-fetch with new entities
+    // Note: Invalidate at organisation level to catch the specific block
+    queryClient.invalidateQueries({
+      queryKey: ['block-hydration', workspaceId],
+      exact: false,
+    });
 
-    return {
-        customActions,
-        modal,
-    };
+    setEntitySelectorOpen(false);
+  };
+
+  // Create custom toolbar action
+  const customActions: CustomToolbarAction[] = [
+    {
+      id: 'select-entities',
+      icon: <Users className="size-3.5" />,
+      label: 'Select entities',
+      onClick: () => setEntitySelectorOpen(true),
+      badge: currentItems.length > 0 ? currentItems.length : undefined,
+    },
+  ];
+
+  // Create modal with all entities shown (allows toggling selection on/off)
+  const modal = (
+    <EntitySelectorModal
+      open={entitySelectorOpen}
+      onOpenChange={setEntitySelectorOpen}
+      onSelect={handleEntitySelect}
+      entityType={entityType}
+      workspaceId={workspaceId}
+      multiSelect={multiSelect}
+      initialSelection={currentItems}
+      showAllEntities={true}
+    />
+  );
+
+  return {
+    customActions,
+    modal,
+  };
 }

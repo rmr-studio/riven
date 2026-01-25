@@ -18,15 +18,15 @@
  */
 
 // Domain types
-export * from "./auth.types";
-export * from "./auth-error";
-export type { AuthProvider } from "./auth-provider.interface";
+export * from './auth.types';
+export * from './auth-error';
+export type { AuthProvider } from './auth-provider.interface';
 
 // Factory
-export { createAuthProvider } from "./factory";
+export { createAuthProvider } from './factory';
 
 // Error messages
-export { getAuthErrorMessage } from "./error-messages";
+export { getAuthErrorMessage } from './error-messages';
 
 // Adapters (for direct instantiation when needed)
-export { SupabaseAuthAdapter } from "./adapters/supabase/supabase-adapter";
+export { SupabaseAuthAdapter } from './adapters/supabase/supabase-adapter';

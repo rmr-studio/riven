@@ -7,6 +7,7 @@
 **Overall:** Feature-Module Architecture with Multi-Tenant SaaS Pattern
 
 **Key Characteristics:**
+
 - Domain-driven feature modules with standardized internal structure
 - Next.js App Router for file-based routing with workspace-scoped paths
 - Service layer pattern with static class methods for API communication
@@ -17,6 +18,7 @@
 ## Layers
 
 **Presentation Layer:**
+
 - Purpose: UI components, forms, modals, tables, and user interactions
 - Location: `components/feature-modules/*/components/`
 - Contains: React components organized by category (forms, modals, tables, ui)
@@ -24,6 +26,7 @@
 - Used by: App Router pages
 
 **Hooks Layer:**
+
 - Purpose: Encapsulate data fetching, mutations, and form logic
 - Location: `components/feature-modules/*/hooks/`
 - Contains: TanStack Query hooks (query/, mutation/), form hooks (form/), custom logic hooks
@@ -31,6 +34,7 @@
 - Used by: Presentation layer
 
 **Service Layer:**
+
 - Purpose: API communication with backend services
 - Location: `components/feature-modules/*/service/`
 - Contains: Static class methods for HTTP requests (e.g., `EntityTypeService.getEntityTypes()`)
@@ -38,6 +42,7 @@
 - Used by: Hooks layer
 
 **State Management Layer:**
+
 - Purpose: Client-side state management and cross-component data sharing
 - Location: `components/feature-modules/*/stores/`, `components/feature-modules/*/context/`
 - Contains: Zustand store factories (scoped instances), React Context providers
@@ -45,6 +50,7 @@
 - Used by: Presentation layer, Hooks layer
 
 **Type System Layer:**
+
 - Purpose: Type definitions and interfaces
 - Location: `components/feature-modules/*/interface/`, `lib/types/types.ts`, `lib/interfaces/`
 - Contains: OpenAPI-generated types (lib/types/), feature-level re-exports with semantic names
@@ -52,6 +58,7 @@
 - Used by: All layers
 
 **Routing Layer:**
+
 - Purpose: URL routing and page composition
 - Location: `app/`
 - Contains: Next.js App Router pages, layouts, API routes
@@ -59,6 +66,7 @@
 - Used by: Next.js framework
 
 **Provider Layer:**
+
 - Purpose: Global application context and initialization
 - Location: `components/provider/`
 - Contains: Auth provider, Theme provider, QueryClient wrapper, Store wrapper
@@ -66,6 +74,7 @@
 - Used by: Root layout
 
 **Shared Utilities Layer:**
+
 - Purpose: Cross-feature utility functions
 - Location: `lib/util/`
 - Contains: Error handling, form validation, service utilities, Supabase client
@@ -105,6 +114,7 @@
 7. User interactions trigger tracked environment updates via context methods
 
 **State Management:**
+
 - Server state: TanStack Query (caching, invalidation, optimistic updates)
 - Client state: Zustand stores (scoped per feature instance) + React Context
 - Form state: React Hook Form with Zod validation
@@ -113,36 +123,43 @@
 ## Key Abstractions
 
 **Feature Module:**
+
 - Purpose: Self-contained domain feature with standardized structure
 - Examples: `components/feature-modules/entity/`, `components/feature-modules/blocks/`, `components/feature-modules/workspace/`
 - Pattern: Consistent subdirectories (components/, hooks/, service/, interface/, stores/, context/, util/)
 
 **Service Class:**
+
 - Purpose: Namespace for API operations related to a domain entity
 - Examples: `EntityTypeService`, `EntityService`, `BlockService`, `WorkspaceService`
 - Pattern: Static methods, session validation, typed responses, centralized error handling
 
 **Query Hook:**
+
 - Purpose: Encapsulate TanStack Query logic with toast notifications and cache management
 - Examples: `useEntityTypes()`, `useSaveDefinitionMutation()`, `useDeleteEntityMutation()`
 - Pattern: useMutation/useQuery wrapper, loading toasts, cache updates, error handling
 
 **Store Factory:**
+
 - Purpose: Create scoped Zustand store instances for feature-specific state
 - Examples: `createEntityTypeConfigStore()`, per-instance stores
 - Pattern: Factory function with closure over dependencies, `subscribeWithSelector` middleware
 
 **Context Provider:**
+
 - Purpose: Inject scoped stores and complex state into component tree
 - Examples: `EntityTypeConfigurationProvider`, `BlockEnvironmentProvider`, `AuthProvider`
 - Pattern: useRef for stable store instance, useMemo for value object, selector-based hooks
 
 **Block Node:**
+
 - Purpose: Fundamental unit in block composition system
 - Examples: `ContentNode` (user data), `ReferenceNode` (entity/block references)
 - Pattern: Discriminated unions with type guards (`isContentNode()`, `isReferenceNode()`)
 
 **Portal Rendering:**
+
 - Purpose: Render React components into Gridstack-managed DOM containers
 - Examples: `RenderElementProvider` + `PortalContentWrapper`
 - Pattern: Map widgets → resolve blocks → generate components → createPortal to containers
@@ -150,31 +167,37 @@
 ## Entry Points
 
 **Root Application:**
+
 - Location: `app/layout.tsx`
 - Triggers: Next.js server/client initialization
 - Responsibilities: Set up global providers (Theme, Auth, QueryClient, Store), render Toaster
 
 **Dashboard Application:**
+
 - Location: `app/dashboard/layout.tsx`
-- Triggers: User navigates to /dashboard/*
+- Triggers: User navigates to /dashboard/\*
 - Responsibilities: Initialize dashboard layout (Sidebar, Navbar), onboarding wrapper
 
 **Landing Page:**
+
 - Location: `app/page.tsx`
 - Triggers: User visits root URL
 - Responsibilities: Marketing landing page with feature showcase
 
 **Workspace-Scoped Routes:**
+
 - Location: `app/dashboard/workspace/[workspaceId]/**`
 - Triggers: User navigates to workspace-specific features
 - Responsibilities: Multi-tenant isolation, entity/block/member/subscription management
 
 **Entity Type Configuration:**
+
 - Location: `app/dashboard/workspace/[workspaceId]/entity/[key]/settings/page.tsx`
 - Triggers: User opens entity type settings
 - Responsibilities: Initialize `EntityTypeConfigurationProvider`, render configuration UI
 
 **API Routes:**
+
 - Location: `app/api/auth/token/callback/route.ts`
 - Triggers: OAuth callback from Supabase
 - Responsibilities: Exchange code for session, handle redirects
@@ -184,6 +207,7 @@
 **Strategy:** Centralized error utilities with typed ResponseError interface
 
 **Patterns:**
+
 - Service layer: `handleError()` utility converts fetch responses to `ResponseError` objects
 - All service methods use try/catch with `isResponseError()` type guard
 - Mutation hooks display errors via `toast.error()` with user-friendly messages
@@ -191,6 +215,7 @@
 - Session validation throws before API calls (`validateSession()`, `validateUuid()`)
 
 **Error Flow:**
+
 1. Service method catches error
 2. `handleError()` or `fromError()` standardizes to `ResponseError`
 3. Error propagates to mutation hook
@@ -202,12 +227,14 @@
 **Logging:** Console-based (development), client-side errors visible in browser console
 
 **Validation:**
+
 - Schema validation: Zod schemas with React Hook Form integration
 - API request validation: `validateSession()`, `validateUuid()` before service calls
 - Type validation: OpenAPI-generated types ensure type safety
 - Runtime validation: Type guards for discriminated unions (`isContentNode()`, `isEntityReferenceMetadata()`)
 
 **Authentication:**
+
 - Supabase-based session management via `AuthProvider`
 - Session stored in React Context (`useAuth()` hook)
 - All service methods require session token in Authorization header
@@ -215,6 +242,7 @@
 - Protected routes via middleware (not visible in client code)
 
 **Multi-Tenancy:**
+
 - Workspace ID (`workspaceId`) in URL path: `/dashboard/workspace/[workspaceId]/*`
 - All API calls scoped by workspace ID
 - Query cache keys include workspace ID for isolation
@@ -222,4 +250,4 @@
 
 ---
 
-*Architecture analysis: 2026-01-19*
+_Architecture analysis: 2026-01-19_

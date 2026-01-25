@@ -1,8 +1,8 @@
-import { useAuth } from "@/components/provider/auth-context";
-import { EntityType } from "@/lib/types/types";
-import { useQuery } from "@tanstack/react-query";
-import { type BlockEnvironment } from "../interface/block.interface";
-import { LayoutService } from "../service/layout.service";
+import { useAuth } from '@/components/provider/auth-context';
+import { EntityType } from '@/lib/types/types';
+import { useQuery } from '@tanstack/react-query';
+import { type BlockEnvironment } from '../interface/block.interface';
+import { LayoutService } from '../service/layout.service';
 
 /**
  * Hook to load and manage block environment for an entity.
@@ -21,31 +21,31 @@ import { LayoutService } from "../service/layout.service";
  * );
  */
 export interface UseEntityLayoutResult {
-    environment?: BlockEnvironment;
-    isLoading: boolean;
-    error: Error | null;
-    refetch: () => Promise<unknown>;
+  environment?: BlockEnvironment;
+  isLoading: boolean;
+  error: Error | null;
+  refetch: () => Promise<unknown>;
 }
 
 export const useEntityLayout = (
-    workspaceId: string | undefined,
-    entityId: string | undefined,
-    entityType: EntityType
+  workspaceId: string | undefined,
+  entityId: string | undefined,
+  entityType: EntityType,
 ): UseEntityLayoutResult => {
-    const { session, loading: authLoading } = useAuth();
+  const { session, loading: authLoading } = useAuth();
 
-    const query = useQuery<BlockEnvironment, Error>({
-        queryKey: ["layout", workspaceId, entityType, entityId],
-        queryFn: () => LayoutService.loadLayout(session, workspaceId, entityId, entityType),
-        enabled: !!workspaceId && !!entityId && !!session && !authLoading,
-        staleTime: 30 * 1000, // 30 seconds
-        refetchOnWindowFocus: true,
-    });
+  const query = useQuery<BlockEnvironment, Error>({
+    queryKey: ['layout', workspaceId, entityType, entityId],
+    queryFn: () => LayoutService.loadLayout(session, workspaceId, entityId, entityType),
+    enabled: !!workspaceId && !!entityId && !!session && !authLoading,
+    staleTime: 30 * 1000, // 30 seconds
+    refetchOnWindowFocus: true,
+  });
 
-    return {
-        environment: query.data,
-        isLoading: query.isLoading || authLoading,
-        error: query.error,
-        refetch: query.refetch,
-    };
+  return {
+    environment: query.data,
+    isLoading: query.isLoading || authLoading,
+    error: query.error,
+    refetch: query.refetch,
+  };
 };

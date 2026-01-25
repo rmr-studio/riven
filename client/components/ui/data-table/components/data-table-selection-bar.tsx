@@ -1,57 +1,54 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/util/utils";
-import { X } from "lucide-react";
-import { TooltipProvider } from "../../tooltip";
-import { useCellSelectionOverview } from "../data-table-provider";
-import type { SelectionActionProps } from "../data-table.types";
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/util/utils';
+import { X } from 'lucide-react';
+import { TooltipProvider } from '../../tooltip';
+import { useCellSelectionOverview } from '../data-table-provider';
+import type { SelectionActionProps } from '../data-table.types';
 
 interface DataTableSelectionBarProps<TData> {
-    actionComponent?: React.ComponentType<SelectionActionProps<TData>>;
+  actionComponent?: React.ComponentType<SelectionActionProps<TData>>;
 }
 
 export function DataTableSelectionBar<TData>({
-    actionComponent: CustomActionComponent,
+  actionComponent: CustomActionComponent,
 }: DataTableSelectionBarProps<TData>) {
-    const { hasSelections, clearSelection, selectedCount, selectedRows } =
-        useCellSelectionOverview<TData>();
+  const { hasSelections, clearSelection, selectedCount, selectedRows } =
+    useCellSelectionOverview<TData>();
 
-    // Don't render if no selections
-    if (!hasSelections) {
-        return null;
-    }
+  // Don't render if no selections
+  if (!hasSelections) {
+    return null;
+  }
 
-    return (
-        <TooltipProvider>
-            <div
-                className={cn(
-                    "text-primary-foreground absolute top-0 left-0 bg-accent  py-0.5 border rounded-md",
-                    "shadow-lg z-10"
-                )}
-            >
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                        <div className="border-r px-1">
-                            <Button
-                                variant="ghost"
-                                size="xs"
-                                onClick={clearSelection}
-                                className="text-primary hover:bg-primary/10 px-1!"
-                            >
-                                <X className="size-3" />
-                                {selectedCount} selected
-                            </Button>
-                        </div>
-                        {CustomActionComponent && (
-                            <CustomActionComponent
-                                selectedRows={selectedRows}
-                                clearSelection={clearSelection}
-                            />
-                        )}
-                    </div>
-                </div>
+  return (
+    <TooltipProvider>
+      <div
+        className={cn(
+          'absolute top-0 left-0 rounded-md border bg-accent py-0.5 text-primary-foreground',
+          'z-10 shadow-lg',
+        )}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="border-r px-1">
+              <Button
+                variant="ghost"
+                size="xs"
+                onClick={clearSelection}
+                className="px-1! text-primary hover:bg-primary/10"
+              >
+                <X className="size-3" />
+                {selectedCount} selected
+              </Button>
             </div>
-        </TooltipProvider>
-    );
+            {CustomActionComponent && (
+              <CustomActionComponent selectedRows={selectedRows} clearSelection={clearSelection} />
+            )}
+          </div>
+        </div>
+      </div>
+    </TooltipProvider>
+  );
 }

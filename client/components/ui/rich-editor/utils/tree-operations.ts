@@ -4,7 +4,7 @@ import {
   isContainerNode,
   isStructuralNode,
   StructuralNode,
-} from "../types"
+} from '../types';
 
 /**
  * Recursively finds a node by its ID in the tree.
@@ -21,26 +21,23 @@ import {
  * }
  * ```
  */
-export function findNodeById(
-  node: EditorNode,
-  targetId: string
-): EditorNode | undefined {
+export function findNodeById(node: EditorNode, targetId: string): EditorNode | undefined {
   // Base case: current node matches
   if (node.id === targetId) {
-    return node
+    return node;
   }
 
   // Recursive case: search children if it's a container or structural node
   if (isContainerNode(node) || isStructuralNode(node)) {
     for (const child of node.children) {
-      const found = findNodeById(child, targetId)
+      const found = findNodeById(child, targetId);
       if (found) {
-        return found
+        return found;
       }
     }
   }
 
-  return undefined
+  return undefined;
 }
 
 /**
@@ -61,30 +58,30 @@ export function findNodeById(
  */
 export function findParentById(
   node: EditorNode,
-  targetId: string
+  targetId: string,
 ): ContainerNode | StructuralNode | undefined {
   if (!isContainerNode(node) && !isStructuralNode(node)) {
-    return undefined
+    return undefined;
   }
 
   // Check if target is a direct child
   for (const child of node.children) {
     if (child.id === targetId) {
-      return node
+      return node;
     }
   }
 
   // Recursively search in children
   for (const child of node.children) {
     if (isContainerNode(child) || isStructuralNode(child)) {
-      const found = findParentById(child, targetId)
+      const found = findParentById(child, targetId);
       if (found) {
-        return found
+        return found;
       }
     }
   }
 
-  return undefined
+  return undefined;
 }
 
 /**
@@ -107,35 +104,33 @@ export function findParentById(
 export function updateNodeById(
   node: EditorNode,
   targetId: string,
-  updater: (node: EditorNode) => Partial<EditorNode>
+  updater: (node: EditorNode) => Partial<EditorNode>,
 ): EditorNode {
   // Base case: found the target node
   if (node.id === targetId) {
-    const updates = updater(node)
-    return { ...node, ...updates } as EditorNode
+    const updates = updater(node);
+    return { ...node, ...updates } as EditorNode;
   }
 
   // Recursive case: update children if it's a container or structural node
   if (isContainerNode(node) || isStructuralNode(node)) {
-    const newChildren = node.children.map((child) =>
-      updateNodeById(child, targetId, updater)
-    )
+    const newChildren = node.children.map((child) => updateNodeById(child, targetId, updater));
 
     // Only create new object if children actually changed
     const childrenChanged = newChildren.some(
-      (newChild, index) => newChild !== node.children[index]
-    )
+      (newChild, index) => newChild !== node.children[index],
+    );
 
     if (childrenChanged) {
       return {
         ...node,
         children: newChildren,
-      }
+      };
     }
   }
 
   // No changes, return original node
-  return node
+  return node;
 }
 
 /**
@@ -151,37 +146,34 @@ export function updateNodeById(
  * const newTree = deleteNodeById(root, 'paragraph-to-remove');
  * ```
  */
-export function deleteNodeById(
-  node: EditorNode,
-  targetId: string
-): EditorNode | null {
+export function deleteNodeById(node: EditorNode, targetId: string): EditorNode | null {
   // If this is the target node, signal deletion
   if (node.id === targetId) {
-    return null
+    return null;
   }
 
   // If it's a container or structural node, filter out the target from children
   if (isContainerNode(node) || isStructuralNode(node)) {
     const newChildren = node.children
       .map((child) => deleteNodeById(child, targetId))
-      .filter((child): child is EditorNode => child !== null)
+      .filter((child): child is EditorNode => child !== null);
 
     // Only create new object if children changed
     if (newChildren.length !== node.children.length) {
       return {
         ...node,
         children: newChildren,
-      }
+      };
     }
   }
 
-  return node
+  return node;
 }
 
 /**
  * Position for inserting a node relative to another node.
  */
-export type InsertPosition = "before" | "after" | "prepend" | "append"
+export type InsertPosition = 'before' | 'after' | 'prepend' | 'append';
 
 /**
  * Inserts a new node relative to a target node.
@@ -205,30 +197,26 @@ export function insertNode(
   root: EditorNode,
   targetId: string,
   newNode: EditorNode,
-  position: InsertPosition
+  position: InsertPosition,
 ): EditorNode {
   // For 'prepend' and 'append', insert inside the target container
-  if (position === "prepend" || position === "append") {
+  if (position === 'prepend' || position === 'append') {
     return updateNodeById(root, targetId, (node) => {
       if (!isContainerNode(node) && !isStructuralNode(node)) {
-        console.warn(
-          `Cannot ${position} to non-container/structural node ${targetId}`
-        )
-        return {}
+        console.warn(`Cannot ${position} to non-container/structural node ${targetId}`);
+        return {};
       }
 
       return {
         children:
-          position === "prepend"
-            ? [newNode, ...node.children]
-            : [...node.children, newNode],
-      }
-    })
+          position === 'prepend' ? [newNode, ...node.children] : [...node.children, newNode],
+      };
+    });
   }
 
   // For 'before' and 'after', insert as sibling
   // We need to find the parent and insert at the right position
-  return insertNodeRecursive(root, targetId, newNode, position)
+  return insertNodeRecursive(root, targetId, newNode, position);
 }
 
 /**
@@ -239,45 +227,43 @@ function insertNodeRecursive(
   node: EditorNode,
   targetId: string,
   newNode: EditorNode,
-  position: "before" | "after"
+  position: 'before' | 'after',
 ): EditorNode {
   if (!isContainerNode(node) && !isStructuralNode(node)) {
-    return node
+    return node;
   }
 
   // Check if target is a direct child
-  const targetIndex = node.children.findIndex((child) => child.id === targetId)
+  const targetIndex = node.children.findIndex((child) => child.id === targetId);
 
   if (targetIndex !== -1) {
     // Found the target, insert the new node
-    const newChildren = [...node.children]
-    const insertIndex = position === "before" ? targetIndex : targetIndex + 1
-    newChildren.splice(insertIndex, 0, newNode)
+    const newChildren = [...node.children];
+    const insertIndex = position === 'before' ? targetIndex : targetIndex + 1;
+    newChildren.splice(insertIndex, 0, newNode);
 
     return {
       ...node,
       children: newChildren,
-    }
+    };
   }
 
   // Recursively search in children
   const newChildren = node.children.map((child) =>
-    insertNodeRecursive(child, targetId, newNode, position)
-  )
+    insertNodeRecursive(child, targetId, newNode, position),
+  );
 
   // Only create new object if children changed
-  const childrenChanged = newChildren.some(
-    (newChild, index) => newChild !== node.children[index]
-  )
+  const childrenChanged = newChildren.some((newChild, index) => newChild !== node.children[index]);
 
   if (childrenChanged) {
     return {
       ...node,
       children: newChildren,
-    }
+    };
   }
 
-  return node
+  return node;
 }
 
 /**
@@ -299,36 +285,36 @@ export function moveNode(
   root: EditorNode,
   nodeId: string,
   targetId: string,
-  position: InsertPosition
+  position: InsertPosition,
 ): EditorNode {
   // Cannot move a node to itself
   if (nodeId === targetId) {
-    console.warn("Cannot move a node to itself")
-    return root
+    console.warn('Cannot move a node to itself');
+    return root;
   }
 
   // Find the node to move
-  const nodeToMove = findNodeById(root, nodeId)
+  const nodeToMove = findNodeById(root, nodeId);
   if (!nodeToMove) {
-    console.warn(`Node ${nodeId} not found`)
-    return root
+    console.warn(`Node ${nodeId} not found`);
+    return root;
   }
 
   // Verify target exists
-  const targetNode = findNodeById(root, targetId)
+  const targetNode = findNodeById(root, targetId);
   if (!targetNode) {
-    console.warn(`Target node ${targetId} not found`)
-    return root
+    console.warn(`Target node ${targetId} not found`);
+    return root;
   }
 
   // First, remove the node from its current position
-  const treeWithoutNode = deleteNodeById(root, nodeId)
+  const treeWithoutNode = deleteNodeById(root, nodeId);
   if (!treeWithoutNode) {
-    return root
+    return root;
   }
 
   // Then, insert it at the new position
-  return insertNode(treeWithoutNode, targetId, nodeToMove, position)
+  return insertNode(treeWithoutNode, targetId, nodeToMove, position);
 }
 
 /**
@@ -348,16 +334,16 @@ export function cloneNode(node: EditorNode, newId?: string): EditorNode {
   const cloned: EditorNode = {
     ...node,
     id: newId || `${node.id}-clone-${Date.now()}`,
-  }
+  };
 
   if (
     (isContainerNode(cloned) || isStructuralNode(cloned)) &&
     (isContainerNode(node) || isStructuralNode(node))
   ) {
-    cloned.children = node.children.map((child) => cloneNode(child))
+    cloned.children = node.children.map((child) => cloneNode(child));
   }
 
-  return cloned
+  return cloned;
 }
 
 /**
@@ -385,13 +371,13 @@ export function cloneNode(node: EditorNode, newId?: string): EditorNode {
 export function traverseTree(
   node: EditorNode,
   callback: (node: EditorNode, depth: number) => void,
-  depth: number = 0
+  depth: number = 0,
 ): void {
-  callback(node, depth)
+  callback(node, depth);
 
   if (isContainerNode(node) || isStructuralNode(node)) {
     for (const child of node.children) {
-      traverseTree(child, callback, depth + 1)
+      traverseTree(child, callback, depth + 1);
     }
   }
 }
@@ -412,22 +398,22 @@ export function traverseTree(
  * ```
  */
 export function validateTree(node: EditorNode): {
-  valid: boolean
-  errors: string[]
+  valid: boolean;
+  errors: string[];
 } {
-  const errors: string[] = []
-  const seenIds = new Set<string>()
+  const errors: string[] = [];
+  const seenIds = new Set<string>();
 
   traverseTree(node, (currentNode) => {
     // Check for duplicate IDs
     if (seenIds.has(currentNode.id)) {
-      errors.push(`Duplicate ID found: ${currentNode.id}`)
+      errors.push(`Duplicate ID found: ${currentNode.id}`);
     }
-    seenIds.add(currentNode.id)
+    seenIds.add(currentNode.id);
 
     // Check for empty IDs
-    if (!currentNode.id || currentNode.id.trim() === "") {
-      errors.push("Node found with empty or missing ID")
+    if (!currentNode.id || currentNode.id.trim() === '') {
+      errors.push('Node found with empty or missing ID');
     }
 
     // Check for invalid container/structural node children
@@ -435,14 +421,12 @@ export function validateTree(node: EditorNode): {
       (isContainerNode(currentNode) || isStructuralNode(currentNode)) &&
       !Array.isArray(currentNode.children)
     ) {
-      errors.push(
-        `Container/Structural node ${currentNode.id} has invalid children property`
-      )
+      errors.push(`Container/Structural node ${currentNode.id} has invalid children property`);
     }
-  })
+  });
 
   return {
     valid: errors.length === 0,
     errors,
-  }
+  };
 }

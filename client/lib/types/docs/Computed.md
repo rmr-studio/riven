@@ -1,36 +1,32 @@
-
 # Computed
-
 
 ## Properties
 
-Name | Type
------------- | -------------
-`expr` | string
-`engine` | string
+| Name     | Type   |
+| -------- | ------ |
+| `expr`   | string |
+| `engine` | string |
 
 ## Example
 
 ```typescript
-import type { Computed } from ''
+import type { Computed } from '';
 
 // TODO: Update the object below with actual values
 const example = {
-  "expr": null,
-  "engine": null,
-} satisfies Computed
+  expr: null,
+  engine: null,
+} satisfies Computed;
 
-console.log(example)
+console.log(example);
 
 // Convert the instance to a JSON string
-const exampleJSON: string = JSON.stringify(example)
-console.log(exampleJSON)
+const exampleJSON: string = JSON.stringify(example);
+console.log(exampleJSON);
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as Computed
-console.log(exampleParsed)
+const exampleParsed = JSON.parse(exampleJSON) as Computed;
+console.log(exampleParsed);
 ```
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-

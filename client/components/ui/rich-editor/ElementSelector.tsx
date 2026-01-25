@@ -1,31 +1,12 @@
-"use client"
+'use client';
 
-import React from "react"
-import {
-  Code,
-  Heading1,
-  Heading2,
-  Heading3,
-  List,
-  ListOrdered,
-  Quote,
-  Type,
-} from "lucide-react"
+import React from 'react';
+import { Code, Heading1, Heading2, Heading3, List, ListOrdered, Quote, Type } from 'lucide-react';
 
-import { cn } from "@/lib/util/utils"
+import { cn } from '@/lib/util/utils';
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../select"
-import {
-  ELEMENT_OPTIONS,
-  type ElementOption,
-  type ElementType,
-} from "./elements"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../select';
+import { ELEMENT_OPTIONS, type ElementOption, type ElementType } from './elements';
 
 // Icon mapping
 const iconMap: Record<string, React.ReactNode> = {
@@ -37,81 +18,70 @@ const iconMap: Record<string, React.ReactNode> = {
   Quote: <Quote className="h-4 w-4" />,
   List: <List className="h-4 w-4" />,
   ListOrdered: <ListOrdered className="h-4 w-4" />,
-}
+};
 
 // Helper to get icon with custom size
 const getIcon = (iconName?: string, iconSize?: string) => {
-  if (!iconName) return null
-  const IconComponent = iconMap[iconName]
-  if (!IconComponent) return null
+  if (!iconName) return null;
+  const IconComponent = iconMap[iconName];
+  if (!IconComponent) return null;
 
   // Clone the icon with custom size if provided
   if (iconSize && React.isValidElement(IconComponent)) {
-    return React.cloneElement(IconComponent, { className: iconSize } as any)
+    return React.cloneElement(IconComponent, { className: iconSize } as any);
   }
-  return IconComponent
-}
+  return IconComponent;
+};
 
 interface ElementSelectorProps {
-  value: ElementType | null
-  onValueChange: (value: ElementType) => void
-  elements?: ElementOption[]
-  variant?: "default" | "compact" | "icon-only"
-  placeholder?: string
-  className?: string
-  disabled?: boolean
-  showDescription?: boolean
-  showIcon?: boolean
+  value: ElementType | null;
+  onValueChange: (value: ElementType) => void;
+  elements?: ElementOption[];
+  variant?: 'default' | 'compact' | 'icon-only';
+  placeholder?: string;
+  className?: string;
+  disabled?: boolean;
+  showDescription?: boolean;
+  showIcon?: boolean;
 }
 
 export function ElementSelector({
   value,
   onValueChange,
   elements = ELEMENT_OPTIONS,
-  variant = "default",
-  placeholder = "Select element",
+  variant = 'default',
+  placeholder = 'Select element',
   className,
   disabled = false,
   showDescription = true,
   showIcon = true,
 }: ElementSelectorProps) {
   // Get the current element option
-  const currentElement =
-    elements.find((el) => el.value === value) || elements[0]
+  const currentElement = elements.find((el) => el.value === value) || elements[0];
 
   // Variant-specific styling
   const triggerClassName = cn(
-    "transition-colors",
-    variant === "compact" &&
-      "h-8 min-w-[90px] border-0 bg-transparent hover:bg-accent/50 focus:ring-0 text-xs rounded-md px-2 gap-1.5",
-    variant === "icon-only" &&
-      "h-9 w-9 border-0 bg-transparent hover:bg-accent/50 focus:ring-0 p-0",
-    variant === "default" && "min-w-[140px]",
-    className
-  )
+    'transition-colors',
+    variant === 'compact' &&
+      'h-8 min-w-[90px] border-0 bg-transparent hover:bg-accent/50 focus:ring-0 text-xs rounded-md px-2 gap-1.5',
+    variant === 'icon-only' &&
+      'h-9 w-9 border-0 bg-transparent hover:bg-accent/50 focus:ring-0 p-0',
+    variant === 'default' && 'min-w-[140px]',
+    className,
+  );
 
   return (
-    <Select
-      value={value || "p"}
-      onValueChange={onValueChange}
-      disabled={disabled}
-    >
+    <Select value={value || 'p'} onValueChange={onValueChange} disabled={disabled}>
       <SelectTrigger className={triggerClassName}>
         <SelectValue>
-          {variant === "icon-only" ? (
+          {variant === 'icon-only' ? (
             <div className="flex items-center justify-center">
               {getIcon(currentElement.icon, currentElement.iconSize)}
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              {showIcon &&
-                getIcon(currentElement.icon, currentElement.iconSize)}
-              <span
-                className={cn(
-                  "font-normal",
-                  variant === "compact" ? "text-xs" : "text-sm"
-                )}
-              >
+              {showIcon && getIcon(currentElement.icon, currentElement.iconSize)}
+              <span className={cn('font-normal', variant === 'compact' ? 'text-xs' : 'text-sm')}>
                 {currentElement.label}
               </span>
             </div>
@@ -123,11 +93,11 @@ export function ElementSelector({
           <SelectItem
             key={element.value}
             value={element.value}
-            className={cn("cursor-pointer", showDescription && "py-2")}
+            className={cn('cursor-pointer', showDescription && 'py-2')}
           >
             <div className="flex w-full items-start gap-2">
               {showIcon && (
-                <div className="text-muted-foreground mt-0.5">
+                <div className="mt-0.5 text-muted-foreground">
                   {getIcon(element.icon, element.iconSize)}
                 </div>
               )}
@@ -135,15 +105,13 @@ export function ElementSelector({
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">{element.label}</span>
                   {element.shortcut && (
-                    <span className="text-muted-foreground font-mono text-xs">
+                    <span className="font-mono text-xs text-muted-foreground">
                       {element.shortcut}
                     </span>
                   )}
                 </div>
                 {showDescription && element.description && (
-                  <p className="text-muted-foreground mt-0.5 text-xs">
-                    {element.description}
-                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{element.description}</p>
                 )}
               </div>
             </div>
@@ -151,9 +119,9 @@ export function ElementSelector({
         ))}
       </SelectContent>
     </Select>
-  )
+  );
 }
 
 // Re-export for convenience
-export { ELEMENT_OPTIONS }
-export type { ElementType, ElementOption }
+export { ELEMENT_OPTIONS };
+export type { ElementType, ElementOption };

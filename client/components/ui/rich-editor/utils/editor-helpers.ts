@@ -5,41 +5,30 @@ import {
   isContainerNode,
   SelectionInfo,
   TextNode,
-} from "../types"
+} from '../types';
 
 /**
  * Parse DOM element back into inline children structure
  * This preserves formatting when user types in a formatted block
  */
-export function parseDOMToInlineChildren(
-  element: HTMLElement
-): TextNode["children"] {
-  const children: TextNode["children"] = []
+export function parseDOMToInlineChildren(element: HTMLElement): TextNode['children'] {
+  const children: TextNode['children'] = [];
 
   const walkNode = (
     node: Node,
     inheritedFormats: {
-      bold?: boolean
-      italic?: boolean
-      underline?: boolean
-      strikethrough?: boolean
-      code?: boolean
-      className?: string
-      elementType?:
-        | "p"
-        | "h1"
-        | "h2"
-        | "h3"
-        | "h4"
-        | "h5"
-        | "h6"
-        | "li"
-        | "blockquote"
-    } = {}
+      bold?: boolean;
+      italic?: boolean;
+      underline?: boolean;
+      strikethrough?: boolean;
+      code?: boolean;
+      className?: string;
+      elementType?: 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'li' | 'blockquote';
+    } = {},
   ) => {
     if (node.nodeType === Node.TEXT_NODE) {
       // Direct text node - use inherited formatting
-      const content = node.textContent || ""
+      const content = node.textContent || '';
 
       const hasAnyFormatting =
         inheritedFormats.bold ||
@@ -48,7 +37,7 @@ export function parseDOMToInlineChildren(
         inheritedFormats.strikethrough ||
         inheritedFormats.code ||
         inheritedFormats.className ||
-        inheritedFormats.elementType
+        inheritedFormats.elementType;
 
       // Always add content if it exists OR if it's empty but has formatting
       // This prevents structure changes when user deletes the last character
@@ -63,91 +52,82 @@ export function parseDOMToInlineChildren(
             code: inheritedFormats.code || undefined,
             className: inheritedFormats.className || undefined,
             elementType: inheritedFormats.elementType,
-          })
+          });
         } else {
-          children.push({ content })
+          children.push({ content });
         }
       }
     } else if (node.nodeType === Node.ELEMENT_NODE) {
-      const el = node as HTMLElement
-      const classList = Array.from(el.classList)
+      const el = node as HTMLElement;
+      const classList = Array.from(el.classList);
 
       // Detect formatting from classes
-      const bold = classList.includes("font-bold")
-      const italic = classList.includes("italic")
-      const underline = classList.includes("underline")
-      const strikethrough = classList.includes("line-through")
-      const code = classList.includes("font-mono")
+      const bold = classList.includes('font-bold');
+      const italic = classList.includes('italic');
+      const underline = classList.includes('underline');
+      const strikethrough = classList.includes('line-through');
+      const code = classList.includes('font-mono');
 
       // Detect element type from classes
-      let elementType:
-        | "p"
-        | "h1"
-        | "h2"
-        | "h3"
-        | "h4"
-        | "h5"
-        | "h6"
-        | "blockquote"
-        | undefined = undefined
-      if (classList.some((c) => c.includes("text-4xl"))) {
-        elementType = "h1"
-      } else if (classList.some((c) => c.includes("text-3xl"))) {
-        elementType = "h2"
-      } else if (classList.some((c) => c.includes("text-2xl"))) {
-        elementType = "h3"
-      } else if (classList.some((c) => c.includes("text-xl"))) {
-        elementType = "h4"
+      let elementType: 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'blockquote' | undefined =
+        undefined;
+      if (classList.some((c) => c.includes('text-4xl'))) {
+        elementType = 'h1';
+      } else if (classList.some((c) => c.includes('text-3xl'))) {
+        elementType = 'h2';
+      } else if (classList.some((c) => c.includes('text-2xl'))) {
+        elementType = 'h3';
+      } else if (classList.some((c) => c.includes('text-xl'))) {
+        elementType = 'h4';
       } else if (
-        classList.some((c) => c.includes("text-lg")) &&
-        classList.includes("font-semibold")
+        classList.some((c) => c.includes('text-lg')) &&
+        classList.includes('font-semibold')
       ) {
-        elementType = "h5"
+        elementType = 'h5';
       } else if (
-        classList.some((c) => c.includes("text-base")) &&
-        classList.includes("font-semibold")
+        classList.some((c) => c.includes('text-base')) &&
+        classList.includes('font-semibold')
       ) {
-        elementType = "h6"
-      } else if (classList.includes("border-l-4")) {
-        elementType = "blockquote"
+        elementType = 'h6';
+      } else if (classList.includes('border-l-4')) {
+        elementType = 'blockquote';
       } else if (
-        classList.some((c) => c.includes("text-base")) &&
-        classList.some((c) => c.includes("leading-relaxed"))
+        classList.some((c) => c.includes('text-base')) &&
+        classList.some((c) => c.includes('leading-relaxed'))
       ) {
-        elementType = "p"
+        elementType = 'p';
       }
 
       // Extract custom classes (filter out known formatting classes and extra spacing classes)
       const knownClasses = [
-        "font-bold",
-        "italic",
-        "underline",
-        "line-through",
-        "font-mono",
-        "bg-gray-100",
-        "dark:bg-gray-800",
-        "px-1",
-        "py-0.5",
-        "rounded",
-        "text-sm",
-        "text-5xl",
-        "text-4xl",
-        "text-3xl",
-        "text-2xl",
-        "text-xl",
-        "text-lg",
-        "font-semibold",
-        "border-l-4",
-        "pl-4",
-        "text-primary",
-        "hover:underline",
-        "cursor-pointer",
-        "inline-block",
-        "inline",
-      ]
-      const customClasses = classList.filter((c) => !knownClasses.includes(c))
-      const customClassName =
-        customClasses.length > 0 ? customClasses.join(" ") : undefined
+        'font-bold',
+        'italic',
+        'underline',
+        'line-through',
+        'font-mono',
+        'bg-gray-100',
+        'dark:bg-gray-800',
+        'px-1',
+        'py-0.5',
+        'rounded',
+        'text-sm',
+        'text-5xl',
+        'text-4xl',
+        'text-3xl',
+        'text-2xl',
+        'text-xl',
+        'text-lg',
+        'font-semibold',
+        'border-l-4',
+        'pl-4',
+        'text-primary',
+        'hover:underline',
+        'cursor-pointer',
+        'inline-block',
+        'inline',
+      ];
+      const customClasses = classList.filter((c) => !knownClasses.includes(c));
+      const customClassName = customClasses.length > 0 ? customClasses.join(' ') : undefined;
 
       // Merge with inherited formatting
       const currentFormats = {
@@ -158,10 +138,10 @@ export function parseDOMToInlineChildren(
         code: code || inheritedFormats.code,
         className: customClassName || inheritedFormats.className,
         elementType: elementType || inheritedFormats.elementType,
-      }
+      };
 
       // If it's a span with formatting, walk its children with inherited formats
-      if (el.tagName === "SPAN") {
+      if (el.tagName === 'SPAN') {
         // Check if the span is empty (no child nodes)
         if (node.childNodes.length === 0) {
           // Empty span with formatting - preserve it
@@ -172,11 +152,11 @@ export function parseDOMToInlineChildren(
             currentFormats.strikethrough ||
             currentFormats.code ||
             currentFormats.className ||
-            currentFormats.elementType
+            currentFormats.elementType;
 
           if (hasAnyFormatting) {
             children.push({
-              content: "",
+              content: '',
               bold: currentFormats.bold || undefined,
               italic: currentFormats.italic || undefined,
               underline: currentFormats.underline || undefined,
@@ -184,25 +164,25 @@ export function parseDOMToInlineChildren(
               code: currentFormats.code || undefined,
               className: currentFormats.className || undefined,
               elementType: currentFormats.elementType,
-            })
+            });
           }
         } else {
           // Span has children, walk them with inherited formats
           for (let i = 0; i < node.childNodes.length; i++) {
-            walkNode(node.childNodes[i], currentFormats)
+            walkNode(node.childNodes[i], currentFormats);
           }
         }
       } else {
         // For other elements (like the main div), just walk children
         for (let i = 0; i < node.childNodes.length; i++) {
-          walkNode(node.childNodes[i], inheritedFormats)
+          walkNode(node.childNodes[i], inheritedFormats);
         }
       }
     }
-  }
+  };
 
   for (let i = 0; i < element.childNodes.length; i++) {
-    walkNode(element.childNodes[i])
+    walkNode(element.childNodes[i]);
   }
 
   // Filter out empty content ONLY if it has no formatting
@@ -210,7 +190,7 @@ export function parseDOMToInlineChildren(
   return children.filter((child) => {
     // If content exists and is not empty, always keep it
     if (child.content && child.content.length > 0) {
-      return true
+      return true;
     }
 
     // If content is empty, only keep it if it has any formatting attributes
@@ -224,10 +204,10 @@ export function parseDOMToInlineChildren(
       child.className ||
       child.elementType ||
       child.href ||
-      child.styles
+      child.styles;
 
-    return hasFormatting
-  })
+    return hasFormatting;
+  });
 }
 
 /**
@@ -236,26 +216,17 @@ export function parseDOMToInlineChildren(
 export function detectFormatsInRange(
   node: TextNode,
   start: number,
-  end: number
+  end: number,
 ): {
-  bold: boolean
-  italic: boolean
-  underline: boolean
-  strikethrough: boolean
-  code: boolean
-  elementType?:
-    | "h1"
-    | "h2"
-    | "h3"
-    | "h4"
-    | "h5"
-    | "h6"
-    | "li"
-    | "blockquote"
-    | null
-  href?: string | null
-  className?: string | null
-  styles?: Record<string, string> | null
+  bold: boolean;
+  italic: boolean;
+  underline: boolean;
+  strikethrough: boolean;
+  code: boolean;
+  elementType?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'li' | 'blockquote' | null;
+  href?: string | null;
+  className?: string | null;
+  styles?: Record<string, string> | null;
 } {
   const formats = {
     bold: false,
@@ -267,32 +238,17 @@ export function detectFormatsInRange(
     href: null as string | null,
     className: null as string | null,
     styles: null as Record<string, string> | null,
-  }
+  };
 
   // If node has no children, check node-level attributes
   if (!node.children || node.children.length === 0) {
     // For nodes without inline children, use the node's type as elementType if it's a heading
     // Note: 'code' is excluded from element types - it's only a block-level type, not inline
-    const nodeElementType = [
-      "h1",
-      "h2",
-      "h3",
-      "h4",
-      "h5",
-      "h6",
-      "blockquote",
-      "li",
-    ].includes(node.type)
-      ? (node.type as
-          | "h1"
-          | "h2"
-          | "h3"
-          | "h4"
-          | "h5"
-          | "h6"
-          | "li"
-          | "blockquote")
-      : null
+    const nodeElementType = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'li'].includes(
+      node.type,
+    )
+      ? (node.type as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'li' | 'blockquote')
+      : null;
 
     return {
       bold: node.attributes?.bold === true,
@@ -304,106 +260,106 @@ export function detectFormatsInRange(
       href: null,
       className: null,
       styles: null,
-    }
+    };
   }
 
   // Node has children array - analyze the range
-  let currentPos = 0
-  let hasAnyBold = false
-  let hasAnyItalic = false
-  let hasAnyUnderline = false
-  let hasAnyStrikethrough = false
-  let hasAnyCode = false
-  let allBold = true
-  let allItalic = true
-  let allUnderline = true
-  let allStrikethrough = true
-  let allCode = true
-  let charsInRange = 0
-  let firstElementType: typeof formats.elementType = undefined
-  let allSameElementType = true
-  let firstHref: string | undefined = undefined
-  let allSameHref = true
-  let firstClassName: string | undefined = undefined
-  let allSameClassName = true
-  let firstStyles: Record<string, string> | undefined = undefined
-  let allSameStyles = true
+  let currentPos = 0;
+  let hasAnyBold = false;
+  let hasAnyItalic = false;
+  let hasAnyUnderline = false;
+  let hasAnyStrikethrough = false;
+  let hasAnyCode = false;
+  let allBold = true;
+  let allItalic = true;
+  let allUnderline = true;
+  let allStrikethrough = true;
+  let allCode = true;
+  let charsInRange = 0;
+  let firstElementType: typeof formats.elementType = undefined;
+  let allSameElementType = true;
+  let firstHref: string | undefined = undefined;
+  let allSameHref = true;
+  let firstClassName: string | undefined = undefined;
+  let allSameClassName = true;
+  let firstStyles: Record<string, string> | undefined = undefined;
+  let allSameStyles = true;
 
   for (const child of node.children) {
-    const childLength = (child.content || "").length
-    const childStart = currentPos
-    const childEnd = currentPos + childLength
+    const childLength = (child.content || '').length;
+    const childStart = currentPos;
+    const childEnd = currentPos + childLength;
 
     // Check if this child overlaps with the selection
-    const overlaps = childStart < end && childEnd > start
+    const overlaps = childStart < end && childEnd > start;
 
     if (overlaps) {
-      charsInRange += Math.min(childEnd, end) - Math.max(childStart, start)
+      charsInRange += Math.min(childEnd, end) - Math.max(childStart, start);
 
       if (child.bold) {
-        hasAnyBold = true
+        hasAnyBold = true;
       } else {
-        allBold = false
+        allBold = false;
       }
 
       if (child.italic) {
-        hasAnyItalic = true
+        hasAnyItalic = true;
       } else {
-        allItalic = false
+        allItalic = false;
       }
 
       if (child.underline) {
-        hasAnyUnderline = true
+        hasAnyUnderline = true;
       } else {
-        allUnderline = false
+        allUnderline = false;
       }
 
       if (child.strikethrough) {
-        hasAnyStrikethrough = true
+        hasAnyStrikethrough = true;
       } else {
-        allStrikethrough = false
+        allStrikethrough = false;
       }
 
       if (child.code) {
-        hasAnyCode = true
+        hasAnyCode = true;
       } else {
-        allCode = false
+        allCode = false;
       }
 
       // Check element type
-      const childElementType = child.elementType || null
+      const childElementType = child.elementType || null;
       if (firstElementType === undefined) {
-        firstElementType = childElementType
+        firstElementType = childElementType;
       } else if (firstElementType !== childElementType) {
-        allSameElementType = false
+        allSameElementType = false;
       }
 
       // Check href
-      const childHref = child.href || null
+      const childHref = child.href || null;
       if (firstHref === undefined) {
-        firstHref = childHref || undefined
+        firstHref = childHref || undefined;
       } else if (firstHref !== childHref) {
-        allSameHref = false
+        allSameHref = false;
       }
 
       // Check className
-      const childClassName = child.className || null
+      const childClassName = child.className || null;
       if (firstClassName === undefined) {
-        firstClassName = childClassName || undefined
+        firstClassName = childClassName || undefined;
       } else if (firstClassName !== childClassName) {
-        allSameClassName = false
+        allSameClassName = false;
       }
 
       // Check styles
-      const childStyles = child.styles || null
+      const childStyles = child.styles || null;
       if (firstStyles === undefined) {
-        firstStyles = childStyles || undefined
+        firstStyles = childStyles || undefined;
       } else if (JSON.stringify(firstStyles) !== JSON.stringify(childStyles)) {
-        allSameStyles = false
+        allSameStyles = false;
       }
     }
 
-    currentPos = childEnd
+    currentPos = childEnd;
   }
 
   // A format is "active" if ALL selected text has that format
@@ -417,9 +373,9 @@ export function detectFormatsInRange(
     href: allSameHref ? firstHref || null : null,
     className: allSameClassName ? firstClassName || null : null,
     styles: allSameStyles ? firstStyles || null : null,
-  }
+  };
 
-  return detectedFormats
+  return detectedFormats;
 }
 
 /**
@@ -427,29 +383,29 @@ export function detectFormatsInRange(
  */
 export function findNodeInTree(
   searchId: string,
-  container: ContainerNode
+  container: ContainerNode,
 ): {
-  node: EditorNode
-  parentId: string | null
-  siblings: EditorNode[]
+  node: EditorNode;
+  parentId: string | null;
+  siblings: EditorNode[];
 } | null {
   // Check direct children
   for (let i = 0; i < container.children.length; i++) {
-    const child = container.children[i]
+    const child = container.children[i];
     if (child.id === searchId) {
       return {
         node: child,
         parentId: container.id,
         siblings: container.children,
-      }
+      };
     }
     // If child is a container, search recursively
     if (isContainerNode(child)) {
-      const found = findNodeInTree(searchId, child as ContainerNode)
-      if (found) return found
+      const found = findNodeInTree(searchId, child as ContainerNode);
+      if (found) return found;
     }
   }
-  return null
+  return null;
 }
 
 /**
@@ -457,88 +413,84 @@ export function findNodeInTree(
  */
 export function findNodeAnywhere(
   id: string,
-  container: ContainerNode
+  container: ContainerNode,
 ): {
-  node: EditorNode
-  parentId?: string
-  parent?: ContainerNode
+  node: EditorNode;
+  parentId?: string;
+  parent?: ContainerNode;
 } | null {
   // Check root level
-  const rootNode = container.children.find((n) => n.id === id)
-  if (rootNode) return { node: rootNode }
+  const rootNode = container.children.find((n) => n.id === id);
+  if (rootNode) return { node: rootNode };
 
   // Check inside containers
   for (const child of container.children) {
     if (isContainerNode(child)) {
-      const containerNode = child as ContainerNode
-      const foundInContainer = containerNode.children.find((c) => c.id === id)
+      const containerNode = child as ContainerNode;
+      const foundInContainer = containerNode.children.find((c) => c.id === id);
       if (foundInContainer)
         return {
           node: foundInContainer,
           parentId: child.id,
           parent: containerNode,
-        }
+        };
     }
   }
-  return null
+  return null;
 }
 
 /**
  * Helper to restore selection after formatting
  */
-export function restoreSelection(
-  element: HTMLElement,
-  start: number,
-  end: number
-) {
-  const range = document.createRange()
-  const sel = window.getSelection()
+export function restoreSelection(element: HTMLElement, start: number, end: number) {
+  const range = document.createRange();
+  const sel = window.getSelection();
 
-  let currentPos = 0
-  let startNode: Node | null = null
-  let startOffset = 0
-  let endNode: Node | null = null
-  let endOffset = 0
-  let found = false
+  let currentPos = 0;
+  let startNode: Node | null = null;
+  let startOffset = 0;
+  let endNode: Node | null = null;
+  let endOffset = 0;
+  let found = false;
 
   const walk = (node: Node) => {
-    if (found) return
+    if (found) return;
 
     if (node.nodeType === Node.TEXT_NODE) {
-      const textLength = node.textContent?.length || 0
+      const textLength = node.textContent?.length || 0;
 
       if (!startNode && currentPos + textLength >= start) {
-        startNode = node
-        startOffset = start - currentPos
+        startNode = node;
+        startOffset = start - currentPos;
       }
 
       if (!endNode && currentPos + textLength >= end) {
-        endNode = node
-        endOffset = end - currentPos
-        found = true
+        endNode = node;
+        endOffset = end - currentPos;
+        found = true;
       }
 
-      currentPos += textLength
+      currentPos += textLength;
     } else if (node.nodeType === Node.ELEMENT_NODE) {
       for (let i = 0; i < node.childNodes.length; i++) {
-        walk(node.childNodes[i])
-        if (found) break
+        walk(node.childNodes[i]);
+        if (found) break;
       }
     }
-  }
+  };
 
-  walk(element)
+  walk(element);
 
   if (startNode && endNode && sel) {
     try {
-      const startLength = (startNode as Text).textContent?.length || 0
-      const endLength = (endNode as Text).textContent?.length || 0
-      range.setStart(startNode, Math.min(startOffset, startLength))
-      range.setEnd(endNode, Math.min(endOffset, endLength))
-      sel.removeAllRanges()
-      sel.addRange(range)
+      const startLength = (startNode as Text).textContent?.length || 0;
+      const endLength = (endNode as Text).textContent?.length || 0;
+      range.setStart(startNode, Math.min(startOffset, startLength));
+      range.setEnd(endNode, Math.min(endOffset, endLength));
+      sel.removeAllRanges();
+      sel.addRange(range);
     } catch (e) {
-      console.warn("Failed to restore selection:", e)
+      console.warn('Failed to restore selection:', e);
     }
   }
 }
