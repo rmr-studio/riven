@@ -3,8 +3,8 @@
  * Creates and caches the configured auth provider instance based on environment variables.
  */
 
-import { AuthProvider } from "./auth-provider.interface";
-import { SupabaseAuthAdapter } from "./adapters/supabase/supabase-adapter";
+import { AuthProvider } from './auth-provider.interface';
+import { SupabaseAuthAdapter } from './adapters/supabase/supabase-adapter';
 
 /** Cached provider instance (singleton) */
 let cachedProvider: AuthProvider | null = null;
@@ -25,27 +25,25 @@ let cachedProvider: AuthProvider | null = null;
  * ```
  */
 export function createAuthProvider(): AuthProvider {
-    if (cachedProvider) {
-        return cachedProvider;
-    }
-
-    const providerType = process.env.NEXT_PUBLIC_AUTH_PROVIDER;
-
-    if (!providerType) {
-        throw new Error(
-            "NEXT_PUBLIC_AUTH_PROVIDER environment variable is not set. Please set it to one of: supabase"
-        );
-    }
-
-    switch (providerType) {
-        case "supabase":
-            cachedProvider = new SupabaseAuthAdapter();
-            break;
-        default:
-            throw new Error(
-                `Unknown auth provider: "${providerType}". Supported providers: supabase`
-            );
-    }
-
+  if (cachedProvider) {
     return cachedProvider;
+  }
+
+  const providerType = process.env.NEXT_PUBLIC_AUTH_PROVIDER;
+
+  if (!providerType) {
+    throw new Error(
+      'NEXT_PUBLIC_AUTH_PROVIDER environment variable is not set. Please set it to one of: supabase',
+    );
+  }
+
+  switch (providerType) {
+    case 'supabase':
+      cachedProvider = new SupabaseAuthAdapter();
+      break;
+    default:
+      throw new Error(`Unknown auth provider: "${providerType}". Supported providers: supabase`);
+  }
+
+  return cachedProvider;
 }

@@ -1,27 +1,27 @@
-import { useMemo } from "react";
-import { EntityRelationshipDefinition, EntityType } from "../interface/entity.interface";
+import { useMemo } from 'react';
+import { EntityRelationshipDefinition, EntityType } from '../interface/entity.interface';
 
 export interface RelationshipOverlap {
-    type: "polymorphic" | "multi-type";
-    targetEntityKey: string;
-    targetEntityName: string;
-    existingRelationship: EntityRelationshipDefinition;
-    suggestedAction: OverlapResolution;
-    description: string;
+  type: 'polymorphic' | 'multi-type';
+  targetEntityKey: string;
+  targetEntityName: string;
+  existingRelationship: EntityRelationshipDefinition;
+  suggestedAction: OverlapResolution;
+  description: string;
 }
 
 export interface OverlapResolution {
-    type: "add-to-bidirectional" | "create-new";
-    details: {
-        relationshipKey?: string;
-        sourceEntityToAdd?: string;
-        newRelationshipName?: string;
-    };
+  type: 'add-to-bidirectional' | 'create-new';
+  details: {
+    relationshipKey?: string;
+    sourceEntityToAdd?: string;
+    newRelationshipName?: string;
+  };
 }
 
 export interface OverlapDetectionResult {
-    hasOverlaps: boolean;
-    overlaps: RelationshipOverlap[];
+  hasOverlaps: boolean;
+  overlaps: RelationshipOverlap[];
 }
 
 /**
@@ -38,90 +38,90 @@ export interface OverlapDetectionResult {
  * @returns Detection result with list of overlaps
  */
 export function useRelationshipOverlapDetection(
-    sourceEntityKey: string | undefined,
-    selectedTargetEntityKeys: string[] | undefined,
-    allowPolymorphic: boolean | undefined,
-    availableEntityTypes: EntityType[] | undefined
+  sourceEntityKey: string | undefined,
+  selectedTargetEntityKeys: string[] | undefined,
+  allowPolymorphic: boolean | undefined,
+  availableEntityTypes: EntityType[] | undefined,
 ): OverlapDetectionResult {
-    return useMemo(() => {
-        // Early returns for invalid state
-        if (
-            !sourceEntityKey ||
-            !selectedTargetEntityKeys ||
-            selectedTargetEntityKeys.length === 0 ||
-            !availableEntityTypes
-        ) {
-            return { hasOverlaps: false, overlaps: [] };
+  return useMemo(() => {
+    // Early returns for invalid state
+    if (
+      !sourceEntityKey ||
+      !selectedTargetEntityKeys ||
+      selectedTargetEntityKeys.length === 0 ||
+      !availableEntityTypes
+    ) {
+      return { hasOverlaps: false, overlaps: [] };
+    }
+
+    const overlaps: RelationshipOverlap[] = [];
+
+    // For each target entity selected
+    selectedTargetEntityKeys.forEach((targetKey) => {
+      const targetEntity = availableEntityTypes.find((et) => et.key === targetKey);
+      if (!targetEntity?.relationships) return;
+
+      // Check each existing relationship on the target entity
+      targetEntity.relationships.forEach((existingRel) => {
+        // SCENARIO 1: Polymorphic overlap
+        // Target has polymorphic relationship that already accepts source
+        if (existingRel.allowPolymorphic && existingRel.bidirectional) {
+          // Check if source is NOT in the bidirectional list
+          if (
+            !existingRel.bidirectionalEntityTypeKeys ||
+            !existingRel.bidirectionalEntityTypeKeys.includes(sourceEntityKey)
+          ) {
+            overlaps.push({
+              type: 'polymorphic',
+              targetEntityKey: targetKey,
+              targetEntityName: targetEntity.name.singular,
+              existingRelationship: existingRel,
+              suggestedAction: {
+                type: 'add-to-bidirectional',
+                details: {
+                  relationshipKey: existingRel.id,
+                  sourceEntityToAdd: sourceEntityKey,
+                },
+              },
+              description: `${targetEntity.name.singular} already has a polymorphic "${existingRel.name}" relationship that accepts all entity types. Consider adding ${sourceEntityKey} to its bidirectional list instead of creating a new relationship.`,
+            });
+          }
         }
 
-        const overlaps: RelationshipOverlap[] = [];
-
-        // For each target entity selected
-        selectedTargetEntityKeys.forEach((targetKey) => {
-            const targetEntity = availableEntityTypes.find((et) => et.key === targetKey);
-            if (!targetEntity?.relationships) return;
-
-            // Check each existing relationship on the target entity
-            targetEntity.relationships.forEach((existingRel) => {
-                // SCENARIO 1: Polymorphic overlap
-                // Target has polymorphic relationship that already accepts source
-                if (existingRel.allowPolymorphic && existingRel.bidirectional) {
-                    // Check if source is NOT in the bidirectional list
-                    if (
-                        !existingRel.bidirectionalEntityTypeKeys ||
-                        !existingRel.bidirectionalEntityTypeKeys.includes(sourceEntityKey)
-                    ) {
-                        overlaps.push({
-                            type: "polymorphic",
-                            targetEntityKey: targetKey,
-                            targetEntityName: targetEntity.name.singular,
-                            existingRelationship: existingRel,
-                            suggestedAction: {
-                                type: "add-to-bidirectional",
-                                details: {
-                                    relationshipKey: existingRel.id,
-                                    sourceEntityToAdd: sourceEntityKey,
-                                },
-                            },
-                            description: `${targetEntity.name.singular} already has a polymorphic "${existingRel.name}" relationship that accepts all entity types. Consider adding ${sourceEntityKey} to its bidirectional list instead of creating a new relationship.`,
-                        });
-                    }
-                }
-
-                // SCENARIO 2: Multi-type overlap
-                // Target has multi-type relationship that includes source
-                if (
-                    !existingRel.allowPolymorphic &&
-                    existingRel.entityTypeKeys?.includes(sourceEntityKey) &&
-                    existingRel.bidirectional
-                ) {
-                    // Check if source is NOT in the bidirectional list
-                    if (
-                        !existingRel.bidirectionalEntityTypeKeys ||
-                        !existingRel.bidirectionalEntityTypeKeys.includes(sourceEntityKey)
-                    ) {
-                        overlaps.push({
-                            type: "multi-type",
-                            targetEntityKey: targetKey,
-                            targetEntityName: targetEntity.name.singular,
-                            existingRelationship: existingRel,
-                            suggestedAction: {
-                                type: "add-to-bidirectional",
-                                details: {
-                                    relationshipKey: existingRel.id,
-                                    sourceEntityToAdd: sourceEntityKey,
-                                },
-                            },
-                            description: `${targetEntity.name.singular} already has a "${existingRel.name}" relationship that includes ${sourceEntityKey}. Consider adding ${sourceEntityKey} to its bidirectional list instead of creating a new relationship.`,
-                        });
-                    }
-                }
+        // SCENARIO 2: Multi-type overlap
+        // Target has multi-type relationship that includes source
+        if (
+          !existingRel.allowPolymorphic &&
+          existingRel.entityTypeKeys?.includes(sourceEntityKey) &&
+          existingRel.bidirectional
+        ) {
+          // Check if source is NOT in the bidirectional list
+          if (
+            !existingRel.bidirectionalEntityTypeKeys ||
+            !existingRel.bidirectionalEntityTypeKeys.includes(sourceEntityKey)
+          ) {
+            overlaps.push({
+              type: 'multi-type',
+              targetEntityKey: targetKey,
+              targetEntityName: targetEntity.name.singular,
+              existingRelationship: existingRel,
+              suggestedAction: {
+                type: 'add-to-bidirectional',
+                details: {
+                  relationshipKey: existingRel.id,
+                  sourceEntityToAdd: sourceEntityKey,
+                },
+              },
+              description: `${targetEntity.name.singular} already has a "${existingRel.name}" relationship that includes ${sourceEntityKey}. Consider adding ${sourceEntityKey} to its bidirectional list instead of creating a new relationship.`,
             });
-        });
+          }
+        }
+      });
+    });
 
-        return {
-            hasOverlaps: overlaps.length > 0,
-            overlaps,
-        };
-    }, [sourceEntityKey, selectedTargetEntityKeys, allowPolymorphic, availableEntityTypes]);
+    return {
+      hasOverlaps: overlaps.length > 0,
+      overlaps,
+    };
+  }, [sourceEntityKey, selectedTargetEntityKeys, allowPolymorphic, availableEntityTypes]);
 }

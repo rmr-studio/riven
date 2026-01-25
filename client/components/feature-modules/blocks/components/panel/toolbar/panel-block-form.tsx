@@ -1,1 +1,1 @@
-export { BlockForm as default } from "../../forms/block-form";
+export { BlockForm as default } from '../../forms/block-form';

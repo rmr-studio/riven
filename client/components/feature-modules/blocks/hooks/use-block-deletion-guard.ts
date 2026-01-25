@@ -1,6 +1,6 @@
-import { useCallback } from "react";
-import { toast } from "sonner";
-import { useBlockEnvironment } from "../context/block-environment-provider";
+import { useCallback } from 'react';
+import { toast } from 'sonner';
+import { useBlockEnvironment } from '../context/block-environment-provider';
 
 /**
  * Hook to guard against deletion of protected blocks.
@@ -17,38 +17,38 @@ import { useBlockEnvironment } from "../context/block-environment-provider";
  * }
  */
 export const useBlockDeletionGuard = () => {
-    const { getBlock } = useBlockEnvironment();
+  const { getBlock } = useBlockEnvironment();
 
-    /**
-     * Checks if a block can be deleted.
-     *
-     * @param blockId - UUID of the block to check
-     * @returns true if the block can be deleted, false if protected
-     */
-    const canDeleteBlock = useCallback(
-        (blockId: string): boolean => {
-            const node = getBlock(blockId);
+  /**
+   * Checks if a block can be deleted.
+   *
+   * @param blockId - UUID of the block to check
+   * @returns true if the block can be deleted, false if protected
+   */
+  const canDeleteBlock = useCallback(
+    (blockId: string): boolean => {
+      const node = getBlock(blockId);
 
-            if (!node) {
-                console.warn(`Block ${blockId} not found in environment`);
-                return false;
-            }
+      if (!node) {
+        console.warn(`Block ${blockId} not found in environment`);
+        return false;
+      }
 
-            const { block } = node;
+      const { block } = node;
 
-            // Check if block is marked as non-deletable. Treat undefined as deletable, so only explicit false blocks are protected.
-            if (block.payload.deletable === false) {
-                toast.error("Cannot delete block", {
-                    description: "This block is required and cannot be deleted.",
-                });
+      // Check if block is marked as non-deletable. Treat undefined as deletable, so only explicit false blocks are protected.
+      if (block.payload.deletable === false) {
+        toast.error('Cannot delete block', {
+          description: 'This block is required and cannot be deleted.',
+        });
 
-                return false;
-            }
+        return false;
+      }
 
-            return true;
-        },
-        [getBlock]
-    );
+      return true;
+    },
+    [getBlock],
+  );
 
-    return { canDeleteBlock };
+  return { canDeleteBlock };
 };

@@ -1,16 +1,16 @@
-"use client"
+'use client';
 
-import React from "react"
-import { Image as ImageIcon, ImagePlus, LayoutGrid, Video } from "lucide-react"
+import React from 'react';
+import { Image as ImageIcon, ImagePlus, LayoutGrid, Video } from 'lucide-react';
 
-import { Button } from "../button"
-import { Popover, PopoverContent, PopoverTrigger } from "../popover"
+import { Button } from '../button';
+import { Popover, PopoverContent, PopoverTrigger } from '../popover';
 
 interface MediaUploadPopoverProps {
-  isUploading: boolean
-  onImageUploadClick: () => void
-  onMultipleImagesUploadClick: () => void
-  onVideoUploadClick: () => void
+  isUploading: boolean;
+  onImageUploadClick: () => void;
+  onMultipleImagesUploadClick: () => void;
+  onVideoUploadClick: () => void;
 }
 
 export function MediaUploadPopover({
@@ -19,12 +19,12 @@ export function MediaUploadPopover({
   onMultipleImagesUploadClick,
   onVideoUploadClick,
 }: MediaUploadPopoverProps) {
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = React.useState(false);
 
   const handleOptionClick = (action: () => void) => {
-    action()
-    setOpen(false)
-  }
+    action();
+    setOpen(false);
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -50,9 +50,7 @@ export function MediaUploadPopover({
             <ImagePlus className="size-4" />
             <div className="flex flex-col items-start">
               <span className="text-sm font-medium">Single Image</span>
-              <span className="text-muted-foreground text-xs">
-                Upload one image
-              </span>
+              <span className="text-xs text-muted-foreground">Upload one image</span>
             </div>
           </Button>
 
@@ -65,9 +63,7 @@ export function MediaUploadPopover({
             <LayoutGrid className="size-4" />
             <div className="flex flex-col items-start">
               <span className="text-sm font-medium">Multiple Images</span>
-              <span className="text-muted-foreground text-xs">
-                Upload image grid
-              </span>
+              <span className="text-xs text-muted-foreground">Upload image grid</span>
             </div>
           </Button>
 
@@ -80,13 +76,11 @@ export function MediaUploadPopover({
             <Video className="size-4" />
             <div className="flex flex-col items-start">
               <span className="text-sm font-medium">Video</span>
-              <span className="text-muted-foreground text-xs">
-                Upload video file
-              </span>
+              <span className="text-xs text-muted-foreground">Upload video file</span>
             </div>
           </Button>
         </div>
       </PopoverContent>
     </Popover>
-  )
+  );
 }

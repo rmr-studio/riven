@@ -1,4 +1,4 @@
-import { tailwindClasses } from "../tailwind-classes"
+import { tailwindClasses } from '../tailwind-classes';
 
 /**
  * Get the category of a Tailwind class
@@ -8,10 +8,10 @@ import { tailwindClasses } from "../tailwind-classes"
 export function getClassCategory(className: string): string | null {
   for (const group of tailwindClasses) {
     if (group.classes.includes(className)) {
-      return group.category
+      return group.category;
     }
   }
-  return null
+  return null;
 }
 
 /**
@@ -20,8 +20,8 @@ export function getClassCategory(className: string): string | null {
  * @returns Array of class names in that category
  */
 export function getClassesInCategory(category: string): string[] {
-  const group = tailwindClasses.find((g) => g.category === category)
-  return group ? group.classes : []
+  const group = tailwindClasses.find((g) => g.category === category);
+  return group ? group.classes : [];
 }
 
 /**
@@ -31,9 +31,9 @@ export function getClassesInCategory(category: string): string[] {
  * @returns true if both classes are in the same category
  */
 export function areSameCategory(class1: string, class2: string): boolean {
-  const cat1 = getClassCategory(class1)
-  const cat2 = getClassCategory(class2)
-  return cat1 !== null && cat1 === cat2
+  const cat1 = getClassCategory(class1);
+  const cat2 = getClassCategory(class2);
+  return cat1 !== null && cat1 === cat2;
 }
 
 /**
@@ -42,27 +42,24 @@ export function areSameCategory(class1: string, class2: string): boolean {
  * @param newClass - The new class to add
  * @returns Updated space-separated string of classes
  */
-export function replaceClassInCategory(
-  currentClasses: string,
-  newClass: string
-): string {
-  if (!currentClasses) return newClass
+export function replaceClassInCategory(currentClasses: string, newClass: string): string {
+  if (!currentClasses) return newClass;
 
-  const classes = currentClasses.split(" ").filter(Boolean)
-  const newCategory = getClassCategory(newClass)
+  const classes = currentClasses.split(' ').filter(Boolean);
+  const newCategory = getClassCategory(newClass);
 
   if (!newCategory) {
     // If new class is not in our known categories, just add it
-    return [...classes, newClass].join(" ")
+    return [...classes, newClass].join(' ');
   }
 
-  const categoryClasses = getClassesInCategory(newCategory)
+  const categoryClasses = getClassesInCategory(newCategory);
 
   // Remove all classes from the same category
-  const filtered = classes.filter((cls) => !categoryClasses.includes(cls))
+  const filtered = classes.filter((cls) => !categoryClasses.includes(cls));
 
   // Add the new class
-  return [...filtered, newClass].join(" ")
+  return [...filtered, newClass].join(' ');
 }
 
 /**
@@ -73,15 +70,15 @@ export function replaceClassInCategory(
  */
 export function getReplacementInfo(
   currentClasses: string,
-  newClass: string
+  newClass: string,
 ): {
-  willReplace: boolean
-  replacedClasses: string[]
-  newClasses: string
-  category: string | null
+  willReplace: boolean;
+  replacedClasses: string[];
+  newClasses: string;
+  category: string | null;
 } {
-  const classes = currentClasses.split(" ").filter(Boolean)
-  const newCategory = getClassCategory(newClass)
+  const classes = currentClasses.split(' ').filter(Boolean);
+  const newCategory = getClassCategory(newClass);
 
   if (!newCategory) {
     return {
@@ -89,18 +86,18 @@ export function getReplacementInfo(
       replacedClasses: [],
       newClasses: replaceClassInCategory(currentClasses, newClass),
       category: null,
-    }
+    };
   }
 
-  const categoryClasses = getClassesInCategory(newCategory)
-  const replacedClasses = classes.filter((cls) => categoryClasses.includes(cls))
+  const categoryClasses = getClassesInCategory(newCategory);
+  const replacedClasses = classes.filter((cls) => categoryClasses.includes(cls));
 
   return {
     willReplace: replacedClasses.length > 0,
     replacedClasses,
     newClasses: replaceClassInCategory(currentClasses, newClass),
     category: newCategory,
-  }
+  };
 }
 
 /**
@@ -108,11 +105,9 @@ export function getReplacementInfo(
  * @param className - The className string (might be null/undefined)
  * @returns Array of class names
  */
-export function getCurrentClasses(
-  className: string | null | undefined
-): string[] {
-  if (!className) return []
-  return className.split(" ").filter(Boolean)
+export function getCurrentClasses(className: string | null | undefined): string[] {
+  if (!className) return [];
+  return className.split(' ').filter(Boolean);
 }
 
 /**
@@ -123,8 +118,8 @@ export function getCurrentClasses(
  */
 export function mergeClasses(
   existingClassName: string | null | undefined,
-  newClass: string
+  newClass: string,
 ): string {
-  const current = existingClassName || ""
-  return replaceClassInCategory(current, newClass)
+  const current = existingClassName || '';
+  return replaceClassInCategory(current, newClass);
 }

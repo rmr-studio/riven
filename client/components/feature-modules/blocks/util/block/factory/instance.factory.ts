@@ -1,39 +1,39 @@
-import { BlockMetadataType, EntityType } from "@/lib/types/types";
-import { BlockNode, BlockSchema, BlockType } from "../../../interface/block.interface";
+import { BlockMetadataType, EntityType } from '@/lib/types/types';
+import { BlockNode, BlockSchema, BlockType } from '../../../interface/block.interface';
 import {
-    createBlockReferenceMetadata,
-    createContentNode,
-    createEntityReferenceMetadata,
-    createListConfiguration,
-    createReferenceNode,
-} from "./block.factory";
+  createBlockReferenceMetadata,
+  createContentNode,
+  createEntityReferenceMetadata,
+  createListConfiguration,
+  createReferenceNode,
+} from './block.factory';
 
 /**
  * Options for creating a block instance from a block type
  */
 export interface CreateBlockInstanceOptions {
-    /** Optional custom name for the block */
-    name?: string;
-    /** Optional initial data to override schema defaults */
-    initialData?: Record<string, unknown>;
-    /** Entity type for entity reference blocks (CLIENT, INVOICE, etc.) */
-    entityType?: EntityType;
-    /** Allowed block type keys for block lists (null = allow all types) */
-    allowedTypes?: string[] | null;
+  /** Optional custom name for the block */
+  name?: string;
+  /** Optional initial data to override schema defaults */
+  initialData?: Record<string, unknown>;
+  /** Entity type for entity reference blocks (CLIENT, INVOICE, etc.) */
+  entityType?: EntityType;
+  /** Allowed block type keys for block lists (null = allow all types) */
+  allowedTypes?: string[] | null;
 }
 
 /**
  * Determines if a block type is a reference block (entity or block reference).
  */
 function isReferenceBlockType(blockType: BlockType): boolean {
-    return blockType.key === "entity_reference" || blockType.key === "block_reference";
+  return blockType.key === 'entity_reference' || blockType.key === 'block_reference';
 }
 
 /**
  * Determines if a block type is a list block that requires listConfig.
  */
 function isListBlockType(blockType: BlockType): boolean {
-    return blockType.key === "block_list" || blockType.key === "content_block_list";
+  return blockType.key === 'block_list' || blockType.key === 'content_block_list';
 }
 
 /**
@@ -75,97 +75,95 @@ function isListBlockType(blockType: BlockType): boolean {
  * ```
  */
 export function createBlockInstanceFromType(
-    blockType: BlockType,
-    workspaceId: string,
-    options?: CreateBlockInstanceOptions
+  blockType: BlockType,
+  workspaceId: string,
+  options?: CreateBlockInstanceOptions,
 ): BlockNode {
-    // Use block type name as default if no custom name provided
-    const name = options?.name ?? blockType.name;
+  // Use block type name as default if no custom name provided
+  const name = options?.name ?? blockType.name;
 
-    // Handle reference blocks (entity_reference, block_reference)
-    if (isReferenceBlockType(blockType)) {
-        if (blockType.key === "entity_reference") {
-            // Create entity reference block with empty items
-            // Use provided entity type or undefined (will need to be set later)
-            const entityType = options?.entityType;
-            const payload = createEntityReferenceMetadata(entityType);
+  // Handle reference blocks (entity_reference, block_reference)
+  if (isReferenceBlockType(blockType)) {
+    if (blockType.key === 'entity_reference') {
+      // Create entity reference block with empty items
+      // Use provided entity type or undefined (will need to be set later)
+      const entityType = options?.entityType;
+      const payload = createEntityReferenceMetadata(entityType);
 
-            // Use entity type in name if provided
-            const blockName = entityType
-                ? name ?? `${entityType.charAt(0) + entityType.slice(1).toLowerCase()} Reference`
-                : name ?? blockType.name;
+      // Use entity type in name if provided
+      const blockName = entityType
+        ? (name ?? `${entityType.charAt(0) + entityType.slice(1).toLowerCase()} Reference`)
+        : (name ?? blockType.name);
 
-            return createReferenceNode({
-                workspaceId,
-                type: blockType,
-                name: blockName,
-                payload,
-            });
-        } else {
-            // Create block reference with empty item
-            const payload = createBlockReferenceMetadata();
-            return createReferenceNode({
-                workspaceId,
-                type: blockType,
-                name,
-                payload,
-            });
-        }
+      return createReferenceNode({
+        workspaceId,
+        type: blockType,
+        name: blockName,
+        payload,
+      });
+    } else {
+      // Create block reference with empty item
+      const payload = createBlockReferenceMetadata();
+      return createReferenceNode({
+        workspaceId,
+        type: blockType,
+        name,
+        payload,
+      });
     }
+  }
 
-    // Handle list blocks (block_list, content_block_list)
-    if (isListBlockType(blockType)) {
-        // Generate default data based on schema
-        const defaultData = generateDefaultDataFromSchema(blockType.schema);
-
-        // Merge with any provided initial data
-        const data = options?.initialData
-            ? { ...defaultData, ...options.initialData }
-            : defaultData;
-
-        // Determine allowed types:
-        // 1. Use provided allowedTypes from options (can be array or null)
-        // 2. Fall back to block type's nesting.allowedTypes
-        // 3. undefined means no restriction (allow all)
-        const allowedTypes =
-            options?.allowedTypes !== undefined
-                ? options.allowedTypes || undefined  // null becomes undefined (allow all)
-                : blockType.nesting?.allowedTypes;
-
-        const listConfig = createListConfiguration(allowedTypes);
-
-        // Create content node with list configuration
-        return createContentNode({
-            workspaceId,
-            type: blockType,
-            data,
-            name,
-            payloadOverride: {
-                type: BlockMetadataType.CONTENT,
-                deletable: true,
-                data,
-                meta: {
-                    validationErrors: [],
-                },
-                listConfig,
-            },
-        });
-    }
-
-    // Handle regular content blocks
+  // Handle list blocks (block_list, content_block_list)
+  if (isListBlockType(blockType)) {
     // Generate default data based on schema
     const defaultData = generateDefaultDataFromSchema(blockType.schema);
 
     // Merge with any provided initial data
     const data = options?.initialData ? { ...defaultData, ...options.initialData } : defaultData;
 
-    // Create content node
+    // Determine allowed types:
+    // 1. Use provided allowedTypes from options (can be array or null)
+    // 2. Fall back to block type's nesting.allowedTypes
+    // 3. undefined means no restriction (allow all)
+    const allowedTypes =
+      options?.allowedTypes !== undefined
+        ? options.allowedTypes || undefined // null becomes undefined (allow all)
+        : blockType.nesting?.allowedTypes;
+
+    const listConfig = createListConfiguration(allowedTypes);
+
+    // Create content node with list configuration
     return createContentNode({
-        workspaceId,
-        type: blockType,
+      workspaceId,
+      type: blockType,
+      data,
+      name,
+      payloadOverride: {
+        type: BlockMetadataType.CONTENT,
+        deletable: true,
         data,
-        name,
+        meta: {
+          validationErrors: [],
+        },
+        listConfig,
+      },
     });
+  }
+
+  // Handle regular content blocks
+  // Generate default data based on schema
+  const defaultData = generateDefaultDataFromSchema(blockType.schema);
+
+  // Merge with any provided initial data
+  const data = options?.initialData ? { ...defaultData, ...options.initialData } : defaultData;
+
+  // Create content node
+  return createContentNode({
+    workspaceId,
+    type: blockType,
+    data,
+    name,
+  });
 }
 
 /**
@@ -197,19 +195,19 @@ export function createBlockInstanceFromType(
  * ```
  */
 export function generateDefaultDataFromSchema(schema: BlockSchema): Record<string, unknown> {
-    const data: Record<string, unknown> = {};
+  const data: Record<string, unknown> = {};
 
-    // Only OBJECT schemas have properties
-    if (schema.type !== "OBJECT" || !schema.properties) {
-        return data;
-    }
-
-    // Generate defaults for each property
-    for (const [key, property] of Object.entries(schema.properties)) {
-        data[key] = getDefaultValueForType(property);
-    }
-
+  // Only OBJECT schemas have properties
+  if (schema.type !== 'OBJECT' || !schema.properties) {
     return data;
+  }
+
+  // Generate defaults for each property
+  for (const [key, property] of Object.entries(schema.properties)) {
+    data[key] = getDefaultValueForType(property);
+  }
+
+  return data;
 }
 
 /**
@@ -219,27 +217,27 @@ export function generateDefaultDataFromSchema(schema: BlockSchema): Record<strin
  * @returns A default value appropriate for the property type
  */
 function getDefaultValueForType(property: BlockSchema): unknown {
-    switch (property.type) {
-        case "STRING":
-            return "";
+  switch (property.type) {
+    case 'STRING':
+      return '';
 
-        case "NUMBER":
-            return 0;
+    case 'NUMBER':
+      return 0;
 
-        case "BOOLEAN":
-            return false;
+    case 'BOOLEAN':
+      return false;
 
-        case "OBJECT":
-            // Recursively generate defaults for nested object
-            return generateDefaultDataFromSchema(property);
+    case 'OBJECT':
+      // Recursively generate defaults for nested object
+      return generateDefaultDataFromSchema(property);
 
-        case "ARRAY":
-            return [];
+    case 'ARRAY':
+      return [];
 
-        default:
-            // For unknown types, return null
-            return null;
-    }
+    default:
+      // For unknown types, return null
+      return null;
+  }
 }
 
 /**
@@ -263,12 +261,12 @@ function getDefaultValueForType(property: BlockSchema): unknown {
  * ```
  */
 export function createBlockInstancesFromTypes(
-    blockTypes: BlockType[],
-    workspaceId: string,
-    optionsMap?: Record<string, CreateBlockInstanceOptions>
+  blockTypes: BlockType[],
+  workspaceId: string,
+  optionsMap?: Record<string, CreateBlockInstanceOptions>,
 ): BlockNode[] {
-    return blockTypes.map((blockType) => {
-        const options = optionsMap?.[blockType.key];
-        return createBlockInstanceFromType(blockType, workspaceId, options);
-    });
+  return blockTypes.map((blockType) => {
+    const options = optionsMap?.[blockType.key];
+    return createBlockInstanceFromType(blockType, workspaceId, options);
+  });
 }

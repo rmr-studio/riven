@@ -136,81 +136,97 @@ client/
 ## Directory Purposes
 
 **app/**
+
 - Purpose: Next.js App Router for file-based routing
 - Contains: Pages (page.tsx), layouts (layout.tsx), API routes (route.ts)
 - Key files: `layout.tsx` (root providers), `dashboard/layout.tsx` (authenticated layout)
 
 **components/feature-modules/**
+
 - Purpose: Domain-driven feature modules with standardized structure
 - Contains: Complete features (components, hooks, services, types, stores)
 - Key modules: `blocks/` (69 components), `entity/` (23 components)
 
-**components/feature-modules/*/components/**
+**components/feature-modules/\*/components/**
+
 - Purpose: UI components for a feature module
 - Contains: Subdirectories by component category (forms/, modals/, tables/, ui/)
 - Pattern: One component per file, kebab-case filenames
 
-**components/feature-modules/*/hooks/**
+**components/feature-modules/\*/hooks/**
+
 - Purpose: Custom React hooks for a feature module
 - Contains: Subdirectories by hook type (query/, mutation/, form/)
 - Pattern: `use-{name}.ts`, encapsulate reusable logic
 
-**components/feature-modules/*/service/**
+**components/feature-modules/\*/service/**
+
 - Purpose: API communication layer
 - Contains: Static class services (e.g., `entity-type.service.ts`)
 - Pattern: `{domain}.service.ts`, static methods only
 
-**components/feature-modules/*/interface/**
+**components/feature-modules/\*/interface/**
+
 - Purpose: Type definitions and interfaces for a feature
 - Contains: Re-exported OpenAPI types with semantic names
 - Pattern: `{domain}.interface.ts`, re-export from `lib/types/types.ts`
 
-**components/feature-modules/*/stores/**
+**components/feature-modules/\*/stores/**
+
 - Purpose: Zustand state management
 - Contains: Store factories for scoped instances
 - Pattern: `{domain}.store.ts`, factory functions returning store API
 
-**components/feature-modules/*/context/**
+**components/feature-modules/\*/context/**
+
 - Purpose: React Context providers for complex state
 - Contains: Provider components that inject stores/state
 - Pattern: `{domain}-provider.tsx`, exports provider + hooks
 
-**components/feature-modules/*/util/**
+**components/feature-modules/\*/util/**
+
 - Purpose: Feature-specific utility functions
 - Contains: Helper functions, data transformations, calculations
 - Pattern: `{category}.util.ts`, pure functions
 
 **components/provider/**
+
 - Purpose: Global application providers
 - Contains: Auth, theme, query client, store wrappers
 - Key files: `auth-context.tsx`, `ThemeContext.tsx`
 
 **components/ui/**
+
 - Purpose: shadcn/ui component library (Radix primitives)
 - Contains: 70+ reusable UI components
 - Pattern: Customized Radix components with Tailwind styling
 
 **lib/types/**
+
 - Purpose: OpenAPI-generated TypeScript types
 - Contains: `types.ts` (generated from backend schema)
 - Pattern: Generated via `npm run types` command
 
 **lib/interfaces/**
+
 - Purpose: Shared type definitions not from OpenAPI
 - Contains: Common interfaces, generic types
 - Key files: `interface.ts`, `common.interface.ts`
 
 **lib/util/**
+
 - Purpose: Cross-feature utility functions
 - Contains: Error handling, form validation, service utilities
 - Key files: `error/error.util.ts`, `service/service.util.ts`, `supabase/client.ts`
 
 **hooks/**
+
 - Purpose: Global custom hooks (not feature-specific)
 - Contains: Media queries, mobile detection
 - Pattern: `use-{name}.ts`
 
 **.planning/codebase/**
+
 - Purpose: Codebase documentation for AI assistants and developers
 - Contains: Architecture, structure, conventions, testing docs
 - Pattern: UPPERCASE.md files
@@ -218,30 +234,35 @@ client/
 ## Key File Locations
 
 **Entry Points:**
+
 - `app/layout.tsx`: Root layout with global providers
 - `app/page.tsx`: Landing page
 - `app/dashboard/layout.tsx`: Dashboard layout
 - `app/dashboard/workspace/[workspaceId]/page.tsx`: Workspace home
 
 **Configuration:**
+
 - `package.json`: Dependencies and scripts
 - `tsconfig.json`: TypeScript configuration
 - `tailwind.config.ts`: Tailwind CSS configuration (likely exists)
 - `.eslintrc.*`: ESLint configuration (likely exists)
 
 **Core Logic:**
+
 - `components/feature-modules/entity/service/entity-type.service.ts`: Entity type API
 - `components/feature-modules/blocks/context/block-environment-provider.tsx`: Block state management
 - `lib/util/error/error.util.ts`: Centralized error handling
 - `lib/util/service/service.util.ts`: Service layer utilities
 
 **Testing:**
+
 - `components/feature-modules/blocks/components/bespoke/__tests__/`: Block component tests
 - Pattern: `*.test.ts` or `*.spec.ts` co-located or in `__tests__/`
 
 ## Naming Conventions
 
 **Files:**
+
 - Components: `kebab-case.tsx` (e.g., `entity-type-header.tsx`)
 - Utilities: `kebab-case.util.ts` (e.g., `error.util.ts`)
 - Services: `kebab-case.service.ts` (e.g., `entity-type.service.ts`)
@@ -251,11 +272,13 @@ client/
 - Providers: `kebab-case-provider.tsx` (e.g., `configuration-provider.tsx`)
 
 **Directories:**
+
 - Feature modules: `kebab-case` (e.g., `entity`, `blocks`)
 - Subdirectories: `kebab-case` (e.g., `feature-modules`, `entity-type`)
 - Next.js routes: `kebab-case` or `[param]` for dynamic routes
 
 **Code:**
+
 - Components: `PascalCase` (e.g., `EntityTypeHeader`)
 - Hooks: `use{Name}` prefix (e.g., `useEntityTypes`)
 - Services: `PascalCase` classes (e.g., `EntityTypeService`)
@@ -266,6 +289,7 @@ client/
 ## Where to Add New Code
 
 **New Feature Module:**
+
 - Create: `components/feature-modules/{feature-name}/`
 - Add subdirectories: `components/`, `hooks/`, `interface/`, `service/`, `util/`
 - Add `interface/{feature-name}.interface.ts` with OpenAPI re-exports
@@ -274,62 +298,74 @@ client/
 - Add UI components in `components/`
 
 **New Component (within existing feature):**
+
 - Implementation: `components/feature-modules/{feature}/components/{category}/{component-name}.tsx`
 - Category: Choose from `forms/`, `modals/`, `tables/`, `ui/`, or create new category
 - Pattern: Export component as default or named export
 
 **New API Service Method:**
+
 - Add to: `components/feature-modules/{feature}/service/{domain}.service.ts`
 - Pattern: Static method, session validation, typed response, error handling
 - Example: `static async getSomething(session: Session | null, ...): Promise<Type>`
 
 **New Query/Mutation Hook:**
+
 - Query hook: `components/feature-modules/{feature}/hooks/query/{hook-name}.ts`
 - Mutation hook: `components/feature-modules/{feature}/hooks/mutation/{hook-name}.ts`
 - Pattern: Wrap TanStack Query, add toasts, cache updates, call service method
 
 **New Form Hook:**
+
 - Add to: `components/feature-modules/{feature}/hooks/form/{hook-name}.ts`
 - Pattern: Initialize `useForm` with Zod schema, return form instance + handlers
 - Use when: Form is isolated and doesn't need global state
 
 **New Context Provider:**
+
 - Add to: `components/feature-modules/{feature}/context/{domain}-provider.tsx`
 - Pattern: Create store in useRef, provide via Context, export selector hooks
 - Use when: State needed across multiple nested components
 
 **New Zustand Store:**
+
 - Add to: `components/feature-modules/{feature}/stores/{domain}.store.ts`
 - Pattern: Factory function that returns store API, use `subscribeWithSelector`
 - Use when: Scoped state per instance (e.g., per entity type)
 
 **New Utility Function:**
+
 - Feature-specific: `components/feature-modules/{feature}/util/{category}.util.ts`
 - Shared: `lib/util/{category}/{name}.util.ts`
 - Pattern: Pure functions, exported as named exports
 
 **New Type Definition:**
+
 - OpenAPI type: Add to backend schema, run `npm run types`
 - Feature interface: Re-export in `components/feature-modules/{feature}/interface/{domain}.interface.ts`
 - Shared type: Add to `lib/interfaces/{category}.interface.ts`
 
 **New Page/Route:**
+
 - Page: `app/{path}/page.tsx`
 - Layout: `app/{path}/layout.tsx`
 - Dynamic route: `app/{path}/[param]/page.tsx`
 - API route: `app/api/{path}/route.ts`
 
 **New Test:**
+
 - Unit test: Co-located `{component}.test.tsx` or in `__tests__/{component}.test.tsx`
 - Integration test: `{feature}/__tests__/{scenario}.test.tsx`
 - Pattern: Follow existing test structure in `blocks/components/bespoke/__tests__/`
 
 **Shared UI Component:**
+
 - Add to: `components/ui/{component-name}.tsx`
 - Pattern: shadcn/ui style, Radix primitives with Tailwind
 - Use when: Component is reusable across multiple features
 
 **Global Provider:**
+
 - Add to: `components/provider/{provider-name}.tsx`
 - Register in: `app/layout.tsx` provider hierarchy
 - Use when: State needed across entire application
@@ -337,6 +373,7 @@ client/
 ## Special Directories
 
 **components/feature-modules/blocks/components/forms/widgets/**
+
 - Purpose: Registry of form input widget components
 - Generated: No
 - Committed: Yes
@@ -344,28 +381,33 @@ client/
 - Pattern: Each widget exports component + default value for registry
 
 **lib/types/**
+
 - Purpose: OpenAPI-generated TypeScript types
 - Generated: Yes (via `npm run types`)
 - Committed: Yes (but regenerated as backend changes)
 - Usage: DO NOT import directly; re-export in feature interfaces
 
 **node_modules/**
+
 - Purpose: Installed npm dependencies
 - Generated: Yes (via `npm install`)
 - Committed: No
 
 **.next/**
+
 - Purpose: Next.js build output
 - Generated: Yes (via `npm run build`)
 - Committed: No
 
 **.planning/**
+
 - Purpose: Documentation for development workflow
 - Generated: No (manually maintained)
 - Committed: Yes
 - Usage: Reference for AI assistants and developers
 
 **components/ui/**
+
 - Purpose: shadcn/ui component library
 - Generated: Partially (via shadcn CLI)
 - Committed: Yes
@@ -373,4 +415,4 @@ client/
 
 ---
 
-*Structure analysis: 2026-01-19*
+_Structure analysis: 2026-01-19_

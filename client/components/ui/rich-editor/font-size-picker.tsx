@@ -1,87 +1,85 @@
-"use client"
+'use client';
 
-import React, { useEffect, useState } from "react"
-import { Minus, Plus } from "lucide-react"
+import React, { useEffect, useState } from 'react';
+import { Minus, Plus } from 'lucide-react';
 
-import { Button } from "../button"
-import { Input } from "../input"
+import { Button } from '../button';
+import { Input } from '../input';
 
 interface FontSizePickerProps {
-  disabled?: boolean
-  onFontSizeSelect: (fontSize: string) => void
-  currentFontSize?: string
+  disabled?: boolean;
+  onFontSizeSelect: (fontSize: string) => void;
+  currentFontSize?: string;
 }
 
 // Extract numeric value from inline style fontSize value
 const extractFontSize = (fontSizeValue?: string): number => {
-  if (!fontSizeValue) return 16 // default
+  if (!fontSizeValue) return 16; // default
 
   // Check if it's a pixel value
-  if (fontSizeValue.includes("px")) {
-    return parseInt(fontSizeValue.replace("px", "")) || 16
+  if (fontSizeValue.includes('px')) {
+    return parseInt(fontSizeValue.replace('px', '')) || 16;
   }
 
   // If it's just a number
-  const parsed = parseInt(fontSizeValue)
+  const parsed = parseInt(fontSizeValue);
   if (!isNaN(parsed)) {
-    return parsed
+    return parsed;
   }
 
-  return 16
-}
+  return 16;
+};
 
 export function FontSizePicker({
   disabled = false,
   onFontSizeSelect,
   currentFontSize,
 }: FontSizePickerProps) {
-  const [fontSize, setFontSize] = useState<number>(
-    extractFontSize(currentFontSize)
-  )
+  const [fontSize, setFontSize] = useState<number>(extractFontSize(currentFontSize));
 
   // Update fontSize when currentFontSize changes (selection changes)
   useEffect(() => {
-    const extractedSize = extractFontSize(currentFontSize)
-    setFontSize(extractedSize)
-  }, [currentFontSize])
+    const extractedSize = extractFontSize(currentFontSize);
+    setFontSize(extractedSize);
+  }, [currentFontSize]);
 
   const handleIncrement = () => {
-    const newSize = Math.min(fontSize + 2, 128)
-    setFontSize(newSize)
-    onFontSizeSelect(`${newSize}px`)
-  }
+    const newSize = Math.min(fontSize + 2, 128);
+    setFontSize(newSize);
+    onFontSizeSelect(`${newSize}px`);
+  };
 
   const handleDecrement = () => {
-    const newSize = Math.max(fontSize - 2, 8)
-    setFontSize(newSize)
-    onFontSizeSelect(`${newSize}px`)
-  }
+    const newSize = Math.max(fontSize - 2, 8);
+    setFontSize(newSize);
+    onFontSizeSelect(`${newSize}px`);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value) || 16
-    const clampedValue = Math.max(8, Math.min(value, 128))
-    setFontSize(clampedValue)
-  }
+    const value = parseInt(e.target.value) || 16;
+    const clampedValue = Math.max(8, Math.min(value, 128));
+    setFontSize(clampedValue);
+  };
 
   const handleInputBlur = () => {
-    onFontSizeSelect(`${fontSize}px`)
-  }
+    onFontSizeSelect(`${fontSize}px`);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (e.key === "Enter") {
-      onFontSizeSelect(`${fontSize}px`)
-      e.currentTarget.blur()
+    if (e.key === 'Enter') {
+      onFontSizeSelect(`${fontSize}px`);
+      e.currentTarget.blur();
     }
-  }
+  };
 
   return (
-    <div className="bg-muted/50 flex items-center gap-0.5 rounded-md">
+    <div className="flex items-center gap-0.5 rounded-md bg-muted/50">
       <Button
         variant="ghost"
         size="icon"
         onClick={handleDecrement}
         disabled={disabled || fontSize <= 8}
-        className="hover:bg-muted h-7 w-6 rounded-r-none md:h-8 md:w-7"
+        className="h-7 w-6 rounded-r-none hover:bg-muted md:h-8 md:w-7"
         title="Decrease font size"
       >
         <Minus className="size-3 md:size-3.5" />
@@ -105,11 +103,11 @@ export function FontSizePicker({
         size="icon"
         onClick={handleIncrement}
         disabled={disabled || fontSize >= 128}
-        className="hover:bg-muted h-7 w-6 rounded-l-none md:h-8 md:w-7"
+        className="h-7 w-6 rounded-l-none hover:bg-muted md:h-8 md:w-7"
         title="Increase font size"
       >
         <Plus className="size-3 md:size-3.5" />
       </Button>
     </div>
-  )
+  );
 }

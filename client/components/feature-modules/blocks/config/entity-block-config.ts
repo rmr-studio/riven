@@ -1,4 +1,4 @@
-import { EntityType } from "@/lib/types/types";
+import { EntityType } from '@/lib/types/types';
 
 /**
  * Configuration for entity-specific block type restrictions.
@@ -7,10 +7,10 @@ import { EntityType } from "@/lib/types/types";
  * This enables entity-specific allowlists for block creation.
  */
 export interface EntityBlockConfig {
-    /** Block type keys that are allowed for this entity */
-    allowedBlockTypes: string[];
-    /** Default blocks to create (besides the mandatory reference block) */
-    defaultBlocks?: string[];
+  /** Block type keys that are allowed for this entity */
+  allowedBlockTypes: string[];
+  /** Default blocks to create (besides the mandatory reference block) */
+  defaultBlocks?: string[];
 }
 
 /**
@@ -25,28 +25,22 @@ export interface EntityBlockConfig {
  * const canAddBlock = config.allowedBlockTypes.includes(blockTypeKey);
  */
 export const ENTITY_BLOCK_CONFIG: Record<EntityType, EntityBlockConfig> = {
-    [EntityType.CLIENT]: {
-        allowedBlockTypes: [
-            "reference",
-            "note",
-            "task_list",
-            "layout_container",
-            "content_block_list",
-        ],
-        defaultBlocks: [], // To be defined later (post-MVP)
-    },
-    [EntityType.ORGANISATION]: {
-        allowedBlockTypes: ["reference", "note", "layout_container", "content_block_list"],
-        defaultBlocks: [],
-    },
-    [EntityType.PROJECT]: {
-        allowedBlockTypes: ["reference", "note", "task_list", "layout_container"],
-        defaultBlocks: [],
-    },
-    [EntityType.INVOICE]: {
-        allowedBlockTypes: ["reference", "note"],
-        defaultBlocks: [],
-    },
+  [EntityType.CLIENT]: {
+    allowedBlockTypes: ['reference', 'note', 'task_list', 'layout_container', 'content_block_list'],
+    defaultBlocks: [], // To be defined later (post-MVP)
+  },
+  [EntityType.ORGANISATION]: {
+    allowedBlockTypes: ['reference', 'note', 'layout_container', 'content_block_list'],
+    defaultBlocks: [],
+  },
+  [EntityType.PROJECT]: {
+    allowedBlockTypes: ['reference', 'note', 'task_list', 'layout_container'],
+    defaultBlocks: [],
+  },
+  [EntityType.INVOICE]: {
+    allowedBlockTypes: ['reference', 'note'],
+    defaultBlocks: [],
+  },
 };
 
 /**
@@ -59,11 +53,11 @@ export const ENTITY_BLOCK_CONFIG: Record<EntityType, EntityBlockConfig> = {
  * const config = getEntityBlockConfig(EntityType.client);
  */
 export const getEntityBlockConfig = (entityType: EntityType): EntityBlockConfig => {
-    return (
-        ENTITY_BLOCK_CONFIG[entityType] || {
-            allowedBlockTypes: ["reference", "note"], // Fallback to basic types
-        }
-    );
+  return (
+    ENTITY_BLOCK_CONFIG[entityType] || {
+      allowedBlockTypes: ['reference', 'note'], // Fallback to basic types
+    }
+  );
 };
 
 /**
@@ -79,6 +73,6 @@ export const getEntityBlockConfig = (entityType: EntityType): EntityBlockConfig 
  * }
  */
 export const isBlockTypeAllowed = (entityType: EntityType, blockTypeKey: string): boolean => {
-    const config = getEntityBlockConfig(entityType);
-    return config.allowedBlockTypes.includes(blockTypeKey);
+  const config = getEntityBlockConfig(entityType);
+  return config.allowedBlockTypes.includes(blockTypeKey);
 };

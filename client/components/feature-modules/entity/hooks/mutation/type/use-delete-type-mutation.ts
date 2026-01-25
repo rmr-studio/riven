@@ -1,81 +1,81 @@
-import { useAuth } from "@/components/provider/auth-context";
-import { useMutation, useQueryClient, type UseMutationOptions } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { EntityType, type EntityTypeImpactResponse } from "../../../interface/entity.interface";
-import { EntityTypeService } from "../../../service/entity-type.service";
+import { useAuth } from '@/components/provider/auth-context';
+import { useMutation, useQueryClient, type UseMutationOptions } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { EntityType, type EntityTypeImpactResponse } from '../../../interface/entity.interface';
+import { EntityTypeService } from '../../../service/entity-type.service';
 
 export interface DeleteEntityTypeRequest {
-    key: string;
-    impactConfirmed?: boolean;
+  key: string;
+  impactConfirmed?: boolean;
 }
 
 export function useDeleteTypeMutation(
-    workspaceId: string,
-    onImpactConfirmation: (impact: EntityTypeImpactResponse) => void,
-    options?: UseMutationOptions<EntityTypeImpactResponse, Error, DeleteEntityTypeRequest>
+  workspaceId: string,
+  onImpactConfirmation: (impact: EntityTypeImpactResponse) => void,
+  options?: UseMutationOptions<EntityTypeImpactResponse, Error, DeleteEntityTypeRequest>,
 ) {
-    const queryClient = useQueryClient();
-    const { session } = useAuth();
+  const queryClient = useQueryClient();
+  const { session } = useAuth();
 
-    return useMutation({
-        mutationFn: (request: DeleteEntityTypeRequest) => {
-            const { key, impactConfirmed = false } = request;
-            return EntityTypeService.deleteEntityType(session, workspaceId, key, impactConfirmed);
-        },
-        onMutate: (data) => {
-            options?.onMutate?.(data);
-        },
-        onError: (error: Error, variables: DeleteEntityTypeRequest, context: unknown) => {
-            options?.onError?.(error, variables, context);
-            toast.error(`Failed to delete entity type definition: ${error.message}`);
-        },
-        onSuccess: (
-            response: EntityTypeImpactResponse,
-            variables: DeleteEntityTypeRequest,
-            context: unknown
-        ) => {
-            options?.onSuccess?.(response, variables, context);
+  return useMutation({
+    mutationFn: (request: DeleteEntityTypeRequest) => {
+      const { key, impactConfirmed = false } = request;
+      return EntityTypeService.deleteEntityType(session, workspaceId, key, impactConfirmed);
+    },
+    onMutate: (data) => {
+      options?.onMutate?.(data);
+    },
+    onError: (error: Error, variables: DeleteEntityTypeRequest, context: unknown) => {
+      options?.onError?.(error, variables, context);
+      toast.error(`Failed to delete entity type definition: ${error.message}`);
+    },
+    onSuccess: (
+      response: EntityTypeImpactResponse,
+      variables: DeleteEntityTypeRequest,
+      context: unknown,
+    ) => {
+      options?.onSuccess?.(response, variables, context);
 
-            // If there is an impact, invoke the impact confirmation callback and return early
-            if (response.impact) {
-                onImpactConfirmation(response);
-                return;
-            }
+      // If there is an impact, invoke the impact confirmation callback and return early
+      if (response.impact) {
+        onImpactConfirmation(response);
+        return;
+      }
 
-            toast.success(`Entity type definition deleted successfully!`);
+      toast.success(`Entity type definition deleted successfully!`);
 
-            if (!response.updatedEntityTypes) return;
+      if (!response.updatedEntityTypes) return;
 
-            Object.entries(response.updatedEntityTypes).forEach(([key, entityType]) => {
-                // Update individual entity type query cache
-                queryClient.setQueryData(["entityType", key, workspaceId], entityType);
-            });
+      Object.entries(response.updatedEntityTypes).forEach(([key, entityType]) => {
+        // Update individual entity type query cache
+        queryClient.setQueryData(['entityType', key, workspaceId], entityType);
+      });
 
-            queryClient.invalidateQueries({
-                queryKey: ["entityType", variables.key, workspaceId],
-            });
+      queryClient.invalidateQueries({
+        queryKey: ['entityType', variables.key, workspaceId],
+      });
 
-            // Update the entity types list in cache
-            queryClient.setQueryData<EntityType[]>(["entityTypes", workspaceId], (oldData) => {
-                if (!response.updatedEntityTypes) return;
+      // Update the entity types list in cache
+      queryClient.setQueryData<EntityType[]>(['entityTypes', workspaceId], (oldData) => {
+        if (!response.updatedEntityTypes) return;
 
-                if (!oldData)
-                    return Object.values(response.updatedEntityTypes).filter(
-                        (et) => et.key !== variables.key
-                    );
+        if (!oldData)
+          return Object.values(response.updatedEntityTypes).filter(
+            (et) => et.key !== variables.key,
+          );
 
-                // Create a map of updated entity types for efficient lookup
-                const updatedTypesMap = new Map(
-                    Object.entries(response.updatedEntityTypes!).map(([key, type]) => [key, type])
-                );
+        // Create a map of updated entity types for efficient lookup
+        const updatedTypesMap = new Map(
+          Object.entries(response.updatedEntityTypes!).map(([key, type]) => [key, type]),
+        );
 
-                // Replace all updated entity types in the list and remove the delete entity type
-                return oldData
-                    .map((et) => updatedTypesMap.get(et.key) ?? et)
-                    .filter((et) => et.key !== variables.key);
-            });
+        // Replace all updated entity types in the list and remove the delete entity type
+        return oldData
+          .map((et) => updatedTypesMap.get(et.key) ?? et)
+          .filter((et) => et.key !== variables.key);
+      });
 
-            return response;
-        },
-    });
+      return response;
+    },
+  });
 }

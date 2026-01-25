@@ -1,11 +1,11 @@
 import {
-    Condition,
-    FormStructure,
-    Icon,
-    SchemaOptions,
-    SchemaString,
-    SchemaUUID,
-} from "@/lib/types";
+  Condition,
+  FormStructure,
+  Icon,
+  SchemaOptions,
+  SchemaString,
+  SchemaUUID,
+} from '@/lib/types';
 
 export type { Condition, FormStructure, Icon, SchemaOptions, SchemaUUID };
 
@@ -14,9 +14,9 @@ export type Schema = SchemaString;
 
 // Custom local type (not in OpenAPI spec)
 export interface Address {
-    street?: string;
-    city?: string;
-    state?: string;
-    postalCode?: string;
-    country?: string;
+  street?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
 }

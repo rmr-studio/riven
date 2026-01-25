@@ -1,7 +1,7 @@
-import { EntityTypeOverviewDashboard } from "@/components/feature-modules/entity/components/dashboard/entity-type-dashboard";
+import { EntityTypeOverviewDashboard } from '@/components/feature-modules/entity/components/dashboard/entity-type-dashboard';
 
 const EntityTypeOverviewPage = () => {
-    return <EntityTypeOverviewDashboard />;
+  return <EntityTypeOverviewDashboard />;
 };
 
 export default EntityTypeOverviewPage;

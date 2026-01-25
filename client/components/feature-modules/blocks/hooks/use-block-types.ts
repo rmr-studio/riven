@@ -1,8 +1,8 @@
-import { useAuth } from "@/components/provider/auth-context";
-import { AuthenticatedQueryResult } from "@/lib/interfaces/interface";
-import { useQuery } from "@tanstack/react-query";
-import { BlockType } from "../interface/block.interface";
-import { BlockTypeService } from "../service/block-type.service";
+import { useAuth } from '@/components/provider/auth-context';
+import { AuthenticatedQueryResult } from '@/lib/interfaces/interface';
+import { useQuery } from '@tanstack/react-query';
+import { BlockType } from '../interface/block.interface';
+import { BlockTypeService } from '../service/block-type.service';
 
 /**
  * React Query hook to fetch available block types for an organization.
@@ -35,41 +35,41 @@ import { BlockTypeService } from "../service/block-type.service";
  * ```
  */
 export function useBlockTypes(
-    workspaceId: string,
-    includeSystem: boolean = true
+  workspaceId: string,
+  includeSystem: boolean = true,
 ): AuthenticatedQueryResult<BlockType[]> {
-    const { session, loading } = useAuth();
-    const query = useQuery({
-        queryKey: ["blockTypes", workspaceId, includeSystem],
-        queryFn: async () => {
-            const types = await BlockTypeService.getBlockTypes(session, workspaceId);
+  const { session, loading } = useAuth();
+  const query = useQuery({
+    queryKey: ['blockTypes', workspaceId, includeSystem],
+    queryFn: async () => {
+      const types = await BlockTypeService.getBlockTypes(session, workspaceId);
 
-            // Filter out archived types
-            let filteredTypes = types.filter((type) => !type.deleted);
+      // Filter out archived types
+      let filteredTypes = types.filter((type) => !type.deleted);
 
-            // Optionally include only system types
-            if (!includeSystem) {
-                filteredTypes = filteredTypes.filter((type) => !type.system);
-            }
+      // Optionally include only system types
+      if (!includeSystem) {
+        filteredTypes = filteredTypes.filter((type) => !type.system);
+      }
 
-            // TODO: Future enhancement - filter by entity type on backend
-            // For now, return all available types
-            // if (entityType) {
-            //   filteredTypes = filterByEntityType(filteredTypes, entityType);
-            // }
+      // TODO: Future enhancement - filter by entity type on backend
+      // For now, return all available types
+      // if (entityType) {
+      //   filteredTypes = filterByEntityType(filteredTypes, entityType);
+      // }
 
-            return filteredTypes;
-        },
-        staleTime: 5 * 60 * 1000, // 5 minutes - block types don't change frequently
-        gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
-        refetchOnWindowFocus: false,
-        enabled: !!workspaceId && !!session?.user.id, // Only run query if workspaceId is provided, and user is authenticated
-    });
+      return filteredTypes;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes - block types don't change frequently
+    gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
+    refetchOnWindowFocus: false,
+    enabled: !!workspaceId && !!session?.user.id, // Only run query if workspaceId is provided, and user is authenticated
+  });
 
-    return {
-        isLoadingAuth: loading,
-        ...query,
-    };
+  return {
+    isLoadingAuth: loading,
+    ...query,
+  };
 }
 
 /**
@@ -85,23 +85,23 @@ export function useBlockTypes(
  * ```
  */
 export function useBlockTypeByKey(
-    key: string,
-    workspaceId: string
+  key: string,
+  workspaceId: string,
 ): AuthenticatedQueryResult<BlockType> {
-    const { session, loading } = useAuth();
-    const query = useQuery({
-        queryKey: ["blockType", key, workspaceId],
-        queryFn: () => BlockTypeService.getBlockTypeByKey(session, key),
-        staleTime: 10 * 60 * 1000,
-        gcTime: 30 * 60 * 1000,
-        refetchOnWindowFocus: false,
-        enabled: !!key && !!workspaceId && !!session?.user.id,
-    });
+  const { session, loading } = useAuth();
+  const query = useQuery({
+    queryKey: ['blockType', key, workspaceId],
+    queryFn: () => BlockTypeService.getBlockTypeByKey(session, key),
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    enabled: !!key && !!workspaceId && !!session?.user.id,
+  });
 
-    return {
-        ...query,
-        isLoadingAuth: loading,
-    };
+  return {
+    ...query,
+    isLoadingAuth: loading,
+  };
 }
 
 /**
@@ -113,60 +113,60 @@ export function useBlockTypeByKey(
  * @returns Object with block types grouped by category
  */
 export function categorizeBlockTypes(blockTypes: BlockType[]): {
-    layout: BlockType[];
-    content: BlockType[];
-    reference: BlockType[];
-    custom: BlockType[];
+  layout: BlockType[];
+  content: BlockType[];
+  reference: BlockType[];
+  custom: BlockType[];
 } {
-    const categories = {
-        layout: [] as BlockType[],
-        content: [] as BlockType[],
-        reference: [] as BlockType[],
-        custom: [] as BlockType[],
-    };
+  const categories = {
+    layout: [] as BlockType[],
+    content: [] as BlockType[],
+    reference: [] as BlockType[],
+    custom: [] as BlockType[],
+  };
 
-    blockTypes.forEach((type) => {
-        // Custom (non-system) types go in their own category
-        if (!type.system) {
-            categories.custom.push(type);
-            return;
+  blockTypes.forEach((type) => {
+    // Custom (non-system) types go in their own category
+    if (!type.system) {
+      categories.custom.push(type);
+      return;
+    }
+
+    // Categorize system types based on key patterns
+    switch (type.key) {
+      // Layout & Containers
+      case 'layout_container':
+      case 'project_overview':
+        categories.layout.push(type);
+        break;
+
+      // References
+      case 'block_reference':
+      case 'entity_reference_list':
+        categories.reference.push(type);
+        break;
+
+      // Content blocks (lists, notes, tasks, addresses, etc.)
+      case 'block_list':
+      case 'content_block_list':
+      case 'note':
+      case 'project_task':
+      case 'postal_address':
+        categories.content.push(type);
+        break;
+
+      // Fallback: use pattern matching for unknown types
+      default:
+        if (type.key.includes('container') || type.key.includes('layout')) {
+          categories.layout.push(type);
+        } else if (type.key.includes('reference')) {
+          categories.reference.push(type);
+        } else {
+          // Default to content for unknown system types
+          categories.content.push(type);
         }
+    }
+  });
 
-        // Categorize system types based on key patterns
-        switch (type.key) {
-            // Layout & Containers
-            case "layout_container":
-            case "project_overview":
-                categories.layout.push(type);
-                break;
-
-            // References
-            case "block_reference":
-            case "entity_reference_list":
-                categories.reference.push(type);
-                break;
-
-            // Content blocks (lists, notes, tasks, addresses, etc.)
-            case "block_list":
-            case "content_block_list":
-            case "note":
-            case "project_task":
-            case "postal_address":
-                categories.content.push(type);
-                break;
-
-            // Fallback: use pattern matching for unknown types
-            default:
-                if (type.key.includes("container") || type.key.includes("layout")) {
-                    categories.layout.push(type);
-                } else if (type.key.includes("reference")) {
-                    categories.reference.push(type);
-                } else {
-                    // Default to content for unknown system types
-                    categories.content.push(type);
-                }
-        }
-    });
-
-    return categories;
+  return categories;
 }

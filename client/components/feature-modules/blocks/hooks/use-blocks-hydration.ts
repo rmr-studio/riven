@@ -1,6 +1,6 @@
-import { useAuth } from "@/components/provider/auth-context";
-import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import { BlockService, HydrateBlocksResponse } from "../service/block.service";
+import { useAuth } from '@/components/provider/auth-context';
+import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { BlockService, HydrateBlocksResponse } from '../service/block.service';
 
 /**
  * Hook to hydrate (resolve entity references for) multiple blocks in a single batched request.
@@ -31,27 +31,27 @@ import { BlockService, HydrateBlocksResponse } from "../service/block.service";
  * }
  */
 export const useBlocksHydration = (
-    blockIds: string[],
-    workspaceId: string | undefined
+  blockIds: string[],
+  workspaceId: string | undefined,
 ): UseQueryResult<HydrateBlocksResponse, Error> => {
-    const { session, loading: authLoading } = useAuth();
+  const { session, loading: authLoading } = useAuth();
 
-    // Sort block IDs for consistent query key (order shouldn't matter for caching)
-    const sortedBlockIds = [...blockIds].sort();
+  // Sort block IDs for consistent query key (order shouldn't matter for caching)
+  const sortedBlockIds = [...blockIds].sort();
 
-    return useQuery<HydrateBlocksResponse, Error>({
-        queryKey: ["blocks-hydration", workspaceId, ...sortedBlockIds],
-        queryFn: async () => {
-            if (!workspaceId) {
-                throw new Error("Organisation ID is required");
-            }
+  return useQuery<HydrateBlocksResponse, Error>({
+    queryKey: ['blocks-hydration', workspaceId, ...sortedBlockIds],
+    queryFn: async () => {
+      if (!workspaceId) {
+        throw new Error('Organisation ID is required');
+      }
 
-            const results = await BlockService.hydrateBlocks(session, blockIds, workspaceId);
+      const results = await BlockService.hydrateBlocks(session, blockIds, workspaceId);
 
-            return results;
-        },
-        enabled: blockIds.length > 0 && !!workspaceId && !!session && !authLoading,
-        staleTime: 5 * 60 * 1000, // 5 minutes - entity data doesn't change frequently
-        refetchOnWindowFocus: false, // Don't refetch on window focus
-    });
+      return results;
+    },
+    enabled: blockIds.length > 0 && !!workspaceId && !!session && !authLoading,
+    staleTime: 5 * 60 * 1000, // 5 minutes - entity data doesn't change frequently
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+  });
 };

@@ -1,76 +1,60 @@
-import React from "react"
-import { create } from "zustand"
-import { subscribeWithSelector } from "zustand/middleware"
-import { useShallow } from "zustand/react/shallow"
+import React from 'react';
+import { create } from 'zustand';
+import { subscribeWithSelector } from 'zustand/middleware';
+import { useShallow } from 'zustand/react/shallow';
 
-import { EditorAction } from "../lib/reducer/actions"
-import {
-  createInitialState,
-  editorReducer,
-} from "../lib/reducer/editor-reducer"
-import {
-  ContainerNode,
-  EditorNode,
-  EditorState,
-  SelectionInfo,
-  TextNode,
-} from "../types"
+import { EditorAction } from '../lib/reducer/actions';
+import { createInitialState, editorReducer } from '../lib/reducer/editor-reducer';
+import { ContainerNode, EditorNode, EditorState, SelectionInfo, TextNode } from '../types';
 
 // Store interface
 interface EditorStore extends EditorState {
   // Actions
-  dispatch: (action: EditorAction) => void
+  dispatch: (action: EditorAction) => void;
 
   // Optimized selectors that don't cause re-renders
-  getNode: (nodeId: string) => EditorNode | undefined
-  getContainer: () => ContainerNode
-  isNodeActive: (nodeId: string) => boolean
-  getActiveNodeId: () => string | null
-  getContainerChildrenIds: () => string[]
+  getNode: (nodeId: string) => EditorNode | undefined;
+  getContainer: () => ContainerNode;
+  isNodeActive: (nodeId: string) => boolean;
+  getActiveNodeId: () => string | null;
+  getContainerChildrenIds: () => string[];
 
   // Selection management (optimized to avoid re-renders)
   selectionManager: {
-    getSelection: () => SelectionInfo | null
-    setSelection: (selection: SelectionInfo | null) => void
-    subscribe: (
-      callback: (selection: SelectionInfo | null) => void
-    ) => () => void
-  }
+    getSelection: () => SelectionInfo | null;
+    setSelection: (selection: SelectionInfo | null) => void;
+    subscribe: (callback: (selection: SelectionInfo | null) => void) => () => void;
+  };
 
   // Internal selection state (not reactive)
-  _selection: SelectionInfo | null
-  _selectionSubscribers: Set<(selection: SelectionInfo | null) => void>
+  _selection: SelectionInfo | null;
+  _selectionSubscribers: Set<(selection: SelectionInfo | null) => void>;
 }
 
 // Helper function to find node by ID in tree
-function findNodeById(
-  container: ContainerNode,
-  nodeId: string
-): EditorNode | undefined {
-  if (container.id === nodeId) return container
+function findNodeById(container: ContainerNode, nodeId: string): EditorNode | undefined {
+  if (container.id === nodeId) return container;
 
   for (const child of container.children) {
-    if (child.id === nodeId) return child
+    if (child.id === nodeId) return child;
 
-    if ("children" in child && Array.isArray(child.children)) {
-      const found = findNodeById(child as ContainerNode, nodeId)
-      if (found) return found
+    if ('children' in child && Array.isArray(child.children)) {
+      const found = findNodeById(child as ContainerNode, nodeId);
+      if (found) return found;
     }
   }
 
-  return undefined
+  return undefined;
 }
 
 // Static empty Set to avoid creating new instances
-const EMPTY_SELECTED_BLOCKS = new Set<string>()
+const EMPTY_SELECTED_BLOCKS = new Set<string>();
 
 // Create the store with subscribeWithSelector middleware for fine-grained subscriptions
 export const useEditorStore = create<EditorStore>()(
   subscribeWithSelector((set, get) => {
     // Initialize selection subscribers
-    const selectionSubscribers = new Set<
-      (selection: SelectionInfo | null) => void
-    >()
+    const selectionSubscribers = new Set<(selection: SelectionInfo | null) => void>();
 
     return {
       // Initialize with default state
@@ -82,34 +66,34 @@ export const useEditorStore = create<EditorStore>()(
 
       // Main dispatch function
       dispatch: (action: EditorAction) => {
-        const currentState = get()
-        const newState = editorReducer(currentState, action)
+        const currentState = get();
+        const newState = editorReducer(currentState, action);
 
         // Update the store with new state
-        set(newState)
+        set(newState);
       },
 
       // Optimized selectors (these don't cause subscriptions)
       getNode: (nodeId: string) => {
-        const container = get().history[get().historyIndex]
-        return findNodeById(container, nodeId)
+        const container = get().history[get().historyIndex];
+        return findNodeById(container, nodeId);
       },
 
       getContainer: () => {
-        return get().history[get().historyIndex]
+        return get().history[get().historyIndex];
       },
 
       isNodeActive: (nodeId: string) => {
-        return get().activeNodeId === nodeId
+        return get().activeNodeId === nodeId;
       },
 
       getActiveNodeId: () => {
-        return get().activeNodeId
+        return get().activeNodeId;
       },
 
       getContainerChildrenIds: () => {
-        const container = get().history[get().historyIndex]
-        return container.children.map((child) => child.id)
+        const container = get().history[get().historyIndex];
+        return container.children.map((child) => child.id);
       },
 
       // Selection manager (optimized to avoid re-renders)
@@ -118,24 +102,24 @@ export const useEditorStore = create<EditorStore>()(
 
         setSelection: (selection: SelectionInfo | null) => {
           // Update internal selection without triggering re-renders
-          set({ _selection: selection })
+          set({ _selection: selection });
 
           // Notify subscribers (e.g., toolbar) but don't trigger full re-render
-          const subscribers = get()._selectionSubscribers
-          subscribers.forEach((callback) => callback(selection))
+          const subscribers = get()._selectionSubscribers;
+          subscribers.forEach((callback) => callback(selection));
         },
 
         subscribe: (callback: (selection: SelectionInfo | null) => void) => {
-          const subscribers = get()._selectionSubscribers
-          subscribers.add(callback)
+          const subscribers = get()._selectionSubscribers;
+          subscribers.add(callback);
           return () => {
-            subscribers.delete(callback)
-          }
+            subscribers.delete(callback);
+          };
         },
       },
-    }
-  })
-)
+    };
+  }),
+);
 
 // Specialized hooks for components to subscribe to specific data
 
@@ -160,9 +144,9 @@ export const useEditorStore = create<EditorStore>()(
  */
 export function useBlockNode(nodeId: string) {
   return useEditorStore((state) => {
-    const container = state.history[state.historyIndex]
-    return findNodeById(container, nodeId)
-  })
+    const container = state.history[state.historyIndex];
+    return findNodeById(container, nodeId);
+  });
 }
 
 /**
@@ -170,7 +154,7 @@ export function useBlockNode(nodeId: string) {
  * Only re-renders when the active status of THIS node changes
  */
 export function useIsNodeActive(nodeId: string): boolean {
-  return useEditorStore((state) => state.activeNodeId === nodeId)
+  return useEditorStore((state) => state.activeNodeId === nodeId);
 }
 
 /**
@@ -178,7 +162,7 @@ export function useIsNodeActive(nodeId: string): boolean {
  * Only re-renders when the active node ID changes
  */
 export function useActiveNodeId(): string | null {
-  return useEditorStore((state) => state.activeNodeId)
+  return useEditorStore((state) => state.activeNodeId);
 }
 
 /**
@@ -189,10 +173,10 @@ export function useActiveNodeId(): string | null {
 export function useContainerChildrenIds(): string[] {
   return useEditorStore(
     useShallow((state) => {
-      const container = state.history[state.historyIndex]
-      return container.children.map((child) => child.id)
-    })
-  )
+      const container = state.history[state.historyIndex];
+      return container.children.map((child) => child.id);
+    }),
+  );
 }
 
 /**
@@ -201,9 +185,7 @@ export function useContainerChildrenIds(): string[] {
  * Uses useShallow to prevent unnecessary re-renders when container reference hasn't changed
  */
 export function useContainer(): ContainerNode {
-  return useEditorStore(
-    useShallow((state) => state.history[state.historyIndex])
-  )
+  return useEditorStore(useShallow((state) => state.history[state.historyIndex]));
 }
 
 /**
@@ -212,9 +194,7 @@ export function useContainer(): ContainerNode {
  * Uses shallow equality since the getter function should be stable
  */
 export function useContainerGetter(): () => ContainerNode {
-  return useEditorStore(
-    useShallow((state) => () => state.history[state.historyIndex])
-  )
+  return useEditorStore(useShallow((state) => () => state.history[state.historyIndex]));
 }
 
 /**
@@ -223,7 +203,7 @@ export function useContainerGetter(): () => ContainerNode {
  * Uses shallow equality to ensure stable reference
  */
 export function useEditorDispatch() {
-  return useEditorStore(useShallow((state) => state.dispatch))
+  return useEditorStore(useShallow((state) => state.dispatch));
 }
 
 /**
@@ -241,12 +221,10 @@ export function useEditorState(): EditorState {
       version: state.version,
       coverImage: state.coverImage,
       hasSelection: state.currentSelection !== null,
-      selectionKey: state.version
-        ? parseInt(state.version.split(".").join(""))
-        : 0,
+      selectionKey: state.version ? parseInt(state.version.split('.').join('')) : 0,
       selectedBlocks: EMPTY_SELECTED_BLOCKS,
-    }))
-  )
+    })),
+  );
 }
 
 /**
@@ -254,7 +232,7 @@ export function useEditorState(): EditorState {
  * Uses shallow equality since selectionManager is a stable object
  */
 export function useSelectionManager() {
-  return useEditorStore(useShallow((state) => state.selectionManager))
+  return useEditorStore(useShallow((state) => state.selectionManager));
 }
 
 /**
@@ -262,26 +240,26 @@ export function useSelectionManager() {
  * Only components that need to react to selection changes should use this
  */
 export function useSelection(): SelectionInfo | null {
-  const selectionManager = useSelectionManager()
+  const selectionManager = useSelectionManager();
   const [selection, setSelection] = React.useState<SelectionInfo | null>(
-    selectionManager.getSelection()
-  )
+    selectionManager.getSelection(),
+  );
 
   React.useEffect(() => {
-    const unsubscribe = selectionManager.subscribe(setSelection)
-    return unsubscribe
-  }, [selectionManager])
+    const unsubscribe = selectionManager.subscribe(setSelection);
+    return unsubscribe;
+  }, [selectionManager]);
 
-  return selection
+  return selection;
 }
 
 // Provider component for initialization
 export interface EditorProviderProps {
-  children: React.ReactNode
-  initialContainer?: ContainerNode
-  initialState?: EditorState
-  onChange?: (state: EditorState) => void
-  debug?: boolean
+  children: React.ReactNode;
+  initialContainer?: ContainerNode;
+  initialState?: EditorState;
+  onChange?: (state: EditorState) => void;
+  debug?: boolean;
 }
 
 export function EditorProvider({
@@ -291,23 +269,23 @@ export function EditorProvider({
   onChange,
   debug = false,
 }: EditorProviderProps) {
-  const store = useEditorStore()
+  const store = useEditorStore();
 
   // Initialize store with provided state
   React.useEffect(() => {
     if (initialState) {
       // Set the initial state
-      useEditorStore.setState(initialState)
+      useEditorStore.setState(initialState);
     } else if (initialContainer) {
       // Create initial state from container
-      const newState = createInitialState(initialContainer)
-      useEditorStore.setState(newState)
+      const newState = createInitialState(initialContainer);
+      useEditorStore.setState(newState);
     }
-  }, [initialContainer, initialState])
+  }, [initialContainer, initialState]);
 
   // Subscribe to state changes for onChange callback
   React.useEffect(() => {
-    if (!onChange) return
+    if (!onChange) return;
 
     return useEditorStore.subscribe((state) => {
       const editorState: EditorState = {
@@ -318,28 +296,26 @@ export function EditorProvider({
         version: state.version,
         coverImage: state.coverImage,
         hasSelection: state.currentSelection !== null,
-        selectionKey: state.version
-          ? parseInt(state.version.split(".").join(""))
-          : 0,
+        selectionKey: state.version ? parseInt(state.version.split('.').join('')) : 0,
         selectedBlocks: new Set<string>(),
-      }
-      onChange(editorState)
-    })
-  }, [onChange])
+      };
+      onChange(editorState);
+    });
+  }, [onChange]);
 
   // Debug logging
   React.useEffect(() => {
-    if (!debug) return
+    if (!debug) return;
 
-    let prevState = useEditorStore.getState()
+    let prevState = useEditorStore.getState();
     return useEditorStore.subscribe((state) => {
-      console.group("🎬 [Mina Editor] State Change")
-      console.log("Previous:", prevState)
-      console.log("Current:", state)
-      console.groupEnd()
-      prevState = state
-    })
-  }, [debug])
+      console.group('🎬 [Mina Editor] State Change');
+      console.log('Previous:', prevState);
+      console.log('Current:', state);
+      console.groupEnd();
+      prevState = state;
+    });
+  }, [debug]);
 
-  return React.createElement(React.Fragment, null, children)
+  return React.createElement(React.Fragment, null, children);
 }

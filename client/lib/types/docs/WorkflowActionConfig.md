@@ -1,38 +1,34 @@
-
 # WorkflowActionConfig
-
 
 ## Properties
 
-Name | Type
------------- | -------------
-`type` | [WorkflowNodeType](WorkflowNodeType.md)
-`version` | number
-`subType` | [WorkflowActionType](WorkflowActionType.md)
+| Name      | Type                                        |
+| --------- | ------------------------------------------- |
+| `type`    | [WorkflowNodeType](WorkflowNodeType.md)     |
+| `version` | number                                      |
+| `subType` | [WorkflowActionType](WorkflowActionType.md) |
 
 ## Example
 
 ```typescript
-import type { WorkflowActionConfig } from ''
+import type { WorkflowActionConfig } from '';
 
 // TODO: Update the object below with actual values
 const example = {
-  "type": null,
-  "version": null,
-  "subType": null,
-} satisfies WorkflowActionConfig
+  type: null,
+  version: null,
+  subType: null,
+} satisfies WorkflowActionConfig;
 
-console.log(example)
+console.log(example);
 
 // Convert the instance to a JSON string
-const exampleJSON: string = JSON.stringify(example)
-console.log(exampleJSON)
+const exampleJSON: string = JSON.stringify(example);
+console.log(exampleJSON);
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkflowActionConfig
-console.log(exampleParsed)
+const exampleParsed = JSON.parse(exampleJSON) as WorkflowActionConfig;
+console.log(exampleParsed);
 ```
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-

@@ -12,9 +12,9 @@
  * Refresh token is intentionally omitted - adapters manage it internally.
  */
 export interface Session {
-    access_token: string;
-    expires_at: number; // Unix timestamp in seconds
-    user: User;
+  access_token: string;
+  expires_at: number; // Unix timestamp in seconds
+  user: User;
 }
 
 /**
@@ -22,9 +22,9 @@ export interface Session {
  * Provider-specific data lives in the metadata field.
  */
 export interface User {
-    id: string;
-    email?: string;
-    metadata: Record<string, unknown>; // Provider-specific data
+  id: string;
+  email?: string;
+  metadata: Record<string, unknown>; // Provider-specific data
 }
 
 // ============================================================================
@@ -35,9 +35,9 @@ export interface User {
  * Email/password sign-in credentials.
  */
 export type PasswordCredentials = {
-    type: "password";
-    email: string;
-    password: string;
+  type: 'password';
+  email: string;
+  password: string;
 };
 
 /**
@@ -45,18 +45,18 @@ export type PasswordCredentials = {
  * Used when user receives a code via email.
  */
 export type OtpCredentials = {
-    type: "otp";
-    email: string;
-    token: string;
+  type: 'otp';
+  email: string;
+  token: string;
 };
 
 /**
  * Phone/password sign-in credentials.
  */
 export type PhoneCredentials = {
-    type: "phone";
-    phone: string;
-    password: string;
+  type: 'phone';
+  phone: string;
+  password: string;
 };
 
 /**
@@ -69,8 +69,8 @@ export type SignInCredentials = PasswordCredentials | OtpCredentials | PhoneCred
  * Sign-up credentials (password-only for now).
  */
 export interface SignUpCredentials {
-    email: string;
-    password: string;
+  email: string;
+  password: string;
 }
 
 // ============================================================================
@@ -81,16 +81,16 @@ export interface SignUpCredentials {
  * Supported OAuth providers.
  */
 export enum OAuthProvider {
-    Google = "google",
-    GitHub = "github",
+  Google = 'google',
+  GitHub = 'github',
 }
 
 /**
  * Options for OAuth sign-in flow.
  */
 export interface OAuthOptions {
-    redirectTo?: string;
-    scopes?: string[];
+  redirectTo?: string;
+  scopes?: string[];
 }
 
 // ============================================================================
@@ -101,17 +101,17 @@ export interface OAuthOptions {
  * Parameters for verifying an OTP code.
  */
 export interface OtpVerificationParams {
-    email: string;
-    token: string;
-    type: "signup" | "recovery" | "email_change";
+  email: string;
+  token: string;
+  type: 'signup' | 'recovery' | 'email_change';
 }
 
 /**
  * Parameters for resending an OTP code.
  */
 export interface OtpResendParams {
-    email: string;
-    type: "signup" | "recovery" | "email_change";
+  email: string;
+  type: 'signup' | 'recovery' | 'email_change';
 }
 
 // ============================================================================
@@ -122,16 +122,16 @@ export interface OtpResendParams {
  * Events emitted when authentication state changes.
  */
 export type AuthChangeEvent =
-    | "SIGNED_IN"
-    | "SIGNED_OUT"
-    | "TOKEN_REFRESHED"
-    | "USER_UPDATED"
-    | "PASSWORD_RECOVERY";
+  | 'SIGNED_IN'
+  | 'SIGNED_OUT'
+  | 'TOKEN_REFRESHED'
+  | 'USER_UPDATED'
+  | 'PASSWORD_RECOVERY';
 
 /**
  * Subscription handle for auth state change listeners.
  * Call unsubscribe() to stop receiving events.
  */
 export interface AuthSubscription {
-    unsubscribe: () => void;
+  unsubscribe: () => void;
 }
