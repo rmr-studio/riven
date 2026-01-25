@@ -4,7 +4,8 @@ import riven.core.enums.workspace.WorkspaceDisplay
 import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.models.user.UserDisplay
 import riven.core.models.workspace.WorkspaceMember
-import java.time.ZonedDateTime
+import java.time.Instant
+import java.time.ZoneId
 import java.util.*
 
 /**
@@ -12,6 +13,9 @@ import java.util.*
  * Spring Data JPA automatically maps query columns to these getter methods.
  *
  * Used to fetch user workspace memberships in a single optimized query with JOIN.
+ *
+ * Note: Native queries return java.time.Instant for TIMESTAMP WITH TIME ZONE columns,
+ * so getMemberSince() returns Instant which is converted to ZonedDateTime in the extension function.
  */
 interface UserWorkspaceMembershipProjection {
     fun getUserId(): UUID
@@ -22,7 +26,7 @@ interface UserWorkspaceMembershipProjection {
     fun getWorkspaceName(): String
     fun getWorkspaceAvatarUrl(): String?
     fun getRole(): String
-    fun getMemberSince(): ZonedDateTime
+    fun getMemberSince(): Instant
 }
 
 /**
@@ -42,6 +46,6 @@ fun UserWorkspaceMembershipProjection.toWorkspaceMember(): WorkspaceMember {
             avatarUrl = getUserAvatarUrl()
         ),
         role = WorkspaceRoles.valueOf(getRole()),
-        memberSince = getMemberSince()
+        memberSince = getMemberSince().atZone(ZoneId.systemDefault())
     )
 }
