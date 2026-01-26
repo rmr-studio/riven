@@ -11,7 +11,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { FC, useMemo, useState } from "react";
-import { BlockType } from "../../../interface/block.interface";
+import type { BlockType } from "@/lib/types/block";
 import { FilterSpec, getSortableFields } from "../../../util/list/list-sorting.util";
 
 // Operator definitions by field type

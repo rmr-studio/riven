@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ChildNodeProps } from "@/lib/interfaces/interface";
+import { EntityType } from "@/lib/types/entity";
 import { toKeyCase } from "@/lib/util/utils";
 import { PopoverClose } from "@radix-ui/react-popover";
 import { Blocks, Info, Plus, Workflow } from "lucide-react";
@@ -30,7 +31,6 @@ import {
     NewEntityTypeFormValues,
     useNewEntityTypeForm,
 } from "../../../hooks/form/type/use-new-type-form";
-import { EntityType } from "../../../interface/entity.interface";
 
 interface Props extends ChildNodeProps {
     entityTypes?: EntityType[];

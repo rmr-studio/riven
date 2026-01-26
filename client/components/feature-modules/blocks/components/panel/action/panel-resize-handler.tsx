@@ -1,6 +1,6 @@
 import { MoveDiagonal, MoveDiagonal2 } from "lucide-react";
 import { FC, Fragment } from "react";
-import { ResizePosition } from "../../../interface/panel.interface";
+import type { ResizePosition } from "@/lib/types/block";
 import { ResizeHandle } from "../../handle/resize-handle";
 
 interface Props {

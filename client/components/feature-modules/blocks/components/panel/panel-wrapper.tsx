@@ -1,6 +1,6 @@
 "use client";
 import { ChildNodeProps, ClassNameProps } from "@/lib/interfaces/interface";
-import { EntityType } from "@/lib/types/types";
+import type { EntityType } from "@/lib/types/entity";
 import { cn } from "@/lib/util/utils";
 import { AnimatePresence } from "framer-motion";
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -10,8 +10,7 @@ import { useRenderElement } from "../../context/block-renderer-provider";
 import { useLayoutChange } from "../../context/layout-change-provider";
 import { useTrackedEnvironment } from "../../context/tracked-environment-provider";
 import { useFocusSurface } from "../../hooks/use-focus-surface";
-import { BlockType, isContentMetadata, isContentNode } from "../../interface/block.interface";
-import { QuickActionItem } from "../../interface/panel.interface";
+import { type BlockType, isContentMetadata, isContentNode, type QuickActionItem } from "@/lib/types/block";
 import { createBlockInstanceFromType } from "../../util/block/factory/instance.factory";
 import { BlockForm } from "../forms/block-form";
 import QuickActionModal from "../modals/quick-action-modal";

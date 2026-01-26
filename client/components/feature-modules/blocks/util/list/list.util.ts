@@ -2,7 +2,7 @@
  * Utility functions for detecting and working with content block lists
  */
 
-import { BlockNode, isContentMetadata, isContentNode } from "../../interface/block.interface";
+import { type BlockNode, isContentMetadata, isContentNode } from "@/lib/types/block";
 
 /**
  * A list will be rendered if:

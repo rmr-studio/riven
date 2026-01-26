@@ -1,10 +1,10 @@
 import { useBlockHydration } from "@/components/feature-modules/blocks/hooks/use-block-hydration";
-import {
+import type {
     EntityReferenceMetadata,
     ReferenceNode,
-} from "@/components/feature-modules/blocks/interface/block.interface";
+} from "@/lib/types/block";
 import { Button } from "@/components/ui/button";
-import { EntityType } from "@/lib/types/types";
+import type { EntityType } from "@/lib/types/entity";
 import { RefreshCw } from "lucide-react";
 import { FC, useMemo } from "react";
 import { useTrackedEnvironment } from "../../../../context/tracked-environment-provider";

@@ -1,5 +1,4 @@
-import { WidgetRenderStructure } from "@/components/feature-modules/blocks/interface/block.interface";
-import { NodeType, RenderType } from "@/lib/types/types";
+import { type WidgetRenderStructure, NodeType, RenderType } from "@/lib/types/block";
 import { GridStackWidget } from "gridstack";
 
 export function parseContent(widget: GridStackWidget): WidgetRenderStructure | null {
@@ -14,8 +13,8 @@ export function parseContent(widget: GridStackWidget): WidgetRenderStructure | n
         return {
             id: payload["id"],
             key: payload["key"],
-            renderType: payload["renderType"] ?? RenderType.COMPONENT,
-            blockType: payload["blockType"] ?? NodeType.CONTENT,
+            renderType: payload["renderType"] ?? RenderType.Component,
+            blockType: payload["blockType"] ?? NodeType.Content,
         };
     } catch (error) {
         if (process.env.NODE_ENV !== "production") {

@@ -2,7 +2,7 @@ import { useAuth } from "@/components/provider/auth-context";
 import { useMutation, UseMutationOptions, useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 import { toast } from "sonner";
-import { SaveWorkspaceRequest, Workspace } from "../../interface/workspace.interface";
+import type { SaveWorkspaceRequest, Workspace } from "@/lib/types/workspace";
 import { WorkspaceService } from "../../service/workspace.service";
 
 interface SaveWorkspaceMutationProps {

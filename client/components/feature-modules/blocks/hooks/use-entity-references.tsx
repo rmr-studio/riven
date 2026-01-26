@@ -11,7 +11,7 @@
  * - Supports single and multi-select modes
  */
 
-import { EntityType } from "@/lib/types/types";
+import type { EntityType } from "@/lib/types/entity";
 import { useQueryClient } from "@tanstack/react-query";
 import { Users } from "lucide-react";
 import { useState } from "react";
@@ -20,10 +20,10 @@ import { CustomToolbarAction } from "../components/panel/toolbar/panel-toolbar";
 import { useBlockEnvironment } from "../context/block-environment-provider";
 import { useTrackedEnvironment } from "../context/tracked-environment-provider";
 import {
-    EntityReferenceMetadata,
+    type EntityReferenceMetadata,
     isEntityReferenceMetadata,
-    ReferenceItem,
-} from "../interface/block.interface";
+    type ReferenceItem,
+} from "@/lib/types/block";
 
 export interface UseReferenceBlockToolbarProps {
     blockId: string;

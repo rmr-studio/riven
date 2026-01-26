@@ -1,8 +1,8 @@
 import { useAuth } from "@/components/provider/auth-context";
+import { Entity, SaveEntityRequest, SaveEntityResponse } from "@/lib/types/entity";
 import { useMutation, useQueryClient, type UseMutationOptions } from "@tanstack/react-query";
 import { useRef } from "react";
 import { toast } from "sonner";
-import { Entity, SaveEntityRequest, SaveEntityResponse } from "../../../interface/entity.interface";
 import { EntityService } from "../../../service/entity.service";
 
 export function useSaveEntityMutation(

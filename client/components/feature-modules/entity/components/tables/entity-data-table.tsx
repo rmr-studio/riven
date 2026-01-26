@@ -5,7 +5,19 @@ import { ColumnResizingConfig, DataTable, DataTableProvider } from "@/components
 import { Form } from "@/components/ui/form";
 import { SchemaUUID } from "@/lib/interfaces/common.interface";
 import { ClassNameProps } from "@/lib/interfaces/interface";
-import { EntityPropertyType } from "@/lib/types/types";
+import {
+    Entity,
+    EntityAttributePrimitivePayload,
+    EntityAttributeRelationPayloadReference,
+    EntityAttributeRequest,
+    EntityLink,
+    EntityPropertyType,
+    EntityRelationshipDefinition,
+    EntityType,
+    isRelationshipPayload,
+    SaveEntityRequest,
+    SaveEntityResponse,
+} from "@/lib/types/entity";
 import { debounce } from "@/lib/util/debounce.util";
 import { cn } from "@/lib/util/utils";
 
@@ -15,18 +27,6 @@ import { FC, useCallback, useMemo, useRef } from "react";
 import { useConfigFormState } from "../../context/configuration-provider";
 import { useEntityDraft } from "../../context/entity-provider";
 import { useSaveEntityMutation } from "../../hooks/mutation/instance/use-save-entity-mutation";
-import {
-    Entity,
-    EntityAttributePrimitivePayload,
-    EntityAttributeRelationPayloadReference,
-    EntityAttributeRequest,
-    EntityLink,
-    EntityRelationshipDefinition,
-    EntityType,
-    isRelationshipPayload,
-    SaveEntityRequest,
-    SaveEntityResponse,
-} from "../../interface/entity.interface";
 import { EntityTypeHeader } from "../ui/entity-type-header";
 import { EntityTypeSaveButton } from "../ui/entity-type-save-button";
 import { EntityDraftRow } from "./entity-draft-row";
@@ -189,7 +189,7 @@ export const EntityDataTable: FC<Props> = ({
             // Prepare updated entity payload
             if (attributeDef) {
                 const payloadEntry: EntityAttributePrimitivePayload = {
-                    type: EntityPropertyType.ATTRIBUTE,
+                    type: EntityPropertyType.Attribute,
                     value: newValue,
                     schemaType: attributeDef.key,
                 };
@@ -200,7 +200,7 @@ export const EntityDataTable: FC<Props> = ({
             if (relationshipDef) {
                 const relationship: EntityLink[] = newValue;
                 const relationshipEntry: EntityAttributeRelationPayloadReference = {
-                    type: EntityPropertyType.RELATIONSHIP,
+                    type: EntityPropertyType.Relationship,
                     relations: relationship.map((rel) => rel.id),
                 };
 
@@ -222,14 +222,14 @@ export const EntityDataTable: FC<Props> = ({
             if (isRelationshipPayload(value.payload)) {
                 payload.set(key, {
                     payload: {
-                        type: EntityPropertyType.RELATIONSHIP,
+                        type: EntityPropertyType.Relationship,
                         relations: value.payload.relations.map((rel) => rel.id),
                     },
                 });
             } else {
                 payload.set(key, {
                     payload: {
-                        type: EntityPropertyType.ATTRIBUTE,
+                        type: EntityPropertyType.Attribute,
                         value: value.payload.value,
                         schemaType: value.payload.schemaType,
                     },

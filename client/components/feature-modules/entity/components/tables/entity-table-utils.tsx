@@ -9,13 +9,20 @@ import { DEFAULT_COLUMN_WIDTH } from "@/components/ui/data-table/data-table";
 import { ColumnEditConfig } from "@/components/ui/data-table/data-table.types";
 import { IconCell } from "@/components/ui/icon/icon-cell";
 import { SchemaUUID } from "@/lib/interfaces/common.interface";
+import { DataFormat } from "@/lib/types/common";   
 import {
-    DataFormat,
     DataType,
+    Entity,
+    EntityAttribute,
+    EntityLink,
     EntityPropertyType,
     EntityRelationshipCardinality,
+    EntityRelationshipDefinition,
+    EntityType,
+    EntityTypeAttributeColumn,
+    isRelationshipPayload,
     SchemaType,
-} from "@/lib/types/types";
+} from "@/lib/types/entity";
 import { iconFormSchema } from "@/lib/util/form/common/icon.form";
 import { buildFieldSchema } from "@/lib/util/form/entity-instance-validation.util";
 import { toTitleCase } from "@/lib/util/utils";
@@ -27,15 +34,6 @@ import { ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { isUUID } from "validator";
 import { z } from "zod";
-import {
-    Entity,
-    EntityAttribute,
-    EntityLink,
-    EntityRelationshipDefinition,
-    EntityType,
-    EntityTypeAttributeColumn,
-    isRelationshipPayload,
-} from "../../interface/entity.interface";
 
 export const entityReferenceFormSchema = z.array(
     z
@@ -119,10 +117,10 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
     const dataFormat = schema.format as DataFormat | undefined;
 
     // STRING type formatting
-    if (dataType === DataType.STRING) {
+    if (dataType === DataType.String) {
         const strValue = String(value);
 
-        if (dataFormat === DataFormat.URL) {
+        if (dataFormat === DataFormat.Url) {
             return (
                 <a
                     href={strValue}
@@ -135,7 +133,7 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
             );
         }
 
-        if (dataFormat === DataFormat.DATE) {
+        if (dataFormat === DataFormat.Date) {
             try {
                 const date = new Date(strValue);
                 return <span>{date.toLocaleDateString()}</span>;
@@ -144,7 +142,7 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
             }
         }
 
-        if (dataFormat === DataFormat.DATETIME) {
+        if (dataFormat === DataFormat.Datetime) {
             try {
                 const date = new Date(strValue);
                 return <span>{date.toLocaleString()}</span>;
@@ -157,10 +155,10 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
     }
 
     // NUMBER type formatting
-    if (dataType === DataType.NUMBER) {
+    if (dataType === DataType.Number) {
         const numValue = Number(value);
 
-        if (dataFormat === DataFormat.CURRENCY) {
+        if (dataFormat === DataFormat.Currency) {
             return (
                 <span>
                     {numValue.toLocaleString("en-US", {
@@ -171,7 +169,7 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
             );
         }
 
-        if (dataFormat === DataFormat.PERCENTAGE) {
+        if (dataFormat === DataFormat.Percentage) {
             return <span>{numValue}%</span>;
         }
 
@@ -179,7 +177,7 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
     }
 
     // BOOLEAN type formatting
-    if (dataType === DataType.BOOLEAN) {
+    if (dataType === DataType.Boolean) {
         return (
             <Badge variant={"secondary"} className="px-2 py-1 gap-2">
                 <Checkbox checked={Boolean(value)} disabled={true} />
@@ -189,7 +187,7 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
     }
 
     // ARRAY type formatting (multi-select enums, etc.)
-    if (dataType === DataType.ARRAY) {
+    if (dataType === DataType.Array) {
         if (Array.isArray(value)) {
             if (value.length === 0) {
                 return <div className="text-muted-foreground flex grow h-full" />;
@@ -210,7 +208,7 @@ export function formatEntityAttributeValue(value: any, schema: any): ReactNode {
     }
 
     // OBJECT type formatting
-    if (dataType === DataType.OBJECT) {
+    if (dataType === DataType.Object) {
         return <Badge variant="outline">Object</Badge>;
     }
 
@@ -271,7 +269,7 @@ export function createAttributeEqualityFn(
 
         // For multi-select, compare arrays (order-independent)
         if (
-            schemaType === SchemaType.MULTI_SELECT &&
+            schemaType === SchemaType.MultiSelect &&
             Array.isArray(normalized1) &&
             Array.isArray(normalized2)
         ) {
@@ -279,15 +277,15 @@ export function createAttributeEqualityFn(
         }
 
         // For checkbox, ensure boolean comparison
-        if (schemaType === SchemaType.CHECKBOX) {
+        if (schemaType === SchemaType.Checkbox) {
             return Boolean(normalized1) === Boolean(normalized2);
         }
 
         // For numbers, handle string vs number comparison
         if (
-            schemaType === SchemaType.NUMBER ||
-            schemaType === SchemaType.CURRENCY ||
-            schemaType === SchemaType.PERCENTAGE
+            schemaType === SchemaType.Number ||
+            schemaType === SchemaType.Currency ||
+            schemaType === SchemaType.Percentage
         ) {
             const num1 =
                 typeof normalized1 === "string" ? parseFloat(normalized1) : (normalized1 as number);
@@ -313,8 +311,8 @@ export function createRelationshipEqualityFn(
     relationship: EntityRelationshipDefinition
 ): (oldValue: EntityLink[], newValue: EntityLink[]) => boolean {
     const isSingleSelect =
-        relationship.cardinality === EntityRelationshipCardinality.ONE_TO_ONE ||
-        relationship.cardinality === EntityRelationshipCardinality.MANY_TO_ONE;
+        relationship.cardinality === EntityRelationshipCardinality.OneToOne ||
+        relationship.cardinality === EntityRelationshipCardinality.ManyToOne;
 
     return (value1: EntityLink[], value2: EntityLink[]): boolean => {
         const normalized1 = normalizeEmpty(value1);
@@ -539,7 +537,7 @@ export function applyColumnOrdering(
 
     // Add columns in order array sequence
     columnsOrder.forEach((orderItem) => {
-        if (orderItem.type === EntityPropertyType.ATTRIBUTE) {
+        if (orderItem.type === EntityPropertyType.Attribute) {
             const column = columnMap.get(orderItem.key);
             if (column) {
                 orderedColumns.push(column);
@@ -604,7 +602,7 @@ export function generateFiltersFromEntityType(
         const label = schema.label || attributeId;
 
         // STRING type filters
-        if (dataType === DataType.STRING) {
+        if (dataType === DataType.String) {
             const uniqueValues = extractUniqueAttributeValues(entities, attributeId);
 
             // Use select filter for low-cardinality attributes
@@ -627,7 +625,7 @@ export function generateFiltersFromEntityType(
         }
 
         // NUMBER type filters
-        if (dataType === DataType.NUMBER) {
+        if (dataType === DataType.Number) {
             filters.push({
                 column: attributeId,
                 type: "number-range",
@@ -636,7 +634,7 @@ export function generateFiltersFromEntityType(
         }
 
         // BOOLEAN type filters
-        if (dataType === DataType.BOOLEAN) {
+        if (dataType === DataType.Boolean) {
             filters.push({
                 column: attributeId,
                 type: "boolean",
@@ -664,7 +662,7 @@ export function generateSearchConfigFromEntityType(
 
     Object.entries(entityType.schema.properties).forEach(([attributeId, schema]) => {
         // Only include non-protected STRING attributes for search
-        if (schema.type === DataType.STRING && !schema.protected) {
+        if (schema.type === DataType.String && !schema.protected) {
             searchableColumns.push(attributeId);
         }
     });

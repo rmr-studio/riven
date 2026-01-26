@@ -4,7 +4,7 @@ import { FC, useCallback } from "react";
 import { useBlockEnvironment } from "../../../../context/block-environment-provider";
 import { useTrackedEnvironment } from "../../../../context/tracked-environment-provider";
 import { useBlockHydration } from "../../../../hooks/use-block-hydration";
-import { EntityReferenceMetadata, ReferenceItem } from "../../../../interface/block.interface";
+import type { EntityReferenceMetadata, ReferenceItem } from "@/lib/types/block";
 import { EntityReferenceItem } from "./reference-item";
 
 interface Props {

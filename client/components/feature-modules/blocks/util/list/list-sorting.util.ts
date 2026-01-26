@@ -1,11 +1,12 @@
-import { BlockListOrderingMode, SortDir } from "@/lib/types/types";
 import {
-    BlockListConfiguration,
-    BlockNode,
-    BlockType,
+    BlockListOrderingMode,
+    SortDir,
+    type BlockListConfiguration,
+    type BlockNode,
+    type BlockType,
     isContentMetadata,
     isContentNode,
-} from "../../interface/block.interface";
+} from "@/lib/types/block";
 
 export interface SortableField {
     key: string;
@@ -256,7 +257,7 @@ function evaluateCondition(value: unknown, condition: unknown): boolean {
  */
 export function isManualOrderingMode(list: BlockListConfiguration): boolean {
     const { config } = list;
-    return config.mode === BlockListOrderingMode.MANUAL;
+    return config.mode === BlockListOrderingMode.Manual;
 }
 
 /**
@@ -264,5 +265,5 @@ export function isManualOrderingMode(list: BlockListConfiguration): boolean {
  */
 export function isSortedOrderingMode(list: BlockListConfiguration): boolean {
     const { config } = list;
-    return config.mode === BlockListOrderingMode.SORTED;
+    return config.mode === BlockListOrderingMode.Sorted;
 }

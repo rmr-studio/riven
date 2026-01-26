@@ -6,13 +6,13 @@ import type {
     SaveFcn,
 } from "gridstack";
 import { createContext, FC, useCallback, useContext, useMemo, useState } from "react";
-import {
+import type {
     GridActionResult,
     GridEnvironment,
     GridProviderProps,
     GridstackContextValue,
-} from "../interface/grid.interface";
-import { WidgetRenderStructure } from "../interface/render.interface";
+    WidgetRenderStructure,
+} from "@/lib/types/block";
 import { generatePath } from "../util/environment/environment.util";
 import { useBlockEnvironment } from "./block-environment-provider";
 

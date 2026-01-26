@@ -1,17 +1,17 @@
-import { EntityPropertyType } from "@/lib/types/types";
-import { buildDefaultValuesFromEntityType } from "@/lib/util/form/entity-instance-validation.util";
-import { UseFormReturn } from "react-hook-form";
-import { create, StoreApi } from "zustand";
-import { subscribeWithSelector } from "zustand/middleware";
 import {
     EntityAttributePrimitivePayload,
     EntityAttributeRelationPayloadReference,
     EntityAttributeRequest,
     EntityLink,
+    EntityPropertyType,
     EntityType,
     SaveEntityRequest,
     SaveEntityResponse,
-} from "../interface/entity.interface";
+} from "@/lib/types/entity";
+import { buildDefaultValuesFromEntityType } from "@/lib/util/form/entity-instance-validation.util";
+import { UseFormReturn } from "react-hook-form";
+import { create, StoreApi } from "zustand";
+import { subscribeWithSelector } from "zustand/middleware";
 
 // Metadata for each attribute/relationship
 
@@ -58,14 +58,14 @@ const buildAttributeMetadataMap = (entityType: EntityType): Map<string, EntityPr
     // Add schema attributes
     if (entityType.schema?.properties) {
         Object.entries(entityType.schema.properties).forEach(([attributeId, schema]) => {
-            map.set(attributeId, EntityPropertyType.ATTRIBUTE);
+            map.set(attributeId, EntityPropertyType.Attribute);
         });
     }
 
     // Add relationships
     if (entityType.relationships) {
         entityType.relationships.forEach((relationship) => {
-            map.set(relationship.id, EntityPropertyType.RELATIONSHIP);
+            map.set(relationship.id, EntityPropertyType.Relationship);
         });
     }
 
@@ -134,7 +134,7 @@ export const createEntityDraftStore = (
                         return;
                     }
 
-                    if (metadata === EntityPropertyType.ATTRIBUTE) {
+                    if (metadata === EntityPropertyType.Attribute) {
                         const attribute = entityType.schema.properties?.[key];
                         if (!attribute) return;
 
@@ -142,20 +142,20 @@ export const createEntityDraftStore = (
                         const primitivePayload: EntityAttributePrimitivePayload = {
                             value: value as any, // JsonValue (Any)
                             schemaType: attribute.key,
-                            type: EntityPropertyType.ATTRIBUTE,
+                            type: EntityPropertyType.Attribute,
                         };
 
                         payload[key] = {
                             payload: primitivePayload,
                         };
-                    } else if (metadata === EntityPropertyType.RELATIONSHIP) {
+                    } else if (metadata === EntityPropertyType.Relationship) {
                         // Relationship - create relation payload
                         // Normalize to array of UUIDs
                         const relations: EntityLink[] = value
 
                         const relationPayload: EntityAttributeRelationPayloadReference = {
                             relations: relations.map((rel) => rel.id),
-                            type: EntityPropertyType.RELATIONSHIP,
+                            type: EntityPropertyType.Relationship,
                         };
 
                         payload[key] = {

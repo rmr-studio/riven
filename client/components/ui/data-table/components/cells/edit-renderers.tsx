@@ -3,12 +3,9 @@
 import { FormWidgetProps } from "@/components/feature-modules/blocks/components/forms";
 import { getWidgetForSchema } from "@/components/feature-modules/entity/components/forms/instance/entity-field-registry";
 import { EntityRelationshipPicker } from "@/components/feature-modules/entity/components/forms/instance/entity-relationship-picker";
-import {
-    EntityLink,
-    EntityRelationshipDefinition,
-} from "@/components/feature-modules/entity/interface/entity.interface";
 import { FormField } from "@/components/ui/form";
 import { SchemaUUID } from "@/lib/interfaces/common.interface";
+import { EntityLink, EntityRelationshipDefinition } from "@/lib/types/entity";
 import { FC } from "react";
 import { useFormState, useWatch } from "react-hook-form";
 import { EditRenderProps } from "../../data-table.types";

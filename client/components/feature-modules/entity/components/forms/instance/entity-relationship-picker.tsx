@@ -12,20 +12,20 @@ import {
 import { IconCell } from "@/components/ui/icon/icon-cell";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EntityRelationshipCardinality } from "@/lib/types/types";
+import {
+    Entity,
+    EntityLink,
+    EntityRelationshipCardinality,
+    EntityRelationshipDefinition,
+    EntityType,
+    isRelationshipPayload,
+} from "@/lib/types/entity";
 import { uuid } from "@/lib/util/utils";
 import { Check, Loader2, X } from "lucide-react";
 import { useParams } from "next/navigation";
 import { FC, useEffect, useMemo, useState } from "react";
 import { useEntityTypes } from "../../../hooks/query/type/use-entity-types";
 import { useEntitiesFromManyTypes } from "../../../hooks/query/use-entities";
-import {
-    Entity,
-    EntityLink,
-    EntityRelationshipDefinition,
-    EntityType,
-    isRelationshipPayload,
-} from "../../../interface/entity.interface";
 
 export interface EntityRelationshipPickerProps {
     relationship: EntityRelationshipDefinition;
@@ -54,8 +54,8 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
     const { data: entityTypes } = useEntityTypes(workspaceId);
 
     const isSingleSelect =
-        relationship.cardinality === EntityRelationshipCardinality.ONE_TO_ONE ||
-        relationship.cardinality === EntityRelationshipCardinality.MANY_TO_ONE;
+        relationship.cardinality === EntityRelationshipCardinality.OneToOne ||
+        relationship.cardinality === EntityRelationshipCardinality.ManyToOne;
 
     const types: EntityType[] = useMemo(() => {
         return (

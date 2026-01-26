@@ -1,5 +1,4 @@
-import { BlockNode } from "../../interface/block.interface";
-import { CommandContext, LayoutCommand } from "../../interface/command.interface";
+import type { BlockNode, CommandContext, LayoutCommand } from "@/lib/types/block";
 import {
     AddBlockCommand,
     BatchCommand,

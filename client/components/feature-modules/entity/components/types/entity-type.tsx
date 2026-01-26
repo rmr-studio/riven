@@ -4,13 +4,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Form } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DataType, type EntityType } from "@/lib/types/entity";
 import { AlertCircle } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FC, useEffect, useMemo, useState } from "react";
 import { useConfigFormState } from "../../context/configuration-provider";
-import { type EntityType } from "../../interface/entity.interface";
-
-import { DataType } from "@/lib/types/types";
 import { ConfigurationForm } from "../forms/type/configuration-form";
 import { EntityTypeHeader } from "../ui/entity-type-header";
 import { EntityTypeSaveButton } from "../ui/entity-type-save-button";
@@ -81,7 +79,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType, wo
                 ([, attr]) =>
                     attr.unique &&
                     attr.required &&
-                    (attr.type === DataType.STRING || attr.type === DataType.NUMBER)
+                    (attr.type === DataType.String || attr.type === DataType.Number)
             )
             .map(([id, attr]) => ({
                 id,

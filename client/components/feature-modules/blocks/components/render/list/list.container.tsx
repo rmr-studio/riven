@@ -2,7 +2,7 @@ import { ChildNodeProps } from "@/lib/interfaces/interface";
 import { FC, useCallback, useMemo } from "react";
 import { useBlockEnvironment } from "../../../context/block-environment-provider";
 import { useTrackedEnvironment } from "../../../context/tracked-environment-provider";
-import { SlashMenuItem } from "../../../interface/panel.interface";
+import type { SlashMenuItem } from "@/lib/types/block";
 import { getTitle } from "../../../util/block/block.util";
 import { createNodeFromSlashItem } from "../../panel/editor-panel";
 import { PanelWrapper } from "../../panel/panel-wrapper";

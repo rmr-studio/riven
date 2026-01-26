@@ -15,8 +15,7 @@ import { Check, CommandIcon, Edit3, InfoIcon, PlusIcon, X } from "lucide-react";
 import { FC, ReactNode, RefObject } from "react";
 
 import { motion } from "framer-motion";
-import { BlockType } from "../../../interface/block.interface";
-import { QuickActionItem } from "../../../interface/panel.interface";
+import type { BlockType, QuickActionItem } from "@/lib/types/block";
 import { usePanelWrapperContext } from "../context/panel-wrapper-provider";
 import { usePanelToolbarIndices } from "../hooks/use-panel-toolbar-indices";
 import PanelActions from "./panel-actions";

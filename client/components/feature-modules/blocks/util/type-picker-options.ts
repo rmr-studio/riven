@@ -10,7 +10,7 @@ import {
     TypeIcon,
 } from "lucide-react";
 import { TypeOption } from "../components/modals/type-picker-modal";
-import { BlockType } from "../interface/block.interface";
+import type { BlockType } from "@/lib/types/block";
 
 /**
  * Converts BlockType array to TypeOption array for the type picker

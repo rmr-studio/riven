@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { FC, useMemo } from "react";
 import { categorizeBlockTypes } from "../../hooks/use-block-types";
-import { BlockType } from "../../interface/block.interface";
+import type { BlockType } from "@/lib/types/block";
 
 /**
  * Props for BlockTypeSelectorList component

@@ -1,7 +1,7 @@
 import { useAuth } from "@/components/provider/auth-context";
 import { AuthenticatedQueryResult } from "@/lib/interfaces/interface";
 import { useQuery } from "@tanstack/react-query";
-import { BlockType } from "../interface/block.interface";
+import type { BlockType } from "@/lib/types";
 import { BlockTypeService } from "../service/block-type.service";
 
 /**

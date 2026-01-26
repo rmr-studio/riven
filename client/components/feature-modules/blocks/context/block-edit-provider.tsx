@@ -10,7 +10,7 @@ import React, {
     useRef,
     useState,
 } from "react";
-import { BlockNode, isContentNode } from "../interface/block.interface";
+import { type BlockNode, isContentNode } from "@/lib/types/block";
 import { useBlockFocus } from "./block-focus-provider";
 import { useTrackedEnvironment } from "./tracked-environment-provider";
 

@@ -5,7 +5,7 @@
  * and metadata used by authoring tools.
  */
 
-import { ComponentType as Component } from "react";
+import { ComponentType as ReactComponentType } from "react";
 import { z, ZodTypeAny } from "zod";
 import { AddressCard } from "../../components/bespoke/AddressCard";
 import { AttachmentBlock } from "../../components/bespoke/AttachmentBlock";
@@ -19,15 +19,15 @@ import { LayoutContainerBlock } from "../../components/primitive/block.container
 import { ListBlock } from "../../components/primitive/block.list";
 import { TextBlock } from "../../components/primitive/block.text";
 import { ReferenceBlock } from "../../components/blocks/reference-block";
-import { ComponentType } from "../../interface/block.interface";
+import type { ComponentType } from "@/lib/types/block";
 
 export interface RenderElementMetadata<T extends ZodTypeAny> {
     type: string;
     name?: string;
     description?: string;
-    icon?: Component<any>;
+    icon?: ReactComponentType<any>;
     schema: T;
-    component: Component<z.infer<T>>;
+    component: ReactComponentType<z.infer<T>>;
 }
 
 type BlockElementMap = Record<string, RenderElementMetadata<ZodTypeAny>>;

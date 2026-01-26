@@ -10,7 +10,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { EntityType } from "@/lib/types/types";
+import type { EntityType } from "@/lib/types/entity";
 import { Building, FileText, FolderKanban, Receipt, UserCircle, Users } from "lucide-react";
 import { FC, useEffect, useState } from "react";
 

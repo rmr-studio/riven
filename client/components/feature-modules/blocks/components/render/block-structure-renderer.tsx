@@ -10,11 +10,11 @@
 
 import { FC } from "react";
 import { useLayoutChange } from "../../context/layout-change-provider";
-import {
+import type {
     BlockComponentNode,
     BlockRenderStructure,
     Metadata,
-} from "../../interface/block.interface";
+} from "@/lib/types/block";
 import { blockRenderRegistry } from "../../util/block/block.registry";
 import { resolveBindings } from "../../util/render/binding.resolver";
 

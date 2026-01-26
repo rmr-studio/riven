@@ -6,7 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, ChevronRight } from "lucide-react";
 import { FC } from "react";
-import { Reference, ReferenceItem } from "../../../../interface/block.interface";
+import type { ReferenceItem } from "@/lib/types/block";
+
+// Reference type may not exist in OpenAPI - using unknown
+type Reference = unknown;
 
 interface EntityReferenceItemProps {
     id: string;

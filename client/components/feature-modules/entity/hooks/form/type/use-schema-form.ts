@@ -1,17 +1,19 @@
 import { SchemaOptions } from "@/lib/interfaces/common.interface";
-import { EntityTypeRequestDefinition, OptionSortingType, SchemaType } from "@/lib/types/types";
+import {
+    EntityAttributeDefinition,
+    EntityType,
+    EntityTypeRequestDefinition,
+    OptionSortingType,
+    SaveAttributeDefinitionRequest,
+    SaveTypeDefinitionRequest,
+    SchemaType,
+} from "@/lib/types/entity";
 import { attributeTypes } from "@/lib/util/form/schema.util";
 import { uuid } from "@/lib/util/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import {
-    EntityAttributeDefinition,
-    EntityType,
-    SaveAttributeDefinitionRequest,
-    SaveTypeDefinitionRequest,
-} from "../../../interface/entity.interface";
 import { useSaveDefinitionMutation } from "../../mutation/type/use-save-definition-mutation";
 
 // Zod schema
@@ -34,8 +36,8 @@ export const attributeFormSchema = z
         (data) => {
             // If selectedType is select or multi-select, at least 2 enum values must be provided
             if (
-                data.selectedType === SchemaType.SELECT ||
-                data.selectedType === SchemaType.MULTI_SELECT
+                data.selectedType === SchemaType.Select ||
+                data.selectedType === SchemaType.MultiSelect
             ) {
                 return data.enumValues && data.enumValues.length >= 2;
             }
@@ -70,12 +72,12 @@ export function useEntityTypeAttributeSchemaForm(
     const form = useForm<AttributeFormValues>({
         resolver: zodResolver(attributeFormSchema),
         defaultValues: {
-            selectedType: SchemaType.TEXT,
+            selectedType: SchemaType.Text,
             name: "",
             required: false,
             unique: false,
             enumValues: [],
-            enumSorting: OptionSortingType.MANUAL,
+            enumSorting: OptionSortingType.Manual,
             minimum: undefined,
             maximum: undefined,
             minLength: undefined,
@@ -168,7 +170,7 @@ export function useEntityTypeAttributeSchemaForm(
 
             const definition: SaveAttributeDefinitionRequest = {
                 id,
-                type: EntityTypeRequestDefinition.SAVE_SCHEMA,
+                type: EntityTypeRequestDefinition.SaveSchema,
                 key: type.key,
                 schema: {
                     key: attributeType.key,

@@ -14,7 +14,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import { ClassNameProps } from "@/lib/interfaces/interface";
-import { IconColour, IconType } from "@/lib/types/types";
+import { IconColour, IconType } from "@/lib/types/common";
 import { cn } from "@/lib/util/utils";
 import { FileQuestionMark } from "lucide-react";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/components/provider/auth-context";
-import { BlockOperationType } from "@/lib/types/types";
+import { BlockOperationType } from "@/lib/types/block";
 import { formatError } from "@/lib/util/error/error.util";
 import { now } from "@/lib/util/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -18,13 +18,14 @@ import {
     useState,
 } from "react";
 import { toast } from "sonner";
-import { BlockNode, isContentNode } from "../interface/block.interface";
 import {
-    LayoutSnapshot,
-    SaveEnvironmentRequest,
-    SaveEnvironmentResponse,
-    StructuralOperationRequest,
-} from "../interface/command.interface";
+    type BlockNode,
+    isContentNode,
+    type LayoutSnapshot,
+    type SaveEnvironmentRequest,
+    type SaveEnvironmentResponse,
+    type StructuralOperationRequest,
+} from "@/lib/types/block";
 import { LayoutService } from "../service/layout.service";
 import { useBlockEnvironment } from "./block-environment-provider";
 import { useGrid } from "./grid-provider";
@@ -488,7 +489,7 @@ export const LayoutChangeProvider: FC<PropsWithChildren> = ({ children }) => {
                             id: crypto.randomUUID(),
                             timestamp: now(),
                             data: {
-                                type: BlockOperationType.UPDATE_BLOCK,
+                                type: BlockOperationType.UpdateBlock,
                                 blockId,
                                 updatedContent: updatedNode,
                             },

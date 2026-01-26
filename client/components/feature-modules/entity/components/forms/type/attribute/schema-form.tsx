@@ -1,8 +1,4 @@
 import { useEntityTypeAttributeSchemaForm } from "@/components/feature-modules/entity/hooks/form/type/use-schema-form";
-import {
-    EntityAttributeDefinition,
-    EntityType,
-} from "@/components/feature-modules/entity/interface/entity.interface";
 import { Button } from "@/components/ui/button";
 import {
     Form,
@@ -16,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { DialogControl } from "@/lib/interfaces/interface";
-import { SchemaType } from "@/lib/types/types";
+import { EntityAttributeDefinition, EntityType, SchemaType } from "@/lib/types/entity";
 import { FC, useEffect, useMemo } from "react";
 import { EnumOptionsEditor } from "../../enum-options-editor";
 
@@ -49,17 +45,17 @@ export const SchemaForm: FC<Props> = ({ currentType, attribute, type, dialog, wo
     );
 
     // Determine what schema options to show based on the selected type
-    const requireEnumOptions = [SchemaType.SELECT, SchemaType.MULTI_SELECT].includes(currentType);
-    const requireNumericalValidation = currentType == SchemaType.NUMBER;
-    const requireStringValidation = [SchemaType.TEXT, SchemaType.EMAIL, SchemaType.PHONE].includes(
+    const requireEnumOptions = [SchemaType.Select, SchemaType.MultiSelect].includes(currentType);
+    const requireNumericalValidation = currentType == SchemaType.Number;
+    const requireStringValidation = [SchemaType.Text, SchemaType.Email, SchemaType.Phone].includes(
         currentType
     );
 
     const allowUniqueness = [
-        SchemaType.TEXT,
-        SchemaType.EMAIL,
-        SchemaType.PHONE,
-        SchemaType.NUMBER,
+        SchemaType.Text,
+        SchemaType.Email,
+        SchemaType.Phone,
+        SchemaType.Number,
     ].includes(currentType); // Add types that allow uniqueness here
 
     // Adjust Schema type inside form based on AttributeTypeDropdown value in outer component

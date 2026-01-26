@@ -1,7 +1,7 @@
 "use client";
 
 import { Schema } from "@/lib/interfaces/common.interface";
-import { DataFormat, DataType } from "@/lib/types/types";
+import { DataFormat, DataType } from "@/lib/types/common";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { ColumnFilter, DataTable, FilterConfig, FilterOption, SearchConfig } from ".";
@@ -47,21 +47,21 @@ function getFilterTypeFromSchema(schema: Schema): ColumnFilter<any>["type"] | nu
     if (schema.protected) return null;
 
     switch (schema.type) {
-        case DataType.STRING:
+        case DataType.String:
             // Use select for short strings, text for others
             return "text";
 
-        case DataType.NUMBER:
-            if (schema.format === DataFormat.CURRENCY) {
+        case DataType.Number:
+            if (schema.format === DataFormat.Currency) {
                 return "number-range";
             }
             return "number-range";
 
-        case DataType.BOOLEAN:
+        case DataType.Boolean:
             return "boolean";
 
-        case DataType.OBJECT:
-        case DataType.ARRAY:
+        case DataType.Object:
+        case DataType.Array:
             // Complex types not directly filterable
             return null;
 
@@ -79,7 +79,7 @@ function isSearchableField(schema: Schema): boolean {
 
     // Only search text-based fields
     switch (schema.type) {
-        case DataType.STRING:
+        case DataType.String:
             return true;
         default:
             return false;
@@ -95,45 +95,45 @@ function formatCellValue(value: any, schema: Schema): React.ReactNode {
     }
 
     switch (schema.type) {
-        case DataType.STRING:
-            if (schema.format === DataFormat.EMAIL) {
+        case DataType.String:
+            if (schema.format === DataFormat.Email) {
                 return (
                     <a href={`mailto:${value}`} className="text-primary hover:underline">
                         {value}
                     </a>
                 );
             }
-            if (schema.format === DataFormat.PHONE) {
+            if (schema.format === DataFormat.Phone) {
                 return (
                     <a href={`tel:${value}`} className="text-primary hover:underline">
                         {value}
                     </a>
                 );
             }
-            if (schema.format === DataFormat.DATE) {
+            if (schema.format === DataFormat.Date) {
                 return new Date(value).toLocaleDateString();
             }
-            if (schema.format === DataFormat.DATETIME) {
+            if (schema.format === DataFormat.Datetime) {
                 return new Date(value).toLocaleString();
             }
             return <span>{value}</span>;
 
-        case DataType.NUMBER:
-            if (schema.format === DataFormat.CURRENCY) {
+        case DataType.Number:
+            if (schema.format === DataFormat.Currency) {
                 return <span>${value.toLocaleString()}</span>;
             }
             return <span>{value.toLocaleString()}</span>;
 
-        case DataType.BOOLEAN:
+        case DataType.Boolean:
             return <Badge variant={value ? "default" : "secondary"}>{value ? "Yes" : "No"}</Badge>;
 
-        case DataType.ARRAY:
+        case DataType.Array:
             if (Array.isArray(value)) {
                 return <span>{value.length} items</span>;
             }
             return <span className="text-muted-foreground">—</span>;
 
-        case DataType.OBJECT:
+        case DataType.Object:
             return <span className="text-muted-foreground">Object</span>;
 
         default:

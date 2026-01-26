@@ -1,13 +1,13 @@
 import { now } from "@/lib/util/utils";
 import { v4 as uuid } from "uuid";
-import {
+import type {
     BlockComponentNode,
     BlockDisplay,
     BlockSchema,
     BlockType,
     BlockTypeNesting,
-} from "../../../interface/block.interface";
-import { GridRect } from "../../../interface/layout.interface";
+    GridRect,
+} from "@/lib/types/block";
 
 export const DEFAULT_GRID_LAYOUT: GridRect = {
     x: 0,

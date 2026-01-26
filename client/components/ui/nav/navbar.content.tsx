@@ -1,6 +1,6 @@
 "use client";
 
-import { User } from "@/components/feature-modules/user/interface/user.interface";
+import type { User } from "@/lib/types/user";
 import { useAuth } from "@/components/provider/auth-context";
 import { FCWC, Propless } from "@/lib/interfaces/interface";
 import { UseQueryResult } from "@tanstack/react-query";

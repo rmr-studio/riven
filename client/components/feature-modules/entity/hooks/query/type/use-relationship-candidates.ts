@@ -1,6 +1,5 @@
 import { useWorkspace } from "@/components/feature-modules/workspace/hooks/query/use-workspace";
-import { EntityTypeRelationshipType } from "@/lib/types/types";
-import { EntityRelationshipCandidate, EntityType } from "../../../interface/entity.interface";
+import { EntityRelationshipCandidate, EntityType, EntityTypeRelationshipType } from "@/lib/types/entity";
 import { useEntityTypes } from "./use-entity-types";
 
 interface UseRelationshipCandidatesReturn {
@@ -29,7 +28,7 @@ export function useRelationshipCandidates(type: EntityType): UseRelationshipCand
                 .filter(
                     (def) =>
                         (def.allowPolymorphic || def.entityTypeKeys?.includes(type.key)) &&
-                        def.relationshipType === EntityTypeRelationshipType.ORIGIN &&
+                        def.relationshipType === EntityTypeRelationshipType.Origin &&
                         def.bidirectional &&
                         !def.bidirectionalEntityTypeKeys?.includes(type.key)
                 )

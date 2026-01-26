@@ -1,6 +1,6 @@
 import { fetchOrganisationClients } from "@/components/feature-modules/client/service/client.service";
 import { useAuth } from "@/components/provider/auth-context";
-import { EntityType } from "@/lib/types/types";
+import type { EntityType } from "@/lib/types/entity";
 import { isResponseError } from "@/lib/util/error/error.util";
 import { useQuery } from "@tanstack/react-query";
 

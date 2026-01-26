@@ -1,7 +1,7 @@
 import { useAuth } from "@/components/provider/auth-context";
 import { AuthenticatedMultiQueryResult, AuthenticatedQueryResult } from "@/lib/interfaces/interface";
+import { Entity } from "@/lib/types/entity";
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { Entity } from "../../interface/entity.interface";
 import { EntityService } from "../../service/entity.service";
 
 export function useEntities(

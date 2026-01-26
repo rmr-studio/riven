@@ -56,7 +56,16 @@ client/
 │   └── provider/                          # Global providers
 │
 ├── lib/
-│   ├── types/                             # OpenAPI-generated TypeScript types
+│   ├── types/                             # OpenAPI-generated + domain barrels
+│   │   ├── entity/                        # Entity domain types
+│   │   │   ├── index.ts                   # Barrel export
+│   │   │   ├── models.ts                  # Generated model types
+│   │   │   ├── custom.ts                  # Custom entity types
+│   │   │   └── guards.ts                  # Type guard functions
+│   │   ├── block/                         # Block domain types
+│   │   ├── workspace/                     # Workspace domain types
+│   │   ├── user/                          # User domain types
+│   │   └── common/                        # Shared types (Icon, DataType, etc.)
 │   ├── interfaces/                        # Shared type definitions
 │   └── util/                              # Shared utilities
 │
@@ -81,7 +90,7 @@ feature-name/
 │   ├── form/          # Form hooks
 │   ├── mutation/      # TanStack mutation hooks
 │   └── query/         # TanStack query hooks
-├── interface/          # TypeScript interfaces (re-exports OpenAPI types)
+├── interface/          # Feature-specific interfaces (auth types, etc.) - most types now in @/lib/types/{domain}
 ├── service/            # API client services (static classes)
 ├── stores/             # Zustand stores (scoped state)
 └── util/               # Feature-specific utilities
@@ -128,15 +137,22 @@ npm run types        # Generate TypeScript types from OpenAPI (http://localhost:
 #### 1. Type Safety with OpenAPI
 
 ```typescript
-// lib/types/types.ts - generated from OpenAPI spec
-import { components } from "@/lib/types/types";
+// Domain barrels aggregate generated types, custom types, and guards
+import type { EntityType, EntityRelationshipDefinition } from "@/lib/types/entity";
+import type { BlockType, BlockNode, EditorEnvironment } from "@/lib/types/block";
+import type { Workspace, WorkspaceMember } from "@/lib/types/workspace";
+import type { User } from "@/lib/types/user";
 
-// feature-modules/entity/interface/entity.interface.ts - semantic re-exports
-export type EntityType = components["schemas"]["EntityType"];
-export type EntityRelationshipDefinition = components["schemas"]["EntityRelationshipDefinition"];
+// Enums are runtime values - use regular import (not `import type`)
+import { EntityPropertyType, RelationshipLimit } from "@/lib/types/entity";
+import { BlockMetadataType, NodeType, LayoutCommandType } from "@/lib/types/block";
+
+// Type guards for discriminated unions
+import { isRelationshipDefinition } from "@/lib/types/entity";
+import { isContentMetadata, isContentNode } from "@/lib/types/block";
 ```
 
-**Always use re-exported types from feature interfaces, never import directly from lib/types.**
+**Import types from `@/lib/types/{domain}` barrels. Use `import type` for types, regular `import` for enums and guards (runtime values).**
 
 #### 2. Service Layer (Static Classes)
 
@@ -585,8 +601,8 @@ interface EntityTypeImpactResponse {
 
 ## Development Gotchas
 
-1. **Never import types directly from `lib/types/types.ts`** - Always use re-exported types from feature interfaces
-2. **Enums can be imported directly from `libs/types.ts`** - They do not need to be re-exported, as it is an exported const
+1. **Import from domain barrels** - Use `@/lib/types/entity`, `@/lib/types/block`, etc. for all type imports
+2. **Use `import type` for types** - Types use `import type { EntityType }`, enums/guards use regular `import { BlockMetadataType }`
 3. **Impact confirmation required** - Schema changes need `impactConfirmed=true` after showing impact
 4. **Portal rendering requires containers** - Gridstack must be initialized before rendering widgets
 5. **Store factories are per-instance** - Never reuse store instances across different entities
@@ -622,8 +638,8 @@ interface EntityTypeImpactResponse {
 **Create a new feature module:**
 
 1. Create directory in `components/feature-modules/`
-2. Add subdirectories: `components/`, `hooks/`, `interface/`, `service/`, `util/`
-3. Create interface file with OpenAPI type re-exports
+2. Add subdirectories: `components/`, `hooks/`, `service/`, `util/`
+3. Import types from `@/lib/types/{domain}` barrels (entity, block, workspace, user, common)
 4. Create service class with static methods
 5. Create query/mutation hooks
 6. Add UI components

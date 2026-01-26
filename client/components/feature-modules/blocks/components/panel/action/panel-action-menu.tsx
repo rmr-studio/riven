@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/context-menu";
 import { ChildNodeProps } from "@/lib/interfaces/interface";
 import { FC, Fragment, useMemo } from "react";
-import { QuickActionItem } from "../../../interface/panel.interface";
+import type { QuickActionItem } from "@/lib/types/block";
 
 interface Props extends ChildNodeProps {
     id: string;

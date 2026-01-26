@@ -11,10 +11,10 @@ import {
     CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { EntityType } from "@/lib/types/entity";
 import { cn } from "@/lib/util/utils";
 import { Check, ChevronsUpDown, Repeat } from "lucide-react";
 import { FC, useState } from "react";
-import { EntityType } from "../../../../interface/entity.interface";
 
 interface Props {
     availableTypes?: EntityType[];

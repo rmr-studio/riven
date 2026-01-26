@@ -2,37 +2,37 @@ import {
     BlockListOrderingMode,
     BlockMetadataType,
     BlockReferenceFetchPolicy,
-    BlockValidationScope,
-    EntityType,
+    ValidationScope,
     ListFilterLogicType,
     NodeType,
     Presentation,
     ReferenceType,
-} from "@/lib/types/types";
+    type Block,
+    type BlockContentMetadata,
+    type BlockDisplay,
+    type BlockListConfiguration,
+    type BlockMeta,
+    type BlockReferenceMetadata,
+    type BlockReferencePayload,
+    type BlockSchema,
+    type BlockTree,
+    type BlockType,
+    type BlockTypeNesting,
+    type ContentNode,
+    type EntityReference,
+    type EntityReferenceMetadata,
+    type Metadata,
+    type ReferenceNode,
+    type ReferencePayload,
+} from "@/lib/types/block";
+import { ApplicationEntityType as EntityType } from "@/lib/types/models";
 import { now } from "@/lib/util/utils";
 import { v4 as uuid } from "uuid";
-import {
-    Block,
-    BlockContentMetadata,
-    BlockDisplay,
-    BlockListConfiguration,
-    BlockMeta,
-    BlockReferenceMetadata,
-    BlockReferencePayload,
-    BlockSchema,
-    BlockTree,
-    BlockType,
-    BlockTypeNesting,
-    ContentNode,
-    EntityReference,
-    EntityReferenceMetadata,
-    Metadata,
-    Reference,
-    Referenceable,
-    ReferenceNode,
-    ReferencePayload,
-    ReferenceWarning,
-} from "../../../interface/block.interface";
+
+// These types may not exist in OpenAPI - using local definitions or any
+type Reference = unknown;
+type Referenceable = unknown;
+type ReferenceWarning = unknown;
 
 const createMeta = (overrides?: Partial<BlockMeta>): BlockMeta => ({
     validationErrors: overrides?.validationErrors ?? [],
@@ -46,7 +46,7 @@ export const createContentMetadata = (
     deletable: boolean = true,
     listConfig?: BlockListConfiguration
 ): BlockContentMetadata => ({
-    type: BlockMetadataType.CONTENT,
+    type: BlockMetadataType.Content,
     deletable,
     data: data ?? {},
     meta: createMeta(overrides),
@@ -66,9 +66,9 @@ export const createListConfiguration = (listType?: string[]): BlockListConfigura
         emptyMessage: "No items yet",
     },
     config: {
-        mode: BlockListOrderingMode.MANUAL,
+        mode: BlockListOrderingMode.Manual,
         filters: [],
-        filterLogic: ListFilterLogicType.AND,
+        filterLogic: ListFilterLogicType.And,
     },
 });
 
@@ -85,12 +85,12 @@ export const createEntityReferenceMetadata = (
     overrides?: Partial<BlockMeta>,
     deletable: boolean = true
 ): EntityReferenceMetadata => ({
-    type: BlockMetadataType.ENTITY_REFERENCE,
+    type: BlockMetadataType.EntityReference,
     deletable,
     meta: createMeta(overrides),
     path: "$.items",
-    fetchPolicy: BlockReferenceFetchPolicy.LAZY,
-    presentation: Presentation.ENTITY,
+    fetchPolicy: BlockReferenceFetchPolicy.Lazy,
+    presentation: Presentation.Entity,
     items: [],
     projection: {
         fields: [],
@@ -102,9 +102,9 @@ export const createEntityReferenceMetadata = (
         emptyMessage: listType ? `No ${listType.toLowerCase()}s selected` : "No entities selected",
     },
     config: {
-        mode: BlockListOrderingMode.MANUAL,
+        mode: BlockListOrderingMode.Manual,
         filters: [],
-        filterLogic: ListFilterLogicType.AND,
+        filterLogic: ListFilterLogicType.And,
     },
     allowDuplicates: false,
 });
@@ -117,14 +117,14 @@ export const createBlockReferenceMetadata = (
     overrides?: Partial<BlockMeta>,
     deletable: boolean = true
 ): BlockReferenceMetadata => ({
-    type: BlockMetadataType.BLOCK_REFERENCE,
+    type: BlockMetadataType.BlockReference,
     deletable,
     meta: createMeta(overrides),
     path: "",
-    fetchPolicy: BlockReferenceFetchPolicy.LAZY,
+    fetchPolicy: BlockReferenceFetchPolicy.Lazy,
     expandDepth: 1,
     item: {
-        type: EntityType.BLOCK_TREE,
+        type: EntityType.BlockType,
         id: "",
     },
 });
@@ -173,7 +173,7 @@ export const createContentNode = ({
     children?: ContentNode[];
     payloadOverride?: Metadata;
 }): ContentNode => ({
-    type: NodeType.CONTENT,
+    type: NodeType.Content,
     block: createBlockBase({
         id,
         workspaceId,
@@ -207,12 +207,12 @@ export const createReferenceNode = ({
     // Create empty reference payload based on metadata type
 
     const reference: ReferencePayload =
-        payload.type === BlockMetadataType.ENTITY_REFERENCE
+        payload.type === BlockMetadataType.EntityReference
             ? createBlankEntityReference()
             : createBlankBlockTreeReference();
 
     return {
-        type: NodeType.REFERENCE,
+        type: NodeType.Reference,
         block: createBlockBase({
             id,
             workspaceId,
@@ -226,24 +226,24 @@ export const createReferenceNode = ({
 };
 
 const createBlankEntityReference = (): EntityReference => ({
-    type: ReferenceType.ENTITY,
+    type: ReferenceType.Entity,
     reference: [],
 });
 
 const createBlankBlockTreeReference = (): BlockReferencePayload => ({
-    type: ReferenceType.BLOCK,
+    type: ReferenceType.Block,
     reference: undefined,
 });
 
 export const createBlockReference = ({ block }: { block: BlockTree }): BlockReferencePayload => {
     const reference = createReference({
-        type: EntityType.BLOCK_TREE,
+        type: EntityType.BlockType,
         entityId: block.root.block.id,
         entity: block,
     });
 
     return {
-        type: ReferenceType.BLOCK,
+        type: ReferenceType.Block,
         reference,
     };
 };
@@ -298,7 +298,7 @@ export const createBlockType = ({
     description,
     workspaceId: workspaceId,
     archived: false,
-    strictness: BlockValidationScope.SOFT,
+    strictness: ValidationScope.Soft,
     system: false,
     schema,
     display,

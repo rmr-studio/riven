@@ -12,11 +12,11 @@ import {
     CommandItem,
     CommandList,
 } from "@/components/ui/command";
-import { EntityType } from "@/lib/types/types";
+import type { EntityType } from "@/lib/types/entity";
+import type { ReferenceItem } from "@/lib/types/block";
 import { AlertCircle, Loader2, RefreshCw, Users } from "lucide-react";
 import { FC, useEffect, useMemo, useState } from "react";
 import { useEntitySelector } from "../../hooks/use-entity-selector";
-import { ReferenceItem } from "../../interface/block.interface";
 
 interface EntitySelectorModalProps {
     open: boolean;

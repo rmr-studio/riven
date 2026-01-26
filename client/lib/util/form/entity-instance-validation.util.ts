@@ -1,10 +1,12 @@
 import { entityReferenceFormSchema } from "@/components/feature-modules/entity/components/tables/entity-table-utils";
+import { SchemaUUID } from "@/lib/interfaces/common.interface";
+import { DataFormat, DataType } from "@/lib/types/common";
 import {
+    EntityRelationshipCardinality,
     EntityRelationshipDefinition,
     EntityType,
-} from "@/components/feature-modules/entity/interface/entity.interface";
-import { SchemaUUID } from "@/lib/interfaces/common.interface";
-import { DataFormat, DataType, EntityRelationshipCardinality, SchemaType } from "@/lib/types/types";
+    SchemaType,
+} from "@/lib/types/entity";
 import { z } from "zod";
 import { exists } from "../utils";
 import { attributeTypes } from "./schema.util";
@@ -41,19 +43,19 @@ export function buildFieldSchema(schema: SchemaUUID): z.ZodTypeAny {
 
     // Base type mapping
     switch (attributeType.type) {
-        case DataType.STRING:
+        case DataType.String:
             fieldSchema = buildStringSchema(schema);
             break;
-        case DataType.NUMBER:
+        case DataType.Number:
             fieldSchema = buildNumberSchema(schema);
             break;
-        case DataType.BOOLEAN:
+        case DataType.Boolean:
             fieldSchema = z.boolean();
             break;
-        case DataType.ARRAY:
+        case DataType.Array:
             fieldSchema = buildArraySchema(schema);
             break;
-        case DataType.OBJECT:
+        case DataType.Object:
             fieldSchema = z.record(z.any());
             break;
         default:
@@ -120,24 +122,24 @@ function buildStringSchema(schema: SchemaUUID): z.ZodString {
     const attributeType = attributeTypes[schema.key];
     if (attributeType.format) {
         switch (attributeType.format) {
-            case DataFormat.EMAIL:
+            case DataFormat.Email:
                 stringSchema = stringSchema.email("Must be a valid email address");
                 break;
-            case DataFormat.URL:
+            case DataFormat.Url:
                 stringSchema = stringSchema.url("Must be a valid URL");
                 break;
-            case DataFormat.DATE:
+            case DataFormat.Date:
                 // Accept ISO date strings
                 stringSchema = stringSchema.regex(
                     /^\d{4}-\d{2}-\d{2}$/,
                     "Must be a valid date (YYYY-MM-DD)"
                 );
                 break;
-            case DataFormat.DATETIME:
+            case DataFormat.Datetime:
                 // Accept ISO datetime strings
                 stringSchema = stringSchema.datetime("Must be a valid datetime");
                 break;
-            case DataFormat.PHONE:
+            case DataFormat.Phone:
                 // Basic phone validation (can be enhanced)
                 stringSchema = stringSchema.regex(
                     /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/,
@@ -180,13 +182,13 @@ function buildArraySchema(schema: SchemaUUID): z.ZodArray<any> {
     const options = schema.options;
 
     // For MULTI_SELECT with enum options
-    if (schema.key === SchemaType.MULTI_SELECT && options?.enum && options.enum.length > 0) {
+    if (schema.key === SchemaType.MultiSelect && options?.enum && options.enum.length > 0) {
         const enumValues = options.enum as [string, ...string[]];
         return z.array(z.enum(enumValues));
     }
 
     // For FILE_ATTACHMENT
-    if (schema.key === SchemaType.FILE_ATTACHMENT) {
+    if (schema.key === SchemaType.FileAttachment) {
         return z.array(z.string().url("Must be a valid file URL"));
     }
 
@@ -199,8 +201,8 @@ function buildArraySchema(schema: SchemaUUID): z.ZodArray<any> {
  */
 export function buildRelationshipFieldSchema(relationship: EntityRelationshipDefinition) {
     const isSingleSelect =
-        relationship.cardinality === EntityRelationshipCardinality.ONE_TO_ONE ||
-        relationship.cardinality === EntityRelationshipCardinality.MANY_TO_ONE;
+        relationship.cardinality === EntityRelationshipCardinality.OneToOne ||
+        relationship.cardinality === EntityRelationshipCardinality.ManyToOne;
 
     let schema = entityReferenceFormSchema;
 
@@ -228,16 +230,16 @@ export function getDefaultValueForSchema(schema: SchemaUUID): any {
     const attributeType = attributeTypes[schema.key];
 
     switch (attributeType.type) {
-        case DataType.STRING:
+        case DataType.String:
             return "";
-        case DataType.NUMBER:
+        case DataType.Number:
             // Use minimum if specified, otherwise 0
             return schema.options?.minimum ?? 0;
-        case DataType.BOOLEAN:
+        case DataType.Boolean:
             return false;
-        case DataType.ARRAY:
+        case DataType.Array:
             return [];
-        case DataType.OBJECT:
+        case DataType.Object:
             return {};
         default:
             return null;

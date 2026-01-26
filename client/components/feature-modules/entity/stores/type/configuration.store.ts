@@ -1,8 +1,8 @@
+import { EntityType } from "@/lib/types/entity";
 import { UseFormReturn } from "react-hook-form";
 import { create, StoreApi } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { type EntityTypeFormValues } from "../../context/configuration-provider";
-import { EntityType } from "../../interface/entity.interface";
 
 // State interface
 interface EntityTypeConfigState {

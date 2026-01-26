@@ -13,15 +13,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { DialogControl } from "@/lib/interfaces/interface";
-import { EntityTypeRelationshipType } from "@/lib/types/types";
-import { cn } from "@/lib/util/utils";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
-import { useRelationshipOverlapDetection } from "../../../../hooks/use-relationship-overlap-detection";
 import {
     EntityRelationshipDefinition,
     EntityType,
+    EntityTypeRelationshipType,
     RelationshipLimit,
-} from "../../../../interface/entity.interface";
+} from "@/lib/types/entity";
+import { cn } from "@/lib/util/utils";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import { useRelationshipOverlapDetection } from "../../../../hooks/use-relationship-overlap-detection";
 import {
     getInverseCardinality,
     processCardinalityToLimits,
@@ -62,7 +62,7 @@ export const RelationshipAttributeForm: FC<Props> = ({
         relationship
     );
 
-    const isReference = relationship?.relationshipType === EntityTypeRelationshipType.REFERENCE;
+    const isReference = relationship?.relationshipType === EntityTypeRelationshipType.Reference;
     const selectedEntityTypeKeys = form.watch("entityTypeKeys");
     const bidirectional = form.watch("bidirectional");
     const allowPolymorphic = form.watch("allowPolymorphic");
@@ -88,7 +88,7 @@ export const RelationshipAttributeForm: FC<Props> = ({
 
         form.setValue("name", relationship.inverseName);
         form.setValue("allowPolymorphic", false);
-        form.setValue("relationshipType", EntityTypeRelationshipType.REFERENCE);
+        form.setValue("relationshipType", EntityTypeRelationshipType.Reference);
         form.setValue("entityTypeKeys", [relationship.sourceEntityTypeKey]);
         form.setValue("sourceEntityTypeKey", relationship.sourceEntityTypeKey);
         form.setValue("sourceRelationsLimit", source);

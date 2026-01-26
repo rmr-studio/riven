@@ -1,12 +1,11 @@
-import { fromError, isResponseError } from "@/lib/util/error/error.util";
-import { handleError, validateSession, validateUuid } from "@/lib/util/service/service.util";
-import { api } from "@/lib/util/utils";
+import { fromError, normalizeApiError } from "@/lib/util/error/error.util";
+import { validateSession, validateUuid } from "@/lib/util/service/service.util";
+import { createBlockApi } from "@/lib/api/block-api";
 import { Session } from "@/lib/auth";
-import {
-    EntityReferenceHydrationRequest,
-    HydrateBlockRequest,
-    HydrateBlockResponse,
-} from "../interface/block.interface";
+import type { EntityReferenceHydrationRequest, HydrateBlockResponse } from "@/lib/types/block";
+
+// Re-export for hook compatibility (hook expects plural name)
+export type { HydrateBlockResponse as HydrateBlocksResponse } from "@/lib/types/block";
 
 /**
  * Block Service - HTTP API Integration for Block operations
@@ -59,32 +58,15 @@ export class BlockService {
             validateUuid(workspaceId);
             Object.keys(entities).forEach(validateUuid);
 
-            const url = api();
-            const request: HydrateBlockRequest = {
-                references: entities,
-                workspaceId,
-            };
-
-            const response = await fetch(`${url}/v1/block/environment/hydrate`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${session.access_token}`,
+            const api = createBlockApi(session);
+            return await api.hydrateBlocks({
+                hydrateBlocksRequest: {
+                    references: entities,
+                    workspaceId,
                 },
-                body: JSON.stringify(request),
             });
-
-            if (response.ok) {
-                return await response.json();
-            }
-
-            throw await handleError(
-                response,
-                (res) => `Failed to hydrate blocks: ${res.status} ${res.statusText}`
-            );
         } catch (error) {
-            if (isResponseError(error)) throw error;
-            throw fromError(error);
+            throw await normalizeApiError(error);
         }
     }
 }

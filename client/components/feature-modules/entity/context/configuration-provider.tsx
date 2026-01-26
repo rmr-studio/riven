@@ -1,6 +1,6 @@
 "use client";
 
-import { EntityPropertyType } from "@/lib/types/types";
+import { EntityPropertyType, EntityType } from "@/lib/types/entity";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
 import { useForm, useFormState } from "react-hook-form";
@@ -10,7 +10,6 @@ import { z } from "zod";
 import { useStore } from "zustand";
 import { baseEntityTypeFormSchema } from "../hooks/form/type/use-new-type-form";
 import { useSaveEntityTypeConfiguration } from "../hooks/mutation/type/use-save-configuration-mutation";
-import { EntityType } from "../interface/entity.interface";
 import {
     createEntityTypeConfigStore,
     EntityTypeConfigStore,

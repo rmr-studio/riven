@@ -1,8 +1,5 @@
 import { useEntityDraft } from "@/components/feature-modules/entity/context/entity-provider";
-import {
-    EntityLink,
-    EntityRelationshipDefinition,
-} from "@/components/feature-modules/entity/interface/entity.interface";
+import { EntityLink, EntityRelationshipDefinition } from "@/lib/types/entity";
 import { FC, useCallback } from "react";
 import { useFormState, useWatch } from "react-hook-form";
 import { EntityRelationshipPicker } from "../entity-relationship-picker";

@@ -1,11 +1,13 @@
 import { now } from "@/lib/util/utils";
-import { BlockNode, BlockTree, isContentNode } from "../../interface/block.interface";
 import {
-    DetachResult,
-    EditorEnvironment,
-    EditorEnvironmentMetadata,
-    InsertResult,
-} from "../../interface/editor.interface";
+    type BlockNode,
+    type BlockTree,
+    isContentNode,
+    type DetachResult,
+    type EditorEnvironment,
+    type EditorEnvironmentMetadata,
+    type InsertResult,
+} from "@/lib/types/block";
 import { allowChildren, insertChild } from "../block/block.util";
 
 /** Collect descendant ids for a node (used when removing or re-indexing). */

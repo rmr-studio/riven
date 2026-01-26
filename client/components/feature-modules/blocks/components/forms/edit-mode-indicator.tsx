@@ -10,7 +10,7 @@ import { useBlockEnvironment } from "../../context/block-environment-provider";
 import { useLayoutChange } from "../../context/layout-change-provider";
 import { useLayoutHistory } from "../../context/layout-history-provider";
 import { useLayoutKeyboardShortcuts } from "../../hooks/use-layout-keyboard-shortcuts";
-import { BlockNode } from "../../interface/block.interface";
+import type { BlockNode } from "@/lib/types/block";
 
 export const EditModeIndicator: FC = () => {
     const { getEditingCount, hasActualChanges, saveAllEdits, discardAllEdits, exitAllSessions } =

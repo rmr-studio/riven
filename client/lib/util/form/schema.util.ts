@@ -1,5 +1,6 @@
 import { Icon, SchemaOptions } from "@/lib/interfaces/common.interface";
-import { DataFormat, DataType, IconColour, IconType, SchemaType } from "@/lib/types/types";
+import { DataFormat, DataType, IconColour, IconType } from "@/lib/types/common";
+import { SchemaType } from "@/lib/types/entity";
 
 export interface AttributeSchemaType {
     label: string;
@@ -11,156 +12,156 @@ export interface AttributeSchemaType {
 }
 
 export const attributeTypes: Record<SchemaType, AttributeSchemaType> = {
-    [SchemaType.TEXT]: {
+    [SchemaType.Text]: {
         label: "Text",
-        key: SchemaType.TEXT,
-        type: DataType.STRING,
+        key: SchemaType.Text,
+        type: DataType.String,
         icon: {
-            icon: IconType.A_LARGE_SMALL,
-            colour: IconColour.NEUTRAL,
+            icon: IconType.ALargeSmall,
+            colour: IconColour.Neutral,
         },
     },
-    [SchemaType.NUMBER]: {
+    [SchemaType.Number]: {
         label: "Number",
-        key: SchemaType.NUMBER,
-        type: DataType.NUMBER,
+        key: SchemaType.Number,
+        type: DataType.Number,
         icon: {
-            icon: IconType.CALCULATOR,
-            colour: IconColour.NEUTRAL,
+            icon: IconType.Calculator,
+            colour: IconColour.Neutral,
         },
     },
-    [SchemaType.CHECKBOX]: {
+    [SchemaType.Checkbox]: {
         label: "Checkbox",
-        key: SchemaType.CHECKBOX,
-        type: DataType.BOOLEAN,
+        key: SchemaType.Checkbox,
+        type: DataType.Boolean,
         icon: {
-            icon: IconType.CHECK_CHECK,
-            colour: IconColour.NEUTRAL,
+            icon: IconType.CheckCheck,
+            colour: IconColour.Neutral,
         },
     },
-    [SchemaType.DATE]: {
+    [SchemaType.Date]: {
         label: "Date",
-        key: SchemaType.DATE,
-        type: DataType.STRING,
-        format: DataFormat.DATE,
+        key: SchemaType.Date,
+        type: DataType.String,
+        format: DataFormat.Date,
         icon: {
-            icon: IconType.CALENDAR_RANGE,
-            colour: IconColour.NEUTRAL,
+            icon: IconType.CalendarRange,
+            colour: IconColour.Neutral,
         },
     },
-    [SchemaType.DATETIME]: {
+    [SchemaType.Datetime]: {
         label: "Date & Time",
-        key: SchemaType.DATETIME,
-        type: DataType.STRING,
-        format: DataFormat.DATETIME,
+        key: SchemaType.Datetime,
+        type: DataType.String,
+        format: DataFormat.Datetime,
         icon: {
-            icon: IconType.CALENDAR_CLOCK,
-            colour: IconColour.NEUTRAL,
+            icon: IconType.CalendarClock,
+            colour: IconColour.Neutral,
         },
     },
-    [SchemaType.RATING]: {
+    [SchemaType.Rating]: {
         label: "Rating",
-        key: SchemaType.RATING,
-        type: DataType.NUMBER,
+        key: SchemaType.Rating,
+        type: DataType.Number,
         options: { minimum: 1, maximum: 5 },
         icon: {
-            icon: IconType.STAR,
-            colour: IconColour.NEUTRAL,
+            icon: IconType.Star,
+            colour: IconColour.Neutral,
         },
     },
-    [SchemaType.PHONE]: {
+    [SchemaType.Phone]: {
         label: "Phone",
-        key: SchemaType.PHONE,
-        type: DataType.STRING,
-        format: DataFormat.PHONE,
+        key: SchemaType.Phone,
+        type: DataType.String,
+        format: DataFormat.Phone,
         icon: {
-            icon: IconType.PHONE,
-            colour: IconColour.NEUTRAL,
+            icon: IconType.Phone,
+            colour: IconColour.Neutral,
         },
     },
-    [SchemaType.EMAIL]: {
+    [SchemaType.Email]: {
         label: "Email",
-        key: SchemaType.EMAIL,
-        type: DataType.STRING,
-        format: DataFormat.EMAIL,
+        key: SchemaType.Email,
+        type: DataType.String,
+        format: DataFormat.Email,
         icon: {
-            icon: IconType.AT_SIGN,
-            colour: IconColour.NEUTRAL,
+            icon: IconType.AtSign,
+            colour: IconColour.Neutral,
         },
     },
-    [SchemaType.URL]: {
+    [SchemaType.Url]: {
         label: "URL",
-        key: SchemaType.URL,
-        type: DataType.STRING,
-        format: DataFormat.URL,
+        key: SchemaType.Url,
+        type: DataType.String,
+        format: DataFormat.Url,
         icon: {
-            icon: IconType.LINK,
-            colour: IconColour.NEUTRAL,
+            icon: IconType.Link,
+            colour: IconColour.Neutral,
         },
     },
-    [SchemaType.CURRENCY]: {
+    [SchemaType.Currency]: {
         label: "Currency",
-        key: SchemaType.CURRENCY,
-        type: DataType.NUMBER,
-        format: DataFormat.CURRENCY,
+        key: SchemaType.Currency,
+        type: DataType.Number,
+        format: DataFormat.Currency,
         icon: {
-            icon: IconType.DOLLAR_SIGN,
-            colour: IconColour.NEUTRAL,
+            icon: IconType.DollarSign,
+            colour: IconColour.Neutral,
         },
     },
-    [SchemaType.PERCENTAGE]: {
+    [SchemaType.Percentage]: {
         label: "Percentage",
-        key: SchemaType.PERCENTAGE,
-        type: DataType.NUMBER,
-        format: DataFormat.PERCENTAGE,
+        key: SchemaType.Percentage,
+        type: DataType.Number,
+        format: DataFormat.Percentage,
         icon: {
-            icon: IconType.PERCENT,
-            colour: IconColour.NEUTRAL,
+            icon: IconType.Percent,
+            colour: IconColour.Neutral,
         },
     },
-    [SchemaType.SELECT]: {
+    [SchemaType.Select]: {
         label: "Select",
-        key: SchemaType.SELECT,
-        type: DataType.STRING,
+        key: SchemaType.Select,
+        type: DataType.String,
         icon: {
-            icon: IconType.LIST,
-            colour: IconColour.NEUTRAL,
+            icon: IconType.List,
+            colour: IconColour.Neutral,
         },
     },
-    [SchemaType.MULTI_SELECT]: {
+    [SchemaType.MultiSelect]: {
         label: "Multi-select",
-        key: SchemaType.MULTI_SELECT,
-        type: DataType.ARRAY,
+        key: SchemaType.MultiSelect,
+        type: DataType.Array,
         icon: {
-            icon: IconType.LIST_CHECKS,
-            colour: IconColour.NEUTRAL,
+            icon: IconType.ListChecks,
+            colour: IconColour.Neutral,
         },
     },
-    [SchemaType.FILE_ATTACHMENT]: {
+    [SchemaType.FileAttachment]: {
         label: "File Attachments",
-        key: SchemaType.FILE_ATTACHMENT,
-        type: DataType.ARRAY,
+        key: SchemaType.FileAttachment,
+        type: DataType.Array,
         icon: {
-            icon: IconType.PAPERCLIP,
-            colour: IconColour.NEUTRAL,
+            icon: IconType.Paperclip,
+            colour: IconColour.Neutral,
         },
     },
-    [SchemaType.OBJECT]: {
+    [SchemaType.Object]: {
         label: "JSON Data",
-        key: SchemaType.OBJECT,
-        type: DataType.OBJECT,
+        key: SchemaType.Object,
+        type: DataType.Object,
         icon: {
-            icon: IconType.CODE,
-            colour: IconColour.NEUTRAL,
+            icon: IconType.Code,
+            colour: IconColour.Neutral,
         },
     },
-    [SchemaType.LOCATION]: {
+    [SchemaType.Location]: {
         label: "Location",
-        key: SchemaType.LOCATION,
-        type: DataType.OBJECT,
+        key: SchemaType.Location,
+        type: DataType.Object,
         icon: {
-            icon: IconType.MAP_PIN,
-            colour: IconColour.NEUTRAL,
+            icon: IconType.MapPin,
+            colour: IconColour.Neutral,
         },
     },
 };

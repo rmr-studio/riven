@@ -24,10 +24,10 @@ import {
 import { useBlockTypes } from "../../hooks/use-block-types";
 import { useEntityLayout } from "../../hooks/use-entity-layout";
 import { BlockEnvironmentGridSync } from "../../hooks/use-environment-grid-sync";
-import { BlockType } from "../../interface/block.interface";
-import { WrapElementProvider } from "../../interface/render.interface";
+import type { BlockType, WrapElementProvider } from "@/lib/types/block";
 import { createBlockInstanceFromType } from "../../util/block/factory/instance.factory";
 import { blockTypesToOptions } from "../../util/type-picker-options";
+import type { ApplicationEntityType, BlockType as GeneratedBlockType } from "@/lib/types";
 import { BlockEditDrawer, EditModeIndicator } from "../forms";
 import { ENTITY_TYPE_OPTIONS, TypePickerModal } from "../modals/type-picker-modal";
 import { KeyboardNavigationHandler } from "../navigation/keyboard-navigation-handler";
@@ -42,8 +42,8 @@ import { AddBlockDialog } from "./add-block-dialog";
 export interface EntityBlockEnvironmentProps {
     /** UUID of the entity (client, workspace, etc.) */
     entityId: string;
-    /** Type of entity (CLIENT, WORKSPACE, PROJECT, INVOICE) */
-    entityType: EntityType;
+    /** Type of entity (from ApplicationEntityType enum, e.g. 'ENTITY' for user-defined entities) */
+    entityType: ApplicationEntityType;
     /** Workspace ID for the entity */
     workspaceId: string;
     /** Optional toolbar component to render above the grid */
@@ -69,7 +69,7 @@ export interface EntityBlockEnvironmentProps {
  * @example
  * <EntityBlockEnvironment
  *   entityId={clientId}
- *   entityType={EntityType.CLIENT}
+ *   entityType={ApplicationEntityType.Entity}
  *   workspaceId={workspaceId}
  *   renderToolbar={() => <ClientToolbar />}
  * />
@@ -182,7 +182,7 @@ export const EntityBlockEnvironment: FC<EntityBlockEnvironmentProps> = ({
  */
 interface EntityToolbarProps {
     workspaceId: string;
-    entityType: EntityType;
+    entityType: ApplicationEntityType;
 }
 
 const EntityToolbar: FC<EntityToolbarProps> = ({ workspaceId, entityType }) => {
@@ -199,7 +199,7 @@ const EntityToolbar: FC<EntityToolbarProps> = ({ workspaceId, entityType }) => {
 
     const { addTrackedBlock } = useTrackedEnvironment();
     const { environment } = useBlockEnvironment();
-    const { data: availableBlockTypes } = useBlockTypes(workspaceId, entityType);
+    const { data: availableBlockTypes } = useBlockTypes(workspaceId);
 
     const handleBlockTypeSelect = (blockType: BlockType) => {
         // Check if this block type requires type selection
@@ -325,7 +325,6 @@ const EntityToolbar: FC<EntityToolbarProps> = ({ workspaceId, entityType }) => {
                 open={dialogOpen}
                 onOpenChange={setDialogOpen}
                 workspaceId={workspaceId}
-                entityType={entityType}
                 onBlockTypeSelect={handleBlockTypeSelect}
             />
 

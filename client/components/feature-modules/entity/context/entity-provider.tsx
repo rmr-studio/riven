@@ -1,5 +1,6 @@
 "use client";
 
+import { Entity, EntityType } from "@/lib/types/entity";
 import {
     buildDefaultValuesFromEntityType,
     buildZodSchemaFromEntityType,
@@ -9,7 +10,6 @@ import { createContext, useContext, useMemo, useRef, type ReactNode } from "reac
 import { FormProvider, useForm } from "react-hook-form";
 import { useStore } from "zustand";
 import { useSaveEntityMutation } from "../hooks/mutation/instance/use-save-entity-mutation";
-import { Entity, EntityType } from "../interface/entity.interface";
 import {
     createEntityDraftStore,
     EntityDraftStore,

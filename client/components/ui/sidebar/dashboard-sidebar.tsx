@@ -1,7 +1,7 @@
 "use client";
 import { useEntityTypes } from "@/components/feature-modules/entity/hooks/query/type/use-entity-types";
 import { useProfile } from "@/components/feature-modules/user/hooks/useProfile";
-import { Workspace } from "@/components/feature-modules/workspace/interface/workspace.interface";
+import type { Workspace } from "@/lib/types/workspace";
 import { useWorkspaceStore } from "@/components/feature-modules/workspace/provider/workspace-provider";
 import { SidebarGroupProps } from "@/lib/interfaces/interface";
 import { DropdownMenuGroup } from "@radix-ui/react-dropdown-menu";

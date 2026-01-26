@@ -1,9 +1,6 @@
 "use client";
 
-import {
-    MembershipDetails,
-    TileLayoutConfig,
-} from "@/components/feature-modules/workspace/interface/workspace.interface";
+import type { MembershipDetails, TileLayoutConfig } from "@/lib/types/workspace";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toTitleCase } from "@/lib/util/utils";

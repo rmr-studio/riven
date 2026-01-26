@@ -5,10 +5,10 @@ import {
     CommandInput,
     CommandItem,
 } from "@/components/ui/command";
-import { EntityType } from "@/lib/types/types";
+import type { EntityType } from "@/lib/types/entity";
+import type { BlockType } from "@/lib/types/block";
 import { FC, Fragment, RefObject } from "react";
 import { useBlockTypes } from "../../../hooks/use-block-types";
-import { BlockType } from "../../../interface/block.interface";
 import { BlockTypeSelectorList } from "../../shared/block-type-selector-list";
 
 interface PanelQuickInsertProps {

@@ -1,7 +1,7 @@
 import { CommandDialog, CommandInput } from "@/components/ui/command";
 import { FC } from "react";
 import { useBlockTypes } from "../../hooks/use-block-types";
-import { BlockType } from "../../interface/block.interface";
+import type { BlockType } from "@/lib/types/block";
 import { BlockTypeSelectorList } from "../shared/block-type-selector-list";
 
 /**

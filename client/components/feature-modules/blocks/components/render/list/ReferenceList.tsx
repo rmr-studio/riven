@@ -8,7 +8,7 @@
 "use client";
 
 import { ReactNode } from "react";
-import { BlockListConfiguration, ReferenceItem } from "../../../interface/block.interface";
+import type { BlockListConfiguration, ReferenceItem } from "@/lib/types/block";
 
 interface ReferenceListProps {
     blockId: string;

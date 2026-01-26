@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useBlockHydrationContext } from "../context/block-hydration-provider";
-import { BlockHydrationResult } from "../interface/block.interface";
+import type { BlockHydrationResult } from "@/lib/types/block";
 
 /**
  * Result type for useBlockHydration hook.

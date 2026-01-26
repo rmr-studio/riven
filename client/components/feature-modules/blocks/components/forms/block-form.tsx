@@ -2,7 +2,7 @@
 
 import { FC, useRef, useEffect } from "react";
 import { get } from "lodash";
-import { BlockType } from "../../interface/block.interface";
+import type { BlockType } from "@/lib/types/block";
 import { useBlockEdit } from "../../context/block-edit-provider";
 import { formWidgetRegistry } from "./form-widget.registry";
 import { cn } from "@/lib/util/utils";

@@ -1,13 +1,13 @@
-import { validateSession, validateUuid } from "@/lib/util/service/service.util";
 import { createEntityApi } from "@/lib/api/entity-api";
-import { ResponseError } from "@/lib/types";
 import { Session } from "@/lib/auth";
+import { ResponseError } from "@/lib/types";
 import {
     DeleteEntityResponse,
     Entity,
     SaveEntityRequest,
     SaveEntityResponse,
-} from "../interface/entity.interface";
+} from "@/lib/types/entity";
+import { validateSession, validateUuid } from "@/lib/util/service/service.util";
 
 export class EntityService {
     /**

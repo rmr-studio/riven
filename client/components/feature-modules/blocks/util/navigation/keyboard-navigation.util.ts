@@ -1,5 +1,5 @@
 import { GridStackNode } from "gridstack";
-import { BlockNode, isContentNode } from "../../interface/block.interface";
+import { type BlockNode, isContentNode } from "@/lib/types/block";
 
 /**
  * Utility functions for keyboard navigation through the block tree.

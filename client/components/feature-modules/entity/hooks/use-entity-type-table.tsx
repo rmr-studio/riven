@@ -2,18 +2,18 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { EntityPropertyType } from "@/lib/types/types";
-import { toTitleCase } from "@/lib/util/utils";
-import { ColumnDef, Row } from "@tanstack/react-table";
-import { Key, Link2, ListTodo, ListX } from "lucide-react";
-import { ReactNode, useMemo } from "react";
 import {
     EntityAttributeDefinition,
+    EntityPropertyType,
     EntityRelationshipDefinition,
     EntityType,
     EntityTypeAttributeRow,
     EntityTypeDefinition,
-} from "../interface/entity.interface";
+} from "@/lib/types/entity";
+import { toTitleCase } from "@/lib/util/utils";
+import { ColumnDef, Row } from "@tanstack/react-table";
+import { Key, Link2, ListTodo, ListX } from "lucide-react";
+import { ReactNode, useMemo } from "react";
 
 // Common type for data table rows (both attributes and relationships)
 
@@ -79,7 +79,7 @@ export function useEntityTypeTable(
             ];
         }
 
-        if (row.original.type === EntityPropertyType.RELATIONSHIP) {
+        if (row.original.type === EntityPropertyType.Relationship) {
             icons.push(
                 <IconWithTooltip
                     key="relationship"
@@ -141,7 +141,7 @@ export function useEntityTypeTable(
                 id: "constraints",
                 header: "Constraints",
                 cell: ({ row }) => {
-                    const isRelationship = row.original.type === EntityPropertyType.RELATIONSHIP;
+                    const isRelationship = row.original.type === EntityPropertyType.Relationship;
                     const constraints: string[] = [];
 
                     if (row.original.required) constraints.push("Required");
@@ -181,7 +181,7 @@ export function useEntityTypeTable(
     ): EntityTypeAttributeRow => ({
         id: relationship.id,
         label: relationship.name || relationship.id,
-        type: EntityPropertyType.RELATIONSHIP,
+        type: EntityPropertyType.Relationship,
         required: relationship.required || false,
         schemaType: "RELATIONSHIP",
         additionalConstraints: [],
@@ -198,7 +198,7 @@ export function useEntityTypeTable(
         return {
             id,
             label: schema.label ?? "Unknown",
-            type: EntityPropertyType.ATTRIBUTE,
+            type: EntityPropertyType.Attribute,
             required: schema.required || false,
             schemaType: schema.key,
             // Todo. Set up additional constraints properly

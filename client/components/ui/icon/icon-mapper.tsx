@@ -1,4 +1,4 @@
-import { IconColour, IconType } from "@/lib/types/types";
+import { IconColour, IconType } from "@/lib/types/common";
 import * as LucideIcons from "lucide-react";
 import { LucideIcon } from "lucide-react";
 

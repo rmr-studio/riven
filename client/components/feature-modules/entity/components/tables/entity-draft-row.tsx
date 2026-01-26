@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { EntityPropertyType } from "@/lib/types/types";
+import { EntityPropertyType, EntityType } from "@/lib/types/entity";
 import { cn } from "@/lib/util/utils";
 import { Row } from "@tanstack/react-table";
 import { Check, X } from "lucide-react";
@@ -10,7 +10,6 @@ import { FC, ReactNode, useCallback, useEffect, useMemo, useState } from "react"
 import { useFormState } from "react-hook-form";
 import { toast } from "sonner";
 import { useEntityDraft } from "../../context/entity-provider";
-import { EntityType } from "../../interface/entity.interface";
 import { EntityFieldCell } from "../forms/instance/entity-field-cell";
 import { DraftEntityRelationshipPicker } from "../forms/instance/relationship/draft-entity-picker";
 import { EntityRow } from "./entity-table-utils";
@@ -94,14 +93,14 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
         property: EntityPropertyType,
         isFirstCell: boolean
     ): ReactNode | null => {
-        if (property === EntityPropertyType.ATTRIBUTE) {
+        if (property === EntityPropertyType.Attribute) {
             const schema = entityType.schema.properties?.[id];
             if (!schema) return null;
             return <EntityFieldCell attributeId={id} schema={schema} autoFocus={isFirstCell} />;
         }
 
         const relationship = entityType.relationships?.find((r) => r.id === id);
-        if (property === EntityPropertyType.RELATIONSHIP && relationship) {
+        if (property === EntityPropertyType.Relationship && relationship) {
             return <DraftEntityRelationshipPicker relationship={relationship} />;
         }
 

@@ -15,11 +15,10 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { EntityPropertyType } from "@/lib/types/types";
+import { EntityAttributeDefinition, EntityPropertyType } from "@/lib/types/entity";
 import { FC, useEffect } from "react";
 import { useWatch } from "react-hook-form";
 import { useConfigForm } from "../../../context/configuration-provider";
-import { EntityAttributeDefinition } from "../../../interface/entity.interface";
 
 interface Props {
     availableIdentifiers: EntityAttributeDefinition[];
@@ -45,14 +44,14 @@ export const ConfigurationForm: FC<Props> = ({ availableIdentifiers }) => {
 
         // Check if identifier is already first
         const firstItem = columns[0];
-        if (firstItem?.key === identifierKey && firstItem?.type === EntityPropertyType.ATTRIBUTE) {
+        if (firstItem?.key === identifierKey && firstItem?.type === EntityPropertyType.Attribute) {
             // Already in first position, nothing to do
             return;
         }
 
         // Find identifier in current columns
         const identifierIndex = columns.findIndex(
-            (item) => item.key === identifierKey && item.type === EntityPropertyType.ATTRIBUTE
+            (item) => item.key === identifierKey && item.type === EntityPropertyType.Attribute
         );
 
         if (identifierIndex !== -1) {
@@ -73,7 +72,7 @@ export const ConfigurationForm: FC<Props> = ({ availableIdentifiers }) => {
             [
                 {
                     key: identifierKey,
-                    type: EntityPropertyType.ATTRIBUTE,
+                    type: EntityPropertyType.Attribute,
                     width: 150,
                 },
                 ...columns,

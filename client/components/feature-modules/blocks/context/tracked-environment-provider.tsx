@@ -1,11 +1,9 @@
 "use client";
 
-import { BlockOperationType } from "@/lib/types/types";
+import { BlockOperationType, type BlockNode, type StructuralOperationRequest } from "@/lib/types/block";
 import { now } from "@/lib/util/utils";
 import { createContext, FC, PropsWithChildren, useCallback, useContext, useMemo } from "react";
 import { useBlockDeletionGuard } from "../hooks/use-block-deletion-guard";
-import { BlockNode } from "../interface/block.interface";
-import { StructuralOperationRequest } from "../interface/command.interface";
 import { useBlockEnvironment } from "./block-environment-provider";
 import { useGrid } from "./grid-provider";
 import { useLayoutChange } from "./layout-change-provider";
@@ -72,7 +70,7 @@ export const TrackedEnvironmentProvider: FC<PropsWithChildren> = ({ children }) 
                 id: crypto.randomUUID(),
                 timestamp: now(),
                 data: {
-                    type: BlockOperationType.ADD_BLOCK,
+                    type: BlockOperationType.AddBlock,
                     blockId: id,
                     block,
                     parentId: parentId || undefined,
@@ -107,7 +105,7 @@ export const TrackedEnvironmentProvider: FC<PropsWithChildren> = ({ children }) 
                 id: crypto.randomUUID(),
                 timestamp: now(),
                 data: {
-                    type: BlockOperationType.REMOVE_BLOCK,
+                    type: BlockOperationType.RemoveBlock,
                     childrenIds: children,
                     blockId,
                     parentId: previousParentId,
@@ -140,7 +138,7 @@ export const TrackedEnvironmentProvider: FC<PropsWithChildren> = ({ children }) 
                 id: crypto.randomUUID(),
                 timestamp: now(),
                 data: {
-                    type: BlockOperationType.MOVE_BLOCK,
+                    type: BlockOperationType.MoveBlock,
                     blockId,
                     fromParentId,
                     toParentId: targetParentId || undefined,
@@ -166,7 +164,7 @@ export const TrackedEnvironmentProvider: FC<PropsWithChildren> = ({ children }) 
                 id: crypto.randomUUID(),
                 timestamp: now(),
                 data: {
-                    type: BlockOperationType.UPDATE_BLOCK,
+                    type: BlockOperationType.UpdateBlock,
                     blockId,
                     updatedContent,
                 },
@@ -211,7 +209,7 @@ export const TrackedEnvironmentProvider: FC<PropsWithChildren> = ({ children }) 
                 id: crypto.randomUUID(),
                 timestamp: now(),
                 data: {
-                    type: BlockOperationType.REORDER_BLOCK,
+                    type: BlockOperationType.ReorderBlock,
                     blockId,
                     parentId,
                     fromIndex,

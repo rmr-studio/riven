@@ -1,4 +1,4 @@
-import { EntityType } from "@/lib/types/types";
+import type { EntityType } from "@/lib/types/entity";
 
 /**
  * Configuration for entity-specific block type restrictions.

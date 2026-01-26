@@ -8,7 +8,7 @@ import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { WorkspaceTile } from "../components/workspace-card";
-import { WorkspaceMember } from "../interface/workspace.interface";
+import type { WorkspaceMember } from "@/lib/types/workspace";
 
 export const WorkspacePicker = () => {
     const { data: user, isPending } = useProfile();

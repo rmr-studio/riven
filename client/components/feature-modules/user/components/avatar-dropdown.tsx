@@ -1,6 +1,6 @@
 "use client";
 
-import { User } from "@/components/feature-modules/user/interface/user.interface";
+import type { User } from "@/lib/types/user";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
     DropdownMenu,

@@ -8,7 +8,7 @@ import { AlertCircle, ChevronRight } from "lucide-react";
 import { FC, useEffect, useState } from "react";
 import { useBlockEdit } from "../../context/block-edit-provider";
 import { useBlockEnvironment } from "../../context/block-environment-provider";
-import { isContentNode } from "../../interface/block.interface";
+import { isContentNode } from "@/lib/types/block";
 import { BlockForm } from "./block-form";
 
 export const BlockEditDrawer: FC = () => {

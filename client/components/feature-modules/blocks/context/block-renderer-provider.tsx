@@ -1,6 +1,6 @@
 "use client";
 
-import { NodeType } from "@/lib/types/types";
+import { NodeType } from "@/lib/types/block";
 import { GridStackWidget } from "gridstack";
 import { createContext, FC, ReactNode, useContext } from "react";
 import { createPortal } from "react-dom";
@@ -11,16 +11,17 @@ import { ContentBlockList } from "../components/render/list/content-block-list";
 import { PortalContentWrapper } from "../components/render/portal-wrapper";
 import { EntityReference } from "../components/render/reference/entity/entity-reference";
 import {
-    BlockNode,
-    ContentNode,
+    type BlockNode,
+    type ContentNode,
     isContentMetadata,
     isContentNode,
     isEntityReferenceMetadata,
     isReferenceNode,
-    ReferenceNode,
-    WidgetRenderStructure,
-} from "../interface/block.interface";
-import { ProviderProps, RenderElementContextValue } from "../interface/render.interface";
+    type ReferenceNode,
+    type WidgetRenderStructure,
+    type ProviderProps,
+    type RenderElementContextValue,
+} from "@/lib/types/block";
 import { isList } from "../util/list/list.util";
 import { parseContent } from "../util/render/render.util";
 import { useBlockEnvironment } from "./block-environment-provider";
@@ -135,7 +136,7 @@ export const RenderElementProvider: FC<ProviderProps> = ({ onUnknownType, wrapEl
                 if (!container) return null;
 
                 // Handle error blocks (missing blocks from layout)
-                if (blockType === NodeType.ERROR) {
+                if (blockType === NodeType.Error) {
                     const rendered = <MissingBlockErrorComponent blockId={id} />;
                     return (
                         <RenderElementContext.Provider

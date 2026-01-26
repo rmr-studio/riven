@@ -1,18 +1,18 @@
 import { DataTable, DataTableProvider } from "@/components/ui/data-table";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { EntityPropertyType } from "@/lib/types/types";
+import {
+    EntityPropertyType,
+    EntityType,
+    EntityTypeAttributeColumn,
+    EntityTypeAttributeRow,
+    type EntityTypeDefinition,
+} from "@/lib/types/entity";
 import { Row } from "@tanstack/react-table";
 import { Edit2, Trash2 } from "lucide-react";
 import { FC, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { useConfigForm } from "../../context/configuration-provider";
 import { useEntityTypeTable } from "../../hooks/use-entity-type-table";
-import {
-    EntityType,
-    EntityTypeAttributeColumn,
-    EntityTypeAttributeRow,
-    type EntityTypeDefinition,
-} from "../../interface/entity.interface";
 
 interface Props {
     type: EntityType;
@@ -49,7 +49,7 @@ const EntityTypeDataTable: FC<Props> = ({ type, identifierKey, onEdit, onDelete 
 
         // Check if first row is the identifier
         const isFirstRowIdentifier =
-            firstRow.id === identifierKey && firstRow.type === EntityPropertyType.ATTRIBUTE;
+            firstRow.id === identifierKey && firstRow.type === EntityPropertyType.Attribute;
 
         if (!isFirstRowIdentifier) {
             // Reject the reorder - identifier was moved from first position
@@ -81,7 +81,7 @@ const EntityTypeDataTable: FC<Props> = ({ type, identifierKey, onEdit, onDelete 
             !row.protected &&
             !(
                 [type.identifierKey, identifierKey].includes(row.id) &&
-                row.type === EntityPropertyType.ATTRIBUTE
+                row.type === EntityPropertyType.Attribute
             )
         );
     };
@@ -91,7 +91,7 @@ const EntityTypeDataTable: FC<Props> = ({ type, identifierKey, onEdit, onDelete 
         (row: Row<EntityTypeAttributeRow>) => {
             return (
                 row.original.id === identifierKey &&
-                row.original.type === EntityPropertyType.ATTRIBUTE
+                row.original.type === EntityPropertyType.Attribute
             );
         },
         [identifierKey]
@@ -122,11 +122,11 @@ const EntityTypeDataTable: FC<Props> = ({ type, identifierKey, onEdit, onDelete 
                                 options: [
                                     {
                                         label: "Attributes",
-                                        value: EntityPropertyType.ATTRIBUTE,
+                                        value: EntityPropertyType.Attribute,
                                     },
                                     {
                                         label: "Relationships",
-                                        value: EntityPropertyType.RELATIONSHIP,
+                                        value: EntityPropertyType.Relationship,
                                     },
                                 ],
                             },

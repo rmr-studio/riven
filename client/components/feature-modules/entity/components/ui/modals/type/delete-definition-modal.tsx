@@ -22,7 +22,7 @@ import {
     DeleteAction,
     EntityTypeRelationshipType,
     EntityTypeRequestDefinition,
-} from "@/lib/types/types";
+} from "@/lib/types/entity";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { FC, useEffect, useState } from "react";
@@ -30,7 +30,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { useWorkspace } from "@/components/feature-modules/workspace/hooks/query/use-workspace";
-import { useDeleteDefinitionMutation } from "../../../../hooks/mutation/type/use-delete-definition-mutation";
 import {
     DeleteAttributeDefinitionRequest,
     DeleteRelationshipDefinitionRequest,
@@ -38,7 +37,8 @@ import {
     EntityTypeDefinition,
     isAttributeDefinition,
     isRelationshipDefinition,
-} from "../../../../interface/entity.interface";
+} from "@/lib/types/entity";
+import { useDeleteDefinitionMutation } from "../../../../hooks/mutation/type/use-delete-definition-mutation";
 
 interface Props {
     dialog: DialogControl;
@@ -47,18 +47,18 @@ interface Props {
 }
 
 const DELETE_ACTION_LABELS: Record<DeleteAction, { label: string; description: string }> = {
-    [DeleteAction.REMOVE_BIDIRECTIONAL]: {
+    [DeleteAction.RemoveBidirectional]: {
         label: "Remove Bidirectional Link",
         description:
             "Removes the bidirectional link between entities. The relationship will become unidirectional.",
     },
-    [DeleteAction.DELETE_RELATIONSHIP]: {
+    [DeleteAction.DeleteRelationship]: {
         label: "Delete Relationship Only",
         description:
             "Removes this relationship definition from the entity type. The relationship data will be deleted.",
     },
 
-    [DeleteAction.REMOVE_ENTITY_TYPE]: {
+    [DeleteAction.RemoveEntityType]: {
         label: "Remove from Entity Type",
         description:
             "Removes this relationship from the entity type configuration without deleting the relationship data.",
@@ -101,7 +101,7 @@ export const DeleteDefinitionModal: FC<Props> = ({ dialog, type: entityType, def
         }
         form.setValue(
             "type",
-            definition.definition.relationshipType === EntityTypeRelationshipType.REFERENCE
+            definition.definition.relationshipType === EntityTypeRelationshipType.Reference
                 ? "REFERENCE_RELATIONSHIP"
                 : "ORIGIN_RELATIONSHIP"
         );
@@ -136,9 +136,9 @@ export const DeleteDefinitionModal: FC<Props> = ({ dialog, type: entityType, def
             const request: DeleteRelationshipDefinitionRequest = {
                 id: definition.id,
                 key: entityType.key,
-                type: EntityTypeRequestDefinition.DELETE_RELATIONSHIP,
+                type: EntityTypeRequestDefinition.DeleteRelationship,
                 deleteAction:
-                    isReference && values.action ? values.action : DeleteAction.DELETE_RELATIONSHIP,
+                    isReference && values.action ? values.action : DeleteAction.DeleteRelationship,
             };
 
             await deleteDefinition({
@@ -151,7 +151,7 @@ export const DeleteDefinitionModal: FC<Props> = ({ dialog, type: entityType, def
         const request: DeleteAttributeDefinitionRequest = {
             id: definition.id,
             key: entityType.key,
-            type: EntityTypeRequestDefinition.DELETE_SCHEMA,
+            type: EntityTypeRequestDefinition.DeleteSchema,
         };
 
         await deleteDefinition({
