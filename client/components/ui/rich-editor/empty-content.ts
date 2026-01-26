@@ -1,4 +1,4 @@
-import { EditorNode, TextNode } from "./types"
+import { EditorNode, TextNode } from './types';
 
 /**
  * Creates minimal empty content for normal rich editor mode.
@@ -22,27 +22,25 @@ import { EditorNode, TextNode } from "./types"
  * };
  * ```
  */
-export function createEmptyContent(
-  timestamp: number = Date.now()
-): EditorNode[] {
+export function createEmptyContent(timestamp: number = Date.now()): EditorNode[] {
   return [
     {
       id: `p-${timestamp}-1`,
-      type: "p",
-      content: "",
+      type: 'p',
+      content: '',
       attributes: {},
     } as TextNode,
     {
       id: `p-${timestamp}-2`,
-      type: "p",
-      content: "",
+      type: 'p',
+      content: '',
       attributes: {},
     } as TextNode,
     {
       id: `p-${timestamp}-3`,
-      type: "p",
-      content: "",
+      type: 'p',
+      content: '',
       attributes: {},
     } as TextNode,
-  ]
+  ];
 }

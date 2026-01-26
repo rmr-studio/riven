@@ -1,29 +1,29 @@
-import React from "react"
+import React from 'react';
 
-import { TextNode } from "../../types"
+import { TextNode } from '../../types';
 
 /**
  * Create handle block drag start
  */
 export function createHandleBlockDragStart(
   textNode: TextNode,
-  onBlockDragStart?: (nodeId: string) => void
+  onBlockDragStart?: (nodeId: string) => void,
 ) {
   return (e: React.DragEvent) => {
-    e.stopPropagation()
-    e.dataTransfer.effectAllowed = "move"
-    e.dataTransfer.setData("text/plain", textNode.id)
+    e.stopPropagation();
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', textNode.id);
     e.dataTransfer.setData(
-      "application/json",
+      'application/json',
       JSON.stringify({
         nodeId: textNode.id,
         type: textNode.type,
-      })
-    )
+      }),
+    );
     if (onBlockDragStart) {
-      onBlockDragStart(textNode.id)
+      onBlockDragStart(textNode.id);
     }
-  }
+  };
 }
 
 /**
@@ -31,10 +31,10 @@ export function createHandleBlockDragStart(
  */
 export function createHandleBlockDragEnd(onDragEnd?: () => void) {
   return (e: React.DragEvent) => {
-    e.stopPropagation()
+    e.stopPropagation();
     // Clear dragging state
     if (onDragEnd) {
-      onDragEnd()
+      onDragEnd();
     }
-  }
+  };
 }

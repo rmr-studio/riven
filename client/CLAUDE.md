@@ -8,27 +8,27 @@ Riven is a Next.js-based SaaS platform for entity and content management with dy
 
 **Core:**
 
--   Next.js 15.3.4 (App Router) + React 19 + TypeScript 5
--   Tailwind CSS 4 + shadcn/ui (Radix primitives)
+- Next.js 15.3.4 (App Router) + React 19 + TypeScript 5
+- Tailwind CSS 4 + shadcn/ui (Radix primitives)
 
 **State Management:**
 
--   Zustand 5.0.8 (client state, stores)
--   TanStack Query 5.81.2 (server state, caching, mutations)
--   React Hook Form 7.58.1 + Zod 3.25.67 (forms & validation)
+- Zustand 5.0.8 (client state, stores)
+- TanStack Query 5.81.2 (server state, caching, mutations)
+- React Hook Form 7.58.1 + Zod 3.25.67 (forms & validation)
 
 **Key Dependencies:**
 
--   Gridstack 12.3.3 (drag-and-drop grid layouts)
--   XYFlow 12.10.0 (node-based UI/graphs)
--   Framer Motion 12.23.24 (animations)
--   Supabase 2.50.0 (auth & backend)
--   OpenAPI TypeScript 7.8.0 (type generation)
+- Gridstack 12.3.3 (drag-and-drop grid layouts)
+- XYFlow 12.10.0 (node-based UI/graphs)
+- Framer Motion 12.23.24 (animations)
+- Supabase 2.50.0 (auth & backend)
+- OpenAPI TypeScript 7.8.0 (type generation)
 
 **Dev Tools:**
 
--   Jest 29.7.0 + Testing Library
--   ESLint + Docker
+- Jest 29.7.0 + Testing Library
+- ESLint + Docker
 
 ## 3. Architecture
 
@@ -89,8 +89,8 @@ feature-name/
 
 **Key modules:**
 
--   **blocks/** - Flexible content composition with drag-and-drop grid layouts, nested block hierarchies, entity references, form widgets, portal-based rendering
--   **entity/** - Dynamic schema management with attributes, bidirectional relationships, cardinality constraints, impact analysis
+- **blocks/** - Flexible content composition with drag-and-drop grid layouts, nested block hierarchies, entity references, form widgets, portal-based rendering
+- **entity/** - Dynamic schema management with attributes, bidirectional relationships, cardinality constraints, impact analysis
 
 ## 4. Development Commands
 
@@ -109,19 +109,19 @@ npm run types        # Generate TypeScript types from OpenAPI (http://localhost:
 
 **Files:**
 
--   Components: `kebab-case.tsx` (e.g., `entity-type-header.tsx`)
--   Utilities: `kebab-case.util.ts`
--   Services: `kebab-case.service.ts`
--   Hooks: `use-kebab-case.ts`
--   Stores: `kebab-case.store.ts`
--   Interfaces: `kebab-case.interface.ts`
+- Components: `kebab-case.tsx` (e.g., `entity-type-header.tsx`)
+- Utilities: `kebab-case.util.ts`
+- Services: `kebab-case.service.ts`
+- Hooks: `use-kebab-case.ts`
+- Stores: `kebab-case.store.ts`
+- Interfaces: `kebab-case.interface.ts`
 
 **Code:**
 
--   Components: `PascalCase`
--   Hooks: `use{Name}` prefix
--   Props interfaces: `{ComponentName}Props`
--   Types/Interfaces: `PascalCase`
+- Components: `PascalCase`
+- Hooks: `use{Name}` prefix
+- Props interfaces: `{ComponentName}Props`
+- Types/Interfaces: `PascalCase`
 
 ### Common Patterns
 
@@ -129,11 +129,11 @@ npm run types        # Generate TypeScript types from OpenAPI (http://localhost:
 
 ```typescript
 // lib/types/types.ts - generated from OpenAPI spec
-import { components } from "@/lib/types/types";
+import { components } from '@/lib/types/types';
 
 // feature-modules/entity/interface/entity.interface.ts - semantic re-exports
-export type EntityType = components["schemas"]["EntityType"];
-export type EntityRelationshipDefinition = components["schemas"]["EntityRelationshipDefinition"];
+export type EntityType = components['schemas']['EntityType'];
+export type EntityRelationshipDefinition = components['schemas']['EntityRelationshipDefinition'];
 ```
 
 **Always use re-exported types from feature interfaces, never import directly from lib/types.**
@@ -142,65 +142,62 @@ export type EntityRelationshipDefinition = components["schemas"]["EntityRelation
 
 ```typescript
 export class EntityTypeService {
-    static async getEntityTypes(
-        session: Session | null,
-        workspaceId: string
-    ): Promise<EntityType[]> {
-        validateSession(session);
-        validateUuid(workspaceId);
+  static async getEntityTypes(session: Session | null, workspaceId: string): Promise<EntityType[]> {
+    validateSession(session);
+    validateUuid(workspaceId);
 
-        const response = await fetch(`/api/organisations/${workspaceId}/entity-types`, {
-            headers: { Authorization: `Bearer ${session.access_token}` },
-        });
+    const response = await fetch(`/api/organisations/${workspaceId}/entity-types`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
 
-        if (response.ok) return await response.json();
-        throw await handleError(response, (res) => `Failed to fetch: ${res.status}`);
-    }
+    if (response.ok) return await response.json();
+    throw await handleError(response, (res) => `Failed to fetch: ${res.status}`);
+  }
 }
 ```
 
 **Pattern:**
 
--   Static methods for all service operations
--   Always validate session and UUIDs first
--   Use `handleError` utility for consistent error handling
--   Return typed responses from OpenAPI schemas
+- Static methods for all service operations
+- Always validate session and UUIDs first
+- Use `handleError` utility for consistent error handling
+- Return typed responses from OpenAPI schemas
 
 #### 3. TanStack Query Hooks
 
 ```typescript
 export function useSaveDefinitionMutation(
-    workspaceId: string,
-    options?: UseMutationOptions<EntityTypeImpactResponse, Error, SaveTypeDefinitionRequest>
+  workspaceId: string,
+  options?: UseMutationOptions<EntityTypeImpactResponse, Error, SaveTypeDefinitionRequest>,
 ) {
-    const queryClient = useQueryClient();
-    const { session } = useAuth();
-    const submissionToastRef = useRef<string | number | undefined>(undefined);
+  const queryClient = useQueryClient();
+  const { session } = useAuth();
+  const submissionToastRef = useRef<string | number | undefined>(undefined);
 
-    return useMutation({
-        mutationFn: (definition) =>
-            EntityTypeService.saveEntityTypeDefinition(session, workspaceId, definition),
-        onMutate: () => {
-            submissionToastRef.current = toast.loading("Saving...");
-        },
-        onSuccess: (response) => {
-            toast.success("Saved successfully!", { id: submissionToastRef.current });
-            queryClient.setQueryData(["entityType", workspaceId, response.key], response);
-        },
-        onError: (error) => {
-            toast.error(`Failed: ${error.message}`, { id: submissionToastRef.current });
-        },
-        ...options,
-    });
+  return useMutation({
+    mutationFn: (definition) =>
+      EntityTypeService.saveEntityTypeDefinition(session, workspaceId, definition),
+    onMutate: () => {
+      submissionToastRef.current = toast.loading('Saving...');
+    },
+    onSuccess: (response) => {
+      toast.success('Saved successfully!', { id: submissionToastRef.current });
+      queryClient.setQueryData(['entityType', workspaceId, response.key], response);
+    },
+    onError: (error) => {
+      toast.error(`Failed: ${error.message}`, { id: submissionToastRef.current });
+    },
+    ...options,
+  });
 }
 ```
 
 **Pattern:**
 
--   Encapsulate mutation logic with toast notifications
--   Update/invalidate cache on success
--   Toast refs for loading → success/error transitions
--   Allow options override for custom behavior
+- Encapsulate mutation logic with toast notifications
+- Update/invalidate cache on success
+- Toast refs for loading → success/error transitions
+- Allow options override for custom behavior
 
 #### 4. Zustand Stores with Context
 
@@ -248,29 +245,29 @@ export const useEntityTypeConfigurationStore = <T,>(
 
 **Pattern:**
 
--   Factory function creates scoped store instances
--   Provider wraps components needing access
--   Selector-based hooks for performance
--   `subscribeWithSelector` enables fine-grained subscriptions
--   Store refs in provider prevent recreation
+- Factory function creates scoped store instances
+- Provider wraps components needing access
+- Selector-based hooks for performance
+- `subscribeWithSelector` enables fine-grained subscriptions
+- Store refs in provider prevent recreation
 
 #### 5. React Hook Form
 
 ```typescript
 const form = useForm<EntityTypeFormValues>({
-    resolver: zodResolver(entityTypeFormSchema),
-    defaultValues: {
-        /* ... */
-    },
-    mode: "onBlur", // Validate on blur
+  resolver: zodResolver(entityTypeFormSchema),
+  defaultValues: {
+    /* ... */
+  },
+  mode: 'onBlur', // Validate on blur
 });
 ```
 
 **Pattern:**
 
--   Zod schema validation via `zodResolver`
--   Appropriate validation mode (onBlur, onChange, onSubmit)
--   Type-safe form values from schema
+- Zod schema validation via `zodResolver`
+- Appropriate validation mode (onBlur, onChange, onSubmit)
+- Type-safe form values from schema
 
 #### 6. Portal-Based Rendering (Blocks)
 
@@ -302,21 +299,21 @@ export const RenderElementProvider: FC<ProviderProps> = ({ wrapElement }) => {
 
 **Pattern:**
 
--   React portals render content into grid containers
--   Each widget has isolated context
--   Container management via hooks
--   Gridstack integration for positioning
+- React portals render content into grid containers
+- Each widget has isolated context
+- Container management via hooks
+- Gridstack integration for positioning
 
 #### 7. Type Guards & Discriminated Unions
 
 ```typescript
-export const isContentMetadata = (payload: Block["payload"]): payload is BlockContentMetadata =>
-    payload?.type === BlockMetadataType.CONTENT;
+export const isContentMetadata = (payload: Block['payload']): payload is BlockContentMetadata =>
+  payload?.type === BlockMetadataType.CONTENT;
 
 // Usage with type narrowing
 if (isContentMetadata(node.block.payload)) {
-    // TypeScript knows payload is BlockContentMetadata
-    const config = node.block.payload.listConfig;
+  // TypeScript knows payload is BlockContentMetadata
+  const config = node.block.payload.listConfig;
 }
 ```
 
@@ -327,20 +324,20 @@ if (isContentMetadata(node.block.payload)) {
 ```typescript
 // Centralized error utilities (lib/util/error/)
 export async function handleError(
-    response: Response,
-    message: (response: Response) => string
+  response: Response,
+  message: (response: Response) => string,
 ): Promise<ResponseError> {
-    let errorData;
-    try {
-        errorData = await response.json();
-    } catch {
-        errorData = {
-            message: message(response),
-            status: response.status,
-            error: "SERVER_ERROR",
-        };
-    }
-    return fromError(errorData);
+  let errorData;
+  try {
+    errorData = await response.json();
+  } catch {
+    errorData = {
+      message: message(response),
+      status: response.status,
+      error: 'SERVER_ERROR',
+    };
+  }
+  return fromError(errorData);
 }
 
 // Usage in services
@@ -350,10 +347,10 @@ throw await handleError(response, (res) => `Failed: ${res.status} ${res.statusTe
 
 **Pattern:**
 
--   Always use `handleError` for fetch responses
--   Provide context-specific error messages
--   Let errors propagate to mutation hooks
--   Display errors via toast notifications
+- Always use `handleError` for fetch responses
+- Provide context-specific error messages
+- Let errors propagate to mutation hooks
+- Display errors via toast notifications
 
 #### 9. Form Management Patterns
 
@@ -364,40 +361,40 @@ throw await handleError(response, (res) => `Failed: ${res.status} ${res.statusTe
 ```typescript
 // hooks/form/use-relationship-form.ts
 export interface UseEntityRelationshipFormReturn {
-    form: UseFormReturn<RelationshipFormValues>;
-    handleSubmit: (values: RelationshipFormValues) => void;
-    handleReset: () => void;
-    mode: "create" | "edit";
+  form: UseFormReturn<RelationshipFormValues>;
+  handleSubmit: (values: RelationshipFormValues) => void;
+  handleReset: () => void;
+  mode: 'create' | 'edit';
 }
 
 export function useEntityTypeRelationshipForm(
-    workspaceId: string,
-    type: EntityType,
-    open: boolean,
-    onSave: () => void,
-    onCancel: () => void,
-    relationship?: EntityRelationshipDefinition
+  workspaceId: string,
+  type: EntityType,
+  open: boolean,
+  onSave: () => void,
+  onCancel: () => void,
+  relationship?: EntityRelationshipDefinition,
 ): UseEntityRelationshipFormReturn {
-    const form = useForm<RelationshipFormValues>({
-        resolver: zodResolver(relationFormSchema),
-        defaultValues: {
-            /* ... */
-        },
-    });
+  const form = useForm<RelationshipFormValues>({
+    resolver: zodResolver(relationFormSchema),
+    defaultValues: {
+      /* ... */
+    },
+  });
 
-    const { mutateAsync: saveDefinition } = useSaveDefinitionMutation(workspaceId, {
-        onSuccess: () => onSave(),
-    });
+  const { mutateAsync: saveDefinition } = useSaveDefinitionMutation(workspaceId, {
+    onSuccess: () => onSave(),
+  });
 
-    const handleSubmit = useCallback(
-        async (values: RelationshipFormValues) => {
-            // Transform and submit data
-            await saveDefinition(request);
-        },
-        [relationship, type]
-    );
+  const handleSubmit = useCallback(
+    async (values: RelationshipFormValues) => {
+      // Transform and submit data
+      await saveDefinition(request);
+    },
+    [relationship, type],
+  );
 
-    return { form, handleSubmit, handleReset: onCancel, mode: relationship ? "edit" : "create" };
+  return { form, handleSubmit, handleReset: onCancel, mode: relationship ? 'edit' : 'create' };
 }
 ```
 
@@ -451,8 +448,8 @@ export const useConfigForm = () => {
 
 **When to use each pattern:**
 
--   **Form Hook:** Modal forms, isolated components, single-level usage, simple workflows
--   **Context Provider:** Multi-step forms, forms with nested components at different levels, global state needed
+- **Form Hook:** Modal forms, isolated components, single-level usage, simple workflows
+- **Context Provider:** Multi-step forms, forms with nested components at different levels, global state needed
 
 ## 6. Key Domain Concepts
 
@@ -462,24 +459,24 @@ export const useConfigForm = () => {
 
 **Entity Types:**
 
--   User-defined schemas (e.g., Client, Project, Invoice)
--   Custom attributes with validation
--   Bidirectional relationships with cardinality constraints
--   Icon, color, and identifier key configuration
+- User-defined schemas (e.g., Client, Project, Invoice)
+- Custom attributes with validation
+- Bidirectional relationships with cardinality constraints
+- Icon, color, and identifier key configuration
 
 **Attributes:**
 
--   UUID-based with SchemaUUID references
--   Data types: string, number, boolean, date, enum
--   Constraints: required, unique, min/max length
--   Protected attributes (cannot be deleted)
+- UUID-based with SchemaUUID references
+- Data types: string, number, boolean, date, enum
+- Constraints: required, unique, min/max length
+- Protected attributes (cannot be deleted)
 
 **Relationships:**
 
--   Bidirectional with automatic inverse creation
--   Cardinality: ONE_TO_ONE, ONE_TO_MANY, MANY_TO_ONE, MANY_TO_MANY
--   Polymorphic (multiple target types)
--   Overlap detection prevents conflicts
+- Bidirectional with automatic inverse creation
+- Cardinality: ONE_TO_ONE, ONE_TO_MANY, MANY_TO_ONE, MANY_TO_MANY
+- Polymorphic (multiple target types)
+- Overlap detection prevents conflicts
 
 **Configuration Flow:**
 
@@ -492,8 +489,8 @@ export const useConfigForm = () => {
 
 **Critical Features:**
 
--   **Impact Analysis:** Server performs dry-run before schema changes
--   **Dirty Tracking:** Visual indicators show unsaved changes
+- **Impact Analysis:** Server performs dry-run before schema changes
+- **Dirty Tracking:** Visual indicators show unsaved changes
 
 ### Block System
 
@@ -501,10 +498,10 @@ export const useConfigForm = () => {
 
 **Blocks:**
 
--   Fundamental content units with type definitions
--   Content blocks (user data) or reference blocks (entity/block references)
--   Support nested children based on type configuration
--   Grid-based positioning with drag-and-drop
+- Fundamental content units with type definitions
+- Content blocks (user data) or reference blocks (entity/block references)
+- Support nested children based on type configuration
+- Grid-based positioning with drag-and-drop
 
 **Block Metadata Types:**
 
@@ -525,9 +522,9 @@ Registry pattern for input types (text, email, phone, dropdown, file upload, etc
 
 ```typescript
 export const formWidgetRegistry: Record<string, WidgetMetadata> = {
-    text_input: { component: TextInputWidget, defaultValue: "" },
-    dropdown: { component: DropdownWidget, defaultValue: null },
-    // ...
+  text_input: { component: TextInputWidget, defaultValue: '' },
+  dropdown: { component: DropdownWidget, defaultValue: null },
+  // ...
 };
 
 const Widget = formWidgetRegistry[fieldConfig.type].component;
@@ -539,9 +536,9 @@ const Widget = formWidgetRegistry[fieldConfig.type].component;
 
 ```typescript
 interface RelationshipOverlap {
-    existingRelationship: EntityRelationshipDefinition;
-    newRelationship: EntityRelationshipDefinition;
-    conflictType: "INVERSE_EXISTS" | "DUPLICATE" | "CARDINALITY_CONFLICT";
+  existingRelationship: EntityRelationshipDefinition;
+  newRelationship: EntityRelationshipDefinition;
+  conflictType: 'INVERSE_EXISTS' | 'DUPLICATE' | 'CARDINALITY_CONFLICT';
 }
 ```
 
@@ -558,10 +555,10 @@ interface RelationshipOverlap {
 
 ```typescript
 interface EntityTypeImpactResponse {
-    success: boolean;
-    updatedEntityTypes?: Record<string, EntityType>;
-    affectedEntities?: number;
-    warnings?: string[];
+  success: boolean;
+  updatedEntityTypes?: Record<string, EntityType>;
+  affectedEntities?: number;
+  warnings?: string[];
 }
 ```
 
@@ -578,10 +575,10 @@ interface EntityTypeImpactResponse {
 
 **Organisation-scoped resources:**
 
--   All major features scoped to organisation ID
--   Route pattern: `/dashboard/organisation/[workspaceId]/{feature}`
--   Entity types, blocks, members isolated per org
--   Subscription and usage tracking per org
+- All major features scoped to organisation ID
+- Route pattern: `/dashboard/organisation/[workspaceId]/{feature}`
+- Entity types, blocks, members isolated per org
+- Subscription and usage tracking per org
 
 ## Development Gotchas
 
@@ -632,10 +629,10 @@ interface EntityTypeImpactResponse {
 
 When making significant changes:
 
--   **New dependencies:** Update Tech Stack section
--   **Architectural shifts:** Update Architecture section
--   **New conventions:** Update Code Conventions section
--   **Domain changes:** Update Key Domain Concepts section
--   **New gotchas:** Add to Development Gotchas section
+- **New dependencies:** Update Tech Stack section
+- **Architectural shifts:** Update Architecture section
+- **New conventions:** Update Code Conventions section
+- **Domain changes:** Update Key Domain Concepts section
+- **New gotchas:** Add to Development Gotchas section
 
 Keep this file accurate and concise - it's a reference for AI assistants and new developers.

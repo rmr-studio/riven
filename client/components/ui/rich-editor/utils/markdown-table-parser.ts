@@ -1,4 +1,4 @@
-import { StructuralNode, TextNode } from "../types"
+import { StructuralNode, TextNode } from '../types';
 
 /**
  * Parse markdown table string into table structure
@@ -11,150 +11,147 @@ import { StructuralNode, TextNode } from "../types"
  * ```
  */
 export function parseMarkdownTable(markdown: string): {
-  success: boolean
-  table?: StructuralNode
-  error?: string
+  success: boolean;
+  table?: StructuralNode;
+  error?: string;
 } {
   try {
     // Split into lines and remove empty lines
     const lines = markdown
       .trim()
-      .split("\n")
+      .split('\n')
       .map((line) => line.trim())
-      .filter((line) => line.length > 0)
+      .filter((line) => line.length > 0);
 
     if (lines.length < 2) {
       return {
         success: false,
-        error: "Table must have at least a header row and separator row",
-      }
+        error: 'Table must have at least a header row and separator row',
+      };
     }
 
     // Parse header row
-    const headerLine = lines[0]
-    if (!headerLine.startsWith("|") || !headerLine.endsWith("|")) {
+    const headerLine = lines[0];
+    if (!headerLine.startsWith('|') || !headerLine.endsWith('|')) {
       return {
         success: false,
-        error: "Table rows must start and end with |",
-      }
+        error: 'Table rows must start and end with |',
+      };
     }
 
     const headerCells = headerLine
-      .split("|")
+      .split('|')
       .slice(1, -1) // Remove first and last empty strings
-      .map((cell) => cell.trim())
+      .map((cell) => cell.trim());
 
     if (headerCells.length === 0) {
       return {
         success: false,
-        error: "Header row must have at least one column",
-      }
+        error: 'Header row must have at least one column',
+      };
     }
 
     // Check separator row
-    const separatorLine = lines[1]
-    if (!separatorLine.includes("---") && !separatorLine.includes("-")) {
+    const separatorLine = lines[1];
+    if (!separatorLine.includes('---') && !separatorLine.includes('-')) {
       return {
         success: false,
-        error: "Second row must be a separator (e.g., |---|---|)",
-      }
+        error: 'Second row must be a separator (e.g., |---|---|)',
+      };
     }
 
     // Parse body rows
-    const bodyLines = lines.slice(2)
-    const numCols = headerCells.length
+    const bodyLines = lines.slice(2);
+    const numCols = headerCells.length;
 
     // Validate all rows have same number of columns
     for (let i = 0; i < bodyLines.length; i++) {
       const cells = bodyLines[i]
-        .split("|")
+        .split('|')
         .slice(1, -1)
-        .map((cell) => cell.trim())
+        .map((cell) => cell.trim());
 
       if (cells.length !== numCols) {
         return {
           success: false,
           error: `Row ${i + 3} has ${cells.length} columns, expected ${numCols}`,
-        }
+        };
       }
     }
 
-    const timestamp = Date.now()
+    const timestamp = Date.now();
 
     // Create header cells
     const headerCellNodes: TextNode[] = headerCells.map((content, idx) => ({
       id: `th-${timestamp}-${idx}`,
-      type: "th",
-      content: content || "",
+      type: 'th',
+      content: content || '',
       attributes: {},
-    }))
+    }));
 
     // Create header row
     const headerRow: StructuralNode = {
       id: `tr-header-${timestamp}`,
-      type: "tr",
+      type: 'tr',
       children: headerCellNodes,
       attributes: {},
-    }
+    };
 
     // Create thead
     const thead: StructuralNode = {
       id: `thead-${timestamp}`,
-      type: "thead",
+      type: 'thead',
       children: [headerRow],
       attributes: {},
-    }
+    };
 
     // Create body rows
     const bodyRows: StructuralNode[] = bodyLines.map((line, rowIdx) => {
       const cells = line
-        .split("|")
+        .split('|')
         .slice(1, -1)
-        .map((cell) => cell.trim())
+        .map((cell) => cell.trim());
 
       const cellNodes: TextNode[] = cells.map((content, colIdx) => ({
         id: `td-${timestamp}-${rowIdx}-${colIdx}`,
-        type: "td",
-        content: content || "",
+        type: 'td',
+        content: content || '',
         attributes: {},
-      }))
+      }));
 
       return {
         id: `tr-${timestamp}-${rowIdx}`,
-        type: "tr",
+        type: 'tr',
         children: cellNodes,
         attributes: {},
-      }
-    })
+      };
+    });
 
     // Create tbody
     const tbody: StructuralNode = {
       id: `tbody-${timestamp}`,
-      type: "tbody",
+      type: 'tbody',
       children: bodyRows,
       attributes: {},
-    }
+    };
 
     // Create table
     const table: StructuralNode = {
       id: `table-${timestamp}`,
-      type: "table",
+      type: 'table',
       children: [thead, tbody],
       attributes: {},
-    }
+    };
 
     return {
       success: true,
       table,
-    }
+    };
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to parse markdown table",
-    }
+      error: error instanceof Error ? error.message : 'Failed to parse markdown table',
+    };
   }
 }
 
@@ -164,18 +161,15 @@ export function parseMarkdownTable(markdown: string): {
 export function isMarkdownTable(text: string): boolean {
   const lines = text
     .trim()
-    .split("\n")
-    .filter((line) => line.trim().length > 0)
+    .split('\n')
+    .filter((line) => line.trim().length > 0);
 
-  if (lines.length < 2) return false
+  if (lines.length < 2) return false;
 
   // Check if first line has pipes
-  if (!lines[0].includes("|")) return false
+  if (!lines[0].includes('|')) return false;
 
   // Check if second line is separator
-  const secondLine = lines[1]
-  return (
-    secondLine.includes("---") ||
-    (secondLine.includes("-") && secondLine.includes("|"))
-  )
+  const secondLine = lines[1];
+  return secondLine.includes('---') || (secondLine.includes('-') && secondLine.includes('|'));
 }

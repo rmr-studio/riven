@@ -1,14 +1,14 @@
-import { TextNode } from "../../types"
-import { getTypeClassName } from "./block-utils"
+import { TextNode } from '../../types';
+import { getTypeClassName } from './block-utils';
 
 interface BlockStyleParams {
-  textNode: TextNode
-  className: string
-  readOnly: boolean
-  isActive: boolean
-  isListItem: boolean
-  isFirstBlock: boolean
-  notionBased: boolean
+  textNode: TextNode;
+  className: string;
+  readOnly: boolean;
+  isActive: boolean;
+  isListItem: boolean;
+  isFirstBlock: boolean;
+  notionBased: boolean;
 }
 
 /**
@@ -25,7 +25,7 @@ export function buildBlockClassName({
 }: BlockStyleParams): string {
   const parts = [
     // List item positioning
-    isListItem ? "relative" : "",
+    isListItem ? 'relative' : '',
 
     // Type-specific styles (h1, h2, p, etc.)
     getTypeClassName(textNode.type),
@@ -34,24 +34,24 @@ export function buildBlockClassName({
     className,
 
     // Editor mode styles
-    readOnly ? "" : "outline-none",
+    readOnly ? '' : 'outline-none',
 
     // Spacing based on type
     getBlockSpacing(textNode.type, isListItem),
 
     // Notion-style first block spacing
-    notionBased && isFirstBlock && textNode.type === "h1" ? "mt-8 pb-12" : "",
+    notionBased && isFirstBlock && textNode.type === 'h1' ? 'mt-8 pb-12' : '',
 
     // Transitions
-    "transition-all",
+    'transition-all',
 
     // Active/hover states
-    !readOnly && isActive ? "border-b bg-accent/5" : "",
-    !readOnly ? "hover:bg-accent/5" : "",
-    readOnly ? "cursor-default" : "",
-  ]
+    !readOnly && isActive ? 'border-b bg-accent/5' : '',
+    !readOnly ? 'hover:bg-accent/5' : '',
+    readOnly ? 'cursor-default' : '',
+  ];
 
-  return parts.filter(Boolean).join(" ")
+  return parts.filter(Boolean).join(' ');
 }
 
 /**
@@ -59,14 +59,14 @@ export function buildBlockClassName({
  */
 function getBlockSpacing(nodeType: string, isListItem: boolean): string {
   if (isListItem) {
-    return "px-3 py-0.5 mb-0.5"
+    return 'px-3 py-0.5 mb-0.5';
   }
 
-  if (nodeType.startsWith("h")) {
-    return "px-3 py-1"
+  if (nodeType.startsWith('h')) {
+    return 'px-3 py-1';
   }
 
-  return "px-3 py-1 mb-1"
+  return 'px-3 py-1 mb-1';
 }
 
 /**
@@ -76,35 +76,29 @@ export function buildBlockStyles(
   depth: number,
   isListItem: boolean,
   textColor: string,
-  backgroundColor?: string
+  backgroundColor?: string,
 ): React.CSSProperties {
   return {
     marginLeft: isListItem ? `${depth * 0.5 + 1.5}rem` : `${depth * 0.5}rem`,
     ...(textColor ? { color: textColor } : {}),
     ...(backgroundColor ? { backgroundColor } : {}),
-  }
+  };
 }
 
 /**
  * Parse custom className to extract color and class
  */
 export function parseCustomClassName(
-  customClassName:
-    | string
-    | number
-    | boolean
-    | Record<string, string>
-    | undefined
+  customClassName: string | number | boolean | Record<string, string> | undefined,
 ): {
-  textColor: string
-  className: string
+  textColor: string;
+  className: string;
 } {
-  const classNameStr =
-    typeof customClassName === "string" ? customClassName : ""
-  const isHexColor = classNameStr.startsWith("#")
+  const classNameStr = typeof customClassName === 'string' ? customClassName : '';
+  const isHexColor = classNameStr.startsWith('#');
 
   return {
-    textColor: isHexColor ? classNameStr : "",
-    className: isHexColor ? "" : classNameStr,
-  }
+    textColor: isHexColor ? classNameStr : '',
+    className: isHexColor ? '' : classNameStr,
+  };
 }

@@ -1,7 +1,7 @@
-import { WorkspaceDashboard } from "@/components/feature-modules/workspace/dashboard/workspace-dashboard";
+import { WorkspaceDashboard } from '@/components/feature-modules/workspace/dashboard/workspace-dashboard';
 
 const Workspace = () => {
-    return <WorkspaceDashboard />;
+  return <WorkspaceDashboard />;
 };
 
 export default Workspace;

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext } from 'react';
 
 /**
  * PanelWrapperContext - Eliminates prop drilling between PanelWrapper and PanelToolbar
@@ -16,40 +16,40 @@ import React, { createContext, useContext } from "react";
  * - Easier to add new features without prop drilling
  */
 export interface PanelWrapperContextValue {
-    // Block identity
-    id: string;
+  // Block identity
+  id: string;
 
-    // Menu/modal state
-    isQuickOpen: boolean;
-    setQuickOpen: (open: boolean) => void;
-    isInlineMenuOpen: boolean;
-    setInlineMenuOpen: (open: boolean) => void;
-    isDetailsOpen: boolean;
-    setDetailsOpen: (open: boolean) => void;
-    isActionsOpen: boolean;
-    setActionsOpen: (open: boolean) => void;
+  // Menu/modal state
+  isQuickOpen: boolean;
+  setQuickOpen: (open: boolean) => void;
+  isInlineMenuOpen: boolean;
+  setInlineMenuOpen: (open: boolean) => void;
+  isDetailsOpen: boolean;
+  setDetailsOpen: (open: boolean) => void;
+  isActionsOpen: boolean;
+  setActionsOpen: (open: boolean) => void;
 
-    // Title management
-    draftTitle: string;
-    setDraftTitle: (title: string) => void;
-    onTitleChange?: (value: string) => void;
-    titlePlaceholder: string;
+  // Title management
+  draftTitle: string;
+  setDraftTitle: (title: string) => void;
+  onTitleChange?: (value: string) => void;
+  titlePlaceholder: string;
 
-    // Toolbar state
-    toolbarFocusIndex: number;
-    setToolbarFocusIndex: (index: number | ((prev: number) => number)) => void;
+  // Toolbar state
+  toolbarFocusIndex: number;
+  setToolbarFocusIndex: (index: number | ((prev: number) => number)) => void;
 
-    // Configuration
-    allowInsert: boolean;
-    hasMenuActions: boolean;
-    description?: string;
+  // Configuration
+  allowInsert: boolean;
+  hasMenuActions: boolean;
+  description?: string;
 
-    // Derived state
-    shouldHighlight: boolean;
+  // Derived state
+  shouldHighlight: boolean;
 
-    // Edit mode state
-    isEditMode: boolean;
-    hasChildren: boolean;
+  // Edit mode state
+  isEditMode: boolean;
+  hasChildren: boolean;
 }
 
 const PanelWrapperContext = createContext<PanelWrapperContextValue | null>(null);
@@ -61,10 +61,10 @@ const PanelWrapperContext = createContext<PanelWrapperContextValue | null>(null)
  * Pattern: Similar to how RenderElementProvider wraps content internally
  */
 export const PanelWrapperProvider: React.FC<{
-    value: PanelWrapperContextValue;
-    children: React.ReactNode;
+  value: PanelWrapperContextValue;
+  children: React.ReactNode;
 }> = ({ value, children }) => {
-    return <PanelWrapperContext.Provider value={value}>{children}</PanelWrapperContext.Provider>;
+  return <PanelWrapperContext.Provider value={value}>{children}</PanelWrapperContext.Provider>;
 };
 
 /**
@@ -75,9 +75,9 @@ export const PanelWrapperProvider: React.FC<{
  * Throws error if used outside PanelWrapperProvider (follows established pattern)
  */
 export function usePanelWrapperContext(): PanelWrapperContextValue {
-    const context = useContext(PanelWrapperContext);
-    if (!context) {
-        throw new Error("usePanelWrapperContext must be used within PanelWrapperProvider");
-    }
-    return context;
+  const context = useContext(PanelWrapperContext);
+  if (!context) {
+    throw new Error('usePanelWrapperContext must be used within PanelWrapperProvider');
+  }
+  return context;
 }

@@ -1,10 +1,4 @@
-import {
-  ContainerNode,
-  EditorState,
-  hasInlineChildren,
-  isTextNode,
-  TextNode,
-} from "../../types"
+import { ContainerNode, EditorState, hasInlineChildren, isTextNode, TextNode } from '../../types';
 import {
   cloneNode,
   deleteNodeById,
@@ -12,13 +6,13 @@ import {
   insertNode,
   moveNode,
   updateNodeById,
-} from "../../utils/tree-operations"
-import { EditorAction } from "./actions"
+} from '../../utils/tree-operations';
+import { EditorAction } from './actions';
 
 /**
  * Maximum number of history states to keep
  */
-const MAX_HISTORY_SIZE = 100
+const MAX_HISTORY_SIZE = 100;
 
 /**
  * NOTE: We removed the deepCloneContainer function that was here before.
@@ -38,18 +32,15 @@ const MAX_HISTORY_SIZE = 100
  *
  * TEMPORARY: History disabled - directly update current state without tracking
  */
-function addToHistory(
-  state: EditorState,
-  newContainer: ContainerNode
-): EditorState {
+function addToHistory(state: EditorState, newContainer: ContainerNode): EditorState {
   // HISTORY DISABLED: Update current position instead of adding to history
-  const newHistory = [...state.history]
-  newHistory[state.historyIndex] = newContainer
+  const newHistory = [...state.history];
+  newHistory[state.historyIndex] = newContainer;
 
   return {
     ...state,
     history: newHistory,
-  }
+  };
 
   /* ORIGINAL CODE - RE-ENABLE TO RESTORE HISTORY:
   // No need to clone - the container is already immutable from tree operations
@@ -94,19 +85,12 @@ function addToHistory(
  * });
  * ```
  */
-export function editorReducer(
-  state: EditorState,
-  action: EditorAction
-): EditorState {
+export function editorReducer(state: EditorState, action: EditorAction): EditorState {
   switch (action.type) {
-    case "UPDATE_NODE": {
-      const { id, updates } = action.payload
-      const currentContainer = state.history[state.historyIndex]
-      const newContainer = updateNodeById(
-        currentContainer,
-        id,
-        () => updates
-      ) as ContainerNode
+    case 'UPDATE_NODE': {
+      const { id, updates } = action.payload;
+      const currentContainer = state.history[state.historyIndex];
+      const newContainer = updateNodeById(currentContainer, id, () => updates) as ContainerNode;
 
       return addToHistory(
         {
@@ -116,16 +100,16 @@ export function editorReducer(
             updatedAt: new Date().toISOString(),
           },
         },
-        newContainer
-      )
+        newContainer,
+      );
     }
 
-    case "UPDATE_ATTRIBUTES": {
-      const { id, attributes, merge = true } = action.payload
-      const currentContainer = state.history[state.historyIndex]
+    case 'UPDATE_ATTRIBUTES': {
+      const { id, attributes, merge = true } = action.payload;
+      const currentContainer = state.history[state.historyIndex];
       const newContainer = updateNodeById(currentContainer, id, (node) => ({
         attributes: merge ? { ...node.attributes, ...attributes } : attributes,
-      })) as ContainerNode
+      })) as ContainerNode;
 
       return addToHistory(
         {
@@ -135,20 +119,20 @@ export function editorReducer(
             updatedAt: new Date().toISOString(),
           },
         },
-        newContainer
-      )
+        newContainer,
+      );
     }
 
-    case "UPDATE_CONTENT": {
-      const { id, content } = action.payload
-      const currentContainer = state.history[state.historyIndex]
+    case 'UPDATE_CONTENT': {
+      const { id, content } = action.payload;
+      const currentContainer = state.history[state.historyIndex];
       const newContainer = updateNodeById(currentContainer, id, (node) => {
         if (isTextNode(node)) {
-          return { content }
+          return { content };
         }
-        console.warn(`Cannot update content of container node ${id}`)
-        return {}
-      }) as ContainerNode
+        console.warn(`Cannot update content of container node ${id}`);
+        return {};
+      }) as ContainerNode;
 
       return addToHistory(
         {
@@ -158,32 +142,30 @@ export function editorReducer(
             updatedAt: new Date().toISOString(),
           },
         },
-        newContainer
-      )
+        newContainer,
+      );
     }
 
-    case "DELETE_NODE": {
-      const { id } = action.payload
-      const currentContainer = state.history[state.historyIndex]
+    case 'DELETE_NODE': {
+      const { id } = action.payload;
+      const currentContainer = state.history[state.historyIndex];
 
       // Check if this is the only h1 header block in the root container
       const isH1Block = currentContainer.children.find((child) => {
         if (isTextNode(child)) {
-          const textChild = child as TextNode
-          return textChild.id === id && textChild.type === "h1"
+          const textChild = child as TextNode;
+          return textChild.id === id && textChild.type === 'h1';
         }
-        return false
-      })
+        return false;
+      });
 
       // If it's an h1 and it's the only child, don't delete - just clear content
       if (isH1Block && currentContainer.children.length === 1) {
-        console.warn(
-          "Cannot delete the last h1 header block. Clearing content instead."
-        )
+        console.warn('Cannot delete the last h1 header block. Clearing content instead.');
         const newContainer = updateNodeById(currentContainer, id, () => ({
-          content: "",
+          content: '',
           children: undefined,
-        })) as ContainerNode
+        })) as ContainerNode;
 
         return addToHistory(
           {
@@ -193,31 +175,31 @@ export function editorReducer(
               updatedAt: new Date().toISOString(),
             },
           },
-          newContainer
-        )
+          newContainer,
+        );
       }
 
-      const result = deleteNodeById(currentContainer, id)
+      const result = deleteNodeById(currentContainer, id);
 
       // If the root container was deleted, prevent it
       if (result === null) {
-        console.warn("Cannot delete the root container")
-        return state
+        console.warn('Cannot delete the root container');
+        return state;
       }
 
       // If after deletion there are no children left, create a default h1 header
-      const resultContainer = result as ContainerNode
+      const resultContainer = result as ContainerNode;
       if (resultContainer.children.length === 0) {
-        const timestamp = Date.now()
+        const timestamp = Date.now();
         const defaultNode: TextNode = {
           id: `h1-${timestamp}`,
-          type: "h1",
-          content: "",
+          type: 'h1',
+          content: '',
           attributes: {
-            placeholder: "New page",
+            placeholder: 'New page',
           },
-        }
-        resultContainer.children = [defaultNode]
+        };
+        resultContainer.children = [defaultNode];
 
         return addToHistory(
           {
@@ -228,8 +210,8 @@ export function editorReducer(
               updatedAt: new Date().toISOString(),
             },
           },
-          resultContainer
-        )
+          resultContainer,
+        );
       }
 
       return addToHistory(
@@ -240,19 +222,14 @@ export function editorReducer(
             updatedAt: new Date().toISOString(),
           },
         },
-        resultContainer
-      )
+        resultContainer,
+      );
     }
 
-    case "INSERT_NODE": {
-      const { node, targetId, position } = action.payload
-      const currentContainer = state.history[state.historyIndex]
-      const newContainer = insertNode(
-        currentContainer,
-        targetId,
-        node,
-        position
-      ) as ContainerNode
+    case 'INSERT_NODE': {
+      const { node, targetId, position } = action.payload;
+      const currentContainer = state.history[state.historyIndex];
+      const newContainer = insertNode(currentContainer, targetId, node, position) as ContainerNode;
 
       // Automatically set the newly inserted node as active for better UX
       // This ensures the node is focused immediately after insertion
@@ -265,19 +242,14 @@ export function editorReducer(
             updatedAt: new Date().toISOString(),
           },
         },
-        newContainer
-      )
+        newContainer,
+      );
     }
 
-    case "MOVE_NODE": {
-      const { nodeId, targetId, position } = action.payload
-      const currentContainer = state.history[state.historyIndex]
-      const newContainer = moveNode(
-        currentContainer,
-        nodeId,
-        targetId,
-        position
-      ) as ContainerNode
+    case 'MOVE_NODE': {
+      const { nodeId, targetId, position } = action.payload;
+      const currentContainer = state.history[state.historyIndex];
+      const newContainer = moveNode(currentContainer, nodeId, targetId, position) as ContainerNode;
 
       return addToHistory(
         {
@@ -287,38 +259,31 @@ export function editorReducer(
             updatedAt: new Date().toISOString(),
           },
         },
-        newContainer
-      )
+        newContainer,
+      );
     }
 
-    case "SWAP_NODES": {
-      const { nodeId1, nodeId2 } = action.payload
-      const currentContainer = state.history[state.historyIndex]
+    case 'SWAP_NODES': {
+      const { nodeId1, nodeId2 } = action.payload;
+      const currentContainer = state.history[state.historyIndex];
 
       // Find indices of both nodes
-      const index1 = currentContainer.children.findIndex(
-        (n) => n.id === nodeId1
-      )
-      const index2 = currentContainer.children.findIndex(
-        (n) => n.id === nodeId2
-      )
+      const index1 = currentContainer.children.findIndex((n) => n.id === nodeId1);
+      const index2 = currentContainer.children.findIndex((n) => n.id === nodeId2);
 
       // If either node not found, return current state
       if (index1 === -1 || index2 === -1) {
-        return state
+        return state;
       }
 
       // Clone container and swap positions
-      const newChildren = [...currentContainer.children]
-      ;[newChildren[index1], newChildren[index2]] = [
-        newChildren[index2],
-        newChildren[index1],
-      ]
+      const newChildren = [...currentContainer.children];
+      [newChildren[index1], newChildren[index2]] = [newChildren[index2], newChildren[index1]];
 
       const newContainer: ContainerNode = {
         ...currentContainer,
         children: newChildren,
-      }
+      };
 
       return addToHistory(
         {
@@ -328,25 +293,20 @@ export function editorReducer(
             updatedAt: new Date().toISOString(),
           },
         },
-        newContainer
-      )
+        newContainer,
+      );
     }
 
-    case "DUPLICATE_NODE": {
-      const { id, newId } = action.payload
-      const currentContainer = state.history[state.historyIndex]
+    case 'DUPLICATE_NODE': {
+      const { id, newId } = action.payload;
+      const currentContainer = state.history[state.historyIndex];
 
       // Clone the node with a new ID
-      const nodeToClone = updateNodeById(currentContainer, id, (node) => node)
-      const clonedNode = cloneNode(nodeToClone, newId)
+      const nodeToClone = updateNodeById(currentContainer, id, (node) => node);
+      const clonedNode = cloneNode(nodeToClone, newId);
 
       // Insert the cloned node after the original
-      const newContainer = insertNode(
-        currentContainer,
-        id,
-        clonedNode,
-        "after"
-      ) as ContainerNode
+      const newContainer = insertNode(currentContainer, id, clonedNode, 'after') as ContainerNode;
 
       return addToHistory(
         {
@@ -356,12 +316,12 @@ export function editorReducer(
             updatedAt: new Date().toISOString(),
           },
         },
-        newContainer
-      )
+        newContainer,
+      );
     }
 
-    case "REPLACE_CONTAINER": {
-      const { container } = action.payload
+    case 'REPLACE_CONTAINER': {
+      const { container } = action.payload;
 
       return addToHistory(
         {
@@ -371,146 +331,139 @@ export function editorReducer(
             updatedAt: new Date().toISOString(),
           },
         },
-        container
-      )
+        container,
+      );
     }
 
-    case "RESET": {
-      return createInitialState()
+    case 'RESET': {
+      return createInitialState();
     }
 
-    case "SET_STATE": {
-      const { state: newState } = action.payload
-      return newState
+    case 'SET_STATE': {
+      const { state: newState } = action.payload;
+      return newState;
     }
 
-    case "BATCH": {
-      const { actions } = action.payload
+    case 'BATCH': {
+      const { actions } = action.payload;
 
       // Apply all actions sequentially
       return actions.reduce(
         (currentState, batchAction) => editorReducer(currentState, batchAction),
-        state
-      )
+        state,
+      );
     }
 
-    case "SET_ACTIVE_NODE": {
-      const { nodeId } = action.payload
+    case 'SET_ACTIVE_NODE': {
+      const { nodeId } = action.payload;
       return {
         ...state,
         activeNodeId: nodeId,
-      }
+      };
     }
 
-    case "SET_SELECTION": {
-      const { hasSelection } = action.payload
+    case 'SET_SELECTION': {
+      const { hasSelection } = action.payload;
       return {
         ...state,
         hasSelection,
-      }
+      };
     }
 
-    case "INCREMENT_SELECTION_KEY": {
+    case 'INCREMENT_SELECTION_KEY': {
       return {
         ...state,
         selectionKey: state.selectionKey + 1,
-      }
+      };
     }
 
-    case "SET_CURRENT_SELECTION": {
-      const { selection } = action.payload
+    case 'SET_CURRENT_SELECTION': {
+      const { selection } = action.payload;
 
       return {
         ...state,
         currentSelection: selection,
         hasSelection: selection !== null,
-      }
+      };
     }
 
-    case "APPLY_INLINE_ELEMENT_TYPE": {
-      const { elementType } = action.payload
+    case 'APPLY_INLINE_ELEMENT_TYPE': {
+      const { elementType } = action.payload;
 
-      console.group("🎨 [APPLY_INLINE_ELEMENT_TYPE] Reducer executing")
+      console.group('🎨 [APPLY_INLINE_ELEMENT_TYPE] Reducer executing');
 
       if (!state.currentSelection) {
-        console.warn("❌ Cannot apply element type without active selection")
-        console.groupEnd()
-        return state
+        console.warn('❌ Cannot apply element type without active selection');
+        console.groupEnd();
+        return state;
       }
 
-      const { nodeId, start, end } = state.currentSelection
+      const { nodeId, start, end } = state.currentSelection;
 
-      const currentContainer = state.history[state.historyIndex]
-      const node = findNodeById(currentContainer, nodeId) as
-        | TextNode
-        | undefined
+      const currentContainer = state.history[state.historyIndex];
+      const node = findNodeById(currentContainer, nodeId) as TextNode | undefined;
 
       if (!node || !isTextNode(node)) {
-        console.warn("❌ Node not found or not a text node")
-        console.groupEnd()
-        return state
+        console.warn('❌ Node not found or not a text node');
+        console.groupEnd();
+        return state;
       }
 
       // Convert node to inline children if it's still plain content
-      const children = hasInlineChildren(node)
-        ? node.children!
-        : [{ content: node.content || "" }]
+      const children = hasInlineChildren(node) ? node.children! : [{ content: node.content || '' }];
 
       // Build new children array by splitting segments that overlap with selection
-      const newChildren: typeof node.children = []
-      let currentPos = 0
+      const newChildren: typeof node.children = [];
+      let currentPos = 0;
 
       for (const child of children) {
-        const childLength = (child.content || "").length
-        const childStart = currentPos
-        const childEnd = currentPos + childLength
+        const childLength = (child.content || '').length;
+        const childStart = currentPos;
+        const childEnd = currentPos + childLength;
 
         // Check overlap with selection [start, end)
         if (childEnd <= start || childStart >= end) {
           // No overlap - keep as is
-          newChildren.push({ ...child })
+          newChildren.push({ ...child });
         } else {
           // There's overlap - need to split this child
-          const overlapStart = Math.max(childStart, start)
-          const overlapEnd = Math.min(childEnd, end)
+          const overlapStart = Math.max(childStart, start);
+          const overlapEnd = Math.min(childEnd, end);
 
           // Before overlap (within this child)
           if (childStart < overlapStart) {
             newChildren.push({
               ...child,
               content: child.content!.substring(0, overlapStart - childStart),
-            })
+            });
           }
 
           // Overlapping part - apply the element type
           newChildren.push({
             ...child,
-            content: child.content!.substring(
-              overlapStart - childStart,
-              overlapEnd - childStart
-            ),
+            content: child.content!.substring(overlapStart - childStart, overlapEnd - childStart),
             elementType: elementType,
-          })
+          });
 
           // After overlap (within this child)
           if (childEnd > overlapEnd) {
             newChildren.push({
               ...child,
               content: child.content!.substring(overlapEnd - childStart),
-            })
+            });
           }
         }
 
-        currentPos = childEnd
+        currentPos = childEnd;
       }
 
       // Update the node in the tree
       const newContainer = updateNodeById(currentContainer, nodeId, () => ({
         content: undefined, // Clear simple content
         children: newChildren, // Set inline children
-      })) as ContainerNode
+      })) as ContainerNode;
 
-      console.groupEnd()
+      console.groupEnd();
 
       return addToHistory(
         {
@@ -520,94 +473,86 @@ export function editorReducer(
             updatedAt: new Date().toISOString(),
           },
         },
-        newContainer
-      )
+        newContainer,
+      );
     }
 
-    case "TOGGLE_FORMAT": {
-      const { format } = action.payload
+    case 'TOGGLE_FORMAT': {
+      const { format } = action.payload;
 
       if (!state.currentSelection) {
-        console.warn("❌ Cannot toggle format without active selection")
-        console.groupEnd()
-        return state
+        console.warn('❌ Cannot toggle format without active selection');
+        console.groupEnd();
+        return state;
       }
 
-      const { nodeId, start, end, formats } = state.currentSelection
+      const { nodeId, start, end, formats } = state.currentSelection;
 
-      const currentContainer = state.history[state.historyIndex]
-      const node = findNodeById(currentContainer, nodeId) as
-        | TextNode
-        | undefined
+      const currentContainer = state.history[state.historyIndex];
+      const node = findNodeById(currentContainer, nodeId) as TextNode | undefined;
 
       if (!node || !isTextNode(node)) {
-        console.warn("❌ Node not found or not a text node")
-        console.groupEnd()
-        return state
+        console.warn('❌ Node not found or not a text node');
+        console.groupEnd();
+        return state;
       }
 
-      const isActive = formats[format]
+      const isActive = formats[format];
 
       // Convert node to inline children if it's still plain content
-      const children = hasInlineChildren(node)
-        ? node.children!
-        : [{ content: node.content || "" }]
+      const children = hasInlineChildren(node) ? node.children! : [{ content: node.content || '' }];
 
       // Build new children array by splitting segments that overlap with selection
-      const newChildren: typeof node.children = []
-      let currentPos = 0
+      const newChildren: typeof node.children = [];
+      let currentPos = 0;
 
       for (const child of children) {
-        const childLength = (child.content || "").length
-        const childStart = currentPos
-        const childEnd = currentPos + childLength
+        const childLength = (child.content || '').length;
+        const childStart = currentPos;
+        const childEnd = currentPos + childLength;
 
         // Check overlap with selection [start, end)
         if (childEnd <= start || childStart >= end) {
           // No overlap - keep as is
-          newChildren.push({ ...child })
+          newChildren.push({ ...child });
         } else {
           // There's overlap - need to split this child
-          const overlapStart = Math.max(childStart, start)
-          const overlapEnd = Math.min(childEnd, end)
+          const overlapStart = Math.max(childStart, start);
+          const overlapEnd = Math.min(childEnd, end);
 
           // Before overlap (within this child)
           if (childStart < overlapStart) {
             newChildren.push({
               ...child,
               content: child.content!.substring(0, overlapStart - childStart),
-            })
+            });
           }
 
           // Overlapping part - toggle the format
           newChildren.push({
             ...child,
-            content: child.content!.substring(
-              overlapStart - childStart,
-              overlapEnd - childStart
-            ),
-            bold: format === "bold" ? !isActive : child.bold,
-            italic: format === "italic" ? !isActive : child.italic,
-            underline: format === "underline" ? !isActive : child.underline,
-            strikethrough:
-              format === "strikethrough" ? !isActive : child.strikethrough,
-            code: format === "code" ? !isActive : child.code,
-          })
+            content: child.content!.substring(overlapStart - childStart, overlapEnd - childStart),
+            bold: format === 'bold' ? !isActive : child.bold,
+            italic: format === 'italic' ? !isActive : child.italic,
+            underline: format === 'underline' ? !isActive : child.underline,
+            strikethrough: format === 'strikethrough' ? !isActive : child.strikethrough,
+            code: format === 'code' ? !isActive : child.code,
+          });
 
           // After overlap (within this child)
           if (childEnd > overlapEnd) {
             newChildren.push({
               ...child,
               content: child.content!.substring(overlapEnd - childStart),
-            })
+            });
           }
         }
 
-        currentPos = childEnd
+        currentPos = childEnd;
       }
 
       // Ensure there's always a text node at the end to allow cursor escape
-      const lastChild = newChildren[newChildren.length - 1]
+      const lastChild = newChildren[newChildren.length - 1];
       const hasFormatting =
         lastChild &&
         (lastChild.bold ||
@@ -615,18 +560,18 @@ export function editorReducer(
           lastChild.underline ||
           lastChild.strikethrough ||
           lastChild.code ||
-          lastChild.elementType)
+          lastChild.elementType);
 
       if (hasFormatting) {
         // Add non-breaking space for cursor positioning (regular space gets collapsed by browser)
-        newChildren.push({ content: "\u00A0" })
+        newChildren.push({ content: '\u00A0' });
       }
 
       // Update the node in the tree
       const newContainer = updateNodeById(currentContainer, nodeId, () => ({
         content: undefined, // Clear simple content
         children: newChildren, // Set inline children
-      })) as ContainerNode
+      })) as ContainerNode;
 
       // Update the selection's format state
       const newSelection = {
@@ -635,9 +580,9 @@ export function editorReducer(
           ...state.currentSelection.formats,
           [format]: !isActive,
         },
-      }
+      };
 
-      console.groupEnd()
+      console.groupEnd();
 
       return addToHistory(
         {
@@ -648,103 +593,92 @@ export function editorReducer(
             updatedAt: new Date().toISOString(),
           },
         },
-        newContainer
-      )
+        newContainer,
+      );
     }
 
-    case "APPLY_CUSTOM_CLASS": {
-      const { className } = action.payload
+    case 'APPLY_CUSTOM_CLASS': {
+      const { className } = action.payload;
 
-      console.group("🎨 [APPLY_CUSTOM_CLASS] Reducer executing")
+      console.group('🎨 [APPLY_CUSTOM_CLASS] Reducer executing');
 
       if (!state.currentSelection) {
-        console.warn("❌ Cannot apply custom class without active selection")
-        console.groupEnd()
-        return state
+        console.warn('❌ Cannot apply custom class without active selection');
+        console.groupEnd();
+        return state;
       }
 
-      const { nodeId, start, end } = state.currentSelection
+      const { nodeId, start, end } = state.currentSelection;
 
-      const currentContainer = state.history[state.historyIndex]
-      const node = findNodeById(currentContainer, nodeId) as
-        | TextNode
-        | undefined
+      const currentContainer = state.history[state.historyIndex];
+      const node = findNodeById(currentContainer, nodeId) as TextNode | undefined;
 
       if (!node || !isTextNode(node)) {
-        console.warn("❌ Node not found or not a text node")
-        console.groupEnd()
-        return state
+        console.warn('❌ Node not found or not a text node');
+        console.groupEnd();
+        return state;
       }
 
       // Convert node to inline children if it's still plain content
-      const children = hasInlineChildren(node)
-        ? node.children!
-        : [{ content: node.content || "" }]
+      const children = hasInlineChildren(node) ? node.children! : [{ content: node.content || '' }];
 
       // Build new children array by splitting segments that overlap with selection
-      const newChildren: typeof node.children = []
-      let currentPos = 0
+      const newChildren: typeof node.children = [];
+      let currentPos = 0;
 
       for (const child of children) {
-        const childLength = (child.content || "").length
-        const childStart = currentPos
-        const childEnd = currentPos + childLength
+        const childLength = (child.content || '').length;
+        const childStart = currentPos;
+        const childEnd = currentPos + childLength;
 
         // Check overlap with selection [start, end)
         if (childEnd <= start || childStart >= end) {
           // No overlap - keep as is
-          newChildren.push({ ...child })
+          newChildren.push({ ...child });
         } else {
           // There's overlap - need to split this child
-          const overlapStart = Math.max(childStart, start)
-          const overlapEnd = Math.min(childEnd, end)
+          const overlapStart = Math.max(childStart, start);
+          const overlapEnd = Math.min(childEnd, end);
 
           // Before overlap (within this child)
           if (childStart < overlapStart) {
             newChildren.push({
               ...child,
               content: child.content!.substring(0, overlapStart - childStart),
-            })
+            });
           }
 
           // Overlapping part - merge className (just combine classes now, no styles)
-          const existingClasses = (child.className || "")
-            .split(" ")
-            .filter(Boolean)
-          const newClasses = className.split(" ").filter(Boolean)
-          const mergedClasses = [
-            ...new Set([...existingClasses, ...newClasses]),
-          ]
-          const mergedClassName = mergedClasses.join(" ").trim()
+          const existingClasses = (child.className || '').split(' ').filter(Boolean);
+          const newClasses = className.split(' ').filter(Boolean);
+          const mergedClasses = [...new Set([...existingClasses, ...newClasses])];
+          const mergedClassName = mergedClasses.join(' ').trim();
 
           newChildren.push({
             ...child,
-            content: child.content!.substring(
-              overlapStart - childStart,
-              overlapEnd - childStart
-            ),
+            content: child.content!.substring(overlapStart - childStart, overlapEnd - childStart),
             className: mergedClassName || undefined,
-          })
+          });
 
           // After overlap (within this child)
           if (childEnd > overlapEnd) {
             newChildren.push({
               ...child,
               content: child.content!.substring(overlapEnd - childStart),
-            })
+            });
           }
         }
 
-        currentPos = childEnd
+        currentPos = childEnd;
       }
 
       // Update the node in the tree
       const newContainer = updateNodeById(currentContainer, nodeId, () => ({
         content: undefined, // Clear simple content
         children: newChildren, // Set inline children
-      })) as ContainerNode
+      })) as ContainerNode;
 
-      console.groupEnd()
+      console.groupEnd();
 
       return addToHistory(
         {
@@ -754,99 +688,92 @@ export function editorReducer(
             updatedAt: new Date().toISOString(),
           },
         },
-        newContainer
-      )
+        newContainer,
+      );
     }
 
-    case "APPLY_INLINE_STYLE": {
-      const { property, value } = action.payload
+    case 'APPLY_INLINE_STYLE': {
+      const { property, value } = action.payload;
 
-      console.group(`🎨 [APPLY_INLINE_STYLE] Applying ${property}: ${value}`)
+      console.group(`🎨 [APPLY_INLINE_STYLE] Applying ${property}: ${value}`);
 
       if (!state.currentSelection) {
-        console.warn("❌ Cannot apply inline style without active selection")
-        console.groupEnd()
-        return state
+        console.warn('❌ Cannot apply inline style without active selection');
+        console.groupEnd();
+        return state;
       }
 
-      const { nodeId, start, end } = state.currentSelection
+      const { nodeId, start, end } = state.currentSelection;
 
-      const currentContainer = state.history[state.historyIndex]
-      const node = findNodeById(currentContainer, nodeId) as
-        | TextNode
-        | undefined
+      const currentContainer = state.history[state.historyIndex];
+      const node = findNodeById(currentContainer, nodeId) as TextNode | undefined;
 
       if (!node || !isTextNode(node)) {
-        console.warn("❌ Node not found or not a text node")
-        console.groupEnd()
-        return state
+        console.warn('❌ Node not found or not a text node');
+        console.groupEnd();
+        return state;
       }
 
       // Convert node to inline children if it's still plain content
-      const children = hasInlineChildren(node)
-        ? node.children!
-        : [{ content: node.content || "" }]
+      const children = hasInlineChildren(node) ? node.children! : [{ content: node.content || '' }];
 
       // Build new children array by splitting segments that overlap with selection
-      const newChildren: typeof node.children = []
-      let currentPos = 0
+      const newChildren: typeof node.children = [];
+      let currentPos = 0;
 
       for (const child of children) {
-        const childLength = (child.content || "").length
-        const childStart = currentPos
-        const childEnd = currentPos + childLength
+        const childLength = (child.content || '').length;
+        const childStart = currentPos;
+        const childEnd = currentPos + childLength;
 
         // Check overlap with selection [start, end)
         if (childEnd <= start || childStart >= end) {
           // No overlap - keep as is
-          newChildren.push({ ...child })
+          newChildren.push({ ...child });
         } else {
           // There's overlap - need to split this child
-          const overlapStart = Math.max(childStart, start)
-          const overlapEnd = Math.min(childEnd, end)
+          const overlapStart = Math.max(childStart, start);
+          const overlapEnd = Math.min(childEnd, end);
 
           // Before overlap (within this child)
           if (childStart < overlapStart) {
             newChildren.push({
               ...child,
               content: child.content!.substring(0, overlapStart - childStart),
-            })
+            });
           }
 
           // Overlapping part - merge inline styles
           const mergedStyles = {
             ...child.styles,
             [property]: value,
-          }
+          };
 
           newChildren.push({
             ...child,
-            content: child.content!.substring(
-              overlapStart - childStart,
-              overlapEnd - childStart
-            ),
+            content: child.content!.substring(overlapStart - childStart, overlapEnd - childStart),
             styles: mergedStyles,
-          })
+          });
 
           // After overlap (within this child)
           if (childEnd > overlapEnd) {
             newChildren.push({
               ...child,
               content: child.content!.substring(overlapEnd - childStart),
-            })
+            });
           }
         }
 
-        currentPos = childEnd
+        currentPos = childEnd;
       }
 
       // Update the node in the tree
       const newContainer = updateNodeById(currentContainer, nodeId, () => ({
         content: undefined, // Clear simple content
         children: newChildren, // Set inline children
-      })) as ContainerNode
+      })) as ContainerNode;
 
-      console.groupEnd()
+      console.groupEnd();
 
       return addToHistory(
         {
@@ -856,94 +783,87 @@ export function editorReducer(
             updatedAt: new Date().toISOString(),
           },
         },
-        newContainer
-      )
+        newContainer,
+      );
     }
 
-    case "APPLY_LINK": {
-      const { href } = action.payload
+    case 'APPLY_LINK': {
+      const { href } = action.payload;
 
-      console.group("🔗 [APPLY_LINK] Reducer executing")
+      console.group('🔗 [APPLY_LINK] Reducer executing');
 
       if (!state.currentSelection) {
-        console.warn("❌ Cannot apply link without active selection")
-        console.groupEnd()
-        return state
+        console.warn('❌ Cannot apply link without active selection');
+        console.groupEnd();
+        return state;
       }
 
-      const { nodeId, start, end } = state.currentSelection
+      const { nodeId, start, end } = state.currentSelection;
 
-      const currentContainer = state.history[state.historyIndex]
-      const node = findNodeById(currentContainer, nodeId) as
-        | TextNode
-        | undefined
+      const currentContainer = state.history[state.historyIndex];
+      const node = findNodeById(currentContainer, nodeId) as TextNode | undefined;
 
       if (!node || !isTextNode(node)) {
-        console.warn("❌ Node not found or not a text node")
-        console.groupEnd()
-        return state
+        console.warn('❌ Node not found or not a text node');
+        console.groupEnd();
+        return state;
       }
 
       // Convert node to inline children if it's still plain content
-      const children = hasInlineChildren(node)
-        ? node.children!
-        : [{ content: node.content || "" }]
+      const children = hasInlineChildren(node) ? node.children! : [{ content: node.content || '' }];
 
       // Build new children array by splitting segments that overlap with selection
-      const newChildren: typeof node.children = []
-      let currentPos = 0
+      const newChildren: typeof node.children = [];
+      let currentPos = 0;
 
       for (const child of children) {
-        const childLength = (child.content || "").length
-        const childStart = currentPos
-        const childEnd = currentPos + childLength
+        const childLength = (child.content || '').length;
+        const childStart = currentPos;
+        const childEnd = currentPos + childLength;
 
         // Check overlap with selection [start, end)
         if (childEnd <= start || childStart >= end) {
           // No overlap - keep as is
-          newChildren.push({ ...child })
+          newChildren.push({ ...child });
         } else {
           // There's overlap - need to split this child
-          const overlapStart = Math.max(childStart, start)
-          const overlapEnd = Math.min(childEnd, end)
+          const overlapStart = Math.max(childStart, start);
+          const overlapEnd = Math.min(childEnd, end);
 
           // Before overlap (within this child)
           if (childStart < overlapStart) {
             newChildren.push({
               ...child,
               content: child.content!.substring(0, overlapStart - childStart),
-            })
+            });
           }
 
           // Overlapping part - apply the link
           newChildren.push({
             ...child,
-            content: child.content!.substring(
-              overlapStart - childStart,
-              overlapEnd - childStart
-            ),
+            content: child.content!.substring(overlapStart - childStart, overlapEnd - childStart),
             href: href,
-          })
+          });
 
           // After overlap (within this child)
           if (childEnd > overlapEnd) {
             newChildren.push({
               ...child,
               content: child.content!.substring(overlapEnd - childStart),
-            })
+            });
           }
         }
 
-        currentPos = childEnd
+        currentPos = childEnd;
       }
 
       // Update the node in the tree
       const newContainer = updateNodeById(currentContainer, nodeId, () => ({
         content: undefined, // Clear simple content
         children: newChildren, // Set inline children
-      })) as ContainerNode
+      })) as ContainerNode;
 
-      console.groupEnd()
+      console.groupEnd();
 
       return addToHistory(
         {
@@ -953,92 +873,85 @@ export function editorReducer(
             updatedAt: new Date().toISOString(),
           },
         },
-        newContainer
-      )
+        newContainer,
+      );
     }
 
-    case "REMOVE_LINK": {
-      console.group("🔗 [REMOVE_LINK] Reducer executing")
+    case 'REMOVE_LINK': {
+      console.group('🔗 [REMOVE_LINK] Reducer executing');
 
       if (!state.currentSelection) {
-        console.warn("❌ Cannot remove link without active selection")
-        console.groupEnd()
-        return state
+        console.warn('❌ Cannot remove link without active selection');
+        console.groupEnd();
+        return state;
       }
 
-      const { nodeId, start, end } = state.currentSelection
+      const { nodeId, start, end } = state.currentSelection;
 
-      const currentContainer = state.history[state.historyIndex]
-      const node = findNodeById(currentContainer, nodeId) as
-        | TextNode
-        | undefined
+      const currentContainer = state.history[state.historyIndex];
+      const node = findNodeById(currentContainer, nodeId) as TextNode | undefined;
 
       if (!node || !isTextNode(node)) {
-        console.warn("❌ Node not found or not a text node")
-        console.groupEnd()
-        return state
+        console.warn('❌ Node not found or not a text node');
+        console.groupEnd();
+        return state;
       }
 
       // Convert node to inline children if it's still plain content
-      const children = hasInlineChildren(node)
-        ? node.children!
-        : [{ content: node.content || "" }]
+      const children = hasInlineChildren(node) ? node.children! : [{ content: node.content || '' }];
 
       // Build new children array by splitting segments that overlap with selection
-      const newChildren: typeof node.children = []
-      let currentPos = 0
+      const newChildren: typeof node.children = [];
+      let currentPos = 0;
 
       for (const child of children) {
-        const childLength = (child.content || "").length
-        const childStart = currentPos
-        const childEnd = currentPos + childLength
+        const childLength = (child.content || '').length;
+        const childStart = currentPos;
+        const childEnd = currentPos + childLength;
 
         // Check overlap with selection [start, end)
         if (childEnd <= start || childStart >= end) {
           // No overlap - keep as is
-          newChildren.push({ ...child })
+          newChildren.push({ ...child });
         } else {
           // There's overlap - need to split this child
-          const overlapStart = Math.max(childStart, start)
-          const overlapEnd = Math.min(childEnd, end)
+          const overlapStart = Math.max(childStart, start);
+          const overlapEnd = Math.min(childEnd, end);
 
           // Before overlap (within this child)
           if (childStart < overlapStart) {
             newChildren.push({
               ...child,
               content: child.content!.substring(0, overlapStart - childStart),
-            })
+            });
           }
 
           // Overlapping part - remove the link
           newChildren.push({
             ...child,
-            content: child.content!.substring(
-              overlapStart - childStart,
-              overlapEnd - childStart
-            ),
+            content: child.content!.substring(overlapStart - childStart, overlapEnd - childStart),
             href: undefined, // Remove the href
-          })
+          });
 
           // After overlap (within this child)
           if (childEnd > overlapEnd) {
             newChildren.push({
               ...child,
               content: child.content!.substring(overlapEnd - childStart),
-            })
+            });
           }
         }
 
-        currentPos = childEnd
+        currentPos = childEnd;
       }
 
       // Update the node in the tree
       const newContainer = updateNodeById(currentContainer, nodeId, () => ({
         content: undefined, // Clear simple content
         children: newChildren, // Set inline children
-      })) as ContainerNode
+      })) as ContainerNode;
 
-      console.groupEnd()
+      console.groupEnd();
 
       return addToHistory(
         {
@@ -1048,49 +961,47 @@ export function editorReducer(
             updatedAt: new Date().toISOString(),
           },
         },
-        newContainer
-      )
+        newContainer,
+      );
     }
 
-    case "SELECT_ALL_BLOCKS": {
+    case 'SELECT_ALL_BLOCKS': {
       // Select all block IDs
-      const currentContainer = state.history[state.historyIndex]
-      const allBlockIds = new Set(
-        currentContainer.children.map((child) => child.id)
-      )
+      const currentContainer = state.history[state.historyIndex];
+      const allBlockIds = new Set(currentContainer.children.map((child) => child.id));
       return {
         ...state,
         selectedBlocks: allBlockIds,
-      }
+      };
     }
 
-    case "CLEAR_BLOCK_SELECTION": {
+    case 'CLEAR_BLOCK_SELECTION': {
       return {
         ...state,
         selectedBlocks: new Set(),
-      }
+      };
     }
 
-    case "DELETE_SELECTED_BLOCKS": {
+    case 'DELETE_SELECTED_BLOCKS': {
       if (state.selectedBlocks.size === 0) {
-        return state
+        return state;
       }
 
-      const currentContainer = state.history[state.historyIndex]
+      const currentContainer = state.history[state.historyIndex];
       // Delete all selected blocks
       const newChildren = currentContainer.children.filter(
-        (child) => !state.selectedBlocks.has(child.id)
-      )
+        (child) => !state.selectedBlocks.has(child.id),
+      );
 
       // If all blocks were deleted, create a new empty paragraph
       if (newChildren.length === 0) {
         const newNode: TextNode = {
-          id: "p-" + Date.now(),
-          type: "p",
-          content: "",
+          id: 'p-' + Date.now(),
+          type: 'p',
+          content: '',
           attributes: {},
-        }
-        newChildren.push(newNode)
+        };
+        newChildren.push(newNode);
       }
 
       return addToHistory(
@@ -1106,34 +1017,34 @@ export function editorReducer(
         {
           ...currentContainer,
           children: newChildren,
-        }
-      )
+        },
+      );
     }
 
-    case "UNDO": {
+    case 'UNDO': {
       if (state.historyIndex > 0) {
-        const newIndex = state.historyIndex - 1
+        const newIndex = state.historyIndex - 1;
         return {
           ...state,
           historyIndex: newIndex,
-        }
+        };
       }
-      return state
+      return state;
     }
 
-    case "REDO": {
+    case 'REDO': {
       if (state.historyIndex < state.history.length - 1) {
-        const newIndex = state.historyIndex + 1
+        const newIndex = state.historyIndex + 1;
         return {
           ...state,
           historyIndex: newIndex,
-        }
+        };
       }
-      return state
+      return state;
     }
 
-    case "SET_COVER_IMAGE": {
-      const { coverImage } = action.payload
+    case 'SET_COVER_IMAGE': {
+      const { coverImage } = action.payload;
       return {
         ...state,
         coverImage,
@@ -1141,10 +1052,10 @@ export function editorReducer(
           ...state.metadata,
           updatedAt: new Date().toISOString(),
         },
-      }
+      };
     }
 
-    case "REMOVE_COVER_IMAGE": {
+    case 'REMOVE_COVER_IMAGE': {
       return {
         ...state,
         coverImage: null,
@@ -1152,14 +1063,14 @@ export function editorReducer(
           ...state.metadata,
           updatedAt: new Date().toISOString(),
         },
-      }
+      };
     }
 
-    case "UPDATE_COVER_IMAGE_POSITION": {
-      const { position } = action.payload
+    case 'UPDATE_COVER_IMAGE_POSITION': {
+      const { position } = action.payload;
       if (!state.coverImage) {
-        console.warn("Cannot update position: no cover image set")
-        return state
+        console.warn('Cannot update position: no cover image set');
+        return state;
       }
       return {
         ...state,
@@ -1171,14 +1082,14 @@ export function editorReducer(
           ...state.metadata,
           updatedAt: new Date().toISOString(),
         },
-      }
+      };
     }
 
     default:
       // Exhaustiveness check
-      const _exhaustive: never = action
-      console.warn("Unknown action type:", _exhaustive)
-      return state
+      const _exhaustive: never = action;
+      console.warn('Unknown action type:', _exhaustive);
+      return state;
   }
 }
 
@@ -1194,37 +1105,35 @@ export function editorReducer(
  * const [state, dispatch] = useReducer(editorReducer, initialState);
  * ```
  */
-export function createInitialState(
-  container?: Partial<ContainerNode>
-): EditorState {
+export function createInitialState(container?: Partial<ContainerNode>): EditorState {
   // If container is provided, use it; otherwise create with at least one empty block
-  let defaultChildren = container?.children
+  let defaultChildren = container?.children;
 
   // If no children provided or empty array, create a default empty heading
   if (!defaultChildren || defaultChildren.length === 0) {
-    const timestamp = 'initial-header-node'
+    const timestamp = 'initial-header-node';
     const defaultNode: TextNode = {
       id: `h1-${timestamp}`,
-      type: "h1",
-      content: "",
+      type: 'h1',
+      content: '',
       attributes: {
-        placeholder: "New page",
+        placeholder: 'New page',
       },
-    }
-    defaultChildren = [defaultNode]
+    };
+    defaultChildren = [defaultNode];
   }
 
   const initialContainer: ContainerNode = {
-    id: "root",
-    type: "container",
+    id: 'root',
+    type: 'container',
     children: defaultChildren,
     ...container,
-  }
+  };
 
   // No need to clone - the container is already a new object
   // Structural sharing will be maintained as we make edits
   return {
-    version: "1.0.0",
+    version: '1.0.0',
     history: [initialContainer],
     historyIndex: 0,
     activeNodeId: initialContainer.children[0].id,
@@ -1237,5 +1146,5 @@ export function createInitialState(
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
-  }
+  };
 }

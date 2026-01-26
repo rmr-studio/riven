@@ -1,16 +1,16 @@
-import { BackgroundBeams } from "@/components/ui/background/beams";
-import { Card } from "@/components/ui/card";
-import { FCWC, Propless } from "@/lib/interfaces/interface";
+import { BackgroundBeams } from '@/components/ui/background/beams';
+import { Card } from '@/components/ui/card';
+import { FCWC, Propless } from '@/lib/interfaces/interface';
 
 export const AuthFormWrapper: FCWC<Propless> = ({ children }) => {
-    return (
-        <>
-            <BackgroundBeams />
-            <section className="h-screen-without-header bg-background/20 flex justify-center items-center">
-                <Card className="p-6 relative transition-all bg-background/70 backdrop-blur-sm">
-                    {children}
-                </Card>
-            </section>
-        </>
-    );
+  return (
+    <>
+      <BackgroundBeams />
+      <section className="h-screen-without-header flex items-center justify-center bg-background/20">
+        <Card className="relative bg-background/70 p-6 backdrop-blur-sm transition-all">
+          {children}
+        </Card>
+      </section>
+    </>
+  );
 };

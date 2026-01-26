@@ -52,7 +52,6 @@ class WorkflowNodeConfigDeserializer : JsonDeserializer<WorkflowNodeConfig>() {
             WorkflowNodeType.TRIGGER -> deserializeTriggerConfig(p, ctxt, node)
             WorkflowNodeType.ACTION -> deserializeActionConfig(p, ctxt, node)
             WorkflowNodeType.CONTROL_FLOW -> deserializeControlConfig(p, ctxt, node)
-            WorkflowNodeType.HUMAN_INTERACTION -> deserializeHumanConfig(p, ctxt, node)
             WorkflowNodeType.UTILITY -> deserializeUtilityConfig(p, ctxt, node)
             WorkflowNodeType.FUNCTION -> deserializeFunctionConfig(p, ctxt, node)
             WorkflowNodeType.PARSE -> deserializeParseConfig(p, ctxt, node)
@@ -148,27 +147,6 @@ class WorkflowNodeConfigDeserializer : JsonDeserializer<WorkflowNodeConfig>() {
         }
     }
 
-    /**
-     * Deserializes HUMAN_INTERACTION category configs.
-     * TODO: Implement concrete human interaction config classes.
-     */
-    private fun deserializeHumanConfig(
-        p: JsonParser,
-        ctxt: DeserializationContext,
-        node: JsonNode
-    ): WorkflowHumanInteractionConfig {
-        val subType = ctxt.getEnumFromField<WorkflowHumanInteractionType>(
-            node,
-            "subType",
-            WorkflowHumanInteractionConfig::class.java
-        )
-
-        // TODO: Implement concrete human interaction config classes
-        return ctxt.reportInputMismatch(
-            WorkflowHumanInteractionConfig::class.java,
-            "Deserialization for HUMAN_INTERACTION subType '$subType' is not yet implemented."
-        )
-    }
 
     /**
      * Deserializes UTILITY category configs.

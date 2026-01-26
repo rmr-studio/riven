@@ -1,5 +1,5 @@
 const Usage = () => {
-    return <div></div>;
+  return <div></div>;
 };
 
 export default Usage;

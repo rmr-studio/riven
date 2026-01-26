@@ -1,40 +1,26 @@
-"use client"
+'use client';
 
-import React, { useState } from "react"
-import {
-  Check,
-  Code2,
-  Copy,
-  Download,
-  Eye,
-  FileJson,
-  Sparkles,
-} from "lucide-react"
+import React, { useState } from 'react';
+import { Check, Code2, Copy, Download, Eye, FileJson, Sparkles } from 'lucide-react';
 
-import { cn } from "@/lib/util/utils"
+import { cn } from '@/lib/util/utils';
 
-import { Button } from "../button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "../dialog"
-import { Label } from "../label"
-import { Switch } from "../switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../tabs"
-import { type ContainerNode } from "./types"
-import { serializeToHtml } from "./utils/serialize-to-html"
+import { Button } from '../button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../dialog';
+import { Label } from '../label';
+import { Switch } from '../switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../tabs';
+import { type ContainerNode } from './types';
+import { serializeToHtml } from './utils/serialize-to-html';
 
 interface ExportFloatingButtonProps {
-  container: ContainerNode
-  onCopyHtml: () => void
-  onCopyJson: () => void
-  copiedHtml: boolean
-  copiedJson: boolean
-  enhanceSpaces: boolean
-  onEnhanceSpacesChange: (checked: boolean) => void
+  container: ContainerNode;
+  onCopyHtml: () => void;
+  onCopyJson: () => void;
+  copiedHtml: boolean;
+  copiedJson: boolean;
+  enhanceSpaces: boolean;
+  onEnhanceSpacesChange: (checked: boolean) => void;
 }
 
 export function ExportFloatingButton({
@@ -46,8 +32,8 @@ export function ExportFloatingButton({
   enhanceSpaces,
   onEnhanceSpacesChange,
 }: ExportFloatingButtonProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [isHovered, setIsHovered] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <>
@@ -58,20 +44,20 @@ export function ExportFloatingButton({
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           className={cn(
-            "h-14 w-14 rounded-full shadow-2xl transition-all duration-300 ease-out",
-            "from-primary via-primary to-primary/80 bg-gradient-to-br",
-            "hover:shadow-primary/50 hover:scale-110",
-            "border-primary/20 border-2",
-            "group relative overflow-hidden"
+            'h-14 w-14 rounded-full shadow-2xl transition-all duration-300 ease-out',
+            'bg-gradient-to-br from-primary via-primary to-primary/80',
+            'hover:scale-110 hover:shadow-primary/50',
+            'border-2 border-primary/20',
+            'group relative overflow-hidden',
           )}
           size="icon"
         >
           {/* Animated background gradient */}
           <div
             className={cn(
-              "from-primary/0 via-primary-foreground/10 to-primary-foreground/20 absolute inset-0 bg-gradient-to-br",
-              "transition-opacity duration-300",
-              isHovered ? "opacity-100" : "opacity-0"
+              'absolute inset-0 bg-gradient-to-br from-primary/0 via-primary-foreground/10 to-primary-foreground/20',
+              'transition-opacity duration-300',
+              isHovered ? 'opacity-100' : 'opacity-0',
             )}
           />
 
@@ -83,9 +69,9 @@ export function ExportFloatingButton({
           {/* Ripple effect on hover */}
           <span
             className={cn(
-              "bg-primary-foreground/20 absolute inset-0 rounded-full",
-              "transition-transform duration-700",
-              isHovered ? "scale-150 opacity-0" : "scale-0 opacity-100"
+              'absolute inset-0 rounded-full bg-primary-foreground/20',
+              'transition-transform duration-700',
+              isHovered ? 'scale-150 opacity-0' : 'scale-0 opacity-100',
             )}
           />
         </Button>
@@ -104,10 +90,7 @@ export function ExportFloatingButton({
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs
-            defaultValue="preview"
-            className="flex flex-1 flex-col overflow-hidden"
-          >
+          <Tabs defaultValue="preview" className="flex flex-1 flex-col overflow-hidden">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="preview" className="gap-2">
                 <Eye className="h-4 w-4" />
@@ -125,12 +108,9 @@ export function ExportFloatingButton({
 
             {/* Enhance Spaces Toggle */}
             <div className="mt-4 flex items-center justify-between px-1">
-              <p className="text-muted-foreground text-sm">Preview Options</p>
+              <p className="text-sm text-muted-foreground">Preview Options</p>
               <div className="flex items-center gap-2">
-                <Label
-                  htmlFor="enhance-spaces"
-                  className="cursor-pointer text-sm"
-                >
+                <Label htmlFor="enhance-spaces" className="cursor-pointer text-sm">
                   Enhance Spaces
                 </Label>
                 <Switch
@@ -142,42 +122,25 @@ export function ExportFloatingButton({
             </div>
 
             {/* Preview Tab */}
-            <TabsContent
-              value="preview"
-              className="mt-4 flex flex-1 flex-col overflow-hidden"
-            >
+            <TabsContent value="preview" className="mt-4 flex flex-1 flex-col overflow-hidden">
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-muted-foreground text-sm">
-                  Live preview of rendered HTML
-                </p>
+                <p className="text-sm text-muted-foreground">Live preview of rendered HTML</p>
               </div>
               <div
-                className="bg-background flex-1 overflow-auto rounded-lg border p-6"
+                className="flex-1 overflow-auto rounded-lg border bg-background p-6"
                 dangerouslySetInnerHTML={{
                   __html: enhanceSpaces
-                    ? `<div class="[&>*]:my-3 [&_*]:my-5">${serializeToHtml(
-                        container
-                      )}</div>`
+                    ? `<div class="[&>*]:my-3 [&_*]:my-5">${serializeToHtml(container)}</div>`
                     : serializeToHtml(container),
                 }}
               />
             </TabsContent>
 
             {/* HTML Tab */}
-            <TabsContent
-              value="html"
-              className="mt-4 flex flex-1 flex-col overflow-hidden"
-            >
+            <TabsContent value="html" className="mt-4 flex flex-1 flex-col overflow-hidden">
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-muted-foreground text-sm">
-                  HTML with Tailwind CSS classes
-                </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onCopyHtml}
-                  className="gap-2"
-                >
+                <p className="text-sm text-muted-foreground">HTML with Tailwind CSS classes</p>
+                <Button variant="ghost" size="sm" onClick={onCopyHtml} className="gap-2">
                   {copiedHtml ? (
                     <>
                       <Check className="h-4 w-4" />
@@ -191,30 +154,18 @@ export function ExportFloatingButton({
                   )}
                 </Button>
               </div>
-              <pre className="bg-secondary text-secondary-foreground flex-1 overflow-auto rounded-lg border p-4 text-xs">
+              <pre className="flex-1 overflow-auto rounded-lg border bg-secondary p-4 text-xs text-secondary-foreground">
                 {enhanceSpaces
-                  ? `<div class="[&>*]:my-3 [&_*]:my-5">\n${serializeToHtml(
-                      container
-                    )}\n</div>`
+                  ? `<div class="[&>*]:my-3 [&_*]:my-5">\n${serializeToHtml(container)}\n</div>`
                   : serializeToHtml(container)}
               </pre>
             </TabsContent>
 
             {/* JSON Tab */}
-            <TabsContent
-              value="json"
-              className="mt-4 flex flex-1 flex-col overflow-hidden"
-            >
+            <TabsContent value="json" className="mt-4 flex flex-1 flex-col overflow-hidden">
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-muted-foreground text-sm">
-                  Editor state as JSON
-                </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onCopyJson}
-                  className="gap-2"
-                >
+                <p className="text-sm text-muted-foreground">Editor state as JSON</p>
+                <Button variant="ghost" size="sm" onClick={onCopyJson} className="gap-2">
                   {copiedJson ? (
                     <>
                       <Check className="h-4 w-4" />
@@ -228,7 +179,7 @@ export function ExportFloatingButton({
                   )}
                 </Button>
               </div>
-              <pre className="bg-secondary text-secondary-foreground flex-1 overflow-auto rounded-lg border p-4 text-xs">
+              <pre className="flex-1 overflow-auto rounded-lg border bg-secondary p-4 text-xs text-secondary-foreground">
                 {JSON.stringify(container.children, null, 2)}
               </pre>
             </TabsContent>
@@ -236,5 +187,5 @@ export function ExportFloatingButton({
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }

@@ -1,24 +1,19 @@
-"use client"
+'use client';
 
-import React, { useRef, useState } from "react"
-import { GripVertical, Plus, Trash2, X } from "lucide-react"
+import React, { useRef, useState } from 'react';
+import { GripVertical, Plus, Trash2, X } from 'lucide-react';
 
-import { cn } from "@/lib/util/utils"
+import { cn } from '@/lib/util/utils';
 
-import { Button } from "../button"
-import {
-  ContainerNode,
-  StructuralNode,
-  TextNode,
-  type EditorNode,
-} from "./types"
+import { Button } from '../button';
+import { ContainerNode, StructuralNode, TextNode, type EditorNode } from './types';
 
 interface TableBuilderProps {
-  node: ContainerNode
-  onUpdate: (id: string, updates: Partial<EditorNode>) => void
-  readOnly?: boolean
-  onBlockDragStart?: (nodeId: string) => void
-  onDelete?: (nodeId?: string) => void
+  node: ContainerNode;
+  onUpdate: (id: string, updates: Partial<EditorNode>) => void;
+  readOnly?: boolean;
+  onBlockDragStart?: (nodeId: string) => void;
+  onDelete?: (nodeId?: string) => void;
 }
 
 export function TableBuilder({
@@ -28,229 +23,219 @@ export function TableBuilder({
   onBlockDragStart,
   onDelete,
 }: TableBuilderProps) {
-  const [hoveredCol, setHoveredCol] = useState<number | null>(null)
-  const [hoveredRow, setHoveredRow] = useState<number | null>(null)
-  const [showColControls, setShowColControls] = useState(false)
-  const [showRowControls, setShowRowControls] = useState(false)
-  const [isHovering, setIsHovering] = useState(false)
-  const [columnWidths, setColumnWidths] = useState<number[]>([])
-  const [resizingCol, setResizingCol] = useState<number | null>(null)
-  const [startX, setStartX] = useState(0)
-  const [startWidth, setStartWidth] = useState(0)
-  const [draggingCol, setDraggingCol] = useState<number | null>(null)
-  const [draggingRow, setDraggingRow] = useState<number | null>(null)
-  const [dragOverCol, setDragOverCol] = useState<number | null>(null)
-  const [dragOverRow, setDragOverRow] = useState<number | null>(null)
-  const tableRef = useRef<HTMLTableElement>(null)
+  const [hoveredCol, setHoveredCol] = useState<number | null>(null);
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const [showColControls, setShowColControls] = useState(false);
+  const [showRowControls, setShowRowControls] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  const [columnWidths, setColumnWidths] = useState<number[]>([]);
+  const [resizingCol, setResizingCol] = useState<number | null>(null);
+  const [startX, setStartX] = useState(0);
+  const [startWidth, setStartWidth] = useState(0);
+  const [draggingCol, setDraggingCol] = useState<number | null>(null);
+  const [draggingRow, setDraggingRow] = useState<number | null>(null);
+  const [dragOverCol, setDragOverCol] = useState<number | null>(null);
+  const [dragOverRow, setDragOverRow] = useState<number | null>(null);
+  const tableRef = useRef<HTMLTableElement>(null);
 
   // Helper to find table structure
-  const table = node.children.find((child) => child.type === "table") as
-    | StructuralNode
-    | undefined
-  if (!table) return null
+  const table = node.children.find((child) => child.type === 'table') as StructuralNode | undefined;
+  if (!table) return null;
 
-  const thead = table.children.find((child) => child.type === "thead") as
+  const thead = table.children.find((child) => child.type === 'thead') as
     | StructuralNode
-    | undefined
-  const tbody = table.children.find((child) => child.type === "tbody") as
+    | undefined;
+  const tbody = table.children.find((child) => child.type === 'tbody') as
     | StructuralNode
-    | undefined
+    | undefined;
 
-  const headerRow = thead?.children[0] as StructuralNode | undefined
-  const bodyRows = tbody?.children as StructuralNode[] | undefined
+  const headerRow = thead?.children[0] as StructuralNode | undefined;
+  const bodyRows = tbody?.children as StructuralNode[] | undefined;
 
-  const numCols = headerRow?.children.length || 0
-  const numRows = (bodyRows?.length || 0) + 1 // +1 for header
+  const numCols = headerRow?.children.length || 0;
+  const numRows = (bodyRows?.length || 0) + 1; // +1 for header
 
   // Initialize column widths if not set (using 'auto' for natural sizing)
   React.useEffect(() => {
     if (columnWidths.length === 0 && numCols > 0) {
       // Start with auto-sizing (0 means auto)
-      setColumnWidths(Array(numCols).fill(0))
+      setColumnWidths(Array(numCols).fill(0));
     }
-  }, [numCols, columnWidths.length])
+  }, [numCols, columnWidths.length]);
 
   // Handle resize start
   const handleResizeStart = (colIndex: number, e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault();
+    e.stopPropagation();
 
     // Get actual width from DOM if it's auto-sized (0)
     const actualWidth =
       columnWidths[colIndex] ||
-      tableRef.current
-        ?.querySelector(`th:nth-child(${colIndex + 1})`)
-        ?.getBoundingClientRect().width ||
-      150
+      tableRef.current?.querySelector(`th:nth-child(${colIndex + 1})`)?.getBoundingClientRect()
+        .width ||
+      150;
 
-    setResizingCol(colIndex)
-    setStartX(e.clientX)
-    setStartWidth(actualWidth)
-  }
+    setResizingCol(colIndex);
+    setStartX(e.clientX);
+    setStartWidth(actualWidth);
+  };
 
   // Handle resize move
   React.useEffect(() => {
-    if (resizingCol === null) return
+    if (resizingCol === null) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      const diff = e.clientX - startX
-      const newWidth = Math.max(80, startWidth + diff) // Minimum width 80px
+      const diff = e.clientX - startX;
+      const newWidth = Math.max(80, startWidth + diff); // Minimum width 80px
 
       setColumnWidths((prev) => {
-        const newWidths = [...prev]
-        newWidths[resizingCol] = newWidth
-        return newWidths
-      })
-    }
+        const newWidths = [...prev];
+        newWidths[resizingCol] = newWidth;
+        return newWidths;
+      });
+    };
 
     const handleMouseUp = () => {
-      setResizingCol(null)
-    }
+      setResizingCol(null);
+    };
 
-    document.addEventListener("mousemove", handleMouseMove)
-    document.addEventListener("mouseup", handleMouseUp)
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove)
-      document.removeEventListener("mouseup", handleMouseUp)
-    }
-  }, [resizingCol, startX, startWidth])
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resizingCol, startX, startWidth]);
 
   // Column drag handlers
   const handleColumnDragStart = (colIndex: number, e: React.DragEvent) => {
-    if (readOnly) return
-    e.stopPropagation()
-    setDraggingCol(colIndex)
-    e.dataTransfer.effectAllowed = "move"
-  }
+    if (readOnly) return;
+    e.stopPropagation();
+    setDraggingCol(colIndex);
+    e.dataTransfer.effectAllowed = 'move';
+  };
 
   const handleColumnDragOver = (colIndex: number, e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (draggingCol === null || draggingCol === colIndex) return
-    setDragOverCol(colIndex)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    if (draggingCol === null || draggingCol === colIndex) return;
+    setDragOverCol(colIndex);
+  };
 
   const handleColumnDrop = (targetColIndex: number, e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault();
+    e.stopPropagation();
 
-    if (
-      draggingCol === null ||
-      draggingCol === targetColIndex ||
-      !headerRow ||
-      !bodyRows
-    )
-      return
+    if (draggingCol === null || draggingCol === targetColIndex || !headerRow || !bodyRows) return;
 
     // Swap columns in header
-    const newHeaderChildren = [...headerRow.children]
-    const [draggedHeader] = newHeaderChildren.splice(draggingCol, 1)
-    newHeaderChildren.splice(targetColIndex, 0, draggedHeader)
+    const newHeaderChildren = [...headerRow.children];
+    const [draggedHeader] = newHeaderChildren.splice(draggingCol, 1);
+    newHeaderChildren.splice(targetColIndex, 0, draggedHeader);
 
     const newHeaderRow: StructuralNode = {
       ...headerRow,
       children: newHeaderChildren,
-    }
+    };
 
     // Swap columns in all body rows
     const newBodyRows = bodyRows.map((row) => {
-      const newRowChildren = [...row.children]
-      const [draggedCell] = newRowChildren.splice(draggingCol, 1)
-      newRowChildren.splice(targetColIndex, 0, draggedCell)
+      const newRowChildren = [...row.children];
+      const [draggedCell] = newRowChildren.splice(draggingCol, 1);
+      newRowChildren.splice(targetColIndex, 0, draggedCell);
       return {
         ...row,
         children: newRowChildren,
-      }
-    })
+      };
+    });
 
     // Swap column widths
-    const newWidths = [...columnWidths]
-    const [draggedWidth] = newWidths.splice(draggingCol, 1)
-    newWidths.splice(targetColIndex, 0, draggedWidth)
-    setColumnWidths(newWidths)
+    const newWidths = [...columnWidths];
+    const [draggedWidth] = newWidths.splice(draggingCol, 1);
+    newWidths.splice(targetColIndex, 0, draggedWidth);
+    setColumnWidths(newWidths);
 
     // Update table
     const newThead: StructuralNode = {
       ...thead!,
       children: [newHeaderRow],
-    }
+    };
 
     const newTbody: StructuralNode = {
       ...tbody!,
       children: newBodyRows,
-    }
+    };
 
     const newTable: StructuralNode = {
       ...table,
       children: [newThead, newTbody],
-    }
+    };
 
     onUpdate(node.id, {
       children: [newTable],
-    })
+    });
 
-    setDraggingCol(null)
-    setDragOverCol(null)
-  }
+    setDraggingCol(null);
+    setDragOverCol(null);
+  };
 
   const handleColumnDragEnd = () => {
-    setDraggingCol(null)
-    setDragOverCol(null)
-  }
+    setDraggingCol(null);
+    setDragOverCol(null);
+  };
 
   // Row drag handlers
   const handleRowDragStart = (rowIndex: number, e: React.DragEvent) => {
-    if (readOnly) return
-    e.stopPropagation()
-    setDraggingRow(rowIndex)
-    e.dataTransfer.effectAllowed = "move"
-  }
+    if (readOnly) return;
+    e.stopPropagation();
+    setDraggingRow(rowIndex);
+    e.dataTransfer.effectAllowed = 'move';
+  };
 
   const handleRowDragOver = (rowIndex: number, e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (draggingRow === null || draggingRow === rowIndex) return
-    setDragOverRow(rowIndex)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    if (draggingRow === null || draggingRow === rowIndex) return;
+    setDragOverRow(rowIndex);
+  };
 
   const handleRowDrop = (targetRowIndex: number, e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault();
+    e.stopPropagation();
 
-    if (draggingRow === null || draggingRow === targetRowIndex || !bodyRows)
-      return
+    if (draggingRow === null || draggingRow === targetRowIndex || !bodyRows) return;
 
     // Reorder rows
-    const newBodyRows = [...bodyRows]
-    const [draggedRow] = newBodyRows.splice(draggingRow, 1)
-    newBodyRows.splice(targetRowIndex, 0, draggedRow)
+    const newBodyRows = [...bodyRows];
+    const [draggedRow] = newBodyRows.splice(draggingRow, 1);
+    newBodyRows.splice(targetRowIndex, 0, draggedRow);
 
     const newTbody: StructuralNode = {
       ...tbody!,
       children: newBodyRows,
-    }
+    };
 
     const newTable: StructuralNode = {
       ...table,
       children: [thead!, newTbody],
-    }
+    };
 
     onUpdate(node.id, {
       children: [newTable],
-    })
+    });
 
-    setDraggingRow(null)
-    setDragOverRow(null)
-  }
+    setDraggingRow(null);
+    setDragOverRow(null);
+  };
 
   const handleRowDragEnd = () => {
-    setDraggingRow(null)
-    setDragOverRow(null)
-  }
+    setDraggingRow(null);
+    setDragOverRow(null);
+  };
 
   const addColumn = () => {
-    if (!headerRow || !bodyRows || readOnly) return
+    if (!headerRow || !bodyRows || readOnly) return;
 
     // Add th to header
     const newHeader: StructuralNode = {
@@ -259,12 +244,12 @@ export function TableBuilder({
         ...headerRow.children,
         {
           id: `th-${Date.now()}`,
-          type: "th" as const,
+          type: 'th' as const,
           content: `Column ${numCols + 1}`,
           attributes: {},
         } as TextNode,
       ],
-    }
+    };
 
     // Add td to each body row
     const newBodyRows = bodyRows.map((row, idx) => ({
@@ -273,222 +258,222 @@ export function TableBuilder({
         ...row.children,
         {
           id: `td-${Date.now()}-${idx}`,
-          type: "td" as const,
-          content: "",
+          type: 'td' as const,
+          content: '',
           attributes: {},
         } as TextNode,
       ],
-    }))
+    }));
 
     const newThead: StructuralNode = {
       ...thead!,
       children: [newHeader],
-    }
+    };
 
     const newTbody: StructuralNode = {
       ...tbody!,
       children: newBodyRows,
-    }
+    };
 
     const newTable: StructuralNode = {
       ...table,
       children: [newThead, newTbody],
-    }
+    };
 
     onUpdate(node.id, {
       children: [newTable],
-    })
+    });
 
     // Add width for new column (default 150px for empty columns)
-    setColumnWidths((prev) => [...prev, 150])
-  }
+    setColumnWidths((prev) => [...prev, 150]);
+  };
 
   const addRow = () => {
-    if (!bodyRows || !headerRow || readOnly) return
+    if (!bodyRows || !headerRow || readOnly) return;
 
     const newCells = Array.from({ length: numCols }, (_, idx) => ({
       id: `td-${Date.now()}-${idx}`,
-      type: "td" as const,
-      content: "",
+      type: 'td' as const,
+      content: '',
       attributes: {},
-    }))
+    }));
 
     const newRow: StructuralNode = {
       id: `tr-${Date.now()}`,
-      type: "tr",
+      type: 'tr',
       children: newCells,
       attributes: {},
-    }
+    };
 
     const newTbody: StructuralNode = {
       ...tbody!,
       children: [...bodyRows, newRow],
-    }
+    };
 
     const newTable: StructuralNode = {
       ...table,
       children: [thead!, newTbody],
-    }
+    };
 
     onUpdate(node.id, {
       children: [newTable],
-    })
-  }
+    });
+  };
 
   const removeColumn = (colIndex: number) => {
-    if (!headerRow || !bodyRows || readOnly || numCols <= 1) return
+    if (!headerRow || !bodyRows || readOnly || numCols <= 1) return;
 
     const newHeader: StructuralNode = {
       ...headerRow,
       children: headerRow.children.filter((_, idx) => idx !== colIndex),
-    }
+    };
 
     const newBodyRows = bodyRows.map((row) => ({
       ...row,
       children: row.children.filter((_, idx) => idx !== colIndex),
-    }))
+    }));
 
     const newThead: StructuralNode = {
       ...thead!,
       children: [newHeader],
-    }
+    };
 
     const newTbody: StructuralNode = {
       ...tbody!,
       children: newBodyRows,
-    }
+    };
 
     const newTable: StructuralNode = {
       ...table,
       children: [newThead, newTbody],
-    }
+    };
 
     onUpdate(node.id, {
       children: [newTable],
-    })
+    });
 
     // Remove width for deleted column
-    setColumnWidths((prev) => prev.filter((_, idx) => idx !== colIndex))
-  }
+    setColumnWidths((prev) => prev.filter((_, idx) => idx !== colIndex));
+  };
 
   const removeRow = (rowIndex: number) => {
-    if (!bodyRows || readOnly || bodyRows.length <= 1) return
+    if (!bodyRows || readOnly || bodyRows.length <= 1) return;
 
-    const newBodyRows = bodyRows.filter((_, idx) => idx !== rowIndex)
+    const newBodyRows = bodyRows.filter((_, idx) => idx !== rowIndex);
 
     const newTbody: StructuralNode = {
       ...tbody!,
       children: newBodyRows,
-    }
+    };
 
     const newTable: StructuralNode = {
       ...table,
       children: [thead!, newTbody],
-    }
+    };
 
     onUpdate(node.id, {
       children: [newTable],
-    })
-  }
+    });
+  };
 
   const handleCellChange = (
     rowIndex: number,
     colIndex: number,
     content: string,
-    isHeader: boolean
+    isHeader: boolean,
   ) => {
-    if (readOnly) return
+    if (readOnly) return;
 
     if (isHeader && headerRow) {
       const newHeader: StructuralNode = {
         ...headerRow,
         children: headerRow.children.map((cell, idx) =>
-          idx === colIndex ? { ...cell, content } : cell
+          idx === colIndex ? { ...cell, content } : cell,
         ),
-      }
+      };
 
       const newThead: StructuralNode = {
         ...thead!,
         children: [newHeader],
-      }
+      };
 
       const newTable: StructuralNode = {
         ...table,
         children: [newThead, tbody!],
-      }
+      };
 
       onUpdate(node.id, {
         children: [newTable],
-      })
+      });
     } else if (bodyRows) {
       const newBodyRows = bodyRows.map((row, rIdx) => {
         if (rIdx === rowIndex) {
           return {
             ...row,
             children: row.children.map((cell, cIdx) =>
-              cIdx === colIndex ? { ...cell, content } : cell
+              cIdx === colIndex ? { ...cell, content } : cell,
             ),
-          }
+          };
         }
-        return row
-      })
+        return row;
+      });
 
       const newTbody: StructuralNode = {
         ...tbody!,
         children: newBodyRows,
-      }
+      };
 
       const newTable: StructuralNode = {
         ...table,
         children: [thead!, newTbody],
-      }
+      };
 
       onUpdate(node.id, {
         children: [newTable],
-      })
+      });
     }
-  }
+  };
 
   // Drag handlers for the entire table
   const handleTableDragStart = (e: React.DragEvent) => {
-    if (readOnly || !onBlockDragStart) return
-    e.stopPropagation()
-    e.dataTransfer.effectAllowed = "move"
-    e.dataTransfer.setData("text/plain", node.id)
+    if (readOnly || !onBlockDragStart) return;
+    e.stopPropagation();
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', node.id);
     e.dataTransfer.setData(
-      "application/json",
+      'application/json',
       JSON.stringify({
         nodeId: node.id,
-        type: "table",
-      })
-    )
-    onBlockDragStart(node.id)
-  }
+        type: 'table',
+      }),
+    );
+    onBlockDragStart(node.id);
+  };
 
   const handleTableDragEnd = () => {
     // Cleanup if needed
-  }
+  };
 
   return (
     <div
       className="group/table relative"
       style={{
-        paddingLeft: readOnly ? "0" : "28px",
-        marginLeft: readOnly ? "0" : "-28px",
+        paddingLeft: readOnly ? '0' : '28px',
+        marginLeft: readOnly ? '0' : '-28px',
       }}
       onMouseEnter={() => {
         if (!readOnly) {
-          setShowColControls(true)
-          setShowRowControls(true)
-          setIsHovering(true)
+          setShowColControls(true);
+          setShowRowControls(true);
+          setIsHovering(true);
         }
       }}
       onMouseLeave={() => {
-        setShowColControls(false)
-        setShowRowControls(false)
-        setHoveredCol(null)
-        setHoveredRow(null)
-        setIsHovering(false)
+        setShowColControls(false);
+        setShowRowControls(false);
+        setHoveredCol(null);
+        setHoveredRow(null);
+        setIsHovering(false);
       }}
     >
       {/* Drag Handle for entire table */}
@@ -502,7 +487,7 @@ export function TableBuilder({
           onMouseDown={(e) => e.stopPropagation()}
         >
           <GripVertical
-            className="text-muted-foreground hover:text-foreground h-4 w-4 transition-colors duration-200"
+            className="h-4 w-4 text-muted-foreground transition-colors duration-200 hover:text-foreground"
             strokeWidth={1.5}
           />
         </div>
@@ -567,7 +552,7 @@ export function TableBuilder({
               <div
                 key={idx}
                 className="flex items-center justify-center"
-                style={{ height: "40px" }}
+                style={{ height: '40px' }}
                 onMouseEnter={() => setHoveredRow(idx)}
                 onMouseLeave={() => setHoveredRow(null)}
               >
@@ -600,8 +585,8 @@ export function TableBuilder({
           {/* Table */}
           <table
             ref={tableRef}
-            className="border-border border-collapse border"
-            style={{ width: "auto" }}
+            className="border-collapse border border-border"
+            style={{ width: 'auto' }}
           >
             <thead>
               {headerRow && (
@@ -610,11 +595,9 @@ export function TableBuilder({
                     <th
                       key={cell.id}
                       className={cn(
-                        "border-border bg-muted/50 group/cell relative border p-2 text-left font-semibold",
-                        hoveredCol === colIdx && "bg-muted",
-                        dragOverCol === colIdx &&
-                          draggingCol !== colIdx &&
-                          "bg-primary/20"
+                        'group/cell relative border border-border bg-muted/50 p-2 text-left font-semibold',
+                        hoveredCol === colIdx && 'bg-muted',
+                        dragOverCol === colIdx && draggingCol !== colIdx && 'bg-primary/20',
                       )}
                       style={
                         columnWidths[colIdx]
@@ -624,7 +607,7 @@ export function TableBuilder({
                               maxWidth: columnWidths[colIdx],
                             }
                           : {
-                              whiteSpace: "nowrap",
+                              whiteSpace: 'nowrap',
                             }
                       }
                       draggable={!readOnly}
@@ -640,24 +623,22 @@ export function TableBuilder({
                             className="cursor-grab opacity-0 transition-opacity group-hover/cell:opacity-100 active:cursor-grabbing"
                             onMouseDown={(e) => e.stopPropagation()}
                           >
-                            <GripVertical className="text-muted-foreground h-3 w-3" />
+                            <GripVertical className="h-3 w-3 text-muted-foreground" />
                           </div>
                         )}
 
                         <input
                           type="text"
-                          value={(cell as TextNode).content || ""}
-                          onChange={(e) =>
-                            handleCellChange(0, colIdx, e.target.value, true)
-                          }
+                          value={(cell as TextNode).content || ''}
+                          onChange={(e) => handleCellChange(0, colIdx, e.target.value, true)}
                           onKeyDown={(e) => {
                             if (
-                              e.key === "Backspace" &&
+                              e.key === 'Backspace' &&
                               !(cell as TextNode).content &&
                               numCols > 1
                             ) {
-                              e.preventDefault()
-                              removeColumn(colIdx)
+                              e.preventDefault();
+                              removeColumn(colIdx);
                             }
                           }}
                           readOnly={readOnly}
@@ -670,14 +651,14 @@ export function TableBuilder({
                       {!readOnly && (
                         <div
                           className={cn(
-                            "hover:bg-primary/50 absolute top-0 right-0 bottom-0 w-1 cursor-col-resize transition-colors",
-                            resizingCol === colIdx && "bg-primary"
+                            'absolute top-0 right-0 bottom-0 w-1 cursor-col-resize transition-colors hover:bg-primary/50',
+                            resizingCol === colIdx && 'bg-primary',
                           )}
                           onMouseDown={(e) => handleResizeStart(colIdx, e)}
-                          style={{ userSelect: "none" }}
+                          style={{ userSelect: 'none' }}
                         >
                           <div className="absolute top-1/2 right-0 -translate-x-1/2 -translate-y-1/2 opacity-0 transition-opacity hover:opacity-100">
-                            <GripVertical className="text-muted-foreground h-4 w-4" />
+                            <GripVertical className="h-4 w-4 text-muted-foreground" />
                           </div>
                         </div>
                       )}
@@ -691,11 +672,9 @@ export function TableBuilder({
                 <tr
                   key={row.id}
                   className={cn(
-                    "group/row",
-                    hoveredRow === rowIdx && "bg-muted/30",
-                    dragOverRow === rowIdx &&
-                      draggingRow !== rowIdx &&
-                      "bg-primary/20"
+                    'group/row',
+                    hoveredRow === rowIdx && 'bg-muted/30',
+                    dragOverRow === rowIdx && draggingRow !== rowIdx && 'bg-primary/20',
                   )}
                   draggable={!readOnly}
                   onDragStart={(e) => handleRowDragStart(rowIdx, e)}
@@ -707,8 +686,8 @@ export function TableBuilder({
                     <td
                       key={cell.id}
                       className={cn(
-                        "border-border relative border p-2",
-                        hoveredCol === colIdx && "bg-muted/50"
+                        'relative border border-border p-2',
+                        hoveredCol === colIdx && 'bg-muted/50',
                       )}
                       style={
                         columnWidths[colIdx]
@@ -718,7 +697,7 @@ export function TableBuilder({
                               maxWidth: columnWidths[colIdx],
                             }
                           : {
-                              whiteSpace: "nowrap",
+                              whiteSpace: 'nowrap',
                             }
                       }
                     >
@@ -729,21 +708,14 @@ export function TableBuilder({
                             className="cursor-grab opacity-0 transition-opacity group-hover/row:opacity-100 active:cursor-grabbing"
                             onMouseDown={(e) => e.stopPropagation()}
                           >
-                            <GripVertical className="text-muted-foreground h-3 w-3" />
+                            <GripVertical className="h-3 w-3 text-muted-foreground" />
                           </div>
                         )}
 
                         <input
                           type="text"
-                          value={(cell as TextNode).content || ""}
-                          onChange={(e) =>
-                            handleCellChange(
-                              rowIdx,
-                              colIdx,
-                              e.target.value,
-                              false
-                            )
-                          }
+                          value={(cell as TextNode).content || ''}
+                          onChange={(e) => handleCellChange(rowIdx, colIdx, e.target.value, false)}
                           readOnly={readOnly}
                           className="w-full border-none bg-transparent outline-none focus:ring-0 focus:outline-none"
                           placeholder="Enter text"
@@ -758,5 +730,5 @@ export function TableBuilder({
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -31,7 +31,7 @@ class UserController(
         ApiResponse(responseCode = "404", description = "User not found")
     )
     fun getCurrentUser(): ResponseEntity<User> {
-        val user: User = profileService.getUserFromSession().toModel()
+        val user: User = profileService.getUserWithWorkspacesFromSession()
         return ResponseEntity.ok(user)
     }
 

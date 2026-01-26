@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useProfile } from "@/components/feature-modules/user/hooks/useProfile";
-import { FCWC, Propless } from "@/lib/interfaces/interface";
-import { Onboard } from "../components/Onboard";
+import { useProfile } from '@/components/feature-modules/user/hooks/useProfile';
+import { FCWC, Propless } from '@/lib/interfaces/interface';
+import { Onboard } from '../components/Onboard';
 
 /**
  * Centralised Wrapper Component to Handle all the Onboarding Process
@@ -11,10 +11,10 @@ import { Onboard } from "../components/Onboard";
  *
  */
 export const OnboardWrapper: FCWC<Propless> = ({ children }) => {
-    const { data: user } = useProfile();
+  const { data: user } = useProfile();
 
-    // New user accounts wont have a name, indicating they haven't completed onboarding
-    if (!user || user.name) return <>{children}</>;
+  // New user accounts wont have a name, indicating they haven't completed onboarding
+  if (!user || user.name) return <>{children}</>;
 
-    return <Onboard />;
+  return <Onboard />;
 };

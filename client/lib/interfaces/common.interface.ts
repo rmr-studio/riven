@@ -1,13 +1,22 @@
-import { components } from "../types/types";
+import {
+  Condition,
+  FormStructure,
+  Icon,
+  SchemaOptions,
+  SchemaString,
+  SchemaUUID,
+} from '@/lib/types';
 
-export type Address = components["schemas"]["Address"];
-export type Condition = components["schemas"]["Condition"];
-export type SchemaOptions = components["schemas"]["SchemaOptions"];
-export type FormStructure = components["schemas"]["FormStructure"];
-export type Icon = components["schemas"]["Icon"];
+export type { Condition, FormStructure, Icon, SchemaOptions, SchemaUUID };
 
 // Basic schema type that enforces string based key identification
-export type Schema = components["schemas"]["SchemaString"];
+export type Schema = SchemaString;
 
-// Schema that enforce UUID based keys for identification
-export type SchemaUUID = components["schemas"]["SchemaUUID"];
+// Custom local type (not in OpenAPI spec)
+export interface Address {
+  street?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+}
