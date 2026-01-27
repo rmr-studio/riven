@@ -12,19 +12,18 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * Enumeration of possible block operation types for requests.
  * @export
+ * @enum {string}
  */
-export const BlockOperationType = {
-    AddBlock: 'ADD_BLOCK',
-    RemoveBlock: 'REMOVE_BLOCK',
-    MoveBlock: 'MOVE_BLOCK',
-    UpdateBlock: 'UPDATE_BLOCK',
-    ReorderBlock: 'REORDER_BLOCK'
-} as const;
-export type BlockOperationType = typeof BlockOperationType[keyof typeof BlockOperationType];
+export enum BlockOperationType {
+    AddBlock = 'ADD_BLOCK',
+    RemoveBlock = 'REMOVE_BLOCK',
+    MoveBlock = 'MOVE_BLOCK',
+    UpdateBlock = 'UPDATE_BLOCK',
+    ReorderBlock = 'REORDER_BLOCK'
+}
 
 
 export function instanceOfBlockOperationType(value: any): boolean {

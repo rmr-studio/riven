@@ -1,19 +1,20 @@
-"use client";
+'use client';
 
-import { useProfile } from "@/components/feature-modules/user/hooks/useProfile";
-import { SidebarTrigger } from "../sidebar";
-import { NavbarLogo, NavbarUserProfile, NavbarWrapper } from "./navbar.content";
+import { useProfile } from '@/components/feature-modules/user/hooks/useProfile';
+import { SidebarTrigger } from '../sidebar';
+import { NavbarLogo, NavbarUserProfile, NavbarWrapper } from './navbar.content';
 
 export const AppNavbar = () => {
-    const { isLoadingAuth: _, ...query } = useProfile();
-    return (
-        <NavbarWrapper>
-            <SidebarTrigger className="mr-4 cursor-pointer" />
-            <NavbarLogo href="/dashboard" />
+  const { isLoadingAuth: _, ...query } = useProfile();
 
-            <div className="flex w-auto flex-grow justify-end mr-2">
-                <NavbarUserProfile {...query} />
-            </div>
-        </NavbarWrapper>
-    );
+  return (
+    <NavbarWrapper>
+      <SidebarTrigger className="mr-4 cursor-pointer" />
+      <NavbarLogo href="/dashboard" />
+
+      <div className="mr-2 flex w-auto flex-grow justify-end">
+        <NavbarUserProfile {...query} />
+      </div>
+    </NavbarWrapper>
+  );
 };

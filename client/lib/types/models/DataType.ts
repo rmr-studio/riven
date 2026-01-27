@@ -12,20 +12,19 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const DataType = {
-    String: 'STRING',
-    Number: 'NUMBER',
-    Boolean: 'BOOLEAN',
-    Object: 'OBJECT',
-    Array: 'ARRAY',
-    Null: 'NULL'
-} as const;
-export type DataType = typeof DataType[keyof typeof DataType];
+export enum DataType {
+    String = 'STRING',
+    Number = 'NUMBER',
+    Boolean = 'BOOLEAN',
+    Object = 'OBJECT',
+    Array = 'ARRAY',
+    Null = 'NULL'
+}
 
 
 export function instanceOfDataType(value: any): boolean {

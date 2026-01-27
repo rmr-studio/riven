@@ -12,17 +12,16 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const BlockMetadataType = {
-    Content: 'CONTENT',
-    EntityReference: 'ENTITY_REFERENCE',
-    BlockReference: 'BLOCK_REFERENCE'
-} as const;
-export type BlockMetadataType = typeof BlockMetadataType[keyof typeof BlockMetadataType];
+export enum BlockMetadataType {
+    Content = 'CONTENT',
+    EntityReference = 'ENTITY_REFERENCE',
+    BlockReference = 'BLOCK_REFERENCE'
+}
 
 
 export function instanceOfBlockMetadataType(value: any): boolean {

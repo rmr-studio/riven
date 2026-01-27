@@ -12,18 +12,17 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const WorkflowTriggerType = {
-    EntityEvent: 'ENTITY_EVENT',
-    Schedule: 'SCHEDULE',
-    Function: 'FUNCTION',
-    Webhook: 'WEBHOOK'
-} as const;
-export type WorkflowTriggerType = typeof WorkflowTriggerType[keyof typeof WorkflowTriggerType];
+export enum WorkflowTriggerType {
+    EntityEvent = 'ENTITY_EVENT',
+    Schedule = 'SCHEDULE',
+    Function = 'FUNCTION',
+    Webhook = 'WEBHOOK'
+}
 
 
 export function instanceOfWorkflowTriggerType(value: any): boolean {

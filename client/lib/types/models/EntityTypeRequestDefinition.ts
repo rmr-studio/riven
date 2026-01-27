@@ -12,18 +12,17 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const EntityTypeRequestDefinition = {
-    SaveRelationship: 'SAVE_RELATIONSHIP',
-    SaveSchema: 'SAVE_SCHEMA',
-    DeleteSchema: 'DELETE_SCHEMA',
-    DeleteRelationship: 'DELETE_RELATIONSHIP'
-} as const;
-export type EntityTypeRequestDefinition = typeof EntityTypeRequestDefinition[keyof typeof EntityTypeRequestDefinition];
+export enum EntityTypeRequestDefinition {
+    SaveRelationship = 'SAVE_RELATIONSHIP',
+    SaveSchema = 'SAVE_SCHEMA',
+    DeleteSchema = 'DELETE_SCHEMA',
+    DeleteRelationship = 'DELETE_RELATIONSHIP'
+}
 
 
 export function instanceOfEntityTypeRequestDefinition(value: any): boolean {

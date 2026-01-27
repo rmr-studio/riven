@@ -1,67 +1,65 @@
-"use client";
+'use client';
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/util/utils";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/util/utils';
 
-import { OptionalTooltip } from "@/components/ui/optional-tooltip";
-import { CircleAlert } from "lucide-react";
-import { FC } from "react";
-import { FormWidgetProps } from "../form-widget.types";
+import { OptionalTooltip } from '@/components/ui/optional-tooltip';
+import { CircleAlert } from 'lucide-react';
+import { FC } from 'react';
+import { FormWidgetProps } from '../form-widget.types';
 
 export const TextInputWidget: FC<FormWidgetProps<string>> = ({
-    value,
-    onChange,
-    onBlur,
-    label,
-    description,
-    placeholder,
-    errors,
-    displayError = "message",
-    disabled,
-    autoFocus,
+  value,
+  onChange,
+  onBlur,
+  label,
+  description,
+  placeholder,
+  errors,
+  displayError = 'message',
+  disabled,
+  autoFocus,
 }) => {
-    const hasErrors = errors && errors.length > 0;
+  const hasErrors = errors && errors.length > 0;
 
-    return (
-        <OptionalTooltip
-            content={errors?.join(", ") || ""}
-            disabled={displayError !== "tooltip" || !hasErrors}
-        >
-            <div className="space-y-2">
-                {label && (
-                    <Label htmlFor={label} className={cn(hasErrors && "text-destructive")}>
-                        {label}
-                    </Label>
-                )}
-                {description && <p className="text-sm text-muted-foreground">{description}</p>}
-                <div className="relative">
-                    <Input
-                        id={label}
-                        value={value || ""}
-                        onChange={(e) => onChange(e.target.value)}
-                        onBlur={onBlur}
-                        placeholder={placeholder}
-                        disabled={disabled}
-                        autoFocus={autoFocus}
-                        className={cn(
-                            hasErrors && "border-destructive focus-visible:ring-destructive"
-                        )}
-                    />
-                    {displayError === "tooltip" && hasErrors && (
-                        <CircleAlert className="absolute -right-1 -bottom-1 size-4 text-destructive fill-background" />
-                    )}
-                </div>
-                {displayError === "message" && hasErrors && (
-                    <div className="space-y-1">
-                        {errors.map((error, idx) => (
-                            <p key={idx} className="text-sm text-destructive">
-                                {error}
-                            </p>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </OptionalTooltip>
-    );
+  return (
+    <OptionalTooltip
+      content={errors?.join(', ') || ''}
+      disabled={displayError !== 'tooltip' || !hasErrors}
+    >
+      <div className="space-y-2">
+        {label && (
+          <Label htmlFor={label} className={cn(hasErrors && 'text-destructive')}>
+            {label}
+          </Label>
+        )}
+        {description && <p className="text-sm text-muted-foreground">{description}</p>}
+        <div className="relative">
+          <Input
+            id={label}
+            value={value || ''}
+            onChange={(e) => onChange(e.target.value)}
+            onBlur={onBlur}
+            placeholder={placeholder}
+            disabled={disabled}
+            autoFocus={autoFocus}
+            className={cn(hasErrors && 'border-destructive focus-visible:ring-destructive')}
+          />
+          {displayError === 'tooltip' && hasErrors && (
+            <CircleAlert className="absolute -right-1 -bottom-1 size-4 fill-background text-destructive" />
+          )}
+        </div>
+        {displayError === 'message' && hasErrors && (
+          <div className="space-y-1">
+            {errors.map((error, idx) => (
+              <p key={idx} className="text-sm text-destructive">
+                {error}
+              </p>
+            ))}
+          </div>
+        )}
+      </div>
+    </OptionalTooltip>
+  );
 };

@@ -1,4 +1,7 @@
 // user/models.ts
 // Re-export user model types from generated code
 
-export type { User, UserDisplay } from "@/lib/types/models";
+import type { User } from "../models/User";
+import type { UserDisplay } from "../models/UserDisplay";
+
+export type { User, UserDisplay };

@@ -1,264 +1,263 @@
-"use client";
+'use client';
 
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-    EntityAttributeDefinition,
-    EntityPropertyType,
-    EntityRelationshipDefinition,
-    EntityType,
-    EntityTypeAttributeRow,
-    EntityTypeDefinition,
-} from "@/lib/types/entity";
-import { toTitleCase } from "@/lib/util/utils";
-import { ColumnDef, Row } from "@tanstack/react-table";
-import { Key, Link2, ListTodo, ListX } from "lucide-react";
-import { ReactNode, useMemo } from "react";
+  EntityAttributeDefinition,
+  EntityPropertyType,
+  EntityRelationshipDefinition,
+  EntityType,
+  EntityTypeAttributeRow,
+  EntityTypeDefinition,
+} from '@/lib/types/entity';
+import { toTitleCase } from '@/lib/util/utils';
+import { ColumnDef, Row } from '@tanstack/react-table';
+import { Key, Link2, ListTodo, ListX } from 'lucide-react';
+import { ReactNode, useMemo } from 'react';
 
 // Common type for data table rows (both attributes and relationships)
 
 interface UseEntityTypeTableReturn {
-    columns: ColumnDef<EntityTypeAttributeRow>[];
-    sortedRowData: EntityTypeAttributeRow[];
-    onDelete: (row: EntityTypeAttributeRow) => void;
-    onEdit: (row: EntityTypeAttributeRow) => void;
+  columns: ColumnDef<EntityTypeAttributeRow>[];
+  sortedRowData: EntityTypeAttributeRow[];
+  onDelete: (row: EntityTypeAttributeRow) => void;
+  onEdit: (row: EntityTypeAttributeRow) => void;
 }
 
 export function useEntityTypeTable(
-    type: EntityType,
-    identifierKey: string,
-    editCB: (definition: EntityTypeDefinition) => void,
-    deleteCB: (definition: EntityTypeDefinition) => void
+  type: EntityType,
+  identifierKey: string,
+  editCB: (definition: EntityTypeDefinition) => void,
+  deleteCB: (definition: EntityTypeDefinition) => void,
 ): UseEntityTypeTableReturn {
-    // Create a lookup map for attributes and relationships by their IDs. This should allow for quick access when choosing the correct item to edit
-    const attributeLookup: Map<string, EntityAttributeDefinition | EntityRelationshipDefinition> =
-        useMemo(() => {
-            const map = new Map<string, EntityAttributeDefinition | EntityRelationshipDefinition>();
+  // Create a lookup map for attributes and relationships by their IDs. This should allow for quick access when choosing the correct item to edit
+  const attributeLookup: Map<string, EntityAttributeDefinition | EntityRelationshipDefinition> =
+    useMemo(() => {
+      const map = new Map<string, EntityAttributeDefinition | EntityRelationshipDefinition>();
 
-            if (type.schema.properties) {
-                Object.entries(type.schema.properties).forEach(([id, attr]) => {
-                    map.set(id, {
-                        id,
-                        schema: attr,
-                    });
-                });
-            }
-
-            type.relationships &&
-                type.relationships.forEach((rel) => {
-                    map.set(rel.id, rel);
-                });
-            return map;
-        }, [type]);
-
-    const IconWithTooltip = ({
-        icon: Icon,
-        tooltip,
-    }: {
-        icon: typeof Key;
-        tooltip: string;
-    }): ReactNode => (
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <Icon className="size-4 text-muted-foreground" />
-            </TooltipTrigger>
-            <TooltipContent className="text-xs font-mono italic">{tooltip}</TooltipContent>
-        </Tooltip>
-    );
-
-    const getIndicatorIcons = (row: Row<EntityTypeAttributeRow>): ReactNode => {
-        const icons: ReactNode[] = [];
-
-        if (identifierKey === row.original.id) {
-            return [
-                <IconWithTooltip
-                    key="identifier"
-                    icon={Key}
-                    tooltip="This attribute represents the primary identifier for this entity"
-                />,
-            ];
-        }
-
-        if (row.original.type === EntityPropertyType.Relationship) {
-            icons.push(
-                <IconWithTooltip
-                    key="relationship"
-                    icon={Link2}
-                    tooltip="This attribute references a relationship to another entity type"
-                />
-            );
-        }
-
-        if (row.original.required) {
-            icons.push(
-                <IconWithTooltip
-                    key="required"
-                    icon={ListTodo}
-                    tooltip="This attribute is required and must have a value for each entity"
-                />
-            );
-        }
-
-        if (row.original.unique) {
-            icons.push(
-                <IconWithTooltip
-                    key="unique"
-                    icon={ListX}
-                    tooltip="This attribute must have a unique value for each entity"
-                />
-            );
-        }
-
-        return <div className="flex items-center gap-1.5">{icons}</div>;
-    };
-
-    // Unified columns for both attributes and relationships
-    const fieldColumns: ColumnDef<EntityTypeAttributeRow>[] = useMemo(
-        () => [
-            {
-                accessorKey: "label",
-                header: "Name",
-                cell: ({ row }) => {
-                    return <span className="font-medium">{row.original.label}</span>;
-                },
-            },
-            {
-                id: "properties",
-                size: 60,
-                header: "Properties",
-                enableResizing: false,
-                cell: ({ row }) => getIndicatorIcons(row),
-            },
-
-            {
-                accessorKey: "rowType",
-                header: "Type",
-                cell: ({ row }) => {
-                    return <Badge variant="outline">{toTitleCase(row.original.schemaType)}</Badge>;
-                },
-            },
-            {
-                id: "constraints",
-                header: "Constraints",
-                cell: ({ row }) => {
-                    const isRelationship = row.original.type === EntityPropertyType.Relationship;
-                    const constraints: string[] = [];
-
-                    if (row.original.required) constraints.push("Required");
-
-                    if (!isRelationship && row.original.unique) {
-                        constraints.push("Unique");
-                    }
-
-                    if (isRelationship && row.original.allowPolymorphic) {
-                        constraints.push("Polymorphic");
-                    }
-
-                    if (isRelationship && row.original.bidirectional) {
-                        constraints.push("Bidirectional");
-                    }
-
-                    return (
-                        <div className="flex gap-1 flex-wrap">
-                            {constraints.map((constraint) => (
-                                <Badge key={constraint} variant="secondary" className="text-xs">
-                                    {constraint}
-                                </Badge>
-                            ))}
-                            {constraints.length === 0 && (
-                                <span className="text-xs text-muted-foreground">None</span>
-                            )}
-                        </div>
-                    );
-                },
-            },
-        ],
-        [identifierKey]
-    );
-
-    const convertRelationshipToRow = (
-        relationship: EntityRelationshipDefinition
-    ): EntityTypeAttributeRow => ({
-        id: relationship.id,
-        label: relationship.name || relationship.id,
-        type: EntityPropertyType.Relationship,
-        required: relationship.required || false,
-        schemaType: "RELATIONSHIP",
-        additionalConstraints: [],
-        cardinality: relationship.cardinality,
-        entityTypeKeys: relationship.entityTypeKeys || [],
-        allowPolymorphic: relationship.allowPolymorphic || false,
-        bidirectional: relationship.bidirectional || false,
-    });
-
-    const convertSchemaPropertyToRow = (
-        attribute: EntityAttributeDefinition
-    ): EntityTypeAttributeRow => {
-        const { id, schema } = attribute;
-        return {
+      if (type.schema.properties) {
+        Object.entries(type.schema.properties).forEach(([id, attr]) => {
+          map.set(id, {
             id,
-            label: schema.label ?? "Unknown",
-            type: EntityPropertyType.Attribute,
-            required: schema.required || false,
-            schemaType: schema.key,
-            // Todo. Set up additional constraints properly
-            additionalConstraints: [],
-            dataType: schema.type,
-            unique: schema.unique || false,
-        };
-    };
-
-    const sortedRowData: EntityTypeAttributeRow[] = useMemo(() => {
-        const { schema, columns, relationships } = type;
-        const rows: EntityTypeAttributeRow[] = [
-            ...Object.entries(schema.properties || {}).map(([id, attr]) =>
-                convertSchemaPropertyToRow({ id, schema: attr })
-            ),
-            ...(relationships || []).map((rel) => convertRelationshipToRow(rel)),
-        ];
-
-        return rows.toSorted((a, b) => {
-            const aIndex = columns.findIndex((o) => o.key === a.id);
-            const bIndex = columns.findIndex((o) => o.key === b.id);
-
-            // If both are in columns array, sort by their position
-            if (aIndex !== -1 && bIndex !== -1) {
-                return aIndex - bIndex;
-            }
-            // If only one is in columns array, prioritize it
-            if (aIndex !== -1) return -1;
-            if (bIndex !== -1) return 1;
-            // If neither is in columns array, maintain current columns
-            return 0;
+            schema: attr,
+          });
         });
+      }
+
+      type.relationships?.forEach((rel) => {
+        map.set(rel.id, rel);
+      });
+      return map;
     }, [type]);
 
-    const onEdit = (row: EntityTypeAttributeRow) => {
-        const definition = attributeLookup.get(row.id);
-        if (!definition) return;
+  const IconWithTooltip = ({
+    icon: Icon,
+    tooltip,
+  }: {
+    icon: typeof Key;
+    tooltip: string;
+  }): ReactNode => (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Icon className="size-4 text-muted-foreground" />
+      </TooltipTrigger>
+      <TooltipContent className="font-mono text-xs italic">{tooltip}</TooltipContent>
+    </Tooltip>
+  );
 
-        editCB({
-            id: row.id,
-            type: row.type,
-            definition,
-        });
-    };
+  const getIndicatorIcons = (row: Row<EntityTypeAttributeRow>): ReactNode => {
+    const icons: ReactNode[] = [];
 
-    const onDelete = (row: EntityTypeAttributeRow) => {
-        const definition = attributeLookup.get(row.id);
-        if (!definition) return;
+    if (identifierKey === row.original.id) {
+      return [
+        <IconWithTooltip
+          key="identifier"
+          icon={Key}
+          tooltip="This attribute represents the primary identifier for this entity"
+        />,
+      ];
+    }
 
-        deleteCB({
-            id: row.id,
-            type: row.type,
-            definition,
-        });
-    };
+    if (row.original.type === EntityPropertyType.Relationship) {
+      icons.push(
+        <IconWithTooltip
+          key="relationship"
+          icon={Link2}
+          tooltip="This attribute references a relationship to another entity type"
+        />,
+      );
+    }
 
+    if (row.original.required) {
+      icons.push(
+        <IconWithTooltip
+          key="required"
+          icon={ListTodo}
+          tooltip="This attribute is required and must have a value for each entity"
+        />,
+      );
+    }
+
+    if (row.original.unique) {
+      icons.push(
+        <IconWithTooltip
+          key="unique"
+          icon={ListX}
+          tooltip="This attribute must have a unique value for each entity"
+        />,
+      );
+    }
+
+    return <div className="flex items-center gap-1.5">{icons}</div>;
+  };
+
+  // Unified columns for both attributes and relationships
+  const fieldColumns: ColumnDef<EntityTypeAttributeRow>[] = useMemo(
+    () => [
+      {
+        accessorKey: 'label',
+        header: 'Name',
+        cell: ({ row }) => {
+          return <span className="font-medium">{row.original.label}</span>;
+        },
+      },
+      {
+        id: 'properties',
+        size: 60,
+        header: 'Properties',
+        enableResizing: false,
+        cell: ({ row }) => getIndicatorIcons(row),
+      },
+
+      {
+        accessorKey: 'rowType',
+        header: 'Type',
+        cell: ({ row }) => {
+          return <Badge variant="outline">{toTitleCase(row.original.schemaType)}</Badge>;
+        },
+      },
+      {
+        id: 'constraints',
+        header: 'Constraints',
+        cell: ({ row }) => {
+          const isRelationship = row.original.type === EntityPropertyType.Relationship;
+          const constraints: string[] = [];
+
+          if (row.original.required) constraints.push('Required');
+
+          if (!isRelationship && row.original.unique) {
+            constraints.push('Unique');
+          }
+
+          if (isRelationship && row.original.allowPolymorphic) {
+            constraints.push('Polymorphic');
+          }
+
+          if (isRelationship && row.original.bidirectional) {
+            constraints.push('Bidirectional');
+          }
+
+          return (
+            <div className="flex flex-wrap gap-1">
+              {constraints.map((constraint) => (
+                <Badge key={constraint} variant="secondary" className="text-xs">
+                  {constraint}
+                </Badge>
+              ))}
+              {constraints.length === 0 && (
+                <span className="text-xs text-muted-foreground">None</span>
+              )}
+            </div>
+          );
+        },
+      },
+    ],
+    [identifierKey],
+  );
+
+  const convertRelationshipToRow = (
+    relationship: EntityRelationshipDefinition,
+  ): EntityTypeAttributeRow => ({
+    id: relationship.id,
+    label: relationship.name || relationship.id,
+    type: EntityPropertyType.Relationship,
+    required: relationship.required || false,
+    schemaType: 'RELATIONSHIP',
+    additionalConstraints: [],
+    cardinality: relationship.cardinality,
+    entityTypeKeys: relationship.entityTypeKeys || [],
+    allowPolymorphic: relationship.allowPolymorphic || false,
+    bidirectional: relationship.bidirectional || false,
+  });
+
+  const convertSchemaPropertyToRow = (
+    attribute: EntityAttributeDefinition,
+  ): EntityTypeAttributeRow => {
+    const { id, schema } = attribute;
     return {
-        columns: fieldColumns,
-        sortedRowData,
-        onEdit,
-        onDelete,
+      id,
+      label: schema.label ?? 'Unknown',
+      type: EntityPropertyType.Attribute,
+      required: schema.required || false,
+      schemaType: schema.key,
+      // Todo. Set up additional constraints properly
+      additionalConstraints: [],
+      dataType: schema.type,
+      unique: schema.unique || false,
     };
+  };
+
+  const sortedRowData: EntityTypeAttributeRow[] = useMemo(() => {
+    const { schema, columns, relationships } = type;
+    const rows: EntityTypeAttributeRow[] = [
+      ...Object.entries(schema.properties || {}).map(([id, attr]) =>
+        convertSchemaPropertyToRow({ id, schema: attr }),
+      ),
+      ...(relationships || []).map((rel) => convertRelationshipToRow(rel)),
+    ];
+
+    return rows.toSorted((a, b) => {
+      const aIndex = columns.findIndex((o) => o.key === a.id);
+      const bIndex = columns.findIndex((o) => o.key === b.id);
+
+      // If both are in columns array, sort by their position
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex;
+      }
+      // If only one is in columns array, prioritize it
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      // If neither is in columns array, maintain current columns
+      return 0;
+    });
+  }, [type]);
+
+  const onEdit = (row: EntityTypeAttributeRow) => {
+    const definition = attributeLookup.get(row.id);
+    if (!definition) return;
+
+    editCB({
+      id: row.id,
+      type: row.type,
+      definition,
+    });
+  };
+
+  const onDelete = (row: EntityTypeAttributeRow) => {
+    const definition = attributeLookup.get(row.id);
+    if (!definition) return;
+
+    deleteCB({
+      id: row.id,
+      type: row.type,
+      definition,
+    });
+  };
+
+  return {
+    columns: fieldColumns,
+    sortedRowData,
+    onEdit,
+    onDelete,
+  };
 }

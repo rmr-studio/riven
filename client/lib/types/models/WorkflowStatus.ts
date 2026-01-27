@@ -12,19 +12,18 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const WorkflowStatus = {
-    Pending: 'PENDING',
-    Running: 'RUNNING',
-    Completed: 'COMPLETED',
-    Failed: 'FAILED',
-    Canceled: 'CANCELED'
-} as const;
-export type WorkflowStatus = typeof WorkflowStatus[keyof typeof WorkflowStatus];
+export enum WorkflowStatus {
+    Pending = 'PENDING',
+    Running = 'RUNNING',
+    Completed = 'COMPLETED',
+    Failed = 'FAILED',
+    Canceled = 'CANCELED'
+}
 
 
 export function instanceOfWorkflowStatus(value: any): boolean {

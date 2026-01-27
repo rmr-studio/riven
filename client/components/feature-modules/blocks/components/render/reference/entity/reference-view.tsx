@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
 import { FC, useCallback } from "react";
 import { useBlockEnvironment } from "../../../../context/block-environment-provider";
 import { useTrackedEnvironment } from "../../../../context/tracked-environment-provider";
 import { useBlockHydration } from "../../../../hooks/use-block-hydration";
 import type { EntityReferenceMetadata, ReferenceItem } from "@/lib/types/block";
-import { EntityReferenceItem } from "./reference-item";
+// import { EntityReferenceItem } from "./reference-item";
 
 interface Props {
-    blockId: string;
-    item: ReferenceItem;
+  blockId: string;
+  item: ReferenceItem;
 }
 
 /**
@@ -17,40 +17,41 @@ interface Props {
  * Handles hydration and removal logic for singleton entity references.
  */
 export const EntityView: FC<Props> = ({ blockId, item }) => {
-    const { workspaceId, getBlock } = useBlockEnvironment();
-    const { updateTrackedBlock } = useTrackedEnvironment();
-    const { data: hydrationResult, isLoading, error } = useBlockHydration(blockId);
+  const { workspaceId, getBlock } = useBlockEnvironment();
+  const { updateTrackedBlock } = useTrackedEnvironment();
+  const { data: hydrationResult, isLoading, error } = useBlockHydration(blockId);
 
-    const reference = hydrationResult?.references?.[0];
+  const reference = hydrationResult?.references?.[0];
 
-    // Handle entity removal
-    const handleRemove = useCallback(() => {
-        const block = getBlock(blockId);
-        if (!block) return;
+  // Handle entity removal
+  const handleRemove = useCallback(() => {
+    const block = getBlock(blockId);
+    if (!block) return;
 
-        const updatedPayload: EntityReferenceMetadata = {
-            ...(block.block.payload as EntityReferenceMetadata),
-            items: [],
-        };
+    const updatedPayload: EntityReferenceMetadata = {
+      ...(block.block.payload as EntityReferenceMetadata),
+      items: [],
+    };
 
-        updateTrackedBlock(blockId, {
-            ...block,
-            block: {
-                ...block.block,
-                payload: updatedPayload,
-            },
-        });
-    }, [blockId, getBlock, updateTrackedBlock]);
+    updateTrackedBlock(blockId, {
+      ...block,
+      block: {
+        ...block.block,
+        payload: updatedPayload,
+      },
+    });
+  }, [blockId, getBlock, updateTrackedBlock]);
 
-    return (
-        <EntityReferenceItem
-            id={item.id}
-            item={item}
-            reference={reference}
-            isLoading={isLoading}
-            error={error}
-            variant="singleton"
-            onRemove={handleRemove}
-        />
-    );
+  return (
+    // <EntityReferenceItem
+    //   id={item.id}
+    //   item={item}
+    //   reference={reference}
+    //   isLoading={isLoading}
+    //   error={error}
+    //   variant="singleton"
+    //   onRemove={handleRemove}
+    // />
+    <></>
+  );
 };

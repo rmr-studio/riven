@@ -12,23 +12,22 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const WorkflowActionType = {
-    CreateEntity: 'CREATE_ENTITY',
-    UpdateEntity: 'UPDATE_ENTITY',
-    DeleteEntity: 'DELETE_ENTITY',
-    QueryEntity: 'QUERY_ENTITY',
-    LinkEntity: 'LINK_ENTITY',
-    IntegrationRequest: 'INTEGRATION_REQUEST',
-    HttpRequest: 'HTTP_REQUEST',
-    SetEnvironmentVariable: 'SET_ENVIRONMENT_VARIABLE',
-    MapData: 'MAP_DATA'
-} as const;
-export type WorkflowActionType = typeof WorkflowActionType[keyof typeof WorkflowActionType];
+export enum WorkflowActionType {
+    CreateEntity = 'CREATE_ENTITY',
+    UpdateEntity = 'UPDATE_ENTITY',
+    DeleteEntity = 'DELETE_ENTITY',
+    QueryEntity = 'QUERY_ENTITY',
+    LinkEntity = 'LINK_ENTITY',
+    IntegrationRequest = 'INTEGRATION_REQUEST',
+    HttpRequest = 'HTTP_REQUEST',
+    SetEnvironmentVariable = 'SET_ENVIRONMENT_VARIABLE',
+    MapData = 'MAP_DATA'
+}
 
 
 export function instanceOfWorkflowActionType(value: any): boolean {

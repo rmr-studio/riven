@@ -1,23 +1,18 @@
-"use client"
+'use client';
 
-import Image from "next/image"
-import { Eye, EyeOff, FileText, Moon, Sun } from "lucide-react"
-import { useTheme } from "next-themes"
+import Image from 'next/image';
+import { Eye, EyeOff, FileText, Moon, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
-import { Button } from "../button"
-import { Separator } from "../separator"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../tooltip"
+import { Button } from '../button';
+import { Separator } from '../separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../tooltip';
 
 interface ToolbarProps {
-  readOnly: boolean
-  onReadOnlyChange: (readOnly: boolean) => void
-  notionBased?: boolean
-  onNotionBasedChange?: (notionBased: boolean) => void
+  readOnly: boolean;
+  onReadOnlyChange: (readOnly: boolean) => void;
+  notionBased?: boolean;
+  onNotionBasedChange?: (notionBased: boolean) => void;
 }
 
 export function QuickModeToggle({
@@ -26,24 +21,24 @@ export function QuickModeToggle({
   notionBased,
   onNotionBasedChange,
 }: ToolbarProps) {
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme } = useTheme();
 
   const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark")
-  }
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
-  return null
+  return null;
 
   return (
     <TooltipProvider>
-      <div className="bg-background fixed top-[4.5rem] right-2 z-[105] flex items-center gap-1 rounded-lg border p-1 shadow-lg md:top-20 md:right-4 md:p-1.5 lg:top-17">
+      <div className="fixed top-[4.5rem] right-2 z-[105] flex items-center gap-1 rounded-lg border bg-background p-1 shadow-lg md:top-20 md:right-4 md:p-1.5 lg:top-17">
         {/* Editor Mode Toggle - Only show if handler is provided */}
         {onNotionBasedChange && (
           <>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant={notionBased ? "default" : "ghost"}
+                  variant={notionBased ? 'default' : 'ghost'}
                   size="icon"
                   className="relative h-8 w-8 md:h-9 md:w-9"
                   onClick={() => onNotionBasedChange(!notionBased)}
@@ -53,10 +48,10 @@ export function QuickModeToggle({
                     alt="Notion Logo"
                     width={16}
                     height={16}
-                    className={`h-3.5 w-3.5 invert-0 md:h-4 md:w-4 dark:invert ${notionBased ? "!invert dark:!invert-0" : ""}`}
+                    className={`h-3.5 w-3.5 invert-0 md:h-4 md:w-4 dark:invert ${notionBased ? '!invert dark:!invert-0' : ''}`}
                   />
                   <span className="sr-only">
-                    {notionBased ? "Notion Mode" : "Rich Editor Mode"}
+                    {notionBased ? 'Notion Mode' : 'Rich Editor Mode'}
                   </span>
                 </Button>
               </TooltipTrigger>
@@ -87,7 +82,7 @@ export function QuickModeToggle({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant={readOnly ? "default" : "ghost"}
+              variant={readOnly ? 'default' : 'ghost'}
               size="icon"
               className="h-8 w-8 md:h-9 md:w-9"
               onClick={() => onReadOnlyChange(!readOnly)}
@@ -97,13 +92,11 @@ export function QuickModeToggle({
               ) : (
                 <EyeOff className="h-3.5 w-3.5 md:h-4 md:w-4" />
               )}
-              <span className="sr-only">
-                {readOnly ? "View Only Mode" : "Edit Mode"}
-              </span>
+              <span className="sr-only">{readOnly ? 'View Only Mode' : 'Edit Mode'}</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{readOnly ? "View Only Mode" : "Edit Mode"}</p>
+            <p>{readOnly ? 'View Only Mode' : 'Edit Mode'}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -129,5 +122,5 @@ export function QuickModeToggle({
         </Tooltip>
       </div>
     </TooltipProvider>
-  )
+  );
 }

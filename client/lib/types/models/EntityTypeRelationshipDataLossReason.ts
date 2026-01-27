@@ -12,17 +12,16 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const EntityTypeRelationshipDataLossReason = {
-    RelationshipDeleted: 'RELATIONSHIP_DELETED',
-    EntityTypeRemovedFromTarget: 'ENTITY_TYPE_REMOVED_FROM_TARGET',
-    CardinalityRestriction: 'CARDINALITY_RESTRICTION'
-} as const;
-export type EntityTypeRelationshipDataLossReason = typeof EntityTypeRelationshipDataLossReason[keyof typeof EntityTypeRelationshipDataLossReason];
+export enum EntityTypeRelationshipDataLossReason {
+    RelationshipDeleted = 'RELATIONSHIP_DELETED',
+    EntityTypeRemovedFromTarget = 'ENTITY_TYPE_REMOVED_FROM_TARGET',
+    CardinalityRestriction = 'CARDINALITY_RESTRICTION'
+}
 
 
 export function instanceOfEntityTypeRelationshipDataLossReason(value: any): boolean {

@@ -12,17 +12,16 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const WorkflowDefinitionStatus = {
-    Draft: 'DRAFT',
-    Active: 'ACTIVE',
-    Paused: 'PAUSED'
-} as const;
-export type WorkflowDefinitionStatus = typeof WorkflowDefinitionStatus[keyof typeof WorkflowDefinitionStatus];
+export enum WorkflowDefinitionStatus {
+    Draft = 'DRAFT',
+    Active = 'ACTIVE',
+    Paused = 'PAUSED'
+}
 
 
 export function instanceOfWorkflowDefinitionStatus(value: any): boolean {

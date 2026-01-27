@@ -12,23 +12,22 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * Enumeration of possible entity types within the system.
  * @export
+ * @enum {string}
  */
-export const ApplicationEntityType = {
-    Workspace: 'WORKSPACE',
-    BlockType: 'BLOCK_TYPE',
-    Block: 'BLOCK',
-    User: 'USER',
-    Entity: 'ENTITY',
-    EntityType: 'ENTITY_TYPE',
-    WorkflowDefinition: 'WORKFLOW_DEFINITION',
-    WorkflowNode: 'WORKFLOW_NODE',
-    WorkflowEdge: 'WORKFLOW_EDGE'
-} as const;
-export type ApplicationEntityType = typeof ApplicationEntityType[keyof typeof ApplicationEntityType];
+export enum ApplicationEntityType {
+    Workspace = 'WORKSPACE',
+    BlockType = 'BLOCK_TYPE',
+    Block = 'BLOCK',
+    User = 'USER',
+    Entity = 'ENTITY',
+    EntityType = 'ENTITY_TYPE',
+    WorkflowDefinition = 'WORKFLOW_DEFINITION',
+    WorkflowNode = 'WORKFLOW_NODE',
+    WorkflowEdge = 'WORKFLOW_EDGE'
+}
 
 
 export function instanceOfApplicationEntityType(value: any): boolean {

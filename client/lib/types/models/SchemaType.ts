@@ -12,30 +12,29 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const SchemaType = {
-    Text: 'TEXT',
-    Object: 'OBJECT',
-    Number: 'NUMBER',
-    Checkbox: 'CHECKBOX',
-    Date: 'DATE',
-    Datetime: 'DATETIME',
-    Rating: 'RATING',
-    Phone: 'PHONE',
-    Email: 'EMAIL',
-    Url: 'URL',
-    Currency: 'CURRENCY',
-    Percentage: 'PERCENTAGE',
-    Select: 'SELECT',
-    MultiSelect: 'MULTI_SELECT',
-    FileAttachment: 'FILE_ATTACHMENT',
-    Location: 'LOCATION'
-} as const;
-export type SchemaType = typeof SchemaType[keyof typeof SchemaType];
+export enum SchemaType {
+    Text = 'TEXT',
+    Object = 'OBJECT',
+    Number = 'NUMBER',
+    Checkbox = 'CHECKBOX',
+    Date = 'DATE',
+    Datetime = 'DATETIME',
+    Rating = 'RATING',
+    Phone = 'PHONE',
+    Email = 'EMAIL',
+    Url = 'URL',
+    Currency = 'CURRENCY',
+    Percentage = 'PERCENTAGE',
+    Select = 'SELECT',
+    MultiSelect = 'MULTI_SELECT',
+    FileAttachment = 'FILE_ATTACHMENT',
+    Location = 'LOCATION'
+}
 
 
 export function instanceOfSchemaType(value: any): boolean {

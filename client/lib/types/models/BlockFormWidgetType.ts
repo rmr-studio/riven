@@ -12,27 +12,26 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const BlockFormWidgetType = {
-    TextInput: 'TEXT_INPUT',
-    NumberInput: 'NUMBER_INPUT',
-    Checkbox: 'CHECKBOX',
-    RadioButton: 'RADIO_BUTTON',
-    Dropdown: 'DROPDOWN',
-    DatePicker: 'DATE_PICKER',
-    EmailInput: 'EMAIL_INPUT',
-    PhoneInput: 'PHONE_INPUT',
-    CurrencyInput: 'CURRENCY_INPUT',
-    TextArea: 'TEXT_AREA',
-    FileUpload: 'FILE_UPLOAD',
-    Slider: 'SLIDER',
-    ToggleSwitch: 'TOGGLE_SWITCH'
-} as const;
-export type BlockFormWidgetType = typeof BlockFormWidgetType[keyof typeof BlockFormWidgetType];
+export enum BlockFormWidgetType {
+    TextInput = 'TEXT_INPUT',
+    NumberInput = 'NUMBER_INPUT',
+    Checkbox = 'CHECKBOX',
+    RadioButton = 'RADIO_BUTTON',
+    Dropdown = 'DROPDOWN',
+    DatePicker = 'DATE_PICKER',
+    EmailInput = 'EMAIL_INPUT',
+    PhoneInput = 'PHONE_INPUT',
+    CurrencyInput = 'CURRENCY_INPUT',
+    TextArea = 'TEXT_AREA',
+    FileUpload = 'FILE_UPLOAD',
+    Slider = 'SLIDER',
+    ToggleSwitch = 'TOGGLE_SWITCH'
+}
 
 
 export function instanceOfBlockFormWidgetType(value: any): boolean {

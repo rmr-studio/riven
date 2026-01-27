@@ -12,17 +12,16 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const NodeType = {
-    Reference: 'REFERENCE',
-    Content: 'CONTENT',
-    Error: 'ERROR'
-} as const;
-export type NodeType = typeof NodeType[keyof typeof NodeType];
+export enum NodeType {
+    Reference = 'REFERENCE',
+    Content = 'CONTENT',
+    Error = 'ERROR'
+}
 
 
 export function instanceOfNodeType(value: any): boolean {

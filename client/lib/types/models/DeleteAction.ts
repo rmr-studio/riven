@@ -12,17 +12,16 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const DeleteAction = {
-    RemoveBidirectional: 'REMOVE_BIDIRECTIONAL',
-    RemoveEntityType: 'REMOVE_ENTITY_TYPE',
-    DeleteRelationship: 'DELETE_RELATIONSHIP'
-} as const;
-export type DeleteAction = typeof DeleteAction[keyof typeof DeleteAction];
+export enum DeleteAction {
+    RemoveBidirectional = 'REMOVE_BIDIRECTIONAL',
+    RemoveEntityType = 'REMOVE_ENTITY_TYPE',
+    DeleteRelationship = 'DELETE_RELATIONSHIP'
+}
 
 
 export function instanceOfDeleteAction(value: any): boolean {

@@ -12,17 +12,16 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const ValidationScope = {
-    Soft: 'SOFT',
-    Strict: 'STRICT',
-    None: 'NONE'
-} as const;
-export type ValidationScope = typeof ValidationScope[keyof typeof ValidationScope];
+export enum ValidationScope {
+    Soft = 'SOFT',
+    Strict = 'STRICT',
+    None = 'NONE'
+}
 
 
 export function instanceOfValidationScope(value: any): boolean {

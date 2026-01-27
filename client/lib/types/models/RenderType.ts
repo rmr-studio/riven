@@ -12,17 +12,16 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const RenderType = {
-    List: 'LIST',
-    Component: 'COMPONENT',
-    Container: 'CONTAINER'
-} as const;
-export type RenderType = typeof RenderType[keyof typeof RenderType];
+export enum RenderType {
+    List = 'LIST',
+    Component = 'COMPONENT',
+    Container = 'CONTAINER'
+}
 
 
 export function instanceOfRenderType(value: any): boolean {

@@ -1,33 +1,32 @@
 import {
-    BlockListOrderingMode,
-    BlockMetadataType,
-    BlockReferenceFetchPolicy,
-    ValidationScope,
-    ListFilterLogicType,
-    NodeType,
-    Presentation,
-    ReferenceType,
-    type Block,
-    type BlockContentMetadata,
-    type BlockDisplay,
-    type BlockListConfiguration,
-    type BlockMeta,
-    type BlockReferenceMetadata,
-    type BlockReferencePayload,
-    type BlockSchema,
-    type BlockTree,
-    type BlockType,
-    type BlockTypeNesting,
-    type ContentNode,
-    type EntityReference,
-    type EntityReferenceMetadata,
-    type Metadata,
-    type ReferenceNode,
-    type ReferencePayload,
-} from "@/lib/types/block";
-import { ApplicationEntityType as EntityType } from "@/lib/types/models";
-import { now } from "@/lib/util/utils";
-import { v4 as uuid } from "uuid";
+  BlockListOrderingMode,
+  BlockMetadataType,
+  BlockReferenceFetchPolicy,
+  ValidationScope,
+  ListFilterLogicType,
+  NodeType,
+  Presentation,
+  ReferenceType,
+  type Block,
+  type BlockContentMetadata,
+  type BlockDisplay,
+  type BlockListConfiguration,
+  type BlockMeta,
+  type BlockReferenceMetadata,
+  type BlockReferencePayload,
+  type BlockTree,
+  type BlockType,
+  type BlockTypeNesting,
+  type ContentNode,
+  type EntityReference,
+  type EntityReferenceMetadata,
+  type Metadata,
+  type ReferenceNode,
+  type ReferencePayload,
+} from '@/lib/types/block';
+
+import { now } from '@/lib/util/utils';
+import { v4 as uuid } from 'uuid';
 
 // These types may not exist in OpenAPI - using local definitions or any
 type Reference = unknown;
@@ -35,22 +34,23 @@ type Referenceable = unknown;
 type ReferenceWarning = unknown;
 
 const createMeta = (overrides?: Partial<BlockMeta>): BlockMeta => ({
-    validationErrors: overrides?.validationErrors ?? [],
-    computedFields: overrides?.computedFields,
-    lastValidatedVersion: overrides?.lastValidatedVersion,
+  validationErrors: overrides?.validationErrors ?? [],
+  computedFields: overrides?.computedFields,
+  lastValidatedVersion: overrides?.lastValidatedVersion,
 });
 
 export const createContentMetadata = (
-    data?: Record<string, unknown>,
-    overrides?: Partial<BlockMeta>,
-    deletable: boolean = true,
-    listConfig?: BlockListConfiguration
+  data?: Record<string, unknown>,
+  overrides?: Partial<BlockMeta>,
+  deletable: boolean = true,
+  listConfig?: BlockListConfiguration,
 ): BlockContentMetadata => ({
-    type: BlockMetadataType.Content,
-    deletable,
-    data: data ?? {},
-    meta: createMeta(overrides),
-    listConfig,
+  type: BlockMetadataType.Content,
+  deletable,
+  data: data ?? {},
+  meta: createMeta(overrides),
+  listConfig,
+  readonly: false,
 });
 
 /**
@@ -58,18 +58,18 @@ export const createContentMetadata = (
  * Used when creating blocks that manage lists of child blocks.
  */
 export const createListConfiguration = (listType?: string[]): BlockListConfiguration => ({
-    listType,
-    allowDuplicates: false,
-    display: {
-        itemSpacing: 8,
-        showDragHandles: true,
-        emptyMessage: "No items yet",
-    },
-    config: {
-        mode: BlockListOrderingMode.Manual,
-        filters: [],
-        filterLogic: ListFilterLogicType.And,
-    },
+  listType,
+  allowDuplicates: false,
+  display: {
+    itemSpacing: 8,
+    showDragHandles: true,
+    emptyMessage: 'No items yet',
+  },
+  config: {
+    mode: BlockListOrderingMode.MANUAL,
+    filters: [],
+    filterLogic: ListFilterLogicType.AND,
+  },
 });
 
 /**
@@ -81,32 +81,32 @@ export const createListConfiguration = (listType?: string[]): BlockListConfigura
  * @param deletable - Whether the block can be deleted
  */
 export const createEntityReferenceMetadata = (
-    listType?: EntityType,
-    overrides?: Partial<BlockMeta>,
-    deletable: boolean = true
+  listType?: EntityType,
+  overrides?: Partial<BlockMeta>,
+  deletable: boolean = true,
 ): EntityReferenceMetadata => ({
-    type: BlockMetadataType.EntityReference,
-    deletable,
-    meta: createMeta(overrides),
-    path: "$.items",
-    fetchPolicy: BlockReferenceFetchPolicy.Lazy,
-    presentation: Presentation.Entity,
-    items: [],
-    projection: {
-        fields: [],
-    },
-    listType, // Set the entity type restriction
-    display: {
-        itemSpacing: 8,
-        showDragHandles: false,
-        emptyMessage: listType ? `No ${listType.toLowerCase()}s selected` : "No entities selected",
-    },
-    config: {
-        mode: BlockListOrderingMode.Manual,
-        filters: [],
-        filterLogic: ListFilterLogicType.And,
-    },
-    allowDuplicates: false,
+  type: BlockMetadataType.ENTITY_REFERENCE,
+  deletable,
+  meta: createMeta(overrides),
+  path: '$.items',
+  fetchPolicy: BlockReferenceFetchPolicy.LAZY,
+  presentation: Presentation.ENTITY,
+  items: [],
+  projection: {
+    fields: [],
+  },
+  listType, // Set the entity type restriction
+  display: {
+    itemSpacing: 8,
+    showDragHandles: false,
+    emptyMessage: listType ? `No ${listType.toLowerCase()}s selected` : 'No entities selected',
+  },
+  config: {
+    mode: BlockListOrderingMode.MANUAL,
+    filters: [],
+    filterLogic: ListFilterLogicType.AND,
+  },
+  allowDuplicates: false,
 });
 
 /**
@@ -114,75 +114,75 @@ export const createEntityReferenceMetadata = (
  * Used when creating blocks that reference other block trees.
  */
 export const createBlockReferenceMetadata = (
-    overrides?: Partial<BlockMeta>,
-    deletable: boolean = true
+  overrides?: Partial<BlockMeta>,
+  deletable: boolean = true,
 ): BlockReferenceMetadata => ({
-    type: BlockMetadataType.BlockReference,
-    deletable,
-    meta: createMeta(overrides),
-    path: "",
-    fetchPolicy: BlockReferenceFetchPolicy.Lazy,
-    expandDepth: 1,
-    item: {
-        type: EntityType.BlockType,
-        id: "",
-    },
+  type: BlockMetadataType.BLOCK_REFERENCE,
+  deletable,
+  meta: createMeta(overrides),
+  path: '',
+  fetchPolicy: BlockReferenceFetchPolicy.LAZY,
+  expandDepth: 1,
+  item: {
+    type: EntityType.BLOCK_TREE,
+    id: '',
+  },
 });
 
 export const createBlockBase = ({
-    id,
-    workspaceId,
-    type,
-    name,
-    payload,
-    archived = false,
+  id,
+  workspaceId,
+  type,
+  name,
+  payload,
+  archived = false,
 }: {
-    id?: string;
-    workspaceId: string;
-    type: BlockType;
-    name?: string;
-    payload: Metadata;
-    archived?: boolean;
+  id?: string;
+  workspaceId: string;
+  type: BlockType;
+  name?: string;
+  payload: Metadata;
+  archived?: boolean;
 }): Block => ({
-    id: id ?? uuid(),
-    name,
-    workspaceId: workspaceId,
-    type,
-    payload,
-    archived,
-    createdAt: now(),
-    updatedAt: now(),
+  id: id ?? uuid(),
+  name,
+  workspaceId: workspaceId,
+  type,
+  payload,
+  archived,
+  createdAt: now(),
+  updatedAt: now(),
 });
 
 export const createContentNode = ({
+  workspaceId,
+  type,
+  data,
+  name,
+  id,
+  children,
+  payloadOverride,
+  deletable = true,
+}: {
+  workspaceId: string;
+  type: BlockType;
+  data?: Record<string, unknown>;
+  name?: string;
+  id?: string;
+  deletable?: boolean;
+  children?: ContentNode[];
+  payloadOverride?: Metadata;
+}): ContentNode => ({
+  type: NodeType.CONTENT,
+  block: createBlockBase({
+    id,
     workspaceId,
     type,
-    data,
     name,
-    id,
-    children,
-    payloadOverride,
-    deletable = true,
-}: {
-    workspaceId: string;
-    type: BlockType;
-    data?: Record<string, unknown>;
-    name?: string;
-    id?: string;
-    deletable?: boolean;
-    children?: ContentNode[];
-    payloadOverride?: Metadata;
-}): ContentNode => ({
-    type: NodeType.Content,
-    block: createBlockBase({
-        id,
-        workspaceId,
-        type,
-        name,
-        payload: payloadOverride ?? createContentMetadata(data, undefined, deletable),
-    }),
-    children,
-    warnings: [],
+    payload: payloadOverride ?? createContentMetadata(data, undefined, deletable),
+  }),
+  children,
+  warnings: [],
 });
 
 /**
@@ -190,119 +190,119 @@ export const createContentNode = ({
  * Reference nodes are used to embed external entities or other block trees.
  */
 export const createReferenceNode = ({
-    workspaceId,
-    type,
-    name,
-    id,
-    payload,
-    deletable = true,
+  workspaceId,
+  type,
+  name,
+  id,
+  payload,
+  deletable = true,
 }: {
-    workspaceId: string;
-    type: BlockType;
-    name?: string;
-    id?: string;
-    payload: EntityReferenceMetadata | BlockReferenceMetadata;
-    deletable?: boolean;
+  workspaceId: string;
+  type: BlockType;
+  name?: string;
+  id?: string;
+  payload: EntityReferenceMetadata | BlockReferenceMetadata;
+  deletable?: boolean;
 }): ReferenceNode => {
-    // Create empty reference payload based on metadata type
+  // Create empty reference payload based on metadata type
 
-    const reference: ReferencePayload =
-        payload.type === BlockMetadataType.EntityReference
-            ? createBlankEntityReference()
-            : createBlankBlockTreeReference();
+  const reference: ReferencePayload =
+    payload.type === BlockMetadataType.ENTITY_REFERENCE
+      ? createBlankEntityReference()
+      : createBlankBlockTreeReference();
 
-    return {
-        type: NodeType.Reference,
-        block: createBlockBase({
-            id,
-            workspaceId,
-            type,
-            name,
-            payload,
-        }),
-        reference,
-        warnings: [],
-    };
+  return {
+    type: NodeType.REFERENCE,
+    block: createBlockBase({
+      id,
+      workspaceId,
+      type,
+      name,
+      payload,
+    }),
+    reference,
+    warnings: [],
+  };
 };
 
 const createBlankEntityReference = (): EntityReference => ({
-    type: ReferenceType.Entity,
-    reference: [],
+  type: ReferenceType.ENTITY,
+  reference: [],
 });
 
 const createBlankBlockTreeReference = (): BlockReferencePayload => ({
-    type: ReferenceType.Block,
-    reference: undefined,
+  type: ReferenceType.BLOCK,
+  reference: undefined,
 });
 
 export const createBlockReference = ({ block }: { block: BlockTree }): BlockReferencePayload => {
-    const reference = createReference({
-        type: EntityType.BlockType,
-        entityId: block.root.block.id,
-        entity: block,
-    });
+  const reference = createReference({
+    type: EntityType.BLOCK_TREE,
+    entityId: block.root.block.id,
+    entity: block,
+  });
 
-    return {
-        type: ReferenceType.Block,
-        reference,
-    };
+  return {
+    type: ReferenceType.BLOCK,
+    reference,
+  };
 };
 
 export const createReference = ({
-    type,
+  type,
+  entityId,
+  path,
+  order,
+  entity,
+  warning,
+}: {
+  type: EntityType;
+  entityId: string;
+  path?: string;
+  order?: number;
+  entity: Referenceable;
+  warning?: ReferenceWarning;
+}): Reference => {
+  return {
+    id: uuid(),
+    entityType: type,
     entityId,
     path,
-    order,
+    orderIndex: order,
     entity,
     warning,
-}: {
-    type: EntityType;
-    entityId: string;
-    path?: string;
-    order?: number;
-    entity: Referenceable;
-    warning?: ReferenceWarning;
-}): Reference => {
-    return {
-        id: uuid(),
-        entityType: type,
-        entityId,
-        path,
-        orderIndex: order,
-        entity,
-        warning,
-    };
+  };
 };
 
 export const createBlockType = ({
-    key,
-    name,
-    description,
-    workspaceId,
-    schema,
-    display,
-    nesting,
+  key,
+  name,
+  description,
+  workspaceId,
+  schema,
+  display,
+  nesting,
 }: {
-    key: string;
-    name: string;
-    description?: string;
-    workspaceId: string;
-    schema: BlockSchema;
-    display: BlockDisplay;
-    nesting?: BlockTypeNesting | null;
+  key: string;
+  name: string;
+  description?: string;
+  workspaceId: string;
+  schema: BlockSchema;
+  display: BlockDisplay;
+  nesting?: BlockTypeNesting | null;
 }): BlockType => ({
-    id: uuid(),
-    key,
-    version: 1,
-    name,
-    description,
-    workspaceId: workspaceId,
-    archived: false,
-    strictness: ValidationScope.Soft,
-    system: false,
-    schema,
-    display,
-    nesting: nesting ?? undefined,
-    createdAt: now(),
-    updatedAt: now(),
+  id: uuid(),
+  key,
+  version: 1,
+  name,
+  description,
+  workspaceId: workspaceId,
+  archived: false,
+  strictness: BlockValidationScope.SOFT,
+  system: false,
+  schema,
+  display,
+  nesting: nesting ?? undefined,
+  createdAt: now(),
+  updatedAt: now(),
 });

@@ -12,16 +12,15 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const BlockReferenceFetchPolicy = {
-    Lazy: 'LAZY',
-    Eager: 'EAGER'
-} as const;
-export type BlockReferenceFetchPolicy = typeof BlockReferenceFetchPolicy[keyof typeof BlockReferenceFetchPolicy];
+export enum BlockReferenceFetchPolicy {
+    Lazy = 'LAZY',
+    Eager = 'EAGER'
+}
 
 
 export function instanceOfBlockReferenceFetchPolicy(value: any): boolean {

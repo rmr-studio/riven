@@ -5,14 +5,17 @@
 ## Test Framework
 
 **Runner:**
+
 - Jest 29.7.0
 - Config: `jest.config.ts`
 
 **Assertion Library:**
+
 - `@testing-library/jest-dom` 6.6.3 (custom matchers like `toBeInTheDocument`)
 - Jest's built-in `expect` API
 
 **Run Commands:**
+
 ```bash
 npm test              # Run all tests
 npm run test:watch    # Watch mode
@@ -24,28 +27,31 @@ No coverage command configured in `package.json` (would need to add `jest --cove
 ## Test Framework Configuration
 
 **jest.config.ts:**
+
 ```typescript
 const customJestConfig: Config = {
-    setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
-    moduleNameMapper: {
-        "^@/(.*)$": "<rootDir>/$1",
-        "^.+\\.(css|scss|sass)$": "identity-obj-proxy",
-        "^.+\\.(png|jpg|jpeg|gif|webp|avif|svg)$": "<rootDir>/test/__mocks__/fileMock.ts",
-    },
-    testEnvironment: "jest-environment-jsdom",
-    testMatch: [
-        "<rootDir>/**/__tests__/**/*.(test|spec).[jt]s?(x)",
-        "<rootDir>/**/?(*.)+(spec|test).[jt]s?(x)",
-    ],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/$1',
+    '^.+\\.(css|scss|sass)$': 'identity-obj-proxy',
+    '^.+\\.(png|jpg|jpeg|gif|webp|avif|svg)$': '<rootDir>/test/__mocks__/fileMock.ts',
+  },
+  testEnvironment: 'jest-environment-jsdom',
+  testMatch: [
+    '<rootDir>/**/__tests__/**/*.(test|spec).[jt]s?(x)',
+    '<rootDir>/**/?(*.)+(spec|test).[jt]s?(x)',
+  ],
 };
 ```
 
 **jest.setup.ts:**
+
 ```typescript
-import "@testing-library/jest-dom";
+import '@testing-library/jest-dom';
 ```
 
 **Key Configuration:**
+
 - Test environment: `jsdom` (simulates browser DOM for React components)
 - Module name mapper supports `@/*` path alias
 - CSS mocked via `identity-obj-proxy`
@@ -55,6 +61,7 @@ import "@testing-library/jest-dom";
 
 **Location:**
 Co-located with source files in `__tests__/` subdirectories:
+
 ```
 components/feature-modules/blocks/components/bespoke/
 ├── AddressCard.tsx
@@ -67,11 +74,13 @@ components/feature-modules/blocks/components/bespoke/
 ```
 
 **Naming:**
+
 - Pattern: `{ComponentName}.test.tsx` (PascalCase matching component name)
 - Location: `__tests__/` directory adjacent to components being tested
 - Alternative: `{name}.spec.tsx` also supported but not observed in codebase
 
 **Structure:**
+
 ```
 components/feature-modules/blocks/components/bespoke/
 └── __tests__/
@@ -79,6 +88,7 @@ components/feature-modules/blocks/components/bespoke/
 
 **Coverage:**
 Minimal test coverage observed. Only 3 test files found in entire codebase:
+
 - `components/feature-modules/blocks/components/bespoke/__tests__/AddressCard.test.tsx`
 - `components/feature-modules/blocks/components/bespoke/__tests__/ContactCard.test.tsx`
 - `components/feature-modules/blocks/components/bespoke/__tests__/FallbackBlock.test.tsx`
@@ -86,6 +96,7 @@ Minimal test coverage observed. Only 3 test files found in entire codebase:
 ## Test Structure
 
 **Suite Organization:**
+
 ```typescript
 import { render, screen } from "@testing-library/react";
 import { AddressCard } from "../AddressCard";
@@ -123,6 +134,7 @@ describe("AddressCard", () => {
 ```
 
 **Patterns:**
+
 - One `describe` block per component
 - Multiple `it` test cases covering different scenarios
 - Descriptive test names using plain English (not action-oriented like "should render...")
@@ -136,8 +148,9 @@ Jest's built-in mocking capabilities (though not extensively used in existing te
 
 **Static Assets:**
 File mock at `test/__mocks__/fileMock.ts`:
+
 ```typescript
-export default "test-file-stub";
+export default 'test-file-stub';
 ```
 
 Maps all image/media imports to a stub string.
@@ -149,6 +162,7 @@ Via `identity-obj-proxy` package - CSS modules return object with className keys
 No mocking observed in existing tests. Components tested are simple presentational components without external dependencies requiring mocks.
 
 **What Would Need Mocking (based on codebase patterns):**
+
 - `fetch` calls in service layer tests
 - Supabase session/auth context
 - TanStack Query providers
@@ -157,6 +171,7 @@ No mocking observed in existing tests. Components tested are simple presentation
 - Toast notifications (Sonner)
 
 **What NOT to Mock:**
+
 - Simple utility functions
 - Type definitions
 - Static configuration objects
@@ -166,6 +181,7 @@ No mocking observed in existing tests. Components tested are simple presentation
 
 **Test Data:**
 Inline test data objects in each test:
+
 ```typescript
 render(
     <Component
@@ -191,21 +207,23 @@ render(
 No centralized fixtures directory. Test data defined inline within test files.
 
 **Pattern:**
+
 - Minimal viable data for each test case
 - Plain objects matching component prop interfaces
 - No factory functions observed
 
 **Recommendation for Future:**
 Given the complex data structures (EntityType, SaveEntityRequest, etc.), factory functions would be beneficial:
+
 ```typescript
 // Future pattern (not currently used)
 function createMockEntityType(overrides?: Partial<EntityType>): EntityType {
-    return {
-        key: "test-entity",
-        name: { singular: "Test", plural: "Tests" },
-        schema: { properties: {} },
-        ...overrides,
-    };
+  return {
+    key: 'test-entity',
+    name: { singular: 'Test', plural: 'Tests' },
+    schema: { properties: {} },
+    ...overrides,
+  };
 }
 ```
 
@@ -216,12 +234,14 @@ None enforced (no coverage threshold in `jest.config.ts`)
 
 **View Coverage:**
 Not configured. To enable:
+
 ```bash
 npm test -- --coverage
 ```
 
 **Current State:**
 Extremely limited test coverage:
+
 - Only 3 test files for entire application
 - Tests only cover simple presentational components in blocks feature
 - No tests for:
@@ -236,11 +256,13 @@ Extremely limited test coverage:
 
 **Unit Tests:**
 Current tests are unit tests for isolated React components. Pattern:
+
 - Import component
 - Render with props
 - Assert rendered output
 
 No tests exist for:
+
 - Service layer methods
 - Custom hooks
 - Utility functions
@@ -248,6 +270,7 @@ No tests exist for:
 
 **Integration Tests:**
 Not currently implemented. Would test:
+
 - Component + hooks + service integration
 - Form submission flows
 - Context provider + consumer interactions
@@ -259,6 +282,7 @@ Not implemented. No Playwright, Cypress, or similar framework configured.
 ## Common Patterns
 
 **Component Testing:**
+
 ```typescript
 import { render, screen } from "@testing-library/react";
 
@@ -272,6 +296,7 @@ it("renders client details", () => {
 ```
 
 **Conditional Rendering:**
+
 ```typescript
 it("wraps content with a link when href provided", () => {
     const Component = ContactCard.component;
@@ -283,12 +308,14 @@ it("wraps content with a link when href provided", () => {
 ```
 
 **Query Methods:**
+
 - `screen.getByText(text)` - Find by text content
 - `screen.getByRole(role)` - Find by ARIA role
 - Prefer accessible queries (ByRole, ByLabelText) over test IDs
 
 **Async Testing:**
 Not demonstrated in existing tests, but would use:
+
 ```typescript
 // Future pattern for async operations
 it("loads and displays data", async () => {
@@ -303,6 +330,7 @@ it("loads and displays data", async () => {
 
 **Error Testing:**
 Not demonstrated. Would follow pattern:
+
 ```typescript
 // Future pattern for error states
 it("displays error message on failure", () => {
@@ -322,6 +350,7 @@ it("displays error message on failure", () => {
 ## Gaps and Recommendations
 
 **Current Gaps:**
+
 1. No service layer tests (fetch calls, error handling, validation)
 2. No custom hook tests (mutations, queries, forms)
 3. No store tests (Zustand state management)
@@ -330,6 +359,7 @@ it("displays error message on failure", () => {
 6. No snapshot testing for complex UI
 
 **Recommended Additions:**
+
 1. Test utilities for common setup (mock auth, query client wrapper)
 2. Factory functions for complex test data (EntityType, etc.)
 3. Service layer tests with mocked fetch
@@ -338,4 +368,4 @@ it("displays error message on failure", () => {
 
 ---
 
-*Testing analysis: 2026-01-19*
+_Testing analysis: 2026-01-19_

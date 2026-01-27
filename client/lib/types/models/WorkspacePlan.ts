@@ -12,18 +12,17 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const WorkspacePlan = {
-    Free: 'FREE',
-    Startup: 'STARTUP',
-    Scale: 'SCALE',
-    Enterprise: 'ENTERPRISE'
-} as const;
-export type WorkspacePlan = typeof WorkspacePlan[keyof typeof WorkspacePlan];
+export enum WorkspacePlan {
+    Free = 'FREE',
+    Startup = 'STARTUP',
+    Scale = 'SCALE',
+    Enterprise = 'ENTERPRISE'
+}
 
 
 export function instanceOfWorkspacePlan(value: any): boolean {

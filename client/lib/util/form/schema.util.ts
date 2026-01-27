@@ -1,6 +1,8 @@
-import { Icon, SchemaOptions } from "@/lib/interfaces/common.interface";
-import { DataFormat, DataType, IconColour, IconType } from "@/lib/types/common";
-import { SchemaType } from "@/lib/types/entity";
+
+import { DataFormat, DataType, IconColour, IconType, SchemaOptions, Icon, SchemaType } from "@/lib/types/common";
+
+
+
 
 export interface AttributeSchemaType {
     label: string;
@@ -17,7 +19,7 @@ export const attributeTypes: Record<SchemaType, AttributeSchemaType> = {
         key: SchemaType.Text,
         type: DataType.String,
         icon: {
-            icon: IconType.ALargeSmall,
+            type: IconType.ALargeSmall,
             colour: IconColour.Neutral,
         },
     },
@@ -26,7 +28,7 @@ export const attributeTypes: Record<SchemaType, AttributeSchemaType> = {
         key: SchemaType.Number,
         type: DataType.Number,
         icon: {
-            icon: IconType.Calculator,
+            type: IconType.Calculator,
             colour: IconColour.Neutral,
         },
     },
@@ -35,7 +37,7 @@ export const attributeTypes: Record<SchemaType, AttributeSchemaType> = {
         key: SchemaType.Checkbox,
         type: DataType.Boolean,
         icon: {
-            icon: IconType.CheckCheck,
+            type: IconType.CheckCheck,
             colour: IconColour.Neutral,
         },
     },
@@ -45,7 +47,7 @@ export const attributeTypes: Record<SchemaType, AttributeSchemaType> = {
         type: DataType.String,
         format: DataFormat.Date,
         icon: {
-            icon: IconType.CalendarRange,
+            type: IconType.CalendarRange,
             colour: IconColour.Neutral,
         },
     },
@@ -55,7 +57,7 @@ export const attributeTypes: Record<SchemaType, AttributeSchemaType> = {
         type: DataType.String,
         format: DataFormat.Datetime,
         icon: {
-            icon: IconType.CalendarClock,
+            type: IconType.CalendarClock,
             colour: IconColour.Neutral,
         },
     },
@@ -65,7 +67,7 @@ export const attributeTypes: Record<SchemaType, AttributeSchemaType> = {
         type: DataType.Number,
         options: { minimum: 1, maximum: 5 },
         icon: {
-            icon: IconType.Star,
+            type: IconType.Star,
             colour: IconColour.Neutral,
         },
     },
@@ -75,7 +77,7 @@ export const attributeTypes: Record<SchemaType, AttributeSchemaType> = {
         type: DataType.String,
         format: DataFormat.Phone,
         icon: {
-            icon: IconType.Phone,
+            type: IconType.Phone,
             colour: IconColour.Neutral,
         },
     },
@@ -85,7 +87,7 @@ export const attributeTypes: Record<SchemaType, AttributeSchemaType> = {
         type: DataType.String,
         format: DataFormat.Email,
         icon: {
-            icon: IconType.AtSign,
+            type: IconType.AtSign,
             colour: IconColour.Neutral,
         },
     },
@@ -95,7 +97,7 @@ export const attributeTypes: Record<SchemaType, AttributeSchemaType> = {
         type: DataType.String,
         format: DataFormat.Url,
         icon: {
-            icon: IconType.Link,
+            type: IconType.Link,
             colour: IconColour.Neutral,
         },
     },
@@ -105,7 +107,7 @@ export const attributeTypes: Record<SchemaType, AttributeSchemaType> = {
         type: DataType.Number,
         format: DataFormat.Currency,
         icon: {
-            icon: IconType.DollarSign,
+            type: IconType.DollarSign,
             colour: IconColour.Neutral,
         },
     },
@@ -115,7 +117,7 @@ export const attributeTypes: Record<SchemaType, AttributeSchemaType> = {
         type: DataType.Number,
         format: DataFormat.Percentage,
         icon: {
-            icon: IconType.Percent,
+            type: IconType.Percent,
             colour: IconColour.Neutral,
         },
     },
@@ -124,7 +126,7 @@ export const attributeTypes: Record<SchemaType, AttributeSchemaType> = {
         key: SchemaType.Select,
         type: DataType.String,
         icon: {
-            icon: IconType.List,
+            type: IconType.List,
             colour: IconColour.Neutral,
         },
     },
@@ -133,7 +135,7 @@ export const attributeTypes: Record<SchemaType, AttributeSchemaType> = {
         key: SchemaType.MultiSelect,
         type: DataType.Array,
         icon: {
-            icon: IconType.ListChecks,
+            type: IconType.ListChecks,
             colour: IconColour.Neutral,
         },
     },
@@ -142,7 +144,7 @@ export const attributeTypes: Record<SchemaType, AttributeSchemaType> = {
         key: SchemaType.FileAttachment,
         type: DataType.Array,
         icon: {
-            icon: IconType.Paperclip,
+            type: IconType.Paperclip,
             colour: IconColour.Neutral,
         },
     },
@@ -151,7 +153,7 @@ export const attributeTypes: Record<SchemaType, AttributeSchemaType> = {
         key: SchemaType.Object,
         type: DataType.Object,
         icon: {
-            icon: IconType.Code,
+            type: IconType.Code,
             colour: IconColour.Neutral,
         },
     },
@@ -160,7 +162,7 @@ export const attributeTypes: Record<SchemaType, AttributeSchemaType> = {
         key: SchemaType.Location,
         type: DataType.Object,
         icon: {
-            icon: IconType.MapPin,
+            type: IconType.MapPin,
             colour: IconColour.Neutral,
         },
     },

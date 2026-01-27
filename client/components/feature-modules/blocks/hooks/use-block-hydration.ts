@@ -7,35 +7,35 @@ import type { BlockHydrationResult } from "@/lib/types/block";
  * Mirrors React Query's UseQueryResult interface for consistency.
  */
 export interface UseBlockHydrationResult {
-    /**
-     * Hydration result for the block with resolved entity references.
-     * Undefined if not yet hydrated or if block doesn't exist.
-     */
-    data: BlockHydrationResult | undefined;
+  /**
+   * Hydration result for the block with resolved entity references.
+   * Undefined if not yet hydrated or if block doesn't exist.
+   */
+  data: BlockHydrationResult | undefined;
 
-    /**
-     * Whether the hydration request is currently loading.
-     * True during initial fetch, false once data or error is available.
-     */
-    isLoading: boolean;
+  /**
+   * Whether the hydration request is currently loading.
+   * True during initial fetch, false once data or error is available.
+   */
+  isLoading: boolean;
 
-    /**
-     * Error from the hydration request.
-     * Network errors and auth errors appear here.
-     * Individual entity errors are in data.error field.
-     */
-    error: Error | null;
+  /**
+   * Error from the hydration request.
+   * Network errors and auth errors appear here.
+   * Individual entity errors are in data.error field.
+   */
+  error: Error | null;
 
-    /**
-     * Refetch hydration data for all blocks.
-     * Note: This refetches ALL blocks in the environment, not just this one.
-     */
-    refetch: () => void;
+  /**
+   * Refetch hydration data for all blocks.
+   * Note: This refetches ALL blocks in the environment, not just this one.
+   */
+  refetch: () => void;
 
-    /**
-     * Whether a refetch is currently in progress.
-     */
-    isRefetching: boolean;
+  /**
+   * Whether a refetch is currently in progress.
+   */
+  isRefetching: boolean;
 }
 
 /**
@@ -62,20 +62,19 @@ export interface UseBlockHydrationResult {
  * return <div>{references.map(ref => ...)}</div>;
  */
 export const useBlockHydration = (blockId: string | undefined): UseBlockHydrationResult => {
-    const { getBlockHydration, isLoading, error, refetch, isRefetching } =
-        useBlockHydrationContext();
+  const { getBlockHydration, isLoading, error, refetch, isRefetching } = useBlockHydrationContext();
 
-    // Get hydration data for this specific block
-    const data = useMemo(() => {
-        if (!blockId) return undefined;
-        return getBlockHydration(blockId);
-    }, [blockId, getBlockHydration]);
+  // Get hydration data for this specific block
+  const data = useMemo(() => {
+    if (!blockId) return undefined;
+    return getBlockHydration(blockId);
+  }, [blockId, getBlockHydration]);
 
-    return {
-        data,
-        isLoading,
-        error,
-        refetch,
-        isRefetching,
-    };
+  return {
+    data,
+    isLoading,
+    error,
+    refetch,
+    isRefetching,
+  };
 };

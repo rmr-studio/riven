@@ -18,32 +18,32 @@ import { type BlockBinding, type BlockNode, type Metadata, isContentNode } from 
  * @returns Object with resolved props ready for component
  */
 export function resolveBindings(
-    bindings: BlockBinding[],
-    payload: Metadata
+  bindings: BlockBinding[],
+  payload: Metadata,
 ): Record<string, unknown> {
-    const props: Record<string, unknown> = {};
+  const props: Record<string, unknown> = {};
 
-    bindings.forEach((binding) => {
-        const value = resolveBinding(binding, payload);
-        if (value !== undefined) {
-            props[binding.prop] = value;
-        }
-    });
+  bindings.forEach((binding) => {
+    const value = resolveBinding(binding, payload);
+    if (value !== undefined) {
+      props[binding.prop] = value;
+    }
+  });
 
-    return props;
+  return props;
 }
 
 /**
  * Resolves a single binding.
  */
 function resolveBinding(binding: BlockBinding, payload: Metadata): unknown {
-    switch (binding.source.type) {
-        case "DataPath":
-            return resolveDataPath(binding.source.path, payload);
-        default:
-            console.warn(`Unknown binding source type:`, binding.source);
-            return undefined;
-    }
+  switch (binding.source.type) {
+    case 'DataPath':
+      return resolveDataPath(binding.source.path, payload);
+    default:
+      console.warn(`Unknown binding source type:`, binding.source);
+      return undefined;
+  }
 }
 
 /**
@@ -53,21 +53,21 @@ function resolveBinding(binding: BlockBinding, payload: Metadata): unknown {
  * @param payload - Block payload
  */
 function resolveDataPath(path: string, payload: Metadata): unknown {
-    try {
-        // Convert "$.data/name" to "$.data.name" for JSONPath
-        const normalizedPath = path.replace(/\//g, ".");
+  try {
+    // Convert "$.data/name" to "$.data.name" for JSONPath
+    const normalizedPath = path.replace(/\//g, '.');
 
-        const result = JSONPath({
-            path: normalizedPath,
-            json: payload,
-            wrap: false,
-        });
+    const result = JSONPath({
+      path: normalizedPath,
+      json: payload,
+      wrap: false,
+    });
 
-        return result;
-    } catch (error) {
-        console.warn(`Failed to resolve DataPath "${path}":`, error);
-        return undefined;
-    }
+    return result;
+  } catch (error) {
+    console.warn(`Failed to resolve DataPath "${path}":`, error);
+    return undefined;
+  }
 }
 
 /**
@@ -77,89 +77,89 @@ function resolveDataPath(path: string, payload: Metadata): unknown {
  * @param childBlocks - Map of slot name to child BlockNodes
  */
 function resolveRefSlot(
-    source: { slot: string; presentation?: string; expandDepth?: number },
-    childBlocks: Record<string, BlockNode[]>
+  source: { slot: string; presentation?: string; expandDepth?: number },
+  childBlocks: Record<string, BlockNode[]>,
 ): unknown {
-    const slotChildren = childBlocks[source.slot] || [];
+  const slotChildren = childBlocks[source.slot] || [];
 
-    // Different presentations require different transformations
-    switch (source.presentation) {
-        case "SUMMARY":
-            // Return summarized data from child blocks
-            return slotChildren.map((child) => summarizeBlock(child));
+  // Different presentations require different transformations
+  switch (source.presentation) {
+    case 'SUMMARY':
+      // Return summarized data from child blocks
+      return slotChildren.map((child) => summarizeBlock(child));
 
-        case "INLINE":
-        case "ENTITY":
-            // Return full child blocks for inline rendering
-            return slotChildren;
+    case 'INLINE':
+    case 'ENTITY':
+      // Return full child blocks for inline rendering
+      return slotChildren;
 
-        case "TABLE":
-            // Return data suitable for table rendering
-            return slotChildren.map((child) => extractBlockData(child));
+    case 'TABLE':
+      // Return data suitable for table rendering
+      return slotChildren.map((child) => extractBlockData(child));
 
-        case "GRID":
-            // Return data suitable for grid rendering
-            return slotChildren.map((child) => extractBlockData(child));
+    case 'GRID':
+      // Return data suitable for grid rendering
+      return slotChildren.map((child) => extractBlockData(child));
 
-        default:
-            // Default to returning child blocks
-            return slotChildren;
-    }
+    default:
+      // Default to returning child blocks
+      return slotChildren;
+  }
 }
 
 /**
  * Summarizes a block for SUMMARY presentation.
  */
 function summarizeBlock(block: BlockNode): Record<string, unknown> {
-    if (!isContentNode(block)) {
-        return {
-            id: block.block.id,
-            type: "reference",
-        };
-    }
-
+  if (!isContentNode(block)) {
     return {
-        id: block.block.id,
-        name: block.block.name,
-        type: block.block.type.key,
-        data: block.block.payload.data || {},
+      id: block.block.id,
+      type: 'reference',
     };
+  }
+
+  return {
+    id: block.block.id,
+    name: block.block.name,
+    type: block.block.type.key,
+    data: block.block.payload.data || {},
+  };
 }
 
 /**
  * Extracts data from a block for table/grid rendering.
  */
 function extractBlockData(block: BlockNode): Record<string, unknown> {
-    if (!isContentNode(block)) {
-        return {
-            id: block.block.id,
-        };
-    }
-
+  if (!isContentNode(block)) {
     return {
-        id: block.block.id,
-        name: block.block.name,
-        ...((block.block.payload.data as Record<string, unknown>) || {}),
+      id: block.block.id,
     };
+  }
+
+  return {
+    id: block.block.id,
+    name: block.block.name,
+    ...((block.block.payload.data as Record<string, unknown>) || {}),
+  };
 }
 
 /**
  * Checks if a component has wildcard slots ("*").
  */
 export function hasWildcardSlots(component: { slots?: Record<string, string[]> }): boolean {
-    if (!component.slots) return false;
+  if (!component.slots) return false;
 
-    return Object.values(component.slots).some((slotIds) => slotIds.includes("*"));
+  return Object.values(component.slots).some((slotIds) => slotIds.includes('*'));
 }
 
 /**
  * Finds the slot name that contains the wildcard marker.
  */
 export function getWildcardSlotName(component: {
-    slots?: Record<string, string[]>;
+  slots?: Record<string, string[]>;
 }): string | null {
-    if (!component.slots) return null;
+  if (!component.slots) return null;
 
-    const entry = Object.entries(component.slots).find(([_, ids]) => ids.includes("*"));
-    return entry ? entry[0] : null;
+  const entry = Object.entries(component.slots).find(([_, ids]) => ids.includes('*'));
+  return entry ? entry[0] : null;
 }

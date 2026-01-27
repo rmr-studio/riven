@@ -12,16 +12,15 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const ListFilterLogicType = {
-    And: 'AND',
-    Or: 'OR'
-} as const;
-export type ListFilterLogicType = typeof ListFilterLogicType[keyof typeof ListFilterLogicType];
+export enum ListFilterLogicType {
+    And = 'AND',
+    Or = 'OR'
+}
 
 
 export function instanceOfListFilterLogicType(value: any): boolean {

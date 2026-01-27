@@ -12,18 +12,17 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const WorkflowUtilityActionType = {
-    Log: 'LOG',
-    Notify: 'NOTIFY',
-    Validate: 'VALIDATE',
-    ThrowError: 'THROW_ERROR'
-} as const;
-export type WorkflowUtilityActionType = typeof WorkflowUtilityActionType[keyof typeof WorkflowUtilityActionType];
+export enum WorkflowUtilityActionType {
+    Log = 'LOG',
+    Notify = 'NOTIFY',
+    Validate = 'VALIDATE',
+    ThrowError = 'THROW_ERROR'
+}
 
 
 export function instanceOfWorkflowUtilityActionType(value: any): boolean {

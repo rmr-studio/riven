@@ -12,20 +12,19 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const WorkflowNodeType = {
-    Function: 'FUNCTION',
-    ControlFlow: 'CONTROL_FLOW',
-    HumanInteraction: 'HUMAN_INTERACTION',
-    Action: 'ACTION',
-    Trigger: 'TRIGGER',
-    Utility: 'UTILITY'
-} as const;
-export type WorkflowNodeType = typeof WorkflowNodeType[keyof typeof WorkflowNodeType];
+export enum WorkflowNodeType {
+    Function = 'FUNCTION',
+    ControlFlow = 'CONTROL_FLOW',
+    Action = 'ACTION',
+    Trigger = 'TRIGGER',
+    Utility = 'UTILITY',
+    Parse = 'PARSE'
+}
 
 
 export function instanceOfWorkflowNodeType(value: any): boolean {

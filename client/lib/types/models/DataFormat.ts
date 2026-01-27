@@ -12,21 +12,20 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const DataFormat = {
-    Date: 'DATE',
-    Datetime: 'DATETIME',
-    Email: 'EMAIL',
-    Phone: 'PHONE',
-    Currency: 'CURRENCY',
-    Url: 'URL',
-    Percentage: 'PERCENTAGE'
-} as const;
-export type DataFormat = typeof DataFormat[keyof typeof DataFormat];
+export enum DataFormat {
+    Date = 'DATE',
+    Datetime = 'DATETIME',
+    Email = 'EMAIL',
+    Phone = 'PHONE',
+    Currency = 'CURRENCY',
+    Url = 'URL',
+    Percentage = 'PERCENTAGE'
+}
 
 
 export function instanceOfDataFormat(value: any): boolean {

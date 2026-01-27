@@ -7,68 +7,68 @@ import type {
 } from "@/lib/types/block";
 import { createBlockType, createContentNode } from "./block.factory";
 import {
-    ALL_BLOCK_COMPONENT_TYPES,
-    createBlockListBlockType,
-    createContentBlockListType,
-    createLayoutContainerBlockType,
-    DEFAULT_GRID_LAYOUT,
-} from "./type.factory";
+  ALL_BLOCK_COMPONENT_TYPES,
+  createBlockListBlockType,
+  createContentBlockListType,
+  createLayoutContainerBlockType,
+  DEFAULT_GRID_LAYOUT,
+} from './type.factory';
 
 export function createProjectBlockNode(workspaceId: string): BlockNode {
-    const projectType = createProjectOverviewType(workspaceId);
-    const taskType = createTaskBlockType(workspaceId);
-    const layoutType = createLayoutContainerBlockType(workspaceId);
-    const listType = createBlockListBlockType(workspaceId);
+  const projectType = createProjectOverviewType(workspaceId);
+  const taskType = createTaskBlockType(workspaceId);
+  const layoutType = createLayoutContainerBlockType(workspaceId);
+  const listType = createBlockListBlockType(workspaceId);
 
-    const taskNodes = createTaskNodes(workspaceId, taskType);
+  const taskNodes = createTaskNodes(workspaceId, taskType);
 
-    const taskListNode = createContentNode({
-        workspaceId,
-        type: listType,
-        name: "Active tasks",
-        data: {
-            title: "Active tasks",
-            description: "Tracked tasks for this project",
-            emptyMessage: "Add a task",
-        },
-        children: taskNodes,
-    });
+  const taskListNode = createContentNode({
+    workspaceId,
+    type: listType,
+    name: 'Active tasks',
+    data: {
+      title: 'Active tasks',
+      description: 'Tracked tasks for this project',
+      emptyMessage: 'Add a task',
+    },
+    children: taskNodes,
+  });
 
-    const layoutNode = createContentNode({
-        workspaceId,
-        type: layoutType,
-        name: "Project details",
-        data: {
-            title: "Project details",
-            description: "Tasks and commentary",
-        },
-        children: [taskListNode],
-    });
+  const layoutNode = createContentNode({
+    workspaceId,
+    type: layoutType,
+    name: 'Project details',
+    data: {
+      title: 'Project details',
+      description: 'Tasks and commentary',
+    },
+    children: [taskListNode],
+  });
 
-    return createContentNode({
-        workspaceId,
-        type: projectType,
-        name: "Project health",
-        data: {
-            name: "Onboarding Portal Revamp",
-            status: "In progress",
-            summary: "Reworking onboarding flows and portal UI for enterprise clients.",
-        },
-        children: [layoutNode],
-    });
+  return createContentNode({
+    workspaceId,
+    type: projectType,
+    name: 'Project health',
+    data: {
+      name: 'Onboarding Portal Revamp',
+      status: 'In progress',
+      summary: 'Reworking onboarding flows and portal UI for enterprise clients.',
+    },
+    children: [layoutNode],
+  });
 }
 
 export function createNoteNode(workspaceId: string, content?: string): BlockNode {
-    const noteType = createNoteBlockType(workspaceId);
+  const noteType = createNoteBlockType(workspaceId);
 
-    return createContentNode({
-        workspaceId,
-        type: noteType,
-        name: "Note",
-        data: {
-            content: content ?? "Start typing...",
-        },
-    });
+  return createContentNode({
+    workspaceId,
+    type: noteType,
+    name: 'Note',
+    data: {
+      content: content ?? 'Start typing...',
+    },
+  });
 }
 
 /**
@@ -79,392 +79,392 @@ export function createNoteNode(workspaceId: string, content?: string): BlockNode
  * 2. Layout container holding multiple different block types
  */
 export function createLayoutContainerNode(workspaceId: string): BlockNode {
-    const layoutType = createLayoutContainerBlockType(workspaceId);
-    const noteType = createNoteBlockType(workspaceId);
+  const layoutType = createLayoutContainerBlockType(workspaceId);
+  const noteType = createNoteBlockType(workspaceId);
 
-    // Create some nested blocks
-    const nestedBlocks = [
-        createContentNode({
-            workspaceId,
-            type: noteType,
-            name: "Welcome note",
-            data: {
-                content:
-                    "Welcome to the block environment! This is a nested block inside a layout container.",
-            },
-        }),
-        createContentNode({
-            workspaceId,
-            type: noteType,
-            name: "Instructions",
-            data: {
-                content:
-                    "You can add, remove, and rearrange blocks using the toolbar. Try dragging blocks around!",
-            },
-        }),
-    ];
+  // Create some nested blocks
+  const nestedBlocks = [
+    createContentNode({
+      workspaceId,
+      type: noteType,
+      name: 'Welcome note',
+      data: {
+        content:
+          'Welcome to the block environment! This is a nested block inside a layout container.',
+      },
+    }),
+    createContentNode({
+      workspaceId,
+      type: noteType,
+      name: 'Instructions',
+      data: {
+        content:
+          'You can add, remove, and rearrange blocks using the toolbar. Try dragging blocks around!',
+      },
+    }),
+  ];
 
-    return createContentNode({
-        workspaceId,
-        type: layoutType,
-        name: "Getting Started",
-        data: {
-            title: "Getting Started",
-            description: "An introduction to block environments",
-        },
-        children: nestedBlocks,
-    });
+  return createContentNode({
+    workspaceId,
+    type: layoutType,
+    name: 'Getting Started',
+    data: {
+      title: 'Getting Started',
+      description: 'An introduction to block environments',
+    },
+    children: nestedBlocks,
+  });
 }
 
 const createAddressBlockType = (workspaceId: string): BlockType => {
-    const component: BlockComponentNode = {
-        id: "addressCard",
-        type: "ADDRESS_CARD",
-        props: {},
-        bindings: [
-            { prop: "title", source: { type: "DataPath", path: "$.data/title" } },
-            { prop: "description", source: { type: "DataPath", path: "$.data/description" } },
-            {
-                prop: "address",
-                source: { type: "DataPath", path: "$.data/address" },
-            },
-        ],
-        fetchPolicy: "LAZY",
-    };
+  const component: BlockComponentNode = {
+    id: 'addressCard',
+    type: 'ADDRESS_CARD',
+    props: {},
+    bindings: [
+      { prop: 'title', source: { type: 'DataPath', path: '$.data/title' } },
+      { prop: 'description', source: { type: 'DataPath', path: '$.data/description' } },
+      {
+        prop: 'address',
+        source: { type: 'DataPath', path: '$.data/address' },
+      },
+    ],
+    fetchPolicy: 'LAZY',
+  };
 
-    const render: BlockRenderStructure = {
-        version: 1,
-        layoutGrid: {
-            layout: DEFAULT_GRID_LAYOUT,
-            items: [
-                {
-                    id: component.id,
-                    rect: { x: 0, y: 0, width: 12, height: 6, locked: false },
-                },
-            ],
+  const render: BlockRenderStructure = {
+    version: 1,
+    layoutGrid: {
+      layout: DEFAULT_GRID_LAYOUT,
+      items: [
+        {
+          id: component.id,
+          rect: { x: 0, y: 0, width: 12, height: 6, locked: false },
         },
-        components: { [component.id]: component },
-    };
+      ],
+    },
+    components: { [component.id]: component },
+  };
 
-    return createBlockType({
-        key: "postal_address",
-        name: "Postal Address",
-        description: "Physical address for a contact or workspace.",
-        workspaceId,
-        schema: {
-            name: "Address",
-            type: "OBJECT",
-            required: true,
-            properties: {
-                title: { name: "Title", type: "STRING", required: false },
-                description: { name: "Description", type: "STRING", required: false },
-                address: {
-                    name: "Address",
-                    type: "OBJECT",
-                    required: true,
-                    properties: {
-                        street: { name: "Street", type: "STRING", required: true },
-                        city: { name: "City", type: "STRING", required: true },
-                        state: { name: "State", type: "STRING", required: true },
-                        postalCode: { name: "Postal Code", type: "STRING", required: true },
-                        country: { name: "Country", type: "STRING", required: true },
-                    },
-                },
-            },
+  return createBlockType({
+    key: 'postal_address',
+    name: 'Postal Address',
+    description: 'Physical address for a contact or workspace.',
+    workspaceId,
+    schema: {
+      name: 'Address',
+      type: 'OBJECT',
+      required: true,
+      properties: {
+        title: { name: 'Title', type: 'STRING', required: false },
+        description: { name: 'Description', type: 'STRING', required: false },
+        address: {
+          name: 'Address',
+          type: 'OBJECT',
+          required: true,
+          properties: {
+            street: { name: 'Street', type: 'STRING', required: true },
+            city: { name: 'City', type: 'STRING', required: true },
+            state: { name: 'State', type: 'STRING', required: true },
+            postalCode: { name: 'Postal Code', type: 'STRING', required: true },
+            country: { name: 'Country', type: 'STRING', required: true },
+          },
         },
-        display: {
-            form: {
-                fields: {
-                    "data.title": {
-                        type: "TEXT_INPUT",
-                        label: "Title",
-                        placeholder: "e.g., Home, Office",
-                    },
-                    "data.description": {
-                        type: "TEXT_AREA",
-                        label: "Description",
-                        placeholder: "Additional address notes",
-                    },
-                    "data.address.street": {
-                        type: "TEXT_INPUT",
-                        label: "Street Address",
-                        placeholder: "123 Main St",
-                    },
-                    "data.address.city": {
-                        type: "TEXT_INPUT",
-                        label: "City",
-                        placeholder: "San Francisco",
-                    },
-                    "data.address.state": {
-                        type: "TEXT_INPUT",
-                        label: "State/Province",
-                        placeholder: "CA",
-                    },
-                    "data.address.postalCode": {
-                        type: "TEXT_INPUT",
-                        label: "Postal Code",
-                        placeholder: "94102",
-                    },
-                    "data.address.country": {
-                        type: "TEXT_INPUT",
-                        label: "Country",
-                        placeholder: "USA",
-                    },
-                },
-            },
-            render,
+      },
+    },
+    display: {
+      form: {
+        fields: {
+          'data.title': {
+            type: 'TEXT_INPUT',
+            label: 'Title',
+            placeholder: 'e.g., Home, Office',
+          },
+          'data.description': {
+            type: 'TEXT_AREA',
+            label: 'Description',
+            placeholder: 'Additional address notes',
+          },
+          'data.address.street': {
+            type: 'TEXT_INPUT',
+            label: 'Street Address',
+            placeholder: '123 Main St',
+          },
+          'data.address.city': {
+            type: 'TEXT_INPUT',
+            label: 'City',
+            placeholder: 'San Francisco',
+          },
+          'data.address.state': {
+            type: 'TEXT_INPUT',
+            label: 'State/Province',
+            placeholder: 'CA',
+          },
+          'data.address.postalCode': {
+            type: 'TEXT_INPUT',
+            label: 'Postal Code',
+            placeholder: '94102',
+          },
+          'data.address.country': {
+            type: 'TEXT_INPUT',
+            label: 'Country',
+            placeholder: 'USA',
+          },
         },
-        nesting: null,
-    });
+      },
+      render,
+    },
+    nesting: null,
+  });
 };
 
 const createTaskBlockType = (workspaceId: string): BlockType => {
-    const component: BlockComponentNode = {
-        id: "task",
-        type: "TEXT",
-        props: {
-            variant: "body",
-        },
-        bindings: [
-            {
-                prop: "text",
-                source: { type: "DataPath", path: "$.data/title" },
-            },
-        ],
-        fetchPolicy: "LAZY",
-    };
+  const component: BlockComponentNode = {
+    id: 'task',
+    type: 'TEXT',
+    props: {
+      variant: 'body',
+    },
+    bindings: [
+      {
+        prop: 'text',
+        source: { type: 'DataPath', path: '$.data/title' },
+      },
+    ],
+    fetchPolicy: 'LAZY',
+  };
 
-    const render: BlockRenderStructure = {
-        version: 1,
-        layoutGrid: {
-            layout: DEFAULT_GRID_LAYOUT,
-            items: [
-                {
-                    id: component.id,
-                    rect: { x: 0, y: 0, width: 12, height: 4, locked: false },
-                },
+  const render: BlockRenderStructure = {
+    version: 1,
+    layoutGrid: {
+      layout: DEFAULT_GRID_LAYOUT,
+      items: [
+        {
+          id: component.id,
+          rect: { x: 0, y: 0, width: 12, height: 4, locked: false },
+        },
+      ],
+    },
+    components: { [component.id]: component },
+  };
+
+  return createBlockType({
+    key: 'project_task',
+    name: 'Project Task',
+    description: 'Individual task item for a project.',
+    workspaceId,
+    schema: {
+      name: 'Task',
+      type: 'OBJECT',
+      required: true,
+      properties: {
+        title: { name: 'Title', type: 'STRING', required: true },
+        assignee: { name: 'Assignee', type: 'STRING', required: false },
+        status: { name: 'Status', type: 'STRING', required: false },
+        dueDate: { name: 'Due date', type: 'STRING', required: false, format: 'DATE' },
+      },
+    },
+    display: {
+      form: {
+        fields: {
+          'data.title': {
+            type: 'TEXT_INPUT',
+            label: 'Task Title',
+            placeholder: 'Enter task title',
+          },
+          'data.assignee': {
+            type: 'TEXT_INPUT',
+            label: 'Assignee',
+            placeholder: 'Who is responsible?',
+          },
+          'data.status': {
+            type: 'DROPDOWN',
+            label: 'Status',
+            options: [
+              { label: 'Not Started', value: 'NOT_STARTED' },
+              { label: 'In Progress', value: 'IN_PROGRESS' },
+              { label: 'In Review', value: 'IN_REVIEW' },
+              { label: 'Completed', value: 'COMPLETED' },
             ],
+          },
+          'data.dueDate': {
+            type: 'DATE_PICKER',
+            label: 'Due Date',
+            placeholder: 'Select due date',
+          },
         },
-        components: { [component.id]: component },
-    };
-
-    return createBlockType({
-        key: "project_task",
-        name: "Project Task",
-        description: "Individual task item for a project.",
-        workspaceId,
-        schema: {
-            name: "Task",
-            type: "OBJECT",
-            required: true,
-            properties: {
-                title: { name: "Title", type: "STRING", required: true },
-                assignee: { name: "Assignee", type: "STRING", required: false },
-                status: { name: "Status", type: "STRING", required: false },
-                dueDate: { name: "Due date", type: "STRING", required: false, format: "DATE" },
-            },
-        },
-        display: {
-            form: {
-                fields: {
-                    "data.title": {
-                        type: "TEXT_INPUT",
-                        label: "Task Title",
-                        placeholder: "Enter task title",
-                    },
-                    "data.assignee": {
-                        type: "TEXT_INPUT",
-                        label: "Assignee",
-                        placeholder: "Who is responsible?",
-                    },
-                    "data.status": {
-                        type: "DROPDOWN",
-                        label: "Status",
-                        options: [
-                            { label: "Not Started", value: "NOT_STARTED" },
-                            { label: "In Progress", value: "IN_PROGRESS" },
-                            { label: "In Review", value: "IN_REVIEW" },
-                            { label: "Completed", value: "COMPLETED" },
-                        ],
-                    },
-                    "data.dueDate": {
-                        type: "DATE_PICKER",
-                        label: "Due Date",
-                        placeholder: "Select due date",
-                    },
-                },
-            },
-            render,
-        },
-        nesting: null,
-    });
+      },
+      render,
+    },
+    nesting: null,
+  });
 };
 
 const createNoteBlockType = (workspaceId: string): BlockType => {
-    const component: BlockComponentNode = {
-        id: "note",
-        type: "TEXT",
-        props: {
-            variant: "body",
-        },
-        bindings: [{ prop: "text", source: { type: "DataPath", path: "$.data/content" } }],
-        fetchPolicy: "LAZY",
-    };
+  const component: BlockComponentNode = {
+    id: 'note',
+    type: 'TEXT',
+    props: {
+      variant: 'body',
+    },
+    bindings: [{ prop: 'text', source: { type: 'DataPath', path: '$.data/content' } }],
+    fetchPolicy: 'LAZY',
+  };
 
-    const render: BlockRenderStructure = {
-        version: 1,
-        layoutGrid: {
-            layout: DEFAULT_GRID_LAYOUT,
-            items: [
-                {
-                    id: component.id,
-                    rect: { x: 0, y: 0, width: 12, height: 4, locked: false },
-                },
-            ],
+  const render: BlockRenderStructure = {
+    version: 1,
+    layoutGrid: {
+      layout: DEFAULT_GRID_LAYOUT,
+      items: [
+        {
+          id: component.id,
+          rect: { x: 0, y: 0, width: 12, height: 4, locked: false },
         },
-        components: { [component.id]: component },
-    };
+      ],
+    },
+    components: { [component.id]: component },
+  };
 
-    return createBlockType({
-        key: "note",
-        name: "Note",
-        description: "Simple rich text note.",
-        workspaceId,
-        schema: {
-            name: "Note",
-            type: "OBJECT",
-            required: true,
-            properties: {
-                content: { name: "Content", type: "STRING", required: true },
-            },
+  return createBlockType({
+    key: 'note',
+    name: 'Note',
+    description: 'Simple rich text note.',
+    workspaceId,
+    schema: {
+      name: 'Note',
+      type: 'OBJECT',
+      required: true,
+      properties: {
+        content: { name: 'Content', type: 'STRING', required: true },
+      },
+    },
+    display: {
+      form: {
+        fields: {
+          'data.content': {
+            type: 'TEXT_AREA',
+            label: 'Note Content',
+            placeholder: 'Start typing your note...',
+          },
         },
-        display: {
-            form: {
-                fields: {
-                    "data.content": {
-                        type: "TEXT_AREA",
-                        label: "Note Content",
-                        placeholder: "Start typing your note...",
-                    },
-                },
-            },
-            render,
-        },
-        nesting: null,
-    });
+      },
+      render,
+    },
+    nesting: null,
+  });
 };
 
 const createProjectOverviewType = (workspaceId: string): BlockType => {
-    const component: BlockComponentNode = {
-        id: "summary",
-        type: "TEXT",
-        props: {
-            variant: "body",
-        },
-        bindings: [
-            {
-                prop: "text",
-                source: { type: "DataPath", path: "$.data/summary" },
-            },
-        ],
-        fetchPolicy: "LAZY",
-    };
+  const component: BlockComponentNode = {
+    id: 'summary',
+    type: 'TEXT',
+    props: {
+      variant: 'body',
+    },
+    bindings: [
+      {
+        prop: 'text',
+        source: { type: 'DataPath', path: '$.data/summary' },
+      },
+    ],
+    fetchPolicy: 'LAZY',
+  };
 
-    const render: BlockRenderStructure = {
-        version: 1,
-        layoutGrid: {
-            layout: DEFAULT_GRID_LAYOUT,
-            items: [
-                {
-                    id: component.id,
-                    rect: { x: 0, y: 0, width: 12, height: 6, locked: false },
-                },
+  const render: BlockRenderStructure = {
+    version: 1,
+    layoutGrid: {
+      layout: DEFAULT_GRID_LAYOUT,
+      items: [
+        {
+          id: component.id,
+          rect: { x: 0, y: 0, width: 12, height: 6, locked: false },
+        },
+      ],
+    },
+    components: { [component.id]: component },
+  };
+
+  return createBlockType({
+    key: 'project_overview',
+    name: 'Project Overview',
+    description: 'High-level project summary block.',
+    workspaceId,
+    schema: {
+      name: 'ProjectOverview',
+      type: 'OBJECT',
+      required: true,
+      properties: {
+        name: { name: 'Name', type: 'STRING', required: true },
+        status: { name: 'Status', type: 'STRING', required: false },
+        summary: { name: 'Summary', type: 'STRING', required: false },
+      },
+    },
+    display: {
+      form: {
+        fields: {
+          'data.name': {
+            type: 'TEXT_INPUT',
+            label: 'Project Name',
+            placeholder: 'Enter project name',
+          },
+          'data.status': {
+            type: 'DROPDOWN',
+            label: 'Project Status',
+
+            options: [
+              { label: 'Planning', value: 'Planning' },
+              { label: 'In Progress', value: 'In progress' },
+              { label: 'On Hold', value: 'On hold' },
+              { label: 'Completed', value: 'Completed' },
+              { label: 'Cancelled', value: 'Cancelled' },
             ],
+          },
+          'data.summary': {
+            type: 'TEXT_AREA',
+            label: 'Project Summary',
+            placeholder: 'Describe the project...',
+          },
         },
-        components: { [component.id]: component },
-    };
-
-    return createBlockType({
-        key: "project_overview",
-        name: "Project Overview",
-        description: "High-level project summary block.",
-        workspaceId,
-        schema: {
-            name: "ProjectOverview",
-            type: "OBJECT",
-            required: true,
-            properties: {
-                name: { name: "Name", type: "STRING", required: true },
-                status: { name: "Status", type: "STRING", required: false },
-                summary: { name: "Summary", type: "STRING", required: false },
-            },
-        },
-        display: {
-            form: {
-                fields: {
-                    "data.name": {
-                        type: "TEXT_INPUT",
-                        label: "Project Name",
-                        placeholder: "Enter project name",
-                    },
-                    "data.status": {
-                        type: "DROPDOWN",
-                        label: "Project Status",
-
-                        options: [
-                            { label: "Planning", value: "Planning" },
-                            { label: "In Progress", value: "In progress" },
-                            { label: "On Hold", value: "On hold" },
-                            { label: "Completed", value: "Completed" },
-                            { label: "Cancelled", value: "Cancelled" },
-                        ],
-                    },
-                    "data.summary": {
-                        type: "TEXT_AREA",
-                        label: "Project Summary",
-                        placeholder: "Describe the project...",
-                    },
-                },
-            },
-            render,
-        },
-        nesting: {
-            max: undefined,
-            allowedTypes: ALL_BLOCK_COMPONENT_TYPES,
-        },
-    });
+      },
+      render,
+    },
+    nesting: {
+      max: undefined,
+      allowedTypes: ALL_BLOCK_COMPONENT_TYPES,
+    },
+  });
 };
 
 const createTaskNodes = (workspaceId: string, taskType: BlockType) => {
-    const tasks = [
-        {
-            title: "Wireframes",
-            assignee: "Jane Doe",
-            status: "IN_REVIEW",
-            dueDate: "2024-07-12",
-        },
-        {
-            title: "Analytics events",
-            assignee: "Kai Wong",
-            status: "IN_PROGRESS",
-            dueDate: "2024-07-19",
-        },
-        {
-            title: "Rollout comms",
-            assignee: "Tina Patel",
-            status: "NOT_STARTED",
-            dueDate: "2024-07-26",
-        },
-    ];
+  const tasks = [
+    {
+      title: 'Wireframes',
+      assignee: 'Jane Doe',
+      status: 'IN_REVIEW',
+      dueDate: '2024-07-12',
+    },
+    {
+      title: 'Analytics events',
+      assignee: 'Kai Wong',
+      status: 'IN_PROGRESS',
+      dueDate: '2024-07-19',
+    },
+    {
+      title: 'Rollout comms',
+      assignee: 'Tina Patel',
+      status: 'NOT_STARTED',
+      dueDate: '2024-07-26',
+    },
+  ];
 
-    return tasks.map((task) =>
-        createContentNode({
-            workspaceId,
-            type: taskType,
-            data: task,
-            name: task.title,
-        })
-    );
+  return tasks.map((task) =>
+    createContentNode({
+      workspaceId,
+      type: taskType,
+      data: task,
+      name: task.title,
+    }),
+  );
 };
 
 /**
@@ -472,79 +472,79 @@ const createTaskNodes = (workspaceId: string, taskType: BlockType) => {
  * Demonstrates manual ordering mode with drag-to-reorder
  */
 export function createTaskListNode(workspaceId: string): BlockNode {
-    const listType = createContentBlockListType(workspaceId);
-    const taskType = createTaskBlockType(workspaceId);
+  const listType = createContentBlockListType(workspaceId);
+  const taskType = createTaskBlockType(workspaceId);
 
-    // Create task items
-    const tasks = [
-        createContentNode({
-            workspaceId,
-            type: taskType,
-            data: {
-                title: "Design wireframes",
-                assignee: "Jane Doe",
-                status: "IN_PROGRESS",
-                dueDate: "2024-12-15",
-            },
-            name: "Design wireframes",
-        }),
-        createContentNode({
-            workspaceId,
-            type: taskType,
-            data: {
-                title: "Implement authentication",
-                assignee: "John Smith",
-                status: "NOT_STARTED",
-                dueDate: "2024-12-20",
-            },
-            name: "Implement authentication",
-        }),
-        createContentNode({
-            workspaceId,
-            type: taskType,
-            data: {
-                title: "Write documentation",
-                assignee: "Alice Johnson",
-                status: "NOT_STARTED",
-                dueDate: "2024-12-25",
-            },
-            name: "Write documentation",
-        }),
-    ];
+  // Create task items
+  const tasks = [
+    createContentNode({
+      workspaceId,
+      type: taskType,
+      data: {
+        title: 'Design wireframes',
+        assignee: 'Jane Doe',
+        status: 'IN_PROGRESS',
+        dueDate: '2024-12-15',
+      },
+      name: 'Design wireframes',
+    }),
+    createContentNode({
+      workspaceId,
+      type: taskType,
+      data: {
+        title: 'Implement authentication',
+        assignee: 'John Smith',
+        status: 'NOT_STARTED',
+        dueDate: '2024-12-20',
+      },
+      name: 'Implement authentication',
+    }),
+    createContentNode({
+      workspaceId,
+      type: taskType,
+      data: {
+        title: 'Write documentation',
+        assignee: 'Alice Johnson',
+        status: 'NOT_STARTED',
+        dueDate: '2024-12-25',
+      },
+      name: 'Write documentation',
+    }),
+  ];
 
-    // Create list with manual ordering configuration
-    const listConfig: BlockListConfiguration = {
-        allowedTypes: ["project_task"],
-        allowDuplicates: false,
-        display: {
-            itemSpacing: 12,
-            showDragHandles: true,
-            emptyMessage: "No tasks yet. Add one to get started!",
-        },
-        order: {
-            mode: "MANUAL",
-        },
-    };
+  // Create list with manual ordering configuration
+  const listConfig: BlockListConfiguration = {
+    allowedTypes: ['project_task'],
+    allowDuplicates: false,
+    display: {
+      itemSpacing: 12,
+      showDragHandles: true,
+      emptyMessage: 'No tasks yet. Add one to get started!',
+    },
+    order: {
+      mode: 'MANUAL',
+    },
+  };
 
-    return createContentNode({
-        workspaceId,
-        type: listType,
-        name: "Project Tasks",
-        data: {
-            title: "Project Tasks",
-            description: "Drag to reorder tasks",
-        },
-        children: tasks,
+  return createContentNode({
+    workspaceId,
+    type: listType,
+    name: 'Project Tasks',
+    data: {
+      title: 'Project Tasks',
+      description: 'Drag to reorder tasks',
+    },
+    children: tasks,
 
-        // Override payload to include listConfig
-        payloadOverride: {
-            type: "content",
-            meta: { validationErrors: [] },
-            data: {
-                title: "Project Tasks",
-                description: "Drag to reorder tasks",
-            },
-            listConfig,
-        },
-    });
+    // Override payload to include listConfig
+    payloadOverride: {
+      type: 'content',
+      meta: { validationErrors: [] },
+      data: {
+        title: 'Project Tasks',
+        description: 'Drag to reorder tasks',
+      },
+      listConfig,
+    },
+  });
 }

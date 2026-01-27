@@ -33,13 +33,13 @@ import {
     WorkflowFunctionConfigFromJSONTyped,
     WorkflowFunctionConfigToJSON,
 } from './WorkflowFunctionConfig';
-import type { WorkflowHumanInteractionConfig } from './WorkflowHumanInteractionConfig';
+import type { WorkflowParseConfig } from './WorkflowParseConfig';
 import {
-    instanceOfWorkflowHumanInteractionConfig,
-    WorkflowHumanInteractionConfigFromJSON,
-    WorkflowHumanInteractionConfigFromJSONTyped,
-    WorkflowHumanInteractionConfigToJSON,
-} from './WorkflowHumanInteractionConfig';
+    instanceOfWorkflowParseConfig,
+    WorkflowParseConfigFromJSON,
+    WorkflowParseConfigFromJSONTyped,
+    WorkflowParseConfigToJSON,
+} from './WorkflowParseConfig';
 import type { WorkflowTriggerConfig } from './WorkflowTriggerConfig';
 import {
     instanceOfWorkflowTriggerConfig,
@@ -60,7 +60,7 @@ import {
  * 
  * @export
  */
-export type SaveWorkflowNodeRequestConfig = WorkflowActionConfig | WorkflowControlConfig | WorkflowFunctionConfig | WorkflowHumanInteractionConfig | WorkflowTriggerConfig | WorkflowUtilityConfig;
+export type SaveWorkflowNodeRequestConfig = WorkflowActionConfig | WorkflowControlConfig | WorkflowFunctionConfig | WorkflowParseConfig | WorkflowTriggerConfig | WorkflowUtilityConfig;
 
 export function SaveWorkflowNodeRequestConfigFromJSON(json: any): SaveWorkflowNodeRequestConfig {
     return SaveWorkflowNodeRequestConfigFromJSONTyped(json, false);
@@ -82,8 +82,8 @@ export function SaveWorkflowNodeRequestConfigFromJSONTyped(json: any, ignoreDisc
     if (instanceOfWorkflowFunctionConfig(json)) {
         return WorkflowFunctionConfigFromJSONTyped(json, true);
     }
-    if (instanceOfWorkflowHumanInteractionConfig(json)) {
-        return WorkflowHumanInteractionConfigFromJSONTyped(json, true);
+    if (instanceOfWorkflowParseConfig(json)) {
+        return WorkflowParseConfigFromJSONTyped(json, true);
     }
     if (instanceOfWorkflowTriggerConfig(json)) {
         return WorkflowTriggerConfigFromJSONTyped(json, true);
@@ -114,8 +114,8 @@ export function SaveWorkflowNodeRequestConfigToJSONTyped(value?: SaveWorkflowNod
     if (instanceOfWorkflowFunctionConfig(value)) {
         return WorkflowFunctionConfigToJSON(value as WorkflowFunctionConfig);
     }
-    if (instanceOfWorkflowHumanInteractionConfig(value)) {
-        return WorkflowHumanInteractionConfigToJSON(value as WorkflowHumanInteractionConfig);
+    if (instanceOfWorkflowParseConfig(value)) {
+        return WorkflowParseConfigToJSON(value as WorkflowParseConfig);
     }
     if (instanceOfWorkflowTriggerConfig(value)) {
         return WorkflowTriggerConfigToJSON(value as WorkflowTriggerConfig);

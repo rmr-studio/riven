@@ -8,14 +8,14 @@ import { BlockTypeSelectorList } from "../shared/block-type-selector-list";
  * Props for the AddBlockDialog component
  */
 export interface AddBlockDialogProps {
-    /** Whether the dialog is open */
-    open: boolean;
-    /** Callback to change the open state */
-    onOpenChange: (open: boolean) => void;
-    /** Workspace ID to fetch block types for */
-    workspaceId: string;
-    /** Callback when a block type is selected */
-    onBlockTypeSelect: (blockType: BlockType) => void;
+  /** Whether the dialog is open */
+  open: boolean;
+  /** Callback to change the open state */
+  onOpenChange: (open: boolean) => void;
+  /** Workspace ID to fetch block types for */
+  workspaceId: string;
+  /** Callback when a block type is selected */
+  onBlockTypeSelect: (blockType: BlockType) => void;
 }
 
 /**
@@ -53,27 +53,27 @@ export interface AddBlockDialogProps {
  * ```
  */
 export const AddBlockDialog: FC<AddBlockDialogProps> = ({
-    open,
-    onOpenChange,
-    workspaceId,
-    onBlockTypeSelect,
+  open,
+  onOpenChange,
+  workspaceId,
+  onBlockTypeSelect,
 }) => {
-    const { data: blockTypes, isLoading, error } = useBlockTypes(workspaceId);
+  const { data: blockTypes, isLoading, error } = useBlockTypes(workspaceId);
 
-    const handleSelect = (blockType: BlockType) => {
-        onBlockTypeSelect(blockType);
-        onOpenChange(false);
-    };
+  const handleSelect = (blockType: BlockType) => {
+    onBlockTypeSelect(blockType);
+    onOpenChange(false);
+  };
 
-    return (
-        <CommandDialog open={open} onOpenChange={onOpenChange}>
-            <CommandInput placeholder="Search block types..." />
-            <BlockTypeSelectorList
-                blockTypes={blockTypes}
-                isLoading={isLoading}
-                error={error}
-                onSelect={handleSelect}
-            />
-        </CommandDialog>
-    );
+  return (
+    <CommandDialog open={open} onOpenChange={onOpenChange}>
+      <CommandInput placeholder="Search block types..." />
+      <BlockTypeSelectorList
+        blockTypes={blockTypes}
+        isLoading={isLoading}
+        error={error}
+        onSelect={handleSelect}
+      />
+    </CommandDialog>
+  );
 };

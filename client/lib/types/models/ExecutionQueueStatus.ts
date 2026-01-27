@@ -12,18 +12,17 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const ExecutionQueueStatus = {
-    Pending: 'PENDING',
-    Claimed: 'CLAIMED',
-    Dispatched: 'DISPATCHED',
-    Failed: 'FAILED'
-} as const;
-export type ExecutionQueueStatus = typeof ExecutionQueueStatus[keyof typeof ExecutionQueueStatus];
+export enum ExecutionQueueStatus {
+    Pending = 'PENDING',
+    Claimed = 'CLAIMED',
+    Dispatched = 'DISPATCHED',
+    Failed = 'FAILED'
+}
 
 
 export function instanceOfExecutionQueueStatus(value: any): boolean {

@@ -12,19 +12,18 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const Presentation = {
-    Summary: 'SUMMARY',
-    Entity: 'ENTITY',
-    Table: 'TABLE',
-    Grid: 'GRID',
-    Inline: 'INLINE'
-} as const;
-export type Presentation = typeof Presentation[keyof typeof Presentation];
+export enum Presentation {
+    Summary = 'SUMMARY',
+    Entity = 'ENTITY',
+    Table = 'TABLE',
+    Grid = 'GRID',
+    Inline = 'INLINE'
+}
 
 
 export function instanceOfPresentation(value: any): boolean {

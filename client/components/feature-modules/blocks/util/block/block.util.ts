@@ -1,15 +1,15 @@
-import { GridStackOptions } from "gridstack";
+import { GridStackOptions } from 'gridstack';
 import {
-    type BlockNode,
-    type ContentNode,
-    isContentMetadata,
-    isContentNode,
-    isEntityReferenceMetadata,
-    isReferenceNode,
-    type InsertResult,
-    type GridRect,
-} from "@/lib/types/block";
-import { isList } from "../list/list.util";
+  type BlockNode,
+  type ContentNode,
+  isContentMetadata,
+  isContentNode,
+  isEntityReferenceMetadata,
+  isReferenceNode,
+  type InsertResult,
+  type GridRect,
+} from '@/lib/types/block';
+import { isList } from '../list/list.util';
 
 // export function evalVisible(cond: Condition | undefined, ctx: TreeCtx): boolean {
 //     if (!cond) return true;
@@ -52,79 +52,79 @@ import { isList } from "../list/list.util";
 // }
 
 export const allowChildren = (node: BlockNode): boolean => {
-    return !!node.block.type.nesting;
+  return !!node.block.type.nesting;
 };
 
 export const DEFAULT_WIDGET_OPTIONS: GridStackOptions = {
-    sizeToContent: true,
-    resizable: {
-        handles: "se, sw", // Only corner handles for cleaner appearance
-    },
-    draggable: {
-        cancel: ".no-drag",
-        pause: 5,
-    },
-    column: 23,
-    columnOpts: {
-        breakpoints: [
-            //md
-            {
-                w: 1024,
-                c: 12,
-            },
-            //sm
-            {
-                w: 768,
-                c: 1,
-            },
-        ],
-    },
-    cellHeight: 25,
-    animate: true,
-    acceptWidgets: true,
+  sizeToContent: true,
+  resizable: {
+    handles: 'se, sw', // Only corner handles for cleaner appearance
+  },
+  draggable: {
+    cancel: '.no-drag',
+    pause: 5,
+  },
+  column: 23,
+  columnOpts: {
+    breakpoints: [
+      //md
+      {
+        w: 1024,
+        c: 12,
+      },
+      //sm
+      {
+        w: 768,
+        c: 1,
+      },
+    ],
+  },
+  cellHeight: 25,
+  animate: true,
+  acceptWidgets: true,
 };
 
 export const insertChild = (
-    parent: ContentNode,
-    child: BlockNode,
-    index: number | null = null
+  parent: ContentNode,
+  child: BlockNode,
+  index: number | null = null,
 ): InsertResult<BlockNode> => {
-    if (!allowChildren(parent)) {
-        return {
-            payload: parent,
-            success: false,
-        };
-    }
-
-    if (!parent.children || parent.children?.length === 0) {
-        return {
-            payload: {
-                ...parent,
-                children: [child],
-            },
-            success: true,
-        };
-    }
-
-    // Either insert at specific index or append to end
-    const updatedChildren =
-        index !== null
-            ? [...parent.children.slice(0, index), child, ...parent.children.slice(index)]
-            : [...parent.children, child];
-
+  if (!allowChildren(parent)) {
     return {
-        payload: {
-            ...parent,
-            children: updatedChildren,
-        },
-        success: true,
+      payload: parent,
+      success: false,
     };
+  }
+
+  if (!parent.children || parent.children?.length === 0) {
+    return {
+      payload: {
+        ...parent,
+        children: [child],
+      },
+      success: true,
+    };
+  }
+
+  // Either insert at specific index or append to end
+  const updatedChildren =
+    index !== null
+      ? [...parent.children.slice(0, index), child, ...parent.children.slice(index)]
+      : [...parent.children, child];
+
+  return {
+    payload: {
+      ...parent,
+      children: updatedChildren,
+    },
+    success: true,
+  };
 };
 
 export const getChildren = (node: BlockNode): BlockNode[] | undefined => {
-    if (!isContentNode(node) || !node.children) return undefined;
+  if (!isContentNode(node) || !node.children) return undefined;
 
-    return node.children;
+  return node.children;
 };
 
 /**
@@ -134,25 +134,25 @@ export const getChildren = (node: BlockNode): BlockNode[] | undefined => {
  * @returns The GridRect representing the block's dimensions.
  */
 export const getDefaultDimensions = (node: BlockNode): GridRect => {
-    return node.block.type.display.render.layoutGrid.layout;
+  return node.block.type.display.render.layoutGrid.layout;
 };
 
 export const getTitle = (node: BlockNode): string => {
-    const { block } = node;
-    const { name, type } = block;
-    return type.name || name || "Untitled Block";
+  const { block } = node;
+  const { name, type } = block;
+  return type.name || name || 'Untitled Block';
 };
 
 export const getAllowedChildTypes = (node: BlockNode): string[] => {
-    if (isList(node)) {
-        if (isReferenceNode(node) && isEntityReferenceMetadata(node.block.payload)) {
-            return node.block.payload.listConfig?.listType || [];
-        }
-
-        if (isContentNode(node) && isContentMetadata(node.block.payload)) {
-            return node.block.payload.listConfig?.listType || [];
-        }
+  if (isList(node)) {
+    if (isReferenceNode(node) && isEntityReferenceMetadata(node.block.payload)) {
+      return node.block.payload.listConfig?.listType || [];
     }
 
-    return node.block.type.nesting?.allowedTypes || [];
+    if (isContentNode(node) && isContentMetadata(node.block.payload)) {
+      return node.block.payload.listConfig?.listType || [];
+    }
+  }
+
+  return node.block.type.nesting?.allowedTypes || [];
 };

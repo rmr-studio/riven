@@ -12,25 +12,24 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const ComponentType = {
-    LayoutContainer: 'LAYOUT_CONTAINER',
-    List: 'LIST',
-    ContactCard: 'CONTACT_CARD',
-    AddressCard: 'ADDRESS_CARD',
-    LineItem: 'LINE_ITEM',
-    Table: 'TABLE',
-    Image: 'IMAGE',
-    Button: 'BUTTON',
-    Attachment: 'ATTACHMENT',
-    Text: 'TEXT',
-    Fallback: 'FALLBACK'
-} as const;
-export type ComponentType = typeof ComponentType[keyof typeof ComponentType];
+export enum ComponentType {
+    LayoutContainer = 'LAYOUT_CONTAINER',
+    List = 'LIST',
+    ContactCard = 'CONTACT_CARD',
+    AddressCard = 'ADDRESS_CARD',
+    LineItem = 'LINE_ITEM',
+    Table = 'TABLE',
+    Image = 'IMAGE',
+    Button = 'BUTTON',
+    Attachment = 'ATTACHMENT',
+    Text = 'TEXT',
+    Fallback = 'FALLBACK'
+}
 
 
 export function instanceOfComponentType(value: any): boolean {

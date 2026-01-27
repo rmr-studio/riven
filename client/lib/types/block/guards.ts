@@ -9,7 +9,8 @@ import type {
     EntityReferenceMetadata,
 } from "./models";
 import type { BlockNode } from "./custom";
-import { BlockMetadataType, NodeType } from "@/lib/types/models";
+import { BlockMetadataType } from "../models/BlockMetadataType";
+import { NodeType } from "../models/NodeType";
 
 export const isContentMetadata = (
     payload: Block["payload"]

@@ -12,16 +12,15 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const SortDir = {
-    Asc: 'ASC',
-    Desc: 'DESC'
-} as const;
-export type SortDir = typeof SortDir[keyof typeof SortDir];
+export enum SortDir {
+    Asc = 'ASC',
+    Desc = 'DESC'
+}
 
 
 export function instanceOfSortDir(value: any): boolean {

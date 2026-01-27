@@ -1,49 +1,49 @@
 import {
-    EntityAttributePrimitivePayload,
-    EntityAttributeRelationPayloadReference,
-    EntityAttributeRequest,
-    EntityLink,
-    EntityPropertyType,
-    EntityType,
-    SaveEntityRequest,
-    SaveEntityResponse,
-} from "@/lib/types/entity";
-import { buildDefaultValuesFromEntityType } from "@/lib/util/form/entity-instance-validation.util";
-import { UseFormReturn } from "react-hook-form";
-import { create, StoreApi } from "zustand";
-import { subscribeWithSelector } from "zustand/middleware";
+  EntityAttributePrimitivePayload,
+  EntityAttributeRelationPayloadReference,
+  EntityAttributeRequest,
+  EntityLink,
+  EntityPropertyType,
+  EntityType,
+  SaveEntityRequest,
+  SaveEntityResponse,
+} from '@/lib/types/entity';
+import { buildDefaultValuesFromEntityType } from '@/lib/util/form/entity-instance-validation.util';
+import { UseFormReturn } from 'react-hook-form';
+import { create, StoreApi } from 'zustand';
+import { subscribeWithSelector } from 'zustand/middleware';
 
 // Metadata for each attribute/relationship
 
 // State interface
 interface EntityDraftState {
-    // Workspace and entity type data
-    workspaceId: string;
-    entityType: EntityType;
+  // Workspace and entity type data
+  workspaceId: string;
+  entityType: EntityType;
 
-    // Memoized map of attribute ID -> metadata for fast lookups
-    attributeMetadataMap: Map<string, EntityPropertyType>;
+  // Memoized map of attribute ID -> metadata for fast lookups
+  attributeMetadataMap: Map<string, EntityPropertyType>;
 
-    // Draft mode flag
-    isDraftMode: boolean;
+  // Draft mode flag
+  isDraftMode: boolean;
 
-    // React Hook Form instance
-    form: UseFormReturn<Record<string, any>>;
+  // React Hook Form instance
+  form: UseFormReturn<Record<string, any>>;
 }
 
 // Actions interface
 interface EntityDraftActions {
-    // Enter draft mode (initialize new entity draft)
-    enterDraftMode: () => void;
+  // Enter draft mode (initialize new entity draft)
+  enterDraftMode: () => void;
 
-    // Exit draft mode (reset form)
-    exitDraftMode: () => void;
+  // Exit draft mode (reset form)
+  exitDraftMode: () => void;
 
-    // Submit draft (create entity)
-    submitDraft: () => Promise<SaveEntityResponse>;
+  // Submit draft (create entity)
+  submitDraft: () => Promise<SaveEntityResponse>;
 
-    // Reset draft (exit draft mode)
-    resetDraft: () => void;
+  // Reset draft (exit draft mode)
+  resetDraft: () => void;
 }
 
 export type EntityDraftStore = EntityDraftState & EntityDraftActions;
@@ -53,134 +53,134 @@ export type EntityDraftStore = EntityDraftState & EntityDraftActions;
  * This allows O(1) lookup to determine if an attribute is a schema attribute or relationship
  */
 const buildAttributeMetadataMap = (entityType: EntityType): Map<string, EntityPropertyType> => {
-    const map = new Map<string, EntityPropertyType>();
+  const map = new Map<string, EntityPropertyType>();
 
-    // Add schema attributes
-    if (entityType.schema?.properties) {
-        Object.entries(entityType.schema.properties).forEach(([attributeId, schema]) => {
-            map.set(attributeId, EntityPropertyType.Attribute);
-        });
-    }
+  // Add schema attributes
+  if (entityType.schema?.properties) {
+    Object.entries(entityType.schema.properties).forEach(([attributeId, schema]) => {
+      map.set(attributeId, EntityPropertyType.Attribute);
+    });
+  }
 
-    // Add relationships
-    if (entityType.relationships) {
-        entityType.relationships.forEach((relationship) => {
-            map.set(relationship.id, EntityPropertyType.Relationship);
-        });
-    }
+  // Add relationships
+  if (entityType.relationships) {
+    entityType.relationships.forEach((relationship) => {
+      map.set(relationship.id, EntityPropertyType.Relationship);
+    });
+  }
 
-    return map;
+  return map;
 };
 
 // Store factory (per-entity-type instances)
 export const createEntityDraftStore = (
-    workspaceId: string,
-    entityType: EntityType,
-    form: UseFormReturn<Record<string, any>>,
-    saveMutation: (request: SaveEntityRequest) => Promise<SaveEntityResponse>
+  workspaceId: string,
+  entityType: EntityType,
+  form: UseFormReturn<Record<string, any>>,
+  saveMutation: (request: SaveEntityRequest) => Promise<SaveEntityResponse>,
 ): StoreApi<EntityDraftStore> => {
-    // Build attribute metadata map once during initialization
-    const attributeMetadataMap = buildAttributeMetadataMap(entityType);
+  // Build attribute metadata map once during initialization
+  const attributeMetadataMap = buildAttributeMetadataMap(entityType);
 
-    return create<EntityDraftStore>()(
-        subscribeWithSelector((set, get) => ({
-            // Initial state
-            workspaceId,
-            entityType,
-            attributeMetadataMap,
-            isDraftMode: false,
-            form,
+  return create<EntityDraftStore>()(
+    subscribeWithSelector((set, get) => ({
+      // Initial state
+      workspaceId,
+      entityType,
+      attributeMetadataMap,
+      isDraftMode: false,
+      form,
 
-            enterDraftMode: () => {
-                // Build default values from entity type schema
-                const defaultValues = buildDefaultValuesFromEntityType(entityType);
+      enterDraftMode: () => {
+        // Build default values from entity type schema
+        const defaultValues = buildDefaultValuesFromEntityType(entityType);
 
-                // Reset form with defaults
-                form.reset(defaultValues);
+        // Reset form with defaults
+        form.reset(defaultValues);
 
-                // Enter draft mode
-                set({ isDraftMode: true });
-            },
+        // Enter draft mode
+        set({ isDraftMode: true });
+      },
 
-            exitDraftMode: () => {
-                // Reset form
-                form.reset({});
+      exitDraftMode: () => {
+        // Reset form
+        form.reset({});
 
-                // Exit draft mode
-                set({ isDraftMode: false });
-            },
+        // Exit draft mode
+        set({ isDraftMode: false });
+      },
 
-            submitDraft: async () => {
-                const { form, attributeMetadataMap } = get();
+      submitDraft: async () => {
+        const { form, attributeMetadataMap } = get();
 
-                // Get current form values
-                const values = form.getValues();
+        // Get current form values
+        const values = form.getValues();
 
-                // Validate all fields
-                const isValid = await form.trigger();
+        // Validate all fields
+        const isValid = await form.trigger();
 
-                if (!isValid) {
-                    throw new Error("Validation failed. Please correct the errors and try again.");
-                }
+        if (!isValid) {
+          throw new Error('Validation failed. Please correct the errors and try again.');
+        }
 
-                // Transform form values into request payload
-                const payload: Record<string, EntityAttributeRequest> = {};
+        // Transform form values into request payload
+        const payload: Record<string, EntityAttributeRequest> = {};
 
-                Object.entries(values).forEach(([key, value]) => {
-                    const metadata = attributeMetadataMap.get(key);
+        Object.entries(values).forEach(([key, value]) => {
+          const metadata = attributeMetadataMap.get(key);
 
-                    if (!metadata) {
-                        console.warn(`No metadata found for attribute: ${key}`);
-                        return;
-                    }
+          if (!metadata) {
+            console.warn(`No metadata found for attribute: ${key}`);
+            return;
+          }
 
-                    if (metadata === EntityPropertyType.Attribute) {
-                        const attribute = entityType.schema.properties?.[key];
-                        if (!attribute) return;
+          if (metadata === EntityPropertyType.Attribute) {
+            const attribute = entityType.schema.properties?.[key];
+            if (!attribute) return;
 
-                        // Schema attribute - create primitive payload
-                        const primitivePayload: EntityAttributePrimitivePayload = {
-                            value: value as any, // JsonValue (Any)
-                            schemaType: attribute.key,
-                            type: EntityPropertyType.Attribute,
-                        };
+            // Schema attribute - create primitive payload
+            const primitivePayload: EntityAttributePrimitivePayload = {
+              value: value as any, // JsonValue (Any)
+              schemaType: attribute.key,
+              type: EntityPropertyType.Attribute,
+            };
 
-                        payload[key] = {
-                            payload: primitivePayload,
-                        };
-                    } else if (metadata === EntityPropertyType.Relationship) {
-                        // Relationship - create relation payload
-                        // Normalize to array of UUIDs
-                        const relations: EntityLink[] = value
+            payload[key] = {
+              payload: primitivePayload,
+            };
+          } else if (metadata === EntityPropertyType.Relationship) {
+            // Relationship - create relation payload
+            // Normalize to array of UUIDs
+            const relations: EntityLink[] = value;
 
-                        const relationPayload: EntityAttributeRelationPayloadReference = {
-                            relations: relations.map((rel) => rel.id),
-                            type: EntityPropertyType.Relationship,
-                        };
+            const relationPayload: EntityAttributeRelationPayloadReference = {
+              relations: relations.map((rel) => rel.id),
+              type: EntityPropertyType.Relationship,
+            };
 
-                        payload[key] = {
-                            payload: relationPayload,
-                        };
-                    }
-                });
+            payload[key] = {
+              payload: relationPayload,
+            };
+          }
+        });
 
-                const request: SaveEntityRequest = { payload };
+        const request: SaveEntityRequest = { payload };
 
-                // Call the save mutation
-                const response = await saveMutation(request);
+        // Call the save mutation
+        const response = await saveMutation(request);
 
-                // Exit draft mode and clear draft
-                get().exitDraftMode();
+        // Exit draft mode and clear draft
+        get().exitDraftMode();
 
-                return response;
-            },
+        return response;
+      },
 
-            resetDraft: () => {
-                // Simply exit draft mode (which clears everything)
-                get().exitDraftMode();
-            },
-        }))
-    );
+      resetDraft: () => {
+        // Simply exit draft mode (which clears everything)
+        get().exitDraftMode();
+      },
+    })),
+  );
 };
 
 // Export store API type for TypeScript

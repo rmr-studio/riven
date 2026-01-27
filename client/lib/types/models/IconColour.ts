@@ -12,24 +12,23 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const IconColour = {
-    Neutral: 'NEUTRAL',
-    Purple: 'PURPLE',
-    Blue: 'BLUE',
-    Teal: 'TEAL',
-    Green: 'GREEN',
-    Yellow: 'YELLOW',
-    Orange: 'ORANGE',
-    Red: 'RED',
-    Pink: 'PINK',
-    Grey: 'GREY'
-} as const;
-export type IconColour = typeof IconColour[keyof typeof IconColour];
+export enum IconColour {
+    Neutral = 'NEUTRAL',
+    Purple = 'PURPLE',
+    Blue = 'BLUE',
+    Teal = 'TEAL',
+    Green = 'GREEN',
+    Yellow = 'YELLOW',
+    Orange = 'ORANGE',
+    Red = 'RED',
+    Pink = 'PINK',
+    Grey = 'GREY'
+}
 
 
 export function instanceOfIconColour(value: any): boolean {

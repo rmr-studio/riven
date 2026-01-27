@@ -1,21 +1,20 @@
 export interface InsertComponent {
-  id: string
-  name: string
-  description: string
-  icon: string
-  category: "media" | "layout" | "interactive" | "decoration"
-  action: "free-image" | "video" | "table" | "custom"
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: 'media' | 'layout' | 'interactive' | 'decoration';
+  action: 'free-image' | 'video' | 'table' | 'custom';
 }
 
 export const INSERT_COMPONENTS: InsertComponent[] = [
   {
-    id: "free-image",
-    name: "Free Movement Image",
-    description:
-      "Add an image that can be positioned anywhere and resized freely",
-    icon: "",
-    category: "media",
-    action: "free-image",
+    id: 'free-image',
+    name: 'Free Movement Image',
+    description: 'Add an image that can be positioned anywhere and resized freely',
+    icon: '',
+    category: 'media',
+    action: 'free-image',
   },
   // Future components can be added here:
   // {
@@ -34,18 +33,14 @@ export const INSERT_COMPONENTS: InsertComponent[] = [
   //   category: "layout",
   //   action: "custom",
   // },
-]
+];
 
-export function getInsertComponentById(
-  id: string
-): InsertComponent | undefined {
-  return INSERT_COMPONENTS.find((component) => component.id === id)
+export function getInsertComponentById(id: string): InsertComponent | undefined {
+  return INSERT_COMPONENTS.find((component) => component.id === id);
 }
 
 export function getInsertComponentsByCategory(
-  category: InsertComponent["category"]
+  category: InsertComponent['category'],
 ): InsertComponent[] {
-  return INSERT_COMPONENTS.filter(
-    (component) => component.category === category
-  )
+  return INSERT_COMPONENTS.filter((component) => component.category === category);
 }

@@ -12,16 +12,15 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const BlockListOrderingMode = {
-    Manual: 'MANUAL',
-    Sorted: 'SORTED'
-} as const;
-export type BlockListOrderingMode = typeof BlockListOrderingMode[keyof typeof BlockListOrderingMode];
+export enum BlockListOrderingMode {
+    Manual = 'MANUAL',
+    Sorted = 'SORTED'
+}
 
 
 export function instanceOfBlockListOrderingMode(value: any): boolean {

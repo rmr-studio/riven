@@ -12,16 +12,15 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const EntityCategory = {
-    Standard: 'STANDARD',
-    Relationship: 'RELATIONSHIP'
-} as const;
-export type EntityCategory = typeof EntityCategory[keyof typeof EntityCategory];
+export enum EntityCategory {
+    Standard = 'STANDARD',
+    Relationship = 'RELATIONSHIP'
+}
 
 
 export function instanceOfEntityCategory(value: any): boolean {

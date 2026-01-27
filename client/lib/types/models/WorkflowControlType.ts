@@ -12,20 +12,19 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const WorkflowControlType = {
-    Condition: 'CONDITION',
-    Switch: 'SWITCH',
-    Loop: 'LOOP',
-    Parallel: 'PARALLEL',
-    Delay: 'DELAY',
-    Merge: 'MERGE'
-} as const;
-export type WorkflowControlType = typeof WorkflowControlType[keyof typeof WorkflowControlType];
+export enum WorkflowControlType {
+    Condition = 'CONDITION',
+    Switch = 'SWITCH',
+    Loop = 'LOOP',
+    Parallel = 'PARALLEL',
+    Delay = 'DELAY',
+    Merge = 'MERGE'
+}
 
 
 export function instanceOfWorkflowControlType(value: any): boolean {

@@ -12,18 +12,17 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const EntityRelationshipCardinality = {
-    OneToOne: 'ONE_TO_ONE',
-    OneToMany: 'ONE_TO_MANY',
-    ManyToOne: 'MANY_TO_ONE',
-    ManyToMany: 'MANY_TO_MANY'
-} as const;
-export type EntityRelationshipCardinality = typeof EntityRelationshipCardinality[keyof typeof EntityRelationshipCardinality];
+export enum EntityRelationshipCardinality {
+    OneToOne = 'ONE_TO_ONE',
+    OneToMany = 'ONE_TO_MANY',
+    ManyToOne = 'MANY_TO_ONE',
+    ManyToMany = 'MANY_TO_MANY'
+}
 
 
 export function instanceOfEntityRelationshipCardinality(value: any): boolean {

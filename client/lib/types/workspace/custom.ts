@@ -1,6 +1,11 @@
 // workspace/custom.ts
 // Custom types for workspace domain (inlined from OpenAPI operations)
 
+// Runtime enum re-exports from generated models
+export { WorkspacePlan } from "../models/WorkspacePlan";
+export { WorkspaceRoles } from "../models/WorkspaceRoles";
+export { WorkspaceInviteStatus } from "../models/WorkspaceInviteStatus";
+
 import type { Workspace, WorkspaceInvite, WorkspaceRoles } from "./models";
 
 // ----- Custom UI Types -----

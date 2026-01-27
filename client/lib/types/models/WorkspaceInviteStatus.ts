@@ -12,18 +12,17 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const WorkspaceInviteStatus = {
-    Pending: 'PENDING',
-    Accepted: 'ACCEPTED',
-    Declined: 'DECLINED',
-    Expired: 'EXPIRED'
-} as const;
-export type WorkspaceInviteStatus = typeof WorkspaceInviteStatus[keyof typeof WorkspaceInviteStatus];
+export enum WorkspaceInviteStatus {
+    Pending = 'PENDING',
+    Accepted = 'ACCEPTED',
+    Declined = 'DECLINED',
+    Expired = 'EXPIRED'
+}
 
 
 export function instanceOfWorkspaceInviteStatus(value: any): boolean {

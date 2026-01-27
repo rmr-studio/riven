@@ -1,80 +1,78 @@
-"use client";
+'use client';
 
-import { useProfile } from "@/components/feature-modules/user/hooks/useProfile";
+import { useProfile } from '@/components/feature-modules/user/hooks/useProfile';
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { PlusCircle } from "lucide-react";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { WorkspaceTile } from "../components/workspace-card";
-import type { WorkspaceMember } from "@/lib/types/workspace";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { PlusCircle } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { WorkspaceTile } from '../components/workspace-card';
+import type { WorkspaceMember } from '@/lib/types/workspace';
 
 export const WorkspacePicker = () => {
-    const { data: user, isPending } = useProfile();
+  const { data: user, isPending } = useProfile();
 
-    const [workspaceSearch, setWorkspaceSearch] = useState<string>("");
-    const [renderedWorkspaces, setRenderedWorkspaces] = useState<WorkspaceMember[]>([]);
-    useEffect(() => {
-        if (user?.memberships) {
-            setRenderedWorkspaces(
+  const [workspaceSearch, setWorkspaceSearch] = useState<string>('');
+  const [renderedWorkspaces, setRenderedWorkspaces] = useState<WorkspaceMember[]>([]);
+  useEffect(() => {
+    if (user?.memberships) {
+      setRenderedWorkspaces(
+        user.memberships.filter((org) =>
+          org.workspace?.name.toLowerCase().includes(workspaceSearch?.toLowerCase() || ''),
+        ),
+      );
+    } else {
+      setRenderedWorkspaces([]);
+    }
+  }, [user, workspaceSearch]);
+
+  return (
+    <>
+      <section className="mt-6 flex space-x-4">
+        <Input
+          className="w-full max-w-sm"
+          placeholder="Search Workspaces"
+          value={workspaceSearch ?? ''}
+          onChange={(e) => {
+            setWorkspaceSearch(e.target.value);
+            if (user?.memberships) {
+              setRenderedWorkspaces(
                 user.memberships.filter((org) =>
-                    org.workspace?.name.toLowerCase().includes(workspaceSearch?.toLowerCase() || "")
-                )
-            );
-        } else {
-            setRenderedWorkspaces([]);
-        }
-    }, [user, workspaceSearch]);
+                  org.workspace?.name.toLowerCase().includes(e.target.value.toLowerCase()),
+                ),
+              );
+            }
+          }}
+        />
 
-    return (
-        <>
-            <section className="flex mt-6 space-x-4">
-                <Input
-                    className="w-full max-w-sm"
-                    placeholder="Search Workspaces"
-                    value={workspaceSearch ?? ""}
-                    onChange={(e) => {
-                        setWorkspaceSearch(e.target.value);
-                        if (user?.memberships) {
-                            setRenderedWorkspaces(
-                                user.memberships.filter((org) =>
-                                    org.workspace?.name
-                                        .toLowerCase()
-                                        .includes(e.target.value.toLowerCase())
-                                )
-                            );
-                        }
-                    }}
-                />
-
-                <Link href={"/dashboard/workspace/new"}>
-                    <Button variant={"outline"} size={"sm"} className="h-full cursor-pointer">
-                        <PlusCircle className="mr-2" />
-                        Create Workspace
-                    </Button>
-                </Link>
-            </section>
-            <section className="flex flex-wrap flex-shrink-0 mt-8 space-x-4">
-                {renderedWorkspaces.length > 0 ? (
-                    <>
-                        {renderedWorkspaces.map(
-                            (org) =>
-                                org.workspace?.id && (
-                                    <WorkspaceTile
-                                        key={org.workspace.id}
-                                        membership={org}
-                                        isDefault={user?.defaultWorkspace?.id === org.workspace.id}
-                                    />
-                                )
-                        )}
-                    </>
-                ) : isPending ? (
-                    <>Loading... </>
-                ) : (
-                    <>No Workspaces found</>
-                )}
-            </section>
-        </>
-    );
+        <Link href={'/dashboard/workspace/new'}>
+          <Button variant={'outline'} size={'sm'} className="h-full cursor-pointer">
+            <PlusCircle className="mr-2" />
+            Create Workspace
+          </Button>
+        </Link>
+      </section>
+      <section className="mt-8 flex flex-shrink-0 flex-wrap space-x-4">
+        {renderedWorkspaces.length > 0 ? (
+          <>
+            {renderedWorkspaces.map(
+              (org) =>
+                org.workspace?.id && (
+                  <WorkspaceTile
+                    key={org.workspace.id}
+                    membership={org}
+                    isDefault={user?.defaultWorkspace?.id === org.workspace.id}
+                  />
+                ),
+            )}
+          </>
+        ) : isPending ? (
+          <>Loading... </>
+        ) : (
+          <>No Workspaces found</>
+        )}
+      </section>
+    </>
+  );
 };

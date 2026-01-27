@@ -12,16 +12,15 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const EntityTypeRelationshipType = {
-    Reference: 'REFERENCE',
-    Origin: 'ORIGIN'
-} as const;
-export type EntityTypeRelationshipType = typeof EntityTypeRelationshipType[keyof typeof EntityTypeRelationshipType];
+export enum EntityTypeRelationshipType {
+    Reference = 'REFERENCE',
+    Origin = 'ORIGIN'
+}
 
 
 export function instanceOfEntityTypeRelationshipType(value: any): boolean {

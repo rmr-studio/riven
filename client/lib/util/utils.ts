@@ -95,8 +95,8 @@ export const isValidCurrency = (value: string): boolean => {
     return validCurrencies.has(value.toUpperCase());
 };
 
-export const now = (): string => {
-    return dayjs().toISOString();
+export const now = (): Date => {
+    return dayjs().toDate();
 };
 
 export const hexToRgb = (hex: string): string => {

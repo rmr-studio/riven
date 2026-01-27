@@ -12,25 +12,24 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const Op = {
-    Exists: 'EXISTS',
-    Equals: 'EQUALS',
-    NotEquals: 'NOT_EQUALS',
-    Gt: 'GT',
-    Gte: 'GTE',
-    Lt: 'LT',
-    Lte: 'LTE',
-    In: 'IN',
-    NotIn: 'NOT_IN',
-    Empty: 'EMPTY',
-    NotEmpty: 'NOT_EMPTY'
-} as const;
-export type Op = typeof Op[keyof typeof Op];
+export enum Op {
+    Exists = 'EXISTS',
+    Equals = 'EQUALS',
+    NotEquals = 'NOT_EQUALS',
+    Gt = 'GT',
+    Gte = 'GTE',
+    Lt = 'LT',
+    Lte = 'LTE',
+    In = 'IN',
+    NotIn = 'NOT_IN',
+    Empty = 'EMPTY',
+    NotEmpty = 'NOT_EMPTY'
+}
 
 
 export function instanceOfOp(value: any): boolean {

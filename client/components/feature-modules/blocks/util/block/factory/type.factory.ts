@@ -1,389 +1,388 @@
-import { now } from "@/lib/util/utils";
-import { v4 as uuid } from "uuid";
-import type {
-    BlockComponentNode,
-    BlockDisplay,
-    BlockSchema,
-    BlockType,
-    BlockTypeNesting,
-    GridRect,
-} from "@/lib/types/block";
+import { now } from '@/lib/util/utils';
+import { v4 as uuid } from 'uuid';
+import {
+  ValidationScope,
+  type BlockComponentNode,
+  type BlockDisplay,
+  type BlockSchema,
+  type BlockType,
+  type BlockTypeNesting,
+  type GridRect,
+} from '@/lib/types/block';
 
 export const DEFAULT_GRID_LAYOUT: GridRect = {
-    x: 0,
-    y: 0,
-    width: 12,
-    height: 4,
-    locked: false,
+  x: 0,
+  y: 0,
+  width: 12,
+  height: 4,
+  locked: false,
 };
 
 const createBaseDisplay = (component: BlockComponentNode): BlockDisplay => ({
-    form: { fields: {} },
-    render: {
-        version: 1,
-        layoutGrid: {
-            layout: DEFAULT_GRID_LAYOUT,
-            items: [
-                {
-                    id: component.id,
-                    rect: { x: 0, y: 0, width: 12, height: 8, locked: false },
-                },
-            ],
+  form: { fields: {} },
+  render: {
+    version: 1,
+    layoutGrid: {
+      layout: DEFAULT_GRID_LAYOUT,
+      items: [
+        {
+          id: component.id,
+          rect: { x: 0, y: 0, width: 12, height: 8, locked: false },
         },
-        components: {
-            [component.id]: component,
-        },
+      ],
     },
+    components: {
+      [component.id]: component,
+    },
+  },
 });
 
 const createBaseBlockType = ({
-    key,
-    name,
-    description,
-    workspaceId,
-    schema,
-    display,
-    nesting,
+  key,
+  name,
+  description,
+  workspaceId,
+  schema,
+  display,
+  nesting,
 }: {
-    key: string;
-    name: string;
-    description?: string;
-    workspaceId?: string;
-    schema: BlockSchema;
-    display: BlockDisplay;
-    nesting?: BlockTypeNesting | null;
+  key: string;
+  name: string;
+  description?: string;
+  workspaceId?: string;
+  schema: BlockSchema;
+  display: BlockDisplay;
+  nesting?: BlockTypeNesting | null;
 }): BlockType => ({
-    id: uuid(),
-    key,
-    version: 1,
-    name,
-    description,
-    workspaceId: workspaceId,
-    archived: false,
-    strictness: "SOFT",
-    system: false,
-    schema,
-    display,
-    nesting: nesting ?? undefined,
-    createdAt: now(),
-    updatedAt: now(),
+  id: uuid(),
+  key,
+  version: 1,
+  name,
+  description,
+  workspaceId: workspaceId,
+  strictness: ValidationScope.Strict
+  schema,
+  display,
+  nesting: nesting ?? undefined,
+  createdAt: now(),
+  updatedAt: now(),
 });
 
-export const ALL_BLOCK_COMPONENT_TYPES: NonNullable<BlockType["nesting"]>["allowedTypes"] = [
-    "CONTACT_CARD",
-    "LAYOUT_CONTAINER",
-    "ADDRESS_CARD",
-    "LINE_ITEM",
-    "TABLE",
-    "TEXT",
-    "IMAGE",
-    "BUTTON",
-    "ATTACHMENT",
+export const ALL_BLOCK_COMPONENT_TYPES: NonNullable<BlockType['nesting']>['allowedTypes'] = [
+  'CONTACT_CARD',
+  'LAYOUT_CONTAINER',
+  'ADDRESS_CARD',
+  'LINE_ITEM',
+  'TABLE',
+  'TEXT',
+  'IMAGE',
+  'BUTTON',
+  'ATTACHMENT',
 ];
 
 const layoutContainerComponent: BlockComponentNode = {
-    id: "layout",
-    type: "LAYOUT_CONTAINER",
-    props: {
-        variant: "card",
-        padded: true,
+  id: 'layout',
+  type: 'LAYOUT_CONTAINER',
+  props: {
+    variant: 'card',
+    padded: true,
+  },
+  bindings: [
+    {
+      prop: 'title',
+      source: { type: 'DataPath', path: '$.data/title' },
     },
-    bindings: [
-        {
-            prop: "title",
-            source: { type: "DataPath", path: "$.data/title" },
-        },
-        {
-            prop: "description",
-            source: { type: "DataPath", path: "$.data/description" },
-        },
-    ],
-    slots: {
-        main: ["*"], // ← Wildcard slot for dynamic child blocks
+    {
+      prop: 'description',
+      source: { type: 'DataPath', path: '$.data/description' },
     },
-    slotLayout: {
-        main: {
-            layout: DEFAULT_GRID_LAYOUT,
-            items: [],
-        },
+  ],
+  slots: {
+    main: ['*'], // ← Wildcard slot for dynamic child blocks
+  },
+  slotLayout: {
+    main: {
+      layout: DEFAULT_GRID_LAYOUT,
+      items: [],
     },
-    fetchPolicy: "LAZY",
+  },
+  fetchPolicy: 'LAZY',
 };
 
 const layoutContainerSchema: BlockSchema = {
-    name: "LayoutContainer",
-    type: "OBJECT",
-    required: true,
-    properties: {
-        title: {
-            name: "Title",
-            type: "STRING",
-            required: false,
-        },
-        description: {
-            name: "Description",
-            type: "STRING",
-            required: false,
-        },
+  name: 'LayoutContainer',
+  type: 'OBJECT',
+  required: true,
+  properties: {
+    title: {
+      name: 'Title',
+      type: 'STRING',
+      required: false,
     },
+    description: {
+      name: 'Description',
+      type: 'STRING',
+      required: false,
+    },
+  },
 };
 
 export const createLayoutContainerBlockType = (workspaceId?: string): BlockType =>
-    createBaseBlockType({
-        key: "layout_container",
-        name: "Layout Container",
-        description: "Hosts nested blocks inside a grid-aware surface.",
-        workspaceId,
-        schema: layoutContainerSchema,
-        display: {
-            form: {
-                fields: {
-                    "data.title": {
-                        type: "TEXT_INPUT",
-                        label: "Container Title",
-                        placeholder: "Enter container title",
-                    },
-                    "data.description": {
-                        type: "TEXT_AREA",
-                        label: "Description",
-                        placeholder: "Describe this container",
-                    },
-                },
-            },
-            render: createBaseDisplay(layoutContainerComponent).render,
+  createBaseBlockType({
+    key: 'layout_container',
+    name: 'Layout Container',
+    description: 'Hosts nested blocks inside a grid-aware surface.',
+    workspaceId,
+    schema: layoutContainerSchema,
+    display: {
+      form: {
+        fields: {
+          'data.title': {
+            type: 'TEXT_INPUT',
+            label: 'Container Title',
+            placeholder: 'Enter container title',
+          },
+          'data.description': {
+            type: 'TEXT_AREA',
+            label: 'Description',
+            placeholder: 'Describe this container',
+          },
         },
-        nesting: {
-            max: undefined,
-            allowedTypes: ALL_BLOCK_COMPONENT_TYPES,
-        },
-    });
+      },
+      render: createBaseDisplay(layoutContainerComponent).render,
+    },
+    nesting: {
+      max: undefined,
+      allowedTypes: ALL_BLOCK_COMPONENT_TYPES,
+    },
+  });
 
 const listComponent: BlockComponentNode = {
-    id: "list",
-    type: "LINE_ITEM",
-    props: {
-        title: "List",
-        emptyMessage: "Add an item",
-        itemComponent: "ADDRESS_CARD",
-    },
-    bindings: [
-        { prop: "title", source: { type: "DataPath", path: "$.data/title" } },
-        { prop: "description", source: { type: "DataPath", path: "$.data/description" } },
-        { prop: "emptyMessage", source: { type: "DataPath", path: "$.data/emptyMessage" } },
-    ],
-    fetchPolicy: "LAZY",
+  id: 'list',
+  type: 'LINE_ITEM',
+  props: {
+    title: 'List',
+    emptyMessage: 'Add an item',
+    itemComponent: 'ADDRESS_CARD',
+  },
+  bindings: [
+    { prop: 'title', source: { type: 'DataPath', path: '$.data/title' } },
+    { prop: 'description', source: { type: 'DataPath', path: '$.data/description' } },
+    { prop: 'emptyMessage', source: { type: 'DataPath', path: '$.data/emptyMessage' } },
+  ],
+  fetchPolicy: 'LAZY',
 };
 
 const listSchema: BlockSchema = {
-    name: "BlockList",
-    type: "OBJECT",
-    required: true,
-    properties: {
-        title: {
-            name: "Title",
-            type: "STRING",
-            required: false,
-        },
-        description: {
-            name: "Description",
-            type: "STRING",
-            required: false,
-        },
-        emptyMessage: {
-            name: "Empty message",
-            type: "STRING",
-            required: false,
-        },
+  name: 'BlockList',
+  type: 'OBJECT',
+  required: true,
+  properties: {
+    title: {
+      name: 'Title',
+      type: 'STRING',
+      required: false,
     },
+    description: {
+      name: 'Description',
+      type: 'STRING',
+      required: false,
+    },
+    emptyMessage: {
+      name: 'Empty message',
+      type: 'STRING',
+      required: false,
+    },
+  },
 };
 
 export const createBlockListBlockType = (workspaceId?: string): BlockType =>
-    createBaseBlockType({
-        key: "block_list",
-        name: "Block List",
-        description: "Renders a homogeneous list of owned child blocks.",
-        workspaceId,
-        schema: listSchema,
-        display: {
-            form: {
-                fields: {
-                    "data.title": {
-                        type: "TEXT_INPUT",
-                        label: "List Title",
-                        placeholder: "Enter list title",
-                    },
-                    "data.description": {
-                        type: "TEXT_AREA",
-                        label: "Description",
-                        placeholder: "Describe this list",
-                    },
-                    "data.emptyMessage": {
-                        type: "TEXT_INPUT",
-                        label: "Empty Message",
-                        placeholder: "Message shown when list is empty",
-                    },
-                },
-            },
-            render: createBaseDisplay(listComponent).render,
+  createBaseBlockType({
+    key: 'block_list',
+    name: 'Block List',
+    description: 'Renders a homogeneous list of owned child blocks.',
+    workspaceId,
+    schema: listSchema,
+    display: {
+      form: {
+        fields: {
+          'data.title': {
+            type: 'TEXT_INPUT',
+            label: 'List Title',
+            placeholder: 'Enter list title',
+          },
+          'data.description': {
+            type: 'TEXT_AREA',
+            label: 'Description',
+            placeholder: 'Describe this list',
+          },
+          'data.emptyMessage': {
+            type: 'TEXT_INPUT',
+            label: 'Empty Message',
+            placeholder: 'Message shown when list is empty',
+          },
         },
-        nesting: {
-            max: 100,
-            allowedTypes: ALL_BLOCK_COMPONENT_TYPES,
-        },
-    });
+      },
+      render: createBaseDisplay(listComponent).render,
+    },
+    nesting: {
+      max: 100,
+      allowedTypes: ALL_BLOCK_COMPONENT_TYPES,
+    },
+  });
 
 const blockReferenceComponent: BlockComponentNode = {
-    id: "reference",
-    type: "TEXT",
-    props: {
-        text: "Referenced block placeholder",
-        variant: "muted",
+  id: 'reference',
+  type: 'TEXT',
+  props: {
+    text: 'Referenced block placeholder',
+    variant: 'muted',
+  },
+  bindings: [
+    {
+      prop: 'text',
+      source: { type: 'DataPath', path: '$.data/placeholder' },
     },
-    bindings: [
-        {
-            prop: "text",
-            source: { type: "DataPath", path: "$.data/placeholder" },
-        },
-    ],
-    fetchPolicy: "LAZY",
+  ],
+  fetchPolicy: 'LAZY',
 };
 
 const blockReferenceSchema: BlockSchema = {
-    name: "BlockReference",
-    type: "OBJECT",
-    required: true,
-    properties: {
-        placeholder: {
-            name: "Placeholder",
-            type: "STRING",
-            required: false,
-        },
+  name: 'BlockReference',
+  type: 'OBJECT',
+  required: true,
+  properties: {
+    placeholder: {
+      name: 'Placeholder',
+      type: 'STRING',
+      required: false,
     },
+  },
 };
 
 export const createBlockReferenceType = (workspaceId?: string): BlockType =>
-    createBaseBlockType({
-        key: "block_reference",
-        name: "Embedded Block Reference",
-        description: "Embeds the contents of another block tree.",
-        workspaceId,
-        schema: blockReferenceSchema,
-        display: createBaseDisplay(blockReferenceComponent),
-        nesting: null,
-    });
+  createBaseBlockType({
+    key: 'block_reference',
+    name: 'Embedded Block Reference',
+    description: 'Embeds the contents of another block tree.',
+    workspaceId,
+    schema: blockReferenceSchema,
+    display: createBaseDisplay(blockReferenceComponent),
+    nesting: null,
+  });
 
 const entityReferenceComponent: BlockComponentNode = {
-    id: "entities",
-    type: "TEXT",
-    props: {
-        text: "Entity reference list placeholder",
-        variant: "muted",
+  id: 'entities',
+  type: 'TEXT',
+  props: {
+    text: 'Entity reference list placeholder',
+    variant: 'muted',
+  },
+  bindings: [
+    {
+      prop: 'text',
+      source: { type: 'DataPath', path: '$.data/emptyMessage' },
     },
-    bindings: [
-        {
-            prop: "text",
-            source: { type: "DataPath", path: "$.data/emptyMessage" },
-        },
-    ],
-    fetchPolicy: "LAZY",
+  ],
+  fetchPolicy: 'LAZY',
 };
 
 const entityReferenceSchema: BlockSchema = {
-    name: "EntityReferenceList",
-    type: "OBJECT",
-    required: true,
-    properties: {
-        title: {
-            name: "Title",
-            type: "STRING",
-            required: false,
-        },
-        emptyMessage: {
-            name: "Empty message",
-            type: "STRING",
-            required: false,
-        },
+  name: 'EntityReferenceList',
+  type: 'OBJECT',
+  required: true,
+  properties: {
+    title: {
+      name: 'Title',
+      type: 'STRING',
+      required: false,
     },
+    emptyMessage: {
+      name: 'Empty message',
+      type: 'STRING',
+      required: false,
+    },
+  },
 };
 
 export const createEntityReferenceListType = (workspaceId?: string): BlockType =>
-    createBaseBlockType({
-        key: "entity_reference_list",
-        name: "Entity Reference List",
-        description: "References a list of external entities.",
-        workspaceId,
-        schema: entityReferenceSchema,
-        display: createBaseDisplay(entityReferenceComponent),
-        nesting: null,
-    });
+  createBaseBlockType({
+    key: 'entity_reference_list',
+    name: 'Entity Reference List',
+    description: 'References a list of external entities.',
+    workspaceId,
+    schema: entityReferenceSchema,
+    display: createBaseDisplay(entityReferenceComponent),
+    nesting: null,
+  });
 
 const contentBlockListComponent: BlockComponentNode = {
-    id: "contentList",
-    type: "LAYOUT_CONTAINER",
-    props: {
-        variant: "list",
-        padded: false,
+  id: 'contentList',
+  type: 'LAYOUT_CONTAINER',
+  props: {
+    variant: 'list',
+    padded: false,
+  },
+  bindings: [
+    {
+      prop: 'title',
+      source: { type: 'DataPath', path: '$.data/title' },
     },
-    bindings: [
-        {
-            prop: "title",
-            source: { type: "DataPath", path: "$.data/title" },
-        },
-        {
-            prop: "description",
-            source: { type: "DataPath", path: "$.data/description" },
-        },
-    ],
-    slots: {
-        items: ["*"], // Wildcard slot for dynamic list items
+    {
+      prop: 'description',
+      source: { type: 'DataPath', path: '$.data/description' },
     },
-    fetchPolicy: "LAZY",
+  ],
+  slots: {
+    items: ['*'], // Wildcard slot for dynamic list items
+  },
+  fetchPolicy: 'LAZY',
 };
 
 const contentBlockListSchema: BlockSchema = {
-    name: "ContentBlockList",
-    type: "OBJECT",
-    required: true,
-    properties: {
-        title: {
-            name: "Title",
-            type: "STRING",
-            required: false,
-        },
-        description: {
-            name: "Description",
-            type: "STRING",
-            required: false,
-        },
+  name: 'ContentBlockList',
+  type: 'OBJECT',
+  required: true,
+  properties: {
+    title: {
+      name: 'Title',
+      type: 'STRING',
+      required: false,
     },
+    description: {
+      name: 'Description',
+      type: 'STRING',
+      required: false,
+    },
+  },
 };
 
 export const createContentBlockListType = (workspaceId?: string): BlockType =>
-    createBaseBlockType({
-        key: "content_block_list",
-        name: "Content Block List",
-        description: "Ordered list of content blocks with configurable ordering.",
-        workspaceId,
-        schema: contentBlockListSchema,
-        display: {
-            form: {
-                fields: {
-                    "data.title": {
-                        type: "TEXT_INPUT",
-                        label: "List Title",
-                        placeholder: "Enter list title",
-                    },
-                    "data.description": {
-                        type: "TEXT_AREA",
-                        label: "Description",
-                        placeholder: "Describe this list",
-                    },
-                },
-            },
-            render: createBaseDisplay(contentBlockListComponent).render,
+  createBaseBlockType({
+    key: 'content_block_list',
+    name: 'Content Block List',
+    description: 'Ordered list of content blocks with configurable ordering.',
+    workspaceId,
+    schema: contentBlockListSchema,
+    display: {
+      form: {
+        fields: {
+          'data.title': {
+            type: 'TEXT_INPUT',
+            label: 'List Title',
+            placeholder: 'Enter list title',
+          },
+          'data.description': {
+            type: 'TEXT_AREA',
+            label: 'Description',
+            placeholder: 'Describe this list',
+          },
         },
-        nesting: {
-            max: undefined,
-            allowedTypes: ["project_task"], // Default, overridden by listConfig
-        },
-    });
+      },
+      render: createBaseDisplay(contentBlockListComponent).render,
+    },
+    nesting: {
+      max: undefined,
+      allowedTypes: ['project_task'], // Default, overridden by listConfig
+    },
+  });

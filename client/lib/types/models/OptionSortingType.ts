@@ -12,17 +12,16 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const OptionSortingType = {
-    Manual: 'MANUAL',
-    Alphabetical: 'ALPHABETICAL',
-    ReverseAlphabetical: 'REVERSE_ALPHABETICAL'
-} as const;
-export type OptionSortingType = typeof OptionSortingType[keyof typeof OptionSortingType];
+export enum OptionSortingType {
+    Manual = 'MANUAL',
+    Alphabetical = 'ALPHABETICAL',
+    ReverseAlphabetical = 'REVERSE_ALPHABETICAL'
+}
 
 
 export function instanceOfOptionSortingType(value: any): boolean {

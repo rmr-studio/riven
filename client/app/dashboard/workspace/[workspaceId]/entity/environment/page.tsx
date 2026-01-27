@@ -1,10 +1,5 @@
-
 const WorkspaceEntityEnvironmentPage = () => {
-  return (
-    <div>
+  return <div></div>;
+};
 
-    </div>
-  )
-}
-
-export default WorkspaceEntityEnvironmentPage
+export default WorkspaceEntityEnvironmentPage;

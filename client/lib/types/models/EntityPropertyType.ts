@@ -12,16 +12,15 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const EntityPropertyType = {
-    Attribute: 'ATTRIBUTE',
-    Relationship: 'RELATIONSHIP'
-} as const;
-export type EntityPropertyType = typeof EntityPropertyType[keyof typeof EntityPropertyType];
+export enum EntityPropertyType {
+    Attribute = 'ATTRIBUTE',
+    Relationship = 'RELATIONSHIP'
+}
 
 
 export function instanceOfEntityPropertyType(value: any): boolean {

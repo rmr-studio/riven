@@ -1,20 +1,20 @@
-"use client"
+'use client';
 
-import React from "react"
-import { Code2, Search } from "lucide-react"
+import React from 'react';
+import { Code2, Search } from 'lucide-react';
 
-import { Button } from "../../button"
-import { Input } from "../../input"
-import { ScrollArea } from "../../scroll-area"
-import { Switch } from "../../switch"
+import { Button } from '../../button';
+import { Input } from '../../input';
+import { ScrollArea } from '../../scroll-area';
+import { Switch } from '../../switch';
 
 interface CustomClassPopoverContentProps {
-  searchQuery: string
-  setSearchQuery: (value: string) => void
-  devMode: boolean
-  setDevMode: (value: boolean) => void
-  filteredClasses: any[]
-  onApplyClass: (className: string) => void
+  searchQuery: string;
+  setSearchQuery: (value: string) => void;
+  devMode: boolean;
+  setDevMode: (value: boolean) => void;
+  filteredClasses: any[];
+  onApplyClass: (className: string) => void;
 }
 
 export function CustomClassPopoverContent({
@@ -30,18 +30,14 @@ export function CustomClassPopoverContent({
       {/* Dev Mode Toggle */}
       <div className="flex items-center justify-between border-b pb-2">
         <div className="flex items-center gap-2">
-          <Code2 className="text-muted-foreground h-4 w-4" />
+          <Code2 className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">Dev Mode</span>
         </div>
-        <Switch
-          checked={devMode}
-          onCheckedChange={setDevMode}
-          aria-label="Toggle dev mode"
-        />
+        <Switch checked={devMode} onCheckedChange={setDevMode} aria-label="Toggle dev mode" />
       </div>
 
       <div className="relative">
-        <Search className="text-muted-foreground absolute top-2.5 left-2 h-4 w-4" />
+        <Search className="absolute top-2.5 left-2 h-4 w-4 text-muted-foreground" />
         <Input
           autoFocus
           placeholder={
@@ -63,7 +59,7 @@ export function CustomClassPopoverContent({
             <>
               {filteredClasses.map((group) => (
                 <div key={group.category}>
-                  <h4 className="text-muted-foreground mb-2 text-xs font-semibold">
+                  <h4 className="mb-2 text-xs font-semibold text-muted-foreground">
                     {group.category}
                   </h4>
                   <div className="flex flex-wrap gap-1.5">
@@ -87,36 +83,34 @@ export function CustomClassPopoverContent({
             <>
               {filteredClasses.map((group) => (
                 <div key={group.category}>
-                  <h4 className="text-muted-foreground mb-2 text-xs font-semibold">
+                  <h4 className="mb-2 text-xs font-semibold text-muted-foreground">
                     {group.category}
                   </h4>
                   <div className="flex flex-wrap gap-1.5">
-                    {(group as any).items.map(
-                      (item: { label: string; value: string }) => (
-                        <Button
-                          key={item.value}
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onApplyClass(item.value)}
-                          className="h-6 px-2 text-xs"
-                          title={`Applies: ${item.value}`}
-                        >
-                          {item.label}
-                        </Button>
-                      )
-                    )}
+                    {(group as any).items.map((item: { label: string; value: string }) => (
+                      <Button
+                        key={item.value}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onApplyClass(item.value)}
+                        className="h-6 px-2 text-xs"
+                        title={`Applies: ${item.value}`}
+                      >
+                        {item.label}
+                      </Button>
+                    ))}
                   </div>
                 </div>
               ))}
             </>
           )}
           {filteredClasses.length === 0 && (
-            <div className="text-muted-foreground py-8 text-center text-sm">
+            <div className="py-8 text-center text-sm text-muted-foreground">
               No classes found matching &quot;{searchQuery}&quot;
             </div>
           )}
         </div>
       </ScrollArea>
     </div>
-  )
+  );
 }

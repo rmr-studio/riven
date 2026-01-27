@@ -12,16 +12,15 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const ReferenceType = {
-    Block: 'BLOCK',
-    Entity: 'ENTITY'
-} as const;
-export type ReferenceType = typeof ReferenceType[keyof typeof ReferenceType];
+export enum ReferenceType {
+    Block = 'BLOCK',
+    Entity = 'ENTITY'
+}
 
 
 export function instanceOfReferenceType(value: any): boolean {

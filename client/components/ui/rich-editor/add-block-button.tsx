@@ -1,20 +1,17 @@
-"use client"
+'use client';
 
-import React, { useState } from "react"
-import { Plus } from "lucide-react"
+import React, { useState } from 'react';
+import { Plus } from 'lucide-react';
 
-import { Button } from "../button"
+import { Button } from '../button';
 
 interface AddBlockButtonProps {
-  onAdd: () => void
-  position?: "before" | "after"
+  onAdd: () => void;
+  position?: 'before' | 'after';
 }
 
-export function AddBlockButton({
-  onAdd,
-  position = "after",
-}: AddBlockButtonProps) {
-  const [isHovered, setIsHovered] = useState(false)
+export function AddBlockButton({ onAdd, position = 'after' }: AddBlockButtonProps) {
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div
@@ -30,18 +27,16 @@ export function AddBlockButton({
         variant="outline"
         size="sm"
         className={`relative z-10 h-6 gap-1 px-2 shadow-sm transition-all ${
-          isHovered
-            ? "scale-100 opacity-100"
-            : "pointer-events-none scale-95 opacity-0"
+          isHovered ? 'scale-100 opacity-100' : 'pointer-events-none scale-95 opacity-0'
         } `}
         onClick={(e) => {
-          e.stopPropagation()
-          onAdd()
+          e.stopPropagation();
+          onAdd();
         }}
       >
         <Plus className="h-3 w-3" />
         <span className="text-xs">Add block</span>
       </Button>
     </div>
-  )
+  );
 }

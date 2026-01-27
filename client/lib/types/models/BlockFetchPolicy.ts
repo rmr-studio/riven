@@ -12,17 +12,16 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const BlockFetchPolicy = {
-    Inherit: 'INHERIT',
-    Lazy: 'LAZY',
-    Eager: 'EAGER'
-} as const;
-export type BlockFetchPolicy = typeof BlockFetchPolicy[keyof typeof BlockFetchPolicy];
+export enum BlockFetchPolicy {
+    Inherit = 'INHERIT',
+    Lazy = 'LAZY',
+    Eager = 'EAGER'
+}
 
 
 export function instanceOfBlockFetchPolicy(value: any): boolean {

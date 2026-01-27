@@ -12,19 +12,18 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const BlockReferenceWarning = {
-    Missing: 'MISSING',
-    RequiresLoading: 'REQUIRES_LOADING',
-    Unsupported: 'UNSUPPORTED',
-    Circular: 'CIRCULAR',
-    DepthExceeded: 'DEPTH_EXCEEDED'
-} as const;
-export type BlockReferenceWarning = typeof BlockReferenceWarning[keyof typeof BlockReferenceWarning];
+export enum BlockReferenceWarning {
+    Missing = 'MISSING',
+    RequiresLoading = 'REQUIRES_LOADING',
+    Unsupported = 'UNSUPPORTED',
+    Circular = 'CIRCULAR',
+    DepthExceeded = 'DEPTH_EXCEEDED'
+}
 
 
 export function instanceOfBlockReferenceWarning(value: any): boolean {

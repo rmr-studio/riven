@@ -12,17 +12,16 @@
  * Do not edit the class manually.
  */
 
-
 /**
  * 
  * @export
+ * @enum {string}
  */
-export const WorkspaceRoles = {
-    Owner: 'OWNER',
-    Admin: 'ADMIN',
-    Member: 'MEMBER'
-} as const;
-export type WorkspaceRoles = typeof WorkspaceRoles[keyof typeof WorkspaceRoles];
+export enum WorkspaceRoles {
+    Owner = 'OWNER',
+    Admin = 'ADMIN',
+    Member = 'MEMBER'
+}
 
 
 export function instanceOfWorkspaceRoles(value: any): boolean {

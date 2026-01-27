@@ -6,36 +6,36 @@ import { memo } from "react";
 import { ICON_COLOUR_MAP, ICON_REGISTRY } from "./icon-mapper";
 
 interface Props extends ClassNameProps {
-    iconType: IconType;
-    colour: IconColour;
-    selected?: boolean;
-    onSelect?: (icon: IconType) => void;
-    className?: string;
-    readonly?: true;
+  iconType: IconType;
+  colour: IconColour;
+  selected?: boolean;
+  onSelect?: (icon: IconType) => void;
+  className?: string;
+  readonly?: true;
 }
 
 export const IconCell = memo(
-    ({ iconType, colour, selected, onSelect, className, readonly }: Props) => {
-        const Icon = ICON_REGISTRY[iconType];
+  ({ iconType, colour, selected, onSelect, className, readonly }: Props) => {
+    const Icon = ICON_REGISTRY[iconType];
 
-        if (readonly) {
-            return <Icon className={cn("size-4", ICON_COLOUR_MAP[colour], className)} />;
-        }
-
-        return (
-            <CommandItem
-                value={iconType}
-                onSelect={() => onSelect && onSelect(iconType)}
-                className={cn(
-                    "flex items-center justify-center h-10 w-10 p-0 cursor-pointer",
-                    selected && "bg-accent",
-                    className
-                )}
-            >
-                <Icon className={cn("size-4", ICON_COLOUR_MAP[colour])} />
-            </CommandItem>
-        );
+    if (readonly) {
+      return <Icon className={cn('size-4', ICON_COLOUR_MAP[colour], className)} />;
     }
+
+    return (
+      <CommandItem
+        value={iconType}
+        onSelect={() => onSelect && onSelect(iconType)}
+        className={cn(
+          'flex h-10 w-10 cursor-pointer items-center justify-center p-0',
+          selected && 'bg-accent',
+          className,
+        )}
+      >
+        <Icon className={cn('size-4', ICON_COLOUR_MAP[colour])} />
+      </CommandItem>
+    );
+  },
 );
 
-IconCell.displayName = "IconCell";
+IconCell.displayName = 'IconCell';

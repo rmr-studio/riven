@@ -44,9 +44,7 @@ class WorkspaceController(
     @PostMapping("/", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun saveWorkspace(
         @RequestPart("workspace", required = true) workspace: SaveWorkspaceRequest,
-        @RequestPart("file", required = false) file: MultipartFile
-
-
+        @RequestPart("file", required = false) file: MultipartFile? = null
     ): ResponseEntity<Workspace> {
         val response: Workspace = this.workspaceService.saveWorkspace(
             workspace
