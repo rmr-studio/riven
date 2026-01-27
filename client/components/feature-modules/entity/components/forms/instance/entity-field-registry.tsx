@@ -1,6 +1,6 @@
-import { SchemaUUID } from "@/lib/types/common";
-import { SchemaType } from "@/lib/types/entity";
-import { FC } from "react";
+import { SchemaUUID } from '@/lib/types/common';
+import { SchemaType } from '@/lib/types/common';
+import { FC } from 'react';
 
 // Import existing widgets from blocks module
 import { FormWidgetProps } from '@/components/feature-modules/blocks/components/forms';
@@ -21,22 +21,22 @@ import { TextInputWidget } from '@/components/feature-modules/blocks/components/
  * Reuses existing widgets from blocks module where possible
  */
 export const entityFieldWidgetRegistry: Record<SchemaType, FC<FormWidgetProps>> = {
-    [SchemaType.Text]: TextInputWidget,
-    [SchemaType.Number]: NumberInputWidget,
-    [SchemaType.Checkbox]: CheckboxWidget,
-    [SchemaType.Email]: EmailInputWidget,
-    [SchemaType.Phone]: PhoneInputWidget,
-    [SchemaType.Date]: DatePickerWidget,
-    [SchemaType.Datetime]: DatePickerWidget, // with time enabled via schema
-    [SchemaType.Currency]: CurrencyInputWidget,
-    [SchemaType.Percentage]: NumberInputWidget, // will show % suffix
-    [SchemaType.Rating]: SliderWidget,
-    [SchemaType.Select]: DropdownWidget,
-    [SchemaType.MultiSelect]: MultiSelectWidget,
-    [SchemaType.Url]: TextInputWidget, // with URL validation
-    [SchemaType.Location]: TextInputWidget, // TODO: Create LocationWidget (simple text for now)
-    [SchemaType.FileAttachment]: FileUploadWidget,
-    [SchemaType.Object]: TextInputWidget,
+  [SchemaType.Text]: TextInputWidget,
+  [SchemaType.Number]: NumberInputWidget,
+  [SchemaType.Checkbox]: CheckboxWidget,
+  [SchemaType.Email]: EmailInputWidget,
+  [SchemaType.Phone]: PhoneInputWidget,
+  [SchemaType.Date]: DatePickerWidget,
+  [SchemaType.Datetime]: DatePickerWidget, // with time enabled via schema
+  [SchemaType.Currency]: CurrencyInputWidget,
+  [SchemaType.Percentage]: NumberInputWidget, // will show % suffix
+  [SchemaType.Rating]: SliderWidget,
+  [SchemaType.Select]: DropdownWidget,
+  [SchemaType.MultiSelect]: MultiSelectWidget,
+  [SchemaType.Url]: TextInputWidget, // with URL validation
+  [SchemaType.Location]: TextInputWidget, // TODO: Create LocationWidget (simple text for now)
+  [SchemaType.FileAttachment]: FileUploadWidget,
+  [SchemaType.Object]: TextInputWidget,
 };
 
 /**

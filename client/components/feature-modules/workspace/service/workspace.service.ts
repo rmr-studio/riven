@@ -4,11 +4,10 @@ import type {
   RevokeInvitePathParams,
   SaveWorkspaceRequest,
   Workspace,
-  WorkspaceMember,
 } from '@/lib/types/workspace';
-import { fromError, isResponseError, normalizeApiError } from '@/lib/util/error/error.util';
-import { handleError, validateSession, validateUuid } from '@/lib/util/service/service.util';
-import { api } from '@/lib/util/utils';
+import { normalizeApiError } from '@/lib/util/error/error.util';
+import { validateSession, validateUuid } from '@/lib/util/service/service.util';
+import { undefinedIfNull } from '@/lib/util/utils';
 import { Session } from '@/lib/auth';
 import { createWorkspaceApi } from '@/lib/api/workspace-api';
 
@@ -24,7 +23,7 @@ export class WorkspaceService {
       const workspaceApi = createWorkspaceApi(session);
       return await workspaceApi.saveWorkspace({
         workspace: request,
-        file: uploadedAvatar ?? undefined,
+        file: undefinedIfNull(uploadedAvatar),
       });
     } catch (error) {
       throw await normalizeApiError(error);
