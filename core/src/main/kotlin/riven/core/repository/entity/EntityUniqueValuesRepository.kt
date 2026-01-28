@@ -50,13 +50,14 @@ interface EntityUniqueValuesRepository : JpaRepository<EntityUniqueValueEntity, 
     @Modifying
     @Query(
         value = """
-            INSERT INTO entities_unique_values (id, type_id, entity_id, field_id, field_value, deleted)
-            VALUES (:id, :typeId, :entityId, :fieldId, :fieldValue, false)
+            INSERT INTO entities_unique_values (id, workspace_id, type_id, entity_id, field_id, field_value, deleted)
+            VALUES (:id, :workspaceId, :typeId, :entityId, :fieldId, :fieldValue, false)
         """,
         nativeQuery = true
     )
     fun insertUniqueValue(
         id: UUID,
+        workspaceId: UUID,
         typeId: UUID,
         entityId: UUID,
         fieldId: UUID,

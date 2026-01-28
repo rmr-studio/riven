@@ -1,6 +1,7 @@
 package riven.core.models.workflow.node.config
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.deserializer.WorkflowNodeConfigDeserializer
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.common.json.JsonObject
@@ -11,10 +12,14 @@ import riven.core.models.workflow.node.NodeServiceProvider
  * Extensible configuration interface for workflow nodes.
  *
  * Controls the behavior of a workflow node during execution.
+ * Subtypes are automatically discovered via [riven.core.configuration.openapi.WorkflowNodeConfigSchemaCustomizer].
  *
  * @property type Node type (ACTION, CONTROL_FLOW, etc.)
  * @property version Schema version for node configuration
  */
+@Schema(
+    description = "Polymorphic workflow node configuration. Discriminated by 'type' and 'subType' fields."
+)
 @JsonDeserialize(using = WorkflowNodeConfigDeserializer::class)
 sealed interface WorkflowNodeConfig {
     val type: WorkflowNodeType

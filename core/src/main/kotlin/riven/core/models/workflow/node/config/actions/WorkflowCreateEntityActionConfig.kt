@@ -3,15 +3,16 @@ package riven.core.models.workflow.node.config.actions
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.common.json.JsonObject
 import riven.core.models.request.entity.SaveEntityRequest
-import riven.core.service.entity.EntityService
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.node.NodeServiceProvider
-import riven.core.models.workflow.node.service
 import riven.core.models.workflow.node.config.WorkflowActionConfig
+import riven.core.models.workflow.node.service
+import riven.core.service.entity.EntityService
 import java.util.*
 
 /**
@@ -47,6 +48,10 @@ import java.util.*
  *
  * Templates are resolved before execute() is called.
  */
+@Schema(
+    name = "WorkflowCreateEntityActionConfig",
+    description = "Configuration for CREATE_ENTITY action nodes."
+)
 @JsonTypeName("workflow_create_entity_action")
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class WorkflowCreateEntityActionConfig(

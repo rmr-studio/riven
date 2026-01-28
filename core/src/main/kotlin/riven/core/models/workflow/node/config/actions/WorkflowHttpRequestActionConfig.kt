@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.swagger.v3.oas.annotations.media.Schema
 import org.springframework.http.HttpMethod
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeType
@@ -60,6 +61,10 @@ private val logger = KotlinLogging.logger {}
  * - SSRF validation prevents requests to localhost, private IPs, and metadata endpoints
  * - Sensitive headers (Authorization, API keys) are not logged
  */
+@Schema(
+    name = "WorkflowHttpRequestActionConfig",
+    description = "Configuration for HTTP_REQUEST action nodes."
+)
 @JsonTypeName("workflow_http_request_action")
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class WorkflowHttpRequestActionConfig(

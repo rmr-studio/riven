@@ -224,7 +224,12 @@ class EntityService(
                     .toMap()
 
                 // Use native SQL operations to avoid Hibernate session conflicts
-                entityAttributeService.saveUniqueValues(entityId, typeId, uniqueValuesToSave)
+                entityAttributeService.saveUniqueValues(
+                    workspaceId = workspaceId,
+                    entityId = entityId,
+                    typeId = typeId,
+                    uniqueValues = uniqueValuesToSave
+                )
 
 
                 val relationshipResult: SaveRelationshipsResult = entityRelationshipService.saveRelationships(

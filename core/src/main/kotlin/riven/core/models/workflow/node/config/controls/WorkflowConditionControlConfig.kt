@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.workflow.WorkflowControlType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
@@ -59,6 +60,10 @@ private val log = KotlinLogging.logger {}
  * - LOOP: Returns `iterations` count and `results` list
  * - PARALLEL: Returns `results` map of branch outputs
  */
+@Schema(
+    name = "WorkflowConditionControlConfig",
+    description = "Configuration for CONDITION control flow nodes."
+)
 @JsonTypeName("workflow_condition_control")
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class WorkflowConditionControlConfig(

@@ -140,6 +140,7 @@ class EntityTypeAttributeService(
      * Uses native SQL for both operations to completely bypass Hibernate entity tracking.
      */
     fun saveUniqueValues(
+        workspaceId: UUID,
         entityId: UUID,
         typeId: UUID,
         uniqueValues: Map<UUID, String>
@@ -151,6 +152,7 @@ class EntityTypeAttributeService(
         uniqueValues.forEach { (fieldId, fieldValue) ->
             uniqueEntityValueRepository.insertUniqueValue(
                 id = UUID.randomUUID(),
+                workspaceId = workspaceId,
                 typeId = typeId,
                 entityId = entityId,
                 fieldId = fieldId,

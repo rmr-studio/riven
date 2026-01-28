@@ -7,5 +7,4 @@ enum class WorkflowNodeType {
     TRIGGER,
     UTILITY,
     PARSE,
-    HUMAN_INTERACTION
 }

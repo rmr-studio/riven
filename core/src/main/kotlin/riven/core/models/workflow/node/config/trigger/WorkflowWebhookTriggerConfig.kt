@@ -3,6 +3,7 @@ package riven.core.models.workflow.node.config.trigger
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import io.swagger.v3.oas.annotations.media.Schema as SwaggerSchema
 import riven.core.enums.common.http.AuthenticationType
 import riven.core.enums.common.http.RequestMethodType
 import riven.core.enums.workflow.WorkflowTriggerType
@@ -18,6 +19,10 @@ import riven.core.models.workflow.node.config.WorkflowTriggerConfig
  * Triggers workflow execution when an HTTP webhook is received
  * at the configured endpoint.
  */
+@SwaggerSchema(
+    name = "WorkflowWebhookTriggerConfig",
+    description = "Configuration for WEBHOOK trigger nodes. Triggers workflow execution when an HTTP webhook is received."
+)
 @JsonTypeName("workflow_webhook_trigger")
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class WorkflowWebhookTriggerConfig(

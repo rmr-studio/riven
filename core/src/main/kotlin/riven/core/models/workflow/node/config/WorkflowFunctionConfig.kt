@@ -3,6 +3,7 @@ package riven.core.models.workflow.node.config
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.node.NodeServiceProvider
@@ -16,6 +17,10 @@ import riven.core.models.workflow.node.NodeServiceProvider
  *
  * FUNCTION has no subtypes - it's a single concrete implementation.
  */
+@Schema(
+    name = "WorkflowFunctionConfig",
+    description = "Configuration for FUNCTION category nodes."
+)
 @JsonTypeName("function_config")
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class WorkflowFunctionConfig(

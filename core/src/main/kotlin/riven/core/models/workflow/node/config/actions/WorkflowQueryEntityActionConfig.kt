@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
@@ -44,6 +45,10 @@ private val log = KotlinLogging.logger {}
  *
  * This action is commonly used to fetch entity data for use in subsequent steps.
  */
+@Schema(
+    name = "WorkflowQueryEntityActionConfig",
+    description = "Configuration for QUERY_ENTITY action nodes."
+)
 @JsonTypeName("workflow_query_entity_action")
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class WorkflowQueryEntityActionConfig(
