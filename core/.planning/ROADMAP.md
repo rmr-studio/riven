@@ -25,7 +25,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6: Backend API Layer** - REST endpoints for workflow management
 - [x] **Phase 6.1: Execution Queue Management (INSERTED)** - Execution queue management
 - [x] **Phase 7: Error Handling & Retry Logic** - Temporal retry policies and error surfacing
-- [ ] **Phase 7.1: Node Configuration Development (INSERTED)** - Node configuration development
+- [ ] **Phase 7.1: Node Configuration Development (INSERTED)** - Strongly-typed node configs with validation
 - [ ] **Phase 8: End-to-End Testing** - Validate complete workflow lifecycle
 
 ## Phase Details
@@ -123,17 +123,21 @@ Plans:
 - [x] 07-03: Error surfacing in API responses and unit tests (2026-01-22)
 
 ### Phase 7.1: Node Configuration Development (INSERTED)
-**Goal**: Node configuration development
+**Goal**: Define strongly-typed configuration structures for workflow node types with save-time validation
 **Depends on**: Phase 7
-**Research**: TBD
+**Research**: Completed (07.1-RESEARCH.md - Kotlin data class patterns, existing config structure analysis)
 **Status**: Not started
+**Plans:** 4 plans
 
 Plans:
-- TBD (run /gsd:plan-phase 7.1 to break down)
+- [ ] 07.1-01-PLAN.md — Validation infrastructure (ConfigValidationError, ConfigValidationService)
+- [ ] 07.1-02-PLAN.md — Type entity action configs (CREATE, UPDATE, DELETE, QUERY)
+- [ ] 07.1-03-PLAN.md — Type HTTP_REQUEST and CONDITION configs
+- [ ] 07.1-04-PLAN.md — Deserializer update, validation integration, tests
 
 ### Phase 8: End-to-End Testing
 **Goal**: Validate complete workflow lifecycle from API definition through execution to entity modifications
-**Depends on**: Phase 7
+**Depends on**: Phase 7.1
 **Research**: Unlikely (testing patterns established)
 **Plans**: TBD
 
@@ -156,5 +160,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 4.1 → 5 → 6 → 6.1
 | 6. Backend API Layer | 3/3 | ✅ Complete | 2026-01-20 |
 | 6.1. Execution Queue Management (INSERTED) | 3/3 | ✅ Complete | 2026-01-21 |
 | 7. Error Handling & Retry Logic | 3/3 | ✅ Complete | 2026-01-22 |
-| 7.1. Node Configuration Development (INSERTED) | 0/TBD | Not started | - |
+| 7.1. Node Configuration Development (INSERTED) | 0/4 | Not started | - |
 | 8. End-to-End Testing | 0/TBD | Not started | - |
