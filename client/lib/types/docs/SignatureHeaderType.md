@@ -1,25 +1,20 @@
 
-# WorkflowFunctionConfig
+# SignatureHeaderType
 
-Configuration for FUNCTION category nodes.
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`version` | number
-`type` | [WorkflowNodeType](WorkflowNodeType.md)
 
 ## Example
 
 ```typescript
-import type { WorkflowFunctionConfig } from ''
+import type { SignatureHeaderType } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "version": null,
-  "type": null,
-} satisfies WorkflowFunctionConfig
+} satisfies SignatureHeaderType
 
 console.log(example)
 
@@ -28,7 +23,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkflowFunctionConfig
+const exampleParsed = JSON.parse(exampleJSON) as SignatureHeaderType
 console.log(exampleParsed)
 ```
 

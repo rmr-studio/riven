@@ -13,6 +13,20 @@
  */
 
 import { mapValues } from '../runtime';
+import type { SchemaString } from './SchemaString';
+import {
+    SchemaStringFromJSON,
+    SchemaStringFromJSONTyped,
+    SchemaStringToJSON,
+    SchemaStringToJSONTyped,
+} from './SchemaString';
+import type { Signature } from './Signature';
+import {
+    SignatureFromJSON,
+    SignatureFromJSONTyped,
+    SignatureToJSON,
+    SignatureToJSONTyped,
+} from './Signature';
 import type { WorkflowNodeType } from './WorkflowNodeType';
 import {
     WorkflowNodeTypeFromJSON,
@@ -20,6 +34,13 @@ import {
     WorkflowNodeTypeToJSON,
     WorkflowNodeTypeToJSONTyped,
 } from './WorkflowNodeType';
+import type { WorkflowScheduleTriggerConfigInterval } from './WorkflowScheduleTriggerConfigInterval';
+import {
+    WorkflowScheduleTriggerConfigIntervalFromJSON,
+    WorkflowScheduleTriggerConfigIntervalFromJSONTyped,
+    WorkflowScheduleTriggerConfigIntervalToJSON,
+    WorkflowScheduleTriggerConfigIntervalToJSONTyped,
+} from './WorkflowScheduleTriggerConfigInterval';
 import type { WorkflowTriggerType } from './WorkflowTriggerType';
 import {
     WorkflowTriggerTypeFromJSON,
@@ -27,25 +48,48 @@ import {
     WorkflowTriggerTypeToJSON,
     WorkflowTriggerTypeToJSONTyped,
 } from './WorkflowTriggerType';
+import type { OperationType } from './OperationType';
+import {
+    OperationTypeFromJSON,
+    OperationTypeFromJSONTyped,
+    OperationTypeToJSON,
+    OperationTypeToJSONTyped,
+} from './OperationType';
+import type { RequestMethodType } from './RequestMethodType';
+import {
+    RequestMethodTypeFromJSON,
+    RequestMethodTypeFromJSONTyped,
+    RequestMethodTypeToJSON,
+    RequestMethodTypeToJSONTyped,
+} from './RequestMethodType';
+import type { WorkflowScheduleTriggerConfigTimeZone } from './WorkflowScheduleTriggerConfigTimeZone';
+import {
+    WorkflowScheduleTriggerConfigTimeZoneFromJSON,
+    WorkflowScheduleTriggerConfigTimeZoneFromJSONTyped,
+    WorkflowScheduleTriggerConfigTimeZoneToJSON,
+    WorkflowScheduleTriggerConfigTimeZoneToJSONTyped,
+} from './WorkflowScheduleTriggerConfigTimeZone';
+import type { AuthenticationType } from './AuthenticationType';
+import {
+    AuthenticationTypeFromJSON,
+    AuthenticationTypeFromJSONTyped,
+    AuthenticationTypeToJSON,
+    AuthenticationTypeToJSONTyped,
+} from './AuthenticationType';
+import type { WorkflowNodeConfig } from './WorkflowNodeConfig';
+import {
+    WorkflowNodeConfigFromJSON,
+    WorkflowNodeConfigFromJSONTyped,
+    WorkflowNodeConfigToJSON,
+    WorkflowNodeConfigToJSONTyped,
+} from './WorkflowNodeConfig';
 
 /**
  * 
  * @export
  * @interface WorkflowTriggerConfig
  */
-export interface WorkflowTriggerConfig {
-    /**
-     * 
-     * @type {WorkflowNodeType}
-     * @memberof WorkflowTriggerConfig
-     */
-    type: WorkflowNodeType;
-    /**
-     * 
-     * @type {number}
-     * @memberof WorkflowTriggerConfig
-     */
-    version: number;
+export interface WorkflowTriggerConfig extends WorkflowNodeConfig {
     /**
      * 
      * @type {WorkflowTriggerType}
@@ -60,8 +104,6 @@ export interface WorkflowTriggerConfig {
  * Check if a given object implements the WorkflowTriggerConfig interface.
  */
 export function instanceOfWorkflowTriggerConfig(value: object): value is WorkflowTriggerConfig {
-    if (!('type' in value) || value['type'] === undefined) return false;
-    if (!('version' in value) || value['version'] === undefined) return false;
     if (!('subType' in value) || value['subType'] === undefined) return false;
     return true;
 }
@@ -75,9 +117,7 @@ export function WorkflowTriggerConfigFromJSONTyped(json: any, ignoreDiscriminato
         return json;
     }
     return {
-        
-        'type': WorkflowNodeTypeFromJSON(json['type']),
-        'version': json['version'],
+        ...WorkflowNodeConfigFromJSONTyped(json, true),
         'subType': WorkflowTriggerTypeFromJSON(json['subType']),
     };
 }
@@ -92,9 +132,7 @@ export function WorkflowTriggerConfigToJSONTyped(value?: WorkflowTriggerConfig |
     }
 
     return {
-        
-        'type': WorkflowNodeTypeToJSON(value['type']),
-        'version': value['version'],
+        ...WorkflowNodeConfigToJSONTyped(value, true),
         'subType': WorkflowTriggerTypeToJSON(value['subType']),
     };
 }

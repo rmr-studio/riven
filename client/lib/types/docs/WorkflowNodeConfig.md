@@ -1,13 +1,29 @@
 
 # WorkflowNodeConfig
 
+Polymorphic workflow node configuration. Discriminated by \'type\' and \'subType\' fields.
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`type` | [WorkflowNodeType](WorkflowNodeType.md)
 `version` | number
+`cronExpression` | string
+`interval` | [WorkflowScheduleTriggerConfigInterval](WorkflowScheduleTriggerConfigInterval.md)
+`timeZone` | [WorkflowScheduleTriggerConfigTimeZone](WorkflowScheduleTriggerConfigTimeZone.md)
+`subType` | [WorkflowControlType](WorkflowControlType.md)
+`type` | [WorkflowNodeType](WorkflowNodeType.md)
+`key` | string
+`operation` | [OperationType](OperationType.md)
+`field` | Array&lt;string&gt;
+`expressions` | object
+`method` | [RequestMethodType](RequestMethodType.md)
+`authentication` | [AuthenticationType](AuthenticationType.md)
+`signature` | [Signature](Signature.md)
+`payloadSchema` | [SchemaString](SchemaString.md)
+`schema` | [SchemaString](SchemaString.md)
+`name` | string
+`config` | { [key: string]: object; }
 
 ## Example
 
@@ -16,8 +32,23 @@ import type { WorkflowNodeConfig } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "type": null,
   "version": null,
+  "cronExpression": null,
+  "interval": null,
+  "timeZone": null,
+  "subType": null,
+  "type": null,
+  "key": null,
+  "operation": null,
+  "field": null,
+  "expressions": null,
+  "method": null,
+  "authentication": null,
+  "signature": null,
+  "payloadSchema": null,
+  "schema": null,
+  "name": null,
+  "config": null,
 } satisfies WorkflowNodeConfig
 
 console.log(example)

@@ -1,25 +1,31 @@
 
-# WorkflowFunctionConfig
+# WorkflowConditionControlConfig
 
-Configuration for FUNCTION category nodes.
+Configuration for CONDITION control flow nodes.
 
 ## Properties
 
 Name | Type
 ------------ | -------------
 `version` | number
+`name` | string
+`config` | { [key: string]: object; }
+`subType` | [WorkflowControlType](WorkflowControlType.md)
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
 
 ## Example
 
 ```typescript
-import type { WorkflowFunctionConfig } from ''
+import type { WorkflowConditionControlConfig } from ''
 
 // TODO: Update the object below with actual values
 const example = {
   "version": null,
+  "name": null,
+  "config": null,
+  "subType": null,
   "type": null,
-} satisfies WorkflowFunctionConfig
+} satisfies WorkflowConditionControlConfig
 
 console.log(example)
 
@@ -28,7 +34,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkflowFunctionConfig
+const exampleParsed = JSON.parse(exampleJSON) as WorkflowConditionControlConfig
 console.log(exampleParsed)
 ```
 

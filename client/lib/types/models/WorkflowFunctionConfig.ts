@@ -22,23 +22,23 @@ import {
 } from './WorkflowNodeType';
 
 /**
- * 
+ * Configuration for FUNCTION category nodes.
  * @export
  * @interface WorkflowFunctionConfig
  */
 export interface WorkflowFunctionConfig {
     /**
      * 
-     * @type {WorkflowNodeType}
-     * @memberof WorkflowFunctionConfig
-     */
-    type: WorkflowNodeType;
-    /**
-     * 
      * @type {number}
      * @memberof WorkflowFunctionConfig
      */
-    version: number;
+    version?: number;
+    /**
+     * 
+     * @type {WorkflowNodeType}
+     * @memberof WorkflowFunctionConfig
+     */
+    type?: WorkflowNodeType;
 }
 
 
@@ -47,8 +47,6 @@ export interface WorkflowFunctionConfig {
  * Check if a given object implements the WorkflowFunctionConfig interface.
  */
 export function instanceOfWorkflowFunctionConfig(value: object): value is WorkflowFunctionConfig {
-    if (!('type' in value) || value['type'] === undefined) return false;
-    if (!('version' in value) || value['version'] === undefined) return false;
     return true;
 }
 
@@ -62,8 +60,8 @@ export function WorkflowFunctionConfigFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'type': WorkflowNodeTypeFromJSON(json['type']),
-        'version': json['version'],
+        'version': json['version'] == null ? undefined : json['version'],
+        'type': json['type'] == null ? undefined : WorkflowNodeTypeFromJSON(json['type']),
     };
 }
 
@@ -78,8 +76,8 @@ export function WorkflowFunctionConfigToJSONTyped(value?: WorkflowFunctionConfig
 
     return {
         
-        'type': WorkflowNodeTypeToJSON(value['type']),
         'version': value['version'],
+        'type': WorkflowNodeTypeToJSON(value['type']),
     };
 }
 

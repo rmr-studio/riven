@@ -9,8 +9,8 @@ Name | Type
 `execution` | [WorkflowExecutionRecord](WorkflowExecutionRecord.md)
 `nodes` | [Array&lt;WorkflowExecutionNodeRecord&gt;](WorkflowExecutionNodeRecord.md)
 `failedNodes` | [Array&lt;WorkflowExecutionNodeRecord&gt;](WorkflowExecutionNodeRecord.md)
-`hasErrors` | boolean
 `failedNode` | [WorkflowExecutionNodeRecord](WorkflowExecutionNodeRecord.md)
+`hasErrors` | boolean
 
 ## Example
 
@@ -22,8 +22,8 @@ const example = {
   "execution": null,
   "nodes": null,
   "failedNodes": null,
-  "hasErrors": null,
   "failedNode": null,
+  "hasErrors": null,
 } satisfies WorkflowExecutionSummaryResponse
 
 console.log(example)

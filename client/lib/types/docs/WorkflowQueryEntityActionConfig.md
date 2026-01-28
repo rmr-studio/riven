@@ -1,26 +1,31 @@
 
-# WorkflowHumanInteractionConfig
+# WorkflowQueryEntityActionConfig
 
+Configuration for QUERY_ENTITY action nodes.
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`type` | [WorkflowNodeType](WorkflowNodeType.md)
 `version` | number
-`subType` | [WorkflowHumanInteractionType](WorkflowHumanInteractionType.md)
+`name` | string
+`config` | { [key: string]: object; }
+`subType` | [WorkflowActionType](WorkflowActionType.md)
+`type` | [WorkflowNodeType](WorkflowNodeType.md)
 
 ## Example
 
 ```typescript
-import type { WorkflowHumanInteractionConfig } from ''
+import type { WorkflowQueryEntityActionConfig } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "type": null,
   "version": null,
+  "name": null,
+  "config": null,
   "subType": null,
-} satisfies WorkflowHumanInteractionConfig
+  "type": null,
+} satisfies WorkflowQueryEntityActionConfig
 
 console.log(example)
 
@@ -29,7 +34,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkflowHumanInteractionConfig
+const exampleParsed = JSON.parse(exampleJSON) as WorkflowQueryEntityActionConfig
 console.log(exampleParsed)
 ```
 

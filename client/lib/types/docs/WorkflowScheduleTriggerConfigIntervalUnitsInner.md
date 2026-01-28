@@ -1,25 +1,26 @@
 
-# WorkflowFunctionConfig
+# WorkflowScheduleTriggerConfigIntervalUnitsInner
 
-Configuration for FUNCTION category nodes.
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`version` | number
-`type` | [WorkflowNodeType](WorkflowNodeType.md)
+`durationEstimated` | boolean
+`timeBased` | boolean
+`dateBased` | boolean
 
 ## Example
 
 ```typescript
-import type { WorkflowFunctionConfig } from ''
+import type { WorkflowScheduleTriggerConfigIntervalUnitsInner } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "version": null,
-  "type": null,
-} satisfies WorkflowFunctionConfig
+  "durationEstimated": null,
+  "timeBased": null,
+  "dateBased": null,
+} satisfies WorkflowScheduleTriggerConfigIntervalUnitsInner
 
 console.log(example)
 
@@ -28,7 +29,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkflowFunctionConfig
+const exampleParsed = JSON.parse(exampleJSON) as WorkflowScheduleTriggerConfigIntervalUnitsInner
 console.log(exampleParsed)
 ```
 

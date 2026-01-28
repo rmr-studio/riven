@@ -1,25 +1,29 @@
 
-# WorkflowFunctionConfig
+# WorkflowFunctionTriggerConfig
 
-Configuration for FUNCTION category nodes.
+Configuration for FUNCTION trigger nodes. Triggers workflow execution when called as a function.
 
 ## Properties
 
 Name | Type
 ------------ | -------------
 `version` | number
+`schema` | [SchemaString](SchemaString.md)
+`subType` | [WorkflowTriggerType](WorkflowTriggerType.md)
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
 
 ## Example
 
 ```typescript
-import type { WorkflowFunctionConfig } from ''
+import type { WorkflowFunctionTriggerConfig } from ''
 
 // TODO: Update the object below with actual values
 const example = {
   "version": null,
+  "schema": null,
+  "subType": null,
   "type": null,
-} satisfies WorkflowFunctionConfig
+} satisfies WorkflowFunctionTriggerConfig
 
 console.log(example)
 
@@ -28,7 +32,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkflowFunctionConfig
+const exampleParsed = JSON.parse(exampleJSON) as WorkflowFunctionTriggerConfig
 console.log(exampleParsed)
 ```
 

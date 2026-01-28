@@ -66,19 +66,19 @@ export interface SchemaString {
      * @type {SchemaType}
      * @memberof SchemaString
      */
-    key: SchemaType;
+    key?: SchemaType;
     /**
      * 
      * @type {Icon}
      * @memberof SchemaString
      */
-    icon: Icon;
+    icon?: Icon;
     /**
      * 
      * @type {DataType}
      * @memberof SchemaString
      */
-    type: DataType;
+    type?: DataType;
     /**
      * 
      * @type {DataFormat}
@@ -90,7 +90,7 @@ export interface SchemaString {
      * @type {boolean}
      * @memberof SchemaString
      */
-    required: boolean;
+    required?: boolean;
     /**
      * 
      * @type {{ [key: string]: SchemaString; }}
@@ -108,13 +108,13 @@ export interface SchemaString {
      * @type {boolean}
      * @memberof SchemaString
      */
-    unique: boolean;
+    unique?: boolean;
     /**
      * 
      * @type {boolean}
      * @memberof SchemaString
      */
-    _protected: boolean;
+    _protected?: boolean;
     /**
      * 
      * @type {SchemaOptions}
@@ -129,12 +129,6 @@ export interface SchemaString {
  * Check if a given object implements the SchemaString interface.
  */
 export function instanceOfSchemaString(value: object): value is SchemaString {
-    if (!('key' in value) || value['key'] === undefined) return false;
-    if (!('icon' in value) || value['icon'] === undefined) return false;
-    if (!('type' in value) || value['type'] === undefined) return false;
-    if (!('required' in value) || value['required'] === undefined) return false;
-    if (!('unique' in value) || value['unique'] === undefined) return false;
-    if (!('_protected' in value) || value['_protected'] === undefined) return false;
     return true;
 }
 
@@ -149,15 +143,15 @@ export function SchemaStringFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return {
         
         'label': json['label'] == null ? undefined : json['label'],
-        'key': SchemaTypeFromJSON(json['key']),
-        'icon': IconFromJSON(json['icon']),
-        'type': DataTypeFromJSON(json['type']),
+        'key': json['key'] == null ? undefined : SchemaTypeFromJSON(json['key']),
+        'icon': json['icon'] == null ? undefined : IconFromJSON(json['icon']),
+        'type': json['type'] == null ? undefined : DataTypeFromJSON(json['type']),
         'format': json['format'] == null ? undefined : DataFormatFromJSON(json['format']),
-        'required': json['required'],
+        'required': json['required'] == null ? undefined : json['required'],
         'properties': json['properties'] == null ? undefined : (mapValues(json['properties'], SchemaStringFromJSON)),
         'items': json['items'] == null ? undefined : SchemaStringFromJSON(json['items']),
-        'unique': json['unique'],
-        '_protected': json['protected'],
+        'unique': json['unique'] == null ? undefined : json['unique'],
+        '_protected': json['protected'] == null ? undefined : json['protected'],
         'options': json['options'] == null ? undefined : SchemaOptionsFromJSON(json['options']),
     };
 }

@@ -1,25 +1,28 @@
 
-# WorkflowFunctionConfig
+# WorkflowScheduleTriggerConfigTimeZone
 
-Configuration for FUNCTION category nodes.
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`version` | number
-`type` | [WorkflowNodeType](WorkflowNodeType.md)
+`displayName` | string
+`id` | string
+`dstsavings` | number
+`rawOffset` | number
 
 ## Example
 
 ```typescript
-import type { WorkflowFunctionConfig } from ''
+import type { WorkflowScheduleTriggerConfigTimeZone } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "version": null,
-  "type": null,
-} satisfies WorkflowFunctionConfig
+  "displayName": null,
+  "id": null,
+  "dstsavings": null,
+  "rawOffset": null,
+} satisfies WorkflowScheduleTriggerConfigTimeZone
 
 console.log(example)
 
@@ -28,7 +31,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkflowFunctionConfig
+const exampleParsed = JSON.parse(exampleJSON) as WorkflowScheduleTriggerConfigTimeZone
 console.log(exampleParsed)
 ```
 

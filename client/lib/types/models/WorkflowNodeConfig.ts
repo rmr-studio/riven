@@ -12,45 +12,90 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime';
-import type { WorkflowNodeType } from './WorkflowNodeType';
+import type { WorkflowConditionControlConfig } from './WorkflowConditionControlConfig';
 import {
-    WorkflowNodeTypeFromJSON,
-    WorkflowNodeTypeFromJSONTyped,
-    WorkflowNodeTypeToJSON,
-    WorkflowNodeTypeToJSONTyped,
-} from './WorkflowNodeType';
+    instanceOfWorkflowConditionControlConfig,
+    WorkflowConditionControlConfigFromJSON,
+    WorkflowConditionControlConfigFromJSONTyped,
+    WorkflowConditionControlConfigToJSON,
+} from './WorkflowConditionControlConfig';
+import type { WorkflowCreateEntityActionConfig } from './WorkflowCreateEntityActionConfig';
+import {
+    instanceOfWorkflowCreateEntityActionConfig,
+    WorkflowCreateEntityActionConfigFromJSON,
+    WorkflowCreateEntityActionConfigFromJSONTyped,
+    WorkflowCreateEntityActionConfigToJSON,
+} from './WorkflowCreateEntityActionConfig';
+import type { WorkflowDeleteEntityActionConfig } from './WorkflowDeleteEntityActionConfig';
+import {
+    instanceOfWorkflowDeleteEntityActionConfig,
+    WorkflowDeleteEntityActionConfigFromJSON,
+    WorkflowDeleteEntityActionConfigFromJSONTyped,
+    WorkflowDeleteEntityActionConfigToJSON,
+} from './WorkflowDeleteEntityActionConfig';
+import type { WorkflowEntityEventTriggerConfig } from './WorkflowEntityEventTriggerConfig';
+import {
+    instanceOfWorkflowEntityEventTriggerConfig,
+    WorkflowEntityEventTriggerConfigFromJSON,
+    WorkflowEntityEventTriggerConfigFromJSONTyped,
+    WorkflowEntityEventTriggerConfigToJSON,
+} from './WorkflowEntityEventTriggerConfig';
+import type { WorkflowFunctionConfig } from './WorkflowFunctionConfig';
+import {
+    instanceOfWorkflowFunctionConfig,
+    WorkflowFunctionConfigFromJSON,
+    WorkflowFunctionConfigFromJSONTyped,
+    WorkflowFunctionConfigToJSON,
+} from './WorkflowFunctionConfig';
+import type { WorkflowFunctionTriggerConfig } from './WorkflowFunctionTriggerConfig';
+import {
+    instanceOfWorkflowFunctionTriggerConfig,
+    WorkflowFunctionTriggerConfigFromJSON,
+    WorkflowFunctionTriggerConfigFromJSONTyped,
+    WorkflowFunctionTriggerConfigToJSON,
+} from './WorkflowFunctionTriggerConfig';
+import type { WorkflowHttpRequestActionConfig } from './WorkflowHttpRequestActionConfig';
+import {
+    instanceOfWorkflowHttpRequestActionConfig,
+    WorkflowHttpRequestActionConfigFromJSON,
+    WorkflowHttpRequestActionConfigFromJSONTyped,
+    WorkflowHttpRequestActionConfigToJSON,
+} from './WorkflowHttpRequestActionConfig';
+import type { WorkflowQueryEntityActionConfig } from './WorkflowQueryEntityActionConfig';
+import {
+    instanceOfWorkflowQueryEntityActionConfig,
+    WorkflowQueryEntityActionConfigFromJSON,
+    WorkflowQueryEntityActionConfigFromJSONTyped,
+    WorkflowQueryEntityActionConfigToJSON,
+} from './WorkflowQueryEntityActionConfig';
+import type { WorkflowScheduleTriggerConfig } from './WorkflowScheduleTriggerConfig';
+import {
+    instanceOfWorkflowScheduleTriggerConfig,
+    WorkflowScheduleTriggerConfigFromJSON,
+    WorkflowScheduleTriggerConfigFromJSONTyped,
+    WorkflowScheduleTriggerConfigToJSON,
+} from './WorkflowScheduleTriggerConfig';
+import type { WorkflowUpdateEntityActionConfig } from './WorkflowUpdateEntityActionConfig';
+import {
+    instanceOfWorkflowUpdateEntityActionConfig,
+    WorkflowUpdateEntityActionConfigFromJSON,
+    WorkflowUpdateEntityActionConfigFromJSONTyped,
+    WorkflowUpdateEntityActionConfigToJSON,
+} from './WorkflowUpdateEntityActionConfig';
+import type { WorkflowWebhookTriggerConfig } from './WorkflowWebhookTriggerConfig';
+import {
+    instanceOfWorkflowWebhookTriggerConfig,
+    WorkflowWebhookTriggerConfigFromJSON,
+    WorkflowWebhookTriggerConfigFromJSONTyped,
+    WorkflowWebhookTriggerConfigToJSON,
+} from './WorkflowWebhookTriggerConfig';
 
 /**
- * 
+ * @type WorkflowNodeConfig
+ * Polymorphic workflow node configuration. Discriminated by 'type' and 'subType' fields.
  * @export
- * @interface WorkflowNodeConfig
  */
-export interface WorkflowNodeConfig {
-    /**
-     * 
-     * @type {WorkflowNodeType}
-     * @memberof WorkflowNodeConfig
-     */
-    type: WorkflowNodeType;
-    /**
-     * 
-     * @type {number}
-     * @memberof WorkflowNodeConfig
-     */
-    version: number;
-}
-
-
-
-/**
- * Check if a given object implements the WorkflowNodeConfig interface.
- */
-export function instanceOfWorkflowNodeConfig(value: object): value is WorkflowNodeConfig {
-    if (!('type' in value) || value['type'] === undefined) return false;
-    if (!('version' in value) || value['version'] === undefined) return false;
-    return true;
-}
+export type WorkflowNodeConfig = { type: 'WorkflowActionConfig' } & WorkflowActionConfig | { type: 'WorkflowControlConfig' } & WorkflowControlConfig | { type: 'WorkflowParseConfig' } & WorkflowParseConfig | { type: 'WorkflowTriggerConfig' } & WorkflowTriggerConfig | { type: 'WorkflowUtilityConfig' } & WorkflowUtilityConfig;
 
 export function WorkflowNodeConfigFromJSON(json: any): WorkflowNodeConfig {
     return WorkflowNodeConfigFromJSONTyped(json, false);
@@ -60,14 +105,23 @@ export function WorkflowNodeConfigFromJSONTyped(json: any, ignoreDiscriminator: 
     if (json == null) {
         return json;
     }
-    return {
-        
-        'type': WorkflowNodeTypeFromJSON(json['type']),
-        'version': json['version'],
-    };
+    switch (json['type']) {
+        case 'WorkflowActionConfig':
+            return Object.assign({}, WorkflowActionConfigFromJSONTyped(json, true), { type: 'WorkflowActionConfig' } as const);
+        case 'WorkflowControlConfig':
+            return Object.assign({}, WorkflowControlConfigFromJSONTyped(json, true), { type: 'WorkflowControlConfig' } as const);
+        case 'WorkflowParseConfig':
+            return Object.assign({}, WorkflowParseConfigFromJSONTyped(json, true), { type: 'WorkflowParseConfig' } as const);
+        case 'WorkflowTriggerConfig':
+            return Object.assign({}, WorkflowTriggerConfigFromJSONTyped(json, true), { type: 'WorkflowTriggerConfig' } as const);
+        case 'WorkflowUtilityConfig':
+            return Object.assign({}, WorkflowUtilityConfigFromJSONTyped(json, true), { type: 'WorkflowUtilityConfig' } as const);
+        default:
+            return json;
+    }
 }
 
-export function WorkflowNodeConfigToJSON(json: any): WorkflowNodeConfig {
+export function WorkflowNodeConfigToJSON(json: any): any {
     return WorkflowNodeConfigToJSONTyped(json, false);
 }
 
@@ -75,11 +129,19 @@ export function WorkflowNodeConfigToJSONTyped(value?: WorkflowNodeConfig | null,
     if (value == null) {
         return value;
     }
-
-    return {
-        
-        'type': WorkflowNodeTypeToJSON(value['type']),
-        'version': value['version'],
-    };
+    switch (value['type']) {
+        case 'WorkflowActionConfig':
+            return Object.assign({}, WorkflowActionConfigToJSON(value), { type: 'WorkflowActionConfig' } as const);
+        case 'WorkflowControlConfig':
+            return Object.assign({}, WorkflowControlConfigToJSON(value), { type: 'WorkflowControlConfig' } as const);
+        case 'WorkflowParseConfig':
+            return Object.assign({}, WorkflowParseConfigToJSON(value), { type: 'WorkflowParseConfig' } as const);
+        case 'WorkflowTriggerConfig':
+            return Object.assign({}, WorkflowTriggerConfigToJSON(value), { type: 'WorkflowTriggerConfig' } as const);
+        case 'WorkflowUtilityConfig':
+            return Object.assign({}, WorkflowUtilityConfigToJSON(value), { type: 'WorkflowUtilityConfig' } as const);
+        default:
+            return value;
+    }
 }
 

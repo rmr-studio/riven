@@ -1,25 +1,35 @@
 
-# WorkflowFunctionConfig
+# WorkflowEntityEventTriggerConfig
 
-Configuration for FUNCTION category nodes.
+Configuration for ENTITY_EVENT trigger nodes. Triggers workflow execution when entity operations occur.
 
 ## Properties
 
 Name | Type
 ------------ | -------------
 `version` | number
+`key` | string
+`operation` | [OperationType](OperationType.md)
+`field` | Array&lt;string&gt;
+`expressions` | object
+`subType` | [WorkflowTriggerType](WorkflowTriggerType.md)
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
 
 ## Example
 
 ```typescript
-import type { WorkflowFunctionConfig } from ''
+import type { WorkflowEntityEventTriggerConfig } from ''
 
 // TODO: Update the object below with actual values
 const example = {
   "version": null,
+  "key": null,
+  "operation": null,
+  "field": null,
+  "expressions": null,
+  "subType": null,
   "type": null,
-} satisfies WorkflowFunctionConfig
+} satisfies WorkflowEntityEventTriggerConfig
 
 console.log(example)
 
@@ -28,7 +38,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkflowFunctionConfig
+const exampleParsed = JSON.parse(exampleJSON) as WorkflowEntityEventTriggerConfig
 console.log(exampleParsed)
 ```
 

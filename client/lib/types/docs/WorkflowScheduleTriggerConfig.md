@@ -1,6 +1,7 @@
 
-# SaveWorkflowNodeRequestConfig
+# WorkflowScheduleTriggerConfig
 
+Configuration for SCHEDULE trigger nodes. Triggers workflow execution on a schedule.
 
 ## Properties
 
@@ -10,24 +11,13 @@ Name | Type
 `cronExpression` | string
 `interval` | [WorkflowScheduleTriggerConfigInterval](WorkflowScheduleTriggerConfigInterval.md)
 `timeZone` | [WorkflowScheduleTriggerConfigTimeZone](WorkflowScheduleTriggerConfigTimeZone.md)
-`subType` | [WorkflowUtilityActionType](WorkflowUtilityActionType.md)
+`subType` | [WorkflowTriggerType](WorkflowTriggerType.md)
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
-`key` | string
-`operation` | [OperationType](OperationType.md)
-`field` | Array&lt;string&gt;
-`expressions` | object
-`method` | [RequestMethodType](RequestMethodType.md)
-`authentication` | [AuthenticationType](AuthenticationType.md)
-`signature` | [Signature](Signature.md)
-`payloadSchema` | [SchemaString](SchemaString.md)
-`schema` | [SchemaString](SchemaString.md)
-`name` | string
-`config` | { [key: string]: object; }
 
 ## Example
 
 ```typescript
-import type { SaveWorkflowNodeRequestConfig } from ''
+import type { WorkflowScheduleTriggerConfig } from ''
 
 // TODO: Update the object below with actual values
 const example = {
@@ -37,18 +27,7 @@ const example = {
   "timeZone": null,
   "subType": null,
   "type": null,
-  "key": null,
-  "operation": null,
-  "field": null,
-  "expressions": null,
-  "method": null,
-  "authentication": null,
-  "signature": null,
-  "payloadSchema": null,
-  "schema": null,
-  "name": null,
-  "config": null,
-} satisfies SaveWorkflowNodeRequestConfig
+} satisfies WorkflowScheduleTriggerConfig
 
 console.log(example)
 
@@ -57,7 +36,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as SaveWorkflowNodeRequestConfig
+const exampleParsed = JSON.parse(exampleJSON) as WorkflowScheduleTriggerConfig
 console.log(exampleParsed)
 ```
 

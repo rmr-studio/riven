@@ -1,25 +1,31 @@
 
-# WorkflowFunctionConfig
+# WorkflowCreateEntityActionConfig
 
-Configuration for FUNCTION category nodes.
+Configuration for CREATE_ENTITY action nodes.
 
 ## Properties
 
 Name | Type
 ------------ | -------------
 `version` | number
+`name` | string
+`config` | { [key: string]: object; }
+`subType` | [WorkflowActionType](WorkflowActionType.md)
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
 
 ## Example
 
 ```typescript
-import type { WorkflowFunctionConfig } from ''
+import type { WorkflowCreateEntityActionConfig } from ''
 
 // TODO: Update the object below with actual values
 const example = {
   "version": null,
+  "name": null,
+  "config": null,
+  "subType": null,
   "type": null,
-} satisfies WorkflowFunctionConfig
+} satisfies WorkflowCreateEntityActionConfig
 
 console.log(example)
 
@@ -28,7 +34,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkflowFunctionConfig
+const exampleParsed = JSON.parse(exampleJSON) as WorkflowCreateEntityActionConfig
 console.log(exampleParsed)
 ```
 
