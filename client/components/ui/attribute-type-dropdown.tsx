@@ -1,6 +1,7 @@
 'use client';
 
-import { DataType, IconColour, IconType, SchemaType } from '@/lib/types/types';
+import { DataType, IconColour, IconType } from '@/lib/types/common';
+import { SchemaType } from '@/lib/types/common';
 import { AttributeSchemaType, attributeTypes } from '@/lib/util/form/schema.util';
 import { cn } from '@/lib/util/utils';
 import { Check, ChevronsUpDown } from 'lucide-react';
@@ -48,11 +49,11 @@ export const AttributeTypeDropdown: FC<Props> = ({
 
   const groupedAttributes = useMemo(() => {
     const groups: Partial<Record<DataType, AttributeSchemaType[]>> = {
-      [DataType.STRING]: [],
-      [DataType.NUMBER]: [],
-      [DataType.BOOLEAN]: [],
-      [DataType.OBJECT]: [],
-      [DataType.ARRAY]: [],
+      [DataType.String]: [],
+      [DataType.Number]: [],
+      [DataType.Boolean]: [],
+      [DataType.Object]: [],
+      [DataType.Array]: [],
     };
 
     Object.values(attributeTypes).forEach((attr) => {
@@ -69,8 +70,8 @@ export const AttributeTypeDropdown: FC<Props> = ({
       return {
         label: 'Relationship',
         icon: {
-          icon: IconType.LINK_2,
-          colour: IconColour.NEUTRAL,
+          type: IconType.Link2,
+          colour: IconColour.Neutral,
         },
       };
     }
@@ -80,15 +81,15 @@ export const AttributeTypeDropdown: FC<Props> = ({
 
   const getGroupName = (type: DataType): string => {
     switch (type) {
-      case DataType.STRING:
+      case DataType.String:
         return 'Text';
-      case DataType.NUMBER:
+      case DataType.Number:
         return 'Number';
-      case DataType.BOOLEAN:
+      case DataType.Boolean:
         return 'Boolean';
-      case DataType.OBJECT:
+      case DataType.Object:
         return 'Object';
-      case DataType.ARRAY:
+      case DataType.Array:
         return 'Array';
       default:
         return type;
@@ -109,7 +110,7 @@ export const AttributeTypeDropdown: FC<Props> = ({
               <IconCell
                 readonly
                 className="mr-1 size-4"
-                iconType={selectedAttribute.icon.icon}
+                iconType={selectedAttribute.icon.type}
                 colour={selectedAttribute.icon.colour}
               />
               <span>{selectedAttribute.label}</span>
@@ -143,7 +144,7 @@ export const AttributeTypeDropdown: FC<Props> = ({
                     type === 'RELATIONSHIP' ? 'opacity-100' : 'opacity-0',
                   )}
                 />
-                <IconCell readonly iconType={IconType.LINK_2} colour={IconColour.NEUTRAL} />
+                <IconCell readonly iconType={IconType.Link2} colour={IconColour.Neutral} />
                 Relationship
               </CommandItem>
             </CommandGroup>
@@ -164,7 +165,7 @@ export const AttributeTypeDropdown: FC<Props> = ({
                   <IconCell
                     readonly
                     className="mr-1 size-4"
-                    iconType={attr.icon.icon}
+                    iconType={attr.icon.type}
                     colour={attr.icon.colour}
                   />
                   {attr.label}
@@ -196,7 +197,7 @@ export const AttributeTypeDropdown: FC<Props> = ({
                         <IconCell
                           readonly
                           className="mr-1 size-4"
-                          iconType={attr.icon.icon}
+                          iconType={attr.icon.type}
                           colour={attr.icon.colour}
                         />
                         {attr.label}

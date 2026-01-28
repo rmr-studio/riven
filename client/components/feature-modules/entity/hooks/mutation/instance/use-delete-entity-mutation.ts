@@ -1,7 +1,7 @@
 import { useAuth } from '@/components/provider/auth-context';
+import { DeleteEntityResponse, Entity } from '@/lib/types/entity';
 import { useMutation, useQueryClient, type UseMutationOptions } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { DeleteEntityResponse, Entity } from '../../../interface/entity.interface';
 import { EntityService } from '../../../service/entity.service';
 
 interface DeleteEntityRequest {

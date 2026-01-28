@@ -1,28 +1,27 @@
-'use client';
-import { ChildNodeProps, ClassNameProps } from '@/lib/interfaces/interface';
-import { EntityType } from '@/lib/types/types';
-import { cn } from '@/lib/util/utils';
-import { AnimatePresence } from 'framer-motion';
-import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useBlockEdit } from '../../context/block-edit-provider';
-import { useBlockEnvironment } from '../../context/block-environment-provider';
-import { useRenderElement } from '../../context/block-renderer-provider';
-import { useLayoutChange } from '../../context/layout-change-provider';
-import { useTrackedEnvironment } from '../../context/tracked-environment-provider';
-import { useFocusSurface } from '../../hooks/use-focus-surface';
-import { BlockType, isContentMetadata, isContentNode } from '../../interface/block.interface';
-import { QuickActionItem } from '../../interface/panel.interface';
-import { createBlockInstanceFromType } from '../../util/block/factory/instance.factory';
-import { BlockForm } from '../forms/block-form';
-import QuickActionModal from '../modals/quick-action-modal';
-import { ENTITY_TYPE_OPTIONS, TypePickerModal } from '../modals/type-picker-modal';
-import PanelActionContextMenu from './action/panel-action-menu';
-import { PanelWrapperProvider } from './context/panel-wrapper-provider';
-import { usePanelEditMode } from './hooks/use-panel-edit-mode';
-import { usePanelKeyboardNavigation } from './hooks/use-panel-keyboard-navigation';
-import { usePanelOverlayLock } from './hooks/use-panel-overlay-lock';
-import { usePanelToolbarIndices } from './hooks/use-panel-toolbar-indices';
-import PanelToolbar, { CustomToolbarAction } from './toolbar/panel-toolbar';
+"use client";
+import { ChildNodeProps, ClassNameProps } from "@/lib/interfaces/interface";
+import type { EntityType } from "@/lib/types/entity";
+import { cn } from "@/lib/util/utils";
+import { AnimatePresence } from "framer-motion";
+import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useBlockEdit } from "../../context/block-edit-provider";
+import { useBlockEnvironment } from "../../context/block-environment-provider";
+import { useRenderElement } from "../../context/block-renderer-provider";
+import { useLayoutChange } from "../../context/layout-change-provider";
+import { useTrackedEnvironment } from "../../context/tracked-environment-provider";
+import { useFocusSurface } from "../../hooks/use-focus-surface";
+import { type BlockType, isContentMetadata, isContentNode, type QuickActionItem } from "@/lib/types/block";
+import { createBlockInstanceFromType } from "../../util/block/factory/instance.factory";
+import { BlockForm } from "../forms/block-form";
+import QuickActionModal from "../modals/quick-action-modal";
+// import { ENTITY_TYPE_OPTIONS, TypePickerModal } from "../modals/type-picker-modal";
+import PanelActionContextMenu from "./action/panel-action-menu";
+import { PanelWrapperProvider } from "./context/panel-wrapper-provider";
+import { usePanelEditMode } from "./hooks/use-panel-edit-mode";
+import { usePanelKeyboardNavigation } from "./hooks/use-panel-keyboard-navigation";
+import { usePanelOverlayLock } from "./hooks/use-panel-overlay-lock";
+import { usePanelToolbarIndices } from "./hooks/use-panel-toolbar-indices";
+import PanelToolbar, { CustomToolbarAction } from "./toolbar/panel-toolbar";
 
 interface Props extends ChildNodeProps, ClassNameProps {
   id: string;
@@ -277,27 +276,27 @@ export const PanelWrapper: FC<Props> = ({
    */
   const handleTypeSelect = useCallback(
     (selectedTypes: string[] | null) => {
-      if (!selectedBlockType) return;
+      // if (!selectedBlockType) return;
 
-      if (selectedBlockType.key === 'entity_reference') {
-        const selectedValue = selectedTypes?.[0];
-        const entityType =
-          selectedValue && Object.values(EntityType).includes(selectedValue as EntityType)
-            ? (selectedValue as EntityType)
-            : undefined;
+      // if (selectedBlockType.key === 'entity_reference') {
+      //   const selectedValue = selectedTypes?.[0];
+      //   const entityType =
+      //     selectedValue && Object.values(EntityType).includes(selectedValue as EntityType)
+      //       ? (selectedValue as EntityType)
+      //       : undefined;
 
-        if (!entityType) return; // Required field
+      //   if (!entityType) return; // Required field
 
-        const newBlock = createBlockInstanceFromType(selectedBlockType, workspaceId, {
-          name: selectedBlockType.name,
-          entityType,
-        });
+      //   const newBlock = createBlockInstanceFromType(selectedBlockType, workspaceId, {
+      //     name: selectedBlockType.name,
+      //     entityType,
+      //   });
 
-        addTrackedBlock(newBlock, id);
-      }
+      //   addTrackedBlock(newBlock, id);
+      // }
 
-      setSelectedBlockType(null);
-      setTypePickerOpen(false);
+      // setSelectedBlockType(null);
+      // setTypePickerOpen(false);
     },
     [selectedBlockType, workspaceId, id, addTrackedBlock],
   );
@@ -481,7 +480,7 @@ export const PanelWrapper: FC<Props> = ({
                 onInlineMenuOpenChange={allowInsert ? handleInlineMenuOpenChange : undefined}
                 inlineSearchRef={allowInsert ? inlineSearchRef : undefined}
                 workspaceId={workspaceId}
-                entityType={envEntityType}
+                // entityType={envEntityType}
                 allowedTypes={allowedTypes}
                 onSelectBlockType={allowInsert ? handleBlockTypeSelect : undefined}
                 onOpenQuickActionsFromInline={
@@ -525,16 +524,16 @@ export const PanelWrapper: FC<Props> = ({
 
       {/* Type picker modal for blocks that need additional configuration */}
       {selectedBlockType && (
-        <TypePickerModal
-          open={typePickerOpen}
-          onOpenChange={setTypePickerOpen}
-          title="Select Entity Type"
-          description="Choose which type of entities this block will reference"
-          options={ENTITY_TYPE_OPTIONS}
-          multiSelect={false}
-          required={true}
-          onSelect={handleTypeSelect}
-        />
+        // <TypePickerModal
+        //   open={typePickerOpen}
+        //   onOpenChange={setTypePickerOpen}
+        //   title="Select Entity Type"
+        //   description="Choose which type of entities this block will reference"
+        //   // options={ENTITY_TYPE_OPTIONS}
+        //   multiSelect={false}
+        //   required={true}
+        //   onSelect={handleTypeSelect}
+        // />
       )}
     </PanelWrapperProvider>
   );

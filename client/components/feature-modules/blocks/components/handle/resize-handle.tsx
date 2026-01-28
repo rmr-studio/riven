@@ -1,8 +1,8 @@
 import { ChildNodeProps } from '@/lib/interfaces/interface';
 import { cn } from '@/lib/util/utils';
 
-import { FC } from 'react';
-import { ResizePosition } from '../../interface/panel.interface';
+import { FC } from "react";
+import type { ResizePosition } from "@/lib/types/block";
 
 interface Props extends ChildNodeProps {
   position: ResizePosition;

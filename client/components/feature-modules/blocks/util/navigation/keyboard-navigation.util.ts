@@ -1,5 +1,5 @@
 import { GridStackNode } from 'gridstack';
-import { BlockNode, isContentNode } from '../../interface/block.interface';
+import { BlockMetadataType, type BlockNode, isContentNode } from '@/lib/types/block';
 
 /**
  * Utility functions for keyboard navigation through the block tree.
@@ -182,7 +182,7 @@ export const isBlockInList = (blockId: string, context: NavigationContext): bool
   // Check if parent is a list type
   return (
     isContentNode(parent) &&
-    parent.block.payload?.type === 'content' &&
+    parent.block.payload?.type === BlockMetadataType.Content &&
     !!parent.block.payload?.listConfig
   );
 };

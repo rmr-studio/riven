@@ -1,7 +1,6 @@
 import { useAuth } from '@/components/provider/auth-context';
-import { EntityType } from '@/lib/types/types';
+import type { BlockEnvironment } from '@/lib/types/block';
 import { useQuery } from '@tanstack/react-query';
-import { type BlockEnvironment } from '../interface/block.interface';
 import { LayoutService } from '../service/layout.service';
 
 /**
@@ -11,13 +10,14 @@ import { LayoutService } from '../service/layout.service';
  * Automatically handles authentication and loading states.
  *
  * @param entityId - UUID of the entity (client, organisation, etc.)
- * @param entityType - Type of entity (CLIENT, ORGANISATION, PROJECT, INVOICE)
+ * @param entityType - Type of entity (from ApplicationEntityType enum, e.g. 'ENTITY')
  * @returns Block environment data, loading state, error, and refetch function
  *
  * @example
  * const { environment, isLoading, error, refetch } = useEntityLayout(
+ *   workspaceId,
  *   clientId,
- *   EntityType.CLIENT
+ *   ApplicationEntityType.Entity
  * );
  */
 export interface UseEntityLayoutResult {
@@ -30,13 +30,12 @@ export interface UseEntityLayoutResult {
 export const useEntityLayout = (
   workspaceId: string | undefined,
   entityId: string | undefined,
-  entityType: EntityType,
 ): UseEntityLayoutResult => {
   const { session, loading: authLoading } = useAuth();
 
   const query = useQuery<BlockEnvironment, Error>({
-    queryKey: ['layout', workspaceId, entityType, entityId],
-    queryFn: () => LayoutService.loadLayout(session, workspaceId, entityId, entityType),
+    queryKey: ['layout', workspaceId, entityId],
+    queryFn: () => LayoutService.loadLayout(session, workspaceId, entityId),
     enabled: !!workspaceId && !!entityId && !!session && !authLoading,
     staleTime: 30 * 1000, // 30 seconds
     refetchOnWindowFocus: true,

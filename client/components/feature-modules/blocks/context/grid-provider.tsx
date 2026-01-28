@@ -1,20 +1,20 @@
 import type {
-  GridStack,
-  GridStackNode,
-  GridStackOptions,
-  GridStackWidget,
-  SaveFcn,
-} from 'gridstack';
-import { createContext, FC, useCallback, useContext, useMemo, useState } from 'react';
-import {
-  GridActionResult,
-  GridEnvironment,
-  GridProviderProps,
-  GridstackContextValue,
-} from '../interface/grid.interface';
-import { WidgetRenderStructure } from '../interface/render.interface';
-import { generatePath } from '../util/environment/environment.util';
-import { useBlockEnvironment } from './block-environment-provider';
+    GridStack,
+    GridStackNode,
+    GridStackOptions,
+    GridStackWidget,
+    SaveFcn,
+} from "gridstack";
+import { createContext, FC, useCallback, useContext, useMemo, useState } from "react";
+import type {
+    GridActionResult,
+    GridEnvironment,
+    GridProviderProps,
+    GridstackContextValue,
+    WidgetRenderStructure,
+} from "@/lib/types/block";
+import { generatePath } from "../util/environment/environment.util";
+import { useBlockEnvironment } from "./block-environment-provider";
 
 export const GridStackContext = createContext<GridstackContextValue | null>(null);
 

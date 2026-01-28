@@ -1,6 +1,6 @@
 'use client';
 
-import { SaveWorkspaceRequest } from '@/components/feature-modules/workspace/interface/workspace.interface';
+import type { SaveWorkspaceRequest } from '@/lib/types/workspace';
 import { useAuth } from '@/components/provider/auth-context';
 import { BreadCrumbGroup, BreadCrumbTrail } from '@/components/ui/breadcrumb-group';
 import { useRouter } from 'next/navigation';

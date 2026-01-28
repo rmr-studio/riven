@@ -1,36 +1,43 @@
 # WorkspaceApi
 
-All URIs are relative to _http://localhost:8081_
+All URIs are relative to *http://localhost:8081*
 
-| Method                                                                     | HTTP request                                                                        | Description |
-| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------- |
-| [**acceptInvite**](WorkspaceApi.md#acceptinvite)                           | **POST** /api/v1/workspace/invite/accept/{inviteToken}                              |             |
-| [**deleteWorkspace**](WorkspaceApi.md#deleteworkspace)                     | **DELETE** /api/v1/workspace/{workspaceId}                                          |             |
-| [**getUserInvites**](WorkspaceApi.md#getuserinvites)                       | **GET** /api/v1/workspace/invite/user                                               |             |
-| [**getWorkspace**](WorkspaceApi.md#getworkspace)                           | **GET** /api/v1/workspace/{workspaceId}                                             |             |
-| [**getWorkspaceInvites**](WorkspaceApi.md#getworkspaceinvites)             | **GET** /api/v1/workspace/invite/workspace/{workspaceId}                            |             |
-| [**inviteToWorkspace**](WorkspaceApi.md#invitetoworkspace)                 | **POST** /api/v1/workspace/invite/workspace/{workspaceId}/email/{email}/role/{role} |             |
-| [**rejectInvite**](WorkspaceApi.md#rejectinvite)                           | **POST** /api/v1/workspace/invite/reject/{inviteToken}                              |             |
-| [**removeMemberFromWorkspace**](WorkspaceApi.md#removememberfromworkspace) | **DELETE** /api/v1/workspace/{workspaceId}/member/{memberId}                        |             |
-| [**revokeInvite**](WorkspaceApi.md#revokeinvite)                           | **DELETE** /api/v1/workspace/invite/workspace/{workspaceId}/invitation/{id}         |             |
-| [**saveWorkspace**](WorkspaceApi.md#saveworkspaceoperation)                | **POST** /api/v1/workspace/                                                         |             |
-| [**updateMemberRole**](WorkspaceApi.md#updatememberrole)                   | **PUT** /api/v1/workspace/{workspaceId}/member/{memberId}/role/{role}               |             |
+| Method | HTTP request | Description |
+|------------- | ------------- | -------------|
+| [**acceptInvite**](WorkspaceApi.md#acceptinvite) | **POST** /api/v1/workspace/invite/accept/{inviteToken} |  |
+| [**deleteWorkspace**](WorkspaceApi.md#deleteworkspace) | **DELETE** /api/v1/workspace/{workspaceId} |  |
+| [**getUserInvites**](WorkspaceApi.md#getuserinvites) | **GET** /api/v1/workspace/invite/user |  |
+| [**getWorkspace**](WorkspaceApi.md#getworkspace) | **GET** /api/v1/workspace/{workspaceId} |  |
+| [**getWorkspaceInvites**](WorkspaceApi.md#getworkspaceinvites) | **GET** /api/v1/workspace/invite/workspace/{workspaceId} |  |
+| [**inviteToWorkspace**](WorkspaceApi.md#invitetoworkspace) | **POST** /api/v1/workspace/invite/workspace/{workspaceId}/email/{email}/role/{role} |  |
+| [**rejectInvite**](WorkspaceApi.md#rejectinvite) | **POST** /api/v1/workspace/invite/reject/{inviteToken} |  |
+| [**removeMemberFromWorkspace**](WorkspaceApi.md#removememberfromworkspace) | **DELETE** /api/v1/workspace/{workspaceId}/member/{memberId} |  |
+| [**revokeInvite**](WorkspaceApi.md#revokeinvite) | **DELETE** /api/v1/workspace/invite/workspace/{workspaceId}/invitation/{id} |  |
+| [**saveWorkspace**](WorkspaceApi.md#saveworkspaceoperation) | **POST** /api/v1/workspace/ |  |
+| [**updateMemberRole**](WorkspaceApi.md#updatememberrole) | **PUT** /api/v1/workspace/{workspaceId}/member/{memberId}/role/{role} |  |
+
+
 
 ## acceptInvite
 
 > acceptInvite(inviteToken)
 
+
+
 ### Example
 
 ```ts
-import { Configuration, WorkspaceApi } from '';
+import {
+  Configuration,
+  WorkspaceApi,
+} from '';
 import type { AcceptInviteRequest } from '';
 
 async function example() {
-  console.log('🚀 Testing  SDK...');
-  const config = new Configuration({
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
-    accessToken: 'YOUR BEARER TOKEN',
+    accessToken: "YOUR BEARER TOKEN",
   });
   const api = new WorkspaceApi(config);
 
@@ -53,9 +60,10 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name            | Type     | Description | Notes                     |
-| --------------- | -------- | ----------- | ------------------------- |
-| **inviteToken** | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **inviteToken** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -70,17 +78,20 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: Not defined
 
-### HTTP response details
 
+### HTTP response details
 | Status code | Description | Response headers |
-| ----------- | ----------- | ---------------- |
-| **200**     | OK          | -                |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## deleteWorkspace
 
 > deleteWorkspace(workspaceId)
+
+
 
 ### Example
 
@@ -93,7 +104,7 @@ import type { DeleteWorkspaceRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -118,9 +129,10 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name            | Type     | Description | Notes                     |
-| --------------- | -------- | ----------- | ------------------------- |
-| **workspaceId** | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -135,29 +147,35 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: Not defined
 
-### HTTP response details
 
+### HTTP response details
 | Status code | Description | Response headers |
-| ----------- | ----------- | ---------------- |
-| **200**     | OK          | -                |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## getUserInvites
 
 > Array&lt;WorkspaceInvite&gt; getUserInvites()
 
+
+
 ### Example
 
 ```ts
-import { Configuration, WorkspaceApi } from '';
+import {
+  Configuration,
+  WorkspaceApi,
+} from '';
 import type { GetUserInvitesRequest } from '';
 
 async function example() {
-  console.log('🚀 Testing  SDK...');
-  const config = new Configuration({
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
-    accessToken: 'YOUR BEARER TOKEN',
+    accessToken: "YOUR BEARER TOKEN",
   });
   const api = new WorkspaceApi(config);
 
@@ -190,17 +208,20 @@ This endpoint does not need any parameter.
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-### HTTP response details
 
+### HTTP response details
 | Status code | Description | Response headers |
-| ----------- | ----------- | ---------------- |
-| **200**     | OK          | -                |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## getWorkspace
 
 > Workspace getWorkspace(workspaceId, includeMetadata)
+
+
 
 ### Example
 
@@ -213,7 +234,7 @@ import type { GetWorkspaceRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -240,10 +261,11 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name                | Type      | Description | Notes                                |
-| ------------------- | --------- | ----------- | ------------------------------------ |
-| **workspaceId**     | `string`  |             | [Defaults to `undefined`]            |
-| **includeMetadata** | `boolean` |             | [Optional] [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
+| **includeMetadata** | `boolean` |  | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -258,17 +280,20 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-### HTTP response details
 
+### HTTP response details
 | Status code | Description | Response headers |
-| ----------- | ----------- | ---------------- |
-| **200**     | OK          | -                |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## getWorkspaceInvites
 
 > Array&lt;WorkspaceInvite&gt; getWorkspaceInvites(workspaceId)
+
+
 
 ### Example
 
@@ -281,7 +306,7 @@ import type { GetWorkspaceInvitesRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -306,9 +331,10 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name            | Type     | Description | Notes                     |
-| --------------- | -------- | ----------- | ------------------------- |
-| **workspaceId** | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -323,17 +349,20 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-### HTTP response details
 
+### HTTP response details
 | Status code | Description | Response headers |
-| ----------- | ----------- | ---------------- |
-| **200**     | OK          | -                |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## inviteToWorkspace
 
 > WorkspaceInvite inviteToWorkspace(workspaceId, email, role)
+
+
 
 ### Example
 
@@ -346,7 +375,7 @@ import type { InviteToWorkspaceRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -375,11 +404,12 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name            | Type             | Description | Notes                                                  |
-| --------------- | ---------------- | ----------- | ------------------------------------------------------ |
-| **workspaceId** | `string`         |             | [Defaults to `undefined`]                              |
-| **email**       | `string`         |             | [Defaults to `undefined`]                              |
-| **role**        | `WorkspaceRoles` |             | [Defaults to `undefined`] [Enum: OWNER, ADMIN, MEMBER] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
+| **email** | `string` |  | [Defaults to `undefined`] |
+| **role** | `WorkspaceRoles` |  | [Defaults to `undefined`] [Enum: OWNER, ADMIN, MEMBER] |
 
 ### Return type
 
@@ -394,29 +424,35 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-### HTTP response details
 
+### HTTP response details
 | Status code | Description | Response headers |
-| ----------- | ----------- | ---------------- |
-| **200**     | OK          | -                |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## rejectInvite
 
 > rejectInvite(inviteToken)
 
+
+
 ### Example
 
 ```ts
-import { Configuration, WorkspaceApi } from '';
+import {
+  Configuration,
+  WorkspaceApi,
+} from '';
 import type { RejectInviteRequest } from '';
 
 async function example() {
-  console.log('🚀 Testing  SDK...');
-  const config = new Configuration({
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
-    accessToken: 'YOUR BEARER TOKEN',
+    accessToken: "YOUR BEARER TOKEN",
   });
   const api = new WorkspaceApi(config);
 
@@ -439,9 +475,10 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name            | Type     | Description | Notes                     |
-| --------------- | -------- | ----------- | ------------------------- |
-| **inviteToken** | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **inviteToken** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -456,17 +493,20 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: Not defined
 
-### HTTP response details
 
+### HTTP response details
 | Status code | Description | Response headers |
-| ----------- | ----------- | ---------------- |
-| **200**     | OK          | -                |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## removeMemberFromWorkspace
 
 > removeMemberFromWorkspace(workspaceId, memberId)
+
+
 
 ### Example
 
@@ -479,7 +519,7 @@ import type { RemoveMemberFromWorkspaceRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -506,10 +546,11 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name            | Type     | Description | Notes                     |
-| --------------- | -------- | ----------- | ------------------------- |
-| **workspaceId** | `string` |             | [Defaults to `undefined`] |
-| **memberId**    | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
+| **memberId** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -524,17 +565,20 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: Not defined
 
-### HTTP response details
 
+### HTTP response details
 | Status code | Description | Response headers |
-| ----------- | ----------- | ---------------- |
-| **200**     | OK          | -                |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## revokeInvite
 
 > revokeInvite(workspaceId, id)
+
+
 
 ### Example
 
@@ -547,7 +591,7 @@ import type { RevokeInviteRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -574,10 +618,11 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name            | Type     | Description | Notes                     |
-| --------------- | -------- | ----------- | ------------------------- |
-| **workspaceId** | `string` |             | [Defaults to `undefined`] |
-| **id**          | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
+| **id** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -592,17 +637,20 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: Not defined
 
-### HTTP response details
 
+### HTTP response details
 | Status code | Description | Response headers |
-| ----------- | ----------- | ---------------- |
-| **200**     | OK          | -                |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## saveWorkspace
 
 > Workspace saveWorkspace(workspace, file)
+
+
 
 ### Example
 
@@ -615,7 +663,7 @@ import type { SaveWorkspaceOperationRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -642,10 +690,11 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name          | Type                                            | Description | Notes                                |
-| ------------- | ----------------------------------------------- | ----------- | ------------------------------------ |
-| **workspace** | [SaveWorkspaceRequest](SaveWorkspaceRequest.md) |             | [Defaults to `undefined`]            |
-| **file**      | `Blob`                                          |             | [Optional] [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **workspace** | [SaveWorkspaceRequest](SaveWorkspaceRequest.md) |  | [Defaults to `undefined`] |
+| **file** | `Blob` |  | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -660,17 +709,20 @@ example().catch(console.error);
 - **Content-Type**: `multipart/form-data`
 - **Accept**: `*/*`
 
-### HTTP response details
 
+### HTTP response details
 | Status code | Description | Response headers |
-| ----------- | ----------- | ---------------- |
-| **200**     | OK          | -                |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## updateMemberRole
 
 > WorkspaceMember updateMemberRole(workspaceId, memberId, role)
+
+
 
 ### Example
 
@@ -683,7 +735,7 @@ import type { UpdateMemberRoleRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -712,11 +764,12 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name            | Type             | Description | Notes                                                  |
-| --------------- | ---------------- | ----------- | ------------------------------------------------------ |
-| **workspaceId** | `string`         |             | [Defaults to `undefined`]                              |
-| **memberId**    | `string`         |             | [Defaults to `undefined`]                              |
-| **role**        | `WorkspaceRoles` |             | [Defaults to `undefined`] [Enum: OWNER, ADMIN, MEMBER] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
+| **memberId** | `string` |  | [Defaults to `undefined`] |
+| **role** | `WorkspaceRoles` |  | [Defaults to `undefined`] [Enum: OWNER, ADMIN, MEMBER] |
 
 ### Return type
 
@@ -731,10 +784,11 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-### HTTP response details
 
+### HTTP response details
 | Status code | Description | Response headers |
-| ----------- | ----------- | ---------------- |
-| **200**     | OK          | -                |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+

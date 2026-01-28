@@ -1,11 +1,11 @@
 'use client';
 
-import { FC, useCallback } from 'react';
-import { useBlockEnvironment } from '../../../../context/block-environment-provider';
-import { useTrackedEnvironment } from '../../../../context/tracked-environment-provider';
-import { useBlockHydration } from '../../../../hooks/use-block-hydration';
-import { EntityReferenceMetadata, ReferenceItem } from '../../../../interface/block.interface';
-import { EntityReferenceItem } from './reference-item';
+import { FC, useCallback } from "react";
+import { useBlockEnvironment } from "../../../../context/block-environment-provider";
+import { useTrackedEnvironment } from "../../../../context/tracked-environment-provider";
+import { useBlockHydration } from "../../../../hooks/use-block-hydration";
+import type { EntityReferenceMetadata, ReferenceItem } from "@/lib/types/block";
+// import { EntityReferenceItem } from "./reference-item";
 
 interface Props {
   blockId: string;
@@ -43,14 +43,15 @@ export const EntityView: FC<Props> = ({ blockId, item }) => {
   }, [blockId, getBlock, updateTrackedBlock]);
 
   return (
-    <EntityReferenceItem
-      id={item.id}
-      item={item}
-      reference={reference}
-      isLoading={isLoading}
-      error={error}
-      variant="singleton"
-      onRemove={handleRemove}
-    />
+    // <EntityReferenceItem
+    //   id={item.id}
+    //   item={item}
+    //   reference={reference}
+    //   isLoading={isLoading}
+    //   error={error}
+    //   variant="singleton"
+    //   onRemove={handleRemove}
+    // />
+    <></>
   );
 };

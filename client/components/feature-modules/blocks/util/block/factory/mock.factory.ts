@@ -1,11 +1,11 @@
-import {
-  BlockComponentNode,
-  BlockListConfiguration,
-  BlockNode,
-  BlockRenderStructure,
-  BlockType,
-} from '../../../interface/block.interface';
-import { createBlockType, createContentNode } from './block.factory';
+import type {
+    BlockComponentNode,
+    BlockListConfiguration,
+    BlockNode,
+    BlockRenderStructure,
+    BlockType,
+} from "@/lib/types/block";
+import { createBlockType, createContentNode } from "./block.factory";
 import {
   ALL_BLOCK_COMPONENT_TYPES,
   createBlockListBlockType,

@@ -1,8 +1,8 @@
-import { useAuth } from '@/components/provider/auth-context';
-import { AuthenticatedQueryResult } from '@/lib/interfaces/interface';
-import { useQuery } from '@tanstack/react-query';
-import { type EntityType } from '../../../interface/entity.interface';
-import { EntityTypeService } from '../../../service/entity-type.service';
+import { useAuth } from "@/components/provider/auth-context";
+import { AuthenticatedQueryResult } from "@/lib/interfaces/interface";
+import { type EntityType } from "@/lib/types/entity";
+import { useQuery } from "@tanstack/react-query";
+import { EntityTypeService } from "../../../service/entity-type.service";
 
 export function useEntityTypes(workspaceId?: string): AuthenticatedQueryResult<EntityType[]> {
   const { session, loading } = useAuth();

@@ -1,12 +1,9 @@
-import {
-  BlockType,
-  CreateBlockTypeRequest,
-  GetBlockTypesResponse,
-} from '@/components/feature-modules/blocks/interface/block.interface';
-import { fromError, isResponseError } from '@/lib/util/error/error.util';
+import { isResponseError, normalizeApiError } from '@/lib/util/error/error.util';
 import { handleError, validateSession, validateUuid } from '@/lib/util/service/service.util';
+import { createBlockApi } from '@/lib/api/block-api';
 import { api } from '@/lib/util/utils';
 import { Session } from '@/lib/auth';
+import { BlockType, CreateBlockTypeRequest } from '@/lib/types/block';
 
 export class BlockTypeService {
   /**
@@ -18,93 +15,47 @@ export class BlockTypeService {
   ): Promise<BlockType> {
     try {
       validateSession(session);
-      const url = api();
 
-      const response = await fetch(`${url}/v1/block/schema/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(request),
-      });
-
-      if (response.ok) return await response.json();
-      throw await handleError(
-        response,
-        (res) => `Failed to publish block type: ${res.status} ${res.statusText}`,
-      );
+      const blockApi = createBlockApi(session);
+      return await blockApi.publishBlockType({ createBlockTypeRequest: request });
     } catch (error) {
-      if (isResponseError(error)) throw error;
-      throw fromError(error);
+      return await normalizeApiError(error);
     }
   }
 
   /**
    * Update an existing block type by id
+   * Note: Generated API returns void, not BlockType
    */
   static async updateBlockType(
     session: Session | null,
     blockTypeId: string,
     request: BlockType,
-  ): Promise<BlockType> {
+  ): Promise<void> {
     try {
       validateSession(session);
       validateUuid(blockTypeId);
 
-      const url = api();
-
-      const response = await fetch(`${url}/v1/block/schema/${blockTypeId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(request),
-      });
-
-      if (response.ok) return await response.json();
-
-      throw await handleError(
-        response,
-        (res) => `Failed to update block type: ${res.status} ${res.statusText}`,
-      );
+      const blockApi = createBlockApi(session);
+      await blockApi.updateBlockType({ blockTypeId, blockType: request });
     } catch (error) {
-      if (isResponseError(error)) throw error;
-      throw fromError(error);
+      return await normalizeApiError(error);
     }
   }
 
   /**
    * Get block types for a workspace
+   * Note: Generated API returns BlockType[], not GetBlockTypesResponse wrapper
    */
-  static async getBlockTypes(
-    session: Session | null,
-    workspaceId: string,
-  ): Promise<GetBlockTypesResponse> {
+  static async getBlockTypes(session: Session | null, workspaceId: string): Promise<BlockType[]> {
     try {
       validateUuid(workspaceId);
       validateSession(session);
 
-      const url = api();
-
-      const response = await fetch(`${url}/v1/block/schema/workspace/${workspaceId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (response.ok) return await response.json();
-
-      throw await handleError(
-        response,
-        (res) => `Failed to fetch block types: ${res.status} ${res.statusText}`,
-      );
+      const blockApi = createBlockApi(session);
+      return await blockApi.getBlockTypes({ workspaceId });
     } catch (error) {
-      if (isResponseError(error)) throw error;
-      throw fromError(error);
+      return await normalizeApiError(error);
     }
   }
 
@@ -115,28 +66,16 @@ export class BlockTypeService {
     try {
       validateSession(session);
 
-      const url = api();
-
-      const response = await fetch(`${url}/v1/block/schema/key/${encodeURIComponent(key)}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (response.ok) return await response.json();
-
-      throw await handleError(
-        response,
-        (res) => `Failed to fetch block type by key: ${res.status} ${res.statusText}`,
-      );
+      const blockApi = createBlockApi(session);
+      return await blockApi.getBlockTypeByKey({ key });
     } catch (error) {
-      if (isResponseError(error)) throw error;
-      throw fromError(error);
+      return await normalizeApiError(error);
     }
   }
 
+  /**
+   * Lint a block type (no generated API coverage - manual fetch retained)
+   */
   static async lintBlockType(session: Session | null, blockType: BlockType): Promise<BlockType> {
     try {
       validateSession(session);
@@ -159,7 +98,7 @@ export class BlockTypeService {
       );
     } catch (error) {
       if (isResponseError(error)) throw error;
-      throw fromError(error);
+      return await normalizeApiError(error);
     }
   }
 }

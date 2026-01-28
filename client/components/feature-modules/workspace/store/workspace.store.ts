@@ -1,5 +1,5 @@
-import { Workspace } from '@/components/feature-modules/workspace/interface/workspace.interface';
-import { createStore } from 'zustand';
+import type { Workspace } from "@/lib/types/workspace";
+import { createStore } from "zustand";
 
 type WorkspaceState = {
   selectedWorkspaceId?: string;

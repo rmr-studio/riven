@@ -1,5 +1,5 @@
 import { useProfile } from '@/components/feature-modules/user/hooks/useProfile';
-import { User } from '@/components/feature-modules/user/interface/user.interface';
+import type { User } from '@/lib/types/user';
 import { updateUser } from '@/components/feature-modules/user/service/user.service';
 import { useAuth } from '@/components/provider/auth-context';
 import { Button } from '@/components/ui/button';

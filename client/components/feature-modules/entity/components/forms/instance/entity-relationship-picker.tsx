@@ -3,29 +3,29 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from '@/components/ui/command';
-import { IconCell } from '@/components/ui/icon/icon-cell';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { EntityRelationshipCardinality } from '@/lib/types/types';
-import { uuid } from '@/lib/util/utils';
-import { Check, Loader2, X } from 'lucide-react';
-import { useParams } from 'next/navigation';
-import { FC, useEffect, useMemo, useState } from 'react';
-import { useEntityTypes } from '../../../hooks/query/type/use-entity-types';
-import { useEntitiesFromManyTypes } from '../../../hooks/query/use-entities';
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+} from "@/components/ui/command";
+import { IconCell } from "@/components/ui/icon/icon-cell";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Entity,
-  EntityLink,
-  EntityRelationshipDefinition,
-  EntityType,
-  isRelationshipPayload,
-} from '../../../interface/entity.interface';
+    Entity,
+    EntityLink,
+    EntityRelationshipCardinality,
+    EntityRelationshipDefinition,
+    EntityType,
+    isRelationshipPayload,
+} from "@/lib/types/entity";
+import { uuid } from "@/lib/util/utils";
+import { Check, Loader2, X } from "lucide-react";
+import { useParams } from "next/navigation";
+import { FC, useEffect, useMemo, useState } from "react";
+import { useEntityTypes } from "../../../hooks/query/type/use-entity-types";
+import { useEntitiesFromManyTypes } from "../../../hooks/query/use-entities";
 
 export interface EntityRelationshipPickerProps {
   relationship: EntityRelationshipDefinition;
@@ -54,8 +54,8 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
   const { data: entityTypes } = useEntityTypes(workspaceId);
 
   const isSingleSelect =
-    relationship.cardinality === EntityRelationshipCardinality.ONE_TO_ONE ||
-    relationship.cardinality === EntityRelationshipCardinality.MANY_TO_ONE;
+    relationship.cardinality === EntityRelationshipCardinality.OneToOne ||
+    relationship.cardinality === EntityRelationshipCardinality.ManyToOne;
 
   const types: EntityType[] = useMemo(() => {
     return (
@@ -244,9 +244,9 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
                   {filteredEntities.map((entity) => {
                     const isSelected = value.some((link) => link.id === entity.id);
 
-                    const { icon, colour } = entity.icon ??
+                    const { type, colour } = entity.icon ??
                       entityTypeKeyIdMap[entity.typeId]?.icon ?? {
-                        icon: 'FILE',
+                        type: 'FILE',
                         colour: 'NEUTRAL',
                       };
 
@@ -260,7 +260,7 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
                           <div className="flex items-center">
                             <IconCell
                               readonly
-                              iconType={icon}
+                              iconType={type}
                               colour={colour}
                               className="mr-2 size-6"
                             />

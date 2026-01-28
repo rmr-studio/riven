@@ -2,37 +2,36 @@ import {
   BlockListOrderingMode,
   BlockMetadataType,
   BlockReferenceFetchPolicy,
-  BlockValidationScope,
-  EntityType,
+  ValidationScope,
   ListFilterLogicType,
   NodeType,
   Presentation,
   ReferenceType,
-} from '@/lib/types/types';
+  type Block,
+  type BlockContentMetadata,
+  type BlockDisplay,
+  type BlockListConfiguration,
+  type BlockMeta,
+  type BlockReferenceMetadata,
+  type BlockReferencePayload,
+  type BlockTree,
+  type BlockType,
+  type BlockTypeNesting,
+  type ContentNode,
+  type EntityReference,
+  type EntityReferenceMetadata,
+  type Metadata,
+  type ReferenceNode,
+  type ReferencePayload,
+} from '@/lib/types/block';
+
 import { now } from '@/lib/util/utils';
 import { v4 as uuid } from 'uuid';
-import {
-  Block,
-  BlockContentMetadata,
-  BlockDisplay,
-  BlockListConfiguration,
-  BlockMeta,
-  BlockReferenceMetadata,
-  BlockReferencePayload,
-  BlockSchema,
-  BlockTree,
-  BlockType,
-  BlockTypeNesting,
-  ContentNode,
-  EntityReference,
-  EntityReferenceMetadata,
-  Metadata,
-  Reference,
-  Referenceable,
-  ReferenceNode,
-  ReferencePayload,
-  ReferenceWarning,
-} from '../../../interface/block.interface';
+
+// These types may not exist in OpenAPI - using local definitions or any
+type Reference = unknown;
+type Referenceable = unknown;
+type ReferenceWarning = unknown;
 
 const createMeta = (overrides?: Partial<BlockMeta>): BlockMeta => ({
   validationErrors: overrides?.validationErrors ?? [],
@@ -46,11 +45,12 @@ export const createContentMetadata = (
   deletable: boolean = true,
   listConfig?: BlockListConfiguration,
 ): BlockContentMetadata => ({
-  type: BlockMetadataType.CONTENT,
+  type: BlockMetadataType.Content,
   deletable,
   data: data ?? {},
   meta: createMeta(overrides),
   listConfig,
+  readonly: false,
 });
 
 /**

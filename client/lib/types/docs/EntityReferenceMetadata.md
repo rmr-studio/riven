@@ -1,54 +1,58 @@
+
 # EntityReferenceMetadata
+
 
 ## Properties
 
-| Name              | Type                                                      |
-| ----------------- | --------------------------------------------------------- |
-| `meta`            | [BlockMeta](BlockMeta.md)                                 |
-| `readonly`        | boolean                                                   |
-| `deletable`       | boolean                                                   |
-| `type`            | [BlockMetadataType](BlockMetadataType.md)                 |
-| `fetchPolicy`     | [BlockReferenceFetchPolicy](BlockReferenceFetchPolicy.md) |
-| `path`            | string                                                    |
-| `presentation`    | [Presentation](Presentation.md)                           |
-| `items`           | [Array&lt;ReferenceItem&gt;](ReferenceItem.md)            |
-| `projection`      | [Projection](Projection.md)                               |
-| `listType`        | [Entity](Entity.md)                                       |
-| `display`         | [ListDisplayConfig](ListDisplayConfig.md)                 |
-| `config`          | [ListConfig](ListConfig.md)                               |
-| `allowDuplicates` | boolean                                                   |
+Name | Type
+------------ | -------------
+`meta` | [BlockMeta](BlockMeta.md)
+`readonly` | boolean
+`deletable` | boolean
+`type` | [BlockMetadataType](BlockMetadataType.md)
+`fetchPolicy` | [BlockReferenceFetchPolicy](BlockReferenceFetchPolicy.md)
+`path` | string
+`presentation` | [Presentation](Presentation.md)
+`items` | [Array&lt;ReferenceItem&gt;](ReferenceItem.md)
+`projection` | [Projection](Projection.md)
+`listType` | [Entity](Entity.md)
+`display` | [ListDisplayConfig](ListDisplayConfig.md)
+`config` | [ListConfig](ListConfig.md)
+`allowDuplicates` | boolean
 
 ## Example
 
 ```typescript
-import type { EntityReferenceMetadata } from '';
+import type { EntityReferenceMetadata } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  meta: null,
-  readonly: null,
-  deletable: null,
-  type: null,
-  fetchPolicy: null,
-  path: null,
-  presentation: null,
-  items: null,
-  projection: null,
-  listType: null,
-  display: null,
-  config: null,
-  allowDuplicates: null,
-} satisfies EntityReferenceMetadata;
+  "meta": null,
+  "readonly": null,
+  "deletable": null,
+  "type": null,
+  "fetchPolicy": null,
+  "path": null,
+  "presentation": null,
+  "items": null,
+  "projection": null,
+  "listType": null,
+  "display": null,
+  "config": null,
+  "allowDuplicates": null,
+} satisfies EntityReferenceMetadata
 
-console.log(example);
+console.log(example)
 
 // Convert the instance to a JSON string
-const exampleJSON: string = JSON.stringify(example);
-console.log(exampleJSON);
+const exampleJSON: string = JSON.stringify(example)
+console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as EntityReferenceMetadata;
-console.log(exampleParsed);
+const exampleParsed = JSON.parse(exampleJSON) as EntityReferenceMetadata
+console.log(exampleParsed)
 ```
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+

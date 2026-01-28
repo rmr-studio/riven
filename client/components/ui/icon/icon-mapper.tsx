@@ -1,6 +1,6 @@
-import { IconColour, IconType } from '@/lib/types/types';
-import * as LucideIcons from 'lucide-react';
-import { LucideIcon } from 'lucide-react';
+import { IconColour, IconType } from "@/lib/types/common";
+import * as LucideIcons from "lucide-react";
+import { LucideIcon } from "lucide-react";
 
 export const ICON_REGISTRY: Record<IconType, LucideIcon> = Object.values(IconType).reduce(
   (acc, iconType) => {

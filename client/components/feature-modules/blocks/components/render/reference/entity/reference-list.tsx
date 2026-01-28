@@ -5,12 +5,12 @@ import { useBlockEnvironment } from '../../../../context/block-environment-provi
 import { useTrackedEnvironment } from '../../../../context/tracked-environment-provider';
 import { useBlockHydration } from '../../../../hooks/use-block-hydration';
 import {
-  EntityReferenceMetadata,
+  type EntityReferenceMetadata,
   isEntityReferenceMetadata,
-  ReferenceItem,
-} from '../../../../interface/block.interface';
+  type ReferenceItem,
+} from '@/lib/types/block';
 import { PanelWrapper } from '../../../panel/panel-wrapper';
-import { EntityReferenceItem } from './reference-item';
+// import { EntityReferenceItem } from "./reference-item";
 
 interface EntityReferenceListProps {
   blockId: string;
@@ -86,7 +86,7 @@ export const EntityReferenceList: FC<EntityReferenceListProps> = ({ blockId, ite
             allowInsert={false}
             onDelete={onRemove}
           >
-            <EntityReferenceItem
+            {/* <EntityReferenceItem
               id={item.id}
               item={item}
               reference={reference}
@@ -94,7 +94,7 @@ export const EntityReferenceList: FC<EntityReferenceListProps> = ({ blockId, ite
               error={error}
               variant="list"
               onRemove={() => handleRemoveEntity(item.id)}
-            />
+            /> */}
           </PanelWrapper>
         );
       })}

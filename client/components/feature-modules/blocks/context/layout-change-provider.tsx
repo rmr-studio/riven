@@ -1,34 +1,35 @@
 'use client';
 
-import { useAuth } from '@/components/provider/auth-context';
-import { BlockOperationType } from '@/lib/types/types';
-import { formatError } from '@/lib/util/error/error.util';
-import { now } from '@/lib/util/utils';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { GridStackOptions } from 'gridstack';
+import { useAuth } from "@/components/provider/auth-context";
+import { BlockOperationType } from "@/lib/types/block";
+import { formatError } from "@/lib/util/error/error.util";
+import { now } from "@/lib/util/utils";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { GridStackOptions } from "gridstack";
 import {
-  createContext,
-  FC,
-  PropsWithChildren,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import { toast } from 'sonner';
-import { BlockNode, isContentNode } from '../interface/block.interface';
+    createContext,
+    FC,
+    PropsWithChildren,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+import { toast } from "sonner";
 import {
-  LayoutSnapshot,
-  SaveEnvironmentRequest,
-  SaveEnvironmentResponse,
-  StructuralOperationRequest,
-} from '../interface/command.interface';
-import { LayoutService } from '../service/layout.service';
-import { useBlockEnvironment } from './block-environment-provider';
-import { useGrid } from './grid-provider';
-import { useLayoutHistory } from './layout-history-provider';
+    type BlockNode,
+    isContentNode,
+    type LayoutSnapshot,
+    type SaveEnvironmentRequest,
+    type SaveEnvironmentResponse,
+    type StructuralOperationRequest,
+} from "@/lib/types/block";
+import { LayoutService } from "../service/layout.service";
+import { useBlockEnvironment } from "./block-environment-provider";
+import { useGrid } from "./grid-provider";
+import { useLayoutHistory } from "./layout-history-provider";
 
 // DONT RESET THE LOCAL VERSION BACK TO ZERO IN ANY SITUATION
 
@@ -659,7 +660,281 @@ export const LayoutChangeProvider: FC<PropsWithChildren> = ({ children }) => {
     ],
   );
 
-  return <LayoutChangeContext.Provider value={value}>{children}</LayoutChangeContext.Provider>;
+    /**
+     * Track that a structural change occurred (re-parent, add, remove block)
+     * With command system, structural changes are now undoable
+     */
+    const trackStructuralChange = useCallback(() => {
+        if (!hasInitializedRef.current || isDiscardingRef.current) {
+            return;
+        }
+
+        setChangeCount((prev) => prev + 1);
+        markHistoryStructuralChange();
+    }, [markHistoryStructuralChange]);
+
+    /**
+     * Track that a content change occurred (block update)
+     * Content changes don't affect layout structure
+     */
+    const trackContentChange = useCallback(() => {
+        if (!hasInitializedRef.current || isDiscardingRef.current) {
+            return;
+        }
+
+        setChangeCount((prev) => prev + 1);
+        markHistoryContentChange();
+    }, [markHistoryContentChange]);
+
+    /**
+     * Check if discard is allowed
+     * With command system, discard is always allowed via undo
+     */
+    const canDiscard = useCallback(() => {
+        return true;
+    }, []);
+
+    /**
+     * Check if there are unsaved layout changes (structural/positional, not content)
+     */
+    const hasLayoutChanges = useCallback(() => {
+        return historyHasLayoutChanges;
+    }, [historyHasLayoutChanges]);
+
+    /**
+     * Discard all layout changes by clearing history and reloading from last save
+     * Called when user clicks "Discard All" in EditModeIndicator
+     * With command system, this clears all commands and reloads from saved state
+     */
+    const discardLayoutChanges = useCallback(
+        (snapshot: LayoutSnapshot | null = null) => {
+            const curr = snapshot || getBaselineSnapshot();
+            if (!curr) {
+                console.warn("Cannot discard layout: missing saved snapshot");
+                return;
+            }
+
+            // Set flag to prevent tracking reload events
+            isDiscardingRef.current = true;
+
+            try {
+                // Clear command history immediately (don't undo - just discard)
+                clearLayoutChanges();
+
+                applySnapshot(curr);
+            } catch (error) {
+                console.error("Failed to discard layout changes:", error);
+            } finally {
+                // Re-enable tracking after delay
+                setTimeout(() => {
+                    isDiscardingRef.current = false;
+                }, 500);
+            }
+        },
+        [clearLayoutChanges, getBaselineSnapshot, applySnapshot]
+    );
+
+    /**
+     * Save current layout state to backend with version control
+     * Called when user clicks "Save All" in EditModeIndicator
+     */
+    const saveLayoutChanges = useCallback(
+        async (contentChanges?: Map<string, BlockNode>): Promise<boolean> => {
+            if (!layoutId || !saveGridLayout) {
+                console.warn("Cannot save layout: missing layoutId or save function");
+                return false;
+            }
+
+            setSaveStatus("saving");
+
+            try {
+                // Apply content changes to environment AND record operations
+                if (contentChanges && contentChanges.size > 0) {
+                    contentChanges.forEach((updatedNode, blockId) => {
+                        // Apply change to environment
+                        updateBlock(blockId, updatedNode);
+
+                        // Record the UPDATE_BLOCK operation for backend
+                        const operation: StructuralOperationRequest = {
+                            id: crypto.randomUUID(),
+                            timestamp: now(),
+                            data: {
+                                type: BlockOperationType.UpdateBlock,
+                                blockId,
+                                updatedContent: updatedNode,
+                            },
+                        };
+                        recordStructuralOperation(operation);
+                    });
+                }
+
+                // Get structural operations since last save
+                const operations = getStructuralOperations();
+
+                // Get current layout from GridStack with preserved JSON content
+                const currentLayout = saveGridLayout();
+                if (!currentLayout) {
+                    console.warn("Cannot save layout: failed to get current layout from GridStack");
+                    setSaveStatus("idle");
+                    return false;
+                }
+
+                const nextVersion = publishedVersion + 1;
+
+                // Prepare save request with ALL changes
+                const saveRequest: SaveEnvironmentRequest = {
+                    layoutId,
+                    workspaceId,
+                    layout: currentLayout,
+                    version: nextVersion,
+                    operations,
+                };
+
+                const response = await saveLayout(saveRequest);
+                const { conflict, success } = response;
+
+                if (conflict) {
+                    setSaveStatus("conflict");
+                    setConflictData(response);
+                    return false;
+                }
+
+                if (success) {
+                    console.log("✅ Layout and content changes saved successfully");
+                    return true;
+                } else {
+                    setSaveStatus("error");
+                    return false;
+                }
+            } catch (error) {
+                console.error("Error saving layout:", error);
+                setSaveStatus("error");
+                return false;
+            }
+        },
+        [
+            layoutId,
+            workspaceId,
+            publishedVersion,
+            saveGridLayout,
+            getStructuralOperations,
+            updateBlock,
+            recordStructuralOperation,
+            saveLayout,
+        ]
+    );
+
+    /**
+     * Resolve a conflict after user makes a decision
+     */
+    const resolveConflict = useCallback(
+        async (action: "keep-mine" | "use-theirs" | "cancel"): Promise<boolean> => {
+            if (!conflictData) {
+                console.warn("No conflict to resolve");
+                return false;
+            }
+
+            try {
+                if (action === "cancel") {
+                    // User cancelled - just clear conflict state
+                    setSaveStatus("idle");
+                    setConflictData(null);
+                    return false;
+                }
+
+                if (action === "use-theirs") {
+                    //TODO: Load and reinit environment with server version
+                }
+
+                if (action === "keep-mine") {
+                    const currentLayout = saveGridLayout();
+                    if (!currentLayout) {
+                        setSaveStatus("error");
+                        return false;
+                    }
+
+                    // TODO: Send Entire Snapshot and Environment to backend to overwrite server version
+                    overwriteLayout();
+                }
+
+                return false;
+            } catch (error) {
+                console.error("Failed to resolve conflict:", error);
+                setSaveStatus("error");
+                return false;
+            }
+        },
+        [
+            conflictData,
+            saveGridLayout,
+            layoutId,
+            environment,
+            publishedVersion,
+            clearLayoutChanges,
+            getEnvironmentSnapshot,
+            applySnapshot,
+            discardLayoutChanges,
+            setBaselineSnapshot,
+            updatePublishedVersion,
+            getStructuralOperations,
+            clearStructuralOperations,
+        ]
+    );
+
+    // TODO: Uncomment this eventually
+    /**
+     * Warn user before leaving page if there are unsaved changes
+     */
+    // useEffect(() => {
+    //     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    //         if (hasUnsavedChanges) {
+    //             e.preventDefault();
+    //             e.returnValue = "You have unsaved layout changes. Are you sure you want to leave?";
+    //         }
+    //     };
+
+    //     window.addEventListener("beforeunload", handleBeforeUnload);
+    //     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    // }, [hasUnsavedChanges]);
+
+    const value: LayoutChangeContextValue = useMemo(
+        () => ({
+            hasLayoutChanges,
+            trackLayoutChange,
+            trackStructuralChange,
+            trackContentChange,
+            clearLayoutChanges,
+            saveLayoutChanges,
+            discardLayoutChanges,
+            canDiscard,
+            suppressEditModeTracking,
+            publishedVersion,
+            localVersion,
+            layoutChangeCount: changeCount,
+            saveStatus,
+            conflictData,
+            resolveConflict,
+        }),
+        [
+            hasLayoutChanges,
+            trackLayoutChange,
+            trackStructuralChange,
+            trackContentChange,
+            clearLayoutChanges,
+            saveLayoutChanges,
+            discardLayoutChanges,
+            canDiscard,
+            suppressEditModeTracking,
+            publishedVersion,
+            localVersion,
+            changeCount,
+            saveStatus,
+            conflictData,
+            resolveConflict,
+        ]
+    );
+
+    return <LayoutChangeContext.Provider value={value}>{children}</LayoutChangeContext.Provider>;
 };
 
 // Todo: Set up a more efficient and accurate diffing mechanism

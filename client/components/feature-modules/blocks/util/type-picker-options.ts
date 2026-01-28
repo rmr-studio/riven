@@ -1,16 +1,16 @@
 import {
-  BoxIcon,
-  CheckSquareIcon,
-  FileTextIcon,
-  FolderKanbanIcon,
-  LayoutGridIcon,
-  LinkIcon,
-  ListIcon,
-  MapPinIcon,
-  TypeIcon,
-} from 'lucide-react';
-import { TypeOption } from '../components/modals/type-picker-modal';
-import { BlockType } from '../interface/block.interface';
+    BoxIcon,
+    CheckSquareIcon,
+    FileTextIcon,
+    FolderKanbanIcon,
+    LayoutGridIcon,
+    LinkIcon,
+    ListIcon,
+    MapPinIcon,
+    TypeIcon,
+} from "lucide-react";
+import {TypeOption} from "@/components/common/type-picker/type-picker.interface";
+import type { BlockType } from "@/lib/types/block";
 
 /**
  * Converts BlockType array to TypeOption array for the type picker

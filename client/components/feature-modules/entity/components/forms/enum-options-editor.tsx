@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { OptionSortingType } from '@/lib/types/types';
+import { OptionSortingType } from '@/lib/types/common';
 import {
   DndContext,
   DragEndEvent,
@@ -78,7 +78,7 @@ const SortableItem: FC<SortableItemProps> = ({ id, value, onRemove }) => {
 export const EnumOptionsEditor: FC<Props> = ({ form }) => {
   const [newEnumValue, setNewEnumValue] = useState('');
   const enumValues = form.watch('enumValues') || [];
-  const enumSorting: OptionSortingType = form.watch('enumSorting') || OptionSortingType.MANUAL;
+  const enumSorting: OptionSortingType = form.watch('enumSorting') || OptionSortingType.Manual;
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -137,7 +137,7 @@ export const EnumOptionsEditor: FC<Props> = ({ form }) => {
 
         form.setValue('enumValues', newArray);
         // Reset to manual sorting when user manually drags
-        form.setValue('enumSorting', OptionSortingType.MANUAL);
+        form.setValue('enumSorting', OptionSortingType.Manual);
       }
     }
   };

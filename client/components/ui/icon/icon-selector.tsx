@@ -13,12 +13,12 @@ import {
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
-import { ClassNameProps } from '@/lib/interfaces/interface';
-import { IconColour, IconType } from '@/lib/types/types';
-import { cn } from '@/lib/util/utils';
-import { FileQuestionMark } from 'lucide-react';
+import { ClassNameProps } from "@/lib/interfaces/interface";
+import { IconColour, IconType } from "@/lib/types/common";
+import { cn } from "@/lib/util/utils";
+import { FileQuestionMark } from "lucide-react";
 
-import { Icon } from '@/lib/interfaces/common.interface';
+import { type Icon} from '@/lib/types/common';
 import { IconCell } from './icon-cell';
 import { getAllIconTypes, ICON_COLOUR_MAP, ICON_REGISTRY, iconTypeToLabel } from './icon-mapper';
 
@@ -44,7 +44,7 @@ const ICON_BUTTON_COLOUR_MAP: Record<IconColour, string> = {
 export const IconSelector: FC<Props> = ({
   onSelect,
 
-  icon: { icon, colour },
+  icon: { type, colour },
   className,
   displayIconClassName,
 }) => {
@@ -64,7 +64,7 @@ export const IconSelector: FC<Props> = ({
   const handleSelect = useCallback(
     (iconType: IconType) => {
       onSelect({
-        icon: iconType,
+        type: iconType,
         colour: currentColour,
       });
       setOpen(false);
@@ -94,7 +94,7 @@ export const IconSelector: FC<Props> = ({
     });
   }, [open, filteredIcons.length, rowVirtualizer]);
 
-  const SelectedIcon = ICON_REGISTRY[icon];
+  const SelectedIcon = ICON_REGISTRY[type];
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -169,7 +169,7 @@ export const IconSelector: FC<Props> = ({
                                 key={iconType}
                                 iconType={iconType}
                                 colour={currentColour}
-                                selected={icon === iconType}
+                                selected={type === iconType}
                                 onSelect={handleSelect}
                               />
                             ))}

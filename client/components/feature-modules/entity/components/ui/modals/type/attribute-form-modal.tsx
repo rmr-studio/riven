@@ -8,17 +8,17 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { DialogControl } from '@/lib/interfaces/interface';
-import { SchemaType } from '@/lib/types/types';
-import { Loader2 } from 'lucide-react';
-import { FC, useEffect, useMemo, useState } from 'react';
 import {
   EntityAttributeDefinition,
   EntityRelationshipDefinition,
   EntityType,
   isRelationshipDefinition,
-} from '../../../../interface/entity.interface';
+} from '@/lib/types/entity';
+import { Loader2 } from 'lucide-react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import { SchemaForm } from '../../../forms/type/attribute/schema-form';
 import { RelationshipAttributeForm } from '../../../forms/type/relationship/relationship-form';
+import { SchemaType } from '@/lib/types/common';
 
 interface Props {
   dialog: DialogControl;
@@ -30,12 +30,12 @@ export const AttributeFormModal: FC<Props> = ({ dialog, type, selectedAttribute 
   const { open, setOpen: onOpenChange } = dialog;
   const isEditMode = Boolean(selectedAttribute);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [currentType, setCurrentType] = useState<SchemaType | 'RELATIONSHIP'>(SchemaType.TEXT);
+  const [currentType, setCurrentType] = useState<SchemaType | 'RELATIONSHIP'>(SchemaType.Text);
   const { data: workspace } = useWorkspace();
 
   useEffect(() => {
     if (!selectedAttribute) {
-      setCurrentType(SchemaType.TEXT);
+      setCurrentType(SchemaType.Text);
       return;
     }
     if (isRelationshipDefinition(selectedAttribute)) {

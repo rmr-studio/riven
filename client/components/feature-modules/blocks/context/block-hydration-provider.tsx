@@ -4,17 +4,17 @@ import { useAuth } from '@/components/provider/auth-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { createContext, useContext, useEffect, useMemo, useRef } from 'react';
 import {
-  BlockHydrationResult,
-  BlockNode,
-  EntityReferenceHydrationRequest,
-  EntityReferenceMetadata,
-  HydrateBlockResponse,
-  isContentNode,
-  isEntityReferenceMetadata,
-  isReferenceNode,
-} from '../interface/block.interface';
-import { BlockService } from '../service/block.service';
-import { useBlockEnvironment } from './block-environment-provider';
+    type BlockHydrationResult,
+    type BlockNode,
+    type EntityReferenceHydrationRequest,
+    type EntityReferenceMetadata,
+    type HydrateBlockResponse,
+    isContentNode,
+    isEntityReferenceMetadata,
+    isReferenceNode,
+} from "@/lib/types/block";
+import { BlockService } from "../service/block.service";
+import { useBlockEnvironment } from "./block-environment-provider";
 
 /**
  * Context value for block hydration.

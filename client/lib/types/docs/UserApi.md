@@ -1,13 +1,15 @@
 # UserApi
 
-All URIs are relative to _http://localhost:8081_
+All URIs are relative to *http://localhost:8081*
 
-| Method                                                        | HTTP request                     | Description                        |
-| ------------------------------------------------------------- | -------------------------------- | ---------------------------------- |
-| [**deleteUserProfileById**](UserApi.md#deleteuserprofilebyid) | **DELETE** /api/v1/user/{userId} | Delete a user profile by ID        |
-| [**getCurrentUser**](UserApi.md#getcurrentuser)               | **GET** /api/v1/user/            | Get current user\&#39;s profile    |
-| [**getUserById**](UserApi.md#getuserbyid)                     | **GET** /api/v1/user/{userId}    | Get a user by ID                   |
-| [**updateUserProfile**](UserApi.md#updateuserprofile)         | **PUT** /api/v1/user/            | Update current user\&#39;s profile |
+| Method | HTTP request | Description |
+|------------- | ------------- | -------------|
+| [**deleteUserProfileById**](UserApi.md#deleteuserprofilebyid) | **DELETE** /api/v1/user/{userId} | Delete a user profile by ID |
+| [**getCurrentUser**](UserApi.md#getcurrentuser) | **GET** /api/v1/user/ | Get current user\&#39;s profile |
+| [**getUserById**](UserApi.md#getuserbyid) | **GET** /api/v1/user/{userId} | Get a user by ID |
+| [**updateUserProfile**](UserApi.md#updateuserprofile) | **PUT** /api/v1/user/ | Update current user\&#39;s profile |
+
+
 
 ## deleteUserProfileById
 
@@ -28,7 +30,7 @@ import type { DeleteUserProfileByIdRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -53,9 +55,10 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name       | Type     | Description | Notes                     |
-| ---------- | -------- | ----------- | ------------------------- |
-| **userId** | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **userId** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -70,16 +73,17 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: Not defined
 
-### HTTP response details
 
-| Status code | Description                                          | Response headers |
-| ----------- | ---------------------------------------------------- | ---------------- |
-| **204**     | User profile deleted successfully                    | -                |
-| **401**     | Unauthorized access                                  | -                |
-| **403**     | User does not have permission to delete this profile | -                |
-| **404**     | User not found                                       | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **204** | User profile deleted successfully |  -  |
+| **401** | Unauthorized access |  -  |
+| **403** | User does not have permission to delete this profile |  -  |
+| **404** | User not found |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## getCurrentUser
 
@@ -92,14 +96,17 @@ Retrieves the profile of the authenticated user based on the current session.
 ### Example
 
 ```ts
-import { Configuration, UserApi } from '';
+import {
+  Configuration,
+  UserApi,
+} from '';
 import type { GetCurrentUserRequest } from '';
 
 async function example() {
-  console.log('🚀 Testing  SDK...');
-  const config = new Configuration({
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
-    accessToken: 'YOUR BEARER TOKEN',
+    accessToken: "YOUR BEARER TOKEN",
   });
   const api = new UserApi(config);
 
@@ -132,15 +139,16 @@ This endpoint does not need any parameter.
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                         | Response headers |
-| ----------- | ----------------------------------- | ---------------- |
-| **200**     | User profile retrieved successfully | -                |
-| **401**     | Unauthorized access                 | -                |
-| **404**     | User not found                      | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | User profile retrieved successfully |  -  |
+| **401** | Unauthorized access |  -  |
+| **404** | User not found |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## getUserById
 
@@ -161,7 +169,7 @@ import type { GetUserByIdRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -186,9 +194,10 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name       | Type     | Description | Notes                     |
-| ---------- | -------- | ----------- | ------------------------- |
-| **userId** | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **userId** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -203,16 +212,17 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                                          | Response headers |
-| ----------- | ---------------------------------------------------- | ---------------- |
-| **200**     | User profile retrieved successfully                  | -                |
-| **401**     | Unauthorized access                                  | -                |
-| **403**     | User does not have permission to access this profile | -                |
-| **404**     | User not found                                       | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | User profile retrieved successfully |  -  |
+| **401** | Unauthorized access |  -  |
+| **403** | User does not have permission to access this profile |  -  |
+| **404** | User not found |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## updateUserProfile
 
@@ -233,7 +243,7 @@ import type { UpdateUserProfileRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -258,9 +268,10 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name     | Type            | Description | Notes |
-| -------- | --------------- | ----------- | ----- |
-| **user** | [User](User.md) |             |       |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **user** | [User](User.md) |  | |
 
 ### Return type
 
@@ -275,14 +286,15 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                                    | Response headers |
-| ----------- | ---------------------------------------------- | ---------------- |
-| **200**     | User profile updated successfully              | -                |
-| **401**     | Unauthorized access                            | -                |
-| **403**     | User ID in request does not match session user | -                |
-| **404**     | User not found                                 | -                |
-| **400**     | Invalid request data                           | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | User profile updated successfully |  -  |
+| **401** | Unauthorized access |  -  |
+| **403** | User ID in request does not match session user |  -  |
+| **404** | User not found |  -  |
+| **400** | Invalid request data |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+

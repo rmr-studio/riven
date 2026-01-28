@@ -1,8 +1,8 @@
-import { useAuth } from '@/components/provider/auth-context';
-import { AuthenticatedQueryResult } from '@/lib/interfaces/interface';
-import { useQuery } from '@tanstack/react-query';
-import { BlockType } from '../interface/block.interface';
-import { BlockTypeService } from '../service/block-type.service';
+import { useAuth } from "@/components/provider/auth-context";
+import { AuthenticatedQueryResult } from "@/lib/interfaces/interface";
+import { useQuery } from "@tanstack/react-query";
+import type { BlockType } from "@/lib/types";
+import { BlockTypeService } from "../service/block-type.service";
 
 /**
  * React Query hook to fetch available block types for an organization.

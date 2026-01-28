@@ -1,14 +1,14 @@
 import { GridStackOptions } from 'gridstack';
 import {
-  BlockNode,
-  ContentNode,
+  type BlockNode,
+  type ContentNode,
   isContentMetadata,
   isContentNode,
   isEntityReferenceMetadata,
   isReferenceNode,
-} from '../../interface/block.interface';
-import { InsertResult } from '../../interface/editor.interface';
-import { GridRect } from '../../interface/layout.interface';
+  type InsertResult,
+  type GridRect,
+} from '@/lib/types/block';
 import { isList } from '../list/list.util';
 
 // export function evalVisible(cond: Condition | undefined, ctx: TreeCtx): boolean {

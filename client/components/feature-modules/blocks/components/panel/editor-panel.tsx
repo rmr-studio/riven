@@ -1,8 +1,6 @@
-import { ReactNode, useCallback } from 'react';
-import { BlockNode } from '../../interface/block.interface';
-import { SlashMenuItem } from '../../interface/panel.interface';
-import { WrapElementProvider } from '../../interface/render.interface';
-import { getTitle } from '../../util/block/block.util';
+import { ReactNode, useCallback } from "react";
+import type { BlockNode, SlashMenuItem, WrapElementProvider } from "@/lib/types/block";
+import { getTitle } from "../../util/block/block.util";
 import {
   createLayoutContainerNode,
   createNoteNode,

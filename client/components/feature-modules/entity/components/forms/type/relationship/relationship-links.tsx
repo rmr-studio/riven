@@ -1,9 +1,6 @@
 import { useRelationshipCandidates } from '@/components/feature-modules/entity/hooks/query/type/use-relationship-candidates';
-import {
-  EntityRelationshipDefinition,
-  EntityType,
-} from '@/components/feature-modules/entity/interface/entity.interface';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { EntityRelationshipDefinition, EntityType } from '@/lib/types/entity';
 import { FC } from 'react';
 import { Candidate } from './relationship-candidate';
 

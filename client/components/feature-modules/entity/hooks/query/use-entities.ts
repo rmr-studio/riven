@@ -1,11 +1,8 @@
-import { useAuth } from '@/components/provider/auth-context';
-import {
-  AuthenticatedMultiQueryResult,
-  AuthenticatedQueryResult,
-} from '@/lib/interfaces/interface';
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { Entity } from '../../interface/entity.interface';
-import { EntityService } from '../../service/entity.service';
+import { useAuth } from "@/components/provider/auth-context";
+import { AuthenticatedMultiQueryResult, AuthenticatedQueryResult } from "@/lib/interfaces/interface";
+import { Entity } from "@/lib/types/entity";
+import { useQueries, useQuery } from "@tanstack/react-query";
+import { EntityService } from "../../service/entity.service";
 
 export function useEntities(
   workspaceId?: string,
@@ -15,7 +12,7 @@ export function useEntities(
   const query = useQuery({
     queryKey: ['entities', workspaceId, typeId],
     queryFn: async () => {
-      return await EntityService.getEntitiesForType(session, workspaceId!!, typeId!!); // Non-null assertion as query is disabled when params are missing
+      return await EntityService.getEntitiesForType(session, workspaceId!, typeId!); // Non-null assertion as query is disabled when params are missing
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!session && !!workspaceId && !!typeId && !loading,

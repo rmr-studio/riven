@@ -4,13 +4,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable, DataTableProvider } from '@/components/ui/data-table';
 import { IconCell } from '@/components/ui/icon/icon-cell';
+import { EntityType, EntityTypeImpactResponse } from '@/lib/types/entity';
 import { ColumnDef } from '@tanstack/react-table';
 import { Edit, Plus, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { FC, useMemo, useState } from 'react';
 import { useDeleteTypeMutation } from '../../hooks/mutation/type/use-delete-type-mutation';
 import { useEntityTypes } from '../../hooks/query/type/use-entity-types';
-import { EntityType, EntityTypeImpactResponse } from '../../interface/entity.interface';
 import { NewEntityTypeForm } from '../forms/type/new-entity-type-form';
 
 interface Props {
@@ -44,7 +44,7 @@ export const EntityTypesOverview: FC<Props> = ({ workspaceId }) => {
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/5">
               <IconCell
                 readonly={true}
-                iconType={row.original.icon.icon}
+                iconType={row.original.icon.type}
                 colour={row.original.icon.colour}
               />
             </div>
@@ -135,7 +135,7 @@ export const EntityTypesOverview: FC<Props> = ({ workspaceId }) => {
                 ],
               },
               {
-                column: 'protected',
+                column: '_protected',
                 type: 'boolean',
                 label: 'Protected',
               },

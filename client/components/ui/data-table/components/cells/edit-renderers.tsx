@@ -3,12 +3,9 @@
 import { FormWidgetProps } from '@/components/feature-modules/blocks/components/forms';
 import { getWidgetForSchema } from '@/components/feature-modules/entity/components/forms/instance/entity-field-registry';
 import { EntityRelationshipPicker } from '@/components/feature-modules/entity/components/forms/instance/entity-relationship-picker';
-import {
-  EntityLink,
-  EntityRelationshipDefinition,
-} from '@/components/feature-modules/entity/interface/entity.interface';
 import { FormField } from '@/components/ui/form';
-import { SchemaUUID } from '@/lib/interfaces/common.interface';
+import { SchemaUUID } from '@/lib/types/common';
+import { EntityLink, EntityRelationshipDefinition } from '@/lib/types/entity';
 import { FC } from 'react';
 import { useFormState, useWatch } from 'react-hook-form';
 import { EditRenderProps } from '../../data-table.types';
@@ -70,8 +67,8 @@ export function createAttributeRenderer<TData>(
             errors={errorMessages}
             autoFocus
             options={
-              schema.options?.enum
-                ? schema.options.enum.map((opt) => ({
+              schema.options?._enum
+                ? schema.options._enum.map((opt) => ({
                     label: opt,
                     value: opt,
                   }))

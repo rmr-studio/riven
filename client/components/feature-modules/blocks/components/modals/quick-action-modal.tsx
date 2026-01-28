@@ -1,14 +1,14 @@
 import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
-import { CommandIcon } from 'lucide-react';
-import { FC } from 'react';
-import { QuickActionItem } from '../../interface/panel.interface';
+    CommandDialog,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command";
+import { CommandIcon } from "lucide-react";
+import { FC } from "react";
+import type { QuickActionItem } from "@/lib/types/block";
 
 interface Props {
   open: boolean;

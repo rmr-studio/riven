@@ -21,3 +21,11 @@
 #docs/*.md
 # Then explicitly reverse the ignore rule for a single file:
 #!docs/README.md
+
+# Protect custom domain barrel directories from regeneration
+# These directories will contain re-exports and custom types (Phase 2)
+entity/**
+block/**
+workspace/**
+user/**
+common/**

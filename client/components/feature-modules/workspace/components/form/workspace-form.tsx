@@ -1,7 +1,7 @@
 'use client';
 
 import { useProfile } from '@/components/feature-modules/user/hooks/useProfile';
-import { Workspace } from '@/components/feature-modules/workspace/interface/workspace.interface';
+import { WorkspacePlan, type Workspace } from '@/lib/types/workspace';
 import { AvatarUploader } from '@/components/ui/AvatarUploader';
 import { Button } from '@/components/ui/button';
 import { CardContent, CardFooter } from '@/components/ui/card';
@@ -24,7 +24,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ClassNameProps } from '@/lib/interfaces/interface';
-import { WorkspacePlan } from '@/lib/types/types';
 import { cn, isValidCurrency } from '@/lib/util/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, SquareArrowUpRight } from 'lucide-react';
@@ -67,7 +66,7 @@ export const WorkspaceForm: FC<Props> = ({
       displayName: workspace?.name || '',
       avatarUrl: workspace?.avatarUrl || undefined,
       isDefault: user?.memberships.length === 0,
-      plan: workspace?.plan || WorkspacePlan.FREE,
+      plan: workspace?.plan || WorkspacePlan.Free,
       defaultCurrency: workspace?.defaultCurrency?.currencyCode || 'AUD',
     },
   });
@@ -122,7 +121,7 @@ export const WorkspaceForm: FC<Props> = ({
                 <FormField
                   control={form.control}
                   name="avatarUrl"
-                  render={(_) => (
+                  render={() => (
                     <FormItem className="flex w-full flex-col lg:flex-row">
                       <FormLabel className="w-1/3">Workspace Avatar</FormLabel>
                       <AvatarUploader

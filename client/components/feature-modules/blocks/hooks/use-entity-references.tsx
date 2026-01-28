@@ -11,19 +11,19 @@
  * - Supports single and multi-select modes
  */
 
-import { EntityType } from '@/lib/types/types';
+import type { EntityType } from '@/lib/types/entity';
 import { useQueryClient } from '@tanstack/react-query';
 import { Users } from 'lucide-react';
 import { useState } from 'react';
-import { EntitySelectorModal } from '../components/modals/entity-selector-modal';
+// import { EntitySelectorModal } from "../components/modals/entity-selector-modal";
 import { CustomToolbarAction } from '../components/panel/toolbar/panel-toolbar';
 import { useBlockEnvironment } from '../context/block-environment-provider';
 import { useTrackedEnvironment } from '../context/tracked-environment-provider';
 import {
-  EntityReferenceMetadata,
+  type EntityReferenceMetadata,
   isEntityReferenceMetadata,
-  ReferenceItem,
-} from '../interface/block.interface';
+  type ReferenceItem,
+} from '@/lib/types/block';
 
 export interface UseReferenceBlockToolbarProps {
   blockId: string;
@@ -99,13 +99,13 @@ export function UseEntityReferenceToolbar({
 
     // Validate entity types if listType is set
     if (payload.listType) {
-      const invalidItems = items.filter((item) => item.type !== payload.listType);
-      if (invalidItems.length > 0) {
-        console.error(
-          `Cannot add entities of type ${invalidItems[0].type} to a ${payload.listType} reference block`,
-        );
-        return;
-      }
+      // const invalidItems = items.filter((item) => item.type !== payload.listType);
+      // if (invalidItems.length > 0) {
+      //   console.error(
+      //     `Cannot add entities of type ${invalidItems[0].type} to a ${payload.listType} reference block`,
+      //   );
+      //   return;
+      // }
     }
 
     // Update block metadata with new items
@@ -145,16 +145,17 @@ export function UseEntityReferenceToolbar({
 
   // Create modal with all entities shown (allows toggling selection on/off)
   const modal = (
-    <EntitySelectorModal
-      open={entitySelectorOpen}
-      onOpenChange={setEntitySelectorOpen}
-      onSelect={handleEntitySelect}
-      entityType={entityType}
-      workspaceId={workspaceId}
-      multiSelect={multiSelect}
-      initialSelection={currentItems}
-      showAllEntities={true}
-    />
+    // <EntitySelectorModal
+    //   open={entitySelectorOpen}
+    //   onOpenChange={setEntitySelectorOpen}
+    //   onSelect={handleEntitySelect}
+    //   entityType={entityType}
+    //   workspaceId={workspaceId}
+    //   multiSelect={multiSelect}
+    //   initialSelection={currentItems}
+    //   showAllEntities={true}
+    // />
+    <></>
   );
 
   return {

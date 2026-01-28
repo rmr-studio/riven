@@ -1,5 +1,9 @@
-import { BlockMetadataType, EntityType } from '@/lib/types/types';
-import { BlockNode, BlockSchema, BlockType } from '../../../interface/block.interface';
+import {
+  BlockMetadataType,
+  type BlockNode,
+  type BlockSchema,
+  type BlockType,
+} from '@/lib/types/block';
 import {
   createBlockReferenceMetadata,
   createContentNode,

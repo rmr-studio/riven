@@ -1,11 +1,7 @@
 import { GridStackWidget } from 'gridstack';
 import { v4 as uuidv4 } from 'uuid';
-import { BlockNode } from '../../interface/block.interface';
-import {
-  CommandContext,
-  LayoutCommand,
-  LayoutCommandType,
-} from '../../interface/command.interface';
+import type { BlockNode } from '@/lib/types/block';
+import { CommandContext, LayoutCommand, LayoutCommandType } from '@/lib/types/block';
 
 /**
  * Base command class with common functionality

@@ -1,17 +1,19 @@
 # BlockApi
 
-All URIs are relative to _http://localhost:8081_
+All URIs are relative to *http://localhost:8081*
 
-| Method                                                                 | HTTP request                                                                        | Description                   |
-| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------- |
-| [**getBlockEnvironment**](BlockApi.md#getblockenvironment)             | **GET** /api/v1/block/environment/workspace/{workspaceId}/type/{type}/id/{entityId} | Get Block Environment         |
-| [**getBlockTypeByKey**](BlockApi.md#getblocktypebykey)                 | **GET** /api/v1/block/schema/key/{key}                                              | Get block type by key         |
-| [**getBlockTypes**](BlockApi.md#getblocktypes)                         | **GET** /api/v1/block/schema/workspace/{workspaceId}                                | Get block types for workspace |
-| [**hydrateBlocks**](BlockApi.md#hydrateblocksoperation)                | **POST** /api/v1/block/environment/hydrate                                          | Hydrate Blocks                |
-| [**overwriteBlockEnvironment**](BlockApi.md#overwriteblockenvironment) | **POST** /api/v1/block/environment/overwrite                                        | Overwrite Block Environment   |
-| [**publishBlockType**](BlockApi.md#publishblocktype)                   | **POST** /api/v1/block/schema/                                                      | Create a new block type       |
-| [**saveBlockEnvironment**](BlockApi.md#saveblockenvironment)           | **POST** /api/v1/block/environment/                                                 | Save Block Environment        |
-| [**updateBlockType**](BlockApi.md#updateblocktype)                     | **PUT** /api/v1/block/schema/{blockTypeId}                                          | Update an existing block type |
+| Method | HTTP request | Description |
+|------------- | ------------- | -------------|
+| [**getBlockEnvironment**](BlockApi.md#getblockenvironment) | **GET** /api/v1/block/environment/workspace/{workspaceId}/type/{type}/id/{entityId} | Get Block Environment |
+| [**getBlockTypeByKey**](BlockApi.md#getblocktypebykey) | **GET** /api/v1/block/schema/key/{key} | Get block type by key |
+| [**getBlockTypes**](BlockApi.md#getblocktypes) | **GET** /api/v1/block/schema/workspace/{workspaceId} | Get block types for workspace |
+| [**hydrateBlocks**](BlockApi.md#hydrateblocksoperation) | **POST** /api/v1/block/environment/hydrate | Hydrate Blocks |
+| [**overwriteBlockEnvironment**](BlockApi.md#overwriteblockenvironment) | **POST** /api/v1/block/environment/overwrite | Overwrite Block Environment |
+| [**publishBlockType**](BlockApi.md#publishblocktype) | **POST** /api/v1/block/schema/ | Create a new block type |
+| [**saveBlockEnvironment**](BlockApi.md#saveblockenvironment) | **POST** /api/v1/block/environment/ | Save Block Environment |
+| [**updateBlockType**](BlockApi.md#updateblocktype) | **PUT** /api/v1/block/schema/{blockTypeId} | Update an existing block type |
+
+
 
 ## getBlockEnvironment
 
@@ -32,7 +34,7 @@ import type { GetBlockEnvironmentRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -61,11 +63,12 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name            | Type                    | Description | Notes                                                                                                                                        |
-| --------------- | ----------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **workspaceId** | `string`                |             | [Defaults to `undefined`]                                                                                                                    |
-| **type**        | `ApplicationEntityType` |             | [Defaults to `undefined`] [Enum: WORKSPACE, BLOCK_TYPE, BLOCK, USER, ENTITY, ENTITY_TYPE, WORKFLOW_DEFINITION, WORKFLOW_NODE, WORKFLOW_EDGE] |
-| **entityId**    | `string`                |             | [Defaults to `undefined`]                                                                                                                    |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
+| **type** | `ApplicationEntityType` |  | [Defaults to `undefined`] [Enum: WORKSPACE, BLOCK_TYPE, BLOCK, USER, ENTITY, ENTITY_TYPE, WORKFLOW_DEFINITION, WORKFLOW_NODE, WORKFLOW_EDGE] |
+| **entityId** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -80,16 +83,17 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                          | Response headers |
-| ----------- | ------------------------------------ | ---------------- |
-| **200**     | Environment retrieved successfully   | -                |
-| **404**     | Entity not found                     | -                |
-| **401**     | Unauthorized access                  | -                |
-| **403**     | Forbidden - insufficient permissions | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Environment retrieved successfully |  -  |
+| **404** | Entity not found |  -  |
+| **401** | Unauthorized access |  -  |
+| **403** | Forbidden - insufficient permissions |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## getBlockTypeByKey
 
@@ -102,14 +106,17 @@ Retrieves a block type by its unique key.
 ### Example
 
 ```ts
-import { Configuration, BlockApi } from '';
+import {
+  Configuration,
+  BlockApi,
+} from '';
 import type { GetBlockTypeByKeyRequest } from '';
 
 async function example() {
-  console.log('🚀 Testing  SDK...');
-  const config = new Configuration({
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
-    accessToken: 'YOUR BEARER TOKEN',
+    accessToken: "YOUR BEARER TOKEN",
   });
   const api = new BlockApi(config);
 
@@ -132,9 +139,10 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name    | Type     | Description | Notes                     |
-| ------- | -------- | ----------- | ------------------------- |
-| **key** | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **key** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -149,15 +157,16 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                       | Response headers |
-| ----------- | --------------------------------- | ---------------- |
-| **200**     | Block type retrieved successfully | -                |
-| **401**     | Unauthorized access               | -                |
-| **404**     | Block type not found              | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Block type retrieved successfully |  -  |
+| **401** | Unauthorized access |  -  |
+| **404** | Block type not found |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## getBlockTypes
 
@@ -178,7 +187,7 @@ import type { GetBlockTypesRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -203,9 +212,10 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name            | Type     | Description | Notes                     |
-| --------------- | -------- | ----------- | ------------------------- |
-| **workspaceId** | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -220,15 +230,16 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                            | Response headers |
-| ----------- | -------------------------------------- | ---------------- |
-| **200**     | Block types retrieved successfully     | -                |
-| **401**     | Unauthorized access                    | -                |
-| **404**     | No block types found for the workspace | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Block types retrieved successfully |  -  |
+| **401** | Unauthorized access |  -  |
+| **404** | No block types found for the workspace |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## hydrateBlocks
 
@@ -249,7 +260,7 @@ import type { HydrateBlocksOperationRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -274,9 +285,10 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name                     | Type                                            | Description | Notes |
-| ------------------------ | ----------------------------------------------- | ----------- | ----- |
-| **hydrateBlocksRequest** | [HydrateBlocksRequest](HydrateBlocksRequest.md) |             |       |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **hydrateBlocksRequest** | [HydrateBlocksRequest](HydrateBlocksRequest.md) |  | |
 
 ### Return type
 
@@ -291,16 +303,17 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                          | Response headers |
-| ----------- | ------------------------------------ | ---------------- |
-| **200**     | Blocks hydrated successfully         | -                |
-| **400**     | Invalid request data                 | -                |
-| **401**     | Unauthorized access                  | -                |
-| **403**     | Forbidden - insufficient permissions | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Blocks hydrated successfully |  -  |
+| **400** | Invalid request data |  -  |
+| **401** | Unauthorized access |  -  |
+| **403** | Forbidden - insufficient permissions |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## overwriteBlockEnvironment
 
@@ -321,7 +334,7 @@ import type { OverwriteBlockEnvironmentRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -346,9 +359,10 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name                            | Type                                                          | Description | Notes |
-| ------------------------------- | ------------------------------------------------------------- | ----------- | ----- |
-| **overwriteEnvironmentRequest** | [OverwriteEnvironmentRequest](OverwriteEnvironmentRequest.md) |             |       |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **overwriteEnvironmentRequest** | [OverwriteEnvironmentRequest](OverwriteEnvironmentRequest.md) |  | |
 
 ### Return type
 
@@ -363,15 +377,16 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                          | Response headers |
-| ----------- | ------------------------------------ | ---------------- |
-| **200**     | Environment overwritten successfully | -                |
-| **401**     | Unauthorized access                  | -                |
-| **400**     | Invalid request data                 | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Environment overwritten successfully |  -  |
+| **401** | Unauthorized access |  -  |
+| **400** | Invalid request data |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## publishBlockType
 
@@ -392,7 +407,7 @@ import type { PublishBlockTypeRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -417,9 +432,10 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name                       | Type                                                | Description | Notes |
-| -------------------------- | --------------------------------------------------- | ----------- | ----- |
-| **createBlockTypeRequest** | [CreateBlockTypeRequest](CreateBlockTypeRequest.md) |             |       |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **createBlockTypeRequest** | [CreateBlockTypeRequest](CreateBlockTypeRequest.md) |  | |
 
 ### Return type
 
@@ -434,15 +450,16 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                     | Response headers |
-| ----------- | ------------------------------- | ---------------- |
-| **201**     | Block type created successfully | -                |
-| **401**     | Unauthorized access             | -                |
-| **400**     | Invalid request data            | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **201** | Block type created successfully |  -  |
+| **401** | Unauthorized access |  -  |
+| **400** | Invalid request data |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## saveBlockEnvironment
 
@@ -463,7 +480,7 @@ import type { SaveBlockEnvironmentRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -488,9 +505,10 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name                       | Type                                                | Description | Notes |
-| -------------------------- | --------------------------------------------------- | ----------- | ----- |
-| **saveEnvironmentRequest** | [SaveEnvironmentRequest](SaveEnvironmentRequest.md) |             |       |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **saveEnvironmentRequest** | [SaveEnvironmentRequest](SaveEnvironmentRequest.md) |  | |
 
 ### Return type
 
@@ -505,16 +523,17 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                                    | Response headers |
-| ----------- | ---------------------------------------------- | ---------------- |
-| **200**     | Environment saved successfully                 | -                |
-| **409**     | Conflict in versioning when saving environment | -                |
-| **401**     | Unauthorized access                            | -                |
-| **400**     | Invalid request data                           | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Environment saved successfully |  -  |
+| **409** | Conflict in versioning when saving environment |  -  |
+| **401** | Unauthorized access |  -  |
+| **400** | Invalid request data |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## updateBlockType
 
@@ -535,7 +554,7 @@ import type { UpdateBlockTypeRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -562,10 +581,11 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name            | Type                      | Description | Notes                     |
-| --------------- | ------------------------- | ----------- | ------------------------- |
-| **blockTypeId** | `string`                  |             | [Defaults to `undefined`] |
-| **blockType**   | [BlockType](BlockType.md) |             |                           |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **blockTypeId** | `string` |  | [Defaults to `undefined`] |
+| **blockType** | [BlockType](BlockType.md) |  | |
 
 ### Return type
 
@@ -580,13 +600,14 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: Not defined
 
-### HTTP response details
 
-| Status code | Description                     | Response headers |
-| ----------- | ------------------------------- | ---------------- |
-| **200**     | Block type updated successfully | -                |
-| **401**     | Unauthorized access             | -                |
-| **404**     | Block type not found            | -                |
-| **400**     | Invalid request data            | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Block type updated successfully |  -  |
+| **401** | Unauthorized access |  -  |
+| **404** | Block type not found |  -  |
+| **400** | Invalid request data |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+

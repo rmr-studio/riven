@@ -1,10 +1,7 @@
-import { formatError, fromError, isResponseError } from '@/lib/util/error/error.util';
-import { handleError, validateSession, validateUuid } from '@/lib/util/service/service.util';
-import { api } from '@/lib/util/utils';
+import { fromError, normalizeApiError } from '@/lib/util/error/error.util';
+import { validateSession, validateUuid } from '@/lib/util/service/service.util';
+import { createBlockApi } from '@/lib/api/block-api';
 import { Session } from '@/lib/auth';
-import { EntityType } from '@/components/feature-modules/entity/interface/entity.interface';
-import { BlockEnvironment } from '../interface/block.interface';
-import { SaveEnvironmentRequest, SaveEnvironmentResponse } from '../interface/command.interface';
 
 /**
  * Layout Service - HTTP API Integration for Block Environment operations
@@ -14,19 +11,20 @@ export class LayoutService {
    * Load a specific layout for an entity
    *
    * @param session - User session for authentication
+   * @param workspaceId - UUID of the workspace
    * @param entityId - UUID of the entity (client, invoice, etc.)
-   * @param entityType - Type of entity (CLIENT, INVOICE, PROJECT)
+   * @param entityType - Type of entity (from ApplicationEntityType enum)
    * @returns Promise<BlockEnvironment>
    *
    * Backend API:
-   * - Endpoint: GET /api/v1/block/environment/type/:entityType/id/:entityId
+   * - Endpoint: GET /api/v1/block/environment/workspace/:workspaceId/type/:type/id/:entityId
    * - Response: BlockEnvironment object
    */
   static async loadLayout(
     session: Session | null,
     workspaceId: string | undefined,
     entityId: string | undefined,
-    entityType: EntityType,
+    entityType: ApplicationEntityType,
   ): Promise<BlockEnvironment> {
     try {
       if (!workspaceId || !entityId) {
@@ -41,36 +39,14 @@ export class LayoutService {
       validateUuid(entityId);
       validateSession(session);
 
-      const url = api();
-      const response = await fetch(
-        `${url}/v1/block/environment/workspace/${workspaceId}/type/${entityType}/id/${entityId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        },
-      );
-
-      if (response.ok) {
-        return await response.json();
-      }
-
-      const err = await handleError(
-        response,
-        (res) => `Failed to load block environment: ${res.status} ${res.statusText}`,
-      );
-      console.error('Failed to load layout:', formatError(err));
-      throw err;
+      const api = createBlockApi(session);
+      return await api.getBlockEnvironment({
+        workspaceId,
+        type: entityType,
+        entityId,
+      });
     } catch (error) {
-      if (isResponseError(error)) {
-        console.error('Failed to load layout:', formatError(error));
-        throw error;
-      }
-      const err = fromError(error);
-      console.error('Failed to load layout:', formatError(err));
-      throw err;
+      return await normalizeApiError(error);
     }
   }
 
@@ -95,34 +71,11 @@ export class LayoutService {
   ): Promise<SaveEnvironmentResponse> {
     try {
       validateSession(session);
-      const url = api();
-      const response = await fetch(`${url}/v1/block/environment/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(request),
-      });
 
-      if (response.ok) {
-        return await response.json();
-      }
-
-      const err = await handleError(
-        response,
-        (res) => `Failed to save block layout: ${res.status} ${res.statusText}`,
-      );
-      console.error('Failed to save layout:', formatError(err));
-      throw err;
+      const api = createBlockApi(session);
+      return await api.saveBlockEnvironment({ saveEnvironmentRequest: request });
     } catch (error) {
-      if (isResponseError(error)) {
-        console.error('Failed to save layout:', formatError(error));
-        throw error;
-      }
-      const err = fromError(error);
-      console.error('Failed to save layout:', formatError(err));
-      throw err;
+      return await normalizeApiError(error);
     }
   }
 }

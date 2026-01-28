@@ -1,19 +1,19 @@
-import { useBlockHydration } from '@/components/feature-modules/blocks/hooks/use-block-hydration';
-import {
-  EntityReferenceMetadata,
-  ReferenceNode,
-} from '@/components/feature-modules/blocks/interface/block.interface';
-import { Button } from '@/components/ui/button';
-import { EntityType } from '@/lib/types/types';
-import { RefreshCw } from 'lucide-react';
-import { FC, useMemo } from 'react';
-import { useTrackedEnvironment } from '../../../../context/tracked-environment-provider';
-import { UseEntityReferenceToolbar } from '../../../../hooks/use-entity-references';
-import { getTitle } from '../../../../util/block/block.util';
-import { PanelWrapper } from '../../../panel/panel-wrapper';
-import { EntityReferenceEmptyState } from './empty-state';
-import { EntityReferenceList } from './reference-list';
-import { EntityView } from './reference-view';
+import { useBlockHydration } from "@/components/feature-modules/blocks/hooks/use-block-hydration";
+import type {
+    EntityReferenceMetadata,
+    ReferenceNode,
+} from "@/lib/types/block";
+import { Button } from "@/components/ui/button";
+import type { EntityType } from "@/lib/types/entity";
+import { RefreshCw } from "lucide-react";
+import { FC, useMemo } from "react";
+import { useTrackedEnvironment } from "../../../../context/tracked-environment-provider";
+import { UseEntityReferenceToolbar } from "../../../../hooks/use-entity-references";
+import { getTitle } from "../../../../util/block/block.util";
+import { PanelWrapper } from "../../../panel/panel-wrapper";
+import { EntityReferenceEmptyState } from "./empty-state";
+import { EntityReferenceList } from "./reference-list";
+import { EntityView } from "./reference-view";
 
 interface Props {
   node: ReferenceNode;
@@ -31,13 +31,13 @@ export const EntityReference: FC<Props> = ({ node, payload }) => {
   const { error, refetch, isRefetching } = useBlockHydration(id);
   // Get entity reference toolbar actions and modal
   // Use listType if set, otherwise default to CLIENT
-  const { customActions, modal } = UseEntityReferenceToolbar({
-    blockId: id,
-    entityType: listType || EntityType.CLIENT,
-    currentItems: items || [],
-    multiSelect: true,
-    readonly: payload.readonly,
-  });
+  // const { customActions, modal } = UseEntityReferenceToolbar({
+  //   blockId: id,
+  //   entityType: listType
+  //   currentItems: items || [],
+  //   multiSelect: true,
+  //   readonly: payload.readonly,
+  // });
 
   // Quick actions for the block
   const quickActions = useMemo(() => {

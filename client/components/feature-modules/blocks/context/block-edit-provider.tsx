@@ -2,17 +2,17 @@
 
 import { get, isPayloadEqual, set } from '@/lib/util/utils';
 import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import { BlockNode, isContentNode } from '../interface/block.interface';
-import { useBlockFocus } from './block-focus-provider';
-import { useTrackedEnvironment } from './tracked-environment-provider';
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+import { type BlockNode, isContentNode } from "@/lib/types/block";
+import { useBlockFocus } from "./block-focus-provider";
+import { useTrackedEnvironment } from "./tracked-environment-provider";
 
 /* -------------------------------------------------------------------------- */
 /*                              Type Definitions                              */

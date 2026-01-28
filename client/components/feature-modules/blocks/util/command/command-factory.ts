@@ -1,5 +1,4 @@
-import { BlockNode } from '../../interface/block.interface';
-import { CommandContext, LayoutCommand } from '../../interface/command.interface';
+import type { BlockNode, CommandContext, LayoutCommand } from '@/lib/types/block';
 import {
   AddBlockCommand,
   BatchCommand,
@@ -14,13 +13,6 @@ import {
  * Factory for creating command instances
  * Provides a clean API for command creation throughout the application
  */
-type CommandCreators =
-  | CommandFactory['addBlock']
-  | CommandFactory['removeBlock']
-  | CommandFactory['moveBlock']
-  | CommandFactory['resizeBlock']
-  | CommandFactory['repositionBlock']
-  | CommandFactory['updateBlock'];
 
 export class CommandFactory {
   constructor(private context: CommandContext) {}

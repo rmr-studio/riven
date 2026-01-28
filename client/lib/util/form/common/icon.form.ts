@@ -1,9 +1,9 @@
-import { IconColour, IconType } from '@/lib/types/types';
+import { IconColour, IconType } from '@/lib/types/common';
 import { z } from 'zod';
 
 export const iconFormSchema = z.object({
   icon: z.object({
-    icon: z.nativeEnum(IconType),
+    type: z.nativeEnum(IconType),
     colour: z.nativeEnum(IconColour),
   }),
 });

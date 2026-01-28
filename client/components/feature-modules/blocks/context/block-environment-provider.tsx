@@ -10,13 +10,14 @@ import React, {
   useState,
 } from 'react';
 
-import { EntityType } from '@/lib/types/types';
-import { BlockNode, BlockTree, isContentNode } from '../interface/block.interface';
 import {
-  BlockEnvironmentContextValue,
-  BlockEnvironmentProviderProps,
-  EditorEnvironment,
-} from '../interface/editor.interface';
+  type BlockNode,
+  type BlockTree,
+  isContentNode,
+  type BlockEnvironmentContextValue,
+  type BlockEnvironmentProviderProps,
+  type EditorEnvironment,
+} from '@/lib/types/block';
 import {
   cloneEnvironment,
   collectDescendantIds,
@@ -147,7 +148,6 @@ export const BlockEnvironmentProvider: React.FC<BlockEnvironmentProviderProps> =
         }
 
         const tree: BlockTree = {
-          type: EntityType.BLOCK_TREE,
           root: block,
         };
 
@@ -487,7 +487,6 @@ export const BlockEnvironmentProvider: React.FC<BlockEnvironmentProviderProps> =
     const treeIndex = new Map(environment.treeIndex);
 
     const newTree: BlockTree = {
-      type: EntityType.BLOCK_TREE,
       root: detachedNode!,
     };
 

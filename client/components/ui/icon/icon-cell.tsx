@@ -1,9 +1,9 @@
-import { CommandItem } from '@/components/ui/command';
-import { ClassNameProps } from '@/lib/interfaces/interface';
-import { IconColour, IconType } from '@/lib/types/types';
-import { cn } from '@/lib/util/utils';
-import { memo } from 'react';
-import { ICON_COLOUR_MAP, ICON_REGISTRY } from './icon-mapper';
+import { CommandItem } from "@/components/ui/command";
+import { ClassNameProps } from "@/lib/interfaces/interface";
+import { IconColour, IconType } from "@/lib/types/common";
+import { cn } from "@/lib/util/utils";
+import { memo } from "react";
+import { ICON_COLOUR_MAP, ICON_REGISTRY } from "./icon-mapper";
 
 interface Props extends ClassNameProps {
   iconType: IconType;

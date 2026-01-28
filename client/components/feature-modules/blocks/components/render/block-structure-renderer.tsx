@@ -8,15 +8,15 @@
  * 2. Resolving bindings to extract props from block payload and child blocks
  */
 
-import { FC } from 'react';
-import { useLayoutChange } from '../../context/layout-change-provider';
-import {
-  BlockComponentNode,
-  BlockRenderStructure,
-  Metadata,
-} from '../../interface/block.interface';
-import { blockRenderRegistry } from '../../util/block/block.registry';
-import { resolveBindings } from '../../util/render/binding.resolver';
+import { FC } from "react";
+import { useLayoutChange } from "../../context/layout-change-provider";
+import type {
+    BlockComponentNode,
+    BlockRenderStructure,
+    Metadata,
+} from "@/lib/types/block";
+import { blockRenderRegistry } from "../../util/block/block.registry";
+import { resolveBindings } from "../../util/render/binding.resolver";
 
 interface BlockStructureRendererProps {
   blockId: string;

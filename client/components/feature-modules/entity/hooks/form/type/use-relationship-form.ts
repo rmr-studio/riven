@@ -1,17 +1,18 @@
-import { EntityTypeRelationshipType, EntityTypeRequestDefinition } from '@/lib/types/types';
+import {
+  EntityRelationshipDefinition,
+  EntityType,
+  EntityTypeRelationshipType,
+  EntityTypeRequestDefinition,
+  RelationshipLimit,
+  SaveRelationshipDefinitionRequest,
+  SaveTypeDefinitionRequest,
+} from '@/lib/types/entity';
 import { uuid } from '@/lib/util/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect } from 'react';
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { isUUID } from 'validator';
 import { z } from 'zod';
-import {
-  EntityRelationshipDefinition,
-  EntityType,
-  RelationshipLimit,
-  SaveRelationshipDefinitionRequest,
-  SaveTypeDefinitionRequest,
-} from '../../../interface/entity.interface';
 import {
   calculateCardinalityFromLimits,
   processCardinalityToLimits,
@@ -49,7 +50,7 @@ export const relationFormSchema = z
   // Further Validation based on relationship type for bidirectional relationship referencing
   .refine(
     (data) => {
-      if (data.relationshipType === EntityTypeRelationshipType.REFERENCE) {
+      if (data.relationshipType === EntityTypeRelationshipType.Reference) {
         return !!data.originRelationshipId && isUUID(data.originRelationshipId);
       }
       return true;
@@ -94,7 +95,7 @@ export function useEntityTypeRelationshipForm(
       bidirectionalEntityTypeKeys: relationship?.bidirectionalEntityTypeKeys || [],
       inverseName: relationship?.inverseName || '',
       // By default. Treat all new relationships as Origin type. Form would update to Reference if needed (ie. Due to overlap prompting)
-      relationshipType: relationship?.relationshipType || EntityTypeRelationshipType.ORIGIN,
+      relationshipType: relationship?.relationshipType || EntityTypeRelationshipType.Origin,
       sourceEntityTypeKey: relationship?.sourceEntityTypeKey || type.key,
       originRelationshipId: relationship?.originRelationshipId || undefined,
     },
@@ -141,14 +142,14 @@ export function useEntityTypeRelationshipForm(
     async (values: RelationshipFormValues) => {
       const id = relationship?.id ?? uuid();
       const definition: SaveRelationshipDefinitionRequest = {
-        type: EntityTypeRequestDefinition.SAVE_RELATIONSHIP,
+        type: EntityTypeRequestDefinition.SaveRelationship,
         id,
         key: type.key,
         relationship: {
           id,
           name: values.name,
           required: false,
-          protected: false,
+          _protected: false,
           entityTypeKeys: values.entityTypeKeys,
           allowPolymorphic: values.allowPolymorphic,
           bidirectional: values.bidirectional,

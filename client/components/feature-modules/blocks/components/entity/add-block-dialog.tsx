@@ -1,8 +1,8 @@
-import { CommandDialog, CommandInput } from '@/components/ui/command';
-import { FC } from 'react';
-import { useBlockTypes } from '../../hooks/use-block-types';
-import { BlockType } from '../../interface/block.interface';
-import { BlockTypeSelectorList } from '../shared/block-type-selector-list';
+import { CommandDialog, CommandInput } from "@/components/ui/command";
+import { FC } from "react";
+import { useBlockTypes } from "../../hooks/use-block-types";
+import type { BlockType } from "@/lib/types/block";
+import { BlockTypeSelectorList } from "../shared/block-type-selector-list";
 
 /**
  * Props for the AddBlockDialog component

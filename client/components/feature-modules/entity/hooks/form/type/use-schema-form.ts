@@ -1,51 +1,51 @@
-import { SchemaOptions } from '@/lib/interfaces/common.interface';
-import { EntityTypeRequestDefinition, OptionSortingType, SchemaType } from '@/lib/types/types';
-import { attributeTypes } from '@/lib/util/form/schema.util';
-import { uuid } from '@/lib/util/utils';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useCallback, useEffect } from 'react';
-import { useForm, UseFormReturn } from 'react-hook-form';
-import { z } from 'zod';
+import { SchemaOptions, SchemaType, OptionSortingType } from "@/lib/types/common";
 import {
-  EntityAttributeDefinition,
-  EntityType,
-  SaveAttributeDefinitionRequest,
-  SaveTypeDefinitionRequest,
-} from '../../../interface/entity.interface';
-import { useSaveDefinitionMutation } from '../../mutation/type/use-save-definition-mutation';
+    EntityAttributeDefinition,
+    EntityType,
+    EntityTypeRequestDefinition,
+    SaveAttributeDefinitionRequest,
+    SaveTypeDefinitionRequest,
+} from "@/lib/types/entity";
+import { attributeTypes } from "@/lib/util/form/schema.util";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useCallback, useEffect } from "react";
+import { useForm, UseFormReturn } from "react-hook-form";
+import { z } from "zod";
+import { useSaveDefinitionMutation } from "../../mutation/type/use-save-definition-mutation";
+import { uuid } from "@/lib/util/utils";
 
 // Zod schema
 export const attributeFormSchema = z
-  .object({
-    selectedType: z.nativeEnum(SchemaType),
-    name: z.string().min(1, 'Name is required'),
-    required: z.boolean(),
-    unique: z.boolean(),
-    // Attribute Schema options
-    enumValues: z.array(z.string()).optional().nullable(),
-    enumSorting: z.nativeEnum(OptionSortingType).optional().nullable(),
-    minimum: z.coerce.number().optional().nullable(),
-    maximum: z.coerce.number().optional().nullable(),
-    minLength: z.coerce.number().min(0).optional().nullable(),
-    maxLength: z.coerce.number().min(0).optional().nullable(),
-    regex: z.string().optional().nullable(),
-  })
-  .refine(
-    (data) => {
-      // If selectedType is select or multi-select, at least 2 enum values must be provided
-      if (
-        data.selectedType === SchemaType.SELECT ||
-        data.selectedType === SchemaType.MULTI_SELECT
-      ) {
-        return data.enumValues && data.enumValues.length >= 2;
-      }
-      return true;
-    },
-    {
-      message: 'At least 2 options are required for select and multi-select types',
-      path: ['enumValues'], // Attach error to the enumValues field
-    },
-  );
+    .object({
+        selectedType: z.nativeEnum(SchemaType),
+        name: z.string().min(1, "Name is required"),
+        required: z.boolean(),
+        unique: z.boolean(),
+        // Attribute Schema options
+        enumValues: z.array(z.string()).optional().nullable(),
+        enumSorting: z.nativeEnum(OptionSortingType).optional().nullable(),
+        minimum: z.coerce.number().optional().nullable(),
+        maximum: z.coerce.number().optional().nullable(),
+        minLength: z.coerce.number().min(0).optional().nullable(),
+        maxLength: z.coerce.number().min(0).optional().nullable(),
+        regex: z.string().optional().nullable(),
+    })
+    .refine(
+        (data) => {
+            // If selectedType is select or multi-select, at least 2 enum values must be provided
+            if (
+                data.selectedType === SchemaType.Select ||
+                data.selectedType === SchemaType.MultiSelect
+            ) {
+                return data.enumValues && data.enumValues.length >= 2;
+            }
+            return true;
+        },
+        {
+            message: "At least 2 options are required for select and multi-select types",
+            path: ["enumValues"], // Attach error to the enumValues field
+        }
+    );
 
 export interface useEntityTypeAttributeSchemaFormReturn {
   form: UseFormReturn<AttributeFormValues>;
@@ -65,24 +65,24 @@ export function useEntityTypeAttributeSchemaForm(
   onCancel: () => void,
   attribute?: EntityAttributeDefinition,
 ): useEntityTypeAttributeSchemaFormReturn {
-  // Always start form as blank, this is because we would want it to reset to blank when a dialogue is re-opened.
-  // Regardless of selected attribute, or previous changes.
-  const form = useForm<AttributeFormValues>({
-    resolver: zodResolver(attributeFormSchema),
-    defaultValues: {
-      selectedType: SchemaType.TEXT,
-      name: '',
-      required: false,
-      unique: false,
-      enumValues: [],
-      enumSorting: OptionSortingType.MANUAL,
-      minimum: undefined,
-      maximum: undefined,
-      minLength: undefined,
-      maxLength: undefined,
-      regex: undefined,
-    },
-  });
+    // Always start form as blank, this is because we would want it to reset to blank when a dialogue is re-opened.
+    // Regardless of selected attribute, or previous changes.
+    const form = useForm<AttributeFormValues>({
+        resolver: zodResolver(attributeFormSchema),
+        defaultValues: {
+            selectedType: SchemaType.Text,
+            name: "",
+            required: false,
+            unique: false,
+            enumValues: [],
+            enumSorting: OptionSortingType.Manual,
+            minimum: undefined,
+            maximum: undefined,
+            minLength: undefined,
+            maxLength: undefined,
+            regex: undefined,
+        },
+    });
 
   // Determines if we are currently editing an existing attribute
   const isEditMode = Boolean(attribute);
@@ -127,7 +127,7 @@ export function useEntityTypeAttributeSchemaForm(
       name: schema.label,
       required: schema.required,
       unique: schema.unique,
-      enumValues: schema.options?.enum,
+      enumValues: schema.options?._enum,
       enumSorting: schema.options?.enumSorting,
       minimum: schema.options?.minimum,
       maximum: schema.options?.maximum,
@@ -157,7 +157,7 @@ export function useEntityTypeAttributeSchemaForm(
       const id = attribute?.id || uuid();
 
       const options: SchemaOptions = {
-        enum: values.enumValues ?? undefined,
+        _enum: values.enumValues ?? undefined,
         enumSorting: values.enumSorting ?? undefined,
         minimum: values.minimum ?? undefined,
         maximum: values.maximum ?? undefined,
@@ -168,11 +168,11 @@ export function useEntityTypeAttributeSchemaForm(
 
       const definition: SaveAttributeDefinitionRequest = {
         id,
-        type: EntityTypeRequestDefinition.SAVE_SCHEMA,
+        type: EntityTypeRequestDefinition.SaveSchema,
         key: type.key,
         schema: {
           key: attributeType.key,
-          protected: false,
+          _protected: false,
           type: attributeType.type,
           format: attributeType.format,
           label: values.name,

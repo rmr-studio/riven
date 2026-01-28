@@ -4,15 +4,15 @@ import { Button } from '@/components/ui/button';
 import { DateTimePicker } from '@/components/ui/forms/date-picker/date-picker';
 import { DateTimeInput } from '@/components/ui/forms/date-picker/date-picker-input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { FC, useMemo, useState } from 'react';
-import { BlockType } from '../../../interface/block.interface';
-import { FilterSpec, getSortableFields } from '../../../util/list/list-sorting.util';
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { FC, useMemo, useState } from "react";
+import type { BlockType } from "@/lib/types/block";
+import { FilterSpec, getSortableFields } from "../../../util/list/list-sorting.util";
 
 // Operator definitions by field type
 const STRING_OPERATORS = [

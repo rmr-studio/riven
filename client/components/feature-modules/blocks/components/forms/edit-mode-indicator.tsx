@@ -1,16 +1,16 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/util/utils';
-import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, Check, Edit3, FileEdit, Layout, X } from 'lucide-react';
-import { FC, useState } from 'react';
-import { useBlockEdit } from '../../context/block-edit-provider';
-import { useBlockEnvironment } from '../../context/block-environment-provider';
-import { useLayoutChange } from '../../context/layout-change-provider';
-import { useLayoutHistory } from '../../context/layout-history-provider';
-import { useLayoutKeyboardShortcuts } from '../../hooks/use-layout-keyboard-shortcuts';
-import { BlockNode } from '../../interface/block.interface';
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/util/utils";
+import { AnimatePresence, motion } from "framer-motion";
+import { AlertCircle, Check, Edit3, FileEdit, Layout, X } from "lucide-react";
+import { FC, useState } from "react";
+import { useBlockEdit } from "../../context/block-edit-provider";
+import { useBlockEnvironment } from "../../context/block-environment-provider";
+import { useLayoutChange } from "../../context/layout-change-provider";
+import { useLayoutHistory } from "../../context/layout-history-provider";
+import { useLayoutKeyboardShortcuts } from "../../hooks/use-layout-keyboard-shortcuts";
+import type { BlockNode } from "@/lib/types/block";
 
 export const EditModeIndicator: FC = () => {
   const { getEditingCount, hasActualChanges, saveAllEdits, discardAllEdits, exitAllSessions } =

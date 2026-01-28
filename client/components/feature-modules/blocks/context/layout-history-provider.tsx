@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { LayoutSnapshot, StructuralOperationRequest } from '../interface/command.interface';
+import type { LayoutSnapshot, StructuralOperationRequest } from '@/lib/types/block';
 
 interface LayoutHistoryContextValue {
   /** Track that a non-structural layout change occurred (resize, reposition). */

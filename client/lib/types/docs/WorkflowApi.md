@@ -1,23 +1,25 @@
 # WorkflowApi
 
-All URIs are relative to _http://localhost:8081_
+All URIs are relative to *http://localhost:8081*
 
-| Method                                                                | HTTP request                                                        | Description                                        |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------- |
-| [**createEdge**](WorkflowApi.md#createedge)                           | **POST** /api/v1/workflow/graph/edges/workspace/{workspaceId}       | Create a new workflow edge                         |
-| [**deleteEdge**](WorkflowApi.md#deleteedge)                           | **DELETE** /api/v1/workflow/graph/edges/{id}                        | Delete workflow edge                               |
-| [**deleteNode**](WorkflowApi.md#deletenode)                           | **DELETE** /api/v1/workflow/graph/nodes/{id}                        | Delete workflow node (cascades to connected edges) |
-| [**deleteWorkflow**](WorkflowApi.md#deleteworkflow)                   | **DELETE** /api/v1/workflow/definitions/{id}                        | Delete workflow definition                         |
-| [**getExecution**](WorkflowApi.md#getexecution)                       | **GET** /api/v1/workflow/executions/{id}                            | Get workflow execution by ID                       |
-| [**getExecutionSummary**](WorkflowApi.md#getexecutionsummary)         | **GET** /api/v1/workflow/executions/{id}/summary                    | Get execution summary with node details            |
-| [**getWorkflow**](WorkflowApi.md#getworkflow)                         | **GET** /api/v1/workflow/definitions/{id}                           | Get workflow definition by ID                      |
-| [**getWorkflowGraph**](WorkflowApi.md#getworkflowgraph)               | **GET** /api/v1/workflow/graph/workflow/{workflowDefinitionId}      | Get complete workflow graph (nodes and edges)      |
-| [**listWorkflowExecutions**](WorkflowApi.md#listworkflowexecutions)   | **GET** /api/v1/workflow/executions/workflow/{workflowDefinitionId} | List all executions for a workflow definition      |
-| [**listWorkflows**](WorkflowApi.md#listworkflows)                     | **GET** /api/v1/workflow/definitions/workspace/{workspaceId}        | List all workflow definitions for workspace        |
-| [**listWorkspaceExecutions**](WorkflowApi.md#listworkspaceexecutions) | **GET** /api/v1/workflow/executions/workspace/{workspaceId}         | List all executions for workspace                  |
-| [**saveNode**](WorkflowApi.md#savenode)                               | **POST** /api/v1/workflow/graph/workspace/{workspaceId}/node        | Save a workflow node                               |
-| [**saveWorkflow**](WorkflowApi.md#saveworkflow)                       | **POST** /api/v1/workflow/definitions/workspace/{workspaceId}       | Save a workflow definition                         |
-| [**startExecution**](WorkflowApi.md#startexecution)                   | **POST** /api/v1/workflow/executions/start                          | Queue a workflow execution                         |
+| Method | HTTP request | Description |
+|------------- | ------------- | -------------|
+| [**createEdge**](WorkflowApi.md#createedge) | **POST** /api/v1/workflow/graph/edges/workspace/{workspaceId} | Create a new workflow edge |
+| [**deleteEdge**](WorkflowApi.md#deleteedge) | **DELETE** /api/v1/workflow/graph/edges/{id} | Delete workflow edge |
+| [**deleteNode**](WorkflowApi.md#deletenode) | **DELETE** /api/v1/workflow/graph/nodes/{id} | Delete workflow node (cascades to connected edges) |
+| [**deleteWorkflow**](WorkflowApi.md#deleteworkflow) | **DELETE** /api/v1/workflow/definitions/{id} | Delete workflow definition |
+| [**getExecution**](WorkflowApi.md#getexecution) | **GET** /api/v1/workflow/executions/{id} | Get workflow execution by ID |
+| [**getExecutionSummary**](WorkflowApi.md#getexecutionsummary) | **GET** /api/v1/workflow/executions/{id}/summary | Get execution summary with node details |
+| [**getWorkflow**](WorkflowApi.md#getworkflow) | **GET** /api/v1/workflow/definitions/{id} | Get workflow definition by ID |
+| [**getWorkflowGraph**](WorkflowApi.md#getworkflowgraph) | **GET** /api/v1/workflow/graph/workflow/{workflowDefinitionId} | Get complete workflow graph (nodes and edges) |
+| [**listWorkflowExecutions**](WorkflowApi.md#listworkflowexecutions) | **GET** /api/v1/workflow/executions/workflow/{workflowDefinitionId} | List all executions for a workflow definition |
+| [**listWorkflows**](WorkflowApi.md#listworkflows) | **GET** /api/v1/workflow/definitions/workspace/{workspaceId} | List all workflow definitions for workspace |
+| [**listWorkspaceExecutions**](WorkflowApi.md#listworkspaceexecutions) | **GET** /api/v1/workflow/executions/workspace/{workspaceId} | List all executions for workspace |
+| [**saveNode**](WorkflowApi.md#savenode) | **POST** /api/v1/workflow/graph/workspace/{workspaceId}/node | Save a workflow node |
+| [**saveWorkflow**](WorkflowApi.md#saveworkflow) | **POST** /api/v1/workflow/definitions/workspace/{workspaceId} | Save a workflow definition |
+| [**startExecution**](WorkflowApi.md#startexecution) | **POST** /api/v1/workflow/executions/start | Queue a workflow execution |
+
+
 
 ## createEdge
 
@@ -38,7 +40,7 @@ import type { CreateEdgeRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -65,10 +67,11 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name                          | Type                                                      | Description | Notes                     |
-| ----------------------------- | --------------------------------------------------------- | ----------- | ------------------------- |
-| **workspaceId**               | `string`                                                  |             | [Defaults to `undefined`] |
-| **createWorkflowEdgeRequest** | [CreateWorkflowEdgeRequest](CreateWorkflowEdgeRequest.md) |             |                           |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
+| **createWorkflowEdgeRequest** | [CreateWorkflowEdgeRequest](CreateWorkflowEdgeRequest.md) |  | |
 
 ### Return type
 
@@ -83,15 +86,16 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                             | Response headers |
-| ----------- | --------------------------------------- | ---------------- |
-| **201**     | Workflow edge created successfully      | -                |
-| **400**     | Invalid request data or nodes not found | -                |
-| **401**     | Unauthorized - authentication required  | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **201** | Workflow edge created successfully |  -  |
+| **400** | Invalid request data or nodes not found |  -  |
+| **401** | Unauthorized - authentication required |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## deleteEdge
 
@@ -112,7 +116,7 @@ import type { DeleteEdgeRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -139,10 +143,11 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name            | Type     | Description | Notes                     |
-| --------------- | -------- | ----------- | ------------------------- |
-| **id**          | `string` |             | [Defaults to `undefined`] |
-| **workspaceId** | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **id** | `string` |  | [Defaults to `undefined`] |
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -157,15 +162,16 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: Not defined
 
-### HTTP response details
 
-| Status code | Description                            | Response headers |
-| ----------- | -------------------------------------- | ---------------- |
-| **204**     | Workflow edge deleted successfully     | -                |
-| **401**     | Unauthorized - authentication required | -                |
-| **404**     | Workflow edge not found                | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **204** | Workflow edge deleted successfully |  -  |
+| **401** | Unauthorized - authentication required |  -  |
+| **404** | Workflow edge not found |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## deleteNode
 
@@ -186,7 +192,7 @@ import type { DeleteNodeRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -213,10 +219,11 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name            | Type     | Description | Notes                     |
-| --------------- | -------- | ----------- | ------------------------- |
-| **id**          | `string` |             | [Defaults to `undefined`] |
-| **workspaceId** | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **id** | `string` |  | [Defaults to `undefined`] |
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -231,15 +238,16 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: Not defined
 
-### HTTP response details
 
-| Status code | Description                                            | Response headers |
-| ----------- | ------------------------------------------------------ | ---------------- |
-| **204**     | Workflow node and connected edges deleted successfully | -                |
-| **401**     | Unauthorized - authentication required                 | -                |
-| **404**     | Workflow node not found                                | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **204** | Workflow node and connected edges deleted successfully |  -  |
+| **401** | Unauthorized - authentication required |  -  |
+| **404** | Workflow node not found |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## deleteWorkflow
 
@@ -260,7 +268,7 @@ import type { DeleteWorkflowRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -287,10 +295,11 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name            | Type     | Description | Notes                     |
-| --------------- | -------- | ----------- | ------------------------- |
-| **id**          | `string` |             | [Defaults to `undefined`] |
-| **workspaceId** | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **id** | `string` |  | [Defaults to `undefined`] |
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -305,15 +314,16 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: Not defined
 
-### HTTP response details
 
-| Status code | Description                              | Response headers |
-| ----------- | ---------------------------------------- | ---------------- |
-| **204**     | Workflow definition deleted successfully | -                |
-| **401**     | Unauthorized - authentication required   | -                |
-| **404**     | Workflow definition not found            | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **204** | Workflow definition deleted successfully |  -  |
+| **401** | Unauthorized - authentication required |  -  |
+| **404** | Workflow definition not found |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## getExecution
 
@@ -332,7 +342,7 @@ import type { GetExecutionRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -359,10 +369,11 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name            | Type     | Description | Notes                     |
-| --------------- | -------- | ----------- | ------------------------- |
-| **id**          | `string` |             | [Defaults to `undefined`] |
-| **workspaceId** | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **id** | `string` |  | [Defaults to `undefined`] |
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -377,15 +388,16 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                      | Response headers |
-| ----------- | -------------------------------- | ---------------- |
-| **200**     | Execution retrieved successfully | -                |
-| **401**     | Unauthorized access              | -                |
-| **404**     | Execution not found              | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Execution retrieved successfully |  -  |
+| **401** | Unauthorized access |  -  |
+| **404** | Execution not found |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## getExecutionSummary
 
@@ -406,7 +418,7 @@ import type { GetExecutionSummaryRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -433,10 +445,11 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name            | Type     | Description | Notes                     |
-| --------------- | -------- | ----------- | ------------------------- |
-| **id**          | `string` |             | [Defaults to `undefined`] |
-| **workspaceId** | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **id** | `string` |  | [Defaults to `undefined`] |
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -451,15 +464,16 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                              | Response headers |
-| ----------- | ---------------------------------------- | ---------------- |
-| **200**     | Execution summary retrieved successfully | -                |
-| **401**     | Unauthorized access                      | -                |
-| **404**     | Execution not found                      | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Execution summary retrieved successfully |  -  |
+| **401** | Unauthorized access |  -  |
+| **404** | Execution not found |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## getWorkflow
 
@@ -480,7 +494,7 @@ import type { GetWorkflowRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -507,10 +521,11 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name            | Type     | Description | Notes                     |
-| --------------- | -------- | ----------- | ------------------------- |
-| **id**          | `string` |             | [Defaults to `undefined`] |
-| **workspaceId** | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **id** | `string` |  | [Defaults to `undefined`] |
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -525,15 +540,16 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                                | Response headers |
-| ----------- | ------------------------------------------ | ---------------- |
-| **200**     | Workflow definition retrieved successfully | -                |
-| **401**     | Unauthorized - authentication required     | -                |
-| **404**     | Workflow definition not found              | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Workflow definition retrieved successfully |  -  |
+| **401** | Unauthorized - authentication required |  -  |
+| **404** | Workflow definition not found |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## getWorkflowGraph
 
@@ -554,7 +570,7 @@ import type { GetWorkflowGraphRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -581,10 +597,11 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name                     | Type     | Description | Notes                     |
-| ------------------------ | -------- | ----------- | ------------------------- |
-| **workflowDefinitionId** | `string` |             | [Defaults to `undefined`] |
-| **workspaceId**          | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **workflowDefinitionId** | `string` |  | [Defaults to `undefined`] |
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -599,15 +616,16 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                            | Response headers |
-| ----------- | -------------------------------------- | ---------------- |
-| **200**     | Workflow graph retrieved successfully  | -                |
-| **401**     | Unauthorized - authentication required | -                |
-| **404**     | Workflow definition not found          | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Workflow graph retrieved successfully |  -  |
+| **401** | Unauthorized - authentication required |  -  |
+| **404** | Workflow definition not found |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## listWorkflowExecutions
 
@@ -628,7 +646,7 @@ import type { ListWorkflowExecutionsRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -655,10 +673,11 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name                     | Type     | Description | Notes                     |
-| ------------------------ | -------- | ----------- | ------------------------- |
-| **workflowDefinitionId** | `string` |             | [Defaults to `undefined`] |
-| **workspaceId**          | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **workflowDefinitionId** | `string` |  | [Defaults to `undefined`] |
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -673,15 +692,16 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                       | Response headers |
-| ----------- | --------------------------------- | ---------------- |
-| **200**     | Executions retrieved successfully | -                |
-| **401**     | Unauthorized access               | -                |
-| **404**     | Workflow definition not found     | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Executions retrieved successfully |  -  |
+| **401** | Unauthorized access |  -  |
+| **404** | Workflow definition not found |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## listWorkflows
 
@@ -702,7 +722,7 @@ import type { ListWorkflowsRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -727,9 +747,10 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name            | Type     | Description | Notes                     |
-| --------------- | -------- | ----------- | ------------------------- |
-| **workspaceId** | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -744,14 +765,15 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                                 | Response headers |
-| ----------- | ------------------------------------------- | ---------------- |
-| **200**     | Workflow definitions retrieved successfully | -                |
-| **401**     | Unauthorized - authentication required      | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Workflow definitions retrieved successfully |  -  |
+| **401** | Unauthorized - authentication required |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## listWorkspaceExecutions
 
@@ -772,7 +794,7 @@ import type { ListWorkspaceExecutionsRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -797,9 +819,10 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name            | Type     | Description | Notes                     |
-| --------------- | -------- | ----------- | ------------------------- |
-| **workspaceId** | `string` |             | [Defaults to `undefined`] |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -814,14 +837,15 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                       | Response headers |
-| ----------- | --------------------------------- | ---------------- |
-| **200**     | Executions retrieved successfully | -                |
-| **401**     | Unauthorized access               | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Executions retrieved successfully |  -  |
+| **401** | Unauthorized access |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## saveNode
 
@@ -842,7 +866,7 @@ import type { SaveNodeRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -869,10 +893,11 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name                        | Type                                                  | Description | Notes                     |
-| --------------------------- | ----------------------------------------------------- | ----------- | ------------------------- |
-| **workspaceId**             | `string`                                              |             | [Defaults to `undefined`] |
-| **saveWorkflowNodeRequest** | [SaveWorkflowNodeRequest](SaveWorkflowNodeRequest.md) |             |                           |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
+| **saveWorkflowNodeRequest** | [SaveWorkflowNodeRequest](SaveWorkflowNodeRequest.md) |  | |
 
 ### Return type
 
@@ -887,16 +912,17 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                            | Response headers |
-| ----------- | -------------------------------------- | ---------------- |
-| **200**     | Workflow node saved successfully       | -                |
-| **400**     | Invalid request data                   | -                |
-| **401**     | Unauthorized - authentication required | -                |
-| **404**     | Workflow node not found (for updates)  | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Workflow node saved successfully |  -  |
+| **400** | Invalid request data |  -  |
+| **401** | Unauthorized - authentication required |  -  |
+| **404** | Workflow node not found (for updates) |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## saveWorkflow
 
@@ -917,7 +943,7 @@ import type { SaveWorkflowRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -944,10 +970,11 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name                              | Type                                                              | Description | Notes                     |
-| --------------------------------- | ----------------------------------------------------------------- | ----------- | ------------------------- |
-| **workspaceId**                   | `string`                                                          |             | [Defaults to `undefined`] |
-| **saveWorkflowDefinitionRequest** | [SaveWorkflowDefinitionRequest](SaveWorkflowDefinitionRequest.md) |             |                           |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **workspaceId** | `string` |  | [Defaults to `undefined`] |
+| **saveWorkflowDefinitionRequest** | [SaveWorkflowDefinitionRequest](SaveWorkflowDefinitionRequest.md) |  | |
 
 ### Return type
 
@@ -962,16 +989,17 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                                 | Response headers |
-| ----------- | ------------------------------------------- | ---------------- |
-| **200**     | Workflow definition saved successfully      | -                |
-| **400**     | Invalid request data                        | -                |
-| **401**     | Unauthorized - authentication required      | -                |
-| **404**     | Workflow definition not found (for updates) | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Workflow definition saved successfully |  -  |
+| **400** | Invalid request data |  -  |
+| **401** | Unauthorized - authentication required |  -  |
+| **404** | Workflow definition not found (for updates) |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 
 ## startExecution
 
@@ -990,7 +1018,7 @@ import type { StartExecutionRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
-  const config = new Configuration({
+  const config = new Configuration({ 
     // Configure HTTP bearer authorization: bearerAuth
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -1015,9 +1043,10 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name                              | Type                                                              | Description | Notes |
-| --------------------------------- | ----------------------------------------------------------------- | ----------- | ----- |
-| **startWorkflowExecutionRequest** | [StartWorkflowExecutionRequest](StartWorkflowExecutionRequest.md) |             |       |
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **startWorkflowExecutionRequest** | [StartWorkflowExecutionRequest](StartWorkflowExecutionRequest.md) |  | |
 
 ### Return type
 
@@ -1032,12 +1061,13 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `*/*`
 
-### HTTP response details
 
-| Status code | Description                            | Response headers |
-| ----------- | -------------------------------------- | ---------------- |
-| **202**     | Workflow execution queued successfully | -                |
-| **401**     | Unauthorized access                    | -                |
-| **404**     | Workflow definition not found          | -                |
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **202** | Workflow execution queued successfully |  -  |
+| **401** | Unauthorized access |  -  |
+| **404** | Workflow definition not found |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+

@@ -1,15 +1,15 @@
 import { createEntityApi } from '@/lib/api/entity-api';
-import { ResponseError as OpenApiResponseError } from '@/lib/types';
-import { normalizeApiError } from '@/lib/util/error/error.util';
-import { validateSession, validateUuid } from '@/lib/util/service/service.util';
 import { Session } from '@/lib/auth';
+import { ResponseError as OpenApiResponseError } from '@/lib/types';
 import {
   CreateEntityTypeRequest,
   DeleteTypeDefinitionRequest,
   EntityType,
   EntityTypeImpactResponse,
   SaveTypeDefinitionRequest,
-} from '../interface/entity.interface';
+} from '@/lib/types/entity';
+import { normalizeApiError } from '@/lib/util/error/error.util';
+import { validateSession, validateUuid } from '@/lib/util/service/service.util';
 
 export class EntityTypeService {
   static async getEntityTypes(session: Session | null, workspaceId: string): Promise<EntityType[]> {

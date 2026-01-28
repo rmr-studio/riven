@@ -1,9 +1,9 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { FC } from 'react';
-import { BlockType } from '../../../interface/block.interface';
-import { getSortableFields, SortSpec } from '../../../util/list/list-sorting.util';
+import { Button } from "@/components/ui/button";
+import { FC } from "react";
+import type { BlockType } from "@/lib/types/block";
+import { getSortableFields, SortSpec } from "../../../util/list/list-sorting.util";
 
 export interface ListSortControlsProps {
   blockType: BlockType;

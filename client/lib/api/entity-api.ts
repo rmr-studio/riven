@@ -1,5 +1,5 @@
-import { EntityApi, Configuration } from '@/lib/types';
-import { Session } from '@/lib/auth';
+import { EntityApi, Configuration } from "@/lib/types";
+import { Session } from "@/lib/auth";
 
 /**
  * Creates an EntityApi instance configured with session-based authentication.
@@ -10,15 +10,15 @@ import { Session } from '@/lib/auth';
  * @throws Error if session is invalid or API URL not configured
  */
 export function createEntityApi(session: Session): EntityApi {
-  const basePath = process.env.NEXT_PUBLIC_API_URL;
-  if (!basePath) {
-    throw new Error('NEXT_PUBLIC_API_URL is not configured');
-  }
+    const basePath = process.env.NEXT_PUBLIC_API_URL;
+    if (!basePath) {
+        throw new Error("NEXT_PUBLIC_API_URL is not configured");
+    }
 
-  const config = new Configuration({
-    basePath,
-    accessToken: async () => session.access_token,
-  });
+    const config = new Configuration({
+        basePath,
+        accessToken: async () => session.access_token,
+    });
 
-  return new EntityApi(config);
+    return new EntityApi(config);
 }

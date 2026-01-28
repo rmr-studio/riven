@@ -1,9 +1,8 @@
-import { EntityRelationshipDefinition } from '@/components/feature-modules/entity/interface/entity.interface';
 import { getInverseCardinality } from '@/components/feature-modules/entity/util/relationship.util';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { IconCell } from '@/components/ui/icon/icon-cell';
-import { Icon } from '@/lib/interfaces/common.interface';
-import { EntityRelationshipCardinality } from '@/lib/types/types';
+import { type Icon } from '@/lib/types/common';
+import { EntityRelationshipCardinality, EntityRelationshipDefinition } from '@/lib/types/entity';
 import { Link } from 'lucide-react';
 import { FC } from 'react';
 
@@ -21,11 +20,11 @@ const getCardinalityDescription = (
   const inverse = getInverseCardinality(cardinality);
 
   switch (inverse) {
-    case EntityRelationshipCardinality.ONE_TO_ONE:
-    case EntityRelationshipCardinality.ONE_TO_MANY:
+    case EntityRelationshipCardinality.OneToOne:
+    case EntityRelationshipCardinality.OneToMany:
       return `Stores one ${entityName.toLowerCase()} reference`;
-    case EntityRelationshipCardinality.MANY_TO_ONE:
-    case EntityRelationshipCardinality.MANY_TO_MANY:
+    case EntityRelationshipCardinality.ManyToOne:
+    case EntityRelationshipCardinality.ManyToMany:
       return `Stores unlimited ${entityName.toLowerCase()} references`;
   }
 };

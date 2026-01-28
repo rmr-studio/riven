@@ -6,8 +6,8 @@
  * - Component slots (Slot bindings)
  */
 
-import { JSONPath } from 'jsonpath-plus';
-import { BlockBinding, BlockNode, Metadata, isContentNode } from '../../interface/block.interface';
+import { JSONPath } from "jsonpath-plus";
+import { type BlockBinding, type BlockNode, type Metadata, isContentNode } from "@/lib/types/block";
 
 /**
  * Resolves all bindings for a component to produce final props.

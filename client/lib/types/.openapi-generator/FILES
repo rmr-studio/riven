@@ -176,11 +176,10 @@ docs/WorkflowExecutionRecord.md
 docs/WorkflowExecutionSummaryResponse.md
 docs/WorkflowFunctionConfig.md
 docs/WorkflowGraph.md
-docs/WorkflowHumanInteractionConfig.md
-docs/WorkflowHumanInteractionType.md
 docs/WorkflowNode.md
 docs/WorkflowNodeConfig.md
 docs/WorkflowNodeType.md
+docs/WorkflowParseConfig.md
 docs/WorkflowStatus.md
 docs/WorkflowTriggerConfig.md
 docs/WorkflowTriggerType.md
@@ -364,11 +363,10 @@ models/WorkflowExecutionRecord.ts
 models/WorkflowExecutionSummaryResponse.ts
 models/WorkflowFunctionConfig.ts
 models/WorkflowGraph.ts
-models/WorkflowHumanInteractionConfig.ts
-models/WorkflowHumanInteractionType.ts
 models/WorkflowNode.ts
 models/WorkflowNodeConfig.ts
 models/WorkflowNodeType.ts
+models/WorkflowParseConfig.ts
 models/WorkflowStatus.ts
 models/WorkflowTriggerConfig.ts
 models/WorkflowTriggerType.ts

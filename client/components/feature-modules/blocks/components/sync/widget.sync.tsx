@@ -1,15 +1,16 @@
-import { NodeType, RenderType } from '@/lib/types/types';
+import {
+  NodeType,
+  RenderType,
+  isContentNode,
+  type TreeLayout,
+  type Widget,
+  type WidgetRenderStructure,
+} from '@/lib/types/block';
 import { GridItemHTMLElement, GridStackWidget } from 'gridstack';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useBlockEnvironment } from '../../context/block-environment-provider';
 import { useGrid } from '../../context/grid-provider';
 import { useLayoutChange } from '../../context/layout-change-provider';
-import {
-  isContentNode,
-  TreeLayout,
-  Widget,
-  WidgetRenderStructure,
-} from '../../interface/block.interface';
 import { DEFAULT_WIDGET_OPTIONS, getDefaultDimensions } from '../../util/block/block.util';
 import { findNodeById, getTreeId } from '../../util/environment/environment.util';
 import { isList } from '../../util/list/list.util';
@@ -207,19 +208,17 @@ export const WidgetEnvironmentSync: React.FC = () => {
         h: height,
       };
 
-      let meta: WidgetRenderStructure;
-
       // Base definition for widget metadata
-      meta = {
+      const meta: WidgetRenderStructure = {
         id: id,
         key: blockNode.block.type.key,
-        renderType: RenderType.COMPONENT,
+        renderType: RenderType.Component,
         blockType: blockNode.type,
       };
 
       // Special handling for list/container blocks blocks => We render them differently
       if (isList(blockNode)) {
-        meta.renderType = RenderType.LIST;
+        meta.renderType = RenderType.List;
       } else {
         // Check if this block should have a subgrid (for blocks with wildcard slots)
         const renderStructure = blockNode.block.type.display.render;
@@ -228,7 +227,7 @@ export const WidgetEnvironmentSync: React.FC = () => {
         );
 
         if (hasWildcards && isContentNode(blockNode)) {
-          meta.renderType = RenderType.CONTAINER;
+          meta.renderType = RenderType.Container;
 
           // Add subgrid configuration - children will be added separately by the sync logic
           // Include a placeholder widget to keep the subgrid active when empty
@@ -282,7 +281,7 @@ export const WidgetEnvironmentSync: React.FC = () => {
       // Dont render list item widgets directly - they are part of the list's rendering
       const parsedParentMeta = parseContent(parent);
       if (!parsedParentMeta) return;
-      if (parsedParentMeta.renderType === RenderType.LIST) {
+      if (parsedParentMeta.renderType === RenderType.List) {
         return;
       }
 
@@ -314,8 +313,8 @@ export const WidgetEnvironmentSync: React.FC = () => {
       const meta: WidgetRenderStructure = {
         id: id,
         key: 'error',
-        renderType: RenderType.COMPONENT,
-        blockType: NodeType.CONTENT,
+        renderType: RenderType.Component,
+        blockType: NodeType.Content,
       };
 
       // Resolve parent node (if any) to place error widget in the correct grid

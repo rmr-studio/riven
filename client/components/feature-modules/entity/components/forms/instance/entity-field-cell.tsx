@@ -2,7 +2,7 @@
 
 import { FormWidgetProps } from '@/components/feature-modules/blocks/components/forms';
 import { FormField } from '@/components/ui/form';
-import { SchemaUUID } from '@/lib/interfaces/common.interface';
+import { SchemaUUID } from '@/lib/types/common';
 import { FC } from 'react';
 import { useFormState } from 'react-hook-form';
 import { useEntityDraft } from '../../../context/entity-provider';
@@ -67,8 +67,8 @@ export const EntityFieldCell: FC<EntityFieldCellProps> = ({ attributeId, schema,
                 errors={errorMessages}
                 autoFocus={autoFocus}
                 options={
-                  schema.options?.enum
-                    ? schema.options.enum.map((opt) => ({
+                  schema.options?._enum
+                    ? schema.options._enum.map((opt) => ({
                         label: opt,
                         value: opt,
                       }))

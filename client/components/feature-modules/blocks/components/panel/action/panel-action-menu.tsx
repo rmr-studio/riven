@@ -1,13 +1,13 @@
 import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger,
-} from '@/components/ui/context-menu';
-import { ChildNodeProps } from '@/lib/interfaces/interface';
-import { FC, Fragment, useMemo } from 'react';
-import { QuickActionItem } from '../../../interface/panel.interface';
+    ContextMenu,
+    ContextMenuContent,
+    ContextMenuItem,
+    ContextMenuSeparator,
+    ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import { ChildNodeProps } from "@/lib/interfaces/interface";
+import { FC, Fragment, useMemo } from "react";
+import type { QuickActionItem } from "@/lib/types/block";
 
 interface Props extends ChildNodeProps {
   id: string;

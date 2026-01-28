@@ -1,28 +1,5 @@
+import { EntityType, OverlapDetectionResult, RelationshipOverlap } from '@/lib/types/entity';
 import { useMemo } from 'react';
-import { EntityRelationshipDefinition, EntityType } from '../interface/entity.interface';
-
-export interface RelationshipOverlap {
-  type: 'polymorphic' | 'multi-type';
-  targetEntityKey: string;
-  targetEntityName: string;
-  existingRelationship: EntityRelationshipDefinition;
-  suggestedAction: OverlapResolution;
-  description: string;
-}
-
-export interface OverlapResolution {
-  type: 'add-to-bidirectional' | 'create-new';
-  details: {
-    relationshipKey?: string;
-    sourceEntityToAdd?: string;
-    newRelationshipName?: string;
-  };
-}
-
-export interface OverlapDetectionResult {
-  hasOverlaps: boolean;
-  overlaps: RelationshipOverlap[];
-}
 
 /**
  * Hook to detect overlapping relationships when creating a new relationship.

@@ -7,9 +7,9 @@
 
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { BlockListOrderingMode, ListFilterLogicType } from '@/lib/types/types';
-import { cn } from '@/lib/util/utils';
+import { Button } from "@/components/ui/button";
+import { BlockListOrderingMode, ListFilterLogicType } from "@/lib/types/block";
+import { cn } from "@/lib/util/utils";
 import {
   closestCenter,
   DndContext,
@@ -29,10 +29,10 @@ import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 're
 import { useBlockFocus } from '../../../context/block-focus-provider';
 import { useTrackedEnvironment } from '../../../context/tracked-environment-provider';
 import {
-  BlockListConfiguration,
-  BlockNode,
-  isContentNode,
-} from '../../../interface/block.interface';
+    type BlockListConfiguration,
+    type BlockNode,
+    isContentNode,
+} from "@/lib/types/block";
 import {
   filterChildren,
   FilterSpec,
@@ -81,43 +81,68 @@ export const ListControls: React.FC<ListControlsProps> = ({
   setActiveFilters,
   filterLogic,
 }) => {
-  const isSortedMode = currentMode === BlockListOrderingMode.SORTED;
-  const isManualMode = currentMode === BlockListOrderingMode.MANUAL;
+    const isSortedMode = currentMode === BlockListOrderingMode.Sorted;
+    const isManualMode = currentMode === BlockListOrderingMode.Manual;
 
-  return (
-    <div className="space-y-2">
-      {/* Mode toggle - only show for uni-block lists */}
-      {isUniBlock && (
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium">List Mode:</span>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              size="xs"
-              className={cn(
-                isManualMode
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80',
-              )}
-              onClick={() => onModeChange(BlockListOrderingMode.MANUAL)}
-            >
-              Manual Order
-            </Button>
-            <Button
-              type="button"
-              size="xs"
-              className={cn(
-                isSortedMode
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80',
-              )}
-              onClick={() => onModeChange(BlockListOrderingMode.SORTED)}
-            >
-              Sorted View
-            </Button>
-          </div>
-        </div>
-      )}
+    return (
+        <div className="space-y-2">
+            {/* Mode toggle - only show for uni-block lists */}
+            {isUniBlock && (
+                <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">List Mode:</span>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            type="button"
+                            size="xs"
+                            className={cn(
+                                isManualMode
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                            )}
+                            onClick={() => onModeChange(BlockListOrderingMode.Manual)}
+                        >
+                            Manual Order
+                        </Button>
+                        <Button
+                            type="button"
+                            size="xs"
+                            className={cn(
+                                isSortedMode
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                            )}
+                            onClick={() => onModeChange(BlockListOrderingMode.Sorted)}
+                        >
+                            Sorted View
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            {/* Sort/filter controls - only show in SORTED mode */}
+            {isSortedMode && uniformBlockType && (
+                <>
+                    <ListSortControls
+                        blockType={uniformBlockType}
+                        currentSort={activeSort}
+                        onSortChange={setActiveSort}
+                    />
+                    <ListFilterControls
+                        blockType={uniformBlockType}
+                        currentFilters={activeFilters}
+                        filterLogic={filterLogic}
+                        onFiltersChange={setActiveFilters}
+                    />
+                </>
+            )}
+
+            {/* Manual mode hint */}
+            {isManualMode && isUniBlock && (
+                <div className="text-xs text-muted-foreground">
+                    Drag and drop items to reorder manually
+                </div>
+            )}
+        
 
       {/* Sort/filter controls - only show in SORTED mode */}
       {isSortedMode && uniformBlockType && (
@@ -175,8 +200,8 @@ export const ContentBlockList: React.FC<ContentBlockListProps> = ({
   const [activeFilters, setActiveFilters] = useState<FilterSpec[]>(listConfig.filters || []);
   const [activeMode, setActiveMode] = useState<BlockListOrderingMode>(listConfig.mode);
 
-  // Determine effective mode - force MANUAL if not uni-block
-  const effectiveMode = isUniBlock ? activeMode : BlockListOrderingMode.MANUAL;
+    // Determine effective mode - force MANUAL if not uni-block
+    const effectiveMode = isUniBlock ? activeMode : BlockListOrderingMode.Manual;
 
   // Debounced persistence of configuration changes to backend
   useEffect(() => {

@@ -7,14 +7,14 @@
 
 'use client';
 
-import { ClassNameProps } from '@/lib/interfaces/interface';
-import { cn } from '@/lib/util/utils';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { ReactNode, useCallback, useMemo } from 'react';
-import { useTrackedEnvironment } from '../../../context/tracked-environment-provider';
-import { BlockListConfiguration } from '../../../interface/block.interface';
-import { PanelWrapper } from '../../panel/panel-wrapper';
+import { ClassNameProps } from "@/lib/interfaces/interface";
+import { cn } from "@/lib/util/utils";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { ReactNode, useCallback, useMemo } from "react";
+import { useTrackedEnvironment } from "../../../context/tracked-environment-provider";
+import type { BlockListConfiguration } from "@/lib/types/block";
+import { PanelWrapper } from "../../panel/panel-wrapper";
 
 interface Props<T> extends ClassNameProps {
   id: string;

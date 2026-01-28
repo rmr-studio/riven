@@ -1,12 +1,12 @@
-import { EntityCategory, IconColour, IconType } from '@/lib/types/types';
-import { iconFormSchema } from '@/lib/util/form/common/icon.form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { useForm, UseFormReturn } from 'react-hook-form';
-import { z } from 'zod';
-import { CreateEntityTypeRequest, EntityType } from '../../../interface/entity.interface';
-import { usePublishEntityTypeMutation } from '../../mutation/type/use-publish-type-mutation';
+import { IconColour, IconType } from "@/lib/types/common";
+import { CreateEntityTypeRequest, EntityCategory, EntityType } from "@/lib/types/entity";
+import { iconFormSchema } from "@/lib/util/form/common/icon.form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm, UseFormReturn } from "react-hook-form";
+import { z } from "zod";
+import { usePublishEntityTypeMutation } from "../../mutation/type/use-publish-type-mutation";
 
 export const baseEntityTypeFormSchema = z
   .object({
@@ -36,10 +36,10 @@ export function useNewEntityTypeForm(workspaceId: string): UseEntityTypeFormRetu
       singularName: '',
       pluralName: '',
       description: '',
-      type: EntityCategory.STANDARD,
+      type: EntityCategory.Standard,
       icon: {
-        icon: IconType.DATABASE,
-        colour: IconColour.NEUTRAL,
+        type: IconType.Database,
+        colour: IconColour.Neutral,
       },
     },
     resolver: zodResolver(baseEntityTypeFormSchema),

@@ -8,4 +8,5 @@ npx openapi-generator-cli generate \
 withSeparateModelsAndApi=true,\
 modelPackage=models,\
 apiPackage=api,\
-supportsES6=true
+supportsES6=true,\
+stringEnums=true

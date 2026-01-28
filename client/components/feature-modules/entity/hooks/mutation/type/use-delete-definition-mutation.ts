@@ -1,11 +1,11 @@
 import { useAuth } from '@/components/provider/auth-context';
-import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import {
   DeleteTypeDefinitionRequest,
   EntityType,
   EntityTypeImpactResponse,
-} from '../../../interface/entity.interface';
+} from '@/lib/types/entity';
+import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { EntityTypeService } from '../../../service/entity-type.service';
 
 export function useDeleteDefinitionMutation(

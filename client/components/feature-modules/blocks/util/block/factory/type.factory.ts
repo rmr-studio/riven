@@ -1,13 +1,14 @@
 import { now } from '@/lib/util/utils';
 import { v4 as uuid } from 'uuid';
 import {
-  BlockComponentNode,
-  BlockDisplay,
-  BlockSchema,
-  BlockType,
-  BlockTypeNesting,
-} from '../../../interface/block.interface';
-import { GridRect } from '../../../interface/layout.interface';
+  ValidationScope,
+  type BlockComponentNode,
+  type BlockDisplay,
+  type BlockSchema,
+  type BlockType,
+  type BlockTypeNesting,
+  type GridRect,
+} from '@/lib/types/block';
 
 export const DEFAULT_GRID_LAYOUT: GridRect = {
   x: 0,
@@ -59,9 +60,7 @@ const createBaseBlockType = ({
   name,
   description,
   workspaceId: workspaceId,
-  archived: false,
-  strictness: 'SOFT',
-  system: false,
+  strictness: ValidationScope.Strict
   schema,
   display,
   nesting: nesting ?? undefined,
