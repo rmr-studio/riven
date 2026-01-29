@@ -606,13 +606,17 @@ class WorkflowExecutionEndToEndIntegrationTest {
     // ========================================
 
     private fun createNode(name: String, config: Map<String, Any>): WorkflowNode {
+        // config map should have "entityTypeId" and optionally "payload"
+        val entityTypeId = config["entityTypeId"]?.toString() ?: UUID.randomUUID().toString()
+        @Suppress("UNCHECKED_CAST")
+        val payload = config["payload"] as? Map<String, String> ?: emptyMap()
         return WorkflowNode(
             id = UUID.randomUUID(),
             name = name,
             config = WorkflowCreateEntityActionConfig(
                 version = 1,
-                name = "Action Config for $name",
-                config = config
+                entityTypeId = entityTypeId,
+                payload = payload
             ),
             workspaceId = workspaceId,
             key = name.lowercase().replace(" ", "_")

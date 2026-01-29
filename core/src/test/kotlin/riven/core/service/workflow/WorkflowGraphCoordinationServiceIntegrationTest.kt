@@ -556,11 +556,8 @@ class WorkflowGraphCoordinationServiceIntegrationTest {
             name = name,
             config = WorkflowCreateEntityActionConfig(
                 version = 1,
-                name = "Create Entity Action for $name",
-                config = mapOf(
-                    "entityTypeId" to UUID.randomUUID().toString(),
-                    "payload" to mapOf("name" to name)
-                )
+                entityTypeId = UUID.randomUUID().toString(),
+                payload = mapOf("name" to name)
             ),
             workspaceId = UUID.randomUUID(),
             key = name.lowercase()

@@ -2,6 +2,7 @@ package riven.core.service.workflow
 
 import io.github.oshai.kotlinlogging.KLogger
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.*
@@ -29,6 +30,7 @@ import riven.core.models.request.workflow.UpdateWorkflowNodeRequest
 import riven.core.models.workflow.WorkflowGraphReference
 import riven.core.models.workflow.node.config.WorkflowNodeConfig
 import riven.core.models.workflow.node.config.actions.WorkflowCreateEntityActionConfig
+import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.repository.workflow.WorkflowDefinitionRepository
 import riven.core.repository.workflow.WorkflowDefinitionVersionRepository
 import riven.core.repository.workflow.WorkflowEdgeRepository
@@ -81,6 +83,12 @@ class WorkflowGraphServiceTest {
     private lateinit var activityService: ActivityService
 
     @MockitoBean
+    private lateinit var configValidationService: ConfigValidationService
+
+    @MockitoBean
+    private lateinit var expressionParserService: ExpressionParserService
+
+    @MockitoBean
     private lateinit var logger: KLogger
 
     @Autowired
@@ -89,13 +97,26 @@ class WorkflowGraphServiceTest {
     private val workspaceId = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef9876543210")
     private val userId = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef0123456789")
 
+    @BeforeEach
+    fun setUp() {
+        // Mock validation service to return valid result for all configs
+        whenever(configValidationService.validateTemplateOrUuid(any(), any()))
+            .thenReturn(emptyList())
+        whenever(configValidationService.validateTemplateMap(any(), any()))
+            .thenReturn(emptyList())
+        whenever(configValidationService.validateOptionalDuration(any(), any()))
+            .thenReturn(emptyList())
+        whenever(configValidationService.combine(any(), any(), any()))
+            .thenReturn(ConfigValidationResult.valid())
+    }
+
     /**
      * Creates a test WorkflowNodeConfig using a real implementation.
      */
     private fun createTestConfig(): WorkflowNodeConfig = WorkflowCreateEntityActionConfig(
         version = 1,
-        name = "Test Action",
-        config = mapOf("entityTypeId" to "test-type", "payload" to emptyMap<String, Any>())
+        entityTypeId = "550e8400-e29b-41d4-a716-446655440000",
+        payload = emptyMap()
     )
 
     // ------------------------------------------------------------------
