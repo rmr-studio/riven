@@ -187,7 +187,11 @@ class WorkflowCoordinationService(
                     "headers" to config.headers,
                     "body" to config.body
                 )
-                is WorkflowConditionControlConfig -> config.config
+                // CONDITION uses typed fields instead of config map
+                is WorkflowConditionControlConfig -> mapOf(
+                    "expression" to config.expression,
+                    "contextEntityId" to config.contextEntityId
+                )
                 //TODO: Add other node config types here and streamline mapping process
                 else -> emptyMap()
             }
