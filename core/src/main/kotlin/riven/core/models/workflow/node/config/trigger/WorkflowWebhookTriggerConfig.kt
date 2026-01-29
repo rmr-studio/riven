@@ -10,6 +10,8 @@ import riven.core.enums.workflow.WorkflowTriggerType
 import riven.core.models.common.http.Signature
 import riven.core.models.common.validation.Schema
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.node.config.validation.ConfigValidationResult
+import riven.core.service.workflow.ConfigValidationService
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowTriggerConfig
 
@@ -34,6 +36,24 @@ data class WorkflowWebhookTriggerConfig(
 ) : WorkflowTriggerConfig {
     override val subType: WorkflowTriggerType
         get() = WorkflowTriggerType.WEBHOOK
+
+    /**
+     * Validates this configuration.
+     *
+     * Checks:
+     * - method is valid (already enforced by enum)
+     * - authentication is valid (already enforced by enum)
+     * - signature is provided
+     * - payloadSchema is provided
+     */
+    @Suppress("UNUSED_PARAMETER")
+    fun validate(validationService: ConfigValidationService): ConfigValidationResult {
+        // method and authentication are enums, always valid if deserialized
+        // signature is non-null in constructor
+        // payloadSchema is non-null in constructor
+        // Could add deeper validation here if needed
+        return ConfigValidationResult.valid()
+    }
 
     override fun execute(
         context: WorkflowExecutionContext,
