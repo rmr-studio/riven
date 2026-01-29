@@ -22,6 +22,10 @@ import riven.core.models.workflow.node.WorkflowNode
 import riven.core.models.workflow.node.config.WorkflowNodeConfig
 import riven.core.models.workflow.node.config.actions.*
 import riven.core.models.workflow.node.config.controls.WorkflowConditionControlConfig
+import riven.core.models.workflow.node.config.trigger.WorkflowEntityEventTriggerConfig
+import riven.core.models.workflow.node.config.trigger.WorkflowFunctionTriggerConfig
+import riven.core.models.workflow.node.config.trigger.WorkflowScheduleTriggerConfig
+import riven.core.models.workflow.node.config.trigger.WorkflowWebhookTriggerConfig
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.repository.workflow.WorkflowDefinitionRepository
 import riven.core.repository.workflow.WorkflowDefinitionVersionRepository
@@ -72,13 +76,21 @@ class WorkflowGraphService(
      */
     private fun validateConfig(config: WorkflowNodeConfig): ConfigValidationResult {
         return when (config) {
+            // Action configs
             is WorkflowCreateEntityActionConfig -> config.validate(configValidationService)
             is WorkflowUpdateEntityActionConfig -> config.validate(configValidationService)
             is WorkflowDeleteEntityActionConfig -> config.validate(configValidationService)
             is WorkflowQueryEntityActionConfig -> config.validate(configValidationService)
             is WorkflowHttpRequestActionConfig -> config.validate(configValidationService)
+            // Control configs
             is WorkflowConditionControlConfig -> config.validate(configValidationService, expressionParserService)
-            else -> ConfigValidationResult.valid()  // Triggers and other types don't have validation yet
+            // Trigger configs
+            is WorkflowEntityEventTriggerConfig -> config.validate(configValidationService)
+            is WorkflowScheduleTriggerConfig -> config.validate(configValidationService)
+            is WorkflowFunctionTriggerConfig -> config.validate(configValidationService)
+            is WorkflowWebhookTriggerConfig -> config.validate(configValidationService)
+            // Other configs without validation yet
+            else -> ConfigValidationResult.valid()
         }
     }
 
