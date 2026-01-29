@@ -165,4 +165,12 @@ class ConfigValidationService(
         val allErrors = results.flatMap { it }
         return ConfigValidationResult(allErrors)
     }
+
+    /**
+     * Checks if a string value contains template syntax (e.g., {{ steps.x.output }}).
+     *
+     * @param value The string to check
+     * @return true if value contains template markers
+     */
+    fun isTemplate(value: String): Boolean = templateParserService.isTemplate(value)
 }
