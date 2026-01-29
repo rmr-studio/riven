@@ -48,8 +48,9 @@ class ConfigValidationService(
             return listOf(ConfigValidationError(fieldPath, "Required field cannot be blank"))
         }
 
-        // Check if it's a template
-        if (templateParserService.isTemplate(value)) {
+        // Check if it looks like a template (contains {{ }})
+        // isTemplate only returns true for valid templates, so we also check for {{ to catch malformed ones
+        if (templateParserService.isTemplate(value) || value.contains("{{")) {
             return validateTemplateSyntax(value, fieldPath)
         }
 
@@ -115,7 +116,8 @@ class ConfigValidationService(
             val fieldPath = "$parentPath.$fieldName"
 
             // All string values in payload can be templates
-            if (templateParserService.isTemplate(value)) {
+            // Check for {{ to catch both valid and malformed templates
+            if (templateParserService.isTemplate(value) || value.contains("{{")) {
                 validateTemplateSyntax(value, fieldPath)
             } else {
                 emptyList() // Static values are always valid
