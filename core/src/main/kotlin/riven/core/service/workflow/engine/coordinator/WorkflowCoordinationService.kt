@@ -180,7 +180,13 @@ class WorkflowCoordinationService(
                 is WorkflowUpdateEntityActionConfig -> config.config
                 is WorkflowDeleteEntityActionConfig -> config.config
                 is WorkflowQueryEntityActionConfig -> config.config
-                is WorkflowHttpRequestActionConfig -> config.config
+                // HTTP_REQUEST uses typed fields instead of config map
+                is WorkflowHttpRequestActionConfig -> mapOf(
+                    "url" to config.url,
+                    "method" to config.method,
+                    "headers" to config.headers,
+                    "body" to config.body
+                )
                 is WorkflowConditionControlConfig -> config.config
                 //TODO: Add other node config types here and streamline mapping process
                 else -> emptyMap()
