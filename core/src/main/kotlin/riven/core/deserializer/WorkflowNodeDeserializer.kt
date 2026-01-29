@@ -11,6 +11,7 @@ import riven.core.models.workflow.node.config.trigger.WorkflowEntityEventTrigger
 import riven.core.models.workflow.node.config.trigger.WorkflowFunctionTriggerConfig
 import riven.core.models.workflow.node.config.trigger.WorkflowScheduleTriggerConfig
 import riven.core.models.workflow.node.config.trigger.WorkflowWebhookTriggerConfig
+import riven.core.models.workflow.node.config.controls.WorkflowConditionControlConfig
 import riven.core.util.getEnumFromField
 
 /**
@@ -138,7 +139,7 @@ class WorkflowNodeConfigDeserializer : JsonDeserializer<WorkflowNodeConfig>() {
         )
 
         return when (subType) {
-            WorkflowControlType.CONDITION -> p.codec.treeToValue(node, WorkflowControlConfig::class.java)
+            WorkflowControlType.CONDITION -> p.codec.treeToValue(node, WorkflowConditionControlConfig::class.java)
             // TODO: Add SWITCH, LOOP, PARALLEL in Phase 5+
             else -> ctx.reportInputMismatch(
                 WorkflowControlConfig::class.java,
