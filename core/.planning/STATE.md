@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-09)
 
 **Core value:** End-to-end workflow lifecycle: create graph -> save -> execute via Temporal -> see results
-**Current focus:** Phase 7.1 - Node Configuration Development (IN PROGRESS)
+**Current focus:** Phase 7.1 - Node Configuration Development (COMPLETE)
 
 ## Current Position
 
 Phase: 7.1 of 8 (Node Configuration Development)
-Plan: 4 of 5 in current phase
-Status: In progress
-Last activity: 2026-01-29 - Completed 07.1-04-PLAN.md
+Plan: 5 of 5 in current phase
+Status: Phase complete
+Last activity: 2026-01-29 - Completed 07.1-05-PLAN.md
 
-Progress: ████████████████████████ 96% (24 of 25 plans complete)
+Progress: █████████████████████████ 100% (25 of 25 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 24
-- Average duration: ~19 minutes (0.32 hours)
-- Total execution time: 7.70 hours
+- Total plans completed: 25
+- Average duration: ~19 minutes (0.31 hours)
+- Total execution time: 7.77 hours
 
 **By Phase:**
 
@@ -36,10 +36,10 @@ Progress: ███████████████████████�
 | 6 - Backend API Layer | 3 | 0.17h | 0.06h |
 | 6.1 - Execution Queue Management | 3 | 0.18h | 0.06h |
 | 7 - Error Handling & Retry Logic | 3 | 0.13h | 0.04h |
-| 7.1 - Node Configuration Development | 4 | 0.29h | 0.07h |
+| 7.1 - Node Configuration Development | 5 | 0.36h | 0.07h |
 
 **Recent Trend:**
-- Last 5 plans: 07.1-01 (0.07h), 07.1-03 (0.07h), 07.1-02 (0.08h), 07.1-04 (0.07h)
+- Last 5 plans: 07.1-01 (0.07h), 07.1-03 (0.07h), 07.1-02 (0.08h), 07.1-04 (0.07h), 07.1-05 (0.07h)
 - Trend: Excellent velocity maintained
 
 ## Accumulated Context
@@ -83,6 +83,9 @@ Recent decisions affecting current work:
 | Coordination service extracts typed fields | Required for InputResolverService compatibility | 07.1-03 |
 | Validation runs before any database changes | Reject early, fail fast pattern | 07.1-04 |
 | Triggers return valid() for now | Graceful fallback until trigger validation added | 07.1-04 |
+| ENTITY_EVENT validates key and expressions | Non-empty validation for required fields | 07.1-05 |
+| SCHEDULE validates cronExpression/interval | Mutual exclusivity already in init block | 07.1-05 |
+| FUNCTION/WEBHOOK return valid() | Constructor enforces non-null | 07.1-05 |
 
 ### Deferred Issues
 
@@ -95,6 +98,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-29
-Stopped at: Completed 07.1-04-PLAN.md (Integration and Testing)
+Stopped at: Completed 07.1-05-PLAN.md (Trigger Configs)
 Resume file: N/A
-Next action: Continue with 07.1-05-PLAN.md (Trigger Configs)
+Next action: Phase 7.1 complete. All 25 plans executed. Ready for Phase 8.
