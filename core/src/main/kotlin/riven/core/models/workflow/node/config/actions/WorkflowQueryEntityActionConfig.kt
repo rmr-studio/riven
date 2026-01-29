@@ -10,8 +10,10 @@ import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
+import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
 import riven.core.service.entity.EntityService
+import riven.core.service.workflow.ConfigValidationService
 import java.util.*
 
 private val log = KotlinLogging.logger {}
@@ -19,10 +21,21 @@ private val log = KotlinLogging.logger {}
 /**
  * Configuration for QUERY_ENTITY action nodes.
  *
- * ## Configuration
+ * ## Configuration Properties
  *
- * Required inputs:
- * - `entityId`: String UUID of the entity to query
+ * @property entityId UUID of the entity to query (template-enabled)
+ * @property timeoutSeconds Optional timeout override in seconds
+ *
+ * ## Example Configuration
+ *
+ * ```json
+ * {
+ *   "version": 1,
+ *   "type": "ACTION",
+ *   "subType": "QUERY_ENTITY",
+ *   "entityId": "{{ steps.previous_step.output.clientId }}"
+ * }
+ * ```
  *
  * ## Output
  *
@@ -34,16 +47,6 @@ private val log = KotlinLogging.logger {}
  * - `identifier`: String unique identifier
  * - `createdAt`: Timestamp
  * - `updatedAt`: Timestamp
- *
- * ## Example Configuration
- *
- * ```json
- * {
- *   "entityId": "{{ steps.previous_step.output.clientId }}"
- * }
- * ```
- *
- * This action is commonly used to fetch entity data for use in subsequent steps.
  */
 @Schema(
     name = "WorkflowQueryEntityActionConfig",
@@ -52,9 +55,20 @@ private val log = KotlinLogging.logger {}
 @JsonTypeName("workflow_query_entity_action")
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class WorkflowQueryEntityActionConfig(
-    override val version: Int,
-    val name: String,
-    val config: Map<String, Any?>
+    override val version: Int = 1,
+
+    @Schema(
+        description = "UUID of the entity to query. Can be a static UUID or template.",
+        example = "550e8400-e29b-41d4-a716-446655440000"
+    )
+    val entityId: String,
+
+    @Schema(
+        description = "Optional timeout override in seconds",
+        nullable = true
+    )
+    val timeoutSeconds: Long? = null
+
 ) : WorkflowActionConfig {
 
     override val type: WorkflowNodeType
@@ -63,25 +77,49 @@ data class WorkflowQueryEntityActionConfig(
     override val subType: WorkflowActionType
         get() = WorkflowActionType.QUERY_ENTITY
 
+    /**
+     * Returns typed fields as a map for template resolution.
+     * Used by WorkflowCoordinationService to resolve templates before execution.
+     */
+    val config: Map<String, Any?>
+        get() = mapOf(
+            "entityId" to entityId,
+            "timeoutSeconds" to timeoutSeconds
+        )
+
+    /**
+     * Validates this configuration.
+     *
+     * Checks:
+     * - entityId is valid UUID or template
+     * - timeout is non-negative if provided
+     */
+    fun validate(validationService: ConfigValidationService): ConfigValidationResult {
+        return validationService.combine(
+            validationService.validateTemplateOrUuid(entityId, "entityId"),
+            validationService.validateOptionalDuration(timeoutSeconds, "timeoutSeconds")
+        )
+    }
+
     override fun execute(
         context: WorkflowExecutionContext,
         inputs: Map<String, Any?>,
         services: NodeServiceProvider
     ): Map<String, Any?> {
-        // Extract inputs (already resolved)
-        val entityId = UUID.fromString(inputs["entityId"] as String)
+        // Extract resolved inputs
+        val resolvedEntityId = UUID.fromString(inputs["entityId"] as String)
 
-        log.info { "Querying entity: $entityId" }
+        log.info { "Querying entity: $resolvedEntityId" }
 
         // Get EntityService on-demand
         val entityService: EntityService = services.service<EntityService>()
 
         // Fetch entity via EntityService
-        val entity = entityService.getEntity(entityId)
+        val entity = entityService.getEntity(resolvedEntityId)
 
         // Verify workspace access
         if (entity.workspaceId != context.workspaceId) {
-            throw SecurityException("Entity $entityId does not belong to workspace ${context.workspaceId}")
+            throw SecurityException("Entity $resolvedEntityId does not belong to workspace ${context.workspaceId}")
         }
 
         // Return output with full entity data
