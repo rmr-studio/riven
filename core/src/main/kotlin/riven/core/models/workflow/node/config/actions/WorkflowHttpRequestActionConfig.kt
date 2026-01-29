@@ -116,6 +116,19 @@ data class WorkflowHttpRequestActionConfig(
     override val subType: WorkflowActionType
         get() = WorkflowActionType.HTTP_REQUEST
 
+    /**
+     * Returns typed fields as a map for template resolution.
+     * Used by WorkflowCoordinationService to resolve templates before execution.
+     */
+    val config: Map<String, Any?>
+        get() = mapOf(
+            "url" to url,
+            "method" to method,
+            "headers" to headers,
+            "body" to body,
+            "timeoutSeconds" to timeoutSeconds
+        )
+
     companion object {
         private val VALID_METHODS = setOf("GET", "POST", "PUT", "DELETE", "PATCH")
         private val SENSITIVE_HEADERS = setOf(
