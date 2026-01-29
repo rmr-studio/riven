@@ -7,6 +7,9 @@ import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.util.OperationType
 import riven.core.enums.workflow.WorkflowTriggerType
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.node.config.validation.ConfigValidationError
+import riven.core.models.workflow.node.config.validation.ConfigValidationResult
+import riven.core.service.workflow.ConfigValidationService
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowTriggerConfig
 
@@ -31,6 +34,40 @@ data class WorkflowEntityEventTriggerConfig(
 ) : WorkflowTriggerConfig {
     override val subType: WorkflowTriggerType
         get() = WorkflowTriggerType.ENTITY_EVENT
+
+    /**
+     * Validates this configuration.
+     *
+     * Checks:
+     * - key is not blank (entity type key)
+     * - operation is valid (already enforced by enum)
+     * - expressions is provided (not null)
+     */
+    fun validate(validationService: ConfigValidationService): ConfigValidationResult {
+        val errors = mutableListOf<ConfigValidationError>()
+
+        // Validate key (entity type key)
+        errors.addAll(validationService.validateRequiredString(key, "key"))
+
+        // operation is an enum, so it's always valid if deserialized
+
+        // expressions should not be null (it's typed as Any which is non-null in Kotlin)
+        // but validate it has content if it's a string or collection
+        when (expressions) {
+            is String -> {
+                if ((expressions as String).isBlank()) {
+                    errors.add(ConfigValidationError("expressions", "Expressions cannot be blank"))
+                }
+            }
+            is Collection<*> -> {
+                if ((expressions as Collection<*>).isEmpty()) {
+                    errors.add(ConfigValidationError("expressions", "Expressions list cannot be empty"))
+                }
+            }
+        }
+
+        return ConfigValidationResult(errors)
+    }
 
     override fun execute(
         context: WorkflowExecutionContext,

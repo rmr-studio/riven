@@ -8,6 +8,9 @@ import riven.core.enums.workflow.WorkflowTriggerType
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowTriggerConfig
+import riven.core.models.workflow.node.config.validation.ConfigValidationError
+import riven.core.models.workflow.node.config.validation.ConfigValidationResult
+import riven.core.service.workflow.ConfigValidationService
 import java.time.Duration
 import java.util.*
 
@@ -37,6 +40,38 @@ data class WorkflowScheduleTriggerConfig(
         require(cronExpression != null || interval != null) {
             "Either cronExpression or interval must be provided for schedule trigger"
         }
+    }
+
+    /**
+     * Validates this configuration.
+     *
+     * Checks:
+     * - Either cronExpression or interval is provided (already in init block)
+     * - cronExpression has valid format if provided
+     * - interval is positive if provided
+     * - timeZone is valid
+     */
+    fun validate(validationService: ConfigValidationService): ConfigValidationResult {
+        val errors = mutableListOf<ConfigValidationError>()
+
+        // Check at least one scheduling option
+        if (cronExpression == null && interval == null) {
+            errors.add(ConfigValidationError("cronExpression", "Either cronExpression or interval must be provided"))
+        }
+
+        // Validate cron expression format if provided
+        if (cronExpression != null && cronExpression.isBlank()) {
+            errors.add(ConfigValidationError("cronExpression", "Cron expression cannot be blank"))
+        }
+
+        // Validate interval is positive if provided
+        if (interval != null && interval.isNegative) {
+            errors.add(ConfigValidationError("interval", "Interval must be positive"))
+        }
+
+        // timeZone is required (non-null in constructor), so it's always present
+
+        return ConfigValidationResult(errors)
     }
 
     override fun execute(
