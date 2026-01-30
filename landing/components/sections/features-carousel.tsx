@@ -18,6 +18,58 @@ function FeatureVisual({ icon: Icon }: { icon: React.ElementType }) {
 }
 
 export function FeaturesCarousel() {
+  const mobileCards = [
+    <BentoCard
+      key="relationships"
+      title="Instant visibility into all your relationships"
+      description="Real-time global database of every contact & company your business interacts with."
+    >
+      <FeatureVisual icon={Users} />
+    </BentoCard>,
+    <BentoCard
+      key="workflows"
+      title="Custom workflows"
+      description="Build automation that fits your exact process. No compromises, no workarounds."
+    >
+      <FeatureVisual icon={Workflow} />
+    </BentoCard>,
+    <BentoCard
+      key="intel"
+      title="Powerful relationship intel"
+      description="See all your team's conversations with a contact or company and create enriched timelines."
+    >
+      <FeatureVisual icon={Database} />
+    </BentoCard>,
+    <BentoCard
+      key="tech-stack"
+      title="Dream tech stack"
+      description="Pull in data from best-in-class SaaS tools through our API and Zapier integration."
+    >
+      <FeatureVisual icon={Zap} />
+    </BentoCard>,
+    <BentoCard
+      key="analytics"
+      title="Advanced analytics"
+      description="Get insights that matter with customizable dashboards and real-time reporting. Track every metric that moves your business forward."
+    >
+      <FeatureVisual icon={BarChart3} />
+    </BentoCard>,
+    <BentoCard
+      key="security"
+      title="Enterprise security"
+      description="Bank-level encryption, SOC 2 compliance, and granular access controls."
+    >
+      <FeatureVisual icon={Lock} />
+    </BentoCard>,
+    <BentoCard
+      key="automation"
+      title="Smart automation"
+      description="Let AI handle the repetitive tasks while you focus on building relationships."
+    >
+      <FeatureVisual icon={Workflow} />
+    </BentoCard>,
+  ];
+
   return (
     <section className="py-16 md:py-24 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
@@ -31,7 +83,7 @@ export function FeaturesCarousel() {
           </p>
         </div>
 
-        <BentoCarousel>
+        <BentoCarousel mobileCards={mobileCards}>
           {/* Slide 1: Main features */}
           <BentoSlide
             gridAreas={`

@@ -4,6 +4,58 @@ import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
+  useCarousel,
+} from "@/components/ui/carousel";
+
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const mediaQuery = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
+    setIsMobile(mediaQuery.matches);
+
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
+  }, [breakpoint]);
+
+  return isMobile;
+}
+
+function MobileCarouselNav() {
+  const { scrollPrev, scrollNext, canScrollPrev, canScrollNext } = useCarousel();
+
+  return (
+    <div className="flex justify-end gap-2 mt-6">
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={scrollPrev}
+        disabled={!canScrollPrev}
+        className="rounded-full"
+        aria-label="Previous slide"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={scrollNext}
+        disabled={!canScrollNext}
+        className="rounded-full"
+        aria-label="Next slide"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
 
 interface BentoCardProps {
   title: string;
@@ -24,18 +76,18 @@ export function BentoCard({
   return (
     <div
       className={cn(
-        "rounded-2xl bg-secondary/50 border border-border p-6 flex flex-col",
+        "rounded-2xl bg-secondary/50 border border-border p-6 flex flex-col overflow-hidden",
         className
       )}
       style={area ? { gridArea: area } : undefined}
     >
-      <div className="space-y-2">
+      <div className="space-y-2 flex-shrink-0">
         <h3 className="text-lg font-semibold">{title}</h3>
         {description && (
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="text-sm text-muted-foreground line-clamp-3">{description}</p>
         )}
       </div>
-      {children && <div className="flex-1 mt-4">{children}</div>}
+      {children && <div className="flex-1 mt-4 min-h-0 overflow-hidden">{children}</div>}
     </div>
   );
 }
@@ -77,18 +129,22 @@ interface BentoCarouselProps {
   className?: string;
   /** How much of the next slide to show (in pixels) */
   peekAmount?: number;
+  /** Cards to show in mobile single-file carousel mode */
+  mobileCards?: React.ReactNode[];
 }
 
 export function BentoCarousel({
   children,
   className,
   peekAmount = 80,
+  mobileCards,
 }: BentoCarouselProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [currentSlide, setCurrentSlide] = React.useState(0);
   const [canScrollLeft, setCanScrollLeft] = React.useState(false);
   const [canScrollRight, setCanScrollRight] = React.useState(true);
   const [isDragging, setIsDragging] = React.useState(false);
+  const isMobile = useIsMobile();
 
   // Drag state refs (using refs to avoid re-renders during drag)
   const dragStartX = React.useRef(0);
@@ -242,6 +298,29 @@ export function BentoCarousel({
     container.scrollBy({ left: scrollAmount, behavior: "smooth" });
   };
 
+  // Mobile view using shadcn carousel
+  if (isMobile && mobileCards) {
+    return (
+      <Carousel
+        className={cn("w-full", className)}
+        opts={{
+          align: "start",
+          loop: false,
+        }}
+      >
+        <CarouselContent className="-ml-2">
+          {mobileCards.map((card, index) => (
+            <CarouselItem key={index} className="pl-2 basis-[85%]">
+              <div className="h-[320px] [&>*]:h-full">{card}</div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <MobileCarouselNav />
+      </Carousel>
+    );
+  }
+
+  // Desktop view with custom implementation
   return (
     <div className={cn("relative", className)}>
       {/* Carousel container */}

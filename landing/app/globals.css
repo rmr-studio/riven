@@ -130,6 +130,15 @@
   height: calc(100dvh - 5rem - 1px);
 }
 
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 :root {
   body[data-scroll-locked][data-scroll-locked] {
     overflow: auto !important;
