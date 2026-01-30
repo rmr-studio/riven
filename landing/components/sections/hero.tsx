@@ -1,9 +1,23 @@
 import { WaitlistForm } from "@/components/waitlist-form";
+import { HeroBackground } from "@/components/ui/hero-background";
 
 export function Hero() {
   return (
     <section className="relative min-h-screen flex items-center">
-      <div className="max-w-7xl mx-auto px-4 py-12 md:px-8 md:py-16 lg:px-12 lg:py-24">
+      <HeroBackground
+        className="opacity-70 blur-xs"
+        lightImage={{
+          avif: "/images/city-skyline-hero-light.avif",
+          webp: "/images/city-skyline-hero-light.webp",
+        }}
+        darkImage={{
+          avif: "/images/city-skyline-hero-dark.avif",
+          webp: "/images/city-skyline-hero-dark.webp",
+        }}
+        alt="City skyline"
+      />
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 py-12 md:px-8 md:py-16 lg:px-12 lg:py-24">
         <div className="flex flex-col gap-8 md:flex-row md:items-center md:gap-12 lg:gap-16">
           {/* Left: Copy + Form */}
           <div className="flex-1 space-y-6">
@@ -31,7 +45,7 @@ export function Hero() {
           {/* Right: Product Visual - HERO-08 */}
           <div className="flex-1 relative md:max-w-md lg:max-w-lg">
             {/* Placeholder for product mockup/visual */}
-            <div className="aspect-[4/3] rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-border flex items-center justify-center">
+            <div className="aspect-[4/3] rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-border flex items-center justify-center backdrop-blur-sm">
               <div className="text-center p-8">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-primary/20 flex items-center justify-center">
                   <svg

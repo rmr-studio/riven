@@ -34,6 +34,37 @@
   --radius: 0.5rem;
 }
 
+.dark {
+  /* Background and foreground */
+  --background: hsl(0 0% 3.9%);
+  --foreground: hsl(0 0% 98%);
+
+  /* Primary - bold purple (anti-corporate) */
+  --primary: hsl(262 83% 68%);
+  --primary-foreground: hsl(0 0% 9%);
+
+  /* Secondary */
+  --secondary: hsl(0 0% 14.9%);
+  --secondary-foreground: hsl(0 0% 98%);
+
+  /* Muted for supporting text */
+  --muted: hsl(0 0% 14.9%);
+  --muted-foreground: hsl(0 0% 63.9%);
+
+  /* Accent */
+  --accent: hsl(0 0% 14.9%);
+  --accent-foreground: hsl(0 0% 98%);
+
+  /* Destructive for errors */
+  --destructive: hsl(0 62.8% 50.6%);
+  --destructive-foreground: hsl(0 0% 98%);
+
+  /* Border, input, ring */
+  --border: hsl(0 0% 14.9%);
+  --input: hsl(0 0% 14.9%);
+  --ring: hsl(262 83% 68%);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -61,4 +92,14 @@
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Hide scrollbar for carousel */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
