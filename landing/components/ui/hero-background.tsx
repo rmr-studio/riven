@@ -22,22 +22,7 @@ export function HeroBackground({
 }: HeroBackgroundProps) {
   return (
     <div className={cn("absolute inset-0 -z-10", className)}>
-      {/* Light mode image */}
-      <picture className="dark:hidden">
-        <source srcSet={lightImage.avif} type="image/avif" />
-        <source srcSet={lightImage.webp} type="image/webp" />
-        <Image
-          src={lightImage.webp}
-          alt={alt}
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-          style={{ objectPosition: "calc(50% - 10px) 50%" }}
-        />
-      </picture>
-      {/* Dark mode image */}
-      <picture className="hidden dark:block">
+      <picture className="">
         <source srcSet={darkImage.avif} type="image/avif" />
         <source srcSet={darkImage.webp} type="image/webp" />
         <Image
@@ -45,7 +30,7 @@ export function HeroBackground({
           alt={alt}
           fill
           sizes="100vw"
-          className="object-cover"
+          className="object-cover invert dark:invert-0 opacity-70 dark:opacity-100 transition-all"
         />
       </picture>
 

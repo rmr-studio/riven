@@ -92,6 +92,15 @@ export function FeaturesCarousel() {
             `}
             gridCols="1fr 1fr 1fr"
             gridRows="1fr 1fr"
+            md={{
+              areas: `
+                "feature feature"
+                "standard1 standard2"
+                "standard3 standard3"
+              `,
+              cols: "1fr 1fr",
+              rows: "1fr 1fr 1fr",
+            }}
           >
             <BentoCard
               area="feature"
@@ -131,6 +140,14 @@ export function FeaturesCarousel() {
             `}
             gridCols="1fr 1fr 1fr"
             gridRows="1fr 1fr"
+            md={{
+              areas: `
+                "analytics analytics"
+                "security automation"
+              `,
+              cols: "1fr 1fr",
+              rows: "1.5fr 1fr",
+            }}
           >
             <BentoCard
               area="analytics"

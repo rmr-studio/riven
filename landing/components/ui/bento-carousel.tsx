@@ -13,19 +13,42 @@ import {
   useCarousel,
 } from "@/components/ui/carousel";
 
-function useIsMobile(breakpoint = 768) {
-  const [isMobile, setIsMobile] = React.useState(false);
+export type Breakpoint = "sm" | "md" | "lg";
+
+export function useBreakpoint(): Breakpoint {
+  const [breakpoint, setBreakpoint] = React.useState<Breakpoint>("lg");
 
   React.useEffect(() => {
-    const mediaQuery = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
-    setIsMobile(mediaQuery.matches);
+    const mdQuery = window.matchMedia("(min-width: 768px)");
+    const lgQuery = window.matchMedia("(min-width: 1024px)");
 
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
-  }, [breakpoint]);
+    const updateBreakpoint = () => {
+      if (lgQuery.matches) {
+        setBreakpoint("lg");
+      } else if (mdQuery.matches) {
+        setBreakpoint("md");
+      } else {
+        setBreakpoint("sm");
+      }
+    };
 
-  return isMobile;
+    updateBreakpoint();
+
+    mdQuery.addEventListener("change", updateBreakpoint);
+    lgQuery.addEventListener("change", updateBreakpoint);
+
+    return () => {
+      mdQuery.removeEventListener("change", updateBreakpoint);
+      lgQuery.removeEventListener("change", updateBreakpoint);
+    };
+  }, []);
+
+  return breakpoint;
+}
+
+function useIsMobile() {
+  const breakpoint = useBreakpoint();
+  return breakpoint === "sm";
 }
 
 function MobileCarouselNav() {
@@ -92,15 +115,28 @@ export function BentoCard({
   );
 }
 
+interface ResponsiveGridConfig {
+  /** CSS grid-template-areas string */
+  areas?: string;
+  /** CSS grid-template-columns */
+  cols?: string;
+  /** CSS grid-template-rows */
+  rows?: string;
+}
+
 interface BentoSlideProps {
   children: React.ReactNode;
   className?: string;
-  /** CSS grid-template-areas string for custom layouts */
+  /** CSS grid-template-areas string for custom layouts (lg breakpoint) */
   gridAreas?: string;
-  /** CSS grid-template-columns */
+  /** CSS grid-template-columns (lg breakpoint) */
   gridCols?: string;
-  /** CSS grid-template-rows */
+  /** CSS grid-template-rows (lg breakpoint) */
   gridRows?: string;
+  /** Grid config for md breakpoint (768px-1023px) */
+  md?: ResponsiveGridConfig;
+  /** Grid config for lg breakpoint (1024px+), overrides gridAreas/gridCols/gridRows */
+  lg?: ResponsiveGridConfig;
 }
 
 export function BentoSlide({
@@ -109,14 +145,38 @@ export function BentoSlide({
   gridAreas,
   gridCols = "repeat(3, 1fr)",
   gridRows = "repeat(2, 1fr)",
+  md,
+  lg,
 }: BentoSlideProps) {
+  const breakpoint = useBreakpoint();
+
+  // Determine grid config based on current breakpoint
+  const getGridConfig = (): ResponsiveGridConfig => {
+    if (breakpoint === "md" && md) {
+      return {
+        areas: md.areas,
+        cols: md.cols ?? "repeat(2, 1fr)",
+        rows: md.rows ?? "auto",
+      };
+    }
+
+    // lg breakpoint or fallback
+    return {
+      areas: lg?.areas ?? gridAreas,
+      cols: lg?.cols ?? gridCols,
+      rows: lg?.rows ?? gridRows,
+    };
+  };
+
+  const config = getGridConfig();
+
   return (
     <div
       className={cn("grid gap-4 h-full", className)}
       style={{
-        gridTemplateAreas: gridAreas,
-        gridTemplateColumns: gridCols,
-        gridTemplateRows: gridRows,
+        gridTemplateAreas: config.areas,
+        gridTemplateColumns: config.cols,
+        gridTemplateRows: config.rows,
       }}
     >
       {children}

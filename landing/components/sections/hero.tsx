@@ -5,7 +5,6 @@ export function Hero() {
   return (
     <section className="relative min-h-screen flex items-center pt-20">
       <HeroBackground
-        className="opacity-70 blur-[2px] dark:blur-[1px]"
         lightImage={{
           avif: "/images/city-skyline-hero-light.avif",
           webp: "/images/city-skyline-hero-light.webp",
