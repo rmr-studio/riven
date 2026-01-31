@@ -2,14 +2,15 @@ package riven.core.service.workflow
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import riven.core.service.workflow.state.WorkflowNodeTemplateParserService
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-class TemplateParserServiceTest {
+class WorkflowNodeTemplateParserServiceTest {
 
-    private val parser = TemplateParserService()
+    private val parser = WorkflowNodeTemplateParserService()
 
     // ========== Valid Template Tests ==========
 

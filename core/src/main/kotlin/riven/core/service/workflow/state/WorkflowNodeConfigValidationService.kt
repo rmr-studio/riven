@@ -1,8 +1,9 @@
-package riven.core.service.workflow
+package riven.core.service.workflow.state
 
 import org.springframework.stereotype.Service
 import riven.core.models.workflow.node.config.validation.ConfigValidationError
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
+import java.time.Duration
 import java.util.UUID
 
 /**
@@ -21,11 +22,11 @@ import java.util.UUID
  * - Validate template SYNTAX only (not that referenced steps exist)
  * - Verify entity refs exist in workspace is service-layer concern (separate)
  *
- * @see TemplateParserService for template parsing
+ * @see WorkflowNodeTemplateParserService for template parsing
  */
 @Service
-class ConfigValidationService(
-    private val templateParserService: TemplateParserService
+class WorkflowNodeConfigValidationService(
+    private val workflowNodeTemplateParserService: WorkflowNodeTemplateParserService
 ) {
 
     /**
@@ -50,7 +51,7 @@ class ConfigValidationService(
 
         // Check if it looks like a template (contains {{ }})
         // isTemplate only returns true for valid templates, so we also check for {{ to catch malformed ones
-        if (templateParserService.isTemplate(value) || value.contains("{{")) {
+        if (workflowNodeTemplateParserService.isTemplate(value) || value.contains("{{")) {
             return validateTemplateSyntax(value, fieldPath)
         }
 
@@ -75,7 +76,7 @@ class ConfigValidationService(
      */
     fun validateTemplateSyntax(value: String, fieldPath: String): List<ConfigValidationError> {
         return try {
-            templateParserService.parse(value)
+            workflowNodeTemplateParserService.parse(value)
             emptyList()
         } catch (e: IllegalArgumentException) {
             listOf(ConfigValidationError(fieldPath, e.message ?: "Invalid template syntax"))
@@ -90,7 +91,11 @@ class ConfigValidationService(
      * @param required Whether the field is required
      * @return List of validation errors (empty if valid)
      */
-    fun validateRequiredString(value: String?, fieldPath: String, required: Boolean = true): List<ConfigValidationError> {
+    fun validateRequiredString(
+        value: String?,
+        fieldPath: String,
+        required: Boolean = true
+    ): List<ConfigValidationError> {
         if (!required) return emptyList()
 
         return when {
@@ -117,7 +122,7 @@ class ConfigValidationService(
 
             // All string values in payload can be templates
             // Check for {{ to catch both valid and malformed templates
-            if (templateParserService.isTemplate(value) || value.contains("{{")) {
+            if (workflowNodeTemplateParserService.isTemplate(value) || value.contains("{{")) {
                 validateTemplateSyntax(value, fieldPath)
             } else {
                 emptyList() // Static values are always valid
@@ -143,14 +148,21 @@ class ConfigValidationService(
                     emptyList()
                 }
             }
+
             is String -> {
                 try {
-                    java.time.Duration.parse(value)
+                    Duration.parse(value)
                     emptyList()
                 } catch (e: Exception) {
-                    listOf(ConfigValidationError(fieldPath, "Invalid duration format. Use ISO-8601 (e.g., PT30S) or seconds"))
+                    listOf(
+                        ConfigValidationError(
+                            fieldPath,
+                            "Invalid duration format. Use ISO-8601 (e.g., PT30S) or seconds"
+                        )
+                    )
                 }
             }
+
             else -> listOf(ConfigValidationError(fieldPath, "Duration must be a number (seconds) or ISO-8601 string"))
         }
     }
@@ -172,5 +184,5 @@ class ConfigValidationService(
      * @param value The string to check
      * @return true if value contains template markers
      */
-    fun isTemplate(value: String): Boolean = templateParserService.isTemplate(value)
+    fun isTemplate(value: String): Boolean = workflowNodeTemplateParserService.isTemplate(value)
 }

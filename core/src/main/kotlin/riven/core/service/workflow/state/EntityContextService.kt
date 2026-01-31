@@ -1,16 +1,17 @@
-package riven.core.service.workflow
+package riven.core.service.workflow.state
 
 import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Service
 import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.models.entity.Entity
 import riven.core.models.entity.EntityType
+import riven.core.models.entity.payload.EntityAttributePayload
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.entity.payload.EntityAttributeRelationPayload
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.entity.EntityRelationshipService
-import java.util.*
+import java.util.UUID
 
 /**
  * Service for converting entity data to expression-compatible context maps.
@@ -163,7 +164,7 @@ class EntityContextService(
      * @return Extracted value (primitive, nested map, or list of maps)
      */
     private fun extractValue(
-        payload: riven.core.models.entity.payload.EntityAttributePayload,
+        payload: EntityAttributePayload,
         fieldUuid: UUID,
         entityType: EntityType,
         workspaceId: UUID,

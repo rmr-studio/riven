@@ -16,6 +16,7 @@ import riven.core.repository.workflow.WorkflowExecutionRepository
 import riven.core.repository.workflow.projection.ExecutionSummaryProjection
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.workflow.queue.WorkflowExecutionQueueService
 import java.util.*
 
 /**
@@ -30,14 +31,14 @@ import java.util.*
  * Note: Actual Temporal dispatch is handled by ExecutionDispatcherService,
  * which processes the queue with tier-based capacity checking.
  *
- * @property executionQueueService Queue service for enqueuing execution requests
+ * @property workflowExecutionQueueService Queue service for enqueuing execution requests
  * @property workflowExecutionRepository Persistence for execution records
  * @property activityService Audit logging
  * @property authTokenService JWT extraction for user context
  */
 @Service
 class WorkflowExecutionService(
-    private val executionQueueService: ExecutionQueueService,
+    private val workflowExecutionQueueService: WorkflowExecutionQueueService,
     private val workflowExecutionRepository: WorkflowExecutionRepository,
     private val activityService: ActivityService,
     private val authTokenService: AuthTokenService,
@@ -68,7 +69,7 @@ class WorkflowExecutionService(
         logger.info { "Queueing workflow execution for definition ${request.workflowDefinitionId} in workspace ${request.workspaceId}" }
 
         // Enqueue execution request (validation happens in queue service)
-        val queueItem: ExecutionQueueEntity = executionQueueService.enqueue(
+        val queueItem: ExecutionQueueEntity = workflowExecutionQueueService.enqueue(
             workspaceId = request.workspaceId,
             workflowDefinitionId = request.workflowDefinitionId
         )

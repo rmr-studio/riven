@@ -25,7 +25,7 @@ import kotlin.reflect.KClass
  * @property applicationContext Spring's application context for bean resolution
  */
 @Service
-class SpringNodeServiceProvider(
+class WorkflowNodeServiceInjectionProvider(
     private val applicationContext: ApplicationContext
 ) : NodeServiceProvider {
 

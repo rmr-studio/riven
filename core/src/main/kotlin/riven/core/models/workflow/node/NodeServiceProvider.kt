@@ -34,10 +34,10 @@ import kotlin.reflect.KClass
  *
  * ## Implementation
  *
- * The Spring implementation ([riven.core.service.workflow.SpringNodeServiceProvider])
+ * The Spring implementation ([riven.core.service.workflow.WorkflowNodeServiceInjectionProvider])
  * wraps ApplicationContext to provide service resolution.
  *
- * @see riven.core.service.workflow.SpringNodeServiceProvider
+ * @see riven.core.service.workflow.WorkflowNodeServiceInjectionProvider
  */
 interface NodeServiceProvider {
     /**

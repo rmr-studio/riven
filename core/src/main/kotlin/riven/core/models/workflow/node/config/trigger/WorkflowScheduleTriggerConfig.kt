@@ -10,7 +10,7 @@ import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowTriggerConfig
 import riven.core.models.workflow.node.config.validation.ConfigValidationError
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
-import riven.core.service.workflow.ConfigValidationService
+import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
 import java.time.Duration
 import java.util.*
 
@@ -51,7 +51,7 @@ data class WorkflowScheduleTriggerConfig(
      * - interval is positive if provided
      * - timeZone is valid
      */
-    fun validate(validationService: ConfigValidationService): ConfigValidationResult {
+    fun validate(validationService: WorkflowNodeConfigValidationService): ConfigValidationResult {
         val errors = mutableListOf<ConfigValidationError>()
 
         // Check at least one scheduling option

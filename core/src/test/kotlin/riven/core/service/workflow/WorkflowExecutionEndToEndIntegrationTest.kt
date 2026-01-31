@@ -20,6 +20,10 @@ import riven.core.service.workflow.engine.coordinator.WorkflowGraphCoordinationS
 import riven.core.service.workflow.engine.coordinator.WorkflowGraphQueueManagementService
 import riven.core.service.workflow.engine.coordinator.WorkflowGraphTopologicalSorterService
 import riven.core.service.workflow.engine.coordinator.WorkflowGraphValidationService
+import riven.core.service.workflow.state.WorkflowNodeExpressionEvaluatorService
+import riven.core.service.workflow.state.WorkflowNodeExpressionParserService
+import riven.core.service.workflow.state.WorkflowNodeInputResolverService
+import riven.core.service.workflow.state.WorkflowNodeTemplateParserService
 import java.time.Instant
 import java.util.*
 
@@ -32,8 +36,11 @@ class WorkflowTestConfiguration {
     fun kLogger(): KLogger = KotlinLogging.logger {}
 
     @Bean
-    fun inputResolverService(templateParserService: TemplateParserService, logger: KLogger): InputResolverService {
-        return InputResolverService(templateParserService, logger)
+    fun inputResolverService(
+        workflowNodeTemplateParserService: WorkflowNodeTemplateParserService,
+        logger: KLogger
+    ): WorkflowNodeInputResolverService {
+        return WorkflowNodeInputResolverService(workflowNodeTemplateParserService, logger)
     }
 }
 
@@ -112,11 +119,11 @@ class WorkflowTestConfiguration {
         WorkflowGraphQueueManagementService::class,
 
         // Input/Template services (these need KLogger - will be provided)
-        TemplateParserService::class,
+        WorkflowNodeTemplateParserService::class,
 
         // Expression services
-        ExpressionEvaluatorService::class,
-        ExpressionParserService::class,
+        WorkflowNodeExpressionEvaluatorService::class,
+        WorkflowNodeExpressionParserService::class,
 
         // Test configuration
         WorkflowTestConfiguration::class
@@ -126,10 +133,10 @@ class WorkflowTestConfiguration {
 class WorkflowExecutionEndToEndIntegrationTest {
 
     @Autowired
-    private lateinit var inputResolverService: InputResolverService
+    private lateinit var workflowNodeInputResolverService: WorkflowNodeInputResolverService
 
     @Autowired
-    private lateinit var expressionEvaluatorService: ExpressionEvaluatorService
+    private lateinit var workflowNodeExpressionEvaluatorService: WorkflowNodeExpressionEvaluatorService
 
     private val logger = KotlinLogging.logger {}
 
@@ -294,7 +301,7 @@ class WorkflowExecutionEndToEndIntegrationTest {
             "status" to "active"
         )
 
-        val resolved = inputResolverService.resolveAll(nodeB_config, context)
+        val resolved = workflowNodeInputResolverService.resolveAll(nodeB_config, context)
 
         // Verify template was resolved
         assertEquals("entity-123", resolved["entityId"], "Template should resolve to actual entity ID")
@@ -343,7 +350,7 @@ class WorkflowExecutionEndToEndIntegrationTest {
             "timestamp" to "{{ steps.fetch_data.metadata.timestamp }}"
         )
 
-        val resolved = inputResolverService.resolveAll(config, context)
+        val resolved = workflowNodeInputResolverService.resolveAll(config, context)
 
         assertEquals("nested@example.com", resolved["email"])
         assertEquals(1234567890, resolved["timestamp"])
@@ -390,7 +397,7 @@ class WorkflowExecutionEndToEndIntegrationTest {
             "message" to "Welcome {{ steps.user.name }}, you have {{ steps.inbox.count }} messages"
         )
 
-        val resolved = inputResolverService.resolveAll(config, context)
+        val resolved = workflowNodeInputResolverService.resolveAll(config, context)
 
         assertEquals(
             "Welcome John Doe, you have 5 messages",
@@ -441,7 +448,7 @@ class WorkflowExecutionEndToEndIntegrationTest {
             "action" to "enrich"
         )
 
-        val nodeBResolved = inputResolverService.resolveAll(nodeBConfig, context)
+        val nodeBResolved = workflowNodeInputResolverService.resolveAll(nodeBConfig, context)
         assertEquals("lead-123", nodeBResolved["id"])
         assertEquals("contact@example.com", nodeBResolved["contactEmail"])
 
@@ -466,7 +473,7 @@ class WorkflowExecutionEndToEndIntegrationTest {
             "data" to "{{ steps.node_b.enrichedData }}"
         )
 
-        val nodeCResolved = inputResolverService.resolveAll(nodeCConfig, context)
+        val nodeCResolved = workflowNodeInputResolverService.resolveAll(nodeCConfig, context)
         val enrichedData = nodeCResolved["data"] as? Map<*, *>
 
         assertNotNull(enrichedData)
@@ -494,7 +501,7 @@ class WorkflowExecutionEndToEndIntegrationTest {
         )
 
         // Simple comparison
-        val expr1 = expressionEvaluatorService.evaluate(
+        val expr1 = workflowNodeExpressionEvaluatorService.evaluate(
             riven.core.models.common.Expression.BinaryOp(
                 riven.core.models.common.Expression.PropertyAccess(listOf("status")),
                 riven.core.models.common.Operator.EQUALS,
@@ -505,7 +512,7 @@ class WorkflowExecutionEndToEndIntegrationTest {
         assertEquals(true, expr1, "status = 'active' should be true")
 
         // Numeric comparison
-        val expr2 = expressionEvaluatorService.evaluate(
+        val expr2 = workflowNodeExpressionEvaluatorService.evaluate(
             riven.core.models.common.Expression.BinaryOp(
                 riven.core.models.common.Expression.PropertyAccess(listOf("count")),
                 riven.core.models.common.Operator.GREATER_THAN,
@@ -541,7 +548,7 @@ class WorkflowExecutionEndToEndIntegrationTest {
             "value" to "{{ steps.nonexistent_node.output }}"
         )
 
-        val resolved = inputResolverService.resolveAll(config, context)
+        val resolved = workflowNodeInputResolverService.resolveAll(config, context)
 
         // Should return null for missing data (graceful degradation)
         assertNull(resolved["value"], "Missing node reference should resolve to null")
@@ -608,6 +615,7 @@ class WorkflowExecutionEndToEndIntegrationTest {
     private fun createNode(name: String, config: Map<String, Any>): WorkflowNode {
         // config map should have "entityTypeId" and optionally "payload"
         val entityTypeId = config["entityTypeId"]?.toString() ?: UUID.randomUUID().toString()
+
         @Suppress("UNCHECKED_CAST")
         val payload = config["payload"] as? Map<String, String> ?: emptyMap()
         return WorkflowNode(

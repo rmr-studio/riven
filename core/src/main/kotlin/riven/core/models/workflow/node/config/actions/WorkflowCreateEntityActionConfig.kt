@@ -17,7 +17,7 @@ import riven.core.models.workflow.node.config.WorkflowActionConfig
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
 import riven.core.service.entity.EntityService
-import riven.core.service.workflow.ConfigValidationService
+import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
 import java.util.*
 
 /**
@@ -62,19 +62,19 @@ import java.util.*
 data class WorkflowCreateEntityActionConfig(
     override val version: Int = 1,
 
-    @Schema(
+    @param:Schema(
         description = "UUID of the entity type to create. Can be a static UUID or template like {{ steps.x.output.typeId }}",
         example = "550e8400-e29b-41d4-a716-446655440000"
     )
     val entityTypeId: String,
 
-    @Schema(
+    @param:Schema(
         description = "Map of attribute key to value. Values can be templates like {{ steps.x.output.field }}",
         example = """{"name": "{{ steps.fetch.output.name }}", "email": "user@example.com"}"""
     )
     val payload: Map<String, String> = emptyMap(),
 
-    @Schema(
+    @param:Schema(
         description = "Optional timeout override in seconds",
         example = "30",
         nullable = true
@@ -111,7 +111,7 @@ data class WorkflowCreateEntityActionConfig(
      * @param validationService Service for validation utilities
      * @return Validation result with any errors
      */
-    fun validate(validationService: ConfigValidationService): ConfigValidationResult {
+    fun validate(validationService: WorkflowNodeConfigValidationService): ConfigValidationResult {
         return validationService.combine(
             validationService.validateTemplateOrUuid(entityTypeId, "entityTypeId"),
             validationService.validateTemplateMap(payload, "payload"),

@@ -15,7 +15,7 @@ import riven.core.models.workflow.node.config.WorkflowActionConfig
 import riven.core.models.workflow.node.config.validation.ConfigValidationError
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
-import riven.core.service.workflow.ConfigValidationService
+import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
 import java.net.URI
 
 private val logger = KotlinLogging.logger {}
@@ -150,7 +150,7 @@ data class WorkflowHttpRequestActionConfig(
      * - body values have valid template syntax
      * - timeout is non-negative if provided
      */
-    fun validate(validationService: ConfigValidationService): ConfigValidationResult {
+    fun validate(validationService: WorkflowNodeConfigValidationService): ConfigValidationResult {
         val errors = mutableListOf<ConfigValidationError>()
 
         // Validate URL
@@ -163,7 +163,12 @@ data class WorkflowHttpRequestActionConfig(
         if (method.isBlank()) {
             errors.add(ConfigValidationError("method", "HTTP method is required"))
         } else if (method.uppercase() !in VALID_METHODS) {
-            errors.add(ConfigValidationError("method", "Invalid HTTP method. Must be one of: ${VALID_METHODS.joinToString()}"))
+            errors.add(
+                ConfigValidationError(
+                    "method",
+                    "Invalid HTTP method. Must be one of: ${VALID_METHODS.joinToString()}"
+                )
+            )
         }
 
         // Validate headers templates

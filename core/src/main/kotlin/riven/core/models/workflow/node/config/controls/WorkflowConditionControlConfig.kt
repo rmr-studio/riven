@@ -13,10 +13,10 @@ import riven.core.models.workflow.node.config.WorkflowControlConfig
 import riven.core.models.workflow.node.config.validation.ConfigValidationError
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
-import riven.core.service.workflow.ConfigValidationService
-import riven.core.service.workflow.EntityContextService
-import riven.core.service.workflow.ExpressionEvaluatorService
-import riven.core.service.workflow.ExpressionParserService
+import riven.core.service.workflow.state.EntityContextService
+import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
+import riven.core.service.workflow.state.WorkflowNodeExpressionEvaluatorService
+import riven.core.service.workflow.state.WorkflowNodeExpressionParserService
 import java.util.*
 
 private val log = KotlinLogging.logger {}
@@ -110,8 +110,8 @@ data class WorkflowConditionControlConfig(
      * The ExpressionParserService must be available for full validation.
      */
     fun validate(
-        validationService: ConfigValidationService,
-        expressionParserService: ExpressionParserService? = null
+        validationService: WorkflowNodeConfigValidationService,
+        workflowNodeExpressionParserService: WorkflowNodeExpressionParserService? = null
     ): ConfigValidationResult {
         val errors = mutableListOf<ConfigValidationError>()
 
@@ -119,9 +119,9 @@ data class WorkflowConditionControlConfig(
         errors.addAll(validationService.validateRequiredString(expression, "expression"))
 
         // Validate expression syntax if parser available
-        if (expression.isNotBlank() && expressionParserService != null) {
+        if (expression.isNotBlank() && workflowNodeExpressionParserService != null) {
             try {
-                expressionParserService.parse(expression)
+                workflowNodeExpressionParserService.parse(expression)
             } catch (e: Exception) {
                 errors.add(ConfigValidationError("expression", "Invalid expression syntax: ${e.message}"))
             }
@@ -149,8 +149,8 @@ data class WorkflowConditionControlConfig(
 
         // Get services on-demand
         val entityContextService = services.service<EntityContextService>()
-        val expressionParserService = services.service<ExpressionParserService>()
-        val expressionEvaluatorService = services.service<ExpressionEvaluatorService>()
+        val workflowNodeExpressionParserService = services.service<WorkflowNodeExpressionParserService>()
+        val workflowNodeExpressionEvaluatorService = services.service<WorkflowNodeExpressionEvaluatorService>()
 
         // Resolve entity context if provided
         val evaluationContext: Map<String, Any?> = if (resolvedContextEntityId != null) {
@@ -161,8 +161,8 @@ data class WorkflowConditionControlConfig(
         }
 
         // Parse and evaluate expression
-        val ast = expressionParserService.parse(resolvedExpression)
-        val result = expressionEvaluatorService.evaluate(ast, evaluationContext)
+        val ast = workflowNodeExpressionParserService.parse(resolvedExpression)
+        val result = workflowNodeExpressionEvaluatorService.evaluate(ast, evaluationContext)
 
         // Validate boolean result
         if (result !is Boolean) {

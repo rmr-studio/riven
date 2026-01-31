@@ -1,4 +1,4 @@
-package riven.core.service.workflow
+package riven.core.service.workflow.queue
 
 import io.github.oshai.kotlinlogging.KLogger
 import io.temporal.client.WorkflowClient
@@ -33,8 +33,8 @@ import java.util.*
  * - Long-running dispatches don't block the entire batch
  */
 @Service
-class ExecutionQueueProcessorService(
-    private val executionQueueService: ExecutionQueueService,
+class WorkflowExecutionQueueProcessorService(
+    private val workflowExecutionQueueService: WorkflowExecutionQueueService,
     private val workflowExecutionRepository: WorkflowExecutionRepository,
     private val workflowDefinitionRepository: WorkflowDefinitionRepository,
     private val executionQueueRepository: ExecutionQueueRepository,
@@ -82,13 +82,13 @@ class ExecutionQueueProcessorService(
      */
     private fun processQueueItem(item: ExecutionQueueEntity) {
         // Mark as claimed
-        executionQueueService.markClaimed(item)
+        workflowExecutionQueueService.markClaimed(item)
 
         // Get workspace and check tier capacity
         val workspace = workspaceRepository.findById(item.workspaceId).orElse(null)
         if (workspace == null) {
             logger.warn { "Workspace ${item.workspaceId} not found, marking item ${item.id} as failed" }
-            executionQueueService.markFailed(item, "Workspace not found")
+            workflowExecutionQueueService.markFailed(item, "Workspace not found")
             return
         }
 
@@ -101,7 +101,7 @@ class ExecutionQueueProcessorService(
                 "Workspace ${item.workspaceId} at capacity ($activeCount/${tier.maxConcurrentWorkflows}), " +
                         "releasing item ${item.id} back to queue"
             }
-            executionQueueService.releaseToPending(item)
+            workflowExecutionQueueService.releaseToPending(item)
             return
         }
 
@@ -122,7 +122,7 @@ class ExecutionQueueProcessorService(
         // Fetch workflow definition and version
         val workflowDefinition = workflowDefinitionRepository.findById(item.workflowDefinitionId).orElse(null)
         if (workflowDefinition == null) {
-            executionQueueService.markFailed(item, "Workflow definition not found")
+            workflowExecutionQueueService.markFailed(item, "Workflow definition not found")
             return
         }
 
@@ -132,7 +132,7 @@ class ExecutionQueueProcessorService(
                 workflowDefinition.versionNumber
             )
         if (workflowVersion == null) {
-            executionQueueService.markFailed(item, "Workflow version not found")
+            workflowExecutionQueueService.markFailed(item, "Workflow version not found")
             return
         }
 
@@ -147,7 +147,7 @@ class ExecutionQueueProcessorService(
         // This ensures the execution can be reused on retry if Temporal start fails.
         // Always update if different (handles case where previous execution was deleted).
         if (item.executionId != id) {
-            executionQueueService.setExecutionId(item, id)
+            workflowExecutionQueueService.setExecutionId(item, id)
         }
 
         // Start Temporal workflow
@@ -169,7 +169,7 @@ class ExecutionQueueProcessorService(
             WorkflowClient.start { workflowStub.execute(workflowInput) }
 
             // Mark queue item as dispatched
-            executionQueueService.markDispatched(item)
+            workflowExecutionQueueService.markDispatched(item)
 
             logger.info { "Dispatched execution $id for queue item ${item.id}" }
 
@@ -245,10 +245,10 @@ class ExecutionQueueProcessorService(
 
         if (item.attemptCount >= MAX_ATTEMPTS) {
             // Max attempts reached - mark as failed
-            executionQueueService.markFailed(item, error.message ?: "Unknown error")
+            workflowExecutionQueueService.markFailed(item, error.message ?: "Unknown error")
         } else {
             // Release for retry
-            executionQueueService.releaseToPending(item)
+            workflowExecutionQueueService.releaseToPending(item)
         }
     }
 }

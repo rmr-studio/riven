@@ -5,16 +5,18 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import riven.core.models.workflow.node.config.validation.ConfigValidationError
+import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
+import riven.core.service.workflow.state.WorkflowNodeTemplateParserService
 
-class ConfigValidationServiceTest {
+class WorkflowNodeConfigValidationServiceTest {
 
-    private lateinit var templateParserService: TemplateParserService
-    private lateinit var configValidationService: ConfigValidationService
+    private lateinit var workflowNodeTemplateParserService: WorkflowNodeTemplateParserService
+    private lateinit var workflowNodeConfigValidationService: WorkflowNodeConfigValidationService
 
     @BeforeEach
     fun setUp() {
-        templateParserService = TemplateParserService()
-        configValidationService = ConfigValidationService(templateParserService)
+        workflowNodeTemplateParserService = WorkflowNodeTemplateParserService()
+        workflowNodeConfigValidationService = WorkflowNodeConfigValidationService(workflowNodeTemplateParserService)
     }
 
     @Nested
@@ -22,7 +24,7 @@ class ConfigValidationServiceTest {
 
         @Test
         fun `returns empty for valid UUID`() {
-            val errors = configValidationService.validateTemplateOrUuid(
+            val errors = workflowNodeConfigValidationService.validateTemplateOrUuid(
                 "550e8400-e29b-41d4-a716-446655440000",
                 "entityTypeId"
             )
@@ -31,7 +33,7 @@ class ConfigValidationServiceTest {
 
         @Test
         fun `returns empty for valid template`() {
-            val errors = configValidationService.validateTemplateOrUuid(
+            val errors = workflowNodeConfigValidationService.validateTemplateOrUuid(
                 "{{ steps.fetch.output.id }}",
                 "entityTypeId"
             )
@@ -40,7 +42,7 @@ class ConfigValidationServiceTest {
 
         @Test
         fun `returns error for null value`() {
-            val errors = configValidationService.validateTemplateOrUuid(null, "entityTypeId")
+            val errors = workflowNodeConfigValidationService.validateTemplateOrUuid(null, "entityTypeId")
             assertEquals(1, errors.size)
             assertEquals("entityTypeId", errors[0].field)
             assertTrue(errors[0].message.contains("null"))
@@ -48,7 +50,7 @@ class ConfigValidationServiceTest {
 
         @Test
         fun `returns error for blank value`() {
-            val errors = configValidationService.validateTemplateOrUuid("  ", "entityTypeId")
+            val errors = workflowNodeConfigValidationService.validateTemplateOrUuid("  ", "entityTypeId")
             assertEquals(1, errors.size)
             assertEquals("entityTypeId", errors[0].field)
             assertTrue(errors[0].message.contains("blank"))
@@ -56,7 +58,7 @@ class ConfigValidationServiceTest {
 
         @Test
         fun `returns error for invalid UUID and non-template`() {
-            val errors = configValidationService.validateTemplateOrUuid(
+            val errors = workflowNodeConfigValidationService.validateTemplateOrUuid(
                 "not-a-uuid",
                 "entityTypeId"
             )
@@ -67,7 +69,7 @@ class ConfigValidationServiceTest {
 
         @Test
         fun `returns error for malformed template`() {
-            val errors = configValidationService.validateTemplateOrUuid(
+            val errors = workflowNodeConfigValidationService.validateTemplateOrUuid(
                 "{{ }}",
                 "entityTypeId"
             )
@@ -82,7 +84,7 @@ class ConfigValidationServiceTest {
 
         @Test
         fun `returns empty for valid simple template`() {
-            val errors = configValidationService.validateTemplateSyntax(
+            val errors = workflowNodeConfigValidationService.validateTemplateSyntax(
                 "{{ steps.node.output }}",
                 "field"
             )
@@ -91,7 +93,7 @@ class ConfigValidationServiceTest {
 
         @Test
         fun `returns empty for valid nested template`() {
-            val errors = configValidationService.validateTemplateSyntax(
+            val errors = workflowNodeConfigValidationService.validateTemplateSyntax(
                 "{{ steps.node.output.nested.value }}",
                 "field"
             )
@@ -100,7 +102,7 @@ class ConfigValidationServiceTest {
 
         @Test
         fun `returns empty for embedded template`() {
-            val errors = configValidationService.validateTemplateSyntax(
+            val errors = workflowNodeConfigValidationService.validateTemplateSyntax(
                 "Hello {{ steps.user.output.name }}!",
                 "field"
             )
@@ -109,7 +111,7 @@ class ConfigValidationServiceTest {
 
         @Test
         fun `returns empty for static value (not a template)`() {
-            val errors = configValidationService.validateTemplateSyntax(
+            val errors = workflowNodeConfigValidationService.validateTemplateSyntax(
                 "static value",
                 "field"
             )
@@ -118,14 +120,14 @@ class ConfigValidationServiceTest {
 
         @Test
         fun `returns error for empty template`() {
-            val errors = configValidationService.validateTemplateSyntax("{{ }}", "field")
+            val errors = workflowNodeConfigValidationService.validateTemplateSyntax("{{ }}", "field")
             assertEquals(1, errors.size)
             assertEquals("field", errors[0].field)
         }
 
         @Test
         fun `returns error for empty path segment`() {
-            val errors = configValidationService.validateTemplateSyntax(
+            val errors = workflowNodeConfigValidationService.validateTemplateSyntax(
                 "{{ steps..output }}",
                 "field"
             )
@@ -139,26 +141,26 @@ class ConfigValidationServiceTest {
 
         @Test
         fun `returns empty for non-null non-blank value`() {
-            val errors = configValidationService.validateRequiredString("value", "field")
+            val errors = workflowNodeConfigValidationService.validateRequiredString("value", "field")
             assertTrue(errors.isEmpty())
         }
 
         @Test
         fun `returns error for null when required`() {
-            val errors = configValidationService.validateRequiredString(null, "field", required = true)
+            val errors = workflowNodeConfigValidationService.validateRequiredString(null, "field", required = true)
             assertEquals(1, errors.size)
             assertEquals("field", errors[0].field)
         }
 
         @Test
         fun `returns error for blank when required`() {
-            val errors = configValidationService.validateRequiredString("  ", "field", required = true)
+            val errors = workflowNodeConfigValidationService.validateRequiredString("  ", "field", required = true)
             assertEquals(1, errors.size)
         }
 
         @Test
         fun `returns empty for null when not required`() {
-            val errors = configValidationService.validateRequiredString(null, "field", required = false)
+            val errors = workflowNodeConfigValidationService.validateRequiredString(null, "field", required = false)
             assertTrue(errors.isEmpty())
         }
     }
@@ -168,19 +170,19 @@ class ConfigValidationServiceTest {
 
         @Test
         fun `returns empty for null map`() {
-            val errors = configValidationService.validateTemplateMap(null, "payload")
+            val errors = workflowNodeConfigValidationService.validateTemplateMap(null, "payload")
             assertTrue(errors.isEmpty())
         }
 
         @Test
         fun `returns empty for empty map`() {
-            val errors = configValidationService.validateTemplateMap(emptyMap(), "payload")
+            val errors = workflowNodeConfigValidationService.validateTemplateMap(emptyMap(), "payload")
             assertTrue(errors.isEmpty())
         }
 
         @Test
         fun `returns empty for valid static values`() {
-            val errors = configValidationService.validateTemplateMap(
+            val errors = workflowNodeConfigValidationService.validateTemplateMap(
                 mapOf("name" to "John", "email" to "john@example.com"),
                 "payload"
             )
@@ -189,7 +191,7 @@ class ConfigValidationServiceTest {
 
         @Test
         fun `returns empty for valid templates`() {
-            val errors = configValidationService.validateTemplateMap(
+            val errors = workflowNodeConfigValidationService.validateTemplateMap(
                 mapOf(
                     "name" to "{{ steps.fetch.output.name }}",
                     "email" to "{{ steps.fetch.output.email }}"
@@ -201,7 +203,7 @@ class ConfigValidationServiceTest {
 
         @Test
         fun `returns error for invalid template in map`() {
-            val errors = configValidationService.validateTemplateMap(
+            val errors = workflowNodeConfigValidationService.validateTemplateMap(
                 mapOf(
                     "name" to "{{ steps.fetch.output.name }}",
                     "email" to "{{ }}"  // Invalid
@@ -214,7 +216,7 @@ class ConfigValidationServiceTest {
 
         @Test
         fun `returns multiple errors for multiple invalid templates`() {
-            val errors = configValidationService.validateTemplateMap(
+            val errors = workflowNodeConfigValidationService.validateTemplateMap(
                 mapOf(
                     "name" to "{{ }}",
                     "email" to "{{ steps..output }}"
@@ -232,38 +234,38 @@ class ConfigValidationServiceTest {
 
         @Test
         fun `returns empty for null`() {
-            val errors = configValidationService.validateOptionalDuration(null, "timeout")
+            val errors = workflowNodeConfigValidationService.validateOptionalDuration(null, "timeout")
             assertTrue(errors.isEmpty())
         }
 
         @Test
         fun `returns empty for positive seconds`() {
-            val errors = configValidationService.validateOptionalDuration(30L, "timeout")
+            val errors = workflowNodeConfigValidationService.validateOptionalDuration(30L, "timeout")
             assertTrue(errors.isEmpty())
         }
 
         @Test
         fun `returns empty for zero seconds`() {
-            val errors = configValidationService.validateOptionalDuration(0L, "timeout")
+            val errors = workflowNodeConfigValidationService.validateOptionalDuration(0L, "timeout")
             assertTrue(errors.isEmpty())
         }
 
         @Test
         fun `returns error for negative seconds`() {
-            val errors = configValidationService.validateOptionalDuration(-5L, "timeout")
+            val errors = workflowNodeConfigValidationService.validateOptionalDuration(-5L, "timeout")
             assertEquals(1, errors.size)
             assertTrue(errors[0].message.contains("negative"))
         }
 
         @Test
         fun `returns empty for valid ISO-8601 duration`() {
-            val errors = configValidationService.validateOptionalDuration("PT30S", "timeout")
+            val errors = workflowNodeConfigValidationService.validateOptionalDuration("PT30S", "timeout")
             assertTrue(errors.isEmpty())
         }
 
         @Test
         fun `returns error for invalid ISO-8601 duration`() {
-            val errors = configValidationService.validateOptionalDuration("invalid", "timeout")
+            val errors = workflowNodeConfigValidationService.validateOptionalDuration("invalid", "timeout")
             assertEquals(1, errors.size)
             assertTrue(errors[0].message.contains("duration"))
         }
@@ -274,7 +276,7 @@ class ConfigValidationServiceTest {
 
         @Test
         fun `returns valid for empty lists`() {
-            val result = configValidationService.combine(emptyList(), emptyList())
+            val result = workflowNodeConfigValidationService.combine(emptyList(), emptyList())
             assertTrue(result.isValid)
         }
 
@@ -287,7 +289,7 @@ class ConfigValidationServiceTest {
                 ConfigValidationError("field2", "error2")
             )
 
-            val result = configValidationService.combine(errors1, errors2)
+            val result = workflowNodeConfigValidationService.combine(errors1, errors2)
             assertFalse(result.isValid)
             assertEquals(2, result.errors.size)
         }

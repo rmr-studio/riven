@@ -1,4 +1,4 @@
-package riven.core.service.workflow
+package riven.core.service.workflow.state
 
 import org.springframework.stereotype.Service
 import riven.core.models.common.Expression
@@ -8,7 +8,7 @@ import riven.core.models.common.Operator
  * Evaluates Expression AST against data context with type safety
  */
 @Service
-class ExpressionEvaluatorService {
+class WorkflowNodeExpressionEvaluatorService {
 
     /**
      * Evaluate expression against data context
@@ -43,7 +43,13 @@ class ExpressionEvaluatorService {
             @Suppress("UNCHECKED_CAST")
             val map = current as Map<String, Any?>
             if (!map.containsKey(key)) {
-                throw IllegalArgumentException("Property '$key' not found in context (available keys: ${map.keys.joinToString(", ")})")
+                throw IllegalArgumentException(
+                    "Property '$key' not found in context (available keys: ${
+                        map.keys.joinToString(
+                            ", "
+                        )
+                    })"
+                )
             }
 
             current = map[key]
@@ -55,7 +61,7 @@ class ExpressionEvaluatorService {
     /**
      * Evaluate binary operation with type coercion
      */
-    private fun evaluateBinaryOp(op: Expression.BinaryOp, context: Map<String, Any?>): Any? {
+    private fun evaluateBinaryOp(op: Expression.BinaryOp, context: Map<String, Any?>): Any {
         return when (op.operator) {
             Operator.AND -> evaluateLogicalAnd(op, context)
             Operator.OR -> evaluateLogicalOr(op, context)

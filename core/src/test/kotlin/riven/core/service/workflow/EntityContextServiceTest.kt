@@ -3,11 +3,7 @@ package riven.core.service.workflow
 import io.github.oshai.kotlinlogging.KLogger
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.InjectMocks
-import org.mockito.Mock
 import org.mockito.Mockito.`when`
-import org.mockito.junit.jupiter.MockitoExtension
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Configuration
@@ -26,7 +22,8 @@ import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.entity.EntityRelationshipService
-import riven.core.service.entity.EntityRelationshipServiceTest
+import riven.core.service.workflow.state.EntityContextService
+import riven.core.service.workflow.state.WorkflowNodeExpressionEvaluatorService
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -255,7 +252,7 @@ class EntityContextServiceTest {
         `when`(entityRelationshipService.findRelatedEntities(entityId, workspaceId)).thenReturn(emptyMap())
 
         val context = entityContextService.buildContextWithRelationships(entityId, workspaceId)
-        val expressionEvaluator = ExpressionEvaluatorService()
+        val expressionEvaluator = WorkflowNodeExpressionEvaluatorService()
 
         val statusExpression = riven.core.models.common.Expression.BinaryOp(
             riven.core.models.common.Expression.PropertyAccess(listOf("status")),

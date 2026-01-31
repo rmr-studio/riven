@@ -13,7 +13,7 @@ import riven.core.models.workflow.node.config.WorkflowActionConfig
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
 import riven.core.service.entity.EntityService
-import riven.core.service.workflow.ConfigValidationService
+import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
 import java.util.*
 
 private val log = KotlinLogging.logger {}
@@ -90,7 +90,7 @@ data class WorkflowDeleteEntityActionConfig(
      * - entityId is valid UUID or template
      * - timeout is non-negative if provided
      */
-    fun validate(validationService: ConfigValidationService): ConfigValidationResult {
+    fun validate(validationService: WorkflowNodeConfigValidationService): ConfigValidationResult {
         return validationService.combine(
             validationService.validateTemplateOrUuid(entityId, "entityId"),
             validationService.validateOptionalDuration(timeoutSeconds, "timeoutSeconds")

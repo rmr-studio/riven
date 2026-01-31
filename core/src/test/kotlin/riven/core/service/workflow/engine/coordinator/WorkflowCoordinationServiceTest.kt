@@ -5,11 +5,9 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
-import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
@@ -18,7 +16,7 @@ import riven.core.repository.workflow.WorkflowEdgeRepository
 import riven.core.repository.workflow.WorkflowExecutionNodeRepository
 import riven.core.repository.workflow.WorkflowNodeRepository
 import riven.core.service.auth.AuthTokenService
-import riven.core.service.workflow.InputResolverService
+import riven.core.service.workflow.state.WorkflowNodeInputResolverService
 import java.util.*
 
 /**
@@ -62,7 +60,7 @@ class WorkflowCoordinationServiceTest {
     private lateinit var nodeServiceProvider: NodeServiceProvider
 
     @MockitoBean
-    private lateinit var inputResolverService: InputResolverService
+    private lateinit var workflowNodeInputResolverService: WorkflowNodeInputResolverService
 
     @Autowired
     private lateinit var activities: WorkflowCoordinationService
@@ -75,7 +73,7 @@ class WorkflowCoordinationServiceTest {
     @BeforeEach
     fun setup() {
         // Mock InputResolverService to return inputs as-is (no templates)
-        whenever(inputResolverService.resolveAll(any(), any())).thenAnswer { it.arguments[0] }
+        whenever(workflowNodeInputResolverService.resolveAll(any(), any())).thenAnswer { it.arguments[0] }
     }
 
     /**

@@ -3,17 +3,17 @@ package riven.core.models.workflow.node.config.trigger
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import io.swagger.v3.oas.annotations.media.Schema as SwaggerSchema
 import riven.core.enums.common.http.AuthenticationType
 import riven.core.enums.common.http.RequestMethodType
 import riven.core.enums.workflow.WorkflowTriggerType
 import riven.core.models.common.http.Signature
 import riven.core.models.common.validation.Schema
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
-import riven.core.models.workflow.node.config.validation.ConfigValidationResult
-import riven.core.service.workflow.ConfigValidationService
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowTriggerConfig
+import riven.core.models.workflow.node.config.validation.ConfigValidationResult
+import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
+import io.swagger.v3.oas.annotations.media.Schema as SwaggerSchema
 
 /**
  * Configuration for WEBHOOK trigger nodes.
@@ -47,7 +47,7 @@ data class WorkflowWebhookTriggerConfig(
      * - payloadSchema is provided
      */
     @Suppress("UNUSED_PARAMETER")
-    fun validate(validationService: ConfigValidationService): ConfigValidationResult {
+    fun validate(validationService: WorkflowNodeConfigValidationService): ConfigValidationResult {
         // method and authentication are enums, always valid if deserialized
         // signature is non-null in constructor
         // payloadSchema is non-null in constructor

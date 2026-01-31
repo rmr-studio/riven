@@ -33,6 +33,8 @@ import riven.core.repository.workflow.WorkflowEdgeRepository
 import riven.core.repository.workflow.WorkflowNodeRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
+import riven.core.service.workflow.state.WorkflowNodeExpressionParserService
 import riven.core.util.ServiceUtil
 import java.time.ZonedDateTime
 import java.util.*
@@ -59,8 +61,8 @@ class WorkflowGraphService(
     private val workflowDefinitionVersionRepository: WorkflowDefinitionVersionRepository,
     private val activityService: ActivityService,
     private val authTokenService: AuthTokenService,
-    private val configValidationService: ConfigValidationService,
-    private val expressionParserService: ExpressionParserService
+    private val workflowNodeConfigValidationService: WorkflowNodeConfigValidationService,
+    private val workflowNodeExpressionParserService: WorkflowNodeExpressionParserService
 ) {
 
     // ------------------------------------------------------------------
@@ -77,18 +79,21 @@ class WorkflowGraphService(
     private fun validateConfig(config: WorkflowNodeConfig): ConfigValidationResult {
         return when (config) {
             // Action configs
-            is WorkflowCreateEntityActionConfig -> config.validate(configValidationService)
-            is WorkflowUpdateEntityActionConfig -> config.validate(configValidationService)
-            is WorkflowDeleteEntityActionConfig -> config.validate(configValidationService)
-            is WorkflowQueryEntityActionConfig -> config.validate(configValidationService)
-            is WorkflowHttpRequestActionConfig -> config.validate(configValidationService)
+            is WorkflowCreateEntityActionConfig -> config.validate(workflowNodeConfigValidationService)
+            is WorkflowUpdateEntityActionConfig -> config.validate(workflowNodeConfigValidationService)
+            is WorkflowDeleteEntityActionConfig -> config.validate(workflowNodeConfigValidationService)
+            is WorkflowQueryEntityActionConfig -> config.validate(workflowNodeConfigValidationService)
+            is WorkflowHttpRequestActionConfig -> config.validate(workflowNodeConfigValidationService)
             // Control configs
-            is WorkflowConditionControlConfig -> config.validate(configValidationService, expressionParserService)
+            is WorkflowConditionControlConfig -> config.validate(
+                workflowNodeConfigValidationService,
+                workflowNodeExpressionParserService
+            )
             // Trigger configs
-            is WorkflowEntityEventTriggerConfig -> config.validate(configValidationService)
-            is WorkflowScheduleTriggerConfig -> config.validate(configValidationService)
-            is WorkflowFunctionTriggerConfig -> config.validate(configValidationService)
-            is WorkflowWebhookTriggerConfig -> config.validate(configValidationService)
+            is WorkflowEntityEventTriggerConfig -> config.validate(workflowNodeConfigValidationService)
+            is WorkflowScheduleTriggerConfig -> config.validate(workflowNodeConfigValidationService)
+            is WorkflowFunctionTriggerConfig -> config.validate(workflowNodeConfigValidationService)
+            is WorkflowWebhookTriggerConfig -> config.validate(workflowNodeConfigValidationService)
             // Other configs without validation yet
             else -> ConfigValidationResult.valid()
         }

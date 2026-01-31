@@ -7,11 +7,11 @@ import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.util.OperationType
 import riven.core.enums.workflow.WorkflowTriggerType
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
-import riven.core.models.workflow.node.config.validation.ConfigValidationError
-import riven.core.models.workflow.node.config.validation.ConfigValidationResult
-import riven.core.service.workflow.ConfigValidationService
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowTriggerConfig
+import riven.core.models.workflow.node.config.validation.ConfigValidationError
+import riven.core.models.workflow.node.config.validation.ConfigValidationResult
+import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
 
 /**
  * Configuration for ENTITY_EVENT trigger nodes.
@@ -43,7 +43,7 @@ data class WorkflowEntityEventTriggerConfig(
      * - operation is valid (already enforced by enum)
      * - expressions is provided (not null)
      */
-    fun validate(validationService: ConfigValidationService): ConfigValidationResult {
+    fun validate(validationService: WorkflowNodeConfigValidationService): ConfigValidationResult {
         val errors = mutableListOf<ConfigValidationError>()
 
         // Validate key (entity type key)
@@ -59,6 +59,7 @@ data class WorkflowEntityEventTriggerConfig(
                     errors.add(ConfigValidationError("expressions", "Expressions cannot be blank"))
                 }
             }
+
             is Collection<*> -> {
                 if ((expressions as Collection<*>).isEmpty()) {
                     errors.add(ConfigValidationError("expressions", "Expressions list cannot be empty"))

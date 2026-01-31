@@ -20,7 +20,7 @@ import riven.core.models.workflow.node.WorkflowNode
 import riven.core.models.workflow.node.config.actions.*
 import riven.core.models.workflow.node.config.controls.WorkflowConditionControlConfig
 import riven.core.repository.workflow.WorkflowExecutionNodeRepository
-import riven.core.service.workflow.InputResolverService
+import riven.core.service.workflow.state.WorkflowNodeInputResolverService
 import riven.core.service.workflow.engine.error.WorkflowErrorClassifier
 import java.time.Instant
 import java.time.ZonedDateTime
@@ -64,7 +64,7 @@ class WorkflowCoordinationService(
     private val workflowNodeRepository: riven.core.repository.workflow.WorkflowNodeRepository,
     private val workflowEdgeRepository: riven.core.repository.workflow.WorkflowEdgeRepository,
     private val nodeServiceProvider: NodeServiceProvider,
-    private val inputResolverService: InputResolverService,
+    private val workflowNodeInputResolverService: WorkflowNodeInputResolverService,
     private val workflowGraphCoordinationService: WorkflowGraphCoordinationService,
     private val logger: KLogger
 ) : WorkflowCoordination {
@@ -196,7 +196,7 @@ class WorkflowCoordinationService(
                 else -> emptyMap()
             }
 
-            val resolvedInputs = inputResolverService.resolveAll(
+            val resolvedInputs = workflowNodeInputResolverService.resolveAll(
                 configMap,
                 context
             )

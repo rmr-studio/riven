@@ -16,7 +16,7 @@ import riven.core.models.workflow.node.config.WorkflowActionConfig
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
 import riven.core.service.entity.EntityService
-import riven.core.service.workflow.ConfigValidationService
+import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
 import java.util.*
 
 /**
@@ -104,7 +104,7 @@ data class WorkflowUpdateEntityActionConfig(
      * - payload values have valid template syntax
      * - timeout is non-negative if provided
      */
-    fun validate(validationService: ConfigValidationService): ConfigValidationResult {
+    fun validate(validationService: WorkflowNodeConfigValidationService): ConfigValidationResult {
         return validationService.combine(
             validationService.validateTemplateOrUuid(entityId, "entityId"),
             validationService.validateTemplateMap(payload, "payload"),

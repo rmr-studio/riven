@@ -39,6 +39,8 @@ import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
+import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
+import riven.core.service.workflow.state.WorkflowNodeExpressionParserService
 import java.util.*
 
 @WithUserPersona(
@@ -83,10 +85,10 @@ class WorkflowGraphServiceTest {
     private lateinit var activityService: ActivityService
 
     @MockitoBean
-    private lateinit var configValidationService: ConfigValidationService
+    private lateinit var workflowNodeConfigValidationService: WorkflowNodeConfigValidationService
 
     @MockitoBean
-    private lateinit var expressionParserService: ExpressionParserService
+    private lateinit var workflowNodeExpressionParserService: WorkflowNodeExpressionParserService
 
     @MockitoBean
     private lateinit var logger: KLogger
@@ -100,13 +102,13 @@ class WorkflowGraphServiceTest {
     @BeforeEach
     fun setUp() {
         // Mock validation service to return valid result for all configs
-        whenever(configValidationService.validateTemplateOrUuid(any(), any()))
+        whenever(workflowNodeConfigValidationService.validateTemplateOrUuid(any(), any()))
             .thenReturn(emptyList())
-        whenever(configValidationService.validateTemplateMap(any(), any()))
+        whenever(workflowNodeConfigValidationService.validateTemplateMap(any(), any()))
             .thenReturn(emptyList())
-        whenever(configValidationService.validateOptionalDuration(any(), any()))
+        whenever(workflowNodeConfigValidationService.validateOptionalDuration(any(), any()))
             .thenReturn(emptyList())
-        whenever(configValidationService.combine(any(), any(), any()))
+        whenever(workflowNodeConfigValidationService.combine(any(), any(), any()))
             .thenReturn(ConfigValidationResult.valid())
     }
 
