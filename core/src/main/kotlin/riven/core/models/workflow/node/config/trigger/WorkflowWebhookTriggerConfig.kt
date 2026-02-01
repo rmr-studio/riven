@@ -5,11 +5,14 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import riven.core.enums.common.http.AuthenticationType
 import riven.core.enums.common.http.RequestMethodType
+import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowTriggerType
+import riven.core.models.common.json.JsonObject
 import riven.core.models.common.http.Signature
 import riven.core.models.common.validation.Schema
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.node.NodeServiceProvider
+import riven.core.models.workflow.node.config.WorkflowNodeConfigField
 import riven.core.models.workflow.node.config.WorkflowTriggerConfig
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import io.swagger.v3.oas.annotations.media.Schema as SwaggerSchema
@@ -35,6 +38,63 @@ data class WorkflowWebhookTriggerConfig(
 ) : WorkflowTriggerConfig {
     override val subType: WorkflowTriggerType
         get() = WorkflowTriggerType.WEBHOOK
+
+    override val config: JsonObject
+        get() = mapOf(
+            "method" to method.name,
+            "authentication" to authentication.name,
+            "signature" to signature,
+            "payloadSchema" to payloadSchema
+        )
+
+    override val configSchema: List<WorkflowNodeConfigField>
+        get() = Companion.configSchema
+
+    companion object {
+        val configSchema: List<WorkflowNodeConfigField> = listOf(
+            WorkflowNodeConfigField(
+                key = "method",
+                label = "HTTP Method",
+                type = WorkflowNodeConfigFieldType.ENUM,
+                required = true,
+                description = "HTTP method the webhook accepts",
+                options = mapOf(
+                    "GET" to "GET",
+                    "POST" to "POST",
+                    "PUT" to "PUT",
+                    "DELETE" to "DELETE",
+                    "PATCH" to "PATCH"
+                )
+            ),
+            WorkflowNodeConfigField(
+                key = "authentication",
+                label = "Authentication",
+                type = WorkflowNodeConfigFieldType.ENUM,
+                required = true,
+                description = "Authentication method for webhook requests",
+                options = mapOf(
+                    "NONE" to "None",
+                    "API_KEY" to "API Key",
+                    "BASIC" to "Basic Auth",
+                    "BEARER" to "Bearer Token"
+                )
+            ),
+            WorkflowNodeConfigField(
+                key = "signature",
+                label = "Signature",
+                type = WorkflowNodeConfigFieldType.JSON,
+                required = true,
+                description = "Signature configuration for request verification"
+            ),
+            WorkflowNodeConfigField(
+                key = "payloadSchema",
+                label = "Payload Schema",
+                type = WorkflowNodeConfigFieldType.JSON,
+                required = true,
+                description = "Schema defining the expected webhook payload structure"
+            )
+        )
+    }
 
     /**
      * Validates this configuration.

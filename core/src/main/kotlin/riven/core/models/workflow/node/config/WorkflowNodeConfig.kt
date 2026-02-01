@@ -47,5 +47,29 @@ sealed interface WorkflowNodeConfig {
         services: NodeServiceProvider
     ): JsonObject
 
+
+    /*
+    * Node attribute configuration properties and validation
+    */
+
+    /**
+     * Validate configuration using provided services.
+     *
+     * @param injector Service provider for validation needs
+     *  - This allows a node to inject spring managed services to perform additional application based validation
+     * @return Validation result with success/failure and messages
+     */
     fun validate(injector: NodeServiceProvider): ConfigValidationResult
+
+    /**
+     * Get raw configuration values as JsonObject.
+     */
+    val config: JsonObject
+
+    /**
+     * Defines the schema for this node configuration.
+     * Used for generating OpenAPI documentation and validation in order to
+     * create dynamic UIs for node configuration.
+     */
+    val configSchema: List<WorkflowNodeConfigField>
 }

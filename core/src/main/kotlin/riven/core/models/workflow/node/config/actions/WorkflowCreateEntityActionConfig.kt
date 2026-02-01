@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.workflow.WorkflowActionType
+import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.common.json.JsonObject
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
@@ -14,6 +15,7 @@ import riven.core.models.request.entity.SaveEntityRequest
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
+import riven.core.models.workflow.node.config.WorkflowNodeConfigField
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
 import riven.core.service.entity.EntityService
@@ -93,12 +95,38 @@ data class WorkflowCreateEntityActionConfig(
      * Returns typed fields as a map for template resolution.
      * Used by WorkflowCoordinationService to resolve templates before execution.
      */
-    val config: JsonObject
+    override val config: JsonObject
         get() = mapOf(
             "entityTypeId" to entityTypeId,
             "payload" to payload,
             "timeoutSeconds" to timeoutSeconds
         )
+
+    override val configSchema: List<WorkflowNodeConfigField>
+        get() = Companion.configSchema
+
+    companion object {
+        val configSchema: List<WorkflowNodeConfigField> = listOf(
+            WorkflowNodeConfigField(
+                key = "entityTypeId",
+                label = "Entity Type",
+                type = WorkflowNodeConfigFieldType.ENTITY_TYPE,
+                required = true,
+            ),
+            WorkflowNodeConfigField(
+                key = "payload",
+                label = "Payload",
+                type = WorkflowNodeConfigFieldType.KEY_VALUE,
+                required = true,
+            ),
+            WorkflowNodeConfigField(
+                key = "timeoutSeconds",
+                label = "Timeout (seconds)",
+                type = WorkflowNodeConfigFieldType.DURATION,
+                required = false,
+            )
+        )
+    }
 
     /**
      * Validates this configuration.

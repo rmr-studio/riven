@@ -4,9 +4,12 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
+import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowTriggerType
+import riven.core.models.common.json.JsonObject
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.node.NodeServiceProvider
+import riven.core.models.workflow.node.config.WorkflowNodeConfigField
 import riven.core.models.workflow.node.config.WorkflowTriggerConfig
 import riven.core.models.workflow.node.config.validation.ConfigValidationError
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
@@ -34,6 +37,44 @@ data class WorkflowScheduleTriggerConfig(
 ) : WorkflowTriggerConfig {
     override val subType: WorkflowTriggerType
         get() = WorkflowTriggerType.SCHEDULE
+
+    override val config: JsonObject
+        get() = mapOf(
+            "cronExpression" to cronExpression,
+            "interval" to interval?.toString(),
+            "timeZone" to timeZone.id
+        )
+
+    override val configSchema: List<WorkflowNodeConfigField>
+        get() = Companion.configSchema
+
+    companion object {
+        val configSchema: List<WorkflowNodeConfigField> = listOf(
+            WorkflowNodeConfigField(
+                key = "cronExpression",
+                label = "Cron Expression",
+                type = WorkflowNodeConfigFieldType.STRING,
+                required = false,
+                description = "Cron expression for scheduling (e.g., '0 0 * * *' for daily at midnight)",
+                placeholder = "0 0 * * *"
+            ),
+            WorkflowNodeConfigField(
+                key = "interval",
+                label = "Interval",
+                type = WorkflowNodeConfigFieldType.DURATION,
+                required = false,
+                description = "Fixed interval between executions (alternative to cron)"
+            ),
+            WorkflowNodeConfigField(
+                key = "timeZone",
+                label = "Time Zone",
+                type = WorkflowNodeConfigFieldType.STRING,
+                required = true,
+                description = "Time zone for schedule interpretation",
+                placeholder = "America/New_York"
+            )
+        )
+    }
 
     init {
         require(cronExpression != null || interval != null) {

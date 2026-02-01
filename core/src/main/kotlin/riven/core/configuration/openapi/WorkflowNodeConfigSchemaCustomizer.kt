@@ -8,18 +8,7 @@ import io.swagger.v3.oas.models.media.Discriminator
 import io.swagger.v3.oas.models.media.Schema
 import org.springdoc.core.customizers.OpenApiCustomizer
 import org.springframework.stereotype.Component
-import riven.core.models.workflow.node.config.WorkflowFunctionConfig
-import riven.core.models.workflow.node.config.actions.WorkflowCreateEntityActionConfig
-import riven.core.models.workflow.node.config.actions.WorkflowDeleteEntityActionConfig
-import riven.core.models.workflow.node.config.actions.WorkflowHttpRequestActionConfig
-import riven.core.models.workflow.node.config.actions.WorkflowQueryEntityActionConfig
-import riven.core.models.workflow.node.config.actions.WorkflowUpdateEntityActionConfig
-import riven.core.models.workflow.node.config.controls.WorkflowConditionControlConfig
-import riven.core.models.workflow.node.config.trigger.WorkflowEntityEventTriggerConfig
-import riven.core.models.workflow.node.config.trigger.WorkflowFunctionTriggerConfig
-import riven.core.models.workflow.node.config.trigger.WorkflowScheduleTriggerConfig
-import riven.core.models.workflow.node.config.trigger.WorkflowWebhookTriggerConfig
-import kotlin.reflect.KClass
+import riven.core.service.workflow.WorkflowNodeConfigRegistry
 
 /**
  * OpenAPI customizer that registers all [riven.core.models.workflow.node.config.WorkflowNodeConfig]
@@ -28,110 +17,51 @@ import kotlin.reflect.KClass
  * ## Why This Exists
  *
  * SpringDoc/OpenAPI doesn't automatically discover polymorphic subtypes when using
- * a custom Jackson deserializer. This customizer bridges that gap by explicitly
- * registering all concrete implementations.
+ * a custom Jackson deserializer. This customizer bridges that gap by using the
+ * [WorkflowNodeConfigRegistry] to get all registered implementations.
  *
  * ## Adding New Node Types
  *
  * When you create a new workflow node config implementation:
  *
  * 1. Add `@Schema(name = "YourNewConfig", description = "...")` to the class
- * 2. Add the class to the appropriate list below (TRIGGER_CONFIGS, ACTION_CONFIGS, etc.)
- * 3. Update [riven.core.deserializer.WorkflowNodeConfigDeserializer] to handle deserialization
+ * 2. Add a companion object with `val configSchema: List<WorkflowNodeConfigField>`
+ * 3. Register in [WorkflowNodeConfigRegistry.registerAllNodes]
+ * 4. Update [riven.core.deserializer.WorkflowNodeConfigDeserializer] to handle deserialization
  *
- * This keeps OpenAPI registration in sync with the deserializer.
+ * The OpenAPI schema will be automatically generated from the registry.
  *
  * ## Example
  *
  * ```kotlin
- * // 1. Create new config with @Schema annotation
+ * // 1. Create new config with @Schema annotation and companion object schema
  * @Schema(name = "WorkflowMyNewActionConfig", description = "...")
  * @JsonTypeName("workflow_my_new_action")
- * data class WorkflowMyNewActionConfig(...) : WorkflowActionConfig
+ * data class WorkflowMyNewActionConfig(...) : WorkflowActionConfig {
+ *     override val configSchema get() = Companion.configSchema
  *
- * // 2. Add to ACTION_CONFIGS list below
- * private val ACTION_CONFIGS: List<KClass<*>> = listOf(
- *     ...
- *     WorkflowMyNewActionConfig::class,
- * )
+ *     companion object {
+ *         val configSchema = listOf(...)
+ *     }
+ * }
+ *
+ * // 2. Register in WorkflowNodeConfigRegistry.registerAllNodes()
+ * registerNode<WorkflowMyNewActionConfig>(WorkflowNodeType.ACTION, "MY_NEW_ACTION")
  *
  * // 3. Update WorkflowNodeConfigDeserializer.deserializeActionConfig()
  * ```
  */
 @Component
-class WorkflowNodeConfigSchemaCustomizer : OpenApiCustomizer {
-
-    companion object {
-        /**
-         * Trigger node config implementations.
-         * Add new trigger configs here.
-         */
-        private val TRIGGER_CONFIGS: List<KClass<*>> = listOf(
-            WorkflowScheduleTriggerConfig::class,
-            WorkflowEntityEventTriggerConfig::class,
-            WorkflowWebhookTriggerConfig::class,
-            WorkflowFunctionTriggerConfig::class,
-        )
-
-        /**
-         * Action node config implementations.
-         * Add new action configs here.
-         */
-        private val ACTION_CONFIGS: List<KClass<*>> = listOf(
-            WorkflowCreateEntityActionConfig::class,
-            WorkflowUpdateEntityActionConfig::class,
-            WorkflowDeleteEntityActionConfig::class,
-            WorkflowQueryEntityActionConfig::class,
-            WorkflowHttpRequestActionConfig::class,
-        )
-
-        /**
-         * Control flow node config implementations.
-         * Add new control configs here.
-         */
-        private val CONTROL_CONFIGS: List<KClass<*>> = listOf(
-            WorkflowConditionControlConfig::class,
-            // Future: WorkflowSwitchControlConfig, WorkflowLoopControlConfig, etc.
-        )
-
-        /**
-         * Utility node config implementations.
-         * Add new utility configs here.
-         */
-        private val UTILITY_CONFIGS: List<KClass<*>> = listOf(
-            // Future: WorkflowTransformUtilityConfig, WorkflowLogUtilityConfig, etc.
-        )
-
-        /**
-         * Parse node config implementations.
-         * Add new parse configs here.
-         */
-        private val PARSE_CONFIGS: List<KClass<*>> = listOf(
-            // Future: WorkflowJsonParseConfig, WorkflowAiParseConfig, etc.
-        )
-
-        /**
-         * Standalone configs (no subtype).
-         */
-        private val STANDALONE_CONFIGS: List<KClass<*>> = listOf(
-            WorkflowFunctionConfig::class,
-        )
-
-        /**
-         * All workflow node config implementations.
-         */
-        val ALL_CONFIGS: List<KClass<*>> = TRIGGER_CONFIGS +
-                ACTION_CONFIGS +
-                CONTROL_CONFIGS +
-                UTILITY_CONFIGS +
-                PARSE_CONFIGS +
-                STANDALONE_CONFIGS
-    }
+class WorkflowNodeConfigSchemaCustomizer(
+    private val workflowNodeConfigRegistry: WorkflowNodeConfigRegistry
+) : OpenApiCustomizer {
 
     override fun customise(openApi: OpenAPI) {
         val components = openApi.components ?: return
 
-        if (ALL_CONFIGS.isEmpty()) {
+        val allConfigClasses = workflowNodeConfigRegistry.getAllEntries().map { it.configClass }
+
+        if (allConfigClasses.isEmpty()) {
             return
         }
 
@@ -141,7 +71,7 @@ class WorkflowNodeConfigSchemaCustomizer : OpenApiCustomizer {
         // Generate and register schemas for each config class
         val oneOfSchemas = mutableListOf<Schema<Any>>()
 
-        for (configClass in ALL_CONFIGS) {
+        for (configClass in allConfigClasses) {
             val schemaName = configClass.simpleName ?: continue
 
             // Generate schema for this class using ModelConverters
