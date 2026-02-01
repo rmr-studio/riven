@@ -8,7 +8,9 @@ Configuration for CREATE_ENTITY action nodes.
 Name | Type
 ------------ | -------------
 `version` | number
-`name` | string
+`entityTypeId` | string
+`payload` | { [key: string]: string; }
+`timeoutSeconds` | number
 `config` | { [key: string]: object; }
 `subType` | [WorkflowActionType](WorkflowActionType.md)
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
@@ -21,7 +23,9 @@ import type { WorkflowCreateEntityActionConfig } from ''
 // TODO: Update the object below with actual values
 const example = {
   "version": null,
-  "name": null,
+  "entityTypeId": null,
+  "payload": null,
+  "timeoutSeconds": null,
   "config": null,
   "subType": null,
   "type": null,

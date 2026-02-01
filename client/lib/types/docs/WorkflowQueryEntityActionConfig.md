@@ -1,14 +1,17 @@
 
 # WorkflowQueryEntityActionConfig
 
-Configuration for QUERY_ENTITY action nodes.
+Configuration for QUERY_ENTITY action nodes that query entities by type with filtering.
 
 ## Properties
 
 Name | Type
 ------------ | -------------
 `version` | number
-`name` | string
+`query` | [EntityQuery](EntityQuery.md)
+`pagination` | [QueryPagination](QueryPagination.md)
+`projection` | [QueryProjection](QueryProjection.md)
+`timeoutSeconds` | number
 `config` | { [key: string]: object; }
 `subType` | [WorkflowActionType](WorkflowActionType.md)
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
@@ -21,7 +24,10 @@ import type { WorkflowQueryEntityActionConfig } from ''
 // TODO: Update the object below with actual values
 const example = {
   "version": null,
-  "name": null,
+  "query": null,
+  "pagination": null,
+  "projection": null,
+  "timeoutSeconds": null,
   "config": null,
   "subType": null,
   "type": null,

@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { QueryProjection } from './QueryProjection';
+import {
+    QueryProjectionFromJSON,
+    QueryProjectionFromJSONTyped,
+    QueryProjectionToJSON,
+    QueryProjectionToJSONTyped,
+} from './QueryProjection';
 import type { SchemaString } from './SchemaString';
 import {
     SchemaStringFromJSON,
@@ -27,6 +34,13 @@ import {
     SignatureToJSON,
     SignatureToJSONTyped,
 } from './Signature';
+import type { QueryPagination } from './QueryPagination';
+import {
+    QueryPaginationFromJSON,
+    QueryPaginationFromJSONTyped,
+    QueryPaginationToJSON,
+    QueryPaginationToJSONTyped,
+} from './QueryPagination';
 import type { WorkflowNodeType } from './WorkflowNodeType';
 import {
     WorkflowNodeTypeFromJSON,
@@ -48,13 +62,13 @@ import {
     OperationTypeToJSON,
     OperationTypeToJSONTyped,
 } from './OperationType';
-import type { RequestMethodType } from './RequestMethodType';
+import type { EntityQuery } from './EntityQuery';
 import {
-    RequestMethodTypeFromJSON,
-    RequestMethodTypeFromJSONTyped,
-    RequestMethodTypeToJSON,
-    RequestMethodTypeToJSONTyped,
-} from './RequestMethodType';
+    EntityQueryFromJSON,
+    EntityQueryFromJSONTyped,
+    EntityQueryToJSON,
+    EntityQueryToJSONTyped,
+} from './EntityQuery';
 import type { WorkflowActionType } from './WorkflowActionType';
 import {
     WorkflowActionTypeFromJSON,

@@ -8,7 +8,11 @@ Configuration for HTTP_REQUEST action nodes.
 Name | Type
 ------------ | -------------
 `version` | number
-`name` | string
+`url` | string
+`method` | string
+`headers` | { [key: string]: string; }
+`body` | { [key: string]: string; }
+`timeoutSeconds` | number
 `config` | { [key: string]: object; }
 `subType` | [WorkflowActionType](WorkflowActionType.md)
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
@@ -21,7 +25,11 @@ import type { WorkflowHttpRequestActionConfig } from ''
 // TODO: Update the object below with actual values
 const example = {
   "version": null,
-  "name": null,
+  "url": null,
+  "method": null,
+  "headers": null,
+  "body": null,
+  "timeoutSeconds": null,
   "config": null,
   "subType": null,
   "type": null,

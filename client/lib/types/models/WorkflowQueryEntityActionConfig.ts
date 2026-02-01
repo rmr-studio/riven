@@ -13,6 +13,20 @@
  */
 
 import { mapValues } from '../runtime';
+import type { QueryProjection } from './QueryProjection';
+import {
+    QueryProjectionFromJSON,
+    QueryProjectionFromJSONTyped,
+    QueryProjectionToJSON,
+    QueryProjectionToJSONTyped,
+} from './QueryProjection';
+import type { QueryPagination } from './QueryPagination';
+import {
+    QueryPaginationFromJSON,
+    QueryPaginationFromJSONTyped,
+    QueryPaginationToJSON,
+    QueryPaginationToJSONTyped,
+} from './QueryPagination';
 import type { WorkflowNodeType } from './WorkflowNodeType';
 import {
     WorkflowNodeTypeFromJSON,
@@ -20,6 +34,13 @@ import {
     WorkflowNodeTypeToJSON,
     WorkflowNodeTypeToJSONTyped,
 } from './WorkflowNodeType';
+import type { EntityQuery } from './EntityQuery';
+import {
+    EntityQueryFromJSON,
+    EntityQueryFromJSONTyped,
+    EntityQueryToJSON,
+    EntityQueryToJSONTyped,
+} from './EntityQuery';
 import type { WorkflowActionType } from './WorkflowActionType';
 import {
     WorkflowActionTypeFromJSON,
@@ -29,7 +50,7 @@ import {
 } from './WorkflowActionType';
 
 /**
- * Configuration for QUERY_ENTITY action nodes.
+ * Configuration for QUERY_ENTITY action nodes that query entities by type with filtering.
  * @export
  * @interface WorkflowQueryEntityActionConfig
  */
@@ -42,13 +63,31 @@ export interface WorkflowQueryEntityActionConfig {
     version?: number;
     /**
      * 
-     * @type {string}
+     * @type {EntityQuery}
      * @memberof WorkflowQueryEntityActionConfig
      */
-    name?: string;
+    query?: EntityQuery;
     /**
      * 
-     * @type {{ [key: string]: object; }}
+     * @type {QueryPagination}
+     * @memberof WorkflowQueryEntityActionConfig
+     */
+    pagination?: QueryPagination;
+    /**
+     * 
+     * @type {QueryProjection}
+     * @memberof WorkflowQueryEntityActionConfig
+     */
+    projection?: QueryProjection;
+    /**
+     * 
+     * @type {number}
+     * @memberof WorkflowQueryEntityActionConfig
+     */
+    timeoutSeconds?: number;
+    /**
+     * 
+     * @type {{ [key: string]: object; }}p
      * @memberof WorkflowQueryEntityActionConfig
      */
     config?: { [key: string]: object; };
@@ -86,7 +125,10 @@ export function WorkflowQueryEntityActionConfigFromJSONTyped(json: any, ignoreDi
     return {
         
         'version': json['version'] == null ? undefined : json['version'],
-        'name': json['name'] == null ? undefined : json['name'],
+        'query': json['query'] == null ? undefined : EntityQueryFromJSON(json['query']),
+        'pagination': json['pagination'] == null ? undefined : QueryPaginationFromJSON(json['pagination']),
+        'projection': json['projection'] == null ? undefined : QueryProjectionFromJSON(json['projection']),
+        'timeoutSeconds': json['timeoutSeconds'] == null ? undefined : json['timeoutSeconds'],
         'config': json['config'] == null ? undefined : json['config'],
         'subType': json['subType'] == null ? undefined : WorkflowActionTypeFromJSON(json['subType']),
         'type': json['type'] == null ? undefined : WorkflowNodeTypeFromJSON(json['type']),
@@ -105,7 +147,10 @@ export function WorkflowQueryEntityActionConfigToJSONTyped(value?: WorkflowQuery
     return {
         
         'version': value['version'],
-        'name': value['name'],
+        'query': EntityQueryToJSON(value['query']),
+        'pagination': QueryPaginationToJSON(value['pagination']),
+        'projection': QueryProjectionToJSON(value['projection']),
+        'timeoutSeconds': value['timeoutSeconds'],
         'config': value['config'],
         'subType': WorkflowActionTypeToJSON(value['subType']),
         'type': WorkflowNodeTypeToJSON(value['type']),

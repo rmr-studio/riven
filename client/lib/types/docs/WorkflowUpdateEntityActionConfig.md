@@ -8,7 +8,9 @@ Configuration for UPDATE_ENTITY action nodes.
 Name | Type
 ------------ | -------------
 `version` | number
-`name` | string
+`entityId` | string
+`payload` | { [key: string]: string; }
+`timeoutSeconds` | number
 `config` | { [key: string]: object; }
 `subType` | [WorkflowActionType](WorkflowActionType.md)
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
@@ -21,7 +23,9 @@ import type { WorkflowUpdateEntityActionConfig } from ''
 // TODO: Update the object below with actual values
 const example = {
   "version": null,
-  "name": null,
+  "entityId": null,
+  "payload": null,
+  "timeoutSeconds": null,
   "config": null,
   "subType": null,
   "type": null,

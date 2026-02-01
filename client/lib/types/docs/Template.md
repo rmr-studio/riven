@@ -1,33 +1,23 @@
 
-# WorkflowConditionControlConfig
+# Template
 
-Configuration for CONDITION control flow nodes.
+Template expression resolved at execution time.
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`version` | number
 `expression` | string
-`contextEntityId` | string
-`timeoutSeconds` | number
-`subType` | [WorkflowControlType](WorkflowControlType.md)
-`type` | [WorkflowNodeType](WorkflowNodeType.md)
 
 ## Example
 
 ```typescript
-import type { WorkflowConditionControlConfig } from ''
+import type { Template } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "version": null,
   "expression": null,
-  "contextEntityId": null,
-  "timeoutSeconds": null,
-  "subType": null,
-  "type": null,
-} satisfies WorkflowConditionControlConfig
+} satisfies Template
 
 console.log(example)
 
@@ -36,7 +26,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkflowConditionControlConfig
+const exampleParsed = JSON.parse(exampleJSON) as Template
 console.log(exampleParsed)
 ```
 

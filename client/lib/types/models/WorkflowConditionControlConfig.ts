@@ -45,13 +45,19 @@ export interface WorkflowConditionControlConfig {
      * @type {string}
      * @memberof WorkflowConditionControlConfig
      */
-    name?: string;
+    expression?: string;
     /**
      * 
-     * @type {{ [key: string]: object; }}
+     * @type {string}
      * @memberof WorkflowConditionControlConfig
      */
-    config?: { [key: string]: object; };
+    contextEntityId?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof WorkflowConditionControlConfig
+     */
+    timeoutSeconds?: number;
     /**
      * 
      * @type {WorkflowControlType}
@@ -86,8 +92,9 @@ export function WorkflowConditionControlConfigFromJSONTyped(json: any, ignoreDis
     return {
         
         'version': json['version'] == null ? undefined : json['version'],
-        'name': json['name'] == null ? undefined : json['name'],
-        'config': json['config'] == null ? undefined : json['config'],
+        'expression': json['expression'] == null ? undefined : json['expression'],
+        'contextEntityId': json['contextEntityId'] == null ? undefined : json['contextEntityId'],
+        'timeoutSeconds': json['timeoutSeconds'] == null ? undefined : json['timeoutSeconds'],
         'subType': json['subType'] == null ? undefined : WorkflowControlTypeFromJSON(json['subType']),
         'type': json['type'] == null ? undefined : WorkflowNodeTypeFromJSON(json['type']),
     };
@@ -105,8 +112,9 @@ export function WorkflowConditionControlConfigToJSONTyped(value?: WorkflowCondit
     return {
         
         'version': value['version'],
-        'name': value['name'],
-        'config': value['config'],
+        'expression': value['expression'],
+        'contextEntityId': value['contextEntityId'],
+        'timeoutSeconds': value['timeoutSeconds'],
         'subType': WorkflowControlTypeToJSON(value['subType']),
         'type': WorkflowNodeTypeToJSON(value['type']),
     };

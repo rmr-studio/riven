@@ -1,33 +1,27 @@
 
-# WorkflowConditionControlConfig
+# FilterValue
 
-Configuration for CONDITION control flow nodes.
+Value for filter comparison - literal or template expression.
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`version` | number
+`kind` | string
 `expression` | string
-`contextEntityId` | string
-`timeoutSeconds` | number
-`subType` | [WorkflowControlType](WorkflowControlType.md)
-`type` | [WorkflowNodeType](WorkflowNodeType.md)
+`value` | object
 
 ## Example
 
 ```typescript
-import type { WorkflowConditionControlConfig } from ''
+import type { FilterValue } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "version": null,
+  "kind": null,
   "expression": null,
-  "contextEntityId": null,
-  "timeoutSeconds": null,
-  "subType": null,
-  "type": null,
-} satisfies WorkflowConditionControlConfig
+  "value": null,
+} satisfies FilterValue
 
 console.log(example)
 
@@ -36,7 +30,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkflowConditionControlConfig
+const exampleParsed = JSON.parse(exampleJSON) as FilterValue
 console.log(exampleParsed)
 ```
 

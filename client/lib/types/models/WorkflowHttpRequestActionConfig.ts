@@ -45,7 +45,31 @@ export interface WorkflowHttpRequestActionConfig {
      * @type {string}
      * @memberof WorkflowHttpRequestActionConfig
      */
-    name?: string;
+    url?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof WorkflowHttpRequestActionConfig
+     */
+    method?: string;
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof WorkflowHttpRequestActionConfig
+     */
+    headers?: { [key: string]: string; };
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof WorkflowHttpRequestActionConfig
+     */
+    body?: { [key: string]: string; };
+    /**
+     * 
+     * @type {number}
+     * @memberof WorkflowHttpRequestActionConfig
+     */
+    timeoutSeconds?: number;
     /**
      * 
      * @type {{ [key: string]: object; }}
@@ -86,7 +110,11 @@ export function WorkflowHttpRequestActionConfigFromJSONTyped(json: any, ignoreDi
     return {
         
         'version': json['version'] == null ? undefined : json['version'],
-        'name': json['name'] == null ? undefined : json['name'],
+        'url': json['url'] == null ? undefined : json['url'],
+        'method': json['method'] == null ? undefined : json['method'],
+        'headers': json['headers'] == null ? undefined : json['headers'],
+        'body': json['body'] == null ? undefined : json['body'],
+        'timeoutSeconds': json['timeoutSeconds'] == null ? undefined : json['timeoutSeconds'],
         'config': json['config'] == null ? undefined : json['config'],
         'subType': json['subType'] == null ? undefined : WorkflowActionTypeFromJSON(json['subType']),
         'type': json['type'] == null ? undefined : WorkflowNodeTypeFromJSON(json['type']),
@@ -105,7 +133,11 @@ export function WorkflowHttpRequestActionConfigToJSONTyped(value?: WorkflowHttpR
     return {
         
         'version': value['version'],
-        'name': value['name'],
+        'url': value['url'],
+        'method': value['method'],
+        'headers': value['headers'],
+        'body': value['body'],
+        'timeoutSeconds': value['timeoutSeconds'],
         'config': value['config'],
         'subType': WorkflowActionTypeToJSON(value['subType']),
         'type': WorkflowNodeTypeToJSON(value['type']),

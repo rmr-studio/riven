@@ -16,13 +16,24 @@ Name | Type
 `operation` | [OperationType](OperationType.md)
 `field` | Array&lt;string&gt;
 `expressions` | object
-`method` | [RequestMethodType](RequestMethodType.md)
+`method` | string
 `authentication` | [AuthenticationType](AuthenticationType.md)
 `signature` | [Signature](Signature.md)
 `payloadSchema` | [SchemaString](SchemaString.md)
 `schema` | [SchemaString](SchemaString.md)
-`name` | string
+`entityTypeId` | string
+`payload` | { [key: string]: string; }
+`timeoutSeconds` | number
 `config` | { [key: string]: object; }
+`entityId` | string
+`query` | [EntityQuery](EntityQuery.md)
+`pagination` | [QueryPagination](QueryPagination.md)
+`projection` | [QueryProjection](QueryProjection.md)
+`url` | string
+`headers` | { [key: string]: string; }
+`body` | { [key: string]: string; }
+`expression` | string
+`contextEntityId` | string
 
 ## Example
 
@@ -46,8 +57,19 @@ const example = {
   "signature": null,
   "payloadSchema": null,
   "schema": null,
-  "name": null,
+  "entityTypeId": null,
+  "payload": null,
+  "timeoutSeconds": null,
   "config": null,
+  "entityId": null,
+  "query": null,
+  "pagination": null,
+  "projection": null,
+  "url": null,
+  "headers": null,
+  "body": null,
+  "expression": null,
+  "contextEntityId": null,
 } satisfies SaveWorkflowNodeRequestConfig
 
 console.log(example)

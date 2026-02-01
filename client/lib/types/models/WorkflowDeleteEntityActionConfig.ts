@@ -45,7 +45,13 @@ export interface WorkflowDeleteEntityActionConfig {
      * @type {string}
      * @memberof WorkflowDeleteEntityActionConfig
      */
-    name?: string;
+    entityId?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof WorkflowDeleteEntityActionConfig
+     */
+    timeoutSeconds?: number;
     /**
      * 
      * @type {{ [key: string]: object; }}
@@ -86,7 +92,8 @@ export function WorkflowDeleteEntityActionConfigFromJSONTyped(json: any, ignoreD
     return {
         
         'version': json['version'] == null ? undefined : json['version'],
-        'name': json['name'] == null ? undefined : json['name'],
+        'entityId': json['entityId'] == null ? undefined : json['entityId'],
+        'timeoutSeconds': json['timeoutSeconds'] == null ? undefined : json['timeoutSeconds'],
         'config': json['config'] == null ? undefined : json['config'],
         'subType': json['subType'] == null ? undefined : WorkflowActionTypeFromJSON(json['subType']),
         'type': json['type'] == null ? undefined : WorkflowNodeTypeFromJSON(json['type']),
@@ -105,7 +112,8 @@ export function WorkflowDeleteEntityActionConfigToJSONTyped(value?: WorkflowDele
     return {
         
         'version': value['version'],
-        'name': value['name'],
+        'entityId': value['entityId'],
+        'timeoutSeconds': value['timeoutSeconds'],
         'config': value['config'],
         'subType': WorkflowActionTypeToJSON(value['subType']),
         'type': WorkflowNodeTypeToJSON(value['type']),
