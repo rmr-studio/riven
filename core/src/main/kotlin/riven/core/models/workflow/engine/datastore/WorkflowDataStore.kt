@@ -58,10 +58,11 @@ class WorkflowDataStore(
     /**
      * User variables keyed by name.
      *
+     * Uses a wrapper to support null values since ConcurrentHashMap doesn't allow nulls.
      * Last-write-wins semantics: concurrent writes to the same key
      * will result in one winning, which is acceptable for variables.
      */
-    private val variables = ConcurrentHashMap<String, Any?>()
+    private val variables = ConcurrentHashMap<String, NullableValue>()
 
     /**
      * Loop contexts keyed by loop ID.
@@ -147,16 +148,24 @@ class WorkflowDataStore(
      * @param value The variable value (can be null)
      */
     fun setVariable(name: String, value: Any?) {
-        variables[name] = value
+        variables[name] = NullableValue(value)
     }
 
     /**
      * Gets a variable by name.
      *
      * @param name The variable name
-     * @return The variable value, or null if not set
+     * @return The variable value, or null if not set or if explicitly set to null
      */
-    fun getVariable(name: String): Any? = variables[name]
+    fun getVariable(name: String): Any? = variables[name]?.value
+
+    /**
+     * Checks if a variable has been set (including if set to null).
+     *
+     * @param name The variable name
+     * @return true if the variable has been set, false otherwise
+     */
+    fun hasVariable(name: String): Boolean = variables.containsKey(name)
 
     /**
      * Gets all variables as an immutable copy.
@@ -166,7 +175,7 @@ class WorkflowDataStore(
      *
      * @return Immutable copy of all variables
      */
-    fun getAllVariables(): Map<String, Any?> = variables.toMap()
+    fun getAllVariables(): Map<String, Any?> = variables.mapValues { it.value.value }
 
     // ==================== Loop Operations ====================
 
@@ -191,6 +200,15 @@ class WorkflowDataStore(
      */
     fun getLoopContext(loopId: String): LoopContext? = loops[loopId]
 }
+
+/**
+ * Wrapper to support null values in ConcurrentHashMap.
+ *
+ * ConcurrentHashMap doesn't allow null keys or values, so we wrap
+ * nullable values in this class to store them safely.
+ */
+@JvmInline
+internal value class NullableValue(val value: Any?)
 
 /**
  * Placeholder loop context for iteration tracking.
