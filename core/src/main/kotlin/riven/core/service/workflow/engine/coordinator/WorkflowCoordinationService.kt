@@ -12,6 +12,8 @@ import riven.core.enums.workflow.WorkflowStatus
 import riven.core.models.workflow.engine.NodeExecutionResult
 import riven.core.models.workflow.engine.coordinator.WorkflowState
 import riven.core.models.workflow.engine.datastore.NodeOutput
+import riven.core.models.workflow.engine.datastore.WorkflowDataStore
+import riven.core.models.workflow.engine.datastore.WorkflowMetadata
 import riven.core.models.workflow.engine.environment.NodeExecutionData
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.engine.error.NodeExecutionError
@@ -197,9 +199,21 @@ class WorkflowCoordinationService(
                 else -> emptyMap()
             }
 
+            // Create WorkflowDataStore for input resolution
+            // Note: WorkflowExecutionContext is kept for node execute() methods until full migration
+            val dataStore = WorkflowDataStore(
+                metadata = WorkflowMetadata(
+                    executionId = workflowExecutionId,
+                    workspaceId = workspaceId,
+                    workflowDefinitionId = UUID.randomUUID(), // TODO: Pass actual definition ID
+                    version = 1, // TODO: Pass actual version
+                    startedAt = java.time.Instant.now()
+                )
+            )
+
             val resolvedInputs = workflowNodeInputResolverService.resolveAll(
                 configMap,
-                context
+                dataStore
             )
 
             // Polymorphic execution - no type switching!

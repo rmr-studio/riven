@@ -169,3 +169,22 @@ data class UnsupportedNodeOutput(
         "message" to message
     )
 }
+
+// =============================================================================
+// Generic Outputs (for testing and flexible use cases)
+// =============================================================================
+
+/**
+ * Generic output that wraps an arbitrary map.
+ *
+ * Useful for testing and scenarios where a specific typed output isn't needed.
+ * Prefer using typed outputs (CreateEntityOutput, HttpResponseOutput, etc.)
+ * for production node implementations.
+ *
+ * @property data Arbitrary key-value data to expose via toMap()
+ */
+data class GenericMapOutput(
+    val data: Map<String, Any?>
+) : NodeOutput {
+    override fun toMap(): Map<String, Any?> = data
+}
