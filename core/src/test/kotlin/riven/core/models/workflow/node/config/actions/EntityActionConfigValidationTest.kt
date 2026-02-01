@@ -158,32 +158,243 @@ class EntityActionConfigValidationTest {
     @Nested
     inner class WorkflowQueryEntityActionConfigValidation {
 
+        private val testEntityTypeId = java.util.UUID.fromString("550e8400-e29b-41d4-a716-446655440000")
+        private val testAttributeId = java.util.UUID.fromString("660e8400-e29b-41d4-a716-446655440001")
+        private val testRelationshipId = java.util.UUID.fromString("770e8400-e29b-41d4-a716-446655440002")
+
         @Test
-        fun `valid config with static UUID passes validation`() {
+        fun `valid config without filter passes validation`() {
             val config = WorkflowQueryEntityActionConfig(
-                entityId = "550e8400-e29b-41d4-a716-446655440000"
+                query = EntityQuery(entityTypeId = testEntityTypeId)
             )
             val result = config.validate(nodeServiceProvider)
             assertTrue(result.isValid, "Expected valid config: ${result.errors}")
         }
 
         @Test
-        fun `valid config with template passes validation`() {
+        fun `valid config with attribute filter passes validation`() {
             val config = WorkflowQueryEntityActionConfig(
-                entityId = "{{ steps.trigger.output.entityId }}"
+                query = EntityQuery(
+                    entityTypeId = testEntityTypeId,
+                    filter = QueryFilter.Attribute(
+                        attributeId = testAttributeId,
+                        operator = FilterOperator.EQUALS,
+                        value = FilterValue.Literal("Active")
+                    )
+                )
             )
             val result = config.validate(nodeServiceProvider)
             assertTrue(result.isValid, "Expected valid config: ${result.errors}")
         }
 
         @Test
-        fun `blank entityId fails validation`() {
+        fun `valid config with template filter value passes validation`() {
             val config = WorkflowQueryEntityActionConfig(
-                entityId = "   "
+                query = EntityQuery(
+                    entityTypeId = testEntityTypeId,
+                    filter = QueryFilter.Attribute(
+                        attributeId = testAttributeId,
+                        operator = FilterOperator.EQUALS,
+                        value = FilterValue.Template("{{ steps.trigger.output.status }}")
+                    )
+                )
+            )
+            val result = config.validate(nodeServiceProvider)
+            assertTrue(result.isValid, "Expected valid config: ${result.errors}")
+        }
+
+        @Test
+        fun `valid config with AND filter passes validation`() {
+            val config = WorkflowQueryEntityActionConfig(
+                query = EntityQuery(
+                    entityTypeId = testEntityTypeId,
+                    filter = QueryFilter.And(
+                        conditions = listOf(
+                            QueryFilter.Attribute(
+                                attributeId = testAttributeId,
+                                operator = FilterOperator.EQUALS,
+                                value = FilterValue.Literal("Active")
+                            ),
+                            QueryFilter.Attribute(
+                                attributeId = testAttributeId,
+                                operator = FilterOperator.GREATER_THAN,
+                                value = FilterValue.Literal(100000)
+                            )
+                        )
+                    )
+                )
+            )
+            val result = config.validate(nodeServiceProvider)
+            assertTrue(result.isValid, "Expected valid config: ${result.errors}")
+        }
+
+        @Test
+        fun `valid config with relationship EXISTS filter passes validation`() {
+            val config = WorkflowQueryEntityActionConfig(
+                query = EntityQuery(
+                    entityTypeId = testEntityTypeId,
+                    filter = QueryFilter.Relationship(
+                        relationshipId = testRelationshipId,
+                        condition = RelationshipCondition.Exists
+                    )
+                )
+            )
+            val result = config.validate(nodeServiceProvider)
+            assertTrue(result.isValid, "Expected valid config: ${result.errors}")
+        }
+
+        @Test
+        fun `valid config with relationship TARGET_EQUALS filter passes validation`() {
+            val config = WorkflowQueryEntityActionConfig(
+                query = EntityQuery(
+                    entityTypeId = testEntityTypeId,
+                    filter = QueryFilter.Relationship(
+                        relationshipId = testRelationshipId,
+                        condition = RelationshipCondition.TargetEquals(
+                            entityIds = listOf("550e8400-e29b-41d4-a716-446655440099")
+                        )
+                    )
+                )
+            )
+            val result = config.validate(nodeServiceProvider)
+            assertTrue(result.isValid, "Expected valid config: ${result.errors}")
+        }
+
+        @Test
+        fun `valid config with relationship TARGET_EQUALS template passes validation`() {
+            val config = WorkflowQueryEntityActionConfig(
+                query = EntityQuery(
+                    entityTypeId = testEntityTypeId,
+                    filter = QueryFilter.Relationship(
+                        relationshipId = testRelationshipId,
+                        condition = RelationshipCondition.TargetEquals(
+                            entityIds = listOf("{{ steps.lookup.output.entityId }}")
+                        )
+                    )
+                )
+            )
+            val result = config.validate(nodeServiceProvider)
+            assertTrue(result.isValid, "Expected valid config: ${result.errors}")
+        }
+
+        @Test
+        fun `empty AND filter fails validation`() {
+            val config = WorkflowQueryEntityActionConfig(
+                query = EntityQuery(
+                    entityTypeId = testEntityTypeId,
+                    filter = QueryFilter.And(conditions = emptyList())
+                )
             )
             val result = config.validate(nodeServiceProvider)
             assertFalse(result.isValid)
-            assertTrue(result.errors.any { it.field == "entityId" })
+            assertTrue(result.errors.any { it.message.contains("at least one condition") })
+        }
+
+        @Test
+        fun `empty OR filter fails validation`() {
+            val config = WorkflowQueryEntityActionConfig(
+                query = EntityQuery(
+                    entityTypeId = testEntityTypeId,
+                    filter = QueryFilter.Or(conditions = emptyList())
+                )
+            )
+            val result = config.validate(nodeServiceProvider)
+            assertFalse(result.isValid)
+            assertTrue(result.errors.any { it.message.contains("at least one condition") })
+        }
+
+        @Test
+        fun `empty TARGET_EQUALS entityIds fails validation`() {
+            val config = WorkflowQueryEntityActionConfig(
+                query = EntityQuery(
+                    entityTypeId = testEntityTypeId,
+                    filter = QueryFilter.Relationship(
+                        relationshipId = testRelationshipId,
+                        condition = RelationshipCondition.TargetEquals(entityIds = emptyList())
+                    )
+                )
+            )
+            val result = config.validate(nodeServiceProvider)
+            assertFalse(result.isValid)
+            assertTrue(result.errors.any { it.message.contains("at least one entity ID") })
+        }
+
+        @Test
+        fun `negative pagination limit fails validation`() {
+            val config = WorkflowQueryEntityActionConfig(
+                query = EntityQuery(entityTypeId = testEntityTypeId),
+                pagination = QueryPagination(limit = -1)
+            )
+            val result = config.validate(nodeServiceProvider)
+            assertFalse(result.isValid)
+            assertTrue(result.errors.any { it.field == "pagination.limit" })
+        }
+
+        @Test
+        fun `negative pagination offset fails validation`() {
+            val config = WorkflowQueryEntityActionConfig(
+                query = EntityQuery(entityTypeId = testEntityTypeId),
+                pagination = QueryPagination(offset = -1)
+            )
+            val result = config.validate(nodeServiceProvider)
+            assertFalse(result.isValid)
+            assertTrue(result.errors.any { it.field == "pagination.offset" })
+        }
+
+        @Test
+        fun `invalid template syntax fails validation`() {
+            val config = WorkflowQueryEntityActionConfig(
+                query = EntityQuery(
+                    entityTypeId = testEntityTypeId,
+                    filter = QueryFilter.Attribute(
+                        attributeId = testAttributeId,
+                        operator = FilterOperator.EQUALS,
+                        value = FilterValue.Template("{{ invalid..syntax }}")
+                    )
+                )
+            )
+            val result = config.validate(nodeServiceProvider)
+            assertFalse(result.isValid)
+        }
+
+        @Test
+        fun `nested TARGET_MATCHES filter passes validation`() {
+            val config = WorkflowQueryEntityActionConfig(
+                query = EntityQuery(
+                    entityTypeId = testEntityTypeId,
+                    filter = QueryFilter.Relationship(
+                        relationshipId = testRelationshipId,
+                        condition = RelationshipCondition.TargetMatches(
+                            filter = QueryFilter.Attribute(
+                                attributeId = testAttributeId,
+                                operator = FilterOperator.EQUALS,
+                                value = FilterValue.Literal("Premium")
+                            )
+                        )
+                    )
+                )
+            )
+            val result = config.validate(nodeServiceProvider)
+            assertTrue(result.isValid, "Expected valid config: ${result.errors}")
+        }
+
+        @Test
+        fun `negative COUNT_MATCHES count fails validation`() {
+            val config = WorkflowQueryEntityActionConfig(
+                query = EntityQuery(
+                    entityTypeId = testEntityTypeId,
+                    filter = QueryFilter.Relationship(
+                        relationshipId = testRelationshipId,
+                        condition = RelationshipCondition.CountMatches(
+                            operator = FilterOperator.GREATER_THAN,
+                            count = -1
+                        )
+                    )
+                )
+            )
+            val result = config.validate(nodeServiceProvider)
+            assertFalse(result.isValid)
+            assertTrue(result.errors.any { it.message.contains("non-negative") })
         }
     }
 

@@ -13,7 +13,6 @@ import riven.core.enums.util.OperationType
 import riven.core.exceptions.SchemaValidationException
 import riven.core.models.common.Icon
 import riven.core.models.entity.Entity
-import riven.core.models.entity.payload.EntityAttributePayload
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.entity.payload.EntityAttributeRelationPayloadReference
 import riven.core.models.entity.payload.EntityAttributeRequest
@@ -43,27 +42,6 @@ class EntityService(
     private val activityService: ActivityService
 ) {
 
-    /**
-     * Converts EntityAttributePayload to a JSON-compatible map structure.
-     */
-    private fun toJsonPayload(payload: EntityAttributePayload): Map<String, Any?> {
-        return when (payload) {
-            is EntityAttributePrimitivePayload -> mapOf(
-                "type" to payload.type.name,
-                "value" to payload.value,
-                "schemaType" to payload.schemaType.name
-            )
-
-            is EntityAttributeRelationPayloadReference -> mapOf(
-                "type" to payload.type.name,
-                "relations" to payload.relations
-            )
-
-            else -> mapOf(
-                "type" to payload.type.name
-            )
-        }
-    }
 
     @PostAuthorize("@workspaceSecurity.hasWorkspace(returnObject.workspaceId)")
     fun getEntity(id: UUID): Entity {

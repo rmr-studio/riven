@@ -19,7 +19,7 @@ import kotlin.reflect.KClass
  *
  * ## Error Handling
  *
- * If a requested service is not found, Spring's [NoSuchBeanDefinitionException]
+ * If a requested service is not found, Spring's [org.springframework.beans.factory.NoSuchBeanDefinitionException]
  * is thrown with a clear message indicating which service was requested.
  *
  * @property applicationContext Spring's application context for bean resolution

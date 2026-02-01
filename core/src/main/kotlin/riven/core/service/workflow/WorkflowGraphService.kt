@@ -57,27 +57,6 @@ class WorkflowGraphService(
     private val nodeServiceProvider: NodeServiceProvider
 ) {
 
-    // ------------------------------------------------------------------
-    // Config Validation
-    // ------------------------------------------------------------------
-
-    /**
-     * Validates a workflow node configuration.
-     *
-     * Uses the polymorphic validate() method on WorkflowNodeConfig, which allows
-     * each config implementation to inject the specific services it needs via
-     * the NodeServiceProvider.
-     *
-     * @param config The config to validate
-     * @return Validation result with any errors
-     */
-    private fun validateConfig(config: WorkflowNodeConfig): ConfigValidationResult {
-        return config.validate(nodeServiceProvider)
-    }
-
-    // ------------------------------------------------------------------
-    // Node Operations
-    // ------------------------------------------------------------------
 
     /**
      * Creates a new workflow node.
@@ -93,7 +72,7 @@ class WorkflowGraphService(
         log.info { "Creating workflow node '${request.name}' (key: ${request.key}) in workspace $workspaceId" }
 
         // Validate config before saving
-        val validationResult = validateConfig(request.config)
+        val validationResult = request.config.validate(nodeServiceProvider)
         if (!validationResult.isValid) {
             val errorMessages = validationResult.errors.joinToString("; ") { "${it.field}: ${it.message}" }
             throw IllegalArgumentException("Invalid node configuration: $errorMessages")
@@ -212,7 +191,7 @@ class WorkflowGraphService(
             log.debug { "Config change detected for node $id, creating new version" }
 
             // Validate new config before saving
-            val validationResult = validateConfig(request.config)
+            val validationResult = request.config.validate(nodeServiceProvider)
             if (!validationResult.isValid) {
                 val errorMessages = validationResult.errors.joinToString("; ") { "${it.field}: ${it.message}" }
                 throw IllegalArgumentException("Invalid node configuration: $errorMessages")
@@ -559,6 +538,18 @@ class WorkflowGraphService(
             nodes = nodes,
             edges = edges
         )
+    }
+
+    @Throws(IllegalArgumentException::class)
+    private fun validateConfig(
+        config: WorkflowNodeConfig
+    ): ConfigValidationResult {
+        return config.validate(nodeServiceProvider).also {
+            if (!it.isValid) {
+                val errorMessages = it.errors.joinToString("; ") { err -> "${err.field}: ${err.message}" }
+                throw IllegalArgumentException("Invalid node configuration: $errorMessages")
+            }
+        }
     }
 
 
