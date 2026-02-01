@@ -12,8 +12,10 @@ import org.springframework.context.annotation.Configuration
 import riven.core.entity.workflow.WorkflowEdgeEntity
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.models.workflow.engine.coordinator.WorkflowExecutionPhase
-import riven.core.models.workflow.engine.environment.NodeExecutionData
-import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.datastore.GenericMapOutput
+import riven.core.models.workflow.engine.datastore.StepOutput
+import riven.core.models.workflow.engine.datastore.WorkflowDataStore
+import riven.core.models.workflow.engine.datastore.WorkflowMetadata
 import riven.core.models.workflow.node.WorkflowNode
 import riven.core.models.workflow.node.config.actions.WorkflowCreateEntityActionConfig
 import riven.core.service.workflow.engine.coordinator.WorkflowGraphCoordinationService
@@ -152,6 +154,42 @@ class WorkflowExecutionEndToEndIntegrationTest {
     }
 
     /**
+     * Creates a WorkflowDataStore for testing.
+     */
+    private fun createDataStore(): WorkflowDataStore {
+        return WorkflowDataStore(
+            metadata = WorkflowMetadata(
+                executionId = workflowExecutionId,
+                workspaceId = workspaceId,
+                workflowDefinitionId = UUID.randomUUID(),
+                version = 1,
+                startedAt = Instant.now()
+            )
+        )
+    }
+
+    /**
+     * Helper to add a step output to the dataStore.
+     */
+    private fun WorkflowDataStore.addStepOutput(
+        nodeName: String,
+        output: Map<String, Any?>,
+        status: WorkflowStatus = WorkflowStatus.COMPLETED
+    ) {
+        setStepOutput(
+            nodeName,
+            StepOutput(
+                nodeId = UUID.randomUUID(),
+                nodeName = nodeName,
+                status = status,
+                output = GenericMapOutput(output),
+                executedAt = Instant.now(),
+                durationMs = 100
+            )
+        )
+    }
+
+    /**
      * Test basic workflow execution without templates.
      *
      * Workflow: A → B → C (linear, no templates)
@@ -200,13 +238,6 @@ class WorkflowExecutionEndToEndIntegrationTest {
             WorkflowGraphValidationService(WorkflowGraphTopologicalSorterService()),
             WorkflowGraphTopologicalSorterService(),
             WorkflowGraphQueueManagementService()
-        )
-
-        WorkflowExecutionContext(
-            workflowExecutionId = workflowExecutionId,
-            workspaceId = workspaceId,
-            metadata = emptyMap(),
-            dataRegistry = mutableMapOf()
         )
 
         val nodeExecutor: (List<WorkflowNode>) -> List<Pair<UUID, Any?>> = { readyNodes ->
@@ -275,24 +306,15 @@ class WorkflowExecutionEndToEndIntegrationTest {
         listOf(nodeA, nodeB)
         listOf(createEdge(nodeA.id, nodeB.id))
 
-        val context = WorkflowExecutionContext(
-            workflowExecutionId = workflowExecutionId,
-            workspaceId = workspaceId,
-            metadata = emptyMap(),
-            dataRegistry = mutableMapOf()
-        )
+        val dataStore = createDataStore()
 
-        // Manually populate context with Node A output (simulating execution)
-        context.dataRegistry["create_entity"] = NodeExecutionData(
-            nodeId = UUID.randomUUID(),
-            nodeName = "create_entity",
-            status = WorkflowStatus.COMPLETED,
-            output = mapOf(
+        // Manually populate dataStore with Node A output (simulating execution)
+        dataStore.addStepOutput(
+            "create_entity",
+            mapOf(
                 "entityId" to "entity-123",
                 "email" to "user@test.com"
-            ),
-            error = null,
-            executedAt = Instant.now()
+            )
         )
 
         // Test template resolution
@@ -301,7 +323,7 @@ class WorkflowExecutionEndToEndIntegrationTest {
             "status" to "active"
         )
 
-        val resolved = workflowNodeInputResolverService.resolveAll(nodeB_config, context)
+        val resolved = workflowNodeInputResolverService.resolveAll(nodeB_config, dataStore)
 
         // Verify template was resolved
         assertEquals("entity-123", resolved["entityId"], "Template should resolve to actual entity ID")
@@ -320,19 +342,12 @@ class WorkflowExecutionEndToEndIntegrationTest {
      */
     @Test
     fun `test workflow with nested template resolution`() {
-        val context = WorkflowExecutionContext(
-            workflowExecutionId = workflowExecutionId,
-            workspaceId = workspaceId,
-            metadata = emptyMap(),
-            dataRegistry = mutableMapOf()
-        )
+        val dataStore = createDataStore()
 
         // Populate registry with nested structure
-        context.dataRegistry["fetch_data"] = NodeExecutionData(
-            nodeId = UUID.randomUUID(),
-            nodeName = "fetch_data",
-            status = WorkflowStatus.COMPLETED,
-            output = mapOf(
+        dataStore.addStepOutput(
+            "fetch_data",
+            mapOf(
                 "user" to mapOf(
                     "email" to "nested@example.com",
                     "name" to "John Doe"
@@ -340,9 +355,7 @@ class WorkflowExecutionEndToEndIntegrationTest {
                 "metadata" to mapOf(
                     "timestamp" to 1234567890
                 )
-            ),
-            error = null,
-            executedAt = Instant.now()
+            )
         )
 
         val config = mapOf(
@@ -350,7 +363,7 @@ class WorkflowExecutionEndToEndIntegrationTest {
             "timestamp" to "{{ steps.fetch_data.metadata.timestamp }}"
         )
 
-        val resolved = workflowNodeInputResolverService.resolveAll(config, context)
+        val resolved = workflowNodeInputResolverService.resolveAll(config, dataStore)
 
         assertEquals("nested@example.com", resolved["email"])
         assertEquals(1234567890, resolved["timestamp"])
@@ -369,35 +382,16 @@ class WorkflowExecutionEndToEndIntegrationTest {
      */
     @Test
     fun `test workflow with embedded templates in strings`() {
-        val context = WorkflowExecutionContext(
-            workflowExecutionId = workflowExecutionId,
-            workspaceId = workspaceId,
-            metadata = emptyMap(),
-            dataRegistry = mutableMapOf()
-        )
+        val dataStore = createDataStore()
 
-        context.dataRegistry["user"] = NodeExecutionData(
-            nodeId = UUID.randomUUID(),
-            nodeName = "user",
-            status = WorkflowStatus.COMPLETED,
-            output = mapOf("name" to "John Doe"),
-            error = null,
-            executedAt = Instant.now()
-        )
-        context.dataRegistry["inbox"] = NodeExecutionData(
-            nodeId = UUID.randomUUID(),
-            nodeName = "inbox",
-            status = WorkflowStatus.COMPLETED,
-            output = mapOf("count" to 5),
-            error = null,
-            executedAt = Instant.now()
-        )
+        dataStore.addStepOutput("user", mapOf("name" to "John Doe"))
+        dataStore.addStepOutput("inbox", mapOf("count" to 5))
 
         val config = mapOf(
             "message" to "Welcome {{ steps.user.name }}, you have {{ steps.inbox.count }} messages"
         )
 
-        val resolved = workflowNodeInputResolverService.resolveAll(config, context)
+        val resolved = workflowNodeInputResolverService.resolveAll(config, dataStore)
 
         assertEquals(
             "Welcome John Doe, you have 5 messages",
@@ -421,24 +415,15 @@ class WorkflowExecutionEndToEndIntegrationTest {
      */
     @Test
     fun `test cross-node data flow via templates`() {
-        val context = WorkflowExecutionContext(
-            workflowExecutionId = workflowExecutionId,
-            workspaceId = workspaceId,
-            metadata = emptyMap(),
-            dataRegistry = mutableMapOf()
-        )
+        val dataStore = createDataStore()
 
         // Simulate Node A execution
-        context.dataRegistry["node_a"] = NodeExecutionData(
-            nodeId = UUID.randomUUID(),
-            nodeName = "node_a",
-            status = WorkflowStatus.COMPLETED,
-            output = mapOf(
+        dataStore.addStepOutput(
+            "node_a",
+            mapOf(
                 "leadId" to "lead-123",
                 "email" to "contact@example.com"
-            ),
-            error = null,
-            executedAt = Instant.now()
+            )
         )
 
         // Node B config with templates referencing Node A
@@ -448,24 +433,20 @@ class WorkflowExecutionEndToEndIntegrationTest {
             "action" to "enrich"
         )
 
-        val nodeBResolved = workflowNodeInputResolverService.resolveAll(nodeBConfig, context)
+        val nodeBResolved = workflowNodeInputResolverService.resolveAll(nodeBConfig, dataStore)
         assertEquals("lead-123", nodeBResolved["id"])
         assertEquals("contact@example.com", nodeBResolved["contactEmail"])
 
         // Simulate Node B execution result
-        context.dataRegistry["node_b"] = NodeExecutionData(
-            nodeId = UUID.randomUUID(),
-            nodeName = "node_b",
-            status = WorkflowStatus.COMPLETED,
-            output = mapOf(
+        dataStore.addStepOutput(
+            "node_b",
+            mapOf(
                 "enrichedData" to mapOf(
                     "leadId" to "lead-123",
                     "score" to 95,
                     "qualified" to true
                 )
-            ),
-            error = null,
-            executedAt = Instant.now()
+            )
         )
 
         // Node C config with template referencing Node B
@@ -473,7 +454,7 @@ class WorkflowExecutionEndToEndIntegrationTest {
             "data" to "{{ steps.node_b.enrichedData }}"
         )
 
-        val nodeCResolved = workflowNodeInputResolverService.resolveAll(nodeCConfig, context)
+        val nodeCResolved = workflowNodeInputResolverService.resolveAll(nodeCConfig, dataStore)
         val enrichedData = nodeCResolved["data"] as? Map<*, *>
 
         assertNotNull(enrichedData)
@@ -535,12 +516,7 @@ class WorkflowExecutionEndToEndIntegrationTest {
      */
     @Test
     fun `test template resolution with missing data returns null`() {
-        val context = WorkflowExecutionContext(
-            workflowExecutionId = workflowExecutionId,
-            workspaceId = workspaceId,
-            metadata = emptyMap(),
-            dataRegistry = mutableMapOf()
-        )
+        val dataStore = createDataStore()
 
         // Empty registry - node doesn't exist
 
@@ -548,7 +524,7 @@ class WorkflowExecutionEndToEndIntegrationTest {
             "value" to "{{ steps.nonexistent_node.output }}"
         )
 
-        val resolved = workflowNodeInputResolverService.resolveAll(config, context)
+        val resolved = workflowNodeInputResolverService.resolveAll(config, dataStore)
 
         // Should return null for missing data (graceful degradation)
         assertNull(resolved["value"], "Missing node reference should resolve to null")

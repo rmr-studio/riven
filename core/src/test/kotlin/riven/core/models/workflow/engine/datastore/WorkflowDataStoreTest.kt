@@ -3,6 +3,7 @@ package riven.core.models.workflow.engine.datastore
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import riven.core.enums.util.OperationType
 import riven.core.enums.workflow.WorkflowStatus
 import java.time.Instant
 import java.util.UUID
@@ -182,7 +183,12 @@ class WorkflowDataStoreTest {
 
     @Test
     fun `setTrigger stores trigger`() {
-        val triggerData = mapOf("eventType" to "CREATED", "entityId" to UUID.randomUUID())
+        val triggerData = EntityEventTrigger(
+            eventType = OperationType.CREATE,
+            entityId = UUID.randomUUID(),
+            entityTypeId = UUID.randomUUID(),
+            entity = mapOf("name" to "test")
+        )
 
         dataStore.setTrigger(triggerData)
 
@@ -191,8 +197,18 @@ class WorkflowDataStoreTest {
 
     @Test
     fun `setTrigger throws IllegalStateException when already set`() {
-        val trigger1 = mapOf("first" to "trigger")
-        val trigger2 = mapOf("second" to "trigger")
+        val trigger1 = EntityEventTrigger(
+            eventType = OperationType.CREATE,
+            entityId = UUID.randomUUID(),
+            entityTypeId = UUID.randomUUID(),
+            entity = mapOf("first" to "trigger")
+        )
+        val trigger2 = EntityEventTrigger(
+            eventType = OperationType.UPDATE,
+            entityId = UUID.randomUUID(),
+            entityTypeId = UUID.randomUUID(),
+            entity = mapOf("second" to "trigger")
+        )
 
         dataStore.setTrigger(trigger1)
 
@@ -387,7 +403,11 @@ class WorkflowDataStoreTest {
             nodeId = UUID.randomUUID(),
             nodeName = nodeName,
             status = WorkflowStatus.COMPLETED,
-            output = mapOf("result" to "value$index"),
+            output = CreateEntityOutput(
+                entityId = UUID.randomUUID(),
+                entityTypeId = UUID.randomUUID(),
+                payload = mapOf(UUID.randomUUID() to "value$index")
+            ),
             executedAt = Instant.now(),
             durationMs = 100L
         )
