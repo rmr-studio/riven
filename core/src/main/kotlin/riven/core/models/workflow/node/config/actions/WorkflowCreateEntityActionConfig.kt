@@ -10,6 +10,8 @@ import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.common.json.JsonObject
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
+import riven.core.models.workflow.engine.datastore.CreateEntityOutput
+import riven.core.models.workflow.engine.datastore.NodeOutput
 import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.request.entity.SaveEntityRequest
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
@@ -160,7 +162,7 @@ data class WorkflowCreateEntityActionConfig(
         context: WorkflowExecutionContext,
         inputs: JsonObject,
         services: NodeServiceProvider
-    ): JsonObject {
+    ): NodeOutput {
         // Extract resolved inputs
         val resolvedEntityTypeId = UUID.fromString(inputs["entityTypeId"] as String)
         val resolvedPayload = inputs["payload"] as? Map<*, *> ?: emptyMap<String, Any?>()
@@ -197,11 +199,11 @@ data class WorkflowCreateEntityActionConfig(
             saveRequest
         )
 
-        // Return output
-        return mapOf(
-            "entityId" to result.entity?.id,
-            "entityTypeId" to result.entity?.typeId,
-            "payload" to result.entity?.payload
+        // Return typed output
+        return CreateEntityOutput(
+            entityId = result.entity?.id ?: throw IllegalStateException("Entity creation failed: no entity returned"),
+            entityTypeId = result.entity?.typeId ?: resolvedEntityTypeId,
+            payload = result.entity?.payload ?: emptyMap()
         )
     }
 }

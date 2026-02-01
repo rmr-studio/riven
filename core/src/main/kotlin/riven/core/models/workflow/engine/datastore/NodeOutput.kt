@@ -149,3 +149,23 @@ data class ConditionOutput(
         "evaluatedExpression" to evaluatedExpression
     )
 }
+
+// =============================================================================
+// Unsupported Node Outputs
+// =============================================================================
+
+/**
+ * Output for nodes that don't support execution.
+ *
+ * Used by TRIGGER nodes (which are entry points, not executed during workflow)
+ * and FUNCTION nodes (not yet implemented).
+ *
+ * @property message Explanation of why execution is not supported
+ */
+data class UnsupportedNodeOutput(
+    val message: String
+) : NodeOutput {
+    override fun toMap(): Map<String, Any?> = mapOf(
+        "message" to message
+    )
+}

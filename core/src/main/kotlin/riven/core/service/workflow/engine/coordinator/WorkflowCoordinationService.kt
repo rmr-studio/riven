@@ -11,6 +11,7 @@ import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.models.workflow.engine.NodeExecutionResult
 import riven.core.models.workflow.engine.coordinator.WorkflowState
+import riven.core.models.workflow.engine.datastore.NodeOutput
 import riven.core.models.workflow.engine.environment.NodeExecutionData
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.engine.error.NodeExecutionError
@@ -303,35 +304,38 @@ class WorkflowCoordinationService(
         nodeName: String,
         nodeType: String,
         context: WorkflowExecutionContext,
-        execution: () -> Map<String, Any?>
+        execution: () -> NodeOutput
     ): NodeExecutionResult {
         return try {
             logger.info { "Executing $nodeType: $nodeName" }
 
             // Record duration of execution
             val startTime = System.currentTimeMillis()
-            val output = execution()
+            val nodeOutput = execution()
             val duration = System.currentTimeMillis() - startTime
             logger.info { "Node $nodeName completed successfully in ${duration}ms" }
+
+            // Convert NodeOutput to map for data registry (backward compatible)
+            val outputMap = nodeOutput.toMap()
 
             // Capture output to data registry
             val executionData = NodeExecutionData(
                 nodeId = nodeId,
                 nodeName = nodeName,
                 status = WorkflowStatus.COMPLETED,
-                output = output,
+                output = outputMap,
                 error = null,
                 executedAt = Instant.now()
             )
             context.dataRegistry[nodeName] = executionData
 
-            logger.debug { "Captured output for node $nodeName: ${output.keys}" }
+            logger.debug { "Captured output for node $nodeName: ${outputMap.keys}" }
             logger.info { "Data registry now contains ${context.dataRegistry.size} node outputs" }
 
             NodeExecutionResult(
                 nodeId = nodeId,
                 status = WorkflowStatus.COMPLETED,
-                output = output
+                output = outputMap
             )
         } catch (e: Exception) {
             logger.error(e) { "$nodeType $nodeName failed: ${e.message}" }

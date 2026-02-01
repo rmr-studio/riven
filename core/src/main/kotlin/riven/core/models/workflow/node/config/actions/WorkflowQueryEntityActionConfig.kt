@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
+import riven.core.models.workflow.engine.datastore.NodeOutput
+import riven.core.models.workflow.engine.datastore.QueryEntityOutput
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
@@ -336,7 +338,7 @@ data class WorkflowQueryEntityActionConfig(
         context: WorkflowExecutionContext,
         inputs: Map<String, Any?>,
         services: NodeServiceProvider
-    ): Map<String, Any?> {
+    ): NodeOutput {
         log.info { "Executing QUERY_ENTITY for type: ${query.entityTypeId}" }
 
         // TODO: Implement query execution via EntityQueryService

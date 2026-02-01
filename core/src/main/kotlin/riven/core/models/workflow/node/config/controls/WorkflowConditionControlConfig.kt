@@ -9,6 +9,8 @@ import riven.core.enums.workflow.WorkflowControlType
 import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.common.json.JsonObject
+import riven.core.models.workflow.engine.datastore.ConditionOutput
+import riven.core.models.workflow.engine.datastore.NodeOutput
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowControlConfig
@@ -181,7 +183,7 @@ data class WorkflowConditionControlConfig(
         context: WorkflowExecutionContext,
         inputs: Map<String, Any?>,
         services: NodeServiceProvider
-    ): Map<String, Any?> {
+    ): NodeOutput {
         // Extract resolved inputs
         val resolvedExpression = inputs["expression"] as? String ?: expression
         val resolvedContextEntityId = inputs["contextEntityId"] as? String
@@ -212,7 +214,10 @@ data class WorkflowConditionControlConfig(
 
         log.debug { "CONDITION evaluated: $resolvedExpression -> $result (context: ${evaluationContext.keys})" }
 
-        // Return boolean for DAG branching
-        return mapOf("conditionResult" to result)
+        // Return typed output for DAG branching
+        return ConditionOutput(
+            result = result,
+            evaluatedExpression = resolvedExpression
+        )
     }
 }

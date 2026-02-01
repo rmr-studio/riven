@@ -42,10 +42,10 @@ class WorkflowDataStore(
      * Write-once trigger context.
      *
      * Set once at workflow start, never modified afterwards.
-     * Will be typed as TriggerContext in plan 03.
+     * Typed as TriggerContext for template resolution via toMap().
      */
     @Volatile
-    private var _trigger: Any? = null
+    private var _trigger: TriggerContext? = null
 
     /**
      * Step outputs keyed by node name.
@@ -80,10 +80,10 @@ class WorkflowDataStore(
      * Must be called exactly once at workflow start. Subsequent calls
      * will throw [IllegalStateException] to enforce write-once semantics.
      *
-     * @param trigger The trigger context (will be typed TriggerContext in plan 03)
+     * @param trigger The trigger context with data accessible via toMap()
      * @throws IllegalStateException if trigger has already been set
      */
-    fun setTrigger(trigger: Any) {
+    fun setTrigger(trigger: TriggerContext) {
         if (_trigger != null) {
             throw IllegalStateException("Trigger already set")
         }
@@ -95,7 +95,7 @@ class WorkflowDataStore(
      *
      * @return The trigger context, or null if not yet set
      */
-    fun getTrigger(): Any? = _trigger
+    fun getTrigger(): TriggerContext? = _trigger
 
     // ==================== Step Operations ====================
 

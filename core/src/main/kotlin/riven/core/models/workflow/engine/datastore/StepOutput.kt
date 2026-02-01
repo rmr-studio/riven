@@ -34,7 +34,7 @@ import java.util.UUID
  * @property nodeId Unique identifier of the executed node
  * @property nodeName Human-readable name used for template references (e.g., "fetch_leads")
  * @property status Execution status: COMPLETED, FAILED, CANCELED
- * @property output Action outputs (Any? temporarily; will be typed NodeOutput in plan 02)
+ * @property output Typed action output (uses NodeOutput.toMap() for template resolution)
  * @property executedAt Timestamp when execution completed
  * @property durationMs Execution duration in milliseconds
  */
@@ -42,7 +42,7 @@ data class StepOutput(
     val nodeId: UUID,
     val nodeName: String,
     val status: WorkflowStatus,
-    val output: Any?,
+    val output: NodeOutput,
     val executedAt: Instant,
     val durationMs: Long
 )

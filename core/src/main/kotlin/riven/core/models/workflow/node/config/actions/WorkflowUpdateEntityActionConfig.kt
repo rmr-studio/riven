@@ -11,6 +11,8 @@ import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.request.entity.SaveEntityRequest
+import riven.core.models.workflow.engine.datastore.NodeOutput
+import riven.core.models.workflow.engine.datastore.UpdateEntityOutput
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
@@ -152,7 +154,7 @@ data class WorkflowUpdateEntityActionConfig(
         context: WorkflowExecutionContext,
         inputs: Map<String, Any?>,
         services: NodeServiceProvider
-    ): Map<String, Any?> {
+    ): NodeOutput {
         // Extract resolved inputs
         val resolvedEntityId = UUID.fromString(inputs["entityId"] as String)
         val resolvedPayload = inputs["payload"] as? Map<*, *> ?: emptyMap<String, Any?>()
@@ -192,11 +194,11 @@ data class WorkflowUpdateEntityActionConfig(
             saveRequest
         )
 
-        // Return output
-        return mapOf(
-            "entityId" to result.entity?.id,
-            "updated" to true,
-            "payload" to result.entity?.payload
+        // Return typed output
+        return UpdateEntityOutput(
+            entityId = resolvedEntityId,
+            updated = true,
+            payload = result.entity?.payload ?: emptyMap()
         )
     }
 }
