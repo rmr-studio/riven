@@ -12,7 +12,7 @@ import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.engine.datastore.NodeOutput
 import riven.core.models.workflow.engine.datastore.QueryEntityOutput
-import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.datastore.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
 import riven.core.models.workflow.node.config.WorkflowNodeConfigField
@@ -335,7 +335,7 @@ data class WorkflowQueryEntityActionConfig(
     }
 
     override fun execute(
-        context: WorkflowExecutionContext,
+        dataStore: WorkflowDataStore,
         inputs: Map<String, Any?>,
         services: NodeServiceProvider
     ): NodeOutput {

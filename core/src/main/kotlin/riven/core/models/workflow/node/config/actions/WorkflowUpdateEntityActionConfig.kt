@@ -13,7 +13,7 @@ import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.request.entity.SaveEntityRequest
 import riven.core.models.workflow.engine.datastore.NodeOutput
 import riven.core.models.workflow.engine.datastore.UpdateEntityOutput
-import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.datastore.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
 import riven.core.models.workflow.node.config.WorkflowNodeConfigField
@@ -151,7 +151,7 @@ data class WorkflowUpdateEntityActionConfig(
     }
 
     override fun execute(
-        context: WorkflowExecutionContext,
+        dataStore: WorkflowDataStore,
         inputs: Map<String, Any?>,
         services: NodeServiceProvider
     ): NodeOutput {
@@ -189,7 +189,7 @@ data class WorkflowUpdateEntityActionConfig(
         )
 
         val result = entityService.saveEntity(
-            context.workspaceId,
+            dataStore.metadata.workspaceId,
             existingEntity.typeId,
             saveRequest
         )

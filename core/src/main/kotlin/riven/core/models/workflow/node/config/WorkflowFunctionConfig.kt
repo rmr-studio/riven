@@ -9,7 +9,7 @@ import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.common.json.JsonObject
 import riven.core.models.workflow.engine.datastore.NodeOutput
 import riven.core.models.workflow.engine.datastore.UnsupportedNodeOutput
-import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.datastore.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 
@@ -57,7 +57,7 @@ data class WorkflowFunctionConfig(
     }
 
     override fun execute(
-        context: WorkflowExecutionContext,
+        dataStore: WorkflowDataStore,
         inputs: Map<String, Any?>,
         services: NodeServiceProvider
     ): NodeOutput {

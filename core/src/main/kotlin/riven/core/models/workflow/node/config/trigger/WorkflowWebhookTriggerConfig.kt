@@ -11,7 +11,7 @@ import riven.core.models.common.json.JsonObject
 import riven.core.models.common.http.Signature
 import riven.core.models.common.validation.Schema
 import riven.core.models.workflow.engine.datastore.NodeOutput
-import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.datastore.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowNodeConfigField
 import riven.core.models.workflow.node.config.WorkflowTriggerConfig
@@ -119,7 +119,7 @@ data class WorkflowWebhookTriggerConfig(
     }
 
     override fun execute(
-        context: WorkflowExecutionContext,
+        dataStore: WorkflowDataStore,
         inputs: Map<String, Any?>,
         services: NodeServiceProvider
     ): NodeOutput {

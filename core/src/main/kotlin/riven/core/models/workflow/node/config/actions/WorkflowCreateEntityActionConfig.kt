@@ -12,9 +12,9 @@ import riven.core.models.common.json.JsonObject
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.workflow.engine.datastore.CreateEntityOutput
 import riven.core.models.workflow.engine.datastore.NodeOutput
+import riven.core.models.workflow.engine.datastore.WorkflowDataStore
 import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.request.entity.SaveEntityRequest
-import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
 import riven.core.models.workflow.node.config.WorkflowNodeConfigField
@@ -159,7 +159,7 @@ data class WorkflowCreateEntityActionConfig(
     }
 
     override fun execute(
-        context: WorkflowExecutionContext,
+        dataStore: WorkflowDataStore,
         inputs: JsonObject,
         services: NodeServiceProvider
     ): NodeOutput {
@@ -194,7 +194,7 @@ data class WorkflowCreateEntityActionConfig(
         )
 
         val result = entityService.saveEntity(
-            context.workspaceId,
+            dataStore.metadata.workspaceId,
             resolvedEntityTypeId,
             saveRequest
         )
