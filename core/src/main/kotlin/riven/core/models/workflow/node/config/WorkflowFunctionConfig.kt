@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
+import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
+import riven.core.models.common.json.JsonObject
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
@@ -29,6 +31,16 @@ data class WorkflowFunctionConfig(
 ) : WorkflowNodeConfig {
     override val type: WorkflowNodeType
         get() = WorkflowNodeType.FUNCTION
+
+    override val config: JsonObject
+        get() = emptyMap()
+
+    override val configSchema: List<WorkflowNodeConfigField>
+        get() = Companion.configSchema
+
+    companion object {
+        val configSchema: List<WorkflowNodeConfigField> = emptyList()
+    }
 
     /**
      * Validates this configuration.

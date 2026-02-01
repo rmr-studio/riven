@@ -8,10 +8,12 @@ import io.swagger.v3.oas.annotations.media.Schema
 import org.springframework.http.HttpMethod
 import org.springframework.web.reactive.function.client.WebClient
 import riven.core.enums.workflow.WorkflowActionType
+import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
+import riven.core.models.workflow.node.config.WorkflowNodeConfigField
 import riven.core.models.workflow.node.config.validation.ConfigValidationError
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
@@ -120,7 +122,7 @@ data class WorkflowHttpRequestActionConfig(
      * Returns typed fields as a map for template resolution.
      * Used by WorkflowCoordinationService to resolve templates before execution.
      */
-    val config: Map<String, Any?>
+    override val config: Map<String, Any?>
         get() = mapOf(
             "url" to url,
             "method" to method,
@@ -128,6 +130,9 @@ data class WorkflowHttpRequestActionConfig(
             "body" to body,
             "timeoutSeconds" to timeoutSeconds
         )
+
+    override val configSchema: List<WorkflowNodeConfigField>
+        get() = Companion.configSchema
 
     companion object {
         private val VALID_METHODS = setOf("GET", "POST", "PUT", "DELETE", "PATCH")
@@ -137,6 +142,52 @@ data class WorkflowHttpRequestActionConfig(
             "api-key",
             "cookie",
             "set-cookie"
+        )
+
+        val configSchema: List<WorkflowNodeConfigField> = listOf(
+            WorkflowNodeConfigField(
+                key = "url",
+                label = "URL",
+                type = WorkflowNodeConfigFieldType.TEMPLATE,
+                required = true,
+                description = "URL to request (supports templates)",
+                placeholder = "https://api.example.com/endpoint"
+            ),
+            WorkflowNodeConfigField(
+                key = "method",
+                label = "HTTP Method",
+                type = WorkflowNodeConfigFieldType.ENUM,
+                required = true,
+                description = "HTTP method to use",
+                options = mapOf(
+                    "GET" to "GET",
+                    "POST" to "POST",
+                    "PUT" to "PUT",
+                    "DELETE" to "DELETE",
+                    "PATCH" to "PATCH"
+                )
+            ),
+            WorkflowNodeConfigField(
+                key = "headers",
+                label = "Headers",
+                type = WorkflowNodeConfigFieldType.KEY_VALUE,
+                required = false,
+                description = "HTTP headers to include in the request"
+            ),
+            WorkflowNodeConfigField(
+                key = "body",
+                label = "Request Body",
+                type = WorkflowNodeConfigFieldType.KEY_VALUE,
+                required = false,
+                description = "Request body for POST/PUT/PATCH requests"
+            ),
+            WorkflowNodeConfigField(
+                key = "timeoutSeconds",
+                label = "Timeout (seconds)",
+                type = WorkflowNodeConfigFieldType.DURATION,
+                required = false,
+                description = "Optional timeout override in seconds"
+            )
         )
     }
 

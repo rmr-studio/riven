@@ -6,10 +6,12 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.workflow.WorkflowActionType
+import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
+import riven.core.models.workflow.node.config.WorkflowNodeConfigField
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
 import riven.core.service.entity.EntityService
@@ -77,11 +79,33 @@ data class WorkflowDeleteEntityActionConfig(
      * Returns typed fields as a map for template resolution.
      * Used by WorkflowCoordinationService to resolve templates before execution.
      */
-    val config: Map<String, Any?>
+    override val config: Map<String, Any?>
         get() = mapOf(
             "entityId" to entityId,
             "timeoutSeconds" to timeoutSeconds
         )
+
+    override val configSchema: List<WorkflowNodeConfigField>
+        get() = Companion.configSchema
+
+    companion object {
+        val configSchema: List<WorkflowNodeConfigField> = listOf(
+            WorkflowNodeConfigField(
+                key = "entityId",
+                label = "Entity ID",
+                type = WorkflowNodeConfigFieldType.UUID,
+                required = true,
+                description = "UUID of the entity to delete"
+            ),
+            WorkflowNodeConfigField(
+                key = "timeoutSeconds",
+                label = "Timeout (seconds)",
+                type = WorkflowNodeConfigFieldType.DURATION,
+                required = false,
+                description = "Optional timeout override in seconds"
+            )
+        )
+    }
 
     /**
      * Validates this configuration.
