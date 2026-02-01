@@ -53,13 +53,13 @@ private val log = KotlinLogging.logger {}
 data class WorkflowDeleteEntityActionConfig(
     override val version: Int = 1,
 
-    @Schema(
+    @param:Schema(
         description = "UUID of the entity to delete. Can be a static UUID or template.",
         example = "550e8400-e29b-41d4-a716-446655440000"
     )
     val entityId: String,
 
-    @Schema(
+    @param:Schema(
         description = "Optional timeout override in seconds",
         nullable = true
     )
@@ -90,7 +90,14 @@ data class WorkflowDeleteEntityActionConfig(
      * - entityId is valid UUID or template
      * - timeout is non-negative if provided
      */
-    fun validate(validationService: WorkflowNodeConfigValidationService): ConfigValidationResult {
+    override fun validate(injector: NodeServiceProvider): ConfigValidationResult {
+        /**
+         * TODO: Add validation for checking if the entity exists before deletion.
+         * **/
+
+        val validationService: WorkflowNodeConfigValidationService =
+            injector.service<WorkflowNodeConfigValidationService>()
+
         return validationService.combine(
             validationService.validateTemplateOrUuid(entityId, "entityId"),
             validationService.validateOptionalDuration(timeoutSeconds, "timeoutSeconds")

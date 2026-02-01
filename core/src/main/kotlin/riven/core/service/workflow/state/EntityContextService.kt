@@ -11,7 +11,7 @@ import riven.core.models.entity.payload.EntityAttributeRelationPayload
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.entity.EntityRelationshipService
-import java.util.UUID
+import java.util.*
 
 /**
  * Service for converting entity data to expression-compatible context maps.
@@ -185,7 +185,7 @@ class EntityContextService(
                 val relationshipDefinition = entityType.relationships?.find { it.id == fieldUuid }
 
                 if (relationshipDefinition == null) {
-                    logger.warn("Relationship definition not found for field $fieldUuid in entity type ${entityType.key}")
+                    logger.warn { "Relationship definition not found for field $fieldUuid in entity type ${entityType.key}" }
                     return null
                 }
 
@@ -200,7 +200,7 @@ class EntityContextService(
                         )
                     } catch (e: IllegalArgumentException) {
                         // Related entity not found (stale relationship)
-                        logger.warn("Related entity not found: ${entityLink.id} for field $fieldUuid - ${e.message}")
+                        logger.warn { "Related entity not found: ${entityLink.id} for field $fieldUuid - ${e.message}" }
                         null
                     }
                 }

@@ -11,6 +11,7 @@ import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowTriggerConfig
 import riven.core.models.workflow.node.config.validation.ConfigValidationError
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
+import riven.core.models.workflow.node.service
 import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
 
 /**
@@ -42,8 +43,12 @@ data class WorkflowEntityEventTriggerConfig(
      * - key is not blank (entity type key)
      * - operation is valid (already enforced by enum)
      * - expressions is provided (not null)
+     *
+     * @param injector Spring managed provider to inject services into model
+     * @return Validation result with any errors
      */
-    fun validate(validationService: WorkflowNodeConfigValidationService): ConfigValidationResult {
+    override fun validate(injector: NodeServiceProvider): ConfigValidationResult {
+        val validationService = injector.service<WorkflowNodeConfigValidationService>()
         val errors = mutableListOf<ConfigValidationError>()
 
         // Validate key (entity type key)

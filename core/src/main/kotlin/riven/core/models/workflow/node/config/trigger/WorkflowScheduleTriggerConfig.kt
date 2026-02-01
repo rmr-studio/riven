@@ -10,7 +10,6 @@ import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowTriggerConfig
 import riven.core.models.workflow.node.config.validation.ConfigValidationError
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
-import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
 import java.time.Duration
 import java.util.*
 
@@ -50,8 +49,12 @@ data class WorkflowScheduleTriggerConfig(
      * - cronExpression has valid format if provided
      * - interval is positive if provided
      * - timeZone is valid
+     *
+     * @param injector Spring managed provider to inject services into model
+     * @return Validation result with any errors
      */
-    fun validate(validationService: WorkflowNodeConfigValidationService): ConfigValidationResult {
+    @Suppress("UNUSED_PARAMETER")
+    override fun validate(injector: NodeServiceProvider): ConfigValidationResult {
         val errors = mutableListOf<ConfigValidationError>()
 
         // Check at least one scheduling option

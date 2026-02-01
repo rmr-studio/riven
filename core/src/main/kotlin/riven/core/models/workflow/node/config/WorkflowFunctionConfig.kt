@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.node.NodeServiceProvider
+import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 
 /**
  * Configuration for a FUNCTION category node.
@@ -28,6 +29,18 @@ data class WorkflowFunctionConfig(
 ) : WorkflowNodeConfig {
     override val type: WorkflowNodeType
         get() = WorkflowNodeType.FUNCTION
+
+    /**
+     * Validates this configuration.
+     *
+     * @param injector Spring managed provider to inject services into model
+     * @return Validation result with any errors
+     */
+    @Suppress("UNUSED_PARAMETER")
+    override fun validate(injector: NodeServiceProvider): ConfigValidationResult {
+        // FUNCTION nodes have no configurable properties to validate
+        return ConfigValidationResult.valid()
+    }
 
     override fun execute(
         context: WorkflowExecutionContext,

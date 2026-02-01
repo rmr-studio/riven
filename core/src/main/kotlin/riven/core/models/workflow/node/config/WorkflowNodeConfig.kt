@@ -7,6 +7,7 @@ import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.common.json.JsonObject
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.node.NodeServiceProvider
+import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 
 /**
  * Extensible configuration interface for workflow nodes.
@@ -45,4 +46,6 @@ sealed interface WorkflowNodeConfig {
         inputs: JsonObject,
         services: NodeServiceProvider
     ): JsonObject
+
+    fun validate(injector: NodeServiceProvider): ConfigValidationResult
 }

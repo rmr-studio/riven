@@ -108,10 +108,19 @@ data class WorkflowCreateEntityActionConfig(
      * - payload values have valid template syntax
      * - timeout is non-negative if provided
      *
-     * @param validationService Service for validation utilities
+     * @param injector Spring managed provider to inject services into model
      * @return Validation result with any errors
      */
-    fun validate(validationService: WorkflowNodeConfigValidationService): ConfigValidationResult {
+    override fun validate(injector: NodeServiceProvider): ConfigValidationResult {
+        /** TODO: This would also need to validate the following:
+         * - entityTypeId resolves to an existing EntityType in the workspace
+         * - payload keys correspond to valid attribute IDs in the EntityType schema
+         * - payload values are compatible with the schema types defined in the EntityType and meet all required fields
+         * **/
+
+
+        val validationService = injector.service<WorkflowNodeConfigValidationService>()
+
         return validationService.combine(
             validationService.validateTemplateOrUuid(entityTypeId, "entityTypeId"),
             validationService.validateTemplateMap(payload, "payload"),

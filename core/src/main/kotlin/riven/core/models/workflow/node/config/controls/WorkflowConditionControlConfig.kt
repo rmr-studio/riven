@@ -106,22 +106,21 @@ data class WorkflowConditionControlConfig(
      * - contextEntityId is valid UUID or template if provided
      * - timeout is non-negative if provided
      *
-     * Note: Expression syntax is validated by attempting to parse it.
-     * The ExpressionParserService must be available for full validation.
+     * @param injector Spring managed provider to inject services into model
+     * @return Validation result with any errors
      */
-    fun validate(
-        validationService: WorkflowNodeConfigValidationService,
-        workflowNodeExpressionParserService: WorkflowNodeExpressionParserService? = null
-    ): ConfigValidationResult {
+    override fun validate(injector: NodeServiceProvider): ConfigValidationResult {
+        val validationService = injector.service<WorkflowNodeConfigValidationService>()
+        val expressionParserService = injector.service<WorkflowNodeExpressionParserService>()
         val errors = mutableListOf<ConfigValidationError>()
 
         // Validate expression is not blank
         errors.addAll(validationService.validateRequiredString(expression, "expression"))
 
-        // Validate expression syntax if parser available
-        if (expression.isNotBlank() && workflowNodeExpressionParserService != null) {
+        // Validate expression syntax
+        if (expression.isNotBlank()) {
             try {
-                workflowNodeExpressionParserService.parse(expression)
+                expressionParserService.parse(expression)
             } catch (e: Exception) {
                 errors.add(ConfigValidationError("expression", "Invalid expression syntax: ${e.message}"))
             }

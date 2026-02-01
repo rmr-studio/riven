@@ -9,7 +9,6 @@ import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowTriggerConfig
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
-import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
 import io.swagger.v3.oas.annotations.media.Schema as SwaggerSchema
 
 /**
@@ -37,9 +36,12 @@ data class WorkflowFunctionTriggerConfig(
      * Checks:
      * - schema is provided (already non-null in constructor)
      * - schema has valid structure
+     *
+     * @param injector Spring managed provider to inject services into model
+     * @return Validation result with any errors
      */
     @Suppress("UNUSED_PARAMETER")
-    fun validate(validationService: WorkflowNodeConfigValidationService): ConfigValidationResult {
+    override fun validate(injector: NodeServiceProvider): ConfigValidationResult {
         // schema is non-null in constructor, so it's always present
         // Could add deeper schema validation here if needed
         return ConfigValidationResult.valid()

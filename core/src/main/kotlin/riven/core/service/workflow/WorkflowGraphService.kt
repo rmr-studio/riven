@@ -20,12 +20,7 @@ import riven.core.models.workflow.WorkflowEdge
 import riven.core.models.workflow.WorkflowGraph
 import riven.core.models.workflow.node.WorkflowNode
 import riven.core.models.workflow.node.config.WorkflowNodeConfig
-import riven.core.models.workflow.node.config.actions.*
-import riven.core.models.workflow.node.config.controls.WorkflowConditionControlConfig
-import riven.core.models.workflow.node.config.trigger.WorkflowEntityEventTriggerConfig
-import riven.core.models.workflow.node.config.trigger.WorkflowFunctionTriggerConfig
-import riven.core.models.workflow.node.config.trigger.WorkflowScheduleTriggerConfig
-import riven.core.models.workflow.node.config.trigger.WorkflowWebhookTriggerConfig
+import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.repository.workflow.WorkflowDefinitionRepository
 import riven.core.repository.workflow.WorkflowDefinitionVersionRepository
@@ -33,8 +28,6 @@ import riven.core.repository.workflow.WorkflowEdgeRepository
 import riven.core.repository.workflow.WorkflowNodeRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
-import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
-import riven.core.service.workflow.state.WorkflowNodeExpressionParserService
 import riven.core.util.ServiceUtil
 import java.time.ZonedDateTime
 import java.util.*
@@ -61,8 +54,7 @@ class WorkflowGraphService(
     private val workflowDefinitionVersionRepository: WorkflowDefinitionVersionRepository,
     private val activityService: ActivityService,
     private val authTokenService: AuthTokenService,
-    private val workflowNodeConfigValidationService: WorkflowNodeConfigValidationService,
-    private val workflowNodeExpressionParserService: WorkflowNodeExpressionParserService
+    private val nodeServiceProvider: NodeServiceProvider
 ) {
 
     // ------------------------------------------------------------------
@@ -72,31 +64,15 @@ class WorkflowGraphService(
     /**
      * Validates a workflow node configuration.
      *
+     * Uses the polymorphic validate() method on WorkflowNodeConfig, which allows
+     * each config implementation to inject the specific services it needs via
+     * the NodeServiceProvider.
+     *
      * @param config The config to validate
      * @return Validation result with any errors
-     * @throws IllegalArgumentException if config is invalid
      */
     private fun validateConfig(config: WorkflowNodeConfig): ConfigValidationResult {
-        return when (config) {
-            // Action configs
-            is WorkflowCreateEntityActionConfig -> config.validate(workflowNodeConfigValidationService)
-            is WorkflowUpdateEntityActionConfig -> config.validate(workflowNodeConfigValidationService)
-            is WorkflowDeleteEntityActionConfig -> config.validate(workflowNodeConfigValidationService)
-            is WorkflowQueryEntityActionConfig -> config.validate(workflowNodeConfigValidationService)
-            is WorkflowHttpRequestActionConfig -> config.validate(workflowNodeConfigValidationService)
-            // Control configs
-            is WorkflowConditionControlConfig -> config.validate(
-                workflowNodeConfigValidationService,
-                workflowNodeExpressionParserService
-            )
-            // Trigger configs
-            is WorkflowEntityEventTriggerConfig -> config.validate(workflowNodeConfigValidationService)
-            is WorkflowScheduleTriggerConfig -> config.validate(workflowNodeConfigValidationService)
-            is WorkflowFunctionTriggerConfig -> config.validate(workflowNodeConfigValidationService)
-            is WorkflowWebhookTriggerConfig -> config.validate(workflowNodeConfigValidationService)
-            // Other configs without validation yet
-            else -> ConfigValidationResult.valid()
-        }
+        return config.validate(nodeServiceProvider)
     }
 
     // ------------------------------------------------------------------

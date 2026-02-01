@@ -149,8 +149,12 @@ data class WorkflowHttpRequestActionConfig(
      * - headers values have valid template syntax
      * - body values have valid template syntax
      * - timeout is non-negative if provided
+     *
+     * @param injector Spring managed provider to inject services into model
+     * @return Validation result with any errors
      */
-    fun validate(validationService: WorkflowNodeConfigValidationService): ConfigValidationResult {
+    override fun validate(injector: NodeServiceProvider): ConfigValidationResult {
+        val validationService = injector.service<WorkflowNodeConfigValidationService>()
         val errors = mutableListOf<ConfigValidationError>()
 
         // Validate URL
@@ -196,6 +200,8 @@ data class WorkflowHttpRequestActionConfig(
         val resolvedUrl = inputs["url"] as String
         val resolvedMethod = inputs["method"] as String
         val resolvedHeaders = inputs["headers"] as? Map<*, *> ?: emptyMap<Any, Any>()
+
+        @Suppress("UNCHECKED_CAST")
         val resolvedBody = inputs["body"] as? Map<String, Any?>
 
         // Validate URL (prevent SSRF)

@@ -76,6 +76,9 @@ class WorkflowGraphServiceTest {
     private lateinit var workflowEdgeRepository: WorkflowEdgeRepository
 
     @MockitoBean
+    private lateinit var workflowNodeServiceInjectionProvider: WorkflowNodeServiceInjectionProvider
+
+    @MockitoBean
     private lateinit var workflowDefinitionRepository: WorkflowDefinitionRepository
 
     @MockitoBean
@@ -101,6 +104,10 @@ class WorkflowGraphServiceTest {
 
     @BeforeEach
     fun setUp() {
+        // Wire up the service provider to return the mocked validation service
+        whenever(workflowNodeServiceInjectionProvider.get(WorkflowNodeConfigValidationService::class))
+            .thenReturn(workflowNodeConfigValidationService)
+
         // Mock validation service to return valid result for all configs
         whenever(workflowNodeConfigValidationService.validateTemplateOrUuid(any(), any()))
             .thenReturn(emptyList())

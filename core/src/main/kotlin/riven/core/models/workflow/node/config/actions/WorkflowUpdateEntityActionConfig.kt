@@ -103,8 +103,13 @@ data class WorkflowUpdateEntityActionConfig(
      * - entityId is valid UUID or template
      * - payload values have valid template syntax
      * - timeout is non-negative if provided
+     *
+     * @param injector Spring managed provider to inject services into model
+     * @return Validation result with any errors
      */
-    fun validate(validationService: WorkflowNodeConfigValidationService): ConfigValidationResult {
+    override fun validate(injector: NodeServiceProvider): ConfigValidationResult {
+        val validationService = injector.service<WorkflowNodeConfigValidationService>()
+
         return validationService.combine(
             validationService.validateTemplateOrUuid(entityId, "entityId"),
             validationService.validateTemplateMap(payload, "payload"),

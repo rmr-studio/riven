@@ -12,7 +12,6 @@ import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowTriggerConfig
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
-import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
 import io.swagger.v3.oas.annotations.media.Schema as SwaggerSchema
 
 /**
@@ -45,9 +44,12 @@ data class WorkflowWebhookTriggerConfig(
      * - authentication is valid (already enforced by enum)
      * - signature is provided
      * - payloadSchema is provided
+     *
+     * @param injector Spring managed provider to inject services into model
+     * @return Validation result with any errors
      */
     @Suppress("UNUSED_PARAMETER")
-    fun validate(validationService: WorkflowNodeConfigValidationService): ConfigValidationResult {
+    override fun validate(injector: NodeServiceProvider): ConfigValidationResult {
         // method and authentication are enums, always valid if deserialized
         // signature is non-null in constructor
         // payloadSchema is non-null in constructor
