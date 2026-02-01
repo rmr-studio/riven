@@ -26,6 +26,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6.1: Execution Queue Management (INSERTED)** - Execution queue management
 - [x] **Phase 7: Error Handling & Retry Logic** - Temporal retry policies and error surfacing
 - [x] **Phase 7.1: Node Configuration Development (INSERTED)** - Strongly-typed node configs with validation
+- [ ] **Phase 7.2: Workflow State Management (INSERTED)** - Unified WorkflowDataStore replacing split state classes
 - [ ] **Phase 8: End-to-End Testing** - Validate complete workflow lifecycle
 
 ## Phase Details
@@ -34,7 +35,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Goal**: Build SQL-like expression parser and evaluator with type-safe evaluation
 **Depends on**: Nothing (first phase)
 **Research**: Unlikely (parser libraries exist, expression evaluation patterns established)
-**Status**: ✅ COMPLETED
+**Status**: COMPLETED
 
 Plans:
 - [x] 01-01: Expression parser and evaluator (2026-01-10) - SQL-like syntax, recursive descent parser, type-safe evaluation
@@ -43,7 +44,7 @@ Plans:
 **Goal**: Enable expression evaluation against dynamic entity data with field traversal
 **Depends on**: Phase 1
 **Research**: Unlikely (entity system already exists, integration patterns clear)
-**Status**: ✅ COMPLETED
+**Status**: COMPLETED
 
 Plans:
 - [x] 02-01: Entity context provider with relationship traversal (2026-01-10) - EntityContextService with depth-limited recursion, cardinality-aware handling, comprehensive test coverage
@@ -52,7 +53,7 @@ Plans:
 **Goal**: Implement core Temporal workflow definitions and activities for workflow execution
 **Depends on**: Phase 2
 **Research**: Completed (03-RESEARCH.md - Temporal SDK patterns, deterministic workflow requirements)
-**Status**: ✅ COMPLETED
+**Status**: COMPLETED
 
 Plans:
 - [x] 03-01: Temporal workflow and activity infrastructure (2026-01-10) - Workflow orchestration, activity execution, REST API, integration tests
@@ -61,7 +62,7 @@ Plans:
 **Goal**: Implement workflow node action executors (entity CRUD, API calls, conditional branches)
 **Depends on**: Phase 3
 **Research**: Unlikely (CRUD operations follow existing entity service patterns)
-**Status**: ✅ COMPLETED
+**Status**: COMPLETED
 
 Plans:
 - [x] 04-01: Entity CRUD action executors (2026-01-11) - CREATE/UPDATE/DELETE/QUERY with extensible executeAction pattern
@@ -71,7 +72,7 @@ Plans:
 **Goal**: Implement data registry, input resolution, and polymorphic execution for action execution
 **Depends on**: Phase 4
 **Research**: Completed (see 4.1-CONTEXT.md)
-**Status**: ✅ COMPLETED
+**Status**: COMPLETED
 
 Plans:
 - [x] 4.1-01: Data Registry & Output Capture (2026-01-11) - WorkflowExecutionContext with data registry, output capture in all executors
@@ -82,7 +83,7 @@ Plans:
 **Goal**: Orchestrate workflow execution with topological sort and parallel node scheduling
 **Depends on**: Phase 4.1
 **Research**: Completed (5-RESEARCH.md - Kahn's algorithm, state machine patterns)
-**Status**: ✅ COMPLETED
+**Status**: COMPLETED
 
 Plans:
 - [x] 5-01: Topological Sort & DAG Validation (2026-01-12) - Kahn's algorithm with cycle detection, comprehensive structural validation
@@ -93,7 +94,7 @@ Plans:
 **Goal**: Expose REST APIs for workflow creation, update, retrieval, and execution triggering
 **Depends on**: Phase 5
 **Research**: Unlikely (REST API patterns established in codebase)
-**Status**: ✅ COMPLETED
+**Status**: COMPLETED
 
 Plans:
 - [x] 06-01: Workflow definition CRUD APIs (2026-01-20) - WorkflowDefinitionService (303 lines), WorkflowDefinitionController (184 lines), 9 unit tests
@@ -104,7 +105,7 @@ Plans:
 **Goal**: Database-backed execution queue with tier-based concurrency limits for workflow dispatching
 **Depends on**: Phase 6
 **Research**: Completed (06.1-RESEARCH.md - ShedLock, SKIP LOCKED, Temporal multi-queue)
-**Status**: ✅ COMPLETED
+**Status**: COMPLETED
 
 Plans:
 - [x] 06.1-01: ShedLock infrastructure and WorkspaceTier enum (2026-01-21)
@@ -115,7 +116,7 @@ Plans:
 **Goal**: Implement Temporal retry policies and error surfacing to execution records
 **Depends on**: Phase 6.1
 **Research**: Completed (07-RESEARCH.md - Temporal RetryOptions, ApplicationFailure, error classification)
-**Status**: ✅ COMPLETED
+**Status**: COMPLETED
 
 Plans:
 - [x] 07-01: Retry configuration infrastructure and structured error models (2026-01-22)
@@ -126,20 +127,36 @@ Plans:
 **Goal**: Define strongly-typed configuration structures for workflow node types with save-time validation
 **Depends on**: Phase 7
 **Research**: Completed (07.1-RESEARCH.md - Kotlin data class patterns, existing config structure analysis)
-**Status**: ✅ COMPLETED
+**Status**: COMPLETED
 
 Plans:
-- [x] 07.1-01: Validation infrastructure (2026-01-29) — ConfigValidationError, ConfigValidationResult, ConfigValidationService with template/UUID validation
-- [x] 07.1-02: Entity action configs (2026-01-29) — Typed CREATE, UPDATE, DELETE, QUERY with validate() methods
-- [x] 07.1-03: HTTP_REQUEST and CONDITION configs (2026-01-29) — Typed fields, validate(), isTemplate() helper
-- [x] 07.1-04: Deserializer and validation integration (2026-01-29) — Fixed CONDITION routing, WorkflowGraphService validation, 20 test cases
-- [x] 07.1-05: Trigger config validation (2026-01-29) — validate() methods for ENTITY_EVENT, SCHEDULE, FUNCTION, WEBHOOK
+- [x] 07.1-01: Validation infrastructure (2026-01-29) - ConfigValidationError, ConfigValidationResult, ConfigValidationService with template/UUID validation
+- [x] 07.1-02: Entity action configs (2026-01-29) - Typed CREATE, UPDATE, DELETE, QUERY with validate() methods
+- [x] 07.1-03: HTTP_REQUEST and CONDITION configs (2026-01-29) - Typed fields, validate(), isTemplate() helper
+- [x] 07.1-04: Deserializer and validation integration (2026-01-29) - Fixed CONDITION routing, WorkflowGraphService validation, 20 test cases
+- [x] 07.1-05: Trigger config validation (2026-01-29) - validate() methods for ENTITY_EVENT, SCHEDULE, FUNCTION, WEBHOOK
+
+### Phase 7.2: Workflow State Management (INSERTED)
+**Goal**: Unify workflow state into single WorkflowDataStore replacing WorkflowState.dataRegistry and WorkflowExecutionContext
+**Depends on**: Phase 7.1
+**Research**: Completed (07.2-RESEARCH.md - Thread-safe patterns, template resolution, NodeOutput typing)
+**Status**: Not started
+**Plans:** 7 plans
+
+Plans:
+- [ ] 07.2-01-PLAN.md - WorkflowDataStore class, StepOutput, WorkflowMetadata with ConcurrentHashMap storage
+- [ ] 07.2-02-PLAN.md - NodeOutput sealed interface with typed outputs for all action types
+- [ ] 07.2-03-PLAN.md - TriggerContext sealed interface with EntityEvent, Webhook, Schedule, Function
+- [ ] 07.2-04-PLAN.md - Update InputResolverService for trigger/steps/variables/loops prefixes
+- [ ] 07.2-05-PLAN.md - Update all node configs to return typed NodeOutput
+- [ ] 07.2-06-PLAN.md - Integration: WorkflowCoordinationService uses WorkflowDataStore
+- [ ] 07.2-07-PLAN.md - Remove deprecated WorkflowExecutionContext and NodeExecutionData
 
 ### Phase 8: End-to-End Testing
 **Goal**: Validate complete workflow lifecycle from API definition through execution to entity modifications
-**Depends on**: Phase 7.1
+**Depends on**: Phase 7.2
 **Research**: Unlikely (testing patterns established)
-**Plans**: TBD
+**Status**: Not started
 
 Plans:
 - TBD
@@ -147,18 +164,19 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 4.1 → 5 → 6 → 6.1 → 7 → 7.1 → 8
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 4.1 -> 5 -> 6 -> 6.1 -> 7 -> 7.1 -> 7.2 -> 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Expression System Foundation | 1/1 | ✅ Complete | 2026-01-10 |
-| 2. Entity Context Integration | 1/1 | ✅ Complete | 2026-01-10 |
-| 3. Temporal Workflow Engine | 1/1 | ✅ Complete | 2026-01-10 |
-| 4. Action Executors | 2/2 | ✅ Complete | 2026-01-11 |
-| 4.1. Action Execution (INSERTED) | 3/3 | ✅ Complete | 2026-01-11 |
-| 5. DAG Execution Coordinator | 3/3 | ✅ Complete | 2026-01-12 |
-| 6. Backend API Layer | 3/3 | ✅ Complete | 2026-01-20 |
-| 6.1. Execution Queue Management (INSERTED) | 3/3 | ✅ Complete | 2026-01-21 |
-| 7. Error Handling & Retry Logic | 3/3 | ✅ Complete | 2026-01-22 |
-| 7.1. Node Configuration Development (INSERTED) | 5/5 | ✅ Complete | 2026-01-29 |
+| 1. Expression System Foundation | 1/1 | Complete | 2026-01-10 |
+| 2. Entity Context Integration | 1/1 | Complete | 2026-01-10 |
+| 3. Temporal Workflow Engine | 1/1 | Complete | 2026-01-10 |
+| 4. Action Executors | 2/2 | Complete | 2026-01-11 |
+| 4.1. Action Execution (INSERTED) | 3/3 | Complete | 2026-01-11 |
+| 5. DAG Execution Coordinator | 3/3 | Complete | 2026-01-12 |
+| 6. Backend API Layer | 3/3 | Complete | 2026-01-20 |
+| 6.1. Execution Queue Management (INSERTED) | 3/3 | Complete | 2026-01-21 |
+| 7. Error Handling & Retry Logic | 3/3 | Complete | 2026-01-22 |
+| 7.1. Node Configuration Development (INSERTED) | 5/5 | Complete | 2026-01-29 |
+| 7.2. Workflow State Management (INSERTED) | 0/7 | Not started | - |
 | 8. End-to-End Testing | 0/TBD | Not started | - |
