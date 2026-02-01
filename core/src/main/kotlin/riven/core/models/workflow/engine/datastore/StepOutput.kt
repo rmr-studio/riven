@@ -7,9 +7,8 @@ import java.util.UUID
 /**
  * Immutable record of a workflow step's execution output.
  *
- * Replaces [riven.core.models.workflow.engine.environment.NodeExecutionData] as the
- * canonical structure for capturing node execution results. Stored in the datastore
- * to enable node-to-node data flow via template resolution.
+ * The canonical structure for capturing node execution results. Stored in the
+ * WorkflowDataStore to enable node-to-node data flow via template resolution.
  *
  * ## Design Principles
  *
@@ -26,10 +25,9 @@ import java.util.UUID
  *
  * ## Error Handling
  *
- * Unlike NodeExecutionData, StepOutput does NOT include an error field.
- * Errors throw exceptions and are not stored in the datastore. Failed
- * executions will have status=FAILED but the specific error is captured
- * at the workflow level, not per-step.
+ * StepOutput does NOT include an error field. Errors throw exceptions and
+ * are not stored in the datastore. Failed executions will have status=FAILED
+ * but the specific error is captured at the workflow level, not per-step.
  *
  * @property nodeId Unique identifier of the executed node
  * @property nodeName Human-readable name used for template references (e.g., "fetch_leads")

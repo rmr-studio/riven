@@ -64,8 +64,8 @@ class WorkflowTestConfiguration {
  * - Real node execution via polymorphic dispatch
  * - Template resolution with InputResolverService
  * - Expression evaluation with ExpressionEvaluatorService
- * - Data flows through WorkflowExecutionContext
- * - Validates outputs captured in data registry
+ * - Data flows through WorkflowDataStore
+ * - Validates outputs captured in step outputs
  * - Tests cross-node data access via templates
  *
  * ## Test Coverage
@@ -85,9 +85,9 @@ class WorkflowTestConfiguration {
  * - Complex expressions: `status = 'active' AND count > 10`
  *
  * ### Data Flow
- * - Node outputs stored in WorkflowExecutionContext.dataRegistry
+ * - Node outputs stored in WorkflowDataStore via StepOutput
  * - Subsequent nodes access prior outputs via templates
- * - Data registry preserves structure (maps, lists, primitives)
+ * - DataStore preserves structure (maps, lists, primitives)
  * - Null handling for missing data
  *
  * ### Real Node Execution

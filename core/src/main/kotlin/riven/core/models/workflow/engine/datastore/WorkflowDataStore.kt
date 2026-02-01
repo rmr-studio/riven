@@ -3,11 +3,22 @@ package riven.core.models.workflow.engine.datastore
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Thread-safe datastore for workflow execution state.
+ * Unified workflow state container.
  *
- * This class serves as the unified state container for all workflow execution data,
- * replacing both WorkflowState.dataRegistry and WorkflowExecutionContext. It provides
- * thread-safe access to trigger context, step outputs, user variables, and loop contexts.
+ * Created in Phase 7.2 to replace:
+ * - WorkflowState.dataRegistry (orchestration data)
+ * - WorkflowExecutionContext (execution metadata + data)
+ *
+ * All workflow data flows through this single datastore:
+ * - Trigger context: Set once at workflow start
+ * - Step outputs: Write-once per node, read by templates
+ * - Variables: Last-write-wins for user variables
+ * - Loop contexts: Per-loop iteration state
+ *
+ * Thread-safe via ConcurrentHashMap for parallel node execution.
+ *
+ * This class provides thread-safe access to trigger context, step outputs,
+ * user variables, and loop contexts.
  *
  * ## Thread Safety
  *
