@@ -24,6 +24,8 @@ export interface WorkflowNodeDataBase {
     icon: LucideIcon;
     /** Whether the node has been configured by the user */
     configured: boolean;
+    /** Node-specific configuration values from form */
+    config?: Record<string, unknown>;
 }
 
 /**

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { ReactFlow, ReactFlowProvider, useReactFlow } from "@xyflow/react";
+import { ReactFlow, ReactFlowProvider, useReactFlow, type NodeMouseHandler } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
 import {
@@ -10,6 +10,8 @@ import {
     useOnNodesChange,
     useOnEdgesChange,
     useAddNode,
+    useSelectedNodeId,
+    useSelectNode,
 } from "../../context/workflow-canvas-provider";
 import { CanvasBackground } from "../ui/canvas-background";
 import { CanvasControls } from "../ui/canvas-controls";
@@ -18,6 +20,19 @@ import { CanvasEmptyState } from "./empty-state";
 import { nodeTypes } from "../../config/node-types.config";
 import { createWorkflowNode } from "../../util/node-factory.util";
 import { NodeLibrarySidebar } from "../sidebar/node-library-sidebar";
+import {
+    ResizablePanelGroup,
+    ResizablePanel,
+    ResizableHandle,
+} from "@/components/ui/resizable";
+import { NodeConfigDrawer } from "../config/node-config-drawer";
+
+/**
+ * Props for WorkflowCanvasInner component
+ */
+interface WorkflowCanvasInnerProps {
+    workspaceId: string;
+}
 
 /**
  * Inner canvas component that uses React Flow hooks
@@ -25,13 +40,15 @@ import { NodeLibrarySidebar } from "../sidebar/node-library-sidebar";
  * Must be wrapped in ReactFlowProvider to access useReactFlow hooks
  * in child components.
  */
-const WorkflowCanvasInner = () => {
+const WorkflowCanvasInner = ({ workspaceId }: WorkflowCanvasInnerProps) => {
     const nodes = useWorkflowNodes();
     const edges = useWorkflowEdges();
     const onNodesChange = useOnNodesChange();
     const onEdgesChange = useOnEdgesChange();
     const { screenToFlowPosition } = useReactFlow();
     const addNode = useAddNode();
+    const selectedNodeId = useSelectedNodeId();
+    const selectNode = useSelectNode();
 
     const onDragOver = useCallback((event: React.DragEvent) => {
         event.preventDefault();
@@ -74,36 +91,73 @@ const WorkflowCanvasInner = () => {
         [nodes.length, screenToFlowPosition, addNode]
     );
 
+    // Handle node click - select node and open drawer
+    const onNodeClick: NodeMouseHandler = useCallback(
+        (_event, node) => {
+            selectNode(node.id);
+        },
+        [selectNode]
+    );
+
+    // Handle pane (background) click - deselect and close drawer
+    const onPaneClick = useCallback(() => {
+        selectNode(null);
+    }, [selectNode]);
+
+    const isDrawerOpen = selectedNodeId !== null;
+
     return (
         <div className="flex h-full w-full">
-            <div className="flex-1 relative">
-                <ReactFlow
-                    nodes={nodes}
-                    edges={edges}
-                    onNodesChange={onNodesChange}
-                    onEdgesChange={onEdgesChange}
-                    nodeTypes={nodeTypes}
-                    onDrop={onDrop}
-                    onDragOver={onDragOver}
-                    minZoom={0.5}
-                    maxZoom={1.5}
-                    fitView
-                    panOnDrag={true}
-                    zoomOnScroll={true}
-                    zoomOnPinch={true}
-                    selectNodesOnDrag={false}
-                    proOptions={{ hideAttribution: true }}
-                >
-                    <CanvasBackground />
-                    <CanvasMinimap />
-                    <CanvasControls />
-                    {nodes.length === 0 && <CanvasEmptyState />}
-                </ReactFlow>
-            </div>
+            <ResizablePanelGroup direction="horizontal" className="flex-1">
+                <ResizablePanel defaultSize={isDrawerOpen ? 70 : 100} minSize={50}>
+                    <div className="h-full relative">
+                        <ReactFlow
+                            nodes={nodes}
+                            edges={edges}
+                            onNodesChange={onNodesChange}
+                            onEdgesChange={onEdgesChange}
+                            nodeTypes={nodeTypes}
+                            onDrop={onDrop}
+                            onDragOver={onDragOver}
+                            onNodeClick={onNodeClick}
+                            onPaneClick={onPaneClick}
+                            minZoom={0.5}
+                            maxZoom={1.5}
+                            fitView
+                            panOnDrag={true}
+                            zoomOnScroll={true}
+                            zoomOnPinch={true}
+                            selectNodesOnDrag={false}
+                            proOptions={{ hideAttribution: true }}
+                        >
+                            <CanvasBackground />
+                            <CanvasMinimap />
+                            <CanvasControls />
+                            {nodes.length === 0 && <CanvasEmptyState />}
+                        </ReactFlow>
+                    </div>
+                </ResizablePanel>
+
+                {isDrawerOpen && (
+                    <>
+                        <ResizableHandle withHandle />
+                        <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
+                            <NodeConfigDrawer workspaceId={workspaceId} />
+                        </ResizablePanel>
+                    </>
+                )}
+            </ResizablePanelGroup>
             <NodeLibrarySidebar onClickAdd={handleClickToAdd} />
         </div>
     );
 };
+
+/**
+ * Props for WorkflowCanvas component
+ */
+interface WorkflowCanvasProps {
+    workspaceId: string;
+}
 
 /**
  * Main workflow canvas component
@@ -116,20 +170,21 @@ const WorkflowCanvasInner = () => {
  * - Minimap in bottom-right showing node positions
  * - Controls in bottom-left with zoom +/- and fit view
  * - Empty state when no nodes exist
+ * - ResizablePanelGroup for canvas/drawer layout
  *
  * All state is managed through Zustand store via context hooks,
  * enabling external control of the canvas state.
  *
  * @example
  * <WorkflowCanvasProvider workspaceId="ws-123">
- *   <WorkflowCanvas />
+ *   <WorkflowCanvas workspaceId="ws-123" />
  * </WorkflowCanvasProvider>
  */
-export const WorkflowCanvas = () => {
+export const WorkflowCanvas = ({ workspaceId }: WorkflowCanvasProps) => {
     return (
         <div className="h-full w-full">
             <ReactFlowProvider>
-                <WorkflowCanvasInner />
+                <WorkflowCanvasInner workspaceId={workspaceId} />
             </ReactFlowProvider>
         </div>
     );

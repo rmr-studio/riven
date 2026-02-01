@@ -18,6 +18,8 @@ export interface WorkflowCanvasState {
     nodes: Node<WorkflowNodeData>[];
     /** Array of edges connecting nodes */
     edges: Edge[];
+    /** ID of currently selected node, null if none selected */
+    selectedNodeId: string | null;
 
     /**
      * Handler for React Flow node changes (drag, select, remove, etc.)
@@ -55,6 +57,19 @@ export interface WorkflowCanvasState {
      * Clear all nodes and edges from the canvas
      */
     clearCanvas: () => void;
+
+    /**
+     * Select a node or clear selection
+     * Pass node ID to select, or null to deselect
+     */
+    selectNode: (nodeId: string | null) => void;
+
+    /**
+     * Update a node's data by merging new data into existing data
+     * @param nodeId - ID of the node to update
+     * @param data - Partial data to merge into existing node data
+     */
+    updateNodeData: (nodeId: string, data: Partial<WorkflowNodeData>) => void;
 }
 
 /**
@@ -69,6 +84,7 @@ export const createWorkflowCanvasStore = (): StoreApi<WorkflowCanvasState> => {
             // Initial state
             nodes: [],
             edges: [],
+            selectedNodeId: null,
 
             onNodesChange: (changes) => {
                 set({
@@ -116,6 +132,21 @@ export const createWorkflowCanvasStore = (): StoreApi<WorkflowCanvasState> => {
                 set({
                     nodes: [],
                     edges: [],
+                    selectedNodeId: null,
+                });
+            },
+
+            selectNode: (nodeId) => {
+                set({ selectedNodeId: nodeId });
+            },
+
+            updateNodeData: (nodeId, newData) => {
+                set({
+                    nodes: get().nodes.map((node) =>
+                        node.id === nodeId
+                            ? { ...node, data: { ...node.data, ...newData } }
+                            : node
+                    ),
                 });
             },
         }))

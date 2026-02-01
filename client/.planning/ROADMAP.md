@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation & Canvas** - XYFlow integration with Zustand state management and basic canvas interactions
 - [x] **Phase 2: Node Library** - Sidebar with draggable node types organized by category
 - [x] **Phase 2.1: Node Library Population** - Populate node library with workflow node types (INSERTED)
-- [ ] **Phase 3: Node Types & Configuration** - Trigger, action, and condition nodes with entity-aware configuration
+- [x] **Phase 3: Node Types & Configuration** - Trigger, action, and condition nodes with entity-aware configuration
 - [ ] **Phase 4: Connections** - Edge creation with validation and cycle prevention
 - [ ] **Phase 5: Selection & Visual Feedback** - Multi-select, deletion, and visual status indicators
 - [ ] **Phase 6: Undo/Redo** - Temporal state management with keyboard shortcuts
@@ -81,10 +81,15 @@ Plans:
   5. User can configure condition node with condition logic
   6. Configuration changes reflect in node state immediately
   7. Workflow builder displays organization's custom entity types from EntityTypeService
-**Plans**: TBD
+**Plans**: 6 plans
 
 Plans:
-- [ ] 03-01: TBD
+- [x] 03-01-PLAN.md — Store extension with selection state and node data update
+- [x] 03-02-PLAN.md — Config schema service and TanStack Query hook
+- [x] 03-03-PLAN.md — Widget registry with basic widgets (string, number, boolean, enum, duration)
+- [x] 03-04-PLAN.md — Entity-aware widgets (entity type selector, entity fields multi-select)
+- [x] 03-05-PLAN.md — Dynamic form renderer with Zod schema builder
+- [x] 03-06-PLAN.md — Configuration drawer with ResizablePanelGroup layout
 
 ### Phase 4: Connections
 **Goal**: Users can connect nodes to define workflow execution flow
@@ -139,7 +144,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 4 -> 5 -> 6
 | 1. Foundation & Canvas | 4/4 | ✓ Complete | 2026-01-25 |
 | 2. Node Library | 2/2 | ✓ Complete | 2026-01-26 |
 | 2.1. Node Library Population | 1/1 | ✓ Complete | 2026-01-28 |
-| 3. Node Types & Configuration | 0/? | Not started | - |
+| 3. Node Types & Configuration | 6/6 | ✓ Complete | 2026-02-01 |
 | 4. Connections | 0/? | Not started | - |
 | 5. Selection & Visual Feedback | 0/? | Not started | - |
 | 6. Undo/Redo | 0/? | Not started | - |
@@ -152,4 +157,6 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 4 -> 5 -> 6
 *Phase 2 completed: 2026-01-26*
 *Phase 2.1 planned: 2026-01-28*
 *Phase 2.1 completed: 2026-01-28*
+*Phase 3 planned: 2026-02-01*
+*Phase 3 completed: 2026-02-01*
 *Milestone: v0.1 (Workflow Builder Foundation Pre-release)*

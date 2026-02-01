@@ -162,3 +162,41 @@ export const useOnEdgesChange = () => {
 export const useClearCanvas = () => {
     return useWorkflowCanvas((state) => state.clearCanvas);
 };
+
+/**
+ * Get the currently selected node ID
+ *
+ * @returns Selected node ID, or null if no node is selected
+ */
+export const useSelectedNodeId = () => {
+    return useWorkflowCanvas((state) => state.selectedNodeId);
+};
+
+/**
+ * Get the selectNode action for selecting/deselecting nodes
+ *
+ * @returns Function to select a node (pass ID) or deselect (pass null)
+ */
+export const useSelectNode = () => {
+    return useWorkflowCanvas((state) => state.selectNode);
+};
+
+/**
+ * Get the updateNodeData action for updating node configuration
+ *
+ * @returns Function to merge data into existing node data
+ */
+export const useUpdateNodeData = () => {
+    return useWorkflowCanvas((state) => state.updateNodeData);
+};
+
+/**
+ * Get the full data for the currently selected node
+ *
+ * @returns The selected node, or undefined if no node is selected
+ */
+export const useSelectedNode = () => {
+    const nodes = useWorkflowCanvas((state) => state.nodes);
+    const selectedNodeId = useWorkflowCanvas((state) => state.selectedNodeId);
+    return nodes.find((node) => node.id === selectedNodeId);
+};
