@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-09)
 ## Current Position
 
 Phase: 7.2 of 8 (Workflow State Management)
-Plan: 5 of 7 in current phase
+Plan: 6 of 7 in current phase
 Status: In progress
-Last activity: 2026-02-01 - Completed 07.2-05-PLAN.md (Node Config Execute Returns)
+Last activity: 2026-02-01 - Completed 07.2-06-PLAN.md (Coordination Service Integration)
 
-Progress: ████████████████████████████░ 97% (29 of 30 plans complete)
+Progress: ████████████████████████████░ 97% (30 of 31 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 29
-- Average duration: ~17 minutes (0.29 hours)
-- Total execution time: 8.12 hours
+- Total plans completed: 30
+- Average duration: ~17 minutes (0.28 hours)
+- Total execution time: 8.27 hours
 
 **By Phase:**
 
@@ -37,10 +37,10 @@ Progress: ███████████████████████�
 | 6.1 - Execution Queue Management | 3 | 0.18h | 0.06h |
 | 7 - Error Handling & Retry Logic | 3 | 0.13h | 0.04h |
 | 7.1 - Node Configuration Development | 5 | 0.36h | 0.07h |
-| 7.2 - Workflow State Management | 5 | 0.35h | 0.07h |
+| 7.2 - Workflow State Management | 6 | 0.50h | 0.08h |
 
 **Recent Trend:**
-- Last 5 plans: 07.2-01 (0.04h), 07.2-02 (0.03h), 07.2-03 (0.04h), 07.2-04 (0.13h), 07.2-05 (0.22h)
+- Last 5 plans: 07.2-02 (0.03h), 07.2-03 (0.04h), 07.2-04 (0.13h), 07.2-05 (0.22h), 07.2-06 (0.15h)
 - Trend: Excellent velocity maintained
 
 ## Accumulated Context
@@ -100,6 +100,9 @@ Recent decisions affecting current work:
 | NodeOutput as interface return type | Enables polymorphic dispatch while maintaining type safety | 07.2-05 |
 | toMap() for data registry | Backward compatible: NodeOutput.toMap() used when storing in data registry | 07.2-05 |
 | Typed outputs per action | Explicit contracts: each action returns specific fields, not generic map | 07.2-05 |
+| Coordinator writes StepOutput | Nodes return NodeOutput, coordinator wraps with execution metadata | 07.2-06 |
+| WorkflowState is orchestration-only | Clean separation: orchestration (which nodes done) vs data (what they produced) | 07.2-06 |
+| Outputs in DB, not workflow result | WorkflowExecutionNodeEntity stores outputs, no need to pass through Temporal | 07.2-06 |
 
 ### Deferred Issues
 
@@ -112,6 +115,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-01
-Stopped at: Completed 07.2-05-PLAN.md (Node Config Execute Returns)
+Stopped at: Completed 07.2-06-PLAN.md (Coordination Service Integration)
 Resume file: N/A
-Next action: Execute 07.2-06-PLAN.md (Coordination Service Integration)
+Next action: Execute 07.2-07-PLAN.md (Deprecation and Cleanup)
