@@ -202,6 +202,8 @@ export * from './WorkflowGraph';
 export * from './WorkflowHttpRequestActionConfig';
 export * from './WorkflowNode';
 export * from './WorkflowNodeConfig';
+export * from './WorkflowNodeConfigField';
+export * from './WorkflowNodeConfigFieldType';
 export * from './WorkflowNodeType';
 export * from './WorkflowParseConfig';
 export * from './WorkflowQueryEntityActionConfig';

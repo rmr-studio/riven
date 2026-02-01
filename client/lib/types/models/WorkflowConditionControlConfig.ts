@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { WorkflowNodeConfigField } from './WorkflowNodeConfigField';
+import {
+    WorkflowNodeConfigFieldFromJSON,
+    WorkflowNodeConfigFieldFromJSONTyped,
+    WorkflowNodeConfigFieldToJSON,
+    WorkflowNodeConfigFieldToJSONTyped,
+} from './WorkflowNodeConfigField';
 import type { WorkflowNodeType } from './WorkflowNodeType';
 import {
     WorkflowNodeTypeFromJSON,
@@ -60,10 +67,22 @@ export interface WorkflowConditionControlConfig {
     timeoutSeconds?: number;
     /**
      * 
+     * @type {{ [key: string]: object; }}
+     * @memberof WorkflowConditionControlConfig
+     */
+    config?: { [key: string]: object; };
+    /**
+     * 
      * @type {WorkflowControlType}
      * @memberof WorkflowConditionControlConfig
      */
     subType?: WorkflowControlType;
+    /**
+     * 
+     * @type {Array<WorkflowNodeConfigField>}
+     * @memberof WorkflowConditionControlConfig
+     */
+    configSchema?: Array<WorkflowNodeConfigField>;
     /**
      * 
      * @type {WorkflowNodeType}
@@ -95,7 +114,9 @@ export function WorkflowConditionControlConfigFromJSONTyped(json: any, ignoreDis
         'expression': json['expression'] == null ? undefined : json['expression'],
         'contextEntityId': json['contextEntityId'] == null ? undefined : json['contextEntityId'],
         'timeoutSeconds': json['timeoutSeconds'] == null ? undefined : json['timeoutSeconds'],
+        'config': json['config'] == null ? undefined : json['config'],
         'subType': json['subType'] == null ? undefined : WorkflowControlTypeFromJSON(json['subType']),
+        'configSchema': json['configSchema'] == null ? undefined : ((json['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldFromJSON)),
         'type': json['type'] == null ? undefined : WorkflowNodeTypeFromJSON(json['type']),
     };
 }
@@ -115,7 +136,9 @@ export function WorkflowConditionControlConfigToJSONTyped(value?: WorkflowCondit
         'expression': value['expression'],
         'contextEntityId': value['contextEntityId'],
         'timeoutSeconds': value['timeoutSeconds'],
+        'config': value['config'],
         'subType': WorkflowControlTypeToJSON(value['subType']),
+        'configSchema': value['configSchema'] == null ? undefined : ((value['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldToJSON)),
         'type': WorkflowNodeTypeToJSON(value['type']),
     };
 }

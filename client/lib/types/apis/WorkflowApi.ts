@@ -27,6 +27,7 @@ import type {
   WorkflowExecutionRecord,
   WorkflowExecutionSummaryResponse,
   WorkflowGraph,
+  WorkflowNodeConfigField,
 } from '../models/index';
 import {
     CreateWorkflowEdgeRequestFromJSON,
@@ -53,6 +54,8 @@ import {
     WorkflowExecutionSummaryResponseToJSON,
     WorkflowGraphFromJSON,
     WorkflowGraphToJSON,
+    WorkflowNodeConfigFieldFromJSON,
+    WorkflowNodeConfigFieldToJSON,
 } from '../models/index';
 
 export interface CreateEdgeRequest {
@@ -466,6 +469,45 @@ export class WorkflowApi extends runtime.BaseAPI {
      */
     async getExecutionSummary(requestParameters: GetExecutionSummaryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkflowExecutionSummaryResponse> {
         const response = await this.getExecutionSummaryRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Retrieves the configuration schemas for all workflow node types. Returns a map where keys are node identifiers (e.g., \'ACTION.CREATE_ENTITY\') and values are lists of configuration fields.
+     * Get workflow node configuration schemas
+     */
+    async getNodeConfigSchemasRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: Array<WorkflowNodeConfigField>; }>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/api/v1/workflow/definitions/node-schemas`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse<any>(response);
+    }
+
+    /**
+     * Retrieves the configuration schemas for all workflow node types. Returns a map where keys are node identifiers (e.g., \'ACTION.CREATE_ENTITY\') and values are lists of configuration fields.
+     * Get workflow node configuration schemas
+     */
+    async getNodeConfigSchemas(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: Array<WorkflowNodeConfigField>; }> {
+        const response = await this.getNodeConfigSchemasRaw(initOverrides);
         return await response.value();
     }
 

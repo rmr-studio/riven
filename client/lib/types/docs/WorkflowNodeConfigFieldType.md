@@ -1,29 +1,20 @@
 
-# WorkflowFunctionConfig
+# WorkflowNodeConfigFieldType
 
-Configuration for FUNCTION category nodes.
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`version` | number
-`config` | { [key: string]: object; }
-`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
-`type` | [WorkflowNodeType](WorkflowNodeType.md)
 
 ## Example
 
 ```typescript
-import type { WorkflowFunctionConfig } from ''
+import type { WorkflowNodeConfigFieldType } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "version": null,
-  "config": null,
-  "configSchema": null,
-  "type": null,
-} satisfies WorkflowFunctionConfig
+} satisfies WorkflowNodeConfigFieldType
 
 console.log(example)
 
@@ -32,7 +23,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkflowFunctionConfig
+const exampleParsed = JSON.parse(exampleJSON) as WorkflowNodeConfigFieldType
 console.log(exampleParsed)
 ```
 

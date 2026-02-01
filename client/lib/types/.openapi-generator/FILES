@@ -210,6 +210,8 @@ docs/WorkflowGraph.md
 docs/WorkflowHttpRequestActionConfig.md
 docs/WorkflowNode.md
 docs/WorkflowNodeConfig.md
+docs/WorkflowNodeConfigField.md
+docs/WorkflowNodeConfigFieldType.md
 docs/WorkflowNodeType.md
 docs/WorkflowParseConfig.md
 docs/WorkflowQueryEntityActionConfig.md
@@ -436,6 +438,8 @@ models/WorkflowGraph.ts
 models/WorkflowHttpRequestActionConfig.ts
 models/WorkflowNode.ts
 models/WorkflowNodeConfig.ts
+models/WorkflowNodeConfigField.ts
+models/WorkflowNodeConfigFieldType.ts
 models/WorkflowNodeType.ts
 models/WorkflowParseConfig.ts
 models/WorkflowQueryEntityActionConfig.ts

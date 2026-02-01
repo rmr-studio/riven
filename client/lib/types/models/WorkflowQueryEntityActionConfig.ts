@@ -20,6 +20,13 @@ import {
     QueryProjectionToJSON,
     QueryProjectionToJSONTyped,
 } from './QueryProjection';
+import type { WorkflowNodeConfigField } from './WorkflowNodeConfigField';
+import {
+    WorkflowNodeConfigFieldFromJSON,
+    WorkflowNodeConfigFieldFromJSONTyped,
+    WorkflowNodeConfigFieldToJSON,
+    WorkflowNodeConfigFieldToJSONTyped,
+} from './WorkflowNodeConfigField';
 import type { QueryPagination } from './QueryPagination';
 import {
     QueryPaginationFromJSON,
@@ -87,7 +94,7 @@ export interface WorkflowQueryEntityActionConfig {
     timeoutSeconds?: number;
     /**
      * 
-     * @type {{ [key: string]: object; }}p
+     * @type {{ [key: string]: object; }}
      * @memberof WorkflowQueryEntityActionConfig
      */
     config?: { [key: string]: object; };
@@ -97,6 +104,12 @@ export interface WorkflowQueryEntityActionConfig {
      * @memberof WorkflowQueryEntityActionConfig
      */
     subType?: WorkflowActionType;
+    /**
+     * 
+     * @type {Array<WorkflowNodeConfigField>}
+     * @memberof WorkflowQueryEntityActionConfig
+     */
+    configSchema?: Array<WorkflowNodeConfigField>;
     /**
      * 
      * @type {WorkflowNodeType}
@@ -131,6 +144,7 @@ export function WorkflowQueryEntityActionConfigFromJSONTyped(json: any, ignoreDi
         'timeoutSeconds': json['timeoutSeconds'] == null ? undefined : json['timeoutSeconds'],
         'config': json['config'] == null ? undefined : json['config'],
         'subType': json['subType'] == null ? undefined : WorkflowActionTypeFromJSON(json['subType']),
+        'configSchema': json['configSchema'] == null ? undefined : ((json['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldFromJSON)),
         'type': json['type'] == null ? undefined : WorkflowNodeTypeFromJSON(json['type']),
     };
 }
@@ -153,6 +167,7 @@ export function WorkflowQueryEntityActionConfigToJSONTyped(value?: WorkflowQuery
         'timeoutSeconds': value['timeoutSeconds'],
         'config': value['config'],
         'subType': WorkflowActionTypeToJSON(value['subType']),
+        'configSchema': value['configSchema'] == null ? undefined : ((value['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldToJSON)),
         'type': WorkflowNodeTypeToJSON(value['type']),
     };
 }

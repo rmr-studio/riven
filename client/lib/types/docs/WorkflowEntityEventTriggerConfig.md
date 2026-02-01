@@ -12,7 +12,9 @@ Name | Type
 `operation` | [OperationType](OperationType.md)
 `field` | Array&lt;string&gt;
 `expressions` | object
+`config` | { [key: string]: object; }
 `subType` | [WorkflowTriggerType](WorkflowTriggerType.md)
+`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
 
 ## Example
@@ -27,7 +29,9 @@ const example = {
   "operation": null,
   "field": null,
   "expressions": null,
+  "config": null,
   "subType": null,
+  "configSchema": null,
   "type": null,
 } satisfies WorkflowEntityEventTriggerConfig
 

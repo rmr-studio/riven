@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { WorkflowNodeConfigField } from './WorkflowNodeConfigField';
+import {
+    WorkflowNodeConfigFieldFromJSON,
+    WorkflowNodeConfigFieldFromJSONTyped,
+    WorkflowNodeConfigFieldToJSON,
+    WorkflowNodeConfigFieldToJSONTyped,
+} from './WorkflowNodeConfigField';
 import type { WorkflowNodeType } from './WorkflowNodeType';
 import {
     WorkflowNodeTypeFromJSON,
@@ -66,6 +73,12 @@ export interface WorkflowDeleteEntityActionConfig {
     subType?: WorkflowActionType;
     /**
      * 
+     * @type {Array<WorkflowNodeConfigField>}
+     * @memberof WorkflowDeleteEntityActionConfig
+     */
+    configSchema?: Array<WorkflowNodeConfigField>;
+    /**
+     * 
      * @type {WorkflowNodeType}
      * @memberof WorkflowDeleteEntityActionConfig
      */
@@ -96,6 +109,7 @@ export function WorkflowDeleteEntityActionConfigFromJSONTyped(json: any, ignoreD
         'timeoutSeconds': json['timeoutSeconds'] == null ? undefined : json['timeoutSeconds'],
         'config': json['config'] == null ? undefined : json['config'],
         'subType': json['subType'] == null ? undefined : WorkflowActionTypeFromJSON(json['subType']),
+        'configSchema': json['configSchema'] == null ? undefined : ((json['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldFromJSON)),
         'type': json['type'] == null ? undefined : WorkflowNodeTypeFromJSON(json['type']),
     };
 }
@@ -116,6 +130,7 @@ export function WorkflowDeleteEntityActionConfigToJSONTyped(value?: WorkflowDele
         'timeoutSeconds': value['timeoutSeconds'],
         'config': value['config'],
         'subType': WorkflowActionTypeToJSON(value['subType']),
+        'configSchema': value['configSchema'] == null ? undefined : ((value['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldToJSON)),
         'type': WorkflowNodeTypeToJSON(value['type']),
     };
 }

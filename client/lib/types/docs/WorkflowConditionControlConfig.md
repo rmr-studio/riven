@@ -11,7 +11,9 @@ Name | Type
 `expression` | string
 `contextEntityId` | string
 `timeoutSeconds` | number
+`config` | { [key: string]: object; }
 `subType` | [WorkflowControlType](WorkflowControlType.md)
+`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
 
 ## Example
@@ -25,7 +27,9 @@ const example = {
   "expression": null,
   "contextEntityId": null,
   "timeoutSeconds": null,
+  "config": null,
   "subType": null,
+  "configSchema": null,
   "type": null,
 } satisfies WorkflowConditionControlConfig
 

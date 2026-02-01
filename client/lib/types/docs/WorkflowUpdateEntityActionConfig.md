@@ -13,6 +13,7 @@ Name | Type
 `timeoutSeconds` | number
 `config` | { [key: string]: object; }
 `subType` | [WorkflowActionType](WorkflowActionType.md)
+`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
 
 ## Example
@@ -28,6 +29,7 @@ const example = {
   "timeoutSeconds": null,
   "config": null,
   "subType": null,
+  "configSchema": null,
   "type": null,
 } satisfies WorkflowUpdateEntityActionConfig
 

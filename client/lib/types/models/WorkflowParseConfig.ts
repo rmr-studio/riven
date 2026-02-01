@@ -20,6 +20,13 @@ import {
     QueryProjectionToJSON,
     QueryProjectionToJSONTyped,
 } from './QueryProjection';
+import type { WorkflowNodeConfigField } from './WorkflowNodeConfigField';
+import {
+    WorkflowNodeConfigFieldFromJSON,
+    WorkflowNodeConfigFieldFromJSONTyped,
+    WorkflowNodeConfigFieldToJSON,
+    WorkflowNodeConfigFieldToJSONTyped,
+} from './WorkflowNodeConfigField';
 import type { SchemaString } from './SchemaString';
 import {
     SchemaStringFromJSON,
@@ -27,20 +34,6 @@ import {
     SchemaStringToJSON,
     SchemaStringToJSONTyped,
 } from './SchemaString';
-import type { Signature } from './Signature';
-import {
-    SignatureFromJSON,
-    SignatureFromJSONTyped,
-    SignatureToJSON,
-    SignatureToJSONTyped,
-} from './Signature';
-import type { QueryPagination } from './QueryPagination';
-import {
-    QueryPaginationFromJSON,
-    QueryPaginationFromJSONTyped,
-    QueryPaginationToJSON,
-    QueryPaginationToJSONTyped,
-} from './QueryPagination';
 import type { WorkflowNodeType } from './WorkflowNodeType';
 import {
     WorkflowNodeTypeFromJSON,
@@ -48,20 +41,6 @@ import {
     WorkflowNodeTypeToJSON,
     WorkflowNodeTypeToJSONTyped,
 } from './WorkflowNodeType';
-import type { WorkflowScheduleTriggerConfigInterval } from './WorkflowScheduleTriggerConfigInterval';
-import {
-    WorkflowScheduleTriggerConfigIntervalFromJSON,
-    WorkflowScheduleTriggerConfigIntervalFromJSONTyped,
-    WorkflowScheduleTriggerConfigIntervalToJSON,
-    WorkflowScheduleTriggerConfigIntervalToJSONTyped,
-} from './WorkflowScheduleTriggerConfigInterval';
-import type { OperationType } from './OperationType';
-import {
-    OperationTypeFromJSON,
-    OperationTypeFromJSONTyped,
-    OperationTypeToJSON,
-    OperationTypeToJSONTyped,
-} from './OperationType';
 import type { WorkflowControlType } from './WorkflowControlType';
 import {
     WorkflowControlTypeFromJSON,
@@ -76,6 +55,41 @@ import {
     EntityQueryToJSON,
     EntityQueryToJSONTyped,
 } from './EntityQuery';
+import type { RequestMethodType } from './RequestMethodType';
+import {
+    RequestMethodTypeFromJSON,
+    RequestMethodTypeFromJSONTyped,
+    RequestMethodTypeToJSON,
+    RequestMethodTypeToJSONTyped,
+} from './RequestMethodType';
+import type { Signature } from './Signature';
+import {
+    SignatureFromJSON,
+    SignatureFromJSONTyped,
+    SignatureToJSON,
+    SignatureToJSONTyped,
+} from './Signature';
+import type { QueryPagination } from './QueryPagination';
+import {
+    QueryPaginationFromJSON,
+    QueryPaginationFromJSONTyped,
+    QueryPaginationToJSON,
+    QueryPaginationToJSONTyped,
+} from './QueryPagination';
+import type { WorkflowScheduleTriggerConfigInterval } from './WorkflowScheduleTriggerConfigInterval';
+import {
+    WorkflowScheduleTriggerConfigIntervalFromJSON,
+    WorkflowScheduleTriggerConfigIntervalFromJSONTyped,
+    WorkflowScheduleTriggerConfigIntervalToJSON,
+    WorkflowScheduleTriggerConfigIntervalToJSONTyped,
+} from './WorkflowScheduleTriggerConfigInterval';
+import type { OperationType } from './OperationType';
+import {
+    OperationTypeFromJSON,
+    OperationTypeFromJSONTyped,
+    OperationTypeToJSON,
+    OperationTypeToJSONTyped,
+} from './OperationType';
 import type { WorkflowScheduleTriggerConfigTimeZone } from './WorkflowScheduleTriggerConfigTimeZone';
 import {
     WorkflowScheduleTriggerConfigTimeZoneFromJSON,
