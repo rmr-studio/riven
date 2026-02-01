@@ -615,16 +615,13 @@ class WorkflowExecutionIntegrationTest {
             config = when (type) {
                 WorkflowNodeType.ACTION -> WorkflowCreateEntityActionConfig(
                     version = 1,
-                    name = "Mock Action Config for $name",
-                    config = mapOf(
-                        "entityTypeId" to UUID.randomUUID().toString(),
-                        "payload" to mapOf("name" to name)
-                    )
+                    entityTypeId = UUID.randomUUID().toString(),
+                    payload = mapOf("name" to name)
                 )
                 else -> WorkflowCreateEntityActionConfig(
                     version = 1,
-                    name = "Mock Config for $name",
-                    config = emptyMap()
+                    entityTypeId = UUID.randomUUID().toString(),
+                    payload = emptyMap()
                 )
             },
             workspaceId = workspaceId,

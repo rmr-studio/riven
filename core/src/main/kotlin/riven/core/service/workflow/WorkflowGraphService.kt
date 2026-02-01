@@ -19,6 +19,9 @@ import riven.core.models.response.workflow.SaveWorkflowNodeResponse
 import riven.core.models.workflow.WorkflowEdge
 import riven.core.models.workflow.WorkflowGraph
 import riven.core.models.workflow.node.WorkflowNode
+import riven.core.models.workflow.node.config.WorkflowNodeConfig
+import riven.core.models.workflow.node.NodeServiceProvider
+import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.repository.workflow.WorkflowDefinitionRepository
 import riven.core.repository.workflow.WorkflowDefinitionVersionRepository
 import riven.core.repository.workflow.WorkflowEdgeRepository
@@ -50,12 +53,10 @@ class WorkflowGraphService(
     private val workflowDefinitionRepository: WorkflowDefinitionRepository,
     private val workflowDefinitionVersionRepository: WorkflowDefinitionVersionRepository,
     private val activityService: ActivityService,
-    private val authTokenService: AuthTokenService
+    private val authTokenService: AuthTokenService,
+    private val nodeServiceProvider: NodeServiceProvider
 ) {
 
-    // ------------------------------------------------------------------
-    // Node Operations
-    // ------------------------------------------------------------------
 
     /**
      * Creates a new workflow node.
@@ -69,6 +70,13 @@ class WorkflowGraphService(
     fun createNode(workspaceId: UUID, request: CreateWorkflowNodeRequest): WorkflowNode {
         val userId = authTokenService.getUserId()
         log.info { "Creating workflow node '${request.name}' (key: ${request.key}) in workspace $workspaceId" }
+
+        // Validate config before saving
+        val validationResult = request.config.validate(nodeServiceProvider)
+        if (!validationResult.isValid) {
+            val errorMessages = validationResult.errors.joinToString("; ") { "${it.field}: ${it.message}" }
+            throw IllegalArgumentException("Invalid node configuration: $errorMessages")
+        }
 
         // Create node entity from config
         val nodeEntity = WorkflowNodeEntity.fromConfig(
@@ -181,6 +189,13 @@ class WorkflowGraphService(
         if (request.config != null) {
             // Config change - create new version (immutable pattern)
             log.debug { "Config change detected for node $id, creating new version" }
+
+            // Validate new config before saving
+            val validationResult = request.config.validate(nodeServiceProvider)
+            if (!validationResult.isValid) {
+                val errorMessages = validationResult.errors.joinToString("; ") { "${it.field}: ${it.message}" }
+                throw IllegalArgumentException("Invalid node configuration: $errorMessages")
+            }
 
             // Soft delete the old version
             val deletedOldNode = existingNode.copy(
@@ -523,6 +538,18 @@ class WorkflowGraphService(
             nodes = nodes,
             edges = edges
         )
+    }
+
+    @Throws(IllegalArgumentException::class)
+    private fun validateConfig(
+        config: WorkflowNodeConfig
+    ): ConfigValidationResult {
+        return config.validate(nodeServiceProvider).also {
+            if (!it.isValid) {
+                val errorMessages = it.errors.joinToString("; ") { err -> "${err.field}: ${err.message}" }
+                throw IllegalArgumentException("Invalid node configuration: $errorMessages")
+            }
+        }
     }
 
 

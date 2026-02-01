@@ -1,4 +1,4 @@
-package riven.core.service.workflow
+package riven.core.service.workflow.state
 
 import org.springframework.stereotype.Service
 
@@ -59,10 +59,10 @@ import org.springframework.stereotype.Service
  * // result3.rawValue == "static value"
  * ```
  *
- * @see InputResolverService for template resolution against data registry
+ * @see WorkflowNodeInputResolverService for template resolution against data registry
  */
 @Service
-class TemplateParserService {
+class WorkflowNodeTemplateParserService {
 
     /**
      * Result of parsing a template string.

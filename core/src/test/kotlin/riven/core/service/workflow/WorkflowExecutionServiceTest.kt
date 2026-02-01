@@ -17,7 +17,6 @@ import riven.core.enums.workflow.WorkflowStatus
 import riven.core.enums.workflow.WorkflowTriggerType
 import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.exceptions.NotFoundException
-import riven.core.repository.workflow.WorkflowDefinitionRepository
 import riven.core.repository.workflow.WorkflowExecutionNodeRepository
 import riven.core.repository.workflow.WorkflowExecutionRepository
 import riven.core.repository.workflow.projection.ExecutionSummaryProjection
@@ -26,6 +25,7 @@ import riven.core.service.auth.AuthTokenService
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
 import riven.core.service.util.factory.workflow.WorkflowFactory
+import riven.core.service.workflow.queue.WorkflowExecutionQueueService
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -59,7 +59,7 @@ class WorkflowExecutionServiceTest {
     private lateinit var workflowClient: WorkflowClient
 
     @MockitoBean
-    private lateinit var workflowExecutionQueueService: ExecutionQueueService
+    private lateinit var workflowExecutionQueueService: WorkflowExecutionQueueService
 
     @MockitoBean
     private lateinit var workflowExecutionRepository: WorkflowExecutionRepository

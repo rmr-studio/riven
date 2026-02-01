@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-09)
 
 **Core value:** End-to-end workflow lifecycle: create graph -> save -> execute via Temporal -> see results
-**Current focus:** Phase 7 - Error Handling & Retry Logic (COMPLETE)
+**Current focus:** Phase 7.1 - Node Configuration Development (COMPLETE)
 
 ## Current Position
 
-Phase: 7 of 8 (Error Handling & Retry Logic)
-Plan: 3 of 3 in current phase
+Phase: 7.1 of 8 (Node Configuration Development)
+Plan: 5 of 5 in current phase
 Status: Phase complete
-Last activity: 2026-01-22 - Completed 07-03-PLAN.md
+Last activity: 2026-01-29 - Completed 07.1-05-PLAN.md
 
-Progress: ████████████████████ 100% (20 of 20 plans complete)
+Progress: █████████████████████████ 100% (25 of 25 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 20 (all fully complete)
-- Average duration: ~22 minutes (0.37 hours)
-- Total execution time: 7.41 hours
+- Total plans completed: 25
+- Average duration: ~19 minutes (0.31 hours)
+- Total execution time: 7.77 hours
 
 **By Phase:**
 
@@ -36,9 +36,10 @@ Progress: ████████████████████ 100% (20 
 | 6 - Backend API Layer | 3 | 0.17h | 0.06h |
 | 6.1 - Execution Queue Management | 3 | 0.18h | 0.06h |
 | 7 - Error Handling & Retry Logic | 3 | 0.13h | 0.04h |
+| 7.1 - Node Configuration Development | 5 | 0.36h | 0.07h |
 
 **Recent Trend:**
-- Last 5 plans: 6.1-03 (0.08h), 07-01 (0.03h), 07-02 (0.05h), 07-03 (0.05h)
+- Last 5 plans: 07.1-01 (0.07h), 07.1-03 (0.07h), 07.1-02 (0.08h), 07.1-04 (0.07h), 07.1-05 (0.07h)
 - Trend: Excellent velocity maintained
 
 ## Accumulated Context
@@ -74,6 +75,17 @@ Recent decisions affecting current work:
 | Hardcoded retry values in workflow | Not a Spring bean, cannot inject ConfigurationProperties | 07-02 |
 | Computed properties over methods for error helpers | Lightweight derived values, Kotlin-idiomatic | 07-03 |
 | Direct object testing for stateless utilities | No Spring context or mocking needed for Kotlin objects | 07-03 |
+| Detect malformed templates with {{ check | isTemplate() only matches valid templates, need explicit check for malformed | 07.1-01 |
+| Config map getter pattern | Add computed `config` property returning typed fields as map for coordination service | 07.1-02 |
+| Entity payload wrapping | Use EntityAttributeRequest with TEXT SchemaType default; infer later | 07.1-02 |
+| HTTP method validated as enum set | GET, POST, PUT, DELETE, PATCH validated in validate() | 07.1-03 |
+| Expression stored as string | Parsed on validation/execution per RESEARCH.md | 07.1-03 |
+| Coordination service extracts typed fields | Required for InputResolverService compatibility | 07.1-03 |
+| Validation runs before any database changes | Reject early, fail fast pattern | 07.1-04 |
+| Triggers return valid() for now | Graceful fallback until trigger validation added | 07.1-04 |
+| ENTITY_EVENT validates key and expressions | Non-empty validation for required fields | 07.1-05 |
+| SCHEDULE validates cronExpression/interval | Mutual exclusivity already in init block | 07.1-05 |
+| FUNCTION/WEBHOOK return valid() | Constructor enforces non-null | 07.1-05 |
 
 ### Deferred Issues
 
@@ -81,11 +93,11 @@ None yet.
 
 ### Blockers/Concerns
 
-None yet.
+None.
 
 ## Session Continuity
 
-Last session: 2026-01-22
-Stopped at: Completed 07-03-PLAN.md (Error Recovery)
+Last session: 2026-01-29
+Stopped at: Completed 07.1-05-PLAN.md (Trigger Configs)
 Resume file: N/A
-Next action: Phase 7 complete. Ready for Phase 8 (Monitoring & Observability) or new phase planning.
+Next action: Phase 7.1 complete. All 25 plans executed. Ready for Phase 8.

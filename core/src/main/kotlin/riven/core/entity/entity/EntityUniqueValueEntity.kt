@@ -21,6 +21,9 @@ data class EntityUniqueValueEntity(
     @Column(name = "id", nullable = false, columnDefinition = "uuid")
     val id: UUID? = null,
 
+    @Column(name = "workspace_id", nullable = false)
+    val workspaceId: UUID,
+
     @Column(name = "type_id", nullable = false)
     val typeId: UUID,
 

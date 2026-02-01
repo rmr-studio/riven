@@ -11,6 +11,7 @@ import riven.core.models.workflow.node.config.trigger.WorkflowEntityEventTrigger
 import riven.core.models.workflow.node.config.trigger.WorkflowFunctionTriggerConfig
 import riven.core.models.workflow.node.config.trigger.WorkflowScheduleTriggerConfig
 import riven.core.models.workflow.node.config.trigger.WorkflowWebhookTriggerConfig
+import riven.core.models.workflow.node.config.controls.WorkflowConditionControlConfig
 import riven.core.util.getEnumFromField
 
 /**
@@ -54,7 +55,24 @@ class WorkflowNodeConfigDeserializer : JsonDeserializer<WorkflowNodeConfig>() {
             WorkflowNodeType.CONTROL_FLOW -> deserializeControlConfig(p, ctxt, node)
             WorkflowNodeType.UTILITY -> deserializeUtilityConfig(p, ctxt, node)
             WorkflowNodeType.FUNCTION -> deserializeFunctionConfig(p, ctxt, node)
+            WorkflowNodeType.PARSE -> deserializeParseConfig(p, ctxt, node)
         }
+    }
+
+    /**
+     * Deserializes PARSE category configs.
+     * TODO: Implement concrete parse config classes.
+     */
+    private fun deserializeParseConfig(
+        p: JsonParser,
+        ctxt: DeserializationContext,
+        node: JsonNode
+    ): WorkflowParseConfig {
+        // TODO: Implement concrete parse config classes
+        return ctxt.reportInputMismatch(
+            WorkflowParseConfig::class.java,
+            "Deserialization for PARSE category is not yet implemented."
+        )
     }
 
     /**
@@ -121,7 +139,7 @@ class WorkflowNodeConfigDeserializer : JsonDeserializer<WorkflowNodeConfig>() {
         )
 
         return when (subType) {
-            WorkflowControlType.CONDITION -> p.codec.treeToValue(node, WorkflowControlConfig::class.java)
+            WorkflowControlType.CONDITION -> p.codec.treeToValue(node, WorkflowConditionControlConfig::class.java)
             // TODO: Add SWITCH, LOOP, PARALLEL in Phase 5+
             else -> ctx.reportInputMismatch(
                 WorkflowControlConfig::class.java,

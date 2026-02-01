@@ -78,13 +78,13 @@ data class WorkflowNode(
      *
      * @param context Workflow execution context with data registry
      * @param inputs Resolved inputs (templates already converted to values)
-     * @param services Dependencies needed for execution
+     * @param services Service provider for on-demand access to Spring services
      * @return Execution output map (structure varies by node type)
      * @throws Exception on execution failure
      */
     fun execute(
         context: WorkflowExecutionContext,
         inputs: JsonObject,
-        services: NodeExecutionServices
+        services: NodeServiceProvider
     ): JsonObject = config.execute(context, inputs, services)
 }

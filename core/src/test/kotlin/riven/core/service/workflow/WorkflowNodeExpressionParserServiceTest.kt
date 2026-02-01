@@ -4,12 +4,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import riven.core.models.common.Expression
 import riven.core.models.common.Operator
+import riven.core.service.workflow.state.WorkflowNodeExpressionParserService
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class ExpressionParserServiceTest {
+class WorkflowNodeExpressionParserServiceTest {
 
-    private val parser = ExpressionParserService()
+    private val parser = WorkflowNodeExpressionParserService()
 
     @Test
     fun `parse simple equality comparison`() {

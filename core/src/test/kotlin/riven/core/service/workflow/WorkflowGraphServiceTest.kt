@@ -2,6 +2,7 @@ package riven.core.service.workflow
 
 import io.github.oshai.kotlinlogging.KLogger
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.*
@@ -29,6 +30,7 @@ import riven.core.models.request.workflow.UpdateWorkflowNodeRequest
 import riven.core.models.workflow.WorkflowGraphReference
 import riven.core.models.workflow.node.config.WorkflowNodeConfig
 import riven.core.models.workflow.node.config.actions.WorkflowCreateEntityActionConfig
+import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.repository.workflow.WorkflowDefinitionRepository
 import riven.core.repository.workflow.WorkflowDefinitionVersionRepository
 import riven.core.repository.workflow.WorkflowEdgeRepository
@@ -37,6 +39,8 @@ import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
+import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
+import riven.core.service.workflow.state.WorkflowNodeExpressionParserService
 import java.util.*
 
 @WithUserPersona(
@@ -72,6 +76,9 @@ class WorkflowGraphServiceTest {
     private lateinit var workflowEdgeRepository: WorkflowEdgeRepository
 
     @MockitoBean
+    private lateinit var workflowNodeServiceInjectionProvider: WorkflowNodeServiceInjectionProvider
+
+    @MockitoBean
     private lateinit var workflowDefinitionRepository: WorkflowDefinitionRepository
 
     @MockitoBean
@@ -79,6 +86,12 @@ class WorkflowGraphServiceTest {
 
     @MockitoBean
     private lateinit var activityService: ActivityService
+
+    @MockitoBean
+    private lateinit var workflowNodeConfigValidationService: WorkflowNodeConfigValidationService
+
+    @MockitoBean
+    private lateinit var workflowNodeExpressionParserService: WorkflowNodeExpressionParserService
 
     @MockitoBean
     private lateinit var logger: KLogger
@@ -89,13 +102,30 @@ class WorkflowGraphServiceTest {
     private val workspaceId = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef9876543210")
     private val userId = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef0123456789")
 
+    @BeforeEach
+    fun setUp() {
+        // Wire up the service provider to return the mocked validation service
+        whenever(workflowNodeServiceInjectionProvider.get(WorkflowNodeConfigValidationService::class))
+            .thenReturn(workflowNodeConfigValidationService)
+
+        // Mock validation service to return valid result for all configs
+        whenever(workflowNodeConfigValidationService.validateTemplateOrUuid(any(), any()))
+            .thenReturn(emptyList())
+        whenever(workflowNodeConfigValidationService.validateTemplateMap(any(), any()))
+            .thenReturn(emptyList())
+        whenever(workflowNodeConfigValidationService.validateOptionalDuration(any(), any()))
+            .thenReturn(emptyList())
+        whenever(workflowNodeConfigValidationService.combine(any(), any(), any()))
+            .thenReturn(ConfigValidationResult.valid())
+    }
+
     /**
      * Creates a test WorkflowNodeConfig using a real implementation.
      */
     private fun createTestConfig(): WorkflowNodeConfig = WorkflowCreateEntityActionConfig(
         version = 1,
-        name = "Test Action",
-        config = mapOf("entityTypeId" to "test-type", "payload" to emptyMap<String, Any>())
+        entityTypeId = "550e8400-e29b-41d4-a716-446655440000",
+        payload = emptyMap()
     )
 
     // ------------------------------------------------------------------

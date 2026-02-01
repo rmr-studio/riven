@@ -1,9 +1,10 @@
-package riven.core.service.workflow
+package riven.core.service.workflow.state
 
 import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Service
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import kotlin.collections.get
 
 /**
  * Service for resolving template references against the workflow data registry.
@@ -84,11 +85,11 @@ import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
  * // resolved == mapOf("to" to "user@example.com", "subject" to "Welcome!")
  * ```
  *
- * @property templateParserService Parser for template syntax
+ * @property workflowNodeTemplateParserService Parser for template syntax
  */
 @Service
-class InputResolverService(
-    private val templateParserService: TemplateParserService,
+class WorkflowNodeInputResolverService(
+    private val workflowNodeTemplateParserService: WorkflowNodeTemplateParserService,
     private val logger: KLogger
 ) {
 
@@ -109,7 +110,7 @@ class InputResolverService(
         }
 
         // Parse template
-        val parsed = templateParserService.parse(templateOrValue)
+        val parsed = workflowNodeTemplateParserService.parse(templateOrValue)
 
         // Not a template - return as-is
         if (!parsed.isTemplate) {
@@ -138,7 +139,7 @@ class InputResolverService(
      * @return String with all templates replaced by resolved values, or null if any resolution fails
      */
     private fun resolveEmbeddedTemplates(
-        parsed: TemplateParserService.ParsedTemplate,
+        parsed: WorkflowNodeTemplateParserService.ParsedTemplate,
         context: WorkflowExecutionContext
     ): String? {
         var result = parsed.templateString ?: return null

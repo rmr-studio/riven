@@ -1,10 +1,11 @@
-package riven.core.service.workflow
+package riven.core.service.workflow.state
 
 import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Service
 import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.models.entity.Entity
 import riven.core.models.entity.EntityType
+import riven.core.models.entity.payload.EntityAttributePayload
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.entity.payload.EntityAttributeRelationPayload
 import riven.core.repository.entity.EntityRepository
@@ -163,7 +164,7 @@ class EntityContextService(
      * @return Extracted value (primitive, nested map, or list of maps)
      */
     private fun extractValue(
-        payload: riven.core.models.entity.payload.EntityAttributePayload,
+        payload: EntityAttributePayload,
         fieldUuid: UUID,
         entityType: EntityType,
         workspaceId: UUID,
@@ -184,7 +185,7 @@ class EntityContextService(
                 val relationshipDefinition = entityType.relationships?.find { it.id == fieldUuid }
 
                 if (relationshipDefinition == null) {
-                    logger.warn("Relationship definition not found for field $fieldUuid in entity type ${entityType.key}")
+                    logger.warn { "Relationship definition not found for field $fieldUuid in entity type ${entityType.key}" }
                     return null
                 }
 
@@ -199,7 +200,7 @@ class EntityContextService(
                         )
                     } catch (e: IllegalArgumentException) {
                         // Related entity not found (stale relationship)
-                        logger.warn("Related entity not found: ${entityLink.id} for field $fieldUuid - ${e.message}")
+                        logger.warn { "Related entity not found: ${entityLink.id} for field $fieldUuid - ${e.message}" }
                         null
                     }
                 }

@@ -1,4 +1,4 @@
-package riven.core.service.workflow
+package riven.core.service.workflow.queue
 
 import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Service
@@ -7,7 +7,6 @@ import riven.core.entity.workflow.ExecutionQueueEntity
 import riven.core.enums.workflow.ExecutionQueueStatus
 import riven.core.exceptions.NotFoundException
 import riven.core.models.common.json.JsonObject
-import riven.core.models.workflow.engine.queue.ExecutionQueueRequest
 import riven.core.repository.workflow.ExecutionQueueRepository
 import riven.core.repository.workflow.WorkflowDefinitionRepository
 import java.time.ZonedDateTime
@@ -25,7 +24,7 @@ import java.util.UUID
  * Does NOT handle: Dispatching to Temporal (see ExecutionDispatcherService)
  */
 @Service
-class ExecutionQueueService(
+class WorkflowExecutionQueueService(
     private val executionQueueRepository: ExecutionQueueRepository,
     private val workflowDefinitionRepository: WorkflowDefinitionRepository,
     private val logger: KLogger

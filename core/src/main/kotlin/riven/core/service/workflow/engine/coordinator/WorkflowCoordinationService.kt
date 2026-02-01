@@ -4,7 +4,6 @@ import io.github.oshai.kotlinlogging.KLogger
 import io.temporal.activity.Activity
 import io.temporal.failure.ApplicationFailure
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import riven.core.entity.workflow.WorkflowEdgeEntity
 import riven.core.entity.workflow.execution.WorkflowExecutionNodeEntity
@@ -16,16 +15,12 @@ import riven.core.models.workflow.engine.environment.NodeExecutionData
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.models.workflow.engine.error.NodeExecutionError
 import riven.core.models.workflow.engine.error.RetryAttempt
-import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.WorkflowNode
 import riven.core.models.workflow.node.config.actions.*
 import riven.core.models.workflow.node.config.controls.WorkflowConditionControlConfig
 import riven.core.repository.workflow.WorkflowExecutionNodeRepository
-import riven.core.service.entity.EntityService
-import riven.core.service.workflow.EntityContextService
-import riven.core.service.workflow.ExpressionEvaluatorService
-import riven.core.service.workflow.ExpressionParserService
-import riven.core.service.workflow.InputResolverService
+import riven.core.service.workflow.state.WorkflowNodeInputResolverService
 import riven.core.service.workflow.engine.error.WorkflowErrorClassifier
 import java.time.Instant
 import java.time.ZonedDateTime
@@ -37,11 +32,11 @@ import java.util.*
  * sub-set of nodes and edges.
  *
  * 1. Initialize WorkflowExecutionContext with data registry
- * 3. Resolve input templates against registry
- * 4. Prepare NodeExecutionServices (dependency injection for nodes)
- * 5. Call node.execute(context, inputs, services) - polymorphic dispatch
- * 6. Capture output to data registry
- * 7. Persist execution state to database
+ * 2. Resolve input templates against registry
+ * 3. Provide NodeServiceProvider for on-demand service access
+ * 4. Call node.execute(context, inputs, services) - polymorphic dispatch
+ * 5. Capture output to data registry
+ * 6. Persist execution state to database
  *
  * ## Error Handling
  *
@@ -51,10 +46,7 @@ import java.util.*
  * - Temporal RetryOptions handle retries automatically
  *
  * @property workflowExecutionNodeRepository Persists node execution state
- * @property entityService Handles entity CRUD operations (injected into nodes)
- * @property expressionEvaluatorService Evaluates expressions (injected into nodes)
- * @property entityContextService Resolves entity context (injected into nodes)
- * @property webClientBuilder HTTP client builder (injected into nodes)
+ * @property nodeServiceProvider Provider for on-demand Spring service access in nodes
  * @property inputResolverService Resolves template references
  */
 
@@ -71,17 +63,11 @@ class WorkflowCoordinationService(
     private val workflowExecutionNodeRepository: WorkflowExecutionNodeRepository,
     private val workflowNodeRepository: riven.core.repository.workflow.WorkflowNodeRepository,
     private val workflowEdgeRepository: riven.core.repository.workflow.WorkflowEdgeRepository,
-    private val entityService: EntityService,
-    private val expressionEvaluatorService: ExpressionEvaluatorService,
-    private val expressionParserService: ExpressionParserService,
-    private val entityContextService: EntityContextService,
-    private val webClientBuilder: WebClient.Builder,
-    private val inputResolverService: InputResolverService,
+    private val nodeServiceProvider: NodeServiceProvider,
+    private val workflowNodeInputResolverService: WorkflowNodeInputResolverService,
     private val workflowGraphCoordinationService: WorkflowGraphCoordinationService,
     private val logger: KLogger
 ) : WorkflowCoordination {
-
-    private val webClient: WebClient = webClientBuilder.build()
 
     override fun executeWorkflowWithCoordinator(
         workflowDefinitionId: UUID,
@@ -194,24 +180,25 @@ class WorkflowCoordinationService(
                 is WorkflowUpdateEntityActionConfig -> config.config
                 is WorkflowDeleteEntityActionConfig -> config.config
                 is WorkflowQueryEntityActionConfig -> config.config
-                is WorkflowHttpRequestActionConfig -> config.config
-                is WorkflowConditionControlConfig -> config.config
+                // HTTP_REQUEST uses typed fields instead of config map
+                is WorkflowHttpRequestActionConfig -> mapOf(
+                    "url" to config.url,
+                    "method" to config.method,
+                    "headers" to config.headers,
+                    "body" to config.body
+                )
+                // CONDITION uses typed fields instead of config map
+                is WorkflowConditionControlConfig -> mapOf(
+                    "expression" to config.expression,
+                    "contextEntityId" to config.contextEntityId
+                )
                 //TODO: Add other node config types here and streamline mapping process
                 else -> emptyMap()
             }
 
-            val resolvedInputs = inputResolverService.resolveAll(
+            val resolvedInputs = workflowNodeInputResolverService.resolveAll(
                 configMap,
                 context
-            )
-
-            // Prepare services for node execution
-            val services = NodeExecutionServices(
-                entityService = entityService,
-                webClient = webClient,
-                expressionEvaluatorService = expressionEvaluatorService,
-                expressionParserService = expressionParserService,
-                entityContextService = entityContextService
             )
 
             // Polymorphic execution - no type switching!
@@ -221,7 +208,7 @@ class WorkflowCoordinationService(
             val executionStart = System.currentTimeMillis()
 
             val result = executeAction(nodeId, node.name, node.type.name, context) {
-                node.execute(context, resolvedInputs, services)
+                node.execute(context, resolvedInputs, nodeServiceProvider)
             }
 
             val duration = System.currentTimeMillis() - executionStart

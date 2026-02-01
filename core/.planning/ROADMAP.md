@@ -25,7 +25,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6: Backend API Layer** - REST endpoints for workflow management
 - [x] **Phase 6.1: Execution Queue Management (INSERTED)** - Execution queue management
 - [x] **Phase 7: Error Handling & Retry Logic** - Temporal retry policies and error surfacing
-- [ ] **Phase 7.1: Node Configuration Development (INSERTED)** - Node configuration development
+- [x] **Phase 7.1: Node Configuration Development (INSERTED)** - Strongly-typed node configs with validation
 - [ ] **Phase 8: End-to-End Testing** - Validate complete workflow lifecycle
 
 ## Phase Details
@@ -123,17 +123,21 @@ Plans:
 - [x] 07-03: Error surfacing in API responses and unit tests (2026-01-22)
 
 ### Phase 7.1: Node Configuration Development (INSERTED)
-**Goal**: Node configuration development
+**Goal**: Define strongly-typed configuration structures for workflow node types with save-time validation
 **Depends on**: Phase 7
-**Research**: TBD
-**Status**: Not started
+**Research**: Completed (07.1-RESEARCH.md - Kotlin data class patterns, existing config structure analysis)
+**Status**: ✅ COMPLETED
 
 Plans:
-- TBD (run /gsd:plan-phase 7.1 to break down)
+- [x] 07.1-01: Validation infrastructure (2026-01-29) — ConfigValidationError, ConfigValidationResult, ConfigValidationService with template/UUID validation
+- [x] 07.1-02: Entity action configs (2026-01-29) — Typed CREATE, UPDATE, DELETE, QUERY with validate() methods
+- [x] 07.1-03: HTTP_REQUEST and CONDITION configs (2026-01-29) — Typed fields, validate(), isTemplate() helper
+- [x] 07.1-04: Deserializer and validation integration (2026-01-29) — Fixed CONDITION routing, WorkflowGraphService validation, 20 test cases
+- [x] 07.1-05: Trigger config validation (2026-01-29) — validate() methods for ENTITY_EVENT, SCHEDULE, FUNCTION, WEBHOOK
 
 ### Phase 8: End-to-End Testing
 **Goal**: Validate complete workflow lifecycle from API definition through execution to entity modifications
-**Depends on**: Phase 7
+**Depends on**: Phase 7.1
 **Research**: Unlikely (testing patterns established)
 **Plans**: TBD
 
@@ -156,5 +160,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 4.1 → 5 → 6 → 6.1
 | 6. Backend API Layer | 3/3 | ✅ Complete | 2026-01-20 |
 | 6.1. Execution Queue Management (INSERTED) | 3/3 | ✅ Complete | 2026-01-21 |
 | 7. Error Handling & Retry Logic | 3/3 | ✅ Complete | 2026-01-22 |
-| 7.1. Node Configuration Development (INSERTED) | 0/TBD | Not started | - |
+| 7.1. Node Configuration Development (INSERTED) | 5/5 | ✅ Complete | 2026-01-29 |
 | 8. End-to-End Testing | 0/TBD | Not started | - |

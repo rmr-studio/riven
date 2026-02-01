@@ -13,6 +13,8 @@ import riven.core.enums.workflow.WorkflowStatus
 import riven.core.models.workflow.engine.environment.NodeExecutionData
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.workflow.state.WorkflowNodeInputResolverService
+import riven.core.service.workflow.state.WorkflowNodeTemplateParserService
 import java.time.Instant
 import java.util.*
 import kotlin.test.assertEquals
@@ -22,12 +24,12 @@ import kotlin.test.assertNull
     classes = [
         AuthTokenService::class,
         WorkspaceSecurity::class,
-        InputResolverServiceTest.TestConfig::class,
-        TemplateParserService::class,
-        InputResolverService::class
+        WorkflowNodeInputResolverServiceTest.TestConfig::class,
+        WorkflowNodeTemplateParserService::class,
+        WorkflowNodeInputResolverService::class
     ]
 )
-class InputResolverServiceTest {
+class WorkflowNodeInputResolverServiceTest {
 
     private lateinit var context: WorkflowExecutionContext
 
@@ -35,13 +37,13 @@ class InputResolverServiceTest {
     class TestConfig
 
     @Autowired
-    private lateinit var templateParserService: TemplateParserService
+    private lateinit var workflowNodeTemplateParserService: WorkflowNodeTemplateParserService
 
     @MockitoBean
     private lateinit var logger: KLogger
 
     @Autowired
-    private lateinit var inputResolverService: InputResolverService
+    private lateinit var workflowNodeInputResolverService: WorkflowNodeInputResolverService
 
     @BeforeEach
     fun setup() {
@@ -67,7 +69,7 @@ class InputResolverServiceTest {
             executedAt = Instant.now()
         )
 
-        val result = inputResolverService.resolve("{{ steps.fetch_leads.output.count }}", context)
+        val result = workflowNodeInputResolverService.resolve("{{ steps.fetch_leads.output.count }}", context)
 
         assertEquals(42, result)
     }
@@ -91,7 +93,8 @@ class InputResolverServiceTest {
             executedAt = Instant.now()
         )
 
-        val result = inputResolverService.resolve("{{ steps.fetch_user.output.user.profile.name }}", context)
+        val result =
+            workflowNodeInputResolverService.resolve("{{ steps.fetch_user.output.user.profile.name }}", context)
 
         assertEquals("John Doe", result)
     }
@@ -108,7 +111,7 @@ class InputResolverServiceTest {
             executedAt = Instant.now()
         )
 
-        val result = inputResolverService.resolve("{{ steps.get_status.output.status }}", context)
+        val result = workflowNodeInputResolverService.resolve("{{ steps.get_status.output.status }}", context)
 
         assertEquals("active", result)
     }
@@ -117,21 +120,21 @@ class InputResolverServiceTest {
 
     @Test
     fun `resolve static string returns unchanged`() {
-        val result = inputResolverService.resolve("static value", context)
+        val result = workflowNodeInputResolverService.resolve("static value", context)
 
         assertEquals("static value", result)
     }
 
     @Test
     fun `resolve non-string value returns unchanged`() {
-        assertEquals(42, inputResolverService.resolve(42, context))
-        assertEquals(true, inputResolverService.resolve(true, context))
-        assertEquals(3.14, inputResolverService.resolve(3.14, context))
+        assertEquals(42, workflowNodeInputResolverService.resolve(42, context))
+        assertEquals(true, workflowNodeInputResolverService.resolve(true, context))
+        assertEquals(3.14, workflowNodeInputResolverService.resolve(3.14, context))
     }
 
     @Test
     fun `resolve null returns null`() {
-        assertNull(inputResolverService.resolve(null, context))
+        assertNull(workflowNodeInputResolverService.resolve(null, context))
     }
 
     // ========== Missing Data Tests (Graceful Degradation) ==========
@@ -139,7 +142,7 @@ class InputResolverServiceTest {
     @Test
     fun `resolve template for missing node returns null`() {
         // Registry is empty - node doesn't exist
-        val result = inputResolverService.resolve("{{ steps.missing_node.output }}", context)
+        val result = workflowNodeInputResolverService.resolve("{{ steps.missing_node.output }}", context)
 
         assertNull(result)
     }
@@ -156,7 +159,7 @@ class InputResolverServiceTest {
             executedAt = Instant.now()
         )
 
-        val result = inputResolverService.resolve("{{ steps.fetch_leads.output.missing_field }}", context)
+        val result = workflowNodeInputResolverService.resolve("{{ steps.fetch_leads.output.missing_field }}", context)
 
         assertNull(result)
     }
@@ -173,7 +176,7 @@ class InputResolverServiceTest {
             executedAt = Instant.now()
         )
 
-        val result = inputResolverService.resolve("{{ steps.failed_node.output }}", context)
+        val result = workflowNodeInputResolverService.resolve("{{ steps.failed_node.output }}", context)
 
         assertNull(result)
     }
@@ -190,7 +193,7 @@ class InputResolverServiceTest {
             executedAt = Instant.now()
         )
 
-        val result = inputResolverService.resolve("{{ steps.fetch_user.output.user.email }}", context)
+        val result = workflowNodeInputResolverService.resolve("{{ steps.fetch_user.output.user.email }}", context)
 
         assertNull(result)
     }
@@ -207,7 +210,7 @@ class InputResolverServiceTest {
             executedAt = Instant.now()
         )
 
-        val result = inputResolverService.resolve("{{ steps.fetch_data.output.value.nested }}", context)
+        val result = workflowNodeInputResolverService.resolve("{{ steps.fetch_data.output.value.nested }}", context)
 
         assertNull(result)
     }
@@ -217,7 +220,7 @@ class InputResolverServiceTest {
     @Test
     fun `resolve template without steps prefix throws error`() {
         val exception = assertThrows<IllegalArgumentException> {
-            inputResolverService.resolve("{{ loop.item }}", context)
+            workflowNodeInputResolverService.resolve("{{ loop.item }}", context)
         }
         assertEquals("Template path must start with 'steps'. Got: loop", exception.message)
     }
@@ -225,7 +228,7 @@ class InputResolverServiceTest {
     @Test
     fun `resolve template with only steps segment throws error`() {
         val exception = assertThrows<IllegalArgumentException> {
-            inputResolverService.resolve("{{ steps }}", context)
+            workflowNodeInputResolverService.resolve("{{ steps }}", context)
         }
         assert(exception.message!!.contains("must include node name"))
     }
@@ -252,7 +255,7 @@ class InputResolverServiceTest {
             "subject" to "Welcome {{ steps.fetch_user.output.name }}!"
         )
 
-        val resolved = inputResolverService.resolveAll(config, context)
+        val resolved = workflowNodeInputResolverService.resolveAll(config, context)
 
         assertEquals("user@example.com", resolved["to"])
         assertEquals("Welcome John Doe!", resolved["subject"]) // Embedded template resolved
@@ -283,7 +286,7 @@ class InputResolverServiceTest {
             "static" to "value"
         )
 
-        val resolved = inputResolverService.resolveAll(config, context)
+        val resolved = workflowNodeInputResolverService.resolveAll(config, context)
 
         @Suppress("UNCHECKED_CAST")
         val http = resolved["http"] as Map<String, Any?>
@@ -319,7 +322,7 @@ class InputResolverServiceTest {
             )
         )
 
-        val resolved = inputResolverService.resolveAll(config, context)
+        val resolved = workflowNodeInputResolverService.resolveAll(config, context)
 
         @Suppress("UNCHECKED_CAST")
         val recipients = resolved["recipients"] as List<Any?>
@@ -336,7 +339,7 @@ class InputResolverServiceTest {
             "nested" to mapOf("key" to "value")
         )
 
-        val resolved = inputResolverService.resolveAll(config, context)
+        val resolved = workflowNodeInputResolverService.resolveAll(config, context)
 
         assertEquals(config, resolved)
     }
@@ -349,7 +352,7 @@ class InputResolverServiceTest {
             "field2" to "static"
         )
 
-        val resolved = inputResolverService.resolveAll(config, context)
+        val resolved = workflowNodeInputResolverService.resolveAll(config, context)
 
         assertNull(resolved["field1"])
         assertEquals("static", resolved["field2"])
