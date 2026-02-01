@@ -151,10 +151,10 @@ class WorkflowExecutionIntegrationTest {
         assertEquals(3, finalState.completedNodes.size)
         assertEquals(0, finalState.activeNodes.size)
 
-        // Verify outputs captured
-        assertNotNull(finalState.getNodeOutput(nodeA.id))
-        assertNotNull(finalState.getNodeOutput(nodeB.id))
-        assertNotNull(finalState.getNodeOutput(nodeC.id))
+        // Verify all nodes completed (outputs are now in WorkflowDataStore, not in WorkflowState)
+        assertTrue(finalState.completedNodes.contains(nodeA.id))
+        assertTrue(finalState.completedNodes.contains(nodeB.id))
+        assertTrue(finalState.completedNodes.contains(nodeC.id))
     }
 
     /**
@@ -330,20 +330,10 @@ class WorkflowExecutionIntegrationTest {
 
         val finalState = workflowGraphCoordinationService.executeWorkflow(nodes, edges, nodeExecutor)
 
-        // Verify registry size
-        assertEquals(2, finalState.dataRegistry.size)
-
-        // Verify node A output
-        val outputA = finalState.getNodeOutput(nodeA.id) as? Map<*, *>
-        assertNotNull(outputA)
-        assertEquals(nodeA.name, outputA?.get("nodeName"))
-        assertTrue(outputA?.containsKey("data") == true)
-
-        // Verify node B output
-        val outputB = finalState.getNodeOutput(nodeB.id) as? Map<*, *>
-        assertNotNull(outputB)
-        assertEquals(nodeB.name, outputB?.get("nodeName"))
-        assertTrue(outputB?.containsKey("data") == true)
+        // Verify completion (outputs are now in WorkflowDataStore, not in WorkflowState)
+        assertEquals(2, finalState.completedNodes.size)
+        assertTrue(finalState.completedNodes.contains(nodeA.id))
+        assertTrue(finalState.completedNodes.contains(nodeB.id))
     }
 
     /**
@@ -457,7 +447,7 @@ class WorkflowExecutionIntegrationTest {
 
         assertEquals(WorkflowExecutionPhase.COMPLETED, finalState.phase)
         assertEquals(0, finalState.completedNodes.size)
-        assertEquals(0, finalState.dataRegistry.size)
+        assertEquals(0, finalState.completedNodes.size)
     }
 
     /**
@@ -489,10 +479,7 @@ class WorkflowExecutionIntegrationTest {
         assertEquals(WorkflowExecutionPhase.COMPLETED, finalState.phase)
         assertEquals(1, finalState.completedNodes.size)
         assertTrue(finalState.completedNodes.contains(node.id))
-
-        val output = finalState.getNodeOutput(node.id) as? Map<*, *>
-        assertNotNull(output)
-        assertEquals("success", output?.get("result"))
+        // Outputs are now in WorkflowDataStore, not in WorkflowState
     }
 
     /**

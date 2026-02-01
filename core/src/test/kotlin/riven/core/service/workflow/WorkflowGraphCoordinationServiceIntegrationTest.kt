@@ -312,15 +312,10 @@ class WorkflowGraphCoordinationServiceIntegrationTest {
 
         val finalState = createCoordinator().executeWorkflow(nodes, edges, nodeExecutor)
 
-        // Verify outputs in registry
-        assertEquals(2, finalState.dataRegistry.size)
-        assertNotNull(finalState.getNodeOutput(nodeA.id))
-        assertNotNull(finalState.getNodeOutput(nodeB.id))
-
-        // Verify output structure
-        val outputA = finalState.getNodeOutput(nodeA.id) as? Map<*, *>
-        assertNotNull(outputA)
-        assertEquals("node-${nodeA.id}", outputA?.get("nodeName"))
+        // Verify completion (outputs are now in WorkflowDataStore, not in WorkflowState)
+        assertEquals(2, finalState.completedNodes.size)
+        assertTrue(finalState.completedNodes.contains(nodeA.id))
+        assertTrue(finalState.completedNodes.contains(nodeB.id))
     }
 
     /**

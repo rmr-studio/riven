@@ -268,10 +268,10 @@ class WorkflowExecutionEndToEndIntegrationTest {
         assertEquals(WorkflowExecutionPhase.COMPLETED, finalState.phase)
         assertEquals(3, finalState.completedNodes.size)
 
-        // Verify outputs in registry
-        assertNotNull(finalState.getNodeOutput(nodeA.id))
-        assertNotNull(finalState.getNodeOutput(nodeB.id))
-        assertNotNull(finalState.getNodeOutput(nodeC.id))
+        // Verify all nodes completed (outputs are now in WorkflowDataStore, not in WorkflowState)
+        assertTrue(finalState.completedNodes.contains(nodeA.id))
+        assertTrue(finalState.completedNodes.contains(nodeB.id))
+        assertTrue(finalState.completedNodes.contains(nodeC.id))
     }
 
     /**
@@ -568,20 +568,11 @@ class WorkflowExecutionEndToEndIntegrationTest {
 
         val finalState = workflowGraphCoordinationService.executeWorkflow(nodes, edges, nodeExecutor)
 
-        // Verify registry contains all outputs
-        assertEquals(3, finalState.dataRegistry.size)
-
-        val outputA = finalState.getNodeOutput(nodeA.id) as? Map<*, *>
-        val outputB = finalState.getNodeOutput(nodeB.id) as? Map<*, *>
-        val outputC = finalState.getNodeOutput(nodeC.id) as? Map<*, *>
-
-        assertNotNull(outputA)
-        assertNotNull(outputB)
-        assertNotNull(outputC)
-
-        assertEquals("step_1", outputA?.get("nodeName"))
-        assertEquals("step_2", outputB?.get("nodeName"))
-        assertEquals("step_3", outputC?.get("nodeName"))
+        // Verify all nodes completed (outputs are now in WorkflowDataStore, not in WorkflowState)
+        assertEquals(3, finalState.completedNodes.size)
+        assertTrue(finalState.completedNodes.contains(nodeA.id))
+        assertTrue(finalState.completedNodes.contains(nodeB.id))
+        assertTrue(finalState.completedNodes.contains(nodeC.id))
     }
 
     // ========================================

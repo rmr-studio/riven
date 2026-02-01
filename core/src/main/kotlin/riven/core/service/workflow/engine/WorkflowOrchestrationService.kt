@@ -112,6 +112,8 @@ class WorkflowOrchestrationService(
         }
 
         // Build and return result
+        // Note: Node outputs are stored in WorkflowDataStore and persisted to execution node records.
+        // The workflow result only contains completion status per node.
         return WorkflowExecutionResult(
             executionId = executionId,
             status = finalStatus,
@@ -119,7 +121,7 @@ class WorkflowOrchestrationService(
                 NodeExecutionResult(
                     nodeId = nodeId,
                     status = WorkflowStatus.COMPLETED,
-                    output = coordinationResult.getNodeOutput(nodeId)
+                    output = null // Outputs are in database execution records, not in workflow result
                 )
             } ?: emptyList()
         )

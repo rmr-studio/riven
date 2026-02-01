@@ -70,19 +70,19 @@ enum class WorkflowExecutionPhase {
  *     phase = WorkflowExecutionPhase.INITIALIZING,
  *     activeNodes = emptySet(),
  *     completedNodes = emptySet(),
- *     failedNodes = emptySet(),
- *     dataRegistry = emptyMap()
+ *     failedNodes = emptySet()
  * )
  *
  * // Transition via events
  * state = StateTransition.apply(state, NodesReady(setOf(node1Id, node2Id)))
- * state = StateTransition.apply(state, NodeCompleted(node1Id, outputData))
+ * state = StateTransition.apply(state, NodeCompleted(node1Id))
  * ```
  *
- * ## Data Registry
+ * ## Data Management
  *
- * The dataRegistry stores node outputs by nodeId (UUID). In Phase 5 Plan 3, the coordinator
- * will map these to node names for template resolution (e.g., `{{ steps.nodeName.output }}`).
+ * WorkflowState is now pure orchestration state. All node output data is managed
+ * by WorkflowDataStore, which stores StepOutput objects keyed by node name.
+ * Template resolution uses dataStore directly via {{ steps.nodeName.output.field }}.
  *
  * ## Thread Safety
  *
@@ -93,14 +93,12 @@ enum class WorkflowExecutionPhase {
  * @property activeNodes Set of node IDs currently executing (in Temporal Async)
  * @property completedNodes Set of node IDs that finished execution
  * @property failedNodes Set of node IDs that failed execution (empty in v1, populated in Phase 7)
- * @property dataRegistry Map of node outputs: nodeId → output data (Any? to handle all types)
  */
 data class WorkflowState(
     val phase: WorkflowExecutionPhase,
     val activeNodes: Set<UUID> = emptySet(),
     val completedNodes: Set<UUID> = emptySet(),
-    val failedNodes: Set<UUID> = emptySet(),
-    val dataRegistry: Map<UUID, Any?> = emptyMap()
+    val failedNodes: Set<UUID> = emptySet()
 ) {
     /**
      * Checks if workflow execution is finished (completed or failed).
@@ -112,14 +110,6 @@ data class WorkflowState(
      * Checks if workflow has active nodes currently executing.
      */
     fun hasActiveNodes(): Boolean = activeNodes.isNotEmpty()
-
-    /**
-     * Gets the output data for a specific node.
-     *
-     * @param nodeId ID of the node
-     * @return Output data, or null if node hasn't completed or has no output
-     */
-    fun getNodeOutput(nodeId: UUID): Any? = dataRegistry[nodeId]
 }
 
 /**
@@ -152,13 +142,12 @@ data class NodesReady(val nodeIds: Set<UUID>) : StateEvent
 /**
  * Node completed execution successfully.
  *
- * Triggered after a node's activity finishes. The output is stored in the
- * data registry for potential use by downstream nodes.
+ * Triggered after a node's activity finishes. Node outputs are stored
+ * in WorkflowDataStore (not in WorkflowState).
  *
  * @property nodeId ID of the completed node
- * @property output Node's output data (Any? to handle all types)
  */
-data class NodeCompleted(val nodeId: UUID, val output: Any?) : StateEvent
+data class NodeCompleted(val nodeId: UUID) : StateEvent
 
 /**
  * Node execution failed with error.

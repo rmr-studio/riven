@@ -73,7 +73,8 @@ class WorkflowGraphCoordinationService(
      * Returns the final WorkflowState containing:
      * - phase: COMPLETED or FAILED
      * - completedNodes: Set of all completed node IDs
-     * - dataRegistry: Map of nodeId → output for all completed nodes
+     *
+     * Note: Node outputs are stored in WorkflowDataStore, not in WorkflowState.
      *
      * @param nodes All workflow nodes in the DAG
      * @param edges All dependency edges (source → target)
@@ -102,13 +103,12 @@ class WorkflowGraphCoordinationService(
             throw WorkflowValidationException("Topological sort failed: ${e.message}", e)
         }
 
-        // 3. Initialize state machine
+        // 3. Initialize state machine (pure orchestration state, no data registry)
         var state = WorkflowState(
             phase = WorkflowExecutionPhase.INITIALIZING,
             activeNodes = emptySet(),
             completedNodes = emptySet(),
-            failedNodes = emptySet(),
-            dataRegistry = emptyMap()
+            failedNodes = emptySet()
         )
 
         // 4. Initialize active node queue
@@ -150,11 +150,12 @@ class WorkflowGraphCoordinationService(
             }
 
             // Mark each node as completed and update state
-            for ((nodeId, output) in results) {
-                // Transition state: node completed with output
+            // Note: Node outputs are stored in WorkflowDataStore by the coordinator
+            for ((nodeId, _) in results) {
+                // Transition state: node completed (output is in dataStore, not in state)
                 state = StateTransition.apply(
                     state,
-                    NodeCompleted(nodeId, output)
+                    NodeCompleted(nodeId)
                 )
 
                 // Mark node completed in queue (decrements successor in-degrees, enqueues new ready nodes)
