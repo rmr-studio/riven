@@ -90,6 +90,9 @@ Recent decisions affecting current work:
 | OperationType reuse for entity events | Reuse existing enum rather than creating EntityEventType | 07.2-03 |
 | Entity data as Map for triggers | Avoid circular deps with Entity model, flexible payload structure | 07.2-03 |
 | toMap() for template access | Enables {{ trigger.propertyName }} resolution | 07.2-03 |
+| NullableValue wrapper for ConcurrentHashMap | ConcurrentHashMap doesn't support null values; inline value class has zero overhead | 07.2-01 |
+| hasVariable() method for null distinction | Distinguish between "not set" and "explicitly set to null" | 07.2-01 |
+| Write-once via putIfAbsent | Atomic operation prevents race conditions in concurrent writes to same key | 07.2-01 |
 
 ### Deferred Issues
 
