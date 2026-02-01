@@ -1,4 +1,4 @@
-package riven.core.service.workflow
+package riven.core.service.workflow.queue
 
 import io.github.oshai.kotlinlogging.KLogger
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
@@ -24,9 +24,9 @@ import org.springframework.stereotype.Service
  * rather than holding all locks until the entire batch finishes.
  */
 @Service
-class ExecutionDispatcherService(
-    private val executionQueueService: ExecutionQueueService,
-    private val executionQueueProcessorService: ExecutionQueueProcessorService,
+class WorkflowExecutionDispatcherService(
+    private val workflowExecutionQueueService: WorkflowExecutionQueueService,
+    private val workflowExecutionQueueProcessorService: WorkflowExecutionQueueProcessorService,
     private val logger: KLogger
 ) {
 
@@ -54,7 +54,7 @@ class ExecutionDispatcherService(
         lockAtLeastFor = "10s"
     )
     fun processQueue() {
-        val pending = executionQueueProcessorService.claimBatch(BATCH_SIZE)
+        val pending = workflowExecutionQueueProcessorService.claimBatch(BATCH_SIZE)
 
         if (pending.isEmpty()) {
             return
@@ -64,7 +64,7 @@ class ExecutionDispatcherService(
 
         for (item in pending) {
             // Each item processed in its own transaction (REQUIRES_NEW)
-            executionQueueProcessorService.processItem(item)
+            workflowExecutionQueueProcessorService.processItem(item)
         }
     }
 
@@ -82,7 +82,7 @@ class ExecutionDispatcherService(
         lockAtLeastFor = "30s"
     )
     fun recoverStaleItems() {
-        val recovered = executionQueueService.recoverStaleItems(5)
+        val recovered = workflowExecutionQueueService.recoverStaleItems(5)
         if (recovered > 0) {
             logger.info { "Recovered $recovered stale queue items" }
         }

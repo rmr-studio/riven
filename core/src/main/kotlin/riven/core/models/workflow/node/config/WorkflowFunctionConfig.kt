@@ -3,9 +3,11 @@ package riven.core.models.workflow.node.config
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
-import riven.core.models.workflow.node.NodeExecutionServices
+import riven.core.models.workflow.node.NodeServiceProvider
+import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 
 /**
  * Configuration for a FUNCTION category node.
@@ -16,6 +18,10 @@ import riven.core.models.workflow.node.NodeExecutionServices
  *
  * FUNCTION has no subtypes - it's a single concrete implementation.
  */
+@Schema(
+    name = "WorkflowFunctionConfig",
+    description = "Configuration for FUNCTION category nodes."
+)
 @JsonTypeName("function_config")
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class WorkflowFunctionConfig(
@@ -24,10 +30,22 @@ data class WorkflowFunctionConfig(
     override val type: WorkflowNodeType
         get() = WorkflowNodeType.FUNCTION
 
+    /**
+     * Validates this configuration.
+     *
+     * @param injector Spring managed provider to inject services into model
+     * @return Validation result with any errors
+     */
+    @Suppress("UNUSED_PARAMETER")
+    override fun validate(injector: NodeServiceProvider): ConfigValidationResult {
+        // FUNCTION nodes have no configurable properties to validate
+        return ConfigValidationResult.valid()
+    }
+
     override fun execute(
         context: WorkflowExecutionContext,
         inputs: Map<String, Any?>,
-        services: NodeExecutionServices
+        services: NodeServiceProvider
     ): Map<String, Any?> {
         // TODO: Implement FUNCTION node execution in Phase 5+
         throw UnsupportedOperationException("FUNCTION nodes not implemented in Phase 4.1")

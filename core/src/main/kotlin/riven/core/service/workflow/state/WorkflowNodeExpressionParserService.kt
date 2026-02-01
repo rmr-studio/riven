@@ -1,4 +1,4 @@
-package riven.core.service.workflow
+package riven.core.service.workflow.state
 
 import org.springframework.stereotype.Service
 import riven.core.models.common.Expression
@@ -9,7 +9,7 @@ import riven.core.models.common.Operator
  * Converts expression strings to Expression AST
  */
 @Service
-class ExpressionParserService {
+class WorkflowNodeExpressionParserService {
 
     /**
      * Parse SQL-like expression string into Expression AST
@@ -218,15 +218,18 @@ class ExpressionParserService {
                     consume() // Consume )
                     expr
                 }
+
                 TokenType.STRING, TokenType.NUMBER, TokenType.BOOLEAN, TokenType.NULL -> {
                     consume()
                     Expression.Literal(token.value)
                 }
+
                 TokenType.IDENTIFIER -> {
                     consume()
                     val path = (token.value as String).split(".")
                     Expression.PropertyAccess(path)
                 }
+
                 else -> throw IllegalArgumentException("Unexpected token: ${token.type}")
             }
         }

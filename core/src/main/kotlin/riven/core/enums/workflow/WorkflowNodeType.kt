@@ -6,4 +6,5 @@ enum class WorkflowNodeType {
     ACTION,
     TRIGGER,
     UTILITY,
+    PARSE,
 }

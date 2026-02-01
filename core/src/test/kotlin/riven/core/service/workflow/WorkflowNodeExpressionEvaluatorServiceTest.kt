@@ -4,13 +4,14 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import riven.core.models.common.Expression
 import riven.core.models.common.Operator
+import riven.core.service.workflow.state.WorkflowNodeExpressionEvaluatorService
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class ExpressionEvaluatorServiceTest {
+class WorkflowNodeExpressionEvaluatorServiceTest {
 
-    private val evaluator = ExpressionEvaluatorService()
+    private val evaluator = WorkflowNodeExpressionEvaluatorService()
 
     @Test
     fun `evaluate simple equality - true`() {

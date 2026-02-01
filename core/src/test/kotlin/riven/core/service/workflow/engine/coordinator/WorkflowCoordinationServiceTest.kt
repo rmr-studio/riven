@@ -5,24 +5,18 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
-import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.test.context.bean.override.mockito.MockitoBean
-import org.springframework.web.reactive.function.client.WebClient
 import riven.core.configuration.auth.WorkspaceSecurity
+import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.repository.workflow.WorkflowEdgeRepository
 import riven.core.repository.workflow.WorkflowExecutionNodeRepository
 import riven.core.repository.workflow.WorkflowNodeRepository
 import riven.core.service.auth.AuthTokenService
-import riven.core.service.entity.EntityService
-import riven.core.service.workflow.EntityContextService
-import riven.core.service.workflow.ExpressionEvaluatorService
-import riven.core.service.workflow.ExpressionParserService
-import riven.core.service.workflow.InputResolverService
+import riven.core.service.workflow.state.WorkflowNodeInputResolverService
 import java.util.*
 
 /**
@@ -45,16 +39,7 @@ import java.util.*
 class WorkflowCoordinationServiceTest {
 
     @Configuration
-    class TestConfig {
-        @Bean
-        fun webClientBuilder(): WebClient.Builder {
-            val mockWebClient: WebClient = mock()
-            val builder: WebClient.Builder = mock()
-            whenever(builder.build()).thenReturn(mockWebClient)
-            return builder
-        }
-    }
-
+    class TestConfig
 
     @MockitoBean
     private lateinit var workflowGraphCoordinationService: WorkflowGraphCoordinationService
@@ -66,25 +51,16 @@ class WorkflowCoordinationServiceTest {
     private lateinit var workflowExecutionNodeRepository: WorkflowExecutionNodeRepository
 
     @MockitoBean
-    private lateinit var entityService: EntityService
-
-    @MockitoBean
     private lateinit var workflowNodeRepository: WorkflowNodeRepository
 
     @MockitoBean
     private lateinit var workflowEdgeRepository: WorkflowEdgeRepository
 
     @MockitoBean
-    private lateinit var expressionEvaluatorService: ExpressionEvaluatorService
+    private lateinit var nodeServiceProvider: NodeServiceProvider
 
     @MockitoBean
-    private lateinit var expressionParserService: ExpressionParserService
-
-    @MockitoBean
-    private lateinit var entityContextService: EntityContextService
-
-    @MockitoBean
-    private lateinit var inputResolverService: InputResolverService
+    private lateinit var workflowNodeInputResolverService: WorkflowNodeInputResolverService
 
     @Autowired
     private lateinit var activities: WorkflowCoordinationService
@@ -97,7 +73,7 @@ class WorkflowCoordinationServiceTest {
     @BeforeEach
     fun setup() {
         // Mock InputResolverService to return inputs as-is (no templates)
-        whenever(inputResolverService.resolveAll(any(), any())).thenAnswer { it.arguments[0] }
+        whenever(workflowNodeInputResolverService.resolveAll(any(), any())).thenAnswer { it.arguments[0] }
     }
 
     /**
