@@ -2,6 +2,7 @@
 
 import { memo } from "react";
 import { Handle, Position, type Node } from "@xyflow/react";
+import { motion } from "framer-motion";
 import {
   User,
   Contact,
@@ -56,7 +57,6 @@ import {
   Award,
   Heart,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 // Extended icon mapping for faded nodes
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -117,6 +117,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 export interface FadedNodeData extends Record<string, unknown> {
   title: string;
   icon: string;
+  animationDelay?: number;
 }
 
 export type FadedNodeType = Node<FadedNodeData, "fadedNode">;
@@ -127,6 +128,7 @@ interface FadedNodeProps {
 
 export const FadedNode = memo(function FadedNode({ data }: FadedNodeProps) {
   const IconComponent = iconMap[data.icon] || Circle;
+  const delay = data.animationDelay ?? 0;
 
   return (
     <>
@@ -135,14 +137,24 @@ export const FadedNode = memo(function FadedNode({ data }: FadedNodeProps) {
         position={Position.Left}
         className="!w-1.5 !h-1.5 !bg-muted-foreground/20 !border-0"
       />
-      <div className="bg-background/40 border border-border/30 rounded-lg px-3 py-2 min-w-[100px] opacity-50 hover:opacity-70 transition-opacity">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.6 }}
+        animate={{ opacity: 0.5, scale: 1 }}
+        transition={{
+          duration: 0.3,
+          delay: delay,
+          ease: [0.25, 0.46, 0.45, 0.94],
+        }}
+        whileHover={{ opacity: 0.7 }}
+        className="bg-background/40 border border-border/30 rounded-lg px-3 py-2 min-w-[100px]"
+      >
         <div className="flex items-center gap-2">
           <div className="p-1 rounded bg-muted/30">
             <IconComponent className="w-3 h-3 text-muted-foreground/60" />
           </div>
           <span className="text-xs font-medium text-muted-foreground/70">{data.title}</span>
         </div>
-      </div>
+      </motion.div>
       <Handle
         type="source"
         position={Position.Right}

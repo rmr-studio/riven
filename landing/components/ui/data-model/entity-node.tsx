@@ -2,6 +2,7 @@
 
 import { memo } from "react";
 import { Handle, Position, type Node } from "@xyflow/react";
+import { motion } from "framer-motion";
 import {
   User,
   Contact,
@@ -93,6 +94,7 @@ export interface EntityNodeData extends Record<string, unknown> {
   badge: string;
   attributes: Attribute[];
   moreCount?: number;
+  animationDelay?: number;
 }
 
 export type EntityNodeType = Node<EntityNodeData, "entityNode">;
@@ -104,6 +106,7 @@ interface EntityNodeProps {
 export const EntityNode = memo(function EntityNode({ data }: EntityNodeProps) {
   const IconComponent = iconMap[data.icon] || User;
   const iconColorClass = iconColors[data.icon] || "bg-muted text-muted-foreground";
+  const delay = data.animationDelay ?? 0;
 
   return (
     <>
@@ -112,7 +115,16 @@ export const EntityNode = memo(function EntityNode({ data }: EntityNodeProps) {
         position={Position.Left}
         className="!w-2 !h-2 !bg-muted-foreground/30 !border-0"
       />
-      <div className="bg-background border border-border rounded-lg shadow-sm min-w-[180px] max-w-[200px]">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{
+          duration: 0.4,
+          delay: delay,
+          ease: [0.25, 0.46, 0.45, 0.94],
+        }}
+        className="bg-background border border-border rounded-lg shadow-sm min-w-[180px] max-w-[200px]"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/50">
           <div className="flex items-center gap-2">
@@ -144,7 +156,7 @@ export const EntityNode = memo(function EntityNode({ data }: EntityNodeProps) {
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
       <Handle
         type="source"
         position={Position.Right}

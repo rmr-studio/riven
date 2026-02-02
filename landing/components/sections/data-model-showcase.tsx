@@ -8,6 +8,7 @@ import {
   useEdgesState,
   ConnectionLineType,
   type NodeTypes,
+  type EdgeTypes,
   type Edge,
   type Node,
 } from "@xyflow/react";
@@ -18,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { EntityNode } from "@/components/ui/data-model/entity-node";
 import { AddObjectNode } from "@/components/ui/data-model/add-object-node";
 import { FadedNode } from "@/components/ui/data-model/faded-node";
+import { AnimatedEdge } from "@/components/ui/data-model/animated-edge";
 import { DataModelTable } from "@/components/ui/data-model/data-model-table";
 
 // Tab configuration - expanded for more business types
@@ -94,10 +96,10 @@ const createEntityNode = (
   data: { title, icon, badge, attributes, moreCount },
 });
 
-// Node configurations for each tab
+// Node configurations for each tab - varied layouts and node counts
 const nodeConfigurations: Record<TabId, Node[]> = {
+  // SaaS: 5 main nodes in a branching tree structure
   saas: [
-    // Main nodes (center)
     createEntityNode(
       "company",
       "Company",
@@ -109,8 +111,8 @@ const nodeConfigurations: Record<TabId, Node[]> = {
         { name: "Plan tier", icon: "layers" },
       ],
       8,
-      100,
-      220
+      50,
+      240
     ),
     createEntityNode(
       "subscription",
@@ -123,22 +125,8 @@ const nodeConfigurations: Record<TabId, Node[]> = {
         { name: "Renewal date", icon: "calendar" },
       ],
       5,
-      370,
-      140
-    ),
-    createEntityNode(
-      "feature-usage",
-      "Feature Usage",
-      "bar-chart",
-      "Custom",
-      [
-        { name: "Feature name", icon: "text" },
-        { name: "Usage count", icon: "hash" },
-        { name: "Last used", icon: "clock" },
-      ],
-      3,
-      370,
-      340
+      300,
+      120
     ),
     createEntityNode(
       "user",
@@ -151,25 +139,52 @@ const nodeConfigurations: Record<TabId, Node[]> = {
         { name: "Last active", icon: "clock" },
       ],
       6,
-      640,
-      240
+      550,
+      120
+    ),
+    createEntityNode(
+      "feature-usage",
+      "Feature Usage",
+      "bar-chart",
+      "Custom",
+      [
+        { name: "Feature name", icon: "text" },
+        { name: "Usage count", icon: "hash" },
+        { name: "Last used", icon: "clock" },
+      ],
+      3,
+      300,
+      360
+    ),
+    createEntityNode(
+      "team",
+      "Team",
+      "users",
+      "Standard",
+      [
+        { name: "Name", icon: "text" },
+        { name: "Members", icon: "hash" },
+        { name: "Plan seats", icon: "layers" },
+      ],
+      4,
+      550,
+      360
     ),
     // Faded ecosystem nodes
-    createFadedNode("activity-log", "Activity Log", "scroll", -80, 80),
-    createFadedNode("notifications", "Notifications", "bell", -80, 360),
-    createFadedNode("api-keys", "API Keys", "code", -60, 480),
-    createFadedNode("integrations", "Integrations", "zap", 180, 20),
-    createFadedNode("webhooks", "Webhooks", "link", 400, 20),
-    createFadedNode("invoices", "Invoices", "receipt", 620, 60),
-    createFadedNode("payments", "Payments", "dollar", 800, 120),
-    createFadedNode("support-tickets", "Support Tickets", "message", 820, 280),
-    createFadedNode("feedback", "Feedback", "heart", 820, 400),
-    createFadedNode("onboarding", "Onboarding", "rocket", 640, 440),
-    createFadedNode("team", "Teams", "users", 400, 480),
-    createFadedNode("permissions", "Permissions", "shield", 180, 480),
+    createFadedNode("activity-log", "Activity Log", "scroll", -100, 100),
+    createFadedNode("notifications", "Notifications", "bell", -100, 380),
+    createFadedNode("api-keys", "API Keys", "code", 80, 480),
+    createFadedNode("integrations", "Integrations", "zap", 300, 20),
+    createFadedNode("webhooks", "Webhooks", "link", 520, 20),
+    createFadedNode("invoices", "Invoices", "receipt", 750, 80),
+    createFadedNode("payments", "Payments", "dollar", 780, 200),
+    createFadedNode("support-tickets", "Support", "message", 780, 320),
+    createFadedNode("feedback", "Feedback", "heart", 750, 440),
+    createFadedNode("onboarding", "Onboarding", "rocket", 520, 480),
+    createFadedNode("permissions", "Permissions", "shield", 300, 480),
   ],
+  // Agency: Horizontal flow with 5 nodes - linear pipeline
   agency: [
-    // Main nodes
     createEntityNode(
       "client",
       "Client",
@@ -181,8 +196,8 @@ const nodeConfigurations: Record<TabId, Node[]> = {
         { name: "Retainer", icon: "dollar" },
       ],
       7,
-      100,
-      200
+      30,
+      220
     ),
     createEntityNode(
       "project",
@@ -195,8 +210,22 @@ const nodeConfigurations: Record<TabId, Node[]> = {
         { name: "Deadline", icon: "calendar" },
       ],
       9,
-      370,
-      140
+      230,
+      220
+    ),
+    createEntityNode(
+      "task",
+      "Task",
+      "task",
+      "Custom",
+      [
+        { name: "Title", icon: "text" },
+        { name: "Assignee", icon: "user" },
+        { name: "Due date", icon: "calendar" },
+      ],
+      6,
+      430,
+      220
     ),
     createEntityNode(
       "deliverable",
@@ -206,42 +235,27 @@ const nodeConfigurations: Record<TabId, Node[]> = {
       [
         { name: "Type", icon: "tag" },
         { name: "Status", icon: "circle" },
-        { name: "Due date", icon: "calendar" },
+        { name: "Version", icon: "hash" },
       ],
       4,
-      370,
-      340
+      630,
+      220
     ),
-    createEntityNode(
-      "team-member",
-      "Team Member",
-      "user",
-      "Standard",
-      [
-        { name: "Name", icon: "text" },
-        { name: "Role", icon: "shield" },
-        { name: "Capacity", icon: "bar-chart" },
-      ],
-      5,
-      640,
-      240
-    ),
-    // Faded nodes
-    createFadedNode("time-entries", "Time Entries", "clock", -80, 80),
-    createFadedNode("contracts", "Contracts", "file-text", -80, 340),
-    createFadedNode("proposals", "Proposals", "clipboard", -60, 460),
-    createFadedNode("briefs", "Briefs", "scroll", 180, 20),
-    createFadedNode("feedback", "Client Feedback", "message", 400, 20),
-    createFadedNode("assets", "Assets", "folder", 620, 60),
-    createFadedNode("invoices", "Invoices", "receipt", 800, 140),
-    createFadedNode("expenses", "Expenses", "dollar", 820, 300),
-    createFadedNode("reviews", "Reviews", "star", 800, 420),
-    createFadedNode("milestones", "Milestones", "flag", 620, 440),
-    createFadedNode("tasks", "Tasks", "task", 400, 480),
-    createFadedNode("notes", "Notes", "text", 180, 480),
+    // Faded nodes - arranged for horizontal flow
+    createFadedNode("proposals", "Proposals", "clipboard", -60, 100),
+    createFadedNode("contracts", "Contracts", "file-text", -60, 340),
+    createFadedNode("time-entries", "Time", "clock", 130, 80),
+    createFadedNode("briefs", "Briefs", "scroll", 130, 360),
+    createFadedNode("feedback", "Feedback", "message", 330, 80),
+    createFadedNode("milestones", "Milestones", "flag", 330, 360),
+    createFadedNode("assets", "Assets", "folder", 530, 80),
+    createFadedNode("reviews", "Reviews", "star", 530, 360),
+    createFadedNode("invoices", "Invoices", "receipt", 730, 100),
+    createFadedNode("notes", "Notes", "text", 730, 340),
+    createFadedNode("team-member", "Team", "users", 830, 220),
   ],
+  // E-commerce: Central hub pattern with Customer in center
   ecommerce: [
-    // Main nodes
     createEntityNode(
       "customer",
       "Customer",
@@ -253,8 +267,8 @@ const nodeConfigurations: Record<TabId, Node[]> = {
         { name: "Lifetime value", icon: "dollar" },
       ],
       8,
-      100,
-      200
+      320,
+      220
     ),
     createEntityNode(
       "order",
@@ -267,8 +281,8 @@ const nodeConfigurations: Record<TabId, Node[]> = {
         { name: "Status", icon: "circle" },
       ],
       6,
-      370,
-      140
+      80,
+      120
     ),
     createEntityNode(
       "product",
@@ -281,8 +295,8 @@ const nodeConfigurations: Record<TabId, Node[]> = {
         { name: "Price", icon: "dollar" },
       ],
       12,
-      370,
-      340
+      560,
+      120
     ),
     createEntityNode(
       "shipment",
@@ -295,25 +309,37 @@ const nodeConfigurations: Record<TabId, Node[]> = {
         { name: "ETA", icon: "calendar" },
       ],
       4,
-      640,
-      240
+      80,
+      340
     ),
-    // Faded nodes
-    createFadedNode("reviews", "Reviews", "star", -80, 80),
-    createFadedNode("wishlists", "Wishlists", "heart", -80, 340),
-    createFadedNode("carts", "Carts", "cart", -60, 460),
-    createFadedNode("categories", "Categories", "folder", 180, 20),
-    createFadedNode("promotions", "Promotions", "tag", 400, 20),
-    createFadedNode("inventory", "Inventory", "database", 620, 60),
-    createFadedNode("returns", "Returns", "package", 800, 140),
-    createFadedNode("refunds", "Refunds", "dollar", 820, 300),
-    createFadedNode("suppliers", "Suppliers", "building", 800, 420),
-    createFadedNode("warehouses", "Warehouses", "building", 620, 440),
-    createFadedNode("variants", "Variants", "layers", 400, 480),
-    createFadedNode("addresses", "Addresses", "globe", 180, 480),
+    createEntityNode(
+      "subscription",
+      "Subscription",
+      "credit-card",
+      "Custom",
+      [
+        { name: "Plan", icon: "tag" },
+        { name: "Next billing", icon: "calendar" },
+        { name: "Status", icon: "circle" },
+      ],
+      5,
+      560,
+      340
+    ),
+    // Faded nodes - radial around center
+    createFadedNode("reviews", "Reviews", "star", 320, 40),
+    createFadedNode("wishlists", "Wishlists", "heart", 140, 40),
+    createFadedNode("carts", "Carts", "cart", 500, 40),
+    createFadedNode("categories", "Categories", "folder", -60, 180),
+    createFadedNode("promotions", "Promotions", "tag", -60, 280),
+    createFadedNode("returns", "Returns", "package", -60, 400),
+    createFadedNode("inventory", "Inventory", "database", 700, 180),
+    createFadedNode("suppliers", "Suppliers", "building", 700, 280),
+    createFadedNode("warehouses", "Warehouses", "building", 700, 400),
+    createFadedNode("addresses", "Addresses", "globe", 320, 440),
   ],
+  // Recruiting: Vertical pipeline with 3 main + add object
   recruiting: [
-    // Main nodes
     createEntityNode(
       "candidate",
       "Candidate",
@@ -322,25 +348,11 @@ const nodeConfigurations: Record<TabId, Node[]> = {
       [
         { name: "Name", icon: "text" },
         { name: "Email", icon: "at-sign" },
-        { name: "Status", icon: "circle" },
+        { name: "Source", icon: "link" },
       ],
       10,
-      100,
-      200
-    ),
-    createEntityNode(
-      "job",
-      "Job Opening",
-      "briefcase",
-      "Standard",
-      [
-        { name: "Title", icon: "text" },
-        { name: "Department", icon: "building" },
-        { name: "Location", icon: "globe" },
-      ],
-      8,
-      370,
-      140
+      300,
+      80
     ),
     createEntityNode(
       "application",
@@ -348,13 +360,13 @@ const nodeConfigurations: Record<TabId, Node[]> = {
       "file-text",
       "Standard",
       [
+        { name: "Job", icon: "briefcase" },
         { name: "Stage", icon: "flag" },
-        { name: "Applied date", icon: "calendar" },
         { name: "Rating", icon: "star" },
       ],
       5,
-      370,
-      340
+      300,
+      260
     ),
     createEntityNode(
       "interview",
@@ -367,25 +379,29 @@ const nodeConfigurations: Record<TabId, Node[]> = {
         { name: "Interviewer", icon: "user" },
       ],
       4,
-      640,
-      240
+      300,
+      440
     ),
-    // Faded nodes
-    createFadedNode("resumes", "Resumes", "file-text", -80, 80),
-    createFadedNode("skills", "Skills", "sparkles", -80, 340),
-    createFadedNode("sources", "Sources", "link", -60, 460),
-    createFadedNode("pipelines", "Pipelines", "git", 180, 20),
-    createFadedNode("scorecards", "Scorecards", "clipboard", 400, 20),
-    createFadedNode("offers", "Offers", "dollar", 620, 60),
-    createFadedNode("departments", "Departments", "building", 800, 140),
-    createFadedNode("hiring-managers", "Hiring Mgrs", "users", 820, 300),
-    createFadedNode("feedback", "Feedback", "message", 800, 420),
-    createFadedNode("assessments", "Assessments", "task", 620, 440),
-    createFadedNode("referrals", "Referrals", "users", 400, 480),
-    createFadedNode("notes", "Notes", "text", 180, 480),
+    {
+      id: "add-stage",
+      type: "addObjectNode",
+      position: { x: 550, y: 260 },
+      data: {},
+    },
+    // Faded nodes - flanking the pipeline
+    createFadedNode("resumes", "Resumes", "file-text", 80, 40),
+    createFadedNode("skills", "Skills", "sparkles", 520, 40),
+    createFadedNode("sources", "Sources", "link", 80, 140),
+    createFadedNode("job", "Job Opening", "briefcase", 80, 260),
+    createFadedNode("scorecards", "Scorecards", "clipboard", 80, 380),
+    createFadedNode("offers", "Offers", "dollar", 520, 380),
+    createFadedNode("departments", "Depts", "building", 520, 140),
+    createFadedNode("hiring-managers", "Hiring Mgrs", "users", 80, 480),
+    createFadedNode("feedback", "Feedback", "message", 520, 480),
+    createFadedNode("notes", "Notes", "text", 720, 260),
   ],
+  // Real Estate: Star pattern with Property in center
   realestate: [
-    // Main nodes
     createEntityNode(
       "property",
       "Property",
@@ -394,11 +410,11 @@ const nodeConfigurations: Record<TabId, Node[]> = {
       [
         { name: "Address", icon: "globe" },
         { name: "Price", icon: "dollar" },
-        { name: "Status", icon: "circle" },
+        { name: "Bedrooms", icon: "hash" },
       ],
       15,
-      100,
-      200
+      320,
+      220
     ),
     createEntityNode(
       "listing",
@@ -408,16 +424,30 @@ const nodeConfigurations: Record<TabId, Node[]> = {
       [
         { name: "MLS #", icon: "hash" },
         { name: "Listed date", icon: "calendar" },
-        { name: "Days on market", icon: "clock" },
+        { name: "Status", icon: "circle" },
       ],
       7,
-      370,
-      140
+      80,
+      100
+    ),
+    createEntityNode(
+      "agent",
+      "Agent",
+      "user",
+      "Standard",
+      [
+        { name: "Name", icon: "text" },
+        { name: "License", icon: "shield" },
+        { name: "Commission", icon: "percent" },
+      ],
+      5,
+      560,
+      100
     ),
     createEntityNode(
       "buyer",
       "Buyer",
-      "user",
+      "contact",
       "Standard",
       [
         { name: "Name", icon: "text" },
@@ -425,8 +455,8 @@ const nodeConfigurations: Record<TabId, Node[]> = {
         { name: "Pre-approved", icon: "circle" },
       ],
       6,
-      370,
-      340
+      80,
+      360
     ),
     createEntityNode(
       "showing",
@@ -436,28 +466,25 @@ const nodeConfigurations: Record<TabId, Node[]> = {
       [
         { name: "Date", icon: "calendar" },
         { name: "Time", icon: "clock" },
-        { name: "Agent", icon: "user" },
+        { name: "Feedback", icon: "message" },
       ],
       3,
-      640,
-      240
+      560,
+      360
     ),
-    // Faded nodes
-    createFadedNode("photos", "Photos", "folder", -80, 80),
-    createFadedNode("documents", "Documents", "file-text", -80, 340),
-    createFadedNode("comps", "Comparables", "bar-chart", -60, 460),
-    createFadedNode("neighborhoods", "Neighborhoods", "globe", 180, 20),
-    createFadedNode("open-houses", "Open Houses", "calendar", 400, 20),
-    createFadedNode("offers", "Offers", "dollar", 620, 60),
-    createFadedNode("contracts", "Contracts", "file-text", 800, 140),
-    createFadedNode("inspections", "Inspections", "clipboard", 820, 300),
-    createFadedNode("closings", "Closings", "flag", 800, 420),
-    createFadedNode("commissions", "Commissions", "percent", 620, 440),
-    createFadedNode("agents", "Agents", "users", 400, 480),
-    createFadedNode("leads", "Leads", "target", 180, 480),
+    // Faded nodes - around the star
+    createFadedNode("photos", "Photos", "folder", 320, 40),
+    createFadedNode("documents", "Documents", "file-text", -60, 180),
+    createFadedNode("comps", "Comparables", "bar-chart", -60, 280),
+    createFadedNode("offers", "Offers", "dollar", -60, 420),
+    createFadedNode("neighborhoods", "Neighborhoods", "globe", 180, 440),
+    createFadedNode("open-houses", "Open Houses", "calendar", 460, 440),
+    createFadedNode("contracts", "Contracts", "file-text", 700, 180),
+    createFadedNode("inspections", "Inspections", "clipboard", 700, 280),
+    createFadedNode("closings", "Closings", "flag", 700, 420),
   ],
+  // Consulting: Hierarchical tree - Client at top, branching down
   consulting: [
-    // Main nodes
     createEntityNode(
       "client",
       "Client",
@@ -469,8 +496,8 @@ const nodeConfigurations: Record<TabId, Node[]> = {
         { name: "Contract value", icon: "dollar" },
       ],
       9,
-      100,
-      200
+      300,
+      60
     ),
     createEntityNode(
       "engagement",
@@ -480,56 +507,55 @@ const nodeConfigurations: Record<TabId, Node[]> = {
       [
         { name: "Name", icon: "text" },
         { name: "Type", icon: "tag" },
-        { name: "Start date", icon: "calendar" },
+        { name: "Duration", icon: "clock" },
       ],
       7,
-      370,
-      140
+      300,
+      220
     ),
     createEntityNode(
-      "workstream",
-      "Workstream",
+      "workstream-a",
+      "Strategy",
       "layers",
       "Custom",
       [
-        { name: "Name", icon: "text" },
+        { name: "Focus area", icon: "target" },
         { name: "Lead", icon: "user" },
         { name: "Status", icon: "circle" },
       ],
       5,
-      370,
-      340
+      100,
+      380
     ),
     createEntityNode(
-      "consultant",
-      "Consultant",
-      "user",
-      "Standard",
+      "workstream-b",
+      "Operations",
+      "layers",
+      "Custom",
       [
-        { name: "Name", icon: "text" },
-        { name: "Level", icon: "shield" },
-        { name: "Utilization", icon: "percent" },
+        { name: "Focus area", icon: "target" },
+        { name: "Lead", icon: "user" },
+        { name: "Status", icon: "circle" },
       ],
-      6,
-      640,
-      240
+      5,
+      500,
+      380
     ),
     // Faded nodes
-    createFadedNode("proposals", "Proposals", "file-text", -80, 80),
-    createFadedNode("sows", "SOWs", "clipboard", -80, 340),
-    createFadedNode("references", "References", "star", -60, 460),
-    createFadedNode("deliverables", "Deliverables", "package", 180, 20),
-    createFadedNode("meetings", "Meetings", "calendar", 400, 20),
-    createFadedNode("travel", "Travel", "globe", 620, 60),
-    createFadedNode("expenses", "Expenses", "receipt", 800, 140),
-    createFadedNode("time-sheets", "Time Sheets", "clock", 820, 300),
-    createFadedNode("findings", "Findings", "idea", 800, 420),
-    createFadedNode("recommendations", "Recommendations", "sparkles", 620, 440),
-    createFadedNode("skills", "Skills", "zap", 400, 480),
-    createFadedNode("certifications", "Certifications", "award", 180, 480),
+    createFadedNode("proposals", "Proposals", "file-text", 80, 20),
+    createFadedNode("sows", "SOWs", "clipboard", 520, 20),
+    createFadedNode("meetings", "Meetings", "calendar", 80, 140),
+    createFadedNode("travel", "Travel", "globe", 520, 140),
+    createFadedNode("deliverables", "Deliverables", "package", 80, 260),
+    createFadedNode("findings", "Findings", "idea", 520, 260),
+    createFadedNode("consultant", "Consultants", "users", -40, 320),
+    createFadedNode("time-sheets", "Timesheets", "clock", -40, 440),
+    createFadedNode("expenses", "Expenses", "receipt", 640, 320),
+    createFadedNode("recommendations", "Recs", "sparkles", 640, 440),
+    createFadedNode("skills", "Skills", "zap", 300, 500),
   ],
+  // Investors: Triangle with Fund/Portfolio/Founder + Add for deal sourcing
   investors: [
-    // Main nodes
     createEntityNode(
       "fund",
       "Fund",
@@ -538,11 +564,11 @@ const nodeConfigurations: Record<TabId, Node[]> = {
       [
         { name: "Fund name", icon: "text" },
         { name: "AUM", icon: "dollar" },
-        { name: "Stage focus", icon: "target" },
+        { name: "Vintage", icon: "calendar" },
       ],
       7,
-      100,
-      200
+      300,
+      60
     ),
     createEntityNode(
       "portfolio",
@@ -555,22 +581,8 @@ const nodeConfigurations: Record<TabId, Node[]> = {
         { name: "Ownership %", icon: "percent" },
       ],
       9,
-      370,
-      140
-    ),
-    createEntityNode(
-      "round",
-      "Round",
-      "layers",
-      "Custom",
-      [
-        { name: "Series", icon: "tag" },
-        { name: "Valuation", icon: "dollar" },
-        { name: "Close date", icon: "calendar" },
-      ],
-      5,
-      370,
-      340
+      100,
+      280
     ),
     createEntityNode(
       "founder",
@@ -580,28 +592,33 @@ const nodeConfigurations: Record<TabId, Node[]> = {
       [
         { name: "Name", icon: "text" },
         { name: "LinkedIn", icon: "link" },
-        { name: "Previous exits", icon: "trending-up" },
+        { name: "Track record", icon: "trending-up" },
       ],
       4,
-      640,
-      240
+      500,
+      280
     ),
+    {
+      id: "add-deal",
+      type: "addObjectNode",
+      position: { x: 300, y: 420 },
+      data: {},
+    },
     // Faded nodes
-    createFadedNode("lps", "LPs", "users", -80, 80),
-    createFadedNode("commitments", "Commitments", "dollar", -80, 340),
-    createFadedNode("distributions", "Distributions", "percent", -60, 460),
-    createFadedNode("deal-flow", "Deal Flow", "git", 180, 20),
-    createFadedNode("term-sheets", "Term Sheets", "file-text", 400, 20),
-    createFadedNode("board-seats", "Board Seats", "users", 620, 60),
-    createFadedNode("kpis", "KPIs", "bar-chart", 800, 140),
-    createFadedNode("reports", "Reports", "clipboard", 820, 300),
-    createFadedNode("meetings", "Meetings", "calendar", 800, 420),
-    createFadedNode("exits", "Exits", "rocket", 620, 440),
-    createFadedNode("co-investors", "Co-investors", "users", 400, 480),
-    createFadedNode("pipeline", "Pipeline", "target", 180, 480),
+    createFadedNode("lps", "LPs", "users", 80, 20),
+    createFadedNode("commitments", "Commitments", "dollar", 520, 20),
+    createFadedNode("deal-flow", "Deal Flow", "git", 80, 140),
+    createFadedNode("term-sheets", "Term Sheets", "file-text", 520, 140),
+    createFadedNode("round", "Rounds", "layers", -40, 220),
+    createFadedNode("board-seats", "Board Seats", "users", -40, 340),
+    createFadedNode("kpis", "KPIs", "bar-chart", 640, 220),
+    createFadedNode("reports", "Reports", "clipboard", 640, 340),
+    createFadedNode("meetings", "Meetings", "calendar", 140, 460),
+    createFadedNode("exits", "Exits", "rocket", 460, 460),
+    createFadedNode("pipeline", "Pipeline", "target", 300, 540),
   ],
+  // Healthcare: 6 nodes in complex interconnected layout
   healthcare: [
-    // Main nodes
     createEntityNode(
       "patient",
       "Patient",
@@ -610,39 +627,25 @@ const nodeConfigurations: Record<TabId, Node[]> = {
       [
         { name: "Name", icon: "text" },
         { name: "DOB", icon: "calendar" },
-        { name: "Insurance", icon: "shield" },
+        { name: "MRN", icon: "hash" },
       ],
       12,
-      100,
-      200
+      50,
+      180
     ),
     createEntityNode(
-      "appointment",
-      "Appointment",
+      "encounter",
+      "Encounter",
       "calendar",
       "Standard",
       [
         { name: "Date", icon: "calendar" },
-        { name: "Provider", icon: "user" },
         { name: "Type", icon: "tag" },
+        { name: "Chief complaint", icon: "text" },
       ],
       5,
-      370,
-      140
-    ),
-    createEntityNode(
-      "treatment",
-      "Treatment",
-      "activity",
-      "Custom",
-      [
-        { name: "Diagnosis", icon: "text" },
-        { name: "Procedure", icon: "tag" },
-        { name: "Status", icon: "circle" },
-      ],
-      8,
-      370,
-      340
+      280,
+      80
     ),
     createEntityNode(
       "provider",
@@ -652,266 +655,305 @@ const nodeConfigurations: Record<TabId, Node[]> = {
       [
         { name: "Name", icon: "text" },
         { name: "Specialty", icon: "tag" },
-        { name: "License", icon: "shield" },
+        { name: "NPI", icon: "hash" },
       ],
       6,
-      640,
-      240
+      520,
+      80
+    ),
+    createEntityNode(
+      "diagnosis",
+      "Diagnosis",
+      "activity",
+      "Custom",
+      [
+        { name: "ICD-10", icon: "hash" },
+        { name: "Description", icon: "text" },
+        { name: "Severity", icon: "circle" },
+      ],
+      8,
+      280,
+      280
+    ),
+    createEntityNode(
+      "treatment",
+      "Treatment",
+      "activity",
+      "Custom",
+      [
+        { name: "Procedure", icon: "tag" },
+        { name: "Status", icon: "circle" },
+        { name: "Notes", icon: "text" },
+      ],
+      7,
+      520,
+      280
+    ),
+    createEntityNode(
+      "prescription",
+      "Prescription",
+      "clipboard",
+      "Custom",
+      [
+        { name: "Medication", icon: "text" },
+        { name: "Dosage", icon: "hash" },
+        { name: "Refills", icon: "hash" },
+      ],
+      5,
+      400,
+      440
     ),
     // Faded nodes
-    createFadedNode("records", "Medical Records", "file-text", -80, 80),
-    createFadedNode("prescriptions", "Prescriptions", "clipboard", -80, 340),
-    createFadedNode("allergies", "Allergies", "bell", -60, 460),
-    createFadedNode("lab-results", "Lab Results", "activity", 180, 20),
-    createFadedNode("referrals", "Referrals", "link", 400, 20),
-    createFadedNode("insurance", "Insurance", "shield", 620, 60),
-    createFadedNode("claims", "Claims", "dollar", 800, 140),
-    createFadedNode("billing", "Billing", "receipt", 820, 300),
-    createFadedNode("notes", "Clinical Notes", "text", 800, 420),
-    createFadedNode("facilities", "Facilities", "building", 620, 440),
-    createFadedNode("schedules", "Schedules", "calendar", 400, 480),
-    createFadedNode("forms", "Forms", "clipboard", 180, 480),
+    createFadedNode("records", "Records", "file-text", -80, 80),
+    createFadedNode("allergies", "Allergies", "bell", -80, 280),
+    createFadedNode("vitals", "Vitals", "activity", -80, 380),
+    createFadedNode("lab-results", "Lab Results", "activity", 140, 440),
+    createFadedNode("insurance", "Insurance", "shield", 660, 440),
+    createFadedNode("claims", "Claims", "dollar", 700, 180),
+    createFadedNode("billing", "Billing", "receipt", 700, 320),
+    createFadedNode("referrals", "Referrals", "link", 400, 0),
+    createFadedNode("facilities", "Facilities", "building", 660, 0),
   ],
 };
 
-// Edge configurations for each tab
+// Edge configurations for each tab - updated to match new node structures
 const edgeConfigurations: Record<TabId, Edge[]> = {
+  // SaaS: Branching tree from Company
   saas: [
-    // Main edges
+    // Main edges - branching from company
     { id: "e1", source: "company", target: "subscription", type: "smoothstep", style: mainEdgeStyle },
     { id: "e2", source: "company", target: "feature-usage", type: "smoothstep", style: mainEdgeStyle },
     { id: "e3", source: "subscription", target: "user", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e4", source: "feature-usage", target: "user", type: "smoothstep", style: mainEdgeStyle },
-    // Secondary to main edges
+    { id: "e4", source: "subscription", target: "team", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e5", source: "feature-usage", target: "team", type: "smoothstep", style: mainEdgeStyle },
+    // Secondary edges
     { id: "f1", source: "activity-log", target: "company", type: "smoothstep", style: fadedEdgeStyle },
     { id: "f2", source: "notifications", target: "company", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f3", source: "api-keys", target: "company", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f4", source: "integrations", target: "subscription", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f5", source: "webhooks", target: "subscription", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f6", source: "invoices", target: "user", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f7", source: "payments", target: "user", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f8", source: "user", target: "support-tickets", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f9", source: "user", target: "feedback", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f10", source: "feature-usage", target: "onboarding", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f11", source: "feature-usage", target: "team", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f12", source: "company", target: "permissions", type: "smoothstep", style: fadedEdgeStyle },
-    // Inter-secondary edges
+    { id: "f3", source: "integrations", target: "subscription", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f4", source: "webhooks", target: "subscription", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f5", source: "user", target: "invoices", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f6", source: "user", target: "payments", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f7", source: "user", target: "support-tickets", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f8", source: "team", target: "feedback", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f9", source: "team", target: "onboarding", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f10", source: "feature-usage", target: "permissions", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f11", source: "company", target: "api-keys", type: "smoothstep", style: fadedEdgeStyle },
+    // Inter-secondary
     { id: "s1", source: "activity-log", target: "notifications", type: "smoothstep", style: interSecondaryEdgeStyle },
     { id: "s2", source: "integrations", target: "webhooks", type: "smoothstep", style: interSecondaryEdgeStyle },
     { id: "s3", source: "invoices", target: "payments", type: "smoothstep", style: interSecondaryEdgeStyle },
     { id: "s4", source: "support-tickets", target: "feedback", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s5", source: "team", target: "permissions", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s6", source: "onboarding", target: "team", type: "smoothstep", style: interSecondaryEdgeStyle },
-    // Polymorphic: Activity Log connects to multiple models
-    { id: "p1", source: "activity-log", target: "subscription", type: "smoothstep", style: polymorphicEdgeStyle },
-    { id: "p2", source: "activity-log", target: "user", type: "smoothstep", style: polymorphicEdgeStyle },
-    { id: "p3", source: "notifications", target: "user", type: "smoothstep", style: polymorphicEdgeStyle },
+    { id: "s5", source: "onboarding", target: "permissions", type: "smoothstep", style: interSecondaryEdgeStyle },
+    // Polymorphic
+    { id: "p1", source: "activity-log", target: "user", type: "smoothstep", style: polymorphicEdgeStyle },
+    { id: "p2", source: "notifications", target: "user", type: "smoothstep", style: polymorphicEdgeStyle },
+    { id: "p3", source: "activity-log", target: "team", type: "smoothstep", style: polymorphicEdgeStyle },
   ],
+  // Agency: Horizontal pipeline flow
   agency: [
+    // Main edges - linear flow
     { id: "e1", source: "client", target: "project", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e2", source: "client", target: "deliverable", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e3", source: "project", target: "team-member", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e4", source: "deliverable", target: "team-member", type: "smoothstep", style: mainEdgeStyle },
-    // Secondary to main
-    { id: "f1", source: "time-entries", target: "client", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "e2", source: "project", target: "task", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e3", source: "task", target: "deliverable", type: "smoothstep", style: mainEdgeStyle },
+    // Secondary edges
+    { id: "f1", source: "proposals", target: "client", type: "smoothstep", style: fadedEdgeStyle },
     { id: "f2", source: "contracts", target: "client", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f3", source: "proposals", target: "client", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f3", source: "time-entries", target: "project", type: "smoothstep", style: fadedEdgeStyle },
     { id: "f4", source: "briefs", target: "project", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f5", source: "feedback", target: "project", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f6", source: "assets", target: "team-member", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f7", source: "team-member", target: "invoices", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f8", source: "team-member", target: "expenses", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f9", source: "team-member", target: "reviews", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f10", source: "deliverable", target: "milestones", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f11", source: "deliverable", target: "tasks", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f12", source: "client", target: "notes", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f5", source: "feedback", target: "task", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f6", source: "milestones", target: "task", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f7", source: "assets", target: "deliverable", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f8", source: "reviews", target: "deliverable", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f9", source: "deliverable", target: "invoices", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f10", source: "deliverable", target: "notes", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f11", source: "deliverable", target: "team-member", type: "smoothstep", style: fadedEdgeStyle },
     // Inter-secondary
-    { id: "s1", source: "time-entries", target: "contracts", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s2", source: "contracts", target: "proposals", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s3", source: "invoices", target: "expenses", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s4", source: "milestones", target: "tasks", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s5", source: "briefs", target: "feedback", type: "smoothstep", style: interSecondaryEdgeStyle },
-    // Polymorphic: Notes connects to multiple
-    { id: "p1", source: "notes", target: "project", type: "smoothstep", style: polymorphicEdgeStyle },
-    { id: "p2", source: "notes", target: "deliverable", type: "smoothstep", style: polymorphicEdgeStyle },
-    { id: "p3", source: "notes", target: "team-member", type: "smoothstep", style: polymorphicEdgeStyle },
-    { id: "p4", source: "time-entries", target: "project", type: "smoothstep", style: polymorphicEdgeStyle },
+    { id: "s1", source: "proposals", target: "contracts", type: "smoothstep", style: interSecondaryEdgeStyle },
+    { id: "s2", source: "time-entries", target: "briefs", type: "smoothstep", style: interSecondaryEdgeStyle },
+    { id: "s3", source: "feedback", target: "milestones", type: "smoothstep", style: interSecondaryEdgeStyle },
+    { id: "s4", source: "assets", target: "reviews", type: "smoothstep", style: interSecondaryEdgeStyle },
+    { id: "s5", source: "invoices", target: "notes", type: "smoothstep", style: interSecondaryEdgeStyle },
+    // Polymorphic - notes to multiple
+    { id: "p1", source: "notes", target: "client", type: "smoothstep", style: polymorphicEdgeStyle },
+    { id: "p2", source: "notes", target: "project", type: "smoothstep", style: polymorphicEdgeStyle },
+    { id: "p3", source: "time-entries", target: "task", type: "smoothstep", style: polymorphicEdgeStyle },
   ],
+  // E-commerce: Hub pattern with Customer in center
   ecommerce: [
-    { id: "e1", source: "customer", target: "order", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e2", source: "customer", target: "product", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e3", source: "order", target: "shipment", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e4", source: "product", target: "shipment", type: "smoothstep", style: mainEdgeStyle },
-    // Secondary to main
+    // Main edges - radiating from customer
+    { id: "e1", source: "order", target: "customer", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e2", source: "product", target: "customer", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e3", source: "shipment", target: "customer", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e4", source: "subscription", target: "customer", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e5", source: "order", target: "shipment", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e6", source: "product", target: "subscription", type: "smoothstep", style: mainEdgeStyle },
+    // Secondary edges
     { id: "f1", source: "reviews", target: "customer", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f2", source: "wishlists", target: "customer", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f3", source: "carts", target: "customer", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f2", source: "wishlists", target: "order", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f3", source: "carts", target: "order", type: "smoothstep", style: fadedEdgeStyle },
     { id: "f4", source: "categories", target: "order", type: "smoothstep", style: fadedEdgeStyle },
     { id: "f5", source: "promotions", target: "order", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f6", source: "inventory", target: "shipment", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f7", source: "shipment", target: "returns", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f8", source: "shipment", target: "refunds", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f9", source: "shipment", target: "suppliers", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f10", source: "product", target: "warehouses", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f11", source: "product", target: "variants", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f12", source: "customer", target: "addresses", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f6", source: "inventory", target: "product", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f7", source: "suppliers", target: "product", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f8", source: "warehouses", target: "product", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f9", source: "returns", target: "shipment", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f10", source: "customer", target: "addresses", type: "smoothstep", style: fadedEdgeStyle },
     // Inter-secondary
     { id: "s1", source: "wishlists", target: "carts", type: "smoothstep", style: interSecondaryEdgeStyle },
     { id: "s2", source: "categories", target: "promotions", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s3", source: "returns", target: "refunds", type: "smoothstep", style: interSecondaryEdgeStyle },
+    { id: "s3", source: "inventory", target: "suppliers", type: "smoothstep", style: interSecondaryEdgeStyle },
     { id: "s4", source: "suppliers", target: "warehouses", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s5", source: "warehouses", target: "inventory", type: "smoothstep", style: interSecondaryEdgeStyle },
-    // Polymorphic: Reviews connects to products too
+    // Polymorphic - reviews to multiple
     { id: "p1", source: "reviews", target: "product", type: "smoothstep", style: polymorphicEdgeStyle },
     { id: "p2", source: "reviews", target: "order", type: "smoothstep", style: polymorphicEdgeStyle },
-    { id: "p3", source: "addresses", target: "order", type: "smoothstep", style: polymorphicEdgeStyle },
+    { id: "p3", source: "addresses", target: "shipment", type: "smoothstep", style: polymorphicEdgeStyle },
   ],
+  // Recruiting: Vertical pipeline
   recruiting: [
-    { id: "e1", source: "candidate", target: "job", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e2", source: "candidate", target: "application", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e3", source: "job", target: "interview", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e4", source: "application", target: "interview", type: "smoothstep", style: mainEdgeStyle },
-    // Secondary to main
+    // Main edges - vertical flow
+    { id: "e1", source: "candidate", target: "application", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e2", source: "application", target: "interview", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e3", source: "application", target: "add-stage", type: "smoothstep", style: mainEdgeStyle },
+    // Secondary edges
     { id: "f1", source: "resumes", target: "candidate", type: "smoothstep", style: fadedEdgeStyle },
     { id: "f2", source: "skills", target: "candidate", type: "smoothstep", style: fadedEdgeStyle },
     { id: "f3", source: "sources", target: "candidate", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f4", source: "pipelines", target: "job", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f5", source: "scorecards", target: "job", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f6", source: "offers", target: "interview", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f7", source: "interview", target: "departments", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f8", source: "interview", target: "hiring-managers", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f4", source: "job", target: "application", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f5", source: "scorecards", target: "application", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f6", source: "departments", target: "application", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f7", source: "hiring-managers", target: "interview", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f8", source: "interview", target: "offers", type: "smoothstep", style: fadedEdgeStyle },
     { id: "f9", source: "interview", target: "feedback", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f10", source: "application", target: "assessments", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f11", source: "application", target: "referrals", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f12", source: "candidate", target: "notes", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f10", source: "add-stage", target: "notes", type: "smoothstep", style: fadedEdgeStyle },
     // Inter-secondary
     { id: "s1", source: "resumes", target: "skills", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s2", source: "pipelines", target: "scorecards", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s3", source: "departments", target: "hiring-managers", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s4", source: "assessments", target: "feedback", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s5", source: "referrals", target: "sources", type: "smoothstep", style: interSecondaryEdgeStyle },
-    // Polymorphic: Notes and Feedback connect to multiple
-    { id: "p1", source: "notes", target: "application", type: "smoothstep", style: polymorphicEdgeStyle },
-    { id: "p2", source: "notes", target: "interview", type: "smoothstep", style: polymorphicEdgeStyle },
-    { id: "p3", source: "feedback", target: "candidate", type: "smoothstep", style: polymorphicEdgeStyle },
+    { id: "s2", source: "sources", target: "job", type: "smoothstep", style: interSecondaryEdgeStyle },
+    { id: "s3", source: "scorecards", target: "departments", type: "smoothstep", style: interSecondaryEdgeStyle },
+    { id: "s4", source: "offers", target: "feedback", type: "smoothstep", style: interSecondaryEdgeStyle },
+    // Polymorphic
+    { id: "p1", source: "notes", target: "candidate", type: "smoothstep", style: polymorphicEdgeStyle },
+    { id: "p2", source: "notes", target: "application", type: "smoothstep", style: polymorphicEdgeStyle },
+    { id: "p3", source: "notes", target: "interview", type: "smoothstep", style: polymorphicEdgeStyle },
   ],
+  // Real Estate: Star pattern with Property in center
   realestate: [
-    { id: "e1", source: "property", target: "listing", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e2", source: "property", target: "buyer", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e3", source: "listing", target: "showing", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e4", source: "buyer", target: "showing", type: "smoothstep", style: mainEdgeStyle },
-    // Secondary to main
+    // Main edges - star from property
+    { id: "e1", source: "listing", target: "property", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e2", source: "agent", target: "property", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e3", source: "buyer", target: "property", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e4", source: "showing", target: "property", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e5", source: "listing", target: "agent", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e6", source: "buyer", target: "showing", type: "smoothstep", style: mainEdgeStyle },
+    // Secondary edges
     { id: "f1", source: "photos", target: "property", type: "smoothstep", style: fadedEdgeStyle },
     { id: "f2", source: "documents", target: "property", type: "smoothstep", style: fadedEdgeStyle },
     { id: "f3", source: "comps", target: "property", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f4", source: "neighborhoods", target: "listing", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f5", source: "open-houses", target: "listing", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f6", source: "offers", target: "showing", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f4", source: "offers", target: "buyer", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f5", source: "neighborhoods", target: "listing", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f6", source: "open-houses", target: "listing", type: "smoothstep", style: fadedEdgeStyle },
     { id: "f7", source: "showing", target: "contracts", type: "smoothstep", style: fadedEdgeStyle },
     { id: "f8", source: "showing", target: "inspections", type: "smoothstep", style: fadedEdgeStyle },
     { id: "f9", source: "showing", target: "closings", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f10", source: "buyer", target: "commissions", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f11", source: "buyer", target: "agents", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f12", source: "property", target: "leads", type: "smoothstep", style: fadedEdgeStyle },
     // Inter-secondary
-    { id: "s1", source: "photos", target: "documents", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s2", source: "contracts", target: "inspections", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s3", source: "inspections", target: "closings", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s4", source: "agents", target: "commissions", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s5", source: "neighborhoods", target: "comps", type: "smoothstep", style: interSecondaryEdgeStyle },
-    // Polymorphic: Documents connects to multiple
+    { id: "s1", source: "documents", target: "comps", type: "smoothstep", style: interSecondaryEdgeStyle },
+    { id: "s2", source: "neighborhoods", target: "open-houses", type: "smoothstep", style: interSecondaryEdgeStyle },
+    { id: "s3", source: "contracts", target: "inspections", type: "smoothstep", style: interSecondaryEdgeStyle },
+    { id: "s4", source: "inspections", target: "closings", type: "smoothstep", style: interSecondaryEdgeStyle },
+    // Polymorphic
     { id: "p1", source: "documents", target: "listing", type: "smoothstep", style: polymorphicEdgeStyle },
     { id: "p2", source: "documents", target: "buyer", type: "smoothstep", style: polymorphicEdgeStyle },
-    { id: "p3", source: "leads", target: "buyer", type: "smoothstep", style: polymorphicEdgeStyle },
+    { id: "p3", source: "photos", target: "listing", type: "smoothstep", style: polymorphicEdgeStyle },
   ],
+  // Consulting: Hierarchical tree
   consulting: [
+    // Main edges - tree structure
     { id: "e1", source: "client", target: "engagement", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e2", source: "client", target: "workstream", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e3", source: "engagement", target: "consultant", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e4", source: "workstream", target: "consultant", type: "smoothstep", style: mainEdgeStyle },
-    // Secondary to main
+    { id: "e2", source: "engagement", target: "workstream-a", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e3", source: "engagement", target: "workstream-b", type: "smoothstep", style: mainEdgeStyle },
+    // Secondary edges
     { id: "f1", source: "proposals", target: "client", type: "smoothstep", style: fadedEdgeStyle },
     { id: "f2", source: "sows", target: "client", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f3", source: "references", target: "client", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f4", source: "deliverables", target: "engagement", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f5", source: "meetings", target: "engagement", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f6", source: "travel", target: "consultant", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f7", source: "consultant", target: "expenses", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f8", source: "consultant", target: "time-sheets", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f9", source: "consultant", target: "findings", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f10", source: "workstream", target: "recommendations", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f11", source: "workstream", target: "skills", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f12", source: "client", target: "certifications", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f3", source: "meetings", target: "client", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f4", source: "travel", target: "engagement", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f5", source: "deliverables", target: "engagement", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f6", source: "findings", target: "engagement", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f7", source: "consultant", target: "workstream-a", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f8", source: "time-sheets", target: "workstream-a", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f9", source: "expenses", target: "workstream-b", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f10", source: "recommendations", target: "workstream-b", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f11", source: "workstream-a", target: "skills", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f12", source: "workstream-b", target: "skills", type: "smoothstep", style: fadedEdgeStyle },
     // Inter-secondary
     { id: "s1", source: "proposals", target: "sows", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s2", source: "expenses", target: "time-sheets", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s3", source: "findings", target: "recommendations", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s4", source: "deliverables", target: "meetings", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s5", source: "skills", target: "certifications", type: "smoothstep", style: interSecondaryEdgeStyle },
-    // Polymorphic: Time-sheets connects to multiple
-    { id: "p1", source: "time-sheets", target: "engagement", type: "smoothstep", style: polymorphicEdgeStyle },
-    { id: "p2", source: "time-sheets", target: "workstream", type: "smoothstep", style: polymorphicEdgeStyle },
-    { id: "p3", source: "meetings", target: "client", type: "smoothstep", style: polymorphicEdgeStyle },
+    { id: "s2", source: "deliverables", target: "findings", type: "smoothstep", style: interSecondaryEdgeStyle },
+    { id: "s3", source: "consultant", target: "time-sheets", type: "smoothstep", style: interSecondaryEdgeStyle },
+    { id: "s4", source: "expenses", target: "recommendations", type: "smoothstep", style: interSecondaryEdgeStyle },
+    // Polymorphic
+    { id: "p1", source: "meetings", target: "engagement", type: "smoothstep", style: polymorphicEdgeStyle },
+    { id: "p2", source: "time-sheets", target: "workstream-b", type: "smoothstep", style: polymorphicEdgeStyle },
+    { id: "p3", source: "consultant", target: "workstream-b", type: "smoothstep", style: polymorphicEdgeStyle },
   ],
+  // Investors: Triangle with add object
   investors: [
+    // Main edges - triangle
     { id: "e1", source: "fund", target: "portfolio", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e2", source: "fund", target: "round", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e2", source: "fund", target: "founder", type: "smoothstep", style: mainEdgeStyle },
     { id: "e3", source: "portfolio", target: "founder", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e4", source: "round", target: "founder", type: "smoothstep", style: mainEdgeStyle },
-    // Secondary to main
+    { id: "e4", source: "portfolio", target: "add-deal", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e5", source: "founder", target: "add-deal", type: "smoothstep", style: mainEdgeStyle },
+    // Secondary edges
     { id: "f1", source: "lps", target: "fund", type: "smoothstep", style: fadedEdgeStyle },
     { id: "f2", source: "commitments", target: "fund", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f3", source: "distributions", target: "fund", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f4", source: "deal-flow", target: "portfolio", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f5", source: "term-sheets", target: "portfolio", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f6", source: "board-seats", target: "founder", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f3", source: "deal-flow", target: "fund", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f4", source: "term-sheets", target: "fund", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f5", source: "round", target: "portfolio", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f6", source: "board-seats", target: "portfolio", type: "smoothstep", style: fadedEdgeStyle },
     { id: "f7", source: "founder", target: "kpis", type: "smoothstep", style: fadedEdgeStyle },
     { id: "f8", source: "founder", target: "reports", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f9", source: "founder", target: "meetings", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f10", source: "round", target: "exits", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f11", source: "round", target: "co-investors", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f12", source: "fund", target: "pipeline", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f9", source: "add-deal", target: "meetings", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f10", source: "add-deal", target: "exits", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f11", source: "add-deal", target: "pipeline", type: "smoothstep", style: fadedEdgeStyle },
     // Inter-secondary
     { id: "s1", source: "lps", target: "commitments", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s2", source: "commitments", target: "distributions", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s3", source: "deal-flow", target: "term-sheets", type: "smoothstep", style: interSecondaryEdgeStyle },
+    { id: "s2", source: "deal-flow", target: "term-sheets", type: "smoothstep", style: interSecondaryEdgeStyle },
+    { id: "s3", source: "round", target: "board-seats", type: "smoothstep", style: interSecondaryEdgeStyle },
     { id: "s4", source: "kpis", target: "reports", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s5", source: "pipeline", target: "deal-flow", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s6", source: "co-investors", target: "term-sheets", type: "smoothstep", style: interSecondaryEdgeStyle },
-    // Polymorphic: Reports and Meetings connect to multiple
+    { id: "s5", source: "meetings", target: "exits", type: "smoothstep", style: interSecondaryEdgeStyle },
+    // Polymorphic
     { id: "p1", source: "reports", target: "portfolio", type: "smoothstep", style: polymorphicEdgeStyle },
     { id: "p2", source: "meetings", target: "portfolio", type: "smoothstep", style: polymorphicEdgeStyle },
-    { id: "p3", source: "meetings", target: "round", type: "smoothstep", style: polymorphicEdgeStyle },
+    { id: "p3", source: "pipeline", target: "fund", type: "smoothstep", style: polymorphicEdgeStyle },
   ],
+  // Healthcare: Complex interconnected 6-node layout
   healthcare: [
-    { id: "e1", source: "patient", target: "appointment", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e2", source: "patient", target: "treatment", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e3", source: "appointment", target: "provider", type: "smoothstep", style: mainEdgeStyle },
-    { id: "e4", source: "treatment", target: "provider", type: "smoothstep", style: mainEdgeStyle },
-    // Secondary to main
+    // Main edges - complex web
+    { id: "e1", source: "patient", target: "encounter", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e2", source: "patient", target: "diagnosis", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e3", source: "encounter", target: "provider", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e4", source: "encounter", target: "diagnosis", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e5", source: "diagnosis", target: "treatment", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e6", source: "treatment", target: "provider", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e7", source: "treatment", target: "prescription", type: "smoothstep", style: mainEdgeStyle },
+    { id: "e8", source: "diagnosis", target: "prescription", type: "smoothstep", style: mainEdgeStyle },
+    // Secondary edges
     { id: "f1", source: "records", target: "patient", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f2", source: "prescriptions", target: "patient", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f3", source: "allergies", target: "patient", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f4", source: "lab-results", target: "appointment", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f5", source: "referrals", target: "appointment", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f6", source: "insurance", target: "provider", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f7", source: "provider", target: "claims", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f8", source: "provider", target: "billing", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f9", source: "provider", target: "notes", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f10", source: "treatment", target: "facilities", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f11", source: "treatment", target: "schedules", type: "smoothstep", style: fadedEdgeStyle },
-    { id: "f12", source: "patient", target: "forms", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f2", source: "allergies", target: "patient", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f3", source: "vitals", target: "patient", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f4", source: "referrals", target: "encounter", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f5", source: "facilities", target: "provider", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f6", source: "provider", target: "claims", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f7", source: "provider", target: "billing", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f8", source: "prescription", target: "lab-results", type: "smoothstep", style: fadedEdgeStyle },
+    { id: "f9", source: "prescription", target: "insurance", type: "smoothstep", style: fadedEdgeStyle },
     // Inter-secondary
-    { id: "s1", source: "records", target: "prescriptions", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s2", source: "prescriptions", target: "allergies", type: "smoothstep", style: interSecondaryEdgeStyle },
+    { id: "s1", source: "records", target: "allergies", type: "smoothstep", style: interSecondaryEdgeStyle },
+    { id: "s2", source: "allergies", target: "vitals", type: "smoothstep", style: interSecondaryEdgeStyle },
     { id: "s3", source: "claims", target: "billing", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s4", source: "facilities", target: "schedules", type: "smoothstep", style: interSecondaryEdgeStyle },
-    { id: "s5", source: "insurance", target: "claims", type: "smoothstep", style: interSecondaryEdgeStyle },
-    // Polymorphic: Notes connects to multiple
-    { id: "p1", source: "notes", target: "patient", type: "smoothstep", style: polymorphicEdgeStyle },
-    { id: "p2", source: "notes", target: "appointment", type: "smoothstep", style: polymorphicEdgeStyle },
-    { id: "p3", source: "notes", target: "treatment", type: "smoothstep", style: polymorphicEdgeStyle },
-    { id: "p4", source: "forms", target: "appointment", type: "smoothstep", style: polymorphicEdgeStyle },
+    { id: "s4", source: "lab-results", target: "insurance", type: "smoothstep", style: interSecondaryEdgeStyle },
+    // Polymorphic
+    { id: "p1", source: "records", target: "encounter", type: "smoothstep", style: polymorphicEdgeStyle },
+    { id: "p2", source: "records", target: "diagnosis", type: "smoothstep", style: polymorphicEdgeStyle },
+    { id: "p3", source: "insurance", target: "patient", type: "smoothstep", style: polymorphicEdgeStyle },
   ],
 };
 
@@ -1012,18 +1054,83 @@ const nodeTypes: NodeTypes = {
   fadedNode: FadedNode,
 } as NodeTypes;
 
+const edgeTypes: EdgeTypes = {
+  animatedEdge: AnimatedEdge,
+} as EdgeTypes;
+
+// Helper to add staggered animation delays to nodes
+function addAnimationDelays(nodes: Node[]): Node[] {
+  // Separate main nodes (entityNode, addObjectNode) from faded nodes
+  const mainNodes = nodes.filter(n => n.type === "entityNode" || n.type === "addObjectNode");
+  const fadedNodes = nodes.filter(n => n.type === "fadedNode");
+
+  // Add delays: main nodes first (0-0.4s), then faded nodes (0.3-0.8s)
+  const animatedMainNodes = mainNodes.map((node, index) => ({
+    ...node,
+    data: {
+      ...node.data,
+      animationDelay: index * 0.08,
+    },
+  }));
+
+  const animatedFadedNodes = fadedNodes.map((node, index) => ({
+    ...node,
+    data: {
+      ...node.data,
+      animationDelay: 0.25 + index * 0.04,
+    },
+  }));
+
+  return [...animatedMainNodes, ...animatedFadedNodes];
+}
+
+// Helper to add animation delays to edges based on connected nodes
+function addEdgeAnimationDelays(edges: Edge[], animatedNodes: Node[]): Edge[] {
+  // Create a map of node id to animation delay
+  const nodeDelayMap = new Map<string, number>();
+  animatedNodes.forEach(node => {
+    const delay = (node.data as { animationDelay?: number }).animationDelay ?? 0;
+    nodeDelayMap.set(node.id, delay);
+  });
+
+  return edges.map(edge => {
+    const sourceDelay = nodeDelayMap.get(edge.source) ?? 0;
+    const targetDelay = nodeDelayMap.get(edge.target) ?? 0;
+    // Edge appears after both connected nodes have appeared (use the later delay)
+    // Add a small offset so the edge starts drawing as the later node finishes appearing
+    const edgeDelay = Math.max(sourceDelay, targetDelay) + 0.15;
+
+    return {
+      ...edge,
+      type: "animatedEdge",
+      data: {
+        ...edge.data,
+        animationDelay: edgeDelay,
+      },
+    };
+  });
+}
+
 export function DataModelShowcase() {
   const [activeTab, setActiveTab] = useState<TabId>("saas");
-  const [nodes, setNodes, onNodesChange] = useNodesState(nodeConfigurations["saas"]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(edgeConfigurations["saas"]);
+  const [animationKey, setAnimationKey] = useState(0);
+  const initialNodes = addAnimationDelays(nodeConfigurations["saas"]);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(
+    addEdgeAnimationDelays(edgeConfigurations["saas"], initialNodes)
+  );
 
   const handleTabChange = useCallback(
     (tabId: TabId) => {
+      if (tabId === activeTab) return;
       setActiveTab(tabId);
-      setNodes(nodeConfigurations[tabId]);
-      setEdges(edgeConfigurations[tabId]);
+      // Add animation delays and increment key to force re-mount
+      const animatedNodes = addAnimationDelays(nodeConfigurations[tabId]);
+      setNodes(animatedNodes);
+      setEdges(addEdgeAnimationDelays(edgeConfigurations[tabId], animatedNodes));
+      setAnimationKey(prev => prev + 1);
     },
-    [setNodes, setEdges]
+    [activeTab, setNodes, setEdges]
   );
 
   const currentTableData = useMemo(
@@ -1096,11 +1203,13 @@ export function DataModelShowcase() {
         >
           <div className="h-[500px] md:h-[550px]">
             <ReactFlow
+              key={animationKey}
               nodes={nodes}
               edges={edges}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               nodeTypes={nodeTypes}
+              edgeTypes={edgeTypes}
               connectionLineType={ConnectionLineType.SmoothStep}
               fitView
               fitViewOptions={{ padding: 0.2 }}

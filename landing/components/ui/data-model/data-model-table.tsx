@@ -1,6 +1,7 @@
 "use client";
 
 import { memo } from "react";
+import { motion } from "framer-motion";
 import {
   User,
   Hash,
@@ -16,6 +17,10 @@ import {
   Briefcase,
   Layers,
   Percent,
+  Clock,
+  Calendar,
+  Star,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +42,25 @@ const headerIconMap: Record<string, React.ComponentType<{ className?: string }>>
   Investment: DollarSign,
   Series: Layers,
   Ownership: Percent,
+  Client: Building,
+  Retainer: DollarSign,
+  Project: Briefcase,
+  Customer: User,
+  Orders: Hash,
+  LTV: DollarSign,
+  Candidate: User,
+  Position: Briefcase,
+  Stage: Target,
+  Rating: Star,
+  Property: Building,
+  Price: DollarSign,
+  Days: Clock,
+  Engagement: Briefcase,
+  Value: DollarSign,
+  Patient: User,
+  Provider: User,
+  "Next Appt": Calendar,
+  Diagnosis: Activity,
 };
 
 // Badge variant styles
@@ -62,15 +86,59 @@ function isBadgeValue(value: string | BadgeValue): value is BadgeValue {
   return typeof value === "object" && "text" in value && "variant" in value;
 }
 
+// Animation variants for table
+const tableVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.3,
+    },
+  },
+};
+
+const headerVariants = {
+  hidden: { opacity: 0, y: -10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.3,
+      ease: "easeOut" as const,
+    },
+  },
+};
+
+const rowVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      duration: 0.3,
+      ease: "easeOut" as const,
+    },
+  },
+};
+
 export const DataModelTable = memo(function DataModelTable({
   headers,
   rows,
 }: DataModelTableProps) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+      <motion.table
+        className="w-full text-sm"
+        initial="hidden"
+        animate="visible"
+        variants={tableVariants}
+      >
         <thead>
-          <tr className="border-b border-border/50">
+          <motion.tr
+            className="border-b border-border/50"
+            variants={headerVariants}
+          >
             <th className="w-10 p-3">
               <div className="w-4 h-4 rounded border border-border" />
             </th>
@@ -88,12 +156,13 @@ export const DataModelTable = memo(function DataModelTable({
                 </th>
               );
             })}
-          </tr>
+          </motion.tr>
         </thead>
         <tbody>
           {rows.map((row, rowIndex) => (
-            <tr
+            <motion.tr
               key={rowIndex}
+              variants={rowVariants}
               className="border-b border-border/30 last:border-b-0 hover:bg-muted/20 transition-colors"
             >
               <td className="w-10 p-3">
@@ -129,10 +198,10 @@ export const DataModelTable = memo(function DataModelTable({
                   </td>
                 );
               })}
-            </tr>
+            </motion.tr>
           ))}
         </tbody>
-      </table>
+      </motion.table>
     </div>
   );
 });
