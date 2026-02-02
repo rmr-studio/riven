@@ -8,6 +8,7 @@ import {
 } from "@xyflow/react";
 import { create, type StoreApi } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
+import type { WorkflowNodeConfigField } from "@/lib/types/models/WorkflowNodeConfigField";
 import type { WorkflowNodeData } from "../interface/workflow.interface";
 
 /**
@@ -20,6 +21,10 @@ export interface WorkflowCanvasState {
     edges: Edge[];
     /** ID of currently selected node, null if none selected */
     selectedNodeId: string | null;
+    /** Node configuration schemas keyed by backend node type identifier */
+    nodeConfigSchemas: Record<string, WorkflowNodeConfigField[]> | null;
+    /** Whether schemas are currently loading */
+    schemasLoading: boolean;
 
     /**
      * Handler for React Flow node changes (drag, select, remove, etc.)
@@ -70,6 +75,17 @@ export interface WorkflowCanvasState {
      * @param data - Partial data to merge into existing node data
      */
     updateNodeData: (nodeId: string, data: Partial<WorkflowNodeData>) => void;
+
+    /**
+     * Set node configuration schemas
+     * Called by the provider after fetching from backend
+     */
+    setNodeConfigSchemas: (schemas: Record<string, WorkflowNodeConfigField[]>) => void;
+
+    /**
+     * Set schemas loading state
+     */
+    setSchemasLoading: (loading: boolean) => void;
 }
 
 /**
@@ -85,6 +101,8 @@ export const createWorkflowCanvasStore = (): StoreApi<WorkflowCanvasState> => {
             nodes: [],
             edges: [],
             selectedNodeId: null,
+            nodeConfigSchemas: null,
+            schemasLoading: true,
 
             onNodesChange: (changes) => {
                 set({
@@ -148,6 +166,14 @@ export const createWorkflowCanvasStore = (): StoreApi<WorkflowCanvasState> => {
                             : node
                     ),
                 });
+            },
+
+            setNodeConfigSchemas: (schemas) => {
+                set({ nodeConfigSchemas: schemas, schemasLoading: false });
+            },
+
+            setSchemasLoading: (loading) => {
+                set({ schemasLoading: loading });
             },
         }))
     );

@@ -7,6 +7,7 @@ import { EnumWidget } from "./enum-widget";
 import { DurationWidget } from "./duration-widget";
 import { EntityTypeWidget } from "./entity-type-widget";
 import { EntityFieldsWidget } from "./entity-fields-widget";
+import { KeyValueWidget } from "./key-value-widget";
 
 /**
  * Registry mapping WorkflowNodeConfigFieldType to widget implementations
@@ -49,6 +50,11 @@ export const configWidgetRegistry: Partial<
     type: WorkflowNodeConfigFieldType.EntityQuery,
     component: EntityFieldsWidget,
     defaultValue: [],
+  },
+  [WorkflowNodeConfigFieldType.KeyValue]: {
+    type: WorkflowNodeConfigFieldType.KeyValue,
+    component: KeyValueWidget,
+    defaultValue: {},
   },
 };
 

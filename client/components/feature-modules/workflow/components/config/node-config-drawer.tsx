@@ -9,8 +9,9 @@ import {
   useSelectedNode,
   useSelectNode,
   useUpdateNodeData,
+  useNodeConfigSchemas,
+  useSchemasLoading,
 } from "../../context/workflow-canvas-provider";
-import { useNodeConfigSchemas } from "../../hooks/query/use-node-config-schemas";
 import { NodeConfigForm } from "./node-config-form";
 import { frontendToBackendKey } from "../../util/node-type-mapping.util";
 import { nodeTypeDefinitions } from "../../config/node-types.config";
@@ -34,7 +35,8 @@ export const NodeConfigDrawer: FC<NodeConfigDrawerProps> = ({ workspaceId }) => 
   const selectedNode = useSelectedNode();
   const selectNode = useSelectNode();
   const updateNodeData = useUpdateNodeData();
-  const { data: schemas, isLoading: schemasLoading } = useNodeConfigSchemas();
+  const schemas = useNodeConfigSchemas();
+  const schemasLoading = useSchemasLoading();
 
   const handleClose = useCallback(() => {
     selectNode(null);

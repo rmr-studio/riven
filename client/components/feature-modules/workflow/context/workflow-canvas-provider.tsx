@@ -1,11 +1,12 @@
 "use client";
 
-import { createContext, useContext, useRef, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
 import { useStore } from "zustand";
 import {
     createWorkflowCanvasStore,
     type WorkflowCanvasState,
 } from "../stores/workflow-canvas.store";
+import { useNodeConfigSchemas as useNodeConfigSchemasQuery } from "../hooks/query/use-node-config-schemas";
 
 /**
  * Type alias for the store API returned by the factory
@@ -58,6 +59,20 @@ export const WorkflowCanvasProvider = ({
     if (!storeRef.current) {
         storeRef.current = createWorkflowCanvasStore();
     }
+
+    // Fetch node config schemas and sync to store
+    const { data: schemas, isLoading: schemasLoading } = useNodeConfigSchemasQuery();
+
+    useEffect(() => {
+        if (!storeRef.current) return;
+
+        const store = storeRef.current.getState();
+        store.setSchemasLoading(schemasLoading);
+
+        if (schemas) {
+            store.setNodeConfigSchemas(schemas);
+        }
+    }, [schemas, schemasLoading]);
 
     return (
         <WorkflowCanvasContext.Provider value={storeRef.current}>
@@ -199,4 +214,22 @@ export const useSelectedNode = () => {
     const nodes = useWorkflowCanvas((state) => state.nodes);
     const selectedNodeId = useWorkflowCanvas((state) => state.selectedNodeId);
     return nodes.find((node) => node.id === selectedNodeId);
+};
+
+/**
+ * Get node configuration schemas from the store
+ *
+ * @returns Record of node type identifiers to their config field definitions, or null if not loaded
+ */
+export const useNodeConfigSchemas = () => {
+    return useWorkflowCanvas((state) => state.nodeConfigSchemas);
+};
+
+/**
+ * Get schemas loading state
+ *
+ * @returns Whether schemas are currently loading
+ */
+export const useSchemasLoading = () => {
+    return useWorkflowCanvas((state) => state.schemasLoading);
 };

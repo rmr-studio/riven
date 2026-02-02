@@ -76,13 +76,15 @@ export const NodeConfigForm: FC<NodeConfigFormProps> = ({
     return () => subscription.unsubscribe();
   }, [form, onValuesChange]);
 
-  // Reset form when node changes
+  // Reset form when node changes (not when initialValues change, to avoid infinite loop)
+  // initialValues is derived from store which gets updated by onValuesChange
   useEffect(() => {
     form.reset({
       ...buildDefaultValues(configSchema),
       ...initialValues,
     });
-  }, [nodeId, configSchema, initialValues, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodeId, configSchema, form]);
 
   // Find ENTITY_TYPE field key to track selected entity type
   // This enables the entity fields widget to know which entity's fields to show
