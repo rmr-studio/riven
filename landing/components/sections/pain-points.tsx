@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { BGPattern } from "../ui/background/grids";
 
 interface PainPoint {
   title: string;
@@ -45,7 +46,13 @@ const itemVariants = {
 
 export function PainPoints() {
   return (
-    <section className="px-4 py-12 md:px-8 md:py-16 lg:px-12 lg:py-24">
+    <section className="px-4 py-12 md:px-8 md:py-16 lg:px-12 lg:py-24 relative">
+      <BGPattern
+        variant="grid"
+        mask="fade-edges"
+        className="opacity-10"
+        size={8}
+      />
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial="hidden"
