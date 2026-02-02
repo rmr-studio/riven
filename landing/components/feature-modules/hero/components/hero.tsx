@@ -14,12 +14,21 @@ export function Hero() {
         }}
         className="h-[80dvh]"
         alt="City skyline"
+        fade
       />
       <BGPattern
         variant="grid"
         mask="fade-edges"
         className="opacity-15"
         size={8}
+      />
+      <HeroBackground
+        image={{
+          avif: "/images/city-skyline-foreground.avif",
+          webp: "/images/city-skyline-foreground.webp",
+        }}
+        className="h-[80dvh] opacity-40"
+        alt="City skyline"
       />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 py-12 md:px-8 md:py-16 lg:px-12 lg:py-24">

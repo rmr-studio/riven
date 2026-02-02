@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 interface HeroBackgroundProps {
   className?: string;
+  fade?: boolean;
   image: {
     avif: string;
     webp: string;
@@ -16,6 +17,7 @@ interface HeroBackgroundProps {
 export function HeroBackground({
   className,
   image,
+  fade,
   alt = "Background image",
 }: HeroBackgroundProps) {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -39,8 +41,13 @@ export function HeroBackground({
       </picture>
 
       {/* Gradient fade upward to background */}
-      <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-background" />
-      <div className="absolute inset-0 bg-linear-to-t from-transparent via-background/50 to-background" />
+
+      <>
+        <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-background" />
+        {fade && (
+          <div className=" opacity-100 absolute inset-0 bg-linear-to-t from-transparent via-transparent to-background" />
+        )}
+      </>
     </div>
   );
 }
