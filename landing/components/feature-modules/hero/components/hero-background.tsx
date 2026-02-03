@@ -34,7 +34,7 @@ export function HeroBackground({
           sizes="100vw"
           className={cn(
             "object-cover object-bottom invert dark:invert-0 transition-opacity duration-700 ease-out",
-            isLoaded ? "opacity-80" : "opacity-0",
+            isLoaded ? "opacity-40" : "opacity-0",
           )}
           onLoad={() => setIsLoaded(true)}
         />

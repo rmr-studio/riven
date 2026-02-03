@@ -1,4 +1,3 @@
-import { WaitlistForm } from "@/components/waitlist-form";
 import { HeroBackground } from "@/components/feature-modules/hero/components/hero-background";
 import { HeroCopy } from "./hero-copy";
 import { HeroProductPreview } from "./hero-product-preview";
@@ -6,7 +5,8 @@ import { BGPattern } from "@/components/ui/background/grids";
 
 export function Hero() {
   return (
-    <section className="relative h-screen flex items-center pt-20">
+    <section className="relative h-screen pt-48">
+      <HeroCopy />
       <HeroBackground
         image={{
           avif: "/images/city-skyline-hero-dark.avif",
@@ -27,16 +27,9 @@ export function Hero() {
           avif: "/images/city-skyline-foreground.avif",
           webp: "/images/city-skyline-foreground.webp",
         }}
-        className="h-[80dvh] opacity-40"
+        className="h-[80dvh] opacity-30"
         alt="City skyline"
       />
-
-      <div className="relative z-10 max-w-7xl mx-auto px-4 py-12 md:px-8 md:py-16 lg:px-12 lg:py-24">
-        <div className="flex flex-col gap-8 md:flex-row md:items-center md:gap-12 lg:gap-16">
-          <HeroCopy />
-          <HeroProductPreview />
-        </div>
-      </div>
     </section>
   );
 }

@@ -4,9 +4,11 @@ import { Features } from "@/components/sections/features";
 import { FinalCTA } from "@/components/sections/final-cta";
 import { Footer } from "@/components/footer";
 import { FeaturesCarousel } from "@/components/sections/features-carousel";
-import { DataModelShowcase } from "@/components/sections/data-model-showcase";
+import { DataModelShowcase } from "@/components/feature-modules/features/data-model";
 import { Navbar } from "@/components/navbar";
 import { BGPattern } from "@/components/ui/background/grids";
+import { DataModel } from "@/components/feature-modules/features/data-model/components/data-model";
+import { Integrations } from "@/components/feature-modules/features/integrations/components/integrations";
 
 export default function Home() {
   return (
@@ -14,10 +16,11 @@ export default function Home() {
       <Navbar />
 
       <Hero />
+      <DataModel />
+      <Integrations />
       <PainPoints />
       <Features />
       <FeaturesCarousel />
-      <DataModelShowcase />
       <FinalCTA />
       <Footer />
     </main>
