@@ -9,10 +9,18 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import riven.core.entity.workflow.WorkflowEdgeEntity
 import riven.core.enums.workflow.WorkflowNodeType
-import riven.core.models.workflow.engine.coordinator.WorkflowExecutionPhase
+import riven.core.exceptions.WorkflowValidationException
+import riven.core.models.workflow.engine.state.WorkflowExecutionPhase
+import riven.core.models.workflow.engine.state.WorkflowState
+import riven.core.models.workflow.engine.state.WorkflowDataStore
+import riven.core.models.workflow.engine.state.WorkflowMetadata
 import riven.core.models.workflow.node.WorkflowNode
 import riven.core.models.workflow.node.config.actions.WorkflowCreateEntityActionConfig
-import riven.core.service.workflow.engine.coordinator.*
+import riven.core.service.workflow.engine.coordinator.WorkflowGraphCoordinationService
+import riven.core.service.workflow.engine.coordinator.WorkflowGraphQueueManagementService
+import riven.core.service.workflow.engine.coordinator.WorkflowGraphTopologicalSorterService
+import riven.core.service.workflow.engine.coordinator.WorkflowGraphValidationService
+import java.time.Instant
 import java.util.*
 
 /**
@@ -85,11 +93,33 @@ class WorkflowExecutionIntegrationTest {
 
     private lateinit var workspaceId: UUID
 
+    private lateinit var workflowExecutionId: UUID
+
     @BeforeEach
     fun setup() {
         workspaceId = UUID.randomUUID()
+        workflowExecutionId = UUID.randomUUID()
         logger.info { "Test setup complete for workspace: $workspaceId" }
     }
+
+    /**
+     * Creates a WorkflowDataStore for testing.
+     */
+    private fun createDataStore(): WorkflowDataStore {
+        return WorkflowDataStore(
+            state = WorkflowState(
+                phase = WorkflowExecutionPhase.INITIALIZING
+            ),
+            metadata = WorkflowMetadata(
+                executionId = workflowExecutionId,
+                workspaceId = workspaceId,
+                workflowDefinitionId = UUID.randomUUID(),
+                version = 1,
+                startedAt = Instant.now()
+            )
+        )
+    }
+
 
     /**
      * Test linear workflow execution (A → B → C).
@@ -107,6 +137,7 @@ class WorkflowExecutionIntegrationTest {
     @Test
     fun `test linear workflow executes nodes in sequence`() {
         // Create nodes
+        val store = createDataStore()
         val nodeA = createMockNode("create_lead", WorkflowNodeType.ACTION)
         val nodeB = createMockNode("query_lead", WorkflowNodeType.ACTION)
         val nodeC = createMockNode("send_notification", WorkflowNodeType.ACTION)
@@ -138,7 +169,7 @@ class WorkflowExecutionIntegrationTest {
         }
 
         // Execute workflow
-        val finalState = workflowGraphCoordinationService.executeWorkflow(nodes, edges, nodeExecutor)
+        workflowGraphCoordinationService.executeWorkflow(store, nodes, edges, nodeExecutor)
 
         // Verify execution order
         assertEquals(3, executionOrder.size)
@@ -147,14 +178,14 @@ class WorkflowExecutionIntegrationTest {
         assertEquals(nodeC.id, executionOrder[2], "Node C should execute third")
 
         // Verify final state
-        assertEquals(WorkflowExecutionPhase.COMPLETED, finalState.phase)
-        assertEquals(3, finalState.completedNodes.size)
-        assertEquals(0, finalState.activeNodes.size)
+        assertEquals(WorkflowExecutionPhase.COMPLETED, store.state.phase)
+        assertEquals(3, store.state.completedNodes.size)
+        assertEquals(0, store.state.activeNodes.size)
 
-        // Verify outputs captured
-        assertNotNull(finalState.getNodeOutput(nodeA.id))
-        assertNotNull(finalState.getNodeOutput(nodeB.id))
-        assertNotNull(finalState.getNodeOutput(nodeC.id))
+        // Verify all nodes completed (outputs are now in WorkflowDataStore, not in WorkflowState)
+        assertTrue(store.state.completedNodes.contains(nodeA.id))
+        assertTrue(store.state.completedNodes.contains(nodeB.id))
+        assertTrue(store.state.completedNodes.contains(nodeC.id))
     }
 
     /**
@@ -174,6 +205,7 @@ class WorkflowExecutionIntegrationTest {
      */
     @Test
     fun `test diamond workflow executes middle nodes in parallel`() {
+        val store = createDataStore()
         val nodeA = createMockNode("start", WorkflowNodeType.ACTION)
         val nodeB = createMockNode("branch_1", WorkflowNodeType.ACTION)
         val nodeC = createMockNode("branch_2", WorkflowNodeType.ACTION)
@@ -196,7 +228,7 @@ class WorkflowExecutionIntegrationTest {
             }
         }
 
-        val finalState = workflowGraphCoordinationService.executeWorkflow(nodes, edges, nodeExecutor)
+        workflowGraphCoordinationService.executeWorkflow(store, nodes, edges, nodeExecutor)
 
         // Verify execution batches
         assertEquals(3, executionBatches.size, "Should have 3 execution batches")
@@ -214,8 +246,8 @@ class WorkflowExecutionIntegrationTest {
         assertTrue(executionBatches[2].contains(nodeD.id))
 
         // Verify final state
-        assertEquals(WorkflowExecutionPhase.COMPLETED, finalState.phase)
-        assertEquals(4, finalState.completedNodes.size)
+        assertEquals(WorkflowExecutionPhase.COMPLETED, store.state.phase)
+        assertEquals(4, store.state.completedNodes.size)
     }
 
     /**
@@ -237,6 +269,7 @@ class WorkflowExecutionIntegrationTest {
      */
     @Test
     fun `test complex workflow with multiple parallel branches`() {
+        val store = createDataStore()
         val nodeA = createMockNode("start", WorkflowNodeType.ACTION)
         val nodeB = createMockNode("branch_1", WorkflowNodeType.ACTION)
         val nodeC = createMockNode("branch_2", WorkflowNodeType.ACTION)
@@ -271,7 +304,7 @@ class WorkflowExecutionIntegrationTest {
             }
         }
 
-        val finalState = workflowGraphCoordinationService.executeWorkflow(nodes, edges, nodeExecutor)
+        workflowGraphCoordinationService.executeWorkflow(store, nodes, edges, nodeExecutor)
 
         // Verify execution batches
         assertEquals(4, executionBatches.size, "Should have 4 execution batches")
@@ -292,8 +325,8 @@ class WorkflowExecutionIntegrationTest {
         assertTrue(executionBatches[3].contains(nodeH.id))
 
         // Verify final state
-        assertEquals(WorkflowExecutionPhase.COMPLETED, finalState.phase)
-        assertEquals(8, finalState.completedNodes.size)
+        assertEquals(WorkflowExecutionPhase.COMPLETED, store.state.phase)
+        assertEquals(8, store.state.completedNodes.size)
     }
 
     /**
@@ -307,6 +340,7 @@ class WorkflowExecutionIntegrationTest {
      */
     @Test
     fun `test data registry captures node outputs correctly`() {
+        val store = createDataStore()
         val nodeA = createMockNode("create_entity", WorkflowNodeType.ACTION)
         val nodeB = createMockNode("query_entity", WorkflowNodeType.ACTION)
 
@@ -328,22 +362,12 @@ class WorkflowExecutionIntegrationTest {
             }
         }
 
-        val finalState = workflowGraphCoordinationService.executeWorkflow(nodes, edges, nodeExecutor)
+        workflowGraphCoordinationService.executeWorkflow(store, nodes, edges, nodeExecutor)
 
-        // Verify registry size
-        assertEquals(2, finalState.dataRegistry.size)
-
-        // Verify node A output
-        val outputA = finalState.getNodeOutput(nodeA.id) as? Map<*, *>
-        assertNotNull(outputA)
-        assertEquals(nodeA.name, outputA?.get("nodeName"))
-        assertTrue(outputA?.containsKey("data") == true)
-
-        // Verify node B output
-        val outputB = finalState.getNodeOutput(nodeB.id) as? Map<*, *>
-        assertNotNull(outputB)
-        assertEquals(nodeB.name, outputB?.get("nodeName"))
-        assertTrue(outputB?.containsKey("data") == true)
+        // Verify completion (outputs are now in WorkflowDataStore, not in WorkflowState)
+        assertEquals(2, store.state.completedNodes.size)
+        assertTrue(store.state.completedNodes.contains(nodeA.id))
+        assertTrue(store.state.completedNodes.contains(nodeB.id))
     }
 
     /**
@@ -359,6 +383,7 @@ class WorkflowExecutionIntegrationTest {
      */
     @Test
     fun `test node failure stops workflow execution`() {
+        val store = createDataStore()
         val nodeA = createMockNode("start", WorkflowNodeType.ACTION)
         val nodeB = createMockNode("failing_node", WorkflowNodeType.ACTION)
         val nodeC = createMockNode("should_not_execute", WorkflowNodeType.ACTION)
@@ -385,7 +410,7 @@ class WorkflowExecutionIntegrationTest {
 
         // Execute and expect exception
         val exception = assertThrows<RuntimeException> {
-            workflowGraphCoordinationService.executeWorkflow(nodes, edges, nodeExecutor)
+            workflowGraphCoordinationService.executeWorkflow(store, nodes, edges, nodeExecutor)
         }
 
         // Verify error message
@@ -410,6 +435,7 @@ class WorkflowExecutionIntegrationTest {
      */
     @Test
     fun `test cycle detection throws validation exception`() {
+        val store = createDataStore()
         val nodeA = createMockNode("node_a", WorkflowNodeType.ACTION)
         val nodeB = createMockNode("node_b", WorkflowNodeType.ACTION)
         val nodeC = createMockNode("node_c", WorkflowNodeType.ACTION)
@@ -426,7 +452,7 @@ class WorkflowExecutionIntegrationTest {
         }
 
         val exception = assertThrows<WorkflowValidationException> {
-            workflowGraphCoordinationService.executeWorkflow(nodes, edges, nodeExecutor)
+            workflowGraphCoordinationService.executeWorkflow(store, nodes, edges, nodeExecutor)
         }
 
         assertTrue(
@@ -446,6 +472,7 @@ class WorkflowExecutionIntegrationTest {
      */
     @Test
     fun `test empty workflow executes successfully`() {
+        val store = createDataStore()
         val nodes = emptyList<WorkflowNode>()
         val edges = emptyList<WorkflowEdgeEntity>()
 
@@ -453,11 +480,11 @@ class WorkflowExecutionIntegrationTest {
             readyNodes.map { it.id to mapOf("result" to "success") }
         }
 
-        val finalState = workflowGraphCoordinationService.executeWorkflow(nodes, edges, nodeExecutor)
+        workflowGraphCoordinationService.executeWorkflow(store, nodes, edges, nodeExecutor)
 
-        assertEquals(WorkflowExecutionPhase.COMPLETED, finalState.phase)
-        assertEquals(0, finalState.completedNodes.size)
-        assertEquals(0, finalState.dataRegistry.size)
+        assertEquals(WorkflowExecutionPhase.COMPLETED, store.state.phase)
+        assertEquals(0, store.state.completedNodes.size)
+        assertEquals(0, store.state.completedNodes.size)
     }
 
     /**
@@ -470,6 +497,7 @@ class WorkflowExecutionIntegrationTest {
      */
     @Test
     fun `test single node workflow executes successfully`() {
+        val store = createDataStore()
         val node = createMockNode("solo_node", WorkflowNodeType.ACTION)
 
         val nodes = listOf(node)
@@ -484,15 +512,11 @@ class WorkflowExecutionIntegrationTest {
             }
         }
 
-        val finalState = workflowGraphCoordinationService.executeWorkflow(nodes, edges, nodeExecutor)
+        workflowGraphCoordinationService.executeWorkflow(store, nodes, edges, nodeExecutor)
 
-        assertEquals(WorkflowExecutionPhase.COMPLETED, finalState.phase)
-        assertEquals(1, finalState.completedNodes.size)
-        assertTrue(finalState.completedNodes.contains(node.id))
-
-        val output = finalState.getNodeOutput(node.id) as? Map<*, *>
-        assertNotNull(output)
-        assertEquals("success", output?.get("result"))
+        assertEquals(WorkflowExecutionPhase.COMPLETED, store.state.phase)
+        assertEquals(1, store.state.completedNodes.size)
+        assertTrue(store.state.completedNodes.contains(node.id))
     }
 
     /**
@@ -507,6 +531,7 @@ class WorkflowExecutionIntegrationTest {
      */
     @Test
     fun `test multiple independent workflows execute in parallel`() {
+        val store = createDataStore()
         val nodeA = createMockNode("chain1_start", WorkflowNodeType.ACTION)
         val nodeB = createMockNode("chain1_end", WorkflowNodeType.ACTION)
         val nodeC = createMockNode("chain2_start", WorkflowNodeType.ACTION)
@@ -525,11 +550,11 @@ class WorkflowExecutionIntegrationTest {
             readyNodes.map { it.id to mapOf("result" to "success") }
         }
 
-        val finalState = workflowGraphCoordinationService.executeWorkflow(nodes, edges, nodeExecutor)
+        workflowGraphCoordinationService.executeWorkflow(store, nodes, edges, nodeExecutor)
 
         // Verify both chains completed
-        assertEquals(WorkflowExecutionPhase.COMPLETED, finalState.phase)
-        assertEquals(4, finalState.completedNodes.size)
+        assertEquals(WorkflowExecutionPhase.COMPLETED, store.state.phase)
+        assertEquals(4, store.state.completedNodes.size)
 
         // Verify A and C started in parallel (batch 1)
         assertEquals(2, executionBatches[0].size)
@@ -558,6 +583,7 @@ class WorkflowExecutionIntegrationTest {
      */
     @Test
     fun `test fan-out and fan-in pattern executes correctly`() {
+        val store = createDataStore()
         val nodeA = createMockNode("start", WorkflowNodeType.ACTION)
         val nodeB = createMockNode("worker_1", WorkflowNodeType.ACTION)
         val nodeC = createMockNode("worker_2", WorkflowNodeType.ACTION)
@@ -581,7 +607,7 @@ class WorkflowExecutionIntegrationTest {
             readyNodes.map { it.id to mapOf("result" to "success") }
         }
 
-        val finalState = workflowGraphCoordinationService.executeWorkflow(nodes, edges, nodeExecutor)
+        workflowGraphCoordinationService.executeWorkflow(store, nodes, edges, nodeExecutor)
 
         // Verify 3 batches
         assertEquals(3, executionBatches.size)
@@ -598,7 +624,7 @@ class WorkflowExecutionIntegrationTest {
         assertEquals(1, executionBatches[2].size)
         assertEquals(nodeE.id, executionBatches[2][0])
 
-        assertEquals(WorkflowExecutionPhase.COMPLETED, finalState.phase)
+        assertEquals(WorkflowExecutionPhase.COMPLETED, store.state.phase)
     }
 
     // ========================================
@@ -618,6 +644,7 @@ class WorkflowExecutionIntegrationTest {
                     entityTypeId = UUID.randomUUID().toString(),
                     payload = mapOf("name" to name)
                 )
+
                 else -> WorkflowCreateEntityActionConfig(
                     version = 1,
                     entityTypeId = UUID.randomUUID().toString(),

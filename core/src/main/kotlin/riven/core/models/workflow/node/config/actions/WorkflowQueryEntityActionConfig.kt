@@ -8,10 +8,13 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.workflow.WorkflowActionType
+import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
-import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.state.NodeOutput
+import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
+import riven.core.models.workflow.node.config.WorkflowNodeConfigField
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
 import riven.core.models.workflow.node.config.validation.ConfigValidationError
@@ -168,7 +171,7 @@ data class WorkflowQueryEntityActionConfig(
      * Returns typed fields as a map for template resolution.
      * Used by WorkflowCoordinationService to resolve templates before execution.
      */
-    val config: Map<String, Any?>
+    override val config: Map<String, Any?>
         get() = mapOf(
             "entityTypeId" to query.entityTypeId.toString(),
             "filter" to query.filter,
@@ -176,6 +179,42 @@ data class WorkflowQueryEntityActionConfig(
             "projection" to projection,
             "timeoutSeconds" to timeoutSeconds
         )
+
+    override val configSchema: List<WorkflowNodeConfigField>
+        get() = Companion.configSchema
+
+    companion object {
+        val configSchema: List<WorkflowNodeConfigField> = listOf(
+            WorkflowNodeConfigField(
+                key = "query",
+                label = "Entity Query",
+                type = WorkflowNodeConfigFieldType.ENTITY_QUERY,
+                required = true,
+                description = "Query definition with entity type and optional filters"
+            ),
+            WorkflowNodeConfigField(
+                key = "pagination",
+                label = "Pagination",
+                type = WorkflowNodeConfigFieldType.JSON,
+                required = false,
+                description = "Pagination and ordering configuration"
+            ),
+            WorkflowNodeConfigField(
+                key = "projection",
+                label = "Projection",
+                type = WorkflowNodeConfigFieldType.JSON,
+                required = false,
+                description = "Field selection for query results"
+            ),
+            WorkflowNodeConfigField(
+                key = "timeoutSeconds",
+                label = "Timeout (seconds)",
+                type = WorkflowNodeConfigFieldType.DURATION,
+                required = false,
+                description = "Optional timeout override in seconds"
+            )
+        )
+    }
 
     /**
      * Validates this configuration.
@@ -295,10 +334,10 @@ data class WorkflowQueryEntityActionConfig(
     }
 
     override fun execute(
-        context: WorkflowExecutionContext,
+        dataStore: WorkflowDataStore,
         inputs: Map<String, Any?>,
         services: NodeServiceProvider
-    ): Map<String, Any?> {
+    ): NodeOutput {
         log.info { "Executing QUERY_ENTITY for type: ${query.entityTypeId}" }
 
         // TODO: Implement query execution via EntityQueryService
@@ -311,7 +350,7 @@ data class WorkflowQueryEntityActionConfig(
 
         throw NotImplementedError(
             "QUERY_ENTITY execution requires EntityQueryService implementation. " +
-                "Filter: ${query.filter}, Pagination: $pagination"
+                    "Filter: ${query.filter}, Pagination: $pagination"
         )
     }
 }

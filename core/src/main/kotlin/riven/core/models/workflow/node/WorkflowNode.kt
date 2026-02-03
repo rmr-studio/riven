@@ -2,7 +2,8 @@ package riven.core.models.workflow.node
 
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.common.json.JsonObject
-import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.state.NodeOutput
+import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.config.WorkflowNodeConfig
 import java.util.*
 
@@ -72,19 +73,19 @@ data class WorkflowNode(
         get() = config.version
 
     /**
-     * Execute this node with given context and resolved inputs.
+     * Execute this node with given datastore and resolved inputs.
      *
      * Delegates to the underlying [WorkflowNodeConfig.execute] method.
      *
-     * @param context Workflow execution context with data registry
+     * @param dataStore Unified workflow data store with step outputs, trigger context, and metadata
      * @param inputs Resolved inputs (templates already converted to values)
      * @param services Service provider for on-demand access to Spring services
-     * @return Execution output map (structure varies by node type)
+     * @return Typed NodeOutput representing execution result
      * @throws Exception on execution failure
      */
     fun execute(
-        context: WorkflowExecutionContext,
+        dataStore: WorkflowDataStore,
         inputs: JsonObject,
         services: NodeServiceProvider
-    ): JsonObject = config.execute(context, inputs, services)
+    ): NodeOutput = config.execute(dataStore, inputs, services)
 }

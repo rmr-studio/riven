@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.*
 import riven.core.models.request.workflow.SaveWorkflowDefinitionRequest
 import riven.core.models.response.workflow.SaveWorkflowDefinitionResponse
 import riven.core.models.workflow.WorkflowDefinition
+import riven.core.models.workflow.node.config.WorkflowNodeConfigField
 import riven.core.service.workflow.WorkflowDefinitionService
+import riven.core.service.workflow.WorkflowNodeConfigRegistry
 import java.util.*
 
 
@@ -33,6 +35,7 @@ import java.util.*
 @PreAuthorize("isAuthenticated()")
 class WorkflowDefinitionController(
     private val workflowDefinitionService: WorkflowDefinitionService,
+    private val workflowNodeConfigRegistry: WorkflowNodeConfigRegistry,
     private val logger: KLogger
 ) {
 
@@ -149,5 +152,24 @@ class WorkflowDefinitionController(
         workflowDefinitionService.deleteWorkflow(id, workspaceId)
 
         return ResponseEntity.noContent().build()
+    }
+
+    @GetMapping("/node-schemas")
+    @Operation(
+        summary = "Get workflow node configuration schemas",
+        description = "Retrieves the configuration schemas for all workflow node types. " +
+            "Returns a map where keys are node identifiers (e.g., 'ACTION.CREATE_ENTITY') " +
+            "and values are lists of configuration fields."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Node configuration schemas retrieved successfully"),
+        ApiResponse(responseCode = "401", description = "Unauthorized - authentication required")
+    )
+    fun getNodeConfigSchemas(): ResponseEntity<Map<String, List<WorkflowNodeConfigField>>> {
+        logger.info { "GET /api/v1/workflow/definitions/node-schemas" }
+
+        val schemas = workflowNodeConfigRegistry.getAllSchemas()
+
+        return ResponseEntity.ok(schemas)
     }
 }

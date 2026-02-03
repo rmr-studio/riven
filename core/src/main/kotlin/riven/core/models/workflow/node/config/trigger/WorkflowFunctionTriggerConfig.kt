@@ -3,10 +3,14 @@ package riven.core.models.workflow.node.config.trigger
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowTriggerType
+import riven.core.models.common.json.JsonObject
 import riven.core.models.common.validation.Schema
-import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.state.NodeOutput
+import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
+import riven.core.models.workflow.node.config.WorkflowNodeConfigField
 import riven.core.models.workflow.node.config.WorkflowTriggerConfig
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import io.swagger.v3.oas.annotations.media.Schema as SwaggerSchema
@@ -30,6 +34,26 @@ data class WorkflowFunctionTriggerConfig(
     override val subType: WorkflowTriggerType
         get() = WorkflowTriggerType.FUNCTION
 
+    override val config: JsonObject
+        get() = mapOf(
+            "schema" to schema
+        )
+
+    override val configSchema: List<WorkflowNodeConfigField>
+        get() = Companion.configSchema
+
+    companion object {
+        val configSchema: List<WorkflowNodeConfigField> = listOf(
+            WorkflowNodeConfigField(
+                key = "schema",
+                label = "Input Schema",
+                type = WorkflowNodeConfigFieldType.JSON,
+                required = true,
+                description = "Schema defining the expected input structure for the function"
+            )
+        )
+    }
+
     /**
      * Validates this configuration.
      *
@@ -48,10 +72,10 @@ data class WorkflowFunctionTriggerConfig(
     }
 
     override fun execute(
-        context: WorkflowExecutionContext,
+        dataStore: WorkflowDataStore,
         inputs: Map<String, Any?>,
         services: NodeServiceProvider
-    ): Map<String, Any?> {
+    ): NodeOutput {
         // Triggers are entry points, not executed during workflow
         throw UnsupportedOperationException("TRIGGER nodes don't execute during workflow")
     }

@@ -6,13 +6,17 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.workflow.WorkflowActionType
+import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.request.entity.SaveEntityRequest
-import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.state.NodeOutput
+import riven.core.models.workflow.engine.state.UpdateEntityOutput
+import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
+import riven.core.models.workflow.node.config.WorkflowNodeConfigField
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
 import riven.core.service.entity.EntityService
@@ -89,12 +93,41 @@ data class WorkflowUpdateEntityActionConfig(
      * Returns typed fields as a map for template resolution.
      * Used by WorkflowCoordinationService to resolve templates before execution.
      */
-    val config: Map<String, Any?>
+    override val config: Map<String, Any?>
         get() = mapOf(
             "entityId" to entityId,
             "payload" to payload,
             "timeoutSeconds" to timeoutSeconds
         )
+
+    override val configSchema: List<WorkflowNodeConfigField>
+        get() = Companion.configSchema
+
+    companion object {
+        val configSchema: List<WorkflowNodeConfigField> = listOf(
+            WorkflowNodeConfigField(
+                key = "entityId",
+                label = "Entity ID",
+                type = WorkflowNodeConfigFieldType.UUID,
+                required = true,
+                description = "UUID of the entity to update"
+            ),
+            WorkflowNodeConfigField(
+                key = "payload",
+                label = "Payload",
+                type = WorkflowNodeConfigFieldType.KEY_VALUE,
+                required = true,
+                description = "Map of attribute values to update"
+            ),
+            WorkflowNodeConfigField(
+                key = "timeoutSeconds",
+                label = "Timeout (seconds)",
+                type = WorkflowNodeConfigFieldType.DURATION,
+                required = false,
+                description = "Optional timeout override in seconds"
+            )
+        )
+    }
 
     /**
      * Validates this configuration.
@@ -118,10 +151,10 @@ data class WorkflowUpdateEntityActionConfig(
     }
 
     override fun execute(
-        context: WorkflowExecutionContext,
+        dataStore: WorkflowDataStore,
         inputs: Map<String, Any?>,
         services: NodeServiceProvider
-    ): Map<String, Any?> {
+    ): NodeOutput {
         // Extract resolved inputs
         val resolvedEntityId = UUID.fromString(inputs["entityId"] as String)
         val resolvedPayload = inputs["payload"] as? Map<*, *> ?: emptyMap<String, Any?>()
@@ -156,16 +189,16 @@ data class WorkflowUpdateEntityActionConfig(
         )
 
         val result = entityService.saveEntity(
-            context.workspaceId,
+            dataStore.metadata.workspaceId,
             existingEntity.typeId,
             saveRequest
         )
 
-        // Return output
-        return mapOf(
-            "entityId" to result.entity?.id,
-            "updated" to true,
-            "payload" to result.entity?.payload
+        // Return typed output
+        return UpdateEntityOutput(
+            entityId = resolvedEntityId,
+            updated = true,
+            payload = result.entity?.payload ?: emptyMap()
         )
     }
 }

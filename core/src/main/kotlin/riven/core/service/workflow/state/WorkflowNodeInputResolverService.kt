@@ -3,18 +3,24 @@ package riven.core.service.workflow.state
 import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Service
 import riven.core.enums.workflow.WorkflowStatus
-import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
-import kotlin.collections.get
+import riven.core.models.workflow.engine.state.WorkflowDataStore
 
 /**
- * Service for resolving template references against the workflow data registry.
+ * Service for resolving template references against the workflow datastore.
  *
  * ## Resolution Algorithm
  *
  * 1. **Template Detection:** Check if value is a String containing {{ }}
- * 2. **Registry Lookup:** First segment must be "steps", second is node name
+ * 2. **Root Segment Routing:** Route to appropriate resolver based on first segment
  * 3. **Property Traversal:** Navigate nested maps using remaining path segments
  * 4. **Graceful Degradation:** Return null for missing data, logger warnings
+ *
+ * ## Supported Root Prefixes
+ *
+ * - `steps` - Access completed node outputs (e.g., {{ steps.nodeName.output.field }})
+ * - `trigger` - Access trigger context (e.g., {{ trigger.entity.fieldName }})
+ * - `variables` - Access user variables (e.g., {{ variables.counter }})
+ * - `loops` - Access loop iteration context (e.g., {{ loops.loopId.currentItem }})
  *
  * ## Template Types
  *
@@ -23,67 +29,21 @@ import kotlin.collections.get
  * - Returns resolved value as-is (any type)
  *
  * **Embedded Templates:** Templates within a larger string
- * - Input: `"Welcome to {{ steps.user.name }}"`
+ * - Input: `"Welcome to {{ trigger.entity.name }}"`
  * - Resolves each template and replaces it in the string
  * - Returns final string with substitutions
- * - Supports multiple templates: `"Hello {{ steps.user.name }}, you have {{ steps.inbox.count }} messages"`
- *
- * ## Template Resolution Flow
- *
- * Given template: `{{ steps.fetch_leads.output.email }}`
- *
- * 1. Parse path: `["steps", "fetch_leads", "output", "email"]`
- * 2. Validate first segment is "steps"
- * 3. Lookup node "fetch_leads" in dataRegistry
- * 4. Extract "output" field from NodeExecutionData
- * 5. Traverse "email" property in output map
- * 6. Return resolved value or null if not found
  *
  * ## Error Handling Strategy
  *
  * **Errors (throw exception):**
  * - Invalid template syntax (parsing errors)
- * - First segment not "steps" (unsupported path type)
+ * - Unrecognized root segment (not steps/trigger/variables/loops)
+ * - Trigger not set when accessing {{ trigger.* }}
  *
  * **Warnings (logger + return null):**
- * - Node not found in registry (may not have executed yet)
- * - Property not found in node output (missing field)
+ * - Node/variable/loop not found (may not have executed yet)
+ * - Property not found in output (missing field)
  * - Type error (accessing property on non-map value)
- *
- * Graceful degradation allows nodes to handle missing data appropriately
- * (e.g., use default values, skip optional operations).
- *
- * ## Recursive Resolution
- *
- * `resolveAll()` walks configuration maps recursively:
- * - Resolves templates in nested maps and lists
- * - Preserves structure (maps stay maps, lists stay lists)
- * - Static values returned unchanged
- *
- * ## Usage Example
- *
- * ```kotlin
- * val context = WorkflowExecutionContext(...)
- *
- * // Populate registry with node output
- * context.dataRegistry["fetch_leads"] = NodeExecutionData(
- *     output = mapOf(
- *         "output" to mapOf("email" to "user@example.com")
- *     )
- * )
- *
- * // Resolve template
- * val email = resolver.resolve("{{ steps.fetch_leads.output.email }}", context)
- * // email == "user@example.com"
- *
- * // Resolve config map
- * val config = mapOf(
- *     "to" to "{{ steps.fetch_leads.output.email }}",
- *     "subject" to "Welcome!"
- * )
- * val resolved = resolver.resolveAll(config, context)
- * // resolved == mapOf("to" to "user@example.com", "subject" to "Welcome!")
- * ```
  *
  * @property workflowNodeTemplateParserService Parser for template syntax
  */
@@ -97,12 +57,12 @@ class WorkflowNodeInputResolverService(
      * Resolve a single value that may contain a template.
      *
      * @param templateOrValue Value to resolve (String template or static value)
-     * @param context Workflow execution context containing data registry
-     * @return Resolved value from registry, or original value if not a template
+     * @param dataStore Workflow datastore containing execution state
+     * @return Resolved value from datastore, or original value if not a template
      */
     fun resolve(
         templateOrValue: Any?,
-        context: WorkflowExecutionContext
+        dataStore: WorkflowDataStore
     ): Any? {
         // Only strings can be templates
         if (templateOrValue !is String) {
@@ -119,34 +79,34 @@ class WorkflowNodeInputResolverService(
 
         // Handle embedded templates (e.g., "Welcome to {{steps.node.output}}")
         if (parsed.isEmbeddedTemplate) {
-            return resolveEmbeddedTemplates(parsed, context)
+            return resolveEmbeddedTemplates(parsed, dataStore)
         }
 
-        // Single exact template - resolve from registry
+        // Single exact template - resolve from datastore
         val path = parsed.path ?: return null
 
-        return resolveTemplatePath(path, context)
+        return resolveTemplatePath(path, dataStore)
     }
 
     /**
      * Resolve embedded templates within a larger string.
      *
-     * Takes a string like "Welcome to {{steps.node.output}}, you have {{steps.other.count}} items"
-     * and replaces each template with its resolved value.
+     * Takes a string like "Welcome to {{trigger.entity.name}}" and replaces each
+     * template with its resolved value.
      *
      * @param parsed Parsed template containing embedded templates
-     * @param context Workflow execution context
+     * @param dataStore Workflow datastore
      * @return String with all templates replaced by resolved values, or null if any resolution fails
      */
     private fun resolveEmbeddedTemplates(
         parsed: WorkflowNodeTemplateParserService.ParsedTemplate,
-        context: WorkflowExecutionContext
+        dataStore: WorkflowDataStore
     ): String? {
         var result = parsed.templateString ?: return null
 
         // Resolve each embedded template and replace in string
         for (embeddedTemplate in parsed.embeddedTemplates.orEmpty()) {
-            val resolvedValue = resolveTemplatePath(embeddedTemplate.path, context)
+            val resolvedValue = resolveTemplatePath(embeddedTemplate.path, dataStore)
 
             // If resolution fails, return null (graceful degradation)
             if (resolvedValue == null) {
@@ -172,83 +132,212 @@ class WorkflowNodeInputResolverService(
     }
 
     /**
-     * Resolve a template path from the data registry.
+     * Resolve a template path from the datastore.
+     *
+     * Routes to the appropriate resolver based on the root segment:
+     * - steps -> resolveStepsPath()
+     * - trigger -> resolveTriggerPath()
+     * - variables -> resolveVariablesPath()
+     * - loops -> resolveLoopsPath()
      *
      * @param path Path segments (e.g., ["steps", "fetch_leads", "output", "email"])
-     * @param context Workflow execution context
-     * @return Resolved value from registry, or null if not found
+     * @param dataStore Workflow datastore
+     * @return Resolved value from datastore, or null if not found
+     * @throws IllegalArgumentException if path is empty or has invalid root segment
      */
     private fun resolveTemplatePath(
         path: List<String>,
-        context: WorkflowExecutionContext
+        dataStore: WorkflowDataStore
     ): Any? {
-        // Path must start with "steps" (only supported type in Phase 4.1)
-        if (path.isEmpty() || path[0] != "steps") {
-            throw IllegalArgumentException(
-                "Template path must start with 'steps'. Got: ${path.firstOrNull()}"
-            )
+        if (path.isEmpty()) {
+            throw IllegalArgumentException("Empty template path")
         }
 
-        // Path must have at least 2 segments: steps.nodeName
-        if (path.size < 2) {
-            throw IllegalArgumentException(
-                "Template path must include node name: steps.<nodeName>. Got: $path"
+        val rootSegment = path[0]
+
+        return when (rootSegment) {
+            "steps" -> resolveStepsPath(path.drop(1), dataStore)
+            "trigger" -> resolveTriggerPath(path.drop(1), dataStore)
+            "variables" -> resolveVariablesPath(path.drop(1), dataStore)
+            "loops" -> resolveLoopsPath(path.drop(1), dataStore)
+            else -> throw IllegalArgumentException(
+                "Invalid root segment '$rootSegment'. Must be: steps, trigger, variables, loops"
             )
         }
+    }
 
-        // Extract node name (second segment)
-        val nodeName = path[1]
+    /**
+     * Resolve a path under the "steps" prefix.
+     *
+     * Format: steps.<nodeName>[.output].<field>...
+     *
+     * The "output" segment is optional for backward compatibility with
+     * {{ steps.nodeName.output.field }} syntax.
+     *
+     * @param path Path segments after "steps" (e.g., ["fetch_leads", "output", "email"])
+     * @param dataStore Workflow datastore
+     * @return Resolved value, or null if not found
+     */
+    private fun resolveStepsPath(path: List<String>, dataStore: WorkflowDataStore): Any? {
+        if (path.isEmpty()) {
+            throw IllegalArgumentException("Template path must include node name: steps.<nodeName>")
+        }
 
-        // Lookup node in registry
-        val nodeData = context.dataRegistry[nodeName]
-        if (nodeData == null) {
-            logger.warn { "Node '$nodeName' not found in registry. Available nodes: ${context.dataRegistry.keys}" }
+        val nodeName = path[0]
+        val stepOutput = dataStore.getStepOutput(nodeName)
+
+        if (stepOutput == null) {
+            logger.warn { "Node '$nodeName' not found in datastore. Available: ${dataStore.getAllStepOutputs().keys}" }
             return null
         }
 
-        // Check if node execution succeeded
-        if (nodeData.status != WorkflowStatus.COMPLETED) {
-            logger.warn { "Node '$nodeName' did not complete successfully (status: ${nodeData.status}). Cannot resolve template." }
+        if (stepOutput.status != WorkflowStatus.COMPLETED) {
+            logger.warn { "Node '$nodeName' did not complete (status: ${stepOutput.status})" }
             return null
         }
 
-        // Start traversal from node output
-        var current: Any? = nodeData.output
+        // Convert NodeOutput to map for traversal
+        var current: Any? = stepOutput.output.toMap()
 
-        // Determine starting index for path traversal
-        // If path[2] is "output", skip it since we're already at nodeData.output
-        val startIndex = if (path.size > 2 && path[2] == "output") {
-            3 // Skip "steps", nodeName, and "output"
-        } else {
-            2 // Skip "steps" and nodeName
-        }
+        // Determine start index (skip "output" if present for backward compat)
+        val startIndex = if (path.size > 1 && path[1] == "output") 2 else 1
 
-        // Traverse remaining path segments
+        // Traverse remaining path
         for (i in startIndex until path.size) {
-            val segment = path[i]
-
-            when (current) {
-                null -> {
-                    logger.debug { "Cannot traverse segment '$segment' - current value is null. Path: $path" }
-                    return null
-                }
-
-                is Map<*, *> -> {
-                    current = current[segment]
-                    if (current == null) {
-                        logger.debug { "Property '$segment' not found in node '$nodeName' output. Path: $path" }
-                        return null
-                    }
-                }
-
-                else -> {
-                    logger.warn { "Cannot access property '$segment' on non-map value (type: ${current!!::class.simpleName}). Path: $path" }
-                    return null
-                }
-            }
+            current = traverseProperty(current, path[i], listOf("steps") + path)
+            if (current == null) return null
         }
 
         return current
+    }
+
+    /**
+     * Resolve a path under the "trigger" prefix.
+     *
+     * Format: trigger.<property>...
+     *
+     * @param path Path segments after "trigger" (e.g., ["entity", "name"])
+     * @param dataStore Workflow datastore
+     * @return Resolved value, or null if not found
+     * @throws IllegalStateException if trigger is not set
+     */
+    private fun resolveTriggerPath(path: List<String>, dataStore: WorkflowDataStore): Any? {
+        val trigger = dataStore.getTrigger()
+            ?: throw IllegalStateException("Trigger not set. Cannot resolve {{ trigger.* }}")
+
+        var current: Any? = trigger.toMap()
+
+        for (segment in path) {
+            current = traverseProperty(current, segment, listOf("trigger") + path)
+            if (current == null) return null
+        }
+
+        return current
+    }
+
+    /**
+     * Resolve a path under the "variables" prefix.
+     *
+     * Format: variables.<name>[.<nestedProperty>...]
+     *
+     * @param path Path segments after "variables" (e.g., ["counter"] or ["user", "name"])
+     * @param dataStore Workflow datastore
+     * @return Resolved value, or null if not found
+     */
+    private fun resolveVariablesPath(path: List<String>, dataStore: WorkflowDataStore): Any? {
+        if (path.isEmpty()) {
+            throw IllegalArgumentException("Template path must include variable name: variables.<name>")
+        }
+
+        val varName = path[0]
+        var current: Any? = dataStore.getVariable(varName)
+
+        if (current == null) {
+            logger.debug { "Variable '$varName' not found" }
+            return null
+        }
+
+        // Traverse nested properties if path continues
+        for (i in 1 until path.size) {
+            current = traverseProperty(current, path[i], listOf("variables") + path)
+            if (current == null) return null
+        }
+
+        return current
+    }
+
+    /**
+     * Resolve a path under the "loops" prefix.
+     *
+     * Format: loops.<loopId>.<property>
+     *
+     * Available properties:
+     * - currentIndex: Zero-based index
+     * - currentItem: Current item being processed
+     * - totalItems: Total count of items
+     * - loopId: Loop identifier
+     *
+     * @param path Path segments after "loops" (e.g., ["processItems", "currentItem", "id"])
+     * @param dataStore Workflow datastore
+     * @return Resolved value, or null if not found
+     */
+    private fun resolveLoopsPath(path: List<String>, dataStore: WorkflowDataStore): Any? {
+        if (path.isEmpty()) {
+            throw IllegalArgumentException("Template path must include loop name: loops.<loopId>")
+        }
+
+        val loopId = path[0]
+        val loopContext = dataStore.getLoopContext(loopId)
+
+        if (loopContext == null) {
+            logger.debug { "Loop context '$loopId' not found" }
+            return null
+        }
+
+        // Convert to map for traversal
+        var current: Any? = mapOf(
+            "currentIndex" to loopContext.currentIndex,
+            "currentItem" to loopContext.currentItem,
+            "totalItems" to loopContext.totalItems,
+            "loopId" to loopContext.loopId
+        )
+
+        for (i in 1 until path.size) {
+            current = traverseProperty(current, path[i], listOf("loops") + path)
+            if (current == null) return null
+        }
+
+        return current
+    }
+
+    /**
+     * Helper to traverse a property on a value.
+     *
+     * @param current Current value being traversed
+     * @param segment Property name to access
+     * @param fullPath Full path for logging context
+     * @return Property value, or null if not accessible
+     */
+    private fun traverseProperty(current: Any?, segment: String, fullPath: List<String>): Any? {
+        return when (current) {
+            null -> {
+                logger.debug { "Cannot traverse '$segment' - value is null. Path: $fullPath" }
+                null
+            }
+
+            is Map<*, *> -> {
+                val value = current[segment]
+                if (value == null) {
+                    logger.debug { "Property '$segment' not found. Path: $fullPath" }
+                }
+                value
+            }
+
+            else -> {
+                logger.warn { "Cannot access '$segment' on ${current::class.simpleName}. Path: $fullPath" }
+                null
+            }
+        }
     }
 
     /**
@@ -258,15 +347,15 @@ class WorkflowNodeInputResolverService(
      * Preserves the structure of maps and lists.
      *
      * @param config Configuration map potentially containing templates
-     * @param context Workflow execution context containing data registry
+     * @param dataStore Workflow datastore containing execution state
      * @return Resolved configuration with templates replaced by values
      */
     fun resolveAll(
         config: Map<String, Any?>,
-        context: WorkflowExecutionContext
+        dataStore: WorkflowDataStore
     ): Map<String, Any?> {
         return config.mapValues { (_, value) ->
-            resolveValue(value, context)
+            resolveValue(value, dataStore)
         }
     }
 
@@ -274,27 +363,27 @@ class WorkflowNodeInputResolverService(
      * Recursively resolve a value (handles nested maps and lists).
      *
      * @param value Value to resolve (may be primitive, map, list, or template)
-     * @param context Workflow execution context
+     * @param dataStore Workflow datastore
      * @return Resolved value
      */
     private fun resolveValue(
         value: Any?,
-        context: WorkflowExecutionContext
+        dataStore: WorkflowDataStore
     ): Any? {
         return when (value) {
-            is String -> resolve(value, context)
+            is String -> resolve(value, dataStore)
             is Map<*, *> -> {
                 // Recursively resolve nested map
                 @Suppress("UNCHECKED_CAST")
                 (value as Map<String, Any?>).mapValues { (_, v) ->
-                    resolveValue(v, context)
+                    resolveValue(v, dataStore)
                 }
             }
 
             is List<*> -> {
                 // Recursively resolve list items
                 value.map { item ->
-                    resolveValue(item, context)
+                    resolveValue(item, dataStore)
                 }
             }
 

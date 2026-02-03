@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.workflow.WorkflowNodeType
-import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.common.json.JsonObject
+import riven.core.models.workflow.engine.state.NodeOutput
+import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 
@@ -30,6 +32,16 @@ data class WorkflowFunctionConfig(
     override val type: WorkflowNodeType
         get() = WorkflowNodeType.FUNCTION
 
+    override val config: JsonObject
+        get() = emptyMap()
+
+    override val configSchema: List<WorkflowNodeConfigField>
+        get() = Companion.configSchema
+
+    companion object {
+        val configSchema: List<WorkflowNodeConfigField> = emptyList()
+    }
+
     /**
      * Validates this configuration.
      *
@@ -43,10 +55,10 @@ data class WorkflowFunctionConfig(
     }
 
     override fun execute(
-        context: WorkflowExecutionContext,
+        dataStore: WorkflowDataStore,
         inputs: Map<String, Any?>,
         services: NodeServiceProvider
-    ): Map<String, Any?> {
+    ): NodeOutput {
         // TODO: Implement FUNCTION node execution in Phase 5+
         throw UnsupportedOperationException("FUNCTION nodes not implemented in Phase 4.1")
     }

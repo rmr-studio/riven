@@ -6,10 +6,15 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.workflow.WorkflowControlType
+import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
-import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.common.json.JsonObject
+import riven.core.models.workflow.engine.state.ConditionOutput
+import riven.core.models.workflow.engine.state.NodeOutput
+import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowControlConfig
+import riven.core.models.workflow.node.config.WorkflowNodeConfigField
 import riven.core.models.workflow.node.config.validation.ConfigValidationError
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
@@ -97,6 +102,43 @@ data class WorkflowConditionControlConfig(
     override val subType: WorkflowControlType
         get() = WorkflowControlType.CONDITION
 
+    override val config: JsonObject
+        get() = mapOf(
+            "expression" to expression,
+            "contextEntityId" to contextEntityId,
+            "timeoutSeconds" to timeoutSeconds
+        )
+
+    override val configSchema: List<WorkflowNodeConfigField>
+        get() = Companion.configSchema
+
+    companion object {
+        val configSchema: List<WorkflowNodeConfigField> = listOf(
+            WorkflowNodeConfigField(
+                key = "expression",
+                label = "Condition Expression",
+                type = WorkflowNodeConfigFieldType.TEMPLATE,
+                required = true,
+                description = "SQL-like expression to evaluate (must return boolean)",
+                placeholder = "entity.status == 'active' && entity.balance > 0"
+            ),
+            WorkflowNodeConfigField(
+                key = "contextEntityId",
+                label = "Context Entity ID",
+                type = WorkflowNodeConfigFieldType.UUID,
+                required = false,
+                description = "Optional entity ID to load as evaluation context"
+            ),
+            WorkflowNodeConfigField(
+                key = "timeoutSeconds",
+                label = "Timeout (seconds)",
+                type = WorkflowNodeConfigFieldType.DURATION,
+                required = false,
+                description = "Optional timeout override in seconds"
+            )
+        )
+    }
+
     /**
      * Validates this configuration.
      *
@@ -138,10 +180,10 @@ data class WorkflowConditionControlConfig(
     }
 
     override fun execute(
-        context: WorkflowExecutionContext,
+        dataStore: WorkflowDataStore,
         inputs: Map<String, Any?>,
         services: NodeServiceProvider
-    ): Map<String, Any?> {
+    ): NodeOutput {
         // Extract resolved inputs
         val resolvedExpression = inputs["expression"] as? String ?: expression
         val resolvedContextEntityId = inputs["contextEntityId"] as? String
@@ -154,7 +196,7 @@ data class WorkflowConditionControlConfig(
         // Resolve entity context if provided
         val evaluationContext: Map<String, Any?> = if (resolvedContextEntityId != null) {
             val entityId = UUID.fromString(resolvedContextEntityId)
-            entityContextService.buildContext(entityId, context.workspaceId)
+            entityContextService.buildContext(entityId, dataStore.metadata.workspaceId)
         } else {
             emptyMap()
         }
@@ -172,7 +214,10 @@ data class WorkflowConditionControlConfig(
 
         log.debug { "CONDITION evaluated: $resolvedExpression -> $result (context: ${evaluationContext.keys})" }
 
-        // Return boolean for DAG branching
-        return mapOf("conditionResult" to result)
+        // Return typed output for DAG branching
+        return ConditionOutput(
+            result = result,
+            evaluatedExpression = resolvedExpression
+        )
     }
 }
