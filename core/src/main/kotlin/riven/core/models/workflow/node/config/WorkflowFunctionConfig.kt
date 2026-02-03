@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
+import riven.core.enums.common.icon.IconType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.common.json.JsonObject
 import riven.core.models.workflow.engine.state.NodeOutput
@@ -39,6 +40,13 @@ data class WorkflowFunctionConfig(
         get() = Companion.configSchema
 
     companion object {
+        val metadata = WorkflowNodeTypeMetadata(
+            label = "Function",
+            description = "A reusable workflow function",
+            icon = IconType.SQUARE_FUNCTION,
+            category = WorkflowNodeType.FUNCTION
+        )
+
         val configSchema: List<WorkflowNodeConfigField> = emptyList()
     }
 

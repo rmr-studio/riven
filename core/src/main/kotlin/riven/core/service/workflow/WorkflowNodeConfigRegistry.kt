@@ -3,10 +3,16 @@ package riven.core.service.workflow
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import riven.core.enums.workflow.WorkflowNodeType
-import riven.core.models.workflow.node.config.*
+import riven.core.models.workflow.node.config.WorkflowFunctionConfig
+import riven.core.models.workflow.node.config.WorkflowNodeConfig
+import riven.core.models.workflow.node.config.WorkflowNodeConfigField
+import riven.core.models.workflow.node.config.WorkflowNodeTypeMetadata
 import riven.core.models.workflow.node.config.actions.*
 import riven.core.models.workflow.node.config.controls.WorkflowConditionControlConfig
-import riven.core.models.workflow.node.config.trigger.*
+import riven.core.models.workflow.node.config.trigger.WorkflowEntityEventTriggerConfig
+import riven.core.models.workflow.node.config.trigger.WorkflowFunctionTriggerConfig
+import riven.core.models.workflow.node.config.trigger.WorkflowScheduleTriggerConfig
+import riven.core.models.workflow.node.config.trigger.WorkflowWebhookTriggerConfig
 import kotlin.reflect.KClass
 import kotlin.reflect.full.companionObjectInstance
 
@@ -19,11 +25,24 @@ private val logger = KotlinLogging.logger {}
  * @property subType The specific node subtype (CREATE_ENTITY, WEBHOOK, CONDITION, etc.)
  * @property configClass The KClass of the configuration
  * @property schema The configuration schema fields
+ * @property metadata Display metadata for the node type (label, description, icon)
  */
 data class NodeSchemaEntry(
     val type: WorkflowNodeType,
     val subType: String,
     val configClass: KClass<out WorkflowNodeConfig>,
+    val schema: List<WorkflowNodeConfigField>,
+    val metadata: WorkflowNodeTypeMetadata
+)
+
+/**
+ * Response model for node schema with metadata (without configClass).
+ * Used for API responses.
+ */
+data class WorkflowNodeMetadata(
+    val type: WorkflowNodeType,
+    val subType: String,
+    val metadata: WorkflowNodeTypeMetadata,
     val schema: List<WorkflowNodeConfigField>
 )
 
@@ -46,7 +65,7 @@ data class NodeSchemaEntry(
  *
  * To add a new node type:
  * 1. Create the config class extending the appropriate interface (WorkflowActionConfig, etc.)
- * 2. Add a companion object with `val configSchema: List<WorkflowNodeConfigField>`
+ * 2. Add a companion object with `val configSchema: List<WorkflowNodeConfigField> and `val metadata: WorkflowNodeTypeMetadata`
  * 3. Register the config class in [registerAllNodes]
  *
  * The schema will then be automatically available via this registry.
@@ -69,9 +88,17 @@ class WorkflowNodeConfigRegistry {
      *
      * @return Map of node key (e.g., "ACTION.CREATE_ENTITY") to schema fields
      */
-    fun getAllSchemas(): Map<String, List<WorkflowNodeConfigField>> {
-        return entries.associate { "${it.type}.${it.subType}" to it.schema }
+    fun getAllNodes(): Map<String, WorkflowNodeMetadata> {
+        return entries.associate {
+            "${it.type}.${it.subType}" to WorkflowNodeMetadata(
+                type = it.type,
+                subType = it.subType,
+                metadata = it.metadata,
+                schema = it.schema
+            )
+        }
     }
+
 
     /**
      * Returns all registered node schema entries.
@@ -178,7 +205,7 @@ class WorkflowNodeConfigRegistry {
     }
 
     /**
-     * Registers a single node configuration class by extracting its companion object schema.
+     * Registers a single node configuration class by extracting its companion object schema and metadata.
      *
      * @param type The node type category
      * @param subType The specific node subtype
@@ -208,13 +235,26 @@ class WorkflowNodeConfigRegistry {
                 return null
             }
 
+            val metadataProperty = companion::class.members.find { it.name == "metadata" }
+            if (metadataProperty == null) {
+                logger.warn { "No metadata property found in companion of ${T::class.simpleName}" }
+                return null
+            }
+
+            val metadata = metadataProperty.call(companion) as? WorkflowNodeTypeMetadata
+            if (metadata == null) {
+                logger.warn { "metadata is null or wrong type for ${T::class.simpleName}" }
+                return null
+            }
+
             logger.debug { "Registered ${T::class.simpleName}: $type.$subType with ${schema.size} fields" }
 
             NodeSchemaEntry(
                 type = type,
                 subType = subType,
                 configClass = T::class,
-                schema = schema
+                schema = schema,
+                metadata = metadata
             )
         } catch (e: Exception) {
             logger.error(e) { "Failed to register node config ${T::class.simpleName}" }
