@@ -1,20 +1,12 @@
 package riven.core.models.workflow.engine.datastore
 
+import riven.core.models.workflow.engine.coordinator.WorkflowState
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Unified workflow state container.
- *
- * Created in Phase 7.2 to replace:
- * - WorkflowState.dataRegistry (orchestration data)
- * - WorkflowExecutionContext (execution metadata + data)
- *
- * All workflow data flows through this single datastore:
- * - Trigger context: Set once at workflow start
- * - Step outputs: Write-once per node, read by templates
- * - Variables: Last-write-wins for user variables
- * - Loop contexts: Per-loop iteration state
- *
+ * Unified workflow state management system
+
  * Thread-safe via ConcurrentHashMap for parallel node execution.
  *
  * This class provides thread-safe access to trigger context, step outputs,
@@ -47,7 +39,8 @@ import java.util.concurrent.ConcurrentHashMap
  * @property metadata Immutable workflow-level context, accessible directly
  */
 class WorkflowDataStore(
-    val metadata: WorkflowMetadata
+    val metadata: WorkflowMetadata,
+    var state: WorkflowState
 ) {
     /**
      * Write-once trigger context.
@@ -135,6 +128,15 @@ class WorkflowDataStore(
      * @return The step output, or null if not yet executed
      */
     fun getStepOutput(name: String): StepOutput? = steps[name]
+
+    /**
+     * Gets the output of a specific step by uuid.
+     *
+     * @param id The step/node uuid
+     * @return The step output, or null if not yet executed
+     */
+    fun getStepOutput(id: UUID): StepOutput? = steps.values.find { it.nodeId == id }
+
 
     /**
      * Gets all step outputs as an immutable copy.

@@ -11,6 +11,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.enums.util.OperationType
 import riven.core.enums.workflow.WorkflowStatus
+import riven.core.models.workflow.engine.coordinator.WorkflowExecutionPhase
+import riven.core.models.workflow.engine.coordinator.WorkflowState
 import riven.core.models.workflow.engine.datastore.*
 import riven.core.service.auth.AuthTokenService
 import java.time.Instant
@@ -46,6 +48,7 @@ class WorkflowNodeInputResolverServiceTest {
 
     @BeforeEach
     fun setup() {
+        val state = WorkflowState(phase = WorkflowExecutionPhase.INITIALIZING)
         val metadata = WorkflowMetadata(
             executionId = UUID.randomUUID(),
             workspaceId = UUID.randomUUID(),
@@ -53,7 +56,7 @@ class WorkflowNodeInputResolverServiceTest {
             version = 1,
             startedAt = Instant.now()
         )
-        dataStore = WorkflowDataStore(metadata)
+        dataStore = WorkflowDataStore(metadata, state)
     }
 
     // ========== Steps Resolution Tests ==========

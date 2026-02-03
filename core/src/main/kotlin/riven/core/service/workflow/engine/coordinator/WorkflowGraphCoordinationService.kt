@@ -2,8 +2,11 @@ package riven.core.service.workflow.engine.coordinator
 
 import org.springframework.stereotype.Service
 import riven.core.entity.workflow.WorkflowEdgeEntity
+import riven.core.exceptions.WorkflowExecutionException
+import riven.core.exceptions.WorkflowValidationException
 import riven.core.models.common.json.JsonValue
 import riven.core.models.workflow.engine.coordinator.*
+import riven.core.models.workflow.engine.datastore.WorkflowDataStore
 import riven.core.models.workflow.node.WorkflowNode
 import java.util.*
 
@@ -84,10 +87,11 @@ class WorkflowGraphCoordinationService(
      * @throws IllegalStateException if execution completes with remaining nodes (deadlock)
      */
     fun executeWorkflow(
+        store: WorkflowDataStore,
         nodes: List<WorkflowNode>,
         edges: List<WorkflowEdgeEntity>,
         nodeExecutor: (List<WorkflowNode>) -> List<Pair<UUID, JsonValue>>
-    ): WorkflowState {
+    ) {
         // 1. Validate DAG structure
         val validationResult = dagValidator.validate(nodes, edges)
         if (!validationResult.valid) {
@@ -103,13 +107,6 @@ class WorkflowGraphCoordinationService(
             throw WorkflowValidationException("Topological sort failed: ${e.message}", e)
         }
 
-        // 3. Initialize state machine (pure orchestration state, no data registry)
-        var state = WorkflowState(
-            phase = WorkflowExecutionPhase.INITIALIZING,
-            activeNodes = emptySet(),
-            completedNodes = emptySet(),
-            failedNodes = emptySet()
-        )
 
         // 4. Initialize active node queue
         workflowGraphQueueManagementService.initialize(nodes, edges)
@@ -117,7 +114,10 @@ class WorkflowGraphCoordinationService(
         // 5. Handle empty workflow (no nodes)
         if (nodes.isEmpty()) {
             // Return COMPLETED state directly (no nodes to execute)
-            return state.copy(phase = WorkflowExecutionPhase.COMPLETED)
+            store.apply {
+                state = state.copy(phase = WorkflowExecutionPhase.COMPLETED)
+            }
+            return
         }
 
         // 6. Execution loop: process nodes in topological order with parallelism
@@ -135,17 +135,21 @@ class WorkflowGraphCoordinationService(
             }
 
             // Transition state: nodes ready for execution
-            state = StateTransition.apply(
-                state,
-                NodesReady(readyNodes.map { it.id }.toSet())
-            )
+            store.apply {
+                state = StateTransition.apply(
+                    state,
+                    NodesReady(readyNodes.map { it.id }.toSet())
+                )
+            }
 
             // Execute ready nodes in parallel (caller handles Temporal Async/Promise)
             val results: List<Pair<UUID, Any?>> = try {
                 nodeExecutor(readyNodes)
             } catch (e: Exception) {
                 // Node execution failed - transition to FAILED state
-                state = StateTransition.apply(state, WorkflowFailed)
+                store.apply {
+                    state = StateTransition.apply(state, WorkflowFailed)
+                }
                 throw WorkflowExecutionException("Node execution failed: ${e.message}", e)
             }
 
@@ -153,17 +157,19 @@ class WorkflowGraphCoordinationService(
             // Note: Node outputs are stored in WorkflowDataStore by the coordinator
             for ((nodeId, _) in results) {
                 // Transition state: node completed (output is in dataStore, not in state)
-                state = StateTransition.apply(
-                    state,
-                    NodeCompleted(nodeId)
-                )
+                store.apply {
+                    state = StateTransition.apply(
+                        state,
+                        NodeCompleted(nodeId)
+                    )
+                }
 
                 // Mark node completed in queue (decrements successor in-degrees, enqueues new ready nodes)
                 workflowGraphQueueManagementService.markNodeCompleted(nodeId)
             }
         }
 
-        // 6. Verify all nodes completed
+        // Finalise workflow execution by asserting that all nodes were completed
         val completedCount = workflowGraphQueueManagementService.getCompletedNodes().size
         if (completedCount != nodes.size) {
             throw IllegalStateException(
@@ -172,40 +178,9 @@ class WorkflowGraphCoordinationService(
             )
         }
 
-        // 7. Transition to COMPLETED state
-        state = StateTransition.apply(state, AllNodesCompleted)
-
-        return state
+        store.apply {
+            state = StateTransition.apply(state, AllNodesCompleted)
+        }
     }
 }
 
-/**
- * Exception thrown when workflow DAG validation fails.
- *
- * This indicates structural problems with the workflow graph:
- * - Cycles detected
- * - Disconnected components
- * - Invalid edge references
- * - Conditional nodes without proper branching
- *
- * @param message Validation error details
- * @param cause Optional underlying exception
- */
-class WorkflowValidationException(
-    message: String,
-    cause: Throwable? = null
-) : RuntimeException(message, cause)
-
-/**
- * Exception thrown when workflow execution fails.
- *
- * This wraps errors that occur during node execution, providing context
- * about which node failed and why.
- *
- * @param message Execution error details
- * @param cause Underlying exception from node execution
- */
-class WorkflowExecutionException(
-    message: String,
-    cause: Throwable? = null
-) : RuntimeException(message, cause)

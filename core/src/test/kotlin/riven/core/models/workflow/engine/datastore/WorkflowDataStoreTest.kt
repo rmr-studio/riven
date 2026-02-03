@@ -5,6 +5,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import riven.core.enums.util.OperationType
 import riven.core.enums.workflow.WorkflowStatus
+import riven.core.models.workflow.engine.coordinator.WorkflowExecutionPhase
+import riven.core.models.workflow.engine.coordinator.WorkflowState
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.CountDownLatch
@@ -16,6 +18,8 @@ class WorkflowDataStoreTest {
     private lateinit var dataStore: WorkflowDataStore
     private lateinit var metadata: WorkflowMetadata
 
+    private lateinit var state: WorkflowState
+
     @BeforeEach
     fun setUp() {
         metadata = WorkflowMetadata(
@@ -25,7 +29,12 @@ class WorkflowDataStoreTest {
             version = 1,
             startedAt = Instant.now()
         )
-        dataStore = WorkflowDataStore(metadata)
+
+        state = WorkflowState(
+            phase = WorkflowExecutionPhase.INITIALIZING
+        )
+
+        dataStore = WorkflowDataStore(metadata, state)
     }
 
     // ==================== Metadata Tests ====================

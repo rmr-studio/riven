@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Configuration
 import riven.core.entity.workflow.WorkflowEdgeEntity
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.models.workflow.engine.coordinator.WorkflowExecutionPhase
+import riven.core.models.workflow.engine.coordinator.WorkflowState
 import riven.core.models.workflow.engine.datastore.GenericMapOutput
 import riven.core.models.workflow.engine.datastore.StepOutput
 import riven.core.models.workflow.engine.datastore.WorkflowDataStore
@@ -35,14 +36,16 @@ import java.util.*
 @Configuration
 class WorkflowTestConfiguration {
     @Bean
-    fun kLogger(): KLogger = KotlinLogging.logger {}
-
-    @Bean
     fun inputResolverService(
         workflowNodeTemplateParserService: WorkflowNodeTemplateParserService,
         logger: KLogger
     ): WorkflowNodeInputResolverService {
         return WorkflowNodeInputResolverService(workflowNodeTemplateParserService, logger)
+    }
+
+    @Bean
+    fun logger(): KLogger {
+        return KotlinLogging.logger {}
     }
 }
 
@@ -158,6 +161,9 @@ class WorkflowExecutionEndToEndIntegrationTest {
      */
     private fun createDataStore(): WorkflowDataStore {
         return WorkflowDataStore(
+            state = WorkflowState(
+                phase = WorkflowExecutionPhase.INITIALIZING
+            ),
             metadata = WorkflowMetadata(
                 executionId = workflowExecutionId,
                 workspaceId = workspaceId,
@@ -201,6 +207,7 @@ class WorkflowExecutionEndToEndIntegrationTest {
      */
     @Test
     fun `test linear workflow with static inputs executes correctly`() {
+        val store = createDataStore()
         // Create nodes with static configs (no templates)
         val nodeA = createNode(
             "create_lead", mapOf(
@@ -256,7 +263,7 @@ class WorkflowExecutionEndToEndIntegrationTest {
             }
         }
 
-        val finalState = workflowGraphCoordinationService.executeWorkflow(nodes, edges, nodeExecutor)
+        workflowGraphCoordinationService.executeWorkflow(store, nodes, edges, nodeExecutor)
 
         // Verify execution order
         assertEquals(3, executionOrder.size)
@@ -265,13 +272,13 @@ class WorkflowExecutionEndToEndIntegrationTest {
         assertEquals(nodeC.id, executionOrder[2])
 
         // Verify final state
-        assertEquals(WorkflowExecutionPhase.COMPLETED, finalState.phase)
-        assertEquals(3, finalState.completedNodes.size)
+        assertEquals(WorkflowExecutionPhase.COMPLETED, store.state.phase)
+        assertEquals(3, store.state.completedNodes.size)
 
         // Verify all nodes completed (outputs are now in WorkflowDataStore, not in WorkflowState)
-        assertTrue(finalState.completedNodes.contains(nodeA.id))
-        assertTrue(finalState.completedNodes.contains(nodeB.id))
-        assertTrue(finalState.completedNodes.contains(nodeC.id))
+        assertTrue(store.state.completedNodes.contains(nodeA.id))
+        assertTrue(store.state.completedNodes.contains(nodeB.id))
+        assertTrue(store.state.completedNodes.contains(nodeC.id))
     }
 
     /**
@@ -540,6 +547,7 @@ class WorkflowExecutionEndToEndIntegrationTest {
      */
     @Test
     fun `test data registry accumulates outputs correctly`() {
+        val store = createDataStore()
         val nodeA = createNode("step_1", mapOf("action" to "create"))
         val nodeB = createNode("step_2", mapOf("action" to "update"))
         val nodeC = createNode("step_3", mapOf("action" to "notify"))
@@ -566,13 +574,13 @@ class WorkflowExecutionEndToEndIntegrationTest {
             }
         }
 
-        val finalState = workflowGraphCoordinationService.executeWorkflow(nodes, edges, nodeExecutor)
+        workflowGraphCoordinationService.executeWorkflow(store, nodes, edges, nodeExecutor)
 
         // Verify all nodes completed (outputs are now in WorkflowDataStore, not in WorkflowState)
-        assertEquals(3, finalState.completedNodes.size)
-        assertTrue(finalState.completedNodes.contains(nodeA.id))
-        assertTrue(finalState.completedNodes.contains(nodeB.id))
-        assertTrue(finalState.completedNodes.contains(nodeC.id))
+        assertEquals(3, store.state.completedNodes.size)
+        assertTrue(store.state.completedNodes.contains(nodeA.id))
+        assertTrue(store.state.completedNodes.contains(nodeB.id))
+        assertTrue(store.state.completedNodes.contains(nodeC.id))
     }
 
     // ========================================

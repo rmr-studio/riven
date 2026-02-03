@@ -57,37 +57,10 @@ enum class WorkflowExecutionPhase {
 }
 
 /**
- * Immutable workflow state tracking orchestration progress.
+ * An immutable data registry used to handle state management and the orchestration of nodes.
  *
  * This data class represents the complete state of a workflow execution at a point in time.
  * All state transitions produce a new WorkflowState instance (immutable pattern).
- *
- * ## Usage Pattern
- *
- * ```kotlin
- * // Initial state
- * var state = WorkflowState(
- *     phase = WorkflowExecutionPhase.INITIALIZING,
- *     activeNodes = emptySet(),
- *     completedNodes = emptySet(),
- *     failedNodes = emptySet()
- * )
- *
- * // Transition via events
- * state = StateTransition.apply(state, NodesReady(setOf(node1Id, node2Id)))
- * state = StateTransition.apply(state, NodeCompleted(node1Id))
- * ```
- *
- * ## Data Management
- *
- * WorkflowState is now pure orchestration state. All node output data is managed
- * by WorkflowDataStore, which stores StepOutput objects keyed by node name.
- * Template resolution uses dataStore directly via {{ steps.nodeName.output.field }}.
- *
- * ## Thread Safety
- *
- * While this data class is immutable, proper synchronization is required if shared across
- * threads. In Temporal workflows, state is single-threaded within the workflow context.
  *
  * @property phase Current execution phase
  * @property activeNodes Set of node IDs currently executing (in Temporal Async)
@@ -98,7 +71,7 @@ data class WorkflowState(
     val phase: WorkflowExecutionPhase,
     val activeNodes: Set<UUID> = emptySet(),
     val completedNodes: Set<UUID> = emptySet(),
-    val failedNodes: Set<UUID> = emptySet()
+    val failedNodes: Set<UUID> = emptySet(),
 ) {
     /**
      * Checks if workflow execution is finished (completed or failed).

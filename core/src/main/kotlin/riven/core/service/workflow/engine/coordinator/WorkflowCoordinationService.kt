@@ -10,8 +10,8 @@ import riven.core.entity.workflow.execution.WorkflowExecutionNodeEntity
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.models.workflow.engine.NodeExecutionResult
+import riven.core.models.workflow.engine.coordinator.WorkflowExecutionPhase
 import riven.core.models.workflow.engine.coordinator.WorkflowState
-import riven.core.models.workflow.engine.datastore.NodeOutput
 import riven.core.models.workflow.engine.datastore.StepOutput
 import riven.core.models.workflow.engine.datastore.WorkflowDataStore
 import riven.core.models.workflow.engine.datastore.WorkflowMetadata
@@ -22,8 +22,8 @@ import riven.core.models.workflow.node.WorkflowNode
 import riven.core.models.workflow.node.config.actions.*
 import riven.core.models.workflow.node.config.controls.WorkflowConditionControlConfig
 import riven.core.repository.workflow.WorkflowExecutionNodeRepository
-import riven.core.service.workflow.state.WorkflowNodeInputResolverService
 import riven.core.service.workflow.engine.error.WorkflowErrorClassifier
+import riven.core.service.workflow.state.WorkflowNodeInputResolverService
 import java.time.Instant
 import java.time.ZonedDateTime
 import java.util.*
@@ -35,7 +35,7 @@ import java.util.*
  * 1. Create WorkflowDataStore at workflow start with metadata
  * 2. Resolve input templates against datastore
  * 3. Provide NodeServiceProvider for on-demand service access
- * 4. Call node.execute(dataStore, inputs, services) - polymorphic dispatch
+ * 4. Call node.execute(store, inputs, services) - polymorphic dispatch
  * 5. Coordinator writes StepOutput to datastore after node execution
  * 6. Persist execution state to database
  *
@@ -72,7 +72,7 @@ class WorkflowCoordinationService(
         workflowDefinitionId: UUID,
         nodeIds: List<UUID>,
         workspaceId: UUID
-    ): WorkflowState {
+    ): WorkflowDataStore {
         logger.info { "Executing workflow with coordinator: definition=$workflowDefinitionId, nodes=${nodeIds.size}" }
 
         // Fetch nodes and edges from database (this is an activity, so database access is allowed)
@@ -89,6 +89,10 @@ class WorkflowCoordinationService(
             activityInfo.workflowId.substringAfter("execution-")
         )
 
+        val state = WorkflowState(
+            phase = WorkflowExecutionPhase.INITIALIZING,
+        )
+
         // Create unified datastore for workflow execution
         val metadata = WorkflowMetadata(
             executionId = workflowExecutionId,
@@ -97,10 +101,13 @@ class WorkflowCoordinationService(
             version = 1, // TODO: Get from workflow definition
             startedAt = Instant.now()
         )
-        val dataStore = WorkflowDataStore(metadata)
+        val store = WorkflowDataStore(
+            metadata = metadata,
+            state = state
+        )
 
         // TODO: Set trigger context when trigger execution is implemented
-        // dataStore.setTrigger(triggerContext)
+        // store.setTrigger(triggerContext)
 
         // Callback to execute a batch of ready nodes during workflow orchestration
         // Returns list of (nodeId, output) pairs
@@ -113,8 +120,8 @@ class WorkflowCoordinationService(
             readyNodes.map { node ->
                 logger.info { "Executing node ${node.id} (${node.type})" }
 
-                // Execute node with shared dataStore
-                val result = executeNode(node, dataStore)
+                // Execute node with shared store
+                val result = executeNode(node, store)
 
                 // Check if node failed
                 if (result.status == WorkflowStatus.FAILED) {
@@ -128,20 +135,20 @@ class WorkflowCoordinationService(
 
         // Delegate to coordinator for DAG orchestration
         return try {
-            val finalState = workflowGraphCoordinationService.executeWorkflow(nodes, edges, nodeExecutor)
-            logger.info { "Workflow execution completed: ${finalState.phase}, ${finalState.completedNodes.size} nodes completed" }
-            finalState
+            workflowGraphCoordinationService.executeWorkflow(store, nodes, edges, nodeExecutor)
+            logger.info { "Workflow execution completed: ${store.state.phase}, ${store.state.completedNodes.size} nodes completed" }
+            store
         } catch (e: Exception) {
             logger.error(e) { "Workflow execution failed: ${e.message}" }
             throw e
         }
     }
 
-    private fun executeNode(node: WorkflowNode, dataStore: WorkflowDataStore): NodeExecutionResult {
+    private fun executeNode(node: WorkflowNode, store: WorkflowDataStore): NodeExecutionResult {
         val startTime = ZonedDateTime.now()
         val nodeId = node.id
-        val workspaceId = dataStore.metadata.workspaceId
-        val workflowExecutionId = dataStore.metadata.executionId
+        val workspaceId = store.metadata.workspaceId
+        val workflowExecutionId = store.metadata.executionId
 
         logger.info { "Executing workflow node: $nodeId in workspace: $workspaceId" }
 
@@ -160,7 +167,7 @@ class WorkflowCoordinationService(
         )
 
         try {
-            logger.debug { "Using dataStore with ${dataStore.getAllStepOutputs().size} prior step outputs" }
+            logger.debug { "Using store with ${store.getAllStepOutputs().size} prior step outputs" }
 
             // Resolve inputs (templates → values)
             // Convert WorkflowNodeConfig properties to Map for resolution
@@ -187,7 +194,7 @@ class WorkflowCoordinationService(
 
             val resolvedInputs = workflowNodeInputResolverService.resolveAll(
                 configMap,
-                dataStore
+                store
             )
 
             // Polymorphic execution - no type switching!
@@ -196,13 +203,13 @@ class WorkflowCoordinationService(
             logger.info { "Executing ${node.type} node via polymorphic dispatch: ${node.name}" }
             val executionStart = System.currentTimeMillis()
 
-            // Execute node with dataStore
-            val nodeOutput = node.execute(dataStore, resolvedInputs, nodeServiceProvider)
+            // Execute node with store
+            val nodeOutput = node.execute(store, resolvedInputs, nodeServiceProvider)
 
             val duration = System.currentTimeMillis() - executionStart
             logger.info { "Node ${node.name} completed via execute() in ${duration}ms" }
 
-            // Create StepOutput and store in dataStore (coordinator writes!)
+            // Create StepOutput and store in store (coordinator writes!)
             val stepOutput = StepOutput(
                 nodeId = nodeId,
                 nodeName = node.name,
@@ -211,10 +218,10 @@ class WorkflowCoordinationService(
                 executedAt = Instant.now(),
                 durationMs = duration
             )
-            dataStore.setStepOutput(node.name, stepOutput)
+            store.setStepOutput(node.name, stepOutput)
 
             logger.debug { "Captured output for node ${node.name}: ${nodeOutput.toMap().keys}" }
-            logger.info { "DataStore now contains ${dataStore.getAllStepOutputs().size} step outputs" }
+            logger.info { "DataStore now contains ${store.getAllStepOutputs().size} step outputs" }
 
             // Update execution record (COMPLETED status)
             updateExecutionNode(
