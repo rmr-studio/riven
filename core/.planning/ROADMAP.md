@@ -1,12 +1,8 @@
-# Roadmap: Workflow Execution Engine
+# Roadmap: Entity Query System
 
 ## Overview
 
-This roadmap guides the development of a Temporal-based workflow execution engine from foundational expression evaluation through complete end-to-end workflow lifecycle. We begin by building the expression system for conditional logic, integrate with the existing entity system for data resolution, implement core Temporal workflow patterns, add action executors for workflow nodes, coordinate DAG-based execution, expose management APIs, handle errors gracefully, and validate the complete system through comprehensive testing.
-
-## Domain Expertise
-
-None
+This roadmap delivers a reusable Entity Query Service that translates structured filter trees into parameterized PostgreSQL JSONB queries. The journey progresses from extracting query models into a shared location, through implementing attribute and relationship filtering with a Visitor-based SQL generation approach, to assembling complete queries with pagination, and finally integrating with the existing workflow system. Each phase builds on the previous, with security (SQL injection prevention, workspace isolation) baked into the foundational components.
 
 ## Phases
 
@@ -16,149 +12,120 @@ None
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [x] **Phase 1: Expression System Foundation** - Parser and evaluator for SQL-like expressions
-- [x] **Phase 2: Entity Context Integration** - Resolve entity data for expression evaluation
-- [x] **Phase 3: Temporal Workflow Engine** - Core workflow execution with Temporal activities
-- [x] **Phase 4: Action Executors** - Implement node action types (CRUD, API calls, conditionals)
-- [x] **Phase 4.1: Action Execution (INSERTED)** - Data registry, template resolution, polymorphic execution
-- [x] **Phase 5: DAG Execution Coordinator** - Topological sort, node scheduling, state management
-- [x] **Phase 6: Backend API Layer** - REST endpoints for workflow management
-- [x] **Phase 6.1: Execution Queue Management (INSERTED)** - Execution queue management
-- [x] **Phase 7: Error Handling & Retry Logic** - Temporal retry policies and error surfacing
-- [x] **Phase 7.1: Node Configuration Development (INSERTED)** - Strongly-typed node configs with validation
-- [ ] **Phase 8: End-to-End Testing** - Validate complete workflow lifecycle
+- [x] **Phase 1: Query Model Extraction** - Extract and enhance query models from workflow config into shared location
+- [x] **Phase 2: Attribute Filter Implementation** - SqlFragment foundation and attribute filtering with all operators
+- [ ] **Phase 3: Relationship Filter Implementation** - EXISTS subqueries and relationship condition handling
+- [ ] **Phase 4: Query Assembly** - Complete SELECT query building with pagination and projection
+- [ ] **Phase 5: Query Execution Service** - EntityQueryService orchestration with security and result mapping
+- [ ] **Phase 6: Workflow Integration** - Update WorkflowQueryEntityActionConfig to use new service
 
 ## Phase Details
 
-### Phase 1: Expression System Foundation
-**Goal**: Build SQL-like expression parser and evaluator with type-safe evaluation
+### Phase 1: Query Model Extraction
+**Goal**: Query models exist in a shared location, enabling any feature to build entity queries
 **Depends on**: Nothing (first phase)
-**Research**: Unlikely (parser libraries exist, expression evaluation patterns established)
-**Status**: ✅ COMPLETED
+**Requirements**: MODEL-01, MODEL-02, MODEL-03, MODEL-04, MODEL-05
+**Success Criteria** (what must be TRUE):
+  1. EntityQuery, QueryFilter, RelationshipCondition, FilterValue, FilterOperator models exist in models/entity/query/
+  2. QueryPagination, QueryProjection, OrderByClause, SortDirection models exist in models/entity/query/
+  3. TargetTypeMatches condition supports type-aware branching with branches list
+  4. maxDepth configuration exists on EntityQuery with default value of 3
+  5. WorkflowQueryEntityActionConfig imports from new location without breaking existing code
+**Plans**: 2 plans
 
 Plans:
-- [x] 01-01: Expression parser and evaluator (2026-01-10) - SQL-like syntax, recursive descent parser, type-safe evaluation
+- [x] 01-01-PLAN.md — Create query models in models/entity/query/
+- [x] 01-02-PLAN.md — Update WorkflowQueryEntityActionConfig imports
 
-### Phase 2: Entity Context Integration
-**Goal**: Enable expression evaluation against dynamic entity data with field traversal
+### Phase 2: Attribute Filter Implementation
+**Goal**: Filter entities by attribute values using all supported operators with GIN-index-aware SQL generation
 **Depends on**: Phase 1
-**Research**: Unlikely (entity system already exists, integration patterns clear)
-**Status**: ✅ COMPLETED
+**Requirements**: ATTR-01, ATTR-02, ATTR-03, ATTR-04, ATTR-05, ATTR-06, ATTR-07, ATTR-08, ATTR-09, ATTR-10, ATTR-11, ATTR-12, LOGIC-01, LOGIC-02, LOGIC-03
+**Success Criteria** (what must be TRUE):
+  1. SqlFragment data class encapsulates parameterized SQL text with bound parameters
+  2. All 12 FilterOperator variants generate correct JSONB SQL (EQUALS through IS_NOT_NULL)
+  3. AND filter combines multiple conditions with all required to match
+  4. OR filter combines multiple conditions with any required to match
+  5. Nested AND/OR filters at arbitrary depth generate correctly parenthesized SQL
+**Plans**: 3 plans
 
 Plans:
-- [x] 02-01: Entity context provider with relationship traversal (2026-01-10) - EntityContextService with depth-limited recursion, cardinality-aware handling, comprehensive test coverage
+- [x] 02-01-PLAN.md — SqlFragment foundation, ParameterNameGenerator, query exceptions
+- [x] 02-02-PLAN.md — AttributeSqlGenerator for all 12 FilterOperator variants
+- [x] 02-03-PLAN.md — AttributeFilterVisitor with AND/OR logical composition
 
-### Phase 3: Temporal Workflow Engine
-**Goal**: Implement core Temporal workflow definitions and activities for workflow execution
+### Phase 3: Relationship Filter Implementation
+**Goal**: Filter entities by their relationships using EXISTS subqueries with workspace isolation
 **Depends on**: Phase 2
-**Research**: Completed (03-RESEARCH.md - Temporal SDK patterns, deterministic workflow requirements)
-**Status**: ✅ COMPLETED
-
-Plans:
-- [x] 03-01: Temporal workflow and activity infrastructure (2026-01-10) - Workflow orchestration, activity execution, REST API, integration tests
-
-### Phase 4: Action Executors
-**Goal**: Implement workflow node action executors (entity CRUD, API calls, conditional branches)
-**Depends on**: Phase 3
-**Research**: Unlikely (CRUD operations follow existing entity service patterns)
-**Status**: ✅ COMPLETED
-
-Plans:
-- [x] 04-01: Entity CRUD action executors (2026-01-11) - CREATE/UPDATE/DELETE/QUERY with extensible executeAction pattern
-- [x] 04-02: HTTP request actions and conditional control flow (2026-01-10) - HTTP_REQUEST with SSRF protection, CONDITION with expression evaluation, extensibility proven
-
-### Phase 4.1: Action Execution (INSERTED)
-**Goal**: Implement data registry, input resolution, and polymorphic execution for action execution
-**Depends on**: Phase 4
-**Research**: Completed (see 4.1-CONTEXT.md)
-**Status**: ✅ COMPLETED
-
-Plans:
-- [x] 4.1-01: Data Registry & Output Capture (2026-01-11) - WorkflowExecutionContext with data registry, output capture in all executors
-- [x] 4.1-02: Template-Based Input Resolution (2026-01-11) - TemplateParserService and InputResolverService enable {{ steps.name.output }} references
-- [x] 4.1-03: Polymorphic Execution Refactor (2026-01-11) - Nodes implement execute(), eliminated type switching, foundation for LOOP/SWITCH/PARALLEL
-
-### Phase 5: DAG Execution Coordinator
-**Goal**: Orchestrate workflow execution with topological sort and parallel node scheduling
-**Depends on**: Phase 4.1
-**Research**: Completed (5-RESEARCH.md - Kahn's algorithm, state machine patterns)
-**Status**: ✅ COMPLETED
-
-Plans:
-- [x] 5-01: Topological Sort & DAG Validation (2026-01-12) - Kahn's algorithm with cycle detection, comprehensive structural validation
-- [x] 5-02: Active Node Queue & State Machine (2026-01-12) - In-degree tracked queue, immutable state machine with event-driven transitions
-- [x] 5-03: DAG Execution Coordinator (2026-01-12) - Parallel orchestration with Temporal integration, comprehensive integration testing
-
-### Phase 6: Backend API Layer
-**Goal**: Expose REST APIs for workflow creation, update, retrieval, and execution triggering
-**Depends on**: Phase 5
-**Research**: Unlikely (REST API patterns established in codebase)
-**Status**: ✅ COMPLETED
-
-Plans:
-- [x] 06-01: Workflow definition CRUD APIs (2026-01-20) - WorkflowDefinitionService (303 lines), WorkflowDefinitionController (184 lines), 9 unit tests
-- [x] 06-02: Workflow graph management APIs (2026-01-20) - WorkflowGraphService (537 lines), WorkflowGraphController (238 lines), cascade deletion, 15 tests
-- [x] 06-03: Workflow execution query APIs (2026-01-20) - Extended WorkflowExecutionService with 4 query methods, 4 GET endpoints, 8 tests
-
-### Phase 6.1: Execution Queue Management (INSERTED)
-**Goal**: Database-backed execution queue with tier-based concurrency limits for workflow dispatching
-**Depends on**: Phase 6
-**Research**: Completed (06.1-RESEARCH.md - ShedLock, SKIP LOCKED, Temporal multi-queue)
-**Status**: ✅ COMPLETED
-
-Plans:
-- [x] 06.1-01: ShedLock infrastructure and WorkspaceTier enum (2026-01-21)
-- [x] 06.1-02: ExecutionQueueEntity, repository, and queue service (2026-01-21)
-- [x] 06.1-03: Multi-queue workers, dispatcher service, queue integration (2026-01-21)
-
-### Phase 7: Error Handling & Retry Logic
-**Goal**: Implement Temporal retry policies and error surfacing to execution records
-**Depends on**: Phase 6.1
-**Research**: Completed (07-RESEARCH.md - Temporal RetryOptions, ApplicationFailure, error classification)
-**Status**: ✅ COMPLETED
-
-Plans:
-- [x] 07-01: Retry configuration infrastructure and structured error models (2026-01-22)
-- [x] 07-02: Error classification and Temporal ApplicationFailure integration (2026-01-22)
-- [x] 07-03: Error surfacing in API responses and unit tests (2026-01-22)
-
-### Phase 7.1: Node Configuration Development (INSERTED)
-**Goal**: Define strongly-typed configuration structures for workflow node types with save-time validation
-**Depends on**: Phase 7
-**Research**: Completed (07.1-RESEARCH.md - Kotlin data class patterns, existing config structure analysis)
-**Status**: ✅ COMPLETED
-
-Plans:
-- [x] 07.1-01: Validation infrastructure (2026-01-29) — ConfigValidationError, ConfigValidationResult, ConfigValidationService with template/UUID validation
-- [x] 07.1-02: Entity action configs (2026-01-29) — Typed CREATE, UPDATE, DELETE, QUERY with validate() methods
-- [x] 07.1-03: HTTP_REQUEST and CONDITION configs (2026-01-29) — Typed fields, validate(), isTemplate() helper
-- [x] 07.1-04: Deserializer and validation integration (2026-01-29) — Fixed CONDITION routing, WorkflowGraphService validation, 20 test cases
-- [x] 07.1-05: Trigger config validation (2026-01-29) — validate() methods for ENTITY_EVENT, SCHEDULE, FUNCTION, WEBHOOK
-
-### Phase 8: End-to-End Testing
-**Goal**: Validate complete workflow lifecycle from API definition through execution to entity modifications
-**Depends on**: Phase 7.1
-**Research**: Unlikely (testing patterns established)
+**Requirements**: REL-01, REL-02, REL-03, REL-04, REL-05, REL-06, REL-07, REL-08
+**Success Criteria** (what must be TRUE):
+  1. EXISTS condition generates SQL that matches entities with at least one related entity
+  2. NOT_EXISTS condition generates SQL that matches entities with no related entities
+  3. TargetEquals condition matches entities related to specific entity IDs
+  4. TargetMatches condition matches entities whose related entities satisfy a nested filter
+  5. TargetTypeMatches condition matches entities using OR semantics across type branches with optional filters
 **Plans**: TBD
 
 Plans:
-- TBD
+- [ ] 03-01: TBD
+
+### Phase 4: Query Assembly
+**Goal**: Assemble complete SELECT queries with pagination and projection support
+**Depends on**: Phase 3
+**Requirements**: PAGE-01, PAGE-02, PAGE-03, PAGE-04
+**Success Criteria** (what must be TRUE):
+  1. Limit parameter caps result count with default of 100
+  2. Offset parameter skips results with default of 0
+  3. Projection includeAttributes hints are available to callers (even if full Entity returned)
+  4. Projection includeRelationships hints are available to callers
+**Plans**: TBD
+
+Plans:
+- [ ] 04-01: TBD
+
+### Phase 5: Query Execution Service
+**Goal**: EntityQueryService executes queries securely and returns typed results
+**Depends on**: Phase 4
+**Requirements**: EXEC-01, EXEC-02, EXEC-03, EXEC-04, EXEC-05, EXEC-06, EXEC-07, EXEC-08, EXEC-09
+**Success Criteria** (what must be TRUE):
+  1. EntityQueryService exists as single entry point in service/entity/
+  2. Generated SQL uses native PostgreSQL JSONB operators (not JPA Criteria)
+  3. All queries use parameterized values with no string concatenation of user input
+  4. All queries include workspace_id filtering on main query and relationship subqueries
+  5. Query execution returns List of Entity domain models with totalCount for pagination
+  6. Invalid attributeId reference throws descriptive exception immediately
+  7. Invalid relationshipId reference throws descriptive exception immediately
+**Plans**: TBD
+
+Plans:
+- [ ] 05-01: TBD
+
+### Phase 6: Workflow Integration
+**Goal**: WorkflowQueryEntityActionConfig delegates to EntityQueryService
+**Depends on**: Phase 5
+**Requirements**: INT-01, INT-02
+**Success Criteria** (what must be TRUE):
+  1. WorkflowQueryEntityActionConfig.execute() calls EntityQueryService instead of throwing NotImplementedError
+  2. Template expressions are resolved by caller before EntityQueryService invocation
+**Plans**: TBD
+
+Plans:
+- [ ] 06-01: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 4.1 → 5 → 6 → 6.1 → 7 → 7.1 → 8
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Expression System Foundation | 1/1 | ✅ Complete | 2026-01-10 |
-| 2. Entity Context Integration | 1/1 | ✅ Complete | 2026-01-10 |
-| 3. Temporal Workflow Engine | 1/1 | ✅ Complete | 2026-01-10 |
-| 4. Action Executors | 2/2 | ✅ Complete | 2026-01-11 |
-| 4.1. Action Execution (INSERTED) | 3/3 | ✅ Complete | 2026-01-11 |
-| 5. DAG Execution Coordinator | 3/3 | ✅ Complete | 2026-01-12 |
-| 6. Backend API Layer | 3/3 | ✅ Complete | 2026-01-20 |
-| 6.1. Execution Queue Management (INSERTED) | 3/3 | ✅ Complete | 2026-01-21 |
-| 7. Error Handling & Retry Logic | 3/3 | ✅ Complete | 2026-01-22 |
-| 7.1. Node Configuration Development (INSERTED) | 5/5 | ✅ Complete | 2026-01-29 |
-| 8. End-to-End Testing | 0/TBD | Not started | - |
+| 1. Query Model Extraction | 2/2 | Complete | 2026-02-01 |
+| 2. Attribute Filter Implementation | 3/3 | Complete | 2026-02-02 |
+| 3. Relationship Filter Implementation | 0/? | Not started | - |
+| 4. Query Assembly | 0/? | Not started | - |
+| 5. Query Execution Service | 0/? | Not started | - |
+| 6. Workflow Integration | 0/? | Not started | - |
+
+---
+*Roadmap created: 2026-02-01*
+*Last updated: 2026-02-02*

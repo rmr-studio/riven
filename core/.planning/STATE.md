@@ -2,102 +2,71 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-09)
+See: .planning/PROJECT.md (updated 2026-02-01)
 
-**Core value:** End-to-end workflow lifecycle: create graph -> save -> execute via Temporal -> see results
-**Current focus:** Phase 7.1 - Node Configuration Development (COMPLETE)
+**Core value:** Execute complex entity queries with attribute filters, relationship traversals, and polymorphic type handling while maintaining workspace isolation and optimal database performance.
+**Current focus:** Phase 3 - Relationship Filter Implementation
 
 ## Current Position
 
-Phase: 7.1 of 8 (Node Configuration Development)
-Plan: 5 of 5 in current phase
-Status: Phase complete
-Last activity: 2026-01-29 - Completed 07.1-05-PLAN.md
+Phase: 3 of 6 (Relationship Filter Implementation)
+Plan: 0 of ? in current phase
+Status: Ready to plan
+Last activity: 2026-02-02 - Phase 2 complete and verified
 
-Progress: █████████████████████████ 100% (25 of 25 plans complete)
+Progress: [███░░░░░░░] 33%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 25
-- Average duration: ~19 minutes (0.31 hours)
-- Total execution time: 7.77 hours
+- Total plans completed: 5
+- Average duration: 2 min
+- Total execution time: 8 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1 - Expression System | 1 | 0.5h | 0.5h |
-| 2 - Entity Context Integration | 1 | 3.67h | 3.67h |
-| 3 - Temporal Workflow Engine | 1 | 0.28h | 0.28h |
-| 4 - Action Executors | 2 | 0.88h | 0.44h |
-| 4.1 - Action Execution | 3 | 0.72h | 0.24h |
-| 5 - DAG Execution Coordinator | 3 | 0.37h | 0.12h |
-| 6 - Backend API Layer | 3 | 0.17h | 0.06h |
-| 6.1 - Execution Queue Management | 3 | 0.18h | 0.06h |
-| 7 - Error Handling & Retry Logic | 3 | 0.13h | 0.04h |
-| 7.1 - Node Configuration Development | 5 | 0.36h | 0.07h |
+| 01-query-model-extraction | 2 | 4 min | 2 min |
+| 02-attribute-filter-implementation | 3 | 4 min | 1.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 07.1-01 (0.07h), 07.1-03 (0.07h), 07.1-02 (0.08h), 07.1-04 (0.07h), 07.1-05 (0.07h)
-- Trend: Excellent velocity maintained
+- Last 5 plans: 01-02 (2 min), 02-01 (2 min), 02-02 (1 min), 02-03 (1 min)
+- Trend: Consistent (accelerating)
+
+*Updated after each plan completion*
 
 ## Accumulated Context
-
-### Roadmap Evolution
-
-- Phase 4.1 inserted after Phase 4: Action Execution (URGENT) - 2026-01-11
-- Phase 6.1 inserted after Phase 6: Execution Queue Management (URGENT) - 2026-01-19
-- Phase 7.1 inserted after Phase 7: Node Configuration Development (URGENT) - 2026-01-22
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-| Decision | Rationale | Plan |
-|----------|-----------|------|
-| Soft-delete for workflow definitions | Allows recovery, maintains referential integrity | 06-01 |
-| Metadata-only updates via updateWorkflow | Graph structure updates handled separately | 06-01 |
-| Cascade deletion on node delete | Deleting node must delete connected edges for graph consistency | 06-02 |
-| Immutable versioning for config changes | Config changes create new entity version, metadata updates in place | 06-02 |
-| Map return types for query responses | Flexibility for evolving response structure without DTOs | 06-03 |
-| Workspace verification in service layer | Better error messages, supports cross-workspace scenarios | 06-03 |
-| ShedLock for distributed scheduler locking | Ensures scheduled tasks only run on one instance | 06.1-01 |
-| FIFO ordering via created_at ASC | Predictable queue behavior for workflow execution | 06.1-02 |
-| SKIP LOCKED for concurrent claiming | Multiple dispatchers can claim items without blocking | 06.1-02 |
-| Stale claim recovery with 5min default | Crash protection for stuck CLAIMED items | 06.1-02 |
-| V1 uses default queue for all workspaces | Simplicity for initial release, per-workspace queues deferred | 06.1-03 |
-| 202 Accepted for queue-based execution | Indicates asynchronous processing to client | 06.1-03 |
-| Enum property for retryable classification | Simpler than method, evaluable at compile time | 07-01 |
-| Non-retryable HTTP codes: 400, 401, 403, 404, 422 | Client errors won't succeed on retry | 07-01 |
-| Kotlin object for WorkflowErrorClassifier | Direct calls without Spring injection, testable | 07-02 |
-| Hardcoded retry values in workflow | Not a Spring bean, cannot inject ConfigurationProperties | 07-02 |
-| Computed properties over methods for error helpers | Lightweight derived values, Kotlin-idiomatic | 07-03 |
-| Direct object testing for stateless utilities | No Spring context or mocking needed for Kotlin objects | 07-03 |
-| Detect malformed templates with {{ check | isTemplate() only matches valid templates, need explicit check for malformed | 07.1-01 |
-| Config map getter pattern | Add computed `config` property returning typed fields as map for coordination service | 07.1-02 |
-| Entity payload wrapping | Use EntityAttributeRequest with TEXT SchemaType default; infer later | 07.1-02 |
-| HTTP method validated as enum set | GET, POST, PUT, DELETE, PATCH validated in validate() | 07.1-03 |
-| Expression stored as string | Parsed on validation/execution per RESEARCH.md | 07.1-03 |
-| Coordination service extracts typed fields | Required for InputResolverService compatibility | 07.1-03 |
-| Validation runs before any database changes | Reject early, fail fast pattern | 07.1-04 |
-| Triggers return valid() for now | Graceful fallback until trigger validation added | 07.1-04 |
-| ENTITY_EVENT validates key and expressions | Non-empty validation for required fields | 07.1-05 |
-| SCHEDULE validates cronExpression/interval | Mutual exclusivity already in init block | 07.1-05 |
-| FUNCTION/WEBHOOK return valid() | Constructor enforces non-null | 07.1-05 |
+- Native SQL over JPA Criteria - JSONB operators need direct SQL control
+- Templates resolved by caller - EntityQueryService focused on execution only
+- TargetTypeMatches with OR semantics - Polymorphic relationships need type-aware branching
+- EntityQuery.maxDepth defaults to 3 with 1-10 validation range
+- Query models use riven.core.models.entity.query package
+- TargetTypeMatches validation added in WorkflowQueryEntityActionConfig
+- SqlFragment immutable composition - Thread-safe, testable, prevents mutation bugs
+- Parameter naming format {prefix}_{counter} - Simple, deterministic, unique within query tree
+- QueryFilterException sealed hierarchy - Enables exhaustive when-expression handling
+- EQUALS uses @> containment for GIN index optimization
+- NOT_EQUALS/NOT_IN require key existence check (? operator)
+- Numeric comparisons fail silently (return false) on non-numeric values
+- AttributeFilterVisitor delegates ATTRIBUTE to AttributeSqlGenerator via composition
 
-### Deferred Issues
+### Pending Todos
 
 None yet.
 
 ### Blockers/Concerns
 
-None.
+None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-29
-Stopped at: Completed 07.1-05-PLAN.md (Trigger Configs)
-Resume file: N/A
-Next action: Phase 7.1 complete. All 25 plans executed. Ready for Phase 8.
+Last session: 2026-02-02
+Stopped at: Phase 2 complete and verified
+Resume file: None

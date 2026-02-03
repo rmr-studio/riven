@@ -1,98 +1,81 @@
-# Workflow Execution Engine
+# Entity Query System
 
 ## What This Is
 
-A Temporal-based workflow execution engine that enables end users to create, save, and execute DAG-structured workflows with full bidirectional integration with the existing dynamic Entity system. Workflows execute actions (CRUD operations, API calls, conditional branching) based on SQL-like expression evaluation of entity data and conditions.
+A reusable Entity Query Service that extracts the query model from `WorkflowQueryEntityActionConfig` into a common location, then implements a service that executes structured queries against entities using native PostgreSQL/JSONB operations. This enables any feature requiring entity querying (workflows, API endpoints, reports) to use a single, optimized, security-aware query system.
 
 ## Core Value
 
-End-to-end workflow lifecycle: create graph → save → execute via Temporal → see results. Users can define a workflow, persist it, trigger execution, and observe completion with entity modifications and action outcomes.
+Execute complex entity queries with attribute filters, relationship traversals, and polymorphic type handling while maintaining workspace isolation and optimal database performance.
 
 ## Requirements
 
 ### Validated
 
-<!-- Existing infrastructure from codebase -->
-
-- ✓ Workflow data model (WorkflowDefinitionEntity, WorkflowNodeEntity, WorkflowEdgeEntity) — existing
-- ✓ Workflow execution tracking (WorkflowExecutionEntity, WorkflowExecutionNodeEntity) — existing
-- ✓ Workflow node type system (WorkflowNodeType enum with action/control/trigger/utility subtypes) — existing
-- ✓ Temporal configuration (TemporalEngineConfiguration, connection to Temporal Cloud) — existing
-- ✓ DAG graph structure (nodes connected by edges, stored in PostgreSQL) — existing
-- ✓ Trigger types defined (webhook, schedule, entity event triggers) — existing
-- ✓ Dynamic Entity system (EntityType with mutable schemas, Entity instances with JSONB payloads) — existing
+(None yet — ship to validate)
 
 ### Active
 
-<!-- Core functionality to build for v1 -->
-
-- [ ] Temporal workflow execution logic (workflow definitions, activities for actions)
-- [ ] Expression parser (parse SQL-like expressions: `entity.status = 'active' AND count > 10`)
-- [ ] Expression evaluator (evaluate parsed expressions against entity data with type safety)
-- [ ] Entity context resolution (fetch entity data by ID/type for expression evaluation)
-- [ ] Entity field traversal (access nested fields: `client.address.city`, `project.owner.email`)
-- [ ] Workflow action executors (CRUD operations on entities, API calls, conditional branches)
-- [ ] Backend API for workflow management (create, update, retrieve, execute workflows)
-- [ ] Workflow execution coordinator (topological sort, node scheduling, state management)
-- [ ] Error handling and retry logic (Temporal retry policies, error surfacing to execution records)
-- [ ] Test workflow end-to-end (define simple workflow via API, execute, verify entity modifications)
+- [ ] Extract query models (`EntityQuery`, `QueryFilter`, `RelationshipCondition`, `FilterValue`, `FilterOperator`, `QueryPagination`, `QueryProjection`) from workflow config into `models/entity/query/`
+- [ ] Add `TargetTypeMatches` relationship condition for polymorphic type-aware branching with OR semantics and optional filters per branch
+- [ ] Create `EntityQueryService` in `service/entity/` with query execution
+- [ ] Generate native PostgreSQL SQL with JSONB operators for attribute filtering
+- [ ] Support relationship filtering via `entity_relationships` table joins
+- [ ] Implement configurable max depth for nested relationship traversals (`TargetMatches`)
+- [ ] Enforce workspace_id filtering on all queries for multi-tenant security
+- [ ] Return `List<Entity>` domain models with `totalCount` for pagination
+- [ ] Fail fast with exceptions on invalid filter references (non-existent attributeId, relationshipId)
+- [ ] Support all `FilterOperator` variants: EQUALS, NOT_EQUALS, GREATER_THAN, LESS_THAN, IN, NOT_IN, CONTAINS, IS_NULL, STARTS_WITH, ENDS_WITH, etc.
+- [ ] Update `WorkflowQueryEntityActionConfig` to use extracted models and delegate execution to `EntityQueryService`
 
 ### Out of Scope
 
-- Visual workflow builder UI — v1 focuses on backend execution engine; workflows defined programmatically or via API
-- Advanced expression functions (aggregations, window functions) — defer complex functions to v2, start with comparisons and basic operations
-- Workflow versioning UI — version management exists in data model but no user-facing versioning controls
-- Real-time execution monitoring dashboard — execution records stored but no live dashboard
-- Workflow marketplace/templates — no pre-built workflow library
+- Template resolution inside EntityQueryService — callers resolve templates before calling
+- Query result caching — optimize at database level first
+- Block system querying — future extension, not this project
+- GraphQL-style field selection — projections are informational, full Entity returned
+- Query plan explanation/debugging tools — defer to future
 
 ## Context
 
-**Existing Infrastructure:**
-- Spring Boot 3.5.3 + Kotlin 2.1.21 backend with PostgreSQL database
-- Temporal 1.32.1 SDK integrated with configuration in place
-- Multi-tenant SaaS architecture with workspace-level isolation (Row-Level Security)
-- Entity system with flexible JSONB schemas (EntityType defines schema, Entity stores instances)
-- Block system for content composition (separate from workflows)
+**Existing Implementation:**
+- Query model already defined in `WorkflowQueryEntityActionConfig` (754 lines) with comprehensive structure
+- `execute()` method throws `NotImplementedError` awaiting `EntityQueryService`
+- Entity payload stored as JSONB in `entities.payload` column with GIN index (`jsonb_path_ops`)
+- Payload structure is `Map<UUID, EntityAttribute>` where values are polymorphic (primitives or relationships)
+- Relationships stored in `entity_relationships` table with source/target entity IDs and relationship keys
+- Existing indexes: `idx_entities_payload_gin`, `idx_entity_relationships_source`, `idx_entity_relationships_target`
 
-**Workflow Data Model (Already Defined):**
-- `WorkflowDefinitionEntity` - Workflow metadata and versioning
-- `WorkflowNodeEntity` - Individual workflow nodes (actions, triggers, controls)
-- `WorkflowEdgeEntity` - Connections between nodes (DAG structure)
-- `WorkflowExecutionEntity` - Execution instances with status tracking
-- `WorkflowExecutionNodeEntity` - Per-node execution state
+**Polymorphic Complexity:**
+- Relationship definitions can target multiple entity types (e.g., Owner → [Client, Partner])
+- Relationship definitions can be fully polymorphic (`allowPolymorphic: true` → any entity type)
+- Different target types have different attribute schemas
+- Requires type-aware filtering: "Owner is Client where tier = Premium" vs "Owner is Partner where region = APAC"
 
-**Node Type System:**
-- `WorkflowNodeType` - Base enum (ACTION, CONTROL, TRIGGER, UTILITY, HUMAN_INTERACTION)
-- Extension enums: `WorkflowActionType`, `WorkflowControlType`, `WorkflowTriggerType`, `WorkflowUtilityActionType`, `WorkflowHumanInteractionType`
-- Each type has specific behavior and configuration requirements
-
-**Entity Integration:**
-- Workflows can read entity data for conditional logic
-- Workflows can create/update/delete entities as actions
-- Entity events (created, updated, deleted) can trigger workflow execution
-- Expressions reference entity fields dynamically based on EntityType schema
-
-**Technical Requirements:**
-- Expression syntax: SQL-like (`=` for equality, `AND`/`OR` for logic, `.` for field access)
-- DAG execution: Topological sort to determine node execution order
-- Temporal patterns: Deterministic workflows, non-deterministic activities, signals for external events
-- Type safety: Expression evaluation must respect EntityType schema and field types
+**Database Schema:**
+- `entities`: id, workspace_id, type_id, payload (JSONB), identifier_key, deleted, audit fields
+- `entity_relationships`: id, workspace_id, source_entity_id, target_entity_id, relationship_key, source/target_entity_type_id
+- RLS policies enforce workspace isolation at database level
 
 ## Constraints
 
-- **Tech Stack**: Must use existing Spring Boot + Kotlin backend, PostgreSQL database, Temporal 1.32.1 SDK — maintain consistency with entity and block systems
-- **Multi-Tenancy**: All workflow operations must respect workspace-level isolation via Row-Level Security
-- **Determinism**: Temporal workflows must be deterministic (no random, no current time in workflow code)
-- **Schema Flexibility**: Expression evaluator must handle dynamic EntityType schemas (fields added/removed at runtime)
+- **Tech stack**: Spring Boot 3.5.3, Kotlin 2.1.21, PostgreSQL with JSONB
+- **Query approach**: Native SQL with JSONB operators (not JPA Criteria API) for maximum performance
+- **Security**: All queries must filter by workspace_id — no cross-tenant data leakage
+- **Compatibility**: Must work with existing Entity/EntityType domain models without modification
+- **Performance**: Leverage existing GIN index on payload column; avoid N+1 queries for relationships
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| SQL-like expression syntax | Familiar to users, aligns with database query patterns | — Pending |
-| DAG structure (no cycles) | Enables topological execution order, prevents infinite loops | — Pending |
-| Full entity integration | Workflows are first-class orchestrators of entity lifecycle | — Pending |
-| Defer visual builder to v2 | Focus on execution engine correctness before UX layer | — Pending |
+| Native SQL over JPA Criteria | JSONB operators and complex joins need direct SQL control for performance | — Pending |
+| Templates resolved by caller | Keeps EntityQueryService focused on query execution, not context resolution | — Pending |
+| Single service (not layered) | Simpler API surface; internal implementation can be refactored later if needed | — Pending |
+| TargetTypeMatches with OR semantics | Polymorphic relationships need type-aware branching; OR allows flexible matching | — Pending |
+| Always return totalCount | Pagination UX requires knowing total; single query with COUNT(*) OVER() | — Pending |
+| Fail fast on invalid refs | Better DX than silent failures; validation should catch issues early | — Pending |
+| Configurable traversal depth | Prevents runaway recursive queries while allowing reasonable nesting | — Pending |
 
 ---
-*Last updated: 2026-01-09 after initialization*
+*Last updated: 2025-02-01 after initialization*
