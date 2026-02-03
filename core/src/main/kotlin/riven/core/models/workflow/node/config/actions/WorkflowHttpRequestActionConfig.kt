@@ -7,6 +7,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.media.Schema
 import org.springframework.http.HttpMethod
 import org.springframework.web.reactive.function.client.WebClient
+import riven.core.enums.common.icon.IconType
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
@@ -16,6 +17,7 @@ import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
 import riven.core.models.workflow.node.config.WorkflowNodeConfigField
+import riven.core.models.workflow.node.config.WorkflowNodeTypeMetadata
 import riven.core.models.workflow.node.config.validation.ConfigValidationError
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
@@ -78,34 +80,34 @@ private val logger = KotlinLogging.logger {}
 data class WorkflowHttpRequestActionConfig(
     override val version: Int = 1,
 
-    @Schema(
+    @param:Schema(
         description = "URL to request. Can contain templates like {{ steps.x.output.url }}",
         example = "https://api.example.com/users"
     )
     val url: String,
 
-    @Schema(
+    @param:Schema(
         description = "HTTP method: GET, POST, PUT, DELETE, PATCH",
         example = "POST",
         allowableValues = ["GET", "POST", "PUT", "DELETE", "PATCH"]
     )
     val method: String,
 
-    @Schema(
+    @param:Schema(
         description = "Optional HTTP headers. Values can be templates.",
         example = """{"Content-Type": "application/json", "Authorization": "Bearer {{ steps.auth.output.token }}"}""",
         nullable = true
     )
     val headers: Map<String, String>? = null,
 
-    @Schema(
+    @param:Schema(
         description = "Optional request body for POST/PUT/PATCH. Values can be templates.",
         example = """{"name": "{{ steps.user.output.name }}", "email": "user@example.com"}""",
         nullable = true
     )
     val body: Map<String, String>? = null,
 
-    @Schema(
+    @param:Schema(
         description = "Optional timeout override in seconds",
         example = "30",
         nullable = true
@@ -137,6 +139,13 @@ data class WorkflowHttpRequestActionConfig(
         get() = Companion.configSchema
 
     companion object {
+        val metadata = WorkflowNodeTypeMetadata(
+            label = "HTTP Request",
+            description = "Makes an HTTP request to an external URL",
+            icon = IconType.SEND,
+            category = WorkflowNodeType.ACTION
+        )
+
         private val VALID_METHODS = setOf("GET", "POST", "PUT", "DELETE", "PATCH")
         private val SENSITIVE_HEADERS = setOf(
             "authorization",

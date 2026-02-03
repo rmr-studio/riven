@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.media.Schema
+import riven.core.enums.common.icon.IconType
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
@@ -15,9 +16,10 @@ import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
 import riven.core.models.workflow.node.config.WorkflowNodeConfigField
+import riven.core.models.workflow.node.config.WorkflowNodeTypeMetadata
+import riven.core.models.workflow.node.config.validation.ConfigValidationError
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
-import riven.core.models.workflow.node.config.validation.ConfigValidationError
 import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
 import java.util.*
 
@@ -184,6 +186,13 @@ data class WorkflowQueryEntityActionConfig(
         get() = Companion.configSchema
 
     companion object {
+        val metadata = WorkflowNodeTypeMetadata(
+            label = "Query Entities",
+            description = "Searches and retrieves entity instances",
+            icon = IconType.SEARCH,
+            category = WorkflowNodeType.ACTION
+        )
+
         val configSchema: List<WorkflowNodeConfigField> = listOf(
             WorkflowNodeConfigField(
                 key = "query",

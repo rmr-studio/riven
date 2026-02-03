@@ -5,15 +5,18 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import riven.core.enums.common.http.AuthenticationType
 import riven.core.enums.common.http.RequestMethodType
+import riven.core.enums.common.icon.IconType
 import riven.core.enums.workflow.WorkflowNodeConfigFieldType
+import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.enums.workflow.WorkflowTriggerType
-import riven.core.models.common.json.JsonObject
 import riven.core.models.common.http.Signature
+import riven.core.models.common.json.JsonObject
 import riven.core.models.common.validation.Schema
 import riven.core.models.workflow.engine.state.NodeOutput
 import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowNodeConfigField
+import riven.core.models.workflow.node.config.WorkflowNodeTypeMetadata
 import riven.core.models.workflow.node.config.WorkflowTriggerConfig
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import io.swagger.v3.oas.annotations.media.Schema as SwaggerSchema
@@ -52,6 +55,13 @@ data class WorkflowWebhookTriggerConfig(
         get() = Companion.configSchema
 
     companion object {
+        val metadata = WorkflowNodeTypeMetadata(
+            label = "Webhook",
+            description = "Triggers when an HTTP request is received",
+            icon = IconType.WEBHOOK,
+            category = WorkflowNodeType.TRIGGER
+        )
+
         val configSchema: List<WorkflowNodeConfigField> = listOf(
             WorkflowNodeConfigField(
                 key = "method",

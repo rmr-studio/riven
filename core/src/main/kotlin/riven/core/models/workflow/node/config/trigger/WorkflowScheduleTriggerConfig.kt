@@ -4,13 +4,16 @@ import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
+import riven.core.enums.common.icon.IconType
 import riven.core.enums.workflow.WorkflowNodeConfigFieldType
+import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.enums.workflow.WorkflowTriggerType
 import riven.core.models.common.json.JsonObject
 import riven.core.models.workflow.engine.state.NodeOutput
 import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowNodeConfigField
+import riven.core.models.workflow.node.config.WorkflowNodeTypeMetadata
 import riven.core.models.workflow.node.config.WorkflowTriggerConfig
 import riven.core.models.workflow.node.config.validation.ConfigValidationError
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
@@ -50,6 +53,13 @@ data class WorkflowScheduleTriggerConfig(
         get() = Companion.configSchema
 
     companion object {
+        val metadata = WorkflowNodeTypeMetadata(
+            label = "Schedule",
+            description = "Triggers on a recurring schedule or cron expression",
+            icon = IconType.CLOCK,
+            category = WorkflowNodeType.TRIGGER
+        )
+
         val configSchema: List<WorkflowNodeConfigField> = listOf(
             WorkflowNodeConfigField(
                 key = "cronExpression",
