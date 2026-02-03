@@ -212,7 +212,9 @@ docs/WorkflowNode.md
 docs/WorkflowNodeConfig.md
 docs/WorkflowNodeConfigField.md
 docs/WorkflowNodeConfigFieldType.md
+docs/WorkflowNodeMetadata.md
 docs/WorkflowNodeType.md
+docs/WorkflowNodeTypeMetadata.md
 docs/WorkflowParseConfig.md
 docs/WorkflowQueryEntityActionConfig.md
 docs/WorkflowScheduleTriggerConfig.md
@@ -440,7 +442,9 @@ models/WorkflowNode.ts
 models/WorkflowNodeConfig.ts
 models/WorkflowNodeConfigField.ts
 models/WorkflowNodeConfigFieldType.ts
+models/WorkflowNodeMetadata.ts
 models/WorkflowNodeType.ts
+models/WorkflowNodeTypeMetadata.ts
 models/WorkflowParseConfig.ts
 models/WorkflowQueryEntityActionConfig.ts
 models/WorkflowScheduleTriggerConfig.ts

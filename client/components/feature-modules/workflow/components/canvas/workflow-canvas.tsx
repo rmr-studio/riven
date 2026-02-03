@@ -10,7 +10,6 @@ import {
     useOnNodesChange,
     useOnEdgesChange,
     useAddNode,
-    useSelectedNodeId,
     useSelectNode,
 } from "../../context/workflow-canvas-provider";
 import { CanvasBackground } from "../ui/canvas-background";
@@ -19,13 +18,7 @@ import { CanvasMinimap } from "../ui/canvas-minimap";
 import { CanvasEmptyState } from "./empty-state";
 import { nodeTypes } from "../../config/node-types.config";
 import { createWorkflowNode } from "../../util/node-factory.util";
-import { NodeLibrarySidebar } from "../sidebar/node-library-sidebar";
-import {
-    ResizablePanelGroup,
-    ResizablePanel,
-    ResizableHandle,
-} from "@/components/ui/resizable";
-import { NodeConfigDrawer } from "../config/node-config-drawer";
+import { WorkflowSidebar } from "../sidebar/workflow-sidebar";
 
 /**
  * Props for WorkflowCanvasInner component
@@ -47,7 +40,6 @@ const WorkflowCanvasInner = ({ workspaceId }: WorkflowCanvasInnerProps) => {
     const onEdgesChange = useOnEdgesChange();
     const { screenToFlowPosition } = useReactFlow();
     const addNode = useAddNode();
-    const selectedNodeId = useSelectedNodeId();
     const selectNode = useSelectNode();
 
     const onDragOver = useCallback((event: React.DragEvent) => {
@@ -104,50 +96,35 @@ const WorkflowCanvasInner = ({ workspaceId }: WorkflowCanvasInnerProps) => {
         selectNode(null);
     }, [selectNode]);
 
-    const isDrawerOpen = selectedNodeId !== null;
-
     return (
         <div className="flex h-full w-full">
-            <ResizablePanelGroup direction="horizontal" className="flex-1">
-                <ResizablePanel defaultSize={isDrawerOpen ? 70 : 100} minSize={50}>
-                    <div className="h-full relative">
-                        <ReactFlow
-                            nodes={nodes}
-                            edges={edges}
-                            onNodesChange={onNodesChange}
-                            onEdgesChange={onEdgesChange}
-                            nodeTypes={nodeTypes}
-                            onDrop={onDrop}
-                            onDragOver={onDragOver}
-                            onNodeClick={onNodeClick}
-                            onPaneClick={onPaneClick}
-                            minZoom={0.5}
-                            maxZoom={1.5}
-                            fitView
-                            panOnDrag={true}
-                            zoomOnScroll={true}
-                            zoomOnPinch={true}
-                            selectNodesOnDrag={false}
-                            proOptions={{ hideAttribution: true }}
-                        >
-                            <CanvasBackground />
-                            <CanvasMinimap />
-                            <CanvasControls />
-                            {nodes.length === 0 && <CanvasEmptyState />}
-                        </ReactFlow>
-                    </div>
-                </ResizablePanel>
-
-                {isDrawerOpen && (
-                    <>
-                        <ResizableHandle withHandle />
-                        <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
-                            <NodeConfigDrawer workspaceId={workspaceId} />
-                        </ResizablePanel>
-                    </>
-                )}
-            </ResizablePanelGroup>
-            <NodeLibrarySidebar onClickAdd={handleClickToAdd} />
+            <div className="flex-1 h-full relative">
+                <ReactFlow
+                    nodes={nodes}
+                    edges={edges}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    nodeTypes={nodeTypes}
+                    onDrop={onDrop}
+                    onDragOver={onDragOver}
+                    onNodeClick={onNodeClick}
+                    onPaneClick={onPaneClick}
+                    minZoom={0.5}
+                    maxZoom={1.5}
+                    fitView
+                    panOnDrag={true}
+                    zoomOnScroll={true}
+                    zoomOnPinch={true}
+                    selectNodesOnDrag={false}
+                    proOptions={{ hideAttribution: true }}
+                >
+                    <CanvasBackground />
+                    <CanvasMinimap />
+                    <CanvasControls />
+                    {nodes.length === 0 && <CanvasEmptyState />}
+                </ReactFlow>
+            </div>
+            <WorkflowSidebar workspaceId={workspaceId} onClickAdd={handleClickToAdd} />
         </div>
     );
 };
@@ -170,7 +147,7 @@ interface WorkflowCanvasProps {
  * - Minimap in bottom-right showing node positions
  * - Controls in bottom-left with zoom +/- and fit view
  * - Empty state when no nodes exist
- * - ResizablePanelGroup for canvas/drawer layout
+ * - Unified sidebar with animated transitions between node library and config drawer
  *
  * All state is managed through Zustand store via context hooks,
  * enabling external control of the canvas state.

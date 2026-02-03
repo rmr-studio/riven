@@ -10,7 +10,7 @@ All URIs are relative to *http://localhost:8081*
 | [**deleteWorkflow**](WorkflowApi.md#deleteworkflow) | **DELETE** /api/v1/workflow/definitions/{id} | Delete workflow definition |
 | [**getExecution**](WorkflowApi.md#getexecution) | **GET** /api/v1/workflow/executions/{id} | Get workflow execution by ID |
 | [**getExecutionSummary**](WorkflowApi.md#getexecutionsummary) | **GET** /api/v1/workflow/executions/{id}/summary | Get execution summary with node details |
-| [**getNodeConfigSchemas**](WorkflowApi.md#getnodeconfigschemas) | **GET** /api/v1/workflow/definitions/node-schemas | Get workflow node configuration schemas |
+| [**getNodeConfigSchemas**](WorkflowApi.md#getnodeconfigschemas) | **GET** /api/v1/workflow/definitions/nodes | Get workflow node configuration schemas |
 | [**getWorkflow**](WorkflowApi.md#getworkflow) | **GET** /api/v1/workflow/definitions/{id} | Get workflow definition by ID |
 | [**getWorkflowGraph**](WorkflowApi.md#getworkflowgraph) | **GET** /api/v1/workflow/graph/workflow/{workflowDefinitionId} | Get complete workflow graph (nodes and edges) |
 | [**listWorkflowExecutions**](WorkflowApi.md#listworkflowexecutions) | **GET** /api/v1/workflow/executions/workflow/{workflowDefinitionId} | List all executions for a workflow definition |
@@ -478,7 +478,7 @@ example().catch(console.error);
 
 ## getNodeConfigSchemas
 
-> { [key: string]: Array&lt;WorkflowNodeConfigField&gt;; } getNodeConfigSchemas()
+> { [key: string]: WorkflowNodeMetadata; } getNodeConfigSchemas()
 
 Get workflow node configuration schemas
 
@@ -519,7 +519,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-**{ [key: string]: Array<WorkflowNodeConfigField>; }**
+[**{ [key: string]: WorkflowNodeMetadata; }**](WorkflowNodeMetadata.md)
 
 ### Authorization
 

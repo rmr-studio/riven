@@ -233,3 +233,21 @@ export const useNodeConfigSchemas = () => {
 export const useSchemasLoading = () => {
     return useWorkflowCanvas((state) => state.schemasLoading);
 };
+
+/**
+ * Get whether the sidebar is collapsed
+ *
+ * @returns Whether the sidebar is collapsed
+ */
+export const useSidebarCollapsed = () => {
+    return useWorkflowCanvas((state) => state.sidebarCollapsed);
+};
+
+/**
+ * Get the setSidebarCollapsed action
+ *
+ * @returns Function to set sidebar collapsed state
+ */
+export const useSetSidebarCollapsed = () => {
+    return useWorkflowCanvas((state) => state.setSidebarCollapsed);
+};

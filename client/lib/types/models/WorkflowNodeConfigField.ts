@@ -40,7 +40,7 @@ export interface WorkflowNodeConfigField {
      */
     label?: string;
     /**
-     * cc
+     * 
      * @type {WorkflowNodeConfigFieldType}
      * @memberof WorkflowNodeConfigField
      */

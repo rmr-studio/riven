@@ -1,32 +1,28 @@
 
-# WorkspaceDefaultCurrency
+# WorkflowNodeMetadata
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`currencyCode` | string
-`numericCode` | number
-`numericCodeAsString` | string
-`displayName` | string
-`symbol` | string
-`defaultFractionDigits` | number
+`type` | [WorkflowNodeType](WorkflowNodeType.md)
+`subType` | string
+`metadata` | [WorkflowNodeTypeMetadata](WorkflowNodeTypeMetadata.md)
+`schema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
 
 ## Example
 
 ```typescript
-import type { WorkspaceDefaultCurrency } from ''
+import type { WorkflowNodeMetadata } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "currencyCode": null,
-  "numericCode": null,
-  "numericCodeAsString": null,
-  "displayName": null,
-  "symbol": null,
-  "defaultFractionDigits": null,
-} satisfies WorkspaceDefaultCurrency
+  "type": null,
+  "subType": null,
+  "metadata": null,
+  "schema": null,
+} satisfies WorkflowNodeMetadata
 
 console.log(example)
 
@@ -35,7 +31,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkspaceDefaultCurrency
+const exampleParsed = JSON.parse(exampleJSON) as WorkflowNodeMetadata
 console.log(exampleParsed)
 ```
 

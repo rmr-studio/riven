@@ -1,14 +1,12 @@
-"use client";
+'use client';
 
-import { useMemo, useEffect, type FC } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import type { WorkflowNodeConfigField } from "@/lib/types/models/WorkflowNodeConfigField";
-import { WorkflowNodeConfigFieldType } from "@/lib/types/models/WorkflowNodeConfigFieldType";
-import { buildZodSchemaFromFields, buildDefaultValues } from "../../util/schema-builder.util";
-import { configWidgetRegistry, getWidgetForType } from "./widgets/config-widget.registry";
+import { useMemo, useEffect, type FC } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { buildZodSchemaFromFields, buildDefaultValues } from '../../util/schema-builder.util';
+import { getWidgetForType } from './widgets/config-widget.registry';
 
 export interface NodeConfigFormProps {
   /** Node ID being configured */
@@ -43,27 +41,39 @@ export const NodeConfigForm: FC<NodeConfigFormProps> = ({
   onValuesChange,
   workspaceId,
 }) => {
-  // Memoize schema to avoid rebuilding on every render
-  const zodSchema = useMemo(
-    () => buildZodSchemaFromFields(configSchema),
-    [configSchema]
+  // Filter schema to only include fields with registered widgets
+  // This prevents crashes when unknown field types are encountered
+  const supportedFields = useMemo(
+    () => configSchema.filter((field) => field.key && field.type && getWidgetForType(field.type)),
+    [configSchema],
   );
+
+  // Track unsupported fields for warning display
+  const unsupportedFields = useMemo(
+    () => configSchema.filter((field) => field.key && field.type && !getWidgetForType(field.type)),
+    [configSchema],
+  );
+
+  // Memoize schema to avoid rebuilding on every render
+  const zodSchema = useMemo(() => buildZodSchemaFromFields(supportedFields), [supportedFields]);
 
   const defaultValues = useMemo(
     () => ({
-      ...buildDefaultValues(configSchema),
+      ...buildDefaultValues(supportedFields),
       ...initialValues,
     }),
-    [configSchema, initialValues]
+    [supportedFields, initialValues],
   );
 
   const form = useForm({
     resolver: zodResolver(zodSchema),
     defaultValues,
-    mode: "onChange", // Validate on change for immediate feedback
+    mode: 'onChange', // Validate on change for immediate feedback
   });
 
-  const { formState: { errors } } = form;
+  const {
+    formState: { errors },
+  } = form;
   const errorMessages = Object.entries(errors)
     .filter(([_, error]) => error?.message)
     .map(([key, error]) => ({ key, message: error?.message as string }));
@@ -80,26 +90,24 @@ export const NodeConfigForm: FC<NodeConfigFormProps> = ({
   // initialValues is derived from store which gets updated by onValuesChange
   useEffect(() => {
     form.reset({
-      ...buildDefaultValues(configSchema),
+      ...buildDefaultValues(supportedFields),
       ...initialValues,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodeId, configSchema, form]);
+  }, [nodeId, supportedFields, form]);
 
   // Find ENTITY_TYPE field key to track selected entity type
   // This enables the entity fields widget to know which entity's fields to show
-  const entityTypeFieldKey = configSchema.find(
-    (f) => f.type === WorkflowNodeConfigFieldType.EntityType
+  const entityTypeFieldKey = supportedFields.find(
+    (f) => f.type === WorkflowNodeConfigFieldType.EntityType,
   )?.key;
 
   // Watch the entity type field value for passing to entity fields widgets
-  const selectedEntityType = entityTypeFieldKey
-    ? form.watch(entityTypeFieldKey)
-    : undefined;
+  const selectedEntityType = entityTypeFieldKey ? form.watch(entityTypeFieldKey) : undefined;
 
-  if (configSchema.length === 0) {
+  if (supportedFields.length === 0 && unsupportedFields.length === 0) {
     return (
-      <div className="text-sm text-muted-foreground py-4 text-center">
+      <div className="py-4 text-center text-sm text-muted-foreground">
         No configuration options for this node type.
       </div>
     );
@@ -112,10 +120,27 @@ export const NodeConfigForm: FC<NodeConfigFormProps> = ({
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            <ul className="list-disc list-inside">
+            <ul className="list-inside list-disc">
               {errorMessages.map(({ key, message }) => (
                 <li key={key}>
-                  {configSchema.find((f) => f.key === key)?.label ?? key}: {message}
+                  {supportedFields.find((f) => f.key === key)?.label ?? key}: {message}
+                </li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Unsupported fields warning */}
+      {unsupportedFields.length > 0 && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <span className="font-medium">Unsupported field types:</span>
+            <ul className="mt-1 list-inside list-disc text-xs">
+              {unsupportedFields.map((field) => (
+                <li key={field.key}>
+                  {field.label ?? field.key}: {field.type}
                 </li>
               ))}
             </ul>
@@ -124,18 +149,10 @@ export const NodeConfigForm: FC<NodeConfigFormProps> = ({
       )}
 
       {/* Form fields */}
-      {configSchema.map((field) => {
-        if (!field.key || !field.type) return null;
-
+      {supportedFields.map((field) => {
         const widgetMeta = getWidgetForType(field.type);
-        if (!widgetMeta) {
-          console.warn(`No widget registered for field type: ${field.type}`);
-          return (
-            <div key={field.key} className="text-sm text-muted-foreground">
-              Unsupported field type: {field.type}
-            </div>
-          );
-        }
+        // Widget is guaranteed to exist due to supportedFields filter
+        if (!widgetMeta) return null;
 
         const Widget = widgetMeta.component;
 

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
-  useSelectedNode,
+  useWorkflowNodes,
   useSelectNode,
   useUpdateNodeData,
   useNodeConfigSchemas,
@@ -19,6 +19,8 @@ import { nodeTypeDefinitions } from "../../config/node-types.config";
 interface NodeConfigDrawerProps {
   /** Workspace ID for entity widgets */
   workspaceId: string;
+  /** Optional node ID override - used during exit animation to render stale data */
+  nodeId?: string | null;
 }
 
 /**
@@ -31,12 +33,15 @@ interface NodeConfigDrawerProps {
  * - Close button to deselect node
  * - Escape key to close drawer (CONFIG-08)
  */
-export const NodeConfigDrawer: FC<NodeConfigDrawerProps> = ({ workspaceId }) => {
-  const selectedNode = useSelectedNode();
+export const NodeConfigDrawer: FC<NodeConfigDrawerProps> = ({ workspaceId, nodeId }) => {
+  const nodes = useWorkflowNodes();
   const selectNode = useSelectNode();
   const updateNodeData = useUpdateNodeData();
   const schemas = useNodeConfigSchemas();
   const schemasLoading = useSchemasLoading();
+
+  // Find the node by the provided nodeId prop (supports exit animation with stale ID)
+  const node = nodeId ? nodes.find((n) => n.id === nodeId) : undefined;
 
   const handleClose = useCallback(() => {
     selectNode(null);
@@ -45,7 +50,7 @@ export const NodeConfigDrawer: FC<NodeConfigDrawerProps> = ({ workspaceId }) => 
   // Handle Escape key to close drawer (CONFIG-08)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && selectedNode) {
+      if (event.key === "Escape" && node) {
         event.preventDefault();
         handleClose();
       }
@@ -53,37 +58,37 @@ export const NodeConfigDrawer: FC<NodeConfigDrawerProps> = ({ workspaceId }) => 
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [selectedNode, handleClose]);
+  }, [node, handleClose]);
 
   const handleValuesChange = useCallback(
     (values: Record<string, unknown>) => {
-      if (!selectedNode) return;
+      if (!node) return;
 
       // Update node data with new config values
       // Set configured to true if any values are set
       const hasConfig = Object.values(values).some(
         (v) => v !== undefined && v !== null && v !== ""
       );
-      updateNodeData(selectedNode.id, {
+      updateNodeData(node.id, {
         config: values,
         configured: hasConfig,
       });
     },
-    [selectedNode, updateNodeData]
+    [node, updateNodeData]
   );
 
-  if (!selectedNode) return null;
+  if (!node) return null;
 
   // Get node type definition for icon/label
-  const nodeTypeDef = nodeTypeDefinitions[selectedNode.type];
-  const Icon = nodeTypeDef?.icon ?? selectedNode.data.icon;
+  const nodeTypeDef = nodeTypeDefinitions[node.type];
+  const Icon = nodeTypeDef?.icon ?? node.data.icon;
 
   // Map frontend node type to backend schema key
-  const backendKey = frontendToBackendKey(selectedNode.type);
+  const backendKey = frontendToBackendKey(node.type);
   const configSchema = schemas?.[backendKey] ?? [];
 
   return (
-    <div className="h-full flex flex-col bg-background border-l">
+    <div className="h-full flex flex-col bg-background">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-3">
@@ -92,10 +97,10 @@ export const NodeConfigDrawer: FC<NodeConfigDrawerProps> = ({ workspaceId }) => 
           </div>
           <div>
             <h3 className="font-semibold text-sm">
-              {nodeTypeDef?.label ?? selectedNode.data.label}
+              {nodeTypeDef?.label ?? node.data.label}
             </h3>
             <p className="text-xs text-muted-foreground">
-              {nodeTypeDef?.description ?? selectedNode.data.description}
+              {nodeTypeDef?.description ?? node.data.description}
             </p>
           </div>
         </div>
@@ -124,10 +129,10 @@ export const NodeConfigDrawer: FC<NodeConfigDrawerProps> = ({ workspaceId }) => 
             </div>
           ) : (
             <NodeConfigForm
-              nodeId={selectedNode.id}
-              nodeType={selectedNode.type}
+              nodeId={node.id}
+              nodeType={node.type}
               configSchema={configSchema}
-              initialValues={selectedNode.data.config}
+              initialValues={node.data.config}
               onValuesChange={handleValuesChange}
               workspaceId={workspaceId}
             />

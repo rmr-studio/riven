@@ -1,7 +1,7 @@
-import { createWorkflowApi } from "@/lib/api/workflow-api";
-import { Session } from "@/lib/auth";
-import type { WorkflowNodeConfigField } from "@/lib/types/models/WorkflowNodeConfigField";
-import { validateSession } from "@/lib/util/service/service.util";
+import { createWorkflowApi } from '@/lib/api/workflow-api';
+import { Session } from '@/lib/auth';
+import { WorkflowNodeMetadata } from '@/lib/types';
+import { validateSession } from '@/lib/util/service/service.util';
 
 /**
  * Service layer for workflow API operations
@@ -17,10 +17,10 @@ export class WorkflowService {
    * const triggerFields = schemas["TRIGGER.ENTITY_EVENT"];
    */
   static async getNodeConfigSchemas(
-    session: Session | null
-  ): Promise<Record<string, WorkflowNodeConfigField[]>> {
+    session: Session | null,
+  ): Promise<Record<string, WorkflowNodeMetadata>> {
     validateSession(session);
-    const api = createWorkflowApi(session!);
+    const api = createWorkflowApi(session);
     return api.getNodeConfigSchemas();
   }
 }
