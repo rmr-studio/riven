@@ -1,4 +1,4 @@
-package riven.core.models.workflow.engine.coordinator
+package riven.core.models.workflow.engine.state
 
 /**
  * Pure state transition logic for workflow state machine.

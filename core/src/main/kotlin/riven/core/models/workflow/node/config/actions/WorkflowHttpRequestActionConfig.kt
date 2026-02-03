@@ -10,9 +10,9 @@ import org.springframework.web.reactive.function.client.WebClient
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
-import riven.core.models.workflow.engine.datastore.HttpResponseOutput
-import riven.core.models.workflow.engine.datastore.NodeOutput
-import riven.core.models.workflow.engine.datastore.WorkflowDataStore
+import riven.core.models.workflow.engine.state.HttpResponseOutput
+import riven.core.models.workflow.engine.state.NodeOutput
+import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
 import riven.core.models.workflow.node.config.WorkflowNodeConfigField

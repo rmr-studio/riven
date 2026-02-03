@@ -10,9 +10,9 @@ import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.common.json.JsonObject
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
-import riven.core.models.workflow.engine.datastore.CreateEntityOutput
-import riven.core.models.workflow.engine.datastore.NodeOutput
-import riven.core.models.workflow.engine.datastore.WorkflowDataStore
+import riven.core.models.workflow.engine.state.CreateEntityOutput
+import riven.core.models.workflow.engine.state.NodeOutput
+import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.request.entity.SaveEntityRequest
 import riven.core.models.workflow.node.NodeServiceProvider

@@ -10,11 +10,11 @@ import riven.core.entity.workflow.execution.WorkflowExecutionNodeEntity
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.models.workflow.engine.NodeExecutionResult
-import riven.core.models.workflow.engine.coordinator.WorkflowExecutionPhase
-import riven.core.models.workflow.engine.coordinator.WorkflowState
-import riven.core.models.workflow.engine.datastore.StepOutput
-import riven.core.models.workflow.engine.datastore.WorkflowDataStore
-import riven.core.models.workflow.engine.datastore.WorkflowMetadata
+import riven.core.models.workflow.engine.state.WorkflowExecutionPhase
+import riven.core.models.workflow.engine.state.WorkflowState
+import riven.core.models.workflow.engine.state.StepOutput
+import riven.core.models.workflow.engine.state.WorkflowDataStore
+import riven.core.models.workflow.engine.state.WorkflowMetadata
 import riven.core.models.workflow.engine.error.NodeExecutionError
 import riven.core.models.workflow.engine.error.RetryAttempt
 import riven.core.models.workflow.node.NodeServiceProvider

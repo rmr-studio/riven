@@ -1,12 +1,10 @@
-package riven.core.models.workflow.engine.datastore
+package riven.core.models.workflow.engine.state
 
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import riven.core.enums.util.OperationType
 import riven.core.enums.workflow.WorkflowStatus
-import riven.core.models.workflow.engine.coordinator.WorkflowExecutionPhase
-import riven.core.models.workflow.engine.coordinator.WorkflowState
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.CountDownLatch

@@ -10,10 +10,10 @@ import org.springframework.boot.test.context.SpringBootTest
 import riven.core.entity.workflow.WorkflowEdgeEntity
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.exceptions.WorkflowValidationException
-import riven.core.models.workflow.engine.coordinator.WorkflowExecutionPhase
-import riven.core.models.workflow.engine.coordinator.WorkflowState
-import riven.core.models.workflow.engine.datastore.WorkflowDataStore
-import riven.core.models.workflow.engine.datastore.WorkflowMetadata
+import riven.core.models.workflow.engine.state.WorkflowExecutionPhase
+import riven.core.models.workflow.engine.state.WorkflowState
+import riven.core.models.workflow.engine.state.WorkflowDataStore
+import riven.core.models.workflow.engine.state.WorkflowMetadata
 import riven.core.models.workflow.node.WorkflowNode
 import riven.core.models.workflow.node.config.actions.WorkflowCreateEntityActionConfig
 import riven.core.service.workflow.engine.coordinator.WorkflowGraphCoordinationService

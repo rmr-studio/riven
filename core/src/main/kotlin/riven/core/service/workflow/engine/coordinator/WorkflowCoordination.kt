@@ -2,7 +2,7 @@ package riven.core.service.workflow.engine.coordinator
 
 import io.temporal.activity.ActivityInterface
 import io.temporal.activity.ActivityMethod
-import riven.core.models.workflow.engine.datastore.WorkflowDataStore
+import riven.core.models.workflow.engine.state.WorkflowDataStore
 import java.util.*
 
 /**

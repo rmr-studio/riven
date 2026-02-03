@@ -2,8 +2,8 @@ package riven.core.models.workflow.node
 
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.common.json.JsonObject
-import riven.core.models.workflow.engine.datastore.NodeOutput
-import riven.core.models.workflow.engine.datastore.WorkflowDataStore
+import riven.core.models.workflow.engine.state.NodeOutput
+import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.config.WorkflowNodeConfig
 import java.util.*
 

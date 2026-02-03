@@ -1,4 +1,4 @@
-package riven.core.models.workflow.engine.datastore
+package riven.core.models.workflow.engine.state
 
 import java.util.UUID
 

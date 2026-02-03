@@ -3,7 +3,7 @@ package riven.core.service.workflow.state
 import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Service
 import riven.core.enums.workflow.WorkflowStatus
-import riven.core.models.workflow.engine.datastore.WorkflowDataStore
+import riven.core.models.workflow.engine.state.WorkflowDataStore
 
 /**
  * Service for resolving template references against the workflow datastore.
@@ -324,6 +324,7 @@ class WorkflowNodeInputResolverService(
                 logger.debug { "Cannot traverse '$segment' - value is null. Path: $fullPath" }
                 null
             }
+
             is Map<*, *> -> {
                 val value = current[segment]
                 if (value == null) {
@@ -331,6 +332,7 @@ class WorkflowNodeInputResolverService(
                 }
                 value
             }
+
             else -> {
                 logger.warn { "Cannot access '$segment' on ${current::class.simpleName}. Path: $fullPath" }
                 null

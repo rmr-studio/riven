@@ -1,6 +1,5 @@
-package riven.core.models.workflow.engine.datastore
+package riven.core.models.workflow.engine.state
 
-import riven.core.models.workflow.engine.coordinator.WorkflowState
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 

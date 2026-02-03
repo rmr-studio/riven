@@ -7,8 +7,8 @@ import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowTriggerType
 import riven.core.models.common.json.JsonObject
-import riven.core.models.workflow.engine.datastore.NodeOutput
-import riven.core.models.workflow.engine.datastore.WorkflowDataStore
+import riven.core.models.workflow.engine.state.NodeOutput
+import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowNodeConfigField
 import riven.core.models.workflow.node.config.WorkflowTriggerConfig

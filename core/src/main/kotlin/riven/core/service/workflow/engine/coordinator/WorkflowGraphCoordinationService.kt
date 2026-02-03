@@ -6,7 +6,13 @@ import riven.core.exceptions.WorkflowExecutionException
 import riven.core.exceptions.WorkflowValidationException
 import riven.core.models.common.json.JsonValue
 import riven.core.models.workflow.engine.coordinator.*
-import riven.core.models.workflow.engine.datastore.WorkflowDataStore
+import riven.core.models.workflow.engine.state.AllNodesCompleted
+import riven.core.models.workflow.engine.state.NodeCompleted
+import riven.core.models.workflow.engine.state.NodesReady
+import riven.core.models.workflow.engine.state.StateTransition
+import riven.core.models.workflow.engine.state.WorkflowDataStore
+import riven.core.models.workflow.engine.state.WorkflowExecutionPhase
+import riven.core.models.workflow.engine.state.WorkflowFailed
 import riven.core.models.workflow.node.WorkflowNode
 import java.util.*
 
