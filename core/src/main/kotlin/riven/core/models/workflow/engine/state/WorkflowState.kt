@@ -1,4 +1,4 @@
-package riven.core.models.workflow.engine.coordinator
+package riven.core.models.workflow.engine.state
 
 import java.util.*
 
@@ -57,50 +57,21 @@ enum class WorkflowExecutionPhase {
 }
 
 /**
- * Immutable workflow state tracking orchestration progress.
+ * An immutable data registry used to handle state management and the orchestration of nodes.
  *
  * This data class represents the complete state of a workflow execution at a point in time.
  * All state transitions produce a new WorkflowState instance (immutable pattern).
- *
- * ## Usage Pattern
- *
- * ```kotlin
- * // Initial state
- * var state = WorkflowState(
- *     phase = WorkflowExecutionPhase.INITIALIZING,
- *     activeNodes = emptySet(),
- *     completedNodes = emptySet(),
- *     failedNodes = emptySet(),
- *     dataRegistry = emptyMap()
- * )
- *
- * // Transition via events
- * state = StateTransition.apply(state, NodesReady(setOf(node1Id, node2Id)))
- * state = StateTransition.apply(state, NodeCompleted(node1Id, outputData))
- * ```
- *
- * ## Data Registry
- *
- * The dataRegistry stores node outputs by nodeId (UUID). In Phase 5 Plan 3, the coordinator
- * will map these to node names for template resolution (e.g., `{{ steps.nodeName.output }}`).
- *
- * ## Thread Safety
- *
- * While this data class is immutable, proper synchronization is required if shared across
- * threads. In Temporal workflows, state is single-threaded within the workflow context.
  *
  * @property phase Current execution phase
  * @property activeNodes Set of node IDs currently executing (in Temporal Async)
  * @property completedNodes Set of node IDs that finished execution
  * @property failedNodes Set of node IDs that failed execution (empty in v1, populated in Phase 7)
- * @property dataRegistry Map of node outputs: nodeId → output data (Any? to handle all types)
  */
 data class WorkflowState(
     val phase: WorkflowExecutionPhase,
     val activeNodes: Set<UUID> = emptySet(),
     val completedNodes: Set<UUID> = emptySet(),
     val failedNodes: Set<UUID> = emptySet(),
-    val dataRegistry: Map<UUID, Any?> = emptyMap()
 ) {
     /**
      * Checks if workflow execution is finished (completed or failed).
@@ -112,14 +83,6 @@ data class WorkflowState(
      * Checks if workflow has active nodes currently executing.
      */
     fun hasActiveNodes(): Boolean = activeNodes.isNotEmpty()
-
-    /**
-     * Gets the output data for a specific node.
-     *
-     * @param nodeId ID of the node
-     * @return Output data, or null if node hasn't completed or has no output
-     */
-    fun getNodeOutput(nodeId: UUID): Any? = dataRegistry[nodeId]
 }
 
 /**
@@ -152,13 +115,12 @@ data class NodesReady(val nodeIds: Set<UUID>) : StateEvent
 /**
  * Node completed execution successfully.
  *
- * Triggered after a node's activity finishes. The output is stored in the
- * data registry for potential use by downstream nodes.
+ * Triggered after a node's activity finishes. Node outputs are stored
+ * in WorkflowDataStore (not in WorkflowState).
  *
  * @property nodeId ID of the completed node
- * @property output Node's output data (Any? to handle all types)
  */
-data class NodeCompleted(val nodeId: UUID, val output: Any?) : StateEvent
+data class NodeCompleted(val nodeId: UUID) : StateEvent
 
 /**
  * Node execution failed with error.

@@ -10,8 +10,9 @@ import riven.core.enums.workflow.WorkflowStatus
 import riven.core.models.workflow.engine.NodeExecutionResult
 import riven.core.models.workflow.engine.WorkflowExecutionInput
 import riven.core.models.workflow.engine.WorkflowExecutionResult
-import riven.core.models.workflow.engine.coordinator.WorkflowExecutionPhase
-import riven.core.models.workflow.engine.coordinator.WorkflowState
+import riven.core.models.workflow.engine.state.WorkflowExecutionPhase
+import riven.core.models.workflow.engine.state.WorkflowState
+import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.engine.error.WorkflowExecutionError
 import riven.core.service.workflow.engine.completion.WorkflowCompletionActivity
 import riven.core.service.workflow.engine.coordinator.WorkflowCoordination
@@ -70,21 +71,21 @@ class WorkflowOrchestrationService(
         // Execute workflow and record completion
         var finalStatus = WorkflowStatus.FAILED
         var executionError: WorkflowExecutionError? = null
-        var coordinationResult: WorkflowState? = null
+        var store: WorkflowDataStore? = null
 
         try {
             // Delegate to activity for all database operations and node execution
-            coordinationResult = coordinationActivity.executeWorkflowWithCoordinator(
+            store = coordinationActivity.executeWorkflowWithCoordinator(
                 workflowDefinitionId = input.workflowDefinitionId,
                 nodeIds = input.nodeIds,
                 workspaceId = input.workspaceId
             )
 
-            finalStatus = if (coordinationResult.phase == WorkflowExecutionPhase.COMPLETED) {
+            finalStatus = if (store.state.phase == WorkflowExecutionPhase.COMPLETED) {
                 WorkflowStatus.COMPLETED
             } else {
                 // DAG completed but with failures - build error from failed nodes
-                executionError = buildErrorFromFailedNodes(coordinationResult)
+                executionError = buildErrorFromFailedNodes(store.state)
                 WorkflowStatus.FAILED
             }
 
@@ -111,16 +112,17 @@ class WorkflowOrchestrationService(
             logger.error("Failed to record completion for execution $executionId: ${e.message}")
         }
 
-        // Build and return result
         return WorkflowExecutionResult(
             executionId = executionId,
             status = finalStatus,
-            nodeResults = coordinationResult?.completedNodes?.map { nodeId ->
-                NodeExecutionResult(
-                    nodeId = nodeId,
-                    status = WorkflowStatus.COMPLETED,
-                    output = coordinationResult.getNodeOutput(nodeId)
-                )
+            nodeResults = store?.let {
+                it.state.completedNodes.map { nodeId ->
+                    NodeExecutionResult(
+                        nodeId = nodeId,
+                        status = finalStatus,
+                        output = it.getStepOutput(nodeId)
+                    )
+                }
             } ?: emptyList()
         )
     }

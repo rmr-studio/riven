@@ -1,7 +1,5 @@
 package riven.core.models.workflow.node.config.actions
 
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
@@ -11,15 +9,13 @@ import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.entity.query.EntityQuery
-import riven.core.models.entity.query.FilterOperator
 import riven.core.models.entity.query.FilterValue
-import riven.core.models.entity.query.OrderByClause
 import riven.core.models.entity.query.QueryFilter
 import riven.core.models.entity.query.QueryPagination
 import riven.core.models.entity.query.QueryProjection
 import riven.core.models.entity.query.RelationshipCondition
-import riven.core.models.entity.query.SortDirection
-import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.state.NodeOutput
+import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
 import riven.core.models.workflow.node.config.WorkflowNodeConfigField
@@ -353,10 +349,10 @@ data class WorkflowQueryEntityActionConfig(
     }
 
     override fun execute(
-        context: WorkflowExecutionContext,
+        dataStore: WorkflowDataStore,
         inputs: Map<String, Any?>,
         services: NodeServiceProvider
-    ): Map<String, Any?> {
+    ): NodeOutput {
         log.info { "Executing QUERY_ENTITY for type: ${query.entityTypeId}" }
 
         // TODO: Implement query execution via EntityQueryService
@@ -369,7 +365,7 @@ data class WorkflowQueryEntityActionConfig(
 
         throw NotImplementedError(
             "QUERY_ENTITY execution requires EntityQueryService implementation. " +
-                "Filter: ${query.filter}, Pagination: $pagination"
+                    "Filter: ${query.filter}, Pagination: $pagination"
         )
     }
 }

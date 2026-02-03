@@ -10,9 +10,11 @@ import riven.core.entity.workflow.execution.WorkflowExecutionNodeEntity
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.models.workflow.engine.NodeExecutionResult
-import riven.core.models.workflow.engine.coordinator.WorkflowState
-import riven.core.models.workflow.engine.environment.NodeExecutionData
-import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.state.WorkflowExecutionPhase
+import riven.core.models.workflow.engine.state.WorkflowState
+import riven.core.models.workflow.engine.state.StepOutput
+import riven.core.models.workflow.engine.state.WorkflowDataStore
+import riven.core.models.workflow.engine.state.WorkflowMetadata
 import riven.core.models.workflow.engine.error.NodeExecutionError
 import riven.core.models.workflow.engine.error.RetryAttempt
 import riven.core.models.workflow.node.NodeServiceProvider
@@ -20,34 +22,31 @@ import riven.core.models.workflow.node.WorkflowNode
 import riven.core.models.workflow.node.config.actions.*
 import riven.core.models.workflow.node.config.controls.WorkflowConditionControlConfig
 import riven.core.repository.workflow.WorkflowExecutionNodeRepository
-import riven.core.service.workflow.state.WorkflowNodeInputResolverService
 import riven.core.service.workflow.engine.error.WorkflowErrorClassifier
+import riven.core.service.workflow.state.WorkflowNodeInputResolverService
 import java.time.Instant
 import java.time.ZonedDateTime
 import java.util.*
 
 /**
  * Service responsible for coordinating the execution of individual workflow nodes.
- * Should initialise the graph execution context, resolve inputs, invoke node logic, and capture outputs for a provided
- * sub-set of nodes and edges.
+ * Uses WorkflowDataStore as the unified state container for workflow execution.
  *
- * 1. Initialize WorkflowExecutionContext with data registry
- * 2. Resolve input templates against registry
+ * 1. Create WorkflowDataStore at workflow start with metadata
+ * 2. Resolve input templates against datastore
  * 3. Provide NodeServiceProvider for on-demand service access
- * 4. Call node.execute(context, inputs, services) - polymorphic dispatch
- * 5. Capture output to data registry
+ * 4. Call node.execute(store, inputs, services) - polymorphic dispatch
+ * 5. Coordinator writes StepOutput to datastore after node execution
  * 6. Persist execution state to database
  *
  * ## Error Handling
  *
- * - executeAction() wrapper provides standardized error handling
  * - Exceptions caught and converted to FAILED status
- * - Failed executions stored in data registry for debugging
  * - Temporal RetryOptions handle retries automatically
  *
  * @property workflowExecutionNodeRepository Persists node execution state
  * @property nodeServiceProvider Provider for on-demand Spring service access in nodes
- * @property inputResolverService Resolves template references
+ * @property workflowNodeInputResolverService Resolves template references
  */
 
 /**
@@ -73,7 +72,7 @@ class WorkflowCoordinationService(
         workflowDefinitionId: UUID,
         nodeIds: List<UUID>,
         workspaceId: UUID
-    ): WorkflowState {
+    ): WorkflowDataStore {
         logger.info { "Executing workflow with coordinator: definition=$workflowDefinitionId, nodes=${nodeIds.size}" }
 
         // Fetch nodes and edges from database (this is an activity, so database access is allowed)
@@ -90,14 +89,25 @@ class WorkflowCoordinationService(
             activityInfo.workflowId.substringAfter("execution-")
         )
 
-        // Initialize workflow execution context
-        WorkflowExecutionContext(
-            workflowExecutionId = workflowExecutionId,
-            workspaceId = workspaceId,
-            metadata = emptyMap(),
-            dataRegistry = mutableMapOf()
+        val state = WorkflowState(
+            phase = WorkflowExecutionPhase.INITIALIZING,
         )
 
+        // Create unified datastore for workflow execution
+        val metadata = WorkflowMetadata(
+            executionId = workflowExecutionId,
+            workspaceId = workspaceId,
+            workflowDefinitionId = workflowDefinitionId,
+            version = 1, // TODO: Get from workflow definition
+            startedAt = Instant.now()
+        )
+        val store = WorkflowDataStore(
+            metadata = metadata,
+            state = state
+        )
+
+        // TODO: Set trigger context when trigger execution is implemented
+        // store.setTrigger(triggerContext)
 
         // Callback to execute a batch of ready nodes during workflow orchestration
         // Returns list of (nodeId, output) pairs
@@ -110,8 +120,8 @@ class WorkflowCoordinationService(
             readyNodes.map { node ->
                 logger.info { "Executing node ${node.id} (${node.type})" }
 
-                // Execute node using existing executeNode logic
-                val result = executeNode(node, workspaceId)
+                // Execute node with shared store
+                val result = executeNode(node, store)
 
                 // Check if node failed
                 if (result.status == WorkflowStatus.FAILED) {
@@ -125,18 +135,20 @@ class WorkflowCoordinationService(
 
         // Delegate to coordinator for DAG orchestration
         return try {
-            val finalState = workflowGraphCoordinationService.executeWorkflow(nodes, edges, nodeExecutor)
-            logger.info { "Workflow execution completed: ${finalState.phase}, ${finalState.completedNodes.size} nodes completed" }
-            finalState
+            workflowGraphCoordinationService.executeWorkflow(store, nodes, edges, nodeExecutor)
+            logger.info { "Workflow execution completed: ${store.state.phase}, ${store.state.completedNodes.size} nodes completed" }
+            store
         } catch (e: Exception) {
             logger.error(e) { "Workflow execution failed: ${e.message}" }
             throw e
         }
     }
 
-    private fun executeNode(node: WorkflowNode, workspaceId: UUID): NodeExecutionResult {
+    private fun executeNode(node: WorkflowNode, store: WorkflowDataStore): NodeExecutionResult {
         val startTime = ZonedDateTime.now()
         val nodeId = node.id
+        val workspaceId = store.metadata.workspaceId
+        val workflowExecutionId = store.metadata.executionId
 
         logger.info { "Executing workflow node: $nodeId in workspace: $workspaceId" }
 
@@ -144,12 +156,6 @@ class WorkflowCoordinationService(
         if (node.workspaceId != workspaceId) {
             throw SecurityException("Node $nodeId does not belong to workspace $workspaceId")
         }
-
-        // Get execution context from Temporal (needed for execution record)
-        val activityInfo = Activity.getExecutionContext().info
-        val workflowExecutionId = UUID.fromString(
-            activityInfo.workflowId.substringAfter("execution-")
-        )
 
         // Create execution record BEFORE try block to ensure single record
         // This record is reused in both success and error paths
@@ -161,17 +167,7 @@ class WorkflowCoordinationService(
         )
 
         try {
-            // Initialize workflow execution context
-            // TODO: Phase 5 DAG coordinator will populate registry with prior node outputs
-            // and pass context between nodes for sequential execution
-            val context = WorkflowExecutionContext(
-                workflowExecutionId = workflowExecutionId,
-                workspaceId = workspaceId,
-                metadata = emptyMap(),
-                dataRegistry = mutableMapOf()
-            )
-
-            logger.debug { "Initialized execution context for node $nodeId (registry: ${context.dataRegistry.size} entries)" }
+            logger.debug { "Using store with ${store.getAllStepOutputs().size} prior step outputs" }
 
             // Resolve inputs (templates → values)
             // Convert WorkflowNodeConfig properties to Map for resolution
@@ -198,7 +194,7 @@ class WorkflowCoordinationService(
 
             val resolvedInputs = workflowNodeInputResolverService.resolveAll(
                 configMap,
-                context
+                store
             )
 
             // Polymorphic execution - no type switching!
@@ -207,25 +203,43 @@ class WorkflowCoordinationService(
             logger.info { "Executing ${node.type} node via polymorphic dispatch: ${node.name}" }
             val executionStart = System.currentTimeMillis()
 
-            val result = executeAction(nodeId, node.name, node.type.name, context) {
-                node.execute(context, resolvedInputs, nodeServiceProvider)
-            }
+            // Execute node with store
+            val nodeOutput = node.execute(store, resolvedInputs, nodeServiceProvider)
 
             val duration = System.currentTimeMillis() - executionStart
             logger.info { "Node ${node.name} completed via execute() in ${duration}ms" }
 
-            // Update execution record (COMPLETED/FAILED status)
+            // Create StepOutput and store in store (coordinator writes!)
+            val stepOutput = StepOutput(
+                nodeId = nodeId,
+                nodeName = node.name,
+                status = WorkflowStatus.COMPLETED,
+                output = nodeOutput,
+                executedAt = Instant.now(),
+                durationMs = duration
+            )
+            store.setStepOutput(node.name, stepOutput)
+
+            logger.debug { "Captured output for node ${node.name}: ${nodeOutput.toMap().keys}" }
+            logger.info { "DataStore now contains ${store.getAllStepOutputs().size} step outputs" }
+
+            // Update execution record (COMPLETED status)
             updateExecutionNode(
                 executionNode = executionNode,
-                status = if (result.status == WorkflowStatus.COMPLETED) WorkflowStatus.COMPLETED else WorkflowStatus.FAILED,
-                output = result.output,
-                error = result.error,
+                status = WorkflowStatus.COMPLETED,
+                output = nodeOutput.toMap(),
+                error = null,
                 completedTime = ZonedDateTime.now(),
                 startTime = startTime
             )
 
-            logger.info { "Node $nodeId completed with status: ${result.status}" }
-            return result
+            logger.info { "Node $nodeId completed with status: COMPLETED" }
+
+            return NodeExecutionResult(
+                nodeId = nodeId,
+                status = WorkflowStatus.COMPLETED,
+                output = nodeOutput.toMap()
+            )
 
         } catch (e: Exception) {
             // Get current attempt from Temporal activity context
@@ -271,90 +285,6 @@ class WorkflowCoordinationService(
 
             // Classify and throw ApplicationFailure for Temporal retry handling
             classifyAndThrowError(e, nodeId, node.name, node.type, attempt)
-        }
-    }
-
-    /**
-     * Invokes a Nodes execution:
-     *
-     * The execution lambda should:
-     * 1. Parse configuration inputs
-     * 2. Execute the node's business logic via node.execute()
-     * 3. Return a map of output data
-     *
-     * Example usage (called by executeNode):
-     * ```kotlin
-     * executeAction(nodeId, nodeName, "ACTION", context) {
-     *     node.execute(context, resolvedInputs, services)
-     * }
-     *
-     * Handles storing outputted data in registry, or handles exceptions and stores failure info.
-     * ```
-     *
-     * @param nodeId Node identifier for tracking
-     * @param nodeName Node name for data registry key (e.g., "fetch_leads")
-     * @param nodeType Human-readable node type for logging
-     * @param context Workflow execution context containing data registry
-     * @param execution Lambda that performs the action and returns output data
-     * @return NodeExecutionResult with COMPLETED or FAILED status
-     */
-    private fun executeAction(
-        nodeId: UUID,
-        nodeName: String,
-        nodeType: String,
-        context: WorkflowExecutionContext,
-        execution: () -> Map<String, Any?>
-    ): NodeExecutionResult {
-        return try {
-            logger.info { "Executing $nodeType: $nodeName" }
-
-            // Record duration of execution
-            val startTime = System.currentTimeMillis()
-            val output = execution()
-            val duration = System.currentTimeMillis() - startTime
-            logger.info { "Node $nodeName completed successfully in ${duration}ms" }
-
-            // Capture output to data registry
-            val executionData = NodeExecutionData(
-                nodeId = nodeId,
-                nodeName = nodeName,
-                status = WorkflowStatus.COMPLETED,
-                output = output,
-                error = null,
-                executedAt = Instant.now()
-            )
-            context.dataRegistry[nodeName] = executionData
-
-            logger.debug { "Captured output for node $nodeName: ${output.keys}" }
-            logger.info { "Data registry now contains ${context.dataRegistry.size} node outputs" }
-
-            NodeExecutionResult(
-                nodeId = nodeId,
-                status = WorkflowStatus.COMPLETED,
-                output = output
-            )
-        } catch (e: Exception) {
-            logger.error(e) { "$nodeType $nodeName failed: ${e.message}" }
-
-            // Capture failure to data registry (for debugging)
-            val executionData = NodeExecutionData(
-                nodeId = nodeId,
-                nodeName = nodeName,
-                status = WorkflowStatus.FAILED,
-                output = null,
-                error = e.message ?: "Unknown error in $nodeType",
-                executedAt = Instant.now()
-            )
-            context.dataRegistry[nodeName] = executionData
-
-            logger.debug { "Captured failure for node $nodeName: ${e.message}" }
-            logger.info { "Data registry now contains ${context.dataRegistry.size} node outputs" }
-
-            NodeExecutionResult(
-                nodeId = nodeId,
-                status = WorkflowStatus.FAILED,
-                error = e.message ?: "Unknown error in $nodeType"
-            )
         }
     }
 

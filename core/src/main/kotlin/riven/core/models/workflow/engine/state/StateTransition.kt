@@ -1,4 +1,4 @@
-package riven.core.models.workflow.engine.coordinator
+package riven.core.models.workflow.engine.state
 
 /**
  * Pure state transition logic for workflow state machine.
@@ -117,7 +117,8 @@ object StateTransition {
      * Updates:
      * - Removes nodeId from activeNodes
      * - Adds nodeId to completedNodes
-     * - Stores output in dataRegistry
+     *
+     * Note: Node outputs are stored in WorkflowDataStore, not in WorkflowState.
      */
     private fun handleNodeCompleted(state: WorkflowState, event: NodeCompleted): WorkflowState {
         require(state.phase == WorkflowExecutionPhase.EXECUTING_NODES) {
@@ -134,8 +135,7 @@ object StateTransition {
 
         return state.copy(
             activeNodes = state.activeNodes - event.nodeId,
-            completedNodes = state.completedNodes + event.nodeId,
-            dataRegistry = state.dataRegistry + (event.nodeId to event.output)
+            completedNodes = state.completedNodes + event.nodeId
         )
     }
 

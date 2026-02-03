@@ -8,7 +8,9 @@ import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
-import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.state.DeleteEntityOutput
+import riven.core.models.workflow.engine.state.NodeOutput
+import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
 import riven.core.models.workflow.node.config.WorkflowNodeConfigField
@@ -129,21 +131,21 @@ data class WorkflowDeleteEntityActionConfig(
     }
 
     override fun execute(
-        context: WorkflowExecutionContext,
+        dataStore: WorkflowDataStore,
         inputs: Map<String, Any?>,
         services: NodeServiceProvider
-    ): Map<String, Any?> {
+    ): NodeOutput {
         // Extract resolved inputs
         val resolvedEntityId = UUID.fromString(inputs["entityId"] as String)
 
-        log.info { "Deleting entity: $resolvedEntityId in workspace: ${context.workspaceId}" }
+        log.info { "Deleting entity: $resolvedEntityId in workspace: ${dataStore.metadata.workspaceId}" }
 
         // Get EntityService on-demand
         val entityService = services.service<EntityService>()
 
         // Execute deletion via EntityService
         val result = entityService.deleteEntities(
-            context.workspaceId,
+            dataStore.metadata.workspaceId,
             listOf(resolvedEntityId)
         )
 
@@ -152,11 +154,11 @@ data class WorkflowDeleteEntityActionConfig(
             throw IllegalStateException("Failed to delete entity: ${result.error}")
         }
 
-        // Return output
-        return mapOf(
-            "entityId" to resolvedEntityId,
-            "deleted" to true,
-            "impactedEntities" to (result.updatedEntities?.size ?: 0)
+        // Return typed output
+        return DeleteEntityOutput(
+            entityId = resolvedEntityId,
+            deleted = true,
+            impactedEntities = result.updatedEntities?.size ?: 0
         )
     }
 }

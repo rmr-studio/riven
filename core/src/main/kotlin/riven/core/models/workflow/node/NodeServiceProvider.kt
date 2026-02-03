@@ -21,14 +21,14 @@ import kotlin.reflect.KClass
  *
  * ```kotlin
  * override fun execute(
- *     context: WorkflowExecutionContext,
+ *     dataStore: WorkflowDataStore,
  *     inputs: JsonObject,
  *     services: NodeServiceProvider
- * ): JsonObject {
+ * ): NodeOutput {
  *     // Request only the services this node needs
  *     val entityService = services.service<EntityService>()
  *     val result = entityService.saveEntity(...)
- *     return mapOf("entityId" to result.id)
+ *     return CreateEntityOutput(entityId = result.id, ...)
  * }
  * ```
  *

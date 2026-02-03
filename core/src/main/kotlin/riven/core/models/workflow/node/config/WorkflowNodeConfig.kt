@@ -5,7 +5,8 @@ import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.deserializer.WorkflowNodeConfigDeserializer
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.common.json.JsonObject
-import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.state.NodeOutput
+import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 
@@ -27,25 +28,25 @@ sealed interface WorkflowNodeConfig {
     val version: Int
 
     /**
-     * Execute this node with given context and resolved inputs.
+     * Execute this node with given datastore and resolved inputs.
      *
      * Implementation contract:
-     * - Actions: Return output map with action results
-     * - Controls: Return map with control result (e.g., conditionResult: Boolean)
-     * - Loops: Return map with aggregated iteration results (Phase 5+)
-     * - Switch: Return map with selected branch (Phase 5+)
+     * - Actions: Return typed NodeOutput (CreateEntityOutput, HttpResponseOutput, etc.)
+     * - Controls: Return typed NodeOutput (ConditionOutput, etc.)
+     * - Loops: Return typed NodeOutput (Phase 5+)
+     * - Switch: Return typed NodeOutput (Phase 5+)
      *
-     * @param context Workflow execution context with data registry
+     * @param dataStore Unified workflow data store with step outputs, trigger context, and metadata
      * @param inputs Resolved inputs (templates already converted to values)
      * @param services Service provider for on-demand access to Spring services
-     * @return Execution output map (structure varies by node type)
+     * @return Typed NodeOutput representing execution result
      * @throws Exception on execution failure (caught by activity implementation)
      */
     fun execute(
-        context: WorkflowExecutionContext,
+        dataStore: WorkflowDataStore,
         inputs: JsonObject,
         services: NodeServiceProvider
-    ): JsonObject
+    ): NodeOutput
 
 
     /*

@@ -10,7 +10,9 @@ import org.springframework.web.reactive.function.client.WebClient
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
-import riven.core.models.workflow.engine.environment.WorkflowExecutionContext
+import riven.core.models.workflow.engine.state.HttpResponseOutput
+import riven.core.models.workflow.engine.state.NodeOutput
+import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
 import riven.core.models.workflow.node.config.WorkflowNodeConfigField
@@ -243,10 +245,10 @@ data class WorkflowHttpRequestActionConfig(
     }
 
     override fun execute(
-        context: WorkflowExecutionContext,
+        dataStore: WorkflowDataStore,
         inputs: Map<String, Any?>,
         services: NodeServiceProvider
-    ): Map<String, Any?> {
+    ): NodeOutput {
         // Extract resolved inputs
         val resolvedUrl = inputs["url"] as String
         val resolvedMethod = inputs["method"] as String
@@ -280,13 +282,13 @@ data class WorkflowHttpRequestActionConfig(
         // Log without sensitive data
         logger.info { "HTTP_REQUEST: $resolvedMethod $resolvedUrl -> ${response.statusCode}" }
 
-        // Clear output contract
-        return mapOf(
-            "statusCode" to response.statusCode.value(),
-            "headers" to response.headers.toSingleValueMap(),
-            "body" to response.body,
-            "url" to resolvedUrl,
-            "method" to resolvedMethod
+        // Return typed output
+        return HttpResponseOutput(
+            statusCode = response.statusCode.value(),
+            headers = response.headers.toSingleValueMap(),
+            body = response.body,
+            url = resolvedUrl,
+            method = resolvedMethod
         )
     }
 
