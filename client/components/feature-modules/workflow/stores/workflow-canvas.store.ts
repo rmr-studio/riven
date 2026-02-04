@@ -1,5 +1,5 @@
 import { WorkflowNodeMetadata } from '@/lib/types';
-import { WorkflowNode, WorkflowNodeData } from '@/lib/types/workflow/custom';
+import { WorkflowStepNode, WorkflowNodeData } from '@/lib/types/workflow/custom';
 import {
   applyEdgeChanges,
   applyNodeChanges,
@@ -15,7 +15,7 @@ import { subscribeWithSelector } from 'zustand/middleware';
  */
 export interface WorkflowCanvasState {
   /** Array of workflow nodes */
-  nodes: WorkflowNode[];
+  nodes: WorkflowStepNode[];
   /** Array of edges connecting nodes */
   edges: Edge[];
   /** ID of currently selected node, null if none selected */
@@ -31,7 +31,7 @@ export interface WorkflowCanvasState {
    * Handler for React Flow node changes (drag, select, remove, etc.)
    * Pass directly to ReactFlow's onNodesChange prop
    */
-  onNodesChange: (changes: NodeChange<WorkflowNode>[]) => void;
+  onNodesChange: (changes: NodeChange<WorkflowStepNode>[]) => void;
 
   /**
    * Handler for React Flow edge changes (select, remove, etc.)
@@ -42,7 +42,7 @@ export interface WorkflowCanvasState {
   /**
    * Add a new node to the canvas
    */
-  addNode: (node: WorkflowNode) => void;
+  addNode: (node: WorkflowStepNode) => void;
 
   /**
    * Update the position of an existing node

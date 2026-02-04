@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { memo } from "react";
-import type { NodeProps } from "@xyflow/react";
-import type { WorkflowNode } from "../../interface/workflow.interface";
-import { BaseWorkflowNode } from "./base-workflow-node";
+import { memo } from 'react';
+import type { NodeProps } from '@xyflow/react';
+import { BaseWorkflowNode } from './base-workflow-node';
+import { WorkflowStepNode } from '@/lib/types/workflow/custom';
 
 /**
  * Condition node component
@@ -12,8 +12,8 @@ import { BaseWorkflowNode } from "./base-workflow-node";
  * Note: Currently delegates to BaseWorkflowNode.
  * Future: May add multiple output handles for true/false branches.
  */
-export const ConditionNode = memo(function ConditionNode(props: NodeProps<WorkflowNode>) {
-    return <BaseWorkflowNode {...props} />;
+export const ConditionNode = memo(function ConditionNode(props: NodeProps<WorkflowStepNode>) {
+  return <BaseWorkflowNode {...props} />;
 });
 
-ConditionNode.displayName = "ConditionNode";
+ConditionNode.displayName = 'ConditionNode';

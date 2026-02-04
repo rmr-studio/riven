@@ -1,6 +1,6 @@
-import { WorkflowNodeType } from '@/lib/types';
+import { WorkflowNodeType } from '@/lib/types/workflow';
+import { Icon } from '@/lib/types/common';
 import type { Node, Edge } from '@xyflow/react';
-import type { LucideIcon } from 'lucide-react';
 
 /**
  * Base data payload for workflow nodes
@@ -14,7 +14,7 @@ export interface WorkflowNodeDataBase {
   /** Node category (trigger, action, condition) */
   type: WorkflowNodeType;
   /** Icon component to display */
-  icon: LucideIcon;
+  icon: Icon;
   /** Whether the node has been configured by the user */
   configured: boolean;
   /** Node-specific configuration values from form */
@@ -30,7 +30,7 @@ export type WorkflowNodeData = WorkflowNodeDataBase & Record<string, unknown>;
 /**
  * Type alias for workflow nodes with proper data typing
  */
-export type WorkflowNode = Node<WorkflowNodeData>;
+export type WorkflowStepNode = Node<WorkflowNodeData>;
 
 /**
  * Type alias for workflow edges

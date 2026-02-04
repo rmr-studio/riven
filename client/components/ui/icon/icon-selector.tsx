@@ -13,12 +13,12 @@ import {
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
-import { ClassNameProps } from "@/lib/interfaces/interface";
-import { IconColour, IconType } from "@/lib/types/common";
-import { cn } from "@/lib/util/utils";
-import { FileQuestionMark } from "lucide-react";
+import { ClassNameProps } from '@/lib/interfaces/interface';
+import { IconColour, IconType } from '@/lib/types/common';
+import { cn } from '@/lib/util/utils';
+import { FileQuestionMark } from 'lucide-react';
 
-import { type Icon} from '@/lib/types/common';
+import { type Icon } from '@/lib/types/common';
 import { IconCell } from './icon-cell';
 import { getAllIconTypes, ICON_COLOUR_MAP, ICON_REGISTRY, iconTypeToLabel } from './icon-mapper';
 
@@ -94,7 +94,7 @@ export const IconSelector: FC<Props> = ({
     });
   }, [open, filteredIcons.length, rowVirtualizer]);
 
-  const SelectedIcon = ICON_REGISTRY[type];
+  const SelectedIcon = ICON_REGISTRY[type || IconType.Database];
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -106,7 +106,9 @@ export const IconSelector: FC<Props> = ({
           className={cn('flex w-full items-center justify-center', className)}
         >
           {SelectedIcon ? (
-            <SelectedIcon className={cn(ICON_COLOUR_MAP[colour], displayIconClassName)} />
+            <SelectedIcon
+              className={cn(ICON_COLOUR_MAP[colour || IconColour.Neutral], displayIconClassName)}
+            />
           ) : (
             <FileQuestionMark className={cn(displayIconClassName)} />
           )}
@@ -167,7 +169,7 @@ export const IconSelector: FC<Props> = ({
                             {items.map((iconType) => (
                               <IconCell
                                 key={iconType}
-                                iconType={iconType}
+                                type={iconType}
                                 colour={currentColour}
                                 selected={type === iconType}
                                 onSelect={handleSelect}
