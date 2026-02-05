@@ -2,21 +2,18 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/util/utils";
-import { categoryMeta } from "../../config/node-types.config";
-import type { WorkflowNodeType } from "../../interface/workflow.interface";
+import { categoryMeta, categoryOrder } from "../../config/node-types.config";
+import { WorkflowNodeType, WorkflowNodeMetadata } from "@/lib/types/workflow";
 import { useNodeLibrary } from "../../hooks/use-node-library";
 import { NodeLibrarySearch } from "./node-library-search";
 import { NodeCategorySection } from "./node-category-section";
 
 export interface NodeLibrarySidebarProps {
-    /** Callback when a node is clicked to add to canvas */
-    onClickAdd?: (type: string) => void;
+    /** Callback when a node is clicked to add to canvas (receives backend key and metadata) */
+    onClickAdd?: (nodeTypeKey: string, metadata: WorkflowNodeMetadata) => void;
     /** Optional additional className */
     className?: string;
 }
-
-/** Order of categories to display */
-const categoryOrder: WorkflowNodeType[] = ["trigger", "action", "condition"];
 
 /**
  * Sidebar component displaying available workflow nodes organized by category
@@ -44,7 +41,9 @@ export function NodeLibrarySidebar({ onClickAdd, className }: NodeLibrarySidebar
                     <div className="flex flex-col gap-4">
                         {categoryOrder.map((category) => {
                             const meta = categoryMeta[category];
-                            const nodes = filteredNodes[category];
+                            const items = filteredNodes[category];
+
+                            if (items.length === 0) return null;
 
                             return (
                                 <NodeCategorySection
@@ -52,7 +51,7 @@ export function NodeLibrarySidebar({ onClickAdd, className }: NodeLibrarySidebar
                                     category={category}
                                     label={meta.label}
                                     icon={meta.icon}
-                                    nodes={nodes}
+                                    items={items}
                                     onClickAdd={onClickAdd}
                                 />
                             );

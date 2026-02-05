@@ -9,20 +9,21 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import type { NodeTypeDefinition } from "../../config/node-types.config";
+import { WorkflowNodeType, WorkflowNodeMetadata } from "@/lib/types/workflow";
+import type { NodeLibraryItem as NodeLibraryItemType } from "../../hooks/use-node-library";
 import { NodeLibraryItem } from "./node-library-item";
 
 export interface NodeCategorySectionProps {
-    /** Category key (trigger, action, condition) */
-    category: string;
+    /** Category enum value (TRIGGER, ACTION, CONTROL_FLOW, etc.) */
+    category: WorkflowNodeType;
     /** Display label for the category */
     label: string;
     /** Icon component for the category */
     icon: LucideIcon;
-    /** Node definitions in this category */
-    nodes: NodeTypeDefinition[];
+    /** Node library items in this category */
+    items: NodeLibraryItemType[];
     /** Callback when a node is clicked to add to canvas */
-    onClickAdd?: (type: string) => void;
+    onClickAdd?: (nodeTypeKey: string, metadata: WorkflowNodeMetadata) => void;
 }
 
 /**
@@ -33,12 +34,12 @@ export function NodeCategorySection({
     category,
     label,
     icon: Icon,
-    nodes,
+    items,
     onClickAdd,
 }: NodeCategorySectionProps) {
     const [isOpen, setIsOpen] = useState(true);
 
-    if (nodes.length === 0) {
+    if (items.length === 0) {
         return null;
     }
 
@@ -49,7 +50,7 @@ export function NodeCategorySection({
                     <Icon className="h-4 w-4 text-muted-foreground" />
                     <span>{label}</span>
                     <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                        {nodes.length}
+                        {items.length}
                     </span>
                 </div>
                 <ChevronDown
@@ -61,10 +62,11 @@ export function NodeCategorySection({
             </CollapsibleTrigger>
             <CollapsibleContent>
                 <div className="flex flex-col gap-2 py-2">
-                    {nodes.map((node) => (
+                    {items.map((item) => (
                         <NodeLibraryItem
-                            key={node.type}
-                            definition={node}
+                            key={item.key}
+                            nodeTypeKey={item.key}
+                            metadata={item.metadata}
                             onClickAdd={onClickAdd}
                         />
                     ))}

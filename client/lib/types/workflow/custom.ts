@@ -1,5 +1,5 @@
 import { WorkflowNodeType } from '@/lib/types/workflow';
-import { Icon } from '@/lib/types/common';
+import { IconType } from '@/lib/types/common';
 import type { Node, Edge } from '@xyflow/react';
 
 /**
@@ -7,14 +7,16 @@ import type { Node, Edge } from '@xyflow/react';
  * Contains display and configuration information
  */
 export interface WorkflowNodeDataBase {
+  /** Full backend key for schema lookup (e.g., TRIGGER.ENTITY_EVENT) */
+  nodeTypeKey: string;
   /** Display label shown on the node */
   label: string;
   /** Description of what the node does */
   description: string;
   /** Node category (trigger, action, condition) */
   type: WorkflowNodeType;
-  /** Icon component to display */
-  icon: Icon;
+  /** Icon type from backend for display */
+  icon: IconType;
   /** Whether the node has been configured by the user */
   configured: boolean;
   /** Node-specific configuration values from form */

@@ -10,7 +10,7 @@ All URIs are relative to *http://localhost:8081*
 | [**deleteWorkflow**](WorkflowApi.md#deleteworkflow) | **DELETE** /api/v1/workflow/definitions/{id} | Delete workflow definition |
 | [**getExecution**](WorkflowApi.md#getexecution) | **GET** /api/v1/workflow/executions/{id} | Get workflow execution by ID |
 | [**getExecutionSummary**](WorkflowApi.md#getexecutionsummary) | **GET** /api/v1/workflow/executions/{id}/summary | Get execution summary with node details |
-| [**getNodeConfigSchemas**](WorkflowApi.md#getnodeconfigschemas) | **GET** /api/v1/workflow/definitions/nodes | Get workflow node configuration schemas |
+| [**getNodeDefinitions**](WorkflowApi.md#getnodedefinitions) | **GET** /api/v1/workflow/definitions/nodes | Get Workflow Node Configuration |
 | [**getWorkflow**](WorkflowApi.md#getworkflow) | **GET** /api/v1/workflow/definitions/{id} | Get workflow definition by ID |
 | [**getWorkflowGraph**](WorkflowApi.md#getworkflowgraph) | **GET** /api/v1/workflow/graph/workflow/{workflowDefinitionId} | Get complete workflow graph (nodes and edges) |
 | [**listWorkflowExecutions**](WorkflowApi.md#listworkflowexecutions) | **GET** /api/v1/workflow/executions/workflow/{workflowDefinitionId} | List all executions for a workflow definition |
@@ -476,13 +476,13 @@ example().catch(console.error);
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
-## getNodeConfigSchemas
+## getNodeDefinitions
 
-> { [key: string]: WorkflowNodeMetadata; } getNodeConfigSchemas()
+> { [key: string]: WorkflowNodeMetadata; } getNodeDefinitions()
 
-Get workflow node configuration schemas
+Get Workflow Node Configuration
 
-Retrieves the configuration schemas for all workflow node types. Returns a map where keys are node identifiers (e.g., \&#39;ACTION.CREATE_ENTITY\&#39;) and values are lists of configuration fields.
+Retrieves the configuration and metadata for all workflow nodes. Returns a map where keys are node identifiers (e.g., \&#39;ACTION.CREATE_ENTITY\&#39;) and values represent its display configs and schema.
 
 ### Example
 
@@ -491,7 +491,7 @@ import {
   Configuration,
   WorkflowApi,
 } from '';
-import type { GetNodeConfigSchemasRequest } from '';
+import type { GetNodeDefinitionsRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
@@ -502,7 +502,7 @@ async function example() {
   const api = new WorkflowApi(config);
 
   try {
-    const data = await api.getNodeConfigSchemas();
+    const data = await api.getNodeDefinitions();
     console.log(data);
   } catch (error) {
     console.error(error);

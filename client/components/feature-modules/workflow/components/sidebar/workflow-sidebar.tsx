@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { WorkflowNodeMetadata } from "@/lib/types/workflow";
 import {
     useSelectedNodeId,
     useSidebarCollapsed,
@@ -15,8 +16,8 @@ import { NodeLibrarySidebar } from "./node-library-sidebar";
 interface WorkflowSidebarProps {
     /** Workspace ID for entity widgets */
     workspaceId: string;
-    /** Callback when a node is clicked to add to canvas */
-    onClickAdd?: (type: string) => void;
+    /** Callback when a node is clicked to add to canvas (receives backend key and metadata) */
+    onClickAdd?: (nodeTypeKey: string, metadata: WorkflowNodeMetadata) => void;
 }
 
 const SIDEBAR_WIDTH = 384; // 24rem = 384px (w-96)

@@ -4,36 +4,43 @@ import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { cn } from '@/lib/util/utils';
 import { WorkflowNodeType, WorkflowStepNode } from '@/lib/types/workflow';
+import { IconColour } from '@/lib/types/common';
 import { IconCell } from '@/components/ui/icon/icon-cell';
 
 /**
  * Type-specific styling for node variants
  * Includes border color and icon background colors
  */
-const typeStyles: Record<WorkflowNodeType, { border: string; iconBg: string }> = {
+const typeStyles: Record<WorkflowNodeType, { border: string; iconBg: string; iconColour: IconColour }> = {
   [WorkflowNodeType.Trigger]: {
     border: 'border-l-4 border-l-amber-500',
-    iconBg: 'bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400',
+    iconBg: 'bg-amber-100 dark:bg-amber-950',
+    iconColour: IconColour.Orange,
   },
   [WorkflowNodeType.Action]: {
     border: 'border-l-4 border-l-blue-500',
-    iconBg: 'bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400',
+    iconBg: 'bg-blue-100 dark:bg-blue-950',
+    iconColour: IconColour.Blue,
   },
   [WorkflowNodeType.ControlFlow]: {
     border: 'border-l-4 border-l-purple-500',
-    iconBg: 'bg-purple-100 text-purple-600 dark:bg-purple-950 dark:text-purple-400',
+    iconBg: 'bg-purple-100 dark:bg-purple-950',
+    iconColour: IconColour.Purple,
   },
   [WorkflowNodeType.Function]: {
     border: 'border-l-4 border-l-green-500',
-    iconBg: 'bg-green-100 text-green-600 dark:bg-green-950 dark:text-green-400',
+    iconBg: 'bg-green-100 dark:bg-green-950',
+    iconColour: IconColour.Green,
   },
   [WorkflowNodeType.Parse]: {
     border: 'border-l-4 border-l-yellow-500',
-    iconBg: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-950 dark:text-yellow-400',
+    iconBg: 'bg-yellow-100 dark:bg-yellow-950',
+    iconColour: IconColour.Yellow,
   },
   [WorkflowNodeType.Utility]: {
     border: 'border-l-4 border-l-gray-500',
-    iconBg: 'bg-gray-100 text-gray-600 dark:bg-gray-950 dark:text-gray-400',
+    iconBg: 'bg-gray-100 dark:bg-gray-950',
+    iconColour: IconColour.Grey,
   },
 };
 
@@ -45,7 +52,6 @@ export const BaseWorkflowNode = memo(function BaseWorkflowNode({
   data,
   selected,
 }: NodeProps<WorkflowStepNode>) {
-  const { type, colour } = data.icon;
   const styles = typeStyles[data.type];
 
   return (
@@ -60,7 +66,7 @@ export const BaseWorkflowNode = memo(function BaseWorkflowNode({
       {/* Header section with icon and label */}
       <div className="flex items-center gap-2 border-b border-border px-3 py-2">
         <div className={cn('rounded p-1.5', styles.iconBg)}>
-          <IconCell readonly type={type} colour={colour} />
+          <IconCell readonly type={data.icon} colour={styles.iconColour} />
         </div>
         <span className="text-sm font-medium">{data.label}</span>
       </div>

@@ -5,8 +5,23 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import type { WorkflowNodeConfigField } from '@/lib/types/workflow';
+import { WorkflowNodeConfigFieldType } from '@/lib/types/workflow';
 import { buildZodSchemaFromFields, buildDefaultValues } from '../../util/schema-builder.util';
 import { getWidgetForType } from './widgets/config-widget.registry';
+
+/**
+ * Type guard for fields with required key and type
+ * Narrows WorkflowNodeConfigField to a type with non-optional key and type
+ */
+type ValidConfigField = WorkflowNodeConfigField & {
+  key: string;
+  type: WorkflowNodeConfigFieldType;
+};
+
+function isValidConfigField(field: WorkflowNodeConfigField): field is ValidConfigField {
+  return !!field.key && !!field.type;
+}
 
 export interface NodeConfigFormProps {
   /** Node ID being configured */
@@ -44,13 +59,19 @@ export const NodeConfigForm: FC<NodeConfigFormProps> = ({
   // Filter schema to only include fields with registered widgets
   // This prevents crashes when unknown field types are encountered
   const supportedFields = useMemo(
-    () => configSchema.filter((field) => field.key && field.type && getWidgetForType(field.type)),
+    () =>
+      configSchema
+        .filter(isValidConfigField)
+        .filter((field) => getWidgetForType(field.type)),
     [configSchema],
   );
 
   // Track unsupported fields for warning display
   const unsupportedFields = useMemo(
-    () => configSchema.filter((field) => field.key && field.type && !getWidgetForType(field.type)),
+    () =>
+      configSchema
+        .filter(isValidConfigField)
+        .filter((field) => !getWidgetForType(field.type)),
     [configSchema],
   );
 

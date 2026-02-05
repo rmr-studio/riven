@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { ReactFlow, ReactFlowProvider, useReactFlow, type NodeMouseHandler } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
+import { WorkflowNodeMetadata } from "@/lib/types/workflow";
 import {
     useWorkflowNodes,
     useWorkflowEdges,
@@ -11,6 +12,7 @@ import {
     useOnEdgesChange,
     useAddNode,
     useSelectNode,
+    useNodeConfig,
 } from "../../context/workflow-canvas-provider";
 import { CanvasBackground } from "../ui/canvas-background";
 import { CanvasControls } from "../ui/canvas-controls";
@@ -41,6 +43,7 @@ const WorkflowCanvasInner = ({ workspaceId }: WorkflowCanvasInnerProps) => {
     const { screenToFlowPosition } = useReactFlow();
     const addNode = useAddNode();
     const selectNode = useSelectNode();
+    const nodeConfig = useNodeConfig();
 
     const onDragOver = useCallback((event: React.DragEvent) => {
         event.preventDefault();
@@ -51,8 +54,19 @@ const WorkflowCanvasInner = ({ workspaceId }: WorkflowCanvasInnerProps) => {
         (event: React.DragEvent) => {
             event.preventDefault();
 
-            const type = event.dataTransfer.getData("application/reactflow");
-            if (!type) return;
+            const nodeTypeKey = event.dataTransfer.getData("application/reactflow");
+            const metadataJson = event.dataTransfer.getData("application/reactflow-metadata");
+
+            if (!nodeTypeKey || !metadataJson) return;
+
+            let metadata: WorkflowNodeMetadata;
+            try {
+                metadata = JSON.parse(metadataJson);
+            } catch {
+                // Fallback to looking up from store if parse fails
+                if (!nodeConfig?.[nodeTypeKey]) return;
+                metadata = nodeConfig[nodeTypeKey];
+            }
 
             // Use clientX/clientY for correct position calculation
             const position = screenToFlowPosition({
@@ -60,14 +74,14 @@ const WorkflowCanvasInner = ({ workspaceId }: WorkflowCanvasInnerProps) => {
                 y: event.clientY,
             });
 
-            const newNode = createWorkflowNode(type, position);
+            const newNode = createWorkflowNode(nodeTypeKey, metadata, position);
             addNode(newNode);
         },
-        [screenToFlowPosition, addNode]
+        [screenToFlowPosition, addNode, nodeConfig]
     );
 
     const handleClickToAdd = useCallback(
-        (nodeType: string) => {
+        (nodeTypeKey: string, metadata: WorkflowNodeMetadata) => {
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
             const staggerOffset = nodes.length * 20;
@@ -77,7 +91,7 @@ const WorkflowCanvasInner = ({ workspaceId }: WorkflowCanvasInnerProps) => {
                 y: viewportHeight / 2 + staggerOffset,
             });
 
-            const newNode = createWorkflowNode(nodeType, position);
+            const newNode = createWorkflowNode(nodeTypeKey, metadata, position);
             addNode(newNode);
         },
         [nodes.length, screenToFlowPosition, addNode]

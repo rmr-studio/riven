@@ -1,17 +1,51 @@
-"use client";
+'use client';
 
-import { useMemo } from "react";
-import {
-    getNodesByCategory,
-    type NodeTypeDefinition,
-} from "../config/node-types.config";
-import type { WorkflowNodeType } from "../interface/workflow.interface";
+import { useMemo } from 'react';
+import { WorkflowNodeType, WorkflowNodeMetadata } from '@/lib/types/workflow';
+import { useNodeConfig } from '../context/workflow-canvas-provider';
+
+/**
+ * Library item representing a node type with its backend key
+ */
+export interface NodeLibraryItem {
+  /** Full backend key (e.g., TRIGGER.ENTITY_EVENT) for node creation */
+  key: string;
+  /** Node metadata from backend */
+  metadata: WorkflowNodeMetadata;
+}
 
 export interface UseNodeLibraryResult {
-    /** Nodes grouped by category, filtered by search query */
-    filteredNodes: Record<WorkflowNodeType, NodeTypeDefinition[]>;
-    /** Whether any nodes match the current search query */
-    hasResults: boolean;
+  /** Nodes grouped by category, filtered by search query */
+  filteredNodes: Record<WorkflowNodeType, NodeLibraryItem[]>;
+  /** Whether any nodes match the current search query */
+  hasResults: boolean;
+}
+
+/**
+ * Groups node metadata by category
+ */
+function groupNodesByCategory(
+  nodeConfig: Record<string, WorkflowNodeMetadata> | null,
+): Record<WorkflowNodeType, NodeLibraryItem[]> {
+  const grouped: Record<WorkflowNodeType, NodeLibraryItem[]> = {
+    [WorkflowNodeType.Trigger]: [],
+    [WorkflowNodeType.Action]: [],
+    [WorkflowNodeType.ControlFlow]: [],
+    [WorkflowNodeType.Function]: [],
+    [WorkflowNodeType.Utility]: [],
+    [WorkflowNodeType.Parse]: [],
+  };
+
+  if (!nodeConfig) return grouped;
+
+  Object.entries(nodeConfig).forEach(([key, metadata]) => {
+    const category = metadata.metadata.category;
+    if (category in grouped) {
+      grouped[category].push({ key, metadata });
+    }
+  });
+
+  return grouped;
 }
 
 /**
@@ -21,35 +55,40 @@ export interface UseNodeLibraryResult {
  * @returns Filtered nodes grouped by category and a hasResults flag
  */
 export function useNodeLibrary(searchQuery: string): UseNodeLibraryResult {
-    const allNodes = useMemo(() => getNodesByCategory(), []);
+  const nodeConfig = useNodeConfig();
 
-    const filteredNodes = useMemo(() => {
-        const query = searchQuery.toLowerCase().trim();
+  const allNodes = useMemo(() => groupNodesByCategory(nodeConfig), [nodeConfig]);
 
-        if (!query) {
-            return allNodes;
-        }
+  const filteredNodes = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
 
-        const filtered: Record<WorkflowNodeType, NodeTypeDefinition[]> = {
-            trigger: [],
-            action: [],
-            condition: [],
-        };
+    if (!query) {
+      return allNodes;
+    }
 
-        (Object.keys(allNodes) as WorkflowNodeType[]).forEach((category) => {
-            filtered[category] = allNodes[category].filter(
-                (node) =>
-                    node.label.toLowerCase().includes(query) ||
-                    node.description.toLowerCase().includes(query)
-            );
-        });
+    const filtered: Record<WorkflowNodeType, NodeLibraryItem[]> = {
+      [WorkflowNodeType.Trigger]: [],
+      [WorkflowNodeType.Action]: [],
+      [WorkflowNodeType.ControlFlow]: [],
+      [WorkflowNodeType.Function]: [],
+      [WorkflowNodeType.Utility]: [],
+      [WorkflowNodeType.Parse]: [],
+    };
 
-        return filtered;
-    }, [allNodes, searchQuery]);
+    (Object.keys(allNodes) as WorkflowNodeType[]).forEach((category) => {
+      filtered[category] = allNodes[category].filter(
+        (item) =>
+          item.metadata.metadata.label.toLowerCase().includes(query) ||
+          item.metadata.metadata.description.toLowerCase().includes(query),
+      );
+    });
 
-    const hasResults = useMemo(() => {
-        return Object.values(filteredNodes).some((nodes) => nodes.length > 0);
-    }, [filteredNodes]);
+    return filtered;
+  }, [allNodes, searchQuery]);
 
-    return { filteredNodes, hasResults };
+  const hasResults = useMemo(() => {
+    return Object.values(filteredNodes).some((nodes) => nodes.length > 0);
+  }, [filteredNodes]);
+
+  return { filteredNodes, hasResults };
 }

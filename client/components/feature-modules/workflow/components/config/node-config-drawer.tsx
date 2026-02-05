@@ -5,16 +5,16 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { IconCell } from "@/components/ui/icon/icon-cell";
+import { IconColour } from "@/lib/types/common";
 import {
   useWorkflowNodes,
   useSelectNode,
   useUpdateNodeData,
-  useNodeConfigSchemas,
+  useNodeConfig,
   useSchemasLoading,
 } from "../../context/workflow-canvas-provider";
 import { NodeConfigForm } from "./node-config-form";
-import { frontendToBackendKey } from "../../util/node-type-mapping.util";
-import { nodeTypeDefinitions } from "../../config/node-types.config";
 
 interface NodeConfigDrawerProps {
   /** Workspace ID for entity widgets */
@@ -37,7 +37,7 @@ export const NodeConfigDrawer: FC<NodeConfigDrawerProps> = ({ workspaceId, nodeI
   const nodes = useWorkflowNodes();
   const selectNode = useSelectNode();
   const updateNodeData = useUpdateNodeData();
-  const schemas = useNodeConfigSchemas();
+  const nodeConfig = useNodeConfig();
   const schemasLoading = useSchemasLoading();
 
   // Find the node by the provided nodeId prop (supports exit animation with stale ID)
@@ -79,13 +79,9 @@ export const NodeConfigDrawer: FC<NodeConfigDrawerProps> = ({ workspaceId, nodeI
 
   if (!node) return null;
 
-  // Get node type definition for icon/label
-  const nodeTypeDef = nodeTypeDefinitions[node.type];
-  const Icon = nodeTypeDef?.icon ?? node.data.icon;
-
-  // Map frontend node type to backend schema key
-  const backendKey = frontendToBackendKey(node.type);
-  const configSchema = schemas?.[backendKey] ?? [];
+  // Use nodeTypeKey from node data to look up schema
+  const nodeMetadata = nodeConfig?.[node.data.nodeTypeKey];
+  const configSchema = nodeMetadata?.schema ?? [];
 
   return (
     <div className="h-full flex flex-col bg-background">
@@ -93,14 +89,14 @@ export const NodeConfigDrawer: FC<NodeConfigDrawerProps> = ({ workspaceId, nodeI
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-md bg-muted">
-            <Icon className="h-5 w-5" />
+            <IconCell readonly type={node.data.icon} colour={IconColour.Neutral} />
           </div>
           <div>
             <h3 className="font-semibold text-sm">
-              {nodeTypeDef?.label ?? node.data.label}
+              {node.data.label}
             </h3>
             <p className="text-xs text-muted-foreground">
-              {nodeTypeDef?.description ?? node.data.description}
+              {node.data.description}
             </p>
           </div>
         </div>

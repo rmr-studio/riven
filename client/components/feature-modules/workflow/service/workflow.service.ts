@@ -9,18 +9,18 @@ import { validateSession } from '@/lib/util/service/service.util';
  */
 export class WorkflowService {
   /**
-   * Fetch configuration schemas for all workflow node types
-   * Returns a map of node type identifiers to their config field definitions
+   * Fetch definitions for all workflow node types
+   * Returns a map of node type identifiers to their metadata, including config schemas
    *
    * @example
-   * const schemas = await WorkflowService.getNodeConfigSchemas(session);
+   * const schemas = await WorkflowService.getWorkflowNodeDefinitions(session);
    * const triggerFields = schemas["TRIGGER.ENTITY_EVENT"];
    */
-  static async getNodeConfigSchemas(
+  static async getWorkflowNodeDefinitions(
     session: Session | null,
   ): Promise<Record<string, WorkflowNodeMetadata>> {
     validateSession(session);
     const api = createWorkflowApi(session);
-    return api.getNodeConfigSchemas();
+    return api.getNodeDefinitions();
   }
 }

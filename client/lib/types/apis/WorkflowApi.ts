@@ -473,10 +473,10 @@ export class WorkflowApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves the configuration schemas for all workflow node types. Returns a map where keys are node identifiers (e.g., \'ACTION.CREATE_ENTITY\') and values are lists of configuration fields.
-     * Get workflow node configuration schemas
+     * Retrieves the configuration and metadata for all workflow nodes. Returns a map where keys are node identifiers (e.g., \'ACTION.CREATE_ENTITY\') and values represent its display configs and schema.
+     * Get Workflow Node Configuration
      */
-    async getNodeConfigSchemasRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: WorkflowNodeMetadata; }>> {
+    async getNodeDefinitionsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: WorkflowNodeMetadata; }>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -503,11 +503,11 @@ export class WorkflowApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves the configuration schemas for all workflow node types. Returns a map where keys are node identifiers (e.g., \'ACTION.CREATE_ENTITY\') and values are lists of configuration fields.
-     * Get workflow node configuration schemas
+     * Retrieves the configuration and metadata for all workflow nodes. Returns a map where keys are node identifiers (e.g., \'ACTION.CREATE_ENTITY\') and values represent its display configs and schema.
+     * Get Workflow Node Configuration
      */
-    async getNodeConfigSchemas(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: WorkflowNodeMetadata; }> {
-        const response = await this.getNodeConfigSchemasRaw(initOverrides);
+    async getNodeDefinitions(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: WorkflowNodeMetadata; }> {
+        const response = await this.getNodeDefinitionsRaw(initOverrides);
         return await response.value();
     }
 
