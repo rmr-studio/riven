@@ -156,17 +156,17 @@ class WorkflowDefinitionController(
 
     @GetMapping("/nodes")
     @Operation(
-        summary = "Get workflow node configuration schemas",
-        description = "Retrieves the configuration schemas for all workflow node types. " +
+        summary = "Get Workflow Node Configuration",
+        description = "Retrieves the configuration and metadata for all workflow nodes. " +
                 "Returns a map where keys are node identifiers (e.g., 'ACTION.CREATE_ENTITY') " +
-                "and values are lists of configuration fields."
+                "and values represent its display configs and schema."
     )
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "Node configuration schemas retrieved successfully"),
         ApiResponse(responseCode = "401", description = "Unauthorized - authentication required")
     )
-    fun getNodeConfigSchemas(): ResponseEntity<Map<String, WorkflowNodeMetadata>> {
-        logger.info { "GET /api/v1/workflow/definitions/node-schemas" }
+    fun getNodeDefinitions(): ResponseEntity<Map<String, WorkflowNodeMetadata>> {
+        logger.info { "GET /api/v1/workflow/definitions/nodes" }
 
         val schemas = workflowNodeConfigRegistry.getAllNodes()
 
