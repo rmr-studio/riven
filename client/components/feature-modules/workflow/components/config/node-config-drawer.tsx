@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, type FC } from "react";
-import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { IconCell } from "@/components/ui/icon/icon-cell";
-import { IconColour } from "@/lib/types/common";
+import { useCallback, useEffect, type FC } from 'react';
+import { ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { IconCell } from '@/components/ui/icon/icon-cell';
+import { IconColour } from '@/lib/types/common';
 import {
   useWorkflowNodes,
   useSelectNode,
   useUpdateNodeData,
   useNodeConfig,
   useSchemasLoading,
-} from "../../context/workflow-canvas-provider";
-import { NodeConfigForm } from "./node-config-form";
+} from '../../context/workflow-canvas-provider';
+import { NodeConfigForm } from './node-config-form';
 
 interface NodeConfigDrawerProps {
   /** Workspace ID for entity widgets */
@@ -50,14 +50,14 @@ export const NodeConfigDrawer: FC<NodeConfigDrawerProps> = ({ workspaceId, nodeI
   // Handle Escape key to close drawer (CONFIG-08)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && node) {
+      if (event.key === 'Escape' && node) {
         event.preventDefault();
         handleClose();
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [node, handleClose]);
 
   const handleValuesChange = useCallback(
@@ -67,14 +67,14 @@ export const NodeConfigDrawer: FC<NodeConfigDrawerProps> = ({ workspaceId, nodeI
       // Update node data with new config values
       // Set configured to true if any values are set
       const hasConfig = Object.values(values).some(
-        (v) => v !== undefined && v !== null && v !== ""
+        (v) => v !== undefined && v !== null && v !== '',
       );
       updateNodeData(node.id, {
         config: values,
         configured: hasConfig,
       });
     },
-    [node, updateNodeData]
+    [node, updateNodeData],
   );
 
   if (!node) return null;
@@ -84,20 +84,16 @@ export const NodeConfigDrawer: FC<NodeConfigDrawerProps> = ({ workspaceId, nodeI
   const configSchema = nodeMetadata?.schema ?? [];
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="flex h-full flex-col bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between border-b p-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-md bg-muted">
+          <div className="rounded-md bg-muted p-2">
             <IconCell readonly type={node.data.icon} colour={IconColour.Neutral} />
           </div>
           <div>
-            <h3 className="font-semibold text-sm">
-              {node.data.label}
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              {node.data.description}
-            </p>
+            <h3 className="text-sm font-semibold">{node.data.label}</h3>
+            <p className="text-xs text-muted-foreground">{node.data.description}</p>
           </div>
         </div>
         <Button
@@ -107,7 +103,7 @@ export const NodeConfigDrawer: FC<NodeConfigDrawerProps> = ({ workspaceId, nodeI
           className="h-8 w-8"
           aria-label="Close drawer (Escape)"
         >
-          <X className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </Button>
       </div>
@@ -119,9 +115,7 @@ export const NodeConfigDrawer: FC<NodeConfigDrawerProps> = ({ workspaceId, nodeI
         <div className="p-4">
           {schemasLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-sm text-muted-foreground">
-                Loading configuration...
-              </div>
+              <div className="text-sm text-muted-foreground">Loading configuration...</div>
             </div>
           ) : (
             <NodeConfigForm

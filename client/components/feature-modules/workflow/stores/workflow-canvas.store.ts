@@ -112,9 +112,19 @@ export const createWorkflowCanvasStore = (): StoreApi<WorkflowCanvasState> => {
       sidebarCollapsed: false,
 
       onNodesChange: (changes) => {
-        set({
-          nodes: applyNodeChanges(changes, get().nodes),
-        });
+        // Handle remove changes via removeNode to ensure selection is cleared
+        const removeChanges = changes.filter((change) => change.type === 'remove');
+        const otherChanges = changes.filter((change) => change.type !== 'remove');
+
+        // Apply non-remove changes first
+        if (otherChanges.length > 0) {
+          set({ nodes: applyNodeChanges(otherChanges, get().nodes) });
+        }
+
+        // Process removals through removeNode (handles selection clearing and edge cleanup)
+        for (const change of removeChanges) {
+          get().removeNode(change.id);
+        }
       },
 
       onEdgesChange: (changes) => {
@@ -138,6 +148,7 @@ export const createWorkflowCanvasStore = (): StoreApi<WorkflowCanvasState> => {
       removeNode: (nodeId) => {
         const { nodes, edges } = get();
         set({
+          selectedNodeId: get().selectedNodeId === nodeId ? null : get().selectedNodeId,
           nodes: nodes.filter((node) => node.id !== nodeId),
           edges: edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
         });
