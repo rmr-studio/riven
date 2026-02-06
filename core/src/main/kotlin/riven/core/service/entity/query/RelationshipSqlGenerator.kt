@@ -1,0 +1,328 @@
+package riven.core.service.entity.query
+
+import riven.core.models.entity.query.QueryFilter
+import riven.core.models.entity.query.RelationshipCondition
+import riven.core.models.entity.query.TypeBranch
+import java.util.*
+
+/**
+ * Generates parameterized EXISTS/NOT EXISTS subqueries for filtering entities by their relationships.
+ *
+ * This generator converts [RelationshipCondition] variants into PostgreSQL EXISTS subqueries
+ * correlated to the outer entity query. Each subquery targets the `entity_relationships` table
+ * and, for conditions that inspect the related entity (TargetMatches, TargetTypeMatches),
+ * JOINs to the `entities` table.
+ *
+ * ## EXISTS Subquery Pattern
+ *
+ * EXISTS subqueries are preferred over JOINs for relationship filtering because they:
+ * - Short-circuit on the first matching row (semi-join optimization)
+ * - Avoid row duplication that JOINs cause when an entity has multiple relationships
+ * - Compose cleanly with AND/OR logic in the outer WHERE clause
+ * - Work well with the existing composite index on `(workspace_id, source_entity_id)`
+ *
+ * ## Nested Filter Visitor Callback
+ *
+ * For [RelationshipCondition.TargetMatches] and [RelationshipCondition.TargetTypeMatches],
+ * nested filters must be applied to the target entity. Rather than holding a direct reference
+ * to the filter visitor (which would create circular dependencies), the [generate] method
+ * accepts an optional `nestedFilterVisitor` lambda. The caller (typically the query filter
+ * visitor in Plan 03) provides this lambda to enable recursive filter processing.
+ *
+ * ## Alias Generation Strategy
+ *
+ * Each subquery generates unique table aliases via [ParameterNameGenerator] to prevent
+ * SQL ambiguity at any nesting depth:
+ * - Relationship table: `r_{counter}` (e.g., `r_0`, `r_3`, `r_7`)
+ * - Target entity table: `t_{counter}` (e.g., `t_1`, `t_4`, `t_8`)
+ *
+ * Since the counter is shared across the entire query tree, aliases are guaranteed unique
+ * even in deeply nested TargetMatches scenarios.
+ *
+ * ## Workspace Isolation
+ *
+ * Subqueries do NOT include workspace_id filtering. Workspace isolation is enforced
+ * on the root query only. The entity_relationships table's FK constraints guarantee
+ * that relationships reference entities within the same workspace, and RLS provides
+ * an additional safety net at the database level.
+ */
+class RelationshipSqlGenerator {
+
+    /**
+     * Generates a SQL fragment for filtering by a relationship condition.
+     *
+     * @param relationshipId UUID of the relationship definition (maps to `relationship_field_id`)
+     * @param condition The relationship condition to evaluate
+     * @param paramGen Generator for unique parameter names and table aliases (shared across query)
+     * @param entityAlias Table alias for the entity being filtered. Defaults to `"e"` (root entity).
+     *   For nested subqueries, this will be the target entity alias from the parent subquery.
+     * @param nestedFilterVisitor Optional lambda for processing nested filters inside TargetMatches
+     *   and TargetTypeMatches conditions. Signature: `(filter, paramGen, entityAlias) -> SqlFragment`.
+     *   Required when the condition contains nested filters; throws [UnsupportedOperationException]
+     *   if null and a nested filter is encountered.
+     * @return SqlFragment with parameterized EXISTS/NOT EXISTS subquery SQL and bound values
+     * @throws UnsupportedOperationException if [RelationshipCondition.CountMatches] is encountered
+     *   or if a nested filter is encountered without a [nestedFilterVisitor]
+     */
+    fun generate(
+        relationshipId: UUID,
+        condition: RelationshipCondition,
+        paramGen: ParameterNameGenerator,
+        entityAlias: String = "e",
+        nestedFilterVisitor: ((QueryFilter, ParameterNameGenerator, String) -> SqlFragment)? = null
+    ): SqlFragment = when (condition) {
+        is RelationshipCondition.Exists ->
+            generateExists(relationshipId, paramGen, entityAlias)
+
+        is RelationshipCondition.NotExists ->
+            generateNotExists(relationshipId, paramGen, entityAlias)
+
+        is RelationshipCondition.TargetEquals ->
+            generateTargetEquals(relationshipId, condition.entityIds, paramGen, entityAlias)
+
+        is RelationshipCondition.TargetMatches ->
+            generateTargetMatches(
+                relationshipId, condition.filter, paramGen, entityAlias,
+                nestedFilterVisitor ?: throw UnsupportedOperationException(
+                    "Nested filter visitor required for TargetMatches conditions"
+                )
+            )
+
+        is RelationshipCondition.TargetTypeMatches ->
+            generateTargetTypeMatches(
+                relationshipId, condition.branches, paramGen, entityAlias,
+                nestedFilterVisitor ?: throw UnsupportedOperationException(
+                    "Nested filter visitor required for TargetTypeMatches conditions"
+                )
+            )
+
+        is RelationshipCondition.CountMatches ->
+            throw UnsupportedOperationException(
+                "CountMatches is not supported in this version. See v2 requirements REL-09."
+            )
+    }
+
+    /**
+     * Generates an EXISTS subquery matching entities with at least one related entity.
+     *
+     * ```sql
+     * EXISTS (
+     *     SELECT 1 FROM entity_relationships r_0
+     *     WHERE r_0.source_entity_id = e.id
+     *       AND r_0.relationship_field_id = :rel_1
+     *       AND r_0.deleted = false
+     * )
+     * ```
+     */
+    private fun generateExists(
+        relationshipId: UUID,
+        paramGen: ParameterNameGenerator,
+        entityAlias: String
+    ): SqlFragment {
+        val relAlias = "r_${paramGen.next("a")}"
+        val relParam = paramGen.next("rel")
+
+        val sql = buildString {
+            append("EXISTS (\n")
+            append("    SELECT 1 FROM entity_relationships $relAlias\n")
+            append("    WHERE $relAlias.source_entity_id = $entityAlias.id\n")
+            append("      AND $relAlias.relationship_field_id = :$relParam\n")
+            append("      AND $relAlias.deleted = false\n")
+            append(")")
+        }
+
+        return SqlFragment(
+            sql = sql,
+            parameters = mapOf(relParam to relationshipId)
+        )
+    }
+
+    /**
+     * Generates a NOT EXISTS subquery matching entities with no related entities.
+     *
+     * Same structure as [generateExists] but with NOT EXISTS prefix.
+     */
+    private fun generateNotExists(
+        relationshipId: UUID,
+        paramGen: ParameterNameGenerator,
+        entityAlias: String
+    ): SqlFragment {
+        val relAlias = "r_${paramGen.next("a")}"
+        val relParam = paramGen.next("rel")
+
+        val sql = buildString {
+            append("NOT EXISTS (\n")
+            append("    SELECT 1 FROM entity_relationships $relAlias\n")
+            append("    WHERE $relAlias.source_entity_id = $entityAlias.id\n")
+            append("      AND $relAlias.relationship_field_id = :$relParam\n")
+            append("      AND $relAlias.deleted = false\n")
+            append(")")
+        }
+
+        return SqlFragment(
+            sql = sql,
+            parameters = mapOf(relParam to relationshipId)
+        )
+    }
+
+    /**
+     * Generates an EXISTS subquery matching entities related to specific entity IDs.
+     *
+     * Converts string entity IDs to UUIDs and uses an IN predicate on `target_entity_id`.
+     *
+     * ```sql
+     * EXISTS (
+     *     SELECT 1 FROM entity_relationships r_0
+     *     WHERE r_0.source_entity_id = e.id
+     *       AND r_0.relationship_field_id = :rel_1
+     *       AND r_0.target_entity_id IN (:te_2)
+     *       AND r_0.deleted = false
+     * )
+     * ```
+     */
+    private fun generateTargetEquals(
+        relationshipId: UUID,
+        entityIds: List<String>,
+        paramGen: ParameterNameGenerator,
+        entityAlias: String
+    ): SqlFragment {
+        val relAlias = "r_${paramGen.next("a")}"
+        val relParam = paramGen.next("rel")
+        val targetParam = paramGen.next("te")
+        val uuidList = entityIds.map { UUID.fromString(it) }
+
+        val sql = buildString {
+            append("EXISTS (\n")
+            append("    SELECT 1 FROM entity_relationships $relAlias\n")
+            append("    WHERE $relAlias.source_entity_id = $entityAlias.id\n")
+            append("      AND $relAlias.relationship_field_id = :$relParam\n")
+            append("      AND $relAlias.target_entity_id IN (:$targetParam)\n")
+            append("      AND $relAlias.deleted = false\n")
+            append(")")
+        }
+
+        return SqlFragment(
+            sql = sql,
+            parameters = mapOf(
+                relParam to relationshipId,
+                targetParam to uuidList
+            )
+        )
+    }
+
+    /**
+     * Generates an EXISTS subquery with a JOIN to the target entities table,
+     * applying a nested filter on the target entity's payload.
+     *
+     * The nested filter is processed via the [visitor] callback, which receives
+     * the target entity's table alias so that attribute references (e.g., `t_0.payload`)
+     * point to the correct table.
+     *
+     * ```sql
+     * EXISTS (
+     *     SELECT 1 FROM entity_relationships r_0
+     *     JOIN entities t_1 ON r_0.target_entity_id = t_1.id AND t_1.deleted = false
+     *     WHERE r_0.source_entity_id = e.id
+     *       AND r_0.relationship_field_id = :rel_2
+     *       AND r_0.deleted = false
+     *       AND {nested filter SQL referencing t_1}
+     * )
+     * ```
+     */
+    private fun generateTargetMatches(
+        relationshipId: UUID,
+        nestedFilter: QueryFilter,
+        paramGen: ParameterNameGenerator,
+        entityAlias: String,
+        visitor: (QueryFilter, ParameterNameGenerator, String) -> SqlFragment
+    ): SqlFragment {
+        val relAlias = "r_${paramGen.next("a")}"
+        val targetAlias = "t_${paramGen.next("a")}"
+        val relParam = paramGen.next("rel")
+
+        val nestedFragment = visitor(nestedFilter, paramGen, targetAlias)
+
+        val sql = buildString {
+            append("EXISTS (\n")
+            append("    SELECT 1 FROM entity_relationships $relAlias\n")
+            append("    JOIN entities $targetAlias ON $relAlias.target_entity_id = $targetAlias.id AND $targetAlias.deleted = false\n")
+            append("    WHERE $relAlias.source_entity_id = $entityAlias.id\n")
+            append("      AND $relAlias.relationship_field_id = :$relParam\n")
+            append("      AND $relAlias.deleted = false\n")
+            append("      AND ${nestedFragment.sql}\n")
+            append(")")
+        }
+
+        return SqlFragment(
+            sql = sql,
+            parameters = mapOf(relParam to relationshipId) + nestedFragment.parameters
+        )
+    }
+
+    /**
+     * Generates an EXISTS subquery with OR-branched type predicates for polymorphic relationships.
+     *
+     * Each [TypeBranch] produces a type check (`target.type_id = :typeParam`) optionally
+     * combined with a nested filter. Branches are combined with OR semantics: the condition
+     * matches if the related entity satisfies any branch.
+     *
+     * ```sql
+     * EXISTS (
+     *     SELECT 1 FROM entity_relationships r_0
+     *     JOIN entities t_1 ON r_0.target_entity_id = t_1.id AND t_1.deleted = false
+     *     WHERE r_0.source_entity_id = e.id
+     *       AND r_0.relationship_field_id = :rel_2
+     *       AND r_0.deleted = false
+     *       AND (
+     *           (t_1.type_id = :ttm_type_3 AND {branch filter SQL})
+     *           OR
+     *           (t_1.type_id = :ttm_type_4)
+     *       )
+     * )
+     * ```
+     */
+    private fun generateTargetTypeMatches(
+        relationshipId: UUID,
+        branches: List<TypeBranch>,
+        paramGen: ParameterNameGenerator,
+        entityAlias: String,
+        visitor: (QueryFilter, ParameterNameGenerator, String) -> SqlFragment
+    ): SqlFragment {
+        val relAlias = "r_${paramGen.next("a")}"
+        val targetAlias = "t_${paramGen.next("a")}"
+        val relParam = paramGen.next("rel")
+
+        val branchFragments = branches.map { branch ->
+            val typeParam = paramGen.next("ttm_type")
+            val typeCondition = SqlFragment(
+                "${targetAlias}.type_id = :$typeParam",
+                mapOf(typeParam to branch.entityTypeId)
+            )
+
+            if (branch.filter != null) {
+                val filterFragment = visitor(branch.filter, paramGen, targetAlias)
+                typeCondition.and(filterFragment)
+            } else {
+                typeCondition
+            }
+        }
+
+        val combinedBranches = branchFragments.reduce { acc, fragment -> acc.or(fragment) }
+
+        val sql = buildString {
+            append("EXISTS (\n")
+            append("    SELECT 1 FROM entity_relationships $relAlias\n")
+            append("    JOIN entities $targetAlias ON $relAlias.target_entity_id = $targetAlias.id AND $targetAlias.deleted = false\n")
+            append("    WHERE $relAlias.source_entity_id = $entityAlias.id\n")
+            append("      AND $relAlias.relationship_field_id = :$relParam\n")
+            append("      AND $relAlias.deleted = false\n")
+            append("      AND ${combinedBranches.sql}\n")
+            append(")")
+        }
+
+        return SqlFragment(
+            sql = sql,
+            parameters = mapOf(relParam to relationshipId) + combinedBranches.parameters
+        )
+    }
+}

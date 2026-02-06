@@ -1,6 +1,7 @@
 package riven.core.service.entity.query
 
 import riven.core.exceptions.query.FilterNestingDepthExceededException
+import riven.core.exceptions.query.RelationshipDepthExceededException
 import riven.core.models.entity.query.FilterValue
 import riven.core.models.entity.query.QueryFilter
 
@@ -10,13 +11,30 @@ import riven.core.models.entity.query.QueryFilter
  * This visitor handles the conversion of filter expressions into executable SQL:
  * - AND/OR logical combinations with arbitrary nesting
  * - ATTRIBUTE filters delegated to [AttributeSqlGenerator]
- * - RELATIONSHIP filters (Phase 3 placeholder)
+ * - RELATIONSHIP filters delegated to [RelationshipSqlGenerator]
  *
  * ## Depth Limit Enforcement
  *
- * To prevent excessive SQL complexity and potential performance issues,
- * the visitor enforces a maximum nesting depth. Filters exceeding this depth
- * throw [FilterNestingDepthExceededException].
+ * The visitor enforces two independent depth limits to prevent excessive SQL complexity:
+ *
+ * 1. **AND/OR nesting depth** (`depth` / [maxNestingDepth]): Tracks how deeply AND/OR
+ *    combinations are nested. Resets to 0 when entering a nested relationship subquery,
+ *    giving each subquery context its own AND/OR depth budget.
+ *
+ * 2. **Relationship traversal depth** (`relationshipDepth` / [maxRelationshipDepth]):
+ *    Tracks how many relationship EXISTS subqueries are nested. Incremented only when
+ *    entering a relationship filter, never by AND/OR combinations.
+ *
+ * Filters exceeding either limit throw the corresponding exception:
+ * [FilterNestingDepthExceededException] or
+ * [riven.core.exceptions.query.RelationshipDepthExceededException].
+ *
+ * ## Entity Alias Propagation
+ *
+ * The [entityAlias] parameter controls which table alias is referenced in generated SQL.
+ * At the root level this defaults to `"e"` (the main entity table). When processing
+ * nested filters inside relationship subqueries, the [RelationshipSqlGenerator] provides
+ * a target entity alias (e.g., `"t_0"`) that is propagated through all nested visit calls.
  *
  * ## Template Resolution
  *
@@ -28,24 +46,35 @@ import riven.core.models.entity.query.QueryFilter
  * ## Example Usage
  *
  * ```kotlin
- * val visitor = AttributeFilterVisitor(attributeSqlGenerator)
+ * val visitor = AttributeFilterVisitor(attributeSqlGenerator, relationshipSqlGenerator)
  * val paramGen = ParameterNameGenerator()
  *
+ * // Pure attribute filter
  * val filter = QueryFilter.And(listOf(
  *     QueryFilter.Attribute(statusId, EQUALS, FilterValue.Literal("Active")),
  *     QueryFilter.Attribute(tierId, EQUALS, FilterValue.Literal("Premium"))
  * ))
- *
  * val fragment = visitor.visit(filter, paramGen)
  * // fragment.sql = "(e.payload @> :eq_0::jsonb) AND (e.payload @> :eq_1::jsonb)"
+ *
+ * // Mixed attribute + relationship filter
+ * val mixed = QueryFilter.And(listOf(
+ *     QueryFilter.Attribute(statusId, EQUALS, FilterValue.Literal("Active")),
+ *     QueryFilter.Relationship(clientRelId, RelationshipCondition.Exists)
+ * ))
+ * val mixedFragment = visitor.visit(mixed, paramGen)
  * ```
  *
  * @property attributeSqlGenerator Generator for ATTRIBUTE filter SQL fragments
+ * @property relationshipSqlGenerator Generator for RELATIONSHIP filter SQL fragments
  * @property maxNestingDepth Maximum allowed nesting depth for AND/OR combinations
+ * @property maxRelationshipDepth Maximum allowed relationship traversal depth
  */
 class AttributeFilterVisitor(
     private val attributeSqlGenerator: AttributeSqlGenerator,
-    private val maxNestingDepth: Int = DEFAULT_MAX_NESTING_DEPTH
+    private val relationshipSqlGenerator: RelationshipSqlGenerator,
+    private val maxNestingDepth: Int = DEFAULT_MAX_NESTING_DEPTH,
+    private val maxRelationshipDepth: Int = DEFAULT_MAX_RELATIONSHIP_DEPTH
 ) {
 
     /**
@@ -56,34 +85,44 @@ class AttributeFilterVisitor(
      *
      * @param filter Root filter expression to visit
      * @param paramGen Generator for unique parameter names (shared across the query)
+     * @param entityAlias Table alias for the entity being filtered. Defaults to `"e"` (root entity).
+     *   Pass a different alias when generating SQL for nested relationship filter contexts.
      * @return SqlFragment with parameterized SQL and bound values
-     * @throws FilterNestingDepthExceededException if nesting exceeds [maxNestingDepth]
+     * @throws FilterNestingDepthExceededException if AND/OR nesting exceeds [maxNestingDepth]
+     * @throws riven.core.exceptions.query.RelationshipDepthExceededException if relationship depth exceeds [maxRelationshipDepth]
      * @throws IllegalStateException if unresolved template expressions are encountered
      */
-    fun visit(filter: QueryFilter, paramGen: ParameterNameGenerator): SqlFragment {
-        return visitInternal(filter, depth = 0, paramGen)
+    fun visit(
+        filter: QueryFilter,
+        paramGen: ParameterNameGenerator,
+        entityAlias: String = "e"
+    ): SqlFragment {
+        return visitInternal(filter, depth = 0, relationshipDepth = 0, paramGen, entityAlias)
     }
 
     /**
      * Internal recursive visitor with depth tracking.
      *
      * Dispatches to type-specific handlers based on the filter variant.
-     * Depth is incremented when descending into AND/OR conditions.
+     * AND/OR depth is incremented when descending into AND/OR conditions.
+     * Relationship depth is incremented when descending into relationship filters.
      */
     private fun visitInternal(
         filter: QueryFilter,
         depth: Int,
-        paramGen: ParameterNameGenerator
+        relationshipDepth: Int,
+        paramGen: ParameterNameGenerator,
+        entityAlias: String
     ): SqlFragment {
         if (depth > maxNestingDepth) {
             throw FilterNestingDepthExceededException(depth, maxNestingDepth)
         }
 
         return when (filter) {
-            is QueryFilter.Attribute -> visitAttribute(filter, paramGen)
-            is QueryFilter.Relationship -> visitRelationship(filter, paramGen)
-            is QueryFilter.And -> visitAnd(filter.conditions, depth, paramGen)
-            is QueryFilter.Or -> visitOr(filter.conditions, depth, paramGen)
+            is QueryFilter.Attribute -> visitAttribute(filter, paramGen, entityAlias)
+            is QueryFilter.Relationship -> visitRelationship(filter, relationshipDepth, paramGen, entityAlias)
+            is QueryFilter.And -> visitAnd(filter.conditions, depth, relationshipDepth, paramGen, entityAlias)
+            is QueryFilter.Or -> visitOr(filter.conditions, depth, relationshipDepth, paramGen, entityAlias)
         }
     }
 
@@ -94,21 +133,25 @@ class AttributeFilterVisitor(
      * Empty AND returns [SqlFragment.ALWAYS_TRUE] (vacuous truth).
      *
      * @param conditions List of filters to combine with AND logic
-     * @param depth Current nesting depth
+     * @param depth Current AND/OR nesting depth
+     * @param relationshipDepth Current relationship traversal depth (passed through unchanged)
      * @param paramGen Parameter name generator
+     * @param entityAlias Table alias for the entity being filtered
      * @return Combined SQL fragment with AND logic
      */
     private fun visitAnd(
         conditions: List<QueryFilter>,
         depth: Int,
-        paramGen: ParameterNameGenerator
+        relationshipDepth: Int,
+        paramGen: ParameterNameGenerator,
+        entityAlias: String
     ): SqlFragment {
         if (conditions.isEmpty()) {
             return SqlFragment.ALWAYS_TRUE
         }
 
         return conditions
-            .map { visitInternal(it, depth + 1, paramGen) }
+            .map { visitInternal(it, depth + 1, relationshipDepth, paramGen, entityAlias) }
             .reduce { acc, fragment -> acc.and(fragment) }
     }
 
@@ -119,21 +162,25 @@ class AttributeFilterVisitor(
      * Empty OR returns [SqlFragment.ALWAYS_FALSE] (no match possible).
      *
      * @param conditions List of filters to combine with OR logic
-     * @param depth Current nesting depth
+     * @param depth Current AND/OR nesting depth
+     * @param relationshipDepth Current relationship traversal depth (passed through unchanged)
      * @param paramGen Parameter name generator
+     * @param entityAlias Table alias for the entity being filtered
      * @return Combined SQL fragment with OR logic
      */
     private fun visitOr(
         conditions: List<QueryFilter>,
         depth: Int,
-        paramGen: ParameterNameGenerator
+        relationshipDepth: Int,
+        paramGen: ParameterNameGenerator,
+        entityAlias: String
     ): SqlFragment {
         if (conditions.isEmpty()) {
             return SqlFragment.ALWAYS_FALSE
         }
 
         return conditions
-            .map { visitInternal(it, depth + 1, paramGen) }
+            .map { visitInternal(it, depth + 1, relationshipDepth, paramGen, entityAlias) }
             .reduce { acc, fragment -> acc.or(fragment) }
     }
 
@@ -145,41 +192,76 @@ class AttributeFilterVisitor(
      *
      * @param filter Attribute filter with attribute ID, operator, and value
      * @param paramGen Parameter name generator
+     * @param entityAlias Table alias for the entity being filtered
      * @return SQL fragment for the attribute comparison
      * @throws IllegalStateException if value is an unresolved template
      */
     private fun visitAttribute(
         filter: QueryFilter.Attribute,
-        paramGen: ParameterNameGenerator
+        paramGen: ParameterNameGenerator,
+        entityAlias: String
     ): SqlFragment {
         val value = extractValue(filter.value)
         return attributeSqlGenerator.generate(
             attributeId = filter.attributeId,
             operator = filter.operator,
             value = value,
-            paramGen = paramGen
+            paramGen = paramGen,
+            entityAlias = entityAlias
         )
     }
 
     /**
      * Visits a RELATIONSHIP filter.
      *
-     * Relationship filtering is implemented in Phase 3. For now, this throws
-     * a clear error so Phase 2 testing can proceed with attribute filters.
+     * Delegates to [RelationshipSqlGenerator] with a nested filter visitor callback
+     * that enables recursive processing of filters on related entities. Relationship
+     * depth is checked before delegation as a safety net (the eager [QueryFilterValidator]
+     * catches this first, but the visitor enforces it too).
+     *
+     * The nested visitor callback:
+     * - Increments relationship depth by 1 for the next level
+     * - Resets AND/OR depth to 0 (each subquery gets its own AND/OR depth budget)
+     * - Uses the target entity alias provided by [RelationshipSqlGenerator]
+     * - Shares the same [ParameterNameGenerator] for parameter uniqueness across the query tree
      *
      * @param filter Relationship filter with relationship ID and condition
-     * @param paramGen Parameter name generator (unused in placeholder)
-     * @throws UnsupportedOperationException always (Phase 3 placeholder)
+     * @param relationshipDepth Current relationship traversal depth
+     * @param paramGen Parameter name generator
+     * @param entityAlias Table alias for the entity being filtered
+     * @return SQL fragment with EXISTS/NOT EXISTS subquery
+     * @throws riven.core.exceptions.query.RelationshipDepthExceededException if depth exceeds [maxRelationshipDepth]
      */
-    @Suppress("UNUSED_PARAMETER")
     private fun visitRelationship(
         filter: QueryFilter.Relationship,
-        paramGen: ParameterNameGenerator
+        relationshipDepth: Int,
+        paramGen: ParameterNameGenerator,
+        entityAlias: String
     ): SqlFragment {
-        throw UnsupportedOperationException(
-            "Relationship filters not yet implemented. " +
-                "Relationship '${filter.relationshipId}' condition '${filter.condition::class.simpleName}' " +
-                "will be supported in Phase 3."
+        if (relationshipDepth >= maxRelationshipDepth) {
+            throw RelationshipDepthExceededException(
+                relationshipDepth + 1,
+                maxRelationshipDepth
+            )
+        }
+
+        val nestedVisitor: (QueryFilter, ParameterNameGenerator, String) -> SqlFragment =
+            { nestedFilter, nestedParamGen, nestedEntityAlias ->
+                visitInternal(
+                    nestedFilter,
+                    depth = 0,
+                    relationshipDepth = relationshipDepth + 1,
+                    nestedParamGen,
+                    nestedEntityAlias
+                )
+            }
+
+        return relationshipSqlGenerator.generate(
+            relationshipId = filter.relationshipId,
+            condition = filter.condition,
+            paramGen = paramGen,
+            entityAlias = entityAlias,
+            nestedFilterVisitor = nestedVisitor
         )
     }
 
@@ -214,5 +296,13 @@ class AttributeFilterVisitor(
          * Can be overridden via constructor parameter if needed.
          */
         const val DEFAULT_MAX_NESTING_DEPTH = 10
+
+        /**
+         * Default maximum relationship traversal depth.
+         *
+         * This limit prevents expensive deeply nested EXISTS subqueries.
+         * Can be overridden via constructor parameter if needed.
+         */
+        const val DEFAULT_MAX_RELATIONSHIP_DEPTH = 3
     }
 }

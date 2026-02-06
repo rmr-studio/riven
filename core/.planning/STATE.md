@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** Execute complex entity queries with attribute filters, relationship traversals, and polymorphic type handling while maintaining workspace isolation and optimal database performance.
-**Current focus:** Phase 3 - Relationship Filter Implementation
+**Current focus:** Phase 4 - Query Assembly
 
 ## Current Position
 
-Phase: 3 of 6 (Relationship Filter Implementation)
+Phase: 4 of 6 (Query Assembly)
 Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-02-02 - Phase 2 complete and verified
+Status: Phase 3 complete, Phase 4 not started
+Last activity: 2026-02-07 - Completed 03-03-PLAN.md
 
-Progress: [███░░░░░░░] 33%
+Progress: [██████░░░░] 67%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
+- Total plans completed: 8
 - Average duration: 2 min
-- Total execution time: 8 min
+- Total execution time: 14 min
 
 **By Phase:**
 
@@ -29,10 +29,11 @@ Progress: [███░░░░░░░] 33%
 |-------|-------|-------|----------|
 | 01-query-model-extraction | 2 | 4 min | 2 min |
 | 02-attribute-filter-implementation | 3 | 4 min | 1.3 min |
+| 03-relationship-filter-implementation | 3 | 6 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 (2 min), 02-01 (2 min), 02-02 (1 min), 02-03 (1 min)
-- Trend: Consistent (accelerating)
+- Last 5 plans: 02-03 (1 min), 03-01 (2 min), 03-02 (2 min), 03-03 (2 min)
+- Trend: Consistent
 
 *Updated after each plan completion*
 
@@ -56,6 +57,13 @@ Recent decisions affecting current work:
 - NOT_EQUALS/NOT_IN require key existence check (? operator)
 - Numeric comparisons fail silently (return false) on non-numeric values
 - AttributeFilterVisitor delegates ATTRIBUTE to AttributeSqlGenerator via composition
+- Error collection over fail-fast - Validator accumulates all errors in single tree walk
+- AND/OR does not increment relationship depth - Only Relationship nodes increment depth counter
+- TargetTypeMatches key-to-ID cross-referencing deferred to Phase 5
+- nestedFilterVisitor callback lambda avoids circular dependency between generator and visitor
+- Unique aliases via ParameterNameGenerator counter (r_{n}, t_{n}) prevent SQL ambiguity at any depth
+- AND/OR depth resets to 0 for nested relationship subqueries -- each subquery gets its own AND/OR depth budget
+- Relationship depth enforced in visitor as safety net even though QueryFilterValidator catches it first
 
 ### Pending Todos
 
@@ -71,6 +79,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-02
-Stopped at: Phase 2 complete and verified
+Last session: 2026-02-07
+Stopped at: Completed 03-03-PLAN.md (Phase 3 complete)
 Resume file: None
