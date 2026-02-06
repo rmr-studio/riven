@@ -61,6 +61,10 @@ Recent decisions affecting current work:
 
 None yet.
 
+### Roadmap Evolution
+
+- Phase 6.1 inserted after Phase 6: End-to-end testing (URGENT)
+
 ### Blockers/Concerns
 
 None yet.

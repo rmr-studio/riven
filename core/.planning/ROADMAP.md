@@ -18,6 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 4: Query Assembly** - Complete SELECT query building with pagination and projection
 - [ ] **Phase 5: Query Execution Service** - EntityQueryService orchestration with security and result mapping
 - [ ] **Phase 6: Workflow Integration** - Update WorkflowQueryEntityActionConfig to use new service
+- [ ] **Phase 6.1: End-to-End Testing** (INSERTED) - Validate complete entity query pipeline with integration tests
 
 ## Phase Details
 
@@ -112,10 +113,21 @@ Plans:
 Plans:
 - [ ] 06-01: TBD
 
+### Phase 6.1: End-to-End Testing (INSERTED)
+**Goal**: Validate the complete entity query pipeline works end-to-end with integration tests
+**Depends on**: Phase 6
+**Requirements**: TBD
+**Success Criteria** (what must be TRUE):
+  1. TBD - to be defined during planning
+**Plans**: TBD
+
+Plans:
+- [ ] 06.1-01: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 6.1
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -125,7 +137,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 4. Query Assembly | 0/? | Not started | - |
 | 5. Query Execution Service | 0/? | Not started | - |
 | 6. Workflow Integration | 0/? | Not started | - |
+| 6.1. End-to-End Testing (INSERTED) | 0/? | Not started | - |
 
 ---
 *Roadmap created: 2026-02-01*
-*Last updated: 2026-02-02*
+*Last updated: 2026-02-06*
