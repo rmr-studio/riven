@@ -170,10 +170,10 @@ END""",
         val attrKey = attributeId.toString()
 
         return SqlFragment(
-            sql = "(e.payload->:$keyParam->>'value') ILIKE :$valParam",
+            sql = "(e.payload->:$keyParam->>'value') ILIKE :$valParam ESCAPE '\\'",
             parameters = mapOf(
                 keyParam to attrKey,
-                valParam to "%${value?.toString() ?: ""}%"
+                valParam to "%${escapeLikePattern(value?.toString() ?: "")}%"
             )
         )
     }
@@ -191,10 +191,10 @@ END""",
         val attrKey = attributeId.toString()
 
         return SqlFragment(
-            sql = "NOT ((e.payload->:$keyParam->>'value') ILIKE :$valParam)",
+            sql = "NOT ((e.payload->:$keyParam->>'value') ILIKE :$valParam ESCAPE '\\')",
             parameters = mapOf(
                 keyParam to attrKey,
-                valParam to "%${value?.toString() ?: ""}%"
+                valParam to "%${escapeLikePattern(value?.toString() ?: "")}%"
             )
         )
     }
@@ -212,10 +212,10 @@ END""",
         val attrKey = attributeId.toString()
 
         return SqlFragment(
-            sql = "(e.payload->:$keyParam->>'value') ILIKE :$valParam",
+            sql = "(e.payload->:$keyParam->>'value') ILIKE :$valParam ESCAPE '\\'",
             parameters = mapOf(
                 keyParam to attrKey,
-                valParam to "${value?.toString() ?: ""}%"
+                valParam to "${escapeLikePattern(value?.toString() ?: "")}%"
             )
         )
     }
@@ -233,10 +233,10 @@ END""",
         val attrKey = attributeId.toString()
 
         return SqlFragment(
-            sql = "(e.payload->:$keyParam->>'value') ILIKE :$valParam",
+            sql = "(e.payload->:$keyParam->>'value') ILIKE :$valParam ESCAPE '\\'",
             parameters = mapOf(
                 keyParam to attrKey,
-                valParam to "%${value?.toString() ?: ""}"
+                valParam to "%${escapeLikePattern(value?.toString() ?: "")}"
             )
         )
     }
@@ -336,6 +336,18 @@ END""",
             parameters = mapOf(keyParam to attrKey)
         )
     }
+
+    /**
+     * Escapes SQL LIKE metacharacters so they are treated as literal characters.
+     *
+     * Backslash is escaped first to avoid double-escaping the escape characters
+     * inserted for '%' and '_'.
+     */
+    private fun escapeLikePattern(value: String): String =
+        value
+            .replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_")
 
     /**
      * Extracts list values from the value parameter.
