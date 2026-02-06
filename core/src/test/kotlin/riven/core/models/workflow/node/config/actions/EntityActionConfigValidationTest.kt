@@ -5,6 +5,12 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import riven.core.models.entity.query.EntityQuery
+import riven.core.models.entity.query.FilterOperator
+import riven.core.models.entity.query.FilterValue
+import riven.core.models.entity.query.QueryFilter
+import riven.core.models.entity.query.QueryPagination
+import riven.core.models.entity.query.RelationshipCondition
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
 import riven.core.service.workflow.state.WorkflowNodeTemplateParserService
