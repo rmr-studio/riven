@@ -27,6 +27,7 @@ import type {
   WorkflowExecutionRecord,
   WorkflowExecutionSummaryResponse,
   WorkflowGraph,
+  WorkflowNodeMetadata,
 } from '../models/index';
 import {
     CreateWorkflowEdgeRequestFromJSON,
@@ -53,6 +54,8 @@ import {
     WorkflowExecutionSummaryResponseToJSON,
     WorkflowGraphFromJSON,
     WorkflowGraphToJSON,
+    WorkflowNodeMetadataFromJSON,
+    WorkflowNodeMetadataToJSON,
 } from '../models/index';
 
 export interface CreateEdgeRequest {
@@ -466,6 +469,45 @@ export class WorkflowApi extends runtime.BaseAPI {
      */
     async getExecutionSummary(requestParameters: GetExecutionSummaryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkflowExecutionSummaryResponse> {
         const response = await this.getExecutionSummaryRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Retrieves the configuration and metadata for all workflow nodes. Returns a map where keys are node identifiers (e.g., \'ACTION.CREATE_ENTITY\') and values represent its display configs and schema.
+     * Get Workflow Node Configuration
+     */
+    async getNodeDefinitionsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: WorkflowNodeMetadata; }>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/api/v1/workflow/definitions/nodes`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => runtime.mapValues(jsonValue, WorkflowNodeMetadataFromJSON));
+    }
+
+    /**
+     * Retrieves the configuration and metadata for all workflow nodes. Returns a map where keys are node identifiers (e.g., \'ACTION.CREATE_ENTITY\') and values represent its display configs and schema.
+     * Get Workflow Node Configuration
+     */
+    async getNodeDefinitions(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: WorkflowNodeMetadata; }> {
+        const response = await this.getNodeDefinitionsRaw(initOverrides);
         return await response.value();
     }
 

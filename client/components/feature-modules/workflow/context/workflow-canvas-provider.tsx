@@ -1,11 +1,12 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useRef, type ReactNode } from "react";
-import { useStore } from "zustand";
+import { createContext, useContext, useEffect, useRef, type ReactNode } from 'react';
+import { useStore } from 'zustand';
 import {
-    createWorkflowCanvasStore,
-    type WorkflowCanvasState,
-} from "../stores/workflow-canvas.store";
+  createWorkflowCanvasStore,
+  type WorkflowCanvasState,
+} from '../stores/workflow-canvas.store';
+import { useWorkflowNodeConfigs } from '../hooks/query/use-workflow-node-config';
 
 /**
  * Type alias for the store API returned by the factory
@@ -16,20 +17,18 @@ type WorkflowCanvasStoreApi = ReturnType<typeof createWorkflowCanvasStore>;
  * Context for the workflow canvas store
  * Undefined when accessed outside provider
  */
-const WorkflowCanvasContext = createContext<WorkflowCanvasStoreApi | undefined>(
-    undefined
-);
+const WorkflowCanvasContext = createContext<WorkflowCanvasStoreApi | undefined>(undefined);
 
 /**
  * Props for the WorkflowCanvasProvider component
  */
 export interface WorkflowCanvasProviderProps {
-    /** Child components that can access the workflow canvas store */
-    children: ReactNode;
-    /** Workspace ID for scoping the workflow */
-    workspaceId: string;
-    /** Optional workflow ID when editing an existing workflow */
-    workflowId?: string;
+  /** Child components that can access the workflow canvas store */
+  children: ReactNode;
+  /** Workspace ID for scoping the workflow */
+  workspaceId: string;
+  /** Optional workflow ID when editing an existing workflow */
+  workflowId?: string;
 }
 
 /**
@@ -45,25 +44,39 @@ export interface WorkflowCanvasProviderProps {
  * </WorkflowCanvasProvider>
  */
 export const WorkflowCanvasProvider = ({
-    children,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    workspaceId,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    workflowId,
+  children,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  workspaceId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  workflowId,
 }: WorkflowCanvasProviderProps) => {
-    // Store reference to prevent recreation on re-renders
-    const storeRef = useRef<WorkflowCanvasStoreApi | null>(null);
+  // Store reference to prevent recreation on re-renders
+  const storeRef = useRef<WorkflowCanvasStoreApi | null>(null);
 
-    // Create store only once per provider instance
-    if (!storeRef.current) {
-        storeRef.current = createWorkflowCanvasStore();
+  // Create store only once per provider instance
+  if (!storeRef.current) {
+    storeRef.current = createWorkflowCanvasStore();
+  }
+
+  // Fetch node config schemas and sync to store
+  const { data: config, isLoading: schemasLoading } = useWorkflowNodeConfigs();
+
+  useEffect(() => {
+    if (!storeRef.current) return;
+
+    const store = storeRef.current.getState();
+    store.setSchemasLoading(schemasLoading);
+
+    if (config) {
+      store.setNodeConfigSchemas(config);
     }
+  }, [config, schemasLoading]);
 
-    return (
-        <WorkflowCanvasContext.Provider value={storeRef.current}>
-            {children}
-        </WorkflowCanvasContext.Provider>
-    );
+  return (
+    <WorkflowCanvasContext.Provider value={storeRef.current}>
+      {children}
+    </WorkflowCanvasContext.Provider>
+  );
 };
 
 /**
@@ -90,19 +103,17 @@ export const WorkflowCanvasProvider = ({
  *   shallow
  * );
  */
-export const useWorkflowCanvas = <T,>(
-    selector: (state: WorkflowCanvasState) => T
-): T => {
-    const context = useContext(WorkflowCanvasContext);
+export const useWorkflowCanvas = <T,>(selector: (state: WorkflowCanvasState) => T): T => {
+  const context = useContext(WorkflowCanvasContext);
 
-    if (!context) {
-        throw new Error(
-            "useWorkflowCanvas must be used within a WorkflowCanvasProvider. " +
-                "Wrap your component tree with <WorkflowCanvasProvider>."
-        );
-    }
+  if (!context) {
+    throw new Error(
+      'useWorkflowCanvas must be used within a WorkflowCanvasProvider. ' +
+        'Wrap your component tree with <WorkflowCanvasProvider>.',
+    );
+  }
 
-    return useStore(context, selector);
+  return useStore(context, selector);
 };
 
 // ============================================================================
@@ -115,7 +126,7 @@ export const useWorkflowCanvas = <T,>(
  * @returns Array of workflow nodes
  */
 export const useWorkflowNodes = () => {
-    return useWorkflowCanvas((state) => state.nodes);
+  return useWorkflowCanvas((state) => state.nodes);
 };
 
 /**
@@ -124,7 +135,7 @@ export const useWorkflowNodes = () => {
  * @returns Array of workflow edges
  */
 export const useWorkflowEdges = () => {
-    return useWorkflowCanvas((state) => state.edges);
+  return useWorkflowCanvas((state) => state.edges);
 };
 
 /**
@@ -133,7 +144,7 @@ export const useWorkflowEdges = () => {
  * @returns Function to add a node to the canvas
  */
 export const useAddNode = () => {
-    return useWorkflowCanvas((state) => state.addNode);
+  return useWorkflowCanvas((state) => state.addNode);
 };
 
 /**
@@ -142,7 +153,7 @@ export const useAddNode = () => {
  * @returns onNodesChange handler compatible with ReactFlow
  */
 export const useOnNodesChange = () => {
-    return useWorkflowCanvas((state) => state.onNodesChange);
+  return useWorkflowCanvas((state) => state.onNodesChange);
 };
 
 /**
@@ -151,7 +162,7 @@ export const useOnNodesChange = () => {
  * @returns onEdgesChange handler compatible with ReactFlow
  */
 export const useOnEdgesChange = () => {
-    return useWorkflowCanvas((state) => state.onEdgesChange);
+  return useWorkflowCanvas((state) => state.onEdgesChange);
 };
 
 /**
@@ -160,5 +171,79 @@ export const useOnEdgesChange = () => {
  * @returns Function to clear all nodes and edges
  */
 export const useClearCanvas = () => {
-    return useWorkflowCanvas((state) => state.clearCanvas);
+  return useWorkflowCanvas((state) => state.clearCanvas);
+};
+
+/**
+ * Get the currently selected node ID
+ *
+ * @returns Selected node ID, or null if no node is selected
+ */
+export const useSelectedNodeId = () => {
+  return useWorkflowCanvas((state) => state.selectedNodeId);
+};
+
+/**
+ * Get the selectNode action for selecting/deselecting nodes
+ *
+ * @returns Function to select a node (pass ID) or deselect (pass null)
+ */
+export const useSelectNode = () => {
+  return useWorkflowCanvas((state) => state.selectNode);
+};
+
+/**
+ * Get the updateNodeData action for updating node configuration
+ *
+ * @returns Function to merge data into existing node data
+ */
+export const useUpdateNodeData = () => {
+  return useWorkflowCanvas((state) => state.updateNodeData);
+};
+
+/**
+ * Get the full data for the currently selected node
+ *
+ * @returns The selected node, or undefined if no node is selected
+ */
+export const useSelectedNode = () => {
+  const nodes = useWorkflowCanvas((state) => state.nodes);
+  const selectedNodeId = useWorkflowCanvas((state) => state.selectedNodeId);
+  return nodes.find((node) => node.id === selectedNodeId);
+};
+
+/**
+ * Get node configuration schemas from the store
+ *
+ * @returns Record of node type identifiers to their config field definitions, or null if not loaded
+ */
+export const useNodeConfig = () => {
+  return useWorkflowCanvas((state) => state.nodeConfig);
+};
+
+/**
+ * Get schemas loading state
+ *
+ * @returns Whether schemas are currently loading
+ */
+export const useSchemasLoading = () => {
+  return useWorkflowCanvas((state) => state.schemasLoading);
+};
+
+/**
+ * Get whether the sidebar is collapsed
+ *
+ * @returns Whether the sidebar is collapsed
+ */
+export const useSidebarCollapsed = () => {
+  return useWorkflowCanvas((state) => state.sidebarCollapsed);
+};
+
+/**
+ * Get the setSidebarCollapsed action
+ *
+ * @returns Function to set sidebar collapsed state
+ */
+export const useSetSidebarCollapsed = () => {
+  return useWorkflowCanvas((state) => state.setSidebarCollapsed);
 };

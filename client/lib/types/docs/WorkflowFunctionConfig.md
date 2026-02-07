@@ -1,13 +1,16 @@
 
 # WorkflowFunctionConfig
 
+Configuration for FUNCTION category nodes.
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`type` | [WorkflowNodeType](WorkflowNodeType.md)
 `version` | number
+`config` | { [key: string]: object; }
+`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
+`type` | [WorkflowNodeType](WorkflowNodeType.md)
 
 ## Example
 
@@ -16,8 +19,10 @@ import type { WorkflowFunctionConfig } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "type": null,
   "version": null,
+  "config": null,
+  "configSchema": null,
+  "type": null,
 } satisfies WorkflowFunctionConfig
 
 console.log(example)

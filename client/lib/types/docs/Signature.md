@@ -1,20 +1,24 @@
 
-# WorkflowHumanInteractionType
+# Signature
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
+`signatureHeader` | [SignatureHeaderType](SignatureHeaderType.md)
+`signatureAlgorithm` | [SignatureAlgorithmType](SignatureAlgorithmType.md)
 
 ## Example
 
 ```typescript
-import type { WorkflowHumanInteractionType } from ''
+import type { Signature } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-} satisfies WorkflowHumanInteractionType
+  "signatureHeader": null,
+  "signatureAlgorithm": null,
+} satisfies Signature
 
 console.log(example)
 
@@ -23,7 +27,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkflowHumanInteractionType
+const exampleParsed = JSON.parse(exampleJSON) as Signature
 console.log(exampleParsed)
 ```
 

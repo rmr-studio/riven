@@ -6,8 +6,6 @@
 
 Name | Type
 ------------ | -------------
-`type` | [WorkflowNodeType](WorkflowNodeType.md)
-`version` | number
 `subType` | [WorkflowActionType](WorkflowActionType.md)
 
 ## Example
@@ -17,8 +15,6 @@ import type { WorkflowActionConfig } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "type": null,
-  "version": null,
   "subType": null,
 } satisfies WorkflowActionConfig
 

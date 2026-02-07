@@ -10,6 +10,7 @@ All URIs are relative to *http://localhost:8081*
 | [**deleteWorkflow**](WorkflowApi.md#deleteworkflow) | **DELETE** /api/v1/workflow/definitions/{id} | Delete workflow definition |
 | [**getExecution**](WorkflowApi.md#getexecution) | **GET** /api/v1/workflow/executions/{id} | Get workflow execution by ID |
 | [**getExecutionSummary**](WorkflowApi.md#getexecutionsummary) | **GET** /api/v1/workflow/executions/{id}/summary | Get execution summary with node details |
+| [**getNodeDefinitions**](WorkflowApi.md#getnodedefinitions) | **GET** /api/v1/workflow/definitions/nodes | Get Workflow Node Configuration |
 | [**getWorkflow**](WorkflowApi.md#getworkflow) | **GET** /api/v1/workflow/definitions/{id} | Get workflow definition by ID |
 | [**getWorkflowGraph**](WorkflowApi.md#getworkflowgraph) | **GET** /api/v1/workflow/graph/workflow/{workflowDefinitionId} | Get complete workflow graph (nodes and edges) |
 | [**listWorkflowExecutions**](WorkflowApi.md#listworkflowexecutions) | **GET** /api/v1/workflow/executions/workflow/{workflowDefinitionId} | List all executions for a workflow definition |
@@ -471,6 +472,70 @@ example().catch(console.error);
 | **200** | Execution summary retrieved successfully |  -  |
 | **401** | Unauthorized access |  -  |
 | **404** | Execution not found |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## getNodeDefinitions
+
+> { [key: string]: WorkflowNodeMetadata; } getNodeDefinitions()
+
+Get Workflow Node Configuration
+
+Retrieves the configuration and metadata for all workflow nodes. Returns a map where keys are node identifiers (e.g., \&#39;ACTION.CREATE_ENTITY\&#39;) and values represent its display configs and schema.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  WorkflowApi,
+} from '';
+import type { GetNodeDefinitionsRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearerAuth
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new WorkflowApi(config);
+
+  try {
+    const data = await api.getNodeDefinitions();
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**{ [key: string]: WorkflowNodeMetadata; }**](WorkflowNodeMetadata.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `*/*`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Node configuration schemas retrieved successfully |  -  |
+| **401** | Unauthorized - authentication required |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 

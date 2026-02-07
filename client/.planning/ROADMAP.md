@@ -14,7 +14,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation & Canvas** - XYFlow integration with Zustand state management and basic canvas interactions
 - [x] **Phase 2: Node Library** - Sidebar with draggable node types organized by category
-- [ ] **Phase 3: Node Types & Configuration** - Trigger, action, and condition nodes with entity-aware configuration
+- [x] **Phase 2.1: Node Library Population** - Populate node library with workflow node types (INSERTED)
+- [x] **Phase 3: Node Types & Configuration** - Trigger, action, and condition nodes with entity-aware configuration
 - [ ] **Phase 4: Connections** - Edge creation with validation and cycle prevention
 - [ ] **Phase 5: Selection & Visual Feedback** - Multi-select, deletion, and visual status indicators
 - [ ] **Phase 6: Undo/Redo** - Temporal state management with keyboard shortcuts
@@ -53,6 +54,21 @@ Plans:
 - [x] 02-01-PLAN.md — Node library sidebar with search, categories, and draggable items
 - [x] 02-02-PLAN.md — Canvas drop handlers and sidebar integration
 
+### Phase 2.1: Node Library Population (INSERTED)
+**Goal**: Populate the node library with 11 comprehensive workflow node types aligned with backend configuration classes
+**Depends on**: Phase 2
+**Requirements**: None (extends existing LIBRARY requirements)
+**Success Criteria** (what must be TRUE):
+  1. User sees 4 trigger node types in sidebar (Entity Event, Schedule, Webhook, Function Call)
+  2. User sees 6 action node types in sidebar (Create Entity, Update Entity, Delete Entity, Query Entities, Link Entities, HTTP Request)
+  3. User sees 1 condition node type in sidebar (Condition)
+  4. All 11 nodes can be dragged to canvas and click-added to canvas center
+  5. Each node displays appropriate Lucide icon, label, and description
+**Plans**: 1 plan
+
+Plans:
+- [x] 02.1-01-PLAN.md — Expand node type definitions and component registry to 11 types
+
 ### Phase 3: Node Types & Configuration
 **Goal**: Users can configure workflow nodes with entity-aware settings
 **Depends on**: Phase 2
@@ -65,10 +81,15 @@ Plans:
   5. User can configure condition node with condition logic
   6. Configuration changes reflect in node state immediately
   7. Workflow builder displays organization's custom entity types from EntityTypeService
-**Plans**: TBD
+**Plans**: 6 plans
 
 Plans:
-- [ ] 03-01: TBD
+- [x] 03-01-PLAN.md — Store extension with selection state and node data update
+- [x] 03-02-PLAN.md — Config schema service and TanStack Query hook
+- [x] 03-03-PLAN.md — Widget registry with basic widgets (string, number, boolean, enum, duration)
+- [x] 03-04-PLAN.md — Entity-aware widgets (entity type selector, entity fields multi-select)
+- [x] 03-05-PLAN.md — Dynamic form renderer with Zod schema builder
+- [x] 03-06-PLAN.md — Configuration drawer with ResizablePanelGroup layout
 
 ### Phase 4: Connections
 **Goal**: Users can connect nodes to define workflow execution flow
@@ -116,13 +137,14 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Canvas | 4/4 | ✓ Complete | 2026-01-25 |
 | 2. Node Library | 2/2 | ✓ Complete | 2026-01-26 |
-| 3. Node Types & Configuration | 0/? | Not started | - |
+| 2.1. Node Library Population | 1/1 | ✓ Complete | 2026-01-28 |
+| 3. Node Types & Configuration | 6/6 | ✓ Complete | 2026-02-01 |
 | 4. Connections | 0/? | Not started | - |
 | 5. Selection & Visual Feedback | 0/? | Not started | - |
 | 6. Undo/Redo | 0/? | Not started | - |
@@ -133,4 +155,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 *Phase 1 completed: 2026-01-25*
 *Phase 2 planned: 2026-01-25*
 *Phase 2 completed: 2026-01-26*
+*Phase 2.1 planned: 2026-01-28*
+*Phase 2.1 completed: 2026-01-28*
+*Phase 3 planned: 2026-02-01*
+*Phase 3 completed: 2026-02-01*
 *Milestone: v0.1 (Workflow Builder Foundation Pre-release)*

@@ -13,6 +13,27 @@
  */
 
 import { mapValues } from '../runtime';
+import type { QueryProjection } from './QueryProjection';
+import {
+    QueryProjectionFromJSON,
+    QueryProjectionFromJSONTyped,
+    QueryProjectionToJSON,
+    QueryProjectionToJSONTyped,
+} from './QueryProjection';
+import type { WorkflowNodeConfigField } from './WorkflowNodeConfigField';
+import {
+    WorkflowNodeConfigFieldFromJSON,
+    WorkflowNodeConfigFieldFromJSONTyped,
+    WorkflowNodeConfigFieldToJSON,
+    WorkflowNodeConfigFieldToJSONTyped,
+} from './WorkflowNodeConfigField';
+import type { SchemaString } from './SchemaString';
+import {
+    SchemaStringFromJSON,
+    SchemaStringFromJSONTyped,
+    SchemaStringToJSON,
+    SchemaStringToJSONTyped,
+} from './SchemaString';
 import type { WorkflowNodeType } from './WorkflowNodeType';
 import {
     WorkflowNodeTypeFromJSON,
@@ -27,25 +48,76 @@ import {
     WorkflowControlTypeToJSON,
     WorkflowControlTypeToJSONTyped,
 } from './WorkflowControlType';
+import type { EntityQuery } from './EntityQuery';
+import {
+    EntityQueryFromJSON,
+    EntityQueryFromJSONTyped,
+    EntityQueryToJSON,
+    EntityQueryToJSONTyped,
+} from './EntityQuery';
+import type { RequestMethodType } from './RequestMethodType';
+import {
+    RequestMethodTypeFromJSON,
+    RequestMethodTypeFromJSONTyped,
+    RequestMethodTypeToJSON,
+    RequestMethodTypeToJSONTyped,
+} from './RequestMethodType';
+import type { Signature } from './Signature';
+import {
+    SignatureFromJSON,
+    SignatureFromJSONTyped,
+    SignatureToJSON,
+    SignatureToJSONTyped,
+} from './Signature';
+import type { QueryPagination } from './QueryPagination';
+import {
+    QueryPaginationFromJSON,
+    QueryPaginationFromJSONTyped,
+    QueryPaginationToJSON,
+    QueryPaginationToJSONTyped,
+} from './QueryPagination';
+import type { WorkflowScheduleTriggerConfigInterval } from './WorkflowScheduleTriggerConfigInterval';
+import {
+    WorkflowScheduleTriggerConfigIntervalFromJSON,
+    WorkflowScheduleTriggerConfigIntervalFromJSONTyped,
+    WorkflowScheduleTriggerConfigIntervalToJSON,
+    WorkflowScheduleTriggerConfigIntervalToJSONTyped,
+} from './WorkflowScheduleTriggerConfigInterval';
+import type { OperationType } from './OperationType';
+import {
+    OperationTypeFromJSON,
+    OperationTypeFromJSONTyped,
+    OperationTypeToJSON,
+    OperationTypeToJSONTyped,
+} from './OperationType';
+import type { WorkflowScheduleTriggerConfigTimeZone } from './WorkflowScheduleTriggerConfigTimeZone';
+import {
+    WorkflowScheduleTriggerConfigTimeZoneFromJSON,
+    WorkflowScheduleTriggerConfigTimeZoneFromJSONTyped,
+    WorkflowScheduleTriggerConfigTimeZoneToJSON,
+    WorkflowScheduleTriggerConfigTimeZoneToJSONTyped,
+} from './WorkflowScheduleTriggerConfigTimeZone';
+import type { AuthenticationType } from './AuthenticationType';
+import {
+    AuthenticationTypeFromJSON,
+    AuthenticationTypeFromJSONTyped,
+    AuthenticationTypeToJSON,
+    AuthenticationTypeToJSONTyped,
+} from './AuthenticationType';
+import type { WorkflowNodeConfig } from './WorkflowNodeConfig';
+import {
+    WorkflowNodeConfigFromJSON,
+    WorkflowNodeConfigFromJSONTyped,
+    WorkflowNodeConfigToJSON,
+    WorkflowNodeConfigToJSONTyped,
+} from './WorkflowNodeConfig';
 
 /**
  * 
  * @export
  * @interface WorkflowControlConfig
  */
-export interface WorkflowControlConfig {
-    /**
-     * 
-     * @type {WorkflowNodeType}
-     * @memberof WorkflowControlConfig
-     */
-    type: WorkflowNodeType;
-    /**
-     * 
-     * @type {number}
-     * @memberof WorkflowControlConfig
-     */
-    version: number;
+export interface WorkflowControlConfig extends WorkflowNodeConfig {
     /**
      * 
      * @type {WorkflowControlType}
@@ -60,8 +132,6 @@ export interface WorkflowControlConfig {
  * Check if a given object implements the WorkflowControlConfig interface.
  */
 export function instanceOfWorkflowControlConfig(value: object): value is WorkflowControlConfig {
-    if (!('type' in value) || value['type'] === undefined) return false;
-    if (!('version' in value) || value['version'] === undefined) return false;
     if (!('subType' in value) || value['subType'] === undefined) return false;
     return true;
 }
@@ -75,9 +145,7 @@ export function WorkflowControlConfigFromJSONTyped(json: any, ignoreDiscriminato
         return json;
     }
     return {
-        
-        'type': WorkflowNodeTypeFromJSON(json['type']),
-        'version': json['version'],
+        ...WorkflowNodeConfigFromJSONTyped(json, true),
         'subType': WorkflowControlTypeFromJSON(json['subType']),
     };
 }
@@ -92,9 +160,7 @@ export function WorkflowControlConfigToJSONTyped(value?: WorkflowControlConfig |
     }
 
     return {
-        
-        'type': WorkflowNodeTypeToJSON(value['type']),
-        'version': value['version'],
+        ...WorkflowNodeConfigToJSONTyped(value, true),
         'subType': WorkflowControlTypeToJSON(value['subType']),
     };
 }

@@ -1,26 +1,20 @@
 
-# WorkflowHumanInteractionConfig
+# OperationType
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`type` | [WorkflowNodeType](WorkflowNodeType.md)
-`version` | number
-`subType` | [WorkflowHumanInteractionType](WorkflowHumanInteractionType.md)
 
 ## Example
 
 ```typescript
-import type { WorkflowHumanInteractionConfig } from ''
+import type { OperationType } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "type": null,
-  "version": null,
-  "subType": null,
-} satisfies WorkflowHumanInteractionConfig
+} satisfies OperationType
 
 console.log(example)
 
@@ -29,7 +23,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkflowHumanInteractionConfig
+const exampleParsed = JSON.parse(exampleJSON) as OperationType
 console.log(exampleParsed)
 ```
 

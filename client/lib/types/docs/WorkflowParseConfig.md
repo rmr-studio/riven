@@ -6,8 +6,6 @@
 
 Name | Type
 ------------ | -------------
-`type` | [WorkflowNodeType](WorkflowNodeType.md)
-`version` | number
 
 ## Example
 
@@ -16,8 +14,6 @@ import type { WorkflowParseConfig } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "type": null,
-  "version": null,
 } satisfies WorkflowParseConfig
 
 console.log(example)

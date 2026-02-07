@@ -6,9 +6,35 @@
 
 Name | Type
 ------------ | -------------
-`type` | [WorkflowNodeType](WorkflowNodeType.md)
 `version` | number
+`entityTypeId` | string
+`payload` | { [key: string]: string; }
+`timeoutSeconds` | number
+`config` | { [key: string]: object; }
 `subType` | [WorkflowUtilityActionType](WorkflowUtilityActionType.md)
+`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
+`type` | [WorkflowNodeType](WorkflowNodeType.md)
+`entityId` | string
+`query` | [EntityQuery](EntityQuery.md)
+`pagination` | [QueryPagination](QueryPagination.md)
+`projection` | [QueryProjection](QueryProjection.md)
+`url` | string
+`method` | [RequestMethodType](RequestMethodType.md)
+`headers` | { [key: string]: string; }
+`body` | { [key: string]: string; }
+`key` | string
+`operation` | [OperationType](OperationType.md)
+`field` | Array&lt;string&gt;
+`expressions` | object
+`cronExpression` | string
+`interval` | [WorkflowScheduleTriggerConfigInterval](WorkflowScheduleTriggerConfigInterval.md)
+`timeZone` | [WorkflowScheduleTriggerConfigTimeZone](WorkflowScheduleTriggerConfigTimeZone.md)
+`authentication` | [AuthenticationType](AuthenticationType.md)
+`signature` | [Signature](Signature.md)
+`payloadSchema` | [SchemaString](SchemaString.md)
+`schema` | [SchemaString](SchemaString.md)
+`expression` | string
+`contextEntityId` | string
 
 ## Example
 
@@ -17,9 +43,35 @@ import type { SaveWorkflowNodeRequestConfig } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "type": null,
   "version": null,
+  "entityTypeId": null,
+  "payload": null,
+  "timeoutSeconds": null,
+  "config": null,
   "subType": null,
+  "configSchema": null,
+  "type": null,
+  "entityId": null,
+  "query": null,
+  "pagination": null,
+  "projection": null,
+  "url": null,
+  "method": null,
+  "headers": null,
+  "body": null,
+  "key": null,
+  "operation": null,
+  "field": null,
+  "expressions": null,
+  "cronExpression": null,
+  "interval": null,
+  "timeZone": null,
+  "authentication": null,
+  "signature": null,
+  "payloadSchema": null,
+  "schema": null,
+  "expression": null,
+  "contextEntityId": null,
 } satisfies SaveWorkflowNodeRequestConfig
 
 console.log(example)

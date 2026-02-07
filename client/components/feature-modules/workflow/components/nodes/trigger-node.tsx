@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { memo } from "react";
-import type { NodeProps } from "@xyflow/react";
-import type { WorkflowNode } from "../../interface/workflow.interface";
-import { BaseWorkflowNode } from "./base-workflow-node";
+import { memo } from 'react';
+import type { NodeProps } from '@xyflow/react';
+import type { WorkflowStepNode } from '@/lib/types/workflow';
+import { BaseWorkflowNode } from './base-workflow-node';
 
 /**
  * Trigger node component
@@ -12,8 +12,8 @@ import { BaseWorkflowNode } from "./base-workflow-node";
  * Note: Currently delegates to BaseWorkflowNode.
  * Future: May override to remove input handle (triggers start workflows).
  */
-export const TriggerNode = memo(function TriggerNode(props: NodeProps<WorkflowNode>) {
-    return <BaseWorkflowNode {...props} />;
+export const TriggerNode = memo(function TriggerNode(props: NodeProps<WorkflowStepNode>) {
+  return <BaseWorkflowNode {...props} />;
 });
 
-TriggerNode.displayName = "TriggerNode";
+TriggerNode.displayName = 'TriggerNode';

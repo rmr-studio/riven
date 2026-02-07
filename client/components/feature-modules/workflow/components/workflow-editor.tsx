@@ -19,12 +19,19 @@ export interface WorkflowEditorProps {
 }
 
 /**
+ * Props for WorkflowEditorInner component
+ */
+interface WorkflowEditorInnerProps {
+    workspaceId: string;
+}
+
+/**
  * Inner editor component with access to canvas context
  *
  * Must be rendered inside WorkflowCanvasProvider to access hooks.
  * In development mode, exposes __addTestNode function to window for testing.
  */
-const WorkflowEditorInner = () => {
+const WorkflowEditorInner = ({ workspaceId }: WorkflowEditorInnerProps) => {
     const addNode = useAddNode();
 
     // Development helper: expose addNode for testing via browser console
@@ -47,7 +54,7 @@ const WorkflowEditorInner = () => {
         }
     }, [addNode]);
 
-    return <WorkflowCanvas />;
+    return <WorkflowCanvas workspaceId={workspaceId} />;
 };
 
 /**
@@ -66,7 +73,7 @@ export const WorkflowEditor = ({
     return (
         <WorkflowCanvasProvider workspaceId={workspaceId} workflowId={workflowId}>
             <div className="h-full w-full">
-                <WorkflowEditorInner />
+                <WorkflowEditorInner workspaceId={workspaceId} />
             </div>
         </WorkflowCanvasProvider>
     );
