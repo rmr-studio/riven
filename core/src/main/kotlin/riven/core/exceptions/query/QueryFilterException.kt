@@ -116,4 +116,8 @@ class QueryValidationException(
 ) : QueryFilterException(
     "Query validation failed with ${validationErrors.size} error(s): " +
         validationErrors.joinToString("; ") { it.message ?: "unknown" }
-)
+) {
+    init {
+        require(validationErrors.isNotEmpty()) { "validationErrors must not be empty" }
+    }
+}

@@ -118,24 +118,7 @@ class RelationshipSqlGenerator {
         relationshipId: UUID,
         paramGen: ParameterNameGenerator,
         entityAlias: String
-    ): SqlFragment {
-        val relAlias = "r_${paramGen.next("a")}"
-        val relParam = paramGen.next("rel")
-
-        val sql = buildString {
-            append("EXISTS (\n")
-            append("    SELECT 1 FROM entity_relationships $relAlias\n")
-            append("    WHERE $relAlias.source_entity_id = $entityAlias.id\n")
-            append("      AND $relAlias.relationship_field_id = :$relParam\n")
-            append("      AND $relAlias.deleted = false\n")
-            append(")")
-        }
-
-        return SqlFragment(
-            sql = sql,
-            parameters = mapOf(relParam to relationshipId)
-        )
-    }
+    ): SqlFragment = generateExistsFragment(relationshipId, paramGen, entityAlias, negated = false)
 
     /**
      * Generates a NOT EXISTS subquery matching entities with no related entities.
@@ -146,12 +129,20 @@ class RelationshipSqlGenerator {
         relationshipId: UUID,
         paramGen: ParameterNameGenerator,
         entityAlias: String
+    ): SqlFragment = generateExistsFragment(relationshipId, paramGen, entityAlias, negated = true)
+
+    private fun generateExistsFragment(
+        relationshipId: UUID,
+        paramGen: ParameterNameGenerator,
+        entityAlias: String,
+        negated: Boolean
     ): SqlFragment {
         val relAlias = "r_${paramGen.next("a")}"
         val relParam = paramGen.next("rel")
+        val prefix = if (negated) "NOT " else ""
 
         val sql = buildString {
-            append("NOT EXISTS (\n")
+            append("${prefix}EXISTS (\n")
             append("    SELECT 1 FROM entity_relationships $relAlias\n")
             append("    WHERE $relAlias.source_entity_id = $entityAlias.id\n")
             append("      AND $relAlias.relationship_field_id = :$relParam\n")
@@ -186,6 +177,19 @@ class RelationshipSqlGenerator {
         paramGen: ParameterNameGenerator,
         entityAlias: String
     ): SqlFragment {
+        if (entityIds.isEmpty()) {
+            return SqlFragment(sql = "1 = 0", parameters = emptyMap())
+        }
+
+        val invalidIds = entityIds.filter { id ->
+            runCatching { UUID.fromString(id) }.isFailure
+        }
+        if (invalidIds.isNotEmpty()) {
+            throw IllegalArgumentException(
+                "generateTargetEquals: invalid entity ID(s): $invalidIds"
+            )
+        }
+
         val relAlias = "r_${paramGen.next("a")}"
         val relParam = paramGen.next("rel")
         val targetParam = paramGen.next("te")
@@ -288,6 +292,10 @@ class RelationshipSqlGenerator {
         entityAlias: String,
         visitor: (QueryFilter, ParameterNameGenerator, String) -> SqlFragment
     ): SqlFragment {
+        if (branches.isEmpty()) {
+            return SqlFragment(sql = "1 = 0", parameters = emptyMap())
+        }
+
         val relAlias = "r_${paramGen.next("a")}"
         val targetAlias = "t_${paramGen.next("a")}"
         val relParam = paramGen.next("rel")
