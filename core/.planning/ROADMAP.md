@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Query Model Extraction** - Extract and enhance query models from workflow config into shared location
 - [x] **Phase 2: Attribute Filter Implementation** - SqlFragment foundation and attribute filtering with all operators
 - [x] **Phase 3: Relationship Filter Implementation** - EXISTS subqueries and relationship condition handling
-- [ ] **Phase 4: Query Assembly** - Complete SELECT query building with pagination and projection
+- [x] **Phase 4: Query Assembly** - Complete SELECT query building with pagination and projection
 - [ ] **Phase 5: Query Execution Service** - EntityQueryService orchestration with security and result mapping
 - [ ] **Phase 6: Workflow Integration** - Update WorkflowQueryEntityActionConfig to use new service
 - [ ] **Phase 6.1: End-to-End Testing** (INSERTED) - Validate complete entity query pipeline with integration tests
@@ -81,10 +81,10 @@ Plans:
   2. Offset parameter skips results with default of 0
   3. Projection includeAttributes hints are available to callers (even if full Entity returned)
   4. Projection includeRelationships hints are available to callers
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 04-01: TBD
+- [x] 04-01-PLAN.md — EntityQueryAssembler with pagination validation, query composition, and EntityQueryResult response model
 
 ### Phase 5: Query Execution Service
 **Goal**: EntityQueryService executes queries securely and returns typed results
@@ -136,11 +136,11 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 6.1
 | 1. Query Model Extraction | 2/2 | Complete | 2026-02-01 |
 | 2. Attribute Filter Implementation | 3/3 | Complete | 2026-02-02 |
 | 3. Relationship Filter Implementation | 3/3 | Complete ✓ | 2026-02-07 |
-| 4. Query Assembly | 0/? | Not started | - |
+| 4. Query Assembly | 1/1 | Complete ✓ | 2026-02-07 |
 | 5. Query Execution Service | 0/? | Not started | - |
 | 6. Workflow Integration | 0/? | Not started | - |
 | 6.1. End-to-End Testing (INSERTED) | 0/? | Not started | - |
 
 ---
 *Roadmap created: 2026-02-01*
-*Last updated: 2026-02-07*
+*Last updated: 2026-02-07 after Phase 4 completion*
