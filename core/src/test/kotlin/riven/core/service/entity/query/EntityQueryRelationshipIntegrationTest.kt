@@ -66,7 +66,6 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
             assertEquals(lonelyCompany, result.entities[0].id)
         } finally {
             // Restore shared state for subsequent tests
-            companyEntities.remove("Lonely Corp")
             truncateAll()
             createEntityTypes()
             seedEntities()

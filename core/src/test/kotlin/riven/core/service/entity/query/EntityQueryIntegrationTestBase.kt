@@ -215,6 +215,9 @@ abstract class EntityQueryIntegrationTestBase {
         jdbcTemplate.execute("TRUNCATE TABLE entity_relationships CASCADE")
         jdbcTemplate.execute("TRUNCATE TABLE entities CASCADE")
         jdbcTemplate.execute("TRUNCATE TABLE entity_types CASCADE")
+        companyEntities.clear()
+        employeeEntities.clear()
+        projectEntities.clear()
     }
 
     protected fun createEntityTypes() {
