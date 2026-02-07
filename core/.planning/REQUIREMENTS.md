@@ -38,14 +38,14 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Relationship Filtering
 
-- [ ] **REL-01**: Support EXISTS condition (entity has at least one related entity)
-- [ ] **REL-02**: Support NOT_EXISTS condition (entity has no related entities)
-- [ ] **REL-03**: Support TargetEquals condition (related to specific entity IDs)
-- [ ] **REL-04**: Support TargetMatches condition (related entity satisfies nested filter)
-- [ ] **REL-05**: Support multi-level TargetMatches traversal up to configurable maxDepth
-- [ ] **REL-06**: Support TargetTypeMatches condition with type-aware branching
-- [ ] **REL-07**: TargetTypeMatches uses OR semantics (match if any branch matches)
-- [ ] **REL-08**: TargetTypeMatches branches have optional filter (type-only matching allowed)
+- [x] **REL-01**: Support EXISTS condition (entity has at least one related entity)
+- [x] **REL-02**: Support NOT_EXISTS condition (entity has no related entities)
+- [x] **REL-03**: Support TargetEquals condition (related to specific entity IDs)
+- [x] **REL-04**: Support TargetMatches condition (related entity satisfies nested filter)
+- [x] **REL-05**: Support multi-level TargetMatches traversal up to configurable maxDepth
+- [x] **REL-06**: Support TargetTypeMatches condition with type-aware branching
+- [x] **REL-07**: TargetTypeMatches uses OR semantics (match if any branch matches)
+- [x] **REL-08**: TargetTypeMatches branches have optional filter (type-only matching allowed)
 
 ### Query Execution
 
@@ -137,14 +137,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LOGIC-01 | Phase 2 | Complete |
 | LOGIC-02 | Phase 2 | Complete |
 | LOGIC-03 | Phase 2 | Complete |
-| REL-01 | Phase 3 | Pending |
-| REL-02 | Phase 3 | Pending |
-| REL-03 | Phase 3 | Pending |
-| REL-04 | Phase 3 | Pending |
-| REL-05 | Phase 3 | Pending |
-| REL-06 | Phase 3 | Pending |
-| REL-07 | Phase 3 | Pending |
-| REL-08 | Phase 3 | Pending |
+| REL-01 | Phase 3 | Complete |
+| REL-02 | Phase 3 | Complete |
+| REL-03 | Phase 3 | Complete |
+| REL-04 | Phase 3 | Complete |
+| REL-05 | Phase 3 | Complete |
+| REL-06 | Phase 3 | Complete |
+| REL-07 | Phase 3 | Complete |
+| REL-08 | Phase 3 | Complete |
 | PAGE-01 | Phase 4 | Pending |
 | PAGE-02 | Phase 4 | Pending |
 | PAGE-03 | Phase 4 | Pending |
@@ -168,4 +168,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2025-02-01*
-*Last updated: 2026-02-02 after Phase 2 completion*
+*Last updated: 2026-02-07 after Phase 3 completion*

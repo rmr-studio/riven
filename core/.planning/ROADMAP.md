@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Query Model Extraction** - Extract and enhance query models from workflow config into shared location
 - [x] **Phase 2: Attribute Filter Implementation** - SqlFragment foundation and attribute filtering with all operators
-- [ ] **Phase 3: Relationship Filter Implementation** - EXISTS subqueries and relationship condition handling
+- [x] **Phase 3: Relationship Filter Implementation** - EXISTS subqueries and relationship condition handling
 - [ ] **Phase 4: Query Assembly** - Complete SELECT query building with pagination and projection
 - [ ] **Phase 5: Query Execution Service** - EntityQueryService orchestration with security and result mapping
 - [ ] **Phase 6: Workflow Integration** - Update WorkflowQueryEntityActionConfig to use new service
@@ -65,10 +65,12 @@ Plans:
   3. TargetEquals condition matches entities related to specific entity IDs
   4. TargetMatches condition matches entities whose related entities satisfy a nested filter
   5. TargetTypeMatches condition matches entities using OR semantics across type branches with optional filters
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: TBD
+- [x] 03-01-PLAN.md — QueryFilterValidator and relationship exception extensions
+- [x] 03-02-PLAN.md — RelationshipSqlGenerator and entityAlias refactor
+- [x] 03-03-PLAN.md — Visitor integration with relationship dispatch and depth tracking
 
 ### Phase 4: Query Assembly
 **Goal**: Assemble complete SELECT queries with pagination and projection support
@@ -133,7 +135,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 6.1
 |-------|----------------|--------|-----------|
 | 1. Query Model Extraction | 2/2 | Complete | 2026-02-01 |
 | 2. Attribute Filter Implementation | 3/3 | Complete | 2026-02-02 |
-| 3. Relationship Filter Implementation | 0/? | Not started | - |
+| 3. Relationship Filter Implementation | 3/3 | Complete ✓ | 2026-02-07 |
 | 4. Query Assembly | 0/? | Not started | - |
 | 5. Query Execution Service | 0/? | Not started | - |
 | 6. Workflow Integration | 0/? | Not started | - |
@@ -141,4 +143,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 6.1
 
 ---
 *Roadmap created: 2026-02-01*
-*Last updated: 2026-02-06*
+*Last updated: 2026-02-07*

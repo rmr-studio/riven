@@ -30,6 +30,13 @@ import java.util.*
  * Numeric comparisons use regex-guarded casts to prevent PostgreSQL cast errors on
  * non-numeric values. Non-numeric values silently fail to match rather than throwing errors.
  *
+ * ## Entity Alias Parameterization
+ *
+ * The [entityAlias] parameter on [generate] controls which table alias is used in SQL
+ * references (e.g., `e.payload` vs `t_0.payload`). This supports nested relationship
+ * filters where the target entity uses a different alias than the root entity. The default
+ * value `"e"` preserves backward compatibility with existing callers.
+ *
  * @property objectMapper Jackson ObjectMapper for JSON serialization in containment queries
  */
 class AttributeSqlGenerator(
@@ -43,28 +50,32 @@ class AttributeSqlGenerator(
      * @param operator Comparison operator to apply
      * @param value Value to compare against (may be null for IS_NULL/IS_NOT_NULL)
      * @param paramGen Generator for unique parameter names
+     * @param entityAlias Table alias for the entity being filtered. Defaults to `"e"` (root entity).
+     *   Pass a different alias (e.g., `"t_0"`) when generating SQL for nested relationship filters
+     *   that reference a target entity rather than the root entity.
      * @return SqlFragment with parameterized SQL and bound values
      */
     fun generate(
         attributeId: UUID,
         operator: FilterOperator,
         value: Any?,
-        paramGen: ParameterNameGenerator
+        paramGen: ParameterNameGenerator,
+        entityAlias: String = "e"
     ): SqlFragment = when (operator) {
-        FilterOperator.EQUALS -> generateEquals(attributeId, value, paramGen)
-        FilterOperator.NOT_EQUALS -> generateNotEquals(attributeId, value, paramGen)
-        FilterOperator.GREATER_THAN -> generateNumericComparison(attributeId, ">", value, paramGen)
-        FilterOperator.GREATER_THAN_OR_EQUALS -> generateNumericComparison(attributeId, ">=", value, paramGen)
-        FilterOperator.LESS_THAN -> generateNumericComparison(attributeId, "<", value, paramGen)
-        FilterOperator.LESS_THAN_OR_EQUALS -> generateNumericComparison(attributeId, "<=", value, paramGen)
-        FilterOperator.IN -> generateIn(attributeId, value, paramGen)
-        FilterOperator.NOT_IN -> generateNotIn(attributeId, value, paramGen)
-        FilterOperator.CONTAINS -> generateContains(attributeId, value, paramGen)
-        FilterOperator.NOT_CONTAINS -> generateNotContains(attributeId, value, paramGen)
-        FilterOperator.IS_NULL -> generateIsNull(attributeId, paramGen)
-        FilterOperator.IS_NOT_NULL -> generateIsNotNull(attributeId, paramGen)
-        FilterOperator.STARTS_WITH -> generateStartsWith(attributeId, value, paramGen)
-        FilterOperator.ENDS_WITH -> generateEndsWith(attributeId, value, paramGen)
+        FilterOperator.EQUALS -> generateEquals(attributeId, value, paramGen, entityAlias)
+        FilterOperator.NOT_EQUALS -> generateNotEquals(attributeId, value, paramGen, entityAlias)
+        FilterOperator.GREATER_THAN -> generateNumericComparison(attributeId, ">", value, paramGen, entityAlias)
+        FilterOperator.GREATER_THAN_OR_EQUALS -> generateNumericComparison(attributeId, ">=", value, paramGen, entityAlias)
+        FilterOperator.LESS_THAN -> generateNumericComparison(attributeId, "<", value, paramGen, entityAlias)
+        FilterOperator.LESS_THAN_OR_EQUALS -> generateNumericComparison(attributeId, "<=", value, paramGen, entityAlias)
+        FilterOperator.IN -> generateIn(attributeId, value, paramGen, entityAlias)
+        FilterOperator.NOT_IN -> generateNotIn(attributeId, value, paramGen, entityAlias)
+        FilterOperator.CONTAINS -> generateContains(attributeId, value, paramGen, entityAlias)
+        FilterOperator.NOT_CONTAINS -> generateNotContains(attributeId, value, paramGen, entityAlias)
+        FilterOperator.IS_NULL -> generateIsNull(attributeId, paramGen, entityAlias)
+        FilterOperator.IS_NOT_NULL -> generateIsNotNull(attributeId, paramGen, entityAlias)
+        FilterOperator.STARTS_WITH -> generateStartsWith(attributeId, value, paramGen, entityAlias)
+        FilterOperator.ENDS_WITH -> generateEndsWith(attributeId, value, paramGen, entityAlias)
     }
 
     /**
@@ -76,10 +87,11 @@ class AttributeSqlGenerator(
     private fun generateEquals(
         attributeId: UUID,
         value: Any?,
-        paramGen: ParameterNameGenerator
+        paramGen: ParameterNameGenerator,
+        entityAlias: String
     ): SqlFragment {
         if (value == null) {
-            return generateIsNull(attributeId, paramGen)
+            return generateIsNull(attributeId, paramGen, entityAlias)
         }
 
         val paramName = paramGen.next("eq")
@@ -87,7 +99,7 @@ class AttributeSqlGenerator(
         val jsonValue = objectMapper.writeValueAsString(jsonObject)
 
         return SqlFragment(
-            sql = "e.payload @> :$paramName::jsonb",
+            sql = "${entityAlias}.payload @> :$paramName::jsonb",
             parameters = mapOf(paramName to jsonValue)
         )
     }
@@ -101,10 +113,11 @@ class AttributeSqlGenerator(
     private fun generateNotEquals(
         attributeId: UUID,
         value: Any?,
-        paramGen: ParameterNameGenerator
+        paramGen: ParameterNameGenerator,
+        entityAlias: String
     ): SqlFragment {
         if (value == null) {
-            return generateIsNotNull(attributeId, paramGen)
+            return generateIsNotNull(attributeId, paramGen, entityAlias)
         }
 
         val keyParam = paramGen.next("neq_key")
@@ -112,7 +125,7 @@ class AttributeSqlGenerator(
         val attrKey = attributeId.toString()
 
         return SqlFragment(
-            sql = "(e.payload ? :$keyParam AND (e.payload->:$keyParam->>'value') != :$valParam)",
+            sql = "(${entityAlias}.payload ? :$keyParam AND (${entityAlias}.payload->:$keyParam->>'value') != :$valParam)",
             parameters = mapOf(
                 keyParam to attrKey,
                 valParam to value.toString()
@@ -130,7 +143,8 @@ class AttributeSqlGenerator(
         attributeId: UUID,
         sqlOperator: String,
         value: Any?,
-        paramGen: ParameterNameGenerator
+        paramGen: ParameterNameGenerator,
+        entityAlias: String
     ): SqlFragment {
         val keyParam = paramGen.next("num_key")
         val valParam = paramGen.next("num_val")
@@ -146,8 +160,8 @@ class AttributeSqlGenerator(
 
         return SqlFragment(
             sql = """CASE
-    WHEN (e.payload->:$keyParam->>'value') ~ '^-?[0-9]+(\.[0-9]+)?$'
-    THEN (e.payload->:$keyParam->>'value')::numeric $sqlOperator :$valParam
+    WHEN (${entityAlias}.payload->:$keyParam->>'value') ~ '^-?[0-9]+(\.[0-9]+)?$'
+    THEN (${entityAlias}.payload->:$keyParam->>'value')::numeric $sqlOperator :$valParam
     ELSE false
 END""",
             parameters = mapOf(
@@ -163,14 +177,15 @@ END""",
     private fun generateContains(
         attributeId: UUID,
         value: Any?,
-        paramGen: ParameterNameGenerator
+        paramGen: ParameterNameGenerator,
+        entityAlias: String
     ): SqlFragment {
         val keyParam = paramGen.next("contains_key")
         val valParam = paramGen.next("contains_val")
         val attrKey = attributeId.toString()
 
         return SqlFragment(
-            sql = "(e.payload->:$keyParam->>'value') ILIKE :$valParam ESCAPE '\\'",
+            sql = "(${entityAlias}.payload->:$keyParam->>'value') ILIKE :$valParam ESCAPE '\\'",
             parameters = mapOf(
                 keyParam to attrKey,
                 valParam to "%${escapeLikePattern(value?.toString() ?: "")}%"
@@ -184,14 +199,15 @@ END""",
     private fun generateNotContains(
         attributeId: UUID,
         value: Any?,
-        paramGen: ParameterNameGenerator
+        paramGen: ParameterNameGenerator,
+        entityAlias: String
     ): SqlFragment {
         val keyParam = paramGen.next("ncontains_key")
         val valParam = paramGen.next("ncontains_val")
         val attrKey = attributeId.toString()
 
         return SqlFragment(
-            sql = "NOT ((e.payload->:$keyParam->>'value') ILIKE :$valParam ESCAPE '\\')",
+            sql = "NOT ((${entityAlias}.payload->:$keyParam->>'value') ILIKE :$valParam ESCAPE '\\')",
             parameters = mapOf(
                 keyParam to attrKey,
                 valParam to "%${escapeLikePattern(value?.toString() ?: "")}%"
@@ -205,14 +221,15 @@ END""",
     private fun generateStartsWith(
         attributeId: UUID,
         value: Any?,
-        paramGen: ParameterNameGenerator
+        paramGen: ParameterNameGenerator,
+        entityAlias: String
     ): SqlFragment {
         val keyParam = paramGen.next("starts_key")
         val valParam = paramGen.next("starts_val")
         val attrKey = attributeId.toString()
 
         return SqlFragment(
-            sql = "(e.payload->:$keyParam->>'value') ILIKE :$valParam ESCAPE '\\'",
+            sql = "(${entityAlias}.payload->:$keyParam->>'value') ILIKE :$valParam ESCAPE '\\'",
             parameters = mapOf(
                 keyParam to attrKey,
                 valParam to "${escapeLikePattern(value?.toString() ?: "")}%"
@@ -226,14 +243,15 @@ END""",
     private fun generateEndsWith(
         attributeId: UUID,
         value: Any?,
-        paramGen: ParameterNameGenerator
+        paramGen: ParameterNameGenerator,
+        entityAlias: String
     ): SqlFragment {
         val keyParam = paramGen.next("ends_key")
         val valParam = paramGen.next("ends_val")
         val attrKey = attributeId.toString()
 
         return SqlFragment(
-            sql = "(e.payload->:$keyParam->>'value') ILIKE :$valParam ESCAPE '\\'",
+            sql = "(${entityAlias}.payload->:$keyParam->>'value') ILIKE :$valParam ESCAPE '\\'",
             parameters = mapOf(
                 keyParam to attrKey,
                 valParam to "%${escapeLikePattern(value?.toString() ?: "")}"
@@ -249,7 +267,8 @@ END""",
     private fun generateIn(
         attributeId: UUID,
         value: Any?,
-        paramGen: ParameterNameGenerator
+        paramGen: ParameterNameGenerator,
+        entityAlias: String
     ): SqlFragment {
         val values = extractListValues(value)
 
@@ -262,7 +281,7 @@ END""",
         val attrKey = attributeId.toString()
 
         return SqlFragment(
-            sql = "(e.payload->:$keyParam->>'value') IN (:$valsParam)",
+            sql = "(${entityAlias}.payload->:$keyParam->>'value') IN (:$valsParam)",
             parameters = mapOf(
                 keyParam to attrKey,
                 valsParam to values.map { it?.toString() ?: "" }
@@ -279,7 +298,8 @@ END""",
     private fun generateNotIn(
         attributeId: UUID,
         value: Any?,
-        paramGen: ParameterNameGenerator
+        paramGen: ParameterNameGenerator,
+        entityAlias: String
     ): SqlFragment {
         val values = extractListValues(value)
 
@@ -292,7 +312,7 @@ END""",
         val attrKey = attributeId.toString()
 
         return SqlFragment(
-            sql = "(e.payload ? :$keyParam AND (e.payload->:$keyParam->>'value') NOT IN (:$valsParam))",
+            sql = "(${entityAlias}.payload ? :$keyParam AND (${entityAlias}.payload->:$keyParam->>'value') NOT IN (:$valsParam))",
             parameters = mapOf(
                 keyParam to attrKey,
                 valsParam to values.map { it?.toString() ?: "" }
@@ -308,13 +328,14 @@ END""",
      */
     private fun generateIsNull(
         attributeId: UUID,
-        paramGen: ParameterNameGenerator
+        paramGen: ParameterNameGenerator,
+        entityAlias: String
     ): SqlFragment {
         val keyParam = paramGen.next("isnull_key")
         val attrKey = attributeId.toString()
 
         return SqlFragment(
-            sql = "(e.payload->:$keyParam->>'value') IS NULL",
+            sql = "(${entityAlias}.payload->:$keyParam->>'value') IS NULL",
             parameters = mapOf(keyParam to attrKey)
         )
     }
@@ -326,13 +347,14 @@ END""",
      */
     private fun generateIsNotNull(
         attributeId: UUID,
-        paramGen: ParameterNameGenerator
+        paramGen: ParameterNameGenerator,
+        entityAlias: String
     ): SqlFragment {
         val keyParam = paramGen.next("notnull_key")
         val attrKey = attributeId.toString()
 
         return SqlFragment(
-            sql = "(e.payload->:$keyParam->>'value') IS NOT NULL",
+            sql = "(${entityAlias}.payload->:$keyParam->>'value') IS NOT NULL",
             parameters = mapOf(keyParam to attrKey)
         )
     }
