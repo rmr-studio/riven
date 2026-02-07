@@ -1,7 +1,7 @@
 package riven.core.service.entity.query
 
+import org.springframework.stereotype.Component
 import riven.core.exceptions.query.InvalidRelationshipReferenceException
-import riven.core.exceptions.query.InvalidTypeBranchException
 import riven.core.exceptions.query.QueryFilterException
 import riven.core.exceptions.query.RelationshipDepthExceededException
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
@@ -33,6 +33,7 @@ import java.util.*
  * }
  * ```
  */
+@Component
 class QueryFilterValidator {
 
     /**

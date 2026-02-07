@@ -5,18 +5,8 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 .planning/*
-!.planning/
-!.planning/PROJECT.md
-!.planning/REQUIREMENTS.md
-!.planning/ROADMAP.md
-!.planning/STATE.md
-!.planning/config.json
-!.planning/codebase/
 !.planning/codebase/**
-!.planning/research/
-!.planning/research/**
-!.planning/phases/
-!.planning/phases/**
+!.planning/codebase
 
 ### STS ###
 .apt_generated

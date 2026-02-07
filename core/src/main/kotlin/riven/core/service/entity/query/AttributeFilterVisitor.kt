@@ -1,5 +1,6 @@
 package riven.core.service.entity.query
 
+import org.springframework.stereotype.Component
 import riven.core.exceptions.query.FilterNestingDepthExceededException
 import riven.core.exceptions.query.RelationshipDepthExceededException
 import riven.core.models.entity.query.FilterValue
@@ -70,6 +71,7 @@ import riven.core.models.entity.query.QueryFilter
  * @property maxNestingDepth Maximum allowed nesting depth for AND/OR combinations
  * @property maxRelationshipDepth Maximum allowed relationship traversal depth
  */
+@Component
 class AttributeFilterVisitor(
     private val attributeSqlGenerator: AttributeSqlGenerator,
     private val relationshipSqlGenerator: RelationshipSqlGenerator,
@@ -282,7 +284,7 @@ class AttributeFilterVisitor(
             is FilterValue.Template -> {
                 throw IllegalStateException(
                     "Template expression '${filterValue.expression}' was not resolved before query execution. " +
-                        "Resolve templates before calling the query service."
+                            "Resolve templates before calling the query service."
                 )
             }
         }

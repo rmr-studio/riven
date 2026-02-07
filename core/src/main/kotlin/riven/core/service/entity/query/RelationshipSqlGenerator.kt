@@ -1,5 +1,6 @@
 package riven.core.service.entity.query
 
+import org.springframework.stereotype.Component
 import riven.core.models.entity.query.QueryFilter
 import riven.core.models.entity.query.RelationshipCondition
 import riven.core.models.entity.query.TypeBranch
@@ -46,6 +47,7 @@ import java.util.*
  * that relationships reference entities within the same workspace, and RLS provides
  * an additional safety net at the database level.
  */
+@Component
 class RelationshipSqlGenerator {
 
     /**

@@ -1,6 +1,7 @@
 package riven.core.service.entity.query
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.stereotype.Component
 import riven.core.models.entity.query.FilterOperator
 import java.util.*
 
@@ -39,6 +40,7 @@ import java.util.*
  *
  * @property objectMapper Jackson ObjectMapper for JSON serialization in containment queries
  */
+@Component
 class AttributeSqlGenerator(
     private val objectMapper: ObjectMapper
 ) {
@@ -65,7 +67,14 @@ class AttributeSqlGenerator(
         FilterOperator.EQUALS -> generateEquals(attributeId, value, paramGen, entityAlias)
         FilterOperator.NOT_EQUALS -> generateNotEquals(attributeId, value, paramGen, entityAlias)
         FilterOperator.GREATER_THAN -> generateNumericComparison(attributeId, ">", value, paramGen, entityAlias)
-        FilterOperator.GREATER_THAN_OR_EQUALS -> generateNumericComparison(attributeId, ">=", value, paramGen, entityAlias)
+        FilterOperator.GREATER_THAN_OR_EQUALS -> generateNumericComparison(
+            attributeId,
+            ">=",
+            value,
+            paramGen,
+            entityAlias
+        )
+
         FilterOperator.LESS_THAN -> generateNumericComparison(attributeId, "<", value, paramGen, entityAlias)
         FilterOperator.LESS_THAN_OR_EQUALS -> generateNumericComparison(attributeId, "<=", value, paramGen, entityAlias)
         FilterOperator.IN -> generateIn(attributeId, value, paramGen, entityAlias)
