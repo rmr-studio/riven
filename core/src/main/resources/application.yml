@@ -50,6 +50,8 @@ riven:
         initial-interval-seconds: 1
         backoff-coefficient: 2.0
         max-interval-seconds: 10
+  query:
+    timeout-seconds: 10
 springdoc:
   api-docs:
     path: /docs/v3/api-docs

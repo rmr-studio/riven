@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Attribute Filter Implementation** - SqlFragment foundation and attribute filtering with all operators
 - [x] **Phase 3: Relationship Filter Implementation** - EXISTS subqueries and relationship condition handling
 - [x] **Phase 4: Query Assembly** - Complete SELECT query building with pagination and projection
-- [ ] **Phase 5: Query Execution Service** - EntityQueryService orchestration with security and result mapping
+- [x] **Phase 5: Query Execution Service** - EntityQueryService orchestration with security and result mapping
 - [ ] **Phase 6: Workflow Integration** - Update WorkflowQueryEntityActionConfig to use new service
 - [ ] **Phase 6.1: End-to-End Testing** (INSERTED) - Validate complete entity query pipeline with integration tests
 
@@ -98,10 +98,11 @@ Plans:
   5. Query execution returns List of Entity domain models with totalCount for pagination
   6. Invalid attributeId reference throws descriptive exception immediately
   7. Invalid relationshipId reference throws descriptive exception immediately
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 05-01: TBD
+- [x] 05-01-PLAN.md — QueryExecutionException, assembler SELECT e.id change, query timeout config
+- [x] 05-02-PLAN.md — EntityQueryService with validation, parallel execution, and result mapping
 
 ### Phase 6: Workflow Integration
 **Goal**: WorkflowQueryEntityActionConfig delegates to EntityQueryService
@@ -137,10 +138,10 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 6.1
 | 2. Attribute Filter Implementation | 3/3 | Complete | 2026-02-02 |
 | 3. Relationship Filter Implementation | 3/3 | Complete ✓ | 2026-02-07 |
 | 4. Query Assembly | 1/1 | Complete ✓ | 2026-02-07 |
-| 5. Query Execution Service | 0/? | Not started | - |
+| 5. Query Execution Service | 2/2 | Complete ✓ | 2026-02-07 |
 | 6. Workflow Integration | 0/? | Not started | - |
 | 6.1. End-to-End Testing (INSERTED) | 0/? | Not started | - |
 
 ---
 *Roadmap created: 2026-02-01*
-*Last updated: 2026-02-07 after Phase 4 completion*
+*Last updated: 2026-02-07 after Phase 5 execution*

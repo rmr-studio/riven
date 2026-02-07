@@ -17,7 +17,7 @@ import java.util.*
  * ## Query Structure
  *
  * Two queries are produced for each request:
- * 1. **Data query:** `SELECT e.* FROM entities e WHERE ... ORDER BY e.created_at DESC, e.id ASC LIMIT :limit OFFSET :offset`
+ * 1. **Data query:** `SELECT e.id FROM entities e WHERE ... ORDER BY e.created_at DESC, e.id ASC LIMIT :limit OFFSET :offset`
  * 2. **Count query:** `SELECT COUNT(*) FROM entities e WHERE ...` (same WHERE, no ORDER BY or LIMIT/OFFSET)
  *
  * Both queries share identical WHERE clause conditions assembled from:
@@ -138,7 +138,7 @@ class EntityQueryAssembler(
         val offsetParam = paramGen.next("offset")
 
         val sql = buildString {
-            append("SELECT e.*\n")
+            append("SELECT e.id\n")
             append("FROM entities e\n")
             append("WHERE ${whereFragment.sql}\n")
             append("ORDER BY e.created_at DESC, e.id ASC\n")
