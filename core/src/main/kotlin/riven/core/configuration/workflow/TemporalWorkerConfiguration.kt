@@ -5,6 +5,7 @@ import io.temporal.client.WorkflowClient
 import io.temporal.serviceclient.WorkflowServiceStubs
 import io.temporal.worker.WorkerFactory
 import jakarta.annotation.PreDestroy
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import riven.core.service.workflow.engine.WorkflowOrchestration
@@ -37,6 +38,7 @@ import java.util.*
  * @property activities Autowired Spring bean with injected dependencies
  */
 @Configuration
+@ConditionalOnProperty(name = ["riven.workflow.engine.enabled"], havingValue = "true", matchIfMissing = true)
 class TemporalWorkerConfiguration(
     private val workflowServiceStubs: WorkflowServiceStubs,
     private val coordinationActivity: WorkflowCoordinationService,

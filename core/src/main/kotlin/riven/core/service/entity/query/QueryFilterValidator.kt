@@ -100,15 +100,22 @@ class QueryFilterValidator {
                     )
                 }
 
-                // Look up relationship definition
-                val definition = context.relationshipDefinitions[filter.relationshipId]
-                if (definition == null) {
-                    context.errors.add(
-                        InvalidRelationshipReferenceException(
-                            relationshipId = filter.relationshipId,
-                            reason = "not found in entity type relationship definitions",
+                // Look up relationship definition only at the root level (depth 0).
+                // Nested relationship IDs reference target entity type definitions,
+                // which aren't available without loading the target entity type schema.
+                val definition = if (relationshipDepth == 0) {
+                    val def = context.relationshipDefinitions[filter.relationshipId]
+                    if (def == null) {
+                        context.errors.add(
+                            InvalidRelationshipReferenceException(
+                                relationshipId = filter.relationshipId,
+                                reason = "not found in entity type relationship definitions",
+                            )
                         )
-                    )
+                    }
+                    def
+                } else {
+                    null
                 }
 
                 // Validate the condition (continue even if definition is null to collect all errors)

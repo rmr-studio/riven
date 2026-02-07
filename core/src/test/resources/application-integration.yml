@@ -1,0 +1,69 @@
+server:
+  port: 0  # Random port for tests
+
+spring:
+  datasource:
+    # Overridden dynamically by @DynamicPropertySource in base class
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9999
+  temporal:
+    workers-auto-discovery:
+      packages: []
+
+riven:
+  security:
+    jwt-secret-key: integration-test-secret-key-minimum-32-chars-long
+    jwt-issuer: http://localhost:9999
+    allowed-origins:
+      - http://localhost:3000
+  supabase-url: http://localhost:54321
+  supabase-key: fake-supabase-key-for-integration-tests
+  web-origin: http://localhost:3000
+  include-stack-trace: false
+  workflow:
+    engine:
+      target: localhost:7233
+      namespace: default
+      enabled: false
+    retry:
+      default:
+        max-attempts: 1
+        initial-interval-seconds: 1
+        backoff-coefficient: 1.0
+        max-interval-seconds: 1
+      http-action:
+        max-attempts: 1
+        initial-interval-seconds: 1
+        backoff-coefficient: 1.0
+        max-interval-seconds: 1
+      crud-action:
+        max-attempts: 1
+        initial-interval-seconds: 1
+        backoff-coefficient: 1.0
+        max-interval-seconds: 1
+  query:
+    timeout-seconds: 10
+
+springdoc:
+  api-docs:
+    enabled: false
+
+logging:
+  level:
+    riven.core: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+    org.testcontainers: INFO
+    io.temporal: OFF

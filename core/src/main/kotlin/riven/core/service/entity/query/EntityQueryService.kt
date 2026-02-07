@@ -21,7 +21,6 @@ import riven.core.models.entity.query.EntityQueryResult
 import riven.core.models.entity.query.QueryFilter
 import riven.core.models.entity.query.QueryPagination
 import riven.core.models.entity.query.QueryProjection
-import riven.core.models.entity.query.RelationshipCondition
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
 import java.util.*
@@ -255,53 +254,13 @@ class EntityQueryService(
             }
 
             is QueryFilter.Relationship -> {
-                walkConditionForAttributes(filter.condition, attributeIds, errors)
+                // Nested relationship filters reference target entity type attributes,
+                // not root entity type attributes. Skip attribute validation here;
+                // cross-type validation requires loading target entity type schemas.
             }
         }
     }
 
-    /**
-     * Recursively walks a relationship condition checking nested filters for attribute references.
-     *
-     * @param condition Relationship condition to walk
-     * @param attributeIds Valid attribute UUIDs
-     * @param errors Mutable list accumulating validation errors
-     */
-    private fun walkConditionForAttributes(
-        condition: RelationshipCondition,
-        attributeIds: Set<UUID>,
-        errors: MutableList<riven.core.exceptions.query.QueryFilterException>,
-    ) {
-        when (condition) {
-            is RelationshipCondition.Exists -> {
-                // No nested filters
-            }
-
-            is RelationshipCondition.NotExists -> {
-                // No nested filters
-            }
-
-            is RelationshipCondition.TargetEquals -> {
-                // No nested filters
-            }
-
-            is RelationshipCondition.TargetMatches -> {
-                walkFilterForAttributes(condition.filter, attributeIds, errors)
-            }
-
-            is RelationshipCondition.TargetTypeMatches -> {
-                for (branch in condition.branches) {
-                    if (branch.filter != null) {
-                        walkFilterForAttributes(branch.filter, attributeIds, errors)
-                    }
-                }
-            }
-
-            is RelationshipCondition.CountMatches -> {
-                // Out of scope for Phase 5
-            }
-        }
-    }
 
     /**
      * Executes the data query and returns a list of entity IDs.
