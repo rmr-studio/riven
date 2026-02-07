@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** Execute complex entity queries with attribute filters, relationship traversals, and polymorphic type handling while maintaining workspace isolation and optimal database performance.
-**Current focus:** Phase 5 - Query Execution Service
+**Current focus:** Phase 6 - Workflow Integration
 
 ## Current Position
 
-Phase: 5 of 7 (Query Execution Service)
+Phase: 6 of 7 (Workflow Integration)
 Plan: 0 of ? in current phase
-Status: Phase 4 complete, Phase 5 not started
-Last activity: 2026-02-07 - Completed Phase 4
+Status: Phase 5 complete, Phase 6 not started
+Last activity: 2026-02-07 - Completed Phase 5
 
-Progress: [███████░░░] 75%
+Progress: [█████████░] 85%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
+- Total plans completed: 11
 - Average duration: 2 min
-- Total execution time: 16 min
+- Total execution time: 20.5 min
 
 **By Phase:**
 
@@ -31,9 +31,10 @@ Progress: [███████░░░] 75%
 | 02-attribute-filter-implementation | 3 | 4 min | 1.3 min |
 | 03-relationship-filter-implementation | 3 | 6 min | 2 min |
 | 04-query-assembly | 1 | 2 min | 2 min |
+| 05-query-execution-service | 2 | 4.5 min | 2.25 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 (2 min), 03-02 (2 min), 03-03 (2 min), 04-01 (2 min)
+- Last 5 plans: 03-03 (2 min), 04-01 (2 min), 05-01 (2 min), 05-02 (2.5 min)
 - Trend: Consistent
 
 *Updated after each plan completion*
@@ -68,6 +69,12 @@ Recent decisions affecting current work:
 - Separate COUNT query over window function -- simpler SQL, independent optimization, easier testing
 - Pagination validation in assembler as private method -- simple enough to not need own class
 - deleted=false as literal not parameter -- always false, benefits partial index matching
+- QueryExecutionException separate from QueryFilterException hierarchy - Different error domains (execution vs validation)
+- SELECT e.id instead of e.* - Implements two-step ID-then-load pattern for lean native queries
+- Query timeout under riven.query namespace - Enables per-query SET statement_timeout control
+- Two-part filter validation - EntityQueryService walks for attributes, delegates to QueryFilterValidator for relationships
+- Parallel query execution via coroutines - Data and count queries run simultaneously on Dispatchers.IO
+- Order preservation via ID-to-index map - Re-sorts entities after batch load to maintain SQL ordering
 
 ### Pending Todos
 
@@ -84,5 +91,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-07
-Stopped at: Completed 04-01-PLAN.md (Phase 4 complete)
+Stopped at: Phase 5 complete, verified ✓
 Resume file: None

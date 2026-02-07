@@ -49,15 +49,15 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Query Execution
 
-- [ ] **EXEC-01**: Create `EntityQueryService` in `service/entity/` as single entry point
-- [ ] **EXEC-02**: Generate native PostgreSQL SQL with JSONB operators
-- [ ] **EXEC-03**: Use parameterized queries for all user-provided values (SQL injection prevention)
-- [ ] **EXEC-04**: Enforce workspace_id filtering on all queries
-- [ ] **EXEC-05**: Enforce workspace_id filtering on relationship JOIN subqueries
-- [ ] **EXEC-06**: Return `List<Entity>` domain models from query execution
-- [ ] **EXEC-07**: Return `totalCount` with every query result
-- [ ] **EXEC-08**: Fail fast with exception on invalid attributeId reference
-- [ ] **EXEC-09**: Fail fast with exception on invalid relationshipId reference
+- [x] **EXEC-01**: Create `EntityQueryService` in `service/entity/` as single entry point
+- [x] **EXEC-02**: Generate native PostgreSQL SQL with JSONB operators
+- [x] **EXEC-03**: Use parameterized queries for all user-provided values (SQL injection prevention)
+- [x] **EXEC-04**: Enforce workspace_id filtering on all queries
+- [x] **EXEC-05**: Enforce workspace_id filtering on relationship JOIN subqueries
+- [x] **EXEC-06**: Return `List<Entity>` domain models from query execution
+- [x] **EXEC-07**: Return `totalCount` with every query result
+- [x] **EXEC-08**: Fail fast with exception on invalid attributeId reference
+- [x] **EXEC-09**: Fail fast with exception on invalid relationshipId reference
 
 ### Pagination and Projection
 
@@ -149,15 +149,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PAGE-02 | Phase 4 | Complete |
 | PAGE-03 | Phase 4 | Complete |
 | PAGE-04 | Phase 4 | Complete |
-| EXEC-01 | Phase 5 | Pending |
-| EXEC-02 | Phase 5 | Pending |
-| EXEC-03 | Phase 5 | Pending |
-| EXEC-04 | Phase 5 | Pending |
-| EXEC-05 | Phase 5 | Pending |
-| EXEC-06 | Phase 5 | Pending |
-| EXEC-07 | Phase 5 | Pending |
-| EXEC-08 | Phase 5 | Pending |
-| EXEC-09 | Phase 5 | Pending |
+| EXEC-01 | Phase 5 | Complete |
+| EXEC-02 | Phase 5 | Complete |
+| EXEC-03 | Phase 5 | Complete |
+| EXEC-04 | Phase 5 | Complete |
+| EXEC-05 | Phase 5 | Complete |
+| EXEC-06 | Phase 5 | Complete |
+| EXEC-07 | Phase 5 | Complete |
+| EXEC-08 | Phase 5 | Complete |
+| EXEC-09 | Phase 5 | Complete |
 | INT-01 | Phase 6 | Pending |
 | INT-02 | Phase 6 | Pending |
 
@@ -168,4 +168,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2025-02-01*
-*Last updated: 2026-02-07 after Phase 4 completion*
+*Last updated: 2026-02-07 after Phase 5 completion*
