@@ -3,6 +3,7 @@ package riven.core.service.entity.query
 import org.springframework.stereotype.Service
 import riven.core.models.entity.query.QueryFilter
 import riven.core.models.entity.query.QueryPagination
+import riven.core.exceptions.SchemaValidationException
 import java.util.*
 
 /**
@@ -52,7 +53,7 @@ class EntityQueryAssembler(
      * @param paramGen Shared parameter name generator for the entire query tree.
      *   Created by the caller and passed through to ensure unique parameter names.
      * @return [AssembledQuery] with separate data and count [SqlFragment]s
-     * @throws IllegalArgumentException if pagination parameters are invalid
+     * @throws SchemaValidationException if pagination parameters are invalid
      */
     fun assemble(
         entityTypeId: UUID,
@@ -82,17 +83,17 @@ class EntityQueryAssembler(
     /**
      * Validates pagination parameters before query assembly.
      *
-     * @throws IllegalArgumentException if limit < 1, limit > [MAX_LIMIT], or offset < 0
+     * @throws SchemaValidationException if limit < 1, limit > [MAX_LIMIT], or offset < 0
      */
     private fun validatePagination(pagination: QueryPagination) {
-        require(pagination.limit >= 1) {
-            "Limit must be at least 1, was: ${pagination.limit}"
+        if (pagination.limit < 1) {
+            throw SchemaValidationException(listOf("Limit must be at least 1, was: ${pagination.limit}"))
         }
-        require(pagination.limit <= MAX_LIMIT) {
-            "Limit must not exceed $MAX_LIMIT, was: ${pagination.limit}"
+        if (pagination.limit > MAX_LIMIT) {
+            throw SchemaValidationException(listOf("Limit must not exceed $MAX_LIMIT, was: ${pagination.limit}"))
         }
-        require(pagination.offset >= 0) {
-            "Offset must be non-negative, was: ${pagination.offset}"
+        if (pagination.offset < 0) {
+            throw SchemaValidationException(listOf("Offset must be non-negative, was: ${pagination.offset}"))
         }
     }
 
