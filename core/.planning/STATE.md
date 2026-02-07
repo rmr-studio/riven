@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** Execute complex entity queries with attribute filters, relationship traversals, and polymorphic type handling while maintaining workspace isolation and optimal database performance.
-**Current focus:** Phase 4 - Query Assembly
+**Current focus:** Phase 5 - Query Execution Service
 
 ## Current Position
 
-Phase: 4 of 6 (Query Assembly)
+Phase: 5 of 7 (Query Execution Service)
 Plan: 0 of ? in current phase
-Status: Phase 3 complete, Phase 4 not started
-Last activity: 2026-02-07 - Completed 03-03-PLAN.md
+Status: Phase 4 complete, Phase 5 not started
+Last activity: 2026-02-07 - Completed Phase 4
 
-Progress: [██████░░░░] 67%
+Progress: [███████░░░] 75%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
+- Total plans completed: 9
 - Average duration: 2 min
-- Total execution time: 14 min
+- Total execution time: 16 min
 
 **By Phase:**
 
@@ -30,9 +30,10 @@ Progress: [██████░░░░] 67%
 | 01-query-model-extraction | 2 | 4 min | 2 min |
 | 02-attribute-filter-implementation | 3 | 4 min | 1.3 min |
 | 03-relationship-filter-implementation | 3 | 6 min | 2 min |
+| 04-query-assembly | 1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-03 (1 min), 03-01 (2 min), 03-02 (2 min), 03-03 (2 min)
+- Last 5 plans: 03-01 (2 min), 03-02 (2 min), 03-03 (2 min), 04-01 (2 min)
 - Trend: Consistent
 
 *Updated after each plan completion*
@@ -64,6 +65,9 @@ Recent decisions affecting current work:
 - Unique aliases via ParameterNameGenerator counter (r_{n}, t_{n}) prevent SQL ambiguity at any depth
 - AND/OR depth resets to 0 for nested relationship subqueries -- each subquery gets its own AND/OR depth budget
 - Relationship depth enforced in visitor as safety net even though QueryFilterValidator catches it first
+- Separate COUNT query over window function -- simpler SQL, independent optimization, easier testing
+- Pagination validation in assembler as private method -- simple enough to not need own class
+- deleted=false as literal not parameter -- always false, benefits partial index matching
 
 ### Pending Todos
 
@@ -80,5 +84,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-07
-Stopped at: Completed 03-03-PLAN.md (Phase 3 complete)
+Stopped at: Completed 04-01-PLAN.md (Phase 4 complete)
 Resume file: None
