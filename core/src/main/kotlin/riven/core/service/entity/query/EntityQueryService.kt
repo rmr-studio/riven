@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
@@ -110,8 +111,9 @@ class EntityQueryService(
         }
 
         // Step 1: Load Entity Type
-        val entityTypeEntity = entityTypeRepository.findById(query.entityTypeId)
-            .orElseThrow { NotFoundException("Entity type ${query.entityTypeId} not found") }
+        val entityTypeEntity = withContext(Dispatchers.IO) {
+            entityTypeRepository.findById(query.entityTypeId)
+        }.orElseThrow { NotFoundException("Entity type ${query.entityTypeId} not found") }
 
         val entityTypeId = requireNotNull(entityTypeEntity.id) { "Entity type ID cannot be null" }
 
@@ -150,7 +152,9 @@ class EntityQueryService(
             )
         }
 
-        val entityEntities = entityRepository.findByIdIn(entityIds)
+        val entityEntities = withContext(Dispatchers.IO) {
+            entityRepository.findByIdIn(entityIds)
+        }
 
         // Convert to domain models (no relationships loaded in Phase 5)
         val entities = entityEntities.map { it.toModel(audit = true, relationships = emptyMap()) }
