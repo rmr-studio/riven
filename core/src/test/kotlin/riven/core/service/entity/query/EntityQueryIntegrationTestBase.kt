@@ -21,8 +21,9 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Testcontainers
+import org.testcontainers.postgresql.PostgreSQLContainer
+import org.testcontainers.utility.DockerImageName
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityRelationshipEntity
 import riven.core.entity.entity.EntityTypeEntity
@@ -143,7 +144,7 @@ abstract class EntityQueryIntegrationTestBase {
 
     companion object {
         @JvmStatic
-        val postgres = PostgreSQLContainer("postgres:16-alpine")
+        val postgres: PostgreSQLContainer = PostgreSQLContainer(DockerImageName.parse("postgres:16-alpine"))
             .withDatabaseName("riven_test")
             .withUsername("test")
             .withPassword("test")
@@ -540,7 +541,7 @@ abstract class EntityQueryIntegrationTestBase {
         projects.forEach { projectEntities[it.first] = it.second }
     }
 
-    private fun createCompany(name: String, industry: String, revenue: Double, active: String, founded: String, website: String?): Pair<String, UUID> {
+    protected fun createCompany(name: String, industry: String, revenue: Double, active: String, founded: String, website: String?): Pair<String, UUID> {
         val payload = mutableMapOf(
             companyNameAttrId.toString() to EntityAttributePrimitivePayload(name, SchemaType.TEXT),
             companyIndustryAttrId.toString() to EntityAttributePrimitivePayload(industry, SchemaType.TEXT),

@@ -37,32 +37,41 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
 
     @Test
     fun `test NOT_EXISTS returns companies without employees`() = runBlocking {
-        // First, truncate and recreate data with a company that has no employees
-        truncateAll()
-        createEntityTypes()
-        seedEntities()
+        // This test modifies shared state, so restore it afterward
+        try {
+            truncateAll()
+            createEntityTypes()
+            seedEntities()
 
-        // Create a company with no employees
-        val lonelyCompany = createCompanyWithoutRelationships("Lonely Corp", "Technology", 1000000.0, "true", "2023", null)
-        companyEntities["Lonely Corp"] = lonelyCompany
+            // Create a company with no employees
+            val lonelyCompany = createCompany("Lonely Corp", "Technology", 1000000.0, "true", "2023", null).second
+            companyEntities["Lonely Corp"] = lonelyCompany
 
-        // Create original relationships
-        createRelationships()
+            // Create original relationships (excludes Lonely Corp)
+            createRelationships()
 
-        val query = EntityQuery(
-            entityTypeId = companyTypeId,
-            filter = QueryFilter.Relationship(
-                relationshipId = companyEmployeesRelId,
-                condition = RelationshipCondition.NotExists
+            val query = EntityQuery(
+                entityTypeId = companyTypeId,
+                filter = QueryFilter.Relationship(
+                    relationshipId = companyEmployeesRelId,
+                    condition = RelationshipCondition.NotExists
+                )
             )
-        )
 
-        val result = entityQueryService.execute(query, workspaceId, QueryPagination())
+            val result = entityQueryService.execute(query, workspaceId, QueryPagination())
 
-        // Only "Lonely Corp" should appear (no employees)
-        assertEquals(1, result.totalCount)
-        assertEquals(1, result.entities.size)
-        assertEquals(lonelyCompany, result.entities[0].id)
+            // Only "Lonely Corp" should appear (no employees)
+            assertEquals(1, result.totalCount)
+            assertEquals(1, result.entities.size)
+            assertEquals(lonelyCompany, result.entities[0].id)
+        } finally {
+            // Restore shared state for subsequent tests
+            companyEntities.remove("Lonely Corp")
+            truncateAll()
+            createEntityTypes()
+            seedEntities()
+            createRelationships()
+        }
     }
 
     @Test
@@ -299,7 +308,8 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
     }
 
     @Test
-    fun `test depth exceeding maxDepth is rejected`() {
+    fun `test 3-deep nesting with maxDepth 2 is rejected`() {
+        // Company -> Employee -> Project -> Company (3 levels, but maxDepth=2)
         val query = EntityQuery(
             entityTypeId = companyTypeId,
             filter = QueryFilter.Relationship(
@@ -307,11 +317,16 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
                 condition = RelationshipCondition.TargetMatches(
                     filter = QueryFilter.Relationship(
                         relationshipId = employeeProjectsRelId,
-                        condition = RelationshipCondition.Exists
+                        condition = RelationshipCondition.TargetMatches(
+                            filter = QueryFilter.Relationship(
+                                relationshipId = projectClientRelId,
+                                condition = RelationshipCondition.Exists
+                            )
+                        )
                     )
                 )
             ),
-            maxDepth = 1 // Only allow 1 level, but we have 2
+            maxDepth = 2 // Only allow 2 levels, but we have 3
         )
 
         val exception = assertThrows<QueryValidationException> {
@@ -323,8 +338,8 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
         // Should contain RelationshipDepthExceededException
         assertTrue(exception.validationErrors.any { it is RelationshipDepthExceededException })
         val depthError = exception.validationErrors.filterIsInstance<RelationshipDepthExceededException>().first()
-        assertEquals(2, depthError.depth)
-        assertEquals(1, depthError.maxDepth)
+        assertEquals(3, depthError.depth)
+        assertEquals(2, depthError.maxDepth)
     }
 
     @Test
@@ -363,34 +378,4 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
         assertTrue(resultCompanyNames.contains("Zeta Systems"))
     }
 
-    // Helper to create a company without adding relationships
-    private fun createCompanyWithoutRelationships(
-        name: String,
-        industry: String,
-        revenue: Double,
-        active: String,
-        founded: String,
-        website: String?
-    ): UUID {
-        val payload = mutableMapOf(
-            companyNameAttrId.toString() to riven.core.models.entity.payload.EntityAttributePrimitivePayload(name, riven.core.enums.common.validation.SchemaType.TEXT),
-            companyIndustryAttrId.toString() to riven.core.models.entity.payload.EntityAttributePrimitivePayload(industry, riven.core.enums.common.validation.SchemaType.TEXT),
-            companyRevenueAttrId.toString() to riven.core.models.entity.payload.EntityAttributePrimitivePayload(revenue, riven.core.enums.common.validation.SchemaType.NUMBER),
-            companyActiveAttrId.toString() to riven.core.models.entity.payload.EntityAttributePrimitivePayload(active, riven.core.enums.common.validation.SchemaType.TEXT),
-            companyFoundedAttrId.toString() to riven.core.models.entity.payload.EntityAttributePrimitivePayload(founded, riven.core.enums.common.validation.SchemaType.TEXT)
-        )
-        if (website != null) {
-            payload[companyWebsiteAttrId.toString()] = riven.core.models.entity.payload.EntityAttributePrimitivePayload(website, riven.core.enums.common.validation.SchemaType.TEXT)
-        }
-
-        val entity = riven.core.entity.entity.EntityEntity(
-            workspaceId = workspaceId,
-            typeId = companyTypeId,
-            typeKey = "company",
-            identifierKey = companyNameAttrId,
-            payload = payload
-        )
-        val saved = entityRepository.save(entity)
-        return saved.id!!
-    }
 }

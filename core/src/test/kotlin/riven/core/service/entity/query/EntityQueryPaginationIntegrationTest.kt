@@ -194,21 +194,36 @@ class EntityQueryPaginationIntegrationTest : EntityQueryIntegrationTestBase() {
     @Test
     fun `test default ordering is created_at DESC, id ASC`() = runBlocking {
         val query = EntityQuery(entityTypeId = companyTypeId)
+        val result = entityQueryService.execute(query, workspaceId, QueryPagination())
 
-        // Execute query twice to verify stable ordering
-        val result1 = entityQueryService.execute(query, workspaceId, QueryPagination())
+        assertEquals(10, result.entities.size)
+        assertEquals(10, result.entities.map { it.id }.toSet().size)
+
+        // Verify created_at DESC with id ASC tie-breaker
+        for (i in 0 until result.entities.size - 1) {
+            val current = result.entities[i]
+            val next = result.entities[i + 1]
+            val currentCreatedAt = requireNotNull(current.createdAt)
+            val nextCreatedAt = requireNotNull(next.createdAt)
+
+            if (currentCreatedAt == nextCreatedAt) {
+                // Tie-breaker: id ASC
+                assertTrue(
+                    current.id < next.id,
+                    "When createdAt is equal, ids should be ascending: ${current.id} should be < ${next.id}"
+                )
+            } else {
+                // Primary sort: created_at DESC
+                assertTrue(
+                    currentCreatedAt.isAfter(nextCreatedAt),
+                    "createdAt should be descending: $currentCreatedAt should be after $nextCreatedAt"
+                )
+            }
+        }
+
+        // Verify stable ordering across executions
         val result2 = entityQueryService.execute(query, workspaceId, QueryPagination())
-
-        assertEquals(10, result1.entities.size)
-        assertEquals(10, result2.entities.size)
-
-        // Verify ordering is stable
-        val ids1 = result1.entities.map { it.id }
-        val ids2 = result2.entities.map { it.id }
-        assertEquals(ids1, ids2)
-
-        // Verify all IDs are unique
-        assertEquals(10, ids1.toSet().size)
+        assertEquals(result.entities.map { it.id }, result2.entities.map { it.id })
     }
 
     @Test
