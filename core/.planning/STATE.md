@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** Execute complex entity queries with attribute filters, relationship traversals, and polymorphic type handling while maintaining workspace isolation and optimal database performance.
-**Current focus:** Phase 6 - Workflow Integration
+**Current focus:** Phase 6 - End-to-End Testing
 
 ## Current Position
 
-Phase: 6 of 7 (Workflow Integration)
-Plan: 0 of ? in current phase
-Status: Phase 5 complete, Phase 6 not started
-Last activity: 2026-02-07 - Completed Phase 5
+Phase: 6 of 6 (End-to-End Testing)
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-02-07 - Completed 06-02-PLAN.md
 
-Progress: [█████████░] 85%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: 2 min
-- Total execution time: 20.5 min
+- Total plans completed: 13
+- Average duration: 2.3 min
+- Total execution time: 30.5 min
 
 **By Phase:**
 
@@ -32,9 +32,10 @@ Progress: [█████████░] 85%
 | 03-relationship-filter-implementation | 3 | 6 min | 2 min |
 | 04-query-assembly | 1 | 2 min | 2 min |
 | 05-query-execution-service | 2 | 4.5 min | 2.25 min |
+| 06-end-to-end-testing | 2 | 10 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-03 (2 min), 04-01 (2 min), 05-01 (2 min), 05-02 (2.5 min)
+- Last 5 plans: 05-01 (2 min), 05-02 (2.5 min), 06-01 (4 min), 06-02 (6 min)
 - Trend: Consistent
 
 *Updated after each plan completion*
@@ -75,6 +76,9 @@ Recent decisions affecting current work:
 - Two-part filter validation - EntityQueryService walks for attributes, delegates to QueryFilterValidator for relationships
 - Parallel query execution via coroutines - Data and count queries run simultaneously on Dispatchers.IO
 - Order preservation via ID-to-index map - Re-sorts entities after batch load to maintain SQL ordering
+- Testcontainers over H2 for JSONB operator compatibility - H2 lacks @>, ?, ->> operators
+- Singleton container pattern for test performance - 10-20x faster than container per class
+- Truncate-based cleanup for native query transaction isolation - Avoids false negatives from rollback
 
 ### Pending Todos
 
@@ -82,7 +86,8 @@ None yet.
 
 ### Roadmap Evolution
 
-- Phase 6.1 inserted after Phase 6: End-to-end testing (URGENT)
+- Phase 6 (Workflow Integration) removed — deferred to separate milestone
+- Former Phase 6.1 (End-to-End Testing) renumbered to Phase 6
 
 ### Blockers/Concerns
 
@@ -91,5 +96,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-07
-Stopped at: Phase 5 complete, verified ✓
+Stopped at: Completed 06-02-PLAN.md (Phase 6 complete - all phases done)
 Resume file: None

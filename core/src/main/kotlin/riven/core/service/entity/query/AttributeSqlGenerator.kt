@@ -125,7 +125,7 @@ class AttributeSqlGenerator(
         val attrKey = attributeId.toString()
 
         return SqlFragment(
-            sql = "(${entityAlias}.payload ? :$keyParam AND (${entityAlias}.payload->:$keyParam->>'value') != :$valParam)",
+            sql = "(jsonb_exists(${entityAlias}.payload, :$keyParam) AND (${entityAlias}.payload->:$keyParam->>'value') != :$valParam)",
             parameters = mapOf(
                 keyParam to attrKey,
                 valParam to value.toString()
@@ -312,7 +312,7 @@ END""",
         val attrKey = attributeId.toString()
 
         return SqlFragment(
-            sql = "(${entityAlias}.payload ? :$keyParam AND (${entityAlias}.payload->:$keyParam->>'value') NOT IN (:$valsParam))",
+            sql = "(jsonb_exists(${entityAlias}.payload, :$keyParam) AND (${entityAlias}.payload->:$keyParam->>'value') NOT IN (:$valsParam))",
             parameters = mapOf(
                 keyParam to attrKey,
                 valsParam to values.map { it?.toString() ?: "" }

@@ -7,8 +7,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
 import riven.core.entity.workflow.WorkflowEdgeEntity
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.models.workflow.engine.state.WorkflowExecutionPhase
@@ -33,7 +33,7 @@ import java.util.*
 /**
  * Test configuration class that provides necessary beans for testing.
  */
-@Configuration
+@TestConfiguration
 class WorkflowTestConfiguration {
     @Bean
     fun inputResolverService(

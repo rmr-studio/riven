@@ -2,23 +2,16 @@
 
 ## Overview
 
-This roadmap delivers a reusable Entity Query Service that translates structured filter trees into parameterized PostgreSQL JSONB queries. The journey progresses from extracting query models into a shared location, through implementing attribute and relationship filtering with a Visitor-based SQL generation approach, to assembling complete queries with pagination, and finally integrating with the existing workflow system. Each phase builds on the previous, with security (SQL injection prevention, workspace isolation) baked into the foundational components.
+This roadmap delivers a reusable Entity Query Service that translates structured filter trees into parameterized PostgreSQL JSONB queries. The journey progresses from extracting query models into a shared location, through implementing attribute and relationship filtering with a Visitor-based SQL generation approach, to assembling complete queries with pagination, and finally validating the complete pipeline with end-to-end tests. Each phase builds on the previous, with security (SQL injection prevention, workspace isolation) baked into the foundational components.
 
 ## Phases
-
-**Phase Numbering:**
-- Integer phases (1, 2, 3): Planned milestone work
-- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
-
-Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Query Model Extraction** - Extract and enhance query models from workflow config into shared location
 - [x] **Phase 2: Attribute Filter Implementation** - SqlFragment foundation and attribute filtering with all operators
 - [x] **Phase 3: Relationship Filter Implementation** - EXISTS subqueries and relationship condition handling
 - [x] **Phase 4: Query Assembly** - Complete SELECT query building with pagination and projection
 - [x] **Phase 5: Query Execution Service** - EntityQueryService orchestration with security and result mapping
-- [ ] **Phase 6: Workflow Integration** - Update WorkflowQueryEntityActionConfig to use new service
-- [ ] **Phase 6.1: End-to-End Testing** (INSERTED) - Validate complete entity query pipeline with integration tests
+- [x] **Phase 6: End-to-End Testing** - Validate complete entity query pipeline with integration tests
 
 ## Phase Details
 
@@ -104,44 +97,39 @@ Plans:
 - [x] 05-01-PLAN.md — QueryExecutionException, assembler SELECT e.id change, query timeout config
 - [x] 05-02-PLAN.md — EntityQueryService with validation, parallel execution, and result mapping
 
-### Phase 6: Workflow Integration
-**Goal**: WorkflowQueryEntityActionConfig delegates to EntityQueryService
+### Phase 6: End-to-End Testing
+**Goal**: Validate the complete entity query pipeline works end-to-end with integration tests against real PostgreSQL
 **Depends on**: Phase 5
-**Requirements**: INT-01, INT-02
+**Requirements**: All 14 FilterOperators, all 5 relationship conditions, logical composition, pagination, workspace isolation, error paths
 **Success Criteria** (what must be TRUE):
-  1. WorkflowQueryEntityActionConfig.execute() calls EntityQueryService instead of throwing NotImplementedError
-  2. Template expressions are resolved by caller before EntityQueryService invocation
-**Plans**: TBD
+  1. All 14 FilterOperators produce correct results against real PostgreSQL JSONB
+  2. All 5 relationship conditions (EXISTS, NOT_EXISTS, TargetEquals, TargetMatches, TargetTypeMatches) return correct entities
+  3. Nested relationship traversals work up to maxDepth=3 and reject depth > maxDepth
+  4. AND/OR logical composition correctly parenthesizes and returns expected entities
+  5. Pagination limit/offset returns correct page slices with accurate totalCount and hasNextPage
+  6. Workspace isolation prevents cross-tenant data leakage
+  7. Invalid references throw descriptive QueryValidationException
+**Plans**: 2 plans
 
 Plans:
-- [ ] 06-01: TBD
-
-### Phase 6.1: End-to-End Testing (INSERTED)
-**Goal**: Validate the complete entity query pipeline works end-to-end with integration tests
-**Depends on**: Phase 6
-**Requirements**: TBD
-**Success Criteria** (what must be TRUE):
-  1. TBD - to be defined during planning
-**Plans**: TBD
-
-Plans:
-- [ ] 06.1-01: TBD
+- [x] 06-01-PLAN.md — Test infrastructure (Testcontainers, test domain, seed data) and attribute filter integration tests
+- [x] 06-02-PLAN.md — Relationship filter, pagination, workspace isolation, and error path integration tests
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 6.1
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Query Model Extraction | 2/2 | Complete | 2026-02-01 |
 | 2. Attribute Filter Implementation | 3/3 | Complete | 2026-02-02 |
-| 3. Relationship Filter Implementation | 3/3 | Complete ✓ | 2026-02-07 |
-| 4. Query Assembly | 1/1 | Complete ✓ | 2026-02-07 |
-| 5. Query Execution Service | 2/2 | Complete ✓ | 2026-02-07 |
-| 6. Workflow Integration | 0/? | Not started | - |
-| 6.1. End-to-End Testing (INSERTED) | 0/? | Not started | - |
+| 3. Relationship Filter Implementation | 3/3 | Complete | 2026-02-07 |
+| 4. Query Assembly | 1/1 | Complete | 2026-02-07 |
+| 5. Query Execution Service | 2/2 | Complete | 2026-02-07 |
+| 6. End-to-End Testing | 2/2 | Complete | 2026-02-07 |
 
 ---
 *Roadmap created: 2026-02-01*
-*Last updated: 2026-02-07 after Phase 5 execution*
+*Last updated: 2026-02-07 after 06-02 completion*
+*All phases complete*

@@ -324,7 +324,7 @@ class RelationshipSqlGenerator {
             append("    WHERE $relAlias.source_entity_id = $entityAlias.id\n")
             append("      AND $relAlias.relationship_field_id = :$relParam\n")
             append("      AND $relAlias.deleted = false\n")
-            append("      AND ${combinedBranches.sql}\n")
+            append("      AND (${combinedBranches.sql})\n")
             append(")")
         }
 
