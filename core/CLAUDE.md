@@ -1,4 +1,4 @@
-##   
+##    
 
 ## Documentation Protocol
 
@@ -11,7 +11,7 @@
 
 ### Repo Documentation Files
 
-- `docs/architecture-changelog.md` — Append-only log of architectural changes made during development tasks.
+- `docs/architecture-changelog.md` — Append-o/cnly log of architectural changes made during development tasks.
 - `docs/architecture-suggestions.md` — Suggestions for vault updates that require human review and authoring.
 
 ## Documentation Rules

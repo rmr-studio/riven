@@ -6,12 +6,13 @@ tags:
   - layer/service
   - layer/utility
   - layer/configuration
+  - architecture/component
 Created:
 Updated:
 Domains:
   - "[[Domain]]"
 ---
-# EntityQueryService
+# {{title}}
 
 ---
 
@@ -245,6 +246,6 @@ _Steps to verify this component works in isolation_
 
 ## Changelog
 
-| Date | Change | Reason |
-| ---- | ------ | ------ |
-|      |        |        |
+|Date|Change|Reason|
+|---|---|---|
+||||
