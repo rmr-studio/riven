@@ -1,61 +1,83 @@
 ---
 tags:
-  - status/implemented
   - layer/service
   - component/active
-Created:
-Updated:
-Domains:
-  - "[[Domain]]"
+  - architecture/component
+Created: 2026-02-08
+Updated: 2026-02-08
 ---
-# WorkflowCompletionService
+# WorkflowCompletionActivityImpl
+
+Part of [[Execution Engine]]
 
 ## Purpose
 
-_One sentence: what does this do and why?_
+Temporal activity for recording final workflow execution status, updating both the execution record and queue item in a single transaction after DAG completion.
 
 ---
 
 ## Responsibilities
 
+- Update `WorkflowExecutionEntity` with final status (COMPLETED or FAILED)
+- Calculate execution duration from start time to completion
+- Store structured error details if workflow failed
+- Update queue item status: delete on COMPLETED, mark FAILED with error message
+- Transaction-safe completion handling
+
 ---
 
 ## Dependencies
 
-- [[Dependency1]] — why
-- [[Dependency2]] — why
+- `WorkflowExecutionRepository` — Persistence for execution records
+- `ExecutionQueueRepository` — Queue item updates
 
 ## Used By
 
-- [[Consumer1]] — context
-- [[Consumer2]] — context
+- [[WorkflowOrchestrationService]] — Invokes after DAG execution completes
 
 ---
 
 ## Key Logic
 
-_The important business rules or algorithms:_
+**Completion lifecycle:**
+
+Dispatcher owns:
+- PENDING → CLAIMED → DISPATCHED (via ShedLock for bulk claiming)
+
+This service owns:
+- DISPATCHED → COMPLETED/FAILED (targets specific execution_id, no locking needed)
+
+**Queue item cleanup strategy:**
+
+- **COMPLETED:** Delete queue item to keep table small and prevent unbounded growth
+- **FAILED:** Keep queue item with status=FAILED and error message for debugging/retry
+
+**No concurrency control needed:**
+
+- Targets records by unique `execution_id` (no concurrent updates possible)
+- Each execution_id is unique to a single Temporal workflow instance
+- Runs in Temporal worker thread pool (not scheduled, no ShedLock or SKIP LOCKED)
 
 ---
 
 ## Public Methods
 
-### `methodName(params): ReturnType`
+### `recordCompletion(executionId, status, error?)`
 
-_What it does, when to use it_
-
----
-
-## Flows Involved
-
-- [[Flow - FlowName]]
+Records final workflow status. Updates execution record with status and duration. Deletes queue item (COMPLETED) or marks failed (FAILED). Handles missing records gracefully with warnings.
 
 ---
 
 ## Gotchas
 
+- **Missing record handling:** If execution or queue item not found, logs warning but doesn't fail. The workflow completed regardless, so completion service shouldn't crash.
+- **Error structure conversion:** Converts `WorkflowExecutionError` domain model to JSONB map for PostgreSQL storage via `mapErrorToJson()`.
+- **Independent lifecycle:** Operates independently of [[ExecutionDispatcherService]]. Dispatcher claims work, this service records completion.
+
 ---
 
 ## Related
 
-- [[ADR-xxx]]
+- [[WorkflowOrchestrationService]] — Caller
+- [[ExecutionDispatcherService]] — Owns queue claiming
+- [[Queue Management]] — Queue lifecycle
