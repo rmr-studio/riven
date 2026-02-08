@@ -1,0 +1,121 @@
+---
+tags:
+  - layer/service
+  - component/active
+  - architecture/component
+Created: 2026-02-08
+Updated: 2026-02-08
+---
+# EntityTypeAttributeService
+
+Part of [[Type Definitions]]
+
+## Purpose
+
+Utility service for attribute schema operations including definition save/remove, unique constraint management, and column extraction.
+
+---
+
+## Responsibilities
+
+- Save attribute definitions with breaking change validation
+- Remove attribute definitions from type schema
+- Extract unique attributes from entity payloads
+- Check unique constraint conflicts (excluding current entity for updates)
+- Save unique values to normalized table via native SQL
+- Delete unique values when entities/types deleted
+- Validate attribute definition constraints (unique requires STRING/NUMBER)
+
+---
+
+## Dependencies
+
+- [[EntityValidationService]] — Breaking change detection and bulk entity validation
+- `EntityRepository` — Fetch existing entities for validation
+- `EntityUniqueValuesRepository` — Normalized unique constraint table
+
+## Used By
+
+- [[EntityTypeService]] — Attribute definition management
+- [[EntityService]] — Unique constraint enforcement during entity save
+
+---
+
+## Key Logic
+
+**Save attribute definition:**
+
+1. Validate attribute constraints (unique requires STRING or NUMBER type)
+2. Upsert attribute into type's schema properties
+3. Detect breaking changes via [[EntityValidationService]]
+4. If breaking changes exist:
+   - Fetch all existing entities of this type
+   - Validate each against new schema
+   - If any invalid: throw `SchemaValidationException` with sample errors
+5. Apply schema update to type (caller saves entity)
+
+**Unique constraint enforcement:**
+
+- **Extract:** Filters payload for attributes marked `unique=true` in schema
+- **Check:** Queries `entity_unique_values` table for conflicts (excludes current entity)
+- **Save:** Uses native SQL DELETE + INSERT to bypass Hibernate tracking issues
+- **Conflict:** Throws `UniqueConstraintViolationException` if duplicate found
+
+**Native SQL rationale:**
+
+- Unique values stored in normalized table separate from entity payload JSONB
+- Native SQL avoids Hibernate session conflicts during entity save transaction
+- DELETE + INSERT pattern ensures clean replacement of unique values
+
+---
+
+## Public Methods
+
+### `saveAttributeDefinition(workspaceId, type, request)`
+
+Validates and applies attribute definition to type schema. Throws `SchemaValidationException` if breaking changes would invalidate existing entities.
+
+### `removeAttributeDefinition(type, attributeId)`
+
+Removes attribute from type schema. Caller responsible for impact analysis and saving.
+
+### `extractUniqueAttributes(type, payload): Map<UUID, EntityAttributePrimitivePayload?>`
+
+Filters entity payload for attributes marked unique in schema. Returns map of fieldId -> primitive payload.
+
+### `checkAttributeUniqueness(typeId, fieldId, value, excludeEntityId?)`
+
+Checks for unique constraint conflicts. Throws `UniqueConstraintViolationException` if duplicate found.
+
+ExcludeEntityId parameter allows updates (entity's own value doesn't conflict with itself).
+
+### `saveUniqueValues(workspaceId, entityId, typeId, uniqueValues)`
+
+Saves unique values to normalized table. Deletes existing values first, then inserts new ones via native SQL.
+
+### `deleteEntities(workspaceId, ids): Int`
+
+Deletes unique values for given entities. Returns count of deleted rows.
+
+### `deleteType(workspaceId, typeId): Int`
+
+Deletes all unique values for entity type. Returns count of deleted rows.
+
+---
+
+## Gotchas
+
+- **No injected dependencies for pure utility methods:** Service is Spring bean but some methods are pure functions (extractUniqueAttributes)
+- **Breaking change validation:** Queries ALL entities of type to validate schema changes. Could be slow for large entity sets (future optimization: sampling).
+- **Native SQL requirement:** Unique value operations use native SQL to avoid Hibernate session conflicts during transactional entity saves
+- **Unique type restriction:** Only STRING and NUMBER attributes can be marked unique (validated at definition save time)
+- **Sample error limit:** Breaking change validation shows first 3 entity errors in exception message
+
+---
+
+## Related
+
+- [[EntityTypeService]] — Primary consumer for definition management
+- [[EntityService]] — Uses for unique constraint checks during save
+- [[EntityValidationService]] — Breaking change detection
+- [[Type Definitions]] — Parent subdomain
