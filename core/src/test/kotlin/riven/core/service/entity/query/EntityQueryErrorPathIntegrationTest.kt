@@ -1,13 +1,21 @@
 package riven.core.service.entity.query
 
 import kotlinx.coroutines.runBlocking
-import riven.core.exceptions.NotFoundException
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import riven.core.exceptions.query.*
+import riven.core.enums.entity.query.FilterOperator
+import riven.core.exceptions.NotFoundException
 import riven.core.exceptions.SchemaValidationException
-import riven.core.models.entity.query.*
+import riven.core.exceptions.query.InvalidAttributeReferenceException
+import riven.core.exceptions.query.InvalidRelationshipReferenceException
+import riven.core.exceptions.query.QueryValidationException
+import riven.core.exceptions.query.RelationshipDepthExceededException
+import riven.core.models.entity.query.EntityQuery
+import riven.core.models.entity.query.filter.FilterValue
+import riven.core.models.entity.query.filter.QueryFilter
+import riven.core.models.entity.query.filter.RelationshipFilter
+import riven.core.models.entity.query.pagination.QueryPagination
 import java.util.*
 
 /**
@@ -55,7 +63,7 @@ class EntityQueryErrorPathIntegrationTest : EntityQueryIntegrationTestBase() {
             entityTypeId = companyTypeId,
             filter = QueryFilter.Relationship(
                 relationshipId = randomRelationshipId,
-                condition = RelationshipCondition.Exists
+                condition = RelationshipFilter.Exists
             )
         )
 
@@ -77,10 +85,10 @@ class EntityQueryErrorPathIntegrationTest : EntityQueryIntegrationTestBase() {
             entityTypeId = companyTypeId,
             filter = QueryFilter.Relationship(
                 relationshipId = companyEmployeesRelId,
-                condition = RelationshipCondition.TargetMatches(
+                condition = RelationshipFilter.TargetMatches(
                     filter = QueryFilter.Relationship(
                         relationshipId = employeeProjectsRelId,
-                        condition = RelationshipCondition.Exists
+                        condition = RelationshipFilter.Exists
                     )
                 )
             ),

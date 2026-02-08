@@ -1,13 +1,13 @@
 package riven.core.service.entity.query
 
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
-import riven.core.models.entity.query.EntityQuery
-import riven.core.models.entity.query.FilterOperator
-import riven.core.models.entity.query.FilterValue
-import riven.core.models.entity.query.QueryFilter
+import org.junit.jupiter.api.Test
+import riven.core.enums.entity.query.FilterOperator
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
+import riven.core.models.entity.query.EntityQuery
+import riven.core.models.entity.query.filter.FilterValue
+import riven.core.models.entity.query.filter.QueryFilter
 
 /**
  * Integration tests for attribute filtering and logical composition.
@@ -193,7 +193,8 @@ class EntityQueryAttributeFilterIntegrationTest : EntityQueryIntegrationTestBase
 
         // Verify all have revenue > 5M
         result.entities.forEach { entity ->
-            val revenue = ((entity.payload[companyRevenueAttrId]!!.payload as EntityAttributePrimitivePayload).value as Number).toDouble()
+            val revenue =
+                ((entity.payload[companyRevenueAttrId]!!.payload as EntityAttributePrimitivePayload).value as Number).toDouble()
             assertTrue(revenue > 5000000.0, "Revenue $revenue should be > 5000000")
         }
     }

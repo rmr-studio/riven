@@ -18,9 +18,9 @@ import riven.core.exceptions.query.QueryValidationException
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.query.EntityQuery
 import riven.core.models.entity.query.EntityQueryResult
-import riven.core.models.entity.query.QueryFilter
-import riven.core.models.entity.query.QueryPagination
 import riven.core.models.entity.query.QueryProjection
+import riven.core.models.entity.query.filter.QueryFilter
+import riven.core.models.entity.query.pagination.QueryPagination
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
 import java.util.*
@@ -35,29 +35,6 @@ private val logger = KotlinLogging.logger {}
  * against the entity type schema, executes parameterized SQL via [NamedParameterJdbcTemplate],
  * and returns an [EntityQueryResult] with typed [riven.core.models.entity.Entity] domain models
  * preserving pagination order.
- *
- * This service ties together all prior phases:
- * - Phase 1: Query models (EntityQuery, QueryFilter, etc.)
- * - Phase 2: Attribute filter SQL generation
- * - Phase 3: Relationship filter SQL generation
- * - Phase 4: Query assembly (EntityQueryAssembler)
- * - Phase 5: Validation, execution, and result mapping (this service)
- *
- * ## Execution Flow
- *
- * 1. **Load Entity Type** - Fetch entity type by ID from repository
- * 2. **Validate Filter References** - Check all attribute/relationship IDs exist in schema
- * 3. **Assemble SQL** - Delegate to EntityQueryAssembler to produce parameterized SQL
- * 4. **Execute Queries** - Run data and count queries in parallel via coroutines
- * 5. **Load Entities** - Batch-fetch full Entity objects by IDs via EntityRepository
- * 6. **Re-sort** - Preserve original SQL ordering (created_at DESC, id ASC)
- * 7. **Build Result** - Return EntityQueryResult with pagination metadata
- *
- * ## Security
- *
- * - All queries are parameterized via NamedParameterJdbcTemplate (no string concatenation)
- * - Workspace isolation enforced via workspace_id parameter in base WHERE clause
- * - Query timeout configured via application property to prevent long-running queries
  *
  * @property entityTypeRepository Repository for loading entity type schemas
  * @property entityRepository Repository for batch-loading full entity objects by IDs
@@ -104,9 +81,9 @@ class EntityQueryService(
     ): EntityQueryResult {
         logger.debug {
             "Executing entity query for entity type ${query.entityTypeId} " +
-                "with filter: ${query.filter != null}, " +
-                "pagination: limit=${pagination.limit} offset=${pagination.offset}, " +
-                "maxDepth: ${query.maxDepth}"
+                    "with filter: ${query.filter != null}, " +
+                    "pagination: limit=${pagination.limit} offset=${pagination.offset}, " +
+                    "maxDepth: ${query.maxDepth}"
         }
 
         // Step 1: Load Entity Type
@@ -129,7 +106,7 @@ class EntityQueryService(
 
         logger.debug {
             "Assembled SQL with ${assembled.dataQuery.parameters.size} data parameters " +
-                "and ${assembled.countQuery.parameters.size} count parameters"
+                    "and ${assembled.countQuery.parameters.size} count parameters"
         }
 
         // Step 4: Execute Queries in Parallel

@@ -1,15 +1,15 @@
 package riven.core.service.entity.query
 
 import org.springframework.stereotype.Component
-import riven.core.models.entity.query.QueryFilter
-import riven.core.models.entity.query.RelationshipCondition
-import riven.core.models.entity.query.TypeBranch
+import riven.core.models.entity.query.filter.QueryFilter
+import riven.core.models.entity.query.filter.RelationshipFilter
+import riven.core.models.entity.query.filter.TypeBranch
 import java.util.*
 
 /**
  * Generates parameterized EXISTS/NOT EXISTS subqueries for filtering entities by their relationships.
  *
- * This generator converts [RelationshipCondition] variants into PostgreSQL EXISTS subqueries
+ * This generator converts [RelationshipFilter] variants into PostgreSQL EXISTS subqueries
  * correlated to the outer entity query. Each subquery targets the `entity_relationships` table
  * and, for conditions that inspect the related entity (TargetMatches, TargetTypeMatches),
  * JOINs to the `entities` table.
@@ -24,7 +24,7 @@ import java.util.*
  *
  * ## Nested Filter Visitor Callback
  *
- * For [RelationshipCondition.TargetMatches] and [RelationshipCondition.TargetTypeMatches],
+ * For [RelationshipFilter.TargetMatches] and [RelationshipFilter.TargetTypeMatches],
  * nested filters must be applied to the target entity. Rather than holding a direct reference
  * to the filter visitor (which would create circular dependencies), the [generate] method
  * accepts an optional `nestedFilterVisitor` lambda. The caller (typically the query filter
@@ -63,26 +63,26 @@ class RelationshipSqlGenerator {
      *   Required when the condition contains nested filters; throws [UnsupportedOperationException]
      *   if null and a nested filter is encountered.
      * @return SqlFragment with parameterized EXISTS/NOT EXISTS subquery SQL and bound values
-     * @throws UnsupportedOperationException if [RelationshipCondition.CountMatches] is encountered
+     * @throws UnsupportedOperationException if [RelationshipFilter.CountMatches] is encountered
      *   or if a nested filter is encountered without a [nestedFilterVisitor]
      */
     fun generate(
         relationshipId: UUID,
-        condition: RelationshipCondition,
+        condition: RelationshipFilter,
         paramGen: ParameterNameGenerator,
         entityAlias: String = "e",
         nestedFilterVisitor: ((QueryFilter, ParameterNameGenerator, String) -> SqlFragment)? = null
     ): SqlFragment = when (condition) {
-        is RelationshipCondition.Exists ->
+        is RelationshipFilter.Exists ->
             generateExists(relationshipId, paramGen, entityAlias)
 
-        is RelationshipCondition.NotExists ->
+        is RelationshipFilter.NotExists ->
             generateNotExists(relationshipId, paramGen, entityAlias)
 
-        is RelationshipCondition.TargetEquals ->
+        is RelationshipFilter.TargetEquals ->
             generateTargetEquals(relationshipId, condition.entityIds, paramGen, entityAlias)
 
-        is RelationshipCondition.TargetMatches ->
+        is RelationshipFilter.TargetMatches ->
             generateTargetMatches(
                 relationshipId, condition.filter, paramGen, entityAlias,
                 nestedFilterVisitor ?: throw UnsupportedOperationException(
@@ -90,7 +90,7 @@ class RelationshipSqlGenerator {
                 )
             )
 
-        is RelationshipCondition.TargetTypeMatches ->
+        is RelationshipFilter.TargetTypeMatches ->
             generateTargetTypeMatches(
                 relationshipId, condition.branches, paramGen, entityAlias,
                 nestedFilterVisitor ?: throw UnsupportedOperationException(
@@ -98,7 +98,7 @@ class RelationshipSqlGenerator {
                 )
             )
 
-        is RelationshipCondition.CountMatches ->
+        is RelationshipFilter.CountMatches ->
             throw UnsupportedOperationException(
                 "CountMatches is not supported in this version. See v2 requirements REL-09."
             )

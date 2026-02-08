@@ -14,19 +14,19 @@ import java.util.*
  */
 @Schema(description = "Field selection for query results.")
 data class QueryProjection(
-    @Schema(
+    @param:Schema(
         description = "Specific attribute UUIDs to include. Null includes all.",
         nullable = true
     )
     val includeAttributes: List<UUID>? = null,
 
-    @Schema(
+    @param:Schema(
         description = "Specific relationship UUIDs to include. Null includes all.",
         nullable = true
     )
     val includeRelationships: List<UUID>? = null,
 
-    @Schema(
+    @param:Schema(
         description = "Whether to hydrate related entities.",
         defaultValue = "false"
     )

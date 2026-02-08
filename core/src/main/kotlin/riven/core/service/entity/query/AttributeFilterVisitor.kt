@@ -3,8 +3,8 @@ package riven.core.service.entity.query
 import org.springframework.stereotype.Component
 import riven.core.exceptions.query.FilterNestingDepthExceededException
 import riven.core.exceptions.query.RelationshipDepthExceededException
-import riven.core.models.entity.query.FilterValue
-import riven.core.models.entity.query.QueryFilter
+import riven.core.models.entity.query.filter.FilterValue
+import riven.core.models.entity.query.filter.QueryFilter
 
 /**
  * Visitor that traverses [QueryFilter] trees and produces [SqlFragment] output.

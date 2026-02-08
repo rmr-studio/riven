@@ -1,9 +1,10 @@
 package riven.core.service.entity.query
 
 import org.springframework.stereotype.Service
-import riven.core.models.entity.query.QueryFilter
-import riven.core.models.entity.query.QueryPagination
 import riven.core.exceptions.SchemaValidationException
+import riven.core.models.entity.query.filter.QueryFilter
+import riven.core.models.entity.query.pagination.QueryPagination
+import riven.core.service.entity.query.EntityQueryAssembler.Companion.MAX_LIMIT
 import java.util.*
 
 /**

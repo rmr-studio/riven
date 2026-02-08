@@ -2,7 +2,7 @@ package riven.core.service.entity.query
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Component
-import riven.core.models.entity.query.FilterOperator
+import riven.core.enums.entity.query.FilterOperator
 import java.util.*
 
 /**

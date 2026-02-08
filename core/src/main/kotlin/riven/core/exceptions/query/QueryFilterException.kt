@@ -1,7 +1,7 @@
 package riven.core.exceptions.query
 
 import riven.core.enums.core.DataType
-import riven.core.models.entity.query.FilterOperator
+import riven.core.enums.entity.query.FilterOperator
 import java.util.*
 
 /**
@@ -115,7 +115,7 @@ class QueryValidationException(
     val validationErrors: List<QueryFilterException>
 ) : QueryFilterException(
     "Query validation failed with ${validationErrors.size} error(s): " +
-        validationErrors.joinToString("; ") { it.message ?: "unknown" }
+            validationErrors.joinToString("; ") { it.message ?: "unknown" }
 ) {
     init {
         require(validationErrors.isNotEmpty()) { "validationErrors must not be empty" }

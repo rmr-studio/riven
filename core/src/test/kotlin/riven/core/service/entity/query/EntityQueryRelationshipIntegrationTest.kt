@@ -5,10 +5,15 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import riven.core.enums.entity.query.FilterOperator
 import riven.core.exceptions.query.QueryValidationException
 import riven.core.exceptions.query.RelationshipDepthExceededException
-import riven.core.models.entity.query.*
-import java.util.*
+import riven.core.models.entity.query.EntityQuery
+import riven.core.models.entity.query.filter.FilterValue
+import riven.core.models.entity.query.filter.QueryFilter
+import riven.core.models.entity.query.filter.RelationshipFilter
+import riven.core.models.entity.query.filter.TypeBranch
+import riven.core.models.entity.query.pagination.QueryPagination
 
 /**
  * Integration tests for relationship filtering in EntityQueryService.
@@ -24,7 +29,7 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
             entityTypeId = companyTypeId,
             filter = QueryFilter.Relationship(
                 relationshipId = companyEmployeesRelId,
-                condition = RelationshipCondition.Exists
+                condition = RelationshipFilter.Exists
             )
         )
 
@@ -54,7 +59,7 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
                 entityTypeId = companyTypeId,
                 filter = QueryFilter.Relationship(
                     relationshipId = companyEmployeesRelId,
-                    condition = RelationshipCondition.NotExists
+                    condition = RelationshipFilter.NotExists
                 )
             )
 
@@ -84,7 +89,7 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
             entityTypeId = companyTypeId,
             filter = QueryFilter.Relationship(
                 relationshipId = companyEmployeesRelId,
-                condition = RelationshipCondition.TargetEquals(
+                condition = RelationshipFilter.TargetEquals(
                     entityIds = listOf(aliceId.toString(), bobId.toString())
                 )
             )
@@ -104,7 +109,7 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
             entityTypeId = companyTypeId,
             filter = QueryFilter.Relationship(
                 relationshipId = companyEmployeesRelId,
-                condition = RelationshipCondition.TargetMatches(
+                condition = RelationshipFilter.TargetMatches(
                     filter = QueryFilter.Attribute(
                         attributeId = employeeSalaryAttrId,
                         operator = FilterOperator.GREATER_THAN,
@@ -147,7 +152,7 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
             entityTypeId = companyTypeId,
             filter = QueryFilter.Relationship(
                 relationshipId = companyOwnerRelId,
-                condition = RelationshipCondition.TargetTypeMatches(
+                condition = RelationshipFilter.TargetTypeMatches(
                     branches = listOf(
                         TypeBranch(
                             entityTypeId = employeeTypeId,
@@ -184,7 +189,7 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
             entityTypeId = companyTypeId,
             filter = QueryFilter.Relationship(
                 relationshipId = companyOwnerRelId,
-                condition = RelationshipCondition.TargetTypeMatches(
+                condition = RelationshipFilter.TargetTypeMatches(
                     branches = listOf(
                         TypeBranch(
                             entityTypeId = employeeTypeId,
@@ -209,7 +214,7 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
             entityTypeId = companyTypeId,
             filter = QueryFilter.Relationship(
                 relationshipId = companyEmployeesRelId,
-                condition = RelationshipCondition.Exists
+                condition = RelationshipFilter.Exists
             )
         )
 
@@ -226,10 +231,10 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
             entityTypeId = companyTypeId,
             filter = QueryFilter.Relationship(
                 relationshipId = companyEmployeesRelId,
-                condition = RelationshipCondition.TargetMatches(
+                condition = RelationshipFilter.TargetMatches(
                     filter = QueryFilter.Relationship(
                         relationshipId = employeeProjectsRelId,
-                        condition = RelationshipCondition.TargetMatches(
+                        condition = RelationshipFilter.TargetMatches(
                             filter = QueryFilter.Attribute(
                                 attributeId = projectStatusAttrId,
                                 operator = FilterOperator.EQUALS,
@@ -266,13 +271,13 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
             entityTypeId = companyTypeId,
             filter = QueryFilter.Relationship(
                 relationshipId = companyEmployeesRelId,
-                condition = RelationshipCondition.TargetMatches(
+                condition = RelationshipFilter.TargetMatches(
                     filter = QueryFilter.Relationship(
                         relationshipId = employeeProjectsRelId,
-                        condition = RelationshipCondition.TargetMatches(
+                        condition = RelationshipFilter.TargetMatches(
                             filter = QueryFilter.Relationship(
                                 relationshipId = projectClientRelId,
-                                condition = RelationshipCondition.TargetMatches(
+                                condition = RelationshipFilter.TargetMatches(
                                     filter = QueryFilter.Attribute(
                                         attributeId = companyIndustryAttrId,
                                         operator = FilterOperator.EQUALS,
@@ -313,13 +318,13 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
             entityTypeId = companyTypeId,
             filter = QueryFilter.Relationship(
                 relationshipId = companyEmployeesRelId,
-                condition = RelationshipCondition.TargetMatches(
+                condition = RelationshipFilter.TargetMatches(
                     filter = QueryFilter.Relationship(
                         relationshipId = employeeProjectsRelId,
-                        condition = RelationshipCondition.TargetMatches(
+                        condition = RelationshipFilter.TargetMatches(
                             filter = QueryFilter.Relationship(
                                 relationshipId = projectClientRelId,
-                                condition = RelationshipCondition.Exists
+                                condition = RelationshipFilter.Exists
                             )
                         )
                     )
@@ -354,7 +359,7 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
                     ),
                     QueryFilter.Relationship(
                         relationshipId = companyEmployeesRelId,
-                        condition = RelationshipCondition.Exists
+                        condition = RelationshipFilter.Exists
                     )
                 )
             )

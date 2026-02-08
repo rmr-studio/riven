@@ -10,11 +10,11 @@ import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.entity.query.EntityQuery
-import riven.core.models.entity.query.FilterValue
-import riven.core.models.entity.query.QueryFilter
-import riven.core.models.entity.query.QueryPagination
 import riven.core.models.entity.query.QueryProjection
-import riven.core.models.entity.query.RelationshipCondition
+import riven.core.models.entity.query.filter.FilterValue
+import riven.core.models.entity.query.filter.QueryFilter
+import riven.core.models.entity.query.filter.RelationshipFilter
+import riven.core.models.entity.query.pagination.QueryPagination
 import riven.core.models.workflow.engine.state.NodeOutput
 import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
@@ -25,7 +25,6 @@ import riven.core.models.workflow.node.config.validation.ConfigValidationError
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
 import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
-import java.util.*
 
 private val log = KotlinLogging.logger {}
 
@@ -314,15 +313,15 @@ data class WorkflowQueryEntityActionConfig(
     }
 
     private fun validateRelationshipCondition(
-        condition: RelationshipCondition,
+        condition: RelationshipFilter,
         path: String,
         validationService: WorkflowNodeConfigValidationService
     ): List<ConfigValidationError> {
         return when (condition) {
-            is RelationshipCondition.Exists -> emptyList()
-            is RelationshipCondition.NotExists -> emptyList()
+            is RelationshipFilter.Exists -> emptyList()
+            is RelationshipFilter.NotExists -> emptyList()
 
-            is RelationshipCondition.TargetEquals -> {
+            is RelationshipFilter.TargetEquals -> {
                 if (condition.entityIds.isEmpty()) {
                     listOf(ConfigValidationError(path, "TARGET_EQUALS must specify at least one entity ID"))
                 } else {
@@ -332,11 +331,11 @@ data class WorkflowQueryEntityActionConfig(
                 }
             }
 
-            is RelationshipCondition.TargetMatches -> {
+            is RelationshipFilter.TargetMatches -> {
                 validateFilter(condition.filter, "$path.filter", validationService)
             }
 
-            is RelationshipCondition.TargetTypeMatches -> {
+            is RelationshipFilter.TargetTypeMatches -> {
                 if (condition.branches.isEmpty()) {
                     listOf(ConfigValidationError(path, "TARGET_TYPE_MATCHES must specify at least one branch"))
                 } else {
@@ -347,7 +346,7 @@ data class WorkflowQueryEntityActionConfig(
                 }
             }
 
-            is RelationshipCondition.CountMatches -> {
+            is RelationshipFilter.CountMatches -> {
                 if (condition.count < 0) {
                     listOf(ConfigValidationError(path, "Count must be non-negative"))
                 } else {

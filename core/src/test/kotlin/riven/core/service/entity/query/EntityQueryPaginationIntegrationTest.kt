@@ -10,10 +10,14 @@ import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.core.DataType
 import riven.core.enums.entity.EntityCategory
 import riven.core.enums.entity.EntityPropertyType
+import riven.core.enums.entity.query.FilterOperator
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.configuration.EntityTypeAttributeColumn
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
-import riven.core.models.entity.query.*
+import riven.core.models.entity.query.EntityQuery
+import riven.core.models.entity.query.filter.FilterValue
+import riven.core.models.entity.query.filter.QueryFilter
+import riven.core.models.entity.query.pagination.QueryPagination
 import java.util.*
 
 /**

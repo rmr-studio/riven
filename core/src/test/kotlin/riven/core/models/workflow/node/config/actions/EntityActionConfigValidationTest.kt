@@ -5,12 +5,12 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import riven.core.enums.entity.query.FilterOperator
 import riven.core.models.entity.query.EntityQuery
-import riven.core.models.entity.query.FilterOperator
-import riven.core.models.entity.query.FilterValue
-import riven.core.models.entity.query.QueryFilter
-import riven.core.models.entity.query.QueryPagination
-import riven.core.models.entity.query.RelationshipCondition
+import riven.core.models.entity.query.filter.FilterValue
+import riven.core.models.entity.query.filter.QueryFilter
+import riven.core.models.entity.query.filter.RelationshipFilter
+import riven.core.models.entity.query.pagination.QueryPagination
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
 import riven.core.service.workflow.state.WorkflowNodeTemplateParserService
@@ -241,7 +241,7 @@ class EntityActionConfigValidationTest {
                     entityTypeId = testEntityTypeId,
                     filter = QueryFilter.Relationship(
                         relationshipId = testRelationshipId,
-                        condition = RelationshipCondition.Exists
+                        condition = RelationshipFilter.Exists
                     )
                 )
             )
@@ -256,7 +256,7 @@ class EntityActionConfigValidationTest {
                     entityTypeId = testEntityTypeId,
                     filter = QueryFilter.Relationship(
                         relationshipId = testRelationshipId,
-                        condition = RelationshipCondition.TargetEquals(
+                        condition = RelationshipFilter.TargetEquals(
                             entityIds = listOf("550e8400-e29b-41d4-a716-446655440099")
                         )
                     )
@@ -273,7 +273,7 @@ class EntityActionConfigValidationTest {
                     entityTypeId = testEntityTypeId,
                     filter = QueryFilter.Relationship(
                         relationshipId = testRelationshipId,
-                        condition = RelationshipCondition.TargetEquals(
+                        condition = RelationshipFilter.TargetEquals(
                             entityIds = listOf("{{ steps.lookup.output.entityId }}")
                         )
                     )
@@ -316,7 +316,7 @@ class EntityActionConfigValidationTest {
                     entityTypeId = testEntityTypeId,
                     filter = QueryFilter.Relationship(
                         relationshipId = testRelationshipId,
-                        condition = RelationshipCondition.TargetEquals(entityIds = emptyList())
+                        condition = RelationshipFilter.TargetEquals(entityIds = emptyList())
                     )
                 )
             )
@@ -370,7 +370,7 @@ class EntityActionConfigValidationTest {
                     entityTypeId = testEntityTypeId,
                     filter = QueryFilter.Relationship(
                         relationshipId = testRelationshipId,
-                        condition = RelationshipCondition.TargetMatches(
+                        condition = RelationshipFilter.TargetMatches(
                             filter = QueryFilter.Attribute(
                                 attributeId = testAttributeId,
                                 operator = FilterOperator.EQUALS,
@@ -391,7 +391,7 @@ class EntityActionConfigValidationTest {
                     entityTypeId = testEntityTypeId,
                     filter = QueryFilter.Relationship(
                         relationshipId = testRelationshipId,
-                        condition = RelationshipCondition.CountMatches(
+                        condition = RelationshipFilter.CountMatches(
                             operator = FilterOperator.GREATER_THAN,
                             count = -1
                         )

@@ -1,6 +1,7 @@
 package riven.core.models.entity.query
 
 import io.swagger.v3.oas.annotations.media.Schema
+import riven.core.models.entity.query.filter.QueryFilter
 import java.util.*
 
 /**
@@ -12,13 +13,13 @@ import java.util.*
  */
 @Schema(description = "Core query definition with entity type and optional filter criteria.")
 data class EntityQuery(
-    @Schema(description = "UUID of the entity type to query.")
+    @param:Schema(description = "UUID of the entity type to query.")
     val entityTypeId: UUID,
 
-    @Schema(description = "Optional filter criteria.", nullable = true)
+    @param:Schema(description = "Optional filter criteria.", nullable = true)
     val filter: QueryFilter? = null,
 
-    @Schema(
+    @param:Schema(
         description = "Maximum depth for nested relationship traversal. Applies to entire query tree.",
         defaultValue = "3",
         minimum = "1",

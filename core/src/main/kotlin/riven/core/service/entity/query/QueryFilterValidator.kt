@@ -5,8 +5,8 @@ import riven.core.exceptions.query.InvalidRelationshipReferenceException
 import riven.core.exceptions.query.QueryFilterException
 import riven.core.exceptions.query.RelationshipDepthExceededException
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
-import riven.core.models.entity.query.QueryFilter
-import riven.core.models.entity.query.RelationshipCondition
+import riven.core.models.entity.query.filter.QueryFilter
+import riven.core.models.entity.query.filter.RelationshipFilter
 import java.util.*
 
 /**
@@ -141,30 +141,30 @@ class QueryFilterValidator {
      * @param relationshipDepth New relationship depth after entering this relationship
      */
     private fun validateCondition(
-        condition: RelationshipCondition,
+        condition: RelationshipFilter,
         definition: EntityRelationshipDefinition?,
         relationshipId: UUID,
         context: ValidationContext,
         relationshipDepth: Int,
     ) {
         when (condition) {
-            is RelationshipCondition.Exists -> {
+            is RelationshipFilter.Exists -> {
                 // No additional validation
             }
 
-            is RelationshipCondition.NotExists -> {
+            is RelationshipFilter.NotExists -> {
                 // No additional validation
             }
 
-            is RelationshipCondition.TargetEquals -> {
+            is RelationshipFilter.TargetEquals -> {
                 // entityIds validated at model level
             }
 
-            is RelationshipCondition.TargetMatches -> {
+            is RelationshipFilter.TargetMatches -> {
                 walkFilter(condition.filter, context, relationshipDepth)
             }
 
-            is RelationshipCondition.TargetTypeMatches -> {
+            is RelationshipFilter.TargetTypeMatches -> {
                 // TODO: Cross-reference branch entityTypeId (UUID) against definition.entityTypeKeys (String keys)
                 //  once entity type key-to-ID mapping is available (Phase 5's EntityQueryService will provide this).
                 //  For now, we only recurse into branch filters for depth/reference validation.
@@ -175,7 +175,7 @@ class QueryFilterValidator {
                 }
             }
 
-            is RelationshipCondition.CountMatches -> {
+            is RelationshipFilter.CountMatches -> {
                 // Out of scope for Phase 3 -- handled as unsupported at generation time
             }
         }
