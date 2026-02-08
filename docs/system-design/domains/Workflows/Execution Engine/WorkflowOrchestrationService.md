@@ -72,7 +72,7 @@ class WorkflowOrchestrationService(
 
 | Component | How It Uses This | Notes |
 |---|---|---|
-| [[ExecutionQueueProcessorService]] | Starts workflow via Temporal WorkflowClient | Creates workflow with ID format `execution-{uuid}` |
+| [[WorkflowExecutionQueueProcessorService]] | Starts workflow via Temporal WorkflowClient | Creates workflow with ID format `execution-{uuid}` |
 | Temporal Server | Invokes execute() method when workflow starts | Temporal manages lifecycle |
 
 ---
@@ -388,7 +388,7 @@ Temporal workflows require the Temporal Test Server or mocking framework for int
 
 - [[WorkflowCoordinationService]] - Main activity for DAG execution
 - [[WorkflowCompletionActivityImpl]] - Completion recording activity
-- [[ExecutionQueueProcessorService]] - Dispatches workflows to Temporal
+- [[WorkflowExecutionQueueProcessorService]] - Dispatches workflows to Temporal
 - [[Execution Engine]] - Parent subdomain
 - [[TemporalWorkerConfiguration]] - Worker registration and factory setup
 

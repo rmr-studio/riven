@@ -72,12 +72,12 @@ Records final workflow status. Updates execution record with status and duration
 
 - **Missing record handling:** If execution or queue item not found, logs warning but doesn't fail. The workflow completed regardless, so completion service shouldn't crash.
 - **Error structure conversion:** Converts `WorkflowExecutionError` domain model to JSONB map for PostgreSQL storage via `mapErrorToJson()`.
-- **Independent lifecycle:** Operates independently of [[ExecutionDispatcherService]]. Dispatcher claims work, this service records completion.
+- **Independent lifecycle:** Operates independently of [[WorkflowExecutionDispatcherService]]. Dispatcher claims work, this service records completion.
 
 ---
 
 ## Related
 
 - [[WorkflowOrchestrationService]] — Caller
-- [[ExecutionDispatcherService]] — Owns queue claiming
+- [[WorkflowExecutionDispatcherService]] — Owns queue claiming
 - [[Queue Management]] — Queue lifecycle

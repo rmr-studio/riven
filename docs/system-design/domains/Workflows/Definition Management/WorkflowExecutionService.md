@@ -18,7 +18,7 @@ Service for managing workflow execution lifecycle: queuing execution requests, q
 
 ## Responsibilities
 
-- Queue workflow execution requests via [[ExecutionQueueService]]
+- Queue workflow execution requests via [[WorkflowExecutionQueueService]]
 - Validate workspace access before queueing
 - Query execution records by ID, workflow definition, or workspace
 - Retrieve execution summaries with node execution details via JOIN query
@@ -28,7 +28,7 @@ Service for managing workflow execution lifecycle: queuing execution requests, q
 
 ## Dependencies
 
-- [[ExecutionQueueService]] — Enqueues execution requests
+- [[WorkflowExecutionQueueService]] — Enqueues execution requests
 - `WorkflowExecutionRepository` — Persistence for execution records
 - `ActivityService` — Audit logging
 - `AuthTokenService` — JWT user extraction
@@ -36,7 +36,7 @@ Service for managing workflow execution lifecycle: queuing execution requests, q
 ## Used By
 
 - Workflow API controllers — REST endpoints for starting and querying executions
-- [[ExecutionDispatcherService]] — Dispatches queued executions to Temporal (async)
+- [[WorkflowExecutionDispatcherService]] — Dispatches queued executions to Temporal (async)
 
 ---
 
@@ -45,14 +45,14 @@ Service for managing workflow execution lifecycle: queuing execution requests, q
 **Execution flow:**
 
 1. **Start:** Queue execution request (this service)
-2. **Dispatch:** [[ExecutionDispatcherService]] claims queue item and starts Temporal workflow (async)
+2. **Dispatch:** [[WorkflowExecutionDispatcherService]] claims queue item and starts Temporal workflow (async)
 3. **Execute:** Temporal workflow orchestrates DAG
 4. **Complete:** [[WorkflowCompletionActivityImpl]] records final status
 5. **Query:** This service retrieves execution details
 
 **Queue-based async execution:**
 
-`startExecution()` returns immediately with queue ID. Actual Temporal dispatch happens asynchronously via [[ExecutionDispatcherService]], which checks tier-based capacity limits.
+`startExecution()` returns immediately with queue ID. Actual Temporal dispatch happens asynchronously via [[WorkflowExecutionDispatcherService]], which checks tier-based capacity limits.
 
 **Execution summary with node details:**
 
@@ -91,7 +91,7 @@ Retrieves execution with all node execution details via single JOIN query. Retur
 
 ## Gotchas
 
-- **Async execution:** `startExecution()` doesn't start Temporal workflow directly. It queues the request. Actual dispatch happens async via [[ExecutionDispatcherService]].
+- **Async execution:** `startExecution()` doesn't start Temporal workflow directly. It queues the request. Actual dispatch happens async via [[WorkflowExecutionDispatcherService]].
 - **Error details in JSONB:** Execution errors stored as JSONB (`WorkflowExecutionError`), node errors stored as JSONB (`NodeExecutionError`). Auto-serialized to JSON in API responses.
 - **JOIN query for summary:** `getExecutionSummary()` uses custom repository query with JOINs to fetch all related data in one query (execution, node executions, workflow nodes). Efficient for detail views.
 
@@ -99,7 +99,7 @@ Retrieves execution with all node execution details via single JOIN query. Retur
 
 ## Related
 
-- [[ExecutionQueueService]] — Queue management
-- [[ExecutionDispatcherService]] — Async Temporal dispatch
+- [[WorkflowExecutionQueueService]] — Queue management
+- [[WorkflowExecutionDispatcherService]] — Async Temporal dispatch
 - [[WorkflowCompletionActivityImpl]] — Records completion
 - [[Definition Management]] — Parent subdomain

@@ -34,10 +34,10 @@ Manages the workflow execution queue persistence layer, handling state transitio
 - Query pending queue counts by workspace
 
 **Explicitly NOT responsible for:**
-- Dispatching to Temporal (handled by ExecutionDispatcherService and ExecutionQueueProcessorService)
-- Claiming queue items via SELECT FOR UPDATE SKIP LOCKED (handled by ExecutionQueueProcessorService)
-- Scheduled polling (handled by ExecutionDispatcherService)
-- Creating or managing WorkflowExecutionEntity (handled by ExecutionQueueProcessorService)
+- Dispatching to Temporal (handled by WorkflowExecutionDispatcherService and WorkflowExecutionQueueProcessorService)
+- Claiming queue items via SELECT FOR UPDATE SKIP LOCKED (handled by WorkflowExecutionQueueProcessorService)
+- Scheduled polling (handled by WorkflowExecutionDispatcherService)
+- Creating or managing WorkflowExecutionEntity (handled by WorkflowExecutionQueueProcessorService)
 
 ---
 
@@ -78,8 +78,8 @@ class WorkflowExecutionQueueService(
 |Component|How It Uses This|Notes|
 |---|---|---|
 |[[WorkflowExecutionService]]|Calls `enqueue()` when API receives execution request|Entry point from REST API|
-|[[ExecutionQueueProcessorService]]|Calls `markClaimed()`, `markDispatched()`, `setExecutionId()`, `markFailed()`, `releaseToPending()`|State transitions during processing|
-|[[ExecutionDispatcherService]]|Calls `recoverStaleItems()` on scheduled recovery job|Stale claim cleanup|
+|[[WorkflowExecutionQueueProcessorService]]|Calls `markClaimed()`, `markDispatched()`, `setExecutionId()`, `markFailed()`, `releaseToPending()`|State transitions during processing|
+|[[WorkflowExecutionDispatcherService]]|Calls `recoverStaleItems()` on scheduled recovery job|Stale claim cleanup|
 |[[WorkflowCompletionActivityImpl]]|May query or update queue status on completion|Temporal activity completion|
 
 ---
@@ -339,7 +339,7 @@ WARN  Recovering 3 stale claimed items (claimed > 5 minutes ago)
 ## Gotchas & Edge Cases
 
 > [!warning] SKIP LOCKED Pattern
-> Queue claiming uses PostgreSQL's `SELECT ... FOR UPDATE SKIP LOCKED` pattern to prevent contention between dispatcher pods. This service does NOT implement that query - it only updates state after claims are made. See `ExecutionQueueProcessorService.claimBatch()` for the actual claiming logic.
+> Queue claiming uses PostgreSQL's `SELECT ... FOR UPDATE SKIP LOCKED` pattern to prevent contention between dispatcher pods. This service does NOT implement that query - it only updates state after claims are made. See `WorkflowExecutionQueueProcessorService.claimBatch()` for the actual claiming logic.
 
 > [!warning] Execution ID Set Before Dispatch
 > `setExecutionId()` is called AFTER creating WorkflowExecutionEntity but BEFORE starting the Temporal workflow. This ensures that if Temporal start fails, the retry can reuse the same execution entity rather than creating duplicates.
@@ -386,8 +386,8 @@ WARN  Recovering 3 stale claimed items (claimed > 5 minutes ago)
 
 ## Related
 
-- [[ExecutionQueueProcessorService]] — Consumes this service for state transitions during processing
-- [[ExecutionDispatcherService]] — Calls recovery logic
+- [[WorkflowExecutionQueueProcessorService]] — Consumes this service for state transitions during processing
+- [[WorkflowExecutionDispatcherService]] — Calls recovery logic
 - [[WorkflowExecutionService]] — Entry point from API
 - [[Queue Management]] — Parent subdomain
 

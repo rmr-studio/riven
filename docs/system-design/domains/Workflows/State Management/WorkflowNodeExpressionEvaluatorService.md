@@ -85,6 +85,6 @@ Evaluates expression AST against context. Returns Boolean for comparisons/logica
 
 ## Related
 
-- [[ExpressionParserService]] — Parses string expressions into AST (separate service)
+- [[WorkflowNodeExpressionParserService]] — Parses string expressions into AST (separate service)
 - CONDITION node config — Primary consumer
 - [[State Management]] — Parent subdomain
