@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { ChevronRight } from "lucide-react";
+import { Logo } from "./ui/logo";
 
 const navLinks = [
   { label: "About", href: "#about" },
@@ -17,11 +18,15 @@ export function Navbar() {
       <nav className="mx-auto max-w-6xl rounded-full border border-border/50 bg-background/60 backdrop-blur-xl shadow-sm">
         <div className="flex h-14 items-center justify-between px-6">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">R</span>
-            </div>
-            <span className="font-semibold text-lg tracking-tight">Riven</span>
+          <Link href="/" className="flex items-end gap-2">
+            <Logo
+              size={32}
+              secondaryClassName="fill-background"
+              primaryClassName="text-primary dark:text-[#D3C79B]"
+            />
+            <span className="font-mono font-bold mb-px text-xl tracking-tight">
+              Riven
+            </span>
           </Link>
 
           {/* Nav Links */}

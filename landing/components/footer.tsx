@@ -1,17 +1,22 @@
-import Image from "next/image"
+import Image from "next/image";
+import { Logo } from "./ui/logo";
+import Link from "next/link";
 
 export function Footer() {
-  const currentYear = new Date().getFullYear()
+  const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="
+    <footer
+      className="
       border-t
       bg-background
       px-4 py-8
       md:px-8 md:py-12
       lg:px-12
-    ">
-      <div className="
+    "
+    >
+      <div
+        className="
         mx-auto
         max-w-7xl
         flex flex-col
@@ -19,17 +24,19 @@ export function Footer() {
         md:flex-row
         md:items-center
         md:justify-between
-      ">
+      "
+      >
         {/* FOOT-03: Logo/wordmark */}
-        <div className="flex-shrink-0">
-          <Image
-            src="/logo.svg"
-            alt="Riven"
-            width={160}
-            height={40}
-            className="h-8 w-auto"
+        <Link href="/" className="flex items-center gap-2">
+          <Logo
+            size={80}
+            secondaryClassName="fill-background"
+            primaryClassName="text-primary dark:text-[#D3C79B]"
           />
-        </div>
+          <span className="font-mono font-bold mt-3 text-3xl tracking-tight">
+            Riven
+          </span>
+        </Link>
 
         {/* FOOT-02: Contact email link */}
         <nav className="flex gap-6">
@@ -53,5 +60,5 @@ export function Footer() {
         </p>
       </div>
     </footer>
-  )
+  );
 }

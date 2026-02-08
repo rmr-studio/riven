@@ -72,17 +72,7 @@ export function DataModelShowcase() {
 
   return (
     <>
-      <SectionDivider name="Custom Data Models" />
-      <section className="relative pt-20 md:pt-32 overflow-hidden">
-        <BGPattern
-          variant="grid"
-          mask="fade-edges"
-          className="opacity-15"
-          size={8}
-        />
-        {/* Background */}
-        {/* <div className="absolute inset-0 bg-gradient-to-b from-muted/30 via-muted/50 to-muted/30" /> */}
-
+      <section className="pt-8">
         <div className="container relative mx-auto px-4 md:px-8">
           {/* Header */}
           <motion.div

@@ -9,6 +9,7 @@ import { Navbar } from "@/components/navbar";
 import { BGPattern } from "@/components/ui/background/grids";
 import { DataModel } from "@/components/feature-modules/features/data-model/components/data-model";
 import { Integrations } from "@/components/feature-modules/features/integrations/components/integrations";
+import { KnowledgeLayer } from "@/components/feature-modules/features/knowledge/components/knowledge-layer";
 
 export default function Home() {
   return (
@@ -18,10 +19,8 @@ export default function Home() {
       <Hero />
       <DataModel />
       <Integrations />
-      <PainPoints />
-      <Features />
-      <FeaturesCarousel />
-      <FinalCTA />
+      <KnowledgeLayer />
+
       <Footer />
     </main>
   );

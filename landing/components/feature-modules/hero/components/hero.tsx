@@ -27,7 +27,7 @@ export function Hero() {
           avif: "/images/city-skyline-foreground.avif",
           webp: "/images/city-skyline-foreground.webp",
         }}
-        className="h-[80dvh] opacity-30"
+        className="h-[80dvh] opacity-100"
         alt="City skyline"
       />
     </section>

@@ -97,6 +97,7 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="system"
           enableSystem
+          themes={["light", "dark", "amber"]}
           disableTransitionOnChange
         >
           <QueryProvider>{children}</QueryProvider>
