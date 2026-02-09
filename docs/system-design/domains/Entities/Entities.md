@@ -51,8 +51,8 @@ The Entities domain provides a flexible, schema-driven data management system. E
 
 | Flow        | Type                     | Description |
 | ----------- | ------------------------ | ----------- |
-| [[Flow - Entity CRUD]] | User-facing | Entity creation, update, and deletion flow (Phase 4) |
-| [[Flow - Entity Type Definition]] | User-facing | Entity type schema definition and modification flow (Phase 4) |
+| [[Entity CRUD]] | User-facing | Entity creation, update, and deletion flow (Phase 4) |
+| [[Entity Type Definition]] | User-facing | Entity type schema definition and modification flow (Phase 4) |
 
 ---
 
@@ -88,16 +88,18 @@ None. The Entities domain operates entirely within the application database (Pos
 
 ### Depends On
 
-| Domain | What We Need | How We Access |
-| ------ | ------------ | ------------- |
-| [[Workspaces]] | Workspace scoping via RLS | Database-level row-level security |
-| Auth | User context for activity logging | AuthTokenService (Direct) |
+| Domain | What We Consume | Via Component | Related Flow |
+|--------|----------------|---------------|--------------|
+| [[Workspaces & Users]] | Workspace scoping via RLS | PostgreSQL RLS policies | [[Auth & Authorization]] |
+| [[Workspaces & Users]] | @PreAuthorize authorization checks | [[WorkspaceSecurity]] | [[Auth & Authorization]] |
+| [[Workspaces & Users]] | User context for activity logging | [[AuthTokenService]] | [[Entity CRUD]] |
 
 ### Consumed By
 
-| Domain | What They Need | How They Access |
-| ------ | -------------- | --------------- |
-| [[Workflows]] | Entity CRUD operations for workflow node actions | EntityService, EntityContextService (Direct) |
+| Consumer | What They Consume | Via Component | Related Flow |
+|----------|------------------|---------------|--------------|
+| [[Workflows]] | Entity CRUD for workflow node actions | [[EntityService]], [[EntityContextService]] | [[Workflow Execution]] |
+| REST API | Entity and entity type management | EntityController, EntityTypeController | [[Entity CRUD]], [[Entity Type Definition]] |
 
 ---
 

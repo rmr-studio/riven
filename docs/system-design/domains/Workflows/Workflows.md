@@ -60,8 +60,8 @@ The Workflows domain provides a DAG-based workflow execution engine that enables
 
 | Flow | Type | Description |
 |---|---|---|
-| [[Flow - Workflow Execution]] | User-facing | API trigger -> queue -> Temporal -> DAG execution -> completion |
-| [[Flow - Queue Processing]] | Background | Scheduled queue polling, claiming, capacity check, Temporal dispatch |
+| [[Workflow Execution]] | User-facing | API trigger -> queue -> Temporal -> DAG execution -> completion |
+| [[Queue Processing]] | Background | Scheduled queue polling, claiming, capacity check, Temporal dispatch |
 
 ---
 
@@ -102,16 +102,18 @@ The Workflows domain provides a DAG-based workflow execution engine that enables
 
 ### Depends On
 
-|Domain|What We Need|How We Access|
-|---|---|---|
-| [[Entities]] | Entity CRUD operations for node actions (create, update, delete, query) | Direct service calls from node config implementations |
-| [[Workspaces]] | Workspace scoping, capacity tier enforcement | PostgreSQL RLS policies, service-level capacity checks |
+| Domain | What We Consume | Via Component | Related Flow |
+|--------|----------------|---------------|--------------|
+| [[Entities]] | Entity CRUD for node actions (create, update, query) | [[EntityService]], [[EntityContextService]] | [[Workflow Execution]] |
+| [[Workspaces & Users]] | Workspace scoping via RLS | PostgreSQL RLS policies | [[Auth & Authorization]] |
+| [[Workspaces & Users]] | @PreAuthorize authorization checks | [[WorkspaceSecurity]] | [[Auth & Authorization]] |
+| [[Workspaces & Users]] | Workspace capacity tier enforcement | [[WorkspaceService]] | [[Queue Processing]] |
 
 ### Consumed By
 
-|Domain|What They Need|How They Access|
-|---|---|---|
-| API consumers | Workflow management endpoints (definitions, executions, graph operations) | REST controllers (WorkflowDefinitionController, WorkflowExecutionController, WorkflowGraphController) |
+| Consumer | What They Consume | Via Component | Related Flow |
+|----------|------------------|---------------|--------------|
+| REST API | Workflow management (definitions, executions, graph ops) | WorkflowDefinitionController, WorkflowExecutionController, WorkflowGraphController | [[Workflow Execution]] |
 
 ---
 

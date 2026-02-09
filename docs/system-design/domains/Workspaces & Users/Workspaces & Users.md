@@ -76,8 +76,8 @@ flowchart TD
 
 | Flow        | Type                     | Description |
 | ----------- | ------------------------ | ----------- |
-| [[Flow - Authentication & Authorization]] | User-facing | JWT decode -> authority extraction -> @PreAuthorize -> RLS (Phase 4) |
-| [[Flow - Invitation Acceptance]] | User-facing | Create invite -> token -> accept -> add member (Phase 4) |
+| [[Auth & Authorization]] | User-facing | JWT decode -> authority extraction -> @PreAuthorize -> RLS (Phase 4) |
+| [[Invitation Acceptance]] | User-facing | Create invite -> token -> accept -> add member (Phase 4) |
 
 ---
 
@@ -116,16 +116,16 @@ flowchart TD
 
 ### Depends On
 
-| Domain | What We Need | How We Access |
-| ------ | ------------ | ------------- |
-| (None — infrastructure domain) | — | — |
+| Domain | What We Consume | Via Component | Related Flow |
+|--------|----------------|---------------|--------------|
+| (None — infrastructure domain) | — | — | — |
 
 ### Consumed By
 
-| Domain | What They Need | How They Access |
-| ------ | -------------- | --------------- |
-| [[Workflows]] | Workspace scoping (RLS), @PreAuthorize authorization | WorkspaceSecurity bean, RLS via workspace_members |
-| [[Entities]] | Workspace scoping (RLS), @PreAuthorize authorization | WorkspaceSecurity bean, RLS via workspace_members |
+| Consumer | What They Consume | Via Component | Related Flow |
+|----------|------------------|---------------|--------------|
+| [[Workflows]] | Workspace scoping (RLS), @PreAuthorize authorization | [[WorkspaceSecurity]], RLS via workspace_members | [[Auth & Authorization]], [[Queue Processing]] |
+| [[Entities]] | Workspace scoping (RLS), @PreAuthorize authorization, user context | [[WorkspaceSecurity]], [[AuthTokenService]], RLS via workspace_members | [[Auth & Authorization]], [[Entity CRUD]] |
 
 ---
 
