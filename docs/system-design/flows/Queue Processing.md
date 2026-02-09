@@ -604,7 +604,7 @@ flow:queue_processing
 - [[WorkflowExecutionDispatcherService]] - Entry point for scheduled processing
 - [[WorkflowExecutionQueueProcessorService]] - Core processing logic
 - [[WorkflowExecutionQueueService]] - Queue state management
-- [[Flow - Workflow Execution]] - What happens after dispatch
+- [[Workflow Execution]] - What happens after dispatch
 - [[Queue Management]] - Subdomain overview
 
 ---
