@@ -3,12 +3,11 @@ tags:
   - layer/configuration
   - component/active
   - architecture/component
-domains:
+Domains:
   - "[[Workspaces & Users]]"
 Created: 2026-02-08
 Updated: 2026-02-08
----
-# TokenDecoder
+---# TokenDecoder
 
 Part of [[Auth & Authorization]]
 

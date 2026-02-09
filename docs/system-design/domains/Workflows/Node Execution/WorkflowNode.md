@@ -3,12 +3,11 @@ tags:
   - layer/model
   - component/active
   - architecture/component
-domains:
+Domains:
   - "[[Workflows]]"
 Created: 2026-02-08
 Updated: 2026-02-08
----
-# WorkflowNode
+---# WorkflowNode
 
 Part of [[Node Execution]]
 

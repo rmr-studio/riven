@@ -2,11 +2,12 @@
 tags:
   - flow/user-facing
   - architecture/flow
+Created: 2026-02-09
+Updated: 2026-02-09
+Critical: true
 Domains:
   - "[[Entities]]"
   - "[[Workspaces & Users]]"
-Created: 2026-02-09
-Updated: 2026-02-09
 ---
 # Flow: Entity CRUD
 

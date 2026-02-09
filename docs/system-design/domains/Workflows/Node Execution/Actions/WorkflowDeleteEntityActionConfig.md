@@ -1,13 +1,8 @@
 ---
-tags:
-  - component/active
-  - layer/model
-  - architecture/component
-Created: 2026-02-09
-Domains:
+Created:
   - "[[Workflows]]"
----
-# WorkflowDeleteEntityActionConfig
+Updated: 2026-02-09
+---# WorkflowDeleteEntityActionConfig
 
 ## Purpose
 

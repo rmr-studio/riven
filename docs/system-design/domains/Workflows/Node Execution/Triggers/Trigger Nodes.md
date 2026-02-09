@@ -1,11 +1,9 @@
 ---
-Created: 2026-02-09
-Domains:
+Created:
   - "[[Workflows]]"
-tags:
   - architecture/subdomain
----
-# Trigger Nodes
+Updated: 2026-02-09
+---# Trigger Nodes
 
 ## Overview
 

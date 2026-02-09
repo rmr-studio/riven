@@ -1,11 +1,9 @@
 ---
-Created: 2026-02-09
-Domains:
+Created:
   - "[[Workflows]]"
-tags:
   - architecture/subdomain
----
-# Control Flow Nodes
+Updated: 2026-02-09
+---# Control Flow Nodes
 
 ## Overview
 

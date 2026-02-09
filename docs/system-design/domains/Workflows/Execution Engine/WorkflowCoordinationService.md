@@ -5,8 +5,9 @@ tags:
   - architecture/component
 Created: 2026-02-08
 Updated: 2026-02-08
----
-# WorkflowCoordinationService
+Domains:
+  - "[[Workflows]]"
+---# WorkflowCoordinationService
 
 Part of [[Execution Engine]]
 

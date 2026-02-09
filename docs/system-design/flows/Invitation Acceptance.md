@@ -2,10 +2,11 @@
 tags:
   - flow/user-facing
   - architecture/flow
-Domains:
-  - "[[Workspaces & Users]]"
 Created: 2026-02-09
 Updated: 2026-02-09
+Critical: false
+Domains:
+  - "[[Workspaces & Users]]"
 ---
 # Flow: Invitation Acceptance
 

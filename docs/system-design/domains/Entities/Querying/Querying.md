@@ -1,9 +1,10 @@
 ---
+tags:
+  - architecture/subdomain
+  - domain/entity
 Created: 2026-02-08
 Domains:
   - "[[Entities]]"
-tags:
-  - domain/entity
 ---
 # Subdomain: Querying
 

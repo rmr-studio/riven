@@ -3,6 +3,7 @@ tags:
   - architecture/domain
   - domain/workflow
 Created: 2024-02-01
+Updated: 2026-02-09
 ---
 # Domain: Workflows
 

@@ -1,9 +1,10 @@
 ---
+tags:
+  - architecture/subdomain
+  - domain/workflow
 Created: 2026-02-08
 Domains:
   - "[[Workflows]]"
-tags:
-  - architecture/subdomain
 ---
 # Subdomain: Definition Management
 

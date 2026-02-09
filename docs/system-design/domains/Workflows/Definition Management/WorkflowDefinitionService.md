@@ -5,8 +5,9 @@ tags:
   - architecture/component
 Created: 2026-02-08
 Updated: 2026-02-08
----
-# WorkflowDefinitionService
+Domains:
+  - "[[Workflows]]"
+---# WorkflowDefinitionService
 
 Part of [[Definition Management]]
 

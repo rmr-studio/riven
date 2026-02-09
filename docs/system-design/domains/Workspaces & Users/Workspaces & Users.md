@@ -4,6 +4,7 @@ tags:
   - domain/workspace
   - domain/user
 Created: 2026-02-08
+Updated: 2026-02-09
 ---
 # Domain: Workspaces & Users
 

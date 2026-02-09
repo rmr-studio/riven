@@ -5,8 +5,9 @@ tags:
   - architecture/component
 Created: 2026-02-08
 Updated: 2026-02-08
----
-# WorkflowNodeExpressionEvaluatorService
+Domains:
+  - "[[Workflows]]"
+---# WorkflowNodeExpressionEvaluatorService
 
 Part of [[State Management]]
 
