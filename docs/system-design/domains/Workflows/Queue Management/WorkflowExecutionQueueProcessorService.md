@@ -401,7 +401,7 @@ Integration tests should verify:
 - [[Queue Management]] - Parent subdomain
 - [[WorkflowExecutionDispatcherService]] - Orchestrates batch processing loop
 - [[WorkflowExecutionQueueService]] - State transition operations
-- [[WorkflowOrchestration]] - Temporal workflow that executes after dispatch
+- [[WorkflowOrchestrationService]] - Temporal workflow that executes after dispatch
 
 ---
 
