@@ -69,12 +69,12 @@ class WorkspaceSecurity
 
 | Component | How It Uses This | Notes |
 |---|---|---|
-| WorkspaceService | @PreAuthorize checks on workspace CRUD operations | hasWorkspace, hasWorkspaceRoleOrHigher |
-| WorkspaceInviteService | @PreAuthorize checks on invitation management | Compound: hasWorkspace AND hasWorkspaceRoleOrHigher |
-| EntityTypeService | @PreAuthorize checks on entity type operations | hasWorkspace |
-| EntityService | @PreAuthorize checks on entity CRUD operations | hasWorkspace |
-| WorkflowDefinitionService | @PreAuthorize checks on workflow CRUD | hasWorkspace |
-| WorkflowGraphService | @PreAuthorize checks on workflow graph operations | hasWorkspace |
+| [[WorkspaceService]] | @PreAuthorize checks on workspace CRUD operations | hasWorkspace, hasWorkspaceRoleOrHigher |
+| [[WorkspaceInviteService]] | @PreAuthorize checks on invitation management | Compound: hasWorkspace AND hasWorkspaceRoleOrHigher |
+| [[EntityTypeService]] | @PreAuthorize checks on entity type operations | hasWorkspace |
+| [[EntityService]] | @PreAuthorize checks on entity CRUD operations | hasWorkspace |
+| [[WorkflowDefinitionService]] | @PreAuthorize checks on workflow CRUD | hasWorkspace |
+| [[WorkflowGraphService]] | @PreAuthorize checks on workflow graph operations | hasWorkspace |
 | BlockService | @PreAuthorize checks on block operations | hasWorkspace |
 | BlockTypeService | @PreAuthorize checks on block type operations | hasWorkspace |
 | BlockEnvironmentService | @PreAuthorize checks on environment operations | hasWorkspace |

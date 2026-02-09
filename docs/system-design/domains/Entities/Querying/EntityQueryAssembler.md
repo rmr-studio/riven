@@ -71,7 +71,7 @@ class EntityQueryAssembler(
 
 |Component|How It Uses This|Notes|
 |---|---|---|
-|EntityQueryService (Phase 5)|Calls assemble() to build queries before execution|Main consumer - coordinates entire query pipeline|
+|[[EntityQueryService]] (Phase 5)|Calls assemble() to build queries before execution|Main consumer - coordinates entire query pipeline|
 
 ---
 

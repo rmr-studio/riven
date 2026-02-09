@@ -327,7 +327,7 @@ This service is a Spring singleton but is NOT thread-safe. Each workflow executi
 | Sequential batch execution | No true parallelism for ready nodes | High | TODO at line 105 |
 | No loop support | Cannot iterate over collections | High | TODO at line 17 |
 | No partial failure recovery | Failed node fails entire workflow | High | Design gap |
-| WorkflowGraphQueueManagementService singleton | Thread safety issue for concurrent executions | High | Architecture issue |
+| [[WorkflowGraphQueueManagementService]] singleton | Thread safety issue for concurrent executions | High | Architecture issue |
 
 ---
 

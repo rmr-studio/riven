@@ -235,7 +235,7 @@ Validates relationship condition based on `RelationshipFilter` sealed class type
 
 | Error/Exception | When | Expected Handling |
 |---|---|---|
-| `NotImplementedError` | `execute()` called | Workflow execution fails, requires EntityQueryService implementation |
+| `NotImplementedError` | `execute()` called | Workflow execution fails, requires [[EntityQueryService]] implementation |
 
 ---
 

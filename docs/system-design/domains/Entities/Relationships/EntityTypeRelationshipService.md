@@ -46,7 +46,7 @@ Manages bidirectional relationship definitions between entity types, ensuring OR
 |---|---|---|
 | EntityTypeRepository | Loads and persists entity type definitions | High |
 | ActivityService | Logs relationship CRUD operations | Medium |
-| AuthTokenService | Retrieves current user ID for activity logging | Low |
+| [[AuthTokenService]] | Retrieves current user ID for activity logging | Low |
 
 ### External Dependencies
 
@@ -71,7 +71,7 @@ class EntityTypeRelationshipService(
 
 | Component | How It Uses This | Notes |
 |---|---|---|
-| EntityTypeService | Coordinates relationship updates with impact analysis | Main entry point for relationship changes |
+| [[EntityTypeService]] | Coordinates relationship updates with impact analysis | Main entry point for relationship changes |
 
 ---
 

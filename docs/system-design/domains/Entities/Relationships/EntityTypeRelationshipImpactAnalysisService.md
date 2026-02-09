@@ -68,7 +68,7 @@ class EntityTypeRelationshipImpactAnalysisService(
 
 | Component | How It Uses This | Notes |
 |---|---|---|
-| EntityTypeService | Calls analyze() before applying relationship updates to warn users | Provides "what breaks?" feedback |
+| [[EntityTypeService]] | Calls analyze() before applying relationship updates to warn users | Provides "what breaks?" feedback |
 
 ---
 

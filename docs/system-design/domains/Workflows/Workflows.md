@@ -192,7 +192,7 @@ flowchart TB
 | No loops or switch/case in control flow — only binary conditions supported | High | High |
 | Template-only expressions — no complex transformations, array indexing, or arithmetic | Medium | Medium |
 | No partial failure recovery — one node failure = entire workflow failure | High | High |
-| WorkflowGraphQueueManagementService holds mutable state — not thread-safe | Medium | Medium |
+| [[WorkflowGraphQueueManagementService]] holds mutable state — not thread-safe | Medium | Medium |
 | No workflow pausing for human approval — WorkflowHumanInteractionConfig is a stub | High | High |
 | Fixed batch size — not adaptive to load | Low | Low |
 | No rate limiting per workspace — fair-use enforcement is coarse | Medium | Medium |
