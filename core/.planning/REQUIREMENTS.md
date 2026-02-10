@@ -68,34 +68,34 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| META-01 | - | Pending |
-| META-02 | - | Pending |
-| META-03 | - | Pending |
-| META-04 | - | Pending |
-| META-05 | - | Pending |
-| META-06 | - | Pending |
-| META-07 | - | Pending |
-| META-08 | - | Pending |
-| META-09 | - | Pending |
-| META-10 | - | Pending |
-| META-11 | - | Pending |
-| META-12 | - | Pending |
-| QERY-01 | - | Pending |
-| QERY-02 | - | Pending |
-| QERY-03 | - | Pending |
-| BULK-01 | - | Pending |
-| BULK-02 | - | Pending |
-| BULK-03 | - | Pending |
-| BULK-04 | - | Pending |
-| BULK-05 | - | Pending |
-| BULK-06 | - | Pending |
-| BULK-07 | - | Pending |
+| META-01 | Phase 1 | Pending |
+| META-02 | Phase 1 | Pending |
+| META-03 | Phase 1 | Pending |
+| META-04 | Phase 1 | Pending |
+| META-05 | Phase 1 | Pending |
+| META-06 | Phase 3 | Pending |
+| META-07 | Phase 3 | Pending |
+| META-08 | Phase 3 | Pending |
+| META-09 | Phase 3 | Pending |
+| META-10 | Phase 3 | Pending |
+| META-11 | Phase 3 | Pending |
+| META-12 | Phase 1 | Pending |
+| QERY-01 | Phase 2 | Pending |
+| QERY-02 | Phase 2 | Pending |
+| QERY-03 | Phase 2 | Pending |
+| BULK-01 | Phase 2 | Pending |
+| BULK-02 | Phase 2 | Pending |
+| BULK-03 | Phase 2 | Pending |
+| BULK-04 | Phase 2 | Pending |
+| BULK-05 | Phase 2 | Pending |
+| BULK-06 | Phase 2 | Pending |
+| BULK-07 | Phase 2 | Pending |
 
 **Coverage:**
 - v1 requirements: 22 total
-- Mapped to phases: 0
-- Unmapped: 22 (pending roadmap)
+- Mapped to phases: 22
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-10*
-*Last updated: 2026-02-10 after initial definition*
+*Last updated: 2026-02-10 after roadmap creation*
