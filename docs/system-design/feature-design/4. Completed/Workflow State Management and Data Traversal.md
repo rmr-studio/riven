@@ -6,7 +6,7 @@ tags:
 Created:
 Updated:
 Domains:
-  - "[[2. Areas/2.1 Startup & Business/Riven - Architecture/Domains/Workflows/__Index/__Index|__Index]]"
+  - "[[Workflows]]"
 ---
 # Quick Design: Workflow State Management and Data Traversal
 
