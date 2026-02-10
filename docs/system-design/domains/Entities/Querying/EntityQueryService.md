@@ -1,250 +1,101 @@
 ---
 tags:
-  - component/active
-  - component/planned
-  - component/deprecated
   - layer/service
-  - layer/utility
-  - layer/configuration
-Created:
-Updated:
+  - component/active
+  - architecture/component
+Created: 2026-02-08
+Updated: 2026-02-08
 Domains:
-  - "[[Domain]]"
+  - "[[Entities]]"
 ---
 # EntityQueryService
 
----
+Part of [[Querying]]
 
 ## Purpose
 
-_What problem does this component solve? Why does it exist? (1-2 sentences)_
+Entry point for entity queries, orchestrating validation → assembly → execution → hydration pipeline with parallel query execution.
 
 ---
 
 ## Responsibilities
 
-_What this component owns and is accountable for:_
-
-**Explicitly NOT responsible for:**
+- Load entity type schema for filter validation
+- Validate filter references (attributes and relationships)
+- Assemble parameterized SQL via query assembler
+- Execute data and count queries in parallel
+- Hydrate entity IDs into full domain models
+- Re-sort results to preserve SQL ORDER BY
+- Build EntityQueryResult with pagination metadata
 
 ---
 
 ## Dependencies
 
-### Internal Dependencies
+- `EntityTypeRepository` — Load entity type schema for validation
+- `EntityRepository` — Batch-load entities by IDs
+- [[EntityQueryAssembler]] — Convert filters to SQL
+- [[QueryFilterValidator]] — Pre-validate filter structure
+- `NamedParameterJdbcTemplate` — Execute parameterized SQL with configured timeout
+- [[ParameterNameGenerator]] — Unique parameter naming
 
-|Component|Purpose|Coupling|
-|---|---|---|
-|[[]]||High / Medium / Low|
+## Used By
 
-### External Dependencies
-
-|Service/Library|Purpose|Failure Impact|
-|---|---|---|
-||||
-
-### Injected Dependencies
-
-_Constructor/DI dependencies for Spring context_
-
-```kotlin
-// Key injected dependencies
-```
-
----
-
-## Consumed By
-
-|Component|How It Uses This|Notes|
-|---|---|---|
-|[[]]|||
-
----
-
-## Public Interface
-
-### Key Methods
-
-#### `methodName(params): ReturnType`
-
-- **Purpose:**
-- **When to use:**
-- **Side effects:**
-- **Throws:**
-
-#### `anotherMethod(params): ReturnType`
-
-- **Purpose:**
-- **When to use:**
-- **Side effects:**
-- **Throws:**
-
-### Events Published
-
-_If this component emits events/messages_
-
-|Event|Trigger|Payload|
-|---|---|---|
-||||
-
-### Events Consumed
-
-_If this component listens to events/messages_
-
-|Event|Source|Action Taken|
-|---|---|---|
-||||
+- Workflow execution layer — Query execution in workflow nodes
+- Entity API controllers — REST endpoints for entity queries
 
 ---
 
 ## Key Logic
 
-### Core Algorithm / Business Rules
+**Query execution pipeline:**
 
-_Explain the main logic this component implements. Use pseudocode, state diagrams, or plain English—whatever communicates best._
+1. **Load entity type** from repository
+2. **Validate filter** (if present):
+   - Part A: Walk tree checking attribute IDs exist in schema
+   - Part B: Delegate to QueryFilterValidator for relationships
+   - Collect all errors, throw QueryValidationException if any found
+3. **Assemble SQL** via EntityQueryAssembler
+4. **Execute in parallel:**
+   - Data query: `SELECT e.id ... ORDER BY ... LIMIT/OFFSET`
+   - Count query: `SELECT COUNT(*) ...`
+5. **Load entities** by IDs from repository
+6. **Re-sort** entities to match SQL ORDER BY (repository doesn't preserve order)
+7. **Build result** with entities, totalCount, hasNextPage
 
-### State Management
+**Query timeout:**
 
-_If this component manages state, document transitions_
+Configured via `riven.query.timeout-seconds` property. Applied to JDBC template during initialization.
 
-```mermaid
-stateDiagram-v2
-    [*] --> State1
-    State1 --> State2: trigger
-    State2 --> [*]
-```
+**Phase 5 limitation — attribute validation:**
 
-### Validation Rules
-
-|Field/Input|Rule|Error|
-|---|---|---|
-||||
-
-### Business Rules / Constraints
-
----
-
-## Data Access
-
-### Entities Owned
-
-_This component is the source of truth for:_
-
-|Entity|Operations|Notes|
-|---|---|---|
-|[[]]|CRUD / Read-only||
-
-### Queries
-
-_Key queries this component performs_
-
-|Query|Purpose|Performance Notes|
-|---|---|---|
-||||
+Nested relationship filters validate against the ROOT entity type's attributes, not the target entity type. Cross-type validation requires loading target schemas (future phase).
 
 ---
 
-## Flows Involved
+## Public Methods
 
-|Flow|Role in Flow|
-|---|---|
-|[[Flow - ]]|Initiator / Participant / Terminator|
+### `execute(query, workspaceId, pagination, projection): EntityQueryResult`
 
----
+Executes entity query with optional filters and pagination. Returns matching entities with metadata.
 
-## Configuration
-
-|Property|Purpose|Default|Environment-specific|
-|---|---|---|---|
-||||Yes / No|
+- **Throws:** `NotFoundException` if entity type not found
+- **Throws:** `QueryValidationException` if filter references invalid
+- **Throws:** `QueryExecutionException` if SQL execution fails
 
 ---
 
-## Error Handling
+## Gotchas
 
-### Errors Thrown
-
-|Error/Exception|When|Expected Handling|
-|---|---|---|
-||||
-
-### Errors Handled
-
-|Error/Exception|Source|Recovery Strategy|
-|---|---|---|
-||||
-
----
-
-## Observability
-
-### Key Metrics
-
-|Metric|Type|What It Indicates|
-|---|---|---|
-||Counter / Gauge / Histogram||
-
-### Log Events
-
-|Event|Level|When|Key Fields|
-|---|---|---|---|
-||INFO / WARN / ERROR|||
-
-### Trace Spans
-
-|Span|Parent|Key Attributes|
-|---|---|---|
-||||
-
----
-
-## Gotchas & Edge Cases
-
-> ## [!warning] Watch Out
-
-### Known Limitations
-
-### Common Mistakes
-
-### Thread Safety / Concurrency
-
-_Is this component thread-safe? Any synchronization concerns?_
-
----
-
-## Technical Debt
-
-|Issue|Impact|Effort|Ticket|
-|---|---|---|---|
-||High/Med/Low|High/Med/Low||
-
----
-
-## Testing
-
-### Unit Test Coverage
-
-- **Location:**
-- **Key scenarios covered:**
-
-### Integration Test Notes
-
-### How to Test Manually
-
-_Steps to verify this component works in isolation_
+- **Parallel execution:** Data and count queries run concurrently via coroutines (Dispatchers.IO)
+- **Re-sorting required:** `EntityRepository.findByIdIn()` doesn't preserve order, must re-sort by SQL ORDER BY
+- **Attribute validation limitation:** Nested filters validate against root type attributes only (known Phase 5 simplification)
+- **No relationship loading:** Phase 5 entities returned with `relationships = emptyMap()`, hydration deferred to future phase
 
 ---
 
 ## Related
 
-- [[ADR-xxx - Relevant Decision]]
-- [[Feature - Related Feature]]
-- [[Domain - Parent Domain]]
-
----
-
-## Changelog
-
-| Date | Change | Reason |
-| ---- | ------ | ------ |
-|      |        |        |
+- [[EntityQueryAssembler]] — SQL assembly
+- [[QueryFilterValidator]] — Filter validation
+- [[Querying]] — Parent subdomain

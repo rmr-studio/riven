@@ -2,57 +2,95 @@
 tags:
   - layer/service
   - component/active
-Created:
-Updated:
+  - architecture/component
+Created: 2026-02-08
+Updated: 2026-02-08
+Domains:
+  - "[[Workflows]]"
 ---
-# TemplateParserService
+# WorkflowNodeTemplateParserService
+
+Part of [[State Management]]
 
 ## Purpose
 
-_One sentence: what does this do and why?_
+Parses template strings with `{{ path.to.data }}` syntax, extracting path segments for later resolution against workflow execution context.
 
 ---
 
 ## Responsibilities
 
+- Parse template syntax: `{{ steps.node_name.output.field }}`
+- Extract path segments: `["steps", "node_name", "output", "field"]`
+- Handle embedded templates: `"Welcome {{ steps.user.name }}"`
+- Validate template syntax and path segments
+- Distinguish exact templates from embedded templates from static strings
+
 ---
 
 ## Dependencies
 
-- [[Dependency1]] — why
-- [[Dependency2]] — why
+None (pure parsing logic, no external dependencies)
 
 ## Used By
 
-- [[Consumer1]] — context
-- [[Consumer2]] — context
+- [[WorkflowNodeInputResolverService]] — Uses parser to identify and resolve templates
 
 ---
 
 ## Key Logic
 
-_The important business rules or algorithms:_
+**Template patterns:**
+
+| Input | Type | Result |
+|---|---|---|
+| `{{ steps.node.output }}` | Exact template | `path = ["steps", "node", "output"]` |
+| `"Welcome {{ steps.user.name }}"` | Embedded template | `embeddedTemplates[0].path = ["steps", "user", "name"]` |
+| `"static value"` | Static string | `isTemplate = false, rawValue = "static value"` |
+| `{{ }}` | Invalid (empty) | Throws `IllegalArgumentException` |
+| `{{ steps..output }}` | Invalid (empty segment) | Throws `IllegalArgumentException` |
+
+**Validation rules:**
+
+- Path segments must be alphanumeric + underscore only
+- No consecutive dots (empty segments)
+- No invalid characters (hyphens, spaces, special chars)
+
+**Regex pattern:**
+
+`\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}` — Matches braces, optional whitespace, alphanumeric path with dots
 
 ---
 
 ## Public Methods
 
-### `methodName(params): ReturnType`
+### `parse(input: String): ParsedTemplate`
 
-_What it does, when to use it_
+Parses input string. Returns `ParsedTemplate` with:
+- `isTemplate`: true if contains `{{ }}`
+- `path`: List of path segments if exact template
+- `rawValue`: Original string if static
+- `isEmbeddedTemplate`: true if template embedded in larger string
+- `embeddedTemplates`: List of templates found if embedded
 
----
+Throws `IllegalArgumentException` for invalid syntax.
 
-## Flows Involved
+### `isTemplate(input: String): Boolean`
 
-- [[Flow - FlowName]]
+Quick check if string contains template syntax. Faster than full parsing when only checking presence.
 
 ---
 
 ## Gotchas
 
+- **Embedded templates vs exact templates:** `"{{ steps.node }}"` is exact (returns single path). `"Welcome {{ steps.node }}"` is embedded (returns list of `EmbeddedTemplateInfo`).
+- **Multiple embedded templates:** Single string can contain multiple templates: `"Hello {{ steps.user.name }}, you have {{ steps.inbox.count }} messages"`.
+- **Whitespace trimmed:** `{{  steps.node  }}` is valid, whitespace around path is trimmed.
+- **Malformed template detection:** If template has `{{ }}` syntax but invalid content, provides specific error (empty template, invalid characters, empty segments).
+
 ---
 
 ## Related
 
-- [[ADR-xxx]]
+- [[WorkflowNodeInputResolverService]] — Resolves parsed templates against data
+- [[State Management]] — Parent subdomain

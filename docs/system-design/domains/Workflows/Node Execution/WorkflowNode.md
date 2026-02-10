@@ -1,246 +1,130 @@
 ---
 tags:
-  - component/active
   - layer/model
-Created:
-Updated:
+  - component/active
+  - architecture/component
 Domains:
-  - "[[Domain]]"
+  - "[[Workflows]]"
+Created: 2026-02-08
+Updated: 2026-02-08
 ---
 # WorkflowNode
 
----
+Part of [[Node Execution]]
 
 ## Purpose
 
-_What problem does this component solve? Why does it exist? (1-2 sentences)_
+Runtime DTO that wraps `WorkflowNodeConfig` with entity metadata (id, workspaceId, key) for execution — bridges persistence layer and execution layer by providing guaranteed non-null ID and workspace context for security checks.
 
 ---
 
 ## Responsibilities
 
-_What this component owns and is accountable for:_
-
-**Explicitly NOT responsible for:**
+- Provide guaranteed non-null ID for persisted nodes (entities have nullable IDs before persistence)
+- Delegate `execute()` to underlying config for node execution
+- Carry workspace context (workspaceId) for security validation
+- Expose node type and version from config
+- Bridge three-layer architecture: WorkflowNodeConfig (pure config) → WorkflowNodeEntity (JPA) → WorkflowNode (runtime DTO)
 
 ---
 
 ## Dependencies
 
-### Internal Dependencies
+- [[WorkflowNodeConfig]] — Wraps the config for execution delegation
+- `WorkflowDataStore` — Passed through to config execution
+- `NodeServiceProvider` — Passed through to config execution
 
-|Component|Purpose|Coupling|
-|---|---|---|
-|[[]]||High / Medium / Low|
+## Used By
 
-### External Dependencies
-
-|Service/Library|Purpose|Failure Impact|
-|---|---|---|
-||||
-
-### Injected Dependencies
-
-_Constructor/DI dependencies for Spring context_
-
-```kotlin
-// Key injected dependencies
-```
-
----
-
-## Consumed By
-
-|Component|How It Uses This|Notes|
-|---|---|---|
-|[[]]|||
-
----
-
-## Public Interface
-
-### Key Methods
-
-#### `methodName(params): ReturnType`
-
-- **Purpose:**
-- **When to use:**
-- **Side effects:**
-- **Throws:**
-
-#### `anotherMethod(params): ReturnType`
-
-- **Purpose:**
-- **When to use:**
-- **Side effects:**
-- **Throws:**
-
-### Events Published
-
-_If this component emits events/messages_
-
-|Event|Trigger|Payload|
-|---|---|---|
-||||
-
-### Events Consumed
-
-_If this component listens to events/messages_
-
-|Event|Source|Action Taken|
-|---|---|---|
-||||
+- [[WorkflowGraphCoordinationService]] — Executes nodes via `execute()` during DAG traversal
+- [[WorkflowGraphTopologicalSorterService]] — Sorts nodes for execution order
+- [[WorkflowGraphQueueManagementService]] — Tracks node readiness in queue system
 
 ---
 
 ## Key Logic
 
-### Core Algorithm / Business Rules
+**Three-layer architecture pattern:**
 
-_Explain the main logic this component implements. Use pseudocode, state diagrams, or plain English—whatever communicates best._
+1. **WorkflowNodeConfig** — Pure configuration and execution logic (no ID)
+   - Exists before persistence
+   - Serializable to JSONB without entity metadata
+   - Contains only business logic and configuration
 
-### State Management
+2. **WorkflowNodeEntity** — JPA entity for persistence (nullable ID)
+   - Database representation with @Entity annotations
+   - ID is nullable because it's generated on save
+   - Contains entity lifecycle metadata (createdAt, updatedAt)
 
-_If this component manages state, document transitions_
+3. **WorkflowNode** (this class) — Runtime DTO with guaranteed non-null ID
+   - Created only from persisted entities via `toExecutableNode()`
+   - ID is guaranteed non-null (entity must be saved)
+   - Provides execution context (workspaceId for security)
 
-```mermaid
-stateDiagram-v2
-    [*] --> State1
-    State1 --> State2: trigger
-    State2 --> [*]
+**Why this exists:**
+
+`WorkflowNodeConfig` can't have an ID because:
+- IDs are DB-generated during persistence
+- Config objects are created before saving to the database
+- Node configuration needs to be serializable to JSONB without the entity's ID
+
+Solution: `WorkflowNode` wraps the config with entity metadata after persistence.
+
+**Execution delegation:**
+
+```kotlin
+fun execute(dataStore, inputs, services): NodeOutput =
+    config.execute(dataStore, inputs, services)
 ```
 
-### Validation Rules
+Simple delegation to underlying config. All execution logic lives in `WorkflowNodeConfig` implementations.
 
-|Field/Input|Rule|Error|
-|---|---|---|
-||||
+**Security context:**
 
-### Business Rules / Constraints
+Before execution, services can check:
 
----
-
-## Data Access
-
-### Entities Owned
-
-_This component is the source of truth for:_
-
-|Entity|Operations|Notes|
-|---|---|---|
-|[[]]|CRUD / Read-only||
-
-### Queries
-
-_Key queries this component performs_
-
-|Query|Purpose|Performance Notes|
-|---|---|---|
-||||
+```kotlin
+if (node.workspaceId != currentWorkspaceId) {
+    throw SecurityException("Node does not belong to workspace")
+}
+```
 
 ---
 
-## Flows Involved
+## Public Methods
 
-|Flow|Role in Flow|
-|---|---|
-|[[Flow - ]]|Initiator / Participant / Terminator|
+### `execute(dataStore: WorkflowDataStore, inputs: JsonObject, services: NodeServiceProvider): NodeOutput`
 
----
-
-## Configuration
-
-|Property|Purpose|Default|Environment-specific|
-|---|---|---|---|
-||||Yes / No|
+Execute this node with given datastore and resolved inputs. Delegates to underlying `WorkflowNodeConfig.execute()`. Returns typed `NodeOutput` representing execution result. Throws exceptions on execution failure.
 
 ---
 
-## Error Handling
+## Fields
 
-### Errors Thrown
+- `id: UUID` — Database-generated node ID (non-null, from persisted entity)
+- `workspaceId: UUID` — Workspace this node belongs to (for security checks)
+- `key: String` — Unique identifier within workflow (human-readable, e.g., "node1", "httpRequest")
+- `name: String` — Human-readable display name
+- `description: String?` — Optional description of node's purpose
+- `config: WorkflowNodeConfig` — Underlying configuration with execution logic
 
-|Error/Exception|When|Expected Handling|
-|---|---|---|
-||||
-
-### Errors Handled
-
-|Error/Exception|Source|Recovery Strategy|
-|---|---|---|
-||||
-
----
-
-## Observability
-
-### Key Metrics
-
-|Metric|Type|What It Indicates|
-|---|---|---|
-||Counter / Gauge / Histogram||
-
-### Log Events
-
-|Event|Level|When|Key Fields|
-|---|---|---|---|
-||INFO / WARN / ERROR|||
-
-### Trace Spans
-
-|Span|Parent|Key Attributes|
-|---|---|---|
-||||
+**Computed properties:**
+- `type: WorkflowNodeType` — Delegated from config.type
+- `version: Int` — Delegated from config.version
 
 ---
 
-## Gotchas & Edge Cases
+## Gotchas
 
-> ## [!warning] Watch Out
-
-### Known Limitations
-
-### Common Mistakes
-
-### Thread Safety / Concurrency
-
-_Is this component thread-safe? Any synchronization concerns?_
-
----
-
-## Technical Debt
-
-|Issue|Impact|Effort|Ticket|
-|---|---|---|---|
-||High/Med/Low|High/Med/Low||
-
----
-
-## Testing
-
-### Unit Test Coverage
-
-- **Location:**
-- **Key scenarios covered:**
-
-### Integration Test Notes
-
-### How to Test Manually
-
-_Steps to verify this component works in isolation_
+- **Created only from persisted entities:** Cannot construct `WorkflowNode` until entity is saved (ID must exist). Use `WorkflowNodeEntity.toExecutableNode()` after persistence.
+- **ID vs key distinction:** `id` is UUID from database (globally unique, opaque). `key` is human-readable string (unique within workflow, e.g., "node1", "sendEmail").
+- **Immutable DTO:** Data class is immutable. Changes to config require updating entity and creating new `WorkflowNode` instance.
+- **Workspace isolation:** `workspaceId` enables multi-tenant security. Always validate workspace matches current user's context before execution.
 
 ---
 
 ## Related
 
-- [[ADR-xxx - Relevant Decision]]
-- [[Feature - Related Feature]]
-- [[Domain - Parent Domain]]
-
----
-
-## Changelog
-
-| Date | Change | Reason |
-| ---- | ------ | ------ |
-|      |        |        |
+- [[WorkflowNodeConfig]] — Underlying configuration interface
+- [[WorkflowNodeEntity]] — JPA entity for persistence
+- [[Node Execution]] — Parent subdomain

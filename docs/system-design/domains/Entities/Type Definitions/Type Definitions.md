@@ -1,0 +1,36 @@
+---
+tags:
+  - architecture/subdomain
+  - domain/entity
+Created: 2026-02-08
+Domains:
+  - "[[Entities]]"
+---
+# Subdomain: Type Definitions
+
+## Overview
+
+Manages entity type schemas — creating types, defining attributes (with property types, display config), and publishing type definitions. The schema defines what data each entity instance can hold.
+
+## Components
+
+| Component | Purpose | Type |
+| --------- | ------- | ---- |
+| [[EntityTypeService]] | Type CRUD, attribute management, definition publishing | Service |
+| [[EntityTypeAttributeService]] | Attribute schema utilities (column extraction, validation) | Service |
+| [[EntityTypeController]] | REST API for entity type operations | Controller |
+| [[EntityTypeRepository]] | JPA repository for entity type persistence | Repository |
+
+## Technical Debt
+
+| Issue | Impact | Effort |
+| ----- | ------ | ------ |
+| None yet | - | - |
+
+---
+
+## Recent Changes
+
+| Date | Change | Feature/ADR |
+| ---- | ------ | ----------- |
+| 2026-02-08 | Subdomain overview created | [[02-01-PLAN]] |
