@@ -7,7 +7,8 @@ Domains:
   - "[[Workflows]]"
 Created: 2026-02-08
 Updated: 2026-02-08
----# WorkflowNodeConfig
+---
+# WorkflowNodeConfig
 
 Part of [[Node Execution]]
 

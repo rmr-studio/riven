@@ -3,7 +3,8 @@ Created:
   - "[[Workflows]]"
   - architecture/subdomain
 Updated: 2026-02-09
----# Trigger Nodes
+---
+# Trigger Nodes
 
 ## Overview
 

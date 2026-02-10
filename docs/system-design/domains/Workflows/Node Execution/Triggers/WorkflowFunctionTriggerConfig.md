@@ -2,7 +2,8 @@
 Created:
   - "[[Workflows]]"
 Updated: 2026-02-09
----# WorkflowFunctionTriggerConfig
+---
+# WorkflowFunctionTriggerConfig
 
 ## Purpose
 

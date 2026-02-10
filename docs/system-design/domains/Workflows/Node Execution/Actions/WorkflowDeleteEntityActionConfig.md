@@ -2,7 +2,8 @@
 Created:
   - "[[Workflows]]"
 Updated: 2026-02-09
----# WorkflowDeleteEntityActionConfig
+---
+# WorkflowDeleteEntityActionConfig
 
 ## Purpose
 

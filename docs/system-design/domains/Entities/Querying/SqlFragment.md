@@ -7,7 +7,8 @@ Created: 2026-02-08
 Updated: 2026-02-08
 Domains:
   - "[[Entities]]"
----# SqlFragment
+---
+# SqlFragment
 
 Part of [[Querying]]
 
