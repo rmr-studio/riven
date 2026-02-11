@@ -11,9 +11,10 @@ tags:
 Created: 2026-02-10
 Updated:
 Domains:
-  - "[[Workflows]]"
+  - "[[Integrations]]"
+  - "[[Knowledge]]"
 ---
-# Quick Design: Workflow Node Output State Management Handling
+# Quick Design: Predefined Integration Entity Types
 
 ## What & Why
 
