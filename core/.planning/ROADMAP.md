@@ -12,7 +12,7 @@ This roadmap delivers output metadata infrastructure for workflow nodes, enablin
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation Infrastructure** - Data model and registry for output metadata
+- [x] **Phase 1: Foundation Infrastructure** - Data model and registry for output metadata
 - [ ] **Phase 2: Query & Bulk Update Execution** - Enable entity querying and bulk updates in workflows
 - [ ] **Phase 3: Output Metadata Coverage** - Add output schemas to all existing node types
 
@@ -31,8 +31,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Data model, registry extraction, and API wiring with CreateEntity proof-of-concept
-- [ ] 01-02-PLAN.md — Parameterized validation tests for outputMetadata keys and types
+- [x] 01-01-PLAN.md — Data model, registry extraction, and API wiring with CreateEntity proof-of-concept
+- [x] 01-02-PLAN.md — Parameterized validation tests for outputMetadata keys and types
 
 ### Phase 2: Query & Bulk Update Execution
 **Goal**: Workflows can query entity subsets and apply bulk updates during execution
@@ -78,6 +78,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation Infrastructure | 0/2 | Not started | - |
+| 1. Foundation Infrastructure | 2/2 | Complete | 2026-02-13 |
 | 2. Query & Bulk Update Execution | 0/3 | Not started | - |
 | 3. Output Metadata Coverage | 0/1 | Not started | - |
