@@ -2,36 +2,32 @@
 tags:
   - "#status/draft"
   - priority/high
-  - architecture/design
-  - domain/entity
-  - domain/knowledge
-Created: 2026-02-06
+  - architecture/feature
+Created:
 Updated:
 Domains:
+  - "[[Integrations]]"
   - "[[Entities]]"
-  - "[[Knowledge]]"
+Sub-Domain: "[[Entity Integration Sync]]"
 ---
-# Feature: Integration Data Ingesting
+# Feature: Integration Schema Mapping
 
 ---
 ## 1. Overview
 
 ### Problem Statement
-- Third party integrations are a core fundamental area that is linked to the success of the platform.
-	- The platform is centred around the cross domain intelligence capabilities by tying together an organisations third party tooling into a singular data source. So it is important that data is continuously synced and accessible.
+When integration data is synced from a third party tool via the infrastructure covered in [[Integration Access Layer]], The data itself is still in its raw form, and would need to be converted into an entity model that can then be integrated into the entity ecosystem. The entity model conversion should allow for internal relationships between models from the same integration to maintain existing relationships.
+
+[[2. Areas/2.1 Startup & Business/Riven/2. System Design/infrastructure/Nango|Nango]] provides the ability to inject 
 ### Proposed Solution
-- An integration framework would need to be created as a common layer that is used to support the integration of a wide-variety of third party toolings
-- This should provide the ability to manage
-	- Storing and retrieving API keys to send requests to their API
-		- Encryption and secrets rotation for additional security
-	- Defining Preset Entity Types for all data sources ingested from the third party integrations
-		- Adding the capability for meaningful relationships to be added between this data, and other data sources within the existing entity environment
-		- Ensuring that the data model stays consistent, and crucial attributes and relationships are protected
-	- Introducing the ability to form links back to existing data sources through common attributes
-		- For example, An integration with a Support tool would need to ensure that every support ticket is recorded, is able to be linked to an existing customer that is defined within a seperate data model, outside of the entity types provided by the integration. This may be through username, email, etc
-	- Handling webhooks for real time data ingest, and ensuring it fits within the provided entity environment
-		- Fallback to scheduled polling if external API's do not support webhooks
-	
+
+- Each integration platform should have its own interface definition of 
+	- Entity Type Templates
+	- Schema Mapping Guides.
+- These can then be passed to Nango to allow for all data synced via webhooks to automatically 
+
+
+_High-level description of the approach (2-3 sentences max)_
 
 ### Success Criteria
 
