@@ -6,6 +6,7 @@ import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.node.config.WorkflowFunctionConfig
 import riven.core.models.workflow.node.config.WorkflowNodeConfig
 import riven.core.models.workflow.node.config.WorkflowNodeConfigField
+import riven.core.models.workflow.node.config.WorkflowNodeOutputMetadata
 import riven.core.models.workflow.node.config.WorkflowNodeTypeMetadata
 import riven.core.models.workflow.node.config.actions.*
 import riven.core.models.workflow.node.config.controls.WorkflowConditionControlConfig
@@ -32,7 +33,8 @@ data class NodeSchemaEntry(
     val subType: String,
     val configClass: KClass<out WorkflowNodeConfig>,
     val schema: List<WorkflowNodeConfigField>,
-    val metadata: WorkflowNodeTypeMetadata
+    val metadata: WorkflowNodeTypeMetadata,
+    val outputMetadata: WorkflowNodeOutputMetadata? = null
 )
 
 /**
@@ -43,7 +45,8 @@ data class WorkflowNodeMetadata(
     val type: WorkflowNodeType,
     val subType: String,
     val metadata: WorkflowNodeTypeMetadata,
-    val schema: List<WorkflowNodeConfigField>
+    val schema: List<WorkflowNodeConfigField>,
+    val outputMetadata: WorkflowNodeOutputMetadata? = null
 )
 
 /**
@@ -94,7 +97,8 @@ class WorkflowNodeConfigRegistry {
                 type = it.type,
                 subType = it.subType,
                 metadata = it.metadata,
-                schema = it.schema
+                schema = it.schema,
+                outputMetadata = it.outputMetadata
             )
         }
     }
@@ -247,6 +251,10 @@ class WorkflowNodeConfigRegistry {
                 return null
             }
 
+            // Extract outputMetadata (optional during rollout)
+            val outputMetadataProperty = companion::class.members.find { it.name == "outputMetadata" }
+            val outputMetadata = outputMetadataProperty?.call(companion) as? WorkflowNodeOutputMetadata
+
             logger.debug { "Registered ${T::class.simpleName}: $type.$subType with ${schema.size} fields" }
 
             NodeSchemaEntry(
@@ -254,7 +262,8 @@ class WorkflowNodeConfigRegistry {
                 subType = subType,
                 configClass = T::class,
                 schema = schema,
-                metadata = metadata
+                metadata = metadata,
+                outputMetadata = outputMetadata
             )
         } catch (e: Exception) {
             logger.error(e) { "Failed to register node config ${T::class.simpleName}" }
