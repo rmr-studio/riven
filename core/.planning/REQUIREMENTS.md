@@ -7,18 +7,18 @@
 
 ### Output Metadata Infrastructure
 
-- [ ] **META-01**: WorkflowNodeOutputField data class with key, label, type, description, nullable, exampleValue
-- [ ] **META-02**: OutputFieldType enum (UUID, STRING, BOOLEAN, NUMBER, MAP, LIST, OBJECT)
-- [ ] **META-03**: WorkflowNodeOutputMetadata data class with outputType, fields list, and registryKeys
-- [ ] **META-04**: WorkflowNodeConfigRegistry extracts outputMetadata from companion objects via reflection
-- [ ] **META-05**: Node-schemas API endpoint includes outputMetadata in response
+- [x] **META-01**: WorkflowNodeOutputField data class with key, label, type, description, nullable, exampleValue
+- [x] **META-02**: OutputFieldType enum (UUID, STRING, BOOLEAN, NUMBER, MAP, LIST, OBJECT)
+- [x] **META-03**: WorkflowNodeOutputMetadata data class with outputType, fields list, and registryKeys
+- [x] **META-04**: WorkflowNodeConfigRegistry extracts outputMetadata from companion objects via reflection
+- [x] **META-05**: Node-schemas API endpoint includes outputMetadata in response
 - [ ] **META-06**: CreateEntityActionConfig declares outputMetadata matching CreateEntityOutput
 - [ ] **META-07**: UpdateEntityActionConfig declares outputMetadata matching UpdateEntityOutput
 - [ ] **META-08**: DeleteEntityActionConfig declares outputMetadata matching DeleteEntityOutput
 - [ ] **META-09**: QueryEntityActionConfig declares outputMetadata matching QueryEntityOutput
 - [ ] **META-10**: HttpRequestActionConfig declares outputMetadata matching HttpResponseOutput
 - [ ] **META-11**: ConditionControlConfig declares outputMetadata matching ConditionOutput
-- [ ] **META-12**: Unit tests validate outputMetadata field keys match NodeOutput.toMap() keys for every node
+- [x] **META-12**: Unit tests validate outputMetadata field keys match NodeOutput.toMap() keys for every node
 
 ### Query Entity Execution
 
@@ -68,18 +68,18 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| META-01 | Phase 1 | Pending |
-| META-02 | Phase 1 | Pending |
-| META-03 | Phase 1 | Pending |
-| META-04 | Phase 1 | Pending |
-| META-05 | Phase 1 | Pending |
+| META-01 | Phase 1 | Complete |
+| META-02 | Phase 1 | Complete |
+| META-03 | Phase 1 | Complete |
+| META-04 | Phase 1 | Complete |
+| META-05 | Phase 1 | Complete |
 | META-06 | Phase 3 | Pending |
 | META-07 | Phase 3 | Pending |
 | META-08 | Phase 3 | Pending |
 | META-09 | Phase 3 | Pending |
 | META-10 | Phase 3 | Pending |
 | META-11 | Phase 3 | Pending |
-| META-12 | Phase 1 | Pending |
+| META-12 | Phase 1 | Complete |
 | QERY-01 | Phase 2 | Pending |
 | QERY-02 | Phase 2 | Pending |
 | QERY-03 | Phase 2 | Pending |
@@ -98,4 +98,4 @@
 
 ---
 *Requirements defined: 2026-02-10*
-*Last updated: 2026-02-10 after roadmap creation*
+*Last updated: 2026-02-13 after Phase 1 completion*
