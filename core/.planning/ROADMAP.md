@@ -28,11 +28,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. WorkflowNodeConfigRegistry extracts outputMetadata from companion objects via reflection
   4. Node-schemas API endpoint includes outputMetadata in response for nodes that declare it
   5. Unit tests validate that declared outputMetadata keys match NodeOutput.toMap() keys
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md — Data model, registry extraction, and API wiring with CreateEntity proof-of-concept
+- [ ] 01-02-PLAN.md — Parameterized validation tests for outputMetadata keys and types
 
 ### Phase 2: Query & Bulk Update Execution
 **Goal**: Workflows can query entity subsets and apply bulk updates during execution
