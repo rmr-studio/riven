@@ -3,18 +3,25 @@ package riven.core.models.workflow.node.config.actions
 import com.fasterxml.jackson.annotation.JsonTypeName
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.media.Schema
+import kotlinx.coroutines.runBlocking
 import riven.core.enums.common.icon.IconType
+import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.workflow.BulkUpdateErrorHandling
 import riven.core.enums.workflow.OutputFieldType
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
+import riven.core.models.entity.payload.EntityAttributePrimitivePayload
+import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.entity.query.EntityQuery
 import riven.core.models.entity.query.filter.FilterValue
 import riven.core.models.entity.query.filter.QueryFilter
 import riven.core.models.entity.query.filter.RelationshipFilter
 import riven.core.models.entity.query.pagination.QueryPagination
+import riven.core.models.request.entity.SaveEntityRequest
+import riven.core.models.workflow.engine.state.BulkUpdateEntityOutput
 import riven.core.models.workflow.engine.state.NodeOutput
 import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
@@ -26,7 +33,16 @@ import riven.core.models.workflow.node.config.WorkflowNodeTypeMetadata
 import riven.core.models.workflow.node.config.validation.ConfigValidationError
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
+import riven.core.service.entity.EntityService
+import riven.core.service.entity.query.EntityQueryService
 import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
+import riven.core.service.workflow.state.WorkflowNodeInputResolverService
+import java.util.*
+
+private val log = KotlinLogging.logger {}
+
+private const val BULK_UPDATE_BATCH_SIZE = 50
+private const val QUERY_PAGE_SIZE = 100
 
 /**
  * Configuration for BULK_UPDATE_ENTITY action nodes.
@@ -364,9 +380,254 @@ data class WorkflowBulkUpdateEntityActionConfig(
         inputs: Map<String, Any?>,
         services: NodeServiceProvider
     ): NodeOutput {
-        throw NotImplementedError(
-            "BULK_UPDATE_ENTITY execution is implemented in Plan 03. " +
-            "Query: ${query.entityTypeId}, ErrorHandling: $errorHandling"
+        log.info { "Executing BULK_UPDATE_ENTITY for type: ${query.entityTypeId}, errorHandling: $errorHandling" }
+
+        // Get required services
+        val entityQueryService = services.service<EntityQueryService>()
+        val entityService = services.service<EntityService>()
+        val inputResolver = services.service<WorkflowNodeInputResolverService>()
+        val workspaceId = dataStore.metadata.workspaceId
+
+        // Resolve template FilterValues in query.filter (reuse pattern from QueryEntityActionConfig)
+        val resolvedFilter = query.filter?.let { filter ->
+            resolveFilterTemplates(filter, dataStore, inputResolver)
+        }
+
+        // Resolve payload templates - extract the resolved payload map from inputs
+        @Suppress("UNCHECKED_CAST")
+        val resolvedPayload = inputs["payload"] as? Map<*, *> ?: emptyMap<String, Any?>()
+
+        // Query ALL matching entities using pagination loop
+        val allEntityIds = mutableListOf<UUID>()
+        var currentOffset = 0
+        var hasNextPage = true
+
+        log.info { "Querying all matching entities with pagination (page size: $QUERY_PAGE_SIZE)" }
+
+        while (hasNextPage) {
+            val pageQuery = EntityQuery(
+                entityTypeId = query.entityTypeId,
+                filter = resolvedFilter,
+                maxDepth = query.maxDepth
+            )
+
+            val pagePagination = QueryPagination(
+                limit = QUERY_PAGE_SIZE,
+                offset = currentOffset
+            )
+
+            val pageResult = runBlocking {
+                entityQueryService.execute(
+                    query = pageQuery,
+                    workspaceId = workspaceId,
+                    pagination = pagePagination,
+                    projection = null
+                )
+            }
+
+            // Accumulate entity IDs
+            allEntityIds.addAll(pageResult.entities.map { it.id })
+
+            // Check if there are more pages
+            hasNextPage = pageResult.hasNextPage
+            currentOffset += QUERY_PAGE_SIZE
+
+            log.debug { "Fetched page with ${pageResult.entities.size} entities, total so far: ${allEntityIds.size}" }
+        }
+
+        log.info { "Found ${allEntityIds.size} total entities to update" }
+
+        if (allEntityIds.isEmpty()) {
+            log.info { "No entities found matching query, returning zero counts" }
+            return BulkUpdateEntityOutput(
+                entitiesUpdated = 0,
+                entitiesFailed = 0,
+                failedEntityDetails = emptyList(),
+                totalProcessed = 0
+            )
+        }
+
+        // Process entities in batches
+        var entitiesUpdated = 0
+        var entitiesFailed = 0
+        val failedDetails = mutableListOf<Map<String, Any?>>()
+
+        log.info { "Processing ${allEntityIds.size} entities in batches of $BULK_UPDATE_BATCH_SIZE" }
+
+        for (batch in allEntityIds.chunked(BULK_UPDATE_BATCH_SIZE)) {
+            for (entityId in batch) {
+                try {
+                    // Get existing entity to determine type
+                    val existingEntity = entityService.getEntity(entityId)
+
+                    // Map resolved payload to proper format (same as UpdateEntityActionConfig)
+                    @Suppress("UNCHECKED_CAST")
+                    val entityPayload = resolvedPayload.mapKeys { (key, _) ->
+                        UUID.fromString(key as String)
+                    }.mapValues { (_, value) ->
+                        EntityAttributeRequest(
+                            EntityAttributePrimitivePayload(
+                                value = value,
+                                schemaType = SchemaType.TEXT  // Default to TEXT
+                            )
+                        )
+                    }
+
+                    // Update entity via EntityService
+                    val saveRequest = SaveEntityRequest(
+                        id = entityId,
+                        payload = entityPayload,
+                        icon = null
+                    )
+
+                    entityService.saveEntity(
+                        workspaceId,
+                        existingEntity.typeId,
+                        saveRequest
+                    )
+
+                    entitiesUpdated++
+
+                } catch (e: Exception) {
+                    when (errorHandling) {
+                        BulkUpdateErrorHandling.FAIL_FAST -> {
+                            log.error { "FAIL_FAST: Entity $entityId update failed: ${e.message}" }
+                            // Return immediately with what succeeded so far
+                            return BulkUpdateEntityOutput(
+                                entitiesUpdated = entitiesUpdated,
+                                entitiesFailed = 1,
+                                failedEntityDetails = listOf(
+                                    mapOf(
+                                        "entityId" to entityId.toString(),
+                                        "error" to (e.message ?: "Unknown error")
+                                    )
+                                ),
+                                totalProcessed = entitiesUpdated + 1
+                            )
+                        }
+                        BulkUpdateErrorHandling.BEST_EFFORT -> {
+                            log.warn { "BEST_EFFORT: Entity $entityId update failed: ${e.message}" }
+                            entitiesFailed++
+                            failedDetails.add(
+                                mapOf(
+                                    "entityId" to entityId.toString(),
+                                    "error" to (e.message ?: "Unknown error")
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        val totalProcessed = entitiesUpdated + entitiesFailed
+        log.info { "BULK_UPDATE_ENTITY complete: $entitiesUpdated updated, $entitiesFailed failed, $totalProcessed total" }
+
+        return BulkUpdateEntityOutput(
+            entitiesUpdated = entitiesUpdated,
+            entitiesFailed = entitiesFailed,
+            failedEntityDetails = failedDetails,
+            totalProcessed = totalProcessed
         )
+    }
+
+    /**
+     * Recursively resolves template FilterValues in the filter tree.
+     *
+     * Walks the filter structure and replaces any FilterValue.Template with
+     * FilterValue.Literal containing the resolved value.
+     *
+     * @param filter The filter to resolve templates in
+     * @param dataStore Workflow datastore for template resolution
+     * @param resolver Service to resolve template expressions
+     * @return Filter with all templates resolved to literals
+     */
+    private fun resolveFilterTemplates(
+        filter: QueryFilter,
+        dataStore: WorkflowDataStore,
+        resolver: WorkflowNodeInputResolverService
+    ): QueryFilter {
+        return when (filter) {
+            is QueryFilter.Attribute -> {
+                val resolvedValue = when (val value = filter.value) {
+                    is FilterValue.Literal -> value
+                    is FilterValue.Template -> {
+                        val resolved = resolver.resolve(value.expression, dataStore)
+                        FilterValue.Literal(resolved)
+                    }
+                }
+                filter.copy(value = resolvedValue)
+            }
+
+            is QueryFilter.And -> {
+                filter.copy(
+                    conditions = filter.conditions.map { condition ->
+                        resolveFilterTemplates(condition, dataStore, resolver)
+                    }
+                )
+            }
+
+            is QueryFilter.Or -> {
+                filter.copy(
+                    conditions = filter.conditions.map { condition ->
+                        resolveFilterTemplates(condition, dataStore, resolver)
+                    }
+                )
+            }
+
+            is QueryFilter.Relationship -> {
+                val resolvedCondition = resolveRelationshipConditionTemplates(
+                    filter.condition,
+                    dataStore,
+                    resolver
+                )
+                filter.copy(condition = resolvedCondition)
+            }
+        }
+    }
+
+    /**
+     * Resolves templates in relationship filter conditions.
+     *
+     * Handles template resolution for different relationship condition types.
+     *
+     * @param condition The relationship condition to resolve templates in
+     * @param dataStore Workflow datastore for template resolution
+     * @param resolver Service to resolve template expressions
+     * @return Relationship condition with all templates resolved
+     */
+    private fun resolveRelationshipConditionTemplates(
+        condition: RelationshipFilter,
+        dataStore: WorkflowDataStore,
+        resolver: WorkflowNodeInputResolverService
+    ): RelationshipFilter {
+        return when (condition) {
+            is RelationshipFilter.Exists -> condition
+            is RelationshipFilter.NotExists -> condition
+
+            is RelationshipFilter.TargetEquals -> {
+                val resolvedIds = condition.entityIds.map { id ->
+                    resolver.resolve(id, dataStore)?.toString() ?: id
+                }
+                condition.copy(entityIds = resolvedIds)
+            }
+
+            is RelationshipFilter.TargetMatches -> {
+                condition.copy(
+                    filter = resolveFilterTemplates(condition.filter, dataStore, resolver)
+                )
+            }
+
+            is RelationshipFilter.TargetTypeMatches -> {
+                val resolvedBranches = condition.branches.map { branch ->
+                    branch.copy(
+                        filter = branch.filter?.let { resolveFilterTemplates(it, dataStore, resolver) }
+                    )
+                }
+                condition.copy(branches = resolvedBranches)
+            }
+
+            is RelationshipFilter.CountMatches -> condition
+        }
     }
 }
