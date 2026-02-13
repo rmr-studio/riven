@@ -47,12 +47,12 @@ Plans:
   6. BulkUpdateEntityNode returns entitiesUpdated and entitiesFailed counts
   7. BulkUpdateEntityNode supports FAIL_FAST and BEST_EFFORT error handling modes
   8. BulkUpdateEntityActionConfig declares outputMetadata
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
-- [ ] 02-03: TBD
+- [ ] 02-01-PLAN.md — QueryEntity execute() implementation with template resolution and outputMetadata
+- [ ] 02-02-PLAN.md — BulkUpdateEntity model layer: enum, output type, config class with validation
+- [ ] 02-03-PLAN.md — BulkUpdateEntity execute() with batch processing, error handling, and registration
 
 ### Phase 3: Output Metadata Coverage
 **Goal**: All existing node types declare output schemas for frontend consumption
