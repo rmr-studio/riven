@@ -13,6 +13,8 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     show-sql: false
+  flyway:
+    enabled: false  # Disable Flyway for tests - use Hibernate schema generation
   security:
     oauth2:
       resourceserver:

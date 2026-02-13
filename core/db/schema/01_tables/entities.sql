@@ -65,7 +65,16 @@ CREATE TABLE IF NOT EXISTS public.entities
     "updated_by"     UUID    REFERENCES users (id) ON DELETE SET NULL,
 
     "deleted"        BOOLEAN NOT NULL         DEFAULT FALSE,
-    "deleted_at"     TIMESTAMP WITH TIME ZONE DEFAULT NULL
+    "deleted_at"     TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+
+    -- Provenance tracking fields
+    "source_type"            VARCHAR(50) NOT NULL DEFAULT 'USER_CREATED',
+    "source_integration_id"  UUID,
+    "source_external_id"     TEXT,
+    "source_url"             TEXT,
+    "first_synced_at"        TIMESTAMPTZ,
+    "last_synced_at"         TIMESTAMPTZ,
+    "sync_version"           BIGINT NOT NULL DEFAULT 0
 );
 
 -- =====================================================
@@ -86,6 +95,23 @@ CREATE TABLE IF NOT EXISTS public.entities_unique_values
 
     "deleted"      BOOLEAN NOT NULL         DEFAULT FALSE,
     "deleted_at"   TIMESTAMP WITH TIME ZONE DEFAULT NULL
+);
+
+-- =====================================================
+-- ENTITY ATTRIBUTE PROVENANCE TABLE
+-- =====================================================
+DROP TABLE IF EXISTS public.entity_attribute_provenance CASCADE;
+CREATE TABLE IF NOT EXISTS public.entity_attribute_provenance (
+    "id"                     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "entity_id"              UUID    NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+    "attribute_id"           UUID    NOT NULL,
+    "source_type"            VARCHAR(50) NOT NULL,
+    "source_integration_id"  UUID,
+    "source_external_field"  VARCHAR(255),
+    "last_updated_at"        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    "override_by_user"       BOOLEAN NOT NULL DEFAULT false,
+    "override_at"            TIMESTAMPTZ,
+    UNIQUE(entity_id, attribute_id)
 );
 
 -- =====================================================

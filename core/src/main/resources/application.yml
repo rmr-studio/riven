@@ -9,6 +9,11 @@ spring:
     hibernate:
       ddl-auto: none
     show-sql: ${riven.include-stack-trace}
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
   security:
     oauth2:
       resourceserver:
@@ -30,6 +35,10 @@ riven:
   supabase-url: ${SUPABASE_URL}
   supabase-key: ${SUPABASE_KEY}
   web-origin: ${ORIGIN_API_URL}
+  nango:
+    secret-key: ${NANGO_SECRET_KEY:}
+    base-url: ${NANGO_BASE_URL:https://api.nango.dev}
+    webhook-secret: ${NANGO_WEBHOOK_SECRET:}
   workflow:
     engine:
       target: ${TEMPORAL_SERVER_ADDRESS}

@@ -1,0 +1,36 @@
+package riven.core.repository.integration
+
+import org.springframework.data.jpa.repository.JpaRepository
+import riven.core.entity.integration.IntegrationConnectionEntity
+import riven.core.enums.integration.ConnectionStatus
+import java.util.*
+
+/**
+ * Repository for integration connections (workspace-scoped).
+ *
+ * Provides queries for finding connections by workspace, integration, and status.
+ * RLS policies ensure workspace isolation at the database level.
+ */
+interface IntegrationConnectionRepository : JpaRepository<IntegrationConnectionEntity, UUID> {
+
+    /**
+     * Find all connections for a workspace.
+     */
+    fun findByWorkspaceId(workspaceId: UUID): List<IntegrationConnectionEntity>
+
+    /**
+     * Find a specific workspace's connection to an integration.
+     */
+    fun findByWorkspaceIdAndIntegrationId(
+        workspaceId: UUID,
+        integrationId: UUID
+    ): IntegrationConnectionEntity?
+
+    /**
+     * Find all connections for a workspace with a specific status.
+     */
+    fun findByWorkspaceIdAndStatus(
+        workspaceId: UUID,
+        status: ConnectionStatus
+    ): List<IntegrationConnectionEntity>
+}
