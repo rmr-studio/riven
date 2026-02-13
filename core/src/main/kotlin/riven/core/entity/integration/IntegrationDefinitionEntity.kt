@@ -1,0 +1,64 @@
+package riven.core.entity.integration
+
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
+import jakarta.persistence.*
+import org.hibernate.annotations.Type
+import riven.core.enums.integration.IntegrationCategory
+import java.time.ZonedDateTime
+import java.util.*
+
+/**
+ * JPA entity for integration definitions (global catalog).
+ *
+ * This is a global catalog of supported integrations (HubSpot, Salesforce, etc.)
+ * that all workspaces can use. Does NOT extend AuditableEntity because it has
+ * no created_by/updated_by columns - it's a global catalog, not user-owned.
+ */
+@Entity
+@Table(name = "integration_definitions")
+data class IntegrationDefinitionEntity(
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", columnDefinition = "uuid")
+    val id: UUID? = null,
+
+    @Column(name = "slug", nullable = false, unique = true, length = 100)
+    val slug: String,
+
+    @Column(name = "name", nullable = false)
+    val name: String,
+
+    @Column(name = "icon_url")
+    val iconUrl: String? = null,
+
+    @Column(name = "description")
+    val description: String? = null,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category", nullable = false, length = 50)
+    val category: IntegrationCategory,
+
+    @Column(name = "nango_provider_key", nullable = false, length = 100)
+    val nangoProviderKey: String,
+
+    @Type(JsonBinaryType::class)
+    @Column(name = "capabilities", columnDefinition = "jsonb", nullable = false)
+    var capabilities: Map<String, Any> = emptyMap(),
+
+    @Type(JsonBinaryType::class)
+    @Column(name = "sync_config", columnDefinition = "jsonb", nullable = false)
+    var syncConfig: Map<String, Any> = emptyMap(),
+
+    @Type(JsonBinaryType::class)
+    @Column(name = "auth_config", columnDefinition = "jsonb", nullable = false)
+    var authConfig: Map<String, Any> = emptyMap(),
+
+    @Column(name = "active", nullable = false)
+    var active: Boolean = true,
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    val createdAt: ZonedDateTime = ZonedDateTime.now(),
+
+    @Column(name = "updated_at")
+    var updatedAt: ZonedDateTime = ZonedDateTime.now()
+)

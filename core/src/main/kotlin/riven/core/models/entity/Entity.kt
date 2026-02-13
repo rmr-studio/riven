@@ -3,6 +3,7 @@ package riven.core.models.entity
 import riven.core.entity.util.AuditableModel
 import riven.core.enums.common.icon.IconColour
 import riven.core.enums.common.icon.IconType
+import riven.core.enums.integration.SourceType
 import riven.core.models.common.Icon
 import riven.core.models.entity.payload.EntityAttribute
 import java.time.ZonedDateTime
@@ -27,7 +28,14 @@ data class Entity(
     override var createdAt: ZonedDateTime? = null,
     override var updatedAt: ZonedDateTime? = null,
     override var createdBy: UUID? = null,
-    override var updatedBy: UUID? = null
+    override var updatedBy: UUID? = null,
+    val sourceType: SourceType = SourceType.USER_CREATED,
+    val sourceIntegrationId: UUID? = null,
+    val sourceExternalId: String? = null,
+    val sourceUrl: String? = null,
+    val firstSyncedAt: ZonedDateTime? = null,
+    val lastSyncedAt: ZonedDateTime? = null,
+    val syncVersion: Long = 0
 ) : AuditableModel {
     val identifier: String
         get() = this.payload[identifierKey].toString()

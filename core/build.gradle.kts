@@ -73,6 +73,10 @@ dependencies {
     implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.9.2")
     runtimeOnly("org.postgresql:postgresql")
 
+    // Flyway Database Migrations
+    implementation("org.flywaydb:flyway-core")
+    implementation("org.flywaydb:flyway-database-postgresql")
+
     // Schema Validation
     implementation("com.networknt:json-schema-validator:1.0.83")
 
