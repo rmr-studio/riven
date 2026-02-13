@@ -7,6 +7,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-logo-primary: var(--logo-primary);
+  --color-logo-secondary: var(--logo-secondary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -50,6 +52,8 @@
 }
 
 :root {
+  --logo-primary: oklch(0.9158 0 0);
+  --logo-secondary: oklch(0.4926 0 0);
   --radius: 0.625rem;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -84,9 +88,21 @@
   --sidebar-ring: oklch(0.708 0 0);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
+
+  /* Navbar inverse values (dark-on-light → light-on-dark) */
+  --nav-inv-background: oklch(0.145 0 0);
+  --nav-inv-foreground: oklch(0.985 0 0);
+  --nav-inv-muted-foreground: oklch(0.708 0 0);
+  --nav-inv-border: oklch(1 0 0 / 10%);
+  --nav-inv-muted: oklch(0.269 0 0);
+  --nav-inv-primary: oklch(0.922 0 0);
+  --nav-inv-logo-primary: oklch(0.2 0 0);
+  --nav-inv-logo-secondary: oklch(0.9541 0.1401 121.98);
 }
 
 .dark {
+  --logo-primary: oklch(0.2 0 0);
+  --logo-secondary: oklch(0.9541 0.1401 121.98);
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -120,9 +136,21 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Navbar inverse values (light-on-dark → dark-on-light) */
+  --nav-inv-background: oklch(1 0 0);
+  --nav-inv-foreground: oklch(0.145 0 0);
+  --nav-inv-muted-foreground: oklch(0.556 0 0);
+  --nav-inv-border: oklch(0.922 0 0);
+  --nav-inv-muted: oklch(0.97 0 0);
+  --nav-inv-primary: oklch(0.205 0 0);
+  --nav-inv-logo-primary: oklch(0.9158 0 0);
+  --nav-inv-logo-secondary: oklch(0.4926 0 0);
 }
 
 .amber {
+  --logo-primary: oklch(0.4926 0 0);
+  --logo-secondary: oklch(0.4926 0 0);
   --background: oklch(0.93 0.032 80);
   --foreground: oklch(0.25 0.02 60);
   --card: oklch(0.91 0.035 78);
@@ -156,6 +184,16 @@
   --sidebar-accent-foreground: oklch(0.25 0.02 60);
   --sidebar-border: oklch(0.25 0.02 60 / 15%);
   --sidebar-ring: oklch(0.55 0.06 70);
+
+  /* Navbar inverse values (amber bg/fg swapped) */
+  --nav-inv-background: oklch(0.25 0.02 60);
+  --nav-inv-foreground: oklch(0.93 0.032 80);
+  --nav-inv-muted-foreground: oklch(0.75 0.06 70);
+  --nav-inv-border: oklch(0.93 0.032 80 / 15%);
+  --nav-inv-muted: oklch(0.35 0.04 65);
+  --nav-inv-primary: oklch(0.93 0.032 80);
+  --nav-inv-logo-primary: oklch(0.93 0.032 80);
+  --nav-inv-logo-secondary: oklch(0.93 0.032 80);
 }
 
 @layer base {
@@ -165,6 +203,13 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.logo-fill {
+  fill: var(--logo-primary);
+}
+.logo-outline {
+  stroke: var(--logo-secondary);
 }
 
 .h-screen-without-header {
@@ -182,6 +227,22 @@
 
 .section {
   @apply relative py-16 md:py-24 lg:py-32 overflow-hidden;
+}
+
+nav[data-navbar] {
+  transition: background-color 0.3s ease, color 0.3s ease,
+              border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+nav[data-inverted] {
+  --background: var(--nav-inv-background);
+  --foreground: var(--nav-inv-foreground);
+  --muted-foreground: var(--nav-inv-muted-foreground);
+  --border: var(--nav-inv-border);
+  --muted: var(--nav-inv-muted);
+  --primary: var(--nav-inv-primary);
+  --logo-primary: var(--nav-inv-logo-primary);
+  --logo-secondary: var(--nav-inv-logo-secondary);
 }
 
 :root {

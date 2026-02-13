@@ -1,10 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { BGPattern } from "@/components/ui/background/grids";
+import { Section } from "@/components/ui/section";
 
 export function RivenDefinition() {
   return (
-    <section className="section">
+    <Section>
       <div className="container relative mx-auto px-4 md:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center max-w-6xl mx-auto">
           {/* Dictionary Definition Card */}
@@ -83,6 +85,6 @@ export function RivenDefinition() {
           </motion.div>
         </div>
       </div>
-    </section>
+    </Section>
   );
 }

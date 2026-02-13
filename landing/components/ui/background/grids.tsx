@@ -19,7 +19,7 @@ type BGMaskType =
   | "fade-y"
   | "none";
 
-type BGPatternProps = React.ComponentProps<"div"> & {
+export type BGPatternProps = React.ComponentProps<"div"> & {
   variant?: BGVariantType;
   mask?: BGMaskType;
   size?: number;

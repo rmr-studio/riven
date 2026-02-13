@@ -1,32 +1,61 @@
-import type { Node } from "@xyflow/react";
+import { CANVAS_PADDING } from '../components/graph/data-model';
+import { Bounds, Dimensions, Node, NodeModel, Position } from '../types';
 
 // Helper to create faded background nodes
-export const createFadedNode = (
+export const createSecondaryNode = (
   id: string,
   title: string,
-  icon: string,
-  x: number,
-  y: number
-): Node => ({
+  icon: React.ElementType,
+  position: Position,
+  dimensions: Dimensions = { width: 110, height: 36 },
+  mobile?: { position: Position; dimensions: Dimensions },
+): NodeModel => ({
   id,
-  type: "fadedNode",
-  position: { x, y },
-  data: { title, icon },
+  type: 'secondary',
+  position,
+  dimensions,
+  title,
+  icon,
+  ...(mobile && { mobile }),
 });
 
 // Helper to create main entity nodes
-export const createEntityNode = (
+export const createPrimaryNode = (
   id: string,
   title: string,
-  icon: string,
-  badge: string,
-  attributes: Array<{ name: string; icon: string }>,
+  icon: React.ElementType,
+  attributes: Node[],
   moreCount: number,
-  x: number,
-  y: number
-): Node => ({
+  position: Position,
+  dimensions: Dimensions = { width: 220, height: 160 },
+  mobile?: { position: Position; dimensions: Dimensions },
+): NodeModel => ({
   id,
-  type: "entityNode",
-  position: { x, y },
-  data: { title, icon, badge, attributes, moreCount },
+  type: 'primary',
+  position,
+  dimensions,
+  title,
+  icon,
+  attributes,
+  moreCount,
+  ...(mobile && { mobile }),
 });
+
+export function computeBounds(nodes: NodeModel[]): Bounds {
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity;
+  for (const n of nodes) {
+    minX = Math.min(minX, n.position.x);
+    minY = Math.min(minY, n.position.y);
+    maxX = Math.max(maxX, n.position.x + n.dimensions.width);
+    maxY = Math.max(maxY, n.position.y + n.dimensions.height);
+  }
+  return {
+    ox: minX - CANVAS_PADDING,
+    oy: minY - CANVAS_PADDING,
+    width: maxX - minX + CANVAS_PADDING * 2,
+    height: maxY - minY + CANVAS_PADDING * 2,
+  };
+}

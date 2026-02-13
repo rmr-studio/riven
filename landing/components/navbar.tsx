@@ -1,57 +1,110 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { ChevronRight } from "lucide-react";
-import { Logo } from "./ui/logo";
+import { Button } from '@/components/ui/button';
+import { MobileNavbar } from '@/components/ui/mobile-nav-menu';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { ChevronRight, Menu } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
+import { Logo } from './ui/logo';
 
 const navLinks = [
-  { label: "About", href: "#about" },
-  { label: "Features", href: "#features" },
-  { label: "FAQs", href: "#faqs" },
+  { label: 'About', href: '#about' },
+  { label: 'Features', href: '#features' },
+  { label: 'FAQs', href: '#faqs' },
 ];
 
 export function Navbar() {
+  const [isInverted, setIsInverted] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const check = () => {
+      const sections = document.querySelectorAll<HTMLElement>('[data-navbar-inverse]');
+
+      const navBottom = 72; // navbar height + top padding
+      let inverted = false;
+      for (const section of sections) {
+        const rect = section.getBoundingClientRect();
+        if (rect.top < navBottom && rect.bottom > 0) {
+          inverted = true;
+          break;
+        }
+      }
+      setIsInverted(inverted);
+    };
+
+    const onScroll = () => {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(check);
+    };
+
+    check();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 px-4 pt-4">
-      <nav className="mx-auto max-w-6xl rounded-full border border-border/50 bg-background/60 backdrop-blur-xl shadow-sm">
-        <div className="flex h-14 items-center justify-between px-6">
-          {/* Logo */}
-          <Link href="/" className="flex items-end gap-2">
-            <Logo
-              size={32}
-              secondaryClassName="fill-background"
-              primaryClassName="text-primary dark:text-[#D3C79B]"
-            />
-            <span className="font-mono font-bold mb-px text-xl tracking-tight">
-              Riven
-            </span>
-          </Link>
-
-          {/* Nav Links */}
-          <div className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
+    <header className="fixed top-0 right-0 left-0 z-50 flex items-center px-2 pt-4 md:px-4">
+      <nav
+        data-navbar=""
+        {...(isInverted ? { 'data-inverted': '' } : {})}
+        className="mx-auto flex h-12 w-auto grow items-center justify-between rounded-full border border-border/50 bg-background/60 shadow-sm shadow-primary/35 backdrop-blur-xl md:h-14 lg:max-w-[80dvw]"
+      >
+        <Link href="/" className="flex shrink-0 gap-1.5 px-3 md:gap-2 md:px-4">
+          <Logo size={24} className="md:w-8" />
+          <div className="mt-0.5 font-mono text-xs font-bold tracking-tight text-primary md:mt-1 md:text-lg">
+            Riven
           </div>
+        </Link>
 
-          {/* Right side: Theme toggle + CTA */}
-          <div className="flex items-center gap-2">
+        {/* Nav Links - desktop only */}
+        <div className="hidden items-center gap-1 md:flex">
+          {navLinks.map((link) => (
+            <Link
+              key={link.label}
+              href={link.href}
+              className="px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-1.5 px-2 md:gap-2 md:px-4">
+          <div className="hidden md:block">
             <ThemeToggle />
-            <Button className="rounded-full gap-1 group">
-              Join the waitlist
-              <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </Button>
           </div>
+          <Button
+            variant={'outline'}
+            size={'sm'}
+            className="py-1` h-8 cursor-pointer items-center gap-1.5 rounded-full border border-border/50 bg-muted/50 py-0.5 font-mono text-xs tracking-widest whitespace-nowrap text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:inline-flex md:h-9 md:gap-2.5 md:px-4 md:text-sm"
+          >
+            <span className="hidden sm:block">Join the waitlist</span>
+            <span className="sm:hidden">Get Started</span>
+            <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 md:h-4 md:w-4" />
+          </Button>
+          <Button
+            variant={'ghost'}
+            size={'icon'}
+            onClick={() => setMobileMenuOpen(true)}
+            className="size-8 shrink-0 cursor-pointer md:hidden"
+          >
+            <Menu className="size-4 text-primary" />
+          </Button>
         </div>
       </nav>
+
+      <MobileNavbar
+        links={navLinks}
+        open={mobileMenuOpen}
+        setOpen={setMobileMenuOpen}
+        showTrigger={false}
+      />
     </header>
   );
 }

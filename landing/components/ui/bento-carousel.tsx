@@ -52,7 +52,8 @@ function useIsMobile() {
 }
 
 function MobileCarouselNav() {
-  const { scrollPrev, scrollNext, canScrollPrev, canScrollNext } = useCarousel();
+  const { scrollPrev, scrollNext, canScrollPrev, canScrollNext } =
+    useCarousel();
 
   return (
     <div className="flex justify-end gap-2 mt-6">
@@ -100,17 +101,21 @@ export function BentoCard({
     <div
       className={cn(
         "rounded-2xl bg-secondary/50 border border-border p-6 flex flex-col overflow-hidden",
-        className
+        className,
       )}
       style={area ? { gridArea: area } : undefined}
     >
       <div className="space-y-2 flex-shrink-0">
         <h3 className="text-lg font-semibold">{title}</h3>
         {description && (
-          <p className="text-sm text-muted-foreground line-clamp-3">{description}</p>
+          <p className="text-sm text-muted-foreground line-clamp-3">
+            {description}
+          </p>
         )}
       </div>
-      {children && <div className="flex-1 mt-4 min-h-0 overflow-hidden">{children}</div>}
+      {children && (
+        <div className="flex-1 mt-4 min-h-0 overflow-hidden">{children}</div>
+      )}
     </div>
   );
 }
@@ -191,6 +196,8 @@ interface BentoCarouselProps {
   peekAmount?: number;
   /** Cards to show in mobile single-file carousel mode */
   mobileCards?: React.ReactNode[];
+  /** Side inset for full-bleed mode. When set, carousel extends edge-to-edge with content inset from viewport edges. */
+  inset?: string;
 }
 
 export function BentoCarousel({
@@ -198,6 +205,7 @@ export function BentoCarousel({
   className,
   peekAmount = 80,
   mobileCards,
+  inset,
 }: BentoCarouselProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [currentSlide, setCurrentSlide] = React.useState(0);
@@ -397,13 +405,21 @@ export function BentoCarousel({
         className={cn(
           "flex gap-6 overflow-x-auto scrollbar-hide select-none",
           isDragging ? "cursor-grabbing" : "cursor-grab",
-          !isDragging && "scroll-smooth"
+          !isDragging && "scroll-smooth",
         )}
         style={{
           scrollSnapType: isDragging ? "none" : "x mandatory",
           WebkitOverflowScrolling: "touch",
+          ...(inset && { scrollPaddingLeft: inset }),
         }}
       >
+        {inset && (
+          <div
+            className="flex-shrink-0"
+            style={{ width: `calc(${inset} - 24px)` }}
+            aria-hidden="true"
+          />
+        )}
         {React.Children.map(children, (child, index) => {
           const isLast = index === childCount - 1;
           return (
@@ -412,8 +428,13 @@ export function BentoCarousel({
               data-slide
               className="flex-shrink-0 min-h-[500px] md:min-h-[600px]"
               style={{
-                // Show peek of next slide, except for the last one
-                width: isLast ? "100%" : `calc(100% - ${peekAmount}px)`,
+                width: inset
+                  ? isLast
+                    ? `calc(100dvw - 2 * ${inset})`
+                    : `calc(100dvw - ${inset} - ${peekAmount + 24}px)`
+                  : isLast
+                    ? "100%"
+                    : `calc(100% - ${peekAmount}px)`,
                 scrollSnapAlign: "start",
               }}
             >
@@ -421,22 +442,20 @@ export function BentoCarousel({
             </div>
           );
         })}
+        {inset && (
+          <div
+            className="flex-shrink-0"
+            style={{ width: `calc(${inset} - 24px)` }}
+            aria-hidden="true"
+          />
+        )}
       </div>
 
-      {/* Fade overlay on the right edge */}
-      <div
-        className="absolute right-0 top-0 bottom-0 pointer-events-none transition-opacity duration-300"
-        style={{
-          width: `${peekAmount + 40}px`,
-          background:
-            "linear-gradient(to right, transparent, var(--background) 80%)",
-          marginBottom: "56px", // Account for navigation buttons
-          opacity: isLastSlide ? 0 : 1,
-        }}
-      />
-
       {/* Navigation arrows */}
-      <div className="flex justify-end gap-2 mt-6">
+      <div
+        className="flex justify-end gap-2 mt-6"
+        style={inset ? { paddingRight: inset } : undefined}
+      >
         <Button
           variant="outline"
           size="icon"

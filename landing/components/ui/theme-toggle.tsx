@@ -2,14 +2,15 @@
 
 import * as React from "react";
 import { useTheme } from "next-themes";
+import { Button } from "./button";
 
 const themes = ["light", "dark", "amber"] as const;
 type Theme = (typeof themes)[number];
 
 const themeLabels: Record<Theme, string> = {
-  light: "LIGHT",
-  dark: "DARK",
-  amber: "AMBER",
+  light: "Light",
+  dark: "Dark",
+  amber: "Amber",
 };
 
 export function ThemeToggle() {
@@ -39,11 +40,10 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <button
+      <Button
         disabled
-        className="inline-flex items-center gap-2.5 rounded-full border border-border/50 bg-muted/50 px-3 py-1.5 font-mono text-[11px] tracking-widest text-muted-foreground"
+        className="inline-flex items-center gap-2.5 rounded-full border border-border/50 bg-muted/50 px-3 py-1.5 font-mono tracking-widest text-muted-foreground"
       >
-        <span>&mdash;</span>
         <span className="flex gap-1">
           {themes.map((t) => (
             <span
@@ -52,16 +52,16 @@ export function ThemeToggle() {
             />
           ))}
         </span>
-      </button>
+      </Button>
     );
   }
 
   return (
-    <button
+    <Button
       onClick={cycle}
-      className="inline-flex items-center gap-2.5 rounded-full border border-border/50 bg-muted/50 px-3 py-1.5 font-mono text-[11px] tracking-widest text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+      className="flex items-center gap-2.5 rounded-full border border-border/50 bg-muted/50 px-3 py-1.5 text-sm font-mono tracking-widest text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
     >
-      <span>{themeLabels[activeTheme] ?? "LIGHT"}</span>
+      <span>{themeLabels[activeTheme] ?? "Light"}</span>
       <span className="flex gap-1">
         {themes.map((t) => (
           <span
@@ -75,6 +75,6 @@ export function ThemeToggle() {
         ))}
       </span>
       <span className="sr-only">Toggle theme</span>
-    </button>
+    </Button>
   );
 }

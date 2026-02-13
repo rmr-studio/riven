@@ -28,11 +28,7 @@ export function Footer() {
       >
         {/* FOOT-03: Logo/wordmark */}
         <Link href="/" className="flex items-center gap-2">
-          <Logo
-            size={80}
-            secondaryClassName="fill-background"
-            primaryClassName="text-primary dark:text-[#D3C79B]"
-          />
+          <Logo size={80} />
           <span className="font-mono font-bold mt-3 text-3xl tracking-tight">
             Riven
           </span>

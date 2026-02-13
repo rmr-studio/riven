@@ -50,7 +50,7 @@ const logos: LogoItem[] = [
 
 export const Integrations = () => {
   return (
-    <section>
+    <>
       <SectionDivider name="Third Party Integrations" />
       <div
         style={{ height: "200px", position: "relative", overflow: "hidden" }}
@@ -65,10 +65,10 @@ export const Integrations = () => {
           hoverSpeed={0}
           scaleOnHover
           fadeOut
-          fadeOutColor="#ffffff"
+          fadeOutColor="var(--foreground)"
           ariaLabel="Technology partners"
         />
       </div>
-    </section>
+    </>
   );
 };

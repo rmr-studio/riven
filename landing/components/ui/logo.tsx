@@ -6,76 +6,57 @@ import { cn } from "@/lib/utils";
 interface LogoProps extends React.SVGProps<SVGSVGElement> {
   /** Width of the logo in pixels (height auto-scales to maintain aspect ratio) */
   size?: number | string;
-  /** Tailwind `text-*` class to control the primary (gold) color via currentColor */
-  primaryClassName?: string;
-  /** Tailwind `fill-*` class to control the secondary (background) color */
-  secondaryClassName?: string;
 }
 
-const PRIMARY_PATHS = {
-  topTriangle: "M58 0L83.9807 44.8576L32.0193 44.8576Z",
-  bottomTriangle: "M59 124.81L33.0193 79.9525L84.9807 79.9525Z",
-  leftUpperTriangle: "M27.5 23L51.3157 67.8576L3.6843 67.8576Z",
-  rightUpperTriangle: "M87.5 23L111.3157 67.8576L63.6843 67.8576Z",
-} as const;
+const SHAPES = [
+  {
+    // Bottom Middle
+    fill: "M88.8262 97.9545C91.1839 94.2495 96.5924 94.2495 98.9501 97.9545L126.838 141.779C128.089 143.744 128.089 146.256 126.838 148.221L98.9501 192.045C96.5924 195.75 91.1839 195.75 88.8262 192.045L60.938 148.221C59.6873 146.256 59.6873 143.744 60.938 141.779L88.8262 97.9545Z",
+    stroke:
+      "M90.0912 98.7598C91.8595 95.981 95.9167 95.981 97.685 98.7598L125.573 142.584C126.511 144.058 126.511 145.942 125.573 147.416L97.685 191.24C95.9167 194.019 91.8595 194.019 90.0912 191.24L62.2036 147.416C61.2655 145.942 61.2655 144.058 62.2036 142.584L90.0912 98.7598Z",
+  },
+  {
+    // Top Right
+    fill: "M143.826 8.95452C146.184 5.24953 151.592 5.24953 153.95 8.95452L181.838 52.7788C183.089 54.7441 183.089 57.2559 181.838 59.2213L153.95 103.045C151.592 106.75 146.184 106.75 143.826 103.045L115.938 59.2212C114.687 57.2559 114.687 54.7441 115.938 52.7787L143.826 8.95452Z",
+    stroke:
+      "M145.091 9.75977C146.86 6.98102 150.917 6.98102 152.685 9.75977L180.573 53.584C181.511 55.058 181.511 56.942 180.573 58.416L152.685 102.24C150.917 105.019 146.86 105.019 145.091 102.24L117.204 58.416C116.266 56.942 116.266 55.058 117.204 53.584L145.091 9.75977Z",
+  },
+  {
+    // Top Left
+    fill: "M32.8262 7.95452C35.1839 4.24953 40.5924 4.24953 42.9501 7.95452L70.8382 51.7788C72.0889 53.7441 72.0889 56.2559 70.8382 58.2213L42.9501 102.045C40.5924 105.75 35.1839 105.75 32.8262 102.045L4.93801 58.2212C3.6873 56.2559 3.6873 53.7441 4.93801 51.7787L32.8262 7.95452Z",
+    stroke:
+      "M34.0912 8.75977C35.8595 5.98102 39.9167 5.98102 41.685 8.75977L69.5727 52.584C70.5107 54.058 70.5107 55.942 69.5727 57.416L41.685 101.24C39.9167 104.019 35.8595 104.019 34.0912 101.24L6.20355 57.416C5.26552 55.942 5.26552 54.058 6.20355 52.584L34.0912 8.75977Z",
+  },
+] as const;
 
-const SECONDARY_PATHS = {
-  leftLowerTriangle: "M27.5 115L3.6843 70.1424L51.3157 70.1424Z",
-  rightLowerTriangle: "M87.5 114L63.6843 69.1424L111.3157 69.1424Z",
-  horizontalBar: "M29 67.85H112V70.15H29V67.85Z",
-} as const;
-
-export function Logo({
-  size = 32,
-  className,
-  primaryClassName = "text-[#D3C79B]",
-  secondaryClassName = "fill-[#393838]",
-  ...props
-}: LogoProps) {
-  const maskId = useId().replace(/:/g, "");
+export function Logo({ size = 32, className, ...props }: LogoProps) {
+  const id = useId().replace(/:/g, "");
 
   return (
     <svg
-      viewBox="0 0 122 128"
+      viewBox="0 0 187 203"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       width={size}
-      className={cn(primaryClassName, className)}
+      className={cn(className)}
       {...props}
     >
       <defs>
-        {/* Mask that cuts out secondary shape areas from primary triangles */}
-        <mask id={maskId}>
-          <rect width="122" height="128" fill="white" />
-          <path d={SECONDARY_PATHS.leftLowerTriangle} fill="black" />
-          <path d={SECONDARY_PATHS.rightLowerTriangle} fill="black" />
-          <ellipse cx="59" cy="65" rx="30" ry="30" fill="black" />
-          <path d={SECONDARY_PATHS.horizontalBar} fill="black" />
-        </mask>
+        <filter id={`${id}-shadow`} x="-10%" y="-5%" width="120%" height="120%">
+          <feDropShadow dx="0" dy="4" stdDeviation="2" floodOpacity="0.4" />
+        </filter>
       </defs>
-      Primary shapes (gold triangles) — masked so secondary areas cut through
-      <g fill="currentColor" mask={`url(#${maskId})`}>
-        <path d={PRIMARY_PATHS.topTriangle} />
-        <path d={PRIMARY_PATHS.bottomTriangle} />
-        <path d={PRIMARY_PATHS.leftUpperTriangle} />
-        <path d={PRIMARY_PATHS.rightUpperTriangle} />
-      </g>
-      {/* Secondary shapes (background-colored) */}
-      <g className={secondaryClassName}>
-        <path d={SECONDARY_PATHS.leftLowerTriangle} />
-        <path d={SECONDARY_PATHS.rightLowerTriangle} />
-
-        <path d={SECONDARY_PATHS.horizontalBar} />
-      </g>
-      {/* Gold outlines on secondary shapes */}
-      <g style={{ fill: "none" }} stroke="currentColor" strokeWidth="2">
-        <path d={SECONDARY_PATHS.leftLowerTriangle} />
-        <path d={SECONDARY_PATHS.rightLowerTriangle} />
-        <ellipse cx="59" cy="65" rx="30" ry="30" />
-      </g>
-      <g className={secondaryClassName}>
-        <ellipse cx="59" cy="65" rx="30" ry="30" />
-      </g>
+      {SHAPES.map((shape, i) => (
+        <g key={i} filter={`url(#${id}-shadow)`}>
+          <path d={shape.fill} className="fill-logo-primary" />
+          <path
+            d={shape.stroke}
+            className="stroke-logo-secondary"
+            fill="none"
+            strokeWidth="3"
+          />
+        </g>
+      ))}
     </svg>
   );
 }

@@ -3,9 +3,7 @@ import type { Node, Edge } from "@xyflow/react";
 // Helper to add staggered animation delays to nodes
 export function addAnimationDelays(nodes: Node[]): Node[] {
   // Separate main nodes (entityNode, addObjectNode) from faded nodes
-  const mainNodes = nodes.filter(
-    (n) => n.type === "entityNode" || n.type === "addObjectNode"
-  );
+  const mainNodes = nodes.filter((n) => n.type === "entityNode");
   const fadedNodes = nodes.filter((n) => n.type === "fadedNode");
 
   // Add delays: main nodes first (0-0.4s), then faded nodes (0.3-0.8s)
@@ -31,12 +29,13 @@ export function addAnimationDelays(nodes: Node[]): Node[] {
 // Helper to add animation delays to edges based on connected nodes
 export function addEdgeAnimationDelays(
   edges: Edge[],
-  animatedNodes: Node[]
+  animatedNodes: Node[],
 ): Edge[] {
   // Create a map of node id to animation delay
   const nodeDelayMap = new Map<string, number>();
   animatedNodes.forEach((node) => {
-    const delay = (node.data as { animationDelay?: number }).animationDelay ?? 0;
+    const delay =
+      (node.data as { animationDelay?: number }).animationDelay ?? 0;
     nodeDelayMap.set(node.id, delay);
   });
 

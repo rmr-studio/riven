@@ -72,7 +72,7 @@ export function FeaturesCarousel() {
 
   return (
     <section className="py-16 md:py-24 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
+      <div className="mx-auto max-w-[80dvw]">
         <div className="mb-12">
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
             Everything you need to{" "}
@@ -82,8 +82,9 @@ export function FeaturesCarousel() {
             A CRM that adapts to your workflow, not the other way around.
           </p>
         </div>
+      </div>
 
-        <BentoCarousel mobileCards={mobileCards}>
+      <BentoCarousel mobileCards={mobileCards} inset="10dvw">
           {/* Slide 1: Main features */}
           <BentoSlide
             gridAreas={`
@@ -171,8 +172,7 @@ export function FeaturesCarousel() {
               <FeatureVisual icon={Workflow} />
             </BentoCard>
           </BentoSlide>
-        </BentoCarousel>
-      </div>
+      </BentoCarousel>
     </section>
   );
 }

@@ -1,39 +1,39 @@
-import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { Toaster } from "sonner";
-import { QueryProvider } from "@/providers/query-provider";
-import { ThemeProvider } from "@/providers/theme-provider";
-import "./globals.css";
+import { QueryProvider } from '@/providers/query-provider';
+import { ThemeProvider } from '@/providers/theme-provider';
+import type { Metadata, Viewport } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
+import { Toaster } from 'sonner';
+import './globals.css';
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://riven.dev'),
 
   title: {
-    default: 'Riven | Build a CRM that fits your business',
-    template: '%s | Riven'
+    default: 'Riven | Your Intelligent Unified Workspace Environment',
+    template: '%s | Riven',
   },
 
   description: 'Stop contorting your workflows to fit rigid tools. Riven adapts to you.',
 
   keywords: [
     'crm',
-    'custom crm',
-    'flexible crm',
+    'workspace',
+    'operational environment',
     'workflow automation',
     'business tools',
     'saas',
     'founders',
-    'startups'
+    'startups',
   ],
 
   openGraph: {
@@ -46,8 +46,8 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Riven - Build a CRM that fits your business'
-      }
+        alt: 'Riven - Build a CRM that fits your business',
+      },
     ],
     locale: 'en_US',
     type: 'website',
@@ -90,14 +90,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
-          themes={["light", "dark", "amber"]}
+          themes={['light', 'dark', 'amber']}
           disableTransitionOnChange
         >
           <QueryProvider>{children}</QueryProvider>

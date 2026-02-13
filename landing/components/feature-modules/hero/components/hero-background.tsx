@@ -44,9 +44,8 @@ export function HeroBackground({
 
       <>
         <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-background" />
-        {fade && (
-          <div className=" opacity-100 absolute inset-0 bg-linear-to-t from-transparent via-transparent to-background" />
-        )}
+
+        <div className="  absolute inset-0 bg-linear-to-t from-transparent via-transparent to-background" />
       </>
     </div>
   );
