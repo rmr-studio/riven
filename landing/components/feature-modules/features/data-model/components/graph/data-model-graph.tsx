@@ -69,7 +69,7 @@ export const DataModelGraph: FC<Props> = ({ tab }) => {
     return m;
   }, [resolvedNodes]);
 
-  const scale = isMobile ? 0.6 : containerWidth > 0 ? containerWidth / bounds.width : 1;
+  const scale = isMobile ? 0.6 : (containerWidth > 0 ? containerWidth / bounds.width : 1) * 0.8;
   const scaledH = bounds.height * scale;
 
   return (

@@ -145,7 +145,7 @@ export const nodeConfigurations: NodeConfigurations = {
     },
 
     createSecondaryNode('support-tickets', 'Support', MessageCircle, { x: 1000, y: 300 }),
-    createSecondaryNode('feedback', 'Feedback', Heart, { x: 860, y: 460 }),
+    createSecondaryNode('feedback', 'Feedback', Heart, { x: 860, y: -80 }),
   ],
 
   // Agency: Horizontal pipeline — evenly spaced left to right
@@ -164,7 +164,7 @@ export const nodeConfigurations: NodeConfigurations = {
         { x: 120, y: 180 },
       ),
       mobile: {
-        position: { x: 0, y: 0 },
+        position: { x: 300, y: 0 },
         dimensions: { width: 220, height: 160 },
       },
     },
@@ -182,7 +182,7 @@ export const nodeConfigurations: NodeConfigurations = {
         { x: 200, y: 500 },
       ),
       mobile: {
-        position: { x: 240, y: 0 },
+        position: { x: 240, y: 600 },
         dimensions: { width: 220, height: 160 },
       },
     },
@@ -200,7 +200,7 @@ export const nodeConfigurations: NodeConfigurations = {
         { x: 700, y: 180 },
       ),
       mobile: {
-        position: { x: 0, y: 180 },
+        position: { x: 0, y: 300 },
         dimensions: { width: 220, height: 160 },
       },
     },
@@ -221,25 +221,25 @@ export const nodeConfigurations: NodeConfigurations = {
     {
       ...createSecondaryNode('contracts', 'Contracts', FileText, { x: -100, y: 310 }),
       mobile: {
-        position: { x: 240, y: 180 },
+        position: { x: 440, y: 300 },
         dimensions: { width: 110, height: 36 },
       },
     },
     {
-      ...createSecondaryNode('time-entries', 'Time', Clock, { x: 200, y: 50 }),
+      ...createSecondaryNode('time-entries', 'Timesheets', Clock, { x: 200, y: 50 }),
       mobile: {
-        position: { x: 350, y: 180 },
+        position: { x: 0, y: 60 },
         dimensions: { width: 110, height: 36 },
       },
     },
-    createSecondaryNode('briefs', 'Briefs', Scroll, { x: 200, y: 330 }),
+    createSecondaryNode('briefs', 'Briefs', Scroll, { x: 0, y: 560 }),
     createSecondaryNode('feedback', 'Feedback', MessageCircle, { x: 550, y: 50 }),
     createSecondaryNode('milestones', 'Milestones', Flag, { x: 650, y: 500 }),
     createSecondaryNode('assets', 'Assets', Folder, { x: 900, y: 50 }),
     createSecondaryNode('reviews', 'Reviews', Star, { x: 900, y: 500 }),
     createSecondaryNode('invoices', 'Invoices', Receipt, { x: 1280, y: 60 }),
     createSecondaryNode('notes', 'Notes', Text, { x: 1280, y: 310 }),
-    createSecondaryNode('team-member', 'Team', Users, { x: 1280, y: 180 }),
+    createSecondaryNode('team-member', 'Team', Users, { x: 1120, y: 180 }),
   ],
 
   // E-commerce: Hub pattern — Customer in center, others at corners
@@ -276,7 +276,7 @@ export const nodeConfigurations: NodeConfigurations = {
         { x: 60, y: 50 },
       ),
       mobile: {
-        position: { x: 240, y: 0 },
+        position: { x: 240, y: 600 },
         dimensions: { width: 220, height: 160 },
       },
     },
@@ -294,7 +294,7 @@ export const nodeConfigurations: NodeConfigurations = {
         { x: 780, y: 50 },
       ),
       mobile: {
-        position: { x: 0, y: 180 },
+        position: { x: 0, y: 300 },
         dimensions: { width: 220, height: 160 },
       },
     },
@@ -326,7 +326,7 @@ export const nodeConfigurations: NodeConfigurations = {
     {
       ...createSecondaryNode('reviews', 'Reviews', Star, { x: 420, y: -30 }),
       mobile: {
-        position: { x: 240, y: 180 },
+        position: { x: 400, y: 180 },
         dimensions: { width: 110, height: 36 },
       },
     },
@@ -334,7 +334,7 @@ export const nodeConfigurations: NodeConfigurations = {
     {
       ...createSecondaryNode('carts', 'Carts', ShoppingCart, { x: 640, y: -30 }),
       mobile: {
-        position: { x: 350, y: 220 },
+        position: { x: 480, y: 400 },
         dimensions: { width: 110, height: 36 },
       },
     },

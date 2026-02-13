@@ -19,7 +19,7 @@ export const PrimaryNode: FC<Props> = ({ node, delay = 0 }) => {
       initial={{ opacity: 0, scale: 0.8, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.4, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="w-64 rounded-lg border border-border bg-background shadow-sm"
+      className="w-64 rounded-lg border border-border bg-background shadow shadow-sm shadow-background"
     >
       <div className="flex items-center justify-between border-b border-border/50 px-3 py-2.5">
         <div className="flex items-center gap-2">
@@ -57,15 +57,15 @@ export const SecondaryNode: FC<Props> = ({ node, delay }) => {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.6 }}
-      animate={{ opacity: 0.5, scale: 1 }}
+      animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="w-fit rounded-lg border border-border/30 bg-background px-3 py-2"
+      className="w-fit rounded-lg border border-primary bg-card-foreground px-3 py-2 shadow shadow-background"
     >
       <div className="flex items-center gap-2">
-        <div className="rounded bg-muted/30 p-1">
-          <Icon className="h-3 w-3 text-muted-foreground/60" />
+        <div className="rounded p-1">
+          <Icon className="h-3 w-3 text-secondary" />
         </div>
-        <span className="truncate text-xs font-medium text-muted-foreground">{title}</span>
+        <span className="truncate text-xs font-medium text-secondary">{title}</span>
       </div>
     </motion.div>
   );
