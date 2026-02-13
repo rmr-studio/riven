@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.media.Schema
+import kotlinx.coroutines.runBlocking
 import riven.core.enums.common.icon.IconType
+import riven.core.enums.workflow.OutputFieldType
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
@@ -16,17 +18,25 @@ import riven.core.models.entity.query.filter.QueryFilter
 import riven.core.models.entity.query.filter.RelationshipFilter
 import riven.core.models.entity.query.pagination.QueryPagination
 import riven.core.models.workflow.engine.state.NodeOutput
+import riven.core.models.workflow.engine.state.QueryEntityOutput
 import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
 import riven.core.models.workflow.node.config.WorkflowNodeConfigField
+import riven.core.models.workflow.node.config.WorkflowNodeOutputField
+import riven.core.models.workflow.node.config.WorkflowNodeOutputMetadata
 import riven.core.models.workflow.node.config.WorkflowNodeTypeMetadata
 import riven.core.models.workflow.node.config.validation.ConfigValidationError
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
+import riven.core.service.entity.query.EntityQueryService
 import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
+import riven.core.service.workflow.state.WorkflowNodeInputResolverService
+import java.util.*
 
 private val log = KotlinLogging.logger {}
+
+private const val DEFAULT_QUERY_LIMIT = 100
 
 /**
  * Configuration for QUERY_ENTITY action nodes.
@@ -226,6 +236,39 @@ data class WorkflowQueryEntityActionConfig(
                 description = "Optional timeout override in seconds"
             )
         )
+
+        val outputMetadata = WorkflowNodeOutputMetadata(
+            fields = listOf(
+                WorkflowNodeOutputField(
+                    key = "entities",
+                    label = "Matching Entities",
+                    type = OutputFieldType.ENTITY_LIST,
+                    description = "List of entities matching the query filters",
+                    entityTypeId = null,  // Dynamic - resolved from query.entityTypeId at runtime
+                    exampleValue = listOf(
+                        mapOf(
+                            "id" to "550e8400-e29b-41d4-a716-446655440000",
+                            "typeId" to "660e8400-e29b-41d4-a716-446655440001",
+                            "payload" to mapOf("attr-uuid" to "Example Value")
+                        )
+                    )
+                ),
+                WorkflowNodeOutputField(
+                    key = "totalCount",
+                    label = "Total Count",
+                    type = OutputFieldType.NUMBER,
+                    description = "Total number of matching entities (before pagination limit)",
+                    exampleValue = 42
+                ),
+                WorkflowNodeOutputField(
+                    key = "hasMore",
+                    label = "Has More",
+                    type = OutputFieldType.BOOLEAN,
+                    description = "Whether more results exist beyond the system limit",
+                    exampleValue = false
+                )
+            )
+        )
     }
 
     /**
@@ -363,17 +406,155 @@ data class WorkflowQueryEntityActionConfig(
     ): NodeOutput {
         log.info { "Executing QUERY_ENTITY for type: ${query.entityTypeId}" }
 
-        // TODO: Implement query execution via EntityQueryService
-        // This will need:
-        // 1. Resolve any template values in filters
-        // 2. Build query criteria from filter structure
-        // 3. Execute query against entity repository
-        // 4. Apply pagination and projection
-        // 5. Return results
+        // Get required services
+        val entityQueryService = services.service<EntityQueryService>()
+        val inputResolverService = services.service<WorkflowNodeInputResolverService>()
 
-        throw NotImplementedError(
-            "QUERY_ENTITY execution requires EntityQueryService implementation. " +
-                    "Filter: ${query.filter}, Pagination: $pagination"
+        // Resolve template values in the filter tree
+        val resolvedFilter = query.filter?.let { filter ->
+            resolveFilterTemplates(filter, dataStore, inputResolverService)
+        }
+
+        // Build query with resolved filter
+        val resolvedQuery = EntityQuery(
+            entityTypeId = query.entityTypeId,
+            filter = resolvedFilter,
+            maxDepth = query.maxDepth
         )
+
+        // Apply system-wide query limit to prevent runaway queries
+        val effectivePagination = pagination?.let {
+            it.copy(limit = minOf(it.limit, DEFAULT_QUERY_LIMIT))
+        } ?: QueryPagination(limit = DEFAULT_QUERY_LIMIT)
+
+        // Execute query (EntityQueryService.execute is suspend, so wrap in runBlocking)
+        val result = runBlocking {
+            entityQueryService.execute(
+                query = resolvedQuery,
+                workspaceId = dataStore.metadata.workspaceId,
+                pagination = effectivePagination,
+                projection = projection
+            )
+        }
+
+        // Transform entities to maps with full entity structure
+        val entityMaps = result.entities.map { entity ->
+            mapOf(
+                "id" to entity.id,
+                "typeId" to entity.typeId,
+                "payload" to entity.payload,
+                "icon" to entity.icon,
+                "identifierKey" to entity.identifierKey,
+                "createdAt" to entity.createdAt,
+                "updatedAt" to entity.updatedAt
+            )
+        }
+
+        // Return QueryEntityOutput with resolved data
+        return QueryEntityOutput(
+            entities = entityMaps,
+            totalCount = result.totalCount.toInt(),
+            hasMore = result.hasNextPage
+        )
+    }
+
+    /**
+     * Recursively resolves template FilterValues in the filter tree.
+     *
+     * Walks the filter structure and replaces any FilterValue.Template with
+     * FilterValue.Literal containing the resolved value.
+     *
+     * @param filter The filter to resolve templates in
+     * @param dataStore Workflow datastore for template resolution
+     * @param resolver Service to resolve template expressions
+     * @return Filter with all templates resolved to literals
+     */
+    private fun resolveFilterTemplates(
+        filter: QueryFilter,
+        dataStore: WorkflowDataStore,
+        resolver: WorkflowNodeInputResolverService
+    ): QueryFilter {
+        return when (filter) {
+            is QueryFilter.Attribute -> {
+                val resolvedValue = when (val value = filter.value) {
+                    is FilterValue.Literal -> value
+                    is FilterValue.Template -> {
+                        val resolved = resolver.resolve(value.expression, dataStore)
+                        FilterValue.Literal(resolved)
+                    }
+                }
+                filter.copy(value = resolvedValue)
+            }
+
+            is QueryFilter.And -> {
+                filter.copy(
+                    conditions = filter.conditions.map { condition ->
+                        resolveFilterTemplates(condition, dataStore, resolver)
+                    }
+                )
+            }
+
+            is QueryFilter.Or -> {
+                filter.copy(
+                    conditions = filter.conditions.map { condition ->
+                        resolveFilterTemplates(condition, dataStore, resolver)
+                    }
+                )
+            }
+
+            is QueryFilter.Relationship -> {
+                val resolvedCondition = resolveRelationshipConditionTemplates(
+                    filter.condition,
+                    dataStore,
+                    resolver
+                )
+                filter.copy(condition = resolvedCondition)
+            }
+        }
+    }
+
+    /**
+     * Resolves templates in relationship filter conditions.
+     *
+     * Handles template resolution for different relationship condition types.
+     *
+     * @param condition The relationship condition to resolve templates in
+     * @param dataStore Workflow datastore for template resolution
+     * @param resolver Service to resolve template expressions
+     * @return Relationship condition with all templates resolved
+     */
+    private fun resolveRelationshipConditionTemplates(
+        condition: RelationshipFilter,
+        dataStore: WorkflowDataStore,
+        resolver: WorkflowNodeInputResolverService
+    ): RelationshipFilter {
+        return when (condition) {
+            is RelationshipFilter.Exists -> condition
+            is RelationshipFilter.NotExists -> condition
+
+            is RelationshipFilter.TargetEquals -> {
+                val resolvedIds = condition.entityIds.map { id ->
+                    resolver.resolve(id, dataStore)?.toString() ?: id
+                }
+                condition.copy(entityIds = resolvedIds)
+            }
+
+            is RelationshipFilter.TargetMatches -> {
+                condition.copy(
+                    filter = resolveFilterTemplates(condition.filter, dataStore, resolver)
+                )
+            }
+
+            is RelationshipFilter.TargetTypeMatches -> {
+                val resolvedBranches = condition.branches.map { branch ->
+                    branch.copy(
+                        filter = branch.filter?.let { resolveFilterTemplates(it, dataStore, resolver) }
+                    )
+                }
+                condition.copy(branches = resolvedBranches)
+            }
+
+            is RelationshipFilter.CountMatches -> condition
+        }
     }
 }
