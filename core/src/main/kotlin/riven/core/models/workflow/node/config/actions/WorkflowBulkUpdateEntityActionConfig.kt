@@ -7,18 +7,22 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.media.Schema
 import kotlinx.coroutines.runBlocking
 import riven.core.enums.common.icon.IconType
+import riven.core.enums.common.validation.SchemaType
+import riven.core.enums.workflow.BulkUpdateErrorHandling
 import riven.core.enums.workflow.OutputFieldType
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
+import riven.core.models.entity.payload.EntityAttributePrimitivePayload
+import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.entity.query.EntityQuery
-import riven.core.models.entity.query.QueryProjection
 import riven.core.models.entity.query.filter.FilterValue
 import riven.core.models.entity.query.filter.QueryFilter
 import riven.core.models.entity.query.filter.RelationshipFilter
 import riven.core.models.entity.query.pagination.QueryPagination
+import riven.core.models.request.entity.SaveEntityRequest
+import riven.core.models.workflow.engine.state.BulkUpdateEntityOutput
 import riven.core.models.workflow.engine.state.NodeOutput
-import riven.core.models.workflow.engine.state.QueryEntityOutput
 import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
@@ -29,6 +33,7 @@ import riven.core.models.workflow.node.config.WorkflowNodeTypeMetadata
 import riven.core.models.workflow.node.config.validation.ConfigValidationError
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
+import riven.core.service.entity.EntityService
 import riven.core.service.entity.query.EntityQueryService
 import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
 import riven.core.service.workflow.state.WorkflowNodeInputResolverService
@@ -36,137 +41,85 @@ import java.util.*
 
 private val log = KotlinLogging.logger {}
 
-private const val DEFAULT_QUERY_LIMIT = 100
+private const val BULK_UPDATE_BATCH_SIZE = 50
+private const val QUERY_PAGE_SIZE = 100
 
 /**
- * Configuration for QUERY_ENTITY action nodes.
+ * Configuration for BULK_UPDATE_ENTITY action nodes.
  *
- * Queries entities of a specific type with optional filtering by attributes and relationships.
+ * Applies identical field updates to all entities matching a query.
  *
  * ## Configuration Properties
  *
- * @property query Core query definition with entity type, workspace, and optional filters
- * @property pagination Optional pagination and ordering configuration
- * @property projection Optional field selection for results
+ * @property query Embedded query definition to find entities for bulk update
+ * @property payload Map of attribute updates to apply to each matching entity (template-enabled values)
+ * @property errorHandling Error handling mode (FAIL_FAST or BEST_EFFORT)
+ * @property pagination Optional pagination for the embedded query
  * @property timeoutSeconds Optional timeout override in seconds
  *
- * ## Example Configurations
+ * ## Example Configuration
  *
- * ### Simple attribute filter (Status == "Active"):
  * ```json
  * {
  *   "version": 1,
  *   "type": "ACTION",
- *   "subType": "QUERY_ENTITY",
+ *   "subType": "BULK_UPDATE_ENTITY",
  *   "query": {
  *     "entityTypeId": "client-type-uuid",
  *     "filter": {
  *       "type": "ATTRIBUTE",
  *       "attributeId": "status-uuid",
  *       "operator": "EQUALS",
- *       "value": { "kind": "LITERAL", "value": "Active" }
+ *       "value": { "kind": "LITERAL", "value": "Pending" }
  *     }
- *   }
- * }
- * ```
- *
- * ### Compound filter (Status == "Active" AND ARR > 100000):
- * ```json
- * {
- *   "query": {
- *     "entityTypeId": "client-type-uuid",
- *     "filter": {
- *       "type": "AND",
- *       "conditions": [
- *         {
- *           "type": "ATTRIBUTE",
- *           "attributeId": "status-uuid",
- *           "operator": "EQUALS",
- *           "value": { "kind": "LITERAL", "value": "Active" }
- *         },
- *         {
- *           "type": "ATTRIBUTE",
- *           "attributeId": "arr-uuid",
- *           "operator": "GREATER_THAN",
- *           "value": { "kind": "LITERAL", "value": 100000 }
- *         }
- *       ]
- *     }
- *   }
- * }
- * ```
- *
- * ### Relationship filter (Projects related to a specific Client):
- * ```json
- * {
- *   "query": {
- *     "entityTypeId": "project-type-uuid",
- *     "filter": {
- *       "type": "RELATIONSHIP",
- *       "relationshipId": "client-relationship-uuid",
- *       "condition": {
- *         "type": "TARGET_EQUALS",
- *         "entityIds": ["{{ trigger.input.clientId }}"]
- *       }
- *     }
- *   }
- * }
- * ```
- *
- * ### Nested relationship filter (Projects with Premium Clients):
- * ```json
- * {
- *   "query": {
- *     "entityTypeId": "project-type-uuid",
- *     "filter": {
- *       "type": "RELATIONSHIP",
- *       "relationshipId": "client-relationship-uuid",
- *       "condition": {
- *         "type": "TARGET_MATCHES",
- *         "filter": {
- *           "type": "ATTRIBUTE",
- *           "attributeId": "client-tier-uuid",
- *           "operator": "EQUALS",
- *           "value": { "kind": "LITERAL", "value": "Premium" }
- *         }
- *       }
- *     }
- *   }
+ *   },
+ *   "payload": {
+ *     "status-uuid": "Active",
+ *     "updated-by-uuid": "{{ trigger.userId }}"
+ *   },
+ *   "errorHandling": "BEST_EFFORT"
  * }
  * ```
  *
  * ## Output
  *
  * Returns map with:
- * - `entities`: List of matching entities with payload, icon, identifier, timestamps
- * - `totalCount`: Total number of matching entities (before pagination)
- * - `hasMore`: Boolean indicating if more results exist beyond current page
+ * - `entitiesUpdated`: Count of entities successfully updated
+ * - `entitiesFailed`: Count of entities that failed to update
+ * - `failedEntityDetails`: List of failed entity IDs with error messages
+ * - `totalProcessed`: Total entities attempted
  */
 @Schema(
-    name = "WorkflowQueryEntityActionConfig",
-    description = "Configuration for QUERY_ENTITY action nodes that query entities by type with filtering."
+    name = "WorkflowBulkUpdateEntityActionConfig",
+    description = "Configuration for BULK_UPDATE_ENTITY action nodes that apply identical field updates to all entities matching a query."
 )
-@JsonTypeName("workflow_query_entity_action")
+@JsonTypeName("workflow_bulk_update_entity_action")
 @JsonDeserialize(using = JsonDeserializer.None::class)
-data class WorkflowQueryEntityActionConfig(
+data class WorkflowBulkUpdateEntityActionConfig(
     override val version: Int = 1,
 
     @param:Schema(
-        description = "Core query definition with entity type, workspace scope, and optional filters."
+        description = "Query to find entities for bulk update. Self-contained query configuration."
     )
     val query: EntityQuery,
 
     @param:Schema(
-        description = "Optional pagination and ordering configuration.",
+        description = "Map of attribute updates to apply to each matching entity. Keys are attribute UUID strings, values support templates.",
+        example = """{"attr-uuid": "New Value", "status-uuid": "{{ steps.x.output.status }}"}"""
+    )
+    val payload: Map<String, String> = emptyMap(),
+
+    @param:Schema(
+        description = "Error handling mode for individual entity update failures.",
+        defaultValue = "FAIL_FAST"
+    )
+    val errorHandling: BulkUpdateErrorHandling = BulkUpdateErrorHandling.FAIL_FAST,
+
+    @param:Schema(
+        description = "Optional pagination for the embedded query to limit entities processed.",
         nullable = true
     )
     val pagination: QueryPagination? = null,
-
-    @param:Schema(
-        description = "Optional field selection for query results.",
-        nullable = true
-    )
-    val projection: QueryProjection? = null,
 
     @param:Schema(
         description = "Optional timeout override in seconds.",
@@ -180,7 +133,7 @@ data class WorkflowQueryEntityActionConfig(
         get() = WorkflowNodeType.ACTION
 
     override val subType: WorkflowActionType
-        get() = WorkflowActionType.QUERY_ENTITY
+        get() = WorkflowActionType.BULK_UPDATE_ENTITY
 
     /**
      * Returns typed fields as a map for template resolution.
@@ -190,8 +143,9 @@ data class WorkflowQueryEntityActionConfig(
         get() = mapOf(
             "entityTypeId" to query.entityTypeId.toString(),
             "filter" to query.filter,
+            "payload" to payload,
+            "errorHandling" to errorHandling.name,
             "pagination" to pagination,
-            "projection" to projection,
             "timeoutSeconds" to timeoutSeconds
         )
 
@@ -200,9 +154,9 @@ data class WorkflowQueryEntityActionConfig(
 
     companion object {
         val metadata = WorkflowNodeTypeMetadata(
-            label = "Query Entities",
-            description = "Searches and retrieves entity instances",
-            icon = IconType.SEARCH,
+            label = "Bulk Update Entities",
+            description = "Applies identical updates to all entities matching a query",
+            icon = IconType.LAYERS,
             category = WorkflowNodeType.ACTION
         )
 
@@ -212,21 +166,28 @@ data class WorkflowQueryEntityActionConfig(
                 label = "Entity Query",
                 type = WorkflowNodeConfigFieldType.ENTITY_QUERY,
                 required = true,
-                description = "Query definition with entity type and optional filters"
+                description = "Query to find entities for bulk update"
+            ),
+            WorkflowNodeConfigField(
+                key = "payload",
+                label = "Payload",
+                type = WorkflowNodeConfigFieldType.KEY_VALUE,
+                required = true,
+                description = "Map of attribute updates to apply to each entity"
+            ),
+            WorkflowNodeConfigField(
+                key = "errorHandling",
+                label = "Error Handling",
+                type = WorkflowNodeConfigFieldType.ENUM,
+                required = true,
+                description = "How to handle individual entity update failures"
             ),
             WorkflowNodeConfigField(
                 key = "pagination",
                 label = "Pagination",
                 type = WorkflowNodeConfigFieldType.JSON,
                 required = false,
-                description = "Pagination and ordering configuration"
-            ),
-            WorkflowNodeConfigField(
-                key = "projection",
-                label = "Projection",
-                type = WorkflowNodeConfigFieldType.JSON,
-                required = false,
-                description = "Field selection for query results"
+                description = "Optional pagination to limit entities processed"
             ),
             WorkflowNodeConfigField(
                 key = "timeoutSeconds",
@@ -240,32 +201,32 @@ data class WorkflowQueryEntityActionConfig(
         val outputMetadata = WorkflowNodeOutputMetadata(
             fields = listOf(
                 WorkflowNodeOutputField(
-                    key = "entities",
-                    label = "Matching Entities",
-                    type = OutputFieldType.ENTITY_LIST,
-                    description = "List of entities matching the query filters",
-                    entityTypeId = null,  // Dynamic - resolved from query.entityTypeId at runtime
-                    exampleValue = listOf(
-                        mapOf(
-                            "id" to "550e8400-e29b-41d4-a716-446655440000",
-                            "typeId" to "660e8400-e29b-41d4-a716-446655440001",
-                            "payload" to mapOf("attr-uuid" to "Example Value")
-                        )
-                    )
-                ),
-                WorkflowNodeOutputField(
-                    key = "totalCount",
-                    label = "Total Count",
+                    key = "entitiesUpdated",
+                    label = "Entities Updated",
                     type = OutputFieldType.NUMBER,
-                    description = "Total number of matching entities (before pagination limit)",
-                    exampleValue = 42
+                    description = "Count of entities successfully updated",
+                    exampleValue = 25
                 ),
                 WorkflowNodeOutputField(
-                    key = "hasMore",
-                    label = "Has More",
-                    type = OutputFieldType.BOOLEAN,
-                    description = "Whether more results exist beyond the system limit",
-                    exampleValue = false
+                    key = "entitiesFailed",
+                    label = "Entities Failed",
+                    type = OutputFieldType.NUMBER,
+                    description = "Count of entities that failed to update",
+                    exampleValue = 0
+                ),
+                WorkflowNodeOutputField(
+                    key = "failedEntityDetails",
+                    label = "Failed Entity Details",
+                    type = OutputFieldType.LIST,
+                    description = "Details of failed entity updates with entityId and error",
+                    exampleValue = emptyList<Map<String, Any?>>()
+                ),
+                WorkflowNodeOutputField(
+                    key = "totalProcessed",
+                    label = "Total Processed",
+                    type = OutputFieldType.NUMBER,
+                    description = "Total entities attempted",
+                    exampleValue = 25
                 )
             )
         )
@@ -275,9 +236,9 @@ data class WorkflowQueryEntityActionConfig(
      * Validates this configuration.
      *
      * Checks:
-     * - entityTypeId is valid UUID
-     * - filter structure is valid (recursive validation)
-     * - pagination values are non-negative
+     * - query.filter structure is valid (recursive validation)
+     * - payload values have valid template syntax
+     * - pagination values are non-negative if present
      * - timeout is non-negative if provided
      *
      * @param injector Spring managed provider to inject services into model
@@ -291,6 +252,9 @@ data class WorkflowQueryEntityActionConfig(
         query.filter?.let { filter ->
             errors.addAll(validateFilter(filter, "query.filter", validationService))
         }
+
+        // Validate payload templates
+        errors.addAll(validationService.validateTemplateMap(payload, "payload"))
 
         // Validate pagination if present
         pagination?.let { paging ->
@@ -308,6 +272,12 @@ data class WorkflowQueryEntityActionConfig(
         return ConfigValidationResult(errors)
     }
 
+    /**
+     * Recursively validates a QueryFilter structure.
+     *
+     * Walks the filter tree validating FilterValue.Template syntax and
+     * RelationshipFilter conditions at each level.
+     */
     private fun validateFilter(
         filter: QueryFilter,
         path: String,
@@ -344,6 +314,9 @@ data class WorkflowQueryEntityActionConfig(
         }
     }
 
+    /**
+     * Validates a FilterValue (literal or template).
+     */
     private fun validateFilterValue(
         value: FilterValue,
         path: String,
@@ -355,6 +328,9 @@ data class WorkflowQueryEntityActionConfig(
         }
     }
 
+    /**
+     * Validates a RelationshipFilter condition.
+     */
     private fun validateRelationshipCondition(
         condition: RelationshipFilter,
         path: String,
@@ -404,57 +380,154 @@ data class WorkflowQueryEntityActionConfig(
         inputs: Map<String, Any?>,
         services: NodeServiceProvider
     ): NodeOutput {
-        log.info { "Executing QUERY_ENTITY for type: ${query.entityTypeId}" }
+        log.info { "Executing BULK_UPDATE_ENTITY for type: ${query.entityTypeId}, errorHandling: $errorHandling" }
 
         // Get required services
         val entityQueryService = services.service<EntityQueryService>()
-        val inputResolverService = services.service<WorkflowNodeInputResolverService>()
+        val entityService = services.service<EntityService>()
+        val inputResolver = services.service<WorkflowNodeInputResolverService>()
+        val workspaceId = dataStore.metadata.workspaceId
 
-        // Resolve template values in the filter tree
+        // Resolve template FilterValues in query.filter (reuse pattern from QueryEntityActionConfig)
         val resolvedFilter = query.filter?.let { filter ->
-            resolveFilterTemplates(filter, dataStore, inputResolverService)
+            resolveFilterTemplates(filter, dataStore, inputResolver)
         }
 
-        // Build query with resolved filter
-        val resolvedQuery = EntityQuery(
-            entityTypeId = query.entityTypeId,
-            filter = resolvedFilter,
-            maxDepth = query.maxDepth
-        )
+        // Resolve payload templates - extract the resolved payload map from inputs
+        @Suppress("UNCHECKED_CAST")
+        val resolvedPayload = inputs["payload"] as? Map<*, *> ?: emptyMap<String, Any?>()
 
-        // Apply system-wide query limit to prevent runaway queries
-        val effectivePagination = pagination?.let {
-            it.copy(limit = minOf(it.limit, DEFAULT_QUERY_LIMIT))
-        } ?: QueryPagination(limit = DEFAULT_QUERY_LIMIT)
+        // Query ALL matching entities using pagination loop
+        val allEntityIds = mutableListOf<UUID>()
+        var currentOffset = 0
+        var hasNextPage = true
 
-        // Execute query (EntityQueryService.execute is suspend, so wrap in runBlocking)
-        val result = runBlocking {
-            entityQueryService.execute(
-                query = resolvedQuery,
-                workspaceId = dataStore.metadata.workspaceId,
-                pagination = effectivePagination,
-                projection = projection
+        log.info { "Querying all matching entities with pagination (page size: $QUERY_PAGE_SIZE)" }
+
+        while (hasNextPage) {
+            val pageQuery = EntityQuery(
+                entityTypeId = query.entityTypeId,
+                filter = resolvedFilter,
+                maxDepth = query.maxDepth
+            )
+
+            val pagePagination = QueryPagination(
+                limit = QUERY_PAGE_SIZE,
+                offset = currentOffset
+            )
+
+            val pageResult = runBlocking {
+                entityQueryService.execute(
+                    query = pageQuery,
+                    workspaceId = workspaceId,
+                    pagination = pagePagination,
+                    projection = null
+                )
+            }
+
+            // Accumulate entity IDs
+            allEntityIds.addAll(pageResult.entities.map { it.id })
+
+            // Check if there are more pages
+            hasNextPage = pageResult.hasNextPage
+            currentOffset += QUERY_PAGE_SIZE
+
+            log.debug { "Fetched page with ${pageResult.entities.size} entities, total so far: ${allEntityIds.size}" }
+        }
+
+        log.info { "Found ${allEntityIds.size} total entities to update" }
+
+        if (allEntityIds.isEmpty()) {
+            log.info { "No entities found matching query, returning zero counts" }
+            return BulkUpdateEntityOutput(
+                entitiesUpdated = 0,
+                entitiesFailed = 0,
+                failedEntityDetails = emptyList(),
+                totalProcessed = 0
             )
         }
 
-        // Transform entities to maps with full entity structure
-        val entityMaps = result.entities.map { entity ->
-            mapOf(
-                "id" to entity.id,
-                "typeId" to entity.typeId,
-                "payload" to entity.payload,
-                "icon" to entity.icon,
-                "identifierKey" to entity.identifierKey,
-                "createdAt" to entity.createdAt,
-                "updatedAt" to entity.updatedAt
-            )
+        // Process entities in batches
+        var entitiesUpdated = 0
+        var entitiesFailed = 0
+        val failedDetails = mutableListOf<Map<String, Any?>>()
+
+        log.info { "Processing ${allEntityIds.size} entities in batches of $BULK_UPDATE_BATCH_SIZE" }
+
+        for (batch in allEntityIds.chunked(BULK_UPDATE_BATCH_SIZE)) {
+            for (entityId in batch) {
+                try {
+                    // Get existing entity to determine type
+                    val existingEntity = entityService.getEntity(entityId)
+
+                    // Map resolved payload to proper format (same as UpdateEntityActionConfig)
+                    @Suppress("UNCHECKED_CAST")
+                    val entityPayload = resolvedPayload.mapKeys { (key, _) ->
+                        UUID.fromString(key as String)
+                    }.mapValues { (_, value) ->
+                        EntityAttributeRequest(
+                            EntityAttributePrimitivePayload(
+                                value = value,
+                                schemaType = SchemaType.TEXT  // Default to TEXT
+                            )
+                        )
+                    }
+
+                    // Update entity via EntityService
+                    val saveRequest = SaveEntityRequest(
+                        id = entityId,
+                        payload = entityPayload,
+                        icon = null
+                    )
+
+                    entityService.saveEntity(
+                        workspaceId,
+                        existingEntity.typeId,
+                        saveRequest
+                    )
+
+                    entitiesUpdated++
+
+                } catch (e: Exception) {
+                    when (errorHandling) {
+                        BulkUpdateErrorHandling.FAIL_FAST -> {
+                            log.error { "FAIL_FAST: Entity $entityId update failed: ${e.message}" }
+                            // Return immediately with what succeeded so far
+                            return BulkUpdateEntityOutput(
+                                entitiesUpdated = entitiesUpdated,
+                                entitiesFailed = 1,
+                                failedEntityDetails = listOf(
+                                    mapOf(
+                                        "entityId" to entityId.toString(),
+                                        "error" to (e.message ?: "Unknown error")
+                                    )
+                                ),
+                                totalProcessed = entitiesUpdated + 1
+                            )
+                        }
+                        BulkUpdateErrorHandling.BEST_EFFORT -> {
+                            log.warn { "BEST_EFFORT: Entity $entityId update failed: ${e.message}" }
+                            entitiesFailed++
+                            failedDetails.add(
+                                mapOf(
+                                    "entityId" to entityId.toString(),
+                                    "error" to (e.message ?: "Unknown error")
+                                )
+                            )
+                        }
+                    }
+                }
+            }
         }
 
-        // Return QueryEntityOutput with resolved data
-        return QueryEntityOutput(
-            entities = entityMaps,
-            totalCount = result.totalCount.toInt(),
-            hasMore = result.hasNextPage
+        val totalProcessed = entitiesUpdated + entitiesFailed
+        log.info { "BULK_UPDATE_ENTITY complete: $entitiesUpdated updated, $entitiesFailed failed, $totalProcessed total" }
+
+        return BulkUpdateEntityOutput(
+            entitiesUpdated = entitiesUpdated,
+            entitiesFailed = entitiesFailed,
+            failedEntityDetails = failedDetails,
+            totalProcessed = totalProcessed
         )
     }
 

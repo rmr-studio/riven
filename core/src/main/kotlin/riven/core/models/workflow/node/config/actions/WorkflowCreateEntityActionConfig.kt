@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.common.icon.IconType
 import riven.core.enums.common.validation.SchemaType
+import riven.core.enums.workflow.OutputFieldType
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
@@ -19,6 +20,8 @@ import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
 import riven.core.models.workflow.node.config.WorkflowNodeConfigField
+import riven.core.models.workflow.node.config.WorkflowNodeOutputField
+import riven.core.models.workflow.node.config.WorkflowNodeOutputMetadata
 import riven.core.models.workflow.node.config.WorkflowNodeTypeMetadata
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
@@ -135,6 +138,30 @@ data class WorkflowCreateEntityActionConfig(
                 label = "Timeout (seconds)",
                 type = WorkflowNodeConfigFieldType.DURATION,
                 required = false,
+            )
+        )
+
+        val outputMetadata = WorkflowNodeOutputMetadata(
+            fields = listOf(
+                WorkflowNodeOutputField(
+                    key = "entityId",
+                    label = "Entity ID",
+                    type = OutputFieldType.UUID,
+                    exampleValue = "550e8400-e29b-41d4-a716-446655440000"
+                ),
+                WorkflowNodeOutputField(
+                    key = "entityTypeId",
+                    label = "Entity Type ID",
+                    type = OutputFieldType.UUID,
+                    exampleValue = "660e8400-e29b-41d4-a716-446655440001"
+                ),
+                WorkflowNodeOutputField(
+                    key = "payload",
+                    label = "Entity Payload",
+                    type = OutputFieldType.MAP,
+                    description = "Entity attributes as UUID-keyed map",
+                    exampleValue = mapOf("770e8400-e29b-41d4-a716-446655440002" to "Example Value")
+                )
             )
         )
     }

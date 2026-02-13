@@ -96,6 +96,28 @@ data class QueryEntityOutput(
     )
 }
 
+/**
+ * Output from BULK_UPDATE_ENTITY action.
+ *
+ * @property entitiesUpdated Count of entities successfully updated
+ * @property entitiesFailed Count of entities that failed to update
+ * @property failedEntityDetails List of failed entity IDs with error messages (empty for FAIL_FAST)
+ * @property totalProcessed Total entities attempted (entitiesUpdated + entitiesFailed)
+ */
+data class BulkUpdateEntityOutput(
+    val entitiesUpdated: Int,
+    val entitiesFailed: Int,
+    val failedEntityDetails: List<Map<String, Any?>>,
+    val totalProcessed: Int
+) : NodeOutput {
+    override fun toMap(): Map<String, Any?> = mapOf(
+        "entitiesUpdated" to entitiesUpdated,
+        "entitiesFailed" to entitiesFailed,
+        "failedEntityDetails" to failedEntityDetails,
+        "totalProcessed" to totalProcessed
+    )
+}
+
 // =============================================================================
 // HTTP Action Output
 // =============================================================================

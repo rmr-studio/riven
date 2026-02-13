@@ -3,6 +3,7 @@ package riven.core.models.response.workflow
 import io.swagger.v3.oas.annotations.media.Schema
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.workflow.node.config.WorkflowNodeConfigField
+import riven.core.models.workflow.node.config.WorkflowNodeOutputMetadata
 import riven.core.models.workflow.node.config.WorkflowNodeTypeMetadata
 
 /**
@@ -35,5 +36,10 @@ data class NodeTypeSchemaResponse(
     @Schema(
         description = "Configuration field definitions for this node type"
     )
-    val configSchema: List<WorkflowNodeConfigField>
+    val configSchema: List<WorkflowNodeConfigField>,
+
+    @Schema(
+        description = "Output field definitions describing the shape of this node's execution output"
+    )
+    val outputMetadata: WorkflowNodeOutputMetadata? = null
 )

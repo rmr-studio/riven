@@ -176,6 +176,7 @@ class WorkflowCoordinationService(
                 is WorkflowUpdateEntityActionConfig -> config.config
                 is WorkflowDeleteEntityActionConfig -> config.config
                 is WorkflowQueryEntityActionConfig -> config.config
+                is WorkflowBulkUpdateEntityActionConfig -> config.config
                 // HTTP_REQUEST uses typed fields instead of config map
                 is WorkflowHttpRequestActionConfig -> mapOf(
                     "url" to config.url,
