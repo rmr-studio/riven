@@ -5,6 +5,7 @@ enum class WorkflowActionType {
     UPDATE_ENTITY,
     DELETE_ENTITY,
     QUERY_ENTITY,
+    BULK_UPDATE_ENTITY,
     LINK_ENTITY,
     INTEGRATION_REQUEST,
     HTTP_REQUEST,
