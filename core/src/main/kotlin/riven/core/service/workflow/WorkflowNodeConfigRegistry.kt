@@ -171,6 +171,10 @@ class WorkflowNodeConfigRegistry {
                 WorkflowNodeType.ACTION,
                 "QUERY_ENTITY"
             ),
+            registerNode<WorkflowBulkUpdateEntityActionConfig>(
+                WorkflowNodeType.ACTION,
+                "BULK_UPDATE_ENTITY"
+            ),
             registerNode<WorkflowHttpRequestActionConfig>(
                 WorkflowNodeType.ACTION,
                 "HTTP_REQUEST"
