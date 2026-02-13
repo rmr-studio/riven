@@ -13,7 +13,7 @@ This roadmap delivers output metadata infrastructure for workflow nodes, enablin
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation Infrastructure** - Data model and registry for output metadata
-- [ ] **Phase 2: Query & Bulk Update Execution** - Enable entity querying and bulk updates in workflows
+- [x] **Phase 2: Query & Bulk Update Execution** - Enable entity querying and bulk updates in workflows
 - [ ] **Phase 3: Output Metadata Coverage** - Add output schemas to all existing node types
 
 ## Phase Details
@@ -50,9 +50,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — QueryEntity execute() implementation with template resolution and outputMetadata
-- [ ] 02-02-PLAN.md — BulkUpdateEntity model layer: enum, output type, config class with validation
-- [ ] 02-03-PLAN.md — BulkUpdateEntity execute() with batch processing, error handling, and registration
+- [x] 02-01-PLAN.md — QueryEntity execute() implementation with template resolution and outputMetadata
+- [x] 02-02-PLAN.md — BulkUpdateEntity model layer: enum, output type, config class with validation
+- [x] 02-03-PLAN.md — BulkUpdateEntity execute() with batch processing, error handling, and registration
 
 ### Phase 3: Output Metadata Coverage
 **Goal**: All existing node types declare output schemas for frontend consumption
@@ -79,5 +79,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation Infrastructure | 2/2 | Complete | 2026-02-13 |
-| 2. Query & Bulk Update Execution | 0/3 | Not started | - |
+| 2. Query & Bulk Update Execution | 3/3 | Complete | 2026-02-13 |
 | 3. Output Metadata Coverage | 0/1 | Not started | - |
