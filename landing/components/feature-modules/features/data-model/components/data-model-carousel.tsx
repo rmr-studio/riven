@@ -1,4 +1,5 @@
 import { BentoCard, BentoCarousel, Slide } from '@/components/ui/bento-carousel';
+import { InterconnectionDiagram } from './carousel/graphic/1.interconnections';
 
 export const DataModelFeatureCarousel = () => {
   const slides: Slide[] = [
@@ -11,22 +12,27 @@ export const DataModelFeatureCarousel = () => {
         cols: '1fr 1fr 1fr',
         rows: '1fr 1fr',
       },
-      md: {
+      lg: {
         areas: `
           "feature feature"
           "standard1 standard2"
-          "standard3 standard3"
+          "standard1 standard3"
         `,
         cols: '1fr 1fr',
         rows: '1.5fr 1fr 1fr',
       },
       cards: [
         <BentoCard
+          className="relative h-120"
           key="feature"
           area="feature"
-          title="Instant visibility into all your relationships"
-          description="Real-time global database of every contact & company your business interacts with."
-        />,
+          title="Cross domain business intelligence"
+          description="Link entities, create associations and generate power insights and pattern recognition capabilities"
+        >
+          <div className="relative h-full w-full overflow-hidden max-md:mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+            <InterconnectionDiagram className="absolute inset-0 h-full w-full max-md:left-1/2 max-md:w-[170%] max-md:-translate-x-1/2 md:static md:h-full md:w-full" />
+          </div>
+        </BentoCard>,
         <BentoCard
           key="standard1"
           area="standard1"

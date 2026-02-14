@@ -1,8 +1,12 @@
 'use client';
 
-import { BentoCard, BentoCarouselContainer, BentoSlide } from '@/components/ui/bento-carousel-container';
-export { BentoCard };
+import {
+  BentoCard,
+  BentoCarouselContainer,
+  BentoSlide,
+} from '@/components/ui/bento-carousel-container';
 import { FC, Fragment, ReactNode } from 'react';
+export { BentoCard };
 
 interface BentoLayout {
   areas: string;
@@ -12,7 +16,7 @@ interface BentoLayout {
 
 export interface Slide {
   layout: BentoLayout;
-  md?: BentoLayout;
+  lg?: BentoLayout;
   cards: ReactNode[];
 }
 
@@ -28,7 +32,13 @@ export const BentoCarousel: FC<Props> = ({ slides }) => {
       {slides.map((slide, index) => {
         const { areas, cols, rows } = slide.layout;
         return (
-          <BentoSlide key={`slide-${index}`} gridAreas={areas} gridCols={cols} gridRows={rows} md={slide.md}>
+          <BentoSlide
+            key={`slide-${index}`}
+            gridAreas={areas}
+            gridCols={cols}
+            gridRows={rows}
+            lg={slide.lg}
+          >
             {slide.cards.map((card, cardIndex) => (
               <Fragment key={`slide-${index}-card-${cardIndex}`}>{card}</Fragment>
             ))}

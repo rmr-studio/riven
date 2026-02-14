@@ -1,3 +1,4 @@
+import { useIsMobile } from '@/hooks/use-is-mobile';
 import { AnimatePresence, motion } from 'motion/react';
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { edgeConfigurations } from '../../config/edge-configurations';
@@ -26,8 +27,7 @@ export const DataModelGraph: FC<Props> = ({ tab }) => {
     return () => observer.disconnect();
   }, []);
 
-  const isMobile = containerWidth > 0 && containerWidth < 640;
-
+  const isMobile = useIsMobile('md');
   const resolvedNodes = useMemo(() => {
     const raw = nodeConfigurations[tab];
     if (!isMobile) return raw;
@@ -114,6 +114,20 @@ export const DataModelGraph: FC<Props> = ({ tab }) => {
                 width={bounds.width}
                 height={bounds.height}
               >
+                <defs>
+                  <linearGradient
+                    id="edgeGradient"
+                    x1="0"
+                    y1="0"
+                    x2={bounds.width}
+                    y2="0"
+                    gradientUnits="userSpaceOnUse"
+                  >
+                    <stop offset="0%" stopColor="#38bdf8" />
+                    <stop offset="50%" stopColor="#8b5cf6" />
+                    <stop offset="100%" stopColor="#f43f5e" />
+                  </linearGradient>
+                </defs>
                 {currentEdges.map((edge) => {
                   const source = nodeMap.get(edge.source);
                   const target = nodeMap.get(edge.target);

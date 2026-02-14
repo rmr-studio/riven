@@ -1,62 +1,19 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselPrevious,
-  CarouselNext,
-  useCarousel,
-} from "@/components/ui/carousel";
-
-export type Breakpoint = "sm" | "md" | "lg";
-
-export function useBreakpoint(): Breakpoint {
-  const [breakpoint, setBreakpoint] = React.useState<Breakpoint>("lg");
-
-  React.useEffect(() => {
-    const mdQuery = window.matchMedia("(min-width: 768px)");
-    const lgQuery = window.matchMedia("(min-width: 1024px)");
-
-    const updateBreakpoint = () => {
-      if (lgQuery.matches) {
-        setBreakpoint("lg");
-      } else if (mdQuery.matches) {
-        setBreakpoint("md");
-      } else {
-        setBreakpoint("sm");
-      }
-    };
-
-    updateBreakpoint();
-
-    mdQuery.addEventListener("change", updateBreakpoint);
-    lgQuery.addEventListener("change", updateBreakpoint);
-
-    return () => {
-      mdQuery.removeEventListener("change", updateBreakpoint);
-      lgQuery.removeEventListener("change", updateBreakpoint);
-    };
-  }, []);
-
-  return breakpoint;
-}
-
-function useIsMobile() {
-  const breakpoint = useBreakpoint();
-  return breakpoint === "sm";
-}
+import { Button } from '@/components/ui/button';
+import { Carousel, CarouselContent, CarouselItem, useCarousel } from '@/components/ui/carousel';
+import { useBreakpoint } from '@/hooks/use-breakpoint';
+import { useIsMobile } from '@/hooks/use-is-mobile';
+import { cn } from '@/lib/utils';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import * as React from 'react';
+import { BGPattern } from './background/grids';
 
 function MobileCarouselNav() {
-  const { scrollPrev, scrollNext, canScrollPrev, canScrollNext } =
-    useCarousel();
+  const { scrollPrev, scrollNext, canScrollPrev, canScrollNext } = useCarousel();
 
   return (
-    <div className="flex justify-end gap-2 mt-6">
+    <div className="mt-6 flex justify-end gap-2">
       <Button
         variant="outline"
         size="icon"
@@ -90,32 +47,27 @@ interface BentoCardProps {
   area?: string;
 }
 
-export function BentoCard({
-  title,
-  description,
-  className,
-  children,
-  area,
-}: BentoCardProps) {
+export function BentoCard({ title, description, className, children, area }: BentoCardProps) {
   return (
     <div
       className={cn(
-        "rounded-2xl bg-secondary/50 border border-border p-6 flex flex-col overflow-hidden",
+        'relative flex flex-col overflow-hidden rounded-2xl border border-border p-6',
         className,
       )}
       style={area ? { gridArea: area } : undefined}
     >
-      <div className="space-y-2 flex-shrink-0">
+      <BGPattern
+        variant="grid"
+        // mask="fade-edges"
+        className="z-0 bg-secondary"
+        size={8}
+        fill="color-mix(in srgb, var(--primary) 10%, transparent)"
+      />
+      <div className="relative z-10 flex-shrink-0 space-y-2">
         <h3 className="text-lg font-semibold">{title}</h3>
-        {description && (
-          <p className="text-sm text-muted-foreground line-clamp-3">
-            {description}
-          </p>
-        )}
+        {description && <p className="line-clamp-3 text-sm text-muted-foreground">{description}</p>}
       </div>
-      {children && (
-        <div className="flex-1 mt-4 min-h-0 overflow-hidden">{children}</div>
-      )}
+      {children && <div className="relative z-10 mt-4 min-h-0 flex-1">{children}</div>}
     </div>
   );
 }
@@ -132,15 +84,15 @@ interface ResponsiveGridConfig {
 interface BentoSlideProps {
   children: React.ReactNode;
   className?: string;
-  /** CSS grid-template-areas string for custom layouts (lg breakpoint) */
+  /** CSS grid-template-areas string for custom layouts (xl breakpoint) */
   gridAreas?: string;
-  /** CSS grid-template-columns (lg breakpoint) */
+  /** CSS grid-template-columns (xl breakpoint) */
   gridCols?: string;
-  /** CSS grid-template-rows (lg breakpoint) */
+  /** CSS grid-template-rows (xl breakpoint) */
   gridRows?: string;
   /** Grid config for md breakpoint (768px-1023px) */
   md?: ResponsiveGridConfig;
-  /** Grid config for lg breakpoint (1024px+), overrides gridAreas/gridCols/gridRows */
+  /** Grid config for lg breakpoint (1024px-1279px) */
   lg?: ResponsiveGridConfig;
 }
 
@@ -148,8 +100,8 @@ export function BentoSlide({
   children,
   className,
   gridAreas,
-  gridCols = "repeat(3, 1fr)",
-  gridRows = "repeat(2, 1fr)",
+  gridCols = 'repeat(3, 1fr)',
+  gridRows = 'repeat(2, 1fr)',
   md,
   lg,
 }: BentoSlideProps) {
@@ -157,19 +109,27 @@ export function BentoSlide({
 
   // Determine grid config based on current breakpoint
   const getGridConfig = (): ResponsiveGridConfig => {
-    if (breakpoint === "md" && md) {
+    if (breakpoint === 'md' && md) {
       return {
         areas: md.areas,
-        cols: md.cols ?? "repeat(2, 1fr)",
-        rows: md.rows ?? "auto",
+        cols: md.cols ?? 'repeat(2, 1fr)',
+        rows: md.rows ?? 'auto',
       };
     }
 
-    // lg breakpoint or fallback
+    if (breakpoint === 'lg' && lg) {
+      return {
+        areas: lg.areas ?? gridAreas,
+        cols: lg.cols ?? gridCols,
+        rows: lg.rows ?? gridRows,
+      };
+    }
+
+    // xl breakpoint or fallback
     return {
-      areas: lg?.areas ?? gridAreas,
-      cols: lg?.cols ?? gridCols,
-      rows: lg?.rows ?? gridRows,
+      areas: gridAreas,
+      cols: gridCols,
+      rows: gridRows,
     };
   };
 
@@ -177,7 +137,7 @@ export function BentoSlide({
 
   return (
     <div
-      className={cn("grid gap-4 h-full", className)}
+      className={cn('grid h-full gap-4', className)}
       style={{
         gridTemplateAreas: config.areas,
         gridTemplateColumns: config.cols,
@@ -212,7 +172,7 @@ export function BentoCarouselContainer({
   const [canScrollLeft, setCanScrollLeft] = React.useState(false);
   const [canScrollRight, setCanScrollRight] = React.useState(true);
   const [isDragging, setIsDragging] = React.useState(false);
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile('md');
 
   // Drag state refs (using refs to avoid re-renders during drag)
   const dragStartX = React.useRef(0);
@@ -225,7 +185,7 @@ export function BentoCarouselContainer({
   const getSlideWidth = React.useCallback(() => {
     const container = containerRef.current;
     if (!container) return 0;
-    const firstSlide = container.querySelector("[data-slide]") as HTMLElement;
+    const firstSlide = container.querySelector('[data-slide]') as HTMLElement;
     return firstSlide ? firstSlide.offsetWidth + 24 : 0; // 24px gap
   }, []);
 
@@ -251,8 +211,8 @@ export function BentoCarouselContainer({
 
   React.useEffect(() => {
     checkScrollability();
-    window.addEventListener("resize", checkScrollability);
-    return () => window.removeEventListener("resize", checkScrollability);
+    window.addEventListener('resize', checkScrollability);
+    return () => window.removeEventListener('resize', checkScrollability);
   }, [checkScrollability]);
 
   // Drag handlers
@@ -312,7 +272,7 @@ export function BentoCarouselContainer({
 
     // Smoothly scroll to the target slide
     const targetScrollLeft = targetSlide * slideWidth;
-    container.scrollTo({ left: targetScrollLeft, behavior: "smooth" });
+    container.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
   };
 
   // Mouse events
@@ -346,13 +306,13 @@ export function BentoCarouselContainer({
     handleDragEnd();
   };
 
-  const scroll = (direction: "left" | "right") => {
+  const scroll = (direction: 'left' | 'right') => {
     const container = containerRef.current;
     if (!container) return;
 
     // Update slide index immediately before animation
     setCurrentSlide((prev) => {
-      if (direction === "right") {
+      if (direction === 'right') {
         return Math.min(prev + 1, childCount - 1);
       } else {
         return Math.max(prev - 1, 0);
@@ -362,24 +322,24 @@ export function BentoCarouselContainer({
     const slideWidth = getSlideWidth();
     if (slideWidth === 0) return;
 
-    const scrollAmount = direction === "left" ? -slideWidth : slideWidth;
-    container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    const scrollAmount = direction === 'left' ? -slideWidth : slideWidth;
+    container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
   };
 
   // Mobile view using shadcn carousel
   if (isMobile && mobileCards) {
     return (
       <Carousel
-        className={cn("w-full", className)}
+        className={cn('w-full', className)}
         opts={{
-          align: "start",
+          align: 'start',
           loop: false,
         }}
       >
-        <CarouselContent className="-ml-2">
+        <CarouselContent className="ml-4">
           {mobileCards.map((card, index) => (
-            <CarouselItem key={index} className="pl-2 basis-[85%]">
-              <div className="h-[320px] [&>*]:h-full">{card}</div>
+            <CarouselItem key={index} className="basis-[90%] pl-2">
+              <div className="h-[480px] [&>*]:h-full">{card}</div>
             </CarouselItem>
           ))}
         </CarouselContent>
@@ -390,7 +350,7 @@ export function BentoCarouselContainer({
 
   // Desktop view with custom implementation
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn('relative', className)}>
       {/* Carousel container */}
       <div
         ref={containerRef}
@@ -403,13 +363,13 @@ export function BentoCarouselContainer({
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         className={cn(
-          "flex gap-6 overflow-x-auto scrollbar-hide select-none",
-          isDragging ? "cursor-grabbing" : "cursor-grab",
-          !isDragging && "scroll-smooth",
+          'scrollbar-hide flex gap-6 overflow-x-auto select-none',
+          isDragging ? 'cursor-grabbing' : 'cursor-grab',
+          !isDragging && 'scroll-smooth',
         )}
         style={{
-          scrollSnapType: isDragging ? "none" : "x mandatory",
-          WebkitOverflowScrolling: "touch",
+          scrollSnapType: isDragging ? 'none' : 'x mandatory',
+          WebkitOverflowScrolling: 'touch',
           ...(inset && { scrollPaddingLeft: inset }),
         }}
       >
@@ -426,16 +386,16 @@ export function BentoCarouselContainer({
             <div
               key={index}
               data-slide
-              className="flex-shrink-0 min-h-[500px] md:min-h-[600px]"
+              className="min-h-[500px] flex-shrink-0 md:min-h-[600px]"
               style={{
                 width: inset
                   ? isLast
                     ? `calc(100dvw - 2 * ${inset})`
                     : `calc(100dvw - ${inset} - ${peekAmount + 24}px)`
                   : isLast
-                    ? "100%"
+                    ? '100%'
                     : `calc(100% - ${peekAmount}px)`,
-                scrollSnapAlign: "start",
+                scrollSnapAlign: 'start',
               }}
             >
               {child}
@@ -453,13 +413,13 @@ export function BentoCarouselContainer({
 
       {/* Navigation arrows */}
       <div
-        className="flex justify-end gap-2 mt-6"
+        className="mt-6 flex justify-end gap-2"
         style={inset ? { paddingRight: inset } : undefined}
       >
         <Button
           variant="outline"
           size="icon"
-          onClick={() => scroll("left")}
+          onClick={() => scroll('left')}
           disabled={!canScrollLeft}
           className="rounded-full"
           aria-label="Previous slide"
@@ -469,7 +429,7 @@ export function BentoCarouselContainer({
         <Button
           variant="outline"
           size="icon"
-          onClick={() => scroll("right")}
+          onClick={() => scroll('right')}
           disabled={!canScrollRight}
           className="rounded-full"
           aria-label="Next slide"

@@ -11,7 +11,7 @@ interface Props {
 }
 
 export const Edge: FC<Props> = ({ source, target, edge, bounds }) => {
-  const { stroke, strokeWidth, opacity } = edge.style;
+  const { strokeWidth, opacity } = edge.style;
 
   const d = edgePath(source, target, bounds.ox, bounds.oy);
 
@@ -20,7 +20,7 @@ export const Edge: FC<Props> = ({ source, target, edge, bounds }) => {
       key={edge.id}
       d={d}
       fill="none"
-      stroke={stroke}
+      stroke="url(#edgeGradient)"
       strokeWidth={strokeWidth}
       initial={{ pathLength: 0, opacity: 0 }}
       animate={{

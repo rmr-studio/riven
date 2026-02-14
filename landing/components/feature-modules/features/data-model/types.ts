@@ -43,7 +43,6 @@ export interface NodeModel extends Node {
 }
 
 export interface EdgeStyle {
-  stroke: string;
   strokeWidth: number;
   opacity: number;
 }

@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { GlowBorder } from '@/components/ui/glow-border';
 import { Plus } from 'lucide-react';
 import { motion } from 'motion/react';
 import { FC } from 'react';
@@ -19,7 +20,7 @@ export const PrimaryNode: FC<Props> = ({ node, delay = 0 }) => {
       initial={{ opacity: 0, scale: 0.8, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.4, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="w-64 rounded-lg border border-border bg-background shadow shadow-sm shadow-background"
+      className="w-64 rounded-lg border border-border bg-secondary shadow shadow-sm shadow-background"
     >
       <div className="flex items-center justify-between border-b border-border/50 px-3 py-2.5">
         <div className="flex items-center gap-2">
@@ -59,14 +60,17 @@ export const SecondaryNode: FC<Props> = ({ node, delay }) => {
       initial={{ opacity: 0, scale: 0.6 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="w-fit rounded-lg border border-primary bg-card-foreground px-3 py-2 shadow shadow-background"
     >
-      <div className="flex items-center gap-2">
-        <div className="rounded p-1">
-          <Icon className="h-3 w-3 text-secondary" />
+      <GlowBorder>
+        <div className="rounded-lg border border-primary bg-card-foreground px-3 py-2 shadow shadow-background">
+          <div className="flex items-center gap-2">
+            <div className="rounded p-1">
+              <Icon className="h-3 w-3 text-secondary" />
+            </div>
+            <span className="truncate text-xs font-medium text-secondary">{title}</span>
+          </div>
         </div>
-        <span className="truncate text-xs font-medium text-secondary">{title}</span>
-      </div>
+      </GlowBorder>
     </motion.div>
   );
 };
