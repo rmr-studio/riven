@@ -27,6 +27,7 @@ export function Hero() {
         }}
         className="h-[70dvh] opacity-100 "
         alt="City skyline"
+        glow
       />
     </Section>
   );

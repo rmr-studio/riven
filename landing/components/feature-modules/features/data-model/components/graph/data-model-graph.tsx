@@ -1,3 +1,4 @@
+import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { useIsMobile } from '@/hooks/use-is-mobile';
 import { AnimatePresence, motion } from 'motion/react';
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
@@ -15,6 +16,7 @@ interface Props {
 export const DataModelGraph: FC<Props> = ({ tab }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
+  const breakpoint = useBreakpoint();
 
   useEffect(() => {
     const el = containerRef.current;
@@ -69,7 +71,13 @@ export const DataModelGraph: FC<Props> = ({ tab }) => {
     return m;
   }, [resolvedNodes]);
 
-  const scale = isMobile ? 0.6 : (containerWidth > 0 ? containerWidth / bounds.width : 1) * 0.8;
+  const getScale = () => {
+    if (breakpoint === 'sm') return 0.6;
+    if (breakpoint === 'md') return 0.9;
+    return containerWidth > 0 ? (containerWidth / bounds.width) * 0.8 : 1;
+  };
+
+  const scale = getScale();
   const scaledH = bounds.height * scale;
 
   return (
@@ -83,7 +91,7 @@ export const DataModelGraph: FC<Props> = ({ tab }) => {
       {/* Graph */}
       <div
         ref={containerRef}
-        className="relative overflow-hidden"
+        className="relative"
         style={{
           height: containerWidth > 0 ? scaledH : 450,
           backgroundImage:

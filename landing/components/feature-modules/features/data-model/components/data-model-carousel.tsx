@@ -1,31 +1,35 @@
 import { BentoCard, BentoCarousel, Slide } from '@/components/ui/bento-carousel';
 import { InterconnectionDiagram } from './carousel/graphic/1.interconnections';
+import { IntegrationsDiagram } from './carousel/graphic/2.integrations';
+import { IdentityMatchingDiagram } from './carousel/graphic/3.identity-matching';
+import { IdentityMatchingDiagramSm } from './carousel/graphic/3.identity-matching-sm';
+import { IntegrationGraphDiagram } from './carousel/graphic/4.integrations';
 
 export const DataModelFeatureCarousel = () => {
   const slides: Slide[] = [
     {
       layout: {
         areas: `
-          "feature feature standard1"
-          "standard2 standard3 standard1"
+          "cross-domain cross-domain identity-matching"
+          "integration integration identity-matching"
         `,
-        cols: '1fr 1fr 1fr',
+        cols: '1fr 1fr 1.33fr',
         rows: '1fr 1fr',
       },
       lg: {
         areas: `
-          "feature feature"
-          "standard1 standard2"
-          "standard1 standard3"
+          "cross-domain cross-domain"
+          "integration integration"
+          "identity-matching identity-matching"
         `,
         cols: '1fr 1fr',
-        rows: '1.5fr 1fr 1fr',
+        rows: 'auto auto auto',
       },
       cards: [
         <BentoCard
           className="relative h-120"
-          key="feature"
-          area="feature"
+          key="cross-domain"
+          area="cross-domain"
           title="Cross domain business intelligence"
           description="Link entities, create associations and generate power insights and pattern recognition capabilities"
         >
@@ -34,38 +38,43 @@ export const DataModelFeatureCarousel = () => {
           </div>
         </BentoCard>,
         <BentoCard
-          key="standard1"
-          area="standard1"
-          title="Custom workflows"
-          description="Build automation that fits your exact process. No compromises, no workarounds."
-        />,
+          key="identity-matching"
+          area="identity-matching"
+          title="New data finds its place automatically"
+          description="Automatic entity resolution and identity matching means your data model stays up to date without manual intervention. New data finds its place seamlessly, so you can focus on insights, not maintenance."
+        >
+          <div className="relative h-full w-full overflow-hidden mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+            <IdentityMatchingDiagramSm className="absolute inset-0 top-0 left-1/2 mx-auto h-full w-full -translate-x-1/2 md:static md:w-[80%] md:translate-x-0 lg:hidden" />
+            <IdentityMatchingDiagram className="absolute inset-0 top-0 hidden h-full lg:block lg:w-[120%]" />
+          </div>
+        </BentoCard>,
+
         <BentoCard
-          key="standard2"
-          area="standard2"
-          title="Powerful relationship intel"
-          description="See all your team's conversations with a contact or company and create enriched timelines."
-        />,
-        <BentoCard
-          key="standard3"
-          area="standard3"
-          title="Dream tech stack"
-          description="Pull in data from best-in-class SaaS tools through our API and Zapier integration."
-        />,
+          className="relative h-120"
+          key="integration"
+          area="integration"
+          title="Integrations that feel natural"
+          description="Treat your tools like first class citizens, not just data sources. Integrate them directly into your models"
+        >
+          <div className="relative h-full w-full overflow-hidden mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+            <IntegrationsDiagram className="absolute inset-0 h-full w-full max-md:left-1/2 max-md:w-[170%] max-md:-translate-x-1/2 md:static md:h-full md:w-full" />
+          </div>
+        </BentoCard>,
       ],
     },
     {
       layout: {
         areas: `
-          "analytics analytics security"
-          "analytics analytics automation"
+          "analytics  integration"
+          "analytics  automation"
         `,
-        cols: '1fr 1fr 1fr',
+        cols: '1fr 1fr',
         rows: '1fr 1fr',
       },
-      md: {
+      lg: {
         areas: `
           "analytics analytics"
-          "security automation"
+          "integration automation"
         `,
         cols: '1fr 1fr',
         rows: '1.5fr 1fr',
@@ -75,14 +84,18 @@ export const DataModelFeatureCarousel = () => {
           key="analytics"
           area="analytics"
           title="Advanced analytics"
-          description="Get insights that matter with customizable dashboards and real-time reporting. Track every metric that moves your business forward."
+          description="Get insights that matter with customizable dashboards ad real-time reporting. Track every metric that moves your business forward."
         />,
         <BentoCard
-          key="security"
-          area="security"
-          title="Enterprise security"
-          description="Bank-level encryption, SOC 2 compliance, and granular access controls."
-        />,
+          key="integration"
+          area="integration"
+          title="Your tools, One platform"
+          description="Balancing 16 tabs to make a decision is overrated. Bring your tools together in one unified platform, and get the full picture without being the integration layer yourself."
+        >
+          <div className="relative h-full w-full overflow-hidden mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+            <IntegrationGraphDiagram className="static inset-0 h-full w-full -translate-x-1/6 max-md:left-1/2 max-md:w-[150%] md:absolute md:translate-x-0" />
+          </div>
+        </BentoCard>,
         <BentoCard
           key="automation"
           area="automation"

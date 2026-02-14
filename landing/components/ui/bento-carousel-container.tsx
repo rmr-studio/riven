@@ -5,6 +5,7 @@ import { Carousel, CarouselContent, CarouselItem, useCarousel } from '@/componen
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { useIsMobile } from '@/hooks/use-is-mobile';
 import { cn } from '@/lib/utils';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import * as React from 'react';
 import { BGPattern } from './background/grids';
@@ -105,7 +106,12 @@ export function BentoSlide({
   md,
   lg,
 }: BentoSlideProps) {
+  const [mounted, setMounted] = React.useState(false);
   const breakpoint = useBreakpoint();
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Determine grid config based on current breakpoint
   const getGridConfig = (): ResponsiveGridConfig => {
@@ -136,16 +142,23 @@ export function BentoSlide({
   const config = getGridConfig();
 
   return (
-    <div
-      className={cn('grid h-full gap-4', className)}
-      style={{
-        gridTemplateAreas: config.areas,
-        gridTemplateColumns: config.cols,
-        gridTemplateRows: config.rows,
-      }}
-    >
-      {children}
-    </div>
+    <AnimatePresence>
+      {mounted && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className={cn('grid h-full gap-4', className)}
+          style={{
+            gridTemplateAreas: config.areas,
+            gridTemplateColumns: config.cols,
+            gridTemplateRows: config.rows,
+          }}
+        >
+          {children}
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -167,12 +180,17 @@ export function BentoCarouselContainer({
   mobileCards,
   inset,
 }: BentoCarouselProps) {
+  const [mounted, setMounted] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [currentSlide, setCurrentSlide] = React.useState(0);
   const [canScrollLeft, setCanScrollLeft] = React.useState(false);
   const [canScrollRight, setCanScrollRight] = React.useState(true);
   const [isDragging, setIsDragging] = React.useState(false);
   const isMobile = useIsMobile('md');
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Drag state refs (using refs to avoid re-renders during drag)
   const dragStartX = React.useRef(0);
@@ -329,28 +347,45 @@ export function BentoCarouselContainer({
   // Mobile view using shadcn carousel
   if (isMobile && mobileCards) {
     return (
-      <Carousel
-        className={cn('w-full', className)}
-        opts={{
-          align: 'start',
-          loop: false,
-        }}
-      >
-        <CarouselContent className="ml-4">
-          {mobileCards.map((card, index) => (
-            <CarouselItem key={index} className="basis-[90%] pl-2">
-              <div className="h-[480px] [&>*]:h-full">{card}</div>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <MobileCarouselNav />
-      </Carousel>
+      <AnimatePresence>
+        {mounted && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Carousel
+              className={cn('w-full', className)}
+              opts={{
+                align: 'start',
+                loop: false,
+              }}
+            >
+              <CarouselContent className="ml-4">
+                {mobileCards.map((card, index) => (
+                  <CarouselItem key={index} className="basis-[90%] pl-2">
+                    <div className="h-[480px] [&>*]:h-full">{card}</div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <MobileCarouselNav />
+            </Carousel>
+          </motion.div>
+        )}
+      </AnimatePresence>
     );
   }
 
   // Desktop view with custom implementation
   return (
-    <div className={cn('relative', className)}>
+    <AnimatePresence>
+      {mounted && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className={cn('relative', className)}
+        >
       {/* Carousel container */}
       <div
         ref={containerRef}
@@ -437,6 +472,8 @@ export function BentoCarouselContainer({
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
-    </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

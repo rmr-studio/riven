@@ -6,6 +6,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { ChevronRight, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { HoverBorderGradient } from './ui/hover-border-gradient';
 import { Logo } from './ui/logo';
 
 const navLinks = [
@@ -79,15 +80,17 @@ export function Navbar() {
           <div className="hidden md:block">
             <ThemeToggle />
           </div>
-          <Button
-            variant={'outline'}
-            size={'sm'}
-            className="py-1` h-8 cursor-pointer items-center gap-1.5 rounded-full border border-border/50 bg-muted/50 py-0.5 font-mono text-xs tracking-widest whitespace-nowrap text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:inline-flex md:h-9 md:gap-2.5 md:px-4 md:text-sm"
-          >
-            <span className="hidden sm:block">Join the waitlist</span>
-            <span className="sm:hidden">Get Started</span>
-            <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 md:h-4 md:w-4" />
-          </Button>
+          <HoverBorderGradient className="overflow-hidden bg-background p-0" as='div'>
+            <Button
+              size={'sm'}
+              className="h-8 cursor-pointer items-center gap-1.5 border-0 bg-muted/50 py-1 font-mono text-xs tracking-wide text-muted-foreground outline-0 hover:bg-muted hover:text-foreground md:h-9 md:gap-2.5 md:px-4 md:text-sm"
+            >
+              <span className="hidden sm:block">Join the waitlist</span>
+              <span className="sm:hidden">Get Started</span>
+              <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 md:h-4 md:w-4" />
+            </Button>
+          </HoverBorderGradient>
+
           <Button
             variant={'ghost'}
             size={'icon'}
