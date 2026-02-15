@@ -8,6 +8,8 @@ Created:
 Updated:
 Domains:
   - "[[Domain]]"
+blocked by:
+  - "[[Entity Querying]]"
 ---
 # Quick Design: Entity Filtering Visual Overhaul
 
@@ -22,10 +24,13 @@ The Current Entity filtering component has the following issues
 			- Dropdown for entity attribute, filtering type, etc etc
 			- Limit the amount of user agency
 
+This should then also be used for Entity Querying. As a query is just made up of different filters
+	The only main different is that for the Entity Filtering. The `Entity Type` would be static, whilst querying nodes would allow a user to determine which entity type to query on
+
 ---
 
 ![[Pasted image 20260201190537.png]]
-
+![[Pasted image 20260210180014.png]]
 ## Gotchas & Edge Cases
 
 _Things to watch out for_

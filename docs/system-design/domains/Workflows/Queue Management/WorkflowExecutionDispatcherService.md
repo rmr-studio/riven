@@ -347,7 +347,7 @@ Integration tests should verify:
 - [[Queue Management]] - Parent subdomain
 - [[WorkflowExecutionQueueProcessorService]] - Processes individual items
 - [[WorkflowExecutionQueueService]] - Queue state management
-- [[ShedLock Documentation]] - External library for distributed locking
+- [[Shedlock]] - External library for distributed locking
 
 ---
 

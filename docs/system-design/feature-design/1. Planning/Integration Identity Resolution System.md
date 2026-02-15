@@ -2,36 +2,37 @@
 tags:
   - "#status/draft"
   - priority/high
-  - architecture/design
-  - domain/entity
-  - domain/knowledge
-Created: 2026-02-06
+  - architecture/feature
+Created: 2026-02-11
 Updated:
 Domains:
+  - "[[Integrations]]"
   - "[[Entities]]"
-  - "[[Knowledge]]"
 ---
-# Feature: Integration Data Ingesting
+# Feature: Integration Identity Resolution System
 
 ---
+
 ## 1. Overview
 
 ### Problem Statement
-- Third party integrations are a core fundamental area that is linked to the success of the platform.
-	- The platform is centred around the cross domain intelligence capabilities by tying together an organisations third party tooling into a singular data source. So it is important that data is continuously synced and accessible.
+
+- One of the biggest problems when handling the integration of an environment of external tooling is that there is not always concrete information available to link entities together to help form cross domain intelligence and relationships
+> *User connects Stripe, Intercom, and a form tool. Stripe has a customer with email `john@acme.com`. Intercom has a user with email `john@acme.com`. The form tool has a submission from `j.smith@acme.com` — same person, different email.*
+
+- The entity model would have a wide variety of different unique identifiers for each piece of data
+	- Email
+	- Username
+	- Id (Per tool)
+- Most data imported from tooling will not automatically match, manual linking is not feasible, and takes away from the premise of the application.
 ### Proposed Solution
-- An integration framework would need to be created as a common layer that is used to support the integration of a wide-variety of third party toolings
-- This should provide the ability to manage
-	- Storing and retrieving API keys to send requests to their API
-		- Encryption and secrets rotation for additional security
-	- Defining Preset Entity Types for all data sources ingested from the third party integrations
-		- Adding the capability for meaningful relationships to be added between this data, and other data sources within the existing entity environment
-		- Ensuring that the data model stays consistent, and crucial attributes and relationships are protected
-	- Introducing the ability to form links back to existing data sources through common attributes
-		- For example, An integration with a Support tool would need to ensure that every support ticket is recorded, is able to be linked to an existing customer that is defined within a seperate data model, outside of the entity types provided by the integration. This may be through username, email, etc
-	- Handling webhooks for real time data ingest, and ensuring it fits within the provided entity environment
-		- Fallback to scheduled polling if external API's do not support webhooks
-	
+
+A dedicated identity resolution service needs to implemented that should be used for all consumption of data across all tool integration flows. This should perform the following
+- Matches on multiple signals (email, phone, name + company, custom identifiers)
+- Scores confidence of matches rather than binary yes/no
+- Surfaces suggested matches for user confirmation
+- Learns from confirmed/rejected matches over time
+- Handles merge and unmerge when users correct mistakes
 
 ### Success Criteria
 

@@ -2,6 +2,8 @@
 tags:
   - architecture/domain
   - domain/integration
+  - tools/nango
+  - tools/temporal
 Created:
 ---
 # Domain: Third Party Integrations

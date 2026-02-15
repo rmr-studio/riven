@@ -24,7 +24,23 @@ const rows = stages.map(s => {
 });
 
 const total = rows.reduce((sum, r) => sum + dv.pages(`"${base}/${stages[rows.indexOf(r)].folder}"`).length, 0);
-dv.table(["Stage", `Features (${dv.pages(`"${base}"`).where(p => p.file.name !== "feature-design").length} total)`], rows);
+const isFeature = p => p.file.name !== "feature-design" && !p.file.folder.includes("__Template") && !p.file.folder.includes("_Sub-Domain Plans");
+dv.table(["Stage", `Features (${dv.pages(`"${base}"`).where(isFeature).length} total)`], rows);
+```
+
+---
+
+## Sub-Domain Plans
+
+> Overarching design plans that group related features into cohesive sub-domains.
+
+```dataview
+TABLE WITHOUT ID
+  file.link as "Sub-Domain Plan",
+  Domains as "Domain",
+  length(filter(this.file.inlinks, (l) => true)) as "Linked Features"
+FROM "2. Areas/2.1 Startup & Business/Riven/2. System Design/feature-design/_Sub-Domain Plans"
+SORT file.name ASC
 ```
 
 ---
@@ -36,7 +52,8 @@ dv.table(["Stage", `Features (${dv.pages(`"${base}"`).where(p => p.file.name !==
 ```dataviewjs
 const base = "2. Areas/2.1 Startup & Business/Riven/2. System Design/feature-design";
 const pages = dv.pages(`"${base}"`)
-  .where(p => p.file.name !== "feature-design");
+  .where(p => p.file.name !== "feature-design")
+  .where(p => !p.file.folder.includes("__Template") && !p.file.folder.includes("_Sub-Domain Plans"));
 
 const domainMap = {};
 
@@ -130,7 +147,8 @@ SORT choice(contains(tags, "priority/high"), 1, choice(contains(tags, "priority/
 ```dataviewjs
 const base = "2. Areas/2.1 Startup & Business/Riven/2. System Design/feature-design";
 const pages = dv.pages(`"${base}"`)
-  .where(p => p.file.name !== "feature-design");
+  .where(p => p.file.name !== "feature-design")
+  .where(p => !p.file.folder.includes("__Template") && !p.file.folder.includes("_Sub-Domain Plans"));
 
 const blockerCounts = {};
 
@@ -226,7 +244,8 @@ SORT choice(contains(tags, "priority/high"), 1, choice(contains(tags, "priority/
 ```dataviewjs
 const base = "2. Areas/2.1 Startup & Business/Riven/2. System Design/feature-design";
 const pages = dv.pages(`"${base}"`)
-  .where(p => p.file.name !== "feature-design");
+  .where(p => p.file.name !== "feature-design")
+  .where(p => !p.file.folder.includes("__Template") && !p.file.folder.includes("_Sub-Domain Plans"));
 
 const untriaged = pages.where(p => {
   const t = (p.tags || []).map(String);
@@ -283,7 +302,7 @@ TABLE WITHOUT ID
   Domains as "Domains",
   blocked-by as "Blocked By"
 FROM "2. Areas/2.1 Startup & Business/Riven/2. System Design/feature-design"
-WHERE file.name != "feature-design"
+WHERE file.name != "feature-design" AND !contains(file.folder, "__Template") AND !contains(file.folder, "_Sub-Domain Plans")
 SORT
   choice(contains(file.folder, "3. Active"), 1, choice(contains(file.folder, "2. Planned"), 2, choice(contains(file.folder, "1. Planning"), 3, choice(contains(file.folder, "5. Backlog"), 4, 5)))) ASC,
   choice(contains(tags, "priority/high"), 1, choice(contains(tags, "priority/medium"), 2, choice(contains(tags, "priority/low"), 3, 4))) ASC
