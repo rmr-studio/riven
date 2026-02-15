@@ -23,4 +23,18 @@ CREATE TABLE IF NOT EXISTS integration_definitions (
 
 CREATE INDEX idx_integration_definitions_category ON integration_definitions(category);
 CREATE INDEX idx_integration_definitions_active ON integration_definitions(active) WHERE active = true;
-CREATE INDEX idx_integration_definitions_slug ON integration_definitions(slug);
+-- Note: slug index is provided by the UNIQUE constraint, no explicit index needed
+
+-- Auto-update updated_at on row modification
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER set_integration_definitions_updated_at
+    BEFORE UPDATE ON integration_definitions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();

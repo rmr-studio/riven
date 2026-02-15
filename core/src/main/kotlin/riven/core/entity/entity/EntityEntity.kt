@@ -86,7 +86,7 @@ data class EntityEntity(
     var lastSyncedAt: ZonedDateTime? = null,
 
     @Column(name = "sync_version", nullable = false)
-    val syncVersion: Long = 0,
+    var syncVersion: Long = 0,
 ) : AuditableEntity(), SoftDeletable {
 
 

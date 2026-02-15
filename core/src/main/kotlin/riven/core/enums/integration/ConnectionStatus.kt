@@ -18,7 +18,7 @@ enum class ConnectionStatus {
             AUTHORIZING -> newStatus in setOf(CONNECTED, FAILED)
             CONNECTED -> newStatus in setOf(SYNCING, HEALTHY, DISCONNECTING, FAILED)
             SYNCING -> newStatus in setOf(HEALTHY, DEGRADED, FAILED)
-            HEALTHY -> newStatus in setOf(SYNCING, STALE, DEGRADED, DISCONNECTING)
+            HEALTHY -> newStatus in setOf(SYNCING, STALE, DEGRADED, DISCONNECTING, FAILED)
             DEGRADED -> newStatus in setOf(HEALTHY, STALE, FAILED, DISCONNECTING)
             STALE -> newStatus in setOf(SYNCING, DISCONNECTING, FAILED)
             DISCONNECTING -> newStatus in setOf(DISCONNECTED, FAILED)

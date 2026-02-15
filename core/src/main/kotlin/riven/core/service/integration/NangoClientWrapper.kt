@@ -9,6 +9,7 @@ import reactor.util.retry.Retry
 import riven.core.configuration.properties.NangoConfigurationProperties
 import riven.core.exceptions.NangoApiException
 import riven.core.exceptions.RateLimitException
+import riven.core.exceptions.TransientNangoException
 import riven.core.models.integration.NangoConnection
 import riven.core.models.integration.NangoConnectionList
 import riven.core.models.integration.NangoErrorResponse
@@ -38,8 +39,9 @@ class NangoClientWrapper(
      * @param providerConfigKey The provider configuration key (e.g., "hubspot")
      * @param connectionId The unique connection ID
      * @return The Nango connection details
-     * @throws NangoApiException if the API returns an error
-     * @throws RateLimitException if rate limited
+     * @throws NangoApiException if the API returns a non-retryable client error
+     * @throws RateLimitException if rate limited after retries exhausted
+     * @throws TransientNangoException if server errors persist after retries
      */
     fun getConnection(providerConfigKey: String, connectionId: String): NangoConnection {
         ensureConfigured()
@@ -47,25 +49,9 @@ class NangoClientWrapper(
             .uri("/connection/{connectionId}?provider_config_key={providerConfigKey}",
                 connectionId, providerConfigKey)
             .retrieve()
-            .onStatus({ it.value() == 429 }) { response ->
-                val retryAfter = response.headers().asHttpHeaders()
-                    .getFirst("Retry-After")?.toLongOrNull() ?: 60
-                Mono.error(RateLimitException("Nango rate limited, retry after $retryAfter seconds"))
-            }
-            .onStatus({ it.is4xxClientError || it.is5xxServerError }) { response ->
-                response.bodyToMono(NangoErrorResponse::class.java)
-                    .flatMap { error ->
-                        Mono.error(NangoApiException(
-                            "Nango API error: ${error.error ?: "Unknown"}",
-                            response.statusCode().value()
-                        ))
-                    }
-            }
+            .withNangoErrorHandling()
             .bodyToMono(NangoConnection::class.java)
-            .retryWhen(Retry.backoff(3, Duration.ofSeconds(2))
-                .filter { it is RateLimitException }
-                .doBeforeRetry { logger.warn { "Retrying Nango API call: ${it.failure().message}" } }
-            )
+            .withNangoRetry()
             .block() ?: throw NangoApiException("Empty response from Nango API", 500)
     }
 
@@ -79,25 +65,9 @@ class NangoClientWrapper(
         return webClient.get()
             .uri("/connections")
             .retrieve()
-            .onStatus({ it.value() == 429 }) { response ->
-                val retryAfter = response.headers().asHttpHeaders()
-                    .getFirst("Retry-After")?.toLongOrNull() ?: 60
-                Mono.error(RateLimitException("Nango rate limited, retry after $retryAfter seconds"))
-            }
-            .onStatus({ it.is4xxClientError || it.is5xxServerError }) { response ->
-                response.bodyToMono(NangoErrorResponse::class.java)
-                    .flatMap { error ->
-                        Mono.error(NangoApiException(
-                            "Nango API error: ${error.error ?: "Unknown"}",
-                            response.statusCode().value()
-                        ))
-                    }
-            }
+            .withNangoErrorHandling()
             .bodyToMono(NangoConnectionList::class.java)
-            .retryWhen(Retry.backoff(3, Duration.ofSeconds(2))
-                .filter { it is RateLimitException }
-                .doBeforeRetry { logger.warn { "Retrying Nango API call: ${it.failure().message}" } }
-            )
+            .withNangoRetry()
             .block() ?: NangoConnectionList()
     }
 
@@ -113,12 +83,35 @@ class NangoClientWrapper(
             .uri("/connection/{connectionId}?provider_config_key={providerConfigKey}",
                 connectionId, providerConfigKey)
             .retrieve()
+            .withNangoErrorHandling()
+            .toBodilessEntity()
+            .withNangoRetry()
+            .block()
+    }
+
+    // ------ Private Helpers ------
+
+    /**
+     * Adds standardized Nango error handling to a WebClient response spec.
+     * Handles 429 (rate limit), 5xx (transient server errors), and 4xx (client errors).
+     */
+    private fun WebClient.ResponseSpec.withNangoErrorHandling(): WebClient.ResponseSpec {
+        return this
             .onStatus({ it.value() == 429 }) { response ->
                 val retryAfter = response.headers().asHttpHeaders()
                     .getFirst("Retry-After")?.toLongOrNull() ?: 60
                 Mono.error(RateLimitException("Nango rate limited, retry after $retryAfter seconds"))
             }
-            .onStatus({ it.is4xxClientError || it.is5xxServerError }) { response ->
+            .onStatus({ it.is5xxServerError }) { response ->
+                response.bodyToMono(NangoErrorResponse::class.java)
+                    .flatMap { error ->
+                        Mono.error(TransientNangoException(
+                            "Nango server error: ${error.error ?: "Unknown"}",
+                            response.statusCode().value()
+                        ))
+                    }
+            }
+            .onStatus({ it.is4xxClientError }) { response ->
                 response.bodyToMono(NangoErrorResponse::class.java)
                     .flatMap { error ->
                         Mono.error(NangoApiException(
@@ -127,11 +120,16 @@ class NangoClientWrapper(
                         ))
                     }
             }
-            .toBodilessEntity()
-            .retryWhen(Retry.backoff(3, Duration.ofSeconds(2))
-                .filter { it is RateLimitException }
+    }
+
+    /**
+     * Adds retry logic for transient failures (rate limits and server errors).
+     */
+    private fun <T> Mono<T>.withNangoRetry(): Mono<T> {
+        return this.retryWhen(
+            Retry.backoff(3, Duration.ofSeconds(2))
+                .filter { it is RateLimitException || it is TransientNangoException }
                 .doBeforeRetry { logger.warn { "Retrying Nango API call: ${it.failure().message}" } }
-            )
-            .block()
+        )
     }
 }

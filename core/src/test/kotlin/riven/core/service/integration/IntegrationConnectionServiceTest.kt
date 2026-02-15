@@ -1,6 +1,5 @@
 package riven.core.service.integration
 
-import io.github.oshai.kotlinlogging.KLogger
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -9,6 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Configuration
 import org.springframework.test.context.bean.override.mockito.MockitoBean
+import org.springframework.transaction.TransactionStatus
+import org.springframework.transaction.support.TransactionCallback
+import org.springframework.transaction.support.TransactionTemplate
 import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.integration.IntegrationConnectionEntity
 import riven.core.entity.integration.IntegrationDefinitionEntity
@@ -73,7 +75,10 @@ class IntegrationConnectionServiceTest {
     private lateinit var activityService: ActivityService
 
     @MockitoBean
-    private lateinit var logger: KLogger
+    private lateinit var authTokenService: AuthTokenService
+
+    @MockitoBean
+    private lateinit var transactionTemplate: TransactionTemplate
 
     @Autowired
     private lateinit var integrationConnectionService: IntegrationConnectionService
@@ -84,12 +89,11 @@ class IntegrationConnectionServiceTest {
 
     @BeforeEach
     fun setup() {
-        reset(connectionRepository, definitionRepository, nangoClientWrapper, activityService)
+        reset(connectionRepository, definitionRepository, nangoClientWrapper, activityService, transactionTemplate)
 
         testIntegrationId = UUID.randomUUID()
         testConnectionId = UUID.randomUUID()
 
-        // Create a test integration definition
         testDefinition = IntegrationDefinitionEntity(
             id = testIntegrationId,
             slug = "hubspot",
@@ -100,18 +104,21 @@ class IntegrationConnectionServiceTest {
             syncConfig = emptyMap(),
             authConfig = emptyMap()
         )
+
+        whenever(authTokenService.getUserId()).thenReturn(userId)
+
+        // Configure TransactionTemplate to execute callbacks directly (no real transaction needed in unit tests)
+        @Suppress("UNCHECKED_CAST")
+        whenever(transactionTemplate.execute(any<TransactionCallback<Any?>>())).thenAnswer { invocation ->
+            val callback = invocation.arguments[0] as TransactionCallback<Any?>
+            callback.doInTransaction(mock<TransactionStatus>())
+        }
     }
 
     // ========== createConnection Tests ==========
 
     @Test
     fun `createConnection - succeeds when no existing connection`() {
-        // Given: No existing connection for this integration
-        whenever(definitionRepository.findById(testIntegrationId))
-            .thenReturn(Optional.of(testDefinition))
-        whenever(connectionRepository.findByWorkspaceIdAndIntegrationId(workspaceId, testIntegrationId))
-            .thenReturn(null)
-
         val savedConnection = IntegrationConnectionEntity(
             id = testConnectionId,
             workspaceId = workspaceId,
@@ -119,17 +126,20 @@ class IntegrationConnectionServiceTest {
             nangoConnectionId = "nango-conn-123",
             status = ConnectionStatus.PENDING_AUTHORIZATION
         )
+
+        whenever(definitionRepository.findById(testIntegrationId))
+            .thenReturn(Optional.of(testDefinition))
+        whenever(connectionRepository.findByWorkspaceIdAndIntegrationId(workspaceId, testIntegrationId))
+            .thenReturn(null)
         whenever(connectionRepository.save(any<IntegrationConnectionEntity>()))
             .thenReturn(savedConnection)
 
-        // When: Creating a new connection
         val result = integrationConnectionService.createConnection(
             workspaceId = workspaceId,
             integrationId = testIntegrationId,
             nangoConnectionId = "nango-conn-123"
         )
 
-        // Then: Connection is created with PENDING_AUTHORIZATION status
         assertNotNull(result)
         assertEquals(workspaceId, result.workspaceId)
         assertEquals(testIntegrationId, result.integrationId)
@@ -146,7 +156,6 @@ class IntegrationConnectionServiceTest {
 
     @Test
     fun `createConnection - throws ConflictException when connection already exists`() {
-        // Given: An existing connection for this integration
         val existingConnection = IntegrationConnectionEntity(
             id = testConnectionId,
             workspaceId = workspaceId,
@@ -160,7 +169,6 @@ class IntegrationConnectionServiceTest {
         whenever(connectionRepository.findByWorkspaceIdAndIntegrationId(workspaceId, testIntegrationId))
             .thenReturn(existingConnection)
 
-        // When/Then: Creating a new connection throws ConflictException
         assertThrows(ConflictException::class.java) {
             integrationConnectionService.createConnection(
                 workspaceId = workspaceId,
@@ -176,7 +184,6 @@ class IntegrationConnectionServiceTest {
 
     @Test
     fun `updateConnectionStatus - valid transition succeeds`() {
-        // Given: A connection with CONNECTED status
         val connection = IntegrationConnectionEntity(
             id = testConnectionId,
             workspaceId = workspaceId,
@@ -192,14 +199,12 @@ class IntegrationConnectionServiceTest {
         whenever(connectionRepository.save(any<IntegrationConnectionEntity>()))
             .thenReturn(updatedConnection)
 
-        // When: Updating to SYNCING (valid transition from CONNECTED)
         val result = integrationConnectionService.updateConnectionStatus(
             workspaceId = workspaceId,
             connectionId = testConnectionId,
             newStatus = ConnectionStatus.SYNCING
         )
 
-        // Then: Status is updated
         assertEquals(ConnectionStatus.SYNCING, result.status)
 
         verify(connectionRepository).save(argThat { conn ->
@@ -210,7 +215,6 @@ class IntegrationConnectionServiceTest {
 
     @Test
     fun `updateConnectionStatus - invalid transition throws InvalidStateTransitionException`() {
-        // Given: A connection with DISCONNECTED status
         val connection = IntegrationConnectionEntity(
             id = testConnectionId,
             workspaceId = workspaceId,
@@ -222,7 +226,6 @@ class IntegrationConnectionServiceTest {
         whenever(connectionRepository.findById(testConnectionId))
             .thenReturn(Optional.of(connection))
 
-        // When/Then: Attempting to update to SYNCING (invalid transition) throws exception
         assertThrows(InvalidStateTransitionException::class.java) {
             integrationConnectionService.updateConnectionStatus(
                 workspaceId = workspaceId,
@@ -236,7 +239,6 @@ class IntegrationConnectionServiceTest {
 
     @Test
     fun `updateConnectionStatus - merges metadata with existing metadata`() {
-        // Given: A connection with existing metadata
         val connection = IntegrationConnectionEntity(
             id = testConnectionId,
             workspaceId = workspaceId,
@@ -259,7 +261,6 @@ class IntegrationConnectionServiceTest {
         whenever(connectionRepository.save(any<IntegrationConnectionEntity>()))
             .thenReturn(updatedConnection)
 
-        // When: Updating with new metadata
         val result = integrationConnectionService.updateConnectionStatus(
             workspaceId = workspaceId,
             connectionId = testConnectionId,
@@ -267,7 +268,6 @@ class IntegrationConnectionServiceTest {
             metadata = mapOf("new_key" to "new_value")
         )
 
-        // Then: Metadata is merged
         assertEquals(2, result.connectionMetadata?.size)
         assertEquals("existing_value", result.connectionMetadata?.get("existing_key"))
         assertEquals("new_value", result.connectionMetadata?.get("new_key"))
@@ -277,7 +277,6 @@ class IntegrationConnectionServiceTest {
 
     @Test
     fun `disconnectConnection - successfully transitions to DISCONNECTED`() {
-        // Given: A connection with HEALTHY status
         val connection = IntegrationConnectionEntity(
             id = testConnectionId,
             workspaceId = workspaceId,
@@ -293,13 +292,11 @@ class IntegrationConnectionServiceTest {
         whenever(connectionRepository.save(any<IntegrationConnectionEntity>()))
             .thenAnswer { invocation -> invocation.getArgument(0) as IntegrationConnectionEntity }
 
-        // When: Disconnecting the connection
         val result = integrationConnectionService.disconnectConnection(
             workspaceId = workspaceId,
             connectionId = testConnectionId
         )
 
-        // Then: Connection is marked as DISCONNECTED
         assertEquals(ConnectionStatus.DISCONNECTED, result.status)
 
         verify(nangoClientWrapper).deleteConnection(
@@ -310,7 +307,6 @@ class IntegrationConnectionServiceTest {
 
     @Test
     fun `disconnectConnection - marks as DISCONNECTED even if Nango delete fails`() {
-        // Given: A connection with HEALTHY status
         val connection = IntegrationConnectionEntity(
             id = testConnectionId,
             workspaceId = workspaceId,
@@ -326,23 +322,19 @@ class IntegrationConnectionServiceTest {
         whenever(connectionRepository.save(any<IntegrationConnectionEntity>()))
             .thenAnswer { invocation -> invocation.getArgument(0) as IntegrationConnectionEntity }
 
-        // Nango delete fails
         whenever(nangoClientWrapper.deleteConnection(any(), any()))
             .thenThrow(RuntimeException("Nango API error"))
 
-        // When: Disconnecting the connection
         val result = integrationConnectionService.disconnectConnection(
             workspaceId = workspaceId,
             connectionId = testConnectionId
         )
 
-        // Then: Connection is still marked as DISCONNECTED locally
         assertEquals(ConnectionStatus.DISCONNECTED, result.status)
     }
 
     @Test
     fun `disconnectConnection - throws InvalidStateTransitionException for invalid state`() {
-        // Given: A connection with SYNCING status
         val connection = IntegrationConnectionEntity(
             id = testConnectionId,
             workspaceId = workspaceId,
@@ -354,7 +346,6 @@ class IntegrationConnectionServiceTest {
         whenever(connectionRepository.findById(testConnectionId))
             .thenReturn(Optional.of(connection))
 
-        // When/Then: Attempting to disconnect from SYNCING throws exception
         assertThrows(InvalidStateTransitionException::class.java) {
             integrationConnectionService.disconnectConnection(
                 workspaceId = workspaceId,

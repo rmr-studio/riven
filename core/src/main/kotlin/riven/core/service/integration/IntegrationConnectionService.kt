@@ -4,10 +4,17 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionTemplate
 import riven.core.entity.integration.IntegrationConnectionEntity
+import riven.core.enums.activity.Activity
+import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.integration.ConnectionStatus
+import riven.core.enums.util.OperationType
 import riven.core.exceptions.ConflictException
 import riven.core.exceptions.InvalidStateTransitionException
+import riven.core.exceptions.NangoApiException
+import riven.core.exceptions.RateLimitException
+import riven.core.exceptions.TransientNangoException
 import riven.core.repository.integration.IntegrationConnectionRepository
 import riven.core.repository.integration.IntegrationDefinitionRepository
 import riven.core.service.activity.ActivityService
@@ -28,9 +35,12 @@ class IntegrationConnectionService(
     private val definitionRepository: IntegrationDefinitionRepository,
     private val nangoClientWrapper: NangoClientWrapper,
     private val activityService: ActivityService,
-    private val authTokenService: AuthTokenService
+    private val authTokenService: AuthTokenService,
+    private val transactionTemplate: TransactionTemplate
 ) {
     private val logger = KotlinLogging.logger {}
+
+    // ------ Public Read Operations ------
 
     /**
      * Get all connections for a workspace.
@@ -55,6 +65,8 @@ class IntegrationConnectionService(
         return connectionRepository.findByWorkspaceIdAndIntegrationId(workspaceId, integrationId)
     }
 
+    // ------ Public Mutations ------
+
     /**
      * Create a new integration connection.
      *
@@ -73,10 +85,10 @@ class IntegrationConnectionService(
         integrationId: UUID,
         nangoConnectionId: String
     ): IntegrationConnectionEntity {
-        // Verify integration exists
+        val userId = authTokenService.getUserId()
+
         findOrThrow { definitionRepository.findById(integrationId) }
 
-        // Check for existing connection
         connectionRepository.findByWorkspaceIdAndIntegrationId(workspaceId, integrationId)
             ?.let { throw ConflictException("Connection already exists for this integration in this workspace") }
 
@@ -89,6 +101,7 @@ class IntegrationConnectionService(
 
         return connectionRepository.save(connection).also {
             logger.info { "Created integration connection for workspace=$workspaceId, integration=$integrationId" }
+            logConnectionActivity(OperationType.CREATE, userId, workspaceId, it)
         }
     }
 
@@ -112,13 +125,15 @@ class IntegrationConnectionService(
         newStatus: ConnectionStatus,
         metadata: Map<String, Any>? = null
     ): IntegrationConnectionEntity {
+        val userId = authTokenService.getUserId()
         val connection = findOrThrow { connectionRepository.findById(connectionId) }
         require(connection.workspaceId == workspaceId) { "Connection does not belong to workspace" }
 
-        // Enforce state machine transitions
-        if (!connection.status.canTransitionTo(newStatus)) {
+        val oldStatus = connection.status
+
+        if (!oldStatus.canTransitionTo(newStatus)) {
             throw InvalidStateTransitionException(
-                "Cannot transition from ${connection.status} to $newStatus"
+                "Cannot transition from $oldStatus to $newStatus"
             )
         }
 
@@ -128,7 +143,11 @@ class IntegrationConnectionService(
         }
 
         return connectionRepository.save(connection).also {
-            logger.info { "Updated connection $connectionId status: ${connection.status} -> $newStatus" }
+            logger.info { "Updated connection $connectionId status: $oldStatus -> $newStatus" }
+            logConnectionActivity(
+                OperationType.UPDATE, userId, workspaceId, it,
+                mapOf("oldStatus" to oldStatus.name, "newStatus" to newStatus.name)
+            )
         }
     }
 
@@ -139,43 +158,111 @@ class IntegrationConnectionService(
      * the connection, then transitions to DISCONNECTED. Handles Nango API
      * failures gracefully by still marking the connection as DISCONNECTED locally.
      *
+     * Uses programmatic transaction management to avoid holding a DB transaction
+     * open during the external Nango API call.
+     *
      * @param workspaceId The workspace ID
      * @param connectionId The connection ID
      * @return The disconnected connection
      * @throws InvalidStateTransitionException if disconnection is not allowed from current state
      */
-    @Transactional
     @PreAuthorize("@workspaceSecurity.hasWorkspaceRole(#workspaceId, T(riven.core.enums.workspace.WorkspaceRoles).ADMIN)")
     fun disconnectConnection(workspaceId: UUID, connectionId: UUID): IntegrationConnectionEntity {
-        val connection = findOrThrow { connectionRepository.findById(connectionId) }
-        require(connection.workspaceId == workspaceId) { "Connection does not belong to workspace" }
+        val userId = authTokenService.getUserId()
 
-        if (!connection.status.canTransitionTo(ConnectionStatus.DISCONNECTING)) {
-            throw InvalidStateTransitionException(
-                "Cannot disconnect from status ${connection.status}"
-            )
-        }
+        val nangoDetails = transitionToDisconnecting(workspaceId, connectionId)
 
-        // Transition to DISCONNECTING
-        connection.status = ConnectionStatus.DISCONNECTING
-        connectionRepository.save(connection)
+        deleteNangoConnection(nangoDetails.first, nangoDetails.second)
 
-        // Call Nango to delete the connection
-        try {
+        return transitionToDisconnected(workspaceId, connectionId, userId)
+    }
+
+    // ------ Private Helpers ------
+
+    /**
+     * Transitions a connection to DISCONNECTING state in its own transaction,
+     * making the intermediate state visible to other transactions.
+     *
+     * @return Pair of (nangoProviderKey, nangoConnectionId) for the Nango API call
+     */
+    private fun transitionToDisconnecting(workspaceId: UUID, connectionId: UUID): Pair<String, String> {
+        return transactionTemplate.execute { _ ->
+            val connection = findOrThrow { connectionRepository.findById(connectionId) }
+            require(connection.workspaceId == workspaceId) { "Connection does not belong to workspace" }
+
+            if (!connection.status.canTransitionTo(ConnectionStatus.DISCONNECTING)) {
+                throw InvalidStateTransitionException(
+                    "Cannot disconnect from status ${connection.status}"
+                )
+            }
+
+            connection.status = ConnectionStatus.DISCONNECTING
+            connectionRepository.save(connection)
+
             val definition = findOrThrow { definitionRepository.findById(connection.integrationId) }
-            nangoClientWrapper.deleteConnection(
-                providerConfigKey = definition.nangoProviderKey,
-                connectionId = connection.nangoConnectionId
-            )
-        } catch (e: Exception) {
-            logger.error { "Failed to delete Nango connection: ${e.message}" }
-            // Even if Nango delete fails, mark as disconnected locally
-        }
+            definition.nangoProviderKey to connection.nangoConnectionId
+        }!!
+    }
 
-        // Transition to DISCONNECTED
-        connection.status = ConnectionStatus.DISCONNECTED
-        return connectionRepository.save(connection).also {
-            logger.info { "Disconnected integration connection $connectionId for workspace=$workspaceId" }
+    /**
+     * Calls Nango to delete the external connection. Handles failures gracefully
+     * since the local disconnect should succeed even if Nango cleanup fails.
+     */
+    private fun deleteNangoConnection(providerConfigKey: String, nangoConnectionId: String) {
+        try {
+            nangoClientWrapper.deleteConnection(
+                providerConfigKey = providerConfigKey,
+                connectionId = nangoConnectionId
+            )
+        } catch (e: NangoApiException) {
+            logger.error { "Nango API error during connection deletion: ${e.message} (status=${e.statusCode})" }
+        } catch (e: RateLimitException) {
+            logger.error { "Rate limited during Nango connection deletion: ${e.message}" }
+        } catch (e: TransientNangoException) {
+            logger.error { "Transient Nango error during connection deletion: ${e.message}" }
+        } catch (e: Exception) {
+            logger.error(e) { "Unexpected error during Nango connection deletion" }
         }
+    }
+
+    /**
+     * Transitions a connection to DISCONNECTED state in its own transaction.
+     */
+    private fun transitionToDisconnected(
+        workspaceId: UUID,
+        connectionId: UUID,
+        userId: UUID
+    ): IntegrationConnectionEntity {
+        return transactionTemplate.execute { _ ->
+            val connection = findOrThrow { connectionRepository.findById(connectionId) }
+            connection.status = ConnectionStatus.DISCONNECTED
+            connectionRepository.save(connection).also {
+                logger.info { "Disconnected integration connection $connectionId for workspace=$workspaceId" }
+                logConnectionActivity(OperationType.DELETE, userId, workspaceId, it)
+            }
+        }!!
+    }
+
+    private fun logConnectionActivity(
+        operation: OperationType,
+        userId: UUID,
+        workspaceId: UUID,
+        connection: IntegrationConnectionEntity,
+        extraDetails: Map<String, Any> = emptyMap()
+    ) {
+        val details = mapOf(
+            "integrationId" to connection.integrationId.toString(),
+            "status" to connection.status.name
+        ) + extraDetails
+
+        activityService.logActivity(
+            activity = Activity.INTEGRATION_CONNECTION,
+            operation = operation,
+            userId = userId,
+            workspaceId = workspaceId,
+            entityType = ApplicationEntityType.INTEGRATION_CONNECTION,
+            entityId = connection.id,
+            details = details
+        )
     }
 }

@@ -1,6 +1,5 @@
 package riven.core.service.integration
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import riven.core.entity.integration.IntegrationDefinitionEntity
 import riven.core.enums.integration.IntegrationCategory
@@ -19,7 +18,6 @@ import java.util.*
 class IntegrationDefinitionService(
     private val repository: IntegrationDefinitionRepository
 ) {
-    private val logger = KotlinLogging.logger {}
 
     /**
      * Get an integration definition by ID.

@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS integration_connections (
     UNIQUE(workspace_id, integration_id)
 );
 
-CREATE INDEX idx_integration_connections_workspace ON integration_connections(workspace_id);
+-- Note: workspace_id index is provided as the leading column of UNIQUE(workspace_id, integration_id)
 CREATE INDEX idx_integration_connections_status ON integration_connections(status);
 CREATE INDEX idx_integration_connections_integration ON integration_connections(integration_id);
 
@@ -29,12 +29,6 @@ CREATE INDEX idx_integration_connections_integration ON integration_connections(
 -- Workspace-scoped access (matches existing entity pattern)
 
 ALTER TABLE integration_connections ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "integration_connections_select_by_workspace" ON integration_connections
-    FOR SELECT TO authenticated
-    USING (workspace_id IN (
-        SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()
-    ));
 
 CREATE POLICY "integration_connections_write_by_workspace" ON integration_connections
     FOR ALL TO authenticated

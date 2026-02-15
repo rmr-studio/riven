@@ -3,6 +3,7 @@ package riven.core.entity.integration
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
+import org.hibernate.annotations.UpdateTimestamp
 import riven.core.enums.integration.IntegrationCategory
 import java.time.ZonedDateTime
 import java.util.*
@@ -59,6 +60,7 @@ data class IntegrationDefinitionEntity(
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: ZonedDateTime = ZonedDateTime.now(),
 
+    @UpdateTimestamp
     @Column(name = "updated_at")
     var updatedAt: ZonedDateTime = ZonedDateTime.now()
 )
