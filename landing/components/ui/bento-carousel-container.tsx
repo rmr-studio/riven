@@ -65,8 +65,12 @@ export function BentoCard({ title, description, className, children, area }: Ben
         fill="color-mix(in srgb, var(--primary) 10%, transparent)"
       />
       <div className="relative z-10 flex-shrink-0 space-y-2">
-        <h3 className="text-lg font-semibold">{title}</h3>
-        {description && <p className="line-clamp-3 text-sm text-muted-foreground">{description}</p>}
+        <h3 className="text-lg leading-tight font-semibold tracking-tight">{title}</h3>
+        {description && (
+          <p className="line-clamp-3 text-xs leading-tight tracking-tighter text-muted-foreground md:text-sm">
+            {description}
+          </p>
+        )}
       </div>
       {children && <div className="relative z-10 mt-4 min-h-0 flex-1">{children}</div>}
     </div>
@@ -386,92 +390,92 @@ export function BentoCarouselContainer({
           transition={{ duration: 0.5 }}
           className={cn('relative', className)}
         >
-      {/* Carousel container */}
-      <div
-        ref={containerRef}
-        onScroll={checkScrollability}
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={onMouseUp}
-        onMouseLeave={onMouseLeave}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        className={cn(
-          'scrollbar-hide flex gap-6 overflow-x-auto select-none',
-          isDragging ? 'cursor-grabbing' : 'cursor-grab',
-          !isDragging && 'scroll-smooth',
-        )}
-        style={{
-          scrollSnapType: isDragging ? 'none' : 'x mandatory',
-          WebkitOverflowScrolling: 'touch',
-          ...(inset && { scrollPaddingLeft: inset }),
-        }}
-      >
-        {inset && (
+          {/* Carousel container */}
           <div
-            className="flex-shrink-0"
-            style={{ width: `calc(${inset} - 24px)` }}
-            aria-hidden="true"
-          />
-        )}
-        {React.Children.map(children, (child, index) => {
-          const isLast = index === childCount - 1;
-          return (
-            <div
-              key={index}
-              data-slide
-              className="min-h-[500px] flex-shrink-0 md:min-h-[600px]"
-              style={{
-                width: inset
-                  ? isLast
-                    ? `calc(100dvw - 2 * ${inset})`
-                    : `calc(100dvw - ${inset} - ${peekAmount + 24}px)`
-                  : isLast
-                    ? '100%'
-                    : `calc(100% - ${peekAmount}px)`,
-                scrollSnapAlign: 'start',
-              }}
-            >
-              {child}
-            </div>
-          );
-        })}
-        {inset && (
-          <div
-            className="flex-shrink-0"
-            style={{ width: `calc(${inset} - 24px)` }}
-            aria-hidden="true"
-          />
-        )}
-      </div>
+            ref={containerRef}
+            onScroll={checkScrollability}
+            onMouseDown={onMouseDown}
+            onMouseMove={onMouseMove}
+            onMouseUp={onMouseUp}
+            onMouseLeave={onMouseLeave}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+            className={cn(
+              'scrollbar-hide flex gap-6 overflow-x-auto select-none',
+              isDragging ? 'cursor-grabbing' : 'cursor-grab',
+              !isDragging && 'scroll-smooth',
+            )}
+            style={{
+              scrollSnapType: isDragging ? 'none' : 'x mandatory',
+              WebkitOverflowScrolling: 'touch',
+              ...(inset && { scrollPaddingLeft: inset }),
+            }}
+          >
+            {inset && (
+              <div
+                className="flex-shrink-0"
+                style={{ width: `calc(${inset} - 24px)` }}
+                aria-hidden="true"
+              />
+            )}
+            {React.Children.map(children, (child, index) => {
+              const isLast = index === childCount - 1;
+              return (
+                <div
+                  key={index}
+                  data-slide
+                  className="min-h-[500px] flex-shrink-0 md:min-h-[600px]"
+                  style={{
+                    width: inset
+                      ? isLast
+                        ? `calc(100dvw - 2 * ${inset})`
+                        : `calc(100dvw - ${inset} - ${peekAmount + 24}px)`
+                      : isLast
+                        ? '100%'
+                        : `calc(100% - ${peekAmount}px)`,
+                    scrollSnapAlign: 'start',
+                  }}
+                >
+                  {child}
+                </div>
+              );
+            })}
+            {inset && (
+              <div
+                className="flex-shrink-0"
+                style={{ width: `calc(${inset} - 24px)` }}
+                aria-hidden="true"
+              />
+            )}
+          </div>
 
-      {/* Navigation arrows */}
-      <div
-        className="mt-6 flex justify-end gap-2"
-        style={inset ? { paddingRight: inset } : undefined}
-      >
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => scroll('left')}
-          disabled={!canScrollLeft}
-          className="rounded-full"
-          aria-label="Previous slide"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => scroll('right')}
-          disabled={!canScrollRight}
-          className="rounded-full"
-          aria-label="Next slide"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
+          {/* Navigation arrows */}
+          <div
+            className="mt-6 flex justify-end gap-2"
+            style={inset ? { paddingRight: inset } : undefined}
+          >
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => scroll('left')}
+              disabled={!canScrollLeft}
+              className="rounded-full"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => scroll('right')}
+              disabled={!canScrollRight}
+              className="rounded-full"
+              aria-label="Next slide"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

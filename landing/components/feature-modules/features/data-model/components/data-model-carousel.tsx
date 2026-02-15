@@ -4,6 +4,8 @@ import { IntegrationsDiagram } from './carousel/graphic/2.integrations';
 import { IdentityMatchingDiagram } from './carousel/graphic/3.identity-matching';
 import { IdentityMatchingDiagramSm } from './carousel/graphic/3.identity-matching-sm';
 import { IntegrationGraphDiagram } from './carousel/graphic/4.integrations';
+import { DataCleanlinessGraphic } from './carousel/graphic/5.data-cleanliness';
+import { QueryBuilderGraphic } from './carousel/graphic/6.query-builder';
 
 export const DataModelFeatureCarousel = () => {
   const slides: Slide[] = [
@@ -65,27 +67,41 @@ export const DataModelFeatureCarousel = () => {
     {
       layout: {
         areas: `
-          "analytics  integration"
-          "analytics  automation"
+          "views  integration"
+          "views  cleanliness"
         `,
         cols: '1fr 1fr',
         rows: '1fr 1fr',
       },
       lg: {
         areas: `
-          "analytics analytics"
-          "integration automation"
+          "views views"
+          "integration cleanliness"
         `,
         cols: '1fr 1fr',
         rows: '1.5fr 1fr',
       },
       cards: [
         <BentoCard
-          key="analytics"
-          area="analytics"
-          title="Advanced analytics"
-          description="Get insights that matter with customizable dashboards ad real-time reporting. Track every metric that moves your business forward."
-        />,
+          key="views"
+          area="views"
+          title="Views that answer your questions."
+          description="Filter, sort, and save custom views across your entire data model. Ask your data a question and pin the answer"
+        >
+          <div
+            style={{
+              maskImage:
+                'linear-gradient(to right, transparent, black 10%, black 80%, transparent), linear-gradient(to bottom, black 40%, transparent)',
+              maskComposite: 'intersect',
+              WebkitMaskImage:
+                'linear-gradient(to right, transparent, black 10%, black 80%, transparent), linear-gradient(to bottom, black 40%, transparent)',
+              WebkitMaskComposite: 'source-in',
+            }}
+            className="relative h-full w-full overflow-hidden mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]"
+          >
+            <QueryBuilderGraphic className="static inset-0 top-0 h-full w-full -translate-x-1/6 scale-70 max-md:left-1/2 max-md:w-[150%] md:absolute md:top-1/6 md:translate-x-4 md:scale-110 lg:top-1/3" />
+          </div>
+        </BentoCard>,
         <BentoCard
           key="integration"
           area="integration"
@@ -93,15 +109,30 @@ export const DataModelFeatureCarousel = () => {
           description="Balancing 16 tabs to make a decision is overrated. Bring your tools together in one unified platform, and get the full picture without being the integration layer yourself."
         >
           <div className="relative h-full w-full overflow-hidden mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
-            <IntegrationGraphDiagram className="static inset-0 h-full w-full -translate-x-1/6 max-md:left-1/2 max-md:w-[150%] md:absolute md:translate-x-0" />
+            <IntegrationGraphDiagram className="static inset-0 h-full w-full -translate-x-1/6 scale-75 max-md:left-1/2 max-md:w-[150%] sm:scale-100 md:absolute md:translate-x-0 md:scale-125" />
           </div>
         </BentoCard>,
         <BentoCard
-          key="automation"
-          area="automation"
-          title="Smart automation"
-          description="Let AI handle the repetitive tasks while you focus on building relationships."
-        />,
+          key="cleanliness"
+          area="cleanliness"
+          title="Keep your data clean without lifting a finger"
+          description="Avoid the headaches of messy data and let your data model maintain itself. With built-in data quality monitoring and automatic cleansing, your data stays accurate and reliable without manual effort."
+          className="max-h-140 overflow-hidden pb-0 lg:max-h-120"
+        >
+          <div
+            className="relative h-full w-full overflow-hidden"
+            style={{
+              maskImage:
+                'linear-gradient(to right, transparent, black 10%, black 80%, transparent), linear-gradient(to bottom, black 40%, transparent)',
+              maskComposite: 'intersect',
+              WebkitMaskImage:
+                'linear-gradient(to right, transparent, black 10%, black 80%, transparent), linear-gradient(to bottom, black 40%, transparent)',
+              WebkitMaskComposite: 'source-in',
+            }}
+          >
+            <DataCleanlinessGraphic className="static inset-0 left-1/2 w-full origin-top-right scale-75 md:scale-90 lg:translate-x-1/3 lg:scale-100" />
+          </div>
+        </BentoCard>,
       ],
     },
   ];
