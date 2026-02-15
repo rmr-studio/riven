@@ -7,7 +7,9 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import riven.core.enums.workflow.OutputFieldType
 import riven.core.models.workflow.engine.state.*
+import riven.core.models.workflow.node.config.actions.WorkflowBulkUpdateEntityActionConfig
 import riven.core.models.workflow.node.config.actions.WorkflowCreateEntityActionConfig
+import riven.core.models.workflow.node.config.actions.WorkflowQueryEntityActionConfig
 import java.util.UUID
 import java.util.stream.Stream
 
@@ -79,7 +81,7 @@ class OutputMetadataValidationTest {
             Arguments.of(
                 OutputMetadataTestCase(
                     nodeLabel = "QUERY_ENTITY",
-                    outputMetadata = null,  // Not yet declared (Phase 3)
+                    outputMetadata = WorkflowQueryEntityActionConfig.outputMetadata,
                     exampleOutput = QueryEntityOutput(
                         entities = listOf(mapOf("id" to "1")),
                         totalCount = 1,
@@ -107,6 +109,18 @@ class OutputMetadataValidationTest {
                     exampleOutput = ConditionOutput(
                         result = true,
                         evaluatedExpression = "x > 5"
+                    )
+                )
+            ),
+            Arguments.of(
+                OutputMetadataTestCase(
+                    nodeLabel = "BULK_UPDATE_ENTITY",
+                    outputMetadata = WorkflowBulkUpdateEntityActionConfig.outputMetadata,
+                    exampleOutput = BulkUpdateEntityOutput(
+                        entitiesUpdated = 25,
+                        entitiesFailed = 0,
+                        failedEntityDetails = emptyList(),
+                        totalProcessed = 25
                     )
                 )
             )
@@ -222,9 +236,9 @@ class OutputMetadataValidationTest {
     @Test
     fun `all node types are accounted for in test cases`() {
         // Expected count of NodeOutput sealed interface implementations
-        // Current: CreateEntity, UpdateEntity, DeleteEntity, QueryEntity, HttpResponse, Condition
+        // Current: CreateEntity, UpdateEntity, DeleteEntity, QueryEntity, HttpResponse, Condition, BulkUpdateEntity
         // Excluded: UnsupportedNodeOutput (utility type), GenericMapOutput (utility type)
-        val expectedNodeOutputTypes = 6
+        val expectedNodeOutputTypes = 7
 
         val testCases = nodeOutputTestCases().toList()
 
