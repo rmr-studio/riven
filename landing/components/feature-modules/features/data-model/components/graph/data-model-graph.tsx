@@ -114,6 +114,7 @@ export const DataModelGraph: FC<Props> = ({ tab }) => {
                 width: bounds.width,
                 height: bounds.height,
                 position: 'relative',
+                left: (containerWidth - bounds.width * scale) / 2,
               }}
             >
               {/* Edges */}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   Accordion,
@@ -10,12 +10,49 @@ import {
 } from '@/components/ui/accordion';
 import { knowledgeScrollContent } from '../config/scroll-content';
 
+const AUTO_ADVANCE_MS = 5000;
+const INTERACTION_PAUSE_MS = 3000;
+
 export const KnowledgeScroll = () => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pauseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startRef = useRef(Date.now());
+
+  // Auto-advance timer
+  useEffect(() => {
+    if (paused) return;
+
+    startRef.current = Date.now();
+    setProgress(0);
+
+    timerRef.current = setInterval(() => {
+      const elapsed = Date.now() - startRef.current;
+      const pct = Math.min(elapsed / AUTO_ADVANCE_MS, 1);
+      setProgress(pct);
+
+      if (pct >= 1) {
+        setActiveIndex((prev) => (prev + 1) % knowledgeScrollContent.length);
+        startRef.current = Date.now();
+        setProgress(0);
+      }
+    }, 50);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [activeIndex, paused]);
 
   const handleValueChange = (value: string) => {
     if (value) {
       setActiveIndex(Number(value));
+      setPaused(true);
+      setProgress(0);
+
+      if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
+      pauseTimeoutRef.current = setTimeout(() => setPaused(false), INTERACTION_PAUSE_MS);
     }
   };
 
@@ -34,7 +71,7 @@ export const KnowledgeScroll = () => {
             <AccordionItem
               key={index}
               value={String(index)}
-              className="border-b border-white/10 last:border-b-0"
+              className="relative border-b border-white/10 last:border-b-0"
             >
               <AccordionTrigger className="py-5 text-lg font-semibold text-primary/60 hover:no-underline data-[state=open]:text-primary">
                 {item.title}
@@ -42,6 +79,15 @@ export const KnowledgeScroll = () => {
               <AccordionContent className="text-sm leading-relaxed text-primary/50">
                 {item.description}
               </AccordionContent>
+              {/* Progress bar for active item */}
+              {activeIndex === index && (
+                <div className="absolute bottom-0 left-0 h-[2px] w-full">
+                  <div
+                    className="h-full bg-primary/30 transition-[width] duration-100 ease-linear"
+                    style={{ width: `${progress * 100}%` }}
+                  />
+                </div>
+              )}
             </AccordionItem>
           ))}
         </Accordion>
@@ -77,7 +123,7 @@ export const KnowledgeScroll = () => {
             <AccordionItem
               key={index}
               value={String(index)}
-              className="border-b border-white/10 last:border-b-0"
+              className="relative border-b border-white/10 last:border-b-0"
             >
               <AccordionTrigger className="py-4 text-base font-semibold text-primary/60 hover:no-underline data-[state=open]:text-primary">
                 {item.title}
@@ -110,6 +156,15 @@ export const KnowledgeScroll = () => {
                   </div>
                 </div>
               </AccordionContent>
+              {/* Progress bar for active item */}
+              {activeIndex === index && (
+                <div className="absolute bottom-0 left-0 h-[2px] w-full">
+                  <div
+                    className="h-full bg-primary/30 transition-[width] duration-100 ease-linear"
+                    style={{ width: `${progress * 100}%` }}
+                  />
+                </div>
+              )}
             </AccordionItem>
           ))}
         </Accordion>
