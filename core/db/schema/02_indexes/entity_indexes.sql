@@ -41,3 +41,20 @@ DROP INDEX IF EXISTS idx_entity_relationships_workspace_target_type;
 CREATE INDEX IF NOT EXISTS idx_entity_relationships_workspace_target_type
     ON entity_relationships (workspace_id, target_entity_type_id)
     WHERE deleted = FALSE AND deleted_at IS NULL;
+
+-- Entity Provenance Indexes
+CREATE INDEX IF NOT EXISTS idx_provenance_entity
+    ON entity_attribute_provenance (entity_id);
+
+CREATE INDEX IF NOT EXISTS idx_provenance_integration
+    ON entity_attribute_provenance (source_integration_id)
+    WHERE source_integration_id IS NOT NULL;
+
+-- Entity Integration Source Indexes
+CREATE INDEX IF NOT EXISTS idx_entities_source_integration
+    ON entities (source_integration_id)
+    WHERE source_integration_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_entities_source_external_id
+    ON entities (source_external_id)
+    WHERE source_external_id IS NOT NULL;
