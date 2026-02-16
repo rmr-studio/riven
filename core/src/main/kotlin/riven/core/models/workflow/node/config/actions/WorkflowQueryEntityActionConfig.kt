@@ -5,28 +5,35 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.media.Schema
+import kotlinx.coroutines.runBlocking
 import riven.core.enums.common.icon.IconType
+import riven.core.enums.workflow.OutputFieldType
 import riven.core.enums.workflow.WorkflowActionType
 import riven.core.enums.workflow.WorkflowNodeConfigFieldType
 import riven.core.enums.workflow.WorkflowNodeType
 import riven.core.models.entity.query.EntityQuery
 import riven.core.models.entity.query.QueryProjection
-import riven.core.models.entity.query.filter.FilterValue
-import riven.core.models.entity.query.filter.QueryFilter
-import riven.core.models.entity.query.filter.RelationshipFilter
 import riven.core.models.entity.query.pagination.QueryPagination
 import riven.core.models.workflow.engine.state.NodeOutput
+import riven.core.models.workflow.engine.state.QueryEntityOutput
 import riven.core.models.workflow.engine.state.WorkflowDataStore
 import riven.core.models.workflow.node.NodeServiceProvider
 import riven.core.models.workflow.node.config.WorkflowActionConfig
 import riven.core.models.workflow.node.config.WorkflowNodeConfigField
+import riven.core.models.workflow.node.config.WorkflowNodeOutputField
+import riven.core.models.workflow.node.config.WorkflowNodeOutputMetadata
 import riven.core.models.workflow.node.config.WorkflowNodeTypeMetadata
 import riven.core.models.workflow.node.config.validation.ConfigValidationError
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.models.workflow.node.service
+import riven.core.service.entity.query.EntityQueryService
 import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
+import riven.core.service.workflow.state.WorkflowNodeInputResolverService
+import java.util.*
 
 private val log = KotlinLogging.logger {}
+
+private const val DEFAULT_QUERY_LIMIT = 100
 
 /**
  * Configuration for QUERY_ENTITY action nodes.
@@ -226,6 +233,39 @@ data class WorkflowQueryEntityActionConfig(
                 description = "Optional timeout override in seconds"
             )
         )
+
+        val outputMetadata = WorkflowNodeOutputMetadata(
+            fields = listOf(
+                WorkflowNodeOutputField(
+                    key = "entities",
+                    label = "Matching Entities",
+                    type = OutputFieldType.ENTITY_LIST,
+                    description = "List of entities matching the query filters",
+                    entityTypeId = null,  // Dynamic - resolved from query.entityTypeId at runtime
+                    exampleValue = listOf(
+                        mapOf(
+                            "id" to "550e8400-e29b-41d4-a716-446655440000",
+                            "typeId" to "660e8400-e29b-41d4-a716-446655440001",
+                            "payload" to mapOf("attr-uuid" to "Example Value")
+                        )
+                    )
+                ),
+                WorkflowNodeOutputField(
+                    key = "totalCount",
+                    label = "Total Count",
+                    type = OutputFieldType.NUMBER,
+                    description = "Total number of matching entities (before pagination limit)",
+                    exampleValue = 42
+                ),
+                WorkflowNodeOutputField(
+                    key = "hasMore",
+                    label = "Has More",
+                    type = OutputFieldType.BOOLEAN,
+                    description = "Whether more results exist beyond the system limit",
+                    exampleValue = false
+                )
+            )
+        )
     }
 
     /**
@@ -246,7 +286,7 @@ data class WorkflowQueryEntityActionConfig(
 
         // Validate filter if present
         query.filter?.let { filter ->
-            errors.addAll(validateFilter(filter, "query.filter", validationService))
+            errors.addAll(WorkflowFilterTemplateUtils.validateFilter(filter, "query.filter", validationService))
         }
 
         // Validate pagination if present
@@ -265,97 +305,6 @@ data class WorkflowQueryEntityActionConfig(
         return ConfigValidationResult(errors)
     }
 
-    private fun validateFilter(
-        filter: QueryFilter,
-        path: String,
-        validationService: WorkflowNodeConfigValidationService
-    ): List<ConfigValidationError> {
-        return when (filter) {
-            is QueryFilter.Attribute -> {
-                validateFilterValue(filter.value, "$path.value", validationService)
-            }
-
-            is QueryFilter.Relationship -> {
-                validateRelationshipCondition(filter.condition, "$path.condition", validationService)
-            }
-
-            is QueryFilter.And -> {
-                if (filter.conditions.isEmpty()) {
-                    listOf(ConfigValidationError(path, "AND filter must have at least one condition"))
-                } else {
-                    filter.conditions.flatMapIndexed { index, condition ->
-                        validateFilter(condition, "$path.conditions[$index]", validationService)
-                    }
-                }
-            }
-
-            is QueryFilter.Or -> {
-                if (filter.conditions.isEmpty()) {
-                    listOf(ConfigValidationError(path, "OR filter must have at least one condition"))
-                } else {
-                    filter.conditions.flatMapIndexed { index, condition ->
-                        validateFilter(condition, "$path.conditions[$index]", validationService)
-                    }
-                }
-            }
-        }
-    }
-
-    private fun validateFilterValue(
-        value: FilterValue,
-        path: String,
-        validationService: WorkflowNodeConfigValidationService
-    ): List<ConfigValidationError> {
-        return when (value) {
-            is FilterValue.Literal -> emptyList()
-            is FilterValue.Template -> validationService.validateTemplateSyntax(value.expression, path)
-        }
-    }
-
-    private fun validateRelationshipCondition(
-        condition: RelationshipFilter,
-        path: String,
-        validationService: WorkflowNodeConfigValidationService
-    ): List<ConfigValidationError> {
-        return when (condition) {
-            is RelationshipFilter.Exists -> emptyList()
-            is RelationshipFilter.NotExists -> emptyList()
-
-            is RelationshipFilter.TargetEquals -> {
-                if (condition.entityIds.isEmpty()) {
-                    listOf(ConfigValidationError(path, "TARGET_EQUALS must specify at least one entity ID"))
-                } else {
-                    condition.entityIds.flatMapIndexed { index, id ->
-                        validationService.validateTemplateOrUuid(id, "$path.entityIds[$index]")
-                    }
-                }
-            }
-
-            is RelationshipFilter.TargetMatches -> {
-                validateFilter(condition.filter, "$path.filter", validationService)
-            }
-
-            is RelationshipFilter.TargetTypeMatches -> {
-                if (condition.branches.isEmpty()) {
-                    listOf(ConfigValidationError(path, "TARGET_TYPE_MATCHES must specify at least one branch"))
-                } else {
-                    condition.branches.flatMapIndexed { index, branch ->
-                        branch.filter?.let { validateFilter(it, "$path.branches[$index].filter", validationService) }
-                            ?: emptyList()
-                    }
-                }
-            }
-
-            is RelationshipFilter.CountMatches -> {
-                if (condition.count < 0) {
-                    listOf(ConfigValidationError(path, "Count must be non-negative"))
-                } else {
-                    emptyList()
-                }
-            }
-        }
-    }
-
     override fun execute(
         dataStore: WorkflowDataStore,
         inputs: Map<String, Any?>,
@@ -363,17 +312,56 @@ data class WorkflowQueryEntityActionConfig(
     ): NodeOutput {
         log.info { "Executing QUERY_ENTITY for type: ${query.entityTypeId}" }
 
-        // TODO: Implement query execution via EntityQueryService
-        // This will need:
-        // 1. Resolve any template values in filters
-        // 2. Build query criteria from filter structure
-        // 3. Execute query against entity repository
-        // 4. Apply pagination and projection
-        // 5. Return results
+        // Get required services
+        val entityQueryService = services.service<EntityQueryService>()
+        val inputResolverService = services.service<WorkflowNodeInputResolverService>()
 
-        throw NotImplementedError(
-            "QUERY_ENTITY execution requires EntityQueryService implementation. " +
-                    "Filter: ${query.filter}, Pagination: $pagination"
+        // Resolve template values in the filter tree
+        val resolvedFilter = query.filter?.let { filter ->
+            WorkflowFilterTemplateUtils.resolveFilterTemplates(filter, dataStore, inputResolverService)
+        }
+
+        // Build query with resolved filter
+        val resolvedQuery = EntityQuery(
+            entityTypeId = query.entityTypeId,
+            filter = resolvedFilter,
+            maxDepth = query.maxDepth
+        )
+
+        // Apply system-wide query limit to prevent runaway queries
+        val effectivePagination = pagination?.let {
+            it.copy(limit = minOf(it.limit, DEFAULT_QUERY_LIMIT))
+        } ?: QueryPagination(limit = DEFAULT_QUERY_LIMIT)
+
+        // Execute query (EntityQueryService.execute is suspend, so wrap in runBlocking)
+        val result = runBlocking {
+            entityQueryService.execute(
+                query = resolvedQuery,
+                workspaceId = dataStore.metadata.workspaceId,
+                pagination = effectivePagination,
+                projection = projection
+            )
+        }
+
+        // Transform entities to maps with full entity structure
+        val entityMaps = result.entities.map { entity ->
+            mapOf(
+                "id" to entity.id,
+                "typeId" to entity.typeId,
+                "payload" to entity.payload,
+                "icon" to entity.icon,
+                "identifierKey" to entity.identifierKey,
+                "createdAt" to entity.createdAt,
+                "updatedAt" to entity.updatedAt
+            )
+        }
+
+        // Return QueryEntityOutput with resolved data
+        return QueryEntityOutput(
+            entities = entityMaps,
+            totalCount = result.totalCount.toInt(),
+            hasMore = result.hasNextPage
         )
     }
+
 }

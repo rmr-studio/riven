@@ -95,3 +95,34 @@ CREATE POLICY "entity_relationships_write_by_org" ON entity_relationships
                      FROM workspace_members
                      WHERE user_id = auth.uid())
     );
+
+-- =====================================================
+-- ENTITY ATTRIBUTE PROVENANCE RLS
+-- =====================================================
+-- Provenance inherits workspace scope through entity_id FK
+
+ALTER TABLE entity_attribute_provenance
+    ENABLE ROW LEVEL SECURITY;
+
+-- Provenance records can be selected by workspace members (via parent entity)
+CREATE POLICY "provenance_select_by_workspace" ON entity_attribute_provenance
+    FOR SELECT TO authenticated
+    USING (entity_id IN (
+        SELECT id FROM entities WHERE workspace_id IN (
+            SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()
+        )
+    ));
+
+-- Provenance records can be written by workspace members (via parent entity)
+CREATE POLICY "provenance_write_by_workspace" ON entity_attribute_provenance
+    FOR ALL TO authenticated
+    USING (entity_id IN (
+        SELECT id FROM entities WHERE workspace_id IN (
+            SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()
+        )
+    ))
+    WITH CHECK (entity_id IN (
+        SELECT id FROM entities WHERE workspace_id IN (
+            SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()
+        )
+    ));

@@ -326,7 +326,16 @@ CREATE TABLE IF NOT EXISTS public.entities
     "updated_at"     TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "created_by"     UUID    REFERENCES users (id) ON DELETE SET NULL,
     "updated_by"     UUID    REFERENCES users (id) ON DELETE SET NULL,
-    "deleted_at"     TIMESTAMP WITH TIME ZONE DEFAULT NULL
+    "deleted_at"     TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+
+    -- Provenance tracking fields
+    "source_type"            VARCHAR(50) NOT NULL DEFAULT 'USER_CREATED',
+    "source_integration_id"  UUID,
+    "source_external_id"     TEXT,
+    "source_url"             TEXT,
+    "first_synced_at"        TIMESTAMPTZ,
+    "last_synced_at"         TIMESTAMPTZ,
+    "sync_version"           BIGINT NOT NULL DEFAULT 0
 );
 
 create index if not exists idx_entities_type_id
@@ -338,6 +347,10 @@ create index if not exists idx_entities_workspace_id
     where deleted = false;
 
 create index idx_entities_payload_gin on entities using gin (payload jsonb_path_ops) where deleted = false and deleted_at is null;
+
+-- Provenance indexes
+CREATE INDEX idx_entities_source_integration ON entities(source_integration_id) WHERE source_integration_id IS NOT NULL;
+CREATE INDEX idx_entities_source_external_id ON entities(source_external_id) WHERE source_external_id IS NOT NULL;
 
 --Easy way to enforce unique fields per entity type. This table will store unique field values for entities.
 --When an entity is created or updated, the relevant unique fields will be deleted and re-inserted/updated here
@@ -436,7 +449,27 @@ CREATE OR REPLACE TRIGGER trg_update_entity_type_count
 EXECUTE FUNCTION public.update_entity_type_count();
 
 -- =====================================================
--- 3. ENTITY_RELATIONSHIPS TABLE
+-- 3. ENTITY_ATTRIBUTE_PROVENANCE TABLE
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS public.entity_attribute_provenance (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    entity_id UUID NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+    attribute_id UUID NOT NULL,
+    source_type VARCHAR(50) NOT NULL,
+    source_integration_id UUID,
+    source_external_field VARCHAR(255),
+    last_updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    override_by_user BOOLEAN NOT NULL DEFAULT false,
+    override_at TIMESTAMPTZ,
+    UNIQUE(entity_id, attribute_id)
+);
+
+CREATE INDEX idx_provenance_entity ON entity_attribute_provenance(entity_id);
+CREATE INDEX idx_provenance_integration ON entity_attribute_provenance(source_integration_id) WHERE source_integration_id IS NOT NULL;
+
+-- =====================================================
+-- 4. ENTITY_RELATIONSHIPS TABLE
 -- =====================================================
 
 CREATE TABLE IF NOT EXISTS public.entity_relationships
@@ -472,7 +505,7 @@ CREATE INDEX idx_entity_relationships_target ON entity_relationships (workspace_
 
 
 -- =====================================================
--- 4. ROW LEVEL SECURITY (RLS) POLICIES
+-- 5. ROW LEVEL SECURITY (RLS) POLICIES
 -- =====================================================
 
 -- entity_types RLS
@@ -636,3 +669,73 @@ CREATE TABLE IF NOT EXISTS public.shedlock (
     locked_by VARCHAR(255) NOT NULL
 );
 
+
+-- =====================================================
+-- INTEGRATION DEFINITIONS TABLE
+-- =====================================================
+-- Global catalog of supported integrations (HubSpot, Salesforce, etc.)
+-- No workspace_id - all workspaces read from same catalog
+-- No RLS - catalog is globally readable
+
+CREATE TABLE IF NOT EXISTS integration_definitions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    slug VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    icon_url TEXT,
+    description TEXT,
+    category VARCHAR(50) NOT NULL,
+    nango_provider_key VARCHAR(100) NOT NULL,
+    capabilities JSONB NOT NULL DEFAULT '{}'::jsonb,
+    sync_config JSONB NOT NULL DEFAULT '{}'::jsonb,
+    auth_config JSONB NOT NULL DEFAULT '{}'::jsonb,
+    active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_integration_definitions_category ON integration_definitions(category);
+CREATE INDEX idx_integration_definitions_active ON integration_definitions(active) WHERE active = true;
+CREATE INDEX idx_integration_definitions_slug ON integration_definitions(slug);
+
+-- =====================================================
+-- INTEGRATION CONNECTIONS TABLE
+-- =====================================================
+-- Workspace-scoped connections to integrations
+-- One connection per integration per workspace
+-- RLS enforces workspace isolation
+
+CREATE TABLE IF NOT EXISTS integration_connections (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    integration_id UUID NOT NULL REFERENCES integration_definitions(id) ON DELETE RESTRICT,
+    nango_connection_id TEXT NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'PENDING_AUTHORIZATION',
+    connection_metadata JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE(workspace_id, integration_id)
+);
+
+CREATE INDEX idx_integration_connections_workspace ON integration_connections(workspace_id);
+CREATE INDEX idx_integration_connections_status ON integration_connections(status);
+CREATE INDEX idx_integration_connections_integration ON integration_connections(integration_id);
+
+-- Integration connections RLS
+ALTER TABLE integration_connections ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "integration_connections_select_by_workspace" ON integration_connections
+    FOR SELECT TO authenticated
+    USING (workspace_id IN (
+        SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()
+    ));
+
+CREATE POLICY "integration_connections_write_by_workspace" ON integration_connections
+    FOR ALL TO authenticated
+    USING (workspace_id IN (
+        SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()
+    ))
+    WITH CHECK (workspace_id IN (
+        SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()
+    ));
