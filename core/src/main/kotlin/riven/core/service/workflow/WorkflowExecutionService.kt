@@ -15,6 +15,7 @@ import riven.core.models.workflow.engine.queue.ExecutionQueueRequest
 import riven.core.repository.workflow.WorkflowExecutionRepository
 import riven.core.repository.workflow.projection.ExecutionSummaryProjection
 import riven.core.service.activity.ActivityService
+import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.workflow.queue.WorkflowExecutionQueueService
 import java.util.*
@@ -80,18 +81,16 @@ class WorkflowExecutionService(
         logger.info { "Enqueued execution: queueId=$id" }
 
         // Log activity (using ENTITY as closest match for workflow execution)
-        activityService.logActivity(
+        activityService.log(
             activity = Activity.ENTITY,
             operation = OperationType.CREATE,
             userId = userId,
             workspaceId = queueItem.workspaceId,
             entityType = ApplicationEntityType.ENTITY,
             entityId = id,
-            details = mapOf(
-                "type" to "workflow_execution_queued",
-                "queueId" to id.toString(),
-                "workflowDefinitionId" to queueItem.workflowDefinitionId.toString()
-            )
+            "type" to "workflow_execution_queued",
+            "queueId" to id.toString(),
+            "workflowDefinitionId" to queueItem.workflowDefinitionId.toString()
         )
 
         return queueItem.toModel()

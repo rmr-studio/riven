@@ -3,11 +3,9 @@ package riven.core.entity.block
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
-import riven.core.entity.util.AuditableEntity
+import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.models.block.layout.TreeLayout
 import riven.core.models.block.tree.BlockTreeLayout
-import riven.core.models.common.SoftDeletable
-import java.time.ZonedDateTime
 import java.util.*
 
 
@@ -44,13 +42,7 @@ data class BlockTreeLayoutEntity(
     @Type(JsonBinaryType::class)
     @Column(name = "layout", columnDefinition = "jsonb", nullable = false)
     var layout: TreeLayout,
-
-    @Column(name = "deleted", columnDefinition = "boolean default false")
-    override var deleted: Boolean = false,
-
-    @Column(name = "deleted_at", nullable = true)
-    override var deletedAt: ZonedDateTime? = null,
-) : AuditableEntity(), SoftDeletable {
+) : AuditableSoftDeletableEntity() {
     fun toModel(audit: Boolean = false): BlockTreeLayout {
         val id = requireNotNull(this.id) { "BlockTreeLayoutEntity ID cannot be null when converting to model" }
         return BlockTreeLayout(

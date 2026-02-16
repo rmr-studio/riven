@@ -11,26 +11,22 @@ import java.util.*
  */
 interface EntityRepository : JpaRepository<EntityEntity, UUID> {
 
-    @Query("SELECT e FROM EntityEntity e WHERE e.id = :id AND e.deleted = false")
-    override fun findById(id: UUID): Optional<EntityEntity>
-
-    @Query("SELECT e FROM EntityEntity e WHERE e.id in :ids AND e.deleted = false")
+    @Query("SELECT e FROM EntityEntity e WHERE e.id in :ids")
     fun findByIdIn(ids: Collection<UUID>): List<EntityEntity>
 
     /**
      * Find all entities for an workspace.
      */
-    @Query("SELECT e FROM EntityEntity e WHERE e.workspaceId = :workspaceId AND e.deleted = false")
+    @Query("SELECT e FROM EntityEntity e WHERE e.workspaceId = :workspaceId")
     fun findByWorkspaceId(workspaceId: UUID): List<EntityEntity>
 
-    @Query("SELECT e FROM EntityEntity e WHERE e.typeId = :typeId AND e.deleted = false")
+    @Query("SELECT e FROM EntityEntity e WHERE e.typeId = :typeId")
     fun findByTypeId(typeId: UUID): List<EntityEntity>
 
     @Query(
         """
-       SELECT e FROM EntityEntity e 
-            WHERE e.typeId in :typeIds 
-            AND e.deleted = false 
+       SELECT e FROM EntityEntity e
+            WHERE e.typeId in :typeIds
     """
     )
     fun findByTypeIdIn(typeIds: List<UUID>): List<EntityEntity>

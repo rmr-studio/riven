@@ -1,54 +1,33 @@
 package riven.core.service.block
 
-import io.github.oshai.kotlinlogging.KLogger
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Import
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.block.BlockEntity
 import riven.core.enums.common.validation.ValidationScope
-import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.models.response.block.internal.CascadeRemovalResult
 import riven.core.models.response.block.internal.MovePreparationResult
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
-import riven.core.service.util.WithUserPersona
-import riven.core.service.util.WorkspaceRole
+import riven.core.service.util.BaseServiceTest
+import riven.core.service.util.SecurityTestConfig
 import riven.core.service.util.factory.block.BlockFactory
 import java.time.ZonedDateTime
 import java.util.*
 
-@WithUserPersona(
-    userId = "f8b1c2d3-4e5f-6789-abcd-ef0123456789",
-    email = "test@example.com",
-    displayName = "Test User",
-    roles = [
-        WorkspaceRole(
-            workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
-            role = WorkspaceRoles.ADMIN
-        )
-    ]
-)
 @SpringBootTest(
     classes = [
         AuthTokenService::class,
         WorkspaceSecurity::class,
-        BlockEnvironmentServiceTest.TestConfig::class,
+        SecurityTestConfig::class,
         BlockEnvironmentService::class
     ]
 )
-class BlockEnvironmentServiceTest {
-
-    @Configuration
-    @EnableMethodSecurity(prePostEnabled = true)
-    @Import(WorkspaceSecurity::class)
-    class TestConfig
+class BlockEnvironmentServiceTest : BaseServiceTest() {
 
     @MockitoBean
     private lateinit var blockService: BlockService
@@ -68,13 +47,10 @@ class BlockEnvironmentServiceTest {
     @MockitoBean
     private lateinit var defaultBlockEnvironmentService: DefaultBlockEnvironmentService
 
-    @MockitoBean
-    private lateinit var logger: KLogger
-
     @Autowired
     private lateinit var blockEnvironmentService: BlockEnvironmentService
 
-    private val orgId = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef9876543210")
+    private val orgId get() = workspaceId
 
     // Helper to create a block type for tests
     private fun createTestBlockType() = BlockFactory.createType(

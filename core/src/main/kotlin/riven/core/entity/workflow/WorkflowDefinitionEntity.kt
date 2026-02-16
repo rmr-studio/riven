@@ -3,15 +3,13 @@ package riven.core.entity.workflow
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
-import riven.core.entity.util.AuditableEntity
+import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.enums.common.icon.IconColour
 import riven.core.enums.common.icon.IconType
 import riven.core.enums.workflow.WorkflowDefinitionStatus
 import riven.core.models.common.Icon
-import riven.core.models.common.SoftDeletable
 import riven.core.models.workflow.WorkflowDefinition
 import riven.core.models.workflow.WorkflowGraph
-import java.time.ZonedDateTime
 import java.util.*
 
 @Entity
@@ -54,13 +52,7 @@ data class WorkflowDefinitionEntity(
     @Type(JsonBinaryType::class)
     @Column(name = "tags", columnDefinition = "jsonb", nullable = false)
     val tags: List<String>,
-
-    @Column(name = "deleted", nullable = false)
-    override var deleted: Boolean = false,
-
-    @Column(name = "deleted_at", columnDefinition = "timestamptz")
-    override var deletedAt: ZonedDateTime? = null
-) : AuditableEntity(), SoftDeletable {
+) : AuditableSoftDeletableEntity() {
     fun toModel(
         workflow: WorkflowDefinitionVersionEntity,
         graph: WorkflowGraph? = null

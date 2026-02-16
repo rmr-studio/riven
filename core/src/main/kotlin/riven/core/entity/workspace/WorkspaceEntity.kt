@@ -1,11 +1,9 @@
 package riven.core.entity.workspace
 
 import jakarta.persistence.*
-import riven.core.entity.util.AuditableEntity
+import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.enums.workspace.WorkspacePlan
-import riven.core.models.common.SoftDeletable
 import riven.core.models.workspace.Workspace
-import java.time.ZonedDateTime
 import java.util.*
 
 @Entity
@@ -37,13 +35,7 @@ data class WorkspaceEntity(
     @Column(name = "plan", nullable = false)
     var plan: WorkspacePlan = WorkspacePlan.FREE, // Default plan is FREE
 
-    @Column(name = "deleted", nullable = false)
-    override var deleted: Boolean = false,
-
-    @Column(name = "deleted_at", nullable = false)
-    override var deletedAt: ZonedDateTime? = null,
-
-    ) : AuditableEntity(), SoftDeletable {
+    ) : AuditableSoftDeletableEntity() {
     fun toModel(audit: Boolean = true): Workspace {
         val id = requireNotNull(this.id) { "WorkspaceEntity must have a non-null id" }
         return Workspace(

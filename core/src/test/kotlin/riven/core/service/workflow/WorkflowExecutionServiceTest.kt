@@ -1,6 +1,5 @@
 package riven.core.service.workflow
 
-import io.github.oshai.kotlinlogging.KLogger
 import io.temporal.client.WorkflowClient
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -8,52 +7,32 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Import
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.enums.workflow.WorkflowTriggerType
-import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.exceptions.NotFoundException
 import riven.core.repository.workflow.WorkflowExecutionNodeRepository
 import riven.core.repository.workflow.WorkflowExecutionRepository
 import riven.core.repository.workflow.projection.ExecutionSummaryProjection
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
-import riven.core.service.util.WithUserPersona
-import riven.core.service.util.WorkspaceRole
+import riven.core.service.util.BaseServiceTest
+import riven.core.service.util.SecurityTestConfig
 import riven.core.service.util.factory.workflow.WorkflowFactory
 import riven.core.service.workflow.queue.WorkflowExecutionQueueService
 import java.time.ZonedDateTime
 import java.util.*
 
-@WithUserPersona(
-    userId = "f8b1c2d3-4e5f-6789-abcd-ef0123456789",
-    email = "test@example.com",
-    displayName = "Test User",
-    roles = [
-        WorkspaceRole(
-            workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
-            role = WorkspaceRoles.ADMIN
-        )
-    ]
-)
 @SpringBootTest(
     classes = [
         AuthTokenService::class,
         WorkspaceSecurity::class,
-        WorkflowExecutionServiceTest.TestConfig::class,
+        SecurityTestConfig::class,
         WorkflowExecutionService::class
     ]
 )
-class WorkflowExecutionServiceTest {
-
-    @Configuration
-    @EnableMethodSecurity(prePostEnabled = true)
-    @Import(WorkspaceSecurity::class)
-    class TestConfig
+class WorkflowExecutionServiceTest : BaseServiceTest() {
 
     @MockitoBean
     private lateinit var workflowClient: WorkflowClient
@@ -70,14 +49,8 @@ class WorkflowExecutionServiceTest {
     @MockitoBean
     private lateinit var activityService: ActivityService
 
-    @MockitoBean
-    private lateinit var logger: KLogger
-
     @Autowired
     private lateinit var workflowExecutionService: WorkflowExecutionService
-
-    private val workspaceId = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef9876543210")
-    private val userId = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef0123456789")
 
     // ------------------------------------------------------------------
     // getExecutionById tests

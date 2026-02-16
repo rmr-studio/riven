@@ -21,15 +21,16 @@ import riven.core.models.workflow.WorkflowGraph
 import riven.core.models.workflow.node.WorkflowNode
 import riven.core.models.workflow.node.config.WorkflowNodeConfig
 import riven.core.models.workflow.node.NodeServiceProvider
+import riven.core.models.common.markDeleted
 import riven.core.models.workflow.node.config.validation.ConfigValidationResult
 import riven.core.repository.workflow.WorkflowDefinitionRepository
 import riven.core.repository.workflow.WorkflowDefinitionVersionRepository
 import riven.core.repository.workflow.WorkflowEdgeRepository
 import riven.core.repository.workflow.WorkflowNodeRepository
 import riven.core.service.activity.ActivityService
+import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
 import riven.core.util.ServiceUtil
-import java.time.ZonedDateTime
 import java.util.*
 
 private val log = KotlinLogging.logger {}
@@ -92,19 +93,17 @@ class WorkflowGraphService(
         val nodeId = requireNotNull(savedNode.id) { "Saved node must have an ID" }
 
         // Log activity
-        activityService.logActivity(
+        activityService.log(
             activity = Activity.WORKFLOW_NODE,
             operation = OperationType.CREATE,
             userId = userId,
             workspaceId = workspaceId,
             entityType = ApplicationEntityType.WORKFLOW_NODE,
             entityId = nodeId,
-            details = mapOf(
-                "key" to request.key,
-                "name" to request.name,
-                "type" to request.config.type.name,
-                "version" to 1
-            )
+            "key" to request.key,
+            "name" to request.name,
+            "type" to request.config.type.name,
+            "version" to 1
         )
 
         log.info { "Created workflow node $nodeId (key: ${request.key})" }
@@ -198,11 +197,8 @@ class WorkflowGraphService(
             }
 
             // Soft delete the old version
-            val deletedOldNode = existingNode.copy(
-                deleted = true,
-                deletedAt = ZonedDateTime.now()
-            )
-            workflowNodeRepository.save(deletedOldNode)
+            existingNode.markDeleted()
+            workflowNodeRepository.save(existingNode)
 
             // Create new version with updated config and metadata
             val newVersionNode = WorkflowNodeEntity.createNewVersion(
@@ -238,23 +234,21 @@ class WorkflowGraphService(
         val nodeId = requireNotNull(savedNode.id) { "Saved node must have an ID" }
 
         // Log activity
-        activityService.logActivity(
+        activityService.log(
             activity = Activity.WORKFLOW_NODE,
             operation = OperationType.UPDATE,
             userId = userId,
             workspaceId = workspaceId,
             entityType = ApplicationEntityType.WORKFLOW_NODE,
             entityId = nodeId,
-            details = mapOf(
-                "key" to savedNode.key,
-                "name" to savedNode.name,
-                "newVersion" to isNewVersion,
-                "version" to savedNode.version,
-                "updatedFields" to listOfNotNull(
-                    if (request.name != null) "name" else null,
-                    if (request.description != null) "description" else null,
-                    if (request.config != null) "config" else null
-                )
+            "key" to savedNode.key,
+            "name" to savedNode.name,
+            "newVersion" to isNewVersion,
+            "version" to savedNode.version,
+            "updatedFields" to listOfNotNull(
+                if (request.name != null) "name" else null,
+                if (request.description != null) "description" else null,
+                if (request.config != null) "config" else null
             )
         )
 
@@ -293,52 +287,42 @@ class WorkflowGraphService(
 
         val deletedEdgeIds = mutableListOf<UUID>()
         connectedEdges.forEach { edge ->
-            val deletedEdge = edge.copy(
-                deleted = true,
-                deletedAt = ZonedDateTime.now()
-            )
-            workflowEdgeRepository.save(deletedEdge)
+            edge.markDeleted()
+            workflowEdgeRepository.save(edge)
 
             val edgeId = requireNotNull(edge.id) { "Edge must have an ID" }
             deletedEdgeIds.add(edgeId)
 
             // Log activity for each deleted edge
-            activityService.logActivity(
+            activityService.log(
                 activity = Activity.WORKFLOW_EDGE,
                 operation = OperationType.DELETE,
                 userId = userId,
                 workspaceId = workspaceId,
                 entityType = ApplicationEntityType.WORKFLOW_EDGE,
                 entityId = edgeId,
-                details = mapOf(
-                    "sourceNodeId" to edge.sourceNodeId.toString(),
-                    "targetNodeId" to edge.targetNodeId.toString(),
-                    "reason" to "CASCADE_NODE_DELETE",
-                    "deletedNodeId" to id.toString()
-                )
+                "sourceNodeId" to edge.sourceNodeId.toString(),
+                "targetNodeId" to edge.targetNodeId.toString(),
+                "reason" to "CASCADE_NODE_DELETE",
+                "deletedNodeId" to id.toString()
             )
         }
 
         // Soft delete the node
-        val deletedNode = existingNode.copy(
-            deleted = true,
-            deletedAt = ZonedDateTime.now()
-        )
-        workflowNodeRepository.save(deletedNode)
+        existingNode.markDeleted()
+        workflowNodeRepository.save(existingNode)
 
         // Log activity for node deletion
-        activityService.logActivity(
+        activityService.log(
             activity = Activity.WORKFLOW_NODE,
             operation = OperationType.DELETE,
             userId = userId,
             workspaceId = workspaceId,
             entityType = ApplicationEntityType.WORKFLOW_NODE,
             entityId = id,
-            details = mapOf(
-                "key" to existingNode.key,
-                "name" to existingNode.name,
-                "cascadeDeletedEdges" to deletedEdgeIds.size
-            )
+            "key" to existingNode.key,
+            "name" to existingNode.name,
+            "cascadeDeletedEdges" to deletedEdgeIds.size
         )
 
         log.info { "Deleted workflow node $id and ${deletedEdgeIds.size} connected edges" }
@@ -376,28 +360,24 @@ class WorkflowGraphService(
             sourceNodeId = request.sourceNodeId,
             targetNodeId = request.targetNodeId,
             label = request.label,
-            deleted = false,
-            deletedAt = null
         )
 
         val savedEdge = workflowEdgeRepository.save(edgeEntity)
         val edgeId = requireNotNull(savedEdge.id) { "Saved edge must have an ID" }
 
         // Log activity
-        activityService.logActivity(
+        activityService.log(
             activity = Activity.WORKFLOW_EDGE,
             operation = OperationType.CREATE,
             userId = userId,
             workspaceId = workspaceId,
             entityType = ApplicationEntityType.WORKFLOW_EDGE,
             entityId = edgeId,
-            details = mapOf(
-                "sourceNodeId" to request.sourceNodeId.toString(),
-                "targetNodeId" to request.targetNodeId.toString(),
-                "sourceNodeName" to sourceNode.name,
-                "targetNodeName" to targetNode.name,
-                "label" to (request.label ?: "")
-            )
+            "sourceNodeId" to request.sourceNodeId.toString(),
+            "targetNodeId" to request.targetNodeId.toString(),
+            "sourceNodeName" to sourceNode.name,
+            "targetNodeName" to targetNode.name,
+            "label" to (request.label ?: "")
         )
 
         log.info { "Created workflow edge $edgeId" }
@@ -428,30 +408,20 @@ class WorkflowGraphService(
             throw AccessDeniedException("Workflow edge does not belong to the specified workspace")
         }
 
-        // Check if already deleted
-        if (existingEdge.deleted) {
-            throw NotFoundException("Workflow edge not found")
-        }
-
         // Soft delete the edge
-        val deletedEdge = existingEdge.copy(
-            deleted = true,
-            deletedAt = ZonedDateTime.now()
-        )
-        workflowEdgeRepository.save(deletedEdge)
+        existingEdge.markDeleted()
+        workflowEdgeRepository.save(existingEdge)
 
         // Log activity
-        activityService.logActivity(
+        activityService.log(
             activity = Activity.WORKFLOW_EDGE,
             operation = OperationType.DELETE,
             userId = userId,
             workspaceId = workspaceId,
             entityType = ApplicationEntityType.WORKFLOW_EDGE,
             entityId = id,
-            details = mapOf(
-                "sourceNodeId" to existingEdge.sourceNodeId.toString(),
-                "targetNodeId" to existingEdge.targetNodeId.toString()
-            )
+            "sourceNodeId" to existingEdge.sourceNodeId.toString(),
+            "targetNodeId" to existingEdge.targetNodeId.toString()
         )
 
         log.info { "Deleted workflow edge $id" }

@@ -14,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import riven.core.enums.workspace.WorkspaceRoles
+import java.lang.annotation.Inherited
 import java.time.Instant
 import java.util.*
 
@@ -92,6 +93,7 @@ annotation class WorkspaceRole(val workspaceId: String, val role: WorkspaceRoles
 
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
+@Inherited
 @MustBeDocumented
 @ExtendWith(WithUserPersonaExtension::class)
 annotation class WithUserPersona(

@@ -1,6 +1,5 @@
 package riven.core.service.workflow
 
-import io.github.oshai.kotlinlogging.KLogger
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -8,10 +7,7 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Import
 import org.springframework.security.access.AccessDeniedException
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.workflow.WorkflowDefinitionEntity
@@ -22,7 +18,6 @@ import riven.core.enums.activity.Activity
 import riven.core.enums.util.OperationType
 import riven.core.enums.workflow.WorkflowDefinitionStatus
 import riven.core.enums.workflow.WorkflowNodeType
-import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.exceptions.NotFoundException
 import riven.core.models.request.workflow.CreateWorkflowEdgeRequest
 import riven.core.models.request.workflow.CreateWorkflowNodeRequest
@@ -37,37 +32,21 @@ import riven.core.repository.workflow.WorkflowEdgeRepository
 import riven.core.repository.workflow.WorkflowNodeRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
-import riven.core.service.util.WithUserPersona
-import riven.core.service.util.WorkspaceRole
+import riven.core.service.util.BaseServiceTest
+import riven.core.service.util.SecurityTestConfig
 import riven.core.service.workflow.state.WorkflowNodeConfigValidationService
 import riven.core.service.workflow.state.WorkflowNodeExpressionParserService
 import java.util.*
 
-@WithUserPersona(
-    userId = "f8b1c2d3-4e5f-6789-abcd-ef0123456789",
-    email = "test@example.com",
-    displayName = "Test User",
-    roles = [
-        WorkspaceRole(
-            workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
-            role = WorkspaceRoles.ADMIN
-        )
-    ]
-)
 @SpringBootTest(
     classes = [
         AuthTokenService::class,
         WorkspaceSecurity::class,
-        WorkflowGraphServiceTest.TestConfig::class,
+        SecurityTestConfig::class,
         WorkflowGraphService::class
     ]
 )
-class WorkflowGraphServiceTest {
-
-    @Configuration
-    @EnableMethodSecurity(prePostEnabled = true)
-    @Import(WorkspaceSecurity::class)
-    class TestConfig
+class WorkflowGraphServiceTest : BaseServiceTest() {
 
     @MockitoBean
     private lateinit var workflowNodeRepository: WorkflowNodeRepository
@@ -93,14 +72,8 @@ class WorkflowGraphServiceTest {
     @MockitoBean
     private lateinit var workflowNodeExpressionParserService: WorkflowNodeExpressionParserService
 
-    @MockitoBean
-    private lateinit var logger: KLogger
-
     @Autowired
     private lateinit var workflowGraphService: WorkflowGraphService
-
-    private val workspaceId = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef9876543210")
-    private val userId = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef0123456789")
 
     @BeforeEach
     fun setUp() {
@@ -794,9 +767,9 @@ class WorkflowGraphServiceTest {
             sourceId = sourceId,
             config = config,
             system = false,
-            deleted = deleted,
-            deletedAt = null
-        )
+        ).also {
+            it.deleted = deleted
+        }
     }
 
     private fun createEdgeEntity(
@@ -813,8 +786,8 @@ class WorkflowGraphServiceTest {
             sourceNodeId = sourceNodeId,
             targetNodeId = targetNodeId,
             label = label,
-            deleted = deleted,
-            deletedAt = null
-        )
+        ).also {
+            it.deleted = deleted
+        }
     }
 }

@@ -3,15 +3,13 @@ package riven.core.entity.block
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
-import riven.core.entity.util.AuditableEntity
+import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.enums.common.validation.ValidationScope
 import riven.core.models.block.BlockType
 import riven.core.models.block.BlockTypeSchema
 import riven.core.models.block.display.BlockDisplay
 import riven.core.models.block.display.BlockTypeNesting
-import riven.core.models.common.SoftDeletable
 import riven.core.models.request.block.CreateBlockTypeRequest
-import java.time.ZonedDateTime
 import java.util.*
 
 /**
@@ -67,12 +65,6 @@ data class BlockTypeEntity(
     @Type(JsonBinaryType::class)
     val schema: BlockTypeSchema,
 
-    @Column(name = "deleted", nullable = false, columnDefinition = "boolean default false")
-    override var deleted: Boolean = false,
-
-    @Column(name = "deleted_at", nullable = true)
-    override var deletedAt: ZonedDateTime? = null,
-
     @Column(name = "nesting", columnDefinition = "jsonb", nullable = true)
     @Type(JsonBinaryType::class)
     val nesting: BlockTypeNesting? = null,
@@ -80,7 +72,7 @@ data class BlockTypeEntity(
     @Column(name = "display_structure", columnDefinition = "jsonb", nullable = false)
     @Type(JsonBinaryType::class)
     val displayStructure: BlockDisplay,
-) : AuditableEntity(), SoftDeletable {
+) : AuditableSoftDeletableEntity() {
     /**
      * Convert this entity into a domain BlockType model.
      *
@@ -147,10 +139,11 @@ data class BlockTypeEntity(
                 version = model.version,
                 strictness = model.strictness,
                 schema = model.schema,
-                deleted = model.deleted,
                 nesting = model.nesting,
                 displayStructure = model.display,
-            )
+            ).also {
+                it.deleted = model.deleted
+            }
         }
     }
 }

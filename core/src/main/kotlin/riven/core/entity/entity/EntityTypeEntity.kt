@@ -3,18 +3,16 @@ package riven.core.entity.entity
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
-import riven.core.entity.util.AuditableEntity
+import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.enums.common.icon.IconColour
 import riven.core.enums.common.icon.IconType
 import riven.core.enums.entity.EntityCategory
 import riven.core.models.common.Icon
-import riven.core.models.common.SoftDeletable
 import riven.core.models.common.display.DisplayName
 import riven.core.models.entity.EntityType
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.configuration.EntityTypeAttributeColumn
-import java.time.ZonedDateTime
 import java.util.*
 
 /**
@@ -90,13 +88,7 @@ data class EntityTypeEntity(
     // Number of entities of this type, calculated via trigger on entities table
     @Column(name = "count", nullable = false)
     var entitiesCount: Long = 0L,
-
-    @Column(name = "deleted", nullable = false, columnDefinition = "boolean default false")
-    override var deleted: Boolean = false,
-
-    @Column(name = "deleted_at", nullable = true)
-    override var deletedAt: ZonedDateTime? = null,
-) : AuditableEntity(), SoftDeletable {
+) : AuditableSoftDeletableEntity() {
 
     /**
      * Convert this entity to a domain model.

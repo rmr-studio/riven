@@ -3,11 +3,9 @@ package riven.core.entity.block
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
-import riven.core.entity.util.AuditableEntity
+import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.models.block.Block
 import riven.core.models.block.metadata.Metadata
-import riven.core.models.common.SoftDeletable
-import java.time.ZonedDateTime
 import java.util.*
 
 @Entity
@@ -34,13 +32,7 @@ data class BlockEntity(
     @Type(JsonBinaryType::class)
     @Column(name = "payload", columnDefinition = "jsonb", nullable = false)
     var payload: Metadata,
-
-    @Column(name = "deleted", columnDefinition = "boolean default false")
-    override var deleted: Boolean = false,
-
-    @Column(name = "deleted_at", nullable = true)
-    override var deletedAt: ZonedDateTime? = null
-) : AuditableEntity(), SoftDeletable {
+) : AuditableSoftDeletableEntity() {
 
     fun toModel(audit: Boolean = false): Block {
         val id = requireNotNull(this.id) { "BlockEntity ID cannot be null when converting to model" }

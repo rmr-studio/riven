@@ -81,3 +81,22 @@ class ActivityService(
     }
 
 }
+
+/** Convenience wrapper that accepts details as vararg pairs instead of requiring `mapOf(...)`. */
+fun ActivityService.log(
+    activity: Activity,
+    operation: OperationType,
+    userId: UUID,
+    workspaceId: UUID,
+    entityType: ApplicationEntityType,
+    entityId: UUID? = null,
+    vararg details: Pair<String, Any?>
+): ActivityLog = logActivity(
+    activity = activity,
+    operation = operation,
+    userId = userId,
+    workspaceId = workspaceId,
+    entityType = entityType,
+    entityId = entityId,
+    details = mapOf(*details)
+)

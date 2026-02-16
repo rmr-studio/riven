@@ -3,12 +3,10 @@ package riven.core.entity.workflow
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
-import riven.core.entity.util.AuditableEntity
+import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.enums.workflow.WorkflowNodeType
-import riven.core.models.common.SoftDeletable
 import riven.core.models.workflow.node.WorkflowNode
 import riven.core.models.workflow.node.config.WorkflowNodeConfig
-import java.time.ZonedDateTime
 import java.util.*
 
 /**
@@ -83,13 +81,7 @@ data class WorkflowNodeEntity(
     @Column(name = "system", nullable = false)
     val system: Boolean = false,
 
-    @Column(name = "deleted", nullable = false, columnDefinition = "boolean default false")
-    override var deleted: Boolean = false,
-
-    @Column(name = "deleted_at", nullable = true)
-    override var deletedAt: ZonedDateTime? = null
-
-) : AuditableEntity(), SoftDeletable {
+) : AuditableSoftDeletableEntity() {
 
     /**
      * Converts this entity to an [WorkflowNode] for runtime execution.
@@ -162,9 +154,10 @@ data class WorkflowNodeEntity(
                 version = original.version + 1,
                 sourceId = original.id, // Link back to original
                 config = updatedConfig,
-                deleted = false,
-                deletedAt = null
-            )
+            ).also {
+                it.deleted = false
+                it.deletedAt = null
+            }
         }
     }
 }

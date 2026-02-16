@@ -3,8 +3,7 @@ package riven.core.entity.workflow
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
-import riven.core.entity.util.AuditableEntity
-import riven.core.models.common.SoftDeletable
+import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.models.workflow.WorkflowDefinitionVersion
 import riven.core.models.workflow.WorkflowGraph
 import riven.core.models.workflow.WorkflowGraphReference
@@ -42,13 +41,7 @@ data class WorkflowDefinitionVersionEntity(
     @Column(name = "canvas", nullable = false, columnDefinition = "jsonb")
     val canvas: Any,
 
-    @Column(name = "deleted", nullable = false)
-    override var deleted: Boolean = false,
-
-    @Column(name = "deleted_at", columnDefinition = "timestamptz")
-    override var deletedAt: java.time.ZonedDateTime? = null
-
-) : AuditableEntity(), SoftDeletable {
+) : AuditableSoftDeletableEntity() {
     fun toModel(graph: WorkflowGraph? = null): WorkflowDefinitionVersion {
         val id = requireNotNull(this.id) { "ID cannot be null" }
 

@@ -17,6 +17,7 @@ import riven.core.models.common.json.JsonObject
 import riven.core.models.request.block.CreateBlockRequest
 import riven.core.repository.block.BlockRepository
 import riven.core.service.activity.ActivityService
+import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.schema.SchemaService
 import java.util.*
@@ -71,22 +72,19 @@ class BlockService(
             type = BlockTypeEntity.fromModel(type),
             name = name,
             payload = validatedMetadata,
-            deleted = false
         ).run {
             blockRepository.save(this)
         }.also {
             requireNotNull(it.id) { "Block '${it.id}' not found" }
-            activityService.logActivity(
+            activityService.log(
                 activity = riven.core.enums.activity.Activity.BLOCK,
                 operation = OperationType.CREATE,
                 userId = authTokenService.getUserId(),
                 workspaceId = workspaceId,
                 entityType = ApplicationEntityType.BLOCK,
                 entityId = it.id,
-                details = mapOf(
-                    "blockId" to it.id.toString(),
-                    "typeKey" to type.key
-                )
+                "blockId" to it.id.toString(),
+                "typeKey" to type.key
             )
 
             // If a parent ID is supplied. This would indicate we are creating a child block
@@ -178,17 +176,15 @@ class BlockService(
 
         val saved = blockRepository.save(updated)
 
-        activityService.logActivity(
+        activityService.log(
             activity = riven.core.enums.activity.Activity.BLOCK,
             operation = OperationType.UPDATE,
             userId = authTokenService.getUserId(),
             workspaceId = saved.workspaceId,
             entityType = ApplicationEntityType.BLOCK,
             entityId = saved.id,
-            details = mapOf(
-                "blockId" to saved.id.toString(),
-                "typeKey" to saved.type.key
-            )
+            "blockId" to saved.id.toString(),
+            "typeKey" to saved.type.key
         )
 
         return saved.toModel()

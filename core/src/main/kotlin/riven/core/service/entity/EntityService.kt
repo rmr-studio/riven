@@ -21,6 +21,7 @@ import riven.core.models.response.entity.DeleteEntityResponse
 import riven.core.models.response.entity.SaveEntityResponse
 import riven.core.repository.entity.EntityRepository
 import riven.core.service.activity.ActivityService
+import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.entity.type.EntityTypeAttributeService
 import riven.core.service.entity.type.EntityTypeService
@@ -217,17 +218,15 @@ class EntityService(
                     curr = relationshipPayload
                 )
 
-                activityService.logActivity(
+                activityService.log(
                     activity = Activity.ENTITY,
                     operation = if (prev != null) OperationType.UPDATE else OperationType.CREATE,
                     userId = userId,
                     workspaceId = workspaceId,
-                    entityId = this.id,
                     entityType = ApplicationEntityType.ENTITY,
-                    details = mapOf(
-                        "type" to type.key,
-                        "category" to type.displayNameSingular
-                    )
+                    entityId = this.id,
+                    "type" to type.key,
+                    "category" to type.displayNameSingular
                 )
 
                 // Fetch impacted entities with their updated relationships

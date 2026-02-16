@@ -20,6 +20,7 @@ import riven.core.models.request.entity.type.DeleteRelationshipDefinitionRequest
 import riven.core.models.request.entity.type.SaveRelationshipDefinitionRequest
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
+import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
 import java.util.*
 
@@ -519,21 +520,19 @@ class EntityTypeRelationshipService(
             // Log activity for relationship removal
             val sourceEntityType = entityTypes[relationship.sourceEntityTypeKey]
             if (sourceEntityType != null) {
-                activityService.logActivity(
+                activityService.log(
                     activity = Activity.ENTITY_RELATIONSHIP,
                     operation = OperationType.DELETE,
                     userId = userId,
                     workspaceId = workspaceId,
-                    entityId = sourceEntityType.id,
                     entityType = ApplicationEntityType.ENTITY_TYPE,
-                    details = mapOf(
-                        "relationshipId" to relationship.id.toString(),
-                        "relationshipName" to relationship.name,
-                        "relationshipType" to relationship.relationshipType.name,
-                        "sourceEntityType" to relationship.sourceEntityTypeKey,
-                        "bidirectional" to relationship.bidirectional,
-                        "targetEntityTypes" to (relationship.entityTypeKeys?.joinToString(", ") ?: "polymorphic")
-                    )
+                    entityId = sourceEntityType.id,
+                    "relationshipId" to relationship.id.toString(),
+                    "relationshipName" to relationship.name,
+                    "relationshipType" to relationship.relationshipType.name,
+                    "sourceEntityType" to relationship.sourceEntityTypeKey,
+                    "bidirectional" to relationship.bidirectional,
+                    "targetEntityTypes" to (relationship.entityTypeKeys?.joinToString(", ") ?: "polymorphic")
                 )
             }
         }
