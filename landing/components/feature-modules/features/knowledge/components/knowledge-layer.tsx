@@ -1,16 +1,23 @@
-import { BGPattern } from "@/components/ui/background/grids";
-import { Section } from "@/components/ui/section";
-import React from "react";
+import { Section } from '@/components/ui/section';
+import { SectionDivider } from '@/components/ui/section-divider';
+import { KnowledgeScroll } from './knowledge-scroll';
 
 export const KnowledgeLayer = () => {
   return (
     <Section>
-      <div className="w-full flex justify-end">
-        <div className="max-w-md text-2xl font-medium leading-relaxed mr-16">
-          All unified under one AI knowledge layer — reasoning across your
-          entire business, not just one corner of it.
-        </div>
-      </div>
+      <h2 className="mx-auto mb-12 max-w-7xl text-center text-3xl font-semibold tracking-tight md:text-4xl lg:text-5xl">
+        <span className="font-bold text-primary italic">
+          All unified together within an AI powered knowledge layer.
+        </span>{' '}
+        <span className="text-primary/80">
+          Building itself through contextual understanding of your entire data ecosystem, providing
+          you with reasoning and insights across your entire business, not just one corner of it.
+        </span>
+      </h2>
+
+      <SectionDivider name="Unified Knowledge Layer" />
+
+      <KnowledgeScroll />
     </Section>
   );
 };

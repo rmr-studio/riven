@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email } = body;
+    const { name, email, feature, integrations, monthlyPrice, earlyTesting } = body;
 
     if (!email || typeof email !== "string") {
       return NextResponse.json(
@@ -12,7 +12,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Basic email format check (backup validation)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
@@ -21,9 +20,15 @@ export async function POST(request: Request) {
       );
     }
 
-    // TODO: User will wire this to actual backend
-    // For now, log and return success
-    console.log("[Waitlist] New signup:", email);
+    // TODO: Wire to actual backend
+    console.log("[Waitlist] New signup:", {
+      name,
+      email,
+      feature,
+      integrations,
+      monthlyPrice,
+      earlyTesting,
+    });
 
     return NextResponse.json({
       success: true,

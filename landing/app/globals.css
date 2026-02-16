@@ -196,6 +196,11 @@
   --nav-inv-logo-secondary: oklch(0.93 0.032 80);
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

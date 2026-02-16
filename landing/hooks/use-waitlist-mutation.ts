@@ -3,10 +3,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useRef } from "react";
-
-interface WaitlistSubmission {
-  email: string;
-}
+import type { WaitlistMultiStepFormData } from "@/lib/validations";
 
 interface WaitlistResponse {
   success: boolean;
@@ -17,7 +14,9 @@ export function useWaitlistMutation() {
   const toastRef = useRef<string | number | undefined>(undefined);
 
   return useMutation({
-    mutationFn: async (data: WaitlistSubmission): Promise<WaitlistResponse> => {
+    mutationFn: async (
+      data: WaitlistMultiStepFormData
+    ): Promise<WaitlistResponse> => {
       const response = await fetch("/api/waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

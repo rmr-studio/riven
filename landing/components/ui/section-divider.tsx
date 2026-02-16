@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 interface SectionDividerProps {
   name: string;
@@ -7,12 +7,12 @@ interface SectionDividerProps {
 
 export function SectionDivider({ name, className }: SectionDividerProps) {
   return (
-    <div className={cn("flex items-center justify-center gap-4", className)}>
-      <div className="h-px w-full max-w-[200px] bg-border" />
-      <span className="shrink-0 rounded-full border border-border px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+    <div className={cn('flex items-center justify-center gap-4', className)}>
+      <div className="h-px w-full max-w-1/4 bg-primary/70" />
+      <span className="shrink-0 rounded-full border border-primary/80 px-5 py-2 text-sm font-medium tracking-wider text-primary uppercase">
         {name}
       </span>
-      <div className="h-px w-full max-w-[200px] bg-border" />
+      <div className="h-px w-full max-w-1/4 bg-primary/70" />
     </div>
   );
 }

@@ -10,7 +10,6 @@ import { HoverBorderGradient } from './ui/hover-border-gradient';
 import { Logo } from './ui/logo';
 
 const navLinks = [
-  { label: 'About', href: '#about' },
   { label: 'Features', href: '#features' },
   { label: 'FAQs', href: '#faqs' },
 ];
@@ -56,40 +55,46 @@ export function Navbar() {
         {...(isInverted ? { 'data-inverted': '' } : {})}
         className="mx-auto flex h-12 w-auto grow items-center justify-between rounded-full border border-border/50 bg-background/60 shadow-sm shadow-primary/35 backdrop-blur-xl md:h-14 lg:max-w-[80dvw]"
       >
-        <Link href="/" className="flex shrink-0 gap-1.5 px-3 md:gap-2 md:px-4">
-          <Logo size={24} className="md:w-8" />
-          <div className="mt-0.5 font-mono text-xs font-bold tracking-tight text-primary md:mt-1 md:text-lg">
-            Riven
-          </div>
-        </Link>
+        {/* Left: Logo + Nav Links */}
+        <div className="flex items-center">
+          <Link href="/" className="flex shrink-0 gap-1.5 px-3 md:gap-2 md:px-4">
+            <Logo size={24} className="md:w-8" />
+            <div className="mt-0.5 font-mono text-xs font-bold tracking-tight text-primary md:mt-1 md:text-lg">
+              Riven
+            </div>
+          </Link>
 
-        {/* Nav Links - desktop only */}
-        <div className="hidden items-center gap-1 md:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.label}
-              href={link.href}
-              className="px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {/* Nav Links - desktop only */}
+          <div className="hidden items-center gap-1 md:flex">
+            {navLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                className="px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
         </div>
 
+        {/* Right: ThemeToggle + CTA + Mobile Menu */}
         <div className="flex items-center gap-1.5 px-2 md:gap-2 md:px-4">
           <div className="hidden md:block">
             <ThemeToggle />
           </div>
-          <HoverBorderGradient className="overflow-hidden bg-background p-0" as='div'>
-            <Button
-              size={'sm'}
-              className="h-8 cursor-pointer items-center gap-1.5 border-0 bg-muted/50 py-1 font-mono text-xs tracking-wide text-muted-foreground outline-0 hover:bg-muted hover:text-foreground md:h-9 md:gap-2.5 md:px-4 md:text-sm"
-            >
-              <span className="hidden sm:block">Join the waitlist</span>
-              <span className="sm:hidden">Get Started</span>
-              <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 md:h-4 md:w-4" />
-            </Button>
-          </HoverBorderGradient>
+          <a href="#contact">
+            <HoverBorderGradient className="overflow-hidden bg-background p-0" as='div'>
+              <Button
+                size={'sm'}
+                className="h-8 cursor-pointer items-center gap-1.5 border-0 bg-muted/50 py-1 font-mono text-xs tracking-wide text-muted-foreground outline-0 hover:bg-muted hover:text-foreground md:h-9 md:gap-2.5 md:px-4 md:text-sm"
+              >
+                <span className="hidden sm:block">Join the waitlist</span>
+                <span className="sm:hidden">Get Started</span>
+                <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 md:h-4 md:w-4" />
+              </Button>
+            </HoverBorderGradient>
+          </a>
 
           <Button
             variant={'ghost'}
