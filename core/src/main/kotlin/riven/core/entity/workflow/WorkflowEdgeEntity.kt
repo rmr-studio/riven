@@ -1,11 +1,9 @@
 package riven.core.entity.workflow
 
 import jakarta.persistence.*
-import riven.core.entity.util.AuditableEntity
-import riven.core.models.common.SoftDeletable
+import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.models.workflow.WorkflowEdge
 import riven.core.models.workflow.node.WorkflowNode
-import java.time.ZonedDateTime
 import java.util.*
 
 @Entity
@@ -34,13 +32,7 @@ data class WorkflowEdgeEntity(
 
     @Column(name = "label", nullable = true)
     val label: String? = null,
-
-    @Column(name = "deleted", columnDefinition = "boolean default false")
-    override var deleted: Boolean = false,
-
-    @Column(name = "deleted_at", nullable = true)
-    override var deletedAt: ZonedDateTime? = null
-) : AuditableEntity(), SoftDeletable {
+) : AuditableSoftDeletableEntity() {
     fun toModel(source: WorkflowNode, target: WorkflowNode): WorkflowEdge {
         val id = requireNotNull(this.id) { "WorkflowEdgeEntity id cannot be null when converting to model." }
         return WorkflowEdge(

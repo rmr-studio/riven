@@ -16,11 +16,12 @@ import riven.core.models.workspace.Workspace
 import riven.core.models.workspace.WorkspaceMember
 import riven.core.repository.workspace.WorkspaceMemberRepository
 import riven.core.repository.workspace.WorkspaceRepository
+import riven.core.models.common.markDeleted
 import riven.core.service.activity.ActivityService
+import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.user.UserService
 import riven.core.util.ServiceUtil.findOrThrow
-import java.time.ZonedDateTime
 import java.util.*
 
 @Service
@@ -93,17 +94,15 @@ class WorkspaceService(
             workspaceRepository.save(entity).run {
                 val id = requireNotNull(this.id) { "WorkspaceEntity must have a non-null id after save" }
                 // Log the activity of creating an workspace
-                activityService.logActivity(
+                activityService.log(
                     activity = riven.core.enums.activity.Activity.WORKSPACE,
                     operation = riven.core.enums.util.OperationType.CREATE,
                     userId = userId,
                     workspaceId = id,
                     entityType = ApplicationEntityType.WORKSPACE,
                     entityId = this.id,
-                    details = mapOf(
-                        "workspaceId" to id.toString(),
-                        "name" to name
-                    )
+                    "workspaceId" to id.toString(),
+                    "name" to name
                 )
 
                 if (request.id == null) {
@@ -161,23 +160,18 @@ class WorkspaceService(
 
 
             // Delete the workspace itself
-            workspace.apply {
-                deleted = true
-                deletedAt = ZonedDateTime.now()
-            }.run {
+            workspace.markDeleted().run {
                 workspaceRepository.save(this)
                 // Log the activity of deleting an workspace
-                activityService.logActivity(
+                activityService.log(
                     activity = riven.core.enums.activity.Activity.WORKSPACE,
                     operation = riven.core.enums.util.OperationType.DELETE,
                     userId = userId,
                     workspaceId = workspaceId,
                     entityType = ApplicationEntityType.WORKSPACE,
                     entityId = workspaceId,
-                    details = mapOf(
-                        "workspaceId" to workspaceId.toString(),
-                        "name" to workspace.name
-                    )
+                    "workspaceId" to workspaceId.toString(),
+                    "name" to workspace.name
                 )
 
             }
@@ -217,17 +211,15 @@ class WorkspaceService(
             }
 
             workspaceMemberRepository.deleteById(id).also {
-                activityService.logActivity(
+                activityService.log(
                     activity = riven.core.enums.activity.Activity.WORKSPACE_MEMBER,
                     operation = riven.core.enums.util.OperationType.DELETE,
                     userId = userId,
                     workspaceId = workspaceId,
                     entityType = ApplicationEntityType.USER,
                     entityId = id,
-                    details = mapOf(
-                        "userId" to id.toString(),
-                        "workspaceId" to workspaceId.toString()
-                    )
+                    "userId" to id.toString(),
+                    "workspaceId" to workspaceId.toString()
                 )
             }
         }
@@ -257,18 +249,16 @@ class WorkspaceService(
                 requireNotNull(it.id)
                 it.toModel()
             }.also {
-                activityService.logActivity(
+                activityService.log(
                     activity = riven.core.enums.activity.Activity.WORKSPACE_MEMBER,
                     operation = riven.core.enums.util.OperationType.UPDATE,
                     userId = userId,
                     workspaceId = workspaceId,
                     entityType = ApplicationEntityType.USER,
                     entityId = memberId,
-                    details = mapOf(
-                        "userId" to memberId.toString(),
-                        "workspaceId" to workspaceId.toString(),
-                        "role" to role.toString()
-                    )
+                    "userId" to memberId.toString(),
+                    "workspaceId" to workspaceId.toString(),
+                    "role" to role.toString()
                 )
             }
 

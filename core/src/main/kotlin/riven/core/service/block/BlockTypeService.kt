@@ -13,6 +13,7 @@ import riven.core.models.block.BlockType
 import riven.core.models.request.block.CreateBlockTypeRequest
 import riven.core.repository.block.BlockTypeRepository
 import riven.core.service.activity.ActivityService
+import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
 import riven.core.util.ServiceUtil.findManyResults
 import riven.core.util.ServiceUtil.findOrThrow
@@ -39,17 +40,15 @@ class BlockTypeService(
         authTokenService.getUserId().let { userId ->
             val entity = BlockTypeEntity.fromRequest(request)
             blockTypeRepository.save(entity).run {
-                activityService.logActivity(
+                activityService.log(
                     activity = Activity.BLOCK_TYPE,
                     operation = OperationType.CREATE,
                     userId = userId,
                     workspaceId = request.workspaceId,
-                    entityId = this.id,
                     entityType = ApplicationEntityType.BLOCK_TYPE,
-                    details = mapOf(
-                        "type" to this.key,
-                        "version" to this.version
-                    )
+                    entityId = this.id,
+                    "type" to this.key,
+                    "version" to this.version
                 )
 
                 return this.toModel()
@@ -90,25 +89,22 @@ class BlockTypeService(
             version = nextVersion,
             strictness = type.strictness,
             schema = type.schema,
-            deleted = false, // new version starts undeleted unless specified otherwise
             displayStructure = type.display,
             // Add this property to your entity (nullable) to record provenance.
             sourceId = existing.id
         )
 
         blockTypeRepository.save(newRow).run {
-            activityService.logActivity(
+            activityService.log(
                 activity = Activity.BLOCK_TYPE,
                 operation = OperationType.CREATE,
                 userId = userId,
                 workspaceId = orgId,
-                entityId = this.id,
                 entityType = ApplicationEntityType.BLOCK_TYPE,
-                details = mapOf(
-                    "type" to this.key,
-                    "version" to this.version,
-                    "sourceVersion" to existing.version
-                )
+                entityId = this.id,
+                "type" to this.key,
+                "version" to this.version,
+                "sourceVersion" to existing.version
             )
         }
     }

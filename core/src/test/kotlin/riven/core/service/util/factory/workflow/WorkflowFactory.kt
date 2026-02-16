@@ -48,9 +48,10 @@ object WorkflowFactory {
             iconColour = iconColour,
             iconType = iconType,
             tags = tags,
-            deleted = deleted,
-            deletedAt = deletedAt
-        )
+        ).also {
+            it.deleted = deleted
+            it.deletedAt = deletedAt
+        }
     }
 
     /**
@@ -73,9 +74,10 @@ object WorkflowFactory {
             versionNumber = versionNumber,
             workflow = workflow,
             canvas = canvas,
-            deleted = deleted,
-            deletedAt = deletedAt
-        )
+        ).also {
+            it.deleted = deleted
+            it.deletedAt = deletedAt
+        }
     }
 
     /**
@@ -174,8 +176,9 @@ object WorkflowFactory {
             sourceId = sourceId,
             config = config,
             system = system,
-            deleted = deleted,
-            deletedAt = deletedAt
-        )
+        ).also {
+            it.deleted = deleted
+            it.deletedAt = deletedAt
+        }
     }
 }

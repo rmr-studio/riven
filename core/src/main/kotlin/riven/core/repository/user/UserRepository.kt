@@ -32,6 +32,8 @@ interface UserRepository : JpaRepository<UserEntity, UUID> {
             INNER JOIN workspaces w ON wm.workspace_id = w.id
             INNER JOIN users u ON wm.user_id = u.id
             WHERE wm.user_id = :userId
+            AND u.deleted = false
+            AND w.deleted = false
             ORDER BY wm.member_since ASC
         """,
         nativeQuery = true

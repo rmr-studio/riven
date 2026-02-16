@@ -19,8 +19,6 @@ interface WorkflowDefinitionVersionRepository : JpaRepository<WorkflowDefinition
         SELECT v FROM WorkflowDefinitionVersionEntity v
         WHERE v.workflowDefinitionId = :workflowDefinitionId
         AND v.versionNumber = :versionNumber
-        AND v.deleted = false
-        AND v.deletedAt IS NULL
         """
     )
     fun findByWorkflowDefinitionIdAndVersionNumber(

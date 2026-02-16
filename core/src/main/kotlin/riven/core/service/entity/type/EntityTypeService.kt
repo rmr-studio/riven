@@ -21,6 +21,7 @@ import riven.core.models.request.entity.type.*
 import riven.core.models.response.entity.type.EntityTypeImpactResponse
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
+import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
 import riven.core.util.ServiceUtil
 import java.util.*
@@ -90,18 +91,16 @@ class EntityTypeService(
                 entityTypeRepository.save(this)
             }.also {
                 requireNotNull(it.id)
-                activityService.logActivity(
+                activityService.log(
                     activity = Activity.ENTITY_TYPE,
                     operation = OperationType.CREATE,
                     userId = userId,
                     workspaceId = requireNotNull(it.workspaceId) { "Cannot create system entity type" },
-                    entityId = it.id,
                     entityType = ApplicationEntityType.ENTITY_TYPE,
-                    details = mapOf(
-                        "type" to it.key,
-                        "version" to 1,
-                        "category" to it.type.name
-                    )
+                    entityId = it.id,
+                    "type" to it.key,
+                    "version" to 1,
+                    "category" to it.type.name
                 )
             }.let {
                 return it.toModel()
@@ -441,16 +440,14 @@ class EntityTypeService(
         }
 
         entityTypeRepository.delete(existing).also {
-            activityService.logActivity(
+            activityService.log(
                 activity = Activity.ENTITY_TYPE,
                 operation = OperationType.DELETE,
                 userId = userId,
                 workspaceId = workspaceId,
-                entityId = existing.id,
                 entityType = ApplicationEntityType.ENTITY_TYPE,
-                details = mapOf(
-                    "type" to existing.key
-                )
+                entityId = existing.id,
+                "type" to existing.key
             )
 
             return EntityTypeImpactResponse(

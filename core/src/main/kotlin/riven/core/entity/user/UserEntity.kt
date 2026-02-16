@@ -1,13 +1,11 @@
 package riven.core.entity.user
 
 import jakarta.persistence.*
-import riven.core.entity.util.AuditableEntity
+import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.entity.workspace.WorkspaceEntity
-import riven.core.models.common.SoftDeletable
 import riven.core.models.user.User
 import riven.core.models.user.UserDisplay
 import riven.core.models.workspace.WorkspaceMember
-import java.time.ZonedDateTime
 import java.util.*
 
 @Entity
@@ -37,13 +35,7 @@ data class UserEntity(
     @JoinColumn(name = "default_workspace_id", referencedColumnName = "id", insertable = true, updatable = true)
     var defaultWorkspace: WorkspaceEntity? = null,
 
-    @Column(name = "deleted", nullable = true)
-    override var deleted: Boolean = false,
-
-    @Column(name = "deleted_at", nullable = true)
-    override var deletedAt: ZonedDateTime? = null,
-
-    ) : AuditableEntity(), SoftDeletable {
+    ) : AuditableSoftDeletableEntity() {
 
 
     fun toModel(memberships: List<WorkspaceMember> = emptyList()): User {

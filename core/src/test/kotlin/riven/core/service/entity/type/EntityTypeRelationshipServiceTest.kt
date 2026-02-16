@@ -1,6 +1,5 @@
 package riven.core.service.entity.type
 
-import io.github.oshai.kotlinlogging.KLogger
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -30,6 +29,7 @@ import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.util.BaseServiceTest
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
 import java.time.ZonedDateTime
@@ -54,13 +54,10 @@ import java.util.*
         )
     ]
 )
-class EntityTypeRelationshipServiceTest {
+class EntityTypeRelationshipServiceTest : BaseServiceTest() {
 
     @Configuration
     class TestConfig
-
-    private val userId: UUID = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef0123456789")
-    private val workspaceId: UUID = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef9876543210")
 
     @MockitoBean
     private lateinit var entityRelationshipRepository: EntityRelationshipRepository
@@ -79,9 +76,6 @@ class EntityTypeRelationshipServiceTest {
 
     @MockitoBean
     private lateinit var activityService: ActivityService
-
-    @MockitoBean
-    private lateinit var logger: KLogger
 
     @Autowired
     private lateinit var entityTypeRelationshipService: EntityTypeRelationshipService

@@ -12,6 +12,6 @@ interface BlockRepository : JpaRepository<BlockEntity, UUID> {
      * @param workspaceId UUID of the workspace whose active (not deleted) blocks should be returned.
      * @return A list of BlockEntity instances for the workspace where `deleted` is false.
      */
-    @Query("SELECT b FROM BlockEntity b WHERE b.workspaceId = :workspaceId AND b.deleted = false and b.deletedAt IS NULL")
+    @Query("SELECT b FROM BlockEntity b WHERE b.workspaceId = :workspaceId")
     fun findByWorkspaceId(workspaceId: UUID): List<BlockEntity>
 }

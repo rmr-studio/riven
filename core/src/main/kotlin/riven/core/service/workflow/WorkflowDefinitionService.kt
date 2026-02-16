@@ -25,10 +25,11 @@ import riven.core.repository.workflow.WorkflowDefinitionRepository
 import riven.core.repository.workflow.WorkflowDefinitionVersionRepository
 import riven.core.repository.workflow.WorkflowEdgeRepository
 import riven.core.repository.workflow.WorkflowNodeRepository
+import riven.core.models.common.markDeleted
 import riven.core.service.activity.ActivityService
+import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
 import riven.core.util.ServiceUtil.findOrThrow
-import java.time.ZonedDateTime
 import java.util.*
 
 /**
@@ -77,8 +78,6 @@ class WorkflowDefinitionService(
             iconColour = request.iconColour,
             iconType = request.iconType,
             tags = request.tags,
-            deleted = false,
-            deletedAt = null
         )
 
         val savedDefinition = workflowDefinitionRepository.save(definitionEntity)
@@ -94,25 +93,21 @@ class WorkflowDefinitionService(
                 edgeIds = setOf<UUID>()
             ),
             canvas = emptyMap<String, Any>(),
-            deleted = false,
-            deletedAt = null
         )
 
         val savedVersion = workflowDefinitionVersionRepository.save(versionEntity)
 
         // Log activity
-        activityService.logActivity(
+        activityService.log(
             activity = Activity.WORKFLOW_DEFINITION,
             operation = OperationType.CREATE,
             userId = userId,
             workspaceId = workspaceId,
             entityType = ApplicationEntityType.WORKFLOW_DEFINITION,
             entityId = definitionId,
-            details = mapOf(
-                "name" to request.name,
-                "version" to 1,
-                "status" to WorkflowDefinitionStatus.DRAFT.name
-            )
+            "name" to request.name,
+            "version" to 1,
+            "status" to WorkflowDefinitionStatus.DRAFT.name
         )
 
         logger.info { "Created workflow definition $definitionId with version 1" }
@@ -260,11 +255,6 @@ class WorkflowDefinitionService(
             throw AccessDeniedException("Workflow definition does not belong to the specified workspace")
         }
 
-        // Check if soft-deleted
-        if (definition.deleted) {
-            throw NotFoundException("Workflow definition not found")
-        }
-
         // Apply updates (only non-null fields)
         val updatedDefinition = definition.copy(
             name = request.name ?: definition.name,
@@ -283,22 +273,20 @@ class WorkflowDefinitionService(
         ) ?: throw NotFoundException("Workflow version not found")
 
         // Log activity
-        activityService.logActivity(
+        activityService.log(
             activity = Activity.WORKFLOW_DEFINITION,
             operation = OperationType.UPDATE,
             userId = userId,
             workspaceId = workspaceId,
             entityType = ApplicationEntityType.WORKFLOW_DEFINITION,
             entityId = id,
-            details = mapOf(
-                "name" to savedDefinition.name,
-                "updatedFields" to listOfNotNull(
-                    if (request.name != null) "name" else null,
-                    if (request.description != null) "description" else null,
-                    if (request.iconColour != null) "iconColour" else null,
-                    if (request.iconType != null) "iconType" else null,
-                    if (request.tags != null) "tags" else null
-                )
+            "name" to savedDefinition.name,
+            "updatedFields" to listOfNotNull(
+                if (request.name != null) "name" else null,
+                if (request.description != null) "description" else null,
+                if (request.iconColour != null) "iconColour" else null,
+                if (request.iconType != null) "iconType" else null,
+                if (request.tags != null) "tags" else null
             )
         )
 
@@ -338,24 +326,18 @@ class WorkflowDefinitionService(
         }
 
         // Soft delete
-        val deletedDefinition = definition.copy(
-            deleted = true,
-            deletedAt = ZonedDateTime.now()
-        )
-
-        workflowDefinitionRepository.save(deletedDefinition)
+        definition.markDeleted()
+        workflowDefinitionRepository.save(definition)
 
         // Log activity
-        activityService.logActivity(
+        activityService.log(
             activity = Activity.WORKFLOW_DEFINITION,
             operation = OperationType.DELETE,
             userId = userId,
             workspaceId = workspaceId,
             entityType = ApplicationEntityType.WORKFLOW_DEFINITION,
             entityId = id,
-            details = mapOf(
-                "name" to definition.name
-            )
+            "name" to definition.name
         )
 
         logger.info { "Soft-deleted workflow definition $id" }

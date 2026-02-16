@@ -26,8 +26,6 @@ interface WorkflowDefinitionRepository : JpaRepository<WorkflowDefinitionEntity,
         SELECT d
         FROM WorkflowDefinitionEntity d
         WHERE d.workspaceId = :workspaceId
-        AND d.deleted = false
-        AND d.deletedAt IS NULL
         """
     )
     fun findByWorkspaceId(workspaceId: UUID): List<WorkflowDefinitionEntity>

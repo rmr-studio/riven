@@ -39,7 +39,6 @@ interface WorkflowEdgeRepository : JpaRepository<WorkflowEdgeEntity, UUID> {
         """
         SELECT e FROM WorkflowEdgeEntity e
         WHERE e.workspaceId = :workspaceId
-        AND e.deleted = false
         AND (e.sourceNodeId = :nodeId OR e.targetNodeId = :nodeId)
         """
     )

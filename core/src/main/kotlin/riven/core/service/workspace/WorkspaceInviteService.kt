@@ -16,6 +16,7 @@ import riven.core.models.workspace.WorkspaceInvite
 import riven.core.repository.workspace.WorkspaceInviteRepository
 import riven.core.repository.workspace.WorkspaceMemberRepository
 import riven.core.service.activity.ActivityService
+import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
 import riven.core.util.ServiceUtil.findManyResults
 import riven.core.util.ServiceUtil.findOrThrow
@@ -83,18 +84,16 @@ class WorkspaceInviteService(
             workspaceInviteRepository.save(it).run {
                 // TODO: Send out invitational email
 
-                activityService.logActivity(
+                activityService.log(
                     activity = Activity.WORKSPACE_MEMBER_INVITE,
                     operation = OperationType.CREATE,
                     userId = authTokenService.getUserId(),
                     workspaceId = workspaceId,
                     entityType = ApplicationEntityType.WORKSPACE,
                     entityId = this.id,
-                    details = mapOf(
-                        "inviteId" to this.id.toString(),
-                        "email" to email,
-                        "role" to role.toString()
-                    )
+                    "inviteId" to this.id.toString(),
+                    "email" to email,
+                    "role" to role.toString()
                 )
                 return this.toModel()
             }

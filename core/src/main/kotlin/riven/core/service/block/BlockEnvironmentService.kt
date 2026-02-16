@@ -532,7 +532,6 @@ class BlockEnvironmentService(
                 type = blockTypeEntity,
                 name = blockData.name,
                 payload = blockData.payload,
-                deleted = false
             )
 
             newBlocks.add(entity)

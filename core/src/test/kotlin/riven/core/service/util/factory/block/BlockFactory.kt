@@ -62,7 +62,6 @@ object BlockFactory {
         version = version,
         strictness = strictness,
         schema = schema,
-        deleted = deleted,
         displayStructure = BlockDisplay(
             form = FormStructure(emptyMap()),
             render = BlockRenderStructure(
@@ -82,7 +81,9 @@ object BlockFactory {
             )
         ),
         nesting = nesting
-    )
+    ).also {
+        it.deleted = deleted
+    }
 
     fun createBlock(
         id: UUID,
@@ -94,7 +95,6 @@ object BlockFactory {
         type = type,
         name = "Test Block",
         payload = BlockContentMetadata(data = emptyMap(), meta = BlockMeta()),
-        deleted = false
     )
 
 

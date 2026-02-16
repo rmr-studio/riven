@@ -3,12 +3,11 @@ package riven.core.entity.entity
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
-import riven.core.entity.util.AuditableEntity
+import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.enums.common.icon.IconColour
 import riven.core.enums.common.icon.IconType
 import riven.core.enums.integration.SourceType
 import riven.core.models.common.Icon
-import riven.core.models.common.SoftDeletable
 import riven.core.models.entity.Entity
 import riven.core.models.entity.EntityLink
 import riven.core.models.entity.payload.EntityAttribute
@@ -59,7 +58,6 @@ data class EntityEntity(
     @Column(name = "icon_type", nullable = false)
     var iconType: IconType = IconType.FILE,
 
-
     @Column("deleted", nullable = false)
     override var deleted: Boolean = false,
 
@@ -87,9 +85,8 @@ data class EntityEntity(
 
     @Column(name = "sync_version", nullable = false)
     var syncVersion: Long = 0,
-) : AuditableEntity(), SoftDeletable {
-
-
+) : AuditableSoftDeletableEntity() {
+    
     /**
      * Convert this entity to a domain model.
      */

@@ -16,13 +16,13 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
     /**
      * Find all relationships where the given entity is the source.
      */
-    @Query("SELECT r FROM EntityRelationshipEntity r WHERE r.sourceId = :id and r.deleted = false")
+    @Query("SELECT r FROM EntityRelationshipEntity r WHERE r.sourceId = :id")
     fun findBySourceId(id: UUID): List<EntityRelationshipEntity>
 
-    @Query("SELECT r FROM EntityRelationshipEntity r WHERE r.sourceId in :ids and r.deleted = false")
+    @Query("SELECT r FROM EntityRelationshipEntity r WHERE r.sourceId in :ids")
     fun findBySourceIdIn(ids: Collection<UUID>): List<EntityRelationshipEntity>
 
-    @Query("SELECT r FROM EntityRelationshipEntity r WHERE r.targetId in :ids and r.deleted = false")
+    @Query("SELECT r FROM EntityRelationshipEntity r WHERE r.targetId in :ids")
     fun findByTargetIdIn(ids: Collection<UUID>): List<EntityRelationshipEntity>
 
     /**

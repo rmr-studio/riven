@@ -1,7 +1,6 @@
 package riven.core.service.entity
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.github.oshai.kotlinlogging.KLogger
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -28,6 +27,7 @@ import riven.core.models.entity.payload.EntityAttributeRelationPayloadReference
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.schema.SchemaService
+import riven.core.service.util.BaseServiceTest
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
 import java.util.*
@@ -53,19 +53,13 @@ import java.util.*
         )
     ]
 )
-class EntityValidationServiceTest {
+class EntityValidationServiceTest : BaseServiceTest() {
 
     @Configuration
     class TestConfig
 
-    private val userId: UUID = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef0123456789")
-    private val workspaceId: UUID = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef9876543210")
-
     @MockitoBean
     private lateinit var entityRelationshipRepository: EntityRelationshipRepository
-
-    @MockitoBean
-    private lateinit var logger: KLogger
 
     @Autowired
     private lateinit var entityValidationService: EntityValidationService
