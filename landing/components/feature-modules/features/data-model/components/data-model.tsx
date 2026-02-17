@@ -15,7 +15,6 @@ export const DataModel = () => {
       navbarInverse
     >
       <DataModelShowcase />
-
       <DataModelFeatureCarousel />
     </Section>
   );

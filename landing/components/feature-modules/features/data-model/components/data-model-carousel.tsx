@@ -109,7 +109,7 @@ export const DataModelFeatureCarousel = () => {
           description="Balancing 16 tabs to make a decision is overrated. Bring your tools together in one unified platform, and get the full picture without being the integration layer yourself."
         >
           <div className="relative h-full w-full overflow-hidden mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
-            <IntegrationGraphDiagram className="static inset-0 h-full w-full -translate-x-1/6 scale-75 max-md:left-1/2 max-md:w-[150%] sm:scale-100 md:absolute md:translate-x-0 md:scale-125" />
+            <IntegrationGraphDiagram className="static inset-0 h-full w-full -translate-x-1/6 scale-75 max-md:left-1/2 max-md:w-[150%] sm:scale-100 md:absolute md:translate-x-0" />
           </div>
         </BentoCard>,
         <BentoCard

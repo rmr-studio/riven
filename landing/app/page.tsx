@@ -16,9 +16,7 @@ export default function Home() {
       <Hero />
       <SectionDivider name="One Unified Data Ecosystem" />
       <RivenDefinition />
-
       <DataModel />
-
       <KnowledgeLayer />
       <Faq />
       <Waitlist />

@@ -1,6 +1,6 @@
 import { Section } from '@/components/ui/section';
 import { SectionDivider } from '@/components/ui/section-divider';
-import { KnowledgeScroll } from './knowledge-scroll';
+import { KnowledgeAccordion } from './knowledge-accordion';
 
 export const KnowledgeLayer = () => {
   return (
@@ -17,7 +17,7 @@ export const KnowledgeLayer = () => {
 
       <SectionDivider name="Unified Knowledge Layer" />
 
-      <KnowledgeScroll />
+      <KnowledgeAccordion />
     </Section>
   );
 };

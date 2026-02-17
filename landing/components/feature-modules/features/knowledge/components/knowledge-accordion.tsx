@@ -1,19 +1,19 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { knowledgeScrollContent } from '../config/scroll-content';
+import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
+import { knowledgeScrollContent } from '../config/accordion-content';
 
 const AUTO_ADVANCE_MS = 5000;
 const INTERACTION_PAUSE_MS = 3000;
 
-export const KnowledgeScroll = () => {
+export const KnowledgeAccordion = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -150,9 +150,7 @@ export const KnowledgeScroll = () => {
 
                   {/* Text content on top */}
                   <div className="relative z-10 p-4">
-                    <p className="text-sm leading-relaxed text-primary/80">
-                      {item.description}
-                    </p>
+                    <p className="text-sm leading-relaxed text-primary/80">{item.description}</p>
                   </div>
                 </div>
               </AccordionContent>
