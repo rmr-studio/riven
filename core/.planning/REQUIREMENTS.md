@@ -99,50 +99,50 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SMETA-01 | — | Pending |
-| SMETA-02 | — | Pending |
-| SMETA-03 | — | Pending |
-| SMETA-04 | — | Pending |
-| SMETA-05 | — | Pending |
-| SMETA-06 | — | Pending |
-| TMPL-01 | — | Pending |
-| TMPL-02 | — | Pending |
-| TMPL-03 | — | Pending |
-| TMPL-04 | — | Pending |
-| TMPL-05 | — | Pending |
-| TMPL-06 | — | Pending |
-| ENRICH-01 | — | Pending |
-| ENRICH-02 | — | Pending |
-| ENRICH-03 | — | Pending |
-| ENRICH-04 | — | Pending |
-| ENRICH-05 | — | Pending |
-| ENRICH-06 | — | Pending |
-| ENRICH-07 | — | Pending |
-| ENRICH-08 | — | Pending |
-| ENRICH-09 | — | Pending |
-| ENRICH-10 | — | Pending |
-| ENRICH-11 | — | Pending |
-| ENRICH-12 | — | Pending |
-| ENRICH-13 | — | Pending |
-| SCHMA-01 | — | Pending |
-| SCHMA-02 | — | Pending |
-| SCHMA-03 | — | Pending |
-| SCHMA-04 | — | Pending |
-| SCHMA-05 | — | Pending |
-| SCHMA-06 | — | Pending |
-| SCHMA-07 | — | Pending |
-| INFRA-01 | — | Pending |
-| INFRA-02 | — | Pending |
-| INFRA-03 | — | Pending |
-| INFRA-04 | — | Pending |
-| INFRA-05 | — | Pending |
-| INFRA-06 | — | Pending |
+| SMETA-01 | Phase 1 | Pending |
+| SMETA-02 | Phase 1 | Pending |
+| SMETA-03 | Phase 1 | Pending |
+| SMETA-04 | Phase 1 | Pending |
+| SMETA-05 | Phase 1 | Pending |
+| SMETA-06 | Phase 1 | Pending |
+| TMPL-01 | Phase 2 | Pending |
+| TMPL-02 | Phase 2 | Pending |
+| TMPL-03 | Phase 2 | Pending |
+| TMPL-04 | Phase 2 | Pending |
+| TMPL-05 | Phase 2 | Pending |
+| TMPL-06 | Phase 2 | Pending |
+| ENRICH-01 | Phase 3 | Pending |
+| ENRICH-02 | Phase 3 | Pending |
+| ENRICH-03 | Phase 3 | Pending |
+| ENRICH-04 | Phase 3 | Pending |
+| ENRICH-05 | Phase 3 | Pending |
+| ENRICH-06 | Phase 3 | Pending |
+| ENRICH-07 | Phase 3 | Pending |
+| ENRICH-08 | Phase 3 | Pending |
+| ENRICH-09 | Phase 3 | Pending |
+| ENRICH-10 | Phase 3 | Pending |
+| ENRICH-11 | Phase 3 | Pending |
+| ENRICH-12 | Phase 3 | Pending |
+| ENRICH-13 | Phase 3 | Pending |
+| SCHMA-01 | Phase 4 | Pending |
+| SCHMA-02 | Phase 4 | Pending |
+| SCHMA-03 | Phase 4 | Pending |
+| SCHMA-04 | Phase 4 | Pending |
+| SCHMA-05 | Phase 4 | Pending |
+| SCHMA-06 | Phase 4 | Pending |
+| SCHMA-07 | Phase 4 | Pending |
+| INFRA-01 | Phase 1 | Pending |
+| INFRA-02 | Phase 3 | Pending |
+| INFRA-03 | Phase 3 | Pending |
+| INFRA-04 | Phase 1 | Pending |
+| INFRA-05 | Phase 3 | Pending |
+| INFRA-06 | Phase 1 | Pending |
 
 **Coverage:**
 - v1 requirements: 38 total
-- Mapped to phases: 0
-- Unmapped: 38
+- Mapped to phases: 38
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-17 after initial definition*
+*Last updated: 2026-02-17 after roadmap creation*
