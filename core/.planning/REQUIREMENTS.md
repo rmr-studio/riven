@@ -1,0 +1,148 @@
+# Requirements: Knowledge Layer
+
+**Defined:** 2026-02-17
+**Core Value:** Entity data is semantically enriched and embedded so that the system understands what business concepts its data represents
+
+## v1 Requirements
+
+Requirements for initial release. Each maps to roadmap phases.
+
+### Semantic Metadata
+
+- [ ] **SMETA-01**: Entity types carry a semantic definition field (natural language description of what the entity represents in the business model), separate from the existing user-facing description
+- [ ] **SMETA-02**: Attributes carry a semantic type classification (extensible: identifier, categorical, quantitative, temporal, freetext, relational_reference) stored as a string with validation for known values
+- [ ] **SMETA-03**: Attributes carry a natural language semantic description explaining what the attribute's values mean
+- [ ] **SMETA-04**: Relationship definitions carry a semantic context field describing the nature of the connection (e.g. "customer purchased product")
+- [ ] **SMETA-05**: Semantic metadata is user-editable via API endpoints on entity types, attributes, and relationships
+- [ ] **SMETA-06**: All semantic metadata endpoints enforce workspace-scoped security via @PreAuthorize
+
+### Templates
+
+- [ ] **TMPL-01**: Template system can install a complete entity type schema (entity types, attributes, relationships, and semantic metadata) into a workspace in one action
+- [ ] **TMPL-02**: SaaS Startup template with entity types for customers, subscriptions, MRR, churn, support interactions, and feature usage — all with semantic metadata
+- [ ] **TMPL-03**: DTC E-commerce template with entity types for customers, orders, products, acquisition channels, support, and returns — all with semantic metadata
+- [ ] **TMPL-04**: Service Business template with entity types for clients, projects, invoices, communications, and deliverables — all with semantic metadata
+- [ ] **TMPL-05**: Template install is idempotent — re-applying does not duplicate entity types or corrupt existing data
+- [ ] **TMPL-06**: Template semantic metadata serves as the editable baseline — users can modify after install without breaking the template structure
+
+### Enrichment Pipeline
+
+- [ ] **ENRICH-01**: Enriched text construction builds a text string from entity type semantic definition, attribute values with semantic labels, and relationship context with related entity summaries
+- [ ] **ENRICH-02**: Enriched text uses semantic type classifications to format attribute values appropriately (dates formatted, enums named, references described by related entity identifiers)
+- [ ] **ENRICH-03**: OpenAI text-embedding-3-small generates 1536-dimensional embedding vectors from enriched text
+- [ ] **ENRICH-04**: Embeddings stored in pgvector entity_embeddings table (separate from entities table) with HNSW index using vector_cosine_ops
+- [ ] **ENRICH-05**: Embedding metadata stored: workspace_id, entity_id, entity_type_id, embedded_at, embedding_model, schema_version
+- [ ] **ENRICH-06**: Entity create triggers enrichment queue entry within the same transaction
+- [ ] **ENRICH-07**: Entity update (attributes or relationships changed) triggers enrichment queue entry
+- [ ] **ENRICH-08**: Relationship create/delete triggers enrichment queue entries for both source and target entities
+- [ ] **ENRICH-09**: Queue deduplication prevents multiple pending entries for the same entity_id
+- [ ] **ENRICH-10**: Temporal workflow processes queue entries: fetch entity with context → construct enriched text → generate embedding → store in pgvector
+- [ ] **ENRICH-11**: OpenAI API calls retry with exponential backoff on transient failures (429, 5xx)
+- [ ] **ENRICH-12**: Enrichment failures log the error and mark the entity as embedding_pending for retry
+- [ ] **ENRICH-13**: Activity logging for enrichment operations (embed created, embed failed, re-embed triggered)
+
+### Schema Change Handling
+
+- [ ] **SCHMA-01**: Schema change detection identifies which entities are affected when entity type semantic description, attribute semantic description, attribute deletion, or relationship semantic description changes
+- [ ] **SCHMA-02**: Re-embedding priority follows the change detection matrix: entity type description changes = high, attribute changes = medium, relationship deletion = low
+- [ ] **SCHMA-03**: Schema mutations fire events to a Temporal workflow that queries affected entity IDs and batches them into child embedding workflows (~100 per batch)
+- [ ] **SCHMA-04**: schema_migration_jobs table tracks re-embedding progress: status (PENDING, IN_PROGRESS, COMPLETE, FAILED), total_entities, processed_entities, error_count, started_at, completed_at
+- [ ] **SCHMA-05**: Re-embedding runs in background without blocking entity CRUD operations
+- [ ] **SCHMA-06**: Queries during re-embedding return results from existing (stale) embeddings rather than failing
+- [ ] **SCHMA-07**: Schema changes to an entity type with <1000 entities complete re-embedding within 15 minutes
+
+### Infrastructure
+
+- [ ] **INFRA-01**: pgvector extension enabled in PostgreSQL (CREATE EXTENSION IF NOT EXISTS vector)
+- [ ] **INFRA-02**: entity_embeddings table with vector(1536) column, HNSW index, and RLS policy for workspace isolation
+- [ ] **INFRA-03**: OpenAI API client using existing WebClient pattern (no external SDK), configured via OPENAI_API_KEY environment variable
+- [ ] **INFRA-04**: Testcontainers pgvector-enabled PostgreSQL image for integration tests
+- [ ] **INFRA-05**: Enrichment queue table following existing workflow_execution_queue pattern
+- [ ] **INFRA-06**: Semantic metadata stored in separate tables (not in existing entity_types schema JSONB) to avoid impacting existing entity CRUD
+
+## v2 Requirements
+
+Deferred to future release. Tracked but not in current roadmap.
+
+### Templates
+
+- **TMPL-07**: 3-5 pre-configured analytical briefs per template demonstrating cross-domain querying
+- **TMPL-08**: Example queries per template that work with minimal data (<50 records)
+
+### Enrichment Pipeline
+
+- **ENRICH-14**: Priority-based re-embedding ordering (recently-active entities first)
+- **ENRICH-15**: Manual re-embedding request endpoint for specific entities or entity types
+
+### Schema Change Handling
+
+- **SCHMA-08**: Re-embedding progress visibility via read API endpoint (polling-based)
+
+## Out of Scope
+
+Explicitly excluded. Documented to prevent scope creep.
+
+| Feature | Reason |
+|---------|--------|
+| Natural language query interface | Retrieval and reasoning engine is a separate future project. Build embeddings first, validate quality, then build retrieval. |
+| Proactive insights / analytical brief execution | Requires query engine and LLM chain calling. Neither exists yet. Store briefs as structured text only. |
+| Synchronous embedding on entity save | Would add 200-500ms latency to every entity write. Queue-based near-real-time is sufficient. |
+| Workspace-level API key management | Single platform-level key is sufficient at initial scale. Adds secrets management and billing complexity. |
+| Custom embedding model support | Multiple providers multiply testing surface and introduce dimension-mismatch risks. OpenAI text-embedding-3-small only. |
+| Semantic search / vector similarity endpoint | Belongs to retrieval project. Embedding quality should be validated first. |
+| Automatic semantic type inference | Inferring types from attribute names produces false positives. Templates pre-configure, users set manually. |
+| Cross-workspace semantic similarity | Breaks multi-tenant isolation. All queries filter by workspace_id. |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| SMETA-01 | — | Pending |
+| SMETA-02 | — | Pending |
+| SMETA-03 | — | Pending |
+| SMETA-04 | — | Pending |
+| SMETA-05 | — | Pending |
+| SMETA-06 | — | Pending |
+| TMPL-01 | — | Pending |
+| TMPL-02 | — | Pending |
+| TMPL-03 | — | Pending |
+| TMPL-04 | — | Pending |
+| TMPL-05 | — | Pending |
+| TMPL-06 | — | Pending |
+| ENRICH-01 | — | Pending |
+| ENRICH-02 | — | Pending |
+| ENRICH-03 | — | Pending |
+| ENRICH-04 | — | Pending |
+| ENRICH-05 | — | Pending |
+| ENRICH-06 | — | Pending |
+| ENRICH-07 | — | Pending |
+| ENRICH-08 | — | Pending |
+| ENRICH-09 | — | Pending |
+| ENRICH-10 | — | Pending |
+| ENRICH-11 | — | Pending |
+| ENRICH-12 | — | Pending |
+| ENRICH-13 | — | Pending |
+| SCHMA-01 | — | Pending |
+| SCHMA-02 | — | Pending |
+| SCHMA-03 | — | Pending |
+| SCHMA-04 | — | Pending |
+| SCHMA-05 | — | Pending |
+| SCHMA-06 | — | Pending |
+| SCHMA-07 | — | Pending |
+| INFRA-01 | — | Pending |
+| INFRA-02 | — | Pending |
+| INFRA-03 | — | Pending |
+| INFRA-04 | — | Pending |
+| INFRA-05 | — | Pending |
+| INFRA-06 | — | Pending |
+
+**Coverage:**
+- v1 requirements: 38 total
+- Mapped to phases: 0
+- Unmapped: 38
+
+---
+*Requirements defined: 2026-02-17*
+*Last updated: 2026-02-17 after initial definition*
