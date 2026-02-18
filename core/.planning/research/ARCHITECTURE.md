@@ -36,9 +36,12 @@ The knowledge layer is a new `knowledge` domain that sits alongside the existing
 [EntityTypeService.saveEntityTypeDefinition()]
     │ (on schema change detected)
     ▼
-[ReBatchingOrchestrationService]
-    └─ Enqueues SchemaMigrationJob → spawns Temporal child workflows
-         └─ Each child: batch of ~100 entities → EnrichmentWorkflow per entity
+[SchemaMigrationJobService]
+    └─ Creates SchemaMigrationJob → spawns ReBatchingWorkflow
+         └─ Enqueues affected entities into entity_enrichment_queue
+              with priority=BATCH
+         └─ Entities are dispatched via the same round-robin dispatcher
+              (NORMAL priority items dispatch first within each workspace)
 ```
 
 ---
@@ -52,15 +55,15 @@ The knowledge layer is a new `knowledge` domain that sits alongside the existing
 | `EntitySemanticMetadataService` | `service.knowledge` | CRUD for semantic metadata on entity types, attributes, relationships. No embedding logic. | `EntityTypeService` (read), `EntitySemanticMetadataRepository` |
 | `EntityTypeTemplateService` | `service.knowledge` | Installs pre-configured entity type schemas + semantic metadata in one transaction. | `EntityTypeService`, `EntitySemanticMetadataService` |
 | `EnrichmentQueueService` | `service.knowledge.queue` | Enqueues enrichment requests (PENDING rows). Status transitions (claim, dispatch, complete, fail). Mirrors `WorkflowExecutionQueueService` exactly. | `EnrichmentQueueRepository` |
-| `EnrichmentDispatcherService` | `service.knowledge.queue` | `@Scheduled` + `@SchedulerLock` loop. Claims batch via `FOR UPDATE SKIP LOCKED`. Dispatches each item to Temporal. Mirrors `WorkflowExecutionDispatcherService`. | `EnrichmentQueueService`, `WorkflowClient` |
+| `EnrichmentDispatcherService` | `service.knowledge.queue` | `@Scheduled` + `@SchedulerLock` loop. Claims batches round-robin across workspaces (not FIFO). Enforces per-workspace concurrency cap (configurable, default 10). Within each workspace's share, dispatches `NORMAL` priority before `BATCH`. Uses `FOR UPDATE SKIP LOCKED`. Dispatches each item to Temporal. | `EnrichmentQueueService`, `WorkflowClient` |
 | `EnrichmentQueueProcessorService` | `service.knowledge.queue` | `REQUIRES_NEW` transaction per item. Constructs `WorkflowClient` stub, starts `EnrichmentWorkflow`. Mirrors `WorkflowExecutionQueueProcessorService`. | `WorkflowClient`, `EnrichmentQueueService` |
-| `SemanticTextBuilderService` | `service.knowledge.enrichment` | Constructs the enriched natural language text for an entity from: entity type semantic definition, attribute values with semantic labels, relationship context. Pure transformation — no I/O. | `EntitySemanticMetadataService` |
+| `SemanticTextBuilderService` | `service.knowledge.enrichment` | Constructs the enriched natural language text for an entity from: entity type semantic definition, attribute values with semantic labels, relationship context. Applies configurable token budget (~7,500 tokens) with priority truncation: entity type definition → identifier → high-signal attributes → relationships → remaining. Returns text + `truncated` flag. Pure transformation — no I/O. | `EntitySemanticMetadataService` |
 | `EmbeddingClientService` | `service.knowledge.enrichment` | Calls OpenAI `text-embedding-3-small` API via Spring `WebClient`. Handles retries, rate limits. Returns `FloatArray` (1536 dimensions). | OpenAI REST API |
 | `EntityEmbeddingService` | `service.knowledge.enrichment` | Upserts embedding + metadata into `entity_embeddings`. Handles conflict resolution (same entity, re-embed replaces). | `EntityEmbeddingRepository` |
 | `EnrichmentCoordinationActivity` | `service.knowledge.enrichment` | Temporal `@ActivityInterface` implementation. Orchestrates steps 1–4 for one entity. Spring bean — has full dependency injection. | `SemanticTextBuilderService`, `EmbeddingClientService`, `EntityEmbeddingService` |
 | `EnrichmentWorkflowImpl` | `service.knowledge.enrichment` | Temporal `@WorkflowInterface` implementation. NOT a Spring bean. Registered via `WorkerFactory`. Delegates to `EnrichmentCoordinationActivity`. | `EnrichmentCoordinationActivity` (via Temporal activity stub) |
-| `SchemaMigrationJobService` | `service.knowledge.schema` | Creates and tracks `schema_migration_jobs` records. Spawns Temporal child workflows for batch re-embedding. | `SchemaMigrationJobRepository`, `WorkflowClient` |
-| `ReBatchingWorkflowImpl` | `service.knowledge.schema` | Temporal workflow for schema change re-embedding. Fans out to child `EnrichmentWorkflow` instances in batches of ~100. | `EnrichmentWorkflow` (Temporal child workflows) |
+| `SchemaMigrationJobService` | `service.knowledge.schema` | Creates and tracks `schema_migration_jobs` records. Progress tracking via queue completion callbacks instead of Temporal child workflow signals. | `SchemaMigrationJobRepository`, `WorkflowClient` |
+| `ReBatchingWorkflowImpl` | `service.knowledge.schema` | Temporal workflow for schema change re-embedding. Enqueues affected entities into `entity_enrichment_queue` with `BATCH` priority instead of spawning child workflows directly. | `EnrichmentQueueService` (via Temporal activity) |
 | `KnowledgeController` | `controller.knowledge` | REST endpoints for semantic metadata CRUD, template installation, manual re-embed triggers, migration job status. | `EntitySemanticMetadataService`, `EntityTypeTemplateService`, `SchemaMigrationJobService` |
 
 ### entity domain — modifications (not new components)
@@ -88,7 +91,11 @@ Step 2: Enqueue enrichment (same transaction)
 
 Step 3: Scheduled dispatcher runs (every 5s, ShedLock)
   EnrichmentDispatcherService.processQueue()
-  → claimBatch(10): SELECT ... FOR UPDATE SKIP LOCKED → status=CLAIMED
+  → Round-robin claim across workspaces:
+    1. SELECT DISTINCT workspace_id FROM entity_enrichment_queue WHERE status = 'PENDING'
+    2. For each workspace: check count of CLAIMED/IN_PROGRESS items (skip if at per-workspace concurrency cap, default 10)
+    3. Claim batchSize/workspaceCount items per workspace, ordered by priority ASC (NORMAL before BATCH), then created_at ASC
+    4. SELECT ... FOR UPDATE SKIP LOCKED → status=CLAIMED
   → for each item: EnrichmentQueueProcessorService.processItem() [REQUIRES_NEW]
 
 Step 4: Temporal workflow started
@@ -99,11 +106,13 @@ Step 5: Temporal activity executes (EnrichmentCoordinationActivity)
   5a. Load entity from EntityRepository (by entityId)
   5b. Load EntityTypeEntity + semantic metadata (by entity.typeId)
   5c. SemanticTextBuilderService.buildText(entity, entityType, semanticMetadata)
-      → produces enriched text string
+      → builds sections in priority order (entity type def → identifier → high-signal attributes → relationships → remaining)
+      → tracks token budget (~7,500), stops adding sections when budget exhausted
+      → returns enriched text string + truncated flag
   5d. EmbeddingClientService.embed(enrichedText)
       → POST to OpenAI API → FloatArray[1536]
-  5e. EntityEmbeddingService.upsert(entityId, workspaceId, embedding, metadata)
-      → INSERT INTO entity_embeddings ... ON CONFLICT (entity_id) DO UPDATE
+  5e. EntityEmbeddingService.upsert(entityId, workspaceId, embedding, metadata, truncated)
+      → INSERT INTO entity_embeddings ... ON CONFLICT (entity_id) DO UPDATE (includes truncated flag)
 
 Step 6: Queue item completed
   EnrichmentCoordinationActivity marks queue item COMPLETED on success
@@ -176,6 +185,8 @@ CREATE TABLE IF NOT EXISTS public.entity_embeddings (
     "semantic_categories" TEXT[] DEFAULT '{}',
     "related_entity_type_keys" TEXT[] DEFAULT '{}',
 
+    "truncated"       BOOLEAN NOT NULL DEFAULT false,  -- true when enriched text was truncated due to token budget
+
     "embedded_at"     TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "embedding_model" TEXT NOT NULL DEFAULT 'text-embedding-3-small',
     "embedding_version" INTEGER NOT NULL DEFAULT 1,
@@ -229,6 +240,7 @@ CREATE TABLE IF NOT EXISTS public.entity_enrichment_queue (
     "workspace_id"    UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     "entity_id"       UUID NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
     "trigger_type"    TEXT NOT NULL,  -- ENTITY_CREATE, ENTITY_UPDATE, RELATIONSHIP_CHANGE, SCHEMA_CHANGE, MANUAL
+    "priority"        TEXT NOT NULL DEFAULT 'NORMAL',  -- NORMAL (entity mutations), BATCH (schema re-embedding)
     "status"          TEXT NOT NULL DEFAULT 'PENDING',
     "created_at"      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "claimed_at"      TIMESTAMPTZ,
@@ -237,7 +249,7 @@ CREATE TABLE IF NOT EXISTS public.entity_enrichment_queue (
     "attempts"        INTEGER NOT NULL DEFAULT 0,
     "last_error"      TEXT,
 
-    INDEX idx_enrichment_queue_workspace (workspace_id, status)
+    INDEX idx_enrichment_queue_workspace (workspace_id, status, priority)
 );
 ```
 
@@ -284,16 +296,17 @@ EnrichmentWorkflow.embed(entityId, workspaceId)
 ### Batch re-embedding workflow (schema change path)
 
 ```
-ReBatchingWorkflow.reembed(migrationJobId, entityTypeId, workspaceId, entityIds)
-  └─ For each batch of 100 entity IDs:
-       └─ Child workflow: EnrichmentWorkflow.embed(entityId, workspaceId)
-            [spawned as Temporal child workflows for fan-out]
-  └─ Activity: MigrationProgressActivity.updateProgress(migrationJobId, completed, failed)
+ReBatchingWorkflow.reembed(migrationJobId, entityTypeId, workspaceId)
+  └─ Activity: EnqueueBatchActivity.enqueueAffectedEntities(entityTypeId, workspaceId)
+       → queries affected entity IDs
+       → enqueues each into entity_enrichment_queue with priority=BATCH
+  └─ Activity: MigrationProgressActivity.trackCompletion(migrationJobId)
+       → monitors queue completion callbacks for progress updates
 ```
 
-**Child workflows over parallel activities:** At 1000 entities, running 1000 parallel Temporal activities in one workflow hits memory and scheduling limits. Child workflows provide natural fan-out with independent retry semantics per entity. Each child handles one entity; the parent tracks progress.
+**Queue-based fan-out over child workflows:** Instead of spawning Temporal child workflows per batch, `ReBatchingWorkflow` enqueues affected entities into the shared `entity_enrichment_queue` with `BATCH` priority. This creates a single dispatch path for all embedding work (mutations and re-embedding), and workspace-fair round-robin + per-workspace concurrency caps apply uniformly. `NORMAL` priority items (entity mutations) always dispatch before `BATCH` items within each workspace's share, ensuring real-time operations are never starved.
 
-**Batch size:** 100 entities per batch. At 15-second target for <1000 entities, and assuming ~500ms per entity (OpenAI latency), 100 parallel children completes in ~5 seconds per batch, 10 batches = ~50 seconds total. Comfortably within target.
+**Progress tracking:** `SchemaMigrationJobService` tracks progress via queue completion callbacks rather than Temporal child workflow signals. The `schema_migration_jobs` record is updated as queue items for the relevant entity type complete.
 
 ---
 
@@ -477,12 +490,12 @@ Phase 3: Enrichment Pipeline
 
 Phase 4: Schema Change Re-embedding
   ├─ schema_migration_jobs table
-  ├─ SchemaMigrationJobService
-  ├─ ReBatchingWorkflowImpl (Temporal child workflow fan-out)
-  ├─ MigrationProgressActivity
+  ├─ SchemaMigrationJobService (with queue completion callback progress tracking)
+  ├─ ReBatchingWorkflowImpl (enqueues to entity_enrichment_queue with BATCH priority)
+  ├─ EnqueueBatchActivity + MigrationProgressActivity
   └─ Schema change detection hook in EntityTypeService
   └─ Migration job status endpoint in KnowledgeController
-  [Depends on Phase 3: re-embedding uses EnrichmentWorkflow as building block]
+  [Depends on Phase 3: re-embedding uses entity_enrichment_queue + EnrichmentDispatcherService]
 ```
 
 **Why this order:** Phase 1 is entirely additive — no existing code changes. Phase 2 (templates) can be shipped before the pipeline exists; templates create entity types and semantic metadata, and the enrichment queue picks them up when Phase 3 is deployed. Phase 3 is the core infrastructure. Phase 4 requires Phase 3's `EnrichmentWorkflow` as a child workflow target.

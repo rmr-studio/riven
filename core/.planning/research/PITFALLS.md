@@ -171,24 +171,30 @@ Mistakes that cause rewrites, data loss, or block the 15-minute re-embedding SLA
 
 ---
 
-### Pitfall 8: Re-embedding Queue Storms When Multiple Schema Changes Fire Simultaneously
+### Pitfall 8: Re-embedding Queue Storms When Multiple Schema Changes Fire Simultaneously — MITIGATED
 
-**What goes wrong:** A user updates semantic metadata on 3 entity types in quick succession. Each change enqueues a separate `SchemaReembeddingJob`. The queue processor picks up all three jobs and launches three parallel Temporal child workflows. Each child workflow fires parallel batches of ~100 entities. The result is 3 × (total_entities / 100) concurrent OpenAI API calls, which immediately saturates the rate limit.
+> **Status:** Mitigated (2026-02-18) — Three architectural mechanisms address this: workspace-fair round-robin dispatch, per-workspace concurrency caps, and priority lanes.
 
-**Why it happens:** The queue-based trigger pattern works well for single-entity mutations. Schema changes are rarer and higher-fan-out. The existing queue consumer doesn't deduplicate or throttle by entity type.
+**What goes wrong:** A user updates semantic metadata on 3 entity types in quick succession. Each change enqueues a separate `SchemaReembeddingJob`. Without controls, all affected entities flood the enrichment queue simultaneously, saturating the OpenAI rate limit.
 
-**Consequences:** OpenAI rate limit errors cascade. Multiple re-embedding runs for the same entity type produce conflicting embeddings in the database. The 15-minute SLA is violated due to retry backoff.
+**Why it happens:** The queue-based trigger pattern works well for single-entity mutations. Schema changes are rarer and higher-fan-out.
 
-**Prevention:**
-- Implement a deduplication check in the schema migration job scheduler: before launching a Temporal workflow for entity type X, check if a `schema_migration_jobs` record for type X is already IN_PROGRESS. If so, mark the new request as QUEUED and let the in-progress job complete.
-- Configure the Temporal child workflow for embedding batches to use a fixed concurrency limit: process batches sequentially or at low parallelism (2-3 concurrent activities) rather than all at once.
-- Add a global OpenAI rate limit semaphore at the service level: a `RateLimiter` (e.g., Guava or custom) that limits embedding API calls to N per minute across all concurrent workflows.
+**Consequences (without mitigation):** OpenAI rate limit errors cascade. One workspace's schema changes starve other workspaces' embedding operations. The 15-minute SLA is violated due to retry backoff.
 
-**Warning signs:** Multiple `schema_migration_jobs` rows with the same `entity_type_id` in IN_PROGRESS state simultaneously. OpenAI 429 errors spiking after schema update bursts.
+**Mitigation (adopted):**
+- **Single queue path:** Phase 4 re-embedding now enqueues affected entities into `entity_enrichment_queue` with `BATCH` priority instead of spawning Temporal child workflows directly. All embedding work flows through one queue and one dispatcher.
+- **Per-workspace concurrency cap:** Configurable `maxConcurrentPerWorkspace` (default ~10). Before dispatching for a workspace, the dispatcher checks count of CLAIMED/IN_PROGRESS items. Workspace is skipped in the current dispatch cycle if at cap. Prevents any single workspace from saturating the OpenAI rate limit. See REQUIREMENTS.md ENRICH-16.
+- **Priority lanes:** Entity mutation queue items have `NORMAL` priority; schema re-embedding items have `BATCH` priority. `NORMAL` dispatches first within each workspace's share, ensuring real-time entity operations are never starved by background re-embedding. See REQUIREMENTS.md ENRICH-17.
+- **Workspace-fair round-robin:** Dispatcher claims batches round-robin across workspaces, not FIFO. No single workspace monopolises a dispatch cycle. See REQUIREMENTS.md ENRICH-15.
+- **Migration job deduplication:** Won't launch a new migration job if one is already IN_PROGRESS for the same entity type (existing design, unchanged).
+
+**Residual risk:** The per-workspace concurrency cap default (10) may need tuning based on OpenAI rate limits in production. Monitor 429 error rates per workspace during load testing.
+
+**Warning signs:** OpenAI 429 errors spiking after schema update bursts. One workspace's in-flight count consistently at cap while others are idle.
 
 **Phase:** Batch re-embedding workflow phase.
 
-**Confidence:** MEDIUM — queue storm behavior is logical from the design; specific Temporal concurrency patterns are based on training data.
+**Confidence:** HIGH — mitigation mechanisms are architectural decisions, not speculative.
 
 ---
 
@@ -272,15 +278,17 @@ Mistakes that cause rewrites, data loss, or block the 15-minute re-embedding SLA
 
 ---
 
-### Pitfall 13: Enriched Text Token Length Exceeds OpenAI Embedding Input Limit
+### Pitfall 13: Enriched Text Token Length Exceeds OpenAI Embedding Input Limit — RESOLVED
+
+> **Status:** Resolved (2026-02-18) — Structured priority truncation strategy adopted.
 
 **What goes wrong:** Entities with many attributes and rich relationship context produce enriched text strings exceeding 8,192 tokens (the text-embedding-3-small input limit). The OpenAI API returns a 400 error. The embedding pipeline fails for those specific entities silently if errors aren't surfaced per-entity.
 
-**Prevention:** Add a pre-call token count check using a tokenizer (tiktoken equivalent in Kotlin/JVM) or a conservative character count heuristic (8,192 tokens ≈ 32,768 characters for typical business text). Truncate or summarize the enriched text if it exceeds the limit. Log which entities triggered truncation for auditing.
+**Resolution:** `SemanticTextBuilderService` applies a configurable token budget (~7,500 tokens, leaving headroom below the 8,191 limit). Text is built in priority order: entity type definition → identifier → high-signal attributes (by semantic type weight) → relationships with context → remaining attributes. Budget consumption is tracked per section; sections are omitted when budget is exhausted. Token estimation uses a character-based heuristic (`chars / 4`). A `truncated: Boolean` column on `entity_embeddings` flags partial embeddings for downstream consumers. No I/O dependency added — stays pure transformation. See REQUIREMENTS.md ENRICH-14.
 
 **Phase:** Enriched text construction phase.
 
-**Confidence:** MEDIUM — token limit is documented; JVM tokenizer library availability requires verification.
+**Confidence:** HIGH — strategy confirmed by architecture decision.
 
 ---
 
@@ -318,7 +326,7 @@ Mistakes that cause rewrites, data loss, or block the 15-minute re-embedding SLA
 | Embedding batch Temporal activity | Wrong timeout / non-retriable 429 | Separate activity config from existing workflow config; treat 429 as retriable |
 | OpenAI API integration | Secrets in logs or metadata | Never pass API key to Temporal activity input; audit HTTP client debug logging |
 | Schema change re-embedding | Full workspace re-embed instead of type-scoped | Filter batch query by `entity_type_id`; record affected type in `schema_migration_jobs` |
-| Concurrent schema changes | Queue storms saturating rate limit | Deduplicate in-progress jobs per type; enforce per-workspace concurrency limit |
+| Concurrent schema changes | Queue storms saturating rate limit | **MITIGATED:** Single queue path + per-workspace concurrency caps + priority lanes + round-robin dispatch (see Pitfall #8) |
 | H2 unit tests | pgvector extension unavailable | Exclude embedding repositories from H2 profile; use Testcontainers pgvector for all vector tests |
 | Template installation | No initial embedding trigger | Document embedding latency; test first-query experience end-to-end |
 | JPA entity associations | N+1 on all entity reads | Never add JPA relationship from EntityEntity to EmbeddingEntity; use plain repository queries |

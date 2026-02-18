@@ -40,6 +40,10 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **ENRICH-11**: OpenAI API calls retry with exponential backoff on transient failures (429, 5xx)
 - [ ] **ENRICH-12**: Enrichment failures log the error and mark the entity as embedding_pending for retry
 - [ ] **ENRICH-13**: Activity logging for enrichment operations (embed created, embed failed, re-embed triggered)
+- [ ] **ENRICH-14**: When enriched text exceeds the token budget (~7,500 tokens), `SemanticTextBuilderService` truncates by section priority (entity type definition → identifier → high-signal attributes → relationships → remaining attributes). A `truncated` flag is stored on the embedding record
+- [ ] **ENRICH-15**: Dispatcher claims items round-robin across workspaces, not FIFO — ensures no single workspace monopolises a dispatch cycle
+- [ ] **ENRICH-16**: Per-workspace concurrency cap on in-flight embedding items (configurable, default 10). Workspaces at cap are skipped in the current dispatch cycle
+- [ ] **ENRICH-17**: Entity mutation queue items have `NORMAL` priority; schema re-embedding items have `BATCH` priority. `NORMAL` dispatches first within each workspace's round-robin share
 
 ### Schema Change Handling
 
@@ -50,6 +54,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **SCHMA-05**: Re-embedding runs in background without blocking entity CRUD operations
 - [ ] **SCHMA-06**: Queries during re-embedding return results from existing (stale) embeddings rather than failing
 - [ ] **SCHMA-07**: Schema changes to an entity type with <1000 entities complete re-embedding within 15 minutes
+- [ ] **SCHMA-08**: Schema change re-embedding enqueues affected entities into `entity_enrichment_queue` with `BATCH` priority instead of spawning direct Temporal child workflows. `ReBatchingWorkflow` uses the shared queue as the single dispatch path
+- [ ] **SCHMA-09**: Staleness is determined at entity-type granularity by checking `schema_migration_jobs` status for the queried entity type. Per-entity and workspace-level staleness checks are not implemented
 
 ### Infrastructure
 
@@ -71,12 +77,12 @@ Deferred to future release. Tracked but not in current roadmap.
 
 ### Enrichment Pipeline
 
-- **ENRICH-14**: Priority-based re-embedding ordering (recently-active entities first)
-- **ENRICH-15**: Manual re-embedding request endpoint for specific entities or entity types
+- **ENRICH-18**: Priority-based re-embedding ordering (recently-active entities first)
+- **ENRICH-19**: Manual re-embedding request endpoint for specific entities or entity types
 
 ### Schema Change Handling
 
-- **SCHMA-08**: Re-embedding progress visibility via read API endpoint (polling-based)
+- **SCHMA-10**: Re-embedding progress visibility via read API endpoint (polling-based)
 
 ## Out of Scope
 
@@ -124,6 +130,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ENRICH-11 | Phase 3 | Pending |
 | ENRICH-12 | Phase 3 | Pending |
 | ENRICH-13 | Phase 3 | Pending |
+| ENRICH-14 | Phase 3 | Pending |
+| ENRICH-15 | Phase 3 | Pending |
+| ENRICH-16 | Phase 3 | Pending |
+| ENRICH-17 | Phase 3 | Pending |
 | SCHMA-01 | Phase 4 | Pending |
 | SCHMA-02 | Phase 4 | Pending |
 | SCHMA-03 | Phase 4 | Pending |
@@ -131,6 +141,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCHMA-05 | Phase 4 | Pending |
 | SCHMA-06 | Phase 4 | Pending |
 | SCHMA-07 | Phase 4 | Pending |
+| SCHMA-08 | Phase 4 | Pending |
+| SCHMA-09 | Phase 4 | Pending |
 | INFRA-01 | Phase 1 | Pending |
 | INFRA-02 | Phase 3 | Pending |
 | INFRA-03 | Phase 3 | Pending |
@@ -139,10 +151,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFRA-06 | Phase 1 | Pending |
 
 **Coverage:**
-- v1 requirements: 38 total
-- Mapped to phases: 38
+- v1 requirements: 44 total
+- Mapped to phases: 44
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-17 after roadmap creation*
+*Last updated: 2026-02-18 — added ENRICH-14 through ENRICH-17, SCHMA-08, SCHMA-09; renumbered v2 IDs to avoid conflicts*

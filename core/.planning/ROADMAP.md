@@ -14,8 +14,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Semantic Metadata Foundation** - Extend entity types, attributes, and relationships with semantic metadata fields and CRUD API
 - [ ] **Phase 2: Template System** - Installable domain schema packages that bootstrap a workspace with semantically-enriched entity types in one action
-- [ ] **Phase 3: Enrichment Pipeline** - Queue-triggered Temporal workflow that builds enriched text from entity data and stores vector embeddings in pgvector
-- [ ] **Phase 4: Schema Change Re-embedding** - Detection of schema mutations that affect embedding quality and batch re-embedding via child Temporal workflows
+- [ ] **Phase 3: Enrichment Pipeline** - Queue-triggered Temporal workflow that builds enriched text from entity data (with token budget truncation) and stores vector embeddings in pgvector, with workspace-fair round-robin dispatch and priority lanes
+- [ ] **Phase 4: Schema Change Re-embedding** - Detection of schema mutations that affect embedding quality and batch re-embedding via shared enrichment queue (BATCH priority), with entity-type-level staleness tracking
 
 ## Phase Details
 
@@ -52,15 +52,17 @@ Plans:
 - [ ] 02-02: EntityTypeTemplateService with idempotent install logic and template installation endpoint in KnowledgeController
 
 ### Phase 3: Enrichment Pipeline
-**Goal**: Every entity create and update automatically produces a vector embedding stored in pgvector that captures the entity's business meaning using its semantic metadata
+**Goal**: Every entity create and update automatically produces a vector embedding stored in pgvector that captures the entity's business meaning using its semantic metadata, with fair multi-tenant dispatch and token-aware text construction
 **Depends on**: Phase 1
-**Requirements**: ENRICH-01, ENRICH-02, ENRICH-03, ENRICH-04, ENRICH-05, ENRICH-06, ENRICH-07, ENRICH-08, ENRICH-09, ENRICH-10, ENRICH-11, ENRICH-12, ENRICH-13, INFRA-02, INFRA-03, INFRA-05
+**Requirements**: ENRICH-01, ENRICH-02, ENRICH-03, ENRICH-04, ENRICH-05, ENRICH-06, ENRICH-07, ENRICH-08, ENRICH-09, ENRICH-10, ENRICH-11, ENRICH-12, ENRICH-13, ENRICH-14, ENRICH-15, ENRICH-16, ENRICH-17, INFRA-02, INFRA-03, INFRA-05
 **Success Criteria** (what must be TRUE):
   1. Creating or updating an entity causes an enrichment queue entry to appear within the same transaction, and the queue deduplicates multiple pending entries for the same entity
   2. A Temporal workflow processes queue entries end-to-end: fetches entity with context, constructs enriched text using semantic labels and descriptions, calls OpenAI text-embedding-3-small, and stores the resulting vector in entity_embeddings
   3. OpenAI API failures (429, 5xx) are retried with exponential backoff; persistent failures mark the entity as embedding_pending and log an activity record rather than crashing the workflow
   4. Changing a relationship (create or delete) triggers enrichment queue entries for both the source and target entities
-  5. The entity_embeddings table uses an HNSW index with vector_cosine_ops and stores workspace_id, entity_type_id, embedded_at, embedding_model, and schema_version metadata per embedding
+  5. The entity_embeddings table uses an HNSW index with vector_cosine_ops and stores workspace_id, entity_type_id, embedded_at, embedding_model, schema_version, and truncated metadata per embedding
+  6. When enriched text exceeds the token budget (~7,500 tokens), SemanticTextBuilderService truncates by section priority, preserving entity type definition and identifier before attributes and relationships, and sets a truncated flag on the embedding record
+  7. The dispatcher claims queue items round-robin across workspaces (not FIFO) with a per-workspace concurrency cap (default 10), and NORMAL priority items dispatch before BATCH priority items within each workspace's share
 **Plans**: TBD
 
 Plans:
@@ -70,15 +72,16 @@ Plans:
 - [ ] 03-04: EnrichmentCoordinationActivity, EnrichmentWorkflowImpl, EntityEmbeddingService, and Temporal worker registration
 
 ### Phase 4: Schema Change Re-embedding
-**Goal**: When semantic metadata changes on an entity type, all affected entities are automatically re-embedded in the background without blocking entity operations or returning errors to users
+**Goal**: When semantic metadata changes on an entity type, all affected entities are automatically re-embedded in the background via the shared enrichment queue without blocking entity operations or returning errors to users
 **Depends on**: Phase 3
-**Requirements**: SCHMA-01, SCHMA-02, SCHMA-03, SCHMA-04, SCHMA-05, SCHMA-06, SCHMA-07
+**Requirements**: SCHMA-01, SCHMA-02, SCHMA-03, SCHMA-04, SCHMA-05, SCHMA-06, SCHMA-07, SCHMA-08, SCHMA-09
 **Success Criteria** (what must be TRUE):
   1. Changing an entity type's semantic definition, an attribute's semantic description, or a relationship's semantic context triggers a background re-embedding job scoped to only the affected entity type
   2. Re-embedding progress is tracked in schema_migration_jobs with status (PENDING, IN_PROGRESS, COMPLETE, FAILED), entity counts, and timestamps
   3. Entity CRUD operations and queries continue working normally during re-embedding; queries return results from existing (stale) embeddings rather than failing
   4. Schema changes to an entity type with fewer than 1000 entities complete re-embedding within 15 minutes
-  5. Re-embedding batches entities into child Temporal workflows of approximately 100 entities each, with priority ordering that reflects the change severity
+  5. Re-embedding enqueues affected entities into `entity_enrichment_queue` with `BATCH` priority instead of spawning direct Temporal child workflows. The shared round-robin dispatcher handles all embedding dispatch
+  6. Staleness is determined at entity-type granularity by checking `schema_migration_jobs` status for the queried entity type — no per-entity staleness checks or workspace-level banners
 **Plans**: TBD
 
 Plans:
