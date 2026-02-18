@@ -29,12 +29,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A user can set a semantic context string on a relationship definition describing the nature of the connection
   4. All semantic metadata endpoints reject requests from users who do not have access to the target workspace
   5. Semantic metadata is stored in a separate table from entity_types so that existing entity type queries are unchanged
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: Database schema — entity_type_semantic_metadata table, pgvector extension registration, Testcontainers pgvector image
-- [ ] 01-02: JPA entity, domain model, repository, and EntitySemanticMetadataService with full CRUD
-- [ ] 01-03: KnowledgeController semantic metadata endpoints with workspace security and Swagger annotations
+- [ ] 01-01-PLAN.md — Database schema, pgvector extension, enums, JPA entity, domain model, repository, Testcontainers pgvector image
+- [ ] 01-02-PLAN.md — EntityTypeSemanticMetadataService with CRUD, lifecycle hooks in existing services, unit tests
+- [ ] 01-03-PLAN.md — KnowledgeController endpoints, ?include=semantics on EntityTypeController, end-to-end verification
 
 ### Phase 2: Template System
 **Goal**: Users can install a complete, semantically-enriched entity type schema into their workspace in one action using a named domain template
@@ -95,7 +95,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Semantic Metadata Foundation | 0/3 | Not started | - |
+| 1. Semantic Metadata Foundation | 0/3 | Planned | - |
 | 2. Template System | 0/2 | Not started | - |
 | 3. Enrichment Pipeline | 0/4 | Not started | - |
 | 4. Schema Change Re-embedding | 0/2 | Not started | - |
