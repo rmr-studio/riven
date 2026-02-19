@@ -1,0 +1,22 @@
+package riven.core.repository.entity
+
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.stereotype.Repository
+import riven.core.entity.entity.RelationshipDefinitionEntity
+import java.util.*
+
+@Repository
+interface RelationshipDefinitionRepository : JpaRepository<RelationshipDefinitionEntity, UUID> {
+
+    fun findByWorkspaceIdAndSourceEntityTypeId(workspaceId: UUID, sourceEntityTypeId: UUID): List<RelationshipDefinitionEntity>
+
+    fun findByIdAndWorkspaceId(id: UUID, workspaceId: UUID): Optional<RelationshipDefinitionEntity>
+
+    @Query("""
+        SELECT rd FROM RelationshipDefinitionEntity rd
+        WHERE rd.workspaceId = :workspaceId
+        AND rd.sourceEntityTypeId IN :entityTypeIds
+    """)
+    fun findByWorkspaceIdAndSourceEntityTypeIdIn(workspaceId: UUID, entityTypeIds: List<UUID>): List<RelationshipDefinitionEntity>
+}
