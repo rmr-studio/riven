@@ -21,8 +21,8 @@ import riven.core.entity.entity.EntityTypeSemanticMetadataEntity
 import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.core.DataType
 import riven.core.enums.entity.EntityCategory
-import riven.core.enums.entity.SemanticAttributeClassification
-import riven.core.enums.entity.SemanticMetadataTargetType
+import riven.core.enums.entity.semantics.SemanticAttributeClassification
+import riven.core.enums.entity.semantics.SemanticMetadataTargetType
 import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.exceptions.NotFoundException
 import riven.core.models.common.validation.Schema
@@ -172,7 +172,7 @@ class EntityTypeSemanticMetadataServiceTest : BaseServiceTest() {
         val targetId = UUID.randomUUID()
         val request = SaveSemanticMetadataRequest(
             definition = "Customer name",
-            classification = SemanticAttributeClassification.identifier,
+            classification = SemanticAttributeClassification.IDENTIFIER,
             tags = listOf("pii", "required"),
         )
 
@@ -196,13 +196,13 @@ class EntityTypeSemanticMetadataServiceTest : BaseServiceTest() {
 
         verify(repository).save(argThat { entity ->
             entity.definition == "Customer name" &&
-                entity.classification == SemanticAttributeClassification.identifier &&
+                entity.classification == SemanticAttributeClassification.IDENTIFIER &&
                 entity.tags == listOf("pii", "required") &&
                 entity.targetType == SemanticMetadataTargetType.ATTRIBUTE &&
                 entity.targetId == targetId
         })
         assertEquals("Customer name", result.definition)
-        assertEquals(SemanticAttributeClassification.identifier, result.classification)
+        assertEquals(SemanticAttributeClassification.IDENTIFIER, result.classification)
     }
 
     @Test
@@ -213,7 +213,7 @@ class EntityTypeSemanticMetadataServiceTest : BaseServiceTest() {
             targetType = SemanticMetadataTargetType.ATTRIBUTE,
             targetId = targetId,
             definition = "Old definition",
-            classification = SemanticAttributeClassification.freetext,
+            classification = SemanticAttributeClassification.FREETEXT,
             tags = listOf("old-tag"),
         )
 
@@ -228,14 +228,14 @@ class EntityTypeSemanticMetadataServiceTest : BaseServiceTest() {
             targetType = SemanticMetadataTargetType.ATTRIBUTE,
             targetId = targetId,
             definition = "New definition",
-            classification = SemanticAttributeClassification.categorical,
+            classification = SemanticAttributeClassification.CATEGORICAL,
             tags = listOf("new-tag"),
         )
         whenever(repository.save(any<EntityTypeSemanticMetadataEntity>())).thenReturn(updatedEntity)
 
         val request = SaveSemanticMetadataRequest(
             definition = "New definition",
-            classification = SemanticAttributeClassification.categorical,
+            classification = SemanticAttributeClassification.CATEGORICAL,
             tags = listOf("new-tag"),
         )
 
@@ -244,11 +244,11 @@ class EntityTypeSemanticMetadataServiceTest : BaseServiceTest() {
         // Verify all fields replaced (PUT semantics)
         verify(repository).save(argThat { entity ->
             entity.definition == "New definition" &&
-                entity.classification == SemanticAttributeClassification.categorical &&
+                entity.classification == SemanticAttributeClassification.CATEGORICAL &&
                 entity.tags == listOf("new-tag")
         })
         assertEquals("New definition", result.definition)
-        assertEquals(SemanticAttributeClassification.categorical, result.classification)
+        assertEquals(SemanticAttributeClassification.CATEGORICAL, result.classification)
     }
 
     @Test

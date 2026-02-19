@@ -16,7 +16,7 @@ import riven.core.models.entity.relationship.EntityTypeReferenceRelationshipBuil
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDeleteRequest
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipModification
-import riven.core.enums.entity.SemanticMetadataTargetType
+import riven.core.enums.entity.semantics.SemanticMetadataTargetType
 import riven.core.models.request.entity.type.DeleteRelationshipDefinitionRequest
 import riven.core.models.request.entity.type.SaveRelationshipDefinitionRequest
 import riven.core.repository.entity.EntityTypeRepository

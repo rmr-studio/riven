@@ -7,16 +7,12 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import riven.core.enums.entity.SemanticMetadataTargetType
 import riven.core.models.entity.EntityType
-import riven.core.models.entity.EntityTypeSemanticMetadata
 import riven.core.models.request.entity.type.CreateEntityTypeRequest
 import riven.core.models.request.entity.type.DeleteTypeDefinitionRequest
 import riven.core.models.request.entity.type.SaveTypeDefinitionRequest
 import riven.core.models.response.entity.type.EntityTypeImpactResponse
 import riven.core.models.response.entity.type.EntityTypeWithSemanticsResponse
-import riven.core.models.response.entity.type.SemanticMetadataBundle
-import riven.core.service.entity.EntityTypeSemanticMetadataService
 import riven.core.service.entity.type.EntityTypeService
 import java.util.*
 
@@ -25,7 +21,6 @@ import java.util.*
 @Tag(name = "entity")
 class EntityTypeController(
     private val entityTypeService: EntityTypeService,
-    private val semanticMetadataService: EntityTypeSemanticMetadataService,
 ) {
 
     @GetMapping("workspace/{workspaceId}")
@@ -43,21 +38,7 @@ class EntityTypeController(
         @PathVariable workspaceId: UUID,
         @RequestParam(required = false, defaultValue = "") include: List<String>,
     ): ResponseEntity<List<EntityTypeWithSemanticsResponse>> {
-        val entityTypes = entityTypeService.getWorkspaceEntityTypes(workspaceId)
-
-        return if ("semantics" in include) {
-            val allMetadata = semanticMetadataService.getMetadataForEntityTypes(entityTypes.map { it.id })
-            val bundleMap = entityTypes.associate { et ->
-                et.id to buildBundle(et.id, allMetadata.filter { m -> m.entityTypeId == et.id })
-            }
-            ResponseEntity.ok(entityTypes.map { et ->
-                EntityTypeWithSemanticsResponse(entityType = et, semantics = bundleMap[et.id])
-            })
-        } else {
-            ResponseEntity.ok(entityTypes.map { et ->
-                EntityTypeWithSemanticsResponse(entityType = et, semantics = null)
-            })
-        }
+        return ResponseEntity.ok(entityTypeService.getWorkspaceEntityTypesWithIncludes(workspaceId, include))
     }
 
     @GetMapping("/workspace/{workspaceId}/key/{key}")
@@ -76,16 +57,7 @@ class EntityTypeController(
         @PathVariable key: String,
         @RequestParam(required = false, defaultValue = "") include: List<String>,
     ): ResponseEntity<EntityTypeWithSemanticsResponse> {
-        val entityTypeEntity = entityTypeService.getByKey(key, workspaceId)
-        val entityType = entityTypeEntity.toModel()
-
-        return if ("semantics" in include) {
-            val allMetadata = semanticMetadataService.getAllMetadataForEntityType(workspaceId, entityType.id)
-            val bundle = buildBundle(entityType.id, allMetadata)
-            ResponseEntity.ok(EntityTypeWithSemanticsResponse(entityType = entityType, semantics = bundle))
-        } else {
-            ResponseEntity.ok(EntityTypeWithSemanticsResponse(entityType = entityType, semantics = null))
-        }
+        return ResponseEntity.ok(entityTypeService.getEntityTypeByKeyWithIncludes(workspaceId, key, include))
     }
 
     @PostMapping("/workspace/{workspaceId}")
@@ -196,20 +168,5 @@ class EntityTypeController(
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response)
         }
         return ResponseEntity.ok(response)
-    }
-
-    // ------ Private helpers ------
-
-    private fun buildBundle(
-        entityTypeId: UUID,
-        metadata: List<EntityTypeSemanticMetadata>,
-    ): SemanticMetadataBundle {
-        return SemanticMetadataBundle(
-            entityType = metadata.firstOrNull { it.targetType == SemanticMetadataTargetType.ENTITY_TYPE },
-            attributes = metadata.filter { it.targetType == SemanticMetadataTargetType.ATTRIBUTE }
-                .associateBy { it.targetId },
-            relationships = metadata.filter { it.targetType == SemanticMetadataTargetType.RELATIONSHIP }
-                .associateBy { it.targetId },
-        )
     }
 }

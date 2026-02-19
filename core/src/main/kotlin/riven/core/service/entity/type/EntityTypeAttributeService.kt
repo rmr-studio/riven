@@ -12,7 +12,7 @@ import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.request.entity.type.SaveAttributeDefinitionRequest
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityUniqueValuesRepository
-import riven.core.enums.entity.SemanticMetadataTargetType
+import riven.core.enums.entity.semantics.SemanticMetadataTargetType
 import riven.core.service.entity.EntityTypeSemanticMetadataService
 import riven.core.service.entity.EntityValidationService
 import java.util.*
@@ -33,7 +33,7 @@ class EntityTypeAttributeService(
         val typeId = requireNotNull(type.id) { "Entity type ID must not be null when saving attribute definition" }
         val (_, id: UUID, attribute: EntityTypeSchema) = request
 
-        // Detect whether this is a new attribute before mutating the schema
+        // Detect whether this is a new attribute before we upsert it, so we can initialize semantic metadata if needed
         val isNewAttribute = type.schema.properties?.containsKey(id) != true
 
         // Validate some basic constraints on the attribute definition itself

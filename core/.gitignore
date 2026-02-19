@@ -40,3 +40,7 @@ out/
 
 ### Kotlin ###
 .kotlin
+
+### Planning ###
+.planning/*
+!.planning/codebase/
