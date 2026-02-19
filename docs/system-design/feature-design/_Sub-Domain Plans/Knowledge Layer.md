@@ -1,10 +1,10 @@
 ---
 tags:
   - architecture/subdomain-plan
-Created: 17-02-2026
-Updated: 17-02-2026
+Created: 2026-02-17
+Updated: 2026-02-18
 Domains:
-  - "[[Entity]]"
+  - "[[Entities]]"
 ---
 # Sub-Domain Plan: Knowledge Layer Ingestion
 
