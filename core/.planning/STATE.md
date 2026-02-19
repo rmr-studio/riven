@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 1 of 4 (Semantic Metadata Foundation)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-19 — Completed Plan 01 (data layer)
+Last activity: 2026-02-19 — Completed Plan 02 (service layer: EntityTypeSemanticMetadataService, lifecycle hooks, unit tests)
 
-Progress: [█░░░░░░░░░] 8%
+Progress: [██░░░░░░░░] 17%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 3 min
-- Total execution time: 3 min
+- Total plans completed: 2
+- Average duration: 5 min
+- Total execution time: 10 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-semantic-metadata-foundation | 1/3 | 3 min | 3 min |
+| 01-semantic-metadata-foundation | 2/3 | 10 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 3 min
-- Trend: —
+- Last 5 plans: 3 min, 7 min
+- Trend: stable
 
 *Updated after each plan completion*
 
@@ -47,6 +47,8 @@ Recent decisions affecting current work:
 - Semantic metadata in separate table (INFRA-06): avoids polluting entity_types CRUD hot path
 - SemanticAttributeClassification uses lowercase enum constants (identifier, categorical, etc.) to match JSON wire format — Jackson requires exact case match, ACCEPT_CASE_INSENSITIVE_ENUMS not enabled
 - hardDeleteByTarget for attribute/relationship orphan cleanup; softDeleteByEntityTypeId for entity type deletion cascade
+- Lifecycle hooks wired into addOrUpdateRelationship (catches all add paths including inverse reference creation) rather than only updateRelationships.diff.added path
+- No activity logging for semantic metadata mutations (enforced via locked decision)
 
 ### Pending Todos
 
@@ -62,5 +64,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 01-01-PLAN.md (data layer: SQL schema, pgvector extension, enums, JPA entity, domain model, repository)
+Stopped at: Completed 01-02-PLAN.md (service layer: EntityTypeSemanticMetadataService, lifecycle hooks wired into 3 existing services, 13 unit tests)
 Resume file: None
