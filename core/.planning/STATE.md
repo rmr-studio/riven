@@ -5,32 +5,32 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Entity data is semantically enriched and embedded so that the system understands what business concepts its data represents
-**Current focus:** Phase 1 — Semantic Metadata Foundation
+**Current focus:** Phase 2 — (next phase after Semantic Metadata Foundation)
 
 ## Current Position
 
-Phase: 1 of 4 (Semantic Metadata Foundation)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-19 — Completed Plan 02 (service layer: EntityTypeSemanticMetadataService, lifecycle hooks, unit tests)
+Phase: 1 of 4 (Semantic Metadata Foundation) — COMPLETE
+Plan: 3 of 3 in phase — COMPLETE
+Status: Phase 1 complete
+Last activity: 2026-02-19 — Completed Plan 03 (API layer: KnowledgeController, response models, ?include=semantics)
 
-Progress: [██░░░░░░░░] 17%
+Progress: [███░░░░░░░] 25%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 5 min
-- Total execution time: 10 min
+- Total plans completed: 3
+- Average duration: 4 min
+- Total execution time: 13 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-semantic-metadata-foundation | 2/3 | 10 min | 5 min |
+| 01-semantic-metadata-foundation | 3/3 | 13 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 3 min, 7 min
+- Last 5 plans: 3 min, 7 min, 3 min
 - Trend: stable
 
 *Updated after each plan completion*
@@ -49,6 +49,8 @@ Recent decisions affecting current work:
 - hardDeleteByTarget for attribute/relationship orphan cleanup; softDeleteByEntityTypeId for entity type deletion cascade
 - Lifecycle hooks wired into addOrUpdateRelationship (catches all add paths including inverse reference creation) rather than only updateRelationships.diff.added path
 - No activity logging for semantic metadata mutations (enforced via locked decision)
+- EntityTypeController list/detail endpoints return EntityTypeWithSemanticsResponse consistently (semantics=null when not requested) — consistent typing avoids client-side branching
+- ?include=semantics uses batch getMetadataForEntityTypes for list endpoint (no @PreAuthorize, called within authorized context) and getAllMetadataForEntityType for single-entity detail
 
 ### Pending Todos
 
@@ -64,5 +66,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 01-02-PLAN.md (service layer: EntityTypeSemanticMetadataService, lifecycle hooks wired into 3 existing services, 13 unit tests)
+Stopped at: Completed 01-03-PLAN.md (API layer: KnowledgeController with 8 endpoints, ?include=semantics on EntityTypeController — Phase 1 complete)
 Resume file: None
