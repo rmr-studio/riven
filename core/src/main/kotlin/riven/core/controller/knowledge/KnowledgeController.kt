@@ -1,0 +1,207 @@
+package riven.core.controller.knowledge
+
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.*
+import riven.core.enums.entity.SemanticMetadataTargetType
+import riven.core.models.entity.EntityTypeSemanticMetadata
+import riven.core.models.request.entity.type.BulkSaveSemanticMetadataRequest
+import riven.core.models.request.entity.type.SaveSemanticMetadataRequest
+import riven.core.models.response.entity.type.SemanticMetadataBundle
+import riven.core.service.entity.EntityTypeSemanticMetadataService
+import java.util.*
+
+@RestController
+@RequestMapping("/api/v1/knowledge")
+@Tag(name = "knowledge")
+class KnowledgeController(
+    private val semanticMetadataService: EntityTypeSemanticMetadataService,
+) {
+
+    // ------ Entity type metadata ------
+
+    @GetMapping("/workspace/{workspaceId}/entity-type/{entityTypeId}")
+    @Operation(
+        summary = "Get semantic metadata for an entity type",
+        description = "Retrieves the semantic metadata record for the entity type itself (not its attributes or relationships)."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Semantic metadata retrieved successfully"),
+        ApiResponse(responseCode = "401", description = "Unauthorized access"),
+        ApiResponse(responseCode = "404", description = "Entity type or metadata not found")
+    )
+    fun getEntityTypeMetadata(
+        @PathVariable workspaceId: UUID,
+        @PathVariable entityTypeId: UUID,
+    ): ResponseEntity<EntityTypeSemanticMetadata> {
+        val metadata = semanticMetadataService.getForEntityType(workspaceId, entityTypeId)
+        return ResponseEntity.ok(metadata)
+    }
+
+    @PutMapping("/workspace/{workspaceId}/entity-type/{entityTypeId}")
+    @Operation(
+        summary = "Set semantic metadata for an entity type (full replacement)",
+        description = "Upserts the semantic metadata for the entity type itself. All fields are fully replaced on every call."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Semantic metadata saved successfully"),
+        ApiResponse(responseCode = "400", description = "Invalid classification value"),
+        ApiResponse(responseCode = "401", description = "Unauthorized access"),
+        ApiResponse(responseCode = "404", description = "Entity type not found")
+    )
+    fun setEntityTypeMetadata(
+        @PathVariable workspaceId: UUID,
+        @PathVariable entityTypeId: UUID,
+        @RequestBody request: SaveSemanticMetadataRequest,
+    ): ResponseEntity<EntityTypeSemanticMetadata> {
+        val metadata = semanticMetadataService.upsertMetadata(
+            workspaceId, entityTypeId, SemanticMetadataTargetType.ENTITY_TYPE, entityTypeId, request
+        )
+        return ResponseEntity.ok(metadata)
+    }
+
+    // ------ Attribute metadata ------
+
+    @GetMapping("/workspace/{workspaceId}/entity-type/{entityTypeId}/attributes")
+    @Operation(
+        summary = "Get semantic metadata for all attributes of an entity type",
+        description = "Retrieves all attribute-level semantic metadata records for the given entity type."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Attribute metadata retrieved successfully"),
+        ApiResponse(responseCode = "401", description = "Unauthorized access"),
+        ApiResponse(responseCode = "404", description = "Entity type not found")
+    )
+    fun getAttributeMetadata(
+        @PathVariable workspaceId: UUID,
+        @PathVariable entityTypeId: UUID,
+    ): ResponseEntity<List<EntityTypeSemanticMetadata>> {
+        val metadata = semanticMetadataService.getAttributeMetadata(workspaceId, entityTypeId)
+        return ResponseEntity.ok(metadata)
+    }
+
+    @PutMapping("/workspace/{workspaceId}/entity-type/{entityTypeId}/attribute/{attributeId}")
+    @Operation(
+        summary = "Set semantic metadata for a single attribute (full replacement)",
+        description = "Upserts semantic metadata for a specific attribute. All fields are fully replaced on every call."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Attribute metadata saved successfully"),
+        ApiResponse(responseCode = "400", description = "Invalid classification value"),
+        ApiResponse(responseCode = "401", description = "Unauthorized access"),
+        ApiResponse(responseCode = "404", description = "Entity type not found")
+    )
+    fun setAttributeMetadata(
+        @PathVariable workspaceId: UUID,
+        @PathVariable entityTypeId: UUID,
+        @PathVariable attributeId: UUID,
+        @RequestBody request: SaveSemanticMetadataRequest,
+    ): ResponseEntity<EntityTypeSemanticMetadata> {
+        val metadata = semanticMetadataService.upsertMetadata(
+            workspaceId, entityTypeId, SemanticMetadataTargetType.ATTRIBUTE, attributeId, request
+        )
+        return ResponseEntity.ok(metadata)
+    }
+
+    @PutMapping("/workspace/{workspaceId}/entity-type/{entityTypeId}/attributes/bulk")
+    @Operation(
+        summary = "Set semantic metadata for multiple attributes (full replacement per attribute)",
+        description = "Bulk upserts semantic metadata for multiple attributes of an entity type. All fields are fully replaced per attribute on every call."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Attribute metadata bulk saved successfully"),
+        ApiResponse(responseCode = "400", description = "Invalid classification value"),
+        ApiResponse(responseCode = "401", description = "Unauthorized access"),
+        ApiResponse(responseCode = "404", description = "Entity type not found")
+    )
+    fun bulkSetAttributeMetadata(
+        @PathVariable workspaceId: UUID,
+        @PathVariable entityTypeId: UUID,
+        @RequestBody requests: List<BulkSaveSemanticMetadataRequest>,
+    ): ResponseEntity<List<EntityTypeSemanticMetadata>> {
+        val metadata = semanticMetadataService.bulkUpsertAttributeMetadata(workspaceId, entityTypeId, requests)
+        return ResponseEntity.ok(metadata)
+    }
+
+    // ------ Relationship metadata ------
+
+    @GetMapping("/workspace/{workspaceId}/entity-type/{entityTypeId}/relationships")
+    @Operation(
+        summary = "Get semantic metadata for all relationships of an entity type",
+        description = "Retrieves all relationship-level semantic metadata records for the given entity type."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Relationship metadata retrieved successfully"),
+        ApiResponse(responseCode = "401", description = "Unauthorized access"),
+        ApiResponse(responseCode = "404", description = "Entity type not found")
+    )
+    fun getRelationshipMetadata(
+        @PathVariable workspaceId: UUID,
+        @PathVariable entityTypeId: UUID,
+    ): ResponseEntity<List<EntityTypeSemanticMetadata>> {
+        val metadata = semanticMetadataService.getRelationshipMetadata(workspaceId, entityTypeId)
+        return ResponseEntity.ok(metadata)
+    }
+
+    @PutMapping("/workspace/{workspaceId}/entity-type/{entityTypeId}/relationship/{relationshipId}")
+    @Operation(
+        summary = "Set semantic metadata for a single relationship (full replacement)",
+        description = "Upserts semantic metadata for a specific relationship definition. All fields are fully replaced on every call."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Relationship metadata saved successfully"),
+        ApiResponse(responseCode = "400", description = "Invalid classification value"),
+        ApiResponse(responseCode = "401", description = "Unauthorized access"),
+        ApiResponse(responseCode = "404", description = "Entity type not found")
+    )
+    fun setRelationshipMetadata(
+        @PathVariable workspaceId: UUID,
+        @PathVariable entityTypeId: UUID,
+        @PathVariable relationshipId: UUID,
+        @RequestBody request: SaveSemanticMetadataRequest,
+    ): ResponseEntity<EntityTypeSemanticMetadata> {
+        val metadata = semanticMetadataService.upsertMetadata(
+            workspaceId, entityTypeId, SemanticMetadataTargetType.RELATIONSHIP, relationshipId, request
+        )
+        return ResponseEntity.ok(metadata)
+    }
+
+    // ------ Full bundle ------
+
+    @GetMapping("/workspace/{workspaceId}/entity-type/{entityTypeId}/all")
+    @Operation(
+        summary = "Get all semantic metadata for an entity type (entity type + attributes + relationships)",
+        description = "Retrieves all semantic metadata records for the entity type itself, its attributes, and its relationships, grouped into a single bundle."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Metadata bundle retrieved successfully"),
+        ApiResponse(responseCode = "401", description = "Unauthorized access"),
+        ApiResponse(responseCode = "404", description = "Entity type not found")
+    )
+    fun getAllMetadata(
+        @PathVariable workspaceId: UUID,
+        @PathVariable entityTypeId: UUID,
+    ): ResponseEntity<SemanticMetadataBundle> {
+        val allMetadata = semanticMetadataService.getAllMetadataForEntityType(workspaceId, entityTypeId)
+        val bundle = buildBundle(entityTypeId, allMetadata)
+        return ResponseEntity.ok(bundle)
+    }
+
+    // ------ Private helpers ------
+
+    private fun buildBundle(
+        entityTypeId: UUID,
+        allMetadata: List<EntityTypeSemanticMetadata>,
+    ): SemanticMetadataBundle {
+        return SemanticMetadataBundle(
+            entityType = allMetadata.firstOrNull { it.targetType == SemanticMetadataTargetType.ENTITY_TYPE },
+            attributes = allMetadata.filter { it.targetType == SemanticMetadataTargetType.ATTRIBUTE }
+                .associateBy { it.targetId },
+            relationships = allMetadata.filter { it.targetType == SemanticMetadataTargetType.RELATIONSHIP }
+                .associateBy { it.targetId },
+        )
+    }
+}
