@@ -23,6 +23,7 @@ import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.entity.EntityTypeSemanticMetadataService
 import riven.core.util.ServiceUtil
 import java.util.*
 
@@ -41,6 +42,7 @@ class EntityTypeService(
     private val impactAnalysisService: EntityTypeRelationshipImpactAnalysisService,
     private val authTokenService: AuthTokenService,
     private val activityService: ActivityService,
+    private val semanticMetadataService: EntityTypeSemanticMetadataService,
 ) {
 
     /**
@@ -91,6 +93,11 @@ class EntityTypeService(
                 entityTypeRepository.save(this)
             }.also {
                 requireNotNull(it.id)
+                semanticMetadataService.initializeForEntityType(
+                    entityTypeId = requireNotNull(it.id),
+                    workspaceId = workspaceId,
+                    attributeIds = listOf(primaryId)
+                )
                 activityService.log(
                     activity = Activity.ENTITY_TYPE,
                     operation = OperationType.CREATE,
@@ -439,6 +446,7 @@ class EntityTypeService(
                 .mapValues { entry -> entry.value.toModel() }
         }
 
+        semanticMetadataService.softDeleteForEntityType(requireNotNull(existing.id))
         entityTypeRepository.delete(existing).also {
             activityService.log(
                 activity = Activity.ENTITY_TYPE,

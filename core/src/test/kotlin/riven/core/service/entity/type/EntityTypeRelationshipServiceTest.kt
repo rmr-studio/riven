@@ -29,6 +29,7 @@ import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.entity.EntityTypeSemanticMetadataService
 import riven.core.service.util.BaseServiceTest
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
@@ -77,6 +78,9 @@ class EntityTypeRelationshipServiceTest : BaseServiceTest() {
     @MockitoBean
     private lateinit var activityService: ActivityService
 
+    @MockitoBean
+    private lateinit var semanticMetadataService: EntityTypeSemanticMetadataService
+
     @Autowired
     private lateinit var entityTypeRelationshipService: EntityTypeRelationshipService
 
@@ -87,7 +91,7 @@ class EntityTypeRelationshipServiceTest : BaseServiceTest() {
     @BeforeEach
     fun setup() {
         // Reset all mocks
-        reset(entityTypeRepository, entityRepository, entityRelationshipRepository, authTokenService, activityService)
+        reset(entityTypeRepository, entityRepository, entityRelationshipRepository, authTokenService, activityService, semanticMetadataService)
 
         // Create test entity types
         companyEntityType = createEntityType("company", "Company", "Companies")
