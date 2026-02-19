@@ -12,7 +12,7 @@ This project grafts a semantic enrichment and vector embedding layer onto the ex
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Semantic Metadata Foundation** - Extend entity types, attributes, and relationships with semantic metadata fields and CRUD API
+- [x] **Phase 1: Semantic Metadata Foundation** - Extend entity types, attributes, and relationships with semantic metadata fields and CRUD API
 - [ ] **Phase 2: Template System** - Installable domain schema packages that bootstrap a workspace with semantically-enriched entity types in one action
 - [ ] **Phase 3: Enrichment Pipeline** - Queue-triggered Temporal workflow that builds enriched text from entity data (with token budget truncation) and stores vector embeddings in pgvector, with workspace-fair round-robin dispatch and priority lanes
 - [ ] **Phase 4: Schema Change Re-embedding** - Detection of schema mutations that affect embedding quality and batch re-embedding via shared enrichment queue (BATCH priority), with entity-type-level staleness tracking
@@ -32,9 +32,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Database schema, pgvector extension, enums, JPA entity, domain model, repository, Testcontainers pgvector image
-- [ ] 01-02-PLAN.md — EntityTypeSemanticMetadataService with CRUD, lifecycle hooks in existing services, unit tests
-- [ ] 01-03-PLAN.md — KnowledgeController endpoints, ?include=semantics on EntityTypeController, end-to-end verification
+- [x] 01-01-PLAN.md — Database schema, pgvector extension, enums, JPA entity, domain model, repository, Testcontainers pgvector image
+- [x] 01-02-PLAN.md — EntityTypeSemanticMetadataService with CRUD, lifecycle hooks in existing services, unit tests
+- [x] 01-03-PLAN.md — KnowledgeController endpoints, ?include=semantics on EntityTypeController, end-to-end verification
 
 ### Phase 2: Template System
 **Goal**: Users can install a complete, semantically-enriched entity type schema into their workspace in one action using a named domain template
@@ -95,7 +95,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Semantic Metadata Foundation | 0/3 | Planned | - |
+| 1. Semantic Metadata Foundation | 3/3 | Complete | 2026-02-19 |
 | 2. Template System | 0/2 | Not started | - |
 | 3. Enrichment Pipeline | 0/4 | Not started | - |
 | 4. Schema Change Re-embedding | 0/2 | Not started | - |
