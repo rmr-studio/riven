@@ -18,8 +18,8 @@ CREATE TABLE IF NOT EXISTS public.entity_type_semantic_metadata
     "target_id"      UUID    NOT NULL,
     "definition"     TEXT,
     "classification" TEXT    CHECK (classification IS NULL OR classification IN (
-                         'identifier', 'categorical', 'quantitative',
-                         'temporal', 'freetext', 'relational_reference'
+                         'IDENTIFIER', 'CATEGORICAL', 'QUANTITATIVE',
+                         'TEMPORAL', 'FREETEXT', 'RELATIONAL_REFERENCE'
                      )),
     "tags"           JSONB   NOT NULL DEFAULT '[]'::jsonb,
     "deleted"        BOOLEAN NOT NULL DEFAULT FALSE,
@@ -29,6 +29,11 @@ CREATE TABLE IF NOT EXISTS public.entity_type_semantic_metadata
     "created_by"     UUID,
     "updated_by"     UUID,
 
+    -- Non-partial UNIQUE: soft-deleted rows still occupy the unique tuple.
+    -- Any future restore path must UPDATE (un-soft-delete) existing rows rather than INSERT,
+    -- otherwise a constraint violation will occur. Current code paths are safe because:
+    -- (1) new entity types get new UUIDs, (2) attribute/relationship removal hard-deletes metadata,
+    -- (3) soft-delete only occurs on entity type deletion, and (4) restore is explicitly unimplemented.
     UNIQUE (entity_type_id, target_type, target_id)
 );
 

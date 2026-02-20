@@ -36,7 +36,7 @@ class EntityTypeController(
     )
     fun getEntityTypesForWorkspace(
         @PathVariable workspaceId: UUID,
-        @RequestParam(required = false, defaultValue = "") include: List<String>,
+        @RequestParam(required = false) include: List<String> = emptyList(),
     ): ResponseEntity<List<EntityTypeWithSemanticsResponse>> {
         return ResponseEntity.ok(entityTypeService.getWorkspaceEntityTypesWithIncludes(workspaceId, include))
     }
@@ -55,7 +55,7 @@ class EntityTypeController(
     fun getEntityTypeByKeyForWorkspace(
         @PathVariable workspaceId: UUID,
         @PathVariable key: String,
-        @RequestParam(required = false, defaultValue = "") include: List<String>,
+        @RequestParam(required = false) include: List<String> = emptyList(),
     ): ResponseEntity<EntityTypeWithSemanticsResponse> {
         return ResponseEntity.ok(entityTypeService.getEntityTypeByKeyWithIncludes(workspaceId, key, include))
     }

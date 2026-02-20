@@ -17,11 +17,10 @@ class ObjectMapperConfig {
 
     @Bean
     fun objectMapper(): ObjectMapper {
-        val dateFormat = StdDateFormat().withTimeZone(TimeZone.getTimeZone("UTC"))
         return JsonMapper.builder()
             .addModule(KotlinModule.Builder().build())
             .addModule(JavaTimeModule())
-            .defaultDateFormat(dateFormat)
+            .defaultDateFormat(StdDateFormat().withTimeZone(TimeZone.getTimeZone("UTC")))
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)

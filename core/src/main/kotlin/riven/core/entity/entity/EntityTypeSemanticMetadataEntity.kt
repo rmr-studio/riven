@@ -4,8 +4,8 @@ import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableSoftDeletableEntity
-import riven.core.enums.entity.semantics.SemanticAttributeClassification
-import riven.core.enums.entity.semantics.SemanticMetadataTargetType
+import riven.core.enums.entity.SemanticAttributeClassification
+import riven.core.enums.entity.SemanticMetadataTargetType
 import riven.core.models.entity.EntityTypeSemanticMetadata
 import java.util.*
 

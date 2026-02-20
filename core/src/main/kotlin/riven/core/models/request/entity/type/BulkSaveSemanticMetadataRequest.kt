@@ -1,6 +1,6 @@
 package riven.core.models.request.entity.type
 
-import riven.core.enums.entity.semantics.SemanticAttributeClassification
+import riven.core.enums.entity.SemanticAttributeClassification
 import java.util.UUID
 
 /**

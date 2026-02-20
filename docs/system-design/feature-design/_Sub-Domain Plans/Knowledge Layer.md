@@ -103,7 +103,7 @@ graph TD
 
 | Component | Responsibility | Status |
 | --------- | -------------- | ------ |
-| `EntitySemanticMetadataService` | CRUD for semantic definitions, attribute classifications, relationship context on entity types | Planned |
+| `EntityTypeSemanticMetadataService` | CRUD for semantic definitions, attribute classifications, relationship context on entity types | Planned |
 | `entity_type_semantic_metadata` table | Stores semantic metadata separate from entity_types (1:1 FK, UNIQUE constraint) | Planned |
 | `EntityTypeTemplateService` | Idempotent installation of pre-configured domain templates (SaaS, DTC, Service Business) | Planned |
 | `EnrichmentQueueService` | Manages `entity_enrichment_queue` — enqueue, dequeue, deduplication | Planned |
@@ -309,7 +309,7 @@ graph LR
 | Domain / Sub-Domain | What They Need | Integration Point |
 | -------------------- | -------------- | ----------------- |
 | Future: Retrieval | Vector similarity search over `entity_embeddings`, embedding metadata (staleness via `schema_migration_jobs` lookup by entity type, schema version). Staleness is entity-type granularity — check for PENDING/IN_PROGRESS migration job on the queried entity type, not per-entity row comparison | Direct repository query (pgvector cosine similarity) + `SchemaMigrationJobRepository` lookup |
-| Future: Query & Reasoning | Semantic metadata for prompt construction (type definitions, attribute descriptions) | Direct service injection of EntitySemanticMetadataService |
+| Future: Query & Reasoning | Semantic metadata for prompt construction (type definitions, attribute descriptions) | Direct service injection of EntityTypeSemanticMetadataService |
 | Future: Agents | Enrichment status, embedding freshness, schema migration progress for agentic decision-making | Direct service injection |
 | Activity | Audit trail entries for all enrichment mutations | ActivityService.logActivity() |
 

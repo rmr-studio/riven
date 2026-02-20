@@ -18,7 +18,7 @@ import riven.core.models.entity.configuration.EntityTypeAttributeColumn
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDeleteRequest
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
 import riven.core.models.request.entity.type.*
-import riven.core.enums.entity.semantics.SemanticMetadataTargetType
+import riven.core.enums.entity.SemanticMetadataTargetType
 import riven.core.models.entity.EntityTypeSemanticMetadata
 import riven.core.models.response.entity.type.EntityTypeImpactResponse
 import riven.core.models.response.entity.type.EntityTypeWithSemanticsResponse
@@ -96,9 +96,9 @@ class EntityTypeService(
             ).run {
                 entityTypeRepository.save(this)
             }.also {
-                requireNotNull(it.id)
+                val entityTypeId = requireNotNull(it.id)
                 semanticMetadataService.initializeForEntityType(
-                    entityTypeId = requireNotNull(it.id),
+                    entityTypeId = entityTypeId,
                     workspaceId = workspaceId,
                     attributeIds = listOf(primaryId)
                 )
@@ -108,7 +108,7 @@ class EntityTypeService(
                     userId = userId,
                     workspaceId = requireNotNull(it.workspaceId) { "Cannot create system entity type" },
                     entityType = ApplicationEntityType.ENTITY_TYPE,
-                    entityId = it.id,
+                    entityId = entityTypeId,
                     "type" to it.key,
                     "version" to 1,
                     "category" to it.type.name
@@ -485,8 +485,9 @@ class EntityTypeService(
 
         val bundleMap = if ("semantics" in include) {
             val allMetadata = semanticMetadataService.getMetadataForEntityTypes(entityTypes.map { it.id })
+            val metadataByEntityType = allMetadata.groupBy { it.entityTypeId }
             entityTypes.associate { et ->
-                et.id to buildSemanticBundle(et.id, allMetadata.filter { m -> m.entityTypeId == et.id })
+                et.id to buildSemanticBundle(et.id, metadataByEntityType[et.id] ?: emptyList())
             }
         } else {
             emptyMap()
@@ -547,9 +548,9 @@ class EntityTypeService(
         return ServiceUtil.findManyResults { entityTypeRepository.findAllById(ids) }
     }
 
-    // ------ Private helpers ------
+    // ------ Semantic helpers ------
 
-    private fun buildSemanticBundle(
+    fun buildSemanticBundle(
         entityTypeId: UUID,
         metadata: List<EntityTypeSemanticMetadata>,
     ): SemanticMetadataBundle {

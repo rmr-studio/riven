@@ -13,7 +13,6 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.context.annotation.Configuration
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.entity.EntityTypeEntity
@@ -21,8 +20,8 @@ import riven.core.entity.entity.EntityTypeSemanticMetadataEntity
 import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.core.DataType
 import riven.core.enums.entity.EntityCategory
-import riven.core.enums.entity.semantics.SemanticAttributeClassification
-import riven.core.enums.entity.semantics.SemanticMetadataTargetType
+import riven.core.enums.entity.SemanticAttributeClassification
+import riven.core.enums.entity.SemanticMetadataTargetType
 import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.exceptions.NotFoundException
 import riven.core.models.common.validation.Schema
@@ -33,6 +32,7 @@ import riven.core.repository.entity.EntityTypeRepository
 import riven.core.repository.entity.EntityTypeSemanticMetadataRepository
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.util.BaseServiceTest
+import riven.core.service.util.SecurityTestConfig
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
 import java.util.Optional
@@ -42,8 +42,8 @@ import java.util.UUID
     classes = [
         AuthTokenService::class,
         WorkspaceSecurity::class,
-        EntityTypeSemanticMetadataServiceTest.TestConfig::class,
-        EntityTypeSemanticMetadataService::class
+        SecurityTestConfig::class,
+        EntityTypeSemanticMetadataService::class,
     ]
 )
 @WithUserPersona(
@@ -59,17 +59,11 @@ import java.util.UUID
 )
 class EntityTypeSemanticMetadataServiceTest : BaseServiceTest() {
 
-    @Configuration
-    class TestConfig
-
     @MockitoBean
     private lateinit var repository: EntityTypeSemanticMetadataRepository
 
     @MockitoBean
     private lateinit var entityTypeRepository: EntityTypeRepository
-
-    @MockitoBean
-    private lateinit var authTokenService: AuthTokenService
 
     @Autowired
     private lateinit var service: EntityTypeSemanticMetadataService
@@ -79,7 +73,7 @@ class EntityTypeSemanticMetadataServiceTest : BaseServiceTest() {
 
     @BeforeEach
     fun setup() {
-        reset(repository, entityTypeRepository, authTokenService)
+        reset(repository, entityTypeRepository)
 
         testEntityTypeId = UUID.randomUUID()
         testEntityType = createTestEntityType(testEntityTypeId, workspaceId)
@@ -368,6 +362,65 @@ class EntityTypeSemanticMetadataServiceTest : BaseServiceTest() {
         service.softDeleteForEntityType(testEntityTypeId)
 
         verify(repository).softDeleteByEntityTypeId(eq(testEntityTypeId))
+    }
+
+    // ------ restoreForEntityType ------
+
+    @Test
+    fun `restoreForEntityType - throws UnsupportedOperationException`() {
+        assertThrows<UnsupportedOperationException> {
+            service.restoreForEntityType(testEntityTypeId)
+        }
+    }
+
+    // ------ toModel mapping ------
+
+    @Test
+    fun `toModel - maps all entity fields to domain model`() {
+        val id = UUID.randomUUID()
+        val targetId = UUID.randomUUID()
+        val entity = EntityTypeSemanticMetadataEntity(
+            id = id,
+            workspaceId = workspaceId,
+            entityTypeId = testEntityTypeId,
+            targetType = SemanticMetadataTargetType.ATTRIBUTE,
+            targetId = targetId,
+            definition = "Test definition",
+            classification = SemanticAttributeClassification.IDENTIFIER,
+            tags = listOf("pii", "required"),
+        )
+
+        val model = entity.toModel()
+
+        assertEquals(id, model.id)
+        assertEquals(workspaceId, model.workspaceId)
+        assertEquals(testEntityTypeId, model.entityTypeId)
+        assertEquals(SemanticMetadataTargetType.ATTRIBUTE, model.targetType)
+        assertEquals(targetId, model.targetId)
+        assertEquals("Test definition", model.definition)
+        assertEquals(SemanticAttributeClassification.IDENTIFIER, model.classification)
+        assertEquals(listOf("pii", "required"), model.tags)
+    }
+
+    // ------ @PreAuthorize enforcement ------
+
+    @Test
+    fun `getForEntityType - throws AccessDeniedException for unauthorized workspace`() {
+        val unauthorizedWorkspaceId = UUID.randomUUID()
+
+        assertThrows<org.springframework.security.access.AccessDeniedException> {
+            service.getForEntityType(unauthorizedWorkspaceId, testEntityTypeId)
+        }
+    }
+
+    @Test
+    fun `upsertMetadata - throws AccessDeniedException for unauthorized workspace`() {
+        val unauthorizedWorkspaceId = UUID.randomUUID()
+        val request = SaveSemanticMetadataRequest(definition = "test")
+
+        assertThrows<org.springframework.security.access.AccessDeniedException> {
+            service.upsertMetadata(unauthorizedWorkspaceId, testEntityTypeId, SemanticMetadataTargetType.ATTRIBUTE, UUID.randomUUID(), request)
+        }
     }
 
     // ------ Workspace verification ------

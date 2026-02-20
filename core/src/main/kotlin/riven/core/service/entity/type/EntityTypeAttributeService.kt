@@ -12,7 +12,7 @@ import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.request.entity.type.SaveAttributeDefinitionRequest
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityUniqueValuesRepository
-import riven.core.enums.entity.semantics.SemanticMetadataTargetType
+import riven.core.enums.entity.SemanticMetadataTargetType
 import riven.core.service.entity.EntityTypeSemanticMetadataService
 import riven.core.service.entity.EntityValidationService
 import java.util.*
