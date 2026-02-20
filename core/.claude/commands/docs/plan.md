@@ -1,5 +1,5 @@
 ---
-name: docs:generate
+name: docs:plan
 description: "Generate fully authored architectural documentation from GSD phase plans"
 argument-hint: "<phase-number>"
 allowed-tools:
