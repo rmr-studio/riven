@@ -26,20 +26,20 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
     fun findByTargetIdIn(ids: Collection<UUID>): List<EntityRelationshipEntity>
 
     /**
-     * Find all relationships with a specific fieldId where the given entity is the source.
+     * Find all relationships with a specific definitionId where the given entity is the source.
      */
-    fun findAllBySourceIdAndFieldId(sourceId: UUID, fieldId: UUID): List<EntityRelationshipEntity>
+    fun findAllBySourceIdAndDefinitionId(sourceId: UUID, definitionId: UUID): List<EntityRelationshipEntity>
 
     /**
-     * Find relationships with a specific source, target, and fieldId.
+     * Find relationships with a specific source, target, and definitionId.
      */
-    fun findBySourceIdAndTargetIdAndFieldId(
+    fun findBySourceIdAndTargetIdAndDefinitionId(
         sourceId: UUID,
         targetId: UUID,
-        fieldId: UUID
+        definitionId: UUID
     ): List<EntityRelationshipEntity>
 
-    fun countBySourceIdAndFieldId(sourceId: UUID, fieldId: UUID): Long
+    fun countBySourceIdAndDefinitionId(sourceId: UUID, definitionId: UUID): Long
 
     /**
      * Find all relationships involving the given entity (as source or target).
@@ -53,31 +53,45 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
     fun findAllRelationshipsForEntity(entityId: UUID): List<EntityRelationshipEntity>
 
     /**
-     * Find all relationships for a source entity across multiple field IDs.
+     * Find all relationships for a source entity across multiple definition IDs.
      */
-    fun findAllBySourceIdAndFieldIdIn(sourceId: UUID, fieldIds: Collection<UUID>): List<EntityRelationshipEntity>
+    fun findAllBySourceIdAndDefinitionIdIn(sourceId: UUID, definitionIds: Collection<UUID>): List<EntityRelationshipEntity>
 
     /**
-     * Delete all relationships for a source entity with a specific field ID.
+     * Delete all relationships for a source entity with a specific definition ID.
      */
-    fun deleteAllBySourceIdAndFieldId(sourceId: UUID, fieldId: UUID)
+    fun deleteAllBySourceIdAndDefinitionId(sourceId: UUID, definitionId: UUID)
 
     /**
-     * Delete relationships by source entity and field ID where target is in the given list.
+     * Delete relationships by source entity and definition ID where target is in the given list.
      */
-    fun deleteAllBySourceIdAndFieldIdAndTargetIdIn(sourceId: UUID, fieldId: UUID, targetIds: Collection<UUID>)
+    fun deleteAllBySourceIdAndDefinitionIdAndTargetIdIn(sourceId: UUID, definitionId: UUID, targetIds: Collection<UUID>)
 
+    /**
+     * Find all relationships for a target entity with a specific definition ID (inverse lookup).
+     */
+    @Query("""
+        SELECT er FROM EntityRelationshipEntity er
+        WHERE er.targetId = :targetId
+        AND er.definitionId = :definitionId
+    """)
+    fun findByTargetIdAndDefinitionId(targetId: UUID, definitionId: UUID): List<EntityRelationshipEntity>
+
+    /**
+     * Count relationships for a given definition ID.
+     */
+    fun countByDefinitionId(definitionId: UUID): Long
 
     @Modifying
     @Query(
         """
         UPDATE entity_relationships
-            SET deleted = true, 
-            deleted_at = CURRENT_TIMESTAMP 
-        WHERE 
-            (source_entity_id = ANY(:ids) 
-            or target_entity_id = ANY(:ids)) 
-            AND workspace_id = :workspaceId 
+            SET deleted = true,
+            deleted_at = CURRENT_TIMESTAMP
+        WHERE
+            (source_entity_id = ANY(:ids)
+            or target_entity_id = ANY(:ids))
+            AND workspace_id = :workspaceId
             AND deleted = false
         RETURNING *
             """, nativeQuery = true
@@ -98,7 +112,7 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
             SELECT
                 e.id as id,
                 e.workspace_id as workspaceId,
-                r.relationship_field_id as fieldId,
+                r.relationship_definition_id as definitionId,
                 r.source_entity_id as sourceEntityId,
                 e.icon_type as iconType,
                 e.icon_colour as iconColour,
@@ -127,7 +141,7 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
             SELECT
                 e.id as id,
                 e.workspace_id as workspaceId,
-                r.relationship_field_id as fieldId,
+                r.relationship_definition_id as definitionId,
                 r.source_entity_id as sourceEntityId,
                 e.icon_type as iconType,
                 e.icon_colour as iconColour,
