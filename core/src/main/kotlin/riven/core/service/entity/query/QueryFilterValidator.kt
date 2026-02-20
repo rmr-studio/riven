@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component
 import riven.core.exceptions.query.InvalidRelationshipReferenceException
 import riven.core.exceptions.query.QueryFilterException
 import riven.core.exceptions.query.RelationshipDepthExceededException
-import riven.core.models.entity.configuration.EntityRelationshipDefinition
+import riven.core.models.entity.RelationshipDefinition
 import riven.core.models.entity.query.filter.QueryFilter
 import riven.core.models.entity.query.filter.RelationshipFilter
 import java.util.*
@@ -51,7 +51,7 @@ class QueryFilterValidator {
      */
     fun validate(
         filter: QueryFilter,
-        relationshipDefinitions: Map<UUID, EntityRelationshipDefinition>,
+        relationshipDefinitions: Map<UUID, RelationshipDefinition>,
         maxDepth: Int,
     ): List<QueryFilterException> {
         val context = ValidationContext(
@@ -185,7 +185,7 @@ class QueryFilterValidator {
      * Internal context for accumulating validation state during tree walk.
      */
     private data class ValidationContext(
-        val relationshipDefinitions: Map<UUID, EntityRelationshipDefinition>,
+        val relationshipDefinitions: Map<UUID, RelationshipDefinition>,
         val maxDepth: Int,
         val errors: MutableList<QueryFilterException>,
     )

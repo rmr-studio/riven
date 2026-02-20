@@ -1,6 +1,7 @@
 package riven.core.service.entity.query
 
 import org.springframework.stereotype.Component
+import riven.core.enums.entity.query.QueryDirection
 import riven.core.models.entity.query.filter.QueryFilter
 import riven.core.models.entity.query.filter.RelationshipFilter
 import riven.core.models.entity.query.filter.TypeBranch
@@ -53,11 +54,13 @@ class RelationshipSqlGenerator {
     /**
      * Generates a SQL fragment for filtering by a relationship condition.
      *
-     * @param relationshipId UUID of the relationship definition (maps to `relationship_field_id`)
+     * @param relationshipId UUID of the relationship definition (maps to `relationship_definition_id`)
      * @param condition The relationship condition to evaluate
      * @param paramGen Generator for unique parameter names and table aliases (shared across query)
      * @param entityAlias Table alias for the entity being filtered. Defaults to `"e"` (root entity).
      *   For nested subqueries, this will be the target entity alias from the parent subquery.
+     * @param direction Query direction — FORWARD correlates on `source_entity_id`, INVERSE on `target_entity_id`.
+     *   The caller resolves direction based on whether the queried entity type is the source or a target.
      * @param nestedFilterVisitor Optional lambda for processing nested filters inside TargetMatches
      *   and TargetTypeMatches conditions. Signature: `(filter, paramGen, entityAlias) -> SqlFragment`.
      *   Required when the condition contains nested filters; throws [UnsupportedOperationException]
@@ -71,20 +74,21 @@ class RelationshipSqlGenerator {
         condition: RelationshipFilter,
         paramGen: ParameterNameGenerator,
         entityAlias: String = "e",
+        direction: QueryDirection = QueryDirection.FORWARD,
         nestedFilterVisitor: ((QueryFilter, ParameterNameGenerator, String) -> SqlFragment)? = null
     ): SqlFragment = when (condition) {
         is RelationshipFilter.Exists ->
-            generateExists(relationshipId, paramGen, entityAlias)
+            generateExists(relationshipId, paramGen, entityAlias, direction)
 
         is RelationshipFilter.NotExists ->
-            generateNotExists(relationshipId, paramGen, entityAlias)
+            generateNotExists(relationshipId, paramGen, entityAlias, direction)
 
         is RelationshipFilter.TargetEquals ->
-            generateTargetEquals(relationshipId, condition.entityIds, paramGen, entityAlias)
+            generateTargetEquals(relationshipId, condition.entityIds, paramGen, entityAlias, direction)
 
         is RelationshipFilter.TargetMatches ->
             generateTargetMatches(
-                relationshipId, condition.filter, paramGen, entityAlias,
+                relationshipId, condition.filter, paramGen, entityAlias, direction,
                 nestedFilterVisitor ?: throw UnsupportedOperationException(
                     "Nested filter visitor required for TargetMatches conditions"
                 )
@@ -92,7 +96,7 @@ class RelationshipSqlGenerator {
 
         is RelationshipFilter.TargetTypeMatches ->
             generateTargetTypeMatches(
-                relationshipId, condition.branches, paramGen, entityAlias,
+                relationshipId, condition.branches, paramGen, entityAlias, direction,
                 nestedFilterVisitor ?: throw UnsupportedOperationException(
                     "Nested filter visitor required for TargetTypeMatches conditions"
                 )
@@ -111,7 +115,7 @@ class RelationshipSqlGenerator {
      * EXISTS (
      *     SELECT 1 FROM entity_relationships r_0
      *     WHERE r_0.source_entity_id = e.id
-     *       AND r_0.relationship_field_id = :rel_1
+     *       AND r_0.relationship_definition_id = :rel_1
      *       AND r_0.deleted = false
      * )
      * ```
@@ -119,8 +123,9 @@ class RelationshipSqlGenerator {
     private fun generateExists(
         relationshipId: UUID,
         paramGen: ParameterNameGenerator,
-        entityAlias: String
-    ): SqlFragment = generateExistsFragment(relationshipId, paramGen, entityAlias, negated = false)
+        entityAlias: String,
+        direction: QueryDirection,
+    ): SqlFragment = generateExistsFragment(relationshipId, paramGen, entityAlias, direction, negated = false)
 
     /**
      * Generates a NOT EXISTS subquery matching entities with no related entities.
@@ -130,24 +135,27 @@ class RelationshipSqlGenerator {
     private fun generateNotExists(
         relationshipId: UUID,
         paramGen: ParameterNameGenerator,
-        entityAlias: String
-    ): SqlFragment = generateExistsFragment(relationshipId, paramGen, entityAlias, negated = true)
+        entityAlias: String,
+        direction: QueryDirection,
+    ): SqlFragment = generateExistsFragment(relationshipId, paramGen, entityAlias, direction, negated = true)
 
     private fun generateExistsFragment(
         relationshipId: UUID,
         paramGen: ParameterNameGenerator,
         entityAlias: String,
-        negated: Boolean
+        direction: QueryDirection,
+        negated: Boolean,
     ): SqlFragment {
         val relAlias = "r_${paramGen.next("a")}"
         val relParam = paramGen.next("rel")
         val prefix = if (negated) "NOT " else ""
+        val correlationColumn = direction.correlationColumn()
 
         val sql = buildString {
             append("${prefix}EXISTS (\n")
             append("    SELECT 1 FROM entity_relationships $relAlias\n")
-            append("    WHERE $relAlias.source_entity_id = $entityAlias.id\n")
-            append("      AND $relAlias.relationship_field_id = :$relParam\n")
+            append("    WHERE $relAlias.$correlationColumn = $entityAlias.id\n")
+            append("      AND $relAlias.relationship_definition_id = :$relParam\n")
             append("      AND $relAlias.deleted = false\n")
             append(")")
         }
@@ -161,13 +169,13 @@ class RelationshipSqlGenerator {
     /**
      * Generates an EXISTS subquery matching entities related to specific entity IDs.
      *
-     * Converts string entity IDs to UUIDs and uses an IN predicate on `target_entity_id`.
+     * Converts string entity IDs to UUIDs and uses an IN predicate on the opposite entity column.
      *
      * ```sql
      * EXISTS (
      *     SELECT 1 FROM entity_relationships r_0
      *     WHERE r_0.source_entity_id = e.id
-     *       AND r_0.relationship_field_id = :rel_1
+     *       AND r_0.relationship_definition_id = :rel_1
      *       AND r_0.target_entity_id IN (:te_2)
      *       AND r_0.deleted = false
      * )
@@ -177,7 +185,8 @@ class RelationshipSqlGenerator {
         relationshipId: UUID,
         entityIds: List<String>,
         paramGen: ParameterNameGenerator,
-        entityAlias: String
+        entityAlias: String,
+        direction: QueryDirection,
     ): SqlFragment {
         if (entityIds.isEmpty()) {
             return SqlFragment(sql = "1 = 0", parameters = emptyMap())
@@ -196,13 +205,15 @@ class RelationshipSqlGenerator {
         val relParam = paramGen.next("rel")
         val targetParam = paramGen.next("te")
         val uuidList = entityIds.map { UUID.fromString(it) }
+        val correlationColumn = direction.correlationColumn()
+        val oppositeColumn = direction.oppositeColumn()
 
         val sql = buildString {
             append("EXISTS (\n")
             append("    SELECT 1 FROM entity_relationships $relAlias\n")
-            append("    WHERE $relAlias.source_entity_id = $entityAlias.id\n")
-            append("      AND $relAlias.relationship_field_id = :$relParam\n")
-            append("      AND $relAlias.target_entity_id IN (:$targetParam)\n")
+            append("    WHERE $relAlias.$correlationColumn = $entityAlias.id\n")
+            append("      AND $relAlias.relationship_definition_id = :$relParam\n")
+            append("      AND $relAlias.$oppositeColumn IN (:$targetParam)\n")
             append("      AND $relAlias.deleted = false\n")
             append(")")
         }
@@ -217,11 +228,11 @@ class RelationshipSqlGenerator {
     }
 
     /**
-     * Generates an EXISTS subquery with a JOIN to the target entities table,
-     * applying a nested filter on the target entity's payload.
+     * Generates an EXISTS subquery with a JOIN to the related entities table,
+     * applying a nested filter on the related entity's payload.
      *
      * The nested filter is processed via the [visitor] callback, which receives
-     * the target entity's table alias so that attribute references (e.g., `t_0.payload`)
+     * the related entity's table alias so that attribute references (e.g., `t_0.payload`)
      * point to the correct table.
      *
      * ```sql
@@ -229,7 +240,7 @@ class RelationshipSqlGenerator {
      *     SELECT 1 FROM entity_relationships r_0
      *     JOIN entities t_1 ON r_0.target_entity_id = t_1.id AND t_1.deleted = false
      *     WHERE r_0.source_entity_id = e.id
-     *       AND r_0.relationship_field_id = :rel_2
+     *       AND r_0.relationship_definition_id = :rel_2
      *       AND r_0.deleted = false
      *       AND {nested filter SQL referencing t_1}
      * )
@@ -240,20 +251,23 @@ class RelationshipSqlGenerator {
         nestedFilter: QueryFilter,
         paramGen: ParameterNameGenerator,
         entityAlias: String,
+        direction: QueryDirection,
         visitor: (QueryFilter, ParameterNameGenerator, String) -> SqlFragment
     ): SqlFragment {
         val relAlias = "r_${paramGen.next("a")}"
         val targetAlias = "t_${paramGen.next("a")}"
         val relParam = paramGen.next("rel")
+        val correlationColumn = direction.correlationColumn()
+        val joinColumn = direction.oppositeColumn()
 
         val nestedFragment = visitor(nestedFilter, paramGen, targetAlias)
 
         val sql = buildString {
             append("EXISTS (\n")
             append("    SELECT 1 FROM entity_relationships $relAlias\n")
-            append("    JOIN entities $targetAlias ON $relAlias.target_entity_id = $targetAlias.id AND $targetAlias.deleted = false\n")
-            append("    WHERE $relAlias.source_entity_id = $entityAlias.id\n")
-            append("      AND $relAlias.relationship_field_id = :$relParam\n")
+            append("    JOIN entities $targetAlias ON $relAlias.$joinColumn = $targetAlias.id AND $targetAlias.deleted = false\n")
+            append("    WHERE $relAlias.$correlationColumn = $entityAlias.id\n")
+            append("      AND $relAlias.relationship_definition_id = :$relParam\n")
             append("      AND $relAlias.deleted = false\n")
             append("      AND ${nestedFragment.sql}\n")
             append(")")
@@ -277,7 +291,7 @@ class RelationshipSqlGenerator {
      *     SELECT 1 FROM entity_relationships r_0
      *     JOIN entities t_1 ON r_0.target_entity_id = t_1.id AND t_1.deleted = false
      *     WHERE r_0.source_entity_id = e.id
-     *       AND r_0.relationship_field_id = :rel_2
+     *       AND r_0.relationship_definition_id = :rel_2
      *       AND r_0.deleted = false
      *       AND (
      *           (t_1.type_id = :ttm_type_3 AND {branch filter SQL})
@@ -292,6 +306,7 @@ class RelationshipSqlGenerator {
         branches: List<TypeBranch>,
         paramGen: ParameterNameGenerator,
         entityAlias: String,
+        direction: QueryDirection,
         visitor: (QueryFilter, ParameterNameGenerator, String) -> SqlFragment
     ): SqlFragment {
         if (branches.isEmpty()) {
@@ -301,6 +316,8 @@ class RelationshipSqlGenerator {
         val relAlias = "r_${paramGen.next("a")}"
         val targetAlias = "t_${paramGen.next("a")}"
         val relParam = paramGen.next("rel")
+        val correlationColumn = direction.correlationColumn()
+        val joinColumn = direction.oppositeColumn()
 
         val branchFragments = branches.map { branch ->
             val typeParam = paramGen.next("ttm_type")
@@ -322,9 +339,9 @@ class RelationshipSqlGenerator {
         val sql = buildString {
             append("EXISTS (\n")
             append("    SELECT 1 FROM entity_relationships $relAlias\n")
-            append("    JOIN entities $targetAlias ON $relAlias.target_entity_id = $targetAlias.id AND $targetAlias.deleted = false\n")
-            append("    WHERE $relAlias.source_entity_id = $entityAlias.id\n")
-            append("      AND $relAlias.relationship_field_id = :$relParam\n")
+            append("    JOIN entities $targetAlias ON $relAlias.$joinColumn = $targetAlias.id AND $targetAlias.deleted = false\n")
+            append("    WHERE $relAlias.$correlationColumn = $entityAlias.id\n")
+            append("      AND $relAlias.relationship_definition_id = :$relParam\n")
             append("      AND $relAlias.deleted = false\n")
             append("      AND (${combinedBranches.sql})\n")
             append(")")
@@ -335,4 +352,20 @@ class RelationshipSqlGenerator {
             parameters = mapOf(relParam to relationshipId) + combinedBranches.parameters
         )
     }
+}
+
+/**
+ * Returns the column used to correlate with the outer entity alias.
+ */
+private fun QueryDirection.correlationColumn(): String = when (this) {
+    QueryDirection.FORWARD -> "source_entity_id"
+    QueryDirection.INVERSE -> "target_entity_id"
+}
+
+/**
+ * Returns the opposite column (the "related" side).
+ */
+private fun QueryDirection.oppositeColumn(): String = when (this) {
+    QueryDirection.FORWARD -> "target_entity_id"
+    QueryDirection.INVERSE -> "source_entity_id"
 }
