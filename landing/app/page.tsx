@@ -3,6 +3,7 @@ import { DataModel } from '@/components/feature-modules/features/data-model/comp
 import { RivenDefinition } from '@/components/feature-modules/features/data-model/components/riven-definition';
 import { KnowledgeLayer } from '@/components/feature-modules/features/knowledge/components/knowledge-layer';
 import { Hero } from '@/components/feature-modules/hero/components/hero';
+import { OpenSource } from '@/components/feature-modules/open-source/components/open-source';
 import { Waitlist } from '@/components/feature-modules/waitlist/components/waitlist';
 import { Footer } from '@/components/footer';
 import { Navbar } from '@/components/navbar';
@@ -19,6 +20,7 @@ export default function Home() {
       <DataModel />
       <KnowledgeLayer />
       <Faq />
+      <OpenSource />
       <Waitlist />
       <Footer />
     </main>

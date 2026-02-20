@@ -1,0 +1,65 @@
+export const FORM_COPY = {
+  cta: {
+    headline: 'Shape the Future of Communication',
+    description: "Join the waitlist and help us build the workspace you've always wanted.",
+    buttonText: 'Join the Waitlist',
+  },
+  contact: {
+    title: "Let's get to know you",
+    nameLabel: 'Your name',
+    namePlaceholder: 'Jane Doe',
+    emailLabel: 'Your email',
+    emailPlaceholder: 'jane@company.com',
+  },
+  features: {
+    stepNumber: 1,
+    title: 'Which Riven Feature will you find most useful?',
+    instruction: 'Choose 1',
+    required: true,
+    options: [
+      { key: 'A', label: 'Multi-Channel Inbox' },
+      { key: 'B', label: 'Universal Search' },
+      { key: 'C', label: 'Prioritised Messaging' },
+      { key: 'D', label: 'Daily Briefing' },
+    ],
+  },
+  integrations: {
+    stepNumber: 2,
+    title: 'Where do your most important conversations live?',
+    subtitle: 'Select your top 3 conversation channels',
+    instruction: 'Choose 3',
+    required: true,
+    maxSelections: 3,
+    options: [
+      { key: 'A', label: 'Gmail' },
+      { key: 'B', label: 'Slack' },
+      { key: 'C', label: 'LinkedIn' },
+      { key: 'D', label: 'Teams' },
+      { key: 'E', label: 'Outlook' },
+      { key: 'F', label: 'WhatsApp' },
+      { key: 'G', label: 'Instagram' },
+      { key: 'H', label: 'iMessage' },
+    ],
+  },
+  pricing: {
+    stepNumber: 3,
+    title: 'If Riven saves you hours each week, what monthly price feels most reasonable to you?',
+    placeholder: 'Type your answer here...',
+    required: true,
+  },
+  earlyTesting: {
+    stepNumber: 4,
+    title: 'Would you like to be part of our early testing batch?',
+    subtitle: 'Get exclusive first access and help shape the product',
+    instruction: 'Choose 1',
+    required: true,
+    options: [
+      { key: 'A', label: 'Yes, sign me up!' },
+      { key: 'B', label: 'No thanks, just the waitlist' },
+    ],
+  },
+  success: {
+    title: "You're on the list!",
+    description: "Thanks for your input. We'll keep you updated as we build Riven.",
+  },
+};

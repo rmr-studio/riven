@@ -1,13 +1,7 @@
 export const MorningBriefing = () => {
   return (
     <div className="relative flex h-full w-full items-center justify-center">
-      <div
-        className="w-full max-w-sm rounded-xl border border-white/10 bg-neutral-900/80 p-6 shadow-2xl backdrop-blur-sm"
-        style={{
-          maskImage: 'linear-gradient(to bottom, black 60%, transparent)',
-          WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent)',
-        }}
-      >
+      <div className="w-full max-w-sm rounded-xl border border-white/10 bg-neutral-900/80 p-6 shadow-2xl backdrop-blur-sm">
         {/* Traffic lights */}
         <div className="mb-6 flex gap-2">
           <div className="h-3 w-3 rounded-full bg-red-500/80" />

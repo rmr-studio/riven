@@ -3,7 +3,7 @@
 import { LinkProps, NavbarProps } from '@/lib/interface';
 import { cn } from '@/lib/utils';
 
-import { Menu, X } from 'lucide-react';
+import { Github, Menu, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -162,6 +162,14 @@ const LinkSection: FC<NavbarMenuProps> = ({ links, toggle }) => {
           </Link>
 
           <div className="flex items-center gap-2">
+            <Link
+              href="https://github.com/rivenmedia/riven"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Github className="size-5" />
+            </Link>
             <ThemeToggle />
             <Button variant={'ghost'} size={'icon'} onClick={() => toggle(false)} className="size-12">
               <X className="size-8" />

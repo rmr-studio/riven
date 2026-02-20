@@ -10,7 +10,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { knowledgeScrollContent } from '../config/accordion-content';
 
-const AUTO_ADVANCE_MS = 5000;
+const AUTO_ADVANCE_MS = 10000;
 const INTERACTION_PAUSE_MS = 3000;
 
 export const KnowledgeAccordion = () => {
@@ -59,7 +59,7 @@ export const KnowledgeAccordion = () => {
   return (
     <div className="mx-auto w-full max-w-7xl px-4 md:px-6 lg:px-10">
       {/* Desktop: accordion left, visual right */}
-      <div className="hidden lg:grid lg:grid-cols-2 lg:gap-12">
+      <div className="hidden lg:grid lg:grid-cols-2 lg:items-center lg:gap-12">
         {/* Left: Accordion */}
         <Accordion
           type="single"
@@ -73,10 +73,10 @@ export const KnowledgeAccordion = () => {
               value={String(index)}
               className="relative border-b border-white/10 last:border-b-0"
             >
-              <AccordionTrigger className="py-5 text-lg font-semibold text-primary/60 hover:no-underline data-[state=open]:text-primary">
+              <AccordionTrigger className="cursor-pointer py-5 text-lg font-semibold text-primary/60 hover:text-primary hover:no-underline data-[state=open]:text-primary">
                 {item.title}
               </AccordionTrigger>
-              <AccordionContent className="text-sm leading-relaxed text-primary/50">
+              <AccordionContent className="text-sm leading-relaxed text-content">
                 {item.description}
               </AccordionContent>
               {/* Progress bar for active item */}
@@ -93,8 +93,18 @@ export const KnowledgeAccordion = () => {
         </Accordion>
 
         {/* Right: Visual panel */}
-        <div className="relative flex items-center justify-center">
-          <div className="relative h-[28rem] w-full overflow-hidden rounded-xl">
+        <div className="relative my-4 flex items-center justify-center">
+          <div
+            className="relative h-[40rem] w-full overflow-hidden rounded-xl"
+            style={{
+              maskImage:
+                'linear-gradient(to right, transparent, black 10%, black 75%, transparent), linear-gradient(to bottom, black 60%, transparent)',
+              maskComposite: 'intersect',
+              WebkitMaskImage:
+                'linear-gradient(to right, transparent, black 10%, black 75%, transparent), linear-gradient(to bottom, black 60%, transparent)',
+              WebkitMaskComposite: 'source-in',
+            }}
+          >
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeIndex}

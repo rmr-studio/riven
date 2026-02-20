@@ -1,5 +1,5 @@
 import { Section } from '@/components/ui/section';
-import { WaitlistForm } from '@/components/waitlist-form';
+import { WaitlistForm } from '@/components/feature-modules/waitlist/components/waitlist-form';
 
 export const Waitlist = () => {
   return (

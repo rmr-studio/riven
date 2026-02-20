@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { MobileNavbar } from '@/components/ui/mobile-nav-menu';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { ChevronRight, Menu } from 'lucide-react';
+import { ChevronRight, Github, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { HoverBorderGradient } from './ui/hover-border-gradient';
@@ -58,9 +58,9 @@ export function Navbar() {
         {/* Left: Logo + Nav Links */}
         <div className="flex items-center">
           <Link href="/" className="flex shrink-0 gap-1.5 px-3 md:gap-2 md:px-4">
-            <Logo size={24} className="md:w-8" />
-            <div className="mt-0.5 font-mono text-xs font-bold tracking-tight text-primary md:mt-1 md:text-lg">
-              Riven
+            <Logo size={24} />
+            <div className="mb-0.5 font-mono text-xs font-bold tracking-tight text-primary md:text-xl">
+              riven
             </div>
           </Link>
 
@@ -80,11 +80,19 @@ export function Navbar() {
 
         {/* Right: ThemeToggle + CTA + Mobile Menu */}
         <div className="flex items-center gap-1.5 px-2 md:gap-2 md:px-4">
+          <Link
+            href="https://github.com/rivenmedia/riven"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden text-muted-foreground transition-colors hover:text-foreground md:flex"
+          >
+            <Github className="size-5" />
+          </Link>
           <div className="hidden md:block">
             <ThemeToggle />
           </div>
           <a href="#contact">
-            <HoverBorderGradient className="overflow-hidden bg-background p-0" as='div'>
+            <HoverBorderGradient className="overflow-hidden bg-background p-0" as="div">
               <Button
                 size={'sm'}
                 className="h-8 cursor-pointer items-center gap-1.5 border-0 bg-muted/50 py-1 font-mono text-xs tracking-wide text-muted-foreground outline-0 hover:bg-muted hover:text-foreground md:h-9 md:gap-2.5 md:px-4 md:text-sm"
