@@ -189,6 +189,9 @@ class EntityTypeRelationshipService(
         workspaceId: UUID,
         userId: UUID,
     ) {
+        // Soft-delete associated relationship links
+        entityRelationshipRepository.softDeleteByDefinitionId(definitionId)
+
         // Soft-delete the definition
         entity.deleted = true
         entity.deletedAt = java.time.ZonedDateTime.now()

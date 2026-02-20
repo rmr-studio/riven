@@ -1,6 +1,8 @@
 package riven.core.repository.entity
 
+import jakarta.persistence.LockModeType
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import riven.core.entity.entity.EntityRelationshipEntity
@@ -29,6 +31,14 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
      * Find all relationships with a specific definitionId where the given entity is the source.
      */
     fun findAllBySourceIdAndDefinitionId(sourceId: UUID, definitionId: UUID): List<EntityRelationshipEntity>
+
+    /**
+     * Same as [findAllBySourceIdAndDefinitionId] but acquires a pessimistic write lock
+     * to serialize concurrent cardinality enforcement for the same source+definition.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM EntityRelationshipEntity r WHERE r.sourceId = :sourceId AND r.definitionId = :definitionId")
+    fun findAllBySourceIdAndDefinitionIdForUpdate(sourceId: UUID, definitionId: UUID): List<EntityRelationshipEntity>
 
     /**
      * Find relationships with a specific source, target, and definitionId.
@@ -82,6 +92,21 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
      */
     fun countByDefinitionId(definitionId: UUID): Long
 
+    /**
+     * Soft-delete all relationship links for a given definition ID.
+     */
+    @Modifying
+    @Query(
+        """
+        UPDATE entity_relationships
+            SET deleted = true,
+            deleted_at = CURRENT_TIMESTAMP
+        WHERE relationship_definition_id = :definitionId
+            AND deleted = false
+        """, nativeQuery = true
+    )
+    fun softDeleteByDefinitionId(definitionId: UUID)
+
     @Modifying
     @Query(
         """
@@ -123,6 +148,7 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
                 ) as label
             FROM entity_relationships r
             JOIN entities e ON r.target_entity_id = e.id
+            JOIN relationship_definitions rd ON r.relationship_definition_id = rd.id AND rd.deleted = false
             WHERE r.source_entity_id = :sourceId
             AND r.deleted = false
             AND e.deleted = false
@@ -152,6 +178,7 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
                 ) as label
             FROM entity_relationships r
             JOIN entities e ON r.target_entity_id = e.id
+            JOIN relationship_definitions rd ON r.relationship_definition_id = rd.id AND rd.deleted = false
             WHERE r.source_entity_id = ANY(:ids)
             AND r.deleted = false
             AND e.deleted = false
@@ -160,4 +187,73 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
         nativeQuery = true
     )
     fun findEntityLinksBySourceIdIn(ids: Array<UUID>, workspaceId: UUID): List<EntityLinkProjection>
+
+    /**
+     * Find inverse entity links where the given entity is a target,
+     * only for definitions where the target rule has inverse_visible = true.
+     *
+     * The sourceEntityId column aliases r.target_entity_id (the entity being viewed),
+     * keeping the EntityLink contract consistent.
+     */
+    @Query(
+        value = """
+            SELECT
+                e.id as id,
+                e.workspace_id as workspaceId,
+                r.relationship_definition_id as definitionId,
+                r.target_entity_id as sourceEntityId,
+                e.icon_type as iconType,
+                e.icon_colour as iconColour,
+                e.type_key as typeKey,
+                COALESCE(
+                    e.payload -> e.identifier_key::text ->> 'value',
+                    e.id::text
+                ) as label
+            FROM entity_relationships r
+            JOIN entities e ON r.source_entity_id = e.id
+            JOIN relationship_definitions rd ON r.relationship_definition_id = rd.id AND rd.deleted = false
+            JOIN relationship_target_rules rtr ON rtr.relationship_definition_id = r.relationship_definition_id
+            WHERE r.target_entity_id = :targetId
+            AND rtr.inverse_visible = true
+            AND rtr.target_entity_type_id = (SELECT type_id FROM entities WHERE id = :targetId)
+            AND r.deleted = false
+            AND e.deleted = false
+            AND e.workspace_id = :workspaceId
+        """,
+        nativeQuery = true
+    )
+    fun findInverseEntityLinksByTargetId(targetId: UUID, workspaceId: UUID): List<EntityLinkProjection>
+
+    /**
+     * Batch variant: find inverse entity links for multiple target entities.
+     */
+    @Query(
+        value = """
+            SELECT
+                e.id as id,
+                e.workspace_id as workspaceId,
+                r.relationship_definition_id as definitionId,
+                r.target_entity_id as sourceEntityId,
+                e.icon_type as iconType,
+                e.icon_colour as iconColour,
+                e.type_key as typeKey,
+                COALESCE(
+                    e.payload -> e.identifier_key::text ->> 'value',
+                    e.id::text
+                ) as label
+            FROM entity_relationships r
+            JOIN entities e ON r.source_entity_id = e.id
+            JOIN relationship_definitions rd ON r.relationship_definition_id = rd.id AND rd.deleted = false
+            JOIN relationship_target_rules rtr ON rtr.relationship_definition_id = r.relationship_definition_id
+            JOIN entities target_e ON r.target_entity_id = target_e.id
+            WHERE r.target_entity_id = ANY(:ids)
+            AND rtr.inverse_visible = true
+            AND rtr.target_entity_type_id = target_e.type_id
+            AND r.deleted = false
+            AND e.deleted = false
+            AND e.workspace_id = :workspaceId
+        """,
+        nativeQuery = true
+    )
+    fun findInverseEntityLinksByTargetIdIn(ids: Array<UUID>, workspaceId: UUID): List<EntityLinkProjection>
 }

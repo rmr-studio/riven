@@ -70,6 +70,8 @@ For each changed file, determine:
 
 Write the report to `docs/architecture-impact-report.md` using the template below. Every section must be filled in — use "None" for sections with no changes. Be specific and actionable: reference exact class names, vault document paths, and describe what needs to change.
 
+If the report already exists. Create a new entry instead of overwriting existing content. Ensure entry is marked with date of creation
+
 ## Report Template
 
 ````markdown

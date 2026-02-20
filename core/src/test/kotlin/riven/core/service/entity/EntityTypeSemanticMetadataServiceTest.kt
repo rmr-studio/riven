@@ -20,7 +20,6 @@ import riven.core.entity.entity.EntityTypeEntity
 import riven.core.entity.entity.EntityTypeSemanticMetadataEntity
 import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.core.DataType
-import riven.core.enums.entity.EntityCategory
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
 import riven.core.enums.entity.semantics.SemanticMetadataTargetType
 import riven.core.enums.workspace.WorkspaceRoles
@@ -394,7 +393,6 @@ class EntityTypeSemanticMetadataServiceTest : BaseServiceTest() {
             displayNameSingular = "Test Entity",
             displayNamePlural = "Test Entities",
             workspaceId = owningWorkspaceId,
-            type = EntityCategory.STANDARD,
             schema = Schema(
                 key = SchemaType.OBJECT,
                 type = DataType.OBJECT,
@@ -407,7 +405,6 @@ class EntityTypeSemanticMetadataServiceTest : BaseServiceTest() {
                 )
             ),
             columns = listOf(EntityTypeAttributeColumn(key = attrId, type = riven.core.enums.entity.EntityPropertyType.ATTRIBUTE)),
-            relationships = emptyList(),
             identifierKey = attrId,
         )
     }

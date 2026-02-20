@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.entity.EntityRelationshipEntity
 import riven.core.enums.entity.EntityRelationshipCardinality
+import riven.core.exceptions.InvalidRelationshipException
 import riven.core.models.entity.EntityLink
 import riven.core.models.entity.RelationshipDefinition
 import riven.core.models.entity.RelationshipTargetRule
@@ -50,7 +51,7 @@ class EntityRelationshipService(
         definition: RelationshipDefinition,
         targetIds: List<UUID>,
     ) {
-        val existingRels = entityRelationshipRepository.findAllBySourceIdAndDefinitionId(id, definitionId)
+        val existingRels = entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(id, definitionId)
         val existingTargetIds = existingRels.map { it.targetId }.toSet()
         val requestedTargetIds = targetIds.toSet()
 
@@ -65,14 +66,21 @@ class EntityRelationshipService(
         // Nothing to add — done
         if (toAdd.isEmpty()) return
 
-        // Validate and create new links
-        val targetEntities = entityRepository.findAllById(toAdd).associateBy { requireNotNull(it.id) }
+        // Load ALL final-state targets (retained + new) for cardinality checks
+        val finalTargetEntities = entityRepository.findAllById(requestedTargetIds).associateBy { requireNotNull(it.id) }
 
-        validateTargets(definition, targetEntities.mapValues { it.value.typeId })
-        enforceCardinality(definition, id, definitionId, existingTargetIds.size - toRemove.size, toAdd.size, targetEntities.mapValues { it.value.typeId })
+        val missingIds = toAdd - finalTargetEntities.keys
+        require(missingIds.isEmpty()) {
+            "Target entities not found: $missingIds"
+        }
 
-        val newRelationships = toAdd.mapNotNull { targetId ->
-            if (!targetEntities.containsKey(targetId)) return@mapNotNull null
+        val finalTypesByEntityId = finalTargetEntities.mapValues { it.value.typeId }
+        val newTargetTypesByEntityId = finalTypesByEntityId.filterKeys { it in toAdd }
+
+        validateTargets(definition, newTargetTypesByEntityId)
+        enforceCardinality(definition, definitionId, finalTypesByEntityId, newTargetTypesByEntityId)
+
+        val newRelationships = toAdd.map { targetId ->
             EntityRelationshipEntity(
                 workspaceId = workspaceId,
                 sourceId = id,
@@ -88,9 +96,14 @@ class EntityRelationshipService(
 
     /**
      * Finds all entity links for a source entity, grouped by definition ID.
+     * Includes both forward links (entity is source) and inverse links (entity is target
+     * with inverse_visible = true on the target rule).
      */
     fun findRelatedEntities(entityId: UUID, workspaceId: UUID): Map<UUID, List<EntityLink>> {
-        return entityRelationshipRepository.findEntityLinksBySourceId(entityId, workspaceId)
+        val forward = entityRelationshipRepository.findEntityLinksBySourceId(entityId, workspaceId)
+        val inverse = entityRelationshipRepository.findInverseEntityLinksByTargetId(entityId, workspaceId)
+
+        return (forward + inverse)
             .groupBy { it.getDefinitionId() }
             .mapValues { (_, projections) ->
                 projections.map { it.toEntityLink() }
@@ -99,9 +112,14 @@ class EntityRelationshipService(
 
     /**
      * Finds all entity links for multiple source entities, grouped by source then definition.
+     * Includes both forward and inverse-visible links.
      */
     fun findRelatedEntities(entityIds: Set<UUID>, workspaceId: UUID): Map<UUID, Map<UUID, List<EntityLink>>> {
-        return entityRelationshipRepository.findEntityLinksBySourceIdIn(entityIds.toTypedArray(), workspaceId)
+        val ids = entityIds.toTypedArray()
+        val forward = entityRelationshipRepository.findEntityLinksBySourceIdIn(ids, workspaceId)
+        val inverse = entityRelationshipRepository.findInverseEntityLinksByTargetIdIn(ids, workspaceId)
+
+        return (forward + inverse)
             .groupBy { it.getSourceEntityId() }
             .mapValues { (_, projections) ->
                 projections.groupBy { it.getDefinitionId() }
@@ -152,49 +170,82 @@ class EntityRelationshipService(
     }
 
     /**
-     * Enforces cardinality constraints for the relationship.
-     *
-     * Determines the effective cardinality (rule override or definition default)
-     * and validates that the total link count after additions won't exceed the limit.
+     * Dispatches cardinality enforcement across both axes:
+     * source-side (how many targets of each type a source can have) and
+     * target-side (how many sources can link to each target).
      */
     private fun enforceCardinality(
         definition: RelationshipDefinition,
-        sourceEntityId: UUID,
         definitionId: UUID,
-        existingCount: Int,
-        addCount: Int,
-        targetTypesByEntityId: Map<UUID, UUID>,
+        finalTypesByEntityId: Map<UUID, UUID>,
+        newTargetTypesByEntityId: Map<UUID, UUID>,
     ) {
-        val totalAfterAdd = existingCount + addCount
-        val maxAllowed = resolveMaxLinks(definition, targetTypesByEntityId.values.toSet())
+        enforceSourceSideCardinality(definition, finalTypesByEntityId)
+        enforceTargetSideCardinality(definition, definitionId, newTargetTypesByEntityId)
+    }
 
-        if (maxAllowed != null && totalAfterAdd > maxAllowed) {
-            throw IllegalArgumentException(
-                "Adding $addCount link(s) would exceed the cardinality limit of $maxAllowed for relationship '${definition.name}' (${definition.id}). Current count: $existingCount."
-            )
+    /**
+     * Enforces source-side cardinality: checks per-type limits on how many targets
+     * of each type a source entity can have.
+     *
+     * Groups ALL final targets (retained + new) by type and checks each group
+     * against the effective cardinality (rule override or definition default).
+     */
+    private fun enforceSourceSideCardinality(
+        definition: RelationshipDefinition,
+        finalTypesByEntityId: Map<UUID, UUID>,
+    ) {
+        val finalByType = finalTypesByEntityId.values.groupingBy { it }.eachCount()
+
+        finalByType.forEach { (typeId, count) ->
+            val effective = resolveCardinality(definition, typeId)
+            val max = effective.maxSourceTargets()
+            if (max != null && count > max) {
+                throw InvalidRelationshipException(
+                    "Having $count target(s) of type $typeId would exceed the per-type source-side limit of $max " +
+                        "for relationship '${definition.name}' (${definition.id})."
+                )
+            }
         }
     }
 
     /**
-     * Resolves the maximum number of target links allowed based on cardinality.
+     * Enforces target-side cardinality: for each NEW target, checks that the target
+     * is not already linked by another source under this definition (when cardinality
+     * requires target exclusivity).
      *
-     * For ONE_TO_ONE and MANY_TO_ONE: max 1 target per source.
-     * For ONE_TO_MANY and MANY_TO_MANY: unlimited (null).
-     *
-     * If any target type has a cardinality override, the most restrictive applies.
+     * Applies to ONE_TO_ONE and ONE_TO_MANY (each target linked by at most one source).
      */
-    private fun resolveMaxLinks(
+    private fun enforceTargetSideCardinality(
         definition: RelationshipDefinition,
-        targetTypeIds: Set<UUID>,
-    ): Int? {
-        val effectiveCardinalities = targetTypeIds.map { typeId ->
-            val rule = findMatchingRule(definition.targetRules, typeId)
-            rule?.cardinalityOverride ?: definition.cardinalityDefault
+        definitionId: UUID,
+        newTargetTypesByEntityId: Map<UUID, UUID>,
+    ) {
+        newTargetTypesByEntityId.forEach { (targetId, typeId) ->
+            val effective = resolveCardinality(definition, typeId)
+            val max = effective.maxTargetSources()
+            if (max != null) {
+                val existingLinks = entityRelationshipRepository.findByTargetIdAndDefinitionId(targetId, definitionId)
+                if (existingLinks.isNotEmpty()) {
+                    throw InvalidRelationshipException(
+                        "Target entity $targetId is already linked by source ${existingLinks.first().sourceId} " +
+                            "under ${effective.name} relationship '${definition.name}' (${definition.id})."
+                    )
+                }
+            }
         }
+    }
 
-        // Use the most restrictive cardinality across all target types
-        val mostRestrictive = effectiveCardinalities.minByOrNull { it.maxTargets() } ?: definition.cardinalityDefault
-        return mostRestrictive.maxTargets()
+    /**
+     * Resolves the effective cardinality for a target type: uses the matching rule's
+     * override if present, otherwise falls back to the definition default.
+     */
+    private fun resolveCardinality(
+        definition: RelationshipDefinition,
+        targetTypeId: UUID,
+    ): EntityRelationshipCardinality {
+        val rule = findMatchingRule(definition.targetRules, targetTypeId)
+        return rule?.cardinalityOverride ?: definition.cardinalityDefault
     }
 
     /**
@@ -217,12 +268,29 @@ class EntityRelationshipService(
 }
 
 /**
- * Returns the maximum number of target links a source entity can have under this cardinality.
+ * Returns the maximum number of targets of a given type that a source entity can have.
  * Returns null for unlimited.
+ *
+ * ONE_TO_ONE / MANY_TO_ONE → 1 (source can have at most 1 target per type)
+ * ONE_TO_MANY / MANY_TO_MANY → null (unlimited targets per type)
  */
-private fun EntityRelationshipCardinality.maxTargets(): Int? = when (this) {
+private fun EntityRelationshipCardinality.maxSourceTargets(): Int? = when (this) {
     EntityRelationshipCardinality.ONE_TO_ONE -> 1
     EntityRelationshipCardinality.MANY_TO_ONE -> 1
     EntityRelationshipCardinality.ONE_TO_MANY -> null
+    EntityRelationshipCardinality.MANY_TO_MANY -> null
+}
+
+/**
+ * Returns the maximum number of sources that can link to a given target.
+ * Returns null for unlimited.
+ *
+ * ONE_TO_ONE / ONE_TO_MANY → 1 (each target linked by at most 1 source)
+ * MANY_TO_ONE / MANY_TO_MANY → null (unlimited sources per target)
+ */
+private fun EntityRelationshipCardinality.maxTargetSources(): Int? = when (this) {
+    EntityRelationshipCardinality.ONE_TO_ONE -> 1
+    EntityRelationshipCardinality.ONE_TO_MANY -> 1
+    EntityRelationshipCardinality.MANY_TO_ONE -> null
     EntityRelationshipCardinality.MANY_TO_MANY -> null
 }

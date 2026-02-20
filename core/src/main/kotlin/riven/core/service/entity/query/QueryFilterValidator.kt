@@ -142,7 +142,7 @@ class QueryFilterValidator {
      */
     private fun validateCondition(
         condition: RelationshipFilter,
-        definition: EntityRelationshipDefinition?,
+        definition: RelationshipDefinition?,
         relationshipId: UUID,
         context: ValidationContext,
         relationshipDepth: Int,

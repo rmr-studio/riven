@@ -9,14 +9,10 @@ import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.core.DataType
 import riven.core.enums.entity.EntityPropertyType
-import riven.core.enums.entity.EntityTypeRelationshipType
 import riven.core.enums.util.OperationType
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.EntityType
-import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.configuration.EntityTypeAttributeColumn
-import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDeleteRequest
-import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
 import riven.core.models.request.entity.type.*
 import riven.core.enums.entity.semantics.SemanticMetadataTargetType
 import riven.core.models.entity.EntityTypeSemanticMetadata
@@ -24,6 +20,8 @@ import riven.core.models.response.entity.type.EntityTypeImpactResponse
 import riven.core.models.response.entity.type.EntityTypeWithSemanticsResponse
 import riven.core.models.response.entity.type.SemanticMetadataBundle
 import riven.core.repository.entity.EntityTypeRepository
+import riven.core.repository.entity.RelationshipDefinitionRepository
+import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
@@ -42,8 +40,8 @@ class EntityTypeService(
     private val entityTypeRepository: EntityTypeRepository,
     private val entityTypeRelationshipService: EntityTypeRelationshipService,
     private val entityAttributeService: EntityTypeAttributeService,
-    private val relationshipDiffService: EntityTypeRelationshipDiffService,
-    private val impactAnalysisService: EntityTypeRelationshipImpactAnalysisService,
+    private val definitionRepository: RelationshipDefinitionRepository,
+    private val entityRelationshipRepository: EntityRelationshipRepository,
     private val authTokenService: AuthTokenService,
     private val activityService: ActivityService,
     private val semanticMetadataService: EntityTypeSemanticMetadataService,
@@ -55,78 +53,68 @@ class EntityTypeService(
     @Transactional
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun publishEntityType(workspaceId: UUID, request: CreateEntityTypeRequest): EntityType {
-        authTokenService.getUserId().let { userId ->
-            val primaryId: UUID = UUID.randomUUID()
+        val userId = authTokenService.getUserId()
+        val primaryId: UUID = UUID.randomUUID()
 
-            EntityTypeEntity(
-                displayNameSingular = request.name.singular,
-                displayNamePlural = request.name.plural,
-                key = request.key,
-                workspaceId = workspaceId,
-                identifierKey = primaryId,
-                description = request.description,
-                iconType = request.icon.type,
-                iconColour = request.icon.colour,
-                // Protected Entity Types cannot be modified or deleted by users. This will usually occur during an automatic setup process.
-                protected = false,
-                type = request.type,
-                schema = Schema(
-                    type = DataType.OBJECT,
-                    key = SchemaType.OBJECT,
-                    protected = true,
-                    required = true,
-                    properties = mapOf(
-                        primaryId to Schema(
-                            type = DataType.STRING,
-                            key = SchemaType.TEXT,
-                            label = "Name",
-                            unique = true,
-                            protected = true,
-                            required = true,
-                        ),
-                    )
-                ),
-                relationships = listOf(),
-                columns = listOf(
-                    EntityTypeAttributeColumn(
-                        key = primaryId,
-                        type = EntityPropertyType.ATTRIBUTE
-                    )
+        val entity = EntityTypeEntity(
+            displayNameSingular = request.name.singular,
+            displayNamePlural = request.name.plural,
+            key = request.key,
+            workspaceId = workspaceId,
+            identifierKey = primaryId,
+            description = request.description,
+            iconType = request.icon.type,
+            iconColour = request.icon.colour,
+            protected = false,
+            schema = Schema(
+                type = DataType.OBJECT,
+                key = SchemaType.OBJECT,
+                protected = true,
+                required = true,
+                properties = mapOf(
+                    primaryId to Schema(
+                        type = DataType.STRING,
+                        key = SchemaType.TEXT,
+                        label = "Name",
+                        unique = true,
+                        protected = true,
+                        required = true,
+                    ),
                 )
-            ).run {
-                entityTypeRepository.save(this)
-            }.also {
-                requireNotNull(it.id)
-                semanticMetadataService.initializeForEntityType(
-                    entityTypeId = requireNotNull(it.id),
-                    workspaceId = workspaceId,
-                    attributeIds = listOf(primaryId)
+            ),
+            columns = listOf(
+                EntityTypeAttributeColumn(
+                    key = primaryId,
+                    type = EntityPropertyType.ATTRIBUTE
                 )
-                activityService.log(
-                    activity = Activity.ENTITY_TYPE,
-                    operation = OperationType.CREATE,
-                    userId = userId,
-                    workspaceId = requireNotNull(it.workspaceId) { "Cannot create system entity type" },
-                    entityType = ApplicationEntityType.ENTITY_TYPE,
-                    entityId = it.id,
-                    "type" to it.key,
-                    "version" to 1,
-                    "category" to it.type.name
-                )
-            }.let {
-                return it.toModel()
-            }
-        }
+            )
+        )
+
+        val saved = entityTypeRepository.save(entity)
+        val savedId = requireNotNull(saved.id)
+
+        semanticMetadataService.initializeForEntityType(
+            entityTypeId = savedId,
+            workspaceId = workspaceId,
+            attributeIds = listOf(primaryId)
+        )
+
+        activityService.log(
+            activity = Activity.ENTITY_TYPE,
+            operation = OperationType.CREATE,
+            userId = userId,
+            workspaceId = requireNotNull(saved.workspaceId) { "Cannot create system entity type" },
+            entityType = ApplicationEntityType.ENTITY_TYPE,
+            entityId = savedId,
+            "type" to saved.key,
+            "version" to 1,
+        )
+
+        return saved.toModel()
     }
 
     /**
      * Update an existing entity type (MUTABLE - updates in place).
-     *
-     * Unlike BlockTypeService which creates new versions, this updates the existing row.
-     * Breaking changes are detected and validated against existing entities.
-     *
-     * When impactConfirmed=false: Performs impact analysis and returns impacts if any exist
-     * When impactConfirmed=true: Proceeds with the update after user confirmation
      */
     @Transactional
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
@@ -150,6 +138,9 @@ class EntityTypeService(
         }
     }
 
+    /**
+     * Save an attribute or relationship definition for an entity type.
+     */
     @Transactional
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun saveEntityTypeDefinition(
@@ -160,6 +151,7 @@ class EntityTypeService(
         val (index: Int?, definition) = request
         val existing =
             ServiceUtil.findOrThrow { entityTypeRepository.findByworkspaceIdAndKey(workspaceId, definition.key) }
+        val entityTypeId = requireNotNull(existing.id)
 
         val impactedEntityTypes = mutableMapOf<String, EntityType>()
 
@@ -171,118 +163,16 @@ class EntityTypeService(
             }
 
             is SaveRelationshipDefinitionRequest -> {
-                val (_, id: UUID, relationship: EntityRelationshipDefinition) = definition
-
-                // Find prev, if exists
-                existing.relationships?.firstOrNull { it.id == id }.run {
-                    // If new, just add new relationships
-                    if (this == null) {
-                        entityTypeRelationshipService.updateRelationships(
-                            workspaceId,
-                            diff = EntityTypeRelationshipDiff(
-                                added = listOf(definition),
-                                modified = emptyList(),
-                                removed = emptyList()
-                            )
-                        ).forEach { (key, type) -> impactedEntityTypes[key] = type.toModel() }
-
-                        return@run
-                    }
-
-                    val diff = relationshipDiffService.calculateModification(
-                        previous = this,
-                        updated = relationship
-                    )
-
-                    if (!impactConfirmed) {
-
-
-                        // Calculate potential impact of relationship change
-                        impactAnalysisService.analyze(
-                            workspaceId,
-                            existing,
-                            diff = EntityTypeRelationshipDiff(
-                                added = emptyList(),
-                                modified = listOf(diff),
-                                removed = emptyList()
-                            )
-                        ).run {
-                            if (impactAnalysisService.hasNotableImpacts(this)) {
-                                return EntityTypeImpactResponse(
-                                    error = null,
-                                    updatedEntityTypes = null,
-                                    impact = this
-                                )
-                            }
-                        }
-
-                    }
-
-                    // Proceed with updating relationships and modifying linked entities
-                    entityTypeRelationshipService.updateRelationships(
-                        workspaceId,
-                        diff = EntityTypeRelationshipDiff(
-                            added = emptyList(),
-                            modified = listOf(diff),
-                            removed = emptyList()
-                        )
-                    ).forEach { (key, type) ->
-                        impactedEntityTypes[key] = type.toModel()
-                    }
-                }
+                handleSaveRelationshipDefinition(workspaceId, entityTypeId, definition)
             }
 
             else -> throw IllegalArgumentException("Unsupported definition type: ${definition::class.java}")
         }
 
-
-        // Handle new order
-        val currentIndex = existing.columns.indexOfFirst { it.key == definition.id }
-        // New attribute/relationship being added
-        if (currentIndex == -1) {
-            val updatedOrdering = reorderEntityTypeColumns(
-                order = existing.columns,
-                key = EntityTypeAttributeColumn(
-                    key = definition.id,
-                    type = when (definition) {
-                        is SaveAttributeDefinitionRequest -> EntityPropertyType.ATTRIBUTE
-                        is SaveRelationshipDefinitionRequest -> EntityPropertyType.RELATIONSHIP
-                        else -> throw IllegalArgumentException("Unsupported definition type: ${definition::class.java}")
-                    }
-                ),
-                prev = null,
-                new = request.index ?: existing.columns.size
-            )
-
-            existing.apply {
-                columns = updatedOrdering
-            }
-        } else {
-            request.index?.run {
-                if (this == index) return@run
-                // Existing attribute/relationship being reordered
-                val updatedOrdering = reorderEntityTypeColumns(
-                    order = existing.columns,
-                    key = EntityTypeAttributeColumn(
-                        key = definition.id,
-                        type = when (definition) {
-                            is SaveAttributeDefinitionRequest -> EntityPropertyType.ATTRIBUTE
-                            is SaveRelationshipDefinitionRequest -> EntityPropertyType.RELATIONSHIP
-                            else -> throw IllegalArgumentException("Unsupported definition type: ${definition::class.java}")
-                        }
-                    ),
-                    prev = index,
-                    new = this
-                )
-
-                existing.apply {
-                    columns = updatedOrdering
-                }
-            }
-        }
+        // Handle column ordering
+        updateColumnOrdering(existing, definition, request.index)
 
         entityTypeRepository.save(existing).also {
-            // Log Activity
             impactedEntityTypes[existing.key] = it.toModel()
             return EntityTypeImpactResponse(
                 impact = null,
@@ -292,6 +182,9 @@ class EntityTypeService(
         }
     }
 
+    /**
+     * Remove an attribute or relationship definition from an entity type.
+     */
     fun removeEntityTypeDefinition(
         workspaceId: UUID,
         request: DeleteTypeDefinitionRequest,
@@ -309,53 +202,22 @@ class EntityTypeService(
             }
 
             is DeleteRelationshipDefinitionRequest -> {
-                existing.relationships?.firstOrNull { it.id == definition.id }?.run {
+                val impact = entityTypeRelationshipService.deleteRelationshipDefinition(
+                    workspaceId = workspaceId,
+                    definitionId = definition.id,
+                    impactConfirmed = impactConfirmed,
+                )
 
-                    if (!impactConfirmed) {
-                        // Calculate potential impact of relationship removal
-                        impactAnalysisService.analyze(
-                            workspaceId,
-                            existing,
-                            diff = EntityTypeRelationshipDiff(
-                                added = emptyList(),
-                                modified = emptyList(),
-                                removed = listOf(
-                                    EntityTypeRelationshipDeleteRequest(
-                                        relationship = this,
-                                        action = definition.deleteAction,
-                                        type = existing
-                                    )
-                                )
-                            )
-                        ).run {
-                            if (impactAnalysisService.hasNotableImpacts(this)) {
-                                return EntityTypeImpactResponse(
-                                    error = null,
-                                    updatedEntityTypes = null,
-                                    impact = this
-                                )
-                            }
-                        }
-                    }
-
-                    // Proceed with removing relationships and modifying linked entities
-                    entityTypeRelationshipService.removeRelationships(
-                        workspaceId,
-                        listOf(
-                            EntityTypeRelationshipDeleteRequest(
-                                relationship = this,
-                                action = definition.deleteAction,
-                                type = existing
-                            )
-                        )
-                    ).forEach { (key, type) ->
-                        impactedEntityTypes[key] = type.toModel()
-                    }
+                if (impact != null) {
+                    return EntityTypeImpactResponse(
+                        error = null,
+                        updatedEntityTypes = null,
+                        impact = impact,
+                    )
                 }
             }
 
             else -> throw IllegalArgumentException("Unsupported definition type: ${definition::class.java}")
-
         }
 
         // Remove from entity type ordering
@@ -385,11 +247,9 @@ class EntityTypeService(
         val mutableOrder = order.toMutableList()
 
         if (prev != null) {
-            // Key already exists, remove it from its current position
             mutableOrder.removeAt(prev)
         }
 
-        // Insert the key at the new position, coercing to valid bounds
         val insertIndex = new.coerceIn(0, mutableOrder.size)
         mutableOrder.add(insertIndex, key)
 
@@ -405,69 +265,53 @@ class EntityTypeService(
     ): EntityTypeImpactResponse {
         val userId = authTokenService.getUserId()
         val existing = ServiceUtil.findOrThrow { entityTypeRepository.findByworkspaceIdAndKey(workspaceId, key) }
+        val entityTypeId = requireNotNull(existing.id)
         requireNotNull(existing.workspaceId) { "Cannot delete system entity type" }
 
-        existing.relationships?.let {
-            if (!impactConfirmed) {
-                val impact = impactAnalysisService.analyze(
-                    workspaceId,
-                    existing,
-                    diff = EntityTypeRelationshipDiff(
-                        added = emptyList(),
-                        modified = emptyList(),
-                        removed = it.map { relationship ->
-                            EntityTypeRelationshipDeleteRequest(
-                                relationship = relationship,
-                                action = if (relationship.relationshipType == EntityTypeRelationshipType.ORIGIN)
-                                    DeleteRelationshipDefinitionRequest.DeleteAction.DELETE_RELATIONSHIP
-                                else DeleteRelationshipDefinitionRequest.DeleteAction.REMOVE_ENTITY_TYPE,
-                                type = existing
-                            )
-                        }
-                    )
+        // Check for relationship definition impact
+        val definitions = definitionRepository.findByWorkspaceIdAndSourceEntityTypeId(workspaceId, entityTypeId)
+        if (!impactConfirmed && definitions.isNotEmpty()) {
+            val totalLinks = definitions.sumOf { entityRelationshipRepository.countByDefinitionId(requireNotNull(it.id)) }
+            if (totalLinks > 0) {
+                return EntityTypeImpactResponse(
+                    impact = DeleteDefinitionImpact(
+                        definitionId = entityTypeId,
+                        definitionName = existing.displayNameSingular,
+                        impactedLinkCount = totalLinks,
+                    ),
+                    updatedEntityTypes = null,
+                    error = null,
                 )
-
-                if (impactAnalysisService.hasNotableImpacts(impact)) {
-                    return EntityTypeImpactResponse(
-                        impact = impact,
-                        updatedEntityTypes = null,
-                        error = null
-                    )
-                }
             }
         }
 
-        val affectedEntityTypes: Map<String, EntityType>? = existing.relationships?.let {
-            entityTypeRelationshipService.removeRelationships(workspaceId, it.map { relationship ->
-                EntityTypeRelationshipDeleteRequest(
-                    relationship = relationship,
-                    action = if (relationship.relationshipType == EntityTypeRelationshipType.ORIGIN)
-                        DeleteRelationshipDefinitionRequest.DeleteAction.DELETE_RELATIONSHIP
-                    else DeleteRelationshipDefinitionRequest.DeleteAction.REMOVE_ENTITY_TYPE,
-                    type = existing
-                )
-            })
-                .mapValues { entry -> entry.value.toModel() }
-        }
-
-        semanticMetadataService.softDeleteForEntityType(requireNotNull(existing.id))
-        entityTypeRepository.delete(existing).also {
-            activityService.log(
-                activity = Activity.ENTITY_TYPE,
-                operation = OperationType.DELETE,
-                userId = userId,
+        // Delete all relationship definitions for this entity type
+        definitions.forEach { def ->
+            entityTypeRelationshipService.deleteRelationshipDefinition(
                 workspaceId = workspaceId,
-                entityType = ApplicationEntityType.ENTITY_TYPE,
-                entityId = existing.id,
-                "type" to existing.key
-            )
-
-            return EntityTypeImpactResponse(
-                impact = null,
-                updatedEntityTypes = affectedEntityTypes,
-                error = null
+                definitionId = requireNotNull(def.id),
+                impactConfirmed = true,
             )
         }
+
+        semanticMetadataService.softDeleteForEntityType(entityTypeId)
+        entityTypeRepository.delete(existing)
+
+        activityService.log(
+            activity = Activity.ENTITY_TYPE,
+            operation = OperationType.DELETE,
+            userId = userId,
+            workspaceId = workspaceId,
+            entityType = ApplicationEntityType.ENTITY_TYPE,
+            entityId = entityTypeId,
+            "type" to existing.key
+        )
+
+        return EntityTypeImpactResponse(
+            impact = null,
+            updatedEntityTypes = null,
+            error = null
+        )
     }
 
 
@@ -548,6 +392,61 @@ class EntityTypeService(
     }
 
     // ------ Private helpers ------
+
+    /**
+     * Delegates relationship definition create/update to EntityTypeRelationshipService.
+     */
+    private fun handleSaveRelationshipDefinition(
+        workspaceId: UUID,
+        entityTypeId: UUID,
+        request: SaveRelationshipDefinitionRequest,
+    ) {
+        val existingDef = definitionRepository.findByIdAndWorkspaceId(request.id, workspaceId)
+
+        if (existingDef.isEmpty) {
+            entityTypeRelationshipService.createRelationshipDefinition(workspaceId, entityTypeId, request)
+        } else {
+            entityTypeRelationshipService.updateRelationshipDefinition(workspaceId, request.id, request)
+        }
+    }
+
+    /**
+     * Updates column ordering when a definition is added or reordered.
+     */
+    private fun updateColumnOrdering(
+        existing: EntityTypeEntity,
+        definition: TypeDefinition,
+        requestIndex: Int?,
+    ) {
+        val currentIndex = existing.columns.indexOfFirst { it.key == definition.id }
+        val propertyType = when (definition) {
+            is SaveAttributeDefinitionRequest -> EntityPropertyType.ATTRIBUTE
+            is SaveRelationshipDefinitionRequest -> EntityPropertyType.RELATIONSHIP
+            else -> throw IllegalArgumentException("Unsupported definition type: ${definition::class.java}")
+        }
+
+        if (currentIndex == -1) {
+            // New definition being added
+            existing.columns = reorderEntityTypeColumns(
+                order = existing.columns,
+                key = EntityTypeAttributeColumn(key = definition.id, type = propertyType),
+                prev = null,
+                new = requestIndex ?: existing.columns.size
+            )
+        } else {
+            // Existing definition being reordered
+            requestIndex?.let { newIndex ->
+                if (newIndex != currentIndex) {
+                    existing.columns = reorderEntityTypeColumns(
+                        order = existing.columns,
+                        key = EntityTypeAttributeColumn(key = definition.id, type = propertyType),
+                        prev = currentIndex,
+                        new = newIndex
+                    )
+                }
+            }
+        }
+    }
 
     private fun buildSemanticBundle(
         entityTypeId: UUID,

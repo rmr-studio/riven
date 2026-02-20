@@ -27,11 +27,11 @@ data class RelationshipTargetRuleEntity(
     val targetEntityTypeId: UUID?,
 
     @Column(name = "semantic_type_constraint", nullable = true)
-    val semanticTypeConstraint: String?,
+    val semanticTypeConstraint: String? = null,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "cardinality_override", nullable = true)
-    val cardinalityOverride: EntityRelationshipCardinality?,
+    val cardinalityOverride: EntityRelationshipCardinality? = null,
 
     @Column(name = "inverse_visible", nullable = false)
     var inverseVisible: Boolean = false,

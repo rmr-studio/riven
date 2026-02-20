@@ -107,8 +107,15 @@ class EntityTypeRelationshipServiceTest : BaseServiceTest() {
             ),
         )
 
-        whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { it.arguments[0] }
-        whenever(targetRuleRepository.saveAll(any<List<RelationshipTargetRuleEntity>>())).thenAnswer { it.arguments[0] }
+        whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { invocation ->
+            val entity = invocation.arguments[0] as RelationshipDefinitionEntity
+            if (entity.id == null) entity.copy(id = UUID.randomUUID()) else entity
+        }
+        whenever(targetRuleRepository.saveAll(any<List<RelationshipTargetRuleEntity>>())).thenAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            val entities = invocation.arguments[0] as List<RelationshipTargetRuleEntity>
+            entities.map { if (it.id == null) it.copy(id = UUID.randomUUID()) else it }
+        }
 
         val result = service.createRelationshipDefinition(workspaceId, sourceEntityTypeId, request)
 
@@ -144,8 +151,15 @@ class EntityTypeRelationshipServiceTest : BaseServiceTest() {
             ),
         )
 
-        whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { it.arguments[0] }
-        whenever(targetRuleRepository.saveAll(any<List<RelationshipTargetRuleEntity>>())).thenAnswer { it.arguments[0] }
+        whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { invocation ->
+            val entity = invocation.arguments[0] as RelationshipDefinitionEntity
+            if (entity.id == null) entity.copy(id = UUID.randomUUID()) else entity
+        }
+        whenever(targetRuleRepository.saveAll(any<List<RelationshipTargetRuleEntity>>())).thenAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            val entities = invocation.arguments[0] as List<RelationshipTargetRuleEntity>
+            entities.map { if (it.id == null) it.copy(id = UUID.randomUUID()) else it }
+        }
 
         val result = service.createRelationshipDefinition(workspaceId, sourceEntityTypeId, request)
 
@@ -167,8 +181,15 @@ class EntityTypeRelationshipServiceTest : BaseServiceTest() {
             targetRules = emptyList(),
         )
 
-        whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { it.arguments[0] }
-        whenever(targetRuleRepository.saveAll(any<List<RelationshipTargetRuleEntity>>())).thenAnswer { it.arguments[0] }
+        whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { invocation ->
+            val entity = invocation.arguments[0] as RelationshipDefinitionEntity
+            if (entity.id == null) entity.copy(id = UUID.randomUUID()) else entity
+        }
+        whenever(targetRuleRepository.saveAll(any<List<RelationshipTargetRuleEntity>>())).thenAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            val entities = invocation.arguments[0] as List<RelationshipTargetRuleEntity>
+            entities.map { if (it.id == null) it.copy(id = UUID.randomUUID()) else it }
+        }
 
         val result = service.createRelationshipDefinition(workspaceId, sourceEntityTypeId, request)
 
@@ -190,8 +211,15 @@ class EntityTypeRelationshipServiceTest : BaseServiceTest() {
             ),
         )
 
-        whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { it.arguments[0] }
-        whenever(targetRuleRepository.saveAll(any<List<RelationshipTargetRuleEntity>>())).thenAnswer { it.arguments[0] }
+        whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { invocation ->
+            val entity = invocation.arguments[0] as RelationshipDefinitionEntity
+            if (entity.id == null) entity.copy(id = UUID.randomUUID()) else entity
+        }
+        whenever(targetRuleRepository.saveAll(any<List<RelationshipTargetRuleEntity>>())).thenAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            val entities = invocation.arguments[0] as List<RelationshipTargetRuleEntity>
+            entities.map { if (it.id == null) it.copy(id = UUID.randomUUID()) else it }
+        }
 
         val result = service.createRelationshipDefinition(workspaceId, sourceEntityTypeId, request)
 
@@ -223,9 +251,16 @@ class EntityTypeRelationshipServiceTest : BaseServiceTest() {
         )
 
         whenever(definitionRepository.findByIdAndWorkspaceId(defId, workspaceId)).thenReturn(Optional.of(existingEntity))
-        whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { it.arguments[0] }
+        whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { invocation ->
+            val entity = invocation.arguments[0] as RelationshipDefinitionEntity
+            if (entity.id == null) entity.copy(id = UUID.randomUUID()) else entity
+        }
         whenever(targetRuleRepository.findByRelationshipDefinitionId(defId)).thenReturn(emptyList())
-        whenever(targetRuleRepository.saveAll(any<List<RelationshipTargetRuleEntity>>())).thenAnswer { it.arguments[0] }
+        whenever(targetRuleRepository.saveAll(any<List<RelationshipTargetRuleEntity>>())).thenAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            val entities = invocation.arguments[0] as List<RelationshipTargetRuleEntity>
+            entities.map { if (it.id == null) it.copy(id = UUID.randomUUID()) else it }
+        }
 
         val result = service.updateRelationshipDefinition(workspaceId, defId, request)
 
@@ -257,9 +292,16 @@ class EntityTypeRelationshipServiceTest : BaseServiceTest() {
         )
 
         whenever(definitionRepository.findByIdAndWorkspaceId(defId, workspaceId)).thenReturn(Optional.of(existingEntity))
-        whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { it.arguments[0] }
+        whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { invocation ->
+            val entity = invocation.arguments[0] as RelationshipDefinitionEntity
+            if (entity.id == null) entity.copy(id = UUID.randomUUID()) else entity
+        }
         whenever(targetRuleRepository.findByRelationshipDefinitionId(defId)).thenReturn(emptyList())
-        whenever(targetRuleRepository.saveAll(any<List<RelationshipTargetRuleEntity>>())).thenAnswer { it.arguments[0] }
+        whenever(targetRuleRepository.saveAll(any<List<RelationshipTargetRuleEntity>>())).thenAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            val entities = invocation.arguments[0] as List<RelationshipTargetRuleEntity>
+            entities.map { if (it.id == null) it.copy(id = UUID.randomUUID()) else it }
+        }
 
         val result = service.updateRelationshipDefinition(workspaceId, defId, request)
 
@@ -294,9 +336,16 @@ class EntityTypeRelationshipServiceTest : BaseServiceTest() {
         )
 
         whenever(definitionRepository.findByIdAndWorkspaceId(defId, workspaceId)).thenReturn(Optional.of(existingEntity))
-        whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { it.arguments[0] }
+        whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { invocation ->
+            val entity = invocation.arguments[0] as RelationshipDefinitionEntity
+            if (entity.id == null) entity.copy(id = UUID.randomUUID()) else entity
+        }
         whenever(targetRuleRepository.findByRelationshipDefinitionId(defId)).thenReturn(listOf(existingRule))
-        whenever(targetRuleRepository.saveAll(any<List<RelationshipTargetRuleEntity>>())).thenAnswer { it.arguments[0] }
+        whenever(targetRuleRepository.saveAll(any<List<RelationshipTargetRuleEntity>>())).thenAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            val entities = invocation.arguments[0] as List<RelationshipTargetRuleEntity>
+            entities.map { if (it.id == null) it.copy(id = UUID.randomUUID()) else it }
+        }
 
         val result = service.updateRelationshipDefinition(workspaceId, defId, request)
 
@@ -325,9 +374,16 @@ class EntityTypeRelationshipServiceTest : BaseServiceTest() {
         )
 
         whenever(definitionRepository.findByIdAndWorkspaceId(defId, workspaceId)).thenReturn(Optional.of(existingEntity))
-        whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { it.arguments[0] }
+        whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { invocation ->
+            val entity = invocation.arguments[0] as RelationshipDefinitionEntity
+            if (entity.id == null) entity.copy(id = UUID.randomUUID()) else entity
+        }
         whenever(targetRuleRepository.findByRelationshipDefinitionId(defId)).thenReturn(emptyList())
-        whenever(targetRuleRepository.saveAll(any<List<RelationshipTargetRuleEntity>>())).thenAnswer { it.arguments[0] }
+        whenever(targetRuleRepository.saveAll(any<List<RelationshipTargetRuleEntity>>())).thenAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            val entities = invocation.arguments[0] as List<RelationshipTargetRuleEntity>
+            entities.map { if (it.id == null) it.copy(id = UUID.randomUUID()) else it }
+        }
 
         val result = service.updateRelationshipDefinition(workspaceId, defId, request)
 
@@ -348,7 +404,10 @@ class EntityTypeRelationshipServiceTest : BaseServiceTest() {
 
         whenever(definitionRepository.findByIdAndWorkspaceId(defId, workspaceId)).thenReturn(Optional.of(existingEntity))
         whenever(entityRelationshipRepository.countByDefinitionId(defId)).thenReturn(0)
-        whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { it.arguments[0] }
+        whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { invocation ->
+            val entity = invocation.arguments[0] as RelationshipDefinitionEntity
+            if (entity.id == null) entity.copy(id = UUID.randomUUID()) else entity
+        }
 
         service.deleteRelationshipDefinition(workspaceId, defId, impactConfirmed = false)
 
@@ -397,6 +456,29 @@ class EntityTypeRelationshipServiceTest : BaseServiceTest() {
         assertThrows(IllegalStateException::class.java) {
             service.deleteRelationshipDefinition(workspaceId, defId, impactConfirmed = false)
         }
+    }
+
+    @Test
+    fun `deleteRelationshipDefinition - soft-deletes associated links`() {
+        val defId = UUID.randomUUID()
+        val existingEntity = EntityFactory.createRelationshipDefinitionEntity(
+            id = defId,
+            workspaceId = workspaceId,
+            sourceEntityTypeId = sourceEntityTypeId,
+            name = "Related",
+        )
+
+        whenever(definitionRepository.findByIdAndWorkspaceId(defId, workspaceId)).thenReturn(Optional.of(existingEntity))
+        whenever(entityRelationshipRepository.countByDefinitionId(defId)).thenReturn(3)
+        whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { invocation ->
+            val entity = invocation.arguments[0] as RelationshipDefinitionEntity
+            if (entity.id == null) entity.copy(id = UUID.randomUUID()) else entity
+        }
+
+        service.deleteRelationshipDefinition(workspaceId, defId, impactConfirmed = true)
+
+        verify(entityRelationshipRepository).softDeleteByDefinitionId(defId)
+        verify(definitionRepository).save(argThat<RelationshipDefinitionEntity> { deleted })
     }
 
     // ------ Read ------
