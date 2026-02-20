@@ -54,7 +54,7 @@ Use Hibernate's `@Inheritance(strategy = InheritanceType.SINGLE_TABLE)` with `@D
 
 - **Pros:** Hibernate manages the discriminator value automatically. Type-safe subclasses allow compile-time distinction between target types. Repository queries can be typed to specific subclasses. Spring Data JPA supports `findByType` patterns with inheritance.
 - **Cons:** Creates a class hierarchy for what is effectively identical data -- all three subclasses would have zero additional fields beyond the base class. The project's JPA entities all extend `AuditableSoftDeletableEntity`; adding an intermediate inheritance layer (AuditableSoftDeletableEntity -> SemanticMetadataEntity -> subclass) creates a three-level hierarchy not used anywhere else. Hibernate single-table inheritance has known quirks with `@SQLRestriction` and soft-delete patterns. Three subclass entities, three repositories, and the associated Spring Data JPA inheritance wiring add complexity without functional benefit.
-- **Why rejected:** Over-engineering for identical field shapes. Introduces a JPA inheritance pattern not used anywhere else in the codebase, violating the consistency principle. The manual discriminator with a Kotlin enum (`SemanticTargetType`) is simpler, more explicit, and easier to debug than Hibernate's inheritance machinery. The team would need to learn and maintain a new JPA pattern for zero structural benefit.
+- **Why rejected:** Over-engineering for identical field shapes. Introduces a JPA inheritance pattern not used anywhere else in the codebase, violating the consistency principle. The manual discriminator with a Kotlin enum (`SemanticMetadataTargetType`) is simpler, more explicit, and easier to debug than Hibernate's inheritance machinery. The team would need to learn and maintain a new JPA pattern for zero structural benefit.
 
 ### Alternative 3: Polymorphic JSONB Column
 
@@ -85,7 +85,7 @@ Store all semantic metadata for an entity type in a single JSONB column on a lig
 
 - The CHECK constraint on `target_type` ensures only valid discriminator values (`ENTITY_TYPE`, `ATTRIBUTE`, `RELATIONSHIP`) are stored. Invalid values are rejected at the database level.
 - Partial indexes on `(entity_type_id) WHERE deleted = false` and `(target_type, target_id) WHERE deleted = false` optimize the two primary query patterns: batch-by-entity-type and lookup-by-target.
-- The Kotlin enum `SemanticTargetType` in `riven.core.enums.entity` mirrors the database CHECK constraint values, providing compile-time safety in application code.
+- The Kotlin enum `SemanticMetadataTargetType` in `riven.core.enums.entity` mirrors the database CHECK constraint values, providing compile-time safety in application code.
 
 ---
 
@@ -95,7 +95,7 @@ Store all semantic metadata for an entity type in a single JSONB column on a lig
     - `ENTITY_TYPE`: `target_id` equals `entity_type_id`. The entity type is its own target -- the metadata describes the entity type itself. This keeps the UNIQUE constraint shape consistent across all target types.
     - `ATTRIBUTE`: `target_id` is the attribute UUID key from `entity_types.schema.properties`. This UUID is generated when an attribute is added to the entity type schema and is stable across schema updates.
     - `RELATIONSHIP`: `target_id` is the relationship definition UUID from the `entity_types.relationships` JSONB array (the `id` field of `EntityRelationshipDefinition`).
-- **`classification` validation:** A CHECK constraint allows NULL but rejects non-null values outside the predefined classification set: `IDENTIFIER`, `DESCRIPTIVE`, `TEMPORAL`, `CATEGORICAL`, `QUANTITATIVE`, `RELATIONAL`. The corresponding Kotlin enum is `SemanticClassification` in `riven.core.enums.entity`.
+- **`classification` validation:** A CHECK constraint allows NULL but rejects non-null values outside the predefined classification set: `IDENTIFIER`, `CATEGORICAL`, `QUANTITATIVE`, `TEMPORAL`, `FREETEXT`, `RELATIONAL_REFERENCE`. The corresponding Kotlin enum is `SemanticAttributeClassification` in `riven.core.enums.entity`.
 - **Primary query patterns:**
     - Batch read: `findByEntityTypeIdAndDeletedFalse(entityTypeId)` -- returns all metadata for an entity type across all target types. Used by `?include=semantics`.
     - Single target read: `findByEntityTypeIdAndTargetTypeAndTargetIdAndDeletedFalse(entityTypeId, targetType, targetId)` -- returns metadata for a specific target. Used by individual attribute/relationship semantic endpoints.

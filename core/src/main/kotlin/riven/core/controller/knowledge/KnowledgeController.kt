@@ -19,6 +19,7 @@ import java.util.*
 @Tag(name = "knowledge")
 class KnowledgeController(
     private val semanticMetadataService: EntityTypeSemanticMetadataService,
+    private val entityTypeService: riven.core.service.entity.type.EntityTypeService,
 ) {
 
     // ------ Entity type metadata ------
@@ -186,22 +187,8 @@ class KnowledgeController(
         @PathVariable entityTypeId: UUID,
     ): ResponseEntity<SemanticMetadataBundle> {
         val allMetadata = semanticMetadataService.getAllMetadataForEntityType(workspaceId, entityTypeId)
-        val bundle = buildBundle(entityTypeId, allMetadata)
+        val bundle = entityTypeService.buildSemanticBundle(entityTypeId, allMetadata)
         return ResponseEntity.ok(bundle)
     }
 
-    // ------ Private helpers ------
-
-    private fun buildBundle(
-        entityTypeId: UUID,
-        allMetadata: List<EntityTypeSemanticMetadata>,
-    ): SemanticMetadataBundle {
-        return SemanticMetadataBundle(
-            entityType = allMetadata.firstOrNull { it.targetType == SemanticMetadataTargetType.ENTITY_TYPE },
-            attributes = allMetadata.filter { it.targetType == SemanticMetadataTargetType.ATTRIBUTE }
-                .associateBy { it.targetId },
-            relationships = allMetadata.filter { it.targetType == SemanticMetadataTargetType.RELATIONSHIP }
-                .associateBy { it.targetId },
-        )
-    }
 }

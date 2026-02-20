@@ -43,4 +43,4 @@ out/
 
 ### Planning ###
 .planning/*
-!.planning/codebase/
+!.planning/codebase/.pr-review/

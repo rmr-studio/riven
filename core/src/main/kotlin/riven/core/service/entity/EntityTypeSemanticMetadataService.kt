@@ -15,7 +15,6 @@ import riven.core.models.request.entity.type.BulkSaveSemanticMetadataRequest
 import riven.core.models.request.entity.type.SaveSemanticMetadataRequest
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.repository.entity.EntityTypeSemanticMetadataRepository
-import riven.core.service.auth.AuthTokenService
 import riven.core.util.ServiceUtil
 import java.util.UUID
 
@@ -34,7 +33,6 @@ import java.util.UUID
 class EntityTypeSemanticMetadataService(
     private val repository: EntityTypeSemanticMetadataRepository,
     private val entityTypeRepository: EntityTypeRepository,
-    private val authTokenService: AuthTokenService,
     private val logger: KLogger,
 ) {
 
@@ -286,7 +284,9 @@ class EntityTypeSemanticMetadataService(
      * @param entityTypeId the entity type to restore metadata for
      */
     fun restoreForEntityType(entityTypeId: UUID) {
-        logger.warn { "restoreForEntityType not yet implemented - requires native query to bypass @SQLRestriction" }
+        throw UnsupportedOperationException(
+            "restoreForEntityType not yet implemented — requires native query to bypass @SQLRestriction"
+        )
     }
 
     // ------ Private helpers ------

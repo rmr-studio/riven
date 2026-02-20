@@ -329,8 +329,9 @@ class EntityTypeService(
 
         val bundleMap = if ("semantics" in include) {
             val allMetadata = semanticMetadataService.getMetadataForEntityTypes(entityTypes.map { it.id })
+            val metadataByEntityType = allMetadata.groupBy { it.entityTypeId }
             entityTypes.associate { et ->
-                et.id to buildSemanticBundle(et.id, allMetadata.filter { m -> m.entityTypeId == et.id })
+                et.id to buildSemanticBundle(et.id, metadataByEntityType[et.id] ?: emptyList())
             }
         } else {
             emptyMap()
@@ -391,8 +392,7 @@ class EntityTypeService(
         return ServiceUtil.findManyResults { entityTypeRepository.findAllById(ids) }
     }
 
-    // ------ Private helpers ------
-
+    // ------ Relationship Helpers ------
     /**
      * Delegates relationship definition create/update to EntityTypeRelationshipService.
      */
@@ -448,7 +448,9 @@ class EntityTypeService(
         }
     }
 
-    private fun buildSemanticBundle(
+    // ------ Semantic helpers ------
+
+    fun buildSemanticBundle(
         entityTypeId: UUID,
         metadata: List<EntityTypeSemanticMetadata>,
     ): SemanticMetadataBundle {
