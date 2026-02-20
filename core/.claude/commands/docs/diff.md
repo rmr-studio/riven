@@ -10,6 +10,8 @@ allowed-tools:
   - Bash
   - Task
   - AskUserQuestion
+  - EnterPlanMode
+  - ExitPlanMode
 ---
 
 <objective>
@@ -74,7 +76,11 @@ Located at `/home/jared/dev/riven/docs/templates/Documentation/`:
 
 <process>
 
-## Step 1: Branch Context
+## Step 1: Enter Plan Mode
+
+Call `EnterPlanMode` to begin the read-only analysis phase. All exploration and analysis in Steps 2–4 happens inside plan mode — no files are written until after the user approves the plan.
+
+## Step 2: Branch Context
 
 Gather the diff context by running these git commands:
 
@@ -94,7 +100,7 @@ git diff main...HEAD -- '*.kt' '*.java' '*.sql' '*.yml' '*.yaml' '*.properties'
 
 If the branch IS `main` or has no commits ahead of `main`, inform the user and stop. This command requires an active feature branch with changes.
 
-## Step 2: Map Changes to Vault
+## Step 3: Map Changes to Vault
 
 For each changed source file from the diff:
 
@@ -118,12 +124,12 @@ Domain: Entities
     - EntityTypeSemanticMetadataEntity.kt (Added) — entity
 ```
 
-## Step 3: Read Context
+## Step 4: Read Context
 
 Read the following to calibrate documentation voice and depth:
 
 ### Templates
-Read these template files (only the ones needed based on Step 2 findings):
+Read these template files (only the ones needed based on Step 3 findings):
 - `/home/jared/dev/riven/docs/templates/Documentation/Component Overview.md` (if full component docs needed)
 - `/home/jared/dev/riven/docs/templates/Documentation/Component Overview - Quick.md` (if quick docs needed)
 - `/home/jared/dev/riven/docs/templates/Domain/Subdomain Overview.md` (if new subdomains)
@@ -141,40 +147,63 @@ Read the existing domain index and subdomain index docs that will need updating:
 - `../docs/system-design/domains/{Domain}/{Domain}.md`
 - `../docs/system-design/domains/{Domain}/{Subdomain}/{Subdomain}.md`
 
-## Step 4: Build Documentation Manifest
+## Step 5: Analysis & Impact Plan
 
-Present a manifest to the user via `AskUserQuestion` with these sections:
+Write a structured analysis to the plan file with the following sections. This replaces the previous manifest approach — the plan file gives the user a comprehensive view of all proposed changes and their impact before any files are written.
 
-### New Component Docs to Create
-| Component | Domain/Subdomain | Template | Reason |
-|-----------|-----------------|----------|--------|
+### Plan File Sections
+
+**1. Change Summary**
+- What the branch does (high-level purpose)
+- Commits involved (from Step 2)
+- Scope of changes (files changed, domains touched)
+
+**2. Existing Documents to Update**
+
+| Document | Domain / Subdomain | Sections Affected | What Changed |
+|----------|-------------------|-------------------|--------------|
+| `EntityTypeService.md` | Entities / Type System | Public Methods, Dependencies | Added `getFoo()` method |
+
+**3. New Documents to Create**
+
+| Component | Domain / Subdomain | Template | Rationale |
+|-----------|-------------------|----------|-----------|
 | `FooService` | Entities / Type System | Full | 7 public methods, complex validation |
 
-### Existing Component Docs to Update
-| Component | Domain/Subdomain | Sections to Update | What Changed |
-|-----------|-----------------|-------------------|--------------|
-| `EntityTypeService` | Entities / Type System | Public Methods, Dependencies | Added `getFoo()` method |
+Include the Full vs Quick template rationale for each: Full when 5+ public methods, complex dependencies, or non-trivial business logic; Quick otherwise.
 
-### Index Docs to Update
+**4. Index Documents to Update**
+
 | Document | What to Add |
 |----------|-------------|
 | `Type System.md` | Add FooService to component list |
 
-### New Flow Docs (if applicable)
-| Flow | Template | Trigger |
-|------|----------|---------|
-| `Semantic Metadata Resolution` | Quick | New cross-domain flow |
+**5. New Flow/Subdomain Docs** (if applicable)
 
-### New Subdomains (if applicable)
-| Subdomain | Domain | Components |
-|-----------|--------|------------|
-| `Semantic Metadata` | Entities | 3 new components |
+| Name | Type | Template | Trigger/Rationale |
+|------|------|----------|-------------------|
+| `Semantic Metadata` | Subdomain | Subdomain Overview | New subdomain introduced by diff |
+| `Semantic Metadata Resolution` | Flow | Quick | New cross-domain flow |
 
-**IMPORTANT**: Do NOT proceed without user confirmation. The user may want to adjust template selection, skip certain docs, or add context.
+**6. Architecture Impact**
+- New cross-domain dependencies introduced by the diff
+- Changed API surface (new/modified endpoints)
+- New components and their architectural roles
+- Pattern deviations or extensions from existing conventions
 
-## Step 5: Generate/Update Documentation
+**7. Points to Consider**
+- Documentation gaps that may need manual attention
+- Areas where the diff touched code but existing docs were already accurate (no update needed)
+- Architectural observations from the diff (inconsistencies, notable patterns)
+- Risks or open questions
 
-After user confirmation, spawn Task sub-agents (up to 3 parallel) grouped by work type:
+After writing the plan, call `ExitPlanMode` for user approval. Do NOT proceed to Step 6 until the user has approved the plan.
+
+**Note:** `AskUserQuestion` remains available for mid-analysis clarifications during Steps 2–4 (e.g., ambiguous domain mapping, unclear subdomain boundaries). It is NOT used for plan/manifest approval — that is handled by `ExitPlanMode`.
+
+## Step 6: Generate/Update Documentation
+
+After user approval, spawn Task sub-agents (up to 3 parallel) grouped by work type:
 
 ### Agent Group 1: New Component Docs
 For each new component doc, the sub-agent must:
@@ -188,7 +217,7 @@ For each new component doc, the sub-agent must:
   - **Security**: Note `@PreAuthorize` annotations, workspace scoping
 - Follow frontmatter conventions: `tags`, `Created` (today's date), `Domains`
 - Use `[[WikiLink]]` syntax for all cross-references
-- Match the voice/depth of the exemplar docs read in Step 3
+- Match the voice/depth of the exemplar docs read in Step 4
 - Write the file to `../docs/system-design/domains/{Domain}/{Subdomain}/{ComponentName}.md`
 
 ### Agent Group 2: Existing Doc Edits
@@ -212,7 +241,7 @@ For each existing doc to update:
 - The list of all existing doc names for valid `[[WikiLink]]` targets
 - The exact output file paths
 
-## Step 6: Verification
+## Step 7: Verification
 
 After all documents are written, verify quality:
 
@@ -224,7 +253,7 @@ After all documents are written, verify quality:
    - Mermaid code blocks (if any) have matching opening/closing fences and valid diagram type keywords
 3. Fix any issues found before proceeding
 
-## Step 7: Summary Report
+## Step 8: Summary Report
 
 Present to the user:
 
@@ -256,6 +285,7 @@ Present to the user:
 - Subdomain and domain index docs reflect the new components
 - All `[[WikiLinks]]` resolve to existing or newly created documents
 - Frontmatter is valid with correct tags, dates, and domains
-- User confirmed the documentation manifest before any files were written
+- User approved the structured analysis plan via `ExitPlanMode` before any files were written
 - Summary report covers created docs, updated docs, architectural impact, and considerations
 </success_criteria>
+</output>

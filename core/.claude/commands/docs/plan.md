@@ -10,6 +10,8 @@ allowed-tools:
   - Bash
   - Task
   - AskUserQuestion
+  - EnterPlanMode
+  - ExitPlanMode
 ---
 
 <objective>
@@ -76,7 +78,11 @@ Translate a GSD phase's planning documents into fully authored architectural doc
 
 <process>
 
-## Step 1: Validate and Parse Phase
+## Step 1: Enter Plan Mode
+
+Call `EnterPlanMode` to begin the read-only analysis phase. All exploration and analysis in Steps 2–4 happens inside plan mode — no files are written until after the user approves the plan.
+
+## Step 2: Validate and Parse Phase
 
 Parse `$ARGUMENTS` as the phase number. If empty or non-numeric, ask the user which phase to generate documentation for.
 
@@ -88,7 +94,7 @@ Read `.planning/ROADMAP.md` and locate the phase section matching the number. Ex
 
 If the phase number doesn't exist in the roadmap, report the error and list available phases.
 
-## Step 2: Gather All Context
+## Step 3: Gather All Context
 
 Read the following files (skip any that don't exist — not all phases will have all files):
 
@@ -114,7 +120,7 @@ Read the following files (skip any that don't exist — not all phases will have
 **Existing ADR numbering:**
 - Glob `../docs/system-design/decisions/*.md` and determine the highest ADR number in use. New ADRs continue from the next number.
 
-## Step 3: Identify Documentation Artifacts
+## Step 4: Identify Documentation Artifacts
 
 Analyze the gathered context and determine what documents to create. Use these heuristics:
 
@@ -130,7 +136,7 @@ For each feature, determine template selection:
 - **Full template** when the feature has 3+ of: new DB tables, new API endpoints, multiple new components, external integrations, complex failure modes, cross-domain flows, security considerations
 - **Quick template** otherwise
 
-Check if a document with matching name already exists in the vault. If it does, flag it for the user (Step 4).
+Check if a document with matching name already exists in the vault. If it does, flag it for the user.
 
 ### ADRs
 
@@ -153,43 +159,76 @@ Select Full vs Quick flow template based on complexity.
 
 If this is the first phase generating features for the sub-domain (check if the sub-domain plan is still a stub/template), plan to populate it after features are written.
 
-## Step 4: Build Generation Manifest and Get User Approval
+## Step 5: Analysis & Impact Plan
 
-Create a structured manifest listing every document to generate:
+Write a structured analysis to the plan file with the following sections. This replaces the previous manifest approach — the plan file gives the user a comprehensive view of all proposed documentation and its architectural context before any files are written.
 
-```
-## Documentation Generation Manifest — Phase N
+### Plan File Sections
 
-### Features
-| # | Name | Template | Output Path | Exists? | Source Context |
-|---|------|----------|-------------|---------|----------------|
-| 1 | ...  | Full/Quick | ...        | Yes/No  | Req IDs, PLAN.md |
+**1. Phase Summary**
+- Phase number, name, and goal
+- Requirement IDs covered
+- Success criteria from the roadmap
+- Dependencies on prior phases
 
-### ADRs
+**2. Existing Documents to Update**
+
+| Document | Location | What Changes | Why |
+|----------|----------|--------------|-----|
+| `Entity Integration Sync.md` | `feature-design/_Sub-Domain Plans/` | Populate from stub | First phase generating features for this sub-domain |
+
+Include any vault docs that will be modified (e.g., sub-domain plans that are currently stubs, existing features that overlap).
+
+**3. New Documents to Create**
+
+#### Features
+| # | Name | Template | Output Path | Source Context |
+|---|------|----------|-------------|----------------|
+| 1 | Integration Access Layer | Full | `feature-design/1. Planning/` | INTG-01/02/03/06, PLAN.md |
+
+Include the Full vs Quick template rationale for each feature.
+
+#### ADRs
 | # | Title | ADR Number | Source Decision |
 |---|-------|------------|-----------------|
-| 1 | ...   | ADR-NNN    | From PROJECT.md |
+| 1 | Use JSONPath for Schema Mapping | ADR-NNN | From PROJECT.md Key Decisions |
 
-### Flows
-| # | Name | Template | Trigger |
-|---|------|----------|---------|
-| 1 | ...  | Full/Quick | ... |
+#### Flows (if applicable)
+| # | Name | Template | Trigger/Rationale |
+|---|------|----------|-------------------|
+| 1 | Webhook-to-Entity Sync Pipeline | Full | Cross-domain async flow via Temporal |
 
-### Sub-Domain Plan
-- [ ] Populate `Entity Integration Sync.md` (currently stub)
+**4. Proposed Directory Changes**
+Full listing of all file paths to create or modify under `../docs/system-design/`:
 
-### Existing Documents
-- `Integration Access Layer.md` — exists as draft, will be replaced with fully authored version
-- (list any others)
+```
+CREATE: feature-design/1. Planning/Integration Access Layer.md
+CREATE: decisions/ADR-007 Use JSONPath for Schema Mapping.md
+CREATE: flows/Webhook-to-Entity Sync Pipeline.md
+UPDATE: feature-design/_Sub-Domain Plans/Entity Integration Sync.md
 ```
 
-Present this manifest to the user via AskUserQuestion. Ask them to confirm or adjust. If documents already exist, ask whether to replace them with fully authored versions or skip.
+**5. Architecture Impact**
+- New domains or subdomains being introduced or documented
+- Cross-domain dependencies surfaced by this phase
+- New components and their architectural roles
+- Pattern decisions being documented (ADRs)
+- How this phase's scope relates to existing vault documentation
 
-**IMPORTANT**: Do NOT proceed to generation without user confirmation of the manifest.
+**6. Points to Consider**
+- Gaps in source material (requirements that lack detail, missing PLAN.md files)
+- Decisions that need human input before documentation can be finalized
+- Assumptions being made about architecture or scope
+- Areas where existing vault docs may conflict with or be superseded by new content
+- Open questions from the analysis
 
-## Step 5: Generate Documents (parallel via Task sub-agents)
+After writing the plan, call `ExitPlanMode` for user approval. Do NOT proceed to Step 6 until the user has approved the plan.
 
-After user confirms the manifest, spawn Task sub-agents to generate documents in parallel, grouped by type. Use up to 3 parallel agents:
+**Note:** `AskUserQuestion` remains available for mid-analysis clarifications during Steps 2–4 (e.g., ambiguous requirement grouping, unclear feature boundaries). It is NOT used for plan/manifest approval — that is handled by `ExitPlanMode`.
+
+## Step 6: Generate Documents (parallel via Task sub-agents)
+
+After user approval, spawn Task sub-agents to generate documents in parallel, grouped by type. Use up to 3 parallel agents:
 
 ### Task 1: "Feature Design Documents"
 
@@ -243,7 +282,7 @@ Each flow must have:
 
 **If fewer than 3 document types need generation, use fewer agents.** If only features and the sub-domain plan are needed, a single agent is fine.
 
-## Step 6: Generate/Update Sub-Domain Plan
+## Step 7: Generate/Update Sub-Domain Plan
 
 After feature documents are written, populate the sub-domain plan (`../docs/system-design/feature-design/_Sub-Domain Plans/Entity Integration Sync.md`).
 
@@ -284,7 +323,7 @@ Read the current file and replace its template content while preserving the exis
 
 11. **Changelog** — add entry: today's date, "Claude", "Populated from GSD Phase N planning documents"
 
-## Step 7: Verification Pass
+## Step 8: Verification Pass
 
 After all documents are written, verify quality:
 
@@ -301,7 +340,7 @@ After all documents are written, verify quality:
    - Any issues found (broken links, remaining placeholders, invalid frontmatter)
    - List of all cross-references used
 
-## Step 8: Update Architecture Changelog
+## Step 9: Update Architecture Changelog
 
 Append an entry to `docs/architecture-changelog.md` following the CLAUDE.md format:
 
@@ -351,5 +390,5 @@ After completing all steps, provide a summary to the user:
 - All `[[WikiLinks]]` resolve to existing or newly created documents
 - Frontmatter is valid with correct tags, dates, domains, and sub-domain references
 - Architecture changelog has a new entry documenting what was generated
-- User confirmed the generation manifest before any documents were written
+- User approved the structured analysis plan via `ExitPlanMode` before any documents were written
 </success_criteria>
