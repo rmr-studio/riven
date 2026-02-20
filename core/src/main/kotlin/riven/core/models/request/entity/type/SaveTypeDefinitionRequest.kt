@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping
 import io.swagger.v3.oas.annotations.media.Schema
+import riven.core.enums.common.icon.IconColour
+import riven.core.enums.common.icon.IconType
+import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.enums.entity.EntityTypeRequestDefinition
 import riven.core.models.entity.EntityTypeSchema
-import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import java.util.*
 
 
@@ -32,10 +34,24 @@ data class SaveAttributeDefinitionRequest(
 data class SaveRelationshipDefinitionRequest(
     override val key: String,
     override val id: UUID,
-    val relationship: EntityRelationshipDefinition
+    val name: String,
+    val iconType: IconType?,
+    val iconColour: IconColour?,
+    val allowPolymorphic: Boolean = false,
+    val cardinalityDefault: EntityRelationshipCardinality,
+    val targetRules: List<SaveTargetRuleRequest> = emptyList(),
 ) : TypeDefinition {
     override val type: EntityTypeRequestDefinition = EntityTypeRequestDefinition.SAVE_RELATIONSHIP
 }
+
+data class SaveTargetRuleRequest(
+    val id: UUID? = null,
+    val targetEntityTypeId: UUID? = null,
+    val semanticTypeConstraint: String? = null,
+    val cardinalityOverride: EntityRelationshipCardinality? = null,
+    val inverseVisible: Boolean = false,
+    val inverseName: String? = null,
+)
 
 
 data class SaveTypeDefinitionRequest(
@@ -50,4 +66,3 @@ data class SaveTypeDefinitionRequest(
     )
     val definition: TypeDefinition
 )
-
