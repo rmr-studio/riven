@@ -12,6 +12,7 @@ import riven.core.models.request.entity.type.CreateEntityTypeRequest
 import riven.core.models.request.entity.type.DeleteTypeDefinitionRequest
 import riven.core.models.request.entity.type.SaveTypeDefinitionRequest
 import riven.core.models.response.entity.type.EntityTypeImpactResponse
+import riven.core.models.response.entity.type.EntityTypeWithSemanticsResponse
 import riven.core.service.entity.type.EntityTypeService
 import java.util.*
 
@@ -19,28 +20,32 @@ import java.util.*
 @RequestMapping("/api/v1/entity/schema")
 @Tag(name = "entity")
 class EntityTypeController(
-    private val entityTypeService: EntityTypeService
+    private val entityTypeService: EntityTypeService,
 ) {
 
     @GetMapping("workspace/{workspaceId}")
     @Operation(
-        summary = "Get all entity types for an workspace",
-        description = "Retrieves all entity types associated with the specified workspace."
+        summary = "Get all entity types for a workspace",
+        description = "Retrieves all entity types associated with the specified workspace. " +
+            "Pass `?include=semantics` to attach semantic metadata bundles alongside each entity type."
     )
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "Entity types retrieved successfully"),
         ApiResponse(responseCode = "401", description = "Unauthorized access"),
         ApiResponse(responseCode = "404", description = "Workspace not found")
     )
-    fun getEntityTypesForWorkspace(@PathVariable workspaceId: UUID): ResponseEntity<List<EntityType>> {
-        val entityTypes = entityTypeService.getWorkspaceEntityTypes(workspaceId)
-        return ResponseEntity.ok(entityTypes)
+    fun getEntityTypesForWorkspace(
+        @PathVariable workspaceId: UUID,
+        @RequestParam(required = false) include: List<String> = emptyList(),
+    ): ResponseEntity<List<EntityTypeWithSemanticsResponse>> {
+        return ResponseEntity.ok(entityTypeService.getWorkspaceEntityTypesWithIncludes(workspaceId, include))
     }
 
     @GetMapping("/workspace/{workspaceId}/key/{key}")
     @Operation(
-        summary = "Get an entity type by key for an workspace",
-        description = "Retrieves a specific entity type by its key associated with the specified workspace."
+        summary = "Get an entity type by key for a workspace",
+        description = "Retrieves a specific entity type by its key associated with the specified workspace. " +
+            "Pass `?include=semantics` to attach the semantic metadata bundle."
     )
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "Entity type retrieved successfully"),
@@ -49,10 +54,10 @@ class EntityTypeController(
     )
     fun getEntityTypeByKeyForWorkspace(
         @PathVariable workspaceId: UUID,
-        @PathVariable key: String
-    ): ResponseEntity<EntityType> {
-        val entityType = entityTypeService.getByKey(key, workspaceId)
-        return ResponseEntity.ok(entityType.toModel())
+        @PathVariable key: String,
+        @RequestParam(required = false) include: List<String> = emptyList(),
+    ): ResponseEntity<EntityTypeWithSemanticsResponse> {
+        return ResponseEntity.ok(entityTypeService.getEntityTypeByKeyWithIncludes(workspaceId, key, include))
     }
 
     @PostMapping("/workspace/{workspaceId}")

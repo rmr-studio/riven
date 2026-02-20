@@ -16,12 +16,14 @@ import riven.core.models.entity.relationship.EntityTypeReferenceRelationshipBuil
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDeleteRequest
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipModification
+import riven.core.enums.entity.SemanticMetadataTargetType
 import riven.core.models.request.entity.type.DeleteRelationshipDefinitionRequest
 import riven.core.models.request.entity.type.SaveRelationshipDefinitionRequest
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.entity.EntityTypeSemanticMetadataService
 import java.util.*
 
 /**
@@ -31,7 +33,8 @@ import java.util.*
 class EntityTypeRelationshipService(
     private val entityTypeRepository: EntityTypeRepository,
     private val activityService: ActivityService,
-    private val authTokenService: AuthTokenService
+    private val authTokenService: AuthTokenService,
+    private val semanticMetadataService: EntityTypeSemanticMetadataService,
 ) {
 
 
@@ -581,6 +584,13 @@ class EntityTypeRelationshipService(
         sourceEntityType = sourceEntityType.copy(relationships = updatedRelationships, columns = updatedOrder)
         entityTypes[sourceKey] = sourceEntityType
 
+        // Hard-delete semantic metadata for the removed ORIGIN relationship
+        semanticMetadataService.deleteForTarget(
+            entityTypeId = requireNotNull(sourceEntityType.id),
+            targetType = SemanticMetadataTargetType.RELATIONSHIP,
+            targetId = originRelationship.id,
+        )
+
         // If bidirectional, remove all inverse REFERENCE relationships from target entity types
         if (originRelationship.bidirectional) {
             val targetKeys = originRelationship.bidirectionalEntityTypeKeys ?: emptyList()
@@ -603,6 +613,7 @@ class EntityTypeRelationshipService(
 
     /**
      * Removes the inverse REFERENCE relationship from a target entity type.
+     * Hard-deletes the associated semantic metadata record.
      */
     private fun removeInverseReferenceRelationship(
         targetEntityTypeKey: String,
@@ -613,6 +624,12 @@ class EntityTypeRelationshipService(
         var targetEntityType = retrieveEntityType(targetEntityTypeKey, workspaceId, entityTypes)
         val targetRelationships = targetEntityType.relationships?.toMutableList() ?: mutableListOf()
 
+        // Find the REFERENCE relationship before removing it (need the ID for metadata cleanup)
+        val removedReference = targetRelationships.find { relDef ->
+            relDef.relationshipType == EntityTypeRelationshipType.REFERENCE &&
+                    relDef.originRelationshipId == originRelationshipId
+        }
+
         // Find and remove the REFERENCE relationship that points to this ORIGIN
         targetRelationships.removeIf { relDef ->
             relDef.relationshipType == EntityTypeRelationshipType.REFERENCE &&
@@ -621,6 +638,15 @@ class EntityTypeRelationshipService(
 
         targetEntityType = targetEntityType.copy(relationships = targetRelationships)
         entityTypes[targetEntityTypeKey] = targetEntityType
+
+        // Hard-delete semantic metadata for the removed REFERENCE relationship
+        if (removedReference != null) {
+            semanticMetadataService.deleteForTarget(
+                entityTypeId = requireNotNull(targetEntityType.id),
+                targetType = SemanticMetadataTargetType.RELATIONSHIP,
+                targetId = removedReference.id,
+            )
+        }
     }
 
     /**
@@ -674,6 +700,13 @@ class EntityTypeRelationshipService(
             }.also {
                 entityTypes[type.key] = it
             }
+
+            // Hard-delete semantic metadata for the removed REFERENCE relationship
+            semanticMetadataService.deleteForTarget(
+                entityTypeId = requireNotNull(type.id),
+                targetType = SemanticMetadataTargetType.RELATIONSHIP,
+                targetId = referenceRelationship.id,
+            )
         }
 
 
@@ -1302,7 +1335,7 @@ class EntityTypeRelationshipService(
 
     /**
      * Adds or updates a relationship in an entity type.
-
+     * Initializes a semantic metadata record for newly added relationships.
      */
     private fun addOrUpdateRelationship(
         entityType: EntityTypeEntity,
@@ -1324,6 +1357,14 @@ class EntityTypeRelationshipService(
             entityType.columns += EntityTypeAttributeColumn(
                 newRelationship.id,
                 EntityPropertyType.RELATIONSHIP
+            )
+
+            // Initialize empty semantic metadata for the new relationship
+            semanticMetadataService.initializeForTarget(
+                entityTypeId = requireNotNull(entityType.id),
+                workspaceId = requireNotNull(entityType.workspaceId),
+                targetType = SemanticMetadataTargetType.RELATIONSHIP,
+                targetId = newRelationship.id,
             )
         }
 

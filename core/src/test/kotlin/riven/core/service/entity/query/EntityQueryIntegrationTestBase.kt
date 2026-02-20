@@ -144,7 +144,9 @@ abstract class EntityQueryIntegrationTestBase {
 
     companion object {
         @JvmStatic
-        val postgres: PostgreSQLContainer = PostgreSQLContainer(DockerImageName.parse("postgres:16-alpine"))
+        val postgres: PostgreSQLContainer = PostgreSQLContainer(
+            DockerImageName.parse("pgvector/pgvector:pg16").asCompatibleSubstituteFor("postgres")
+        )
             .withDatabaseName("riven_test")
             .withUsername("test")
             .withPassword("test")

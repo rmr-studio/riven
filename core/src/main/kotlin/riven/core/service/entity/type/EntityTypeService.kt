@@ -18,11 +18,16 @@ import riven.core.models.entity.configuration.EntityTypeAttributeColumn
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDeleteRequest
 import riven.core.models.entity.relationship.analysis.EntityTypeRelationshipDiff
 import riven.core.models.request.entity.type.*
+import riven.core.enums.entity.SemanticMetadataTargetType
+import riven.core.models.entity.EntityTypeSemanticMetadata
 import riven.core.models.response.entity.type.EntityTypeImpactResponse
+import riven.core.models.response.entity.type.EntityTypeWithSemanticsResponse
+import riven.core.models.response.entity.type.SemanticMetadataBundle
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.entity.EntityTypeSemanticMetadataService
 import riven.core.util.ServiceUtil
 import java.util.*
 
@@ -41,6 +46,7 @@ class EntityTypeService(
     private val impactAnalysisService: EntityTypeRelationshipImpactAnalysisService,
     private val authTokenService: AuthTokenService,
     private val activityService: ActivityService,
+    private val semanticMetadataService: EntityTypeSemanticMetadataService,
 ) {
 
     /**
@@ -90,14 +96,19 @@ class EntityTypeService(
             ).run {
                 entityTypeRepository.save(this)
             }.also {
-                requireNotNull(it.id)
+                val entityTypeId = requireNotNull(it.id)
+                semanticMetadataService.initializeForEntityType(
+                    entityTypeId = entityTypeId,
+                    workspaceId = workspaceId,
+                    attributeIds = listOf(primaryId)
+                )
                 activityService.log(
                     activity = Activity.ENTITY_TYPE,
                     operation = OperationType.CREATE,
                     userId = userId,
                     workspaceId = requireNotNull(it.workspaceId) { "Cannot create system entity type" },
                     entityType = ApplicationEntityType.ENTITY_TYPE,
-                    entityId = it.id,
+                    entityId = entityTypeId,
                     "type" to it.key,
                     "version" to 1,
                     "category" to it.type.name
@@ -439,6 +450,7 @@ class EntityTypeService(
                 .mapValues { entry -> entry.value.toModel() }
         }
 
+        semanticMetadataService.softDeleteForEntityType(requireNotNull(existing.id))
         entityTypeRepository.delete(existing).also {
             activityService.log(
                 activity = Activity.ENTITY_TYPE,
@@ -459,8 +471,56 @@ class EntityTypeService(
     }
 
 
+    // ------ Public read operations ------
+
     /**
-     * Get all entity types for an workspace (including system types).
+     * Get all entity types for a workspace, optionally enriched with semantic metadata.
+     */
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun getWorkspaceEntityTypesWithIncludes(
+        workspaceId: UUID,
+        include: List<String>,
+    ): List<EntityTypeWithSemanticsResponse> {
+        val entityTypes = getWorkspaceEntityTypes(workspaceId)
+
+        val bundleMap = if ("semantics" in include) {
+            val allMetadata = semanticMetadataService.getMetadataForEntityTypes(entityTypes.map { it.id })
+            val metadataByEntityType = allMetadata.groupBy { it.entityTypeId }
+            entityTypes.associate { et ->
+                et.id to buildSemanticBundle(et.id, metadataByEntityType[et.id] ?: emptyList())
+            }
+        } else {
+            emptyMap()
+        }
+
+        return entityTypes.map { et ->
+            EntityTypeWithSemanticsResponse(entityType = et, semantics = bundleMap[et.id])
+        }
+    }
+
+    /**
+     * Get a single entity type by key, optionally enriched with semantic metadata.
+     */
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun getEntityTypeByKeyWithIncludes(
+        workspaceId: UUID,
+        key: String,
+        include: List<String>,
+    ): EntityTypeWithSemanticsResponse {
+        val entityType = getByKey(key, workspaceId).toModel()
+
+        val bundle = if ("semantics" in include) {
+            val allMetadata = semanticMetadataService.getAllMetadataForEntityType(workspaceId, entityType.id)
+            buildSemanticBundle(entityType.id, allMetadata)
+        } else {
+            null
+        }
+
+        return EntityTypeWithSemanticsResponse(entityType = entityType, semantics = bundle)
+    }
+
+    /**
+     * Get all entity types for a workspace (including system types).
      */
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun getWorkspaceEntityTypes(workspaceId: UUID): List<EntityType> {
@@ -486,5 +546,20 @@ class EntityTypeService(
      */
     fun getByIds(ids: Collection<UUID>): List<EntityTypeEntity> {
         return ServiceUtil.findManyResults { entityTypeRepository.findAllById(ids) }
+    }
+
+    // ------ Semantic helpers ------
+
+    fun buildSemanticBundle(
+        entityTypeId: UUID,
+        metadata: List<EntityTypeSemanticMetadata>,
+    ): SemanticMetadataBundle {
+        return SemanticMetadataBundle(
+            entityType = metadata.firstOrNull { it.targetType == SemanticMetadataTargetType.ENTITY_TYPE },
+            attributes = metadata.filter { it.targetType == SemanticMetadataTargetType.ATTRIBUTE }
+                .associateBy { it.targetId },
+            relationships = metadata.filter { it.targetType == SemanticMetadataTargetType.RELATIONSHIP }
+                .associateBy { it.targetId },
+        )
     }
 }

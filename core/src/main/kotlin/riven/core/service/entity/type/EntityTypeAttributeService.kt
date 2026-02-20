@@ -12,6 +12,8 @@ import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.request.entity.type.SaveAttributeDefinitionRequest
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityUniqueValuesRepository
+import riven.core.enums.entity.SemanticMetadataTargetType
+import riven.core.service.entity.EntityTypeSemanticMetadataService
 import riven.core.service.entity.EntityValidationService
 import java.util.*
 
@@ -19,7 +21,8 @@ import java.util.*
 class EntityTypeAttributeService(
     private val entityValidationService: EntityValidationService,
     private val entityRepository: EntityRepository,
-    private val uniqueEntityValueRepository: EntityUniqueValuesRepository
+    private val uniqueEntityValueRepository: EntityUniqueValuesRepository,
+    private val semanticMetadataService: EntityTypeSemanticMetadataService,
 ) {
 
     fun saveAttributeDefinition(
@@ -29,6 +32,9 @@ class EntityTypeAttributeService(
     ) {
         val typeId = requireNotNull(type.id) { "Entity type ID must not be null when saving attribute definition" }
         val (_, id: UUID, attribute: EntityTypeSchema) = request
+
+        // Detect whether this is a new attribute before we upsert it, so we can initialize semantic metadata if needed
+        val isNewAttribute = type.schema.properties?.containsKey(id) != true
 
         // Validate some basic constraints on the attribute definition itself
         if (attribute.unique) {
@@ -75,6 +81,15 @@ class EntityTypeAttributeService(
         type.apply {
             schema = updatedSchema
         }
+
+        if (isNewAttribute) {
+            semanticMetadataService.initializeForTarget(
+                entityTypeId = typeId,
+                workspaceId = requireNotNull(type.workspaceId),
+                targetType = SemanticMetadataTargetType.ATTRIBUTE,
+                targetId = id,
+            )
+        }
     }
 
     fun removeAttributeDefinition(
@@ -91,6 +106,12 @@ class EntityTypeAttributeService(
         type.apply {
             schema = updatedSchema
         }
+
+        semanticMetadataService.deleteForTarget(
+            entityTypeId = requireNotNull(type.id),
+            targetType = SemanticMetadataTargetType.ATTRIBUTE,
+            targetId = attributeId,
+        )
     }
 
     fun extractUniqueAttributes(

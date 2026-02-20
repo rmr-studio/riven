@@ -326,6 +326,8 @@ If `docs/architecture-changelog.md` doesn't exist yet, create it with a header:
 
 Append-only log of architectural changes made during development tasks.
 
+If the feature design plan has been successfully drafted. The file itself should be moved to the next step (2.Planned). Make the directory if it does not exist.
+
 ---
 ```
 
