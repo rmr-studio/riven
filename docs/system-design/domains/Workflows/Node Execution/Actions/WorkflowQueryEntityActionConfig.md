@@ -18,12 +18,7 @@ Queries entities by type with attribute and relationship filtering, supporting c
 - Configure query parameters (entity type, filters, pagination, projection)
 - Validate recursive filter structure with compound AND/OR and nested relationships
 - Validate template syntax in filter values
-- Execute entity queries (NOT YET IMPLEMENTED - validation only)
-
-**Explicitly NOT responsible for:**
-- Query execution (planned but not implemented)
-- Query optimization (delegated to future EntityQueryService)
-- Result caching
+- Execute entity queries via [[EntityQueryService]] with template-resolved filter trees
 
 ---
 
@@ -44,6 +39,14 @@ Queries entities by type with attribute and relationship filtering, supporting c
 | [[QueryFilter]] (Entities domain) | Sealed class for attribute/relationship filters | High |
 | [[RelationshipFilter]] (Entities domain) | Relationship condition types | High |
 
+### Runtime Execution Dependencies
+
+| Component | Purpose | Coupling |
+|---|---|---|
+| [[EntityQueryService]] (Entities domain) | Executes resolved entity queries | High |
+| [[WorkflowNodeInputResolverService]] | Resolves template values in inputs | Medium |
+| WorkflowFilterTemplateUtils | Resolves template values within filter trees | Medium |
+
 ---
 
 ## Consumed By
@@ -51,7 +54,7 @@ Queries entities by type with attribute and relationship filtering, supporting c
 | Component | How It Uses This | Notes |
 |---|---|---|
 | [[WorkflowNodeConfigRegistry]] | Discovers at startup via classpath scan | Auto-registration |
-| [[WorkflowNode]] | Executes via `execute()` method | Throws NotImplementedError at runtime |
+| [[WorkflowNode]] | Executes via `execute()` method | Executes query via EntityQueryService at runtime |
 
 ---
 
@@ -63,6 +66,18 @@ Queries entities by type with attribute and relationship filtering, supporting c
 | `pagination` | JSON | No | Pagination (limit, offset) and ordering configuration |
 | `projection` | JSON | No | Field selection for query results |
 | `timeoutSeconds` | DURATION | No | Optional timeout override in seconds |
+
+---
+
+## Output Metadata
+
+Declared on companion object for frontend preview and downstream node reference:
+
+| Field | Type | Description |
+|---|---|---|
+| `entities` | ENTITY_LIST | List of entities matching the query filters (entity type resolved at runtime) |
+| `totalCount` | NUMBER | Total number of matching entities before pagination limit |
+| `hasMore` | BOOLEAN | Whether more results exist beyond the system limit |
 
 ---
 
@@ -159,6 +174,20 @@ Queries entities by type with attribute and relationship filtering, supporting c
 
 ## Key Logic
 
+### Execution Flow
+
+The `execute()` method:
+
+1. Resolves template values in the filter tree via `WorkflowFilterTemplateUtils.resolveFilterTemplates()`
+2. Resolves template values in relationship conditions via `resolveRelationshipConditionTemplates()`
+3. Builds resolved `EntityQuery` with workspace ID from data store
+4. Calls `EntityQueryService.execute()` with resolved query and pagination
+5. Enforces system-wide `DEFAULT_QUERY_LIMIT = 100` entities per query
+6. Transforms entity results to map representations
+7. Returns `QueryEntityOutput` with entities list, total count, and hasMore flag
+
+**Template resolution in filters:** Filter values using `{{ steps.x.output.field }}` syntax are resolved against the workflow data store before query execution. This enables dynamic filtering based on outputs from previous workflow nodes.
+
 ### Recursive Filter Validation
 
 The validation logic dispatches through three private methods based on filter structure:
@@ -236,21 +265,18 @@ Validates relationship condition based on `RelationshipFilter` sealed class type
 
 | Error/Exception | When | Expected Handling |
 |---|---|---|
-| `NotImplementedError` | `execute()` called | Workflow execution fails, requires [[EntityQueryService]] implementation |
+| `IllegalArgumentException` | Entity type not found, invalid filter structure | Workflow node execution fails with VALIDATION_ERROR classification |
+| Runtime exceptions from EntityQueryService | Query execution failure | Workflow node execution fails with EXECUTION_ERROR classification (retryable) |
 
 ---
 
 ## Gotchas & Edge Cases
 
-> [!warning] Execute Not Implemented
-> The `execute()` method throws `NotImplementedError`. This node can only be **validated**, not executed. Workflows using QUERY_ENTITY will fail at runtime.
->
-> **Implementation gap:** Requires `EntityQueryService` to:
-> 1. Resolve template values in filters
-> 2. Build query criteria from filter structure
-> 3. Execute query against entity repository
-> 4. Apply pagination and projection
-> 5. Return results in expected format
+> [!info] System Query Limit
+> All queries enforce `DEFAULT_QUERY_LIMIT = 100`. Even if more entities match, only 100 are returned per execution. The `hasMore` output field indicates whether additional results exist. Workflows requiring all matching entities should use [[WorkflowBulkUpdateEntityActionConfig]] which handles internal pagination.
+
+> [!info] runBlocking Usage
+> The execute method uses `runBlocking` to bridge suspend functions from EntityQueryService into the synchronous workflow execution context. This is acceptable within Temporal activity threads but should not be used in coroutine contexts.
 
 ### Cross-Domain Dependency
 

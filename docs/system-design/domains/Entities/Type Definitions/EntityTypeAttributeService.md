@@ -4,7 +4,7 @@ tags:
   - component/active
   - architecture/component
 Created: 2026-02-08
-Updated: 2026-02-08
+Updated: 2026-02-19
 Domains:
   - "[[Entities]]"
 ---
@@ -35,6 +35,7 @@ Utility service for attribute schema operations including definition save/remove
 - [[EntityValidationService]] — Breaking change detection and bulk entity validation
 - `EntityRepository` — Fetch existing entities for validation
 - `EntityUniqueValuesRepository` — Normalized unique constraint table
+- [[EntityTypeSemanticMetadataService]] — Lifecycle hooks for attribute semantic metadata
 
 ## Used By
 
@@ -55,6 +56,11 @@ Utility service for attribute schema operations including definition save/remove
    - Validate each against new schema
    - If any invalid: throw `SchemaValidationException` with sample errors
 5. Apply schema update to type (caller saves entity)
+6. If attribute is new: initialize semantic metadata via `semanticMetadataService.initializeForTarget(entityTypeId, workspaceId, ATTRIBUTE, attributeId)`
+
+**Remove attribute definition (semantic metadata):**
+
+When an attribute is removed, calls `semanticMetadataService.deleteForTarget(entityTypeId, ATTRIBUTE, attributeId)` to hard-delete the metadata record. Hard-delete (not soft-delete) prevents orphaned metadata for non-existent attributes.
 
 **Unique constraint enforcement:**
 

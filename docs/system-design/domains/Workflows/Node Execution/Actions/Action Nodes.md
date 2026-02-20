@@ -19,7 +19,8 @@ Action nodes are the primary mechanism for workflows to interact with the entity
 | [[WorkflowDeleteEntityActionConfig]] | Deletes an entity instance | Implemented |
 | [[WorkflowUpdateEntityActionConfig]] | Updates an existing entity instance | Implemented |
 | [[WorkflowHttpRequestActionConfig]] | Makes an HTTP request to an external URL | Implemented |
-| [[WorkflowQueryEntityActionConfig]] | Searches and retrieves entity instances | Partial (validation only, execute not implemented) |
+| [[WorkflowQueryEntityActionConfig]] | Searches and retrieves entity instances | Implemented |
+| [[WorkflowBulkUpdateEntityActionConfig]] | Queries entities and applies batch updates with configurable error handling (FAIL_FAST/BEST_EFFORT) | Implemented |
 
 ## Unimplemented Action Types
 

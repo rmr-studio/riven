@@ -97,6 +97,37 @@ CREATE POLICY "entity_relationships_write_by_org" ON entity_relationships
     );
 
 -- =====================================================
+-- ENTITY TYPE SEMANTIC METADATA RLS
+-- =====================================================
+
+-- Enable RLS on entity_type_semantic_metadata
+ALTER TABLE entity_type_semantic_metadata
+    ENABLE ROW LEVEL SECURITY;
+
+-- Semantic metadata can be selected by workspace members
+CREATE POLICY "entity_semantic_metadata_select_by_org" ON entity_type_semantic_metadata
+    FOR SELECT TO authenticated
+    USING (
+    workspace_id IN (SELECT workspace_id
+                     FROM workspace_members
+                     WHERE user_id = auth.uid())
+    );
+
+-- Semantic metadata can be written by workspace members
+CREATE POLICY "entity_semantic_metadata_write_by_org" ON entity_type_semantic_metadata
+    FOR ALL TO authenticated
+    USING (
+    workspace_id IN (SELECT workspace_id
+                     FROM workspace_members
+                     WHERE user_id = auth.uid())
+    )
+    WITH CHECK (
+    workspace_id IN (SELECT workspace_id
+                     FROM workspace_members
+                     WHERE user_id = auth.uid())
+    );
+
+-- =====================================================
 -- ENTITY ATTRIBUTE PROVENANCE RLS
 -- =====================================================
 -- Provenance inherits workspace scope through entity_id FK
