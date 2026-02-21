@@ -70,6 +70,14 @@ export function Navbar() {
               <Link
                 key={link.label}
                 href={link.href}
+                onClick={(e) => {
+                  const hash = link.href.split('#')[1];
+                  if (hash) {
+                    e.preventDefault();
+                    document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' });
+                    window.history.replaceState(null, '', link.href);
+                  }
+                }}
                 className="px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 {link.label}
@@ -91,7 +99,14 @@ export function Navbar() {
           <div className="hidden md:block">
             <ThemeToggle />
           </div>
-          <a href="/#contact">
+          <a
+            href="/#contact"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+              window.history.replaceState(null, '', '/#contact');
+            }}
+          >
             <HoverBorderGradient className="overflow-hidden bg-background p-0" as="div">
               <Button
                 size={'sm'}

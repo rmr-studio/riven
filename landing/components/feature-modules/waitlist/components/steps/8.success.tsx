@@ -19,7 +19,7 @@ export function SuccessStep() {
       <h3 className="mt-6 text-2xl font-semibold md:text-3xl">You are on the list!</h3>
       <p className="mx-auto mt-3 max-w-md text-muted-foreground">
         Thanks for joining the waitlist. We cannot wait to share all updates, news and exciting
-        features with you and look forward to working with you as we build the future of
+        features with you. The team looks forward to working with you as we build the future of
         cross-domain intelligence.
       </p>
     </div>

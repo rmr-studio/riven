@@ -215,20 +215,18 @@ const MobileNavLink: FC<NavbarItemProps> = ({
   external = false,
 }) => {
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    // Check if it's an internal link (starts with #)
-    if (href.startsWith('#')) {
+    const hash = href.includes('#') ? href.split('#')[1] : null;
+    if (hash) {
       e.preventDefault();
-      const sectionId = href.substring(1);
-      const element = document.getElementById(sectionId);
+      const element = document.getElementById(hash);
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-      // Close the menu after navigating
+      window.history.replaceState(null, '', `#${hash}`);
       if (shouldCloseOnClick) {
         toggle(false);
       }
     } else {
-      // For external links, just close the menu
       if (shouldCloseOnClick) {
         toggle(false);
       }
