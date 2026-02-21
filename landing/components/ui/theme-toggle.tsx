@@ -42,7 +42,7 @@ export function ThemeToggle() {
     return (
       <Button
         disabled
-        className="inline-flex items-center gap-2.5 rounded-full border border-border/50 bg-muted/50 px-3 py-1.5 font-mono tracking-widest text-muted-foreground"
+        className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-muted/50 px-2.5 py-1 text-xs font-mono tracking-widest text-muted-foreground"
       >
         <span className="flex gap-1">
           {themes.map((t) => (
@@ -59,7 +59,7 @@ export function ThemeToggle() {
   return (
     <Button
       onClick={cycle}
-      className="flex items-center gap-2.5 rounded-full border border-border/50 bg-muted/50 px-3 py-1.5 text-sm font-mono tracking-widest text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+      className="flex items-center gap-2 rounded-full border border-border/50 bg-muted/50 px-2.5 py-1 text-xs font-mono tracking-widest text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
     >
       <span>{themeLabels[activeTheme] ?? "Light"}</span>
       <span className="flex gap-1">

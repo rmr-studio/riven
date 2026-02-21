@@ -1,35 +1,38 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
+import posthog from "posthog-js";
 import { useRef } from "react";
+import { toast } from "sonner";
 import type { WaitlistMultiStepFormData } from "@/lib/validations";
+import { supabase } from "@/lib/supabase";
 
-interface WaitlistResponse {
-  success: boolean;
-  message?: string;
-}
+const PostgresErrorCode = {
+  UniqueViolation: "23505",
+} as const;
 
 export function useWaitlistMutation() {
   const toastRef = useRef<string | number | undefined>(undefined);
 
   return useMutation({
-    mutationFn: async (
-      data: WaitlistMultiStepFormData
-    ): Promise<WaitlistResponse> => {
-      const response = await fetch("/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+    mutationFn: async (data: WaitlistMultiStepFormData): Promise<void> => {
+      const { error } = await supabase
+        .from("waitlist_submissions")
+        .insert({
+          name: data.name,
+          email: data.email,
+          operational_headache: data.operationalHeadache || null,
+          integrations: data.integrations,
+          monthly_price: data.monthlyPrice,
+          involvement: data.involvement,
+        });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to join waitlist");
+      if (error) {
+        if (error.code === PostgresErrorCode.UniqueViolation) {
+          throw new Error("This email is already on the waitlist!");
+        }
+        throw new Error(error.message);
       }
-
-      return result;
     },
     onMutate: () => {
       toastRef.current = toast.loading("Joining waitlist...");
@@ -40,6 +43,9 @@ export function useWaitlistMutation() {
       });
     },
     onError: (error: Error) => {
+      posthog.capture('waitlist_submission_failed', {
+        error: error.message,
+      });
       toast.error(error.message, { id: toastRef.current });
     },
   });

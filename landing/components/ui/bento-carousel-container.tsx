@@ -5,7 +5,7 @@ import { Carousel, CarouselContent, CarouselItem, useCarousel } from '@/componen
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { useIsMobile } from '@/hooks/use-is-mobile';
 import { cn } from '@/lib/utils';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import * as React from 'react';
 import { BGPattern } from './background/grids';

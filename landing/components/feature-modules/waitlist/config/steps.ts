@@ -3,21 +3,31 @@ import type { WaitlistMultiStepFormData } from '@/lib/validations';
 export enum Step {
   CTA = 0,
   CONTACT = 1,
-  FEATURE = 2,
+  OPERATIONAL_HEADACHE = 2,
   INTEGRATIONS = 3,
   PRICE = 4,
-  EARLY_TESTING = 5,
+  INVOLVEMENT = 5,
   SUCCESS = 6,
 }
 
 export const TOTAL_FORM_STEPS = 5;
 
+export const STEP_NAMES: Record<number, string> = {
+  [Step.CTA]: 'cta',
+  [Step.CONTACT]: 'contact',
+  [Step.OPERATIONAL_HEADACHE]: 'operational_headache',
+  [Step.INTEGRATIONS]: 'integrations',
+  [Step.PRICE]: 'pricing',
+  [Step.INVOLVEMENT]: 'involvement',
+  [Step.SUCCESS]: 'success',
+};
+
 export const STEP_FIELDS: Partial<Record<Step, (keyof WaitlistMultiStepFormData)[]>> = {
   [Step.CONTACT]: ['name', 'email'],
-  [Step.FEATURE]: ['feature'],
+  [Step.OPERATIONAL_HEADACHE]: ['operationalHeadache'],
   [Step.INTEGRATIONS]: ['integrations'],
   [Step.PRICE]: ['monthlyPrice'],
-  [Step.EARLY_TESTING]: ['earlyTesting'],
+  [Step.INVOLVEMENT]: ['involvement'],
 };
 
 export const INPUT_CLASS =

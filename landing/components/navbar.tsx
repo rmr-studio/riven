@@ -10,8 +10,8 @@ import { HoverBorderGradient } from './ui/hover-border-gradient';
 import { Logo } from './ui/logo';
 
 const navLinks = [
-  { label: 'Features', href: '#features' },
-  { label: 'FAQs', href: '#faqs' },
+  { label: 'Features', href: '/#features' },
+  { label: 'FAQs', href: '/#faqs' },
 ];
 
 export function Navbar() {
@@ -91,11 +91,11 @@ export function Navbar() {
           <div className="hidden md:block">
             <ThemeToggle />
           </div>
-          <a href="#contact">
+          <a href="/#contact">
             <HoverBorderGradient className="overflow-hidden bg-background p-0" as="div">
               <Button
                 size={'sm'}
-                className="h-8 cursor-pointer items-center gap-1.5 border-0 bg-muted/50 py-1 font-mono text-xs tracking-wide text-muted-foreground outline-0 hover:bg-muted hover:text-foreground md:h-9 md:gap-2.5 md:px-4 md:text-sm"
+                className="h-7 cursor-pointer items-center gap-1 border-0 bg-muted/50 py-0.5 px-2.5 font-mono text-xs tracking-wide text-muted-foreground outline-0 hover:bg-muted hover:text-foreground md:h-8 md:gap-1.5 md:px-3 md:text-xs"
               >
                 <span className="hidden sm:block">Join the waitlist</span>
                 <span className="sm:hidden">Get Started</span>

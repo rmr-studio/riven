@@ -5,15 +5,11 @@ import { KnowledgeLayer } from '@/components/feature-modules/features/knowledge/
 import { Hero } from '@/components/feature-modules/hero/components/hero';
 import { OpenSource } from '@/components/feature-modules/open-source/components/open-source';
 import { Waitlist } from '@/components/feature-modules/waitlist/components/waitlist';
-import { Footer } from '@/components/footer';
-import { Navbar } from '@/components/navbar';
 import { SectionDivider } from '@/components/ui/section-divider';
 
 export default function Home() {
   return (
     <main className="min-h-screen">
-      <Navbar />
-
       <Hero />
       <SectionDivider name="One Unified Data Ecosystem" />
       <RivenDefinition />
@@ -22,7 +18,6 @@ export default function Home() {
       <Faq />
       <OpenSource />
       <Waitlist />
-      <Footer />
     </main>
   );
 }

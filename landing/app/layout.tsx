@@ -1,3 +1,6 @@
+import { Footer } from '@/components/footer';
+import { Navbar } from '@/components/navbar';
+import { MotionProvider } from '@/providers/motion-provider';
 import { QueryProvider } from '@/providers/query-provider';
 import { ThemeProvider } from '@/providers/theme-provider';
 import type { Metadata, Viewport } from 'next';
@@ -98,7 +101,13 @@ export default function RootLayout({
           themes={['light', 'dark', 'amber']}
           disableTransitionOnChange
         >
-          <QueryProvider>{children}</QueryProvider>
+          <MotionProvider>
+            <QueryProvider>
+              <Navbar />
+              {children}
+              <Footer />
+            </QueryProvider>
+          </MotionProvider>
           <Toaster richColors position="bottom-center" />
         </ThemeProvider>
       </body>

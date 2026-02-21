@@ -1,0 +1,7 @@
+ignoredBuiltDependencies:
+  - core-js
+
+onlyBuiltDependencies:
+  - protobufjs
+  - sharp
+  - unrs-resolver

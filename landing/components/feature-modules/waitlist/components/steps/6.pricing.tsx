@@ -1,59 +1,59 @@
-import { FORM_COPY } from '@/components/feature-modules/waitlist/config/form-copy';
-import { EnterHint } from '@/components/feature-modules/waitlist/components/enter-hint';
 import { OkButton } from '@/components/feature-modules/waitlist/components/ok-button';
 import { OptionPill } from '@/components/feature-modules/waitlist/components/option-pill';
 import { StepBadge } from '@/components/feature-modules/waitlist/components/step-badge';
 import { motion } from 'motion/react';
 
-export function IntegrationsStep({
-  selectedIntegrations,
-  onToggle,
+export const PRICING_STEP_CONFIG = {
+  stepNumber: 2,
+  title: 'What would you expect to pay monthly for a platform like this?',
+  instruction: 'Choose 1',
+  options: [
+    { key: 'A', label: 'Under $50/mo' },
+    { key: 'B', label: '$50 - $150/mo' },
+    { key: 'C', label: '$150 - $300/mo' },
+    { key: 'D', label: '$300+/mo' },
+  ],
+};
+
+export function PricingStep({
+  selectedPrice,
+  onSelect,
   onNext,
   error,
 }: {
-  selectedIntegrations: string[];
-  onToggle: (label: string) => void;
+  selectedPrice: string;
+  onSelect: (label: string) => void;
   onNext: () => void;
   error?: string;
 }) {
   return (
     <div className="py-8">
       <div className="flex items-start gap-3">
-        <StepBadge number={FORM_COPY.integrations.stepNumber} />
+        <StepBadge number={PRICING_STEP_CONFIG.stepNumber} />
         <h3 className="text-xl leading-snug font-medium md:text-2xl">
-          {FORM_COPY.integrations.title}
-          {FORM_COPY.integrations.subtitle && (
-            <>
-              <br />
-              <span className="text-lg text-muted-foreground md:text-xl">
-                {FORM_COPY.integrations.subtitle}
-              </span>
-            </>
-          )}
-          {FORM_COPY.integrations.required && (
-            <span className="ml-1 text-destructive">*</span>
-          )}
+          {PRICING_STEP_CONFIG.title}
+          <span className="text-destructive">*</span>
         </h3>
       </div>
       <p className="mt-6 ml-10 text-sm text-muted-foreground">
-        {FORM_COPY.integrations.instruction}
+        {PRICING_STEP_CONFIG.instruction}
       </p>
       <div className="mt-4 ml-10 space-y-2.5">
-        {FORM_COPY.integrations.options.map((option, i) => (
+        {PRICING_STEP_CONFIG.options.map((option, i) => (
           <motion.div
             key={option.key}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{
-              delay: 0.08 + i * 0.03,
+              delay: 0.08 + i * 0.04,
               duration: 0.25,
             }}
           >
             <OptionPill
               letterKey={option.key}
               label={option.label}
-              selected={selectedIntegrations.includes(option.label)}
-              onClick={() => onToggle(option.label)}
+              selected={selectedPrice === option.label}
+              onClick={() => onSelect(option.label)}
             />
           </motion.div>
         ))}
@@ -62,8 +62,7 @@ export function IntegrationsStep({
         <p className="mt-3 ml-10 text-xs text-destructive">{error}</p>
       )}
       <div className="mt-6 ml-10 flex items-center">
-        <OkButton onClick={onNext} disabled={selectedIntegrations.length === 0} />
-        <EnterHint />
+        <OkButton onClick={onNext} disabled={!selectedPrice} />
       </div>
     </div>
   );

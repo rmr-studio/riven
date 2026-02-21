@@ -2,62 +2,86 @@
 
 import { CtaStep } from '@/components/feature-modules/waitlist/components/steps/1.cta';
 import { ContactStep } from '@/components/feature-modules/waitlist/components/steps/2.contact';
-import { FeatureStep } from '@/components/feature-modules/waitlist/components/steps/3.feature';
-import { IntegrationsStep } from '@/components/feature-modules/waitlist/components/steps/4.integrations';
-import { PricingStep } from '@/components/feature-modules/waitlist/components/steps/5.pricing';
-import { EarlyTestingStep } from '@/components/feature-modules/waitlist/components/steps/6.early-testing';
-import { SuccessStep } from '@/components/feature-modules/waitlist/components/steps/7.success';
+import { OperationalHeadacheStep } from '@/components/feature-modules/waitlist/components/steps/3.operational-headache';
+import {
+  IntegrationsStep,
+  INTEGRATIONS_STEP_CONFIG,
+} from '@/components/feature-modules/waitlist/components/steps/5.integrations';
+import {
+  PricingStep,
+  PRICING_STEP_CONFIG,
+} from '@/components/feature-modules/waitlist/components/steps/6.pricing';
+import {
+  InvolvementStep,
+  INVOLVEMENT_STEP_CONFIG,
+} from '@/components/feature-modules/waitlist/components/steps/7.involvement';
+import { SuccessStep } from '@/components/feature-modules/waitlist/components/steps/8.success';
 import {
   slideTransition,
   slideVariants,
 } from '@/components/feature-modules/waitlist/config/animation';
-import { FORM_COPY } from '@/components/feature-modules/waitlist/config/form-copy';
 import {
   Step,
   STEP_FIELDS,
+  STEP_NAMES,
   TOTAL_FORM_STEPS,
 } from '@/components/feature-modules/waitlist/config/steps';
+import posthog from 'posthog-js';
 import { useWaitlistMutation } from '@/hooks/use-waitlist-mutation';
 import { cn } from '@/lib/utils';
 import { waitlistFormSchema, type WaitlistMultiStepFormData } from '@/lib/validations';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
+
+const PRESET_INTEGRATION_LABELS = new Set(
+  INTEGRATIONS_STEP_CONFIG.categories.flatMap((c) => c.options.map((o) => o.label)),
+);
 
 export function WaitlistForm({ className }: { className?: string }) {
   const [currentStep, setCurrentStep] = useState<Step>(Step.CTA);
   const [direction, setDirection] = useState(1);
+  const [showOtherInput, setShowOtherInput] = useState(false);
   const { mutate, isPending } = useWaitlistMutation();
+  const duplicateEmails = useRef(new Set<string>());
 
   const form = useForm<WaitlistMultiStepFormData>({
     resolver: zodResolver(waitlistFormSchema),
     defaultValues: {
       name: '',
       email: '',
-      feature: '',
+      operationalHeadache: '',
       integrations: [],
       monthlyPrice: '',
-      earlyTesting: '',
+      involvement: undefined as unknown as 'WAITLIST' | 'EARLY_TESTING' | 'CALL_EARLY_TESTING',
     },
     mode: 'onTouched',
   });
 
   const { trigger, setValue, watch, handleSubmit, formState } = form;
-  const selectedFeature = watch('feature');
   const selectedIntegrations = watch('integrations');
-  const selectedEarlyTesting = watch('earlyTesting');
+  const selectedPrice = watch('monthlyPrice');
+  const selectedInvolvement = watch('involvement');
 
   // ── Navigation ──
 
   const goForward = useCallback(() => {
+    posthog.capture('waitlist_step_completed', {
+      from_step: STEP_NAMES[currentStep],
+      to_step: STEP_NAMES[currentStep + 1],
+    });
     setDirection(1);
     setCurrentStep((prev) => prev + 1);
-  }, []);
+  }, [currentStep]);
 
   const goBack = useCallback(() => {
     if (currentStep <= Step.CTA) return;
+    posthog.capture('waitlist_step_back', {
+      from_step: STEP_NAMES[currentStep],
+      to_step: STEP_NAMES[currentStep - 1],
+    });
     setDirection(-1);
     setCurrentStep((prev) => prev - 1);
   }, [currentStep]);
@@ -68,15 +92,32 @@ export function WaitlistForm({ className }: { className?: string }) {
       const valid = await trigger(fields);
       if (!valid) return;
     }
+    if (currentStep === Step.CONTACT && duplicateEmails.current.has(form.getValues('email'))) {
+      form.setError('email', { message: 'This email is already on the waitlist!' });
+      return;
+    }
     goForward();
-  }, [currentStep, trigger, goForward]);
+  }, [currentStep, trigger, goForward, form]);
 
   const onSubmit = useCallback(
     (data: WaitlistMultiStepFormData) => {
       mutate(data, {
         onSuccess: () => {
+          posthog.capture('waitlist_submitted', {
+            integrations: data.integrations,
+            monthly_price: data.monthlyPrice,
+            involvement: data.involvement,
+          });
           setDirection(1);
           setCurrentStep(Step.SUCCESS);
+        },
+        onError: (error: Error) => {
+          if (error.message.includes('already on the waitlist')) {
+            duplicateEmails.current.add(data.email);
+            setDirection(-1);
+            setCurrentStep(Step.CONTACT);
+            form.setError('email', { message: error.message });
+          }
         },
       });
     },
@@ -89,8 +130,8 @@ export function WaitlistForm({ className }: { className?: string }) {
       goForward();
       return;
     }
-    if (currentStep === Step.EARLY_TESTING) {
-      const valid = await trigger(['earlyTesting']);
+    if (currentStep === Step.INVOLVEMENT) {
+      const valid = await trigger(['involvement']);
       if (!valid) return;
       handleSubmit(onSubmit)();
     } else {
@@ -100,16 +141,18 @@ export function WaitlistForm({ className }: { className?: string }) {
 
   // ── Selections ──
 
-  const selectFeature = useCallback(
+  const selectPrice = useCallback(
     (label: string) => {
-      setValue('feature', label, { shouldValidate: true });
+      setValue('monthlyPrice', label, { shouldValidate: true });
     },
     [setValue],
   );
 
-  const selectEarlyTesting = useCallback(
-    (label: string) => {
-      setValue('earlyTesting', label, { shouldValidate: true });
+  const selectInvolvement = useCallback(
+    (value: string) => {
+      setValue('involvement', value as 'WAITLIST' | 'EARLY_TESTING' | 'CALL_EARLY_TESTING', {
+        shouldValidate: true,
+      });
     },
     [setValue],
   );
@@ -117,7 +160,7 @@ export function WaitlistForm({ className }: { className?: string }) {
   const toggleIntegration = useCallback(
     (label: string) => {
       const current = form.getValues('integrations');
-      const max = FORM_COPY.integrations.maxSelections;
+      const max = INTEGRATIONS_STEP_CONFIG.maxSelections;
       if (current.includes(label)) {
         setValue(
           'integrations',
@@ -133,6 +176,40 @@ export function WaitlistForm({ className }: { className?: string }) {
     [form, setValue],
   );
 
+  const addCustomIntegration = useCallback(
+    (label: string) => {
+      const current = form.getValues('integrations');
+      if (current.length < INTEGRATIONS_STEP_CONFIG.maxSelections && !current.includes(label)) {
+        setValue('integrations', [...current, label], { shouldValidate: true });
+      }
+    },
+    [form, setValue],
+  );
+
+  const removeCustomIntegration = useCallback(
+    (label: string) => {
+      const current = form.getValues('integrations');
+      setValue(
+        'integrations',
+        current.filter((i) => i !== label),
+        { shouldValidate: true },
+      );
+    },
+    [form, setValue],
+  );
+
+  const toggleOtherInput = useCallback(() => {
+    setShowOtherInput((prev) => {
+      if (prev) {
+        // Toggling off — remove all custom entries
+        const current = form.getValues('integrations');
+        const presetOnly = current.filter((i) => PRESET_INTEGRATION_LABELS.has(i));
+        setValue('integrations', presetOnly, { shouldValidate: true });
+      }
+      return !prev;
+    });
+  }, [form, setValue]);
+
   // ── Keyboard shortcuts ──
 
   useEffect(() => {
@@ -143,6 +220,7 @@ export function WaitlistForm({ className }: { className?: string }) {
       const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
 
       if (e.key === 'Enter') {
+        if (isInput) return; // let input-level handlers (like custom integration) handle Enter
         e.preventDefault();
         handleOk();
         return;
@@ -152,29 +230,25 @@ export function WaitlistForm({ className }: { className?: string }) {
       if (isInput) return;
 
       const key = e.key.toUpperCase();
-      if (currentStep === Step.FEATURE) {
-        const option = FORM_COPY.features.options.find((o) => o.key === key);
-        if (option) selectFeature(option.label);
+      if (currentStep === Step.PRICE) {
+        const option = PRICING_STEP_CONFIG.options.find((o) => o.key === key);
+        if (option) selectPrice(option.label);
       }
-      if (currentStep === Step.INTEGRATIONS) {
-        const option = FORM_COPY.integrations.options.find((o) => o.key === key);
-        if (option) toggleIntegration(option.label);
-      }
-      if (currentStep === Step.EARLY_TESTING) {
-        const option = FORM_COPY.earlyTesting.options.find((o) => o.key === key);
-        if (option) selectEarlyTesting(option.label);
+      if (currentStep === Step.INVOLVEMENT) {
+        const option = INVOLVEMENT_STEP_CONFIG.options.find((o) => o.key === key);
+        if (option) selectInvolvement(option.value);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentStep, isPending, handleOk, selectFeature, toggleIntegration, selectEarlyTesting]);
+  }, [currentStep, isPending, handleOk, selectPrice, selectInvolvement]);
 
   // ── Progress ──
 
   const formStepIndex = currentStep - 1;
   const progress =
-    currentStep >= Step.CONTACT && currentStep <= Step.EARLY_TESTING
+    currentStep >= Step.CONTACT && currentStep <= Step.INVOLVEMENT
       ? ((formStepIndex + 1) / TOTAL_FORM_STEPS) * 100
       : currentStep === Step.SUCCESS
         ? 100
@@ -189,34 +263,38 @@ export function WaitlistForm({ className }: { className?: string }) {
         return <CtaStep onStart={goForward} />;
       case Step.CONTACT:
         return <ContactStep form={form} onNext={handleOk} />;
-      case Step.FEATURE:
-        return (
-          <FeatureStep
-            selectedFeature={selectedFeature}
-            onSelect={selectFeature}
-            onNext={handleOk}
-            error={formState.errors.feature?.message}
-          />
-        );
+      case Step.OPERATIONAL_HEADACHE:
+        return <OperationalHeadacheStep form={form} onNext={handleOk} />;
       case Step.INTEGRATIONS:
         return (
           <IntegrationsStep
             selectedIntegrations={selectedIntegrations}
             onToggle={toggleIntegration}
+            onAddCustom={addCustomIntegration}
+            onRemoveCustom={removeCustomIntegration}
+            showOtherInput={showOtherInput}
+            onToggleOther={toggleOtherInput}
             onNext={handleOk}
             error={formState.errors.integrations?.message}
           />
         );
       case Step.PRICE:
-        return <PricingStep form={form} onNext={handleOk} isPending={isPending} />;
-      case Step.EARLY_TESTING:
         return (
-          <EarlyTestingStep
-            selectedEarlyTesting={selectedEarlyTesting}
-            onSelect={selectEarlyTesting}
+          <PricingStep
+            selectedPrice={selectedPrice}
+            onSelect={selectPrice}
+            onNext={handleOk}
+            error={formState.errors.monthlyPrice?.message}
+          />
+        );
+      case Step.INVOLVEMENT:
+        return (
+          <InvolvementStep
+            selectedInvolvement={selectedInvolvement}
+            onSelect={selectInvolvement}
             onSubmit={handleOk}
             isPending={isPending}
-            error={formState.errors.earlyTesting?.message}
+            error={formState.errors.involvement?.message}
           />
         );
       case Step.SUCCESS:

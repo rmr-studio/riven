@@ -1,15 +1,17 @@
 import { cn } from '@/lib/utils';
-import { Check, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 export function OkButton({
   onClick,
   disabled,
   loading,
+  label = 'Next',
   className,
 }: {
   onClick: () => void;
   disabled?: boolean;
   loading?: boolean;
+  label?: string;
   className?: string;
 }) {
   return (
@@ -22,14 +24,7 @@ export function OkButton({
         className,
       )}
     >
-      {loading ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <>
-          OK
-          <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
-        </>
-      )}
+      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : label}
     </button>
   );
 }

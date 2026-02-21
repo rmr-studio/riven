@@ -15,12 +15,15 @@ export const waitlistFormSchema = z.object({
     .string()
     .min(1, "Email is required")
     .email("Please enter a valid email address"),
-  feature: z.string().min(1, "Please select a feature"),
+  operationalHeadache: z.string().optional(),
   integrations: z
     .array(z.string())
-    .min(1, "Please select at least one integration"),
+    .min(1, "Please select at least one integration")
+    .max(5, "Please select at most 5 integrations"),
   monthlyPrice: z.string().min(1, "Please enter a price"),
-  earlyTesting: z.string().min(1, "Please select an option"),
+  involvement: z.enum(["WAITLIST", "EARLY_TESTING", "CALL_EARLY_TESTING"], {
+    required_error: "Please select an option",
+  }),
 });
 
 export type WaitlistMultiStepFormData = z.infer<typeof waitlistFormSchema>;

@@ -1,10 +1,17 @@
-import { FORM_COPY } from '@/components/feature-modules/waitlist/config/form-copy';
 import { INPUT_CLASS, INPUT_ERROR_CLASS } from '@/components/feature-modules/waitlist/config/steps';
-import { EnterHint } from '@/components/feature-modules/waitlist/components/enter-hint';
 import { OkButton } from '@/components/feature-modules/waitlist/components/ok-button';
 import { cn } from '@/lib/utils';
 import type { WaitlistMultiStepFormData } from '@/lib/validations';
+import { useRef } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
+
+const STEP_CONFIG = {
+  title: "Let's get to know you",
+  nameLabel: 'Your name',
+  namePlaceholder: 'Jane Doe',
+  emailLabel: 'Your email',
+  emailPlaceholder: 'jane@company.com',
+};
 
 export function ContactStep({
   form,
@@ -14,19 +21,27 @@ export function ContactStep({
   onNext: () => void;
 }) {
   const { register, formState } = form;
+  const emailRef = useRef<HTMLInputElement | null>(null);
+  const { ref: emailRegRef, ...emailRest } = register('email');
 
   return (
     <div className="py-8">
-      <h3 className="text-2xl font-medium md:text-3xl">{FORM_COPY.contact.title}</h3>
+      <h3 className="text-2xl font-medium md:text-3xl">{STEP_CONFIG.title}</h3>
       <div className="mt-8 max-w-md space-y-6">
         <div>
           <label className="mb-1.5 block text-sm text-muted-foreground">
-            {FORM_COPY.contact.nameLabel}
+            {STEP_CONFIG.nameLabel}
           </label>
           <input
             {...register('name')}
-            placeholder={FORM_COPY.contact.namePlaceholder}
+            placeholder={STEP_CONFIG.namePlaceholder}
             autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                emailRef.current?.focus();
+              }
+            }}
             className={cn(INPUT_CLASS, formState.errors.name && INPUT_ERROR_CLASS)}
           />
           {formState.errors.name && (
@@ -35,12 +50,22 @@ export function ContactStep({
         </div>
         <div>
           <label className="mb-1.5 block text-sm text-muted-foreground">
-            {FORM_COPY.contact.emailLabel}
+            {STEP_CONFIG.emailLabel}
           </label>
           <input
-            {...register('email')}
+            {...emailRest}
+            ref={(el) => {
+              emailRegRef(el);
+              emailRef.current = el;
+            }}
             type="email"
-            placeholder={FORM_COPY.contact.emailPlaceholder}
+            placeholder={STEP_CONFIG.emailPlaceholder}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                onNext();
+              }
+            }}
             className={cn(INPUT_CLASS, formState.errors.email && INPUT_ERROR_CLASS)}
           />
           {formState.errors.email && (
@@ -52,7 +77,6 @@ export function ContactStep({
       </div>
       <div className="mt-8 flex items-center">
         <OkButton onClick={onNext} />
-        <EnterHint />
       </div>
     </div>
   );
