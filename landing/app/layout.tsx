@@ -1,52 +1,69 @@
-import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { Toaster } from "sonner";
-import { QueryProvider } from "@/providers/query-provider";
-import "./globals.css";
+import { Footer } from '@/components/footer';
+import { Navbar } from '@/components/navbar';
+import { MotionProvider } from '@/providers/motion-provider';
+import { QueryProvider } from '@/providers/query-provider';
+import { ThemeProvider } from '@/providers/theme-provider';
+import type { Metadata, Viewport } from 'next';
+import { Geist, Geist_Mono, Instrument_Serif, Space_Mono } from 'next/font/google';
+import { Toaster } from 'sonner';
+import './globals.css';
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+});
+
+const instrumentSerif = Instrument_Serif({
+  variable: '--font-instrument-serif',
+  subsets: ['latin'],
+  weight: '400',
+  style: ['normal', 'italic'],
+});
+
+const spaceMono = Space_Mono({
+  variable: '--font-space-mono',
+  subsets: ['latin'],
+  weight: ['400', '700'],
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://riven.dev'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://getriven.io'),
 
   title: {
-    default: 'Riven | Build a CRM that fits your business',
-    template: '%s | Riven'
+    default: 'Riven | Your Intelligent Unified Workspace Environment',
+    template: '%s | Riven',
   },
 
   description: 'Stop contorting your workflows to fit rigid tools. Riven adapts to you.',
 
   keywords: [
     'crm',
-    'custom crm',
-    'flexible crm',
+    'workspace',
+    'operational environment',
     'workflow automation',
     'business tools',
     'saas',
     'founders',
-    'startups'
+    'startups',
   ],
 
   openGraph: {
     title: 'Riven | Build a CRM that fits your business',
     description: 'Stop contorting your workflows to fit rigid tools. Riven adapts to you.',
-    url: 'https://riven.dev',
+    url: 'https://getriven.io',
     siteName: 'Riven',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Riven - Build a CRM that fits your business'
-      }
+        alt: 'Riven - Build a CRM that fits your business',
+      },
     ],
     locale: 'en_US',
     type: 'website',
@@ -88,12 +105,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} ${spaceMono.variable} antialiased`}
       >
-        <QueryProvider>{children}</QueryProvider>
-        <Toaster richColors position="bottom-center" />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          themes={['light', 'dark', 'amber']}
+          disableTransitionOnChange
+        >
+          <MotionProvider>
+            <QueryProvider>
+              <Navbar />
+              {children}
+              <Footer />
+            </QueryProvider>
+          </MotionProvider>
+          <Toaster richColors position="bottom-center" />
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,17 +1,23 @@
-import { Hero } from "@/components/sections/hero";
-import { PainPoints } from "@/components/sections/pain-points";
-import { Features } from "@/components/sections/features";
-import { FinalCTA } from "@/components/sections/final-cta";
-import { Footer } from "@/components/footer";
+import { Faq } from '@/components/feature-modules/faq/components/faq';
+import { DataModel } from '@/components/feature-modules/features/data-model/components/data-model';
+import { RivenDefinition } from '@/components/feature-modules/features/data-model/components/riven-definition';
+import { KnowledgeLayer } from '@/components/feature-modules/features/knowledge/components/knowledge-layer';
+import { Hero } from '@/components/feature-modules/hero/components/hero';
+import { OpenSource } from '@/components/feature-modules/open-source/components/open-source';
+import { Waitlist } from '@/components/feature-modules/waitlist/components/waitlist';
+import { SectionDivider } from '@/components/ui/section-divider';
 
 export default function Home() {
   return (
     <main className="min-h-screen">
       <Hero />
-      <PainPoints />
-      <Features />
-      <FinalCTA />
-      <Footer />
+      <SectionDivider name="One Unified Data Ecosystem" />
+      <RivenDefinition />
+      <DataModel />
+      <KnowledgeLayer />
+      <Faq />
+      <OpenSource />
+      <Waitlist />
     </main>
   );
 }
