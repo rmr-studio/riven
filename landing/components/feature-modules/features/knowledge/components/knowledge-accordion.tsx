@@ -119,7 +119,7 @@ export const KnowledgeAccordion = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12 }}
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
-                className="absolute inset-0"
+                className="flex h-full items-center -mt-16"
               >
                 {activeIndex !== null && knowledgeScrollContent[activeIndex]?.content}
               </motion.div>

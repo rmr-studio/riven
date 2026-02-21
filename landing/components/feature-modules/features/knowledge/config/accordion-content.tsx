@@ -36,7 +36,7 @@ export const knowledgeScrollContent: KnowledgeLayerSectionContent[] = [
     description:
       "Every entity, relationship, and interaction carries meaning that Riven understands. As your data grows, the knowledge layer doesn't just store more — it connects more. New data automatically enriches what came before. The longer you operate, the sharper the intelligence becomes.",
     content: (
-      <ContextDiagram className="translate-x-16 -translate-y-6 scale-80 md:-translate-y-24 md:scale-65" />
+      <ContextDiagram className="translate-x-8 scale-100" />
     ),
   },
 ];

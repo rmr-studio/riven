@@ -15,7 +15,7 @@ const footerLinks = {
 const socialLinks = [
   {
     label: 'Instagram',
-    href: 'https://instagram.com/riven.dev',
+    href: 'https://instagram.com/riven',
     icon: Instagram,
   },
   {
