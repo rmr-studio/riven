@@ -24,6 +24,7 @@ Sealed interface defining the polymorphic execution contract for all workflow no
 - Define validation contract via `validate(injector): ConfigValidationResult`
 - Expose raw configuration as `config: JsonObject`
 - Provide schema definition via `configSchema: List<WorkflowNodeConfigField>` for dynamic UI generation
+- Optionally declare output field shape via `outputMetadata: WorkflowNodeOutputMetadata` on companion object for frontend preview and downstream reference
 - Support polymorphic JSON deserialization via type/subtype discrimination
 
 ---
@@ -65,6 +66,13 @@ Each subtype implements:
 2. `validate()` — Configuration validation with access to Spring services for application-based validation
 3. `config` — Raw configuration as `JsonObject`
 4. `configSchema` — Field definitions for OpenAPI docs and dynamic UI generation
+
+**Companion object contract:**
+
+Each subtype's companion object provides:
+1. `configSchema: List<WorkflowNodeConfigField>` — Required. Field definitions for configuration UI
+2. `metadata: WorkflowNodeTypeMetadata` — Required. Display metadata (name, description, icon)
+3. `outputMetadata: WorkflowNodeOutputMetadata?` — Optional. Declares the shape of node execution output for frontend preview and downstream template reference
 
 **Polymorphic deserialization:**
 

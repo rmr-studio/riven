@@ -4,7 +4,7 @@ tags:
   - component/active
   - architecture/component
 Created: 2026-02-08
-Updated: 2026-02-08
+Updated: 2026-02-19
 Domains:
   - "[[Entities]]"
 ---
@@ -40,6 +40,7 @@ Primary entry point for entity type lifecycle operations including creation, att
 - `EntityTypeRelationshipImpactAnalysisService` — Breaking change impact analysis
 - `AuthTokenService` — JWT user extraction
 - `ActivityService` — Audit logging
+- [[EntityTypeSemanticMetadataService]] — Lifecycle hooks for semantic metadata initialization and cascade deletion
 
 ## Used By
 
@@ -56,6 +57,7 @@ Primary entry point for entity type lifecycle operations including creation, att
 2. Identifier is UUID-based, required, unique, protected STRING field
 3. Initialize empty relationships list and single-column ordering
 4. Log CREATE activity
+5. Initialize semantic metadata via [[EntityTypeSemanticMetadataService]].initializeForEntityType() — creates ENTITY_TYPE metadata record plus one ATTRIBUTE metadata record per initial attribute
 
 **Save definition (attribute or relationship):**
 
@@ -79,6 +81,19 @@ Primary entry point for entity type lifecycle operations including creation, att
 - Similar impact flow for attribute and relationship removals
 - Relationship removals specify `DeleteAction` (DELETE_RELATIONSHIP or REMOVE_ENTITY_TYPE)
 - Attributes removed via [[EntityTypeAttributeService]], relationships via [[EntityTypeRelationshipService]]
+
+**Semantic metadata lifecycle:**
+
+- On publish: `semanticMetadataService.initializeForEntityType(entityTypeId, workspaceId, attributeIds)` — creates empty metadata records
+- On delete: `semanticMetadataService.softDeleteForEntityType(entityTypeId)` — cascade soft-delete preserves metadata for audit
+
+**Query with semantics (`?include=semantics`):**
+
+New methods `getWorkspaceEntityTypesWithIncludes()` and `getEntityTypeByKeyWithIncludes()` support opt-in semantic metadata loading:
+1. Check if `"semantics"` is in the `include` parameter
+2. Batch-fetch metadata via `semanticMetadataService.getMetadataForEntityTypes(entityTypeIds)`
+3. Group by entity_type_id and build `SemanticMetadataBundle` per entity type
+4. Return `EntityTypeWithSemanticsResponse` wrapping entity type + optional semantics
 
 **Column reordering:**
 
@@ -130,6 +145,18 @@ Retrieves entity type by ID (no workspace scope — used for system operations).
 ### `getByIds(ids): List<EntityTypeEntity>`
 
 Batch retrieval by IDs.
+
+### `getWorkspaceEntityTypesWithIncludes(workspaceId, include): List<EntityTypeWithSemanticsResponse>`
+
+Retrieves entity types with optional semantic metadata bundles. Pass `include = ["semantics"]` to attach metadata.
+
+### `getEntityTypeByKeyWithIncludes(workspaceId, key, include): EntityTypeWithSemanticsResponse`
+
+Retrieves single entity type by key with optional semantic metadata bundle.
+
+### `buildSemanticBundle(metadataList): SemanticMetadataBundle`
+
+Groups metadata records by targetType into structured bundle (entity type + attribute map + relationship map).
 
 ---
 

@@ -25,6 +25,7 @@ Registry service that discovers and caches all workflow node configuration schem
 - Cache schema entries in-memory on first access (lazy initialization)
 - Provide schema lookup by node type, subtype, or full key
 - Return `WorkflowNodeMetadata` for API responses (schema + metadata, no config class)
+- Extract optional `outputMetadata` from companion objects (null-safe, supports incremental rollout)
 
 ---
 
@@ -68,7 +69,8 @@ data class NodeSchemaEntry(
     subType: String,               // CREATE_ENTITY, WEBHOOK, CONDITION, etc.
     configClass: KClass<...>,      // Actual config class (not exposed in API)
     schema: List<WorkflowNodeConfigField>,
-    metadata: WorkflowNodeTypeMetadata
+    metadata: WorkflowNodeTypeMetadata,
+    outputMetadata: WorkflowNodeOutputMetadata?  // Optional — null during rollout for nodes that haven't adopted
 )
 ```
 
@@ -103,6 +105,7 @@ Returns schema fields for node key (e.g., "ACTION.CREATE_ENTITY"). Null if not f
 - **Explicit registration required:** New node types must be added to `registerAllNodes()`. Not automatic classpath scanning. Ensures type safety and compile-time checking.
 - **Companion object requirement:** Each config class MUST have companion object with `configSchema` and `metadata`. If missing, logs warning and skips registration.
 - **Reflection performance:** Uses Kotlin reflection to extract companion members. Only runs once at startup (lazy init), so minimal performance impact.
+- **Output metadata is optional:** Unlike `configSchema` and `metadata` which are required, `outputMetadata` is extracted via reflection and defaults to `null` if the companion object doesn't declare it. Nodes without output metadata are silently skipped — no warning logged.
 - **Adding new nodes:** To add node type:
   1. Create config class with companion object (schema + metadata)
   2. Add `registerNode<YourConfigClass>(type, subType)` to `registerAllNodes()`

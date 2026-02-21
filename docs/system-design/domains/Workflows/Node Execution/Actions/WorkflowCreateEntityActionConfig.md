@@ -54,6 +54,20 @@ The `execute()` method:
 
 ---
 
+## Output Metadata
+
+Declared on companion object for frontend preview and downstream node reference:
+
+| Field | Type | Description |
+|---|---|---|
+| `entityId` | UUID | ID of the newly created entity |
+| `entityTypeId` | UUID | ID of the entity type |
+| `payload` | MAP | Entity attributes as UUID-keyed map |
+
+Downstream nodes can reference these via templates: `{{ steps.create_node.output.entityId }}`
+
+---
+
 ## JSON Examples
 
 ### Configuration

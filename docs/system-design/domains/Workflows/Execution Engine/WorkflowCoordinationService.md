@@ -68,6 +68,16 @@ Uses [[WorkflowErrorClassifier]] to categorize exceptions:
 
 Throws `ApplicationFailure` with error type for Temporal's retry policy matching.
 
+**Input resolution dispatch:**
+
+The coordinator extracts config properties for template resolution based on node config type. Supported action configs:
+- `WorkflowCreateEntityActionConfig` → entity type ID and payload templates
+- `WorkflowUpdateEntityActionConfig` → entity ID, type ID, and payload templates
+- `WorkflowDeleteEntityActionConfig` → entity ID template
+- `WorkflowQueryEntityActionConfig` → query config (filter templates resolved separately within execute())
+- `WorkflowBulkUpdateEntityActionConfig` → query config and payload templates
+- `WorkflowHttpRequestActionConfig` → URL, headers, and body templates
+
 ---
 
 ## Public Methods

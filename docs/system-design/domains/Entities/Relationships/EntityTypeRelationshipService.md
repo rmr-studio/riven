@@ -4,7 +4,7 @@ tags:
   - layer/service
   - architecture/component
 Created: 2026-02-08
-Updated: 2026-02-08
+Updated: 2026-02-19
 Domains:
   - "[[Entities]]"
 ---
@@ -47,6 +47,7 @@ Manages bidirectional relationship definitions between entity types, ensuring OR
 | EntityTypeRepository | Loads and persists entity type definitions | High |
 | ActivityService | Logs relationship CRUD operations | Medium |
 | [[AuthTokenService]] | Retrieves current user ID for activity logging | Low |
+| [[EntityTypeSemanticMetadataService]] | Lifecycle hooks for relationship semantic metadata init and deletion | Medium |
 
 ### External Dependencies
 
@@ -61,7 +62,8 @@ Manages bidirectional relationship definitions between entity types, ensuring OR
 class EntityTypeRelationshipService(
     private val entityTypeRepository: EntityTypeRepository,
     private val activityService: ActivityService,
-    private val authTokenService: AuthTokenService
+    private val authTokenService: AuthTokenService,
+    private val semanticMetadataService: EntityTypeSemanticMetadataService
 )
 ```
 
@@ -204,6 +206,16 @@ The service handles five change types:
 - Removes REFERENCE relationships for removed targets
 - Creates REFERENCE relationships for added targets
 
+### Semantic Metadata Lifecycle Hooks
+
+Relationship mutations trigger semantic metadata lifecycle operations:
+
+- **addOriginRelationship()**: Calls `semanticMetadataService.initializeForTarget(entityTypeId, workspaceId, RELATIONSHIP, relationshipId)` — creates empty metadata record for the new relationship
+- **removeOriginRelationship()**: Calls `semanticMetadataService.deleteForTarget(sourceEntityTypeId, RELATIONSHIP, originRelationshipId)` — hard-deletes metadata for removed ORIGIN relationship
+- **removeInverseReferenceRelationship()**: Calls `semanticMetadataService.deleteForTarget(targetEntityTypeId, RELATIONSHIP, removedReferenceId)` — hard-deletes metadata for corresponding REFERENCE relationship on target entity type
+
+All lifecycle hooks execute within the same `@Transactional` boundary as the triggering relationship mutation.
+
 ---
 
 ## Data Access
@@ -331,3 +343,4 @@ Service is stateless and thread-safe. Uses `@Transactional` for atomicity. Concu
 | Date | Change | Reason |
 |---|---|---|
 | 2026-02-08 | Initial documentation | Phase 2 Plan 2 - Entities domain Relationships subdomain component docs |
+| 2026-02-19 | Added EntityTypeSemanticMetadataService dependency and lifecycle hooks for relationship metadata | Semantic Metadata Foundation |

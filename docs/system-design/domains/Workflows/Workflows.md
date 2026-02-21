@@ -105,7 +105,7 @@ The Workflows domain provides a DAG-based workflow execution engine that enables
 
 | Domain | What We Consume | Via Component | Related Flow |
 |--------|----------------|---------------|--------------|
-| [[Entities]] | Entity CRUD for node actions (create, update, query) | [[EntityService]], [[EntityContextService]] | [[Workflow Execution]] |
+| [[Entities]] | Entity CRUD and querying for node actions (create, update, delete, query, bulk update) | [[EntityService]], [[EntityQueryService]], [[EntityContextService]] | [[Workflow Execution]] |
 | [[Workspaces & Users]] | Workspace scoping via RLS | PostgreSQL RLS policies | [[Auth & Authorization]] |
 | [[Workspaces & Users]] | @PreAuthorize authorization checks | [[WorkspaceSecurity]] | [[Auth & Authorization]] |
 | [[Workspaces & Users]] | Workspace capacity tier enforcement | [[WorkspaceService]] | [[Queue Processing]] |
@@ -203,4 +203,5 @@ flowchart TB
 
 | Date | Change | Feature/ADR |
 | ---- | ------ | ----------- |
-|      |        | [[]]        |
+| 2026-02-13 | Output metadata infrastructure for workflow nodes | Output Metadata |
+| 2026-02-13 | QueryEntity execution implemented, BulkUpdateEntity action node added | |

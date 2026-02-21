@@ -3,7 +3,7 @@ tags:
   - architecture/domain
   - domain/entity
 Created: 2026-02-01
-Updated: 2026-02-08
+Updated: 2026-02-19
 ---
 # Domain: Entities
 
@@ -31,7 +31,7 @@ The Entities domain provides a flexible, schema-driven data management system. E
 - Workflow execution (Workflows domain consumes entities via node actions)
 - Workspace scoping enforcement (enforced by Workspaces domain via RLS)
 - Block management (separate domain)
-- Entity semantics and templates (future domains, not yet implemented)
+- Entity templates (future domain, not yet implemented)
 
 ---
 
@@ -44,6 +44,7 @@ The Entities domain provides a flexible, schema-driven data management system. E
 | [[Relationships]] | Bidirectional relationship definitions and instance data with ORIGIN/REFERENCE sync |
 | [[Querying]] | Query pipeline for filtered entity retrieval with JSONB attribute filters and relationship traversal |
 | [[Validation]] | Schema validation for entity instances before persistence |
+| [[Entity Semantics]] | Semantic metadata for entity types, attributes, and relationships — definitions, classifications, and tags |
 
 ---
 
@@ -66,6 +67,7 @@ The Entities domain provides a flexible, schema-driven data management system. E
 | EntityEntity | Entity instances with JSONB attribute data | id, typeId, typeKey, workspaceId, payload, iconType, iconColour, identifierKey |
 | EntityRelationshipEntity | Relationship instances linking entities | id, sourceId, targetId, relationshipTypeId, workspaceId |
 | EntityUniqueValueEntity | Unique constraint tracking for entity attributes | entityId, typeId, fieldId, value, workspaceId |
+| EntityTypeSemanticMetadataEntity | Semantic metadata records for entity types, attributes, and relationships | id, workspaceId, entityTypeId, targetType, targetId, definition, classification, tags |
 
 ### Database Tables
 
@@ -75,6 +77,7 @@ The Entities domain provides a flexible, schema-driven data management system. E
 | entities | EntityEntity | Entity instances with JSONB payload column for attribute data |
 | entity_relationships | EntityRelationshipEntity | Relationship instance data |
 | entity_unique_values | EntityUniqueValueEntity | Normalized unique value tracking for uniqueness constraints |
+| entity_type_semantic_metadata | EntityTypeSemanticMetadataEntity | Single-table discriminator pattern for type/attribute/relationship metadata. JSONB tags column. Partial indexes on soft-delete flag |
 
 ---
 
@@ -100,6 +103,7 @@ None. The Entities domain operates entirely within the application database (Pos
 |----------|------------------|---------------|--------------|
 | [[Workflows]] | Entity CRUD for workflow node actions | [[EntityService]], [[EntityContextService]] | [[Workflow Execution]] |
 | REST API | Entity and entity type management | EntityController, EntityTypeController | [[Entity CRUD]], [[Entity Type Definition]] |
+| [[Knowledge]] | Semantic metadata CRUD endpoints | [[EntityTypeSemanticMetadataService]] via [[KnowledgeController]] | |
 
 ---
 
@@ -111,6 +115,8 @@ None. The Entities domain operates entirely within the application database (Pos
 | Bidirectional relationship sync | ORIGIN relationships automatically create/update inverse REFERENCE relationships |
 | Mutable entity types | Entity types update in place (unlike BlockTypes which are versioned) |
 | Query pipeline architecture | Filter validation → AST traversal → SQL generation → parameterized execution |
+| Separate table for semantic metadata | Semantic metadata stored in dedicated table (not embedded in entity_types JSONB) to protect entity CRUD hot path |
+| Single discriminator table for metadata | One table with target_type discriminator (ENTITY_TYPE, ATTRIBUTE, RELATIONSHIP) rather than three separate tables |
 
 ---
 
@@ -125,7 +131,8 @@ None. The Entities domain operates entirely within the application database (Pos
 
 ## Recent Changes
 
-| Date | Change | Feature/ADR |
-| ---- | ------ | ----------- |
-| 2026-02-01 | Domain structure created | Phase 2 initialization |
-| 2026-02-08 | Domain overview and subdomain docs created | [[02-01-PLAN]] |
+| Date       | Change                                                                                                               | Feature/ADR                  |
+| ---------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| 2026-02-01 | Domain structure created                                                                                             | Phase 2 initialization       |
+| 2026-02-08 | Domain overview and subdomain docs created                                                                           | [[02-01-PLAN]]               |
+| 2026-02-19 | Entity Semantics subdomain implemented — semantic metadata service, repository, lifecycle hooks, KnowledgeController | Semantic Metadata Foundation |

@@ -18,9 +18,15 @@ Entity types, attributes, and relationships carry semantic metadata that defines
 	- [[Schema Change Handling]]
 ## Components
 
-| Component | Purpose | Type                            |
-| --------- | ------- | ------------------------------- |
-| [[]]      |         | Service/ Controller /Repository |
+| Component | Purpose | Type |
+| --------- | ------- | ---- |
+| [[EntityTypeSemanticMetadataService]] | CRUD operations and lifecycle hooks for semantic metadata | Service |
+| [[EntityTypeSemanticMetadataRepository]] | Data access with custom JPQL for hard-delete and cascade soft-delete | Repository |
+| [[KnowledgeController]] | 8 REST endpoints at `/api/v1/knowledge/` for semantic metadata management | Controller |
+| EntityTypeSemanticMetadataEntity | Database mapping for `entity_type_semantic_metadata` table | JPA Entity |
+| EntityTypeSemanticMetadata | Immutable domain model for semantic metadata | Model |
+| SemanticMetadataTargetType | Discriminator enum: ENTITY_TYPE, ATTRIBUTE, RELATIONSHIP | Enum |
+| SemanticAttributeClassification | Classification enum: identifier, categorical, quantitative, temporal, freetext, relational_reference | Enum |
 
 ## Technical Debt
 
@@ -34,4 +40,4 @@ Entity types, attributes, and relationships carry semantic metadata that defines
 
 | Date | Change | Feature/ADR |
 | ---- | ------ | ----------- |
-|      |        | [[]]        |
+| 2026-02-19 | Phase 1 implementation — service, repository, JPA entity, domain model, enums, lifecycle hooks, KnowledgeController, 12 unit tests | Semantic Metadata Foundation |
