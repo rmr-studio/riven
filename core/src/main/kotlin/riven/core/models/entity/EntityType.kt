@@ -1,11 +1,9 @@
 package riven.core.models.entity
 
 import riven.core.entity.util.AuditableModel
-import riven.core.enums.entity.EntityCategory
 import riven.core.models.common.Icon
 import riven.core.models.common.display.DisplayName
 import riven.core.models.common.validation.Schema
-import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.configuration.EntityTypeAttributeColumn
 import java.time.ZonedDateTime
 import java.util.*
@@ -37,11 +35,9 @@ data class EntityType(
     val identifierKey: UUID,
     val description: String?,
     val workspaceId: UUID?,
-    val type: EntityCategory,
     // Schema will always be created with a unique, non-nullable 'name' attribute
     // Each attribute in the schema will be uniquely identified with a UUID key
     val schema: EntityTypeSchema,
-    val relationships: List<EntityRelationshipDefinition>? = null,
     // Configuration for how attributes are displayed in tabular/list views (ie. Column ordering, widths, etc)
     val columns: List<EntityTypeAttributeColumn>,
     val entitiesCount: Long = 0L,
@@ -49,9 +45,6 @@ data class EntityType(
     override var updatedAt: ZonedDateTime?,
     override var createdBy: UUID?,
     override var updatedBy: UUID?
-) : AuditableModel {
-    val attributes: Pair<Int, Int>
-        get() = Pair(schema.properties?.size ?: 0, relationships?.size ?: 0)
-}
+) : AuditableModel
 
 typealias EntityTypeSchema = Schema<UUID>

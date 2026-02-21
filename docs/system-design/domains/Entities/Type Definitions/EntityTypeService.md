@@ -4,7 +4,7 @@ tags:
   - component/active
   - architecture/component
 Created: 2026-02-08
-Updated: 2026-02-19
+Updated: 2026-02-21
 Domains:
   - "[[Entities]]"
 ---
@@ -36,8 +36,8 @@ Primary entry point for entity type lifecycle operations including creation, att
 - `EntityTypeRepository` — Type persistence
 - [[EntityTypeRelationshipService]] — Relationship definition management
 - [[EntityTypeAttributeService]] — Attribute schema operations
-- [[EntityTypeRelationshipDiffService]] — Delta calculation for modifications
-- `EntityTypeRelationshipImpactAnalysisService` — Breaking change impact analysis
+- `RelationshipDefinitionRepository` — Direct repository access for checking definition existence during save/delete
+- `EntityRelationshipRepository` — Counts active links for impact analysis during delete
 - `AuthTokenService` — JWT user extraction
 - `ActivityService` — Audit logging
 - [[EntityTypeSemanticMetadataService]] — Lifecycle hooks for semantic metadata initialization and cascade deletion
@@ -63,24 +63,29 @@ Primary entry point for entity type lifecycle operations including creation, att
 
 1. Parse request to determine attribute vs. relationship
 2. For attributes: delegate to [[EntityTypeAttributeService]] (validates breaking changes)
-3. For relationships: calculate diff and check impact via `EntityTypeRelationshipImpactAnalysisService`
-4. If `impactConfirmed=false` and impacts exist: return impacts WITHOUT applying changes
-5. If confirmed or no impacts: apply changes via [[EntityTypeRelationshipService]]
-6. Update column ordering (insert at specified index)
-7. Return `EntityTypeImpactResponse` with updated types
+3. For relationships: check if definition exists via `definitionRepository.findByIdAndWorkspaceId()`
+   - Not found → call `entityTypeRelationshipService.createRelationshipDefinition()`
+   - Found → call `entityTypeRelationshipService.updateRelationshipDefinition()`
+4. Update column ordering (insert at specified index)
+5. Return `EntityTypeImpactResponse` with updated types
 
-**Impact analysis flow:**
-
-- User attempts change → service detects impacts → returns `EntityTypeImpactResponse.impact`
-- Frontend shows confirmation dialog with impact details
-- User confirms → frontend retries with `impactConfirmed=true`
-- Service applies changes and returns `EntityTypeImpactResponse.updatedEntityTypes`
+No diff calculation or impact analysis is performed on save — the create/update dispatch is a straight delegation.
 
 **Remove definition:**
 
-- Similar impact flow for attribute and relationship removals
+- For attributes: delegate to [[EntityTypeAttributeService]]
+- For relationships: delegate to `entityTypeRelationshipService.deleteRelationshipDefinition()`, which returns a `DeleteDefinitionImpact?`
+  - If impact returned: wrap in `EntityTypeImpactResponse` and return (two-pass confirmation flow)
+  - Otherwise: proceed with column removal and return updated types
 - Relationship removals specify `DeleteAction` (DELETE_RELATIONSHIP or REMOVE_ENTITY_TYPE)
-- Attributes removed via [[EntityTypeAttributeService]], relationships via [[EntityTypeRelationshipService]]
+
+**Delete entity type:**
+
+1. Fetch all relationship definitions for the entity type via `definitionRepository.findByWorkspaceIdAndSourceEntityTypeId()`
+2. If `!impactConfirmed` and any definition has active links (counted via `entityRelationshipRepository`): return `EntityTypeImpactResponse.impact` without deleting
+3. If confirmed or no links: iterate definitions and call `entityTypeRelationshipService.deleteRelationshipDefinition(impactConfirmed=true)` for each
+4. Soft-delete semantic metadata via `semanticMetadataService.softDeleteForEntityType()`
+5. Soft-delete the entity type itself
 
 **Semantic metadata lifecycle:**
 
@@ -163,11 +168,11 @@ Groups metadata records by targetType into structured bundle (entity type + attr
 ## Gotchas
 
 - **Mutable types:** Unlike BlockTypeService (versioned), entity types update in place. Breaking changes validated against existing entities.
-- **Impact confirmation required:** Breaking changes return impact analysis first. Client must retry with `impactConfirmed=true` after user confirmation.
-- **Workspace security:** All public methods use `@PreAuthorize` for access control
+- **Impact confirmation required:** Destructive operations (delete definition, delete entity type) use a two-pass pattern — first call returns impact analysis, second call with `impactConfirmed=true` executes. Save operations do NOT use this pattern; create/update dispatch is immediate.
+- **Workspace security:** All public methods use `@PreAuthorize` for access control.
 - **Protected types:** `protected=false` on user-created types. System types (if any) cannot be modified/deleted.
-- **Relationship impact vs. attribute impact:** Relationship changes can affect OTHER entity types (bidirectional definitions). Attribute changes only affect the same type's instances.
-- **Cascade complexity:** Deleting entity type with relationships requires cascade handling via [[EntityTypeRelationshipService]]
+- **Relationship impact vs. attribute impact:** Relationship definition deletes can affect OTHER entity types (bidirectional). Attribute changes only affect the same type's instances.
+- **Cascade complexity:** Deleting entity type with relationships requires cascade handling via [[EntityTypeRelationshipService]]. Link counts are checked directly via `EntityRelationshipRepository` before proceeding.
 
 ---
 
@@ -175,6 +180,17 @@ Groups metadata records by targetType into structured bundle (entity type + attr
 
 - [[EntityTypeAttributeService]] — Attribute schema operations
 - [[EntityTypeRelationshipService]] — Relationship definition management
-- [[EntityTypeRelationshipDiffService]] — Modification delta calculation
 - [[EntityService]] — Consumes type definitions for instance validation
 - [[Type Definitions]] — Parent subdomain
+
+---
+
+## Changelog
+
+### 2026-02-21
+
+- Removed `EntityTypeRelationshipDiffService` and `EntityTypeRelationshipImpactAnalysisService` from dependencies — these services no longer exist.
+- Added `RelationshipDefinitionRepository` and `EntityRelationshipRepository` as direct dependencies for save/delete dispatch and link-count checks.
+- `saveEntityTypeDefinition`: Relationship path now does a simple create/update dispatch via `definitionRepository.findByIdAndWorkspaceId()` — no diff calculation or impact analysis on save.
+- `removeEntityTypeDefinition`: Relationship path now delegates entirely to `entityTypeRelationshipService.deleteRelationshipDefinition()`, which owns the two-pass impact pattern.
+- `deleteEntityType`: Cascade logic rewritten — fetches definitions via `definitionRepository`, counts links via `entityRelationshipRepository`, delegates each definition delete to `entityTypeRelationshipService.deleteRelationshipDefinition(impactConfirmed=true)`.

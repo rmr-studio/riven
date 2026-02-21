@@ -1,0 +1,22 @@
+package riven.core.models.entity
+
+import riven.core.enums.entity.EntityRelationshipCardinality
+import riven.core.models.common.Icon
+import java.time.ZonedDateTime
+import java.util.*
+
+data class RelationshipDefinition(
+    val id: UUID,
+    val workspaceId: UUID,
+    val sourceEntityTypeId: UUID,
+    val name: String,
+    val icon: Icon,
+    val allowPolymorphic: Boolean,
+    val cardinalityDefault: EntityRelationshipCardinality,
+    val protected: Boolean,
+    val targetRules: List<RelationshipTargetRule> = emptyList(),
+    val createdAt: ZonedDateTime?,
+    val updatedAt: ZonedDateTime?,
+    val createdBy: UUID?,
+    val updatedBy: UUID?,
+)

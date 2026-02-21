@@ -8,7 +8,6 @@ import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.core.DataType
-import riven.core.enums.entity.EntityCategory
 import riven.core.enums.entity.EntityPropertyType
 import riven.core.enums.entity.query.FilterOperator
 import riven.core.models.common.validation.Schema
@@ -38,7 +37,6 @@ class EntityQueryPaginationIntegrationTest : EntityQueryIntegrationTestBase() {
             displayNameSingular = "Company",
             displayNamePlural = "Companies",
             identifierKey = companyNameAttrId,
-            type = EntityCategory.STANDARD,
             schema = Schema(
                 label = "Company",
                 key = SchemaType.OBJECT,
@@ -53,7 +51,6 @@ class EntityQueryPaginationIntegrationTest : EntityQueryIntegrationTestBase() {
                     )
                 )
             ),
-            relationships = null,
             columns = listOf(
                 EntityTypeAttributeColumn(companyNameAttrId, EntityPropertyType.ATTRIBUTE)
             )

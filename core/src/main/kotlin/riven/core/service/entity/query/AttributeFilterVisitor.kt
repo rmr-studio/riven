@@ -1,10 +1,12 @@
 package riven.core.service.entity.query
 
 import org.springframework.stereotype.Component
+import riven.core.enums.entity.query.QueryDirection
 import riven.core.exceptions.query.FilterNestingDepthExceededException
 import riven.core.exceptions.query.RelationshipDepthExceededException
 import riven.core.models.entity.query.filter.FilterValue
 import riven.core.models.entity.query.filter.QueryFilter
+import java.util.*
 
 /**
  * Visitor that traverses [QueryFilter] trees and produces [SqlFragment] output.
@@ -97,9 +99,10 @@ class AttributeFilterVisitor(
     fun visit(
         filter: QueryFilter,
         paramGen: ParameterNameGenerator,
-        entityAlias: String = "e"
+        entityAlias: String = "e",
+        relationshipDirections: Map<UUID, QueryDirection> = emptyMap(),
     ): SqlFragment {
-        return visitInternal(filter, depth = 0, relationshipDepth = 0, paramGen, entityAlias)
+        return visitInternal(filter, depth = 0, relationshipDepth = 0, paramGen, entityAlias, relationshipDirections)
     }
 
     /**
@@ -114,7 +117,8 @@ class AttributeFilterVisitor(
         depth: Int,
         relationshipDepth: Int,
         paramGen: ParameterNameGenerator,
-        entityAlias: String
+        entityAlias: String,
+        relationshipDirections: Map<UUID, QueryDirection> = emptyMap(),
     ): SqlFragment {
         if (depth > maxNestingDepth) {
             throw FilterNestingDepthExceededException(depth, maxNestingDepth)
@@ -122,9 +126,9 @@ class AttributeFilterVisitor(
 
         return when (filter) {
             is QueryFilter.Attribute -> visitAttribute(filter, paramGen, entityAlias)
-            is QueryFilter.Relationship -> visitRelationship(filter, relationshipDepth, paramGen, entityAlias)
-            is QueryFilter.And -> visitAnd(filter.conditions, depth, relationshipDepth, paramGen, entityAlias)
-            is QueryFilter.Or -> visitOr(filter.conditions, depth, relationshipDepth, paramGen, entityAlias)
+            is QueryFilter.Relationship -> visitRelationship(filter, relationshipDepth, paramGen, entityAlias, relationshipDirections)
+            is QueryFilter.And -> visitAnd(filter.conditions, depth, relationshipDepth, paramGen, entityAlias, relationshipDirections)
+            is QueryFilter.Or -> visitOr(filter.conditions, depth, relationshipDepth, paramGen, entityAlias, relationshipDirections)
         }
     }
 
@@ -146,14 +150,15 @@ class AttributeFilterVisitor(
         depth: Int,
         relationshipDepth: Int,
         paramGen: ParameterNameGenerator,
-        entityAlias: String
+        entityAlias: String,
+        relationshipDirections: Map<UUID, QueryDirection>,
     ): SqlFragment {
         if (conditions.isEmpty()) {
             return SqlFragment.ALWAYS_TRUE
         }
 
         return conditions
-            .map { visitInternal(it, depth + 1, relationshipDepth, paramGen, entityAlias) }
+            .map { visitInternal(it, depth + 1, relationshipDepth, paramGen, entityAlias, relationshipDirections) }
             .reduce { acc, fragment -> acc.and(fragment) }
     }
 
@@ -175,14 +180,15 @@ class AttributeFilterVisitor(
         depth: Int,
         relationshipDepth: Int,
         paramGen: ParameterNameGenerator,
-        entityAlias: String
+        entityAlias: String,
+        relationshipDirections: Map<UUID, QueryDirection>,
     ): SqlFragment {
         if (conditions.isEmpty()) {
             return SqlFragment.ALWAYS_FALSE
         }
 
         return conditions
-            .map { visitInternal(it, depth + 1, relationshipDepth, paramGen, entityAlias) }
+            .map { visitInternal(it, depth + 1, relationshipDepth, paramGen, entityAlias, relationshipDirections) }
             .reduce { acc, fragment -> acc.or(fragment) }
     }
 
@@ -238,7 +244,8 @@ class AttributeFilterVisitor(
         filter: QueryFilter.Relationship,
         relationshipDepth: Int,
         paramGen: ParameterNameGenerator,
-        entityAlias: String
+        entityAlias: String,
+        relationshipDirections: Map<UUID, QueryDirection>,
     ): SqlFragment {
         if (relationshipDepth >= maxRelationshipDepth) {
             throw RelationshipDepthExceededException(
@@ -246,6 +253,8 @@ class AttributeFilterVisitor(
                 maxRelationshipDepth
             )
         }
+
+        val direction = relationshipDirections[filter.relationshipId] ?: QueryDirection.FORWARD
 
         val nestedVisitor: (QueryFilter, ParameterNameGenerator, String) -> SqlFragment =
             { nestedFilter, nestedParamGen, nestedEntityAlias ->
@@ -263,6 +272,7 @@ class AttributeFilterVisitor(
             condition = filter.condition,
             paramGen = paramGen,
             entityAlias = entityAlias,
+            direction = direction,
             nestedFilterVisitor = nestedVisitor
         )
     }

@@ -15,12 +15,13 @@ import riven.core.enums.common.icon.IconColour
 import riven.core.enums.common.icon.IconType
 import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.core.DataType
-import riven.core.enums.entity.EntityCategory
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.auth.AuthTokenService
+import riven.core.repository.entity.RelationshipDefinitionRepository
+import riven.core.repository.entity.RelationshipTargetRuleRepository
 import riven.core.service.entity.EntityRelationshipService
 import riven.core.service.workflow.state.EntityContextService
 import riven.core.service.workflow.state.WorkflowNodeExpressionEvaluatorService
@@ -51,6 +52,12 @@ class EntityContextServiceTest {
 
     @MockitoBean
     private lateinit var entityRelationshipService: EntityRelationshipService
+
+    @MockitoBean
+    private lateinit var definitionRepository: RelationshipDefinitionRepository
+
+    @MockitoBean
+    private lateinit var targetRuleRepository: RelationshipTargetRuleRepository
 
     @Autowired
     private lateinit var entityContextService: EntityContextService
@@ -94,10 +101,8 @@ class EntityContextServiceTest {
             identifierKey = statusFieldId,
             workspaceId = workspaceId,
             protected = false,
-            type = EntityCategory.STANDARD,
             version = 1,
             schema = schema,
-            relationships = null,
             columns = emptyList()
         ).apply {
             createdAt = ZonedDateTime.now()
@@ -157,10 +162,8 @@ class EntityContextServiceTest {
             identifierKey = fieldId,
             workspaceId = workspaceId,
             protected = false,
-            type = EntityCategory.STANDARD,
             version = 1,
             schema = schema,
-            relationships = null,
             columns = emptyList()
         ).apply {
             createdAt = ZonedDateTime.now()
@@ -220,10 +223,8 @@ class EntityContextServiceTest {
             identifierKey = statusFieldId,
             workspaceId = workspaceId,
             protected = false,
-            type = EntityCategory.STANDARD,
             version = 1,
             schema = schema,
-            relationships = null,
             columns = emptyList()
         ).apply {
             createdAt = ZonedDateTime.now()

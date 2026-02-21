@@ -15,7 +15,8 @@ import riven.core.exceptions.NotFoundException
 import riven.core.exceptions.query.InvalidAttributeReferenceException
 import riven.core.exceptions.query.QueryExecutionException
 import riven.core.exceptions.query.QueryValidationException
-import riven.core.models.entity.configuration.EntityRelationshipDefinition
+import riven.core.enums.entity.query.QueryDirection
+import riven.core.models.entity.RelationshipDefinition
 import riven.core.models.entity.query.EntityQuery
 import riven.core.models.entity.query.EntityQueryResult
 import riven.core.models.entity.query.QueryProjection
@@ -23,6 +24,8 @@ import riven.core.models.entity.query.filter.QueryFilter
 import riven.core.models.entity.query.pagination.QueryPagination
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
+import riven.core.repository.entity.RelationshipDefinitionRepository
+import riven.core.repository.entity.RelationshipTargetRuleRepository
 import java.util.*
 import javax.sql.DataSource
 
@@ -48,6 +51,8 @@ class EntityQueryService(
     private val entityRepository: EntityRepository,
     private val assembler: EntityQueryAssembler,
     private val validator: QueryFilterValidator,
+    private val definitionRepository: RelationshipDefinitionRepository,
+    private val targetRuleRepository: RelationshipTargetRuleRepository,
     dataSource: DataSource,
     @Value("\${riven.query.timeout-seconds}") queryTimeoutSeconds: Long,
 ) {
@@ -94,15 +99,22 @@ class EntityQueryService(
         val entityTypeId = requireNotNull(entityTypeEntity.id) { "Entity type ID cannot be null" }
 
         // Step 2: Validate Filter References (if filter present)
+        val resolvedDefinitions = if (query.filter != null) {
+            loadRelationshipDefinitions(workspaceId, entityTypeId)
+        } else {
+            emptyMap()
+        }
+
         if (query.filter != null) {
-            val relationshipDefinitions = entityTypeEntity.relationships?.associateBy { it.id } ?: emptyMap()
             val attributeIds = entityTypeEntity.schema.properties?.keys ?: emptySet()
-            validateFilterReferences(query.filter, attributeIds, relationshipDefinitions, query.maxDepth)
+            val definitionsOnly = resolvedDefinitions.mapValues { it.value.first }
+            validateFilterReferences(query.filter, attributeIds, definitionsOnly, query.maxDepth)
         }
 
         // Step 3: Assemble SQL
+        val relationshipDirections = resolvedDefinitions.mapValues { it.value.second }
         val paramGen = ParameterNameGenerator()
-        val assembled = assembler.assemble(entityTypeId, workspaceId, query.filter, pagination, paramGen)
+        val assembled = assembler.assemble(entityTypeId, workspaceId, query.filter, pagination, paramGen, relationshipDirections)
 
         logger.debug {
             "Assembled SQL with ${assembled.dataQuery.parameters.size} data parameters " +
@@ -151,6 +163,54 @@ class EntityQueryService(
     }
 
     /**
+     * Loads relationship definitions for an entity type, including both forward and inverse-visible.
+     * Returns a map of definition ID to (definition, direction) pairs.
+     */
+    private fun loadRelationshipDefinitions(
+        workspaceId: UUID,
+        entityTypeId: UUID,
+    ): Map<UUID, Pair<RelationshipDefinition, QueryDirection>> {
+        // Forward definitions: this entity type is the source
+        val forwardEntities = definitionRepository.findByWorkspaceIdAndSourceEntityTypeId(workspaceId, entityTypeId)
+
+        // Inverse definitions: this entity type is a target with inverse_visible = true
+        val inverseRules = targetRuleRepository.findInverseVisibleByTargetEntityTypeId(entityTypeId)
+        val inverseDefIds = inverseRules.map { it.relationshipDefinitionId }.distinct()
+        val inverseEntities = if (inverseDefIds.isNotEmpty()) {
+            definitionRepository.findAllById(inverseDefIds)
+        } else {
+            emptyList()
+        }
+
+        val allDefIds = (forwardEntities.mapNotNull { it.id } + inverseDefIds).distinct()
+        val rulesByDefId = if (allDefIds.isNotEmpty()) {
+            targetRuleRepository.findByRelationshipDefinitionIdIn(allDefIds)
+                .groupBy { it.relationshipDefinitionId }
+        } else {
+            emptyMap()
+        }
+
+        val forwardDefIds = forwardEntities.mapNotNull { it.id }.toSet()
+
+        val result = mutableMapOf<UUID, Pair<RelationshipDefinition, QueryDirection>>()
+
+        forwardEntities.forEach { entity ->
+            val id = entity.id ?: return@forEach
+            val rules = rulesByDefId[id]?.map { it.toModel() } ?: emptyList()
+            result[id] = entity.toModel(rules) to QueryDirection.FORWARD
+        }
+
+        inverseEntities.forEach { entity ->
+            val id = entity.id ?: return@forEach
+            if (id in forwardDefIds) return@forEach // Already added as forward
+            val rules = rulesByDefId[id]?.map { it.toModel() } ?: emptyList()
+            result[id] = entity.toModel(rules) to QueryDirection.INVERSE
+        }
+
+        return result
+    }
+
+    /**
      * Validates all filter references against the entity type schema.
      *
      * Performs two-part validation:
@@ -172,7 +232,7 @@ class EntityQueryService(
     private fun validateFilterReferences(
         filter: QueryFilter?,
         attributeIds: Set<UUID>,
-        relationshipDefinitions: Map<UUID, EntityRelationshipDefinition>,
+        relationshipDefinitions: Map<UUID, RelationshipDefinition>,
         maxDepth: Int,
     ) {
         if (filter == null) return

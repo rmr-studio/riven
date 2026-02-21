@@ -10,7 +10,6 @@ CREATE TABLE IF NOT EXISTS public.entity_types
 (
     "id"                    UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
     "key"                   TEXT    NOT NULL,
-    "type"                  TEXT    NOT NULL CHECK (type IN ('STANDARD', 'RELATIONSHIP')),
     "workspace_id"          UUID REFERENCES workspaces (id) ON DELETE CASCADE,
     "identifier_key"        UUID    NOT NULL,
     "display_name_singular" TEXT    NOT NULL,
@@ -23,7 +22,6 @@ CREATE TABLE IF NOT EXISTS public.entity_types
     "columns"               JSONB,
     -- Denormalized count of entities of this type for faster access
     "count"                 INTEGER NOT NULL         DEFAULT 0,
-    "relationships"         JSONB,
     "version"               INTEGER NOT NULL         DEFAULT 1,
     "deleted"               BOOLEAN NOT NULL         DEFAULT FALSE,
     "created_at"            TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -34,13 +32,7 @@ CREATE TABLE IF NOT EXISTS public.entity_types
 
     -- Single row per entity type (mutable pattern)
     -- Also creates an index on workspace_id + key for faster lookups
-    UNIQUE (workspace_id, key),
-
-    -- Relationship entities must have relationship_config
-    CHECK (
-        (type = 'RELATIONSHIP' AND relationships IS NOT NULL) OR
-        (type = 'STANDARD' AND relationships IS NULL)
-        )
+    UNIQUE (workspace_id, key)
 );
 
 -- =====================================================
@@ -115,25 +107,69 @@ CREATE TABLE IF NOT EXISTS public.entity_attribute_provenance (
 );
 
 -- =====================================================
+-- RELATIONSHIP DEFINITIONS TABLE
+-- =====================================================
+DROP TABLE IF EXISTS public.relationship_definitions CASCADE;
+CREATE TABLE IF NOT EXISTS public.relationship_definitions
+(
+    "id"                    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "workspace_id"          UUID NOT NULL REFERENCES public.workspaces(id) ON DELETE CASCADE,
+    "source_entity_type_id" UUID NOT NULL REFERENCES public.entity_types(id) ON DELETE CASCADE,
+    "name"                  TEXT NOT NULL,
+    "icon_type"             TEXT NOT NULL,
+    "icon_value"            TEXT NOT NULL,
+    "allow_polymorphic"     BOOLEAN NOT NULL DEFAULT FALSE,
+    "cardinality_default"   TEXT NOT NULL CHECK (cardinality_default IN ('ONE_TO_ONE','ONE_TO_MANY','MANY_TO_ONE','MANY_TO_MANY')),
+    "protected"             BOOLEAN NOT NULL DEFAULT FALSE,
+    "created_at"            TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    "updated_at"            TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    "created_by"            UUID,
+    "updated_by"            UUID,
+    "deleted"               BOOLEAN NOT NULL DEFAULT FALSE,
+    "deleted_at"            TIMESTAMP WITH TIME ZONE DEFAULT NULL
+);
+
+-- =====================================================
+-- RELATIONSHIP TARGET RULES TABLE
+-- =====================================================
+DROP TABLE IF EXISTS public.relationship_target_rules CASCADE;
+CREATE TABLE IF NOT EXISTS public.relationship_target_rules
+(
+    "id"                         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "relationship_definition_id" UUID NOT NULL REFERENCES public.relationship_definitions(id) ON DELETE CASCADE,
+    "target_entity_type_id"      UUID REFERENCES public.entity_types(id) ON DELETE CASCADE,
+    "semantic_type_constraint"   TEXT,
+    "cardinality_override"       TEXT CHECK (cardinality_override IN ('ONE_TO_ONE','ONE_TO_MANY','MANY_TO_ONE','MANY_TO_MANY')),
+    "inverse_visible"            BOOLEAN NOT NULL DEFAULT FALSE,
+    "inverse_name"               TEXT,
+    "created_at"                 TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    "updated_at"                 TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    "created_by"                 UUID,
+    "updated_by"                 UUID,
+
+    CONSTRAINT chk_target_or_semantic CHECK (
+        target_entity_type_id IS NOT NULL OR semantic_type_constraint IS NOT NULL
+    )
+);
+
+-- =====================================================
 -- ENTITY RELATIONSHIPS TABLE
 -- =====================================================
 DROP TABLE IF EXISTS public.entity_relationships CASCADE;
 CREATE TABLE IF NOT EXISTS public.entity_relationships
 (
-    "id"                    UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
-    "workspace_id"          UUID    NOT NULL REFERENCES workspaces (id) ON DELETE CASCADE,
-    "source_entity_id"      UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
-    "source_entity_type_id" UUID    NOT NULL REFERENCES entity_types (id) ON DELETE RESTRICT,
-    "target_entity_id"      UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
-    "target_entity_type_id" UUID    NOT NULL REFERENCES entity_types (id) ON DELETE RESTRICT,
-    "relationship_field_id" UUID    NOT NULL,
+    "id"                         UUID PRIMARY KEY         DEFAULT uuid_generate_v4(),
+    "workspace_id"               UUID    NOT NULL REFERENCES workspaces (id) ON DELETE CASCADE,
+    "source_entity_id"           UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
+    "target_entity_id"           UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
+    "relationship_definition_id" UUID    NOT NULL REFERENCES relationship_definitions (id) ON DELETE RESTRICT,
 
     -- Additional metadata about the relationship
-    "created_at"            TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "updated_at"            TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "created_by"            UUID    REFERENCES users (id) ON DELETE SET NULL,
-    "updated_by"            UUID    REFERENCES users (id) ON DELETE SET NULL,
+    "created_at"                 TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updated_at"                 TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "created_by"                 UUID    REFERENCES users (id) ON DELETE SET NULL,
+    "updated_by"                 UUID    REFERENCES users (id) ON DELETE SET NULL,
 
-    "deleted"               BOOLEAN NOT NULL         DEFAULT FALSE,
-    "deleted_at"            TIMESTAMP WITH TIME ZONE DEFAULT NULL
+    "deleted"                    BOOLEAN NOT NULL         DEFAULT FALSE,
+    "deleted_at"                 TIMESTAMP WITH TIME ZONE DEFAULT NULL
 );

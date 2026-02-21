@@ -2,7 +2,6 @@ package riven.core.service.entity
 
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.*
 import org.springframework.beans.factory.annotation.Autowired
@@ -12,46 +11,32 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityRelationshipEntity
-import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.common.icon.IconColour
 import riven.core.enums.common.icon.IconType
-import riven.core.enums.common.validation.SchemaType
-import riven.core.enums.core.DataType
-import riven.core.enums.entity.EntityCategory
-import riven.core.enums.entity.EntityPropertyType
 import riven.core.enums.entity.EntityRelationshipCardinality
-import riven.core.enums.entity.EntityTypeRelationshipType
 import riven.core.enums.workspace.WorkspaceRoles
-import riven.core.models.common.validation.Schema
-import riven.core.models.entity.configuration.EntityRelationshipDefinition
-import riven.core.models.entity.configuration.EntityTypeAttributeColumn
+import riven.core.exceptions.InvalidRelationshipException
+import riven.core.models.common.Icon
+import riven.core.models.entity.RelationshipDefinition
+import riven.core.models.entity.RelationshipTargetRule
+import riven.core.enums.common.validation.SchemaType
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityRepository
+import riven.core.repository.entity.RelationshipDefinitionRepository
+import riven.core.repository.entity.RelationshipTargetRuleRepository
 import riven.core.service.auth.AuthTokenService
-import riven.core.service.entity.type.EntityTypeService
 import riven.core.service.util.BaseServiceTest
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
-import java.time.ZonedDateTime
 import java.util.*
 
-/**
- * Unit tests for EntityRelationshipService.
- *
- * Tests the management of entity instance relationships including:
- * - Creating new relationships
- * - Creating bidirectional relationships with inverse mirroring
- * - Removing relationships
- * - Updating relationships (adding/removing targets)
- * - Edge cases and validation
- */
 @SpringBootTest(
     classes = [
         AuthTokenService::class,
         WorkspaceSecurity::class,
         EntityRelationshipServiceTest.TestConfig::class,
-        EntityRelationshipService::class
+        EntityRelationshipService::class,
     ]
 )
 @WithUserPersona(
@@ -77,1518 +62,939 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
     private lateinit var entityRepository: EntityRepository
 
     @MockitoBean
-    private lateinit var entityTypeService: EntityTypeService
+    private lateinit var definitionRepository: RelationshipDefinitionRepository
+
+    @MockitoBean
+    private lateinit var targetRuleRepository: RelationshipTargetRuleRepository
 
     @Autowired
-    private lateinit var entityRelationshipService: EntityRelationshipService
+    private lateinit var service: EntityRelationshipService
 
-    // Test entity types
-    private lateinit var companyEntityType: EntityTypeEntity
-    private lateinit var contactEntityType: EntityTypeEntity
-    private lateinit var projectEntityType: EntityTypeEntity
-
-    // Relationship definition IDs
-    private lateinit var companyContactsRelId: UUID
-    private lateinit var contactCompanyRelId: UUID
-    private lateinit var companyProjectsRelId: UUID
-    private lateinit var projectCompanyRelId: UUID
+    private val sourceEntityId = UUID.randomUUID()
+    private val sourceEntityTypeId = UUID.randomUUID()
 
     @BeforeEach
     fun setup() {
-        reset(entityRelationshipRepository, entityRepository, entityTypeService)
-
-        // Initialize relationship IDs
-        companyContactsRelId = UUID.randomUUID()
-        contactCompanyRelId = UUID.randomUUID()
-        companyProjectsRelId = UUID.randomUUID()
-        projectCompanyRelId = UUID.randomUUID()
-
-        // Create test entity types with relationships
-        companyEntityType = createEntityType(
-            key = "company",
-            singularName = "Company",
-            pluralName = "Companies",
-            relationships = listOf(
-                createRelationshipDefinition(
-                    id = companyContactsRelId,
-                    name = "Contacts",
-                    sourceKey = "company",
-                    type = EntityTypeRelationshipType.ORIGIN,
-                    cardinality = EntityRelationshipCardinality.ONE_TO_MANY,
-                    entityTypeKeys = listOf("contact"),
-                    bidirectional = true,
-                    bidirectionalEntityTypeKeys = listOf("contact"),
-                    inverseName = "Company"
-                ),
-                createRelationshipDefinition(
-                    id = companyProjectsRelId,
-                    name = "Projects",
-                    sourceKey = "company",
-                    type = EntityTypeRelationshipType.ORIGIN,
-                    cardinality = EntityRelationshipCardinality.ONE_TO_MANY,
-                    entityTypeKeys = listOf("project"),
-                    bidirectional = true,
-                    bidirectionalEntityTypeKeys = listOf("project"),
-                    inverseName = "Company"
-                )
-            )
+        reset(
+            entityRelationshipRepository,
+            entityRepository,
+            definitionRepository,
+            targetRuleRepository,
         )
-
-        contactEntityType = createEntityType(
-            key = "contact",
-            singularName = "Contact",
-            pluralName = "Contacts",
-            relationships = listOf(
-                createRelationshipDefinition(
-                    id = contactCompanyRelId,
-                    name = "Company",
-                    sourceKey = "contact",
-                    type = EntityTypeRelationshipType.REFERENCE,
-                    originRelationshipId = companyContactsRelId,
-                    cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
-                    entityTypeKeys = listOf("company"),
-                    bidirectional = false
-                )
-            )
-        )
-
-        projectEntityType = createEntityType(
-            key = "project",
-            singularName = "Project",
-            pluralName = "Projects",
-            relationships = listOf(
-                createRelationshipDefinition(
-                    id = projectCompanyRelId,
-                    name = "Company",
-                    sourceKey = "project",
-                    type = EntityTypeRelationshipType.REFERENCE,
-                    originRelationshipId = companyProjectsRelId,
-                    cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
-                    entityTypeKeys = listOf("company"),
-                    bidirectional = false
-                )
-            )
-        )
-
-        // Default: no existing relationships
-        whenever(entityRelationshipRepository.findBySourceId(any()))
-            .thenReturn(emptyList())
     }
 
-    // ========== TEST CASE 1: New Entity with No Relationships ==========
+    // ------ Helper builders ------
 
-    @Nested
-    inner class NewEntityWithNoRelationships {
-
-        @Test
-        fun `saveRelationships - new entity with empty relationships returns empty map`() {
-            // Given: A new entity with no relationships
-            val entityId = UUID.randomUUID()
-
-            // When: Saving relationships with empty map
-            val result = entityRelationshipService.saveRelationships(
-                id = entityId,
-                workspaceId = workspaceId,
-                type = companyEntityType,
-                curr = emptyMap()
-            )
-
-            // Then: Returns empty links, no repository interactions
-            assertTrue(result.links.isEmpty(), "Result should be empty for entity with no relationships")
-            assertTrue(result.impactedEntityIds.isEmpty(), "No entities should be impacted")
-            verify(entityRelationshipRepository, never()).saveAll<EntityRelationshipEntity>(any())
-            verify(entityRelationshipRepository, never()).deleteAllBySourceIdAndFieldId(any(), any())
-        }
-    }
-
-    // ========== TEST CASE 2: Creating New Relationships ==========
-
-    @Nested
-    inner class CreatingNewRelationships {
-
-        @Test
-        fun `saveRelationships - creates single relationship to one target entity`() {
-            // Given: A new entity with one relationship to one target
-            val entityId = UUID.randomUUID()
-            val contactId = UUID.randomUUID()
-            val contact = createEntity(
-                id = contactId,
-                typeId = contactEntityType.id!!,
-                payload = emptyMap()
-            )
-
-            // Mock repository calls
-            whenever(entityRepository.findAllById(eq(setOf(contactId))))
-                .thenReturn(listOf(contact))
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactEntityType))
-            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
-                .thenAnswer { invocation -> invocation.getArgument(0) as Collection<EntityRelationshipEntity> }
-
-            // When: Saving relationships
-            val result = entityRelationshipService.saveRelationships(
-                id = entityId,
-                workspaceId = workspaceId,
-                type = companyEntityType,
-                curr = mapOf(companyContactsRelId to listOf(contactId))
-            )
-
-            // Then: Creates relationship and returns EntityLink
-            assertFalse(result.links.isEmpty(), "Result should contain the relationship")
-            assertTrue(result.links.containsKey(companyContactsRelId), "Result should have the field ID as key")
-            assertEquals(1, result.links[companyContactsRelId]?.size, "Should have one EntityLink")
-            assertEquals(
-                contactId,
-                result.links[companyContactsRelId]?.first()?.id,
-                "EntityLink should reference the contact"
-            )
-
-            // Verify repository interactions
-            verify(entityRelationshipRepository).saveAll<EntityRelationshipEntity>(argThat { entities ->
-                entities.any { it.sourceId == entityId && it.targetId == contactId && it.fieldId == companyContactsRelId }
-            })
-        }
-
-        @Test
-        fun `saveRelationships - creates multiple relationships to multiple targets`() {
-            // Given: A company with relationships to multiple contacts
-            val entityId = UUID.randomUUID()
-            val contact1Id = UUID.randomUUID()
-            val contact2Id = UUID.randomUUID()
-            val contact3Id = UUID.randomUUID()
-
-            val contacts = listOf(
-                createEntity(id = contact1Id, typeId = contactEntityType.id!!, payload = emptyMap()),
-                createEntity(id = contact2Id, typeId = contactEntityType.id!!, payload = emptyMap()),
-                createEntity(id = contact3Id, typeId = contactEntityType.id!!, payload = emptyMap())
-            )
-
-            // Mock repository calls
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(contacts)
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactEntityType))
-            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
-                .thenAnswer { invocation -> invocation.getArgument(0) as Collection<EntityRelationshipEntity> }
-
-            // When: Saving relationships
-            val result = entityRelationshipService.saveRelationships(
-                id = entityId,
-                workspaceId = workspaceId,
-                type = companyEntityType,
-                curr = mapOf(companyContactsRelId to listOf(contact1Id, contact2Id, contact3Id))
-            )
-
-            // Then: Creates all relationships
-            assertEquals(3, result.links[companyContactsRelId]?.size, "Should have three EntityLinks")
-
-            verify(entityRelationshipRepository).saveAll<EntityRelationshipEntity>(argThat { entities: Collection<EntityRelationshipEntity> ->
-                entities.size == 3 &&
-                        entities.all { it.sourceId == entityId && it.fieldId == companyContactsRelId }
-            })
-        }
-
-        @Test
-        fun `saveRelationships - creates relationships for multiple relationship fields`() {
-            // Given: A company with both contacts AND projects
-            val entityId = UUID.randomUUID()
-            val contactId = UUID.randomUUID()
-            val projectId = UUID.randomUUID()
-
-            val contact = createEntity(id = contactId, typeId = contactEntityType.id!!, payload = emptyMap())
-            val project = createEntity(id = projectId, typeId = projectEntityType.id!!, payload = emptyMap())
-
-            // Mock repository calls
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(listOf(contact, project))
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactEntityType, projectEntityType))
-            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
-                .thenAnswer { invocation -> invocation.getArgument(0) as Collection<EntityRelationshipEntity> }
-
-            // When: Saving relationships
-            val result = entityRelationshipService.saveRelationships(
-                id = entityId,
-                workspaceId = workspaceId,
-                type = companyEntityType,
-                curr = mapOf(
-                    companyContactsRelId to listOf(contactId),
-                    companyProjectsRelId to listOf(projectId)
-                )
-            )
-
-            // Then: Both relationship fields have EntityLinks
-            assertTrue(result.links.containsKey(companyContactsRelId), "Result should have contacts field")
-            assertTrue(result.links.containsKey(companyProjectsRelId), "Result should have projects field")
-            assertEquals(1, result.links[companyContactsRelId]?.size)
-            assertEquals(1, result.links[companyProjectsRelId]?.size)
-        }
-    }
-
-    // ========== TEST CASE 3: Bidirectional Relationships ==========
-
-    @Nested
-    inner class BidirectionalRelationships {
-
-        @Test
-        fun `saveRelationships - creates inverse relationship on target entity for bidirectional ORIGIN`() {
-            // Given: A company (ORIGIN side) adding a contact relationship
-            val entityId = UUID.randomUUID()
-            val contactId = UUID.randomUUID()
-            val contact = createEntity(
-                id = contactId,
-                typeId = contactEntityType.id!!,
-                payload = emptyMap()
-            )
-
-            // Mock repository calls
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(listOf(contact))
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactEntityType))
-
-            val savedRelationships = mutableListOf<EntityRelationshipEntity>()
-            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
-                .thenAnswer { invocation ->
-                    val entities = invocation.getArgument(0) as Collection<EntityRelationshipEntity>
-                    savedRelationships.addAll(entities)
-                    entities
-                }
-
-            // When: Saving relationships
-            val result = entityRelationshipService.saveRelationships(
-                id = entityId,
-                workspaceId = workspaceId,
-                type = companyEntityType,
-                curr = mapOf(companyContactsRelId to listOf(contactId))
-            )
-
-            // Then: Two relationships created - source and inverse
-            assertEquals(2, savedRelationships.size, "Should create both source and inverse relationships")
-
-            // Verify source relationship: company -> contact
-            val sourceRel = savedRelationships.find {
-                it.sourceId == entityId && it.targetId == contactId
-            }
-            assertNotNull(sourceRel, "Source relationship should exist")
-            assertEquals(companyContactsRelId, sourceRel!!.fieldId, "Source field ID should match")
-
-            // Verify inverse relationship: contact -> company
-            val inverseRel = savedRelationships.find {
-                it.sourceId == contactId && it.targetId == entityId
-            }
-            assertNotNull(inverseRel, "Inverse relationship should exist")
-            assertEquals(
-                contactCompanyRelId,
-                inverseRel!!.fieldId,
-                "Inverse field ID should match REFERENCE definition"
-            )
-
-            // Verify impacted entities includes the contact (which had inverse relationship created)
-            assertTrue(result.impactedEntityIds.contains(contactId), "Contact should be in impacted entities")
-            assertEquals(1, result.impactedEntityIds.size, "Only one entity should be impacted")
-        }
-
-        @Test
-        fun `saveRelationships - creates inverse relationships for multiple targets of same type`() {
-            // Given: A company with multiple contacts (all bidirectional)
-            val entityId = UUID.randomUUID()
-            val contact1Id = UUID.randomUUID()
-            val contact2Id = UUID.randomUUID()
-
-            val contacts = listOf(
-                createEntity(id = contact1Id, typeId = contactEntityType.id!!, payload = emptyMap()),
-                createEntity(id = contact2Id, typeId = contactEntityType.id!!, payload = emptyMap())
-            )
-
-            // Mock repository calls
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(contacts)
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactEntityType))
-
-            val savedRelationships = mutableListOf<EntityRelationshipEntity>()
-            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
-                .thenAnswer { invocation ->
-                    val entities = invocation.getArgument(0) as Collection<EntityRelationshipEntity>
-                    savedRelationships.addAll(entities)
-                    entities
-                }
-
-            // When: Saving relationships
-            entityRelationshipService.saveRelationships(
-                id = entityId,
-                workspaceId = workspaceId,
-                type = companyEntityType,
-                curr = mapOf(companyContactsRelId to listOf(contact1Id, contact2Id))
-            )
-
-            // Then: 4 relationships total (2 source + 2 inverse)
-            assertEquals(4, savedRelationships.size, "Should create 2 source and 2 inverse relationships")
-
-            // Verify inverse relationships exist for both contacts
-            val inverseRels = savedRelationships.filter { it.fieldId == contactCompanyRelId }
-            assertEquals(2, inverseRels.size, "Should have 2 inverse relationships")
-            assertTrue(inverseRels.any { it.sourceId == contact1Id }, "Contact 1 should have inverse")
-            assertTrue(inverseRels.any { it.sourceId == contact2Id }, "Contact 2 should have inverse")
-        }
-
-        @Test
-        fun `saveRelationships - creates inverse relationship on origin entity when saving from REFERENCE side`() {
-            // Given: A contact (REFERENCE side) adding a relationship to a company
-            // This tests the REFERENCE -> ORIGIN mirroring path
-            val contactId = UUID.randomUUID()
-            val companyId = UUID.randomUUID()
-            val company = createEntity(
-                id = companyId,
-                typeId = companyEntityType.id!!,
-                payload = emptyMap()
-            )
-
-            // Mock repository calls
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(listOf(company))
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(companyEntityType))
-
-            val savedRelationships = mutableListOf<EntityRelationshipEntity>()
-            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
-                .thenAnswer { invocation ->
-                    val entities = invocation.getArgument(0) as Collection<EntityRelationshipEntity>
-                    savedRelationships.addAll(entities)
-                    entities
-                }
-
-            // When: Saving relationships from the REFERENCE side (contact -> company)
-            val result = entityRelationshipService.saveRelationships(
-                id = contactId,
-                workspaceId = workspaceId,
-                type = contactEntityType,
-                curr = mapOf(contactCompanyRelId to listOf(companyId))
-            )
-
-            // Then: Two relationships created - source and inverse
-            assertEquals(2, savedRelationships.size, "Should create both source and inverse relationships")
-
-            // Verify source relationship: contact -> company (REFERENCE side)
-            val sourceRel = savedRelationships.find {
-                it.sourceId == contactId && it.targetId == companyId
-            }
-            assertNotNull(sourceRel, "Source relationship should exist")
-            assertEquals(contactCompanyRelId, sourceRel!!.fieldId, "Source field ID should match REFERENCE definition")
-
-            // Verify inverse relationship: company -> contact (back to ORIGIN side)
-            val inverseRel = savedRelationships.find {
-                it.sourceId == companyId && it.targetId == contactId
-            }
-            assertNotNull(inverseRel, "Inverse relationship should exist on ORIGIN side")
-            assertEquals(
-                companyContactsRelId,
-                inverseRel!!.fieldId,
-                "Inverse field ID should match ORIGIN definition"
-            )
-
-            // Verify impacted entities includes the company (which had inverse relationship created)
-            assertTrue(result.impactedEntityIds.contains(companyId), "Company should be in impacted entities")
-            assertEquals(1, result.impactedEntityIds.size, "Only one entity should be impacted")
-        }
-
-        @Test
-        fun `saveRelationships - creates inverse relationships for multiple targets when saving from REFERENCE side`() {
-            // Given: A contact that can belong to multiple companies (if cardinality allowed)
-            // For this test, we'll create multiple contacts pointing to the same company
-            val contact1Id = UUID.randomUUID()
-            val contact2Id = UUID.randomUUID()
-            val companyId = UUID.randomUUID()
-
-            val company = createEntity(
-                id = companyId,
-                typeId = companyEntityType.id!!,
-                payload = emptyMap()
-            )
-
-            // Mock repository calls
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(listOf(company))
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(companyEntityType))
-
-            val savedRelationshipsContact1 = mutableListOf<EntityRelationshipEntity>()
-            val savedRelationshipsContact2 = mutableListOf<EntityRelationshipEntity>()
-
-            // First call for contact1
-            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
-                .thenAnswer { invocation ->
-                    val entities = invocation.getArgument(0) as Collection<EntityRelationshipEntity>
-                    savedRelationshipsContact1.addAll(entities)
-                    entities
-                }
-
-            // When: Contact 1 saves relationship to company
-            entityRelationshipService.saveRelationships(
-                id = contact1Id,
-                workspaceId = workspaceId,
-                type = contactEntityType,
-                curr = mapOf(contactCompanyRelId to listOf(companyId))
-            )
-
-            // Then: Both source and inverse created for contact1
-            assertEquals(2, savedRelationshipsContact1.size, "Should create source and inverse for contact1")
-
-            val contact1Inverse = savedRelationshipsContact1.find {
-                it.sourceId == companyId && it.targetId == contact1Id
-            }
-            assertNotNull(contact1Inverse, "Company should have inverse to contact1")
-            assertEquals(companyContactsRelId, contact1Inverse!!.fieldId)
-
-            // Reset and test contact2
-            reset(entityRelationshipRepository)
-            whenever(entityRelationshipRepository.findBySourceId(any()))
-                .thenReturn(emptyList())
-            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
-                .thenAnswer { invocation ->
-                    val entities = invocation.getArgument(0) as Collection<EntityRelationshipEntity>
-                    savedRelationshipsContact2.addAll(entities)
-                    entities
-                }
-
-            // When: Contact 2 saves relationship to same company
-            entityRelationshipService.saveRelationships(
-                id = contact2Id,
-                workspaceId = workspaceId,
-                type = contactEntityType,
-                curr = mapOf(contactCompanyRelId to listOf(companyId))
-            )
-
-            // Then: Both source and inverse created for contact2
-            assertEquals(2, savedRelationshipsContact2.size, "Should create source and inverse for contact2")
-
-            val contact2Inverse = savedRelationshipsContact2.find {
-                it.sourceId == companyId && it.targetId == contact2Id
-            }
-            assertNotNull(contact2Inverse, "Company should have inverse to contact2")
-            assertEquals(companyContactsRelId, contact2Inverse!!.fieldId)
-        }
-
-        @Test
-        fun `saveRelationships - creates inverse relationships across multiple entity types (polymorphic)`() {
-            // Given: An entity type that can relate to multiple target types bidirectionally
-            val polymorphicRelId = UUID.randomUUID()
-            val contactRefId = UUID.randomUUID()
-            val projectRefId = UUID.randomUUID()
-
-            // Create a polymorphic entity type
-            val polymorphicType = createEntityType(
-                key = "task",
-                singularName = "Task",
-                pluralName = "Tasks",
-                relationships = listOf(
-                    createRelationshipDefinition(
-                        id = polymorphicRelId,
-                        name = "Assignees",
-                        sourceKey = "task",
-                        type = EntityTypeRelationshipType.ORIGIN,
-                        cardinality = EntityRelationshipCardinality.MANY_TO_MANY,
-                        entityTypeKeys = listOf("contact", "project"),
-                        bidirectional = true,
-                        bidirectionalEntityTypeKeys = listOf("contact", "project"),
-                        inverseName = "Assigned Tasks"
-                    )
-                )
-            )
-
-            // Update contact and project types with REFERENCE to the polymorphic relationship
-            val contactWithRef = contactEntityType.copy(
-                relationships = contactEntityType.relationships?.plus(
-                    createRelationshipDefinition(
-                        id = contactRefId,
-                        name = "Assigned Tasks",
-                        sourceKey = "contact",
-                        type = EntityTypeRelationshipType.REFERENCE,
-                        originRelationshipId = polymorphicRelId,
-                        cardinality = EntityRelationshipCardinality.MANY_TO_MANY,
-                        entityTypeKeys = listOf("task"),
-                        bidirectional = false
-                    )
-                )
-            )
-
-            val projectWithRef = projectEntityType.copy(
-                relationships = projectEntityType.relationships?.plus(
-                    createRelationshipDefinition(
-                        id = projectRefId,
-                        name = "Assigned Tasks",
-                        sourceKey = "project",
-                        type = EntityTypeRelationshipType.REFERENCE,
-                        originRelationshipId = polymorphicRelId,
-                        cardinality = EntityRelationshipCardinality.MANY_TO_MANY,
-                        entityTypeKeys = listOf("task"),
-                        bidirectional = false
-                    )
-                )
-            )
-
-            val taskId = UUID.randomUUID()
-            val contactId = UUID.randomUUID()
-            val projectId = UUID.randomUUID()
-
-            val contact = createEntity(id = contactId, typeId = contactWithRef.id!!, payload = emptyMap())
-            val project = createEntity(id = projectId, typeId = projectWithRef.id!!, payload = emptyMap())
-
-            // Mock repository calls
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(listOf(contact, project))
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactWithRef, projectWithRef))
-
-            val savedRelationships = mutableListOf<EntityRelationshipEntity>()
-            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
-                .thenAnswer { invocation ->
-                    val entities = invocation.getArgument(0) as Collection<EntityRelationshipEntity>
-                    savedRelationships.addAll(entities)
-                    entities
-                }
-
-            // When: Saving relationships
-            entityRelationshipService.saveRelationships(
-                id = taskId,
-                workspaceId = workspaceId,
-                type = polymorphicType,
-                curr = mapOf(polymorphicRelId to listOf(contactId, projectId))
-            )
-
-            // Then: 4 relationships (2 source + 2 inverse to different entity types)
-            assertEquals(4, savedRelationships.size, "Should create source and inverse for both target types")
-
-            // Verify inverse to contact
-            val contactInverse = savedRelationships.find {
-                it.sourceId == contactId && it.targetId == taskId
-            }
-            assertNotNull(contactInverse, "Contact should have inverse relationship to task")
-            assertEquals(contactRefId, contactInverse!!.fieldId)
-
-            // Verify inverse to project
-            val projectInverse = savedRelationships.find {
-                it.sourceId == projectId && it.targetId == taskId
-            }
-            assertNotNull(projectInverse, "Project should have inverse relationship to task")
-            assertEquals(projectRefId, projectInverse!!.fieldId)
-        }
-    }
-
-    // ========== TEST CASE 4: Updating Relationships (Adding Targets) ==========
-
-    @Nested
-    inner class UpdatingRelationshipsAddingTargets {
-
-        @Test
-        fun `saveRelationships - adds new target to existing relationship`() {
-            // Given: An existing company with one contact, adding a second contact
-            val entityId = UUID.randomUUID()
-            val existingContactId = UUID.randomUUID()
-            val newContactId = UUID.randomUUID()
-
-            // Mock: existing relationship in database
-            whenever(entityRelationshipRepository.findBySourceId(entityId))
-                .thenReturn(
-                    listOf(
-                        EntityRelationshipEntity(
-                            workspaceId = workspaceId,
-                            sourceId = entityId,
-                            targetId = existingContactId,
-                            fieldId = companyContactsRelId,
-                            sourceTypeId = UUID.randomUUID(),
-                            targetTypeId = UUID.randomUUID()
-                        )
-                    )
-                )
-
-            val contacts = listOf(
-                createEntity(id = existingContactId, typeId = contactEntityType.id!!, payload = emptyMap()),
-                createEntity(id = newContactId, typeId = contactEntityType.id!!, payload = emptyMap())
-            )
-
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(contacts)
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactEntityType))
-
-            val savedRelationships = mutableListOf<EntityRelationshipEntity>()
-            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
-                .thenAnswer { invocation ->
-                    val entities = invocation.getArgument(0) as Collection<EntityRelationshipEntity>
-                    savedRelationships.addAll(entities)
-                    entities
-                }
-
-            // When: Saving relationships with both contacts
-            entityRelationshipService.saveRelationships(
-                id = entityId,
-                workspaceId = workspaceId,
-                type = companyEntityType,
-                curr = mapOf(companyContactsRelId to listOf(existingContactId, newContactId))
-            )
-
-            // Then: Only new contact relationship is created (not existing)
-            val sourceRels = savedRelationships.filter { it.sourceId == entityId }
-            assertEquals(1, sourceRels.size, "Should only create relationship for NEW contact")
-            assertEquals(newContactId, sourceRels.first().targetId, "New relationship should target the new contact")
-
-            // Verify no deletions occurred
-            verify(entityRelationshipRepository, never()).deleteAllBySourceIdAndFieldIdAndTargetIdIn(
-                any(), any(), any()
-            )
-        }
-
-        @Test
-        fun `saveRelationships - adds new relationship field to existing entity`() {
-            // Given: A company with contacts, now adding projects
-            val entityId = UUID.randomUUID()
-            val contactId = UUID.randomUUID()
-            val projectId = UUID.randomUUID()
-
-            // Mock: existing contact relationship in database
-            whenever(entityRelationshipRepository.findBySourceId(entityId))
-                .thenReturn(
-                    listOf(
-                        EntityRelationshipEntity(
-                            workspaceId = workspaceId,
-                            sourceId = entityId,
-                            targetId = contactId,
-                            fieldId = companyContactsRelId,
-                            sourceTypeId = UUID.randomUUID(),
-                            targetTypeId = UUID.randomUUID()
-                        )
-                    )
-                )
-
-            val entities = listOf(
-                createEntity(id = contactId, typeId = contactEntityType.id!!, payload = emptyMap()),
-                createEntity(id = projectId, typeId = projectEntityType.id!!, payload = emptyMap())
-            )
-
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(entities)
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactEntityType, projectEntityType))
-
-            val savedRelationships = mutableListOf<EntityRelationshipEntity>()
-            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
-                .thenAnswer { invocation ->
-                    val ents = invocation.getArgument(0) as Collection<EntityRelationshipEntity>
-                    savedRelationships.addAll(ents)
-                    ents
-                }
-
-            // When: Saving relationships with contacts and new projects
-            val result = entityRelationshipService.saveRelationships(
-                id = entityId,
-                workspaceId = workspaceId,
-                type = companyEntityType,
-                curr = mapOf(
-                    companyContactsRelId to listOf(contactId),
-                    companyProjectsRelId to listOf(projectId)
-                )
-            )
-
-            // Then: Only project relationships created (contacts unchanged)
-            val projectRels = savedRelationships.filter { it.fieldId == companyProjectsRelId }
-            assertTrue(projectRels.isNotEmpty(), "Should create project relationships")
-
-            // Result should include both relationship fields
-            assertTrue(result.links.containsKey(companyContactsRelId), "Result should have contacts")
-            assertTrue(result.links.containsKey(companyProjectsRelId), "Result should have projects")
-        }
-    }
-
-    // ========== TEST CASE 5: Updating Relationships (Removing Targets) ==========
-
-    @Nested
-    inner class UpdatingRelationshipsRemovingTargets {
-
-        @Test
-        fun `saveRelationships - removes target from existing relationship`() {
-            // Given: A company with two contacts, removing one
-            val entityId = UUID.randomUUID()
-            val contact1Id = UUID.randomUUID()
-            val contact2Id = UUID.randomUUID()
-
-            // Mock: existing relationships in database
-            whenever(entityRelationshipRepository.findBySourceId(entityId))
-                .thenReturn(
-                    listOf(
-                        EntityRelationshipEntity(
-                            workspaceId = workspaceId,
-                            sourceId = entityId,
-                            targetId = contact1Id,
-                            fieldId = companyContactsRelId,
-                            sourceTypeId = UUID.randomUUID(),
-                            targetTypeId = UUID.randomUUID()
-                        ),
-                        EntityRelationshipEntity(
-                            workspaceId = workspaceId,
-                            sourceId = entityId,
-                            targetId = contact2Id,
-                            fieldId = companyContactsRelId,
-                            sourceTypeId = UUID.randomUUID(),
-                            targetTypeId = UUID.randomUUID()
-                        )
-                    )
-                )
-
-            val contacts = listOf(
-                createEntity(id = contact1Id, typeId = contactEntityType.id!!, payload = emptyMap()),
-                createEntity(id = contact2Id, typeId = contactEntityType.id!!, payload = emptyMap())
-            )
-
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(contacts)
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactEntityType))
-
-            // When: Saving relationships with only contact1 (contact2 removed)
-            entityRelationshipService.saveRelationships(
-                id = entityId,
-                workspaceId = workspaceId,
-                type = companyEntityType,
-                curr = mapOf(companyContactsRelId to listOf(contact1Id))
-            )
-
-            // Then: Relationship to contact2 is deleted
-            verify(entityRelationshipRepository).deleteAllBySourceIdAndFieldIdAndTargetIdIn(
-                eq(entityId),
-                eq(companyContactsRelId),
-                eq(setOf(contact2Id))
-            )
-
-            // Verify no new relationships created (contact1 already existed)
-            verify(entityRelationshipRepository, never()).saveAll<EntityRelationshipEntity>(any())
-        }
-
-        @Test
-        fun `saveRelationships - removes bidirectional inverse when target removed`() {
-            // Given: A company removing a contact (bidirectional relationship)
-            val entityId = UUID.randomUUID()
-            val contactId = UUID.randomUUID()
-
-            // Mock: existing relationship in database
-            whenever(entityRelationshipRepository.findBySourceId(entityId))
-                .thenReturn(
-                    listOf(
-                        EntityRelationshipEntity(
-                            workspaceId = workspaceId,
-                            sourceId = entityId,
-                            targetId = contactId,
-                            fieldId = companyContactsRelId,
-                            sourceTypeId = UUID.randomUUID(),
-                            targetTypeId = UUID.randomUUID()
-                        )
-                    )
-                )
-
-            val contact = createEntity(id = contactId, typeId = contactEntityType.id!!, payload = emptyMap())
-
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(listOf(contact))
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactEntityType))
-
-            // When: Saving relationships with empty list (all contacts removed)
-            val result = entityRelationshipService.saveRelationships(
-                id = entityId,
-                workspaceId = workspaceId,
-                type = companyEntityType,
-                curr = mapOf(companyContactsRelId to emptyList())
-            )
-
-            // Then: Both source and inverse relationships are deleted
-            // Source: company -> contact
-            verify(entityRelationshipRepository).deleteAllBySourceIdAndFieldIdAndTargetIdIn(
-                eq(entityId),
-                eq(companyContactsRelId),
-                eq(setOf(contactId))
-            )
-
-            // Inverse: contact -> company (the REFERENCE side)
-            verify(entityRelationshipRepository).deleteAllBySourceIdAndFieldIdAndTargetIdIn(
-                eq(contactId),
-                eq(contactCompanyRelId),
-                eq(setOf(entityId))
-            )
-
-            // Verify impacted entities includes the contact (which had inverse relationship removed)
-            assertTrue(result.impactedEntityIds.contains(contactId), "Contact should be in impacted entities")
-            assertEquals(1, result.impactedEntityIds.size, "Only one entity should be impacted")
-        }
-
-        @Test
-        fun `saveRelationships - removes origin inverse when target removed from REFERENCE side`() {
-            // Given: A contact (REFERENCE side) removing its relationship to a company
-            // This tests the REFERENCE -> ORIGIN removal mirroring path
-            val contactId = UUID.randomUUID()
-            val companyId = UUID.randomUUID()
-
-            // Mock: existing relationship in database
-            whenever(entityRelationshipRepository.findBySourceId(contactId))
-                .thenReturn(
-                    listOf(
-                        EntityRelationshipEntity(
-                            workspaceId = workspaceId,
-                            sourceId = contactId,
-                            targetId = companyId,
-                            fieldId = contactCompanyRelId,
-                            sourceTypeId = UUID.randomUUID(),
-                            targetTypeId = UUID.randomUUID()
-                        )
-                    )
-                )
-
-            val company = createEntity(id = companyId, typeId = companyEntityType.id!!, payload = emptyMap())
-
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(listOf(company))
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(companyEntityType))
-
-            // When: Saving relationships with empty list (all companies removed from contact)
-            val result = entityRelationshipService.saveRelationships(
-                id = contactId,
-                workspaceId = workspaceId,
-                type = contactEntityType,
-                curr = mapOf(contactCompanyRelId to emptyList())
-            )
-
-            // Then: Both source and inverse relationships are deleted
-            // Source: contact -> company (REFERENCE side)
-            verify(entityRelationshipRepository).deleteAllBySourceIdAndFieldIdAndTargetIdIn(
-                eq(contactId),
-                eq(contactCompanyRelId),
-                eq(setOf(companyId))
-            )
-
-            // Inverse: company -> contact (the ORIGIN side)
-            verify(entityRelationshipRepository).deleteAllBySourceIdAndFieldIdAndTargetIdIn(
-                eq(companyId),
-                eq(companyContactsRelId),
-                eq(setOf(contactId))
-            )
-
-            // Verify impacted entities includes the company (which had inverse relationship removed)
-            assertTrue(result.impactedEntityIds.contains(companyId), "Company should be in impacted entities")
-            assertEquals(1, result.impactedEntityIds.size, "Only one entity should be impacted")
-        }
-
-        @Test
-        fun `saveRelationships - removes entire relationship field when field removed from payload`() {
-            // Given: A company with contacts, removing the entire contacts field
-            val entityId = UUID.randomUUID()
-            val contact1Id = UUID.randomUUID()
-            val contact2Id = UUID.randomUUID()
-
-            // Mock: existing relationships in database
-            whenever(entityRelationshipRepository.findBySourceId(entityId))
-                .thenReturn(
-                    listOf(
-                        EntityRelationshipEntity(
-                            workspaceId = workspaceId,
-                            sourceId = entityId,
-                            targetId = contact1Id,
-                            fieldId = companyContactsRelId,
-                            sourceTypeId = UUID.randomUUID(),
-                            targetTypeId = UUID.randomUUID()
-                        ),
-                        EntityRelationshipEntity(
-                            workspaceId = workspaceId,
-                            sourceId = entityId,
-                            targetId = contact2Id,
-                            fieldId = companyContactsRelId,
-                            sourceTypeId = UUID.randomUUID(),
-                            targetTypeId = UUID.randomUUID()
-                        )
-                    )
-                )
-
-            val contacts = listOf(
-                createEntity(id = contact1Id, typeId = contactEntityType.id!!, payload = emptyMap()),
-                createEntity(id = contact2Id, typeId = contactEntityType.id!!, payload = emptyMap())
-            )
-
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(contacts)
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactEntityType))
-
-            // When: Saving relationships with no contacts field at all
-            entityRelationshipService.saveRelationships(
-                id = entityId,
-                workspaceId = workspaceId,
-                type = companyEntityType,
-                curr = emptyMap()
-            )
-
-            // Then: All relationships for that field are deleted
-            verify(entityRelationshipRepository).deleteAllBySourceIdAndFieldId(
-                eq(entityId),
-                eq(companyContactsRelId)
-            )
-        }
-    }
-
-    // ========== TEST CASE 6: Mixed Add/Remove Operations ==========
-
-    @Nested
-    inner class MixedAddRemoveOperations {
-
-        @Test
-        fun `saveRelationships - handles simultaneous add and remove of targets`() {
-            // Given: A company replacing contacts (remove old, add new)
-            val entityId = UUID.randomUUID()
-            val oldContactId = UUID.randomUUID()
-            val newContactId = UUID.randomUUID()
-
-            // Mock: existing relationship in database
-            whenever(entityRelationshipRepository.findBySourceId(entityId))
-                .thenReturn(
-                    listOf(
-                        EntityRelationshipEntity(
-                            workspaceId = workspaceId,
-                            sourceId = entityId,
-                            targetId = oldContactId,
-                            fieldId = companyContactsRelId,
-                            sourceTypeId = UUID.randomUUID(),
-                            targetTypeId = UUID.randomUUID()
-                        )
-                    )
-                )
-
-            val contacts = listOf(
-                createEntity(id = oldContactId, typeId = contactEntityType.id!!, payload = emptyMap()),
-                createEntity(id = newContactId, typeId = contactEntityType.id!!, payload = emptyMap())
-            )
-
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(contacts)
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactEntityType))
-
-            val savedRelationships = mutableListOf<EntityRelationshipEntity>()
-            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
-                .thenAnswer { invocation ->
-                    val ents = invocation.getArgument(0) as Collection<EntityRelationshipEntity>
-                    savedRelationships.addAll(ents)
-                    ents
-                }
-
-            // When: Saving relationships with new contact only
-            entityRelationshipService.saveRelationships(
-                id = entityId,
-                workspaceId = workspaceId,
-                type = companyEntityType,
-                curr = mapOf(companyContactsRelId to listOf(newContactId))
-            )
-
-            // Then: Old contact is removed, new contact is added
-            // Verify deletion of old
-            verify(entityRelationshipRepository).deleteAllBySourceIdAndFieldIdAndTargetIdIn(
-                eq(entityId),
-                eq(companyContactsRelId),
-                eq(setOf(oldContactId))
-            )
-
-            // Verify creation of new
-            val sourceRels =
-                savedRelationships.filter { it.sourceId == entityId && it.fieldId == companyContactsRelId }
-            assertEquals(1, sourceRels.size, "Should create relationship to new contact")
-            assertEquals(newContactId, sourceRels.first().targetId)
-        }
-
-        @Test
-        fun `saveRelationships - handles add to one field while removing from another`() {
-            // Given: A company adding a project while removing a contact
-            val entityId = UUID.randomUUID()
-            val contactId = UUID.randomUUID()
-            val projectId = UUID.randomUUID()
-
-            // Mock: existing contact relationship in database
-            whenever(entityRelationshipRepository.findBySourceId(entityId))
-                .thenReturn(
-                    listOf(
-                        EntityRelationshipEntity(
-                            workspaceId = workspaceId,
-                            sourceId = entityId,
-                            targetId = contactId,
-                            fieldId = companyContactsRelId,
-                            sourceTypeId = UUID.randomUUID(),
-                            targetTypeId = UUID.randomUUID()
-                        )
-                    )
-                )
-
-            val entities = listOf(
-                createEntity(id = contactId, typeId = contactEntityType.id!!, payload = emptyMap()),
-                createEntity(id = projectId, typeId = projectEntityType.id!!, payload = emptyMap())
-            )
-
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(entities)
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactEntityType, projectEntityType))
-
-            val savedRelationships = mutableListOf<EntityRelationshipEntity>()
-            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
-                .thenAnswer { invocation ->
-                    val ents = invocation.getArgument(0) as Collection<EntityRelationshipEntity>
-                    savedRelationships.addAll(ents)
-                    ents
-                }
-
-            // When: Saving relationships with only projects (contacts removed)
-            entityRelationshipService.saveRelationships(
-                id = entityId,
-                workspaceId = workspaceId,
-                type = companyEntityType,
-                curr = mapOf(companyProjectsRelId to listOf(projectId))
-            )
-
-            // Then: Contacts field deleted, projects field created
-            verify(entityRelationshipRepository).deleteAllBySourceIdAndFieldId(
-                eq(entityId),
-                eq(companyContactsRelId)
-            )
-
-            val projectRels = savedRelationships.filter { it.fieldId == companyProjectsRelId }
-            assertTrue(projectRels.isNotEmpty(), "Should create project relationships")
-        }
-    }
-
-    // ========== TEST CASE 7: Edge Cases ==========
-
-    @Nested
-    inner class EdgeCases {
-
-        @Test
-        fun `saveRelationships - ignores non-existent target entities`() {
-            // Given: A company with a relationship to a non-existent entity
-            val entityId = UUID.randomUUID()
-            val validContactId = UUID.randomUUID()
-            val invalidContactId = UUID.randomUUID()
-
-            val validContact = createEntity(id = validContactId, typeId = contactEntityType.id!!, payload = emptyMap())
-
-            // Mock: Only return the valid contact (invalid not found)
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(listOf(validContact))
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactEntityType))
-
-            val savedRelationships = mutableListOf<EntityRelationshipEntity>()
-            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
-                .thenAnswer { invocation ->
-                    val ents = invocation.getArgument(0) as Collection<EntityRelationshipEntity>
-                    savedRelationships.addAll(ents)
-                    ents
-                }
-
-            // When: Saving relationships with both valid and invalid IDs
-            val result = entityRelationshipService.saveRelationships(
-                id = entityId,
-                workspaceId = workspaceId,
-                type = companyEntityType,
-                curr = mapOf(companyContactsRelId to listOf(validContactId, invalidContactId))
-            )
-
-            // Then: Only valid contact relationship is created
-            val sourceRels =
-                savedRelationships.filter { it.sourceId == entityId && it.fieldId == companyContactsRelId }
-            assertEquals(1, sourceRels.size, "Should only create relationship for valid entity")
-            assertEquals(validContactId, sourceRels.first().targetId)
-
-            // Result should only have the valid entity link
-            assertEquals(1, result.links[companyContactsRelId]?.size, "Result should only have valid EntityLink")
-        }
-
-        @Test
-        fun `saveRelationships - handles relationship field with unknown definition gracefully`() {
-            // Given: An entity with a relationship field not in the type's definitions
-            val entityId = UUID.randomUUID()
-            val unknownFieldId = UUID.randomUUID()
-            val contactId = UUID.randomUUID()
-
-            val contact = createEntity(id = contactId, typeId = contactEntityType.id!!, payload = emptyMap())
-
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(listOf(contact))
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactEntityType))
-
-            // When: Saving relationships with unknown field ID
-            val result = entityRelationshipService.saveRelationships(
-                id = entityId,
-                workspaceId = workspaceId,
-                type = companyEntityType,
-                curr = mapOf(unknownFieldId to listOf(contactId))
-            )
-
-            // Then: Unknown field is skipped, no relationships created
-            verify(entityRelationshipRepository, never()).saveAll<EntityRelationshipEntity>(any())
-            assertFalse(result.links.containsKey(unknownFieldId), "Unknown field should not be in result")
-        }
-
-        @Test
-        fun `saveRelationships - no changes when prev and curr have same relationships`() {
-            // Given: Entity with no changes to relationships
-            val entityId = UUID.randomUUID()
-            val contactId = UUID.randomUUID()
-
-            // Mock: existing relationship in database
-            whenever(entityRelationshipRepository.findBySourceId(entityId))
-                .thenReturn(
-                    listOf(
-                        EntityRelationshipEntity(
-                            workspaceId = workspaceId,
-                            sourceId = entityId,
-                            targetId = contactId,
-                            fieldId = companyContactsRelId,
-                            sourceTypeId = UUID.randomUUID(),
-                            targetTypeId = UUID.randomUUID()
-                        )
-                    )
-                )
-
-            val contact = createEntity(id = contactId, typeId = contactEntityType.id!!, payload = emptyMap())
-
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(listOf(contact))
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactEntityType))
-
-            // When: Saving relationships with same data
-            entityRelationshipService.saveRelationships(
-                id = entityId,
-                workspaceId = workspaceId,
-                type = companyEntityType,
-                curr = mapOf(companyContactsRelId to listOf(contactId))
-            )
-
-            // Then: No saves or deletes (no changes)
-            verify(entityRelationshipRepository, never()).saveAll<EntityRelationshipEntity>(any())
-            verify(entityRelationshipRepository, never()).deleteAllBySourceIdAndFieldId(any(), any())
-            verify(entityRelationshipRepository, never()).deleteAllBySourceIdAndFieldIdAndTargetIdIn(
-                any(),
-                any(),
-                any()
-            )
-        }
-    }
-
-    // ========== TEST CASE 8: Unidirectional Relationships ==========
-
-    @Nested
-    inner class UnidirectionalRelationships {
-
-        @Test
-        fun `saveRelationships - does not create inverse for unidirectional relationship`() {
-            // Given: An entity type with unidirectional relationship
-            val uniRelId = UUID.randomUUID()
-
-            val unidirectionalType = createEntityType(
-                key = "document",
-                singularName = "Document",
-                pluralName = "Documents",
-                relationships = listOf(
-                    createRelationshipDefinition(
-                        id = uniRelId,
-                        name = "Related Contacts",
-                        sourceKey = "document",
-                        type = EntityTypeRelationshipType.ORIGIN,
-                        cardinality = EntityRelationshipCardinality.MANY_TO_MANY,
-                        entityTypeKeys = listOf("contact"),
-                        bidirectional = false, // Unidirectional!
-                        bidirectionalEntityTypeKeys = null,
-                        inverseName = null
-                    )
-                )
-            )
-
-            val documentId = UUID.randomUUID()
-            val contactId = UUID.randomUUID()
-            val contact = createEntity(id = contactId, typeId = contactEntityType.id!!, payload = emptyMap())
-
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(listOf(contact))
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactEntityType))
-
-            val savedRelationships = mutableListOf<EntityRelationshipEntity>()
-            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
-                .thenAnswer { invocation ->
-                    val ents = invocation.getArgument(0) as Collection<EntityRelationshipEntity>
-                    savedRelationships.addAll(ents)
-                    ents
-                }
-
-            // When: Saving relationships
-            entityRelationshipService.saveRelationships(
-                id = documentId,
-                workspaceId = workspaceId,
-                type = unidirectionalType,
-                curr = mapOf(uniRelId to listOf(contactId))
-            )
-
-            // Then: Only source relationship created, no inverse
-            assertEquals(1, savedRelationships.size, "Should only create source relationship")
-            assertEquals(documentId, savedRelationships.first().sourceId)
-            assertEquals(contactId, savedRelationships.first().targetId)
-            assertEquals(uniRelId, savedRelationships.first().fieldId)
-        }
-
-        @Test
-        fun `saveRelationships - does not remove inverse for unidirectional relationship removal`() {
-            // Given: A unidirectional relationship being removed
-            val uniRelId = UUID.randomUUID()
-
-            val unidirectionalType = createEntityType(
-                key = "document",
-                singularName = "Document",
-                pluralName = "Documents",
-                relationships = listOf(
-                    createRelationshipDefinition(
-                        id = uniRelId,
-                        name = "Related Contacts",
-                        sourceKey = "document",
-                        type = EntityTypeRelationshipType.ORIGIN,
-                        cardinality = EntityRelationshipCardinality.MANY_TO_MANY,
-                        entityTypeKeys = listOf("contact"),
-                        bidirectional = false, // Unidirectional
-                        bidirectionalEntityTypeKeys = null,
-                        inverseName = null
-                    )
-                )
-            )
-
-            val documentId = UUID.randomUUID()
-            val contactId = UUID.randomUUID()
-
-            // Mock: existing relationship in database
-            whenever(entityRelationshipRepository.findBySourceId(documentId))
-                .thenReturn(
-                    listOf(
-                        EntityRelationshipEntity(
-                            workspaceId = workspaceId,
-                            sourceId = documentId,
-                            targetId = contactId,
-                            fieldId = uniRelId,
-                            sourceTypeId = UUID.randomUUID(),
-                            targetTypeId = UUID.randomUUID()
-                        )
-                    )
-                )
-
-            val contact = createEntity(id = contactId, typeId = contactEntityType.id!!, payload = emptyMap())
-
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(listOf(contact))
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactEntityType))
-
-            // When: Saving relationships with empty list (removed)
-            entityRelationshipService.saveRelationships(
-                id = documentId,
-                workspaceId = workspaceId,
-                type = unidirectionalType,
-                curr = mapOf(uniRelId to emptyList())
-            )
-
-            // Then: Only source relationship deleted, no attempt to delete inverse
-            verify(entityRelationshipRepository).deleteAllBySourceIdAndFieldIdAndTargetIdIn(
-                eq(documentId),
-                eq(uniRelId),
-                eq(setOf(contactId))
-            )
-
-            // Should NOT try to delete inverse on contact (since unidirectional)
-            verify(entityRelationshipRepository, never()).deleteAllBySourceIdAndFieldIdAndTargetIdIn(
-                eq(contactId),
-                any(),
-                any()
-            )
-        }
-    }
-
-    // ========== TEST CASE 9: EntityLink Hydration ==========
-
-    @Nested
-    inner class EntityLinkHydration {
-
-        @Test
-        fun `saveRelationships - returns EntityLinks with correct icon and label`() {
-            // Given: An entity with custom icon
-            val entityId = UUID.randomUUID()
-            val contactId = UUID.randomUUID()
-            val nameFieldId = UUID.randomUUID()
-
-            val contact = createEntity(
-                id = contactId,
-                typeId = contactEntityType.id!!,
-                identifierKey = nameFieldId,
-                iconType = IconType.USER,
-                iconColour = IconColour.BLUE,
-                payload = mapOf(
-                    nameFieldId.toString() to EntityAttributePrimitivePayload(
-                        value = "John Doe",
-                        schemaType = SchemaType.TEXT
-                    )
-                )
-            )
-
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(listOf(contact))
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactEntityType))
-            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
-                .thenAnswer { invocation -> invocation.getArgument(0) as Collection<EntityRelationshipEntity> }
-
-            // When: Saving relationships
-            val result = entityRelationshipService.saveRelationships(
-                id = entityId,
-                workspaceId = workspaceId,
-                type = companyEntityType,
-                curr = mapOf(companyContactsRelId to listOf(contactId))
-            )
-
-            // Then: EntityLink has correct properties
-            val entityLink = result.links[companyContactsRelId]?.first()
-            assertNotNull(entityLink, "EntityLink should exist")
-            assertEquals(contactId, entityLink!!.id)
-            assertEquals(IconType.USER, entityLink.icon.type)
-            assertEquals(IconColour.BLUE, entityLink.icon.colour)
-            assertEquals("John Doe", entityLink.label)
-        }
-
-        @Test
-        fun `saveRelationships - uses entity ID as fallback label when identifier not found`() {
-            // Given: An entity with no identifier value
-            val entityId = UUID.randomUUID()
-            val contactId = UUID.randomUUID()
-            val missingFieldId = UUID.randomUUID()
-
-            val contact = createEntity(
-                id = contactId,
-                typeId = contactEntityType.id!!,
-                identifierKey = missingFieldId, // Points to non-existent field
-                payload = emptyMap()
-            )
-
-            whenever(entityRepository.findAllById(any()))
-                .thenReturn(listOf(contact))
-            whenever(entityTypeService.getByIds(any()))
-                .thenReturn(listOf(contactEntityType))
-            whenever(entityRelationshipRepository.saveAll<EntityRelationshipEntity>(any()))
-                .thenAnswer { invocation -> invocation.getArgument(0) as Collection<EntityRelationshipEntity> }
-
-            // When: Saving relationships
-            val result = entityRelationshipService.saveRelationships(
-                id = entityId,
-                workspaceId = workspaceId,
-                type = companyEntityType,
-                curr = mapOf(companyContactsRelId to listOf(contactId))
-            )
-
-            // Then: EntityLink uses ID as label
-            val entityLink = result.links[companyContactsRelId]?.first()
-            assertNotNull(entityLink)
-            assertEquals(contactId.toString(), entityLink!!.label, "Should use entity ID as fallback label")
-        }
-    }
-
-    // ========== Helper Methods ==========
-
-    private fun createEntityType(
+    private fun buildDefinition(
         id: UUID = UUID.randomUUID(),
-        key: String,
-        singularName: String,
-        pluralName: String,
-        relationships: List<EntityRelationshipDefinition>? = null
-    ): EntityTypeEntity {
-        val identifierKey = UUID.randomUUID()
+        sourceEntityTypeId: UUID = this.sourceEntityTypeId,
+        allowPolymorphic: Boolean = false,
+        cardinalityDefault: EntityRelationshipCardinality = EntityRelationshipCardinality.MANY_TO_MANY,
+        targetRules: List<RelationshipTargetRule> = emptyList(),
+    ) = RelationshipDefinition(
+        id = id,
+        workspaceId = workspaceId,
+        sourceEntityTypeId = sourceEntityTypeId,
+        name = "Test Relationship",
+        icon = Icon(IconType.LINK, IconColour.NEUTRAL),
+        allowPolymorphic = allowPolymorphic,
+        cardinalityDefault = cardinalityDefault,
+        protected = false,
+        targetRules = targetRules,
+        createdAt = null,
+        updatedAt = null,
+        createdBy = null,
+        updatedBy = null,
+    )
 
-        return EntityTypeEntity(
-            id = id,
-            key = key,
-            displayNameSingular = singularName,
-            displayNamePlural = pluralName,
-            workspaceId = workspaceId,
-            type = EntityCategory.STANDARD,
-            schema = Schema(
-                key = SchemaType.OBJECT,
-                type = DataType.OBJECT,
-                properties = mapOf(
-                    identifierKey to Schema(
-                        key = SchemaType.TEXT,
-                        label = "Name",
-                        type = DataType.STRING,
-                        required = true
-                    )
-                )
-            ),
-            columns = relationships?.map {
-                EntityTypeAttributeColumn(it.id, EntityPropertyType.RELATIONSHIP)
-            } ?: emptyList(),
-            relationships = relationships,
-            identifierKey = identifierKey
-        )
-    }
-
-    private fun createRelationshipDefinition(
+    private fun buildTargetRule(
         id: UUID = UUID.randomUUID(),
-        name: String,
-        sourceKey: String,
-        type: EntityTypeRelationshipType,
-        cardinality: EntityRelationshipCardinality,
-        entityTypeKeys: List<String>?,
-        bidirectional: Boolean,
-        bidirectionalEntityTypeKeys: List<String>? = null,
+        definitionId: UUID = UUID.randomUUID(),
+        targetEntityTypeId: UUID? = UUID.randomUUID(),
+        semanticTypeConstraint: String? = null,
+        cardinalityOverride: EntityRelationshipCardinality? = null,
+        inverseVisible: Boolean = false,
         inverseName: String? = null,
-        originRelationshipId: UUID? = null
-    ): EntityRelationshipDefinition {
-        return EntityRelationshipDefinition(
-            id = id,
-            name = name,
-            sourceEntityTypeKey = sourceKey,
-            relationshipType = type,
-            originRelationshipId = originRelationshipId,
-            cardinality = cardinality,
-            entityTypeKeys = entityTypeKeys,
-            allowPolymorphic = false,
-            required = false,
-            bidirectional = bidirectional,
-            bidirectionalEntityTypeKeys = bidirectionalEntityTypeKeys,
-            inverseName = inverseName,
-            protected = false,
-            createdAt = ZonedDateTime.now(),
-            updatedAt = ZonedDateTime.now(),
-            createdBy = userId,
-            updatedBy = userId
+    ) = RelationshipTargetRule(
+        id = id,
+        relationshipDefinitionId = definitionId,
+        targetEntityTypeId = targetEntityTypeId,
+        semanticTypeConstraint = semanticTypeConstraint,
+        cardinalityOverride = cardinalityOverride,
+        inverseVisible = inverseVisible,
+        inverseName = inverseName,
+        createdAt = null,
+        updatedAt = null,
+    )
+
+    private fun buildEntity(
+        id: UUID = UUID.randomUUID(),
+        typeId: UUID = UUID.randomUUID(),
+        typeKey: String = "test_entity",
+    ) = EntityEntity(
+        id = id,
+        workspaceId = workspaceId,
+        typeId = typeId,
+        typeKey = typeKey,
+        identifierKey = UUID.randomUUID(),
+        payload = mapOf(
+            UUID.randomUUID().toString() to EntityAttributePrimitivePayload(value = "Test", schemaType = SchemaType.TEXT)
+        ),
+        iconType = IconType.CIRCLE_DASHED,
+        iconColour = IconColour.NEUTRAL,
+    )
+
+    // ------ Save: new links ------
+
+    @Test
+    fun `saveRelationships - new links - creates rows`() {
+        val defId = UUID.randomUUID()
+        val targetId1 = UUID.randomUUID()
+        val targetId2 = UUID.randomUUID()
+        val targetTypeId = UUID.randomUUID()
+
+        val targetEntity1 = buildEntity(id = targetId1, typeId = targetTypeId)
+        val targetEntity2 = buildEntity(id = targetId2, typeId = targetTypeId)
+
+        val rule = buildTargetRule(definitionId = defId, targetEntityTypeId = targetTypeId)
+        val definition = buildDefinition(id = defId, targetRules = listOf(rule))
+
+        whenever(entityRelationshipRepository.findBySourceId(sourceEntityId)).thenReturn(emptyList())
+        whenever(definitionRepository.findById(defId)).thenReturn(Optional.of(
+            riven.core.service.util.factory.entity.EntityFactory.createRelationshipDefinitionEntity(
+                id = defId, workspaceId = workspaceId, sourceEntityTypeId = sourceEntityTypeId,
+            )
+        ))
+        whenever(targetRuleRepository.findByRelationshipDefinitionId(defId)).thenReturn(emptyList())
+        whenever(entityRepository.findAllById(any<Collection<UUID>>())).thenReturn(listOf(targetEntity1, targetEntity2))
+        whenever(entityRelationshipRepository.saveAll(any<List<EntityRelationshipEntity>>())).thenAnswer { it.arguments[0] }
+
+        service.saveRelationships(
+            id = sourceEntityId,
+            workspaceId = workspaceId,
+            definitionId = defId,
+            definition = definition,
+            targetIds = listOf(targetId1, targetId2),
+        )
+
+        verify(entityRelationshipRepository).saveAll(argThat<List<EntityRelationshipEntity>> { size == 2 })
+    }
+
+    @Test
+    fun `saveRelationships - missing target entity - throws`() {
+        val defId = UUID.randomUUID()
+        val existingTargetId = UUID.randomUUID()
+        val missingTargetId = UUID.randomUUID()
+        val targetTypeId = UUID.randomUUID()
+
+        val rule = buildTargetRule(definitionId = defId, targetEntityTypeId = targetTypeId)
+        val definition = buildDefinition(id = defId, targetRules = listOf(rule))
+
+        val existingEntity = buildEntity(id = existingTargetId, typeId = targetTypeId)
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(emptyList())
+        // Only return one of the two requested entities
+        whenever(entityRepository.findAllById(any<Collection<UUID>>())).thenReturn(listOf(existingEntity))
+
+        assertThrows(IllegalArgumentException::class.java) {
+            service.saveRelationships(
+                id = sourceEntityId,
+                workspaceId = workspaceId,
+                definitionId = defId,
+                definition = definition,
+                targetIds = listOf(existingTargetId, missingTargetId),
+            )
+        }
+    }
+
+    // ------ Save: remove links ------
+
+    @Test
+    fun `saveRelationships - remove links - deletes rows`() {
+        val defId = UUID.randomUUID()
+        val existingTargetId = UUID.randomUUID()
+
+        val existingRel = EntityRelationshipEntity(
+            id = UUID.randomUUID(),
+            workspaceId = workspaceId,
+            sourceId = sourceEntityId,
+            targetId = existingTargetId,
+            definitionId = defId,
+        )
+
+        val definition = buildDefinition(id = defId, allowPolymorphic = true)
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(listOf(existingRel))
+
+        service.saveRelationships(
+            id = sourceEntityId,
+            workspaceId = workspaceId,
+            definitionId = defId,
+            definition = definition,
+            targetIds = emptyList(),
+        )
+
+        verify(entityRelationshipRepository).deleteAllBySourceIdAndDefinitionIdAndTargetIdIn(
+            eq(sourceEntityId), eq(defId), any()
         )
     }
 
-    private fun createEntity(
-        id: UUID = UUID.randomUUID(),
-        typeId: UUID,
-        identifierKey: UUID = UUID.randomUUID(),
-        iconType: IconType = IconType.FILE,
-        iconColour: IconColour = IconColour.NEUTRAL,
-        payload: Map<String, EntityAttributePrimitivePayload> = emptyMap()
-    ): EntityEntity {
-        return EntityEntity(
-            id = id,
+    // ------ Save: no change ------
+
+    @Test
+    fun `saveRelationships - no change - no operations`() {
+        val defId = UUID.randomUUID()
+        val targetId = UUID.randomUUID()
+
+        val existingRel = EntityRelationshipEntity(
+            id = UUID.randomUUID(),
             workspaceId = workspaceId,
-            typeId = typeId,
-            typeKey = "test-entity-key",
-            identifierKey = identifierKey,
-            iconType = iconType,
-            iconColour = iconColour,
-            payload = payload
+            sourceId = sourceEntityId,
+            targetId = targetId,
+            definitionId = defId,
         )
+
+        val definition = buildDefinition(id = defId, allowPolymorphic = true)
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(listOf(existingRel))
+
+        service.saveRelationships(
+            id = sourceEntityId,
+            workspaceId = workspaceId,
+            definitionId = defId,
+            definition = definition,
+            targetIds = listOf(targetId),
+        )
+
+        verify(entityRelationshipRepository, never()).saveAll(any<List<EntityRelationshipEntity>>())
+        verify(entityRelationshipRepository, never()).deleteAllBySourceIdAndDefinitionIdAndTargetIdIn(any(), any(), any())
+    }
+
+    // ------ Cardinality enforcement ------
+
+    @Test
+    fun `saveRelationships - enforces cardinality ONE_TO_ONE - rejects second link`() {
+        val defId = UUID.randomUUID()
+        val targetId1 = UUID.randomUUID()
+        val targetId2 = UUID.randomUUID()
+        val targetTypeId = UUID.randomUUID()
+
+        val rule = buildTargetRule(definitionId = defId, targetEntityTypeId = targetTypeId)
+        val definition = buildDefinition(
+            id = defId,
+            cardinalityDefault = EntityRelationshipCardinality.ONE_TO_ONE,
+            targetRules = listOf(rule),
+        )
+
+        val targetEntity1 = buildEntity(id = targetId1, typeId = targetTypeId)
+        val targetEntity2 = buildEntity(id = targetId2, typeId = targetTypeId)
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(emptyList())
+        whenever(entityRepository.findAllById(any<Collection<UUID>>())).thenReturn(listOf(targetEntity1, targetEntity2))
+
+        assertThrows(InvalidRelationshipException::class.java) {
+            service.saveRelationships(
+                id = sourceEntityId,
+                workspaceId = workspaceId,
+                definitionId = defId,
+                definition = definition,
+                targetIds = listOf(targetId1, targetId2),
+            )
+        }
+    }
+
+    @Test
+    fun `saveRelationships - enforces cardinality MANY_TO_ONE - allows multiple sources`() {
+        val defId = UUID.randomUUID()
+        val targetId = UUID.randomUUID()
+        val targetTypeId = UUID.randomUUID()
+
+        val rule = buildTargetRule(definitionId = defId, targetEntityTypeId = targetTypeId)
+        val definition = buildDefinition(
+            id = defId,
+            cardinalityDefault = EntityRelationshipCardinality.MANY_TO_ONE,
+            targetRules = listOf(rule),
+        )
+
+        val targetEntity = buildEntity(id = targetId, typeId = targetTypeId)
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(emptyList())
+        whenever(entityRepository.findAllById(any<Collection<UUID>>())).thenReturn(listOf(targetEntity))
+        whenever(entityRelationshipRepository.saveAll(any<List<EntityRelationshipEntity>>())).thenAnswer { it.arguments[0] }
+
+        // MANY_TO_ONE means many sources → one target. For a single source, 1 target is valid.
+        service.saveRelationships(
+            id = sourceEntityId,
+            workspaceId = workspaceId,
+            definitionId = defId,
+            definition = definition,
+            targetIds = listOf(targetId),
+        )
+
+        verify(entityRelationshipRepository).saveAll(any<List<EntityRelationshipEntity>>())
+    }
+
+    // ------ Target type validation ------
+
+    @Test
+    fun `saveRelationships - polymorphic - accepts any target type`() {
+        val defId = UUID.randomUUID()
+        val targetId = UUID.randomUUID()
+        val targetTypeId = UUID.randomUUID()
+
+        val definition = buildDefinition(id = defId, allowPolymorphic = true)
+        val targetEntity = buildEntity(id = targetId, typeId = targetTypeId)
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(emptyList())
+        whenever(entityRepository.findAllById(any<Collection<UUID>>())).thenReturn(listOf(targetEntity))
+        whenever(entityRelationshipRepository.saveAll(any<List<EntityRelationshipEntity>>())).thenAnswer { it.arguments[0] }
+
+        service.saveRelationships(
+            id = sourceEntityId,
+            workspaceId = workspaceId,
+            definitionId = defId,
+            definition = definition,
+            targetIds = listOf(targetId),
+        )
+
+        verify(entityRelationshipRepository).saveAll(any<List<EntityRelationshipEntity>>())
+    }
+
+    @Test
+    fun `saveRelationships - non polymorphic - rejects unlisted target type`() {
+        val defId = UUID.randomUUID()
+        val targetId = UUID.randomUUID()
+        val allowedTypeId = UUID.randomUUID()
+        val actualTypeId = UUID.randomUUID() // different from allowed
+
+        val rule = buildTargetRule(definitionId = defId, targetEntityTypeId = allowedTypeId)
+        val definition = buildDefinition(id = defId, allowPolymorphic = false, targetRules = listOf(rule))
+        val targetEntity = buildEntity(id = targetId, typeId = actualTypeId)
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(emptyList())
+        whenever(entityRepository.findAllById(any<Collection<UUID>>())).thenReturn(listOf(targetEntity))
+
+        assertThrows(IllegalArgumentException::class.java) {
+            service.saveRelationships(
+                id = sourceEntityId,
+                workspaceId = workspaceId,
+                definitionId = defId,
+                definition = definition,
+                targetIds = listOf(targetId),
+            )
+        }
+    }
+
+    @Test
+    fun `saveRelationships - cardinality override - uses rule override over default`() {
+        val defId = UUID.randomUUID()
+        val targetId1 = UUID.randomUUID()
+        val targetId2 = UUID.randomUUID()
+        val targetTypeId = UUID.randomUUID()
+
+        // Definition defaults to MANY_TO_MANY, but rule overrides to ONE_TO_ONE for this type
+        val rule = buildTargetRule(
+            definitionId = defId,
+            targetEntityTypeId = targetTypeId,
+            cardinalityOverride = EntityRelationshipCardinality.ONE_TO_ONE,
+        )
+        val definition = buildDefinition(
+            id = defId,
+            cardinalityDefault = EntityRelationshipCardinality.MANY_TO_MANY,
+            targetRules = listOf(rule),
+        )
+
+        val targetEntity1 = buildEntity(id = targetId1, typeId = targetTypeId)
+        val targetEntity2 = buildEntity(id = targetId2, typeId = targetTypeId)
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(emptyList())
+        whenever(entityRepository.findAllById(any<Collection<UUID>>())).thenReturn(listOf(targetEntity1, targetEntity2))
+
+        // ONE_TO_ONE override should reject the second link (source-side: max 1 per type)
+        assertThrows(InvalidRelationshipException::class.java) {
+            service.saveRelationships(
+                id = sourceEntityId,
+                workspaceId = workspaceId,
+                definitionId = defId,
+                definition = definition,
+                targetIds = listOf(targetId1, targetId2),
+            )
+        }
+    }
+
+    // ------ Cardinality: mixed types ------
+
+    @Test
+    fun `saveRelationships - mixed types - ONE_TO_ONE override only restricts that type`() {
+        val defId = UUID.randomUUID()
+        val typeA = UUID.randomUUID()
+        val typeB = UUID.randomUUID()
+        val targetA1 = UUID.randomUUID()
+        val targetB1 = UUID.randomUUID()
+        val targetB2 = UUID.randomUUID()
+
+        // TypeA has ONE_TO_ONE override, TypeB uses MANY_TO_MANY default
+        val ruleA = buildTargetRule(definitionId = defId, targetEntityTypeId = typeA, cardinalityOverride = EntityRelationshipCardinality.ONE_TO_ONE)
+        val ruleB = buildTargetRule(definitionId = defId, targetEntityTypeId = typeB)
+        val definition = buildDefinition(
+            id = defId,
+            cardinalityDefault = EntityRelationshipCardinality.MANY_TO_MANY,
+            targetRules = listOf(ruleA, ruleB),
+        )
+
+        val entityA1 = buildEntity(id = targetA1, typeId = typeA)
+        val entityB1 = buildEntity(id = targetB1, typeId = typeB)
+        val entityB2 = buildEntity(id = targetB2, typeId = typeB)
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(emptyList())
+        whenever(entityRepository.findAllById(any<Collection<UUID>>()))
+            .thenReturn(listOf(entityA1, entityB1, entityB2))
+        whenever(entityRelationshipRepository.findByTargetIdAndDefinitionId(eq(targetA1), eq(defId)))
+            .thenReturn(emptyList())
+        whenever(entityRelationshipRepository.saveAll(any<List<EntityRelationshipEntity>>())).thenAnswer { it.arguments[0] }
+
+        // 1 TypeA + 2 TypeB should succeed (TypeA ONE_TO_ONE limit applies only to TypeA)
+        service.saveRelationships(
+            id = sourceEntityId,
+            workspaceId = workspaceId,
+            definitionId = defId,
+            definition = definition,
+            targetIds = listOf(targetA1, targetB1, targetB2),
+        )
+
+        verify(entityRelationshipRepository).saveAll(argThat<List<EntityRelationshipEntity>> { size == 3 })
+    }
+
+    // ------ ONE_TO_ONE target-side enforcement ------
+
+    @Test
+    fun `saveRelationships - ONE_TO_ONE - rejects target already linked by another source`() {
+        val defId = UUID.randomUUID()
+        val targetId = UUID.randomUUID()
+        val targetTypeId = UUID.randomUUID()
+        val otherSourceId = UUID.randomUUID()
+
+        val rule = buildTargetRule(definitionId = defId, targetEntityTypeId = targetTypeId)
+        val definition = buildDefinition(
+            id = defId,
+            cardinalityDefault = EntityRelationshipCardinality.ONE_TO_ONE,
+            targetRules = listOf(rule),
+        )
+
+        val targetEntity = buildEntity(id = targetId, typeId = targetTypeId)
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(emptyList())
+        whenever(entityRepository.findAllById(any<Collection<UUID>>()))
+            .thenReturn(listOf(targetEntity))
+        // Another source already links to this target
+        whenever(entityRelationshipRepository.findByTargetIdAndDefinitionId(targetId, defId))
+            .thenReturn(listOf(
+                EntityRelationshipEntity(
+                    id = UUID.randomUUID(),
+                    workspaceId = workspaceId,
+                    sourceId = otherSourceId,
+                    targetId = targetId,
+                    definitionId = defId,
+                )
+            ))
+
+        assertThrows(InvalidRelationshipException::class.java) {
+            service.saveRelationships(
+                id = sourceEntityId,
+                workspaceId = workspaceId,
+                definitionId = defId,
+                definition = definition,
+                targetIds = listOf(targetId),
+            )
+        }
+    }
+
+    @Test
+    fun `saveRelationships - MANY_TO_MANY - allows target linked by multiple sources`() {
+        val defId = UUID.randomUUID()
+        val targetId = UUID.randomUUID()
+        val targetTypeId = UUID.randomUUID()
+
+        val rule = buildTargetRule(definitionId = defId, targetEntityTypeId = targetTypeId)
+        val definition = buildDefinition(
+            id = defId,
+            cardinalityDefault = EntityRelationshipCardinality.MANY_TO_MANY,
+            targetRules = listOf(rule),
+        )
+
+        val targetEntity = buildEntity(id = targetId, typeId = targetTypeId)
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(emptyList())
+        whenever(entityRepository.findAllById(any<Collection<UUID>>()))
+            .thenReturn(listOf(targetEntity))
+        whenever(entityRelationshipRepository.saveAll(any<List<EntityRelationshipEntity>>())).thenAnswer { it.arguments[0] }
+
+        // MANY_TO_MANY should not check target uniqueness
+        service.saveRelationships(
+            id = sourceEntityId,
+            workspaceId = workspaceId,
+            definitionId = defId,
+            definition = definition,
+            targetIds = listOf(targetId),
+        )
+
+        verify(entityRelationshipRepository).saveAll(argThat<List<EntityRelationshipEntity>> { size == 1 })
+        // Should NOT call findByTargetIdAndDefinitionId for MANY_TO_MANY
+        verify(entityRelationshipRepository, never()).findByTargetIdAndDefinitionId(any(), any())
+    }
+
+    // ------ Diff logic ------
+
+    @Test
+    fun `saveRelationships - diff logic - adds new and removes old in same call`() {
+        val defId = UUID.randomUUID()
+        val targetTypeId = UUID.randomUUID()
+        val targetA = UUID.randomUUID()
+        val targetB = UUID.randomUUID()
+        val targetC = UUID.randomUUID()
+
+        // Existing: [A, B], Request: [B, C] → remove A, keep B, add C
+        val existingRelA = EntityRelationshipEntity(
+            id = UUID.randomUUID(), workspaceId = workspaceId,
+            sourceId = sourceEntityId, targetId = targetA, definitionId = defId,
+        )
+        val existingRelB = EntityRelationshipEntity(
+            id = UUID.randomUUID(), workspaceId = workspaceId,
+            sourceId = sourceEntityId, targetId = targetB, definitionId = defId,
+        )
+
+        val rule = buildTargetRule(definitionId = defId, targetEntityTypeId = targetTypeId)
+        val definition = buildDefinition(id = defId, targetRules = listOf(rule))
+
+        val entityB = buildEntity(id = targetB, typeId = targetTypeId)
+        val entityC = buildEntity(id = targetC, typeId = targetTypeId)
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(listOf(existingRelA, existingRelB))
+        // Now returns all final targets (retained B + new C)
+        whenever(entityRepository.findAllById(any<Collection<UUID>>())).thenReturn(listOf(entityB, entityC))
+        whenever(entityRelationshipRepository.saveAll(any<List<EntityRelationshipEntity>>())).thenAnswer { it.arguments[0] }
+
+        service.saveRelationships(
+            id = sourceEntityId,
+            workspaceId = workspaceId,
+            definitionId = defId,
+            definition = definition,
+            targetIds = listOf(targetB, targetC),
+        )
+
+        // Should remove A
+        verify(entityRelationshipRepository).deleteAllBySourceIdAndDefinitionIdAndTargetIdIn(
+            eq(sourceEntityId), eq(defId), argThat<Collection<UUID>> { contains(targetA) && size == 1 }
+        )
+        // Should add C only (B is already present)
+        verify(entityRelationshipRepository).saveAll(argThat<List<EntityRelationshipEntity>> {
+            size == 1 && first().targetId == targetC
+        })
+    }
+
+    @Test
+    fun `saveRelationships - empty targetIds - removes all existing links`() {
+        val defId = UUID.randomUUID()
+        val targetA = UUID.randomUUID()
+        val targetB = UUID.randomUUID()
+
+        val existingRelA = EntityRelationshipEntity(
+            id = UUID.randomUUID(), workspaceId = workspaceId,
+            sourceId = sourceEntityId, targetId = targetA, definitionId = defId,
+        )
+        val existingRelB = EntityRelationshipEntity(
+            id = UUID.randomUUID(), workspaceId = workspaceId,
+            sourceId = sourceEntityId, targetId = targetB, definitionId = defId,
+        )
+
+        val definition = buildDefinition(id = defId, allowPolymorphic = true)
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(listOf(existingRelA, existingRelB))
+
+        service.saveRelationships(
+            id = sourceEntityId,
+            workspaceId = workspaceId,
+            definitionId = defId,
+            definition = definition,
+            targetIds = emptyList(),
+        )
+
+        verify(entityRelationshipRepository).deleteAllBySourceIdAndDefinitionIdAndTargetIdIn(
+            eq(sourceEntityId), eq(defId), argThat<Collection<UUID>> { size == 2 }
+        )
+        verify(entityRelationshipRepository, never()).saveAll(any<List<EntityRelationshipEntity>>())
+    }
+
+    @Test
+    fun `saveRelationships - cardinality with mixed add and remove - ONE_TO_ONE succeeds`() {
+        val defId = UUID.randomUUID()
+        val targetTypeId = UUID.randomUUID()
+        val existingTarget = UUID.randomUUID()
+        val newTarget = UUID.randomUUID()
+
+        val rule = buildTargetRule(definitionId = defId, targetEntityTypeId = targetTypeId)
+        val definition = buildDefinition(
+            id = defId,
+            cardinalityDefault = EntityRelationshipCardinality.ONE_TO_ONE,
+            targetRules = listOf(rule),
+        )
+
+        val existingRel = EntityRelationshipEntity(
+            id = UUID.randomUUID(), workspaceId = workspaceId,
+            sourceId = sourceEntityId, targetId = existingTarget, definitionId = defId,
+        )
+
+        val newEntity = buildEntity(id = newTarget, typeId = targetTypeId)
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(listOf(existingRel))
+        // Only newTarget is in the final state (existingTarget is being removed)
+        whenever(entityRepository.findAllById(any<Collection<UUID>>())).thenReturn(listOf(newEntity))
+        whenever(entityRelationshipRepository.findByTargetIdAndDefinitionId(newTarget, defId))
+            .thenReturn(emptyList())
+        whenever(entityRelationshipRepository.saveAll(any<List<EntityRelationshipEntity>>())).thenAnswer { it.arguments[0] }
+
+        // Remove 1, add 1 → total stays at 1, ONE_TO_ONE should succeed
+        service.saveRelationships(
+            id = sourceEntityId,
+            workspaceId = workspaceId,
+            definitionId = defId,
+            definition = definition,
+            targetIds = listOf(newTarget),
+        )
+
+        verify(entityRelationshipRepository).deleteAllBySourceIdAndDefinitionIdAndTargetIdIn(any(), any(), any())
+        verify(entityRelationshipRepository).saveAll(argThat<List<EntityRelationshipEntity>> { size == 1 })
+    }
+
+    // ------ Regression: Bug 1 — retained targets count toward per-type cardinality ------
+
+    @Test
+    fun `saveRelationships - retained targets count toward per-type cardinality`() {
+        val defId = UUID.randomUUID()
+        val targetTypeId = UUID.randomUUID()
+        val existingTarget = UUID.randomUUID()
+        val newTarget = UUID.randomUUID()
+
+        // ONE_TO_ONE override: max 1 target of this type
+        val rule = buildTargetRule(
+            definitionId = defId,
+            targetEntityTypeId = targetTypeId,
+            cardinalityOverride = EntityRelationshipCardinality.ONE_TO_ONE,
+        )
+        val definition = buildDefinition(
+            id = defId,
+            cardinalityDefault = EntityRelationshipCardinality.MANY_TO_MANY,
+            targetRules = listOf(rule),
+        )
+
+        val existingRel = EntityRelationshipEntity(
+            id = UUID.randomUUID(), workspaceId = workspaceId,
+            sourceId = sourceEntityId, targetId = existingTarget, definitionId = defId,
+        )
+
+        val existingEntity = buildEntity(id = existingTarget, typeId = targetTypeId)
+        val newEntity = buildEntity(id = newTarget, typeId = targetTypeId)
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(listOf(existingRel))
+        // Returns both retained + new targets
+        whenever(entityRepository.findAllById(any<Collection<UUID>>()))
+            .thenReturn(listOf(existingEntity, newEntity))
+
+        // Existing has 1 TypeA target, adding another TypeA → 2 of same type, exceeds ONE_TO_ONE
+        assertThrows(InvalidRelationshipException::class.java) {
+            service.saveRelationships(
+                id = sourceEntityId,
+                workspaceId = workspaceId,
+                definitionId = defId,
+                definition = definition,
+                targetIds = listOf(existingTarget, newTarget),
+            )
+        }
+    }
+
+    // ------ Regression: Bug 2 — ONE_TO_MANY target-side enforcement ------
+
+    @Test
+    fun `saveRelationships - ONE_TO_MANY - rejects target already linked by another source`() {
+        val defId = UUID.randomUUID()
+        val targetId = UUID.randomUUID()
+        val targetTypeId = UUID.randomUUID()
+        val otherSourceId = UUID.randomUUID()
+
+        val rule = buildTargetRule(definitionId = defId, targetEntityTypeId = targetTypeId)
+        val definition = buildDefinition(
+            id = defId,
+            cardinalityDefault = EntityRelationshipCardinality.ONE_TO_MANY,
+            targetRules = listOf(rule),
+        )
+
+        val targetEntity = buildEntity(id = targetId, typeId = targetTypeId)
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(emptyList())
+        whenever(entityRepository.findAllById(any<Collection<UUID>>()))
+            .thenReturn(listOf(targetEntity))
+        // Another source already links to this target
+        whenever(entityRelationshipRepository.findByTargetIdAndDefinitionId(targetId, defId))
+            .thenReturn(listOf(
+                EntityRelationshipEntity(
+                    id = UUID.randomUUID(),
+                    workspaceId = workspaceId,
+                    sourceId = otherSourceId,
+                    targetId = targetId,
+                    definitionId = defId,
+                )
+            ))
+
+        // ONE_TO_MANY: each target can only be linked by one source
+        assertThrows(InvalidRelationshipException::class.java) {
+            service.saveRelationships(
+                id = sourceEntityId,
+                workspaceId = workspaceId,
+                definitionId = defId,
+                definition = definition,
+                targetIds = listOf(targetId),
+            )
+        }
+    }
+
+    @Test
+    fun `saveRelationships - ONE_TO_MANY - allows multiple targets from same source`() {
+        val defId = UUID.randomUUID()
+        val targetId1 = UUID.randomUUID()
+        val targetId2 = UUID.randomUUID()
+        val targetTypeId = UUID.randomUUID()
+
+        val rule = buildTargetRule(definitionId = defId, targetEntityTypeId = targetTypeId)
+        val definition = buildDefinition(
+            id = defId,
+            cardinalityDefault = EntityRelationshipCardinality.ONE_TO_MANY,
+            targetRules = listOf(rule),
+        )
+
+        val targetEntity1 = buildEntity(id = targetId1, typeId = targetTypeId)
+        val targetEntity2 = buildEntity(id = targetId2, typeId = targetTypeId)
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(emptyList())
+        whenever(entityRepository.findAllById(any<Collection<UUID>>()))
+            .thenReturn(listOf(targetEntity1, targetEntity2))
+        // Neither target is linked by another source
+        whenever(entityRelationshipRepository.findByTargetIdAndDefinitionId(eq(targetId1), eq(defId)))
+            .thenReturn(emptyList())
+        whenever(entityRelationshipRepository.findByTargetIdAndDefinitionId(eq(targetId2), eq(defId)))
+            .thenReturn(emptyList())
+        whenever(entityRelationshipRepository.saveAll(any<List<EntityRelationshipEntity>>())).thenAnswer { it.arguments[0] }
+
+        // ONE_TO_MANY: source can have many targets (no source-side limit)
+        service.saveRelationships(
+            id = sourceEntityId,
+            workspaceId = workspaceId,
+            definitionId = defId,
+            definition = definition,
+            targetIds = listOf(targetId1, targetId2),
+        )
+
+        verify(entityRelationshipRepository).saveAll(argThat<List<EntityRelationshipEntity>> { size == 2 })
+    }
+
+    // ------ Regression: Bug 3 — per-type default fallback, no cross-type total ------
+
+    @Test
+    fun `saveRelationships - per-type default fallback - different types each get their own limit`() {
+        val defId = UUID.randomUUID()
+        val typeA = UUID.randomUUID()
+        val typeB = UUID.randomUUID()
+        val targetA1 = UUID.randomUUID()
+        val targetB1 = UUID.randomUUID()
+
+        val ruleA = buildTargetRule(definitionId = defId, targetEntityTypeId = typeA)
+        val ruleB = buildTargetRule(definitionId = defId, targetEntityTypeId = typeB)
+        val definition = buildDefinition(
+            id = defId,
+            cardinalityDefault = EntityRelationshipCardinality.ONE_TO_ONE,
+            targetRules = listOf(ruleA, ruleB),
+        )
+
+        val entityA1 = buildEntity(id = targetA1, typeId = typeA)
+        val entityB1 = buildEntity(id = targetB1, typeId = typeB)
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(emptyList())
+        whenever(entityRepository.findAllById(any<Collection<UUID>>()))
+            .thenReturn(listOf(entityA1, entityB1))
+        whenever(entityRelationshipRepository.findByTargetIdAndDefinitionId(eq(targetA1), eq(defId)))
+            .thenReturn(emptyList())
+        whenever(entityRelationshipRepository.findByTargetIdAndDefinitionId(eq(targetB1), eq(defId)))
+            .thenReturn(emptyList())
+        whenever(entityRelationshipRepository.saveAll(any<List<EntityRelationshipEntity>>())).thenAnswer { it.arguments[0] }
+
+        // 1 TypeA + 1 TypeB with ONE_TO_ONE default = PASS (each type has 1, limit is 1 per type)
+        service.saveRelationships(
+            id = sourceEntityId,
+            workspaceId = workspaceId,
+            definitionId = defId,
+            definition = definition,
+            targetIds = listOf(targetA1, targetB1),
+        )
+
+        verify(entityRelationshipRepository).saveAll(argThat<List<EntityRelationshipEntity>> { size == 2 })
+    }
+
+    // ------ MANY_TO_ONE source-side enforcement ------
+
+    @Test
+    fun `saveRelationships - MANY_TO_ONE - rejects two targets of same type`() {
+        val defId = UUID.randomUUID()
+        val targetId1 = UUID.randomUUID()
+        val targetId2 = UUID.randomUUID()
+        val targetTypeId = UUID.randomUUID()
+
+        val rule = buildTargetRule(definitionId = defId, targetEntityTypeId = targetTypeId)
+        val definition = buildDefinition(
+            id = defId,
+            cardinalityDefault = EntityRelationshipCardinality.MANY_TO_ONE,
+            targetRules = listOf(rule),
+        )
+
+        val targetEntity1 = buildEntity(id = targetId1, typeId = targetTypeId)
+        val targetEntity2 = buildEntity(id = targetId2, typeId = targetTypeId)
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(emptyList())
+        whenever(entityRepository.findAllById(any<Collection<UUID>>()))
+            .thenReturn(listOf(targetEntity1, targetEntity2))
+
+        // MANY_TO_ONE: source can only have 1 target per type
+        assertThrows(InvalidRelationshipException::class.java) {
+            service.saveRelationships(
+                id = sourceEntityId,
+                workspaceId = workspaceId,
+                definitionId = defId,
+                definition = definition,
+                targetIds = listOf(targetId1, targetId2),
+            )
+        }
+    }
+
+    // ------ Read ------
+
+    @Test
+    fun `findRelatedEntities - forward - returns targets`() {
+        whenever(entityRelationshipRepository.findEntityLinksBySourceId(sourceEntityId, workspaceId))
+            .thenReturn(emptyList())
+        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(sourceEntityId, workspaceId))
+            .thenReturn(emptyList())
+
+        val result = service.findRelatedEntities(sourceEntityId, workspaceId)
+
+        assertTrue(result.isEmpty())
+        verify(entityRelationshipRepository).findEntityLinksBySourceId(sourceEntityId, workspaceId)
+        verify(entityRelationshipRepository).findInverseEntityLinksByTargetId(sourceEntityId, workspaceId)
+    }
+
+    @Test
+    fun `findRelatedEntities - includes inverse-visible links`() {
+        val defId = UUID.randomUUID()
+        val inverseDefId = UUID.randomUUID()
+
+        val forwardProjection = mock<riven.core.projection.entity.EntityLinkProjection> {
+            on { getDefinitionId() } doReturn defId
+            on { getId() } doReturn UUID.randomUUID()
+            on { getworkspaceId() } doReturn workspaceId
+            on { getSourceEntityId() } doReturn sourceEntityId
+            on { getIconType() } doReturn "LINK"
+            on { getIconColour() } doReturn "NEUTRAL"
+            on { getTypeKey() } doReturn "company"
+            on { getLabel() } doReturn "Acme Corp"
+        }
+
+        val inverseProjection = mock<riven.core.projection.entity.EntityLinkProjection> {
+            on { getDefinitionId() } doReturn inverseDefId
+            on { getId() } doReturn UUID.randomUUID()
+            on { getworkspaceId() } doReturn workspaceId
+            on { getSourceEntityId() } doReturn sourceEntityId
+            on { getIconType() } doReturn "LINK"
+            on { getIconColour() } doReturn "NEUTRAL"
+            on { getTypeKey() } doReturn "employee"
+            on { getLabel() } doReturn "Alice"
+        }
+
+        whenever(entityRelationshipRepository.findEntityLinksBySourceId(sourceEntityId, workspaceId))
+            .thenReturn(listOf(forwardProjection))
+        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(sourceEntityId, workspaceId))
+            .thenReturn(listOf(inverseProjection))
+
+        val result = service.findRelatedEntities(sourceEntityId, workspaceId)
+
+        assertEquals(2, result.size)
+        assertTrue(result.containsKey(defId))
+        assertTrue(result.containsKey(inverseDefId))
+    }
+
+    @Test
+    fun `findRelatedEntities - excludes inverse-invisible links`() {
+        // Inverse-invisible links are excluded at the repository level (SQL filter).
+        // This test verifies the service correctly delegates to both queries.
+        whenever(entityRelationshipRepository.findEntityLinksBySourceId(sourceEntityId, workspaceId))
+            .thenReturn(emptyList())
+        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(sourceEntityId, workspaceId))
+            .thenReturn(emptyList()) // repo returns nothing for inverse-invisible
+
+        val result = service.findRelatedEntities(sourceEntityId, workspaceId)
+
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `findRelatedEntities - merges forward and inverse under same definition`() {
+        val defId = UUID.randomUUID()
+
+        val forwardProjection = mock<riven.core.projection.entity.EntityLinkProjection> {
+            on { getDefinitionId() } doReturn defId
+            on { getId() } doReturn UUID.randomUUID()
+            on { getworkspaceId() } doReturn workspaceId
+            on { getSourceEntityId() } doReturn sourceEntityId
+            on { getIconType() } doReturn "LINK"
+            on { getIconColour() } doReturn "NEUTRAL"
+            on { getTypeKey() } doReturn "company"
+            on { getLabel() } doReturn "Forward Entity"
+        }
+
+        val inverseProjection = mock<riven.core.projection.entity.EntityLinkProjection> {
+            on { getDefinitionId() } doReturn defId
+            on { getId() } doReturn UUID.randomUUID()
+            on { getworkspaceId() } doReturn workspaceId
+            on { getSourceEntityId() } doReturn sourceEntityId
+            on { getIconType() } doReturn "LINK"
+            on { getIconColour() } doReturn "NEUTRAL"
+            on { getTypeKey() } doReturn "company"
+            on { getLabel() } doReturn "Inverse Entity"
+        }
+
+        whenever(entityRelationshipRepository.findEntityLinksBySourceId(sourceEntityId, workspaceId))
+            .thenReturn(listOf(forwardProjection))
+        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(sourceEntityId, workspaceId))
+            .thenReturn(listOf(inverseProjection))
+
+        val result = service.findRelatedEntities(sourceEntityId, workspaceId)
+
+        assertEquals(1, result.size)
+        assertEquals(2, result[defId]!!.size)
     }
 }

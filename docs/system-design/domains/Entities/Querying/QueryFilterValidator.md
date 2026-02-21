@@ -4,7 +4,7 @@ tags:
   - component/active
   - architecture/component
 Created: 2026-02-08
-Updated: 2026-02-08
+Updated: 2026-02-21
 Domains:
   - "[[Entities]]"
 ---
@@ -31,7 +31,7 @@ Eager pre-validation pass over QueryFilter trees to collect all relationship val
 
 ## Dependencies
 
-- Entity models: `QueryFilter`, `EntityRelationshipDefinition`, `RelationshipFilter`
+- Entity models: `QueryFilter`, `RelationshipDefinition`, `RelationshipFilter`
 - Exception types: `InvalidRelationshipReferenceException`, `RelationshipDepthExceededException`
 
 ## Used By
@@ -70,6 +70,8 @@ Only validates root-level relationship IDs (depth 0). Nested relationships refer
 
 Walks filter tree and returns list of validation errors. Empty list means valid.
 
+`relationshipDefinitions` maps relationship definition IDs to `RelationshipDefinition` objects (the domain model backed by `relationship_definitions` table, replacing the old `EntityRelationshipDefinition` JSONB model).
+
 Callers should wrap non-empty results in `QueryValidationException` if throwing.
 
 ---
@@ -88,3 +90,11 @@ Callers should wrap non-empty results in `QueryValidationException` if throwing.
 - [[EntityQueryService]] — Uses validator in pipeline
 - [[AttributeFilterVisitor]] — Enforces depth during SQL generation (redundant safety)
 - [[Querying]] — Parent subdomain
+
+---
+
+## Changelog
+
+| Date | Change | Reason |
+| ---- | ------ | ------ |
+| 2026-02-21 | Updated to use RelationshipDefinition model (replaces EntityRelationshipDefinition from JSONB schema) | Entity Relationships |

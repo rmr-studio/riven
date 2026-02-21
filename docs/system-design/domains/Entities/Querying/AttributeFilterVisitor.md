@@ -4,7 +4,7 @@ tags:
   - component/active
   - architecture/component
 Created: 2026-02-08
-Updated: 2026-02-08
+Updated: 2026-02-21
 Domains:
   - "[[Entities]]"
 ---
@@ -72,7 +72,7 @@ Visitor that traverses QueryFilter trees and produces SqlFragment output, dispat
 - `QueryFilter.And` → visit all conditions, combine with `and()`
 - `QueryFilter.Or` → visit all conditions, combine with `or()`
 - `QueryFilter.Attribute` → delegate to AttributeSqlGenerator
-- `QueryFilter.Relationship` → delegate to RelationshipSqlGenerator with nested callback
+- `QueryFilter.Relationship` → delegate to RelationshipSqlGenerator with nested callback. Looks up direction from `relationshipDirections` map (defaults to FORWARD) and passes to RelationshipSqlGenerator.
 
 **Template handling:**
 
@@ -95,13 +95,15 @@ When delegating to RelationshipSqlGenerator, provides callback:
 
 ## Public Methods
 
-### `visit(filter, paramGen, entityAlias = "e"): SqlFragment`
+### `visit(filter, paramGen, entityAlias = "e", relationshipDirections: Map<UUID, QueryDirection> = emptyMap()): SqlFragment`
 
 Entry point for filter tree traversal. Returns SQL fragment with parameterized SQL and bound values.
 
 - **Throws:** `FilterNestingDepthExceededException` if AND/OR nesting exceeds limit
 - **Throws:** `RelationshipDepthExceededException` if relationship depth exceeds limit
 - **Throws:** `IllegalStateException` if unresolved template expressions encountered
+
+**`relationshipDirections`** — Query direction map — each relationship definition ID maps to FORWARD or INVERSE direction, passed through to RelationshipSqlGenerator.
 
 ---
 
@@ -112,6 +114,7 @@ Entry point for filter tree traversal. Returns SQL fragment with parameterized S
 - **Redundant depth check:** QueryFilterValidator already checks depth, but visitor enforces it too (defense in depth)
 - **Empty AND returns `1=1`:** Vacuous truth for empty conjunction
 - **Empty OR returns `1=0`:** No match possible for empty disjunction
+- **Direction map defaults:** If a relationship ID is not in the directions map, defaults to FORWARD. This is correct for most use cases but may produce wrong results for inverse-visible relationships not included in the map.
 
 ---
 
@@ -122,3 +125,11 @@ Entry point for filter tree traversal. Returns SQL fragment with parameterized S
 - [[AttributeSqlGenerator]] — Attribute filter delegation
 - [[SqlFragment]] — Returned fragment type
 - [[Querying]] — Parent subdomain
+
+---
+
+## Changelog
+
+| Date | Change | Reason |
+| ---- | ------ | ------ |
+| 2026-02-21 | Added `relationshipDirections` parameter for FORWARD/INVERSE query direction support | Entity Relationships |

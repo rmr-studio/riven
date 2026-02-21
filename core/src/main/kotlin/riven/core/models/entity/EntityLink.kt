@@ -11,7 +11,7 @@ import java.util.*
 data class EntityLink(
     val id: UUID,
     val workspaceId: UUID,
-    val fieldId: UUID,
+    val definitionId: UUID,
     val sourceEntityId: UUID,
     val icon: Icon,
     // This should be the value taken from the field marked as the `key` of that entity type for navigation purposes

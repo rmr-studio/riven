@@ -1,7 +1,7 @@
 package riven.core.models.entity
 
-import riven.core.enums.entity.SemanticAttributeClassification
-import riven.core.enums.entity.SemanticMetadataTargetType
+import riven.core.enums.entity.semantics.SemanticAttributeClassification
+import riven.core.enums.entity.semantics.SemanticMetadataTargetType
 import java.time.ZonedDateTime
 import java.util.*
 

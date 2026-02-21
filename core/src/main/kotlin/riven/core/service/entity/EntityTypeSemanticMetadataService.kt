@@ -6,10 +6,10 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.entity.entity.EntityTypeSemanticMetadataEntity
-import riven.core.enums.entity.SemanticMetadataTargetType
-import riven.core.enums.entity.SemanticMetadataTargetType.ATTRIBUTE
-import riven.core.enums.entity.SemanticMetadataTargetType.ENTITY_TYPE
-import riven.core.enums.entity.SemanticMetadataTargetType.RELATIONSHIP
+import riven.core.enums.entity.semantics.SemanticMetadataTargetType
+import riven.core.enums.entity.semantics.SemanticMetadataTargetType.ATTRIBUTE
+import riven.core.enums.entity.semantics.SemanticMetadataTargetType.ENTITY_TYPE
+import riven.core.enums.entity.semantics.SemanticMetadataTargetType.RELATIONSHIP
 import riven.core.models.entity.EntityTypeSemanticMetadata
 import riven.core.models.request.entity.type.BulkSaveSemanticMetadataRequest
 import riven.core.models.request.entity.type.SaveSemanticMetadataRequest

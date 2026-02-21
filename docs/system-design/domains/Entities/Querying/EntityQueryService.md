@@ -4,7 +4,7 @@ tags:
   - component/active
   - architecture/component
 Created: 2026-02-08
-Updated: 2026-02-08
+Updated: 2026-02-21
 Domains:
   - "[[Entities]]"
 ---
@@ -36,6 +36,8 @@ Entry point for entity queries, orchestrating validation → assembly → execut
 - `EntityRepository` — Batch-load entities by IDs
 - [[EntityQueryAssembler]] — Convert filters to SQL
 - [[QueryFilterValidator]] — Pre-validate filter structure
+- `RelationshipDefinitionRepository` — Load relationship definitions for filter validation and direction resolution
+- `RelationshipTargetRuleRepository` — Load relationship definitions for filter validation and direction resolution
 - `NamedParameterJdbcTemplate` — Execute parameterized SQL with configured timeout
 - [[ParameterNameGenerator]] — Unique parameter naming
 
@@ -51,21 +53,31 @@ Entry point for entity queries, orchestrating validation → assembly → execut
 **Query execution pipeline:**
 
 1. **Load entity type** from repository
-2. **Validate filter** (if present):
+2. **Load relationship definitions** via `loadRelationshipDefinitions`: fetches forward definitions (entity type is source) and inverse-visible definitions (entity type is target with `inverseVisible=true`). Returns `Map<UUID, Pair<RelationshipDefinition, QueryDirection>>` — each definition keyed by ID and paired with its resolved direction (`FORWARD` or `INVERSE`).
+3. **Validate filter** (if present):
    - Part A: Walk tree checking attribute IDs exist in schema
-   - Part B: Delegate to QueryFilterValidator for relationships
+   - Part B: Delegate to QueryFilterValidator, passing `RelationshipDefinition` objects (not legacy JSONB models)
    - Collect all errors, throw QueryValidationException if any found
-3. **Assemble SQL** via EntityQueryAssembler
-4. **Execute in parallel:**
+4. **Assemble SQL** via EntityQueryAssembler, passing `relationshipDirections: Map<UUID, QueryDirection>` so the assembler can thread direction through to `AttributeFilterVisitor` and `RelationshipSqlGenerator`
+5. **Execute in parallel:**
    - Data query: `SELECT e.id ... ORDER BY ... LIMIT/OFFSET`
    - Count query: `SELECT COUNT(*) ...`
-5. **Load entities** by IDs from repository
-6. **Re-sort** entities to match SQL ORDER BY (repository doesn't preserve order)
-7. **Build result** with entities, totalCount, hasNextPage
+6. **Load entities** by IDs from repository
+7. **Re-sort** entities to match SQL ORDER BY (repository doesn't preserve order)
+8. **Build result** with entities, totalCount, hasNextPage
 
 **Query timeout:**
 
 Configured via `riven.query.timeout-seconds` property. Applied to JDBC template during initialization.
+
+**Relationship direction resolution:**
+
+Direction is determined by whether the queried entity type is the source or target of each relationship definition:
+
+- **FORWARD** — the queried entity type is the source of the definition. SQL correlates on `source_entity_id`.
+- **INVERSE** — the queried entity type is a target of the definition, and `inverseVisible=true`. SQL correlates on `target_entity_id`.
+
+This direction is stored in the `Map<UUID, QueryDirection>` returned by `loadRelationshipDefinitions` and flows through: service → assembler → `AttributeFilterVisitor.visit()` → `RelationshipSqlGenerator`.
 
 **Phase 5 limitation — attribute validation:**
 
@@ -91,6 +103,7 @@ Executes entity query with optional filters and pagination. Returns matching ent
 - **Re-sorting required:** `EntityRepository.findByIdIn()` doesn't preserve order, must re-sort by SQL ORDER BY
 - **Attribute validation limitation:** Nested filters validate against root type attributes only (known Phase 5 simplification)
 - **No relationship loading:** Phase 5 entities returned with `relationships = emptyMap()`, hydration deferred to future phase
+- **FORWARD/INVERSE direction affects SQL:** The correlation column in `RelationshipSqlGenerator` differs by direction — `source_entity_id` for FORWARD, `target_entity_id` for INVERSE. Using the wrong direction silently produces incorrect results rather than an error.
 
 ---
 
@@ -99,3 +112,15 @@ Executes entity query with optional filters and pagination. Returns matching ent
 - [[EntityQueryAssembler]] — SQL assembly
 - [[QueryFilterValidator]] — Filter validation
 - [[Querying]] — Parent subdomain
+
+---
+
+## Changelog
+
+### 2026-02-21 — Relationship direction resolution
+
+- Added `RelationshipDefinitionRepository` and `RelationshipTargetRuleRepository` as dependencies for loading relationship definitions.
+- Added `loadRelationshipDefinitions` private method: resolves both forward and inverse-visible definitions into a `Map<UUID, Pair<RelationshipDefinition, QueryDirection>>`.
+- Filter validation now passes `RelationshipDefinition` objects to `QueryFilterValidator` (replacing legacy JSONB-sourced models).
+- SQL assembly now receives `relationshipDirections` map, threading direction through assembler → `AttributeFilterVisitor` → `RelationshipSqlGenerator`.
+- Documented FORWARD vs INVERSE direction semantics and the SQL correlation column implication.

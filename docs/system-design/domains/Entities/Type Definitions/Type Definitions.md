@@ -34,3 +34,4 @@ Manages entity type schemas — creating types, defining attributes (with proper
 | Date | Change | Feature/ADR |
 | ---- | ------ | ----------- |
 | 2026-02-08 | Subdomain overview created | [[02-01-PLAN]] |
+| 2026-02-21 | EntityTypeService updated — removed DiffService and ImpactAnalysisService dependencies, added direct repository access for relationship definition management | Entity Relationships |

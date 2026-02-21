@@ -1,6 +1,6 @@
 package riven.core.models.request.entity.type
 
-import riven.core.enums.entity.SemanticAttributeClassification
+import riven.core.enums.entity.semantics.SemanticAttributeClassification
 
 /**
  * Request body for saving (upserting) semantic metadata on a single target.

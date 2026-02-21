@@ -56,7 +56,7 @@ The query pipeline flow:
 
 | Issue | Impact | Effort |
 | ----- | ------ | ------ |
-| Cross-type attribute validation missing | Relationship filters validate against root entity type attributes instead of target type | Low |
+| Cross-type attribute validation partially addressed | Nested relationship filters skip attribute validation (skip rather than validate against wrong type). Full cross-type validation requires loading target schemas. | Low |
 
 ---
 
@@ -65,3 +65,4 @@ The query pipeline flow:
 | Date | Change | Feature/ADR |
 | ---- | ------ | ----------- |
 | 2026-02-08 | Subdomain overview created with pipeline diagram | [[02-01-PLAN]] |
+| 2026-02-21 | Query pipeline updated with FORWARD/INVERSE direction support. EntityQueryService now loads relationship definitions for direction resolution. RelationshipSqlGenerator accepts QueryDirection parameter. | Entity Relationships |

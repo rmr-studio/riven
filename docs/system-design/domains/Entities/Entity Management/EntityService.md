@@ -4,7 +4,7 @@ tags:
   - component/active
   - architecture/component
 Created: 2026-02-08
-Updated: 2026-02-08
+Updated: 2026-02-21
 Domains:
   - "[[Entities]]"
 ---
@@ -25,7 +25,6 @@ CRUD service for entity instances with validation, relationship hydration, and u
 - Delete entities with relationship cascade handling
 - Enforce unique attribute constraints via normalized table
 - Hydrate entity relationships for API responses
-- Track impacted entities when relationships change
 - Log activity for audit trail
 
 ---
@@ -35,6 +34,7 @@ CRUD service for entity instances with validation, relationship hydration, and u
 - `EntityRepository` — Entity instance persistence
 - [[EntityTypeService]] — Type schema retrieval
 - [[EntityRelationshipService]] — Instance relationship management
+- [[EntityTypeRelationshipService]] — Loads relationship definitions for entity type during save operations
 - [[EntityValidationService]] — Schema validation
 - [[EntityTypeAttributeService]] — Unique constraint handling
 - `AuthTokenService` — JWT user extraction
@@ -55,9 +55,9 @@ CRUD service for entity instances with validation, relationship hydration, and u
 3. Validate attribute payload against type schema via [[EntityValidationService]]
 4. Save entity to database
 5. Check and save unique constraints via [[EntityTypeAttributeService]]
-6. Save relationships via [[EntityRelationshipService]] (returns impacted entities)
+6. Save relationships via `saveRelationshipsPerDefinition()`: extract `relationshipPayload: Map<UUID, List<UUID>>` (keyed by definition ID → target entity IDs); load definitions via [[EntityTypeRelationshipService]]; for each definition in the payload, delegate to [[EntityRelationshipService]] with the resolved definition
 7. Log activity with CREATE or UPDATE operation
-8. Return saved entity + impacted entities (for bidirectional relationship updates)
+8. Return saved entity (`impactedEntities` is always `null` — bidirectional sync removed)
 
 **Unique constraint enforcement:**
 
@@ -76,7 +76,8 @@ CRUD service for entity instances with validation, relationship hydration, and u
 **Relationship hydration:**
 
 - All retrieval methods call `entityRelationshipService.findRelatedEntities()`
-- Returns `Map<UUID, List<EntityLink>>` keyed by relationship field ID
+- Returns `Map<UUID, List<EntityLink>>` keyed by relationship definition ID (not field ID)
+- Includes inverse-visible links (relationships where this entity is the target)
 - Entity model includes `relationships` property for API responses
 
 ---
@@ -97,7 +98,7 @@ Batch retrieval for multiple entity types. Returns map keyed by type ID.
 
 ### `saveEntity(workspaceId, entityTypeId, request): SaveEntityResponse`
 
-Creates or updates entity. Returns saved entity plus impacted entities (from bidirectional relationship changes).
+Creates or updates entity. `impactedEntities` in the response is always `null` (bidirectional sync has been removed).
 
 Validation errors returned in response (not thrown) for better UX.
 
@@ -115,7 +116,7 @@ Retrieves all entities in workspace (across all types). Relationships NOT hydrat
 
 - **Workspace security:** All methods use `@PreAuthorize` or `@PostAuthorize` for access control
 - **Transactional boundaries:** `saveEntity()` and `deleteEntities()` are `@Transactional` — relationship operations participate in same transaction
-- **Impacted entities:** Relationship changes can affect other entities (bidirectional links, cascade deletes). SaveEntityResponse and DeleteEntityResponse include these for client cache updates.
+- **Impacted entities:** `SaveEntityResponse.impactedEntities` is always `null` — bidirectional sync was removed. `DeleteEntityResponse` still includes impacted entities (entities that were linking to the deleted ones).
 - **Validation vs. exceptions:** Schema validation errors returned in SaveEntityResponse.errors (not thrown), but unique constraint violations throw exceptions
 - **Entity type immutability:** Cannot change entity's type after creation (validated in saveEntity)
 
@@ -124,6 +125,18 @@ Retrieves all entities in workspace (across all types). Relationships NOT hydrat
 ## Related
 
 - [[EntityRelationshipService]] — Manages instance relationships
+- [[EntityTypeRelationshipService]] — Provides relationship definitions during save
 - [[EntityValidationService]] — Schema validation
 - [[EntityTypeAttributeService]] — Unique constraint operations
 - [[Entity Management]] — Parent subdomain
+
+---
+
+## Changelog
+
+### 2026-02-21 — Relationship save refactor and hydration key change
+
+- Added `EntityTypeRelationshipService` as a constructor dependency; used to load definitions when saving relationships.
+- Relationship save flow now uses `saveRelationshipsPerDefinition()`: payload keyed by definition ID (not field ID), definitions resolved via `EntityTypeRelationshipService`, then delegated per-definition to `EntityRelationshipService`.
+- `findRelatedEntities` hydration map is now keyed by definition ID; inverse-visible links included.
+- `SaveEntityResponse.impactedEntities` always `null` — bidirectional sync removed.
