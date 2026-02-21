@@ -1,7 +1,6 @@
 'use client';
 
 import { OkButton } from '@/components/feature-modules/waitlist/components/ok-button';
-import { StepBadge } from '@/components/feature-modules/waitlist/components/step-badge';
 import { INPUT_CLASS } from '@/components/feature-modules/waitlist/config/steps';
 import { cn } from '@/lib/utils';
 import { Check, ChevronDown, Search, X } from 'lucide-react';
@@ -14,7 +13,6 @@ type CategoryConfig = {
 };
 
 export const INTEGRATIONS_STEP_CONFIG = {
-  stepNumber: 1,
   title: 'What are your most important integrations?',
   subtitle: 'Select your top integrations you want to see here from day 1',
   instruction: 'Choose up to 5',
@@ -322,7 +320,6 @@ export function IntegrationsStep({
   return (
     <div className="py-8">
       <div className="flex items-start gap-3">
-        <StepBadge number={INTEGRATIONS_STEP_CONFIG.stepNumber} />
         <h3 className="text-xl leading-snug font-medium md:text-2xl">
           {INTEGRATIONS_STEP_CONFIG.title}
           <br />
@@ -332,7 +329,7 @@ export function IntegrationsStep({
           <span className="ml-1 text-destructive">*</span>
         </h3>
       </div>
-      <p className="mt-6 ml-10 text-sm text-muted-foreground">
+      <p className="mt-6 text-sm text-muted-foreground md:ml-10">
         {INTEGRATIONS_STEP_CONFIG.instruction}
         <span className="ml-2 text-xs text-muted-foreground/60">
           ({selectedIntegrations.length}/{INTEGRATIONS_STEP_CONFIG.maxSelections})
@@ -340,7 +337,7 @@ export function IntegrationsStep({
       </p>
 
       {/* Search */}
-      <div className="relative mt-4 ml-10 max-w-sm">
+      <div className="relative mt-4 max-w-sm md:ml-10">
         <Search className="absolute top-1/2 left-0 h-4 w-4 -translate-y-1/2 text-muted-foreground/50" />
         <input
           type="text"
@@ -351,7 +348,7 @@ export function IntegrationsStep({
         />
       </div>
 
-      <div className="mt-4 ml-10 space-y-1">
+      <div className="mt-4 space-y-1 md:ml-10">
         <AnimatePresence initial={false}>
           {INTEGRATIONS_STEP_CONFIG.categories.map((category) => {
             if (!isCategoryVisible(category)) return null;
@@ -443,7 +440,7 @@ export function IntegrationsStep({
         </AnimatePresence>
       </div>
       {error && <p className="mt-3 ml-10 text-xs text-destructive">{error}</p>}
-      <div className="mt-6 ml-10 flex items-center">
+      <div className="mt-6 ml-10 flex items-center justify-end">
         <OkButton onClick={onNext} disabled={selectedIntegrations.length === 0} />
       </div>
     </div>

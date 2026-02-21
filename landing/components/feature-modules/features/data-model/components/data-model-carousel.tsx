@@ -140,10 +140,10 @@ export const DataModelFeatureCarousel = () => {
   return (
     <section className="my-12">
       <div className="mx-auto mb-12 w-full text-center leading-tight tracking-tight">
-        <h3 className="text-4xl font-bold text-background/80">Templates, at your fingertips.</h3>
-        <h4 className="font-semibold text-background/80">
-          Start in minutes with a proven data model fit for your business, then customize endlessly.
-        </h4>
+        <h3 className="text-4xl leading-tight font-medium text-background/70">
+          Interconnection has never been easier
+        </h3>
+        <h4 className="font-normal text-background/60">Your data, Your model, Your platform. </h4>
       </div>
       <BentoCarousel slides={slides} />
     </section>

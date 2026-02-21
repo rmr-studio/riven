@@ -1,3 +1,5 @@
+'use client';
+
 import { Instagram, Linkedin } from 'lucide-react';
 import Link from 'next/link';
 import { Logo } from './ui/logo';
@@ -53,6 +55,14 @@ export function Footer() {
                   <li key={link.label}>
                     <Link
                       href={link.href}
+                      onClick={(e) => {
+                        const hash = link.href.split('#')[1];
+                        if (hash) {
+                          e.preventDefault();
+                          document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' });
+                          window.history.replaceState(null, '', link.href);
+                        }
+                      }}
                       className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >
                       {link.label}
@@ -105,12 +115,6 @@ export function Footer() {
           <p className="text-sm text-muted-foreground">
             &copy; {currentYear} Riven. All rights reserved.
           </p>
-          <a
-            href="mailto:hello@riven.dev"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            hello@riven.dev
-          </a>
         </div>
       </div>
     </footer>

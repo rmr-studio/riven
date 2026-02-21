@@ -42,7 +42,7 @@ export function OperationalHeadacheStep({
           className="h-24 resize-none overflow-y-auto field-sizing-fixed"
         />
       </div>
-      <div className="mt-8 flex items-center">
+      <div className="mt-8 flex items-center justify-end">
         <OkButton onClick={onNext} />
       </div>
     </div>

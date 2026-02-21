@@ -13,7 +13,13 @@ const edgePaths = [
 
 export const InterconnectionDiagram = ({ className }: { className?: string }) => {
   return (
-    <svg viewBox="0 0 955 357" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <svg
+      viewBox="0 0 955 357"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      style={{ fontFamily: 'var(--font-mono)' }}
+    >
       {/* Connection lines - glow layer */}
       <g filter="url(#edgeGlow)">
         {edgePaths.map((edge) => (
@@ -68,9 +74,8 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
           fontSize="16"
-          fontWeight="600"
+          fontWeight="500"
           letterSpacing="-0.05em"
         >
           <tspan x="382" y="116.18">
@@ -81,9 +86,8 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
           fontSize="16"
-          fontWeight="500"
+          fontWeight="300"
           letterSpacing="-0.05em"
         >
           <tspan x="372" y="179.18">
@@ -94,9 +98,8 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
           fontSize="16"
-          fontWeight="500"
+          fontWeight="300"
           letterSpacing="-0.05em"
         >
           <tspan x="372" y="157.18">
@@ -107,9 +110,8 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
           fontSize="16"
-          fontWeight="500"
+          fontWeight="300"
           letterSpacing="-0.05em"
         >
           <tspan x="372" y="203.18">
@@ -120,9 +122,8 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
           fontSize="16"
-          fontWeight="500"
+          fontWeight="300"
           letterSpacing="-0.05em"
         >
           <tspan x="372" y="227.18">
@@ -174,7 +175,12 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
       </g>
 
       {/* ===== Feedback Entity ===== */}
-      <motion.g initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.5 }}>
+      <motion.g
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4, delay: 0.5 }}
+      >
         <g filter="url(#filter4_d_47_128)">
           <rect x="675" y="0" width="277" height="110" rx="16" className="fill-card" />
           <rect x="675.5" y="0.5" width="276" height="109" rx="15.5" className="stroke-border" />
@@ -188,9 +194,8 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
           fontSize="16"
-          fontWeight="600"
+          fontWeight="500"
           letterSpacing="-0.05em"
         >
           <tspan x="729" y="39.18">
@@ -202,9 +207,8 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
             className="fill-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
             fontSize="16"
-            fontWeight="600"
+            fontWeight="500"
             letterSpacing="-0.05em"
           >
             <tspan x="691" y="84.18">
@@ -215,12 +219,11 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
             className="fill-muted-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
             fontSize="16"
             fontWeight="500"
             letterSpacing="-0.05em"
           >
-            <tspan x="716.925" y="84.18">
+            <tspan x="724" y="84.18">
               entities
             </tspan>
           </text>
@@ -251,7 +254,12 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
       </motion.g>
 
       {/* ===== Support Tickets Entity ===== */}
-      <motion.g initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.4 }}>
+      <motion.g
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4, delay: 0.4 }}
+      >
         <g filter="url(#filter7_d_47_128)">
           <path
             d="M3 249.5C3 240.663 10.1634 233.5 19 233.5H264C272.837 233.5 280 240.663 280 249.5V327.5C280 336.337 272.837 343.5 264 343.5H19C10.1634 343.5 3 336.337 3 327.5V249.5Z"
@@ -278,9 +286,8 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
           fontSize="16"
-          fontWeight="600"
+          fontWeight="500"
           letterSpacing="-0.05em"
         >
           <tspan x="58" y="269.18">
@@ -292,9 +299,8 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
             className="fill-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
             fontSize="16"
-            fontWeight="600"
+            fontWeight="500"
             letterSpacing="-0.05em"
           >
             <tspan x="18" y="314.18">
@@ -305,12 +311,11 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
             className="fill-muted-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
             fontSize="16"
             fontWeight="500"
             letterSpacing="-0.05em"
           >
-            <tspan x="45.9406" y="314.18">
+            <tspan x="49" y="314.18">
               entities
             </tspan>
           </text>
@@ -330,7 +335,12 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
       </motion.g>
 
       {/* ===== Acquisition Channels Entity ===== */}
-      <motion.g initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.3 }}>
+      <motion.g
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4, delay: 0.3 }}
+      >
         <g filter="url(#filter12_d_47_128)">
           <rect x="648" y="247" width="277" height="110" rx="16" className="fill-card" />
           <rect x="648.5" y="247.5" width="276" height="109" rx="15.5" className="stroke-border" />
@@ -344,9 +354,8 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
           fontSize="16"
-          fontWeight="600"
+          fontWeight="500"
           letterSpacing="-0.05em"
         >
           <tspan x="703" y="286.18">
@@ -358,9 +367,8 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
             className="fill-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
             fontSize="16"
-            fontWeight="600"
+            fontWeight="500"
             letterSpacing="-0.05em"
           >
             <tspan x="664" y="331.18">
@@ -371,12 +379,11 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
             className="fill-muted-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
             fontSize="16"
             fontWeight="500"
             letterSpacing="-0.05em"
           >
-            <tspan x="674.791" y="331.18">
+            <tspan x="678" y="331.18">
               entities
             </tspan>
           </text>
@@ -401,7 +408,14 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
       </motion.g>
 
       <defs>
-        <linearGradient id="edgeGradient" x1="0" y1="0" x2="955" y2="0" gradientUnits="userSpaceOnUse">
+        <linearGradient
+          id="edgeGradient"
+          x1="0"
+          y1="0"
+          x2="955"
+          y2="0"
+          gradientUnits="userSpaceOnUse"
+        >
           <stop offset="0%" stopColor="#38bdf8" />
           <stop offset="50%" stopColor="#8b5cf6" />
           <stop offset="100%" stopColor="#f43f5e" />

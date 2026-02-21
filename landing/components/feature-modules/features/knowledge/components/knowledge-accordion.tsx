@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { knowledgeScrollContent } from '../config/accordion-content';
@@ -14,16 +15,17 @@ const AUTO_ADVANCE_MS = 10000;
 const INTERACTION_PAUSE_MS = 3000;
 
 export const KnowledgeAccordion = () => {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const isMobile = useIsMobile('md');
+  const [activeIndex, setActiveIndex] = useState<number | null>(0);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pauseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startRef = useRef(Date.now());
 
-  // Auto-advance timer
+  // Auto-advance timer (disabled on mobile)
   useEffect(() => {
-    if (paused) return;
+    if (paused || isMobile) return;
 
     startRef.current = Date.now();
     setProgress(0);
@@ -34,7 +36,7 @@ export const KnowledgeAccordion = () => {
       setProgress(pct);
 
       if (pct >= 1) {
-        setActiveIndex((prev) => (prev + 1) % knowledgeScrollContent.length);
+        setActiveIndex((prev) => ((prev ?? -1) + 1) % knowledgeScrollContent.length);
         startRef.current = Date.now();
         setProgress(0);
       }
@@ -43,14 +45,18 @@ export const KnowledgeAccordion = () => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [activeIndex, paused]);
+  }, [activeIndex, paused, isMobile]);
 
   const handleValueChange = (value: string) => {
     if (value) {
       setActiveIndex(Number(value));
+    } else {
+      setActiveIndex(null);
+    }
+
+    if (!isMobile) {
       setPaused(true);
       setProgress(0);
-
       if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
       pauseTimeoutRef.current = setTimeout(() => setPaused(false), INTERACTION_PAUSE_MS);
     }
@@ -63,7 +69,8 @@ export const KnowledgeAccordion = () => {
         {/* Left: Accordion */}
         <Accordion
           type="single"
-          value={String(activeIndex)}
+          collapsible
+          value={activeIndex !== null ? String(activeIndex) : ''}
           onValueChange={handleValueChange}
           className="w-full"
         >
@@ -73,14 +80,14 @@ export const KnowledgeAccordion = () => {
               value={String(index)}
               className="relative border-b border-white/10 last:border-b-0"
             >
-              <AccordionTrigger className="cursor-pointer py-5 text-lg font-semibold text-primary/60 hover:text-primary hover:no-underline data-[state=open]:text-primary">
+              <AccordionTrigger className="cursor-pointer py-5 text-lg font-medium text-content hover:text-heading hover:no-underline data-[state=open]:text-heading">
                 {item.title}
               </AccordionTrigger>
               <AccordionContent className="text-sm leading-relaxed text-content">
                 {item.description}
               </AccordionContent>
               {/* Progress bar for active item */}
-              {activeIndex === index && (
+              {activeIndex === index && !isMobile && (
                 <div className="absolute bottom-0 left-0 h-[2px] w-full">
                   <div
                     className="h-full bg-primary/30 transition-[width] duration-100 ease-linear"
@@ -114,7 +121,7 @@ export const KnowledgeAccordion = () => {
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
                 className="absolute inset-0"
               >
-                {knowledgeScrollContent[activeIndex]?.content}
+                {activeIndex !== null && knowledgeScrollContent[activeIndex]?.content}
               </motion.div>
             </AnimatePresence>
           </div>
@@ -125,7 +132,8 @@ export const KnowledgeAccordion = () => {
       <div className="lg:hidden">
         <Accordion
           type="single"
-          value={String(activeIndex)}
+          collapsible
+          value={activeIndex !== null ? String(activeIndex) : ''}
           onValueChange={handleValueChange}
           className="w-full"
         >
@@ -135,37 +143,35 @@ export const KnowledgeAccordion = () => {
               value={String(index)}
               className="relative border-b border-white/10 last:border-b-0"
             >
-              <AccordionTrigger className="py-4 text-base font-semibold text-primary/60 hover:no-underline data-[state=open]:text-primary">
+              <AccordionTrigger className="py-4 text-base font-medium text-content hover:no-underline data-[state=open]:text-heading">
                 {item.title}
               </AccordionTrigger>
               <AccordionContent>
-                <div className="relative min-h-[16rem] overflow-hidden rounded-lg">
-                  {/* Visual background */}
-                  <div className="absolute inset-0">
-                    <AnimatePresence mode="wait">
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="h-full w-full"
-                      >
-                        {item.content}
-                      </motion.div>
-                    </AnimatePresence>
-                    {/* Darkening overlay for text readability */}
-                    <div className="absolute inset-0 bg-black/60" />
-                  </div>
-
-                  {/* Text content on top */}
-                  <div className="relative z-10 p-4">
-                    <p className="text-sm leading-relaxed text-primary/80">{item.description}</p>
-                  </div>
+                <div
+                  className="relative h-[14rem] overflow-hidden rounded-lg"
+                  style={{
+                    maskImage: 'linear-gradient(to bottom, black 30%, transparent 85%)',
+                    WebkitMaskImage: 'linear-gradient(to bottom, black 30%, transparent 85%)',
+                  }}
+                >
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="h-full w-full"
+                    >
+                      {item.content}
+                    </motion.div>
+                  </AnimatePresence>
                 </div>
+
+                <p className="mt-3 text-sm leading-relaxed text-content">{item.description}</p>
               </AccordionContent>
               {/* Progress bar for active item */}
-              {activeIndex === index && (
+              {activeIndex === index && !isMobile && (
                 <div className="absolute bottom-0 left-0 h-[2px] w-full">
                   <div
                     className="h-full bg-primary/30 transition-[width] duration-100 ease-linear"

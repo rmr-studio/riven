@@ -19,7 +19,7 @@ const edgePaths = [
 
 export const IdentityMatchingDiagramSm = ({ className }: { className?: string }) => {
   return (
-    <svg viewBox="0 0 681 327" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <svg viewBox="0 0 681 327" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} style={{ fontFamily: 'var(--font-mono)' }}>
       {/* Connection lines - glow layer */}
       <g filter="url(#smEdgeGlow)">
         {edgePaths.map((edge) => (
@@ -68,9 +68,8 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
-          fontSize="16"
-          fontWeight="600"
+                    fontSize="16"
+          fontWeight="500"
           letterSpacing="-0.05em"
         >
           <tspan x="57" y="34.219">
@@ -95,8 +94,7 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
             className="fill-muted-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
-            fontSize="12"
+                        fontSize="12"
             fontWeight="500"
             letterSpacing="-0.05em"
           >
@@ -108,9 +106,8 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
             className="fill-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
-            fontSize="12"
-            fontWeight="600"
+                        fontSize="12"
+            fontWeight="500"
             letterSpacing="-0.05em"
           >
             <tspan x="18" y="77.765">
@@ -141,9 +138,8 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
-          fontSize="16"
-          fontWeight="600"
+                    fontSize="16"
+          fontWeight="500"
           letterSpacing="-0.05em"
         >
           <tspan x="59" y="142.18">
@@ -184,8 +180,7 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
             className="fill-muted-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
-            fontSize="12"
+                        fontSize="12"
             fontWeight="500"
             letterSpacing="-0.05em"
           >
@@ -197,9 +192,8 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
             className="fill-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
-            fontSize="12"
-            fontWeight="600"
+                        fontSize="12"
+            fontWeight="500"
             letterSpacing="-0.05em"
           >
             <tspan x="21" y="186.26">
@@ -230,9 +224,8 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
-          fontSize="16"
-          fontWeight="600"
+                    fontSize="16"
+          fontWeight="500"
           letterSpacing="-0.05em"
         >
           <tspan x="62" y="263.18">
@@ -265,8 +258,7 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
             className="fill-muted-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
-            fontSize="12"
+                        fontSize="12"
             fontWeight="500"
             letterSpacing="-0.05em"
           >
@@ -278,9 +270,8 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
             className="fill-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
-            fontSize="12"
-            fontWeight="600"
+                        fontSize="12"
+            fontWeight="500"
             letterSpacing="-0.05em"
           >
             <tspan x="24" y="302.26">
@@ -318,9 +309,8 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
-          fontSize="16"
-          fontWeight="600"
+                    fontSize="16"
+          fontWeight="500"
           letterSpacing="-0.05em"
         >
           <tspan x="445.23" y="111.574">
@@ -332,8 +322,7 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
-          fontSize="16"
+                    fontSize="16"
           fontWeight="500"
           letterSpacing="-0.05em"
         >
@@ -345,8 +334,7 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
-          fontSize="16"
+                    fontSize="16"
           fontWeight="500"
           letterSpacing="-0.05em"
         >
@@ -358,8 +346,7 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
-          fontSize="16"
+                    fontSize="16"
           fontWeight="500"
           letterSpacing="-0.05em"
         >

@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 
 export const PatternsDiagram = ({ className }: { className?: string }) => {
   return (
-    <svg viewBox="0 0 344 316" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <svg viewBox="0 0 344 316" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} style={{ fontFamily: 'var(--font-mono)' }}>
       {/* ===== Background Card ===== */}
       <g filter="url(#pat_f0)">
         <path
@@ -39,7 +39,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="12"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -53,7 +53,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -68,7 +68,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -106,7 +106,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="bold"
           letterSpacing="-0.05em"
@@ -146,7 +146,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -161,7 +161,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           fill="#9D3838"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -202,7 +202,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -227,7 +227,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -240,7 +240,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="5"
           fontWeight="500"
           letterSpacing="-0.05em"
@@ -278,7 +278,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -303,7 +303,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -316,7 +316,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="5"
           fontWeight="500"
           letterSpacing="-0.05em"
@@ -332,7 +332,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           fill="#377C7E"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -351,7 +351,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -376,7 +376,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -389,7 +389,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="5"
           fontWeight="500"
           letterSpacing="-0.05em"
@@ -413,7 +413,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -438,7 +438,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -451,7 +451,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="5"
           fontWeight="500"
           letterSpacing="-0.05em"
@@ -474,7 +474,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -489,7 +489,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           fill="#9D3838"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -538,7 +538,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           fill="#773D3D"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -564,7 +564,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -577,7 +577,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="5"
           fontWeight="500"
           letterSpacing="-0.05em"
@@ -593,7 +593,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           fill="#377C7E"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -630,7 +630,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           fill="#773D3D"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -656,7 +656,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -669,7 +669,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="5"
           fontWeight="500"
           letterSpacing="-0.05em"
@@ -692,7 +692,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -711,7 +711,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -740,7 +740,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -772,7 +772,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -803,7 +803,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -841,7 +841,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"

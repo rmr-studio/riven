@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 
 export const SubAgentsDiagram = ({ className }: { className?: string }) => {
   return (
-    <svg viewBox="0 0 462 493" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <svg viewBox="0 0 462 493" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} style={{ fontFamily: 'var(--font-mono)' }}>
       {/* ===== Sub-Agent: Operational cost-to-revenue ratio monitor ===== */}
       <motion.g
         initial={{ opacity: 0 }}
@@ -20,7 +20,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           letterSpacing="-0.05em"
         >
@@ -35,7 +35,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="12"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -67,7 +67,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           letterSpacing="-0.05em"
         >
@@ -82,7 +82,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="12"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -114,7 +114,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           letterSpacing="-0.05em"
         >
@@ -129,7 +129,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="12"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -184,7 +184,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           letterSpacing="-0.05em"
         >
@@ -199,7 +199,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="12"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -215,7 +215,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
             className="fill-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
+  
             fontSize="12"
             fontWeight="600"
             letterSpacing="-0.05em"
@@ -232,7 +232,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
             className="fill-muted-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
+  
             fontSize="12"
             fontWeight="500"
             letterSpacing="-0.05em"
@@ -248,7 +248,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="10"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -284,7 +284,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
             fill="white"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
+  
             fontSize="8"
             fontWeight="500"
             letterSpacing="-0.05em"
@@ -308,7 +308,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
             fill="white"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
+  
             fontSize="8"
             fontWeight="500"
             letterSpacing="-0.05em"
@@ -353,7 +353,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
             fill="white"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
+  
             fontSize="8"
             fontWeight="500"
             letterSpacing="-0.05em"
@@ -369,7 +369,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="10"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -388,7 +388,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="10"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -401,7 +401,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="500"
           letterSpacing="-0.05em"
@@ -426,7 +426,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="12"
           fontWeight="500"
           letterSpacing="-0.05em"
@@ -439,7 +439,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="5"
           fontWeight="500"
           letterSpacing="-0.05em"
@@ -478,7 +478,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
             fill="white"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
+  
             fontSize="8"
             fontWeight="500"
             letterSpacing="-0.05em"
@@ -494,7 +494,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="10"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -513,7 +513,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="10"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -526,7 +526,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="500"
           letterSpacing="-0.05em"
@@ -570,7 +570,7 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="5"
           fontWeight="500"
           letterSpacing="-0.05em"

@@ -20,7 +20,7 @@ export function OpenSource() {
   return (
     <Section id="open-source">
       <div className="relative z-10 mx-auto flex flex-col items-center justify-center px-4 text-center sm:px-6">
-        <h2 className="text-4xl font-bold tracking-tight sm:text-4xl md:text-5xl">
+        <h2 className="font-serif text-4xl font-normal leading-[0.95] tracking-tight text-heading sm:text-4xl md:text-5xl">
           Open source from day one
         </h2>
 

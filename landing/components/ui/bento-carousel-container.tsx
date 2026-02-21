@@ -5,8 +5,8 @@ import { Carousel, CarouselContent, CarouselItem, useCarousel } from '@/componen
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { useIsMobile } from '@/hooks/use-is-mobile';
 import { cn } from '@/lib/utils';
-import { AnimatePresence, motion } from 'motion/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import * as React from 'react';
 import { BGPattern } from './background/grids';
 
@@ -14,7 +14,7 @@ function MobileCarouselNav() {
   const { scrollPrev, scrollNext, canScrollPrev, canScrollNext } = useCarousel();
 
   return (
-    <div className="mt-6 flex justify-end gap-2">
+    <div className="mt-6 flex justify-end gap-2 px-4">
       <Button
         variant="outline"
         size="icon"
@@ -65,7 +65,7 @@ export function BentoCard({ title, description, className, children, area }: Ben
         fill="color-mix(in srgb, var(--primary) 10%, transparent)"
       />
       <div className="relative z-10 flex-shrink-0 space-y-2">
-        <h3 className="text-lg leading-tight font-semibold tracking-tight">{title}</h3>
+        <h3 className="text-lg leading-tight font-medium tracking-tight">{title}</h3>
         {description && (
           <p className="line-clamp-3 text-xs leading-tight tracking-tighter text-muted-foreground md:text-sm">
             {description}

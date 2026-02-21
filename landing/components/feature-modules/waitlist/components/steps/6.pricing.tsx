@@ -1,10 +1,8 @@
 import { OkButton } from '@/components/feature-modules/waitlist/components/ok-button';
 import { OptionPill } from '@/components/feature-modules/waitlist/components/option-pill';
-import { StepBadge } from '@/components/feature-modules/waitlist/components/step-badge';
 import { motion } from 'motion/react';
 
 export const PRICING_STEP_CONFIG = {
-  stepNumber: 2,
   title: 'What would you expect to pay monthly for a platform like this?',
   instruction: 'Choose 1',
   options: [
@@ -29,15 +27,12 @@ export function PricingStep({
   return (
     <div className="py-8">
       <div className="flex items-start gap-3">
-        <StepBadge number={PRICING_STEP_CONFIG.stepNumber} />
         <h3 className="text-xl leading-snug font-medium md:text-2xl">
           {PRICING_STEP_CONFIG.title}
           <span className="text-destructive">*</span>
         </h3>
       </div>
-      <p className="mt-6 ml-10 text-sm text-muted-foreground">
-        {PRICING_STEP_CONFIG.instruction}
-      </p>
+      <p className="mt-6 ml-10 text-sm text-muted-foreground">{PRICING_STEP_CONFIG.instruction}</p>
       <div className="mt-4 ml-10 space-y-2.5">
         {PRICING_STEP_CONFIG.options.map((option, i) => (
           <motion.div
@@ -58,10 +53,8 @@ export function PricingStep({
           </motion.div>
         ))}
       </div>
-      {error && (
-        <p className="mt-3 ml-10 text-xs text-destructive">{error}</p>
-      )}
-      <div className="mt-6 ml-10 flex items-center">
+      {error && <p className="mt-3 ml-10 text-xs text-destructive">{error}</p>}
+      <div className="mt-6 ml-10 flex items-center justify-end">
         <OkButton onClick={onNext} disabled={!selectedPrice} />
       </div>
     </div>

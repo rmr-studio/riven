@@ -75,7 +75,7 @@ export function ContactStep({
           )}
         </div>
       </div>
-      <div className="mt-8 flex items-center">
+      <div className="mt-8 flex items-center justify-end">
         <OkButton onClick={onNext} />
       </div>
     </div>

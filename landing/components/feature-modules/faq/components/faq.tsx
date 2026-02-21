@@ -76,7 +76,7 @@ export const Faq = () => {
   return (
     <Section id="faqs">
       <div className="items-cen relative z-10 mx-auto flex max-w-5xl flex-col px-4 sm:px-6">
-        <h2 className="text-center text-4xl font-semibold tracking-tight md:text-5xl">
+        <h2 className="text-center font-serif text-4xl font-normal leading-[0.95] tracking-tight text-heading md:text-5xl">
           Frequently Asked Questions
         </h2>
         <Accordion type="single" collapsible className="mt-10">

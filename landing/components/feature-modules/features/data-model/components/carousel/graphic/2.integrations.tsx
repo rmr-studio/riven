@@ -12,7 +12,13 @@ const edgePaths = [
 
 export const IntegrationsDiagram = ({ className }: { className?: string }) => {
   return (
-    <svg viewBox="0 0 890 395" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <svg
+      viewBox="0 0 890 395"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      style={{ fontFamily: 'var(--font-mono)' }}
+    >
       {/* Connection lines - glow layer */}
       <g filter="url(#intEdgeGlow)">
         {edgePaths.map((edge) => (
@@ -87,7 +93,9 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
           <tspan x="20" y="225.384">
             {'       "product": "prod_QwL8nMx3Kp"'}
           </tspan>
-          <tspan x="20" y="238.384">{'}, '}</tspan>
+          <tspan x="20" y="238.384">
+            {'}, '}
+          </tspan>
           <tspan x="20" y="252.384">
             {'   "current_period_start": 1738368000,'}
           </tspan>
@@ -146,9 +154,8 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
           fontSize="16"
-          fontWeight="600"
+          fontWeight="500"
           letterSpacing="-0.05em"
         >
           <tspan x="392" y="39.18">
@@ -160,9 +167,8 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
             className="fill-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
             fontSize="16"
-            fontWeight="600"
+            fontWeight="500"
             letterSpacing="-0.05em"
           >
             <tspan x="354" y="84.18">
@@ -173,12 +179,11 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
             className="fill-muted-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
             fontSize="16"
             fontWeight="500"
             letterSpacing="-0.05em"
           >
-            <tspan x="389.219" y="84.18">
+            <tspan x="394" y="84.18">
               entities
             </tspan>
           </text>
@@ -240,9 +245,8 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
           fontSize="16"
-          fontWeight="600"
+          fontWeight="500"
           letterSpacing="-0.05em"
         >
           <tspan x="667" y="162.18">
@@ -254,9 +258,8 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
             className="fill-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
             fontSize="16"
-            fontWeight="600"
+            fontWeight="500"
             letterSpacing="-0.05em"
           >
             <tspan x="629" y="209.18">
@@ -267,7 +270,6 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
             className="fill-muted-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
             fontSize="16"
             fontWeight="500"
             letterSpacing="-0.05em"
@@ -330,9 +332,8 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
           fontSize="16"
-          fontWeight="600"
+          fontWeight="500"
           letterSpacing="-0.05em"
         >
           <tspan x="477" y="321.18">
@@ -344,9 +345,8 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
             className="fill-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
             fontSize="16"
-            fontWeight="600"
+            fontWeight="500"
             letterSpacing="-0.05em"
           >
             <tspan x="439" y="366.18">
@@ -357,12 +357,11 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
             className="fill-muted-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Geist"
             fontSize="16"
             fontWeight="500"
             letterSpacing="-0.05em"
           >
-            <tspan x="457.319" y="366.18">
+            <tspan x="461" y="366.18">
               entities
             </tspan>
           </text>
@@ -512,30 +511,7 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
           <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_56_12" />
           <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_56_12" result="shape" />
         </filter>
-        {/* Overdue connector dots */}
-        <filter
-          id="filter3_d_56_12"
-          x="693"
-          y="330"
-          width="14"
-          height="14"
-          filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
-        >
-          <feFlood floodOpacity="0" result="BackgroundImageFix" />
-          <feColorMatrix
-            in="SourceAlpha"
-            type="matrix"
-            values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-            result="hardAlpha"
-          />
-          <feOffset dy="4" />
-          <feGaussianBlur stdDeviation="2" />
-          <feComposite in2="hardAlpha" operator="out" />
-          <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
-          <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_56_12" />
-          <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_56_12" result="shape" />
-        </filter>
+
         <filter
           id="filter4_d_56_12"
           x="557"
@@ -586,30 +562,7 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
           <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_56_12" />
           <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_56_12" result="shape" />
         </filter>
-        {/* Invoice connector dots */}
-        <filter
-          id="filter6_d_56_12"
-          x="607"
-          y="54"
-          width="14"
-          height="14"
-          filterUnits="userSpaceOnUse"
-          colorInterpolationFilters="sRGB"
-        >
-          <feFlood floodOpacity="0" result="BackgroundImageFix" />
-          <feColorMatrix
-            in="SourceAlpha"
-            type="matrix"
-            values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-            result="hardAlpha"
-          />
-          <feOffset dy="4" />
-          <feGaussianBlur stdDeviation="2" />
-          <feComposite in2="hardAlpha" operator="out" />
-          <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
-          <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_56_12" />
-          <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_56_12" result="shape" />
-        </filter>
+
         <filter
           id="filter7_d_56_12"
           x="472"

@@ -91,7 +91,7 @@ const BGPattern = ({
   return (
     <div
       className={cn(
-        "absolute inset-0 z-[-10] size-full",
+        "pointer-events-none absolute inset-0 z-[-10] size-full",
         maskClasses[mask],
         className,
       )}

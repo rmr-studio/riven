@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 
 export const ChatResponseGraphic = ({ className }: { className?: string }) => {
   return (
-    <svg viewBox="0 0 462 472" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <svg viewBox="0 0 462 472" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} style={{ fontFamily: 'var(--font-mono)' }}>
       {/* ===== Background Card Glow ===== */}
       <path
         d="M12 0.5H450C456.351 0.5 461.5 5.64873 461.5 12V460C461.5 466.351 456.351 471.5 450 471.5H12C5.64873 471.5 0.5 466.351 0.5 460V12C0.5 5.64873 5.64873 0.5 12 0.5Z"
@@ -48,7 +48,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="12"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -70,7 +70,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           fill="#484848"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           letterSpacing="-0.05em"
         >
@@ -118,7 +118,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           letterSpacing="-0.05em"
         >
@@ -147,7 +147,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="bold"
           letterSpacing="-0.05em"
@@ -185,7 +185,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="10"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -201,7 +201,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           fill="white"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="500"
           letterSpacing="-0.05em"
@@ -217,7 +217,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           fill="white"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="500"
           letterSpacing="-0.05em"
@@ -252,7 +252,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -281,7 +281,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -294,7 +294,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -346,7 +346,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -359,7 +359,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -373,7 +373,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -397,7 +397,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="bold"
           letterSpacing="-0.05em"
@@ -434,7 +434,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -463,7 +463,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -476,7 +476,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="500"
           letterSpacing="-0.05em"
@@ -534,7 +534,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -547,7 +547,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -604,7 +604,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -617,7 +617,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -668,7 +668,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -694,7 +694,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="bold"
           letterSpacing="-0.05em"
@@ -733,7 +733,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -746,7 +746,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -787,7 +787,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -806,7 +806,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -854,7 +854,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -886,7 +886,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -917,7 +917,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -949,7 +949,7 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"

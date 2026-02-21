@@ -72,7 +72,7 @@ export const nodeConfigurations: NodeConfigurations = {
         { x: 340, y: 80 },
       ),
       mobile: {
-        position: { x: 300, y: 360 },
+        position: { x: 240, y: 360 },
         dimensions: { width: 220, height: 160 },
       },
     },

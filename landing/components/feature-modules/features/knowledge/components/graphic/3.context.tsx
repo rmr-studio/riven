@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 
 export const ContextDiagram = ({ className }: { className?: string }) => {
   return (
-    <svg viewBox="0 0 231 315" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <svg viewBox="0 0 231 315" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} style={{ fontFamily: 'var(--font-mono)' }}>
       {/* ===== Background Panel ===== */}
       <g filter="url(#ctx_f0)">
         <path
@@ -35,7 +35,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -52,7 +52,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -63,7 +63,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -92,7 +92,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -103,7 +103,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -151,7 +151,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -162,7 +162,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -173,7 +173,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="12"
           letterSpacing="-0.05em"
         >
@@ -183,7 +183,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -203,7 +203,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -220,7 +220,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -231,7 +231,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -253,7 +253,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="12"
           letterSpacing="-0.05em"
         >
@@ -263,7 +263,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -283,7 +283,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -294,7 +294,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -310,7 +310,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -321,7 +321,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -367,7 +367,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -378,7 +378,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -395,7 +395,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -406,7 +406,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -437,7 +437,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -448,7 +448,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -464,7 +464,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -483,7 +483,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -499,7 +499,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -510,7 +510,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-muted-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="6"
           letterSpacing="-0.05em"
         >
@@ -559,7 +559,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           className="fill-foreground"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="10"
           fontWeight="600"
           letterSpacing="-0.05em"
@@ -572,7 +572,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           fill="white"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="500"
           letterSpacing="-0.05em"
@@ -585,7 +585,7 @@ export const ContextDiagram = ({ className }: { className?: string }) => {
           fill="white"
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
-          fontFamily="Geist"
+
           fontSize="8"
           fontWeight="500"
           letterSpacing="-0.05em"
