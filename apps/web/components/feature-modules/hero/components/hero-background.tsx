@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
+import { cdnImageLoader } from "@/lib/cdn-image-loader";
 
 interface HeroBackgroundProps {
   className?: string;
@@ -14,6 +15,8 @@ interface HeroBackgroundProps {
     webp: string;
   };
   alt?: string;
+  priority?: boolean;
+  lazy?: boolean;
 }
 
 export function HeroBackground({
@@ -22,6 +25,8 @@ export function HeroBackground({
   fade,
   glow,
   alt = "Background image",
+  priority,
+  lazy,
 }: HeroBackgroundProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const { resolvedTheme } = useTheme();
@@ -46,12 +51,15 @@ export function HeroBackground({
   return (
     <div className={cn("absolute inset-x-0 bottom-0 -z-10", className)}>
       <picture>
-        <source srcSet={image.avif} type="image/avif" />
-        <source srcSet={image.webp} type="image/webp" />
+        <source srcSet={cdnImageLoader({ src: image.avif, width: 0, quality: 0 })} type="image/avif" />
+        <source srcSet={cdnImageLoader({ src: image.webp, width: 0, quality: 0 })} type="image/webp" />
         <Image
+          loader={cdnImageLoader}
           src={image.webp}
           alt={alt}
           fill
+          priority={priority}
+          loading={lazy ? "lazy" : undefined}
           sizes="100vw"
           className={cn(
             "object-cover object-bottom transition-opacity duration-700 ease-out",

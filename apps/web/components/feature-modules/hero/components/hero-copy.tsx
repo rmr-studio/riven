@@ -3,22 +3,33 @@
 import { Button } from '@/components/ui/button';
 import { HoverBorderGradient } from '@/components/ui/hover-border-gradient';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { motion } from 'motion/react';
 import Link from 'next/link';
 
 export const HeroCopy = () => {
   return (
     <div className="relative z-10 flex h-[calc(100dvh-6rem)] w-full flex-col justify-between px-6 sm:px-10 lg:px-16">
       {/* Top-left headline */}
-      <div className="pt-4 sm:pt-8">
+      <motion.div
+        className="pt-4 sm:pt-8"
+        initial={{ opacity: 0, x: -60 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+      >
         <h1 className="max-w-4xl font-serif text-5xl leading-[0.95] tracking-tight text-heading sm:text-7xl md:text-8xl lg:text-9xl">
           Every tool
           <br />
           <span className="italic">shows you a slice.</span>
         </h1>
-      </div>
+      </motion.div>
 
       {/* Bottom section: copy left, headline + CTAs right */}
-      <div className="flex flex-col gap-8 pb-8 sm:pb-12">
+      <motion.div
+        className="flex flex-col gap-8 pb-8 sm:pb-12"
+        initial={{ opacity: 0, x: 60 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.9, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+      >
         {/* Bottom-right: second headline + CTAs */}
         <div className="flex flex-col items-end">
           <h2 className="mb-4 text-right font-serif text-[2.5rem] leading-[0.85] tracking-tight text-heading sm:text-7xl md:text-8xl lg:text-9xl">
@@ -68,7 +79,7 @@ export const HeroCopy = () => {
             </Link>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

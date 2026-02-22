@@ -1,7 +1,9 @@
 'use client';
 
 import { motion } from 'motion/react';
-import stripeWordmark from './stripe-wordmark.png';
+
+const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL ?? '';
+const stripeWordmarkSrc = `${CDN_URL}/images/stripe-wordmark.png`;
 
 const edgePaths = [
   { d: 'M223 181L611.5 181', delay: 0.3 },
@@ -121,7 +123,7 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
           y="69"
           width="63"
           height="26"
-          href={stripeWordmark.src}
+          href={stripeWordmarkSrc}
           preserveAspectRatio="none"
         />
       </g>

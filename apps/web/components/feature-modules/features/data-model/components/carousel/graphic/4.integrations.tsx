@@ -1,8 +1,10 @@
 'use client';
 
 import { motion } from 'motion/react';
-import stripeWordmark from './stripe-wordmark.png';
-import slackLogo from './slack-logo.png';
+
+const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL ?? '';
+const stripeWordmarkSrc = `${CDN_URL}/images/stripe-wordmark.png`;
+const slackLogoSrc = `${CDN_URL}/images/slack-logo.png`;
 
 const edgePaths = [
   // Riven → Stripe (up-left)
@@ -155,7 +157,7 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
           y="6"
           width="70"
           height="29"
-          href={stripeWordmark.src}
+          href={stripeWordmarkSrc}
           preserveAspectRatio="none"
         />
       </motion.g>
@@ -327,7 +329,7 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
           y="334"
           width="50"
           height="50"
-          href={slackLogo.src}
+          href={slackLogoSrc}
           preserveAspectRatio="xMidYMid slice"
         />
       </motion.g>

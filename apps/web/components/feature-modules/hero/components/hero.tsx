@@ -12,20 +12,22 @@ export function Hero() {
       <HeroCopy />
       <HeroBackground
         image={{
-          avif: '/images/city-skyline-hero-dark.avif',
-          webp: '/images/city-skyline-hero-dark.webp',
+          avif: 'images/city-skyline-hero.avif',
+          webp: 'images/city-skyline-hero.webp',
         }}
         className="h-[70dvh]"
         alt="City skyline"
+        priority
       />
 
       <HeroBackground
         image={{
-          avif: '/images/city-skyline-foreground.avif',
-          webp: '/images/city-skyline-foreground.webp',
+          avif: 'images/hero-skyline-foreground-layer.avif',
+          webp: 'images/hero-skyline-foreground-layer.webp',
         }}
-        className="md:block opacity-100 hidden h-[70dvh]"
+        className="hidden h-[70dvh] opacity-30 md:block"
         alt="City skyline"
+        lazy
       />
     </Section>
   );

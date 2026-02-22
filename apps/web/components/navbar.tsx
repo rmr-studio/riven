@@ -76,9 +76,10 @@ export function Navbar() {
                 href={link.href}
                 onClick={(e) => {
                   const hash = link.href.split('#')[1];
-                  if (hash) {
+                  const el = hash ? document.getElementById(hash) : null;
+                  if (el) {
                     e.preventDefault();
-                    document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' });
+                    el.scrollIntoView({ behavior: 'smooth' });
                     window.history.replaceState(null, '', link.href);
                   }
                 }}

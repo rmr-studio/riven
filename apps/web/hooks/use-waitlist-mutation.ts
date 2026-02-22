@@ -25,6 +25,7 @@ export function useWaitlistMutation() {
           integrations: data.integrations,
           monthly_price: data.monthlyPrice,
           involvement: data.involvement,
+          joined_at: new Date().toISOString(),
         });
 
       if (error) {
