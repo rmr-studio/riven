@@ -5,7 +5,7 @@ import posthog from "posthog-js";
 import { useRef } from "react";
 import { toast } from "sonner";
 import type { WaitlistMultiStepFormData } from "@/lib/validations";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase";
 
 const PostgresErrorCode = {
   UniqueViolation: "23505",
@@ -16,7 +16,7 @@ export function useWaitlistMutation() {
 
   return useMutation({
     mutationFn: async (data: WaitlistMultiStepFormData): Promise<void> => {
-      const { error } = await supabase
+      const { error } = await createClient()
         .from("waitlist_submissions")
         .insert({
           name: data.name,

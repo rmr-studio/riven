@@ -9,6 +9,3 @@ export function createClient() {
     cookieOptions: cookieDomain ? { domain: cookieDomain } : undefined,
   });
 }
-
-// Legacy export for waitlist and other simple uses
-export const supabase = createClient();

@@ -11,6 +11,7 @@
     "format:check": "prettier --check \"apps/**/*.{ts,tsx,js,jsx,json,css}\" \"packages/**/*.{ts,tsx,js,jsx,json,css}\""
   },
   "devDependencies": {
+    "dotenv-cli": "^11.0.0",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "turbo": "^2.5.4"
