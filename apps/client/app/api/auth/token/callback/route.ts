@@ -6,10 +6,10 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
   // if "next" is in param, use it as the redirect URL
-  const next = searchParams.get('next') ?? '/';
+  const next = searchParams.get('next') ?? '/dashboard/workspace';
   // Validate next parameter to prevent open redirects
   const isValidNext = next.startsWith('/') && !next.startsWith('//');
-  const safeNext = isValidNext ? next : '/';
+  const safeNext = isValidNext ? next : '/dashboard/workspace';
 
   if (code) {
     // Instatiate the Supabase client to perform code exchange and await a successful status

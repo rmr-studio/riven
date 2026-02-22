@@ -60,7 +60,7 @@ const LoginForm: FC = () => {
     try {
       await signIn({ type: 'password', email: values.email, password: values.password });
       toast.success('Logged in successfully');
-      router.push('/dashboard');
+      router.push('/dashboard/workspace');
     } catch (error) {
       if (isAuthError(error)) {
         toast.error(getAuthErrorMessage(error.code));
