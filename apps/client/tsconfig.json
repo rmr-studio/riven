@@ -1,0 +1,22 @@
+{
+  "extends": "@riven/tsconfig/nextjs.json",
+  "compilerOptions": {
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "stores/dragdrop"
+  ],
+  "exclude": ["node_modules"]
+}

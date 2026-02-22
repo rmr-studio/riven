@@ -1,0 +1,11 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+onlyBuiltDependencies:
+  - protobufjs
+  - sharp
+  - unrs-resolver
+
+ignoredBuiltDependencies:
+  - core-js

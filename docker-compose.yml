@@ -1,0 +1,55 @@
+services:
+  # ── Landing page (independent) ──
+  web:
+    profiles: ["web", "all"]
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        NEXT_PUBLIC_AUTH_ENABLED: ${NEXT_PUBLIC_AUTH_ENABLED:-false}
+        NEXT_PUBLIC_COOKIE_DOMAIN: ${NEXT_PUBLIC_COOKIE_DOMAIN:-}
+        NEXT_PUBLIC_CLIENT_URL: ${NEXT_PUBLIC_CLIENT_URL:-}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-}
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    restart: unless-stopped
+
+  # ── Backend API (always with client) ──
+  core:
+    profiles: ["platform", "all"]
+    build:
+      context: ./core
+      dockerfile: Dockerfile
+    ports:
+      - "${CORE_PORT:-8081}:8080"
+    environment:
+      - SERVER_PORT=8080
+      - POSTGRES_DB_JDBC=${POSTGRES_DB_JDBC}
+      - JWT_AUTH_URL=${JWT_AUTH_URL}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - ORIGIN_API_URL=${ORIGIN_API_URL}
+      - TEMPORAL_SERVER_ADDRESS=${TEMPORAL_SERVER_ADDRESS}
+    restart: unless-stopped
+
+  # ── Dashboard frontend (depends on core) ──
+  client:
+    profiles: ["platform", "all"]
+    build:
+      context: .
+      dockerfile: apps/client/Dockerfile
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_HOSTED_URL: ${NEXT_PUBLIC_HOSTED_URL}
+        NEXT_PUBLIC_AUTH_PROVIDER: ${NEXT_PUBLIC_AUTH_PROVIDER:-supabase}
+        NEXT_PUBLIC_COOKIE_DOMAIN: ${NEXT_PUBLIC_COOKIE_DOMAIN:-}
+    ports:
+      - "${CLIENT_PORT:-3001}:3000"
+    depends_on:
+      - core
+    restart: unless-stopped
