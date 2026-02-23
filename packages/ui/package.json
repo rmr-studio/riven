@@ -1,0 +1,49 @@
+{
+  "name": "@riven/ui",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./button": "./src/button.tsx",
+    "./input": "./src/input.tsx",
+    "./textarea": "./src/textarea.tsx",
+    "./card": "./src/card.tsx",
+    "./badge": "./src/badge.tsx",
+    "./label": "./src/label.tsx",
+    "./separator": "./src/separator.tsx",
+    "./tabs": "./src/tabs.tsx",
+    "./tooltip": "./src/tooltip.tsx",
+    "./popover": "./src/popover.tsx",
+    "./dropdown-menu": "./src/dropdown-menu.tsx",
+    "./dialog": "./src/dialog.tsx",
+    "./scroll-area": "./src/scroll-area.tsx",
+    "./accordion": "./src/accordion.tsx",
+    "./table": "./src/table.tsx",
+    "./command": "./src/command.tsx"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-popover": "^1.1.15",
+    "@radix-ui/react-scroll-area": "^1.2.10",
+    "@radix-ui/react-separator": "^1.1.8",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-tabs": "^1.1.13",
+    "@radix-ui/react-tooltip": "^1.2.8",
+    "@riven/utils": "workspace:*",
+    "class-variance-authority": "^0.7.1",
+    "cmdk": "^1.1.1",
+    "lucide-react": "^0.522.0",
+    "radix-ui": "^1.4.3"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5"
+  }
+}
