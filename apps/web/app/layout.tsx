@@ -64,8 +64,29 @@ export const metadata: Metadata = {
     siteName: 'Riven',
     locale: 'en_US',
     type: 'website',
+    images: [
+      {
+        url: process.env.NEXT_PUBLIC_CDN_URL
+          ? `${process.env.NEXT_PUBLIC_CDN_URL}/images/og-image.png`
+          : '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Riven — Cross-Domain Intelligence',
+      },
+    ],
   },
 
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Riven | Cross-Domain Intelligence for Scaling Businesses',
+    description:
+      "Connect your CRM, payments, support, and product data with an AI layer that surfaces what siloed tools can't.",
+    images: [
+      process.env.NEXT_PUBLIC_CDN_URL
+        ? `${process.env.NEXT_PUBLIC_CDN_URL}/images/og-image.png`
+        : '/og-image.png',
+    ],
+  },
 
   robots: {
     index: true,

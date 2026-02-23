@@ -1,9 +1,9 @@
 'use client';
 
 import { motion } from 'motion/react';
+import { getCdnUrl } from '@/lib/cdn-image-loader';
 
-const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL ?? '';
-const stripeWordmarkSrc = `${CDN_URL}/images/stripe-wordmark.png`;
+const stripeWordmarkSrc = getCdnUrl('images/stripe-wordmark.png');
 
 const edgePaths = [
   { d: 'M223 181L611.5 181', delay: 0.3 },

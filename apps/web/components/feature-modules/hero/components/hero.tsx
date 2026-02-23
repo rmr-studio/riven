@@ -17,7 +17,7 @@ export function Hero() {
         }}
         className="h-[70dvh]"
         alt="City skyline"
-        priority
+        preload
       />
 
       <HeroBackground

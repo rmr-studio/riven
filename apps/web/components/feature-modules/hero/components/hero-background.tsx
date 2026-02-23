@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
-import { cdnImageLoader } from "@/lib/cdn-image-loader";
+import { cdnImageLoader, getCdnUrl } from "@/lib/cdn-image-loader";
 
 interface HeroBackgroundProps {
   className?: string;
@@ -15,7 +15,7 @@ interface HeroBackgroundProps {
     webp: string;
   };
   alt?: string;
-  priority?: boolean;
+  preload?: boolean;
   lazy?: boolean;
 }
 
@@ -25,7 +25,7 @@ export function HeroBackground({
   fade,
   glow,
   alt = "Background image",
-  priority,
+  preload,
   lazy,
 }: HeroBackgroundProps) {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -51,14 +51,14 @@ export function HeroBackground({
   return (
     <div className={cn("absolute inset-x-0 bottom-0 -z-10", className)}>
       <picture>
-        <source srcSet={cdnImageLoader({ src: image.avif, width: 0, quality: 0 })} type="image/avif" />
-        <source srcSet={cdnImageLoader({ src: image.webp, width: 0, quality: 0 })} type="image/webp" />
+        <source srcSet={getCdnUrl(image.avif)} type="image/avif" />
+        <source srcSet={getCdnUrl(image.webp)} type="image/webp" />
         <Image
           loader={cdnImageLoader}
           src={image.webp}
           alt={alt}
           fill
-          priority={priority}
+          preload={preload}
           loading={lazy ? "lazy" : undefined}
           sizes="100vw"
           className={cn(
