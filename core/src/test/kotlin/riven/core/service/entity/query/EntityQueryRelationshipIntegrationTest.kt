@@ -8,6 +8,7 @@ import org.junit.jupiter.api.assertThrows
 import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.entity.query.FilterOperator
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
+import riven.core.service.util.factory.entity.EntityFactory
 import riven.core.exceptions.query.QueryValidationException
 import riven.core.exceptions.query.RelationshipDepthExceededException
 import riven.core.models.entity.query.EntityQuery
@@ -423,7 +424,7 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
 
             // Add an employee with no company link
             val freelancerId = entityRepository.save(
-                riven.core.entity.entity.EntityEntity(
+                EntityFactory.createEntityEntity(
                     workspaceId = workspaceId,
                     typeId = employeeTypeId,
                     typeKey = "employee",

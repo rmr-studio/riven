@@ -10,9 +10,8 @@ import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.entity.payload.EntityAttributeRelationPayload
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
-import riven.core.repository.entity.RelationshipDefinitionRepository
-import riven.core.repository.entity.RelationshipTargetRuleRepository
 import riven.core.service.entity.EntityRelationshipService
+import riven.core.service.entity.type.EntityTypeRelationshipService
 import java.util.*
 
 /**
@@ -26,8 +25,7 @@ class EntityContextService(
     private val entityRepository: EntityRepository,
     private val entityTypeRepository: EntityTypeRepository,
     private val entityRelationshipService: EntityRelationshipService,
-    private val definitionRepository: RelationshipDefinitionRepository,
-    private val targetRuleRepository: RelationshipTargetRuleRepository,
+    private val entityTypeRelationshipService: EntityTypeRelationshipService,
     private val logger: KLogger
 ) {
 
@@ -243,35 +241,9 @@ class EntityContextService(
 
     /**
      * Loads relationship definitions for an entity type, keyed by definition ID.
-     * Includes both forward definitions (entity type is source) and inverse-visible
-     * definitions (entity type is a target with inverse_visible = true).
+     * Delegates to EntityTypeRelationshipService for forward + inverse definition loading.
      */
     private fun loadDefinitions(workspaceId: UUID, entityTypeId: UUID): Map<UUID, RelationshipDefinition> {
-        // Forward definitions
-        val forwardEntities = definitionRepository.findByWorkspaceIdAndSourceEntityTypeId(workspaceId, entityTypeId)
-
-        // Inverse definitions
-        val inverseRules = targetRuleRepository.findInverseVisibleByTargetEntityTypeId(entityTypeId)
-        val inverseDefIds = inverseRules.map { it.relationshipDefinitionId }.distinct()
-        val inverseEntities = if (inverseDefIds.isNotEmpty()) {
-            definitionRepository.findAllById(inverseDefIds)
-        } else {
-            emptyList()
-        }
-
-        val allEntities = forwardEntities + inverseEntities
-        val allDefIds = allEntities.mapNotNull { it.id }
-        val rulesByDefId = if (allDefIds.isNotEmpty()) {
-            targetRuleRepository.findByRelationshipDefinitionIdIn(allDefIds)
-                .groupBy { it.relationshipDefinitionId }
-        } else {
-            emptyMap()
-        }
-
-        return allEntities.mapNotNull { entity ->
-            val id = entity.id ?: return@mapNotNull null
-            val rules = rulesByDefId[id]?.map { it.toModel() } ?: emptyList()
-            id to entity.toModel(rules)
-        }.toMap()
+        return entityTypeRelationshipService.getDefinitionsForEntityTypeAsMap(workspaceId, entityTypeId)
     }
 }

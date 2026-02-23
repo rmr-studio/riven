@@ -24,8 +24,7 @@ import riven.core.models.entity.query.filter.QueryFilter
 import riven.core.models.entity.query.pagination.QueryPagination
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
-import riven.core.repository.entity.RelationshipDefinitionRepository
-import riven.core.repository.entity.RelationshipTargetRuleRepository
+import riven.core.service.entity.type.EntityTypeRelationshipService
 import java.util.*
 import javax.sql.DataSource
 
@@ -51,8 +50,7 @@ class EntityQueryService(
     private val entityRepository: EntityRepository,
     private val assembler: EntityQueryAssembler,
     private val validator: QueryFilterValidator,
-    private val definitionRepository: RelationshipDefinitionRepository,
-    private val targetRuleRepository: RelationshipTargetRuleRepository,
+    private val entityTypeRelationshipService: EntityTypeRelationshipService,
     dataSource: DataSource,
     @Value("\${riven.query.timeout-seconds}") queryTimeoutSeconds: Long,
 ) {
@@ -165,49 +163,21 @@ class EntityQueryService(
     /**
      * Loads relationship definitions for an entity type, including both forward and inverse-visible.
      * Returns a map of definition ID to (definition, direction) pairs.
+     * Delegates definition loading to EntityTypeRelationshipService and maps direction locally.
      */
     private fun loadRelationshipDefinitions(
         workspaceId: UUID,
         entityTypeId: UUID,
     ): Map<UUID, Pair<RelationshipDefinition, QueryDirection>> {
-        // Forward definitions: this entity type is the source
-        val forwardEntities = definitionRepository.findByWorkspaceIdAndSourceEntityTypeId(workspaceId, entityTypeId)
-
-        // Inverse definitions: this entity type is a target with inverse_visible = true
-        val inverseRules = targetRuleRepository.findInverseVisibleByTargetEntityTypeId(entityTypeId)
-        val inverseDefIds = inverseRules.map { it.relationshipDefinitionId }.distinct()
-        val inverseEntities = if (inverseDefIds.isNotEmpty()) {
-            definitionRepository.findAllById(inverseDefIds)
-        } else {
-            emptyList()
+        val definitions = entityTypeRelationshipService.getDefinitionsForEntityTypeAsMap(workspaceId, entityTypeId)
+        return definitions.mapValues { (_, definition) ->
+            val direction = if (definition.sourceEntityTypeId == entityTypeId) {
+                QueryDirection.FORWARD
+            } else {
+                QueryDirection.INVERSE
+            }
+            definition to direction
         }
-
-        val allDefIds = (forwardEntities.mapNotNull { it.id } + inverseDefIds).distinct()
-        val rulesByDefId = if (allDefIds.isNotEmpty()) {
-            targetRuleRepository.findByRelationshipDefinitionIdIn(allDefIds)
-                .groupBy { it.relationshipDefinitionId }
-        } else {
-            emptyMap()
-        }
-
-        val forwardDefIds = forwardEntities.mapNotNull { it.id }.toSet()
-
-        val result = mutableMapOf<UUID, Pair<RelationshipDefinition, QueryDirection>>()
-
-        forwardEntities.forEach { entity ->
-            val id = entity.id ?: return@forEach
-            val rules = rulesByDefId[id]?.map { it.toModel() } ?: emptyList()
-            result[id] = entity.toModel(rules) to QueryDirection.FORWARD
-        }
-
-        inverseEntities.forEach { entity ->
-            val id = entity.id ?: return@forEach
-            if (id in forwardDefIds) return@forEach // Already added as forward
-            val rules = rulesByDefId[id]?.map { it.toModel() } ?: emptyList()
-            result[id] = entity.toModel(rules) to QueryDirection.INVERSE
-        }
-
-        return result
     }
 
     /**

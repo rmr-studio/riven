@@ -44,6 +44,7 @@ data class SaveRelationshipDefinitionRequest(
     override val type: EntityTypeRequestDefinition = EntityTypeRequestDefinition.SAVE_RELATIONSHIP
 }
 
+@Schema(name = "SaveTargetRuleRequest", description = "Request to save a target rule for a relationship definition")
 data class SaveTargetRuleRequest(
     val id: UUID? = null,
     val targetEntityTypeId: UUID? = null,

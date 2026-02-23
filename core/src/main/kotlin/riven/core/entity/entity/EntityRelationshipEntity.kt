@@ -11,12 +11,10 @@ import java.util.*
 @Entity
 @Table(
     name = "entity_relationships",
-    uniqueConstraints = [
-        UniqueConstraint(columnNames = ["source_entity_id", "relationship_definition_id", "target_entity_id"])
-    ],
     indexes = [
         Index(name = "idx_entity_relationships_source", columnList = "workspace_id, source_entity_id"),
         Index(name = "idx_entity_relationships_target", columnList = "workspace_id, target_entity_id"),
+        Index(name = "idx_entity_relationships_definition", columnList = "relationship_definition_id"),
     ]
 )
 data class EntityRelationshipEntity(

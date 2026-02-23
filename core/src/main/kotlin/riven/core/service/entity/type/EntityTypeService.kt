@@ -16,12 +16,14 @@ import riven.core.models.entity.configuration.EntityTypeAttributeColumn
 import riven.core.models.request.entity.type.*
 import riven.core.enums.entity.semantics.SemanticMetadataTargetType
 import riven.core.models.entity.EntityTypeSemanticMetadata
+import riven.core.models.response.entity.type.DeleteDefinitionImpact
 import riven.core.models.response.entity.type.EntityTypeImpactResponse
 import riven.core.models.response.entity.type.EntityTypeWithSemanticsResponse
 import riven.core.models.response.entity.type.SemanticMetadataBundle
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.repository.entity.RelationshipDefinitionRepository
 import riven.core.repository.entity.EntityRelationshipRepository
+import riven.core.repository.entity.RelationshipTargetRuleRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
@@ -42,6 +44,7 @@ class EntityTypeService(
     private val entityAttributeService: EntityTypeAttributeService,
     private val definitionRepository: RelationshipDefinitionRepository,
     private val entityRelationshipRepository: EntityRelationshipRepository,
+    private val targetRuleRepository: RelationshipTargetRuleRepository,
     private val authTokenService: AuthTokenService,
     private val activityService: ActivityService,
     private val semanticMetadataService: EntityTypeSemanticMetadataService,
@@ -273,10 +276,11 @@ class EntityTypeService(
         if (!impactConfirmed && definitions.isNotEmpty()) {
             val totalLinks = definitions.sumOf { entityRelationshipRepository.countByDefinitionId(requireNotNull(it.id)) }
             if (totalLinks > 0) {
+                val firstDef = definitions.first()
                 return EntityTypeImpactResponse(
                     impact = DeleteDefinitionImpact(
-                        definitionId = entityTypeId,
-                        definitionName = existing.displayNameSingular,
+                        definitionId = requireNotNull(firstDef.id),
+                        definitionName = "${existing.displayNameSingular} (${definitions.size} definition(s))",
                         impactedLinkCount = totalLinks,
                     ),
                     updatedEntityTypes = null,
@@ -293,6 +297,9 @@ class EntityTypeService(
                 impactConfirmed = true,
             )
         }
+
+        // Clean up target rules from OTHER definitions that point TO this entity type
+        targetRuleRepository.deleteByTargetEntityTypeId(entityTypeId)
 
         semanticMetadataService.softDeleteForEntityType(entityTypeId)
         entityTypeRepository.delete(existing)

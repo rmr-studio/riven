@@ -45,6 +45,11 @@ CREATE INDEX IF NOT EXISTS idx_entity_relationships_workspace_target
     ON entity_relationships (workspace_id, target_entity_id)
     WHERE deleted = FALSE AND deleted_at IS NULL;
 
+DROP INDEX IF EXISTS idx_entity_relationships_definition;
+CREATE INDEX IF NOT EXISTS idx_entity_relationships_definition
+    ON entity_relationships (relationship_definition_id)
+    WHERE deleted = FALSE AND deleted_at IS NULL;
+
 -- Entity Provenance Indexes
 CREATE INDEX IF NOT EXISTS idx_provenance_entity
     ON entity_attribute_provenance (entity_id);

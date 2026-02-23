@@ -123,8 +123,8 @@ class EntityRelationshipService(
             .groupBy { it.getSourceEntityId() }
             .mapValues { (_, projections) ->
                 projections.groupBy { it.getDefinitionId() }
-                    .mapValues { (_, fieldProjections) ->
-                        fieldProjections.map { it.toEntityLink() }
+                    .mapValues { (_, defProjections) ->
+                        defProjections.map { it.toEntityLink() }
                     }
             }
     }

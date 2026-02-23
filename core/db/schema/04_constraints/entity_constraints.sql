@@ -9,5 +9,7 @@ ALTER TABLE public.entity_relationships
 ALTER TABLE public.entity_relationships
     drop constraint IF EXISTS uq_entity_relationship;
 
-ALTER TABLE public.entity_relationships
-    ADD CONSTRAINT uq_entity_relationship UNIQUE (source_entity_id, relationship_definition_id, target_entity_id)
+DROP INDEX IF EXISTS uq_entity_relationship;
+CREATE UNIQUE INDEX uq_entity_relationship
+    ON public.entity_relationships (source_entity_id, relationship_definition_id, target_entity_id)
+    WHERE deleted = FALSE AND deleted_at IS NULL;

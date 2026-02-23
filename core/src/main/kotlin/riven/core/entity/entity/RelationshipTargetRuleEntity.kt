@@ -6,6 +6,10 @@ import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.models.entity.RelationshipTargetRule
 import java.util.*
 
+/**
+ * Target rules are type-level configuration, not user data, so they use hard-delete rather than soft-delete.
+ * They are recreated via diff when the parent definition is updated, and are cascade-deleted when the definition is deleted.
+ */
 @Entity
 @Table(
     name = "relationship_target_rules",
@@ -37,7 +41,7 @@ data class RelationshipTargetRuleEntity(
     var inverseVisible: Boolean = false,
 
     @Column(name = "inverse_name", nullable = true)
-    var inverseName: String?,
+    var inverseName: String? = null,
 ) : AuditableEntity() {
 
     fun toModel(): RelationshipTargetRule {

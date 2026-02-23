@@ -3,6 +3,7 @@ package riven.core.repository.entity
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.entity.RelationshipTargetRuleEntity
 import java.util.*
 
@@ -13,7 +14,11 @@ interface RelationshipTargetRuleRepository : JpaRepository<RelationshipTargetRul
 
     fun findByRelationshipDefinitionIdIn(definitionIds: List<UUID>): List<RelationshipTargetRuleEntity>
 
+    @Transactional
     fun deleteByRelationshipDefinitionId(definitionId: UUID)
+
+    @Transactional
+    fun deleteByTargetEntityTypeId(entityTypeId: UUID)
 
     @Query("""
         SELECT rtr FROM RelationshipTargetRuleEntity rtr

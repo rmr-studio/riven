@@ -259,6 +259,10 @@ class EntityService(
         relationshipPayload.forEach { (definitionId, targetIds) ->
             val definition = definitionsById[definitionId]
                 ?: throw IllegalArgumentException("Unknown relationship definition: $definitionId")
+            require(definition.sourceEntityTypeId == entityTypeId) {
+                "Definition $definitionId belongs to source type ${definition.sourceEntityTypeId}, not $entityTypeId. " +
+                    "Inverse definitions cannot be used to create relationships."
+            }
             entityRelationshipService.saveRelationships(
                 id = entityId,
                 workspaceId = workspaceId,

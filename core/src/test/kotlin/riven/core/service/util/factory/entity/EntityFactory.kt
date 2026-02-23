@@ -1,9 +1,12 @@
 package riven.core.service.util.factory.entity
 
+import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityRelationshipEntity
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.entity.entity.RelationshipDefinitionEntity
 import riven.core.entity.entity.RelationshipTargetRuleEntity
+import riven.core.enums.common.icon.IconColour
+import riven.core.enums.common.icon.IconType
 import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.core.DataType
 import riven.core.enums.entity.EntityPropertyType
@@ -11,6 +14,7 @@ import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.EntityTypeAttributeColumn
+import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import java.util.*
 
 object EntityFactory {
@@ -30,8 +34,8 @@ object EntityFactory {
         protected: Boolean = false,
         identifierKey: UUID = schema.properties?.keys?.first() ?: UUID.randomUUID()
     ): EntityTypeEntity {
-        val defaultOrder = order ?: (schema.properties?.keys ?: listOf()).map { key ->
-            EntityTypeAttributeColumn(key, EntityPropertyType.ATTRIBUTE)
+        val defaultOrder = order ?: (schema.properties?.keys ?: listOf()).map { attrId ->
+            EntityTypeAttributeColumn(attrId, EntityPropertyType.ATTRIBUTE)
         }
 
         return EntityTypeEntity(
@@ -127,6 +131,31 @@ object EntityFactory {
             cardinalityOverride = cardinalityOverride,
             inverseVisible = inverseVisible,
             inverseName = inverseName,
+        )
+    }
+
+    /**
+     * Creates an EntityEntity with the given parameters and reasonable defaults.
+     */
+    fun createEntityEntity(
+        id: UUID? = null,
+        workspaceId: UUID = UUID.randomUUID(),
+        typeId: UUID = UUID.randomUUID(),
+        typeKey: String = "test_entity",
+        identifierKey: UUID = UUID.randomUUID(),
+        payload: Map<String, EntityAttributePrimitivePayload> = emptyMap(),
+        iconColour: IconColour = IconColour.NEUTRAL,
+        iconType: IconType = IconType.FILE,
+    ): EntityEntity {
+        return EntityEntity(
+            id = id,
+            workspaceId = workspaceId,
+            typeId = typeId,
+            typeKey = typeKey,
+            identifierKey = identifierKey,
+            payload = payload,
+            iconColour = iconColour,
+            iconType = iconType,
         )
     }
 }

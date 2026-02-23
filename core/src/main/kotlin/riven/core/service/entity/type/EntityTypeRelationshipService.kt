@@ -22,18 +22,10 @@ import riven.core.repository.entity.RelationshipTargetRuleRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
+import riven.core.models.response.entity.type.DeleteDefinitionImpact
 import riven.core.service.entity.EntityTypeSemanticMetadataService
 import riven.core.util.ServiceUtil
 import java.util.*
-
-/**
- * Result of an impact check when deleting a relationship definition with existing instance data.
- */
-data class DeleteDefinitionImpact(
-    val definitionId: UUID,
-    val definitionName: String,
-    val impactedLinkCount: Long,
-)
 
 /**
  * Service for managing relationship definitions and their target rules.
@@ -276,6 +268,18 @@ class EntityTypeRelationshipService(
     }
 
     /**
+     * Returns all relationship definitions for an entity type, keyed by definition ID.
+     * Includes both forward and inverse-visible definitions.
+     */
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun getDefinitionsForEntityTypeAsMap(
+        workspaceId: UUID,
+        entityTypeId: UUID,
+    ): Map<UUID, RelationshipDefinition> {
+        return getDefinitionsForEntityType(workspaceId, entityTypeId).associateBy { it.id }
+    }
+
+    /**
      * Retrieves a single relationship definition by ID with its target rules.
      */
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
@@ -308,6 +312,9 @@ class EntityTypeRelationshipService(
         }
 
         val toSave = requestedRules.map { req ->
+            require(req.targetEntityTypeId != null || req.semanticTypeConstraint != null) {
+                "Target rule must specify either targetEntityTypeId or semanticTypeConstraint"
+            }
             if (req.id != null && existingById.containsKey(req.id)) {
                 // Update existing rule
                 val existing = existingById[req.id]!!
@@ -339,6 +346,9 @@ class EntityTypeRelationshipService(
         rules: List<SaveTargetRuleRequest>,
     ): List<RelationshipTargetRuleEntity> {
         return rules.map { rule ->
+            require(rule.targetEntityTypeId != null || rule.semanticTypeConstraint != null) {
+                "Target rule must specify either targetEntityTypeId or semanticTypeConstraint"
+            }
             RelationshipTargetRuleEntity(
                 relationshipDefinitionId = definitionId,
                 targetEntityTypeId = rule.targetEntityTypeId,

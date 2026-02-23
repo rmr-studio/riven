@@ -96,15 +96,11 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
      * Soft-delete all relationship links for a given definition ID.
      */
     @Modifying
-    @Query(
-        """
-        UPDATE entity_relationships
-            SET deleted = true,
-            deleted_at = CURRENT_TIMESTAMP
-        WHERE relationship_definition_id = :definitionId
-            AND deleted = false
-        """, nativeQuery = true
-    )
+    @Query("""
+        UPDATE EntityRelationshipEntity e
+        SET e.deleted = true, e.deletedAt = CURRENT_TIMESTAMP
+        WHERE e.definitionId = :definitionId AND e.deleted = false
+    """)
     fun softDeleteByDefinitionId(definitionId: UUID)
 
     @Modifying
@@ -197,7 +193,7 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
      */
     @Query(
         value = """
-            SELECT
+            SELECT DISTINCT
                 e.id as id,
                 e.workspace_id as workspaceId,
                 r.relationship_definition_id as definitionId,
@@ -229,7 +225,7 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
      */
     @Query(
         value = """
-            SELECT
+            SELECT DISTINCT
                 e.id as id,
                 e.workspace_id as workspaceId,
                 r.relationship_definition_id as definitionId,

@@ -43,6 +43,7 @@ import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.repository.entity.RelationshipDefinitionRepository
 import riven.core.repository.entity.RelationshipTargetRuleRepository
+import riven.core.service.entity.type.EntityTypeRelationshipService
 import java.time.ZonedDateTime
 import java.time.temporal.TemporalAccessor
 import java.util.*
@@ -102,16 +103,28 @@ class EntityQueryIntegrationTestConfig {
     fun entityQueryAssembler(visitor: AttributeFilterVisitor) = EntityQueryAssembler(visitor)
 
     @Bean
+    fun entityTypeRelationshipService(
+        definitionRepository: RelationshipDefinitionRepository,
+        targetRuleRepository: RelationshipTargetRuleRepository,
+        entityRelationshipRepository: EntityRelationshipRepository,
+    ) = EntityTypeRelationshipService(
+        definitionRepository, targetRuleRepository, entityRelationshipRepository,
+        org.mockito.Mockito.mock(riven.core.service.activity.ActivityService::class.java),
+        org.mockito.Mockito.mock(riven.core.service.auth.AuthTokenService::class.java),
+        org.mockito.Mockito.mock(riven.core.service.entity.EntityTypeSemanticMetadataService::class.java),
+        org.mockito.Mockito.mock(io.github.oshai.kotlinlogging.KLogger::class.java),
+    )
+
+    @Bean
     fun entityQueryService(
         entityTypeRepository: EntityTypeRepository,
         entityRepository: EntityRepository,
         assembler: EntityQueryAssembler,
         validator: QueryFilterValidator,
-        definitionRepository: RelationshipDefinitionRepository,
-        targetRuleRepository: RelationshipTargetRuleRepository,
+        entityTypeRelationshipService: EntityTypeRelationshipService,
         dataSource: DataSource,
         @Value("\${riven.query.timeout-seconds:10}") queryTimeoutSeconds: Long,
-    ) = EntityQueryService(entityTypeRepository, entityRepository, assembler, validator, definitionRepository, targetRuleRepository, dataSource, queryTimeoutSeconds)
+    ) = EntityQueryService(entityTypeRepository, entityRepository, assembler, validator, entityTypeRelationshipService, dataSource, queryTimeoutSeconds)
 }
 
 /**
@@ -428,7 +441,7 @@ abstract class EntityQueryIntegrationTestBase {
             inverseName = "Company",
         ))
 
-        // Company -> Owner (MANY_TO_ONE, polymorphic: Employee or Project)
+        // Company -> Owner (MANY_TO_ONE, multiple target types: Employee or Project)
         companyOwnerRelId = definitionRepository.save(RelationshipDefinitionEntity(
             workspaceId = workspaceId,
             sourceEntityTypeId = companyTypeId,

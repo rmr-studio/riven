@@ -20,9 +20,8 @@ import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.auth.AuthTokenService
-import riven.core.repository.entity.RelationshipDefinitionRepository
-import riven.core.repository.entity.RelationshipTargetRuleRepository
 import riven.core.service.entity.EntityRelationshipService
+import riven.core.service.entity.type.EntityTypeRelationshipService
 import riven.core.service.workflow.state.EntityContextService
 import riven.core.service.workflow.state.WorkflowNodeExpressionEvaluatorService
 import java.time.ZonedDateTime
@@ -54,10 +53,7 @@ class EntityContextServiceTest {
     private lateinit var entityRelationshipService: EntityRelationshipService
 
     @MockitoBean
-    private lateinit var definitionRepository: RelationshipDefinitionRepository
-
-    @MockitoBean
-    private lateinit var targetRuleRepository: RelationshipTargetRuleRepository
+    private lateinit var entityTypeRelationshipService: EntityTypeRelationshipService
 
     @Autowired
     private lateinit var entityContextService: EntityContextService
