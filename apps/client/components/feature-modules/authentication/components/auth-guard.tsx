@@ -16,16 +16,12 @@ export const AuthGuard: FCWC = ({ children }) => {
     }
   }, [session, loading, router]);
 
-  if (loading) {
+  if (loading || !session) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
       </div>
     );
-  }
-
-  if (!session) {
-    return null;
   }
 
   return <>{children}</>;

@@ -1,17 +1,15 @@
-'use client';
-
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { WorkspaceMember } from '@/lib/types/workspace';
 import Link from 'next/link';
 import { FC } from 'react';
 
-interface WorkspaceTileProps {
+interface WorkspaceCardProps {
   membership: WorkspaceMember;
   isDefault: boolean;
 }
 
-export const WorkspaceTile: FC<WorkspaceTileProps> = ({ membership, isDefault }) => {
+export const WorkspaceCard: FC<WorkspaceCardProps> = ({ membership, isDefault }) => {
   const workspace = membership.workspace;
 
   return (
