@@ -5,6 +5,9 @@ validateEnv();
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  turbopack: {
+    root: "../../",
+  },
   transpilePackages: ["@riven/ui", "@riven/hooks", "@riven/utils"],
   images: {
     remotePatterns: [
