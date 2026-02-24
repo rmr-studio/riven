@@ -1,8 +1,8 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { HoverBorderGradient } from '@/components/ui/hover-border-gradient';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { CtaButton } from '@/components/ui/cta-button';
+import { scrollToSection } from '@/lib/scroll';
+import { ChevronDown } from 'lucide-react';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 
@@ -48,29 +48,19 @@ export const HeroCopy = () => {
           {/* CTA buttons */}
           <div className="mt-6 flex items-center gap-3 sm:mt-8 lg:gap-4">
             <Link
-              href="/#contact"
+              href="/#waitlist"
               onClick={(e) => {
                 e.preventDefault();
-                document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-                window.history.replaceState(null, '', '/#contact');
+                scrollToSection('waitlist');
               }}
             >
-              <HoverBorderGradient className="overflow-hidden bg-background p-0" as="div">
-                <Button
-                  size="sm"
-                  className="h-7 cursor-pointer items-center gap-1 border-0 bg-muted/50 px-2.5 py-0.5 font-mono text-xs tracking-wide text-muted-foreground outline-0 hover:bg-muted hover:text-foreground md:h-8 md:gap-1.5 md:px-3 md:text-xs"
-                >
-                  Join the waitlist
-                  <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 md:h-4 md:w-4" />
-                </Button>
-              </HoverBorderGradient>
+              <CtaButton>Join the waitlist</CtaButton>
             </Link>
             <Link
               href="/#features"
               onClick={(e) => {
                 e.preventDefault();
-                document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-                window.history.replaceState(null, '', '/#features');
+                scrollToSection('features');
               }}
               className="inline-flex items-center gap-1 px-2.5 py-0.5 font-mono text-xs tracking-wide text-muted-foreground transition-colors hover:text-foreground md:gap-1.5 md:px-3 md:text-xs"
             >

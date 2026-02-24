@@ -1,21 +1,18 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { CtaButton } from '@/components/ui/cta-button';
 import { MobileNavbar } from '@/components/ui/mobile-nav-menu';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { NAV_LINKS } from '@/lib/navigation';
+import { scrollToSection } from '@/lib/scroll';
 import { useAuth } from '@/providers/auth-provider';
-import { ChevronRight, Github, Menu } from 'lucide-react';
+import { Logo } from '@riven/ui/logo';
+import { Github, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { HoverBorderGradient } from './ui/hover-border-gradient';
-import { Logo } from './ui/logo';
 
 const CLIENT_URL = process.env.NEXT_PUBLIC_CLIENT_URL || '/dashboard';
-
-const navLinks = [
-  { label: 'Features', href: '/#features' },
-  { label: 'FAQs', href: '/#faqs' },
-];
 
 export function Navbar() {
   const { user, loading } = useAuth();
@@ -57,30 +54,26 @@ export function Navbar() {
       <nav
         data-navbar=""
         {...(isInverted ? { 'data-inverted': '' } : {})}
-        className="mx-auto flex h-12 w-auto grow items-center justify-between rounded-full border border-border/50 bg-background/60 shadow-sm shadow-primary/35 backdrop-blur-xl md:h-14 lg:max-w-[80dvw]"
+        className={`mx-auto flex h-12 w-auto grow items-center justify-between rounded-md border border-border/50 shadow-sm shadow-primary/35 backdrop-blur-xl transition-colors md:h-14 md:rounded-full lg:max-w-[80dvw] ${isInverted ? 'bg-background/90' : 'bg-background/60'}`}
       >
         {/* Left: Logo + Nav Links */}
         <div className="flex items-center">
-          <Link href="/" className="flex shrink-0 gap-1.5 px-3 md:gap-2 md:px-4">
-            <Logo size={24} />
-            <div className="mb-0.5 font-mono text-xs font-bold tracking-tight text-primary md:text-xl">
-              riven
-            </div>
+          <Link href="/" className="flex shrink-0 gap-1 px-3 md:px-4">
+            <Logo size={32} />
+            <div className="mt-1 font-serif text-2xl font-bold text-logo-primary">Riven</div>
           </Link>
 
           {/* Nav Links - desktop only */}
-          <div className="hidden items-center gap-1 md:flex">
-            {navLinks.map((link) => (
+          <div className="mt-1 hidden items-center gap-1 md:flex">
+            {NAV_LINKS.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
                 onClick={(e) => {
                   const hash = link.href.split('#')[1];
-                  const el = hash ? document.getElementById(hash) : null;
-                  if (el) {
+                  if (hash) {
                     e.preventDefault();
-                    el.scrollIntoView({ behavior: 'smooth' });
-                    window.history.replaceState(null, '', link.href);
+                    scrollToSection(hash, link.href);
                   }
                 }}
                 className="px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -94,7 +87,7 @@ export function Navbar() {
         {/* Right: ThemeToggle + CTA + Mobile Menu */}
         <div className="flex items-center gap-1.5 px-2 md:gap-2 md:px-4">
           <Link
-            href="https://github.com/rivenmedia/riven"
+            href="https://github.com/rmr-studio/riven"
             target="_blank"
             rel="noopener noreferrer"
             className="hidden text-muted-foreground transition-colors hover:text-foreground md:flex"
@@ -106,36 +99,23 @@ export function Navbar() {
           </div>
           {!loading && user ? (
             <Link href={CLIENT_URL}>
-              <HoverBorderGradient className="overflow-hidden bg-background p-0" as="div">
-                <Button
-                  size={'sm'}
-                  className="h-7 cursor-pointer items-center gap-1 border-0 bg-muted/50 py-0.5 px-2.5 font-mono text-xs tracking-wide text-muted-foreground outline-0 hover:bg-muted hover:text-foreground md:h-8 md:gap-1.5 md:px-3 md:text-xs"
-                >
-                  <span>Go to Dashboard</span>
-                  <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 md:h-4 md:w-4" />
-                </Button>
-              </HoverBorderGradient>
+              <CtaButton>
+                <span>Go to Dashboard</span>
+              </CtaButton>
             </Link>
           ) : (
-            <a
-              href="/#contact"
+            <Link
+              href="/#waitlist"
               onClick={(e) => {
                 e.preventDefault();
-                document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-                window.history.replaceState(null, '', '/#contact');
+                scrollToSection('waitlist');
               }}
             >
-              <HoverBorderGradient className="overflow-hidden bg-background p-0" as="div">
-                <Button
-                  size={'sm'}
-                  className="h-7 cursor-pointer items-center gap-1 border-0 bg-muted/50 py-0.5 px-2.5 font-mono text-xs tracking-wide text-muted-foreground outline-0 hover:bg-muted hover:text-foreground md:h-8 md:gap-1.5 md:px-3 md:text-xs"
-                >
-                  <span className="hidden sm:block">Join the waitlist</span>
-                  <span className="sm:hidden">Get Started</span>
-                  <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 md:h-4 md:w-4" />
-                </Button>
-              </HoverBorderGradient>
-            </a>
+              <CtaButton>
+                <span className="hidden sm:block">Join the waitlist</span>
+                <span className="sm:hidden">Get Started</span>
+              </CtaButton>
+            </Link>
           )}
 
           <Button
@@ -144,17 +124,12 @@ export function Navbar() {
             onClick={() => setMobileMenuOpen(true)}
             className="size-8 shrink-0 cursor-pointer md:hidden"
           >
-            <Menu className="size-4 text-primary" />
+            <Menu className="size-6 text-primary" />
           </Button>
         </div>
       </nav>
 
-      <MobileNavbar
-        links={navLinks}
-        open={mobileMenuOpen}
-        setOpen={setMobileMenuOpen}
-        showTrigger={false}
-      />
+      <MobileNavbar links={NAV_LINKS} open={mobileMenuOpen} setOpen={setMobileMenuOpen} />
     </header>
   );
 }

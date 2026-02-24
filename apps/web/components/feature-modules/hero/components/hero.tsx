@@ -6,7 +6,8 @@ export function Hero() {
   return (
     <Section
       className="h-screen py-0! pt-20!"
-      fill="color-mix(in srgb, var(--primary) 10%, transparent)"
+      size={24}
+      fill="color-mix(in srgb, var(--primary) 5%, transparent)"
       gridClassName="z-20"
     >
       <HeroCopy />
@@ -18,16 +19,6 @@ export function Hero() {
         className="h-[70dvh]"
         alt="City skyline"
         preload
-      />
-
-      <HeroBackground
-        image={{
-          avif: 'images/hero-skyline-foreground-layer.avif',
-          webp: 'images/hero-skyline-foreground-layer.webp',
-        }}
-        className="hidden h-[70dvh] opacity-30 md:block"
-        alt="City skyline"
-        lazy
       />
     </Section>
   );

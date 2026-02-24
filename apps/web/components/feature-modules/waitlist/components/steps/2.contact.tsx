@@ -15,10 +15,12 @@ const STEP_CONFIG = {
 
 export function ContactStep({
   form,
-  onNext,
+  onJoin,
+  isPending,
 }: {
   form: UseFormReturn<WaitlistMultiStepFormData>;
-  onNext: () => void;
+  onJoin: () => void;
+  isPending: boolean;
 }) {
   const { register, formState } = form;
   const emailRef = useRef<HTMLInputElement | null>(null);
@@ -26,8 +28,8 @@ export function ContactStep({
 
   return (
     <div className="py-8">
-      <h3 className="text-2xl font-medium md:text-3xl">{STEP_CONFIG.title}</h3>
-      <div className="mt-8 max-w-md space-y-6">
+      <h3 className="text-center text-2xl font-medium md:text-3xl">{STEP_CONFIG.title}</h3>
+      <div className="mx-auto mt-8 max-w-md space-y-6">
         <div>
           <label className="mb-1.5 block text-sm text-muted-foreground">
             {STEP_CONFIG.nameLabel}
@@ -63,7 +65,7 @@ export function ContactStep({
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
-                onNext();
+                onJoin();
               }
             }}
             className={cn(INPUT_CLASS, formState.errors.email && INPUT_ERROR_CLASS)}
@@ -74,9 +76,9 @@ export function ContactStep({
             </p>
           )}
         </div>
-      </div>
-      <div className="mt-8 flex items-center justify-end">
-        <OkButton onClick={onNext} />
+        <div className="mt-8 flex items-center justify-end">
+          <OkButton onClick={onJoin} label="Join the Waitlist" loading={isPending} />
+        </div>
       </div>
     </div>
   );

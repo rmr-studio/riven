@@ -71,7 +71,7 @@ export const metadata: Metadata = {
           : '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Riven — Cross-Domain Intelligence',
+        alt: 'Riven — Cross-Domain Intelligence. One Business',
       },
     ],
   },
@@ -137,7 +137,7 @@ export default function RootLayout({
               </AuthProvider>
             </QueryProvider>
           </MotionProvider>
-          <Toaster richColors position="bottom-center" />
+          <Toaster richColors position="bottom-right" />
         </ThemeProvider>
       </body>
     </html>

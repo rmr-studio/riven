@@ -1,0 +1,8 @@
+
+> @riven/client@0.1.0 build /home/jared/dev/worktrees/landing/apps/client
+> dotenv -e ../../.env -- next build
+
+   ▲ Next.js 15.3.4
+
+   Creating an optimized production build ...
+ ELIFECYCLE  Command failed with exit code 130.

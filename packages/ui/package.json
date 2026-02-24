@@ -19,7 +19,8 @@
     "./scroll-area": "./src/scroll-area.tsx",
     "./accordion": "./src/accordion.tsx",
     "./table": "./src/table.tsx",
-    "./command": "./src/command.tsx"
+    "./command": "./src/command.tsx",
+    "./logo": "./src/logo.tsx"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

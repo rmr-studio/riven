@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React, { Dispatch, FC, useState } from 'react';
 import { Button } from './button';
-import { Logo } from './logo';
+import { Logo } from '@riven/ui/logo';
 import { ThemeToggle } from './theme-toggle';
 
 interface MobileNavbarExtendedProps extends NavbarProps {
@@ -33,25 +33,7 @@ export const MobileNavbar: FC<MobileNavbarExtendedProps> = ({
 
   return (
     <>
-      {showTrigger && (
-        <div className={cn('flex w-full items-center px-4', className)}>
-          <Button
-            variant={'ghost'}
-            size={'icon'}
-            onClick={() => setIsOpen((prev) => !prev)}
-            className="size-12"
-          >
-            <Menu className="size-8" />
-          </Button>
 
-          <section className="flex w-auto flex-grow justify-end pt-1 pr-6">
-            <Link href={'/'} className="mb-2 justify-end lg:w-fit">
-              {/* <Logo className="cursor-pointer w-[10rem]" variant="minimal" /> */}
-              jtucker.io
-            </Link>
-          </section>
-        </div>
-      )}
 
       <AnimatePresence>
         {isOpen ? <LinkSection links={links} toggle={setIsOpen} className={className} /> : null}
@@ -158,7 +140,7 @@ const LinkSection: FC<NavbarMenuProps> = ({ links, toggle }) => {
         <div className="flex h-[6rem] w-full items-center justify-between p-4">
           <Link href={'/'} onClick={() => toggle(false)} className="flex items-center gap-2 px-2">
             <Logo size={32} />
-            <span className="font-mono font-bold text-lg tracking-tight text-primary">Riven</span>
+            <div className="mt-1 font-serif text-2xl font-bold text-logo-primary">Riven</div>
           </Link>
 
           <div className="flex items-center gap-2">
@@ -171,7 +153,12 @@ const LinkSection: FC<NavbarMenuProps> = ({ links, toggle }) => {
               <Github className="size-5" />
             </Link>
             <ThemeToggle />
-            <Button variant={'ghost'} size={'icon'} onClick={() => toggle(false)} className="size-12">
+            <Button
+              variant={'ghost'}
+              size={'icon'}
+              onClick={() => toggle(false)}
+              className="size-12"
+            >
               <X className="size-8" />
             </Button>
           </div>
