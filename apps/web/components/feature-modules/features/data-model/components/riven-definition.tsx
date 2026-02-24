@@ -26,13 +26,7 @@ export function PainPoint() {
             <p className="text-rightfont-mono max-w-2xl text-base leading-tight text-muted-foreground md:text-left md:text-lg">
               Every tool owns a fragment. None of them talk. You end up as the integration
               layer&thinsp;&mdash;&thinsp;copying, pasting, and context-switching until the picture
-              blurs.
-            </p>
-          </div>
-          <div className="mt-24 font-serif text-3xl leading-[0.95] text-content md:text-end md:text-5xl">
-            This is your data, your business, your platform.
-            <p className="ml-auto max-w-2xl font-mono text-base leading-tight text-muted-foreground md:text-right md:text-lg">
-              Shouldn't you be the one in control of it?
+              blurs. This is your data, and it should work for you, not the other way around.
             </p>
           </div>
         </motion.div>
