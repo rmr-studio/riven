@@ -1,4 +1,5 @@
 import { BentoCard, BentoCarousel, Slide } from '@/components/ui/bento-carousel';
+import { FADE_EDGE_MASK } from '@/lib/styles';
 import { InterconnectionDiagram } from './carousel/graphic/1.interconnections';
 import { IntegrationsDiagram } from './carousel/graphic/2.integrations';
 import { IdentityMatchingDiagram } from './carousel/graphic/3.identity-matching';
@@ -89,14 +90,7 @@ export const DataModelFeatureCarousel = () => {
           description="Filter, sort, and save custom views across your entire data model. Ask your data a question and pin the answer"
         >
           <div
-            style={{
-              maskImage:
-                'linear-gradient(to right, transparent, black 10%, black 80%, transparent), linear-gradient(to bottom, black 40%, transparent)',
-              maskComposite: 'intersect',
-              WebkitMaskImage:
-                'linear-gradient(to right, transparent, black 10%, black 80%, transparent), linear-gradient(to bottom, black 40%, transparent)',
-              WebkitMaskComposite: 'source-in',
-            }}
+            style={FADE_EDGE_MASK}
             className="relative h-full w-full overflow-hidden mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]"
           >
             <QueryBuilderGraphic className="static inset-0 top-0 h-full w-full -translate-x-1/6 scale-70 max-md:left-1/2 max-md:w-[150%] md:absolute md:top-1/6 md:translate-x-4 md:scale-110 lg:top-1/3" />
@@ -121,14 +115,7 @@ export const DataModelFeatureCarousel = () => {
         >
           <div
             className="relative h-full w-full overflow-hidden"
-            style={{
-              maskImage:
-                'linear-gradient(to right, transparent, black 10%, black 80%, transparent), linear-gradient(to bottom, black 40%, transparent)',
-              maskComposite: 'intersect',
-              WebkitMaskImage:
-                'linear-gradient(to right, transparent, black 10%, black 80%, transparent), linear-gradient(to bottom, black 40%, transparent)',
-              WebkitMaskComposite: 'source-in',
-            }}
+            style={FADE_EDGE_MASK}
           >
             <DataCleanlinessGraphic className="static inset-0 left-1/2 w-full origin-top-right scale-75 md:scale-90 lg:translate-x-1/3 lg:scale-100" />
           </div>

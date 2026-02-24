@@ -3,18 +3,20 @@ import type { WaitlistMultiStepFormData } from '@/lib/validations';
 export enum Step {
   CTA = 0,
   CONTACT = 1,
-  OPERATIONAL_HEADACHE = 2,
-  INTEGRATIONS = 3,
-  PRICE = 4,
-  INVOLVEMENT = 5,
-  SUCCESS = 6,
+  BRIDGE = 2,
+  OPERATIONAL_HEADACHE = 3,
+  INTEGRATIONS = 4,
+  PRICE = 5,
+  INVOLVEMENT = 6,
+  SUCCESS = 7,
 }
 
-export const TOTAL_FORM_STEPS = 5;
+export const TOTAL_FORM_STEPS = 4;
 
 export const STEP_NAMES: Record<number, string> = {
   [Step.CTA]: 'cta',
   [Step.CONTACT]: 'contact',
+  [Step.BRIDGE]: 'bridge',
   [Step.OPERATIONAL_HEADACHE]: 'operational_headache',
   [Step.INTEGRATIONS]: 'integrations',
   [Step.PRICE]: 'pricing',

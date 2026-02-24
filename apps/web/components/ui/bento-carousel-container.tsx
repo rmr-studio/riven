@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, useCarousel } from '@/components/ui/carousel';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { useIsMobile } from '@/hooks/use-is-mobile';
+import { useMounted } from '@/hooks/use-mounted';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -110,12 +111,8 @@ export function BentoSlide({
   md,
   lg,
 }: BentoSlideProps) {
-  const [mounted, setMounted] = React.useState(false);
+  const mounted = useMounted();
   const breakpoint = useBreakpoint();
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Determine grid config based on current breakpoint
   const getGridConfig = (): ResponsiveGridConfig => {
@@ -184,17 +181,13 @@ export function BentoCarouselContainer({
   mobileCards,
   inset,
 }: BentoCarouselProps) {
-  const [mounted, setMounted] = React.useState(false);
+  const mounted = useMounted();
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [currentSlide, setCurrentSlide] = React.useState(0);
   const [canScrollLeft, setCanScrollLeft] = React.useState(false);
   const [canScrollRight, setCanScrollRight] = React.useState(true);
   const [isDragging, setIsDragging] = React.useState(false);
   const isMobile = useIsMobile('md');
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Drag state refs (using refs to avoid re-renders during drag)
   const dragStartX = React.useRef(0);

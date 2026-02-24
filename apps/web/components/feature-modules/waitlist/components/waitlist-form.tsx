@@ -2,6 +2,7 @@
 
 import { CtaStep } from '@/components/feature-modules/waitlist/components/steps/1.cta';
 import { ContactStep } from '@/components/feature-modules/waitlist/components/steps/2.contact';
+import { BridgeStep } from '@/components/feature-modules/waitlist/components/steps/2b.bridge';
 import { OperationalHeadacheStep } from '@/components/feature-modules/waitlist/components/steps/3.operational-headache';
 import {
   IntegrationsStep,
@@ -27,13 +28,13 @@ import {
   TOTAL_FORM_STEPS,
 } from '@/components/feature-modules/waitlist/config/steps';
 import posthog from 'posthog-js';
-import { useWaitlistMutation } from '@/hooks/use-waitlist-mutation';
+import { useWaitlistJoinMutation, useWaitlistUpdateMutation } from '@/hooks/use-waitlist-mutation';
 import { cn } from '@/lib/utils';
 import { waitlistFormSchema, type WaitlistMultiStepFormData } from '@/lib/validations';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 const PRESET_INTEGRATION_LABELS = new Set(
@@ -44,8 +45,10 @@ export function WaitlistForm({ className }: { className?: string }) {
   const [currentStep, setCurrentStep] = useState<Step>(Step.CTA);
   const [direction, setDirection] = useState(1);
   const [showOtherInput, setShowOtherInput] = useState(false);
-  const { mutate, isPending } = useWaitlistMutation();
-  const duplicateEmails = useRef(new Set<string>());
+  const [completedSurvey, setCompletedSurvey] = useState(false);
+
+  const joinMutation = useWaitlistJoinMutation();
+  const updateMutation = useWaitlistUpdateMutation();
 
   const form = useForm<WaitlistMultiStepFormData>({
     resolver: zodResolver(waitlistFormSchema),
@@ -60,7 +63,7 @@ export function WaitlistForm({ className }: { className?: string }) {
     mode: 'onTouched',
   });
 
-  const { trigger, setValue, watch, handleSubmit, formState } = form;
+  const { trigger, setValue, watch, formState } = form;
   const selectedIntegrations = watch('integrations');
   const selectedPrice = watch('monthlyPrice');
   const selectedInvolvement = watch('involvement');
@@ -77,7 +80,7 @@ export function WaitlistForm({ className }: { className?: string }) {
   }, [currentStep]);
 
   const goBack = useCallback(() => {
-    if (currentStep <= Step.CTA) return;
+    if (currentStep <= Step.OPERATIONAL_HEADACHE) return;
     posthog.capture('waitlist_step_back', {
       from_step: STEP_NAMES[currentStep],
       to_step: STEP_NAMES[currentStep - 1],
@@ -86,43 +89,71 @@ export function WaitlistForm({ className }: { className?: string }) {
     setCurrentStep((prev) => prev - 1);
   }, [currentStep]);
 
-  const handleNext = useCallback(async () => {
+  // ── Phase 1: Join ──
+
+  const handleJoin = useCallback(async () => {
+    const valid = await trigger(['name', 'email']);
+    if (!valid) return;
+
+    const { name, email } = form.getValues();
+    joinMutation.mutate(
+      { name, email },
+      {
+        onSuccess: () => {
+          posthog.capture('waitlist_joined', { email });
+          setDirection(1);
+          setCurrentStep(Step.BRIDGE);
+        },
+        onError: (error: Error) => {
+          if (error.message.includes('already on the waitlist')) {
+            form.setError('email', { message: error.message });
+          }
+        },
+      },
+    );
+  }, [trigger, form, joinMutation]);
+
+  // ── Phase 2: Survey ──
+
+  const handleSurveyNext = useCallback(async () => {
     const fields = STEP_FIELDS[currentStep];
     if (fields) {
       const valid = await trigger(fields);
       if (!valid) return;
     }
-    if (currentStep === Step.CONTACT && duplicateEmails.current.has(form.getValues('email'))) {
-      form.setError('email', { message: 'This email is already on the waitlist!' });
-      return;
-    }
     goForward();
-  }, [currentStep, trigger, goForward, form]);
+  }, [currentStep, trigger, goForward]);
 
-  const onSubmit = useCallback(
-    (data: WaitlistMultiStepFormData) => {
-      mutate(data, {
+  const handleSurveySubmit = useCallback(async () => {
+    const valid = await trigger(['involvement']);
+    if (!valid) return;
+
+    const { email, operationalHeadache, integrations, monthlyPrice, involvement } =
+      form.getValues();
+
+    updateMutation.mutate(
+      { email, operationalHeadache, integrations, monthlyPrice, involvement },
+      {
         onSuccess: () => {
-          posthog.capture('waitlist_submitted', {
-            integrations: data.integrations,
-            monthly_price: data.monthlyPrice,
-            involvement: data.involvement,
+          posthog.capture('waitlist_survey_submitted', {
+            integrations,
+            monthly_price: monthlyPrice,
+            involvement,
           });
+          setCompletedSurvey(true);
           setDirection(1);
           setCurrentStep(Step.SUCCESS);
         },
-        onError: (error: Error) => {
-          if (error.message.includes('already on the waitlist')) {
-            duplicateEmails.current.add(data.email);
-            setDirection(-1);
-            setCurrentStep(Step.CONTACT);
-            form.setError('email', { message: error.message });
-          }
-        },
-      });
-    },
-    [mutate],
-  );
+      },
+    );
+  }, [trigger, form, updateMutation]);
+
+  const handleBridgeSkip = useCallback(() => {
+    posthog.capture('waitlist_survey_skipped');
+    setCompletedSurvey(false);
+    setDirection(1);
+    setCurrentStep(Step.SUCCESS);
+  }, []);
 
   const handleOk = useCallback(async () => {
     if (currentStep === Step.SUCCESS) return;
@@ -130,14 +161,20 @@ export function WaitlistForm({ className }: { className?: string }) {
       goForward();
       return;
     }
-    if (currentStep === Step.INVOLVEMENT) {
-      const valid = await trigger(['involvement']);
-      if (!valid) return;
-      handleSubmit(onSubmit)();
-    } else {
-      handleNext();
+    if (currentStep === Step.CONTACT) {
+      handleJoin();
+      return;
     }
-  }, [currentStep, trigger, handleSubmit, onSubmit, handleNext, goForward]);
+    if (currentStep === Step.BRIDGE) {
+      goForward();
+      return;
+    }
+    if (currentStep === Step.INVOLVEMENT) {
+      handleSurveySubmit();
+    } else {
+      handleSurveyNext();
+    }
+  }, [currentStep, handleJoin, goForward, handleSurveySubmit, handleSurveyNext]);
 
   // ── Selections ──
 
@@ -201,7 +238,6 @@ export function WaitlistForm({ className }: { className?: string }) {
   const toggleOtherInput = useCallback(() => {
     setShowOtherInput((prev) => {
       if (prev) {
-        // Toggling off — remove all custom entries
         const current = form.getValues('integrations');
         const presetOnly = current.filter((i) => PRESET_INTEGRATION_LABELS.has(i));
         setValue('integrations', presetOnly, { shouldValidate: true });
@@ -212,6 +248,8 @@ export function WaitlistForm({ className }: { className?: string }) {
 
   // ── Keyboard shortcuts ──
 
+  const isPending = joinMutation.isPending || updateMutation.isPending;
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isPending) return;
@@ -220,13 +258,12 @@ export function WaitlistForm({ className }: { className?: string }) {
       const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
 
       if (e.key === 'Enter') {
-        if (isInput) return; // let input-level handlers (like custom integration) handle Enter
+        if (isInput) return;
         e.preventDefault();
         handleOk();
         return;
       }
 
-      // Letter shortcuts only on selection steps, not when typing
       if (isInput) return;
 
       const key = e.key.toUpperCase();
@@ -246,14 +283,9 @@ export function WaitlistForm({ className }: { className?: string }) {
 
   // ── Progress ──
 
-  const formStepIndex = currentStep - 1;
-  const progress =
-    currentStep >= Step.CONTACT && currentStep <= Step.INVOLVEMENT
-      ? ((formStepIndex + 1) / TOTAL_FORM_STEPS) * 100
-      : currentStep === Step.SUCCESS
-        ? 100
-        : 0;
-  const showProgress = currentStep >= Step.CONTACT;
+  const surveyStepIndex = currentStep - Step.OPERATIONAL_HEADACHE;
+  const showProgress = currentStep >= Step.OPERATIONAL_HEADACHE && currentStep <= Step.INVOLVEMENT;
+  const progress = showProgress ? ((surveyStepIndex + 1) / TOTAL_FORM_STEPS) * 100 : 0;
 
   // ── Render steps ──
 
@@ -262,7 +294,15 @@ export function WaitlistForm({ className }: { className?: string }) {
       case Step.CTA:
         return <CtaStep onStart={goForward} />;
       case Step.CONTACT:
-        return <ContactStep form={form} onNext={handleOk} />;
+        return (
+          <ContactStep
+            form={form}
+            onJoin={handleJoin}
+            isPending={joinMutation.isPending}
+          />
+        );
+      case Step.BRIDGE:
+        return <BridgeStep onContinue={goForward} onSkip={handleBridgeSkip} />;
       case Step.OPERATIONAL_HEADACHE:
         return <OperationalHeadacheStep form={form} onNext={handleOk} />;
       case Step.INTEGRATIONS:
@@ -293,16 +333,19 @@ export function WaitlistForm({ className }: { className?: string }) {
             selectedInvolvement={selectedInvolvement}
             onSelect={selectInvolvement}
             onSubmit={handleOk}
-            isPending={isPending}
+            isPending={updateMutation.isPending}
             error={formState.errors.involvement?.message}
           />
         );
       case Step.SUCCESS:
-        return <SuccessStep />;
+        return <SuccessStep completedSurvey={completedSurvey} />;
       default:
         return null;
     }
   };
+
+  const showBackButton =
+    currentStep >= Step.OPERATIONAL_HEADACHE && currentStep <= Step.INVOLVEMENT;
 
   return (
     <div className={cn('mx-auto w-full max-w-5xl', className)}>
@@ -327,7 +370,7 @@ export function WaitlistForm({ className }: { className?: string }) {
 
       {/* Back button */}
       <AnimatePresence>
-        {currentStep > Step.CTA && currentStep < Step.SUCCESS && (
+        {showBackButton && (
           <motion.button
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

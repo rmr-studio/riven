@@ -36,45 +36,56 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://getriven.io'),
 
   title: {
-    default: 'Riven | Your Intelligent Unified Workspace Environment',
+    default: 'Riven | Cross-Domain Intelligence for Scaling Businesses',
     template: '%s | Riven',
   },
 
-  description: 'Stop contorting your workflows to fit rigid tools. Riven adapts to you.',
+  description:
+    "Every tool shows you a slice. Riven connects your entire business. One unified data ecosystem with an AI knowledge layer that surfaces what siloed tools can't.",
 
   keywords: [
-    'crm',
-    'workspace',
-    'operational environment',
+    'cross-domain intelligence',
+    'business intelligence platform',
+    'unified data ecosystem',
+    'AI knowledge layer',
+    'business operations platform',
     'workflow automation',
-    'business tools',
-    'saas',
-    'founders',
-    'startups',
+    'data unification',
+    'operational intelligence',
+    'scaling startups',
+    'integration platform',
   ],
 
   openGraph: {
-    title: 'Riven | Build a CRM that fits your business',
-    description: 'Stop contorting your workflows to fit rigid tools. Riven adapts to you.',
+    title: 'Riven | Every tool shows you a slice. Riven connects your entire business.',
+    description:
+      "Cross-domain intelligence for scaling consumer businesses. Connect your CRM, payments, support, and product data with an AI layer that surfaces what siloed tools can't.",
     url: 'https://getriven.io',
     siteName: 'Riven',
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'Riven - Build a CRM that fits your business',
-      },
-    ],
     locale: 'en_US',
     type: 'website',
+    images: [
+      {
+        url: process.env.NEXT_PUBLIC_CDN_URL
+          ? `${process.env.NEXT_PUBLIC_CDN_URL}/images/og-image.png`
+          : '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Riven — Cross-Domain Intelligence. One Business',
+      },
+    ],
   },
 
   twitter: {
     card: 'summary_large_image',
-    title: 'Riven | Build a CRM that fits your business',
-    description: 'Stop contorting your workflows to fit rigid tools. Riven adapts to you.',
-    images: ['/og-image.png'],
+    title: 'Riven | Cross-Domain Intelligence for Scaling Businesses',
+    description:
+      "Connect your CRM, payments, support, and product data with an AI layer that surfaces what siloed tools can't.",
+    images: [
+      process.env.NEXT_PUBLIC_CDN_URL
+        ? `${process.env.NEXT_PUBLIC_CDN_URL}/images/og-image.png`
+        : '/og-image.png',
+    ],
   },
 
   robots: {
@@ -126,7 +137,7 @@ export default function RootLayout({
               </AuthProvider>
             </QueryProvider>
           </MotionProvider>
-          <Toaster richColors position="bottom-center" />
+          <Toaster richColors position="bottom-right" />
         </ThemeProvider>
       </body>
     </html>

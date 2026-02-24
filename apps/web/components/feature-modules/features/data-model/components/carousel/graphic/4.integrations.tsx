@@ -1,8 +1,11 @@
 'use client';
 
 import { motion } from 'motion/react';
-import stripeWordmark from './stripe-wordmark.png';
-import slackLogo from './slack-logo.png';
+import { getCdnUrl } from '@/lib/cdn-image-loader';
+import { EdgeGlowFilter, GlowEdgePaths } from './shared';
+
+const stripeWordmarkSrc = getCdnUrl('images/stripe-wordmark.png');
+const slackLogoSrc = getCdnUrl('images/slack-logo.png');
 
 const edgePaths = [
   // Riven → Stripe (up-left)
@@ -36,37 +39,7 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
-      {/* Connection lines - glow layer */}
-      <g filter="url(#igEdgeGlow)">
-        {edgePaths.map((edge) => (
-          <motion.path
-            key={`glow-${edge.d}`}
-            d={edge.d}
-            fill="none"
-            stroke="url(#igEdgeGradient)"
-            strokeWidth="2.5"
-            strokeOpacity="0.6"
-            initial={{ pathLength: 0, opacity: 0 }}
-            whileInView={{ pathLength: 1, opacity: 0.6 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: edge.delay }}
-          />
-        ))}
-      </g>
-      {/* Connection lines - crisp layer */}
-      {edgePaths.map((edge) => (
-        <motion.path
-          key={`crisp-${edge.d}`}
-          d={edge.d}
-          fill="none"
-          stroke="url(#igEdgeGradient)"
-          strokeWidth="1.5"
-          initial={{ pathLength: 0, opacity: 0 }}
-          whileInView={{ pathLength: 1, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: edge.delay }}
-        />
-      ))}
+      <GlowEdgePaths edgePaths={edgePaths} glowFilterId="igEdgeGlow" gradientId="igEdgeGradient" />
 
       {/* ===== Riven (center) ===== */}
       <g>
@@ -91,42 +64,43 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
             className="stroke-border"
           />
         </g>
-        {/* Riven Logo - Bottom Middle hexagon */}
-        <g filter="url(#igLogoShadow)">
-          <path
-            d="M267.818 194.805C268.605 193.58 270.395 193.58 271.182 194.804L281.742 211.231C282.166 211.89 282.166 212.735 281.742 213.394L271.182 229.82C270.395 231.045 268.605 231.045 267.818 229.821L257.258 213.394C256.834 212.735 256.834 211.89 257.258 211.231L267.818 194.805Z"
-            className="fill-muted-foreground"
-          />
-          <path
-            d="M269.079 195.615C269.276 195.309 269.724 195.309 269.921 195.615L280.48 212.042C280.586 212.207 280.586 212.418 280.48 212.583L269.921 229.01C269.724 229.316 269.276 229.316 269.079 229.01L258.52 212.583C258.414 212.418 258.414 212.207 258.52 212.042L269.079 195.615Z"
-            className="stroke-muted-foreground"
-            strokeWidth="3"
-          />
-        </g>
-        {/* Top Right hexagon */}
-        <g filter="url(#igLogoShadow)">
-          <path
-            d="M287.943 161.742C288.73 160.517 290.52 160.517 291.307 161.742L301.867 178.168C302.291 178.827 302.291 179.673 301.867 180.332L291.307 196.758C290.52 197.983 288.73 197.983 287.943 196.758L277.383 180.332C276.959 179.673 276.959 178.827 277.383 178.168L287.943 161.742Z"
-            className="fill-muted-foreground"
-          />
-          <path
-            d="M289.204 162.553C289.401 162.247 289.849 162.247 290.046 162.553L300.605 178.979C300.711 179.144 300.711 179.356 300.605 179.521L290.046 195.947C289.849 196.253 289.401 196.253 289.204 195.947L278.645 179.521C278.539 179.356 278.539 179.144 278.645 178.979L289.204 162.553Z"
-            className="stroke-muted-foreground"
-            strokeWidth="3"
-          />
-        </g>
-        {/* Top Left hexagon */}
-        <g filter="url(#igLogoShadow)">
-          <path
-            d="M247.693 161.742C248.48 160.517 250.27 160.517 251.057 161.742L261.617 178.168C262.041 178.827 262.041 179.673 261.617 180.332L251.057 196.758C250.27 197.983 248.48 197.983 247.693 196.758L237.133 180.332C236.709 179.673 236.709 178.827 237.133 178.168L247.693 161.742Z"
-            className="fill-muted-foreground"
-          />
-          <path
-            d="M248.954 162.553C249.151 162.247 249.599 162.247 249.796 162.553L260.355 178.979C260.461 179.144 260.461 179.356 260.355 179.521L249.796 195.947C249.599 196.253 249.151 196.253 248.954 195.947L238.395 179.521C238.289 179.356 238.289 179.144 238.395 178.979L248.954 162.553Z"
-            className="stroke-muted-foreground"
-            strokeWidth="3"
-          />
-        </g>
+        {/* Riven Logo */}
+        <svg x="240" y="169" width="60" height="56" viewBox="624 590 748 698">
+          <mask
+            id="igLogoMask0"
+            style={{ maskType: 'luminance' }}
+            maskUnits="userSpaceOnUse"
+            x="1113"
+            y="901"
+            width="239"
+            height="368"
+          >
+            <path d="M1113.33 901.333H1352V1268.29H1113.33V901.333Z" fill="white" />
+          </mask>
+          <g mask="url(#igLogoMask0)">
+            <path
+              d="M1343.46 1177.18L1184.63 902.141L1114.6 1023.57L1238.27 1237.82C1249.44 1257.19 1269.85 1268.22 1290.86 1268.22C1301.14 1268.22 1311.57 1265.54 1321.11 1260.03C1350.31 1243.19 1360.15 1206.24 1343.46 1177.18Z"
+              className="fill-logo-primary"
+            />
+          </g>
+          <mask
+            id="igLogoMask1"
+            style={{ maskType: 'luminance' }}
+            maskUnits="userSpaceOnUse"
+            x="644"
+            y="610"
+            width="598"
+            height="659"
+          >
+            <path d="M644 610.667H1241.33V1268.29H644V610.667Z" fill="white" />
+          </mask>
+          <g mask="url(#igLogoMask1)">
+            <path
+              d="M1232.01 751.063L1164.66 867.724L1094.49 989.156L986.021 1177.04C953.536 1233.35 892.896 1268.37 827.938 1268.37C761.932 1268.37 702.781 1234.25 669.703 1177.04C636.63 1119.97 636.63 1051.58 669.703 994.37L859.526 665.839C879.193 631.719 914.5 611.302 953.839 611.302C993.172 611.302 1028.48 631.719 1048.3 665.839L1055.15 677.755L1074.82 711.729L1004.65 833.156L953.839 745.25L775.042 1055.01C759.099 1082.57 769.682 1107.01 775.042 1116.24C780.406 1125.48 796.203 1146.94 828.083 1146.94C849.839 1146.94 870.25 1135.17 880.979 1116.24L1024.46 867.724L1094.64 746.292L1126.82 690.422C1143.66 661.365 1180.76 651.385 1209.81 668.219C1238.86 684.906 1248.84 722.005 1232.01 751.063Z"
+              className="fill-logo-primary"
+            />
+          </g>
+        </svg>
       </g>
 
       {/* ===== Stripe ===== */}
@@ -155,7 +129,7 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
           y="6"
           width="70"
           height="29"
-          href={stripeWordmark.src}
+          href={stripeWordmarkSrc}
           preserveAspectRatio="none"
         />
       </motion.g>
@@ -327,7 +301,7 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
           y="334"
           width="50"
           height="50"
-          href={slackLogo.src}
+          href={slackLogoSrc}
           preserveAspectRatio="xMidYMid slice"
         />
       </motion.g>
@@ -347,22 +321,7 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
           <stop offset="100%" stopColor="#f43f5e" />
         </linearGradient>
         {/* Edge glow filter */}
-        <filter
-          id="igEdgeGlow"
-          x="-50%"
-          y="-50%"
-          width="200%"
-          height="200%"
-          colorInterpolationFilters="sRGB"
-        >
-          <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur1" />
-          <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur2" />
-          <feMerge>
-            <feMergeNode in="blur2" />
-            <feMergeNode in="blur1" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
+        <EdgeGlowFilter id="igEdgeGlow" />
         {/* Card glow gradient */}
         <linearGradient id="igCardGlowGradient" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#38bdf8" />
@@ -402,32 +361,6 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
           <feColorMatrix
             type="matrix"
             values="0 0 0 0 0.09 0 0 0 0 0.09 0 0 0 0 0.09 0 0 0 0.25 0"
-          />
-          <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
-          <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
-        </filter>
-        {/* Logo shadow */}
-        <filter
-          id="igLogoShadow"
-          x="-10%"
-          y="-10%"
-          width="120%"
-          height="130%"
-          colorInterpolationFilters="sRGB"
-        >
-          <feFlood floodOpacity="0" result="BackgroundImageFix" />
-          <feColorMatrix
-            in="SourceAlpha"
-            type="matrix"
-            values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-            result="hardAlpha"
-          />
-          <feOffset dy="4" />
-          <feGaussianBlur stdDeviation="2" />
-          <feComposite in2="hardAlpha" operator="out" />
-          <feColorMatrix
-            type="matrix"
-            values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"
           />
           <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
           <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />

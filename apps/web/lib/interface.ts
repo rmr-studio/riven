@@ -1,6 +1,3 @@
-export interface ChildNodeProps {
-  children: React.ReactNode;
-}
 export interface ClassNameProps {
   className?: string;
 }
@@ -13,5 +10,5 @@ export interface LinkProps {
 }
 
 export interface NavbarProps extends ClassNameProps {
-  links: LinkProps[];
+  links: readonly LinkProps[];
 }

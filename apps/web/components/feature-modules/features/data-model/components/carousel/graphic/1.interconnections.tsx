@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'motion/react';
+import { EdgeGlowFilter, GlowEdgePaths } from './shared';
 
 const edgePaths = [
   { d: 'M789 248V163.413C789 161.241 787.268 159.467 785.097 159.414L768 159', delay: 0.3 },
@@ -20,37 +21,7 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
       className={className}
       style={{ fontFamily: 'var(--font-mono)' }}
     >
-      {/* Connection lines - glow layer */}
-      <g filter="url(#edgeGlow)">
-        {edgePaths.map((edge) => (
-          <motion.path
-            key={`glow-${edge.d}`}
-            d={edge.d}
-            fill="none"
-            stroke="url(#edgeGradient)"
-            strokeWidth="2.5"
-            strokeOpacity="0.6"
-            initial={{ pathLength: 0, opacity: 0 }}
-            whileInView={{ pathLength: 1, opacity: 0.6 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: edge.delay }}
-          />
-        ))}
-      </g>
-      {/* Connection lines - crisp layer */}
-      {edgePaths.map((edge) => (
-        <motion.path
-          key={`crisp-${edge.d}`}
-          d={edge.d}
-          fill="none"
-          stroke="url(#edgeGradient)"
-          strokeWidth="1.5"
-          initial={{ pathLength: 0, opacity: 0 }}
-          whileInView={{ pathLength: 1, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: edge.delay }}
-        />
-      ))}
+      <GlowEdgePaths edgePaths={edgePaths} glowFilterId="edgeGlow" gradientId="edgeGradient" />
 
       {/* ===== User Entity ===== */}
       <g>
@@ -60,7 +31,7 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
         </g>
         <path
           d="M343 98C343 95.7909 344.791 94 347 94H371C373.209 94 375 95.7909 375 98V122C375 124.209 373.209 126 371 126H347C344.791 126 343 124.209 343 122V98Z"
-          fill="#7BC5A0"
+          fill="#7BC5A0" fillOpacity="0.8"
         />
         <path
           d="M361.667 116.625V115.042C361.667 114.202 361.333 113.396 360.739 112.802C360.145 112.209 359.34 111.875 358.5 111.875H353.75C352.91 111.875 352.105 112.209 351.511 112.802C350.917 113.396 350.583 114.202 350.583 115.042V116.625M361.667 102.476C362.346 102.652 362.947 103.049 363.376 103.604C363.806 104.159 364.039 104.84 364.039 105.542C364.039 106.243 363.806 106.925 363.376 107.48C362.947 108.034 362.346 108.431 361.667 108.607M366.417 116.625V115.042C366.416 114.34 366.183 113.658 365.753 113.104C365.323 112.549 364.721 112.153 364.042 111.978M359.292 105.542C359.292 107.291 357.874 108.708 356.125 108.708C354.376 108.708 352.958 107.291 352.958 105.542C352.958 103.793 354.376 102.375 356.125 102.375C357.874 102.375 359.292 103.793 359.292 105.542Z"
@@ -75,8 +46,8 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
           fontSize="16"
-          fontWeight="500"
-          letterSpacing="-0.05em"
+          fontWeight="400"
+          letterSpacing="-0.02em"
         >
           <tspan x="382" y="116.18">
             User
@@ -88,7 +59,7 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
           xmlSpace="preserve"
           fontSize="16"
           fontWeight="300"
-          letterSpacing="-0.05em"
+          letterSpacing="-0.02em"
         >
           <tspan x="372" y="179.18">
             Email
@@ -100,7 +71,7 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
           xmlSpace="preserve"
           fontSize="16"
           fontWeight="300"
-          letterSpacing="-0.05em"
+          letterSpacing="-0.02em"
         >
           <tspan x="372" y="157.18">
             Name
@@ -112,7 +83,7 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
           xmlSpace="preserve"
           fontSize="16"
           fontWeight="300"
-          letterSpacing="-0.05em"
+          letterSpacing="-0.02em"
         >
           <tspan x="372" y="203.18">
             Connected Accounts
@@ -124,7 +95,7 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
           xmlSpace="preserve"
           fontSize="16"
           fontWeight="300"
-          letterSpacing="-0.05em"
+          letterSpacing="-0.02em"
         >
           <tspan x="372" y="227.18">
             Acquisition Source
@@ -136,8 +107,9 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
+          opacity="0.6"
         />
-        <g clipPath="url(#clip0_47_128)">
+        <g clipPath="url(#clip0_47_128)" opacity="0.6">
           <g clipPath="url(#clip1_47_128)">
             <path
               d="M362.753 192.393C360.147 195.093 356.667 195.96 351.5 196.293M364.5 197.56C360.087 196.62 356.407 198.227 353.58 201.773M355.707 190.833C358.62 194.833 359.707 197.113 361.04 202.647M364.667 197C364.667 200.682 361.682 203.667 358 203.667C354.318 203.667 351.333 200.682 351.333 197C351.333 193.318 354.318 190.333 358 190.333C361.682 190.333 364.667 193.318 364.667 197Z"
@@ -148,7 +120,7 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
             />
           </g>
         </g>
-        <g clipPath="url(#clip2_47_128)">
+        <g clipPath="url(#clip2_47_128)" opacity="0.6">
           <path
             d="M356.333 218C356.51 218 356.68 217.93 356.805 217.805C356.93 217.68 357 217.51 357 217.333V215.374C356.971 215.223 356.994 215.066 357.067 214.931C357.14 214.795 357.257 214.689 357.399 214.63C357.541 214.571 357.699 214.564 357.847 214.608C357.994 214.652 358.121 214.746 358.207 214.874L362.765 219.431C362.839 219.506 362.899 219.595 362.939 219.692C362.98 219.79 363 219.895 363 220C363 220.106 362.98 220.211 362.939 220.308C362.899 220.406 362.839 220.495 362.765 220.569L358.207 225.126C358.121 225.254 357.994 225.347 357.847 225.392C357.699 225.436 357.541 225.428 357.399 225.37C357.257 225.311 357.14 225.204 357.067 225.069C356.994 224.933 356.971 224.777 357 224.626V222.667C357 222.49 356.93 222.32 356.805 222.195C356.68 222.07 356.51 222 356.333 222H352.333C352.157 222 351.987 221.93 351.862 221.805C351.737 221.68 351.667 221.51 351.667 221.333V218.667C351.667 218.49 351.737 218.32 351.862 218.195C351.987 218.07 352.157 218 352.333 218H356.333Z"
             className="stroke-muted-foreground"
@@ -163,15 +135,8 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
+          opacity="0.6"
         />
-        <g filter="url(#filter2_d_47_128)">
-          <circle cx="605" cy="159" r="3" className="fill-card" />
-          <circle cx="605" cy="159" r="2.5" className="stroke-muted-foreground" />
-        </g>
-        <g filter="url(#filter3_d_47_128)">
-          <circle cx="330" cy="159" r="3" className="fill-card" />
-          <circle cx="330" cy="159" r="2.5" className="stroke-muted-foreground" />
-        </g>
       </g>
 
       {/* ===== Feedback Entity ===== */}
@@ -187,7 +152,7 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
         </g>
         <path
           d="M690 21C690 18.7909 691.791 17 694 17H718C720.209 17 722 18.7909 722 21V45C722 47.2091 720.209 49 718 49H694C691.791 49 690 47.2091 690 45V21Z"
-          fill="#7BC5C3"
+          fill="#7BC5C3" fillOpacity="0.8"
         />
         <rect x="691" y="58" width="247" height="2" className="fill-border" />
         <text
@@ -195,53 +160,24 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
           fontSize="16"
-          fontWeight="500"
-          letterSpacing="-0.05em"
+          fontWeight="400"
+          letterSpacing="-0.02em"
         >
           <tspan x="729" y="39.18">
             Feedback
           </tspan>
         </text>
-        <g>
-          <text
-            className="fill-foreground"
-            style={{ whiteSpace: 'pre' }}
-            xmlSpace="preserve"
-            fontSize="16"
-            fontWeight="500"
-            letterSpacing="-0.05em"
-          >
-            <tspan x="691" y="84.18">
-              761{' '}
-            </tspan>
-          </text>
-          <text
-            className="fill-muted-foreground"
-            style={{ whiteSpace: 'pre' }}
-            xmlSpace="preserve"
-            fontSize="16"
-            fontWeight="500"
-            letterSpacing="-0.05em"
-          >
-            <tspan x="724" y="84.18">
-              entities
-            </tspan>
-          </text>
-        </g>
-        <g filter="url(#filter5_d_47_128)">
-          <circle cx="952" cy="51" r="3" className="fill-card" />
-          <circle cx="952" cy="51" r="2.5" className="stroke-muted-foreground" />
-        </g>
-        <g filter="url(#filter6_d_47_128)">
-          <path
-            d="M819 109.171C819 110.828 817.657 112.171 816 112.171C814.343 112.171 813 110.828 813 109.171C813 107.514 814.343 106.171 816 106.171C817.657 106.171 819 107.514 819 109.171Z"
-            className="fill-card"
-          />
-          <path
-            d="M816 106.671C817.381 106.671 818.5 107.79 818.5 109.171C818.5 110.551 817.381 111.671 816 111.671C814.619 111.671 813.5 110.551 813.5 109.171C813.5 107.79 814.619 106.671 816 106.671Z"
-            className="stroke-border"
-          />
-        </g>
+        <text
+          x="691" y="84.18"
+          style={{ whiteSpace: 'pre' }}
+          xmlSpace="preserve"
+          fontSize="16"
+          fontWeight="400"
+          letterSpacing="-0.02em"
+        >
+          <tspan className="fill-foreground">761 </tspan>
+          <tspan className="fill-muted-foreground">entities</tspan>
+        </text>
         <g clipPath="url(#clip3_47_128)">
           <path
             d="M698.369 35.9373C698.485 36.231 698.511 36.5527 698.443 36.8612L697.6 39.4658C697.573 39.5979 697.58 39.7347 697.62 39.8633C697.661 39.9919 697.734 40.1081 697.832 40.2007C697.93 40.2933 698.05 40.3593 698.18 40.3926C698.311 40.4258 698.448 40.4251 698.578 40.3905L701.28 39.6004C701.572 39.5426 701.873 39.5679 702.15 39.6732C703.841 40.4627 705.756 40.6297 707.558 40.1448C709.359 39.6599 710.932 38.5543 711.998 37.023C713.064 35.4917 713.554 33.6331 713.384 31.7752C713.213 29.9173 712.391 28.1794 711.064 26.8682C709.737 25.5569 707.989 24.7567 706.129 24.6085C704.269 24.4604 702.417 24.9738 700.898 26.0584C699.38 27.1429 698.294 28.7288 697.831 30.5363C697.368 32.3438 697.559 34.2566 698.369 35.9373Z"
@@ -272,7 +208,7 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
         </g>
         <path
           d="M18 251C18 248.791 19.7909 247 22 247H46C48.2091 247 50 248.791 50 251V275C50 277.209 48.2091 279 46 279H22C19.7909 279 18 277.209 18 275V251Z"
-          fill="#C589D0"
+          fill="#C589D0" fillOpacity="0.8"
         />
         <path
           d="M33.5277 266.468C33.5277 265.838 33.2775 265.234 32.8321 264.788C32.3867 264.343 31.7826 264.093 31.1527 264.093L30.9065 264.091C30.7941 264.091 30.6843 264.057 30.5911 263.994C30.4979 263.931 30.4254 263.842 30.3826 263.738C30.3399 263.634 30.3289 263.519 30.3509 263.409C30.373 263.299 30.4272 263.198 30.5067 263.118L31.4527 262.172C31.7496 261.875 32.1523 261.708 32.5722 261.708H33.5C33.9199 261.708 34.3227 261.541 34.6196 261.245C34.9165 260.948 35.0833 260.545 35.0833 260.125C35.0833 259.705 34.9165 259.302 34.6196 259.005C34.3227 258.708 33.9199 258.542 33.5 258.542H31.3174C31.0054 258.542 30.6964 258.603 30.4082 258.722C30.1199 258.842 29.858 259.017 29.6375 259.237L27.4944 261.381C26.7778 262.097 26.3751 263.07 26.375 264.083C26.375 265.763 27.0423 267.374 28.23 268.562C29.4177 269.749 31.0286 270.417 32.7083 270.417H34.2917C35.9714 270.417 37.5823 269.749 38.77 268.562C39.9577 267.374 40.625 265.763 40.625 264.083V258.542C40.625 258.122 40.4582 257.719 40.1613 257.422C39.8643 257.125 39.4616 256.958 39.0417 256.958C38.6217 256.958 38.219 257.125 37.9221 257.422C37.6251 257.719 37.4583 258.122 37.4583 258.542V260.125C37.4583 260.545 37.6251 260.948 37.9221 261.245C38.219 261.541 38.6217 261.708 39.0417 261.708C39.4616 261.708 39.8643 261.541 40.1613 261.245C40.4582 260.948 40.625 260.545 40.625 260.125M38.9947 260.649C39.233 260.808 39.5102 260.9 39.7966 260.914C40.083 260.929 40.3679 260.865 40.6209 260.73C40.8738 260.595 41.0854 260.393 41.2329 260.147C41.3803 259.901 41.4583 259.62 41.4583 259.333V256.958C41.4583 256.538 41.2915 256.136 40.9946 255.839C40.6977 255.542 40.2949 255.375 39.875 255.375C39.4551 255.375 39.0523 255.542 38.7554 255.839C38.4585 256.136 38.2917 256.538 38.2917 256.958M35.125 256.958C35.125 256.538 34.9582 256.136 34.6613 255.839C34.3643 255.542 33.9616 255.375 33.5417 255.375C33.1217 255.375 32.719 255.542 32.4221 255.839C32.1251 256.136 31.9583 256.538 31.9583 256.958V260.917M35.125 258.542V256.167C35.125 255.747 35.2918 255.344 35.5887 255.047C35.8857 254.75 36.2884 254.583 36.7083 254.583C37.1283 254.583 37.531 254.75 37.8279 255.047C38.1249 255.344 38.2917 255.747 38.2917 256.167V258.754"
@@ -287,51 +223,24 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
           fontSize="16"
-          fontWeight="500"
-          letterSpacing="-0.05em"
+          fontWeight="400"
+          letterSpacing="-0.02em"
         >
           <tspan x="58" y="269.18">
             Support Tickets
           </tspan>
         </text>
-        <g>
-          <text
-            className="fill-foreground"
-            style={{ whiteSpace: 'pre' }}
-            xmlSpace="preserve"
-            fontSize="16"
-            fontWeight="500"
-            letterSpacing="-0.05em"
-          >
-            <tspan x="18" y="314.18">
-              912{' '}
-            </tspan>
-          </text>
-          <text
-            className="fill-muted-foreground"
-            style={{ whiteSpace: 'pre' }}
-            xmlSpace="preserve"
-            fontSize="16"
-            fontWeight="500"
-            letterSpacing="-0.05em"
-          >
-            <tspan x="49" y="314.18">
-              entities
-            </tspan>
-          </text>
-        </g>
-        <g filter="url(#filter8_d_47_128)">
-          <circle cx="142" cy="234" r="3" className="fill-card" />
-          <circle cx="142" cy="234" r="2.5" className="stroke-muted-foreground" />
-        </g>
-        <g filter="url(#filter9_d_47_128)">
-          <circle cx="3" cy="285" r="3" className="fill-card" />
-          <circle cx="3" cy="285" r="2.5" className="stroke-muted-foreground" />
-        </g>
-        <g filter="url(#filter10_d_47_128)">
-          <circle cx="280" cy="290" r="3" className="fill-card" />
-          <circle cx="280" cy="290" r="2.5" className="stroke-muted-foreground" />
-        </g>
+        <text
+          x="18" y="314.18"
+          style={{ whiteSpace: 'pre' }}
+          xmlSpace="preserve"
+          fontSize="16"
+          fontWeight="400"
+          letterSpacing="-0.02em"
+        >
+          <tspan className="fill-foreground">912 </tspan>
+          <tspan className="fill-muted-foreground">entities</tspan>
+        </text>
       </motion.g>
 
       {/* ===== Acquisition Channels Entity ===== */}
@@ -347,7 +256,7 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
         </g>
         <path
           d="M663 268C663 265.791 664.791 264 667 264H691C693.209 264 695 265.791 695 268V292C695 294.209 693.209 296 691 296H667C664.791 296 663 294.209 663 292V268Z"
-          fill="#EBB3A4"
+          fill="#EBB3A4" fillOpacity="0.8"
         />
         <rect x="664" y="305" width="247" height="2" className="fill-border" />
         <text
@@ -355,47 +264,24 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
           fontSize="16"
-          fontWeight="500"
-          letterSpacing="-0.05em"
+          fontWeight="400"
+          letterSpacing="-0.02em"
         >
           <tspan x="703" y="286.18">
             Acquisition Channels
           </tspan>
         </text>
-        <g>
-          <text
-            className="fill-foreground"
-            style={{ whiteSpace: 'pre' }}
-            xmlSpace="preserve"
-            fontSize="16"
-            fontWeight="500"
-            letterSpacing="-0.05em"
-          >
-            <tspan x="664" y="331.18">
-              7{' '}
-            </tspan>
-          </text>
-          <text
-            className="fill-muted-foreground"
-            style={{ whiteSpace: 'pre' }}
-            xmlSpace="preserve"
-            fontSize="16"
-            fontWeight="500"
-            letterSpacing="-0.05em"
-          >
-            <tspan x="678" y="331.18">
-              entities
-            </tspan>
-          </text>
-        </g>
-        <g filter="url(#filter13_d_47_128)">
-          <circle cx="789" cy="247" r="3" className="fill-card" />
-          <circle cx="789" cy="247" r="2.5" className="stroke-muted-foreground" />
-        </g>
-        <g filter="url(#filter14_d_47_128)">
-          <circle cx="649" cy="305" r="3" className="fill-card" />
-          <circle cx="649" cy="305" r="2.5" className="stroke-muted-foreground" />
-        </g>
+        <text
+          x="664" y="331.18"
+          style={{ whiteSpace: 'pre' }}
+          xmlSpace="preserve"
+          fontSize="16"
+          fontWeight="400"
+          letterSpacing="-0.02em"
+        >
+          <tspan className="fill-foreground">7 </tspan>
+          <tspan className="fill-muted-foreground">entities</tspan>
+        </text>
         <g clipPath="url(#clip4_47_128)">
           <path
             d="M670.583 279.5L674.542 271.583M674.542 279.5L678.5 271.583M678.5 279.5L682.458 271.583M682.458 279.5L686.417 271.583M672.562 275.542H684.437M678.5 282.667V287.417"
@@ -420,22 +306,7 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
           <stop offset="50%" stopColor="#8b5cf6" />
           <stop offset="100%" stopColor="#f43f5e" />
         </linearGradient>
-        <filter
-          id="edgeGlow"
-          x="-50%"
-          y="-50%"
-          width="200%"
-          height="200%"
-          colorInterpolationFilters="sRGB"
-        >
-          <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur1" />
-          <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur2" />
-          <feMerge>
-            <feMergeNode in="blur2" />
-            <feMergeNode in="blur1" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
+        <EdgeGlowFilter id="edgeGlow" />
         <filter
           id="filter0_d_47_128"
           x="324"

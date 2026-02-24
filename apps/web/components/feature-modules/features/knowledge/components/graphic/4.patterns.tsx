@@ -1,53 +1,10 @@
 'use client';
 
+import { WindowControls } from '@/components/ui/window-controls';
+import { useContainerScale } from '@/hooks/use-container-scale';
 import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
-import { useEffect, useRef, useState } from 'react';
-
-// ── Tiny Brand Icons ────────────────────────────────────────────────────
-
-const IntercomIcon = ({ size = 8 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
-    <rect width="14" height="14" rx="2.5" fill="#42A5F5" />
-    <rect x="6.25" y="3.25" width="1.5" height="7" rx="0.75" fill="white" />
-    <rect x="3.75" y="3.75" width="1.5" height="6" rx="0.75" fill="white" />
-    <rect x="8.75" y="3.75" width="1.5" height="6" rx="0.75" fill="white" />
-    <rect x="1.5" y="4.75" width="1.5" height="4" rx="0.75" fill="white" />
-    <rect x="11" y="4.75" width="1.5" height="4" rx="0.75" fill="white" />
-    <path
-      d="M3.5 11C5 12.5 9 12.5 10.5 11"
-      stroke="white"
-      strokeWidth="0.75"
-      strokeLinecap="round"
-      fill="none"
-    />
-  </svg>
-);
-
-const CompanyIcon = ({ size = 8 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 14 14" fill="none" className="flex-shrink-0">
-    <rect width="14" height="14" rx="2.5" fill="#67207A" />
-    <path
-      d="M7 6H7.01M7 8H7.01M7 4H7.01M9 6H9.01M9 8H9.01M9 4H9.01M5 6H5.01M5 8H5.01M5 4H5.01M5.5 12V10.5C5.5 10.22 5.72 10 6 10H8C8.28 10 8.5 10.22 8.5 10.5V12M4 3H10C10.55 3 11 3.45 11 4V11C11 11.55 10.55 12 10 12H4C3.45 12 3 11.55 3 11V4C3 3.45 3.45 3 4 3Z"
-      stroke="white"
-      strokeWidth="0.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const StripeIcon = ({ size = 8 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-    <circle cx="8" cy="8" r="8" fill="#635BFF" />
-    <path
-      fillRule="evenodd"
-      clipRule="evenodd"
-      d="M7.28 6.27C7.28 5.81 7.66 5.63 8.28 5.63C9.17 5.63 10.29 5.9 11.17 6.38V3.64C10.2 3.26 9.24 3.11 8.28 3.11C5.92 3.11 4.35 4.34 4.35 6.4C4.35 9.61 9.07 9.1 9.07 10.49C9.07 11.02 8.6 11.2 7.95 11.2C6.98 11.2 5.75 10.81 4.77 10.27V13.06C5.85 13.53 6.94 13.73 7.95 13.73C10.37 13.73 12.04 12.53 12.04 10.44C12.02 6.97 7.28 7.59 7.28 6.27Z"
-      fill="white"
-    />
-  </svg>
-);
+import { CompanyIcon, IntercomIcon, StripeIcon } from './icons';
 
 // ── Bar Row Component ───────────────────────────────────────────────────
 
@@ -97,18 +54,7 @@ function BarRow({
 // ── Main Component ──────────────────────────────────────────────────────
 
 export const PatternsDiagram = ({ className }: { className?: string }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const obs = new ResizeObserver(([entry]) => {
-      setScale(entry.contentRect.width / 344);
-    });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
+  const { containerRef, scale } = useContainerScale(344);
 
   return (
     <div ref={containerRef} className={cn('relative w-full', className)}>
@@ -124,11 +70,7 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
         <div className="relative overflow-hidden rounded-xl border border-border bg-card shadow-lg">
           <div className="relative space-y-2.5 p-4">
             {/* ── Window Controls ── */}
-            <div className="flex items-center gap-[4px]">
-              <div className="h-[5px] w-[5px] rounded-full bg-[#F72F2F] shadow-[inset_0_0.5px_0.5px_rgba(0,0,0,0.25)]" />
-              <div className="h-[5px] w-[5px] rounded-full bg-[#FFE72F] shadow-[inset_0_0.5px_0.5px_rgba(0,0,0,0.25)]" />
-              <div className="h-[5px] w-[5px] rounded-full bg-[#56F659] shadow-[inset_0_0.5px_0.5px_rgba(0,0,0,0.25)]" />
-            </div>
+            <WindowControls size={5} />
 
             {/* ── Header ── */}
             <motion.div
@@ -257,9 +199,9 @@ export const PatternsDiagram = ({ className }: { className?: string }) => {
                   Entities Referenced
                 </p>
                 {[
-                  { icon: <IntercomIcon />, label: 'Tickets' },
-                  { icon: <CompanyIcon />, label: 'Companies' },
-                  { icon: <StripeIcon />, label: 'Invoices' },
+                  { icon: <IntercomIcon size={8} />, label: 'Tickets' },
+                  { icon: <CompanyIcon size={8} />, label: 'Companies' },
+                  { icon: <StripeIcon size={8} />, label: 'Invoices' },
                 ].map((entity) => (
                   <div
                     key={entity.label}

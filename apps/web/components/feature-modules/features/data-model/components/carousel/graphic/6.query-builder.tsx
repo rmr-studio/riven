@@ -17,15 +17,15 @@ import {
 import { motion } from 'motion/react';
 
 const planStyles = {
-  Pro: 'bg-[#F9B7B7] border-[#E6A7A7]',
-  Enterprise: 'bg-[#A0D0AC] border-[#93C19E]',
+  Pro: 'bg-[#F9B7B7]/15 text-[#F9B7B7]',
+  Enterprise: 'bg-[#A0D0AC]/15 text-[#A0D0AC]',
 } as const;
 
 const revenueStyles = {
-  '10k - 20k': 'bg-[#EB9393] border-[#D48484]',
-  '5k - 10k': 'bg-[#AEA7E0] border-[#A099CF]',
-  '3k - 5k': 'bg-[#F882E8] border-[#DD6FCE]',
-  '20k - 50k': 'bg-[#9ADA6A] border-[#82BA58]',
+  '10k - 20k': 'bg-[#EB9393]/15 text-[#EB9393]',
+  '5k - 10k': 'bg-[#AEA7E0]/15 text-[#AEA7E0]',
+  '3k - 5k': 'bg-[#F882E8]/15 text-[#F882E8]',
+  '20k - 50k': 'bg-[#9ADA6A]/15 text-[#9ADA6A]',
 } as const;
 
 interface AccountRow {
@@ -110,26 +110,23 @@ const FilterChip = ({
   children: React.ReactNode;
   hasChevron?: boolean;
 }) => (
-  <div className="flex h-[22px] items-center gap-1 rounded border border-border bg-card px-1.5 shadow-sm">
-    {Icon && <Icon className="h-3 w-3 text-muted-foreground" />}
-    <span className="text-[11px] whitespace-nowrap text-muted-foreground">{children}</span>
-    {hasChevron && <ChevronDown className="h-2 w-2 shrink-0 text-border" />}
+  <div className="flex h-[18px] items-center gap-0.5 rounded border border-border bg-card px-1 shadow-sm">
+    {Icon && <Icon className="h-2 w-2 text-muted-foreground" />}
+    <span className="text-[10px] whitespace-nowrap text-muted-foreground">{children}</span>
+    {hasChevron && <ChevronDown className="h-1.5 w-1.5 shrink-0 text-border" />}
   </div>
 );
 
 const Pill = ({
   children,
   colorClass,
-  large,
 }: {
   children: React.ReactNode;
   colorClass: string;
-  large?: boolean;
 }) => (
   <span
     className={cn(
-      'inline-flex shrink-0 items-center rounded border font-medium whitespace-nowrap text-white',
-      large ? 'px-1.5 py-0.5 text-[10px]' : 'px-1 py-px text-[8px]',
+      'inline-flex shrink-0 items-center rounded-full px-1.5 py-px text-[8px] font-medium whitespace-nowrap',
       colorClass,
     )}
   >
@@ -139,55 +136,48 @@ const Pill = ({
 
 const TableRow = ({
   account,
-  featured,
   delay,
 }: {
   account: AccountRow;
-  featured?: boolean;
   delay: number;
 }) => (
   <motion.div
-    className="flex border-b border-border last:border-b-0"
+    className="flex border-b border-border/40 last:border-b-0"
     initial={{ opacity: 0, x: -6 }}
     whileInView={{ opacity: 1, x: 0 }}
     viewport={{ once: true }}
     transition={{ duration: 0.25, delay }}
   >
-    {/* Checkbox + Account Name */}
-    <div className="flex w-[120px] shrink-0 items-start gap-1 border-r border-border px-1.5 py-1.5">
-      <div className="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full border border-border bg-card shadow-sm" />
-      <span className="whitespace-nowrap text-[10px] font-bold tracking-tight text-foreground underline">
+    {/* Account Name */}
+    <div className="flex w-[110px] shrink-0 items-center px-2.5 py-1.5">
+      <span className="whitespace-nowrap text-[10px] font-semibold tracking-tight text-foreground">
         {account.name}
       </span>
     </div>
 
     {/* Plan */}
-    <div className="flex w-[80px] shrink-0 items-start border-r border-border px-1 py-1.5">
-      <Pill colorClass={planStyles[account.plan]} large={featured}>
-        {account.plan}
-      </Pill>
+    <div className="flex w-[72px] shrink-0 items-center px-1.5 py-1.5">
+      <Pill colorClass={planStyles[account.plan]}>{account.plan}</Pill>
     </div>
 
     {/* Revenue */}
-    <div className="flex w-[70px] shrink-0 items-start border-r border-border px-1 py-1.5">
-      <Pill colorClass={revenueStyles[account.revenue]} large={featured}>
-        {account.revenue}
-      </Pill>
+    <div className="flex w-[64px] shrink-0 items-center px-1.5 py-1.5">
+      <Pill colorClass={revenueStyles[account.revenue]}>{account.revenue}</Pill>
     </div>
 
     {/* Interactions */}
-    <div className="flex-1 space-y-px px-1.5 py-1.5">
+    <div className="flex-1 space-y-px px-2 py-1.5">
       {account.interactions.map((text, j) => (
-        <div key={j} className="flex items-start gap-1">
-          <HeartHandshake className="mt-px h-3 w-3 shrink-0 text-muted-foreground" />
-          <span className="whitespace-nowrap text-[10px] leading-tight tracking-tight text-foreground underline">
+        <div key={j} className="flex items-center gap-1">
+          <div className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground/40" />
+          <span className="whitespace-nowrap text-[9px] leading-tight tracking-tight text-muted-foreground">
             {text}
           </span>
         </div>
       ))}
       {account.more && (
-        <span className="text-[8px] tracking-tight text-muted-foreground underline">
-          + {account.more} more
+        <span className="pl-2 text-[8px] tracking-tight text-muted-foreground/60">
+          +{account.more} more
         </span>
       )}
     </div>
@@ -200,25 +190,25 @@ export const QueryBuilderGraphic = ({ className }: { className?: string }) => {
       {/* Query Builder - front, left */}
       <GlowBorder className="relative z-10 w-[480px]">
         <motion.div
-          className="w-full rounded-2xl border border-border bg-card p-4 shadow-lg"
+          className="w-full rounded-2xl border border-border bg-card p-3 shadow-lg"
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.4 }}
         >
           {/* Type selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">Type</span>
-            <div className="flex items-center gap-1.5 rounded border border-border bg-muted px-2 py-1 shadow-sm">
-              <SquareUser className="h-3 w-3 text-muted-foreground" />
-              <span className="text-[11px] text-muted-foreground">Account</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-medium text-muted-foreground">Type</span>
+            <div className="flex items-center gap-1 rounded border border-border bg-muted px-1.5 py-0.5 shadow-sm">
+              <SquareUser className="h-2 w-2 text-muted-foreground" />
+              <span className="text-[10px] text-muted-foreground">Account</span>
             </div>
           </div>
 
           {/* Filter area */}
-          <div className="mt-3 rounded-lg bg-muted p-3">
+          <div className="mt-2.5 rounded-lg bg-muted p-2.5">
             {/* Row 1: Plan is Pro or Enterprise */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <FilterChip icon={File} hasChevron>
                 Plan
               </FilterChip>
@@ -233,7 +223,7 @@ export const QueryBuilderGraphic = ({ className }: { className?: string }) => {
             </div>
 
             {/* Row 2: MRR > $3,000.00 */}
-            <div className="mt-2 flex items-center gap-1.5">
+            <div className="mt-1.5 flex items-center gap-1">
               <FilterChip icon={DollarSign} hasChevron>
                 MRR
               </FilterChip>
@@ -242,7 +232,7 @@ export const QueryBuilderGraphic = ({ className }: { className?: string }) => {
             </div>
 
             {/* Row 3: Interactions → Support Tickets is Critical */}
-            <div className="mt-2 flex items-center gap-1.5">
+            <div className="mt-1.5 flex items-center gap-1">
               <FilterChip icon={UserPen} hasChevron>
                 Interactions
               </FilterChip>
@@ -257,12 +247,12 @@ export const QueryBuilderGraphic = ({ className }: { className?: string }) => {
           </div>
 
           {/* Footer */}
-          <div className="mt-2.5 flex items-center justify-between">
-            <div className="flex items-center gap-1.5 rounded border border-border bg-card px-2 py-1 shadow-sm">
-              <ListFilter className="h-3 w-3 text-muted-foreground" />
-              <span className="text-[11px] text-muted-foreground">Add Condition</span>
+          <div className="mt-2 flex items-center justify-between">
+            <div className="flex items-center gap-1 rounded border border-border bg-card px-1.5 py-0.5 shadow-sm">
+              <ListFilter className="h-2 w-2 text-muted-foreground" />
+              <span className="text-[10px] text-muted-foreground">Add Condition</span>
             </div>
-            <span className="text-xs font-medium text-muted-foreground">Remove All</span>
+            <span className="text-[10px] font-medium text-muted-foreground">Remove All</span>
           </div>
         </motion.div>
       </GlowBorder>
@@ -277,12 +267,24 @@ export const QueryBuilderGraphic = ({ className }: { className?: string }) => {
           transition={{ duration: 0.4, delay: 0.15 }}
         >
           {/* Table Header */}
-          <div className="flex border-b border-border">
-            <div className="w-[120px] shrink-0 border-r border-border px-1.5 py-1.5" />
-            <div className="w-[80px] shrink-0 border-r border-border px-1 py-1.5" />
-            <div className="w-[70px] shrink-0 border-r border-border px-1 py-1.5" />
-            <div className="flex-1 px-1.5 py-1.5">
-              <span className="text-[11px] font-bold tracking-tight text-foreground">
+          <div className="flex border-b border-border/60">
+            <div className="w-[110px] shrink-0 px-2.5 py-1.5">
+              <span className="text-[9px] font-medium tracking-wide text-muted-foreground/70 uppercase">
+                Account
+              </span>
+            </div>
+            <div className="w-[72px] shrink-0 px-1.5 py-1.5">
+              <span className="text-[9px] font-medium tracking-wide text-muted-foreground/70 uppercase">
+                Plan
+              </span>
+            </div>
+            <div className="w-[64px] shrink-0 px-1.5 py-1.5">
+              <span className="text-[9px] font-medium tracking-wide text-muted-foreground/70 uppercase">
+                MRR
+              </span>
+            </div>
+            <div className="flex-1 px-2 py-1.5">
+              <span className="text-[9px] font-medium tracking-wide text-muted-foreground/70 uppercase">
                 Interactions
               </span>
             </div>
@@ -290,7 +292,7 @@ export const QueryBuilderGraphic = ({ className }: { className?: string }) => {
 
           {/* Data Rows */}
           {accounts.map((account, i) => (
-            <TableRow key={i} account={account} featured={i === 0} delay={0.2 + i * 0.05} />
+            <TableRow key={i} account={account} delay={0.2 + i * 0.05} />
           ))}
         </motion.div>
       </GlowBorder>

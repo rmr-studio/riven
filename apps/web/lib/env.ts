@@ -12,6 +12,8 @@ const envSchema = z
     NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
     NEXT_PUBLIC_CLIENT_URL: z.string().optional(),
 
+    NEXT_PUBLIC_CDN_URL: z.string().url().optional(),
+
     NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
     NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional(),
   })

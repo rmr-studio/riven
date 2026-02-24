@@ -1,5 +1,6 @@
 "use client";
 
+import { useMounted } from "@/hooks/use-mounted";
 import * as React from "react";
 import { useTheme } from "next-themes";
 import { Button } from "./button";
@@ -15,11 +16,7 @@ const themeLabels: Record<Theme, string> = {
 
 export function ThemeToggle() {
   const { setTheme, resolvedTheme, theme } = useTheme();
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useMounted();
 
   const activeTheme = (theme === "system" ? resolvedTheme : theme) as Theme;
 

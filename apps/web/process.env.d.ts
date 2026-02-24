@@ -21,5 +21,8 @@ declare namespace NodeJS {
     NEXT_PUBLIC_POSTHOG_KEY?: string;
     /** PostHog API host */
     NEXT_PUBLIC_POSTHOG_HOST?: string;
+
+    /** CDN URL for static assets */
+    NEXT_PUBLIC_CDN_URL?: string;
   }
 }

@@ -1,26 +1,25 @@
 'use client';
 
+import { NAV_LINKS } from '@/lib/navigation';
+import { scrollToSection } from '@/lib/scroll';
 import { Instagram, Linkedin } from 'lucide-react';
 import Link from 'next/link';
-import { Logo } from './ui/logo';
+import { Logo } from '@riven/ui/logo';
 
 const footerLinks = {
-  product: [
-    { label: 'Features', href: '/#features' },
-    { label: 'FAQs', href: '/#faqs' },
-  ],
+  product: NAV_LINKS,
   legal: [{ label: 'Privacy Policy', href: '/privacy' }],
 };
 
 const socialLinks = [
   {
     label: 'Instagram',
-    href: 'https://instagram.com/riven',
+    href: 'https://instagram.com/riven.app',
     icon: Instagram,
   },
   {
     label: 'LinkedIn',
-    href: 'https://linkedin.com/company/rivendev',
+    href: 'https://linkedin.com/company/getriven',
     icon: Linkedin,
   },
 ];
@@ -35,14 +34,15 @@ export function Footer() {
         <div className="flex flex-col gap-10 md:flex-row md:justify-between">
           <div className="flex flex-col gap-5">
             <Link href="/" className="flex items-center gap-2.5">
-              <Logo size={44} />
-              <span className="mt-1 font-mono text-2xl font-bold tracking-tight text-primary">
+              <Logo size={64} />
+              <span className="mt-2 font-serif text-5xl font-bold tracking-tight text-logo-primary">
                 Riven
               </span>
             </Link>
-            <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
-              Stop contorting your workflows to fit rigid tools. Riven adapts to you.
-            </p>
+            <div className="max-w-xs text-sm leading-relaxed text-muted-foreground">
+              <p>Cross Domain Intelligence.</p>
+              <p>One Connected Business.</p>
+            </div>
           </div>
 
           <div className="flex gap-16 md:gap-20">
@@ -59,8 +59,7 @@ export function Footer() {
                         const hash = link.href.split('#')[1];
                         if (hash) {
                           e.preventDefault();
-                          document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' });
-                          window.history.replaceState(null, '', link.href);
+                          scrollToSection(hash, link.href);
                         }
                       }}
                       className="text-sm text-muted-foreground transition-colors hover:text-foreground"

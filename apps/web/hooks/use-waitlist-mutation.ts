@@ -4,27 +4,23 @@ import { useMutation } from "@tanstack/react-query";
 import posthog from "posthog-js";
 import { useRef } from "react";
 import { toast } from "sonner";
-import type { WaitlistMultiStepFormData } from "@/lib/validations";
+import type { WaitlistJoinData, WaitlistSurveyData } from "@/lib/validations";
 import { createClient } from "@/lib/supabase";
 
 const PostgresErrorCode = {
   UniqueViolation: "23505",
 } as const;
 
-export function useWaitlistMutation() {
+export function useWaitlistJoinMutation() {
   const toastRef = useRef<string | number | undefined>(undefined);
 
   return useMutation({
-    mutationFn: async (data: WaitlistMultiStepFormData): Promise<void> => {
+    mutationFn: async (data: WaitlistJoinData): Promise<void> => {
       const { error } = await createClient()
         .from("waitlist_submissions")
         .insert({
           name: data.name,
           email: data.email,
-          operational_headache: data.operationalHeadache || null,
-          integrations: data.integrations,
-          monthly_price: data.monthlyPrice,
-          involvement: data.involvement,
         });
 
       if (error) {
@@ -38,15 +34,55 @@ export function useWaitlistMutation() {
       toastRef.current = toast.loading("Joining waitlist...");
     },
     onSuccess: () => {
-      toast.success("You're on the list! We'll be in touch.", {
+      toast.success("You're on the list!", {
         id: toastRef.current,
       });
     },
     onError: (error: Error) => {
-      posthog.capture('waitlist_submission_failed', {
+      posthog.capture("waitlist_join_failed", {
         error: error.message,
       });
       toast.error(error.message, { id: toastRef.current });
+    },
+  });
+}
+
+export function useWaitlistUpdateMutation() {
+  const toastRef = useRef<string | number | undefined>(undefined);
+
+  return useMutation({
+    mutationFn: async (
+      data: WaitlistSurveyData & { email: string },
+    ): Promise<void> => {
+      const { error } = await createClient()
+        .from("waitlist_submissions")
+        .update({
+          operational_headache: data.operationalHeadache || null,
+          integrations: data.integrations,
+          monthly_price: data.monthlyPrice,
+          involvement: data.involvement,
+        })
+        .eq("email", data.email);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+    },
+    onMutate: () => {
+      toastRef.current = toast.loading("Saving your preferences...");
+    },
+    onSuccess: () => {
+      toast.success("Thanks for the extra detail!", {
+        id: toastRef.current,
+      });
+    },
+    onError: (error: Error) => {
+      posthog.capture("waitlist_survey_failed", {
+        error: error.message,
+      });
+      toast.error("Something went wrong, but you're still on the list!", {
+        id: toastRef.current,
+      });
     },
   });
 }

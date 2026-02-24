@@ -1,7 +1,10 @@
 'use client';
 
 import { motion } from 'motion/react';
-import stripeWordmark from './stripe-wordmark.png';
+import { getCdnUrl } from '@/lib/cdn-image-loader';
+import { EdgeGlowFilter, GlowEdgePaths } from './shared';
+
+const stripeWordmarkSrc = getCdnUrl('images/stripe-wordmark.png');
 
 const edgePaths = [
   { d: 'M223 181L611.5 181', delay: 0.3 },
@@ -19,37 +22,7 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
       className={className}
       style={{ fontFamily: 'var(--font-mono)' }}
     >
-      {/* Connection lines - glow layer */}
-      <g filter="url(#intEdgeGlow)">
-        {edgePaths.map((edge) => (
-          <motion.path
-            key={`glow-${edge.d}`}
-            d={edge.d}
-            fill="none"
-            stroke="url(#intEdgeGradient)"
-            strokeWidth="2.5"
-            strokeOpacity="0.6"
-            initial={{ pathLength: 0, opacity: 0 }}
-            whileInView={{ pathLength: 1, opacity: 0.6 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: edge.delay }}
-          />
-        ))}
-      </g>
-      {/* Connection lines - crisp layer */}
-      {edgePaths.map((edge) => (
-        <motion.path
-          key={`crisp-${edge.d}`}
-          d={edge.d}
-          fill="none"
-          stroke="url(#intEdgeGradient)"
-          strokeWidth="1.5"
-          initial={{ pathLength: 0, opacity: 0 }}
-          whileInView={{ pathLength: 1, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: edge.delay }}
-        />
-      ))}
+      <GlowEdgePaths edgePaths={edgePaths} glowFilterId="intEdgeGlow" gradientId="intEdgeGradient" />
 
       {/* ===== Origin Source ===== */}
       <g>
@@ -121,7 +94,7 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
           y="69"
           width="63"
           height="26"
-          href={stripeWordmark.src}
+          href={stripeWordmarkSrc}
           preserveAspectRatio="none"
         />
       </g>
@@ -155,8 +128,8 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
           fontSize="16"
-          fontWeight="500"
-          letterSpacing="-0.05em"
+          fontWeight="400"
+          letterSpacing="-0.02em"
         >
           <tspan x="392" y="39.18">
             Invoices
@@ -168,8 +141,8 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
             fontSize="16"
-            fontWeight="500"
-            letterSpacing="-0.05em"
+            fontWeight="400"
+            letterSpacing="-0.02em"
           >
             <tspan x="354" y="84.18">
               {'1847 '}
@@ -180,33 +153,25 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
             fontSize="16"
-            fontWeight="500"
-            letterSpacing="-0.05em"
+            fontWeight="400"
+            letterSpacing="-0.02em"
           >
             <tspan x="394" y="84.18">
               entities
             </tspan>
           </text>
         </g>
-        <g filter="url(#filter6_d_56_12)">
-          <circle cx="614" cy="57" r="3" className="fill-card" />
-          <circle cx="614" cy="57" r="2.5" className="stroke-muted-foreground" />
-        </g>
-        <g filter="url(#filter7_d_56_12)">
-          <circle cx="479" cy="109.171" r="3" className="fill-card" />
-          <circle cx="479" cy="109.171" r="2.5" className="stroke-border" />
-        </g>
         {/* Synced tag */}
         <g opacity="0.8">
           <path
             d="M550 29C550 25.6863 552.686 23 556 23H595C598.314 23 601 25.6863 601 29V37C601 40.3137 598.314 43 595 43H556C552.686 43 550 40.3137 550 37V29Z"
-            fill="#D8D8D8"
+            className="fill-muted"
           />
           <text
-            fill="#565656"
+            className="fill-muted-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Hind Guntur"
+
             fontSize="12"
             letterSpacing="0em"
           >
@@ -246,8 +211,8 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
           fontSize="16"
-          fontWeight="500"
-          letterSpacing="-0.05em"
+          fontWeight="400"
+          letterSpacing="-0.02em"
         >
           <tspan x="667" y="162.18">
             Subscriptions
@@ -259,8 +224,8 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
             fontSize="16"
-            fontWeight="500"
-            letterSpacing="-0.05em"
+            fontWeight="400"
+            letterSpacing="-0.02em"
           >
             <tspan x="629" y="209.18">
               {'243 '}
@@ -271,37 +236,25 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
             fontSize="16"
-            fontWeight="500"
-            letterSpacing="-0.05em"
+            fontWeight="400"
+            letterSpacing="-0.02em"
           >
             <tspan x="659.941" y="209.18">
               entities
             </tspan>
           </text>
         </g>
-        <g filter="url(#filter9_d_56_12)">
-          <circle cx="614" cy="181" r="3" className="fill-card" />
-          <circle cx="614" cy="181" r="2.5" className="stroke-muted-foreground" />
-        </g>
-        <g filter="url(#filter10_d_56_12)">
-          <circle cx="756" cy="125" r="3" className="fill-card" />
-          <circle cx="756" cy="125" r="2.5" className="stroke-muted-foreground" />
-        </g>
-        <g filter="url(#filter11_d_56_12)">
-          <circle cx="756" cy="235" r="3" className="fill-card" />
-          <circle cx="756" cy="235" r="2.5" className="stroke-muted-foreground" />
-        </g>
         {/* Synced tag */}
         <g opacity="0.8">
           <path
             d="M825 152C825 148.686 827.686 146 831 146H871C874.314 146 877 148.686 877 152V160C877 163.314 874.314 166 871 166H831C827.686 166 825 163.314 825 160V152Z"
-            fill="#D8D8D8"
+            className="fill-muted"
           />
           <text
-            fill="#565656"
+            className="fill-muted-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Hind Guntur"
+
             fontSize="12"
             letterSpacing="0em"
           >
@@ -325,7 +278,7 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
         </g>
         <path
           d="M438 303C438 300.791 439.791 299 442 299H466C468.209 299 470 300.791 470 303V327C470 329.209 468.209 331 466 331H442C439.791 331 438 329.209 438 327V303Z"
-          fill="#7BC5C3"
+          fill="#7BC5C3" fillOpacity="0.8"
         />
         <rect x="439" y="340" width="247" height="2" className="fill-border" />
         <text
@@ -333,8 +286,8 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
           fontSize="16"
-          fontWeight="500"
-          letterSpacing="-0.05em"
+          fontWeight="400"
+          letterSpacing="-0.02em"
         >
           <tspan x="477" y="321.18">
             Overdue Payments
@@ -346,8 +299,8 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
             fontSize="16"
-            fontWeight="500"
-            letterSpacing="-0.05em"
+            fontWeight="400"
+            letterSpacing="-0.02em"
           >
             <tspan x="439" y="366.18">
               {'12 '}
@@ -358,21 +311,13 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
             fontSize="16"
-            fontWeight="500"
-            letterSpacing="-0.05em"
+            fontWeight="400"
+            letterSpacing="-0.02em"
           >
             <tspan x="461" y="366.18">
               entities
             </tspan>
           </text>
-        </g>
-        <g filter="url(#filter3_d_56_12)">
-          <circle cx="700" cy="333" r="3" className="fill-card" />
-          <circle cx="700" cy="333" r="2.5" className="stroke-muted-foreground" />
-        </g>
-        <g filter="url(#filter4_d_56_12)">
-          <circle cx="564" cy="391.171" r="3" className="fill-card" />
-          <circle cx="564" cy="391.171" r="2.5" className="stroke-border" />
         </g>
         <g clipPath="url(#clip1_56_12)">
           <path
@@ -387,13 +332,13 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
         <g opacity="0.8">
           <path
             d="M634 312C634 308.686 636.686 306 640 306H682C685.314 306 688 308.686 688 312V320C688 323.314 685.314 326 682 326H640C636.686 326 634 323.314 634 320V312Z"
-            fill="#D8D8D8"
+            className="fill-muted"
           />
           <text
-            fill="#565656"
+            className="fill-muted-foreground"
             style={{ whiteSpace: 'pre' }}
             xmlSpace="preserve"
-            fontFamily="Hind Guntur"
+
             fontSize="12"
             letterSpacing="0em"
           >
@@ -417,22 +362,7 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
           <stop offset="50%" stopColor="#8b5cf6" />
           <stop offset="100%" stopColor="#f43f5e" />
         </linearGradient>
-        <filter
-          id="intEdgeGlow"
-          x="-50%"
-          y="-50%"
-          width="200%"
-          height="200%"
-          colorInterpolationFilters="sRGB"
-        >
-          <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur1" />
-          <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur2" />
-          <feMerge>
-            <feMergeNode in="blur2" />
-            <feMergeNode in="blur1" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
+        <EdgeGlowFilter id="intEdgeGlow" />
         {/* Origin card shadow */}
         <filter
           id="filter0_d_56_12"

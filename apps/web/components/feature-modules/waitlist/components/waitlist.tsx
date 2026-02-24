@@ -1,9 +1,9 @@
-import { Section } from '@/components/ui/section';
 import { WaitlistForm } from '@/components/feature-modules/waitlist/components/waitlist-form';
+import { Section } from '@/components/ui/section';
 
 export const Waitlist = () => {
   return (
-    <Section id="contact" className="min-h-[80dvh] flex items-center justify-center">
+    <Section id="waitlist" className="flex min-h-[80dvh] items-center justify-center">
       <WaitlistForm className="relative z-10 px-4 sm:px-6" />
     </Section>
   );

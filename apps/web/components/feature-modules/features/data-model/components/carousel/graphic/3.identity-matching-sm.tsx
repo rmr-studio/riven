@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'motion/react';
+import { EdgeGlowFilter, GlowEdgePaths } from './shared';
 
 const edgePaths = [
   {
@@ -20,37 +21,7 @@ const edgePaths = [
 export const IdentityMatchingDiagramSm = ({ className }: { className?: string }) => {
   return (
     <svg viewBox="0 0 681 327" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} style={{ fontFamily: 'var(--font-mono)' }}>
-      {/* Connection lines - glow layer */}
-      <g filter="url(#smEdgeGlow)">
-        {edgePaths.map((edge) => (
-          <motion.path
-            key={`glow-${edge.d}`}
-            d={edge.d}
-            fill="none"
-            stroke="url(#smEdgeGradient)"
-            strokeWidth="2.5"
-            strokeOpacity="0.6"
-            initial={{ pathLength: 0, opacity: 0 }}
-            whileInView={{ pathLength: 1, opacity: 0.6 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: edge.delay }}
-          />
-        ))}
-      </g>
-      {/* Connection lines - crisp layer */}
-      {edgePaths.map((edge) => (
-        <motion.path
-          key={`crisp-${edge.d}`}
-          d={edge.d}
-          fill="none"
-          stroke="url(#smEdgeGradient)"
-          strokeWidth="1.5"
-          initial={{ pathLength: 0, opacity: 0 }}
-          whileInView={{ pathLength: 1, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: edge.delay }}
-        />
-      ))}
+      <GlowEdgePaths edgePaths={edgePaths} glowFilterId="smEdgeGlow" gradientId="smEdgeGradient" />
 
       {/* ===== Stripe Invoice Card ===== */}
       <motion.g
@@ -69,8 +40,8 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
                     fontSize="16"
-          fontWeight="500"
-          letterSpacing="-0.05em"
+          fontWeight="400"
+          letterSpacing="-0.02em"
         >
           <tspan x="57" y="34.219">
             Invoice Sent
@@ -89,37 +60,17 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
             fill="white"
           />
         </g>
-        <g>
-          <text
-            className="fill-muted-foreground"
-            style={{ whiteSpace: 'pre' }}
-            xmlSpace="preserve"
-                        fontSize="12"
-            fontWeight="500"
-            letterSpacing="-0.05em"
-          >
-            <tspan x="58.036" y="77.765">
-              john.smith@email.com
-            </tspan>
-          </text>
-          <text
-            className="fill-foreground"
-            style={{ whiteSpace: 'pre' }}
-            xmlSpace="preserve"
-                        fontSize="12"
-            fontWeight="500"
-            letterSpacing="-0.05em"
-          >
-            <tspan x="18" y="77.765">
-              {'Sent to '}
-            </tspan>
-          </text>
-        </g>
-        {/* Connector dot */}
-        <g filter="url(#smConnDot0)">
-          <circle cx="280" cy="45.757" r="3" className="fill-card" />
-          <circle cx="280" cy="45.757" r="2.5" className="stroke-muted-foreground" />
-        </g>
+        <text
+          x="18" y="77.765"
+          style={{ whiteSpace: 'pre' }}
+          xmlSpace="preserve"
+          fontSize="12"
+          fontWeight="400"
+          letterSpacing="-0.02em"
+        >
+          <tspan className="fill-foreground">Sent to </tspan>
+          <tspan className="fill-muted-foreground">john.smith@email.com</tspan>
+        </text>
       </motion.g>
 
       {/* ===== Intercom Support Ticket Card ===== */}
@@ -139,8 +90,8 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
                     fontSize="16"
-          fontWeight="500"
-          letterSpacing="-0.05em"
+          fontWeight="400"
+          letterSpacing="-0.02em"
         >
           <tspan x="59" y="142.18">
             New Support Ticket Lodged
@@ -175,37 +126,17 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
           d="M35 145.898C32.007 145.898 29.014 144.881 26.573 142.846C26.29 142.61 26.252 142.19 26.487 141.907C26.723 141.624 27.143 141.587 27.427 141.822C31.815 145.479 38.185 145.479 42.573 141.822C42.857 141.586 43.277 141.624 43.512 141.907C43.747 142.19 43.709 142.611 43.427 142.846C40.986 144.88 37.993 145.898 35 145.898Z"
           fill="#F9F9F9"
         />
-        <g>
-          <text
-            className="fill-muted-foreground"
-            style={{ whiteSpace: 'pre' }}
-            xmlSpace="preserve"
-                        fontSize="12"
-            fontWeight="500"
-            letterSpacing="-0.05em"
-          >
-            <tspan x="77.473" y="186.26">
-              John Smith
-            </tspan>
-          </text>
-          <text
-            className="fill-foreground"
-            style={{ whiteSpace: 'pre' }}
-            xmlSpace="preserve"
-                        fontSize="12"
-            fontWeight="500"
-            letterSpacing="-0.05em"
-          >
-            <tspan x="21" y="186.26">
-              {'Lodged by '}
-            </tspan>
-          </text>
-        </g>
-        {/* Connector dot */}
-        <g filter="url(#smConnDot1)">
-          <circle cx="281" cy="156" r="3" className="fill-card" />
-          <circle cx="281" cy="156" r="2.5" className="stroke-muted-foreground" />
-        </g>
+        <text
+          x="21" y="186.26"
+          style={{ whiteSpace: 'pre' }}
+          xmlSpace="preserve"
+          fontSize="12"
+          fontWeight="400"
+          letterSpacing="-0.02em"
+        >
+          <tspan className="fill-foreground">Lodged by </tspan>
+          <tspan className="fill-muted-foreground">John Smith</tspan>
+        </text>
       </motion.g>
 
       {/* ===== Gmail Email Card ===== */}
@@ -225,8 +156,8 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
                     fontSize="16"
-          fontWeight="500"
-          letterSpacing="-0.05em"
+          fontWeight="400"
+          letterSpacing="-0.02em"
         >
           <tspan x="62" y="263.18">
             New Email Received
@@ -253,37 +184,17 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
           fill="#FF0909"
           fillOpacity="0.86"
         />
-        <g>
-          <text
-            className="fill-muted-foreground"
-            style={{ whiteSpace: 'pre' }}
-            xmlSpace="preserve"
-                        fontSize="12"
-            fontWeight="500"
-            letterSpacing="-0.05em"
-          >
-            <tspan x="101.416" y="302.26">
-              john.smith@email.com
-            </tspan>
-          </text>
-          <text
-            className="fill-foreground"
-            style={{ whiteSpace: 'pre' }}
-            xmlSpace="preserve"
-                        fontSize="12"
-            fontWeight="500"
-            letterSpacing="-0.05em"
-          >
-            <tspan x="24" y="302.26">
-              {'Received from '}
-            </tspan>
-          </text>
-        </g>
-        {/* Connector dot */}
-        <g filter="url(#smConnDot2)">
-          <circle cx="285" cy="275" r="3" className="fill-card" />
-          <circle cx="285" cy="275" r="2.5" className="stroke-muted-foreground" />
-        </g>
+        <text
+          x="24" y="302.26"
+          style={{ whiteSpace: 'pre' }}
+          xmlSpace="preserve"
+          fontSize="12"
+          fontWeight="400"
+          letterSpacing="-0.02em"
+        >
+          <tspan className="fill-foreground">Received from </tspan>
+          <tspan className="fill-muted-foreground">john.smith@email.com</tspan>
+        </text>
       </motion.g>
 
       {/* ===== User Entity ===== */}
@@ -294,7 +205,7 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
         </g>
         <path
           d="M404.68 93.155C404.68 90.946 406.47 89.155 408.68 89.155H433.952C436.161 89.155 437.952 90.946 437.952 93.155V118.427C437.952 120.636 436.161 122.427 433.952 122.427H408.68C406.47 122.427 404.68 120.636 404.68 118.427V93.155Z"
-          fill="#7BC5A0"
+          fill="#7BC5A0" fillOpacity="0.8"
         />
         {/* User icon */}
         <path
@@ -310,87 +221,34 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
           style={{ whiteSpace: 'pre' }}
           xmlSpace="preserve"
                     fontSize="16"
-          fontWeight="500"
-          letterSpacing="-0.05em"
+          fontWeight="400"
+          letterSpacing="-0.02em"
         >
           <tspan x="445.23" y="111.574">
             User
           </tspan>
         </text>
         {/* Attribute labels */}
-        <text
-          className="fill-foreground"
-          style={{ whiteSpace: 'pre' }}
-          xmlSpace="preserve"
-                    fontSize="16"
-          fontWeight="500"
-          letterSpacing="-0.05em"
-        >
-          <tspan x="435.043" y="155.18">
-            Name
-          </tspan>
+        <text className="fill-foreground" style={{ whiteSpace: 'pre' }} xmlSpace="preserve" fontSize="16" fontWeight="300" letterSpacing="-0.02em">
+          <tspan x="435.043" y="155.18">Name</tspan>
         </text>
-        <text
-          className="fill-foreground"
-          style={{ whiteSpace: 'pre' }}
-          xmlSpace="preserve"
-                    fontSize="16"
-          fontWeight="500"
-          letterSpacing="-0.05em"
-        >
-          <tspan x="435.043" y="177.18">
-            Email
-          </tspan>
+        <text className="fill-foreground" style={{ whiteSpace: 'pre' }} xmlSpace="preserve" fontSize="16" fontWeight="300" letterSpacing="-0.02em">
+          <tspan x="435.043" y="177.18">Email</tspan>
         </text>
-        <text
-          className="fill-foreground"
-          style={{ whiteSpace: 'pre' }}
-          xmlSpace="preserve"
-                    fontSize="16"
-          fontWeight="500"
-          letterSpacing="-0.05em"
-        >
-          <tspan x="434.833" y="202.033">
-            Connected Accounts
-          </tspan>
+        <text className="fill-foreground" style={{ whiteSpace: 'pre' }} xmlSpace="preserve" fontSize="16" fontWeight="300" letterSpacing="-0.02em">
+          <tspan x="434.833" y="202.033">Connected Accounts</tspan>
         </text>
         {/* Attribute icons */}
-        {/* Name icon (contact card) */}
-        <g clipPath="url(#smClipAttrName)">
-          <path
-            d="M421.316 145.648H419.236M422.356 141.489L421.662 142.876H423.742C424.11 142.876 424.462 143.022 424.722 143.282C424.982 143.542 425.128 143.894 425.128 144.262V153.966C425.128 154.334 424.982 154.687 424.722 154.947C424.462 155.207 424.11 155.353 423.742 155.353H416.81C416.443 155.353 416.09 155.207 415.83 154.947C415.57 154.687 415.424 154.334 415.424 153.966V144.262C415.424 143.894 415.57 143.542 415.83 143.282C416.09 143.022 416.443 142.876 416.81 142.876H418.89M423.672 155.353C423.513 154.57 423.087 153.866 422.468 153.36C421.85 152.854 421.075 152.578 420.276 152.578C419.477 152.578 418.702 152.854 418.083 153.36C417.464 153.866 417.039 154.57 416.88 155.353M418.197 141.489L420.276 145.648M422.356 150.501C422.356 151.649 421.425 152.58 420.276 152.58C419.128 152.58 418.197 151.649 418.197 150.501C418.197 149.352 419.128 148.421 420.276 148.421C421.425 148.421 422.356 149.352 422.356 150.501Z"
-            className="stroke-muted-foreground"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+        <g clipPath="url(#smClipAttrName)" opacity="0.6">
+          <path d="M421.316 145.648H419.236M422.356 141.489L421.662 142.876H423.742C424.11 142.876 424.462 143.022 424.722 143.282C424.982 143.542 425.128 143.894 425.128 144.262V153.966C425.128 154.334 424.982 154.687 424.722 154.947C424.462 155.207 424.11 155.353 423.742 155.353H416.81C416.443 155.353 416.09 155.207 415.83 154.947C415.57 154.687 415.424 154.334 415.424 153.966V144.262C415.424 143.894 415.57 143.542 415.83 143.282C416.09 143.022 416.443 142.876 416.81 142.876H418.89M423.672 155.353C423.513 154.57 423.087 153.866 422.468 153.36C421.85 152.854 421.075 152.578 420.276 152.578C419.477 152.578 418.702 152.854 418.083 153.36C417.464 153.866 417.039 154.57 416.88 155.353M418.197 141.489L420.276 145.648M422.356 150.501C422.356 151.649 421.425 152.58 420.276 152.58C419.128 152.58 418.197 151.649 418.197 150.501C418.197 149.352 419.128 148.421 420.276 148.421C421.425 148.421 422.356 149.352 422.356 150.501Z" className="stroke-muted-foreground" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </g>
-        {/* Email icon */}
-        <g clipPath="url(#smClipAttrEmail)">
-          <path
-            d="M427.208 167.83L420.976 171.8C420.764 171.923 420.524 171.987 420.279 171.987C420.035 171.987 419.794 171.923 419.583 171.8L413.344 167.83M414.731 165.75H425.822C426.587 165.75 427.208 166.371 427.208 167.137V175.455C427.208 176.221 426.587 176.841 425.822 176.841H414.731C413.965 176.841 413.344 176.221 413.344 175.455V167.137C413.344 166.371 413.965 165.75 414.731 165.75Z"
-            className="stroke-muted-foreground"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+        <g clipPath="url(#smClipAttrEmail)" opacity="0.6">
+          <path d="M427.208 167.83L420.976 171.8C420.764 171.923 420.524 171.987 420.279 171.987C420.035 171.987 419.794 171.923 419.583 171.8L413.344 167.83M414.731 165.75H425.822C426.587 165.75 427.208 166.371 427.208 167.137V175.455C427.208 176.221 426.587 176.841 425.822 176.841H414.731C413.965 176.841 413.344 176.221 413.344 175.455V167.137C413.344 166.371 413.965 165.75 414.731 165.75Z" className="stroke-muted-foreground" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </g>
-        {/* Connected accounts icon (dribbble) */}
-        <g clipPath="url(#smClipAttrAccounts)">
+        <g clipPath="url(#smClipAttrAccounts)" opacity="0.6">
           <g clipPath="url(#smClipAttrAccountsInner)">
-            <path
-              d="M425.304 191.528C422.594 194.335 418.975 195.237 413.603 195.583M427.12 196.9C422.531 195.923 418.705 197.593 415.766 201.281M417.977 189.906C421.006 194.065 422.136 196.436 423.522 202.189M427.293 196.318C427.293 200.146 424.19 203.25 420.362 203.25C416.533 203.25 413.43 200.146 413.43 196.318C413.43 192.49 416.533 189.386 420.362 189.386C424.19 189.386 427.293 192.49 427.293 196.318Z"
-              className="stroke-muted-foreground"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+            <path d="M425.304 191.528C422.594 194.335 418.975 195.237 413.603 195.583M427.12 196.9C422.531 195.923 418.705 197.593 415.766 201.281M417.977 189.906C421.006 194.065 422.136 196.436 423.522 202.189M427.293 196.318C427.293 200.146 424.19 203.25 420.362 203.25C416.533 203.25 413.43 200.146 413.43 196.318C413.43 192.49 416.533 189.386 420.362 189.386C424.19 189.386 427.293 192.49 427.293 196.318Z" className="stroke-muted-foreground" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </g>
-        </g>
-        {/* User entity connector dot */}
-        <g filter="url(#smConnDot3)">
-          <circle cx="390.119" cy="155.119" r="3.119" className="fill-card" />
-          <circle cx="390.119" cy="155.119" r="2.619" className="stroke-muted-foreground" />
         </g>
       </g>
 
@@ -409,22 +267,7 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
           <stop offset="100%" stopColor="#16a34a" />
         </linearGradient>
         {/* Edge glow filter */}
-        <filter
-          id="smEdgeGlow"
-          x="-50%"
-          y="-50%"
-          width="200%"
-          height="200%"
-          colorInterpolationFilters="sRGB"
-        >
-          <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur1" />
-          <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur2" />
-          <feMerge>
-            <feMergeNode in="blur2" />
-            <feMergeNode in="blur1" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
+        <EdgeGlowFilter id="smEdgeGlow" />
         {/* Card drop shadows */}
         <filter
           id="smFilter0"
@@ -555,65 +398,18 @@ export const IdentityMatchingDiagramSm = ({ className }: { className?: string })
           <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
           <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
         </filter>
-        {/* Connector dot shadows */}
-        {[
-          { id: 'smConnDot0', x: 273, y: 42.466, w: 14, h: 14.582 },
-          { id: 'smConnDot1', x: 274, y: 153, w: 14, h: 14 },
-          { id: 'smConnDot2', x: 278, y: 272, w: 14, h: 14 },
-          { id: 'smConnDot3', x: 383, y: 152, w: 14.239, h: 14.239 },
-        ].map((f) => (
-          <filter
-            key={f.id}
-            id={f.id}
-            x={f.x}
-            y={f.y}
-            width={f.w}
-            height={f.h}
-            filterUnits="userSpaceOnUse"
-            colorInterpolationFilters="sRGB"
-          >
-            <feFlood floodOpacity="0" result="BackgroundImageFix" />
-            <feColorMatrix
-              in="SourceAlpha"
-              type="matrix"
-              values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-              result="hardAlpha"
-            />
-            <feOffset dy="4" />
-            <feGaussianBlur stdDeviation="2" />
-            <feComposite in2="hardAlpha" operator="out" />
-            <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
-            <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
-            <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
-          </filter>
-        ))}
         {/* Clip paths */}
         <clipPath id="smClipStripe">
           <rect width="32" height="32" fill="white" transform="translate(17 10)" />
         </clipPath>
         <clipPath id="smClipAttrName">
-          <rect
-            width="16.636"
-            height="16.636"
-            fill="white"
-            transform="translate(411.958 140.103)"
-          />
+          <rect width="16.636" height="16.636" fill="white" transform="translate(411.958 140.103)" />
         </clipPath>
         <clipPath id="smClipAttrEmail">
-          <rect
-            width="16.636"
-            height="16.636"
-            fill="white"
-            transform="translate(411.958 162.978)"
-          />
+          <rect width="16.636" height="16.636" fill="white" transform="translate(411.958 162.978)" />
         </clipPath>
         <clipPath id="smClipAttrAccounts">
-          <rect
-            width="16.636"
-            height="16.636"
-            fill="white"
-            transform="translate(411.958 187.932)"
-          />
+          <rect width="16.636" height="16.636" fill="white" transform="translate(411.958 187.932)" />
         </clipPath>
         <clipPath id="smClipAttrAccountsInner">
           <rect width="16.636" height="16.636" fill="white" transform="translate(412.043 188)" />
