@@ -6,10 +6,9 @@ Riven is a unified business tooling SaaS platform that aims to connect all tools
 
 **Route groups:**
 
-- `/` — Marketing landing page
+- `/` — Auth-aware redirect (authenticated → last workspace or `/dashboard/workspace`, unauthenticated → `/auth/login`)
 - `/auth/login`, `/auth/register` — Supabase auth flows
-- `/waitlist` — Pre-launch waitlist signup
-- `/dashboard` — Authenticated app shell (sidebar, navbar, onboarding wrapper)
+- `/dashboard` — Authenticated app shell (sidebar, navbar, onboarding wrapper), protected by `AuthGuard`
 - `/dashboard/workspace/[workspaceId]/entity/**` — Entity type management, data tables, schema config
 - `/dashboard/workspace/[workspaceId]/workflow/**` — Visual workflow builder (React Flow)
 - `/dashboard/settings`, `/dashboard/templates` — User settings, templates
@@ -20,9 +19,9 @@ Riven is a unified business tooling SaaS platform that aims to connect all tools
 
 **App Router conventions:** Flat route structure under `app/`. Dynamic segments use `[workspaceId]`, `[key]`, `[workflowId]`. No route groups `(groupName)`, no parallel routes, no intercepting routes. Pages are thin wrappers that render a single feature component.
 
-**Server vs Client components:** The root layout (`app/layout.tsx`) is a server component. All providers (`AuthProvider`, `QueryClientWrapper`, `StoreProviderWrapper`, `ThemeProvider`) are client components. Pages are mixed — some have `"use client"` at page level (landing page), others are server components that delegate to a client feature component. The pattern is ad-hoc — there is no consistent boundary strategy. **Standardise on:** pages as server components that import a single client feature component.
+**Server vs Client components:** The root layout (`app/layout.tsx`) is a server component. All providers (`AuthProvider`, `QueryClientWrapper`, `StoreProviderWrapper`, `ThemeProvider`) are client components. Pages are mixed — some have `"use client"` at page level, others are server components that delegate to a client feature component. The pattern is ad-hoc — there is no consistent boundary strategy. **Standardise on:** pages as server components that import a single client feature component.
 
-**Layout hierarchy:** Root layout → providers (Theme → Auth → QueryClient → Store) → `<main>`. Dashboard layout adds `OnboardWrapper`, `SidebarProvider`, `DashboardSidebar`, `AppNavbar`. Auth layout adds `HomeNavbar`.
+**Layout hierarchy:** Root layout → providers (Theme → Auth → QueryClient → Store) → `<main>`. Dashboard layout adds `AuthGuard`, `OnboardWrapper`, `SidebarProvider`, `DashboardSidebar`, `AppNavbar`. Auth layout is a simple passthrough.
 
 **Feature organization:** Hybrid. Feature code lives in `components/feature-modules/{feature}/` with subdirectories: `components/`, `hooks/query/`, `hooks/mutation/`, `hooks/form/`, `service/`, `store/` (or `stores/`), `context/`. Shared UI lives in `components/ui/`. Shared hooks in `hooks/`. Shared utils in `lib/util/`.
 
@@ -88,8 +87,8 @@ Riven is a unified business tooling SaaS platform that aims to connect all tools
 - Tailwind 4 with CSS-based config in `app/globals.css` (no `tailwind.config.ts`).
 - Color tokens via CSS custom properties using oklch. Semantic tokens: `--background`, `--foreground`, `--card`, `--primary`, `--muted`, `--destructive`, `--edit`, `--archive`, plus sidebar and chart variants.
 - Dark mode: class-based toggling via `next-themes`. `.dark` class on `<html>`. Custom variant: `@custom-variant dark (&:is(.dark *))`.
-- Responsive: mobile-first with `sm:`, `md:`, `lg:` breakpoints. Landing page is heavily responsive.
-- Animation: Framer Motion (`framer-motion` / `motion`) + Tailwind transitions + `tw-animate-css`. `@paper-design/shaders-react` for shader effects on landing page.
+- Responsive: mobile-first with `sm:`, `md:`, `lg:` breakpoints.
+- Animation: Framer Motion (`framer-motion` / `motion`) + Tailwind transitions + `tw-animate-css`.
 - Font: Montserrat (Google Fonts, loaded via `next/font`). Weights: 200, 400, 700.
 
 ## Auth and Middleware
@@ -97,7 +96,7 @@ Riven is a unified business tooling SaaS platform that aims to connect all tools
 - **Auth provider:** Supabase via adapter pattern. `lib/auth/` defines provider-agnostic interface (`AuthProvider`). Factory creates `SupabaseAuthAdapter`. Context in `components/provider/auth-context.tsx` exposes `useAuth()` → `{ session, user, loading, signIn, signUp, signOut, signInWithOAuth, verifyOtp, resendOtp }`.
 - **Token attachment:** Generated API classes receive `accessToken: async () => session.access_token` via `Configuration`. Each service call creates a new API instance with the current session.
 - **OAuth callback:** `app/api/auth/token/callback/route.ts` handles Supabase code exchange.
-- **Route protection:** No Next.js middleware — intentional. Auth is enforced by the backend API. Redirects will be handled at infrastructure level. Auth-gated queries use `enabled: !!session` to avoid fetching when unauthenticated. Do not add `middleware.ts` for auth redirects.
+- **Route protection:** No Next.js middleware — intentional. Dashboard routes are protected by `AuthGuard` (`components/feature-modules/authentication/components/auth-guard.tsx`) which wraps the dashboard layout and redirects unauthenticated users to `/auth/login`. The root page (`/`) also redirects based on auth state. Auth-gated queries use `enabled: !!session` to avoid fetching when unauthenticated. Do not add `middleware.ts` for auth redirects.
 - **On error:** Auth errors use `AuthError` class with typed `AuthErrorCode` enum. `getAuthErrorMessage()` maps codes to user-friendly strings for UI display.
 
 ## Error Handling
