@@ -73,8 +73,8 @@ export const DataModelGraph: FC<Props> = ({ tab }) => {
 
   const getScale = () => {
     if (breakpoint === 'sm') return 0.6;
-    if (breakpoint === 'md') return 0.9;
-    return containerWidth > 0 ? (containerWidth / bounds.width) * 0.8 : 1;
+    // if (breakpoint === 'md') return 0.9;
+    return containerWidth > 0 ? (containerWidth / bounds.width) * 0.7 : 1;
   };
 
   const scale = getScale();
