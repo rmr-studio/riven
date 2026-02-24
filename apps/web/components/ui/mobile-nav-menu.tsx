@@ -1,15 +1,15 @@
 'use client';
 
 import { LinkProps, NavbarProps } from '@/lib/interface';
-import { cn } from '@/lib/utils';
 
-import { Github, Menu, X } from 'lucide-react';
+import { Logo } from '@riven/ui/logo';
+import { Github, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React, { Dispatch, FC, useState } from 'react';
 import { Button } from './button';
-import { Logo } from '@riven/ui/logo';
+import { CtaButton } from './cta-button';
 import { ThemeToggle } from './theme-toggle';
 
 interface MobileNavbarExtendedProps extends NavbarProps {
@@ -33,8 +33,6 @@ export const MobileNavbar: FC<MobileNavbarExtendedProps> = ({
 
   return (
     <>
-
-
       <AnimatePresence>
         {isOpen ? <LinkSection links={links} toggle={setIsOpen} className={className} /> : null}
       </AnimatePresence>
@@ -184,6 +182,9 @@ const LinkSection: FC<NavbarMenuProps> = ({ links, toggle }) => {
             );
           })}
         </motion.div>
+        <div className="flex h-auto w-full grow px-12">
+          <CtaButton>Join the waitlist</CtaButton>
+        </div>
       </motion.aside>
     </motion.div>
   );

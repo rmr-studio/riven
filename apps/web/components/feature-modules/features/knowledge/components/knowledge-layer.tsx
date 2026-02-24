@@ -5,7 +5,7 @@ import { KnowledgeAccordion } from './knowledge-accordion';
 export const KnowledgeLayer = () => {
   return (
     <Section>
-      <h2 className="mx-auto mb-12 max-w-7xl text-center font-serif text-3xl font-normal leading-[1.1] tracking-tight md:text-4xl lg:text-5xl">
+      <h2 className="mx-auto mb-12 max-w-7xl px-6 md:px-0 text-center font-serif text-3xl leading-[1.1] font-normal tracking-tight md:text-4xl lg:text-5xl">
         <span className="text-heading italic">
           All unified together within an AI powered knowledge layer.
         </span>{' '}

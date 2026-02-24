@@ -117,13 +117,7 @@ const FilterChip = ({
   </div>
 );
 
-const Pill = ({
-  children,
-  colorClass,
-}: {
-  children: React.ReactNode;
-  colorClass: string;
-}) => (
+const Pill = ({ children, colorClass }: { children: React.ReactNode; colorClass: string }) => (
   <span
     className={cn(
       'inline-flex shrink-0 items-center rounded-full px-1.5 py-px text-[8px] font-medium whitespace-nowrap',
@@ -134,13 +128,7 @@ const Pill = ({
   </span>
 );
 
-const TableRow = ({
-  account,
-  delay,
-}: {
-  account: AccountRow;
-  delay: number;
-}) => (
+const TableRow = ({ account, delay }: { account: AccountRow; delay: number }) => (
   <motion.div
     className="flex border-b border-border/40 last:border-b-0"
     initial={{ opacity: 0, x: -6 }}
@@ -150,7 +138,7 @@ const TableRow = ({
   >
     {/* Account Name */}
     <div className="flex w-[110px] shrink-0 items-center px-2.5 py-1.5">
-      <span className="whitespace-nowrap text-[10px] font-semibold tracking-tight text-foreground">
+      <span className="text-[10px] font-semibold tracking-tight whitespace-nowrap text-foreground">
         {account.name}
       </span>
     </div>
@@ -170,7 +158,7 @@ const TableRow = ({
       {account.interactions.map((text, j) => (
         <div key={j} className="flex items-center gap-1">
           <div className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground/40" />
-          <span className="whitespace-nowrap text-[9px] leading-tight tracking-tight text-muted-foreground">
+          <span className="text-[9px] leading-tight tracking-tight whitespace-nowrap text-muted-foreground">
             {text}
           </span>
         </div>

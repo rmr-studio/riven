@@ -25,7 +25,7 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
       <GlowEdgePaths edgePaths={edgePaths} glowFilterId="intEdgeGlow" gradientId="intEdgeGradient" />
 
       {/* ===== Origin Source ===== */}
-      <g>
+      <g opacity={0.3}>
         {/* Code snippet text */}
         <text
           fill="#66BB6A"
@@ -81,23 +81,23 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
         </text>
         {/* Semi-transparent card overlay */}
         <g filter="url(#filter0_d_56_12)">
-          <rect y="76" width="223" height="223" rx="16" className="fill-card" fillOpacity="0.3" />
+          <rect y="76" width="223" height="223" rx="16" className="fill-card" />
           <rect x="0.5" y="76.5" width="222" height="222" rx="15.5" className="stroke-border" />
         </g>
-        {/* Stripe logo badge */}
-        <g filter="url(#filter1_d_56_12)">
-          <rect x="136" y="64" width="100" height="35" rx="4" className="fill-card" />
-          <rect x="136.5" y="64.5" width="99" height="34" rx="3.5" className="stroke-border" />
-        </g>
-        <image
-          x="154"
-          y="69"
-          width="63"
-          height="26"
-          href={stripeWordmarkSrc}
-          preserveAspectRatio="none"
-        />
       </g>
+      {/* Stripe logo badge — kept at full opacity */}
+      <g filter="url(#filter1_d_56_12)">
+        <rect x="136" y="64" width="100" height="35" rx="4" className="fill-card" />
+        <rect x="136.5" y="64.5" width="99" height="34" rx="3.5" className="stroke-border" />
+      </g>
+      <image
+        x="154"
+        y="69"
+        width="63"
+        height="26"
+        href={stripeWordmarkSrc}
+        preserveAspectRatio="none"
+      />
 
       {/* ===== Invoice Entity ===== */}
       <motion.g
