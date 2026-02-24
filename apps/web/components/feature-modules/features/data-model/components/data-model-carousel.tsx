@@ -113,10 +113,7 @@ export const DataModelFeatureCarousel = () => {
           description="Avoid the headaches of messy data and let your data model maintain itself. With built-in data quality monitoring and automatic cleansing, your data stays accurate and reliable without manual effort."
           className="max-h-140 overflow-hidden pb-0 lg:max-h-120"
         >
-          <div
-            className="relative h-full w-full overflow-hidden"
-            style={FADE_EDGE_MASK}
-          >
+          <div className="relative h-full w-full overflow-hidden" style={FADE_EDGE_MASK}>
             <DataCleanlinessGraphic className="static inset-0 left-1/2 w-full origin-top-right scale-75 md:scale-90 lg:translate-x-1/3 lg:scale-100" />
           </div>
         </BentoCard>,
@@ -127,10 +124,12 @@ export const DataModelFeatureCarousel = () => {
   return (
     <section className="my-12">
       <div className="mx-auto mb-12 w-full text-center leading-tight tracking-tight">
-        <h3 className="text-4xl leading-tight font-medium text-background/70">
+        <h3 className="text-4xl leading-tight font-medium tracking-tight text-background/70 [word-spacing:-0.2em]">
           Interconnection has never been easier
         </h3>
-        <h4 className="font-normal text-background/60">Your data, Your model, Your platform. </h4>
+        <h4 className="mt-4 max-w-md px-4 font-normal text-background/60 md:mt-0 md:px-0">
+          Your data, Your model, Your platform.{' '}
+        </h4>
       </div>
       <BentoCarousel slides={slides} />
     </section>

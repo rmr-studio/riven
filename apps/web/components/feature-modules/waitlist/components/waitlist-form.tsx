@@ -377,7 +377,13 @@ export function WaitlistForm({ className }: { className?: string }) {
             exit={{ opacity: 0 }}
             type="button"
             onClick={goBack}
-            className="mb-4 inline-flex cursor-pointer items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            disabled={currentStep === Step.OPERATIONAL_HEADACHE}
+            className={cn(
+              'mb-4 inline-flex items-center gap-1 text-sm transition-colors',
+              currentStep === Step.OPERATIONAL_HEADACHE
+                ? 'cursor-not-allowed text-muted-foreground/40'
+                : 'cursor-pointer text-muted-foreground hover:text-foreground',
+            )}
           >
             <ChevronLeft className="h-4 w-4" />
             Back

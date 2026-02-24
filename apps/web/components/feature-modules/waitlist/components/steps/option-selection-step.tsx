@@ -41,13 +41,11 @@ export function OptionSelectionStep({
             {title}
             <span className="text-destructive">*</span>
           </h3>
-          {subtitle && (
-            <p className="mt-1 text-lg text-muted-foreground md:text-xl">{subtitle}</p>
-          )}
+          {subtitle && <p className="mt-1 text-lg text-muted-foreground md:text-xl">{subtitle}</p>}
         </div>
       </div>
-      <p className="mt-6 ml-10 text-sm text-muted-foreground">{instruction}</p>
-      <div className="mt-4 ml-10 space-y-2.5">
+      <p className="mt-6 text-sm text-muted-foreground">{instruction}</p>
+      <div className="mt-4 space-y-2.5">
         {options.map((option, i) => (
           <motion.div
             key={option.key}
@@ -67,8 +65,8 @@ export function OptionSelectionStep({
           </motion.div>
         ))}
       </div>
-      {error && <p className="mt-3 ml-10 text-xs text-destructive">{error}</p>}
-      <div className="mt-6 ml-10 flex items-center justify-end">
+      {error && <p className="mt-3 text-xs text-destructive">{error}</p>}
+      <div className="mt-6 flex items-center justify-end">
         <OkButton
           onClick={onSubmit}
           disabled={!selectedValue}

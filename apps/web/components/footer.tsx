@@ -2,9 +2,9 @@
 
 import { NAV_LINKS } from '@/lib/navigation';
 import { scrollToSection } from '@/lib/scroll';
+import { Logo } from '@riven/ui/logo';
 import { Instagram, Linkedin } from 'lucide-react';
 import Link from 'next/link';
-import { Logo } from '@riven/ui/logo';
 
 const footerLinks = {
   product: NAV_LINKS,
@@ -28,7 +28,7 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t bg-background px-4 pt-14 pb-10 md:px-8 md:pt-20 md:pb-14 lg:px-12">
+    <footer className="border-t bg-background px-8 pt-14 pb-10 md:px-4 md:px-8 md:pt-20 md:pb-14 lg:px-12">
       <div className="mx-auto max-w-7xl">
         {/* Top: Logo/tagline + link columns */}
         <div className="flex flex-col gap-10 md:flex-row md:justify-between">

@@ -27,7 +27,7 @@ export function OperationalHeadacheStep({
           </span>
         </h3>
       </div>
-      <div className="mt-8 max-w-lg">
+      <div className="mt-8">
         <Textarea
           {...register('operationalHeadache')}
           placeholder={STEP_CONFIG.placeholder}
@@ -39,7 +39,7 @@ export function OperationalHeadacheStep({
               onNext();
             }
           }}
-          className="h-24 resize-none overflow-y-auto field-sizing-fixed"
+          className="field-sizing-fixed h-24 resize-none overflow-y-auto"
         />
       </div>
       <div className="mt-8 flex items-center justify-end">

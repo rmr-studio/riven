@@ -18,7 +18,7 @@ export function OptionPill({
       type="button"
       onClick={onClick}
       className={cn(
-        'group flex w-full max-w-xl cursor-pointer items-center gap-3 rounded-full border px-4 py-3 text-left backdrop-blur-md transition-all duration-200',
+        'group flex w-full cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-left backdrop-blur-md transition-all duration-200',
         selected
           ? 'border-foreground/25 bg-foreground/10'
           : 'border-foreground/10 bg-foreground/[0.03] hover:border-foreground/15 hover:bg-foreground/[0.07]',
@@ -27,7 +27,7 @@ export function OptionPill({
     >
       <span
         className={cn(
-          'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold transition-colors',
+          'flex h-6 w-6 shrink-0 items-center justify-center rounded-xl text-[11px] font-semibold transition-colors',
           selected
             ? 'bg-foreground/20 text-foreground'
             : 'bg-foreground/8 text-muted-foreground group-hover:bg-foreground/12',
