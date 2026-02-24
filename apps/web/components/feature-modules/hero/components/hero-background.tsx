@@ -47,7 +47,7 @@ export function HeroBackground({
 
   return (
     <div className={cn('absolute inset-x-0 bottom-0 -z-10', className)}>
-      <picture>
+      <picture className="relative block h-full w-full">
         <source srcSet={getCdnUrl(image.avif)} type="image/avif" />
         <source srcSet={getCdnUrl(image.webp)} type="image/webp" />
         <Image
