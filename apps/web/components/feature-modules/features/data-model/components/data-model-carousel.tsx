@@ -52,7 +52,7 @@ const ACCORDION_ITEMS = [
   },
   {
     key: 'cleanliness',
-    title: 'Keep your data clean without lifting a finger',
+    title: 'Smart enough to do its own housekeeping',
     description:
       'Avoid the headaches of messy data and let your data model maintain itself. With built-in data quality monitoring and automatic cleansing, your data stays accurate and reliable without manual effort.',
   },
@@ -216,12 +216,12 @@ export const DataModelFeatureCarousel = () => {
 
   return (
     <section className="my-12">
-      <div className="mx-auto mb-12 w-full text-center leading-tight tracking-tight">
-        <h3 className="text-4xl leading-tight font-medium tracking-tight text-background/70 [word-spacing:-0.2em]">
+      <div className="mx-auto mb-12 w-full px-3 leading-[0.9em] tracking-tight md:text-center">
+        <h3 className="text-3xl leading-tight font-medium tracking-tight text-background/70 [word-spacing:-0.2em] md:text-4xl">
           Interconnection has never been easier
         </h3>
-        <h4 className="mt-4 px-4 font-normal text-background/60 md:mt-0 md:px-0">
-          Your data, Your model, Your platform.{' '}
+        <h4 className="font-normal text-background/60 md:mt-0 md:px-0">
+          Your data, Your platform.{' '}
         </h4>
       </div>
 

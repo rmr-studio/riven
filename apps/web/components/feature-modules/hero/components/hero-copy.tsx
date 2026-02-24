@@ -35,7 +35,7 @@ export const HeroCopy = () => {
           <h2 className="mb-4 font-serif text-[3rem] leading-[0.85] tracking-tight text-heading sm:text-7xl md:text-right md:text-8xl lg:text-9xl">
             Riven sees
             <br />
-            <span className="italic">the biggest picture.</span>
+            <span className="italic">the bigger picture.</span>
           </h2>
           {/* Bottom-left: description */}
           <div className="mt-2 leading-tight font-bold tracking-tighter text-primary/90 italic md:text-right md:text-xl lg:pb-1">
