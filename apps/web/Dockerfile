@@ -5,7 +5,7 @@ RUN corepack enable && corepack prepare pnpm@10.28.2 --activate
 FROM base AS deps
 WORKDIR /app
 
-COPY package.json pnpm-workspace.yaml .npmrc ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/ui/package.json ./packages/ui/
 COPY packages/hooks/package.json ./packages/hooks/
