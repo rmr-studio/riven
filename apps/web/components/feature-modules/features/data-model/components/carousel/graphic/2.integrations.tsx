@@ -8,7 +8,7 @@ import { EdgeGlowFilter, GlowEdgePaths } from './shared';
 const stripeWordmarkSrc = getCdnUrl('images/stripe-wordmark.png');
 
 const edgePaths = [
-  { d: 'M223 181L611.5 181', delay: 0.3 },
+  { d: 'M210 181L611.5 181', delay: 0.3 },
   { d: 'M614 57H747.5C751.918 57 755.5 60.5817 755.5 65V124.5', delay: 0.4 },
   { d: 'M440 181H472C476.418 181 480 177.418 480 173V110.3', delay: 0.5 },
   { d: 'M756.5 235.5V325.5C756.5 329.918 752.918 333.5 748.5 333.5H700.5', delay: 0.6 },
@@ -26,79 +26,14 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
     >
       <GlowEdgePaths edgePaths={edgePaths} glowFilterId="intEdgeGlow" gradientId="intEdgeGradient" />
 
-      {/* ===== Origin Source ===== */}
-      <g opacity={0.3}>
-        {/* Code snippet text */}
-        <text
-          fill="#66BB6A"
-          style={{ whiteSpace: 'pre' }}
-          xmlSpace="preserve"
-          fontFamily="Roboto Mono"
-          fontSize="10"
-          fontWeight="500"
-          letterSpacing="0em"
-        >
-          <tspan x="20" y="99.3843">
-            {'{  "id": "sub_1RKx4mFz3QJvOe",'}
-          </tspan>
-          <tspan x="20" y="113.384">
-            {'   "object": "subscription",'}
-          </tspan>
-          <tspan x="20" y="127.384">
-            {'   "customer": "cus_RxN4kLm92s",'}
-          </tspan>
-          <tspan x="20" y="141.384">
-            {'   "status": "active",'}
-          </tspan>
-          <tspan x="20" y="155.384">
-            {'   "plan": {'}
-          </tspan>
-          <tspan x="20" y="169.384">
-            {'       "id": "price_1RKwPl8xVn",'}
-          </tspan>
-          <tspan x="20" y="183.384">
-            {'       "amount": 4900,'}
-          </tspan>
-          <tspan x="20" y="197.384">
-            {'       "currency": "usd",'}
-          </tspan>
-          <tspan x="20" y="211.384">
-            {'       "interval": "month",'}
-          </tspan>
-          <tspan x="20" y="225.384">
-            {'       "product": "prod_QwL8nMx3Kp"'}
-          </tspan>
-          <tspan x="20" y="238.384">
-            {'}, '}
-          </tspan>
-          <tspan x="20" y="252.384">
-            {'   "current_period_start": 1738368000,'}
-          </tspan>
-          <tspan x="20" y="266.384">
-            {'   "current_period_end": 1740960000,'}
-          </tspan>
-          <tspan x="20" y="280.384">
-            {'   "latest_invoice": "in_1RKx4mFz3Q"}'}
-          </tspan>
-        </text>
-        {/* Semi-transparent card overlay */}
-        <g filter="url(#filter0_d_56_12)">
-          <rect y="76" width="223" height="223" rx="16" className="fill-card" />
-          <rect x="0.5" y="76.5" width="222" height="222" rx="15.5" className="stroke-border" />
-        </g>
-      </g>
-      {/* Stripe logo badge — kept at full opacity */}
-      <g filter="url(#filter1_d_56_12)">
-        <rect x="136" y="64" width="100" height="35" rx="4" className="fill-card" />
-        <rect x="136.5" y="64.5" width="99" height="34" rx="3.5" className="stroke-border" />
-      </g>
+      {/* ===== Stripe Logo ===== */}
       <image
-        x="154"
-        y="69"
-        width="63"
-        height="26"
+        x="120"
+        y="163"
+        width="90"
+        height="37"
         href={stripeWordmarkSrc}
-        preserveAspectRatio="none"
+        preserveAspectRatio="xMidYMid meet"
       />
 
       {/* ===== Invoice Entity ===== */}

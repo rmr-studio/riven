@@ -124,7 +124,7 @@ export const DataModelFeatureCarousel = () => {
       },
       cards: [
         <BentoCard
-          className="relative h-120"
+          className="relative"
           key="cross-domain"
           area="cross-domain"
           title="Cross domain business intelligence"
@@ -146,7 +146,7 @@ export const DataModelFeatureCarousel = () => {
         </BentoCard>,
 
         <BentoCard
-          className="relative h-120"
+          className="relative"
           key="integration"
           area="integration"
           title="Integrations that feel natural"

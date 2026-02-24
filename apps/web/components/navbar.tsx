@@ -99,7 +99,7 @@ export function Navbar() {
           </div>
           {!loading && user ? (
             <Link href={CLIENT_URL}>
-              <CtaButton>
+              <CtaButton size="sm">
                 <span>Go to Dashboard</span>
               </CtaButton>
             </Link>
@@ -111,7 +111,7 @@ export function Navbar() {
                 scrollToSection('waitlist');
               }}
             >
-              <CtaButton>
+              <CtaButton size="sm">
                 <span className="hidden sm:block">Join the waitlist</span>
                 <span className="sm:hidden">Get Started</span>
               </CtaButton>

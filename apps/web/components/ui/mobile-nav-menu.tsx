@@ -183,7 +183,7 @@ const LinkSection: FC<NavbarMenuProps> = ({ links, toggle }) => {
           })}
         </motion.div>
         <div className="flex h-auto w-full grow px-12">
-          <CtaButton>Join the waitlist</CtaButton>
+          <CtaButton size="sm">Join the waitlist</CtaButton>
         </div>
       </motion.aside>
     </motion.div>

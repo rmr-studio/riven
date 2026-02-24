@@ -63,7 +63,7 @@ export function BentoCard({ title, description, className, children, area }: Ben
         // mask="fade-edges"
         className="z-0 bg-secondary"
         size={8}
-        fill="color-mix(in srgb, var(--primary) 10%, transparent)"
+        fill="color-mix(in srgb, var(--primary) 5%, transparent)"
       />
       <div className="relative z-10 flex-shrink-0 space-y-2">
         <h3 className="text-lg leading-tight font-medium tracking-tight">{title}</h3>
@@ -418,7 +418,7 @@ export function BentoCarouselContainer({
                 <div
                   key={index}
                   data-slide
-                  className="min-h-[500px] flex-shrink-0 md:min-h-[600px]"
+                  className="h-[clamp(600px,80vh,1000px)] flex-shrink-0"
                   style={{
                     width: inset
                       ? isLast

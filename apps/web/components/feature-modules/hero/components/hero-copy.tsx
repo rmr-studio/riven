@@ -8,7 +8,7 @@ import Link from 'next/link';
 
 export const HeroCopy = () => {
   return (
-    <div className="relative z-10 flex h-[calc(100dvh-6rem)] w-full flex-col justify-between px-6 sm:px-10 lg:px-16">
+    <div className="relative z-10 flex h-[calc(100svh-6rem)] w-full flex-col justify-between px-6 sm:px-10 lg:px-16">
       {/* Top-left headline */}
       <motion.div
         className="pt-4 sm:pt-8"
@@ -16,10 +16,10 @@ export const HeroCopy = () => {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
       >
-        <h1 className="max-w-4xl font-serif text-5xl leading-[0.95] tracking-tight text-heading sm:text-7xl md:text-8xl lg:text-9xl">
-          Every tool
+        <h1 className="max-w-4xl font-serif text-5xl leading-[0.95] tracking-tight text-heading sm:text-7xl md:text-8xl">
+          Your tools can
           <br />
-          <span className="italic">shows you a slice.</span>
+          <span className="italic">see one side.</span>
         </h1>
       </motion.div>
 
@@ -38,7 +38,7 @@ export const HeroCopy = () => {
             <span className="italic">your entire business.</span>
           </h2>
           {/* Bottom-left: description */}
-          <div className="text-end text-xs leading-tight tracking-tighter text-muted-foreground italic sm:text-[0.935rem] lg:pb-1">
+          <div className="text-header/70 text-end text-lg leading-tight font-bold tracking-tighter italic md:text-xl lg:pb-1">
             <p>
               AI powered data platform enabling cross-domain intelligence for scaling
               consumer-facing businesses.
@@ -46,7 +46,7 @@ export const HeroCopy = () => {
           </div>
 
           {/* CTA buttons */}
-          <div className="mt-6 flex items-center gap-3 sm:mt-8 lg:gap-4">
+          <div className="mt-6 flex flex-col items-end gap-3 sm:mt-8 sm:flex-row sm:items-center lg:gap-4">
             <Link
               href="/#waitlist"
               onClick={(e) => {
@@ -62,10 +62,10 @@ export const HeroCopy = () => {
                 e.preventDefault();
                 scrollToSection('features');
               }}
-              className="inline-flex items-center gap-1 px-2.5 py-0.5 font-mono text-xs tracking-wide text-muted-foreground transition-colors hover:text-foreground md:gap-1.5 md:px-3 md:text-xs"
+              className="inline-flex items-center gap-1.5 px-4 py-1 font-mono text-sm tracking-wide text-muted-foreground transition-colors hover:text-foreground md:gap-2 md:px-5 md:text-sm"
             >
               Learn More
-              <ChevronDown className="h-3.5 w-3.5 md:h-4 md:w-4" />
+              <ChevronDown className="h-4 w-4 md:h-5 md:w-5" />
             </Link>
           </div>
         </div>

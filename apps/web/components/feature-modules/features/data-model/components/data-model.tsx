@@ -6,10 +6,10 @@ export const DataModel = () => {
   return (
     <Section
       id="features"
-      className="shadow-xl shadow-primary dark:shadow-none flex flex-col space-y-16"
+      className="flex flex-col space-y-16 shadow-xl shadow-primary dark:shadow-none"
       gridClassName="bg-foreground"
       mask="none"
-      fill="color-mix(in srgb, var(--background) 40%, transparent)"
+      fill="color-mix(in srgb, var(--background) 15%, transparent)"
       variant="dots"
       size={12}
       navbarInverse

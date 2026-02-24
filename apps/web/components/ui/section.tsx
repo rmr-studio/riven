@@ -1,6 +1,6 @@
-import { cn } from "@/lib/utils";
-import React, { FC } from "react";
-import { BGPattern, BGPatternProps } from "./background/grids";
+import { cn } from '@/lib/utils';
+import React, { FC } from 'react';
+import { BGPattern, BGPatternProps } from './background/grids';
 
 interface Props extends BGPatternProps {
   id?: string;
@@ -14,19 +14,19 @@ export const Section: FC<Props> = ({
   id,
   className,
   children,
-  variant = "grid",
-  mask = "fade-edges",
+  variant = 'grid',
+  mask = 'fade-edges',
   gridClassName,
   size = 8,
-  fill = "color-mix(in srgb, var(--primary) 15%, transparent)",
+  fill = 'color-mix(in srgb, var(--primary) 7.5%, transparent)',
   navbarInverse,
   ...rest
 }) => {
   return (
     <section
       id={id}
-      className={cn("section", className)}
-      {...(navbarInverse ? { "data-navbar-inverse": "" } : {})}
+      className={cn('section', className)}
+      {...(navbarInverse ? { 'data-navbar-inverse': '' } : {})}
     >
       <BGPattern
         variant={variant}
