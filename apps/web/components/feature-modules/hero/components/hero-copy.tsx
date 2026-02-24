@@ -38,7 +38,7 @@ export const HeroCopy = () => {
             <span className="italic">the biggest picture.</span>
           </h2>
           {/* Bottom-left: description */}
-          <div className="mt-2 leading-tight font-bold tracking-tighter text-primary/90 italic md:text-xl lg:pb-1">
+          <div className="mt-2 leading-tight font-bold tracking-tighter text-primary/90 italic md:text-right md:text-xl lg:pb-1">
             AI powered data platform enabling cross-domain intelligence for scaling consumer-facing
             businesses.
           </div>
