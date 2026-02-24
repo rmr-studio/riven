@@ -17,9 +17,9 @@ export const HeroCopy = () => {
         transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
       >
         <h1 className="max-w-4xl font-serif text-5xl leading-[0.95] tracking-tight text-heading sm:text-7xl md:text-8xl">
-          Your tools can
+          Your tools can only
           <br />
-          <span className="italic">see one side.</span>
+          <span className="italic">look at one piece.</span>
         </h1>
       </motion.div>
 
@@ -31,22 +31,20 @@ export const HeroCopy = () => {
         transition={{ duration: 0.9, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* Bottom-right: second headline + CTAs */}
-        <div className="flex flex-col items-end">
-          <h2 className="mb-4 text-right font-serif text-[2.5rem] leading-[0.85] tracking-tight text-heading sm:text-7xl md:text-8xl lg:text-9xl">
-            Riven connects
+        <div className="flex flex-col md:items-end">
+          <h2 className="mb-4 font-serif text-[3rem] leading-[0.85] tracking-tight text-heading sm:text-7xl md:text-right md:text-8xl lg:text-9xl">
+            Riven sees
             <br />
-            <span className="italic">your entire business.</span>
+            <span className="italic">the biggest picture.</span>
           </h2>
           {/* Bottom-left: description */}
-          <div className="text-header/70 text-end text-lg leading-tight font-bold tracking-tighter italic md:text-xl lg:pb-1">
-            <p>
-              AI powered data platform enabling cross-domain intelligence for scaling
-              consumer-facing businesses.
-            </p>
+          <div className="mt-2 leading-tight font-bold tracking-tighter text-primary/90 italic md:text-right md:text-xl lg:pb-1">
+            AI powered data platform enabling cross-domain intelligence for scaling consumer-facing
+            businesses.
           </div>
 
           {/* CTA buttons */}
-          <div className="mt-6 flex flex-col items-end gap-3 sm:mt-8 sm:flex-row sm:items-center lg:gap-4">
+          <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:items-center lg:gap-4">
             <Link
               href="/#waitlist"
               onClick={(e) => {
