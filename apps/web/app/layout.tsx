@@ -123,8 +123,7 @@ export default function RootLayout({
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="amber"
           themes={['light', 'dark', 'amber']}
           disableTransitionOnChange
         >

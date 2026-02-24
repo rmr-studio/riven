@@ -52,7 +52,7 @@ const ACCORDION_ITEMS = [
   },
   {
     key: 'cleanliness',
-    title: 'Keep your data clean without lifting a finger',
+    title: 'Smart enough to do its own housekeeping',
     description:
       'Avoid the headaches of messy data and let your data model maintain itself. With built-in data quality monitoring and automatic cleansing, your data stays accurate and reliable without manual effort.',
   },
@@ -215,16 +215,7 @@ export const DataModelFeatureCarousel = () => {
   ];
 
   return (
-    <section className="my-12">
-      <div className="mx-auto mb-12 w-full text-center leading-tight tracking-tight">
-        <h3 className="text-4xl leading-tight font-medium tracking-tight text-background/70 [word-spacing:-0.2em]">
-          Interconnection has never been easier
-        </h3>
-        <h4 className="mt-4 px-4 font-normal text-background/60 md:mt-0 md:px-0">
-          Your data, Your model, Your platform.{' '}
-        </h4>
-      </div>
-
+    <section className="mx-4 sm:mx-12 md:mx-0">
       {/* Desktop: bento grid carousel — only mounted when not mobile to avoid SVG ID collisions */}
       {(!mounted || !isMobile) && (
         <div className={mounted ? undefined : 'hidden lg:block'}>

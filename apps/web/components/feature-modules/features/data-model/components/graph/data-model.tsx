@@ -19,34 +19,14 @@ export function DataModelShowcase() {
     if (e.pointerType === 'touch') isTouchDevice.current = true;
   }, []);
 
-  const handleMouseEnter = useCallback(
-    (id: TabId) => {
-      if (!isTouchDevice.current) setActiveTab(id);
-    },
-    [],
-  );
+  const handleMouseEnter = useCallback((id: TabId) => {
+    if (!isTouchDevice.current) setActiveTab(id);
+  }, []);
 
   return (
     <>
       <section className="">
         <div className="relative mx-auto">
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="mb-32 text-center"
-          >
-            <h2 className="mx-auto mb-12 max-w-7xl px-8 font-serif text-3xl leading-[1.1] font-normal tracking-tight md:text-4xl lg:text-5xl">
-              <span className="text-background/90 italic">A true focus on structural freedom.</span>{' '}
-              <span className="text-background/65">
-                Our data models and relationships adapt to how you work, not the other way around.
-                Because your business is unique, so your platform should be too.
-              </span>
-            </h2>
-          </motion.div>
-
           {/* Tabs */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -54,11 +34,11 @@ export function DataModelShowcase() {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <div className="mx-auto mb-12 w-full text-center">
-              <h3 className="text-4xl font-medium text-background/70 [word-spacing:-0.2em]">
+            <div className="mx-auto mb-12 w-full px-3 md:text-center">
+              <h3 className="text-3xl font-medium text-background/70 [word-spacing:-0.2em] md:text-4xl">
                 Templates, at your fingertips.
               </h3>
-              <h4 className="mt-4 px-3 font-normal text-background/60 md:mt-0 md:px-0">
+              <h4 className="font-normal text-background/60 md:mt-0 md:px-0">
                 Start in minutes with a proven data model fit for your business, then customize
                 endlessly.
               </h4>
