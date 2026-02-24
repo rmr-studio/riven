@@ -215,16 +215,7 @@ export const DataModelFeatureCarousel = () => {
   ];
 
   return (
-    <section className="my-12">
-      <div className="mx-auto mb-12 w-full px-3 leading-[0.9em] tracking-tight md:text-center">
-        <h3 className="text-3xl leading-tight font-medium tracking-tight text-background/70 [word-spacing:-0.2em] md:text-4xl">
-          Interconnection has never been easier
-        </h3>
-        <h4 className="font-normal text-background/60 md:mt-0 md:px-0">
-          Your data, Your platform.{' '}
-        </h4>
-      </div>
-
+    <section className="mx-4 sm:mx-12 md:mx-0">
       {/* Desktop: bento grid carousel — only mounted when not mobile to avoid SVG ID collisions */}
       {(!mounted || !isMobile) && (
         <div className={mounted ? undefined : 'hidden lg:block'}>
