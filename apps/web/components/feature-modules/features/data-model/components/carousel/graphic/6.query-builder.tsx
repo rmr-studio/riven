@@ -15,6 +15,7 @@ import {
   UserPen,
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { inViewProps, useAnimateOnMount } from './animate-context';
 
 const planStyles = {
   Pro: 'bg-[#F9B7B7]/15 text-[#F9B7B7]',
@@ -128,12 +129,11 @@ const Pill = ({ children, colorClass }: { children: React.ReactNode; colorClass:
   </span>
 );
 
-const TableRow = ({ account, delay }: { account: AccountRow; delay: number }) => (
+const TableRow = ({ account, delay, onMount }: { account: AccountRow; delay: number; onMount: boolean }) => (
   <motion.div
     className="flex border-b border-border/40 last:border-b-0"
     initial={{ opacity: 0, x: -6 }}
-    whileInView={{ opacity: 1, x: 0 }}
-    viewport={{ once: true }}
+    {...inViewProps(onMount, { opacity: 1, x: 0 })}
     transition={{ duration: 0.25, delay }}
   >
     {/* Account Name */}
@@ -173,6 +173,7 @@ const TableRow = ({ account, delay }: { account: AccountRow; delay: number }) =>
 );
 
 export const QueryBuilderGraphic = ({ className }: { className?: string }) => {
+  const onMount = useAnimateOnMount();
   return (
     <div className={cn('pointer-events-none relative', className)}>
       {/* Query Builder - front, left */}
@@ -180,8 +181,7 @@ export const QueryBuilderGraphic = ({ className }: { className?: string }) => {
         <motion.div
           className="w-full rounded-2xl border border-border bg-card p-3 shadow-lg"
           initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          {...inViewProps(onMount, { opacity: 1, y: 0 })}
           transition={{ duration: 0.4 }}
         >
           {/* Type selector */}
@@ -250,8 +250,7 @@ export const QueryBuilderGraphic = ({ className }: { className?: string }) => {
         <motion.div
           className="w-full overflow-hidden rounded-2xl border border-border bg-card shadow-lg"
           initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          {...inViewProps(onMount, { opacity: 1, y: 0 })}
           transition={{ duration: 0.4, delay: 0.15 }}
         >
           {/* Table Header */}
@@ -280,7 +279,7 @@ export const QueryBuilderGraphic = ({ className }: { className?: string }) => {
 
           {/* Data Rows */}
           {accounts.map((account, i) => (
-            <TableRow key={i} account={account} delay={0.2 + i * 0.05} />
+            <TableRow key={i} account={account} delay={0.2 + i * 0.05} onMount={onMount} />
           ))}
         </motion.div>
       </GlowBorder>

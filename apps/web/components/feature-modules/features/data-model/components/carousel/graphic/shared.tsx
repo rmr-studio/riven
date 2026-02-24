@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { inViewProps, useAnimateOnMount } from './animate-context';
 
 interface EdgePath {
   d: string;
@@ -14,6 +15,7 @@ export function GlowEdgePaths({
   glowFilterId: string;
   gradientId: string;
 }) {
+  const onMount = useAnimateOnMount();
   return (
     <>
       {/* Glow layer */}
@@ -27,8 +29,7 @@ export function GlowEdgePaths({
             strokeWidth="2.5"
             strokeOpacity="0.6"
             initial={{ pathLength: 0, opacity: 0 }}
-            whileInView={{ pathLength: 1, opacity: 0.6 }}
-            viewport={{ once: true }}
+            {...inViewProps(onMount, { pathLength: 1, opacity: 0.6 })}
             transition={{ duration: 0.6, delay: edge.delay }}
           />
         ))}
@@ -42,8 +43,7 @@ export function GlowEdgePaths({
           stroke={`url(#${gradientId})`}
           strokeWidth="1.5"
           initial={{ pathLength: 0, opacity: 0 }}
-          whileInView={{ pathLength: 1, opacity: 1 }}
-          viewport={{ once: true }}
+          {...inViewProps(onMount, { pathLength: 1, opacity: 1 })}
           transition={{ duration: 0.6, delay: edge.delay }}
         />
       ))}

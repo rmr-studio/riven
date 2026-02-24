@@ -2,6 +2,7 @@
 
 import { motion } from 'motion/react';
 import { getCdnUrl } from '@/lib/cdn-image-loader';
+import { inViewProps, useAnimateOnMount } from './animate-context';
 import { EdgeGlowFilter, GlowEdgePaths } from './shared';
 
 const stripeWordmarkSrc = getCdnUrl('images/stripe-wordmark.png');
@@ -14,6 +15,7 @@ const edgePaths = [
 ];
 
 export const IntegrationsDiagram = ({ className }: { className?: string }) => {
+  const onMount = useAnimateOnMount();
   return (
     <svg
       viewBox="0 0 890 395"
@@ -102,8 +104,7 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
       {/* ===== Invoice Entity ===== */}
       <motion.g
         initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
+        {...inViewProps(onMount, { opacity: 1 })}
         transition={{ duration: 0.4, delay: 0.4 }}
       >
         <g filter="url(#filter5_d_56_12)">
@@ -185,8 +186,7 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
       {/* ===== Subscription Entity ===== */}
       <motion.g
         initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
+        {...inViewProps(onMount, { opacity: 1 })}
         transition={{ duration: 0.4, delay: 0.5 }}
       >
         <g filter="url(#filter8_d_56_12)">
@@ -268,8 +268,7 @@ export const IntegrationsDiagram = ({ className }: { className?: string }) => {
       {/* ===== Overdue Payments Entity ===== */}
       <motion.g
         initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
+        {...inViewProps(onMount, { opacity: 1 })}
         transition={{ duration: 0.4, delay: 0.6 }}
       >
         <g filter="url(#filter2_d_56_12)">

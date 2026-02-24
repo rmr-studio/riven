@@ -17,6 +17,7 @@ import { IdentityMatchingDiagram } from './carousel/graphic/3.identity-matching'
 import { IntegrationGraphDiagram } from './carousel/graphic/4.integrations';
 import { DataCleanlinessGraphic } from './carousel/graphic/5.data-cleanliness';
 import { QueryBuilderGraphic } from './carousel/graphic/6.query-builder';
+import { AnimateOnMountContext } from './carousel/graphic/animate-context';
 
 const ACCORDION_ITEMS = [
   {
@@ -67,39 +68,32 @@ const ACCORDION_GRAPHICS: Record<
   { content: React.ReactNode; containerClass: string; maskStyle?: React.CSSProperties }
 > = {
   'cross-domain': {
-    content: <InterconnectionDiagram className="absolute inset-0 h-full w-full" />,
+    content: <InterconnectionDiagram className="absolute inset-0 h-full w-full px-4" />,
     containerClass: 'aspect-[4/3]',
   },
   'identity-matching': {
-    content: <IdentityMatchingDiagram className="absolute inset-0 h-full w-full" />,
+    content: <IdentityMatchingDiagram className="absolute inset-0 h-full w-full px-4" />,
     containerClass: 'aspect-[4/3]',
   },
   integrations: {
-    content: <IntegrationsDiagram className="absolute inset-0 h-full w-full" />,
+    content: <IntegrationsDiagram className="absolute inset-0 h-full w-full px-4" />,
     containerClass: 'aspect-[4/3]',
   },
   views: {
     content: <QueryBuilderGraphic className="origin-top-left scale-[0.65]" />,
-    containerClass: 'min-h-[20rem]',
-    maskStyle: {
-      maskImage:
-        'linear-gradient(to bottom, black 70%, transparent), linear-gradient(to left, transparent, black 15%)',
-      WebkitMaskImage:
-        'linear-gradient(to bottom, black 70%, transparent), linear-gradient(to left, transparent, black 15%)',
-      maskComposite: 'intersect',
-      WebkitMaskComposite: 'destination-in',
-    },
+    containerClass: 'min-h-[20rem] pl-4',
   },
   tools: {
     content: <IntegrationGraphDiagram className="absolute inset-0 h-full w-full" />,
     containerClass: 'aspect-[4/3]',
   },
   cleanliness: {
-    content: <DataCleanlinessGraphic />,
+    content: <DataCleanlinessGraphic className="scale-80" />,
     containerClass: 'min-h-[28rem]',
     maskStyle: {
       maskImage: 'linear-gradient(to bottom, black 55%, rgba(0,0,0,0.4) 80%, transparent 100%)',
-      WebkitMaskImage: 'linear-gradient(to bottom, black 55%, rgba(0,0,0,0.4) 80%, transparent 100%)',
+      WebkitMaskImage:
+        'linear-gradient(to bottom, black 55%, rgba(0,0,0,0.4) 80%, transparent 100%)',
     },
   },
 };
@@ -240,38 +234,40 @@ export const DataModelFeatureCarousel = () => {
 
       {/* Mobile / Tablet: stacked accordion, all panels open */}
       {(!mounted || isMobile) && (
-        <div className={cn('px-4', !mounted && 'lg:hidden')}>
-          <Accordion type="multiple" defaultValue={ACCORDION_ITEMS.map((item) => item.key)}>
-            {ACCORDION_ITEMS.map((item) => {
-              const graphic = ACCORDION_GRAPHICS[item.key];
-              return (
-                <AccordionItem
-                  key={item.key}
-                  value={item.key}
-                  className="border-b border-background/10 last:border-b-0"
-                >
-                  <AccordionTrigger className="py-5 text-lg font-medium text-background/70 hover:text-background hover:no-underline data-[state=open]:text-background [&>svg]:text-background/40">
-                    {item.title}
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <p className="mb-4 text-sm leading-relaxed text-background/60">
-                      {item.description}
-                    </p>
-                    <div
-                      className={cn(
-                        'relative w-full overflow-hidden rounded-xl',
-                        graphic.containerClass,
-                      )}
-                      style={graphic.maskStyle ?? DEFAULT_MASK}
-                    >
-                      {graphic.content}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              );
-            })}
-          </Accordion>
-        </div>
+        <AnimateOnMountContext.Provider value={true}>
+          <div className={cn('', !mounted && 'lg:hidden')}>
+            <Accordion type="multiple" defaultValue={ACCORDION_ITEMS.map((item) => item.key)}>
+              {ACCORDION_ITEMS.map((item) => {
+                const graphic = ACCORDION_GRAPHICS[item.key];
+                return (
+                  <AccordionItem
+                    key={item.key}
+                    value={item.key}
+                    className="border-b border-background/10 last:border-b-0"
+                  >
+                    <AccordionTrigger className="px-4 py-5 text-lg font-medium text-background/70 hover:text-background hover:no-underline data-[state=open]:text-background [&>svg]:text-background/40">
+                      {item.title}
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <p className="mb-4 px-4 text-sm leading-relaxed text-background/60">
+                        {item.description}
+                      </p>
+                      <div
+                        className={cn(
+                          'relative w-full overflow-hidden rounded-xl',
+                          graphic.containerClass,
+                        )}
+                        style={graphic.maskStyle ?? DEFAULT_MASK}
+                      >
+                        {graphic.content}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
+          </div>
+        </AnimateOnMountContext.Provider>
       )}
     </section>
   );
