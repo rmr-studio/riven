@@ -2,6 +2,7 @@
 
 import { motion } from 'motion/react';
 import { getCdnUrl } from '@/lib/cdn-image-loader';
+import { inViewProps, useAnimateOnMount } from './animate-context';
 import { EdgeGlowFilter, GlowEdgePaths } from './shared';
 
 const stripeWordmarkSrc = getCdnUrl('images/stripe-wordmark.png');
@@ -32,6 +33,7 @@ const edgePaths = [
 ];
 
 export const IntegrationGraphDiagram = ({ className }: { className?: string }) => {
+  const onMount = useAnimateOnMount();
   return (
     <svg
       viewBox="0 0 501 414"
@@ -106,8 +108,7 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
       {/* ===== Stripe ===== */}
       <motion.g
         initial={{ opacity: 0 }}
-        whileInView={{ opacity: 0.55 }}
-        viewport={{ once: true }}
+        {...inViewProps(onMount, { opacity: 0.55 })}
         transition={{ duration: 0.4, delay: 0.3 }}
       >
         <rect
@@ -137,8 +138,7 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
       {/* ===== Intercom ===== */}
       <motion.g
         initial={{ opacity: 0 }}
-        whileInView={{ opacity: 0.55 }}
-        viewport={{ once: true }}
+        {...inViewProps(onMount, { opacity: 0.55 })}
         transition={{ duration: 0.4, delay: 0.4 }}
       >
         <rect
@@ -191,8 +191,7 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
       {/* ===== Gmail ===== */}
       <motion.g
         initial={{ opacity: 0 }}
-        whileInView={{ opacity: 0.55 }}
-        viewport={{ once: true }}
+        {...inViewProps(onMount, { opacity: 0.55 })}
         transition={{ duration: 0.4, delay: 0.4 }}
       >
         <rect
@@ -236,8 +235,7 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
       {/* ===== Jotform ===== */}
       <motion.g
         initial={{ opacity: 0 }}
-        whileInView={{ opacity: 0.55 }}
-        viewport={{ once: true }}
+        {...inViewProps(onMount, { opacity: 0.55 })}
         transition={{ duration: 0.4, delay: 0.6 }}
       >
         <rect
@@ -278,8 +276,7 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
       {/* ===== Slack ===== */}
       <motion.g
         initial={{ opacity: 0 }}
-        whileInView={{ opacity: 0.55 }}
-        viewport={{ once: true }}
+        {...inViewProps(onMount, { opacity: 0.55 })}
         transition={{ duration: 0.4, delay: 0.5 }}
       >
         <rect

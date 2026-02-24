@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'motion/react';
+import { inViewProps, useAnimateOnMount } from './animate-context';
 import { EdgeGlowFilter, GlowEdgePaths } from './shared';
 
 const edgePaths = [
@@ -13,6 +14,7 @@ const edgePaths = [
 ];
 
 export const InterconnectionDiagram = ({ className }: { className?: string }) => {
+  const onMount = useAnimateOnMount();
   return (
     <svg
       viewBox="0 0 955 357"
@@ -142,8 +144,7 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
       {/* ===== Feedback Entity ===== */}
       <motion.g
         initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
+        {...inViewProps(onMount, { opacity: 1 })}
         transition={{ duration: 0.4, delay: 0.5 }}
       >
         <g filter="url(#filter4_d_47_128)">
@@ -192,8 +193,7 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
       {/* ===== Support Tickets Entity ===== */}
       <motion.g
         initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
+        {...inViewProps(onMount, { opacity: 1 })}
         transition={{ duration: 0.4, delay: 0.4 }}
       >
         <g filter="url(#filter7_d_47_128)">
@@ -246,8 +246,7 @@ export const InterconnectionDiagram = ({ className }: { className?: string }) =>
       {/* ===== Acquisition Channels Entity ===== */}
       <motion.g
         initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
+        {...inViewProps(onMount, { opacity: 1 })}
         transition={{ duration: 0.4, delay: 0.3 }}
       >
         <g filter="url(#filter12_d_47_128)">
