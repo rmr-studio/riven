@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   },
 
   description:
-    "Every tool shows you a slice. Riven connects your entire business. One unified data ecosystem with an AI knowledge layer that surfaces what siloed tools can't.",
+    "AI powered data platform enabling cross-domain intelligence for scaling consumer-facing businesses. Connect your CRM, payments, support, and product data with an AI layer that surfaces what siloed tools can't.",
 
   keywords: [
     'cross-domain intelligence',
@@ -57,9 +57,9 @@ export const metadata: Metadata = {
   ],
 
   openGraph: {
-    title: 'Riven | Every tool shows you a slice. Riven connects your entire business.',
+    title: 'Riven | Cross-Domain Intelligence for Scaling Businesses',
     description:
-      "Cross-domain intelligence for scaling consumer businesses. Connect your CRM, payments, support, and product data with an AI layer that surfaces what siloed tools can't.",
+      "AI powered data platform enabling cross-domain intelligence for scaling consumer-facing businesses. Connect your CRM, payments, support, and product data with an AI layer that surfaces what siloed tools can't.",
     url: 'https://getriven.io',
     siteName: 'Riven',
     locale: 'en_US',
@@ -80,7 +80,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Riven | Cross-Domain Intelligence for Scaling Businesses',
     description:
-      "Connect your CRM, payments, support, and product data with an AI layer that surfaces what siloed tools can't.",
+      "AI powered data platform enabling cross-domain intelligence for scaling consumer-facing businesses. Connect your CRM, payments, support, and product data with an AI layer that surfaces what siloed tools can't.",
     images: [
       process.env.NEXT_PUBLIC_CDN_URL
         ? `${process.env.NEXT_PUBLIC_CDN_URL}/images/og-image.png`
