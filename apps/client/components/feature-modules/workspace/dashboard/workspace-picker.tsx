@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { WorkspaceTile } from '../components/workspace-card';
+import { WorkspaceCard } from '../components/workspace-card';
 import type { WorkspaceMember } from '@/lib/types/workspace';
 
 export const WorkspacePicker = () => {
@@ -59,7 +59,7 @@ export const WorkspacePicker = () => {
             {renderedWorkspaces.map(
               (org) =>
                 org.workspace?.id && (
-                  <WorkspaceTile
+                  <WorkspaceCard
                     key={org.workspace.id}
                     membership={org}
                     isDefault={user?.defaultWorkspace?.id === org.workspace.id}

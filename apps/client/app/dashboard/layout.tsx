@@ -1,3 +1,4 @@
+import { AuthGuard } from '@/components/feature-modules/authentication/components/auth-guard';
 import { OnboardWrapper } from '@/components/feature-modules/onboarding/context/onboard.wrapper';
 import { BGPattern } from '@/components/ui/background/grids';
 import { AppNavbar } from '@/components/ui/nav/app.navbar';
@@ -8,7 +9,7 @@ import { FC } from 'react';
 
 const layout: FC<ChildNodeProps> = ({ children }) => {
   return (
-    <>
+    <AuthGuard>
       <OnboardWrapper>
         <SidebarProvider>
           <DashboardSidebar />
@@ -22,7 +23,7 @@ const layout: FC<ChildNodeProps> = ({ children }) => {
           </SidebarInset>
         </SidebarProvider>
       </OnboardWrapper>
-    </>
+    </AuthGuard>
   );
 };
 

@@ -22,3 +22,4 @@ pnpm-debug.log*
 # build output
 dist/
 build/
+.pr-review/
