@@ -119,7 +119,7 @@ export const KnowledgeAccordion = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12 }}
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
-                className="flex h-full items-center -mt-16"
+                className="-mt-16 flex h-full items-center"
               >
                 {activeIndex !== null && knowledgeScrollContent[activeIndex]?.content}
               </motion.div>
@@ -148,7 +148,7 @@ export const KnowledgeAccordion = () => {
               </AccordionTrigger>
               <AccordionContent>
                 <div
-                  className="relative h-[14rem] overflow-hidden rounded-lg"
+                  className="relative h-[20rem] overflow-hidden rounded-lg"
                   style={{
                     maskImage: 'linear-gradient(to bottom, black 30%, transparent 85%)',
                     WebkitMaskImage: 'linear-gradient(to bottom, black 30%, transparent 85%)',

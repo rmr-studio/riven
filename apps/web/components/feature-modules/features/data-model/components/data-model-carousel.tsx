@@ -1,14 +1,114 @@
+'use client';
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { BentoCard, BentoCarousel, Slide } from '@/components/ui/bento-carousel';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 import { FADE_EDGE_MASK } from '@/lib/styles';
+import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
 import { InterconnectionDiagram } from './carousel/graphic/1.interconnections';
 import { IntegrationsDiagram } from './carousel/graphic/2.integrations';
 import { IdentityMatchingDiagram } from './carousel/graphic/3.identity-matching';
-import { IdentityMatchingDiagramSm } from './carousel/graphic/3.identity-matching-sm';
 import { IntegrationGraphDiagram } from './carousel/graphic/4.integrations';
 import { DataCleanlinessGraphic } from './carousel/graphic/5.data-cleanliness';
 import { QueryBuilderGraphic } from './carousel/graphic/6.query-builder';
 
+const ACCORDION_ITEMS = [
+  {
+    key: 'cross-domain',
+    title: 'Cross domain business intelligence',
+    description:
+      'Link entities, create associations and generate power insights and pattern recognition capabilities',
+  },
+  {
+    key: 'identity-matching',
+    title: 'New data finds its place automatically',
+    description:
+      'Automatic entity resolution and identity matching means your data model stays up to date without manual intervention. New data finds its place seamlessly, so you can focus on insights, not maintenance.',
+  },
+  {
+    key: 'integrations',
+    title: 'Integrations that feel natural',
+    description:
+      'Treat your tools like first class citizens, not just data sources. Integrate them directly into your models',
+  },
+  {
+    key: 'views',
+    title: 'Views that answer your questions.',
+    description:
+      'Filter, sort, and save custom views across your entire data model. Ask your data a question and pin the answer',
+  },
+  {
+    key: 'tools',
+    title: 'Your tools, One platform',
+    description:
+      'Balancing 16 tabs to make a decision is overrated. Bring your tools together in one unified platform, and get the full picture without being the integration layer yourself.',
+  },
+  {
+    key: 'cleanliness',
+    title: 'Keep your data clean without lifting a finger',
+    description:
+      'Avoid the headaches of messy data and let your data model maintain itself. With built-in data quality monitoring and automatic cleansing, your data stays accurate and reliable without manual effort.',
+  },
+] as const;
+
+const DEFAULT_MASK: React.CSSProperties = {
+  maskImage: 'linear-gradient(to bottom, black 70%, transparent)',
+  WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent)',
+};
+
+const ACCORDION_GRAPHICS: Record<
+  string,
+  { content: React.ReactNode; containerClass: string; maskStyle?: React.CSSProperties }
+> = {
+  'cross-domain': {
+    content: <InterconnectionDiagram className="absolute inset-0 h-full w-full" />,
+    containerClass: 'aspect-[4/3]',
+  },
+  'identity-matching': {
+    content: <IdentityMatchingDiagram className="absolute inset-0 h-full w-full" />,
+    containerClass: 'aspect-[4/3]',
+  },
+  integrations: {
+    content: <IntegrationsDiagram className="absolute inset-0 h-full w-full" />,
+    containerClass: 'aspect-[4/3]',
+  },
+  views: {
+    content: <QueryBuilderGraphic className="origin-top-left scale-[0.65]" />,
+    containerClass: 'min-h-[20rem]',
+    maskStyle: {
+      maskImage:
+        'linear-gradient(to bottom, black 70%, transparent), linear-gradient(to left, transparent, black 15%)',
+      WebkitMaskImage:
+        'linear-gradient(to bottom, black 70%, transparent), linear-gradient(to left, transparent, black 15%)',
+      maskComposite: 'intersect',
+      WebkitMaskComposite: 'destination-in',
+    },
+  },
+  tools: {
+    content: <IntegrationGraphDiagram className="absolute inset-0 h-full w-full" />,
+    containerClass: 'aspect-[4/3]',
+  },
+  cleanliness: {
+    content: <DataCleanlinessGraphic />,
+    containerClass: 'min-h-[28rem]',
+    maskStyle: {
+      maskImage: 'linear-gradient(to bottom, black 55%, rgba(0,0,0,0.4) 80%, transparent 100%)',
+      WebkitMaskImage: 'linear-gradient(to bottom, black 55%, rgba(0,0,0,0.4) 80%, transparent 100%)',
+    },
+  },
+};
+
 export const DataModelFeatureCarousel = () => {
+  const isMobile = useIsMobile('lg');
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const slides: Slide[] = [
     {
       layout: {
@@ -37,7 +137,7 @@ export const DataModelFeatureCarousel = () => {
           description="Link entities, create associations and generate power insights and pattern recognition capabilities"
         >
           <div className="relative h-full w-full overflow-hidden max-md:mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
-            <InterconnectionDiagram className="absolute inset-0 h-full w-full max-md:left-1/2 max-md:w-[170%] max-md:-translate-x-1/2 md:static md:h-full md:w-full" />
+            <InterconnectionDiagram className="absolute inset-0 h-full w-full max-md:left-1/2 max-md:w-[280%] max-md:-translate-x-1/2 md:static md:h-full md:w-full" />
           </div>
         </BentoCard>,
         <BentoCard
@@ -47,8 +147,7 @@ export const DataModelFeatureCarousel = () => {
           description="Automatic entity resolution and identity matching means your data model stays up to date without manual intervention. New data finds its place seamlessly, so you can focus on insights, not maintenance."
         >
           <div className="relative h-full w-full overflow-hidden mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
-            <IdentityMatchingDiagramSm className="absolute inset-0 top-0 left-1/2 mx-auto h-full w-full -translate-x-1/2 md:static md:w-[80%] md:translate-x-0 lg:hidden" />
-            <IdentityMatchingDiagram className="absolute inset-0 top-0 hidden h-full lg:block lg:w-[120%]" />
+            <IdentityMatchingDiagram className="absolute inset-0 w-[110%] md:top-1/6 lg:w-[120%]" />
           </div>
         </BentoCard>,
 
@@ -60,7 +159,7 @@ export const DataModelFeatureCarousel = () => {
           description="Treat your tools like first class citizens, not just data sources. Integrate them directly into your models"
         >
           <div className="relative h-full w-full overflow-hidden mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
-            <IntegrationsDiagram className="absolute inset-0 h-full w-full max-md:left-1/2 max-md:w-[170%] max-md:-translate-x-1/2 md:static md:h-full md:w-full" />
+            <IntegrationsDiagram className="absolute inset-0 h-full w-full max-md:left-1/2 max-md:w-[250%] max-md:-translate-x-1/2 md:static md:h-full md:w-full" />
           </div>
         </BentoCard>,
       ],
@@ -103,7 +202,7 @@ export const DataModelFeatureCarousel = () => {
           description="Balancing 16 tabs to make a decision is overrated. Bring your tools together in one unified platform, and get the full picture without being the integration layer yourself."
         >
           <div className="relative h-full w-full overflow-hidden mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
-            <IntegrationGraphDiagram className="static inset-0 h-full w-full -translate-x-1/6 scale-75 max-md:left-1/2 max-md:w-[150%] sm:scale-100 md:absolute md:translate-x-0" />
+            <IntegrationGraphDiagram className="absolute inset-0 h-full w-full max-md:left-1/2 max-md:w-[140%] max-md:-translate-x-1/2 md:translate-x-0" />
           </div>
         </BentoCard>,
         <BentoCard
@@ -131,7 +230,49 @@ export const DataModelFeatureCarousel = () => {
           Your data, Your model, Your platform.{' '}
         </h4>
       </div>
-      <BentoCarousel slides={slides} />
+
+      {/* Desktop: bento grid carousel — only mounted when not mobile to avoid SVG ID collisions */}
+      {(!mounted || !isMobile) && (
+        <div className={mounted ? undefined : 'hidden lg:block'}>
+          <BentoCarousel slides={slides} />
+        </div>
+      )}
+
+      {/* Mobile / Tablet: stacked accordion, all panels open */}
+      {(!mounted || isMobile) && (
+        <div className={cn('px-4', !mounted && 'lg:hidden')}>
+          <Accordion type="multiple" defaultValue={ACCORDION_ITEMS.map((item) => item.key)}>
+            {ACCORDION_ITEMS.map((item) => {
+              const graphic = ACCORDION_GRAPHICS[item.key];
+              return (
+                <AccordionItem
+                  key={item.key}
+                  value={item.key}
+                  className="border-b border-background/10 last:border-b-0"
+                >
+                  <AccordionTrigger className="py-5 text-lg font-medium text-background/70 hover:text-background hover:no-underline data-[state=open]:text-background [&>svg]:text-background/40">
+                    {item.title}
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <p className="mb-4 text-sm leading-relaxed text-background/60">
+                      {item.description}
+                    </p>
+                    <div
+                      className={cn(
+                        'relative w-full overflow-hidden rounded-xl',
+                        graphic.containerClass,
+                      )}
+                      style={graphic.maskStyle ?? DEFAULT_MASK}
+                    >
+                      {graphic.content}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
+        </div>
+      )}
     </section>
   );
 };
