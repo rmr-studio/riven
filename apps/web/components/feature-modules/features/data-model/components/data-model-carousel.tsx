@@ -127,7 +127,7 @@ export const DataModelFeatureCarousel = () => {
         <h3 className="text-4xl leading-tight font-medium tracking-tight text-background/70 [word-spacing:-0.2em]">
           Interconnection has never been easier
         </h3>
-        <h4 className="mt-4 max-w-md px-4 font-normal text-background/60 md:mt-0 md:px-0">
+        <h4 className="mt-4 px-4 font-normal text-background/60 md:mt-0 md:px-0">
           Your data, Your model, Your platform.{' '}
         </h4>
       </div>
