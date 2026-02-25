@@ -28,13 +28,7 @@ export const DataModel = () => {
           transition={{ duration: 0.6 }}
           className="text-center"
         >
-          <h2 className="mx-auto mb-12 max-w-7xl px-8 font-serif text-3xl leading-[1.1] font-normal tracking-tight md:text-4xl lg:text-5xl">
-            <span className="text-background/90 italic">A true focus on structural freedom.</span>{' '}
-            <span className="text-background/65">
-              Our data models and relationships adapt to how you work, not the other way around.
-              Because your business is unique, so your platform should be too.
-            </span>
-          </h2>
+       
         </motion.div>
         <DataModelFeatureCarousel />
         <DataModelShowcase />

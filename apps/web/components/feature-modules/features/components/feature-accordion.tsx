@@ -3,12 +3,12 @@
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { knowledgeScrollContent } from '../config/accordion-content';
+import { FEATURE_CONTENT } from '../knowledge/config/accordion-content';
 
 const AUTO_ADVANCE_MS = 10000;
 const INTERACTION_PAUSE_MS = 3000;
 
-export const KnowledgeAccordion = () => {
+export const VisualAccordionSection = () => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [paused, setPaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -25,7 +25,7 @@ export const KnowledgeAccordion = () => {
       const elapsed = Date.now() - startRef.current;
 
       if (elapsed >= AUTO_ADVANCE_MS) {
-        setActiveIndex((prev) => (prev + 1) % knowledgeScrollContent.length);
+        setActiveIndex((prev) => (prev + 1) % FEATURE_CONTENT.length);
         startRef.current = Date.now();
       }
     }, 200);
@@ -48,7 +48,7 @@ export const KnowledgeAccordion = () => {
       <div className="hidden lg:grid lg:grid-cols-2 lg:items-center lg:gap-12">
         {/* Left: Item selector list */}
         <div className="flex flex-col">
-          {knowledgeScrollContent.map((item, index) => {
+          {FEATURE_CONTENT.map((item, index) => {
             const isActive = activeIndex === index;
             return (
               <button
@@ -119,7 +119,7 @@ export const KnowledgeAccordion = () => {
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
                 className="-mt-16 flex h-full items-center"
               >
-                {knowledgeScrollContent[activeIndex]?.content}
+                {FEATURE_CONTENT[activeIndex]?.content}
               </motion.div>
             </AnimatePresence>
           </div>
@@ -128,7 +128,7 @@ export const KnowledgeAccordion = () => {
 
       {/* Mobile: all items fully expanded in scroll */}
       <div className="flex flex-col gap-16 lg:hidden">
-        {knowledgeScrollContent.map((item, index) => (
+        {FEATURE_CONTENT.map((item, index) => (
           <div key={index} className="flex flex-col items-center">
             {/* Title */}
             <div className="text-center text-2xl font-medium text-heading">{item.title}</div>
