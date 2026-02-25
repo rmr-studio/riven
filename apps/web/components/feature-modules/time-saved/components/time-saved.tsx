@@ -169,25 +169,25 @@ export function TimeSaved() {
           className="flex flex-col gap-4 md:hidden"
         >
           {items.map((item) => (
-            <div key={item.label} className="border-l-2 border-white/[0.12] py-4 pr-3 pl-5">
-              <p className="text-base font-medium tracking-tight text-white/90">{item.metric}</p>
-              <p className="mt-1.5 text-sm leading-relaxed tracking-normal text-white/35">
+            <div key={item.label} className="border-l-2 border-content/50 py-4 pr-3 pl-5">
+              <p className="text-base font-medium tracking-tight text-secondary">{item.metric}</p>
+              <p className="mt-1.5 text-sm leading-relaxed tracking-normal text-secondary/50">
                 {item.description}
               </p>
             </div>
           ))}
-          <div className="border-l-2 border-white/[0.12] py-4 pr-3 pl-5">
-            <p className="text-base font-medium tracking-tight text-white/90">
+          <div className="border-l-2 border-content/50 py-4 pr-3 pl-5">
+            <p className="text-base font-medium tracking-tight text-secondary">
               What disappears over time
             </p>
-            <p className="mt-1.5 text-sm leading-relaxed tracking-normal text-white/35">
+            <p className="mt-1.5 text-sm leading-relaxed tracking-normal text-secondary/50">
               Manual operational work caused by tools that don&apos;t talk to each other.
             </p>
             <div className="mt-4 space-y-0.5 font-serif font-light tracking-tight">
-              <p className="text-2xl text-white/70">8–12 hours</p>
-              <p className="text-2xl text-white/70">16 tabs</p>
-              <p className="text-2xl text-white/70">3 spreadsheets</p>
-              <p className="text-2xl text-white/55 italic">1 massive headache</p>
+              <p className="text-2xl text-secondary/75">8–12 hours</p>
+              <p className="text-2xl text-secondary/75">16 tabs</p>
+              <p className="text-2xl text-secondary/75">3 spreadsheets</p>
+              <p className="text-2xl font-semibold text-secondary italic">1 massive headache</p>
             </div>
           </div>
         </motion.div>

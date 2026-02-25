@@ -19,20 +19,20 @@ function EntityChips({ entities }: { entities: InsightCard['entities'] }) {
   const remaining = entities.length - VISIBLE_ENTITIES;
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className="flex items-center gap-1.5 overflow-hidden">
       {visible.map((entity) => (
         <div
           key={entity.label}
-          className="flex items-center gap-1.5 rounded-md border border-border/60 bg-muted/40 px-2.5 py-1"
+          className="flex shrink-0 items-center gap-1.5 rounded-md border border-border/60 bg-muted/40 px-2.5 py-1"
         >
           {entity.icon}
-          <span className="text-xs font-medium -tracking-[0.02em] text-muted-foreground">
+          <span className="whitespace-nowrap text-xs font-medium -tracking-[0.02em] text-muted-foreground">
             {entity.label}
           </span>
         </div>
       ))}
       {remaining > 0 && (
-        <span className="text-xs -tracking-[0.02em] text-muted-foreground/60">
+        <span className="shrink-0 whitespace-nowrap text-xs -tracking-[0.02em] text-muted-foreground/60">
           +{remaining} more
         </span>
       )}
@@ -50,9 +50,9 @@ function InsightCardComponent({ card }: { card: InsightCard }) {
 
       {/* Mock browser window */}
       <div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
-        <div className="flex flex-col gap-5 p-5 md:p-7">
-          {/* Browser chrome: window controls + entity chips */}
-          <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-4 p-5 md:p-7">
+          {/* Browser chrome row */}
+          <div className="flex items-center justify-between gap-4">
             <WindowControls size={7} />
             <EntityChips entities={card.entities} />
           </div>
@@ -174,7 +174,7 @@ export function CrossDomainCarousel() {
       </div>
 
       {/* Dot indicators */}
-      <div className="mt-4 flex items-center justify-center gap-1.5">
+      <div className="mt-5 flex items-center justify-center gap-2">
         {INSIGHT_CARDS.map((card, index) => (
           <button
             key={card.title}
@@ -186,8 +186,8 @@ export function CrossDomainCarousel() {
               pauseTimeoutRef.current = setTimeout(() => setPaused(false), 8000);
             }}
             className={cn(
-              'h-1.5 rounded-full transition-all duration-300',
-              current === index ? 'w-6 bg-foreground/70' : 'w-1.5 bg-foreground/20',
+              'h-2.5 rounded-full transition-all duration-300',
+              current === index ? 'w-8 bg-foreground/70' : 'w-2.5 bg-foreground/20',
             )}
             aria-label={`Go to slide ${index + 1}`}
           />

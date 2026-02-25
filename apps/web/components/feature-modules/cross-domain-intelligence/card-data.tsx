@@ -40,11 +40,11 @@ export const INSIGHT_CARDS: InsightCard[] = [
       </>
     ),
     entities: [
-      { icon: <CompanyIcon size={10} />, label: 'Company' },
-      { icon: <StripeIcon size={10} />, label: 'Subscription' },
-      { icon: <IntercomIcon size={10} />, label: 'Support Ticket' },
-      { icon: <FeatureUsageIcon size={10} />, label: 'Feature Usage' },
-      { icon: <CalendarIcon size={10} />, label: 'Subscription Renewal' },
+      { icon: <CompanyIcon size={13} />, label: 'Company' },
+      { icon: <StripeIcon size={13} />, label: 'Subscription' },
+      { icon: <IntercomIcon size={13} />, label: 'Support Ticket' },
+      { icon: <FeatureUsageIcon size={13} />, label: 'Feature Usage' },
+      { icon: <CalendarIcon size={13} />, label: 'Subscription Renewal' },
     ],
   },
   {
@@ -60,11 +60,11 @@ export const INSIGHT_CARDS: InsightCard[] = [
       </>
     ),
     entities: [
-      { icon: <CompanyIcon size={10} />, label: 'Company' },
-      { icon: <GoogleAdsIcon size={10} />, label: 'Marketing Campaign' },
-      { icon: <IntercomIcon size={10} />, label: 'Support Ticket' },
-      { icon: <StripeIcon size={10} />, label: 'Subscription' },
-      { icon: <ClockIcon size={10} />, label: 'Team Time Log' },
+      { icon: <CompanyIcon size={13} />, label: 'Company' },
+      { icon: <GoogleAdsIcon size={13} />, label: 'Marketing Campaign' },
+      { icon: <IntercomIcon size={13} />, label: 'Support Ticket' },
+      { icon: <StripeIcon size={13} />, label: 'Subscription' },
+      { icon: <ClockIcon size={13} />, label: 'Team Time Log' },
     ],
   },
   {
@@ -79,12 +79,12 @@ export const INSIGHT_CARDS: InsightCard[] = [
       </>
     ),
     entities: [
-      { icon: <CompanyIcon size={10} />, label: 'Company' },
-      { icon: <StripeIcon size={10} />, label: 'Subscription' },
-      { icon: <FeatureUsageIcon size={10} />, label: 'Feature Usage' },
-      { icon: <ApiUsageIcon size={10} />, label: 'API Usage Metrics' },
-      { icon: <GmailIcon size={10} />, label: 'Contact Activity' },
-      { icon: <SalesPipelineIcon size={10} />, label: 'Sales Pipeline' },
+      { icon: <CompanyIcon size={13} />, label: 'Company' },
+      { icon: <StripeIcon size={13} />, label: 'Subscription' },
+      { icon: <FeatureUsageIcon size={13} />, label: 'Feature Usage' },
+      { icon: <ApiUsageIcon size={13} />, label: 'API Usage Metrics' },
+      { icon: <GmailIcon size={13} />, label: 'Contact Activity' },
+      { icon: <SalesPipelineIcon size={13} />, label: 'Sales Pipeline' },
     ],
   },
   {
@@ -99,11 +99,11 @@ export const INSIGHT_CARDS: InsightCard[] = [
       </>
     ),
     entities: [
-      { icon: <TeamMemberIcon size={10} />, label: 'Team Member' },
-      { icon: <IntercomIcon size={10} />, label: 'Support Ticket' },
-      { icon: <CalendarIcon size={10} />, label: 'Subscription Renewal' },
-      { icon: <CompanyIcon size={10} />, label: 'Company' },
-      { icon: <CalendarIcon size={10} />, label: 'Calendar Events' },
+      { icon: <TeamMemberIcon size={13} />, label: 'Team Member' },
+      { icon: <IntercomIcon size={13} />, label: 'Support Ticket' },
+      { icon: <CalendarIcon size={13} />, label: 'Subscription Renewal' },
+      { icon: <CompanyIcon size={13} />, label: 'Company' },
+      { icon: <CalendarIcon size={13} />, label: 'Calendar Events' },
     ],
   },
   {
@@ -118,12 +118,12 @@ export const INSIGHT_CARDS: InsightCard[] = [
       </>
     ),
     entities: [
-      { icon: <CompanyIcon size={10} />, label: 'Company' },
-      { icon: <ChecklistIcon size={10} />, label: 'Onboarding Checklist' },
-      { icon: <IntegrationIcon size={10} />, label: 'Integration Log' },
-      { icon: <StripeIcon size={10} />, label: 'Subscription' },
-      { icon: <IntercomIcon size={10} />, label: 'Support Ticket' },
-      { icon: <GmailIcon size={10} />, label: 'Email Thread' },
+      { icon: <CompanyIcon size={13} />, label: 'Company' },
+      { icon: <ChecklistIcon size={13} />, label: 'Onboarding Checklist' },
+      { icon: <IntegrationIcon size={13} />, label: 'Integration Log' },
+      { icon: <StripeIcon size={13} />, label: 'Subscription' },
+      { icon: <IntercomIcon size={13} />, label: 'Support Ticket' },
+      { icon: <GmailIcon size={13} />, label: 'Email Thread' },
     ],
   },
   {
@@ -139,12 +139,12 @@ export const INSIGHT_CARDS: InsightCard[] = [
       </>
     ),
     entities: [
-      { icon: <InvoiceIcon size={10} />, label: 'Invoice' },
-      { icon: <IntegrationIcon size={10} />, label: 'Integration Health' },
-      { icon: <IntercomIcon size={10} />, label: 'Support Ticket' },
-      { icon: <CompanyIcon size={10} />, label: 'Company' },
-      { icon: <InfrastructureIcon size={10} />, label: 'Infrastructure' },
-      { icon: <ChangelogIcon size={10} />, label: 'Product Changelog' },
+      { icon: <InvoiceIcon size={13} />, label: 'Invoice' },
+      { icon: <IntegrationIcon size={13} />, label: 'Integration Health' },
+      { icon: <IntercomIcon size={13} />, label: 'Support Ticket' },
+      { icon: <CompanyIcon size={13} />, label: 'Company' },
+      { icon: <InfrastructureIcon size={13} />, label: 'Infrastructure' },
+      { icon: <ChangelogIcon size={13} />, label: 'Product Changelog' },
     ],
   },
 ];
