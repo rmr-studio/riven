@@ -1,103 +1,101 @@
 'use client';
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import { useIsMobile } from '@/hooks/use-is-mobile';
+import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { knowledgeScrollContent } from '../config/accordion-content';
 
 const AUTO_ADVANCE_MS = 10000;
 const INTERACTION_PAUSE_MS = 3000;
 
 export const KnowledgeAccordion = () => {
-  const isMobile = useIsMobile('md');
-  const [activeIndex, setActiveIndex] = useState<number | null>(0);
-  const [progress, setProgress] = useState(0);
+  const [activeIndex, setActiveIndex] = useState<number>(0);
   const [paused, setPaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pauseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startRef = useRef(Date.now());
 
-  // Auto-advance timer (disabled on mobile)
+  // Auto-advance timer (desktop only, controlled by CSS visibility)
   useEffect(() => {
-    if (paused || isMobile) return;
+    if (paused) return;
 
     startRef.current = Date.now();
-    setProgress(0);
 
     timerRef.current = setInterval(() => {
       const elapsed = Date.now() - startRef.current;
-      const pct = Math.min(elapsed / AUTO_ADVANCE_MS, 1);
-      setProgress(pct);
 
-      if (pct >= 1) {
-        setActiveIndex((prev) => ((prev ?? -1) + 1) % knowledgeScrollContent.length);
+      if (elapsed >= AUTO_ADVANCE_MS) {
+        setActiveIndex((prev) => (prev + 1) % knowledgeScrollContent.length);
         startRef.current = Date.now();
-        setProgress(0);
       }
-    }, 50);
+    }, 200);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [activeIndex, paused, isMobile]);
+  }, [activeIndex, paused]);
 
-  const handleValueChange = (value: string) => {
-    if (value) {
-      setActiveIndex(Number(value));
-    } else {
-      setActiveIndex(null);
-    }
-
-    if (!isMobile) {
-      setPaused(true);
-      setProgress(0);
-      if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
-      pauseTimeoutRef.current = setTimeout(() => setPaused(false), INTERACTION_PAUSE_MS);
-    }
-  };
+  const handleItemClick = useCallback((index: number) => {
+    setActiveIndex(index);
+    setPaused(true);
+    if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
+    pauseTimeoutRef.current = setTimeout(() => setPaused(false), INTERACTION_PAUSE_MS);
+  }, []);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 md:px-6 lg:px-10">
-      {/* Desktop: accordion left, visual right */}
+      {/* Desktop: item list left, visual right */}
       <div className="hidden lg:grid lg:grid-cols-2 lg:items-center lg:gap-12">
-        {/* Left: Accordion */}
-        <Accordion
-          type="single"
-          collapsible
-          value={activeIndex !== null ? String(activeIndex) : ''}
-          onValueChange={handleValueChange}
-          className="w-full"
-        >
-          {knowledgeScrollContent.map((item, index) => (
-            <AccordionItem
-              key={index}
-              value={String(index)}
-              className="relative border-b border-white/10 last:border-b-0"
-            >
-              <AccordionTrigger className="cursor-pointer py-5 text-lg font-medium text-content hover:text-heading hover:no-underline data-[state=open]:text-heading">
-                {item.title}
-              </AccordionTrigger>
-              <AccordionContent className="text-sm leading-relaxed text-content">
-                {item.description}
-              </AccordionContent>
-              {/* Progress bar for active item */}
-              {activeIndex === index && !isMobile && (
-                <div className="absolute bottom-0 left-0 h-[2px] w-full">
+        {/* Left: Item selector list */}
+        <div className="flex flex-col">
+          {knowledgeScrollContent.map((item, index) => {
+            const isActive = activeIndex === index;
+            return (
+              <button
+                key={index}
+                type="button"
+                onClick={() => handleItemClick(index)}
+                className="flex cursor-pointer items-start gap-4 border-b border-white/10 py-5 text-left last:border-b-0"
+              >
+                {/* Indicator dot */}
+                <div className="flex h-7 w-4 shrink-0 items-center justify-center">
                   <div
-                    className="h-full bg-primary/30 transition-[width] duration-100 ease-linear"
-                    style={{ width: `${progress * 100}%` }}
+                    className={cn(
+                      'rounded-full transition-all duration-300',
+                      isActive ? 'h-3 w-3 bg-primary' : 'h-2 w-2 bg-content/20',
+                    )}
                   />
                 </div>
-              )}
-            </AccordionItem>
-          ))}
-        </Accordion>
+
+                {/* Text content */}
+                <div className="min-w-0 flex-1">
+                  <div
+                    className={cn(
+                      'text-lg font-medium transition-colors duration-300',
+                      isActive ? 'text-heading' : 'text-content/40',
+                    )}
+                  >
+                    {item.title}
+                  </div>
+
+                  <AnimatePresence initial={false}>
+                    {isActive && (
+                      <motion.p
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        className="overflow-hidden text-sm leading-relaxed text-content"
+                      >
+                        <span className="block pt-2">{item.description}</span>
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </button>
+            );
+          })}
+        </div>
 
         {/* Right: Visual panel */}
         <div className="relative my-4 flex items-center justify-center">
@@ -121,67 +119,37 @@ export const KnowledgeAccordion = () => {
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
                 className="-mt-16 flex h-full items-center"
               >
-                {activeIndex !== null && knowledgeScrollContent[activeIndex]?.content}
+                {knowledgeScrollContent[activeIndex]?.content}
               </motion.div>
             </AnimatePresence>
           </div>
         </div>
       </div>
 
-      {/* Mobile: full-width accordion with visual behind active content */}
-      <div className="lg:hidden">
-        <Accordion
-          type="single"
-          collapsible
-          value={activeIndex !== null ? String(activeIndex) : ''}
-          onValueChange={handleValueChange}
-          className="w-full"
-        >
-          {knowledgeScrollContent.map((item, index) => (
-            <AccordionItem
-              key={index}
-              value={String(index)}
-              className="relative border-b border-white/10 last:border-b-0"
-            >
-              <AccordionTrigger className="py-4 text-base font-medium text-content hover:no-underline data-[state=open]:text-heading">
-                {item.title}
-              </AccordionTrigger>
-              <AccordionContent>
-                <div
-                  className="relative h-[20rem] overflow-hidden rounded-lg"
-                  style={{
-                    maskImage: 'linear-gradient(to bottom, black 30%, transparent 85%)',
-                    WebkitMaskImage: 'linear-gradient(to bottom, black 30%, transparent 85%)',
-                  }}
-                >
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="h-full w-full"
-                    >
-                      {item.content}
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
+      {/* Mobile: all items fully expanded in scroll */}
+      <div className="flex flex-col gap-16 lg:hidden">
+        {knowledgeScrollContent.map((item, index) => (
+          <div key={index} className="flex flex-col items-center">
+            {/* Title */}
+            <div className="text-center text-2xl font-medium text-heading">{item.title}</div>
 
-                <p className="mt-3 text-sm leading-relaxed text-content">{item.description}</p>
-              </AccordionContent>
-              {/* Progress bar for active item */}
-              {activeIndex === index && !isMobile && (
-                <div className="absolute bottom-0 left-0 h-[2px] w-full">
-                  <div
-                    className="h-full bg-primary/30 transition-[width] duration-100 ease-linear"
-                    style={{ width: `${progress * 100}%` }}
-                  />
-                </div>
-              )}
-            </AccordionItem>
-          ))}
-        </Accordion>
+            {/* Description */}
+            <p className="mt-3 max-w-md text-center text-sm leading-relaxed text-content">
+              {item.description}
+            </p>
+
+            {/* Visual */}
+            <div
+              className="relative mt-6 h-[20rem] w-full overflow-hidden rounded-lg"
+              style={{
+                maskImage: 'linear-gradient(to bottom, black 30%, transparent 85%)',
+                WebkitMaskImage: 'linear-gradient(to bottom, black 30%, transparent 85%)',
+              }}
+            >
+              {item.content}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

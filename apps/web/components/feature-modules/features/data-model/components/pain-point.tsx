@@ -9,8 +9,8 @@ export function PainPoint() {
       <div className="relative container mx-auto px-4 md:px-8">
         {/* Pain Copy */}
         <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          whileInView={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{
             duration: 0.7,
@@ -23,10 +23,10 @@ export function PainPoint() {
             <div className="text-left font-serif text-3xl leading-[0.95] text-content md:text-5xl">
               16 tabs, 6 dashboards, and a spreadsheet holding it all together.
             </div>
-            <p className="text-rightfont-mono max-w-2xl text-base leading-tight text-muted-foreground md:text-left md:text-lg">
-              Every tool owns a fragment. None of them talk. You end up as the integration
-              layer&thinsp;&mdash;&thinsp;copying, pasting, and context-switching until the picture
-              blurs. This is your data, and it should work for you, not the other way around.
+            <p className="max-w-2xl text-right font-mono text-base leading-tight text-muted-foreground md:text-left md:text-lg">
+              Every tool owns a fragment. None of them talk. Your team spends more time piecing
+              together data than using it to actually make decisions. <br />{' '}
+              <span className="font-bold text-primary">It's time for change.</span>
             </p>
           </div>
         </motion.div>

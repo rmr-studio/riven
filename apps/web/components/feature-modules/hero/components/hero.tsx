@@ -5,7 +5,7 @@ import { HeroCopy } from './hero-copy';
 export function Hero() {
   return (
     <Section
-      className="h-screen py-0! pt-20!"
+      className="h-screen w-full py-0! pt-20!"
       size={24}
       fill="color-mix(in srgb, var(--primary) 5%, transparent)"
       gridClassName="z-20"
@@ -16,7 +16,7 @@ export function Hero() {
           avif: 'images/city-skyline-hero.avif',
           webp: 'images/city-skyline-hero.webp',
         }}
-        className="h-[70svh]"
+        className="h-[70svh] opacity-40 md:opacity-70"
         alt="City skyline"
         preload
       />
