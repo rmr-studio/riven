@@ -136,13 +136,14 @@ export function TimeSaved() {
               <div className="col-span-2 flex flex-col justify-between border-l border-content/50 p-7 lg:flex-row lg:items-end lg:p-8">
                 <div>
                   <p className="mb-2 text-[0.8rem] tracking-wide text-secondary/70">
-                    As things add up
+                    Take back control
                   </p>
                   <p className="mb-3 text-lg font-medium tracking-tight text-secondary lg:text-xl">
-                    What disappears over time
+                    What you save
                   </p>
                   <p className="text-sm leading-relaxed tracking-normal text-secondary/50">
-                    Manual operational work caused by tools that don&apos;t talk to each other.
+                    Hours of manual work every week. The mental overhead of stitching together data,
+                    the anxiety of making decisions based on incomplete information.
                   </p>
                 </div>
                 <div className="mt-6 shrink-0 space-y-0.5 font-serif font-light tracking-tight lg:mt-0 lg:pl-8 lg:text-right">

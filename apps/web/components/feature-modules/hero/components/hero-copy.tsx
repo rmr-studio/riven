@@ -17,7 +17,7 @@ export const HeroCopy = () => {
           animate={{ height: 'auto', opacity: 1, filter: 'blur(0px)' }}
           transition={{ duration: 1.4, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
         >
-          <div className="text-heading/90">Your Tools </div>
+          <div className="text-heading/90">Your Tools. </div>
           <div className="italic">All Connected.</div>
         </motion.h2>
         <motion.h2
