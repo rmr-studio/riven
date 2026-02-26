@@ -5,11 +5,98 @@ import { useContainerScale } from '@/hooks/use-container-scale';
 import { TIMELINE_GRADIENT } from '@/lib/styles';
 import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
-import { BasketIcon, IntercomIcon, RadarIcon, ScalesIcon, StripeIcon, TableShieldIcon } from './icons';
+import {
+  BasketIcon,
+  CalendarIcon,
+  CompanyIcon,
+  IntercomIcon,
+  RadarIcon,
+  ScalesIcon,
+  StripeIcon,
+  TableShieldIcon,
+} from './icons';
+
+// ── Source Chip ──────────────────────────────────────────────────────────
+
+function SourceChip({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <div className="inline-flex items-center gap-[3px] rounded-[3px] border border-border/50 bg-card px-1 py-px">
+      {icon}
+      <span className="text-[5.5px] font-medium -tracking-[0.03em] text-muted-foreground">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+// ── Expand Arrow Icon ───────────────────────────────────────────────────
+
+function ExpandIcon() {
+  return (
+    <svg
+      width="10"
+      height="10"
+      viewBox="0 0 10 10"
+      fill="none"
+      className="flex-shrink-0 text-muted-foreground/40"
+    >
+      <path
+        d="M3.5 1.5H8.5V6.5"
+        stroke="currentColor"
+        strokeWidth="0.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8.5 1.5L1.5 8.5"
+        stroke="currentColor"
+        strokeWidth="0.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+// ── Collapsed Agent Card ────────────────────────────────────────────────
+
+function CollapsedAgent({
+  icon,
+  title,
+  description,
+  delay,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  delay: number;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.4, delay }}
+      className="flex flex-col rounded-lg border border-border/40 bg-muted/20 px-3 py-2.5"
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-1.5">
+          {icon}
+          <span className="text-[8px] font-semibold -tracking-[0.03em] text-foreground">
+            {title}
+          </span>
+        </div>
+        <ExpandIcon />
+      </div>
+      <p className="mt-1.5 text-[6.5px] leading-[1.5] -tracking-[0.03em] text-muted-foreground">
+        {description}
+      </p>
+    </motion.div>
+  );
+}
 
 // ── Main Component ──────────────────────────────────────────────────────
 
-const INTERNAL_WIDTH = 380;
+const INTERNAL_WIDTH = 480;
 
 export const SubAgentsDiagram = ({ className }: { className?: string }) => {
   const { containerRef, scale } = useContainerScale(INTERNAL_WIDTH);
@@ -26,164 +113,158 @@ export const SubAgentsDiagram = ({ className }: { className?: string }) => {
       >
         {/* ── Outer Card ── */}
         <div className="relative overflow-hidden rounded-xl border border-border bg-card shadow-lg">
-          <div className="relative space-y-2.5 p-4">
+          <div className="space-y-3 p-5">
             {/* ── Window Controls ── */}
-            <WindowControls size={5} />
+            <WindowControls size={6} />
 
-            {/* ── Collapsed Agent Rows ── */}
+            {/* ── Header ── */}
             <motion.div
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.1 }}
+              transition={{ duration: 0.4, delay: 0.05 }}
             >
-              <div className="flex items-center gap-2 py-1.5">
-                <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className="flex-shrink-0 text-muted-foreground/60">
-                  <path d="M3 2L5.5 4L3 6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <ScalesIcon />
-                <span className="text-[9px] font-semibold -tracking-[0.05em] text-foreground">
-                  Cost-to-revenue ratio monitor
-                </span>
-              </div>
-              <div className="border-b border-border/40" />
-              <div className="flex items-center gap-2 py-1.5">
-                <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className="flex-shrink-0 text-muted-foreground/60">
-                  <path d="M3 2L5.5 4L3 6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <RadarIcon />
-                <span className="text-[9px] font-semibold -tracking-[0.05em] text-foreground">
-                  Deal momentum tracker
-                </span>
-              </div>
-              <div className="border-b border-border/40" />
-              <div className="flex items-center gap-2 py-1.5">
-                <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className="flex-shrink-0 text-muted-foreground/60">
-                  <path d="M3 2L5.5 4L3 6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <TableShieldIcon />
-                <span className="text-[9px] font-semibold -tracking-[0.05em] text-foreground">
-                  Revenue leakage detector
-                </span>
-              </div>
-            </motion.div>
-
-            {/* ── Expanded Agent Header ── */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.2 }}
-              className="space-y-1 rounded-lg bg-muted/30 px-2.5 py-2 shadow-[inset_0_1px_3px_rgba(0,0,0,0.08)]"
-            >
-              <div className="flex items-center gap-2">
-                <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className="flex-shrink-0 text-muted-foreground/60">
-                  <path d="M2 3L4 5.5L6 3" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <BasketIcon />
-                <span className="text-[10px] font-semibold -tracking-[0.05em] text-foreground">
-                  Post-Purchase Dropout Monitor
-                </span>
-              </div>
-              <p className="text-[7px] -tracking-[0.05em] text-muted-foreground">
-                Customers inactive for 14+ days after first purchase
-              </p>
-              <p className="text-[8px] -tracking-[0.05em] text-foreground">
-                <span className="font-semibold">3 </span>
-                <span className="font-medium text-muted-foreground">customers matched in the</span>
-                <span className="font-semibold"> last 7 days</span>
+              <h3 className="text-[11px] font-semibold -tracking-[0.04em] text-foreground">
+                Active Agents
+              </h3>
+              <p className="mt-0.5 text-[7px] -tracking-[0.03em] text-muted-foreground">
+                4 agents monitoring your data continuously
               </p>
             </motion.div>
 
-            {/* ── Entity Row ── */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.3 }}
-              className="flex items-center gap-1.5"
-            >
-              <span className="text-[9px] font-semibold -tracking-[0.05em] text-foreground">
-                Meridian Labs
-              </span>
-              <span className="rounded-xs border border-border bg-card px-1 py-px text-[6px] font-medium -tracking-[0.05em] text-muted-foreground">
-                Enterprise
-              </span>
-              <span className="rounded-xs border border-border bg-card px-1 py-px text-[6px] font-medium -tracking-[0.05em] text-muted-foreground">
-                $32k MRR
-              </span>
-            </motion.div>
-
-            {/* ── Timeline ── */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.4 }}
-              className="relative pl-2.5"
-            >
-              {/* Timeline glow */}
-              <div
-                className="absolute left-[2px] top-0 bottom-0 w-[3px] opacity-60"
-                style={{
-                  background:
-                    TIMELINE_GRADIENT,
-                  filter: 'blur(4px)',
-                }}
+            {/* ── Collapsed Agent Grid ── */}
+            <div className="grid grid-cols-3 gap-2">
+              <CollapsedAgent
+                icon={<ScalesIcon />}
+                title="Cost-to-revenue ratio"
+                description="Flags accounts where cost of service exceeds revenue thresholds"
+                delay={0.1}
               />
-              {/* Timeline line */}
-              <div
-                className="absolute left-[3px] top-0 bottom-0 w-[1.5px]"
-                style={{
-                  background:
-                    TIMELINE_GRADIENT,
-                }}
+              <CollapsedAgent
+                icon={<RadarIcon />}
+                title="Deal momentum"
+                description="Tracks deal velocity and flags stalling opportunities"
+                delay={0.15}
               />
+              <CollapsedAgent
+                icon={<TableShieldIcon />}
+                title="Revenue leakage"
+                description="Detects billing gaps, failed charges, and missed renewals"
+                delay={0.2}
+              />
+            </div>
 
-              <div className="space-y-2 pl-3">
-                {/* Day 1 */}
+            {/* ── Expanded Agent ── */}
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.25 }}
+              className="rounded-lg border border-border/40 bg-muted/20"
+            >
+              {/* Agent Header */}
+              <div className="space-y-1 px-4 pt-3 pb-2">
+                <div className="flex items-center gap-2">
+                  <BasketIcon />
+                  <span className="text-[10px] font-semibold -tracking-[0.04em] text-foreground">
+                    Post-Purchase Dropout Monitor
+                  </span>
+                </div>
+                <p className="text-[7px] -tracking-[0.03em] text-muted-foreground">
+                  Customers inactive for 14+ days after first purchase
+                </p>
+                <p className="text-[8px] -tracking-[0.03em] text-foreground">
+                  <span className="font-semibold">3 </span>
+                  <span className="text-muted-foreground">customers matched in the</span>
+                  <span className="font-semibold"> last 7 days</span>
+                </p>
+              </div>
+
+              {/* Divider */}
+              <div className="mx-4 border-t border-border/30" />
+
+              {/* Entity + Detail */}
+              <div className="space-y-2.5 px-4 pt-2.5 pb-3">
+                {/* Entity Row */}
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[6px] font-semibold -tracking-[0.05em] text-muted-foreground">
-                    Day 1
+                  <span className="text-[9px] font-semibold -tracking-[0.03em] text-foreground">
+                    Meridian Labs
                   </span>
-                  <span className="text-[7px] -tracking-[0.05em] text-foreground">
-                    First purchase
+                  <span className="rounded-[3px] border border-border/50 bg-card px-1 py-px text-[6px] font-medium -tracking-[0.03em] text-muted-foreground">
+                    Enterprise
                   </span>
-                  <div className="flex items-center gap-1 rounded-xs border border-border px-1.5 py-0.5">
-                    <StripeIcon size={8} />
-                    <span className="text-[6px] font-semibold -tracking-[0.05em] text-foreground">
-                      Stripe Purchase
-                    </span>
-                    <span className="text-[6px] -tracking-[0.05em] text-muted-foreground">
-                      $720
-                    </span>
+                  <span className="rounded-[3px] border border-border/50 bg-card px-1 py-px text-[6px] font-medium -tracking-[0.03em] text-muted-foreground">
+                    $32k MRR
+                  </span>
+                </div>
+
+                {/* Timeline */}
+                <div className="relative pl-2.5">
+                  {/* Timeline glow */}
+                  <div
+                    className="absolute top-0 bottom-0 left-[2px] w-[3px] opacity-60"
+                    style={{ background: TIMELINE_GRADIENT, filter: 'blur(4px)' }}
+                  />
+                  {/* Timeline line */}
+                  <div
+                    className="absolute top-0 bottom-0 left-[3px] w-[1.5px]"
+                    style={{ background: TIMELINE_GRADIENT }}
+                  />
+
+                  <div className="space-y-2 pl-3">
+                    {/* Day 1 */}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[6px] font-semibold -tracking-[0.03em] text-muted-foreground">
+                        Day 1
+                      </span>
+                      <span className="text-[7px] -tracking-[0.03em] text-foreground">
+                        First purchase
+                      </span>
+                      <SourceChip
+                        icon={<StripeIcon size={8} />}
+                        label="Stripe Purchase — $720"
+                      />
+                    </div>
+
+                    {/* Day 3 */}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[6px] font-semibold -tracking-[0.03em] text-muted-foreground">
+                        Day 3
+                      </span>
+                      <span className="text-[7px] -tracking-[0.03em] text-foreground">
+                        Support ticket raised
+                      </span>
+                      <SourceChip
+                        icon={<IntercomIcon size={8} />}
+                        label="OAuth token refresh failing"
+                      />
+                    </div>
+
+                    {/* Day 14 */}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[6px] font-semibold -tracking-[0.03em] text-muted-foreground">
+                        Day 14
+                      </span>
+                      <span className="text-[7px] -tracking-[0.03em] text-foreground">
+                        No activity since
+                      </span>
+                      <SourceChip
+                        icon={<CompanyIcon size={8} />}
+                        label="Last login 14 days ago"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                {/* Day 3 */}
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[6px] font-semibold -tracking-[0.05em] text-muted-foreground">
-                    Day 3
+                {/* Sources used */}
+                <div className="flex items-center gap-1.5 pt-0.5">
+                  <span className="text-[6px] font-medium -tracking-[0.03em] text-muted-foreground/60">
+                    Sources:
                   </span>
-                  <span className="text-[7px] -tracking-[0.05em] text-foreground">
-                    Support ticket raised
-                  </span>
-                  <div className="flex items-center gap-1 rounded-xs border border-border px-1.5 py-0.5">
-                    <IntercomIcon size={8} />
-                    <span className="text-[6px] font-semibold -tracking-[0.05em] text-foreground">
-                      Support Ticket
-                    </span>
-                    <span className="text-[6px] -tracking-[0.05em] text-muted-foreground">
-                      OAuth token refresh failing
-                    </span>
-                  </div>
-                </div>
-
-                {/* Day 7 (clipped) */}
-                <div className="overflow-hidden h-[8px]">
-                  <span className="text-[6px] font-semibold -tracking-[0.05em] text-muted-foreground">
-                    Day 7
-                  </span>
+                  <SourceChip icon={<StripeIcon size={7} />} label="Invoices" />
+                  <SourceChip icon={<IntercomIcon size={7} />} label="Support Tickets" />
+                  <SourceChip icon={<CompanyIcon size={7} />} label="Usage Data" />
+                  <SourceChip icon={<CalendarIcon size={7} />} label="Subscriptions" />
                 </div>
               </div>
             </motion.div>

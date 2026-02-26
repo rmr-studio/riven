@@ -8,66 +8,64 @@ import Link from 'next/link';
 
 export const HeroCopy = () => {
   return (
-    <div className="relative z-10 flex h-[calc(100svh-6rem)] w-full flex-col justify-between px-6 sm:px-10 lg:px-16">
-      {/* Top-left headline */}
-      <motion.div
-        className="pt-4 sm:pt-8"
-        initial={{ opacity: 0, x: -60 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <h1 className="max-w-4xl font-serif text-5xl leading-[0.95] tracking-tight text-heading sm:text-7xl md:text-8xl">
-          Your tools can only
-          <br />
-          <span className="italic">look at one piece.</span>
-        </h1>
-      </motion.div>
+    <div className="relative z-10 flex h-[calc(100svh-6rem)] w-full flex-col justify-between px-6 pb-6 sm:px-10 md:items-end md:justify-end md:pb-24 lg:px-16">
+      {/* Headings — grouped together */}
+      <div className="mt-24 md:mt-0 md:contents">
+        <motion.h2
+          className="mb-4 flex flex-col overflow-hidden font-serif text-[2.5rem] leading-[0.85] tracking-tighter sm:text-7xl md:flex-row md:gap-4 md:text-right md:text-[5rem] lg:gap-8 lg:text-[5.75rem] xl:text-[7rem]"
+          initial={{ height: 0, opacity: 0, filter: 'blur(12px)' }}
+          animate={{ height: 'auto', opacity: 1, filter: 'blur(0px)' }}
+          transition={{ duration: 1.4, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className="text-heading/90">Your Tools </div>
+          <div className="italic">All Connected.</div>
+        </motion.h2>
+        <motion.h2
+          className="mb-4 flex flex-col overflow-hidden text-end font-serif text-[2.5rem] leading-[0.85] tracking-tighter sm:text-7xl md:flex-row md:gap-4 lg:gap-8 lg:text-[5.75rem] xl:text-[7rem]"
+          initial={{ height: 0, opacity: 0, filter: 'blur(12px)' }}
+          animate={{ height: 'auto', opacity: 1, filter: 'blur(0px)' }}
+          transition={{ duration: 2, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className="text-heading/90">Your Business.</div>
+          <div className="italic">One Platform.</div>
+        </motion.h2>
+      </div>
 
-      {/* Bottom section: copy left, headline + CTAs right */}
-      <motion.div
-        className="flex flex-col gap-8 pb-8 sm:pb-12"
-        initial={{ opacity: 0, x: 60 }}
+      <motion.section
+        initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.9, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 1.4, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        className="relative mt-4 flex flex-col items-end"
       >
-        {/* Bottom-right: second headline + CTAs */}
-        <div className="flex flex-col md:items-end">
-          <h2 className="mb-4 font-serif text-[3rem] leading-[0.85] tracking-tight text-heading sm:text-7xl md:text-right md:text-8xl lg:text-9xl">
-            Riven sees
-            <br />
-            <span className="italic">the bigger picture.</span>
-          </h2>
-          {/* Bottom-left: description */}
-          <div className="mt-2 leading-tight font-bold tracking-tighter text-primary/90 italic md:text-right md:text-xl lg:pb-1">
-            AI powered data platform enabling cross-domain intelligence for scaling consumer-facing
-            businesses.
-          </div>
-
-          {/* CTA buttons */}
-          <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:items-center lg:gap-4">
-            <Link
-              href="/#waitlist"
-              onClick={(e) => {
-                e.preventDefault();
-                scrollToSection('waitlist');
-              }}
-            >
-              <CtaButton>Join the waitlist</CtaButton>
-            </Link>
-            <Link
-              href="/#features"
-              onClick={(e) => {
-                e.preventDefault();
-                scrollToSection('features');
-              }}
-              className="inline-flex items-center gap-1.5 px-4 py-1 font-mono text-sm tracking-wide text-muted-foreground transition-colors hover:text-foreground md:gap-2 md:px-5 md:text-sm"
-            >
-              Learn More
-              <ChevronDown className="h-4 w-4 md:h-5 md:w-5" />
-            </Link>
-          </div>
+        {/* Bottom-left: description */}
+        <div className="mt-2 text-[0.95rem] leading-tight tracking-tighter text-primary/90 italic md:text-right md:text-xl lg:pb-1">
+          Riven's AI powered data platform unifies your tools and enables true cross-domain
+          intelligence. <br />
+          <span className="font-bold">All in one collaborative workspace.</span>
         </div>
-      </motion.div>
+        <div className="mt-6 flex flex-col items-end gap-3 sm:mt-8 sm:flex-row sm:items-center md:mb-0 lg:gap-4">
+          <Link
+            href="/#waitlist"
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToSection('waitlist');
+            }}
+          >
+            <CtaButton className="w-full">Join the waitlist</CtaButton>
+          </Link>
+          <Link
+            href="/#features"
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToSection('features');
+            }}
+            className="inline-flex items-center gap-1.5 px-4 py-1 font-mono text-sm tracking-wide text-muted-foreground transition-colors hover:text-foreground md:gap-2 md:px-5 md:text-sm"
+          >
+            Learn More
+            <ChevronDown className="h-4 w-4 md:h-5 md:w-5" />
+          </Link>
+        </div>
+      </motion.section>
     </div>
   );
 };
