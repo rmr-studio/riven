@@ -2,6 +2,7 @@
 
 import { LinkProps, NavbarProps } from '@/lib/interface';
 
+import { scrollToSection } from '@/lib/scroll';
 import { Logo } from '@riven/ui/logo';
 import { Github, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -182,9 +183,33 @@ const LinkSection: FC<NavbarMenuProps> = ({ links, toggle }) => {
             );
           })}
         </motion.div>
-        <div className="flex h-auto w-full grow px-12">
-          <CtaButton size="sm">Join the waitlist</CtaButton>
-        </div>
+        <motion.div
+          initial={{
+            opacity: 0,
+          }}
+          animate={{
+            opacity: 1,
+            transition: {
+              delay: 0.4,
+            },
+          }}
+          exit={{
+            opacity: 0,
+            transition: {},
+          }}
+          className="flex h-auto w-full grow px-12"
+        >
+          <Link
+            href="/#waitlist"
+            onClick={(e) => {
+              e.preventDefault();
+              toggle(false);
+              scrollToSection('waitlist');
+            }}
+          >
+            <CtaButton size="sm">Join the waitlist</CtaButton>
+          </Link>
+        </motion.div>
       </motion.aside>
     </motion.div>
   );
