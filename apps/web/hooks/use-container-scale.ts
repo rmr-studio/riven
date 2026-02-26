@@ -8,7 +8,7 @@ export function useContainerScale(internalWidth: number) {
     const el = containerRef.current;
     if (!el) return;
     const obs = new ResizeObserver(([entry]) => {
-      setScale(entry.contentRect.width / internalWidth);
+      setScale(Math.min(1, entry.contentRect.width / internalWidth));
     });
     obs.observe(el);
     return () => obs.disconnect();

@@ -3,9 +3,10 @@
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AnimateOnMountContext } from '../data-model/components/graphic/animate-context';
 import { FEATURE_CONTENT } from '../knowledge/config/accordion-content';
 
-const AUTO_ADVANCE_MS = 10000;
+const AUTO_ADVANCE_MS = 10000000;
 const INTERACTION_PAUSE_MS = 3000;
 
 export const VisualAccordionSection = () => {
@@ -43,7 +44,7 @@ export const VisualAccordionSection = () => {
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 md:px-6 lg:px-10">
+    <div className="mx-auto w-full px-4 md:px-18">
       {/* Desktop: item list left, visual right */}
       <div className="hidden lg:grid lg:grid-cols-2 lg:items-center lg:gap-12">
         {/* Left: Item selector list */}
@@ -98,15 +99,15 @@ export const VisualAccordionSection = () => {
         </div>
 
         {/* Right: Visual panel */}
-        <div className="relative my-4 flex items-center justify-center">
+        <div className="relative my-4 flex items-start justify-center">
           <div
-            className="relative h-[40rem] w-full overflow-hidden rounded-xl"
+            className="relative h-180 w-full overflow-hidden rounded-xl"
             style={{
               maskImage:
-                'linear-gradient(to right, transparent, black 10%, black 75%, transparent), linear-gradient(to bottom, black 60%, transparent)',
+                'linear-gradient(to right, transparent, black 10%, black 75%, transparent), linear-gradient(to bottom, black 0%, black 95%, transparent)',
               maskComposite: 'intersect',
               WebkitMaskImage:
-                'linear-gradient(to right, transparent, black 10%, black 75%, transparent), linear-gradient(to bottom, black 60%, transparent)',
+                'linear-gradient(to right, transparent, black 10%, black 75%, transparent), linear-gradient(to bottom, black 0%, black 95%, transparent)',
               WebkitMaskComposite: 'source-in',
             }}
           >
@@ -117,7 +118,7 @@ export const VisualAccordionSection = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12 }}
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
-                className="-mt-16 flex h-full items-center"
+                className="flex h-full items-center pt-4"
               >
                 {FEATURE_CONTENT[activeIndex]?.content}
               </motion.div>
@@ -131,22 +132,31 @@ export const VisualAccordionSection = () => {
         {FEATURE_CONTENT.map((item, index) => (
           <div key={index} className="flex flex-col items-center">
             {/* Title */}
-            <div className="text-center text-2xl font-medium text-heading">{item.title}</div>
+            <div className="mx-auto max-w-7xl text-center text-2xl font-medium text-heading">
+              {item.title}
+            </div>
 
             {/* Description */}
-            <p className="mt-3 max-w-md text-center text-sm leading-relaxed text-content">
+            <p className="mx-auto mt-3 max-w-7xl text-center text-sm leading-relaxed text-content ">
               {item.description}
             </p>
 
-            {/* Visual */}
+            {/* Visual — animate-on-mount bypasses unreliable IntersectionObserver
+                for SVG elements inside overflow-hidden containers on mobile */}
             <div
-              className="relative mt-6 h-[20rem] w-full overflow-hidden rounded-lg"
+              className="relative mx-auto mt-6 w-full max-w-2xl overflow-hidden rounded-lg min-h-[400px] sm:min-h-[500px]"
               style={{
-                maskImage: 'linear-gradient(to bottom, black 30%, transparent 85%)',
-                WebkitMaskImage: 'linear-gradient(to bottom, black 30%, transparent 85%)',
+                maskImage:
+                  'linear-gradient(to right, black 85%, transparent), linear-gradient(to bottom, black 30%, transparent 120%)',
+                maskComposite: 'intersect',
+                WebkitMaskImage:
+                  'linear-gradient(to right, black 85%, transparent), linear-gradient(to bottom, black 30%, transparent 120%)',
+                WebkitMaskComposite: 'source-in',
               }}
             >
-              {item.content}
+              <AnimateOnMountContext.Provider value={true}>
+                {item.content}
+              </AnimateOnMountContext.Provider>
             </div>
           </div>
         ))}

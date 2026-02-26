@@ -8,27 +8,28 @@ import Link from 'next/link';
 
 export const HeroCopy = () => {
   return (
-    <div className="relative z-10 flex h-[calc(100svh-6rem)] w-full flex-col justify-between px-6 sm:px-10 md:items-end md:justify-end md:pb-24 lg:px-16">
-      {/* Bottom-right: second headline + CTAs */}
-
-      <motion.h2
-        className="mb-4 flex flex-col overflow-hidden font-serif text-[2.5rem] leading-[0.85] tracking-tighter sm:text-7xl md:flex-row md:gap-4 md:text-right md:text-[5rem] lg:gap-8 lg:text-[5.75rem] xl:text-[7rem]"
-        initial={{ height: 0, opacity: 0, filter: 'blur(12px)' }}
-        animate={{ height: 'auto', opacity: 1, filter: 'blur(0px)' }}
-        transition={{ duration: 1.4, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <div className="text-heading/90">Your Tools </div>
-        <div className="italic">All Connected.</div>
-      </motion.h2>
-      <motion.h2
-        className="mb-4 flex flex-col overflow-hidden text-end font-serif text-[2.5rem] leading-[0.85] tracking-tighter sm:text-7xl md:flex-row md:gap-4 lg:gap-8 lg:text-[5.75rem] xl:text-[7rem]"
-        initial={{ height: 0, opacity: 0, filter: 'blur(12px)' }}
-        animate={{ height: 'auto', opacity: 1, filter: 'blur(0px)' }}
-        transition={{ duration: 2, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <div className="text-heading/90">Your Business.</div>
-        <div className="italic">One Platform.</div>
-      </motion.h2>
+    <div className="relative z-10 flex h-[calc(100svh-6rem)] w-full flex-col justify-between px-6 pb-6 sm:px-10 md:items-end md:justify-end md:pb-24 lg:px-16">
+      {/* Headings — grouped together */}
+      <div className="mt-24 md:mt-0 md:contents">
+        <motion.h2
+          className="mb-4 flex flex-col overflow-hidden font-serif text-[2.5rem] leading-[0.85] tracking-tighter sm:text-7xl md:flex-row md:gap-4 md:text-right md:text-[5rem] lg:gap-8 lg:text-[5.75rem] xl:text-[7rem]"
+          initial={{ height: 0, opacity: 0, filter: 'blur(12px)' }}
+          animate={{ height: 'auto', opacity: 1, filter: 'blur(0px)' }}
+          transition={{ duration: 1.4, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className="text-heading/90">Your Tools </div>
+          <div className="italic">All Connected.</div>
+        </motion.h2>
+        <motion.h2
+          className="mb-4 flex flex-col overflow-hidden text-end font-serif text-[2.5rem] leading-[0.85] tracking-tighter sm:text-7xl md:flex-row md:gap-4 lg:gap-8 lg:text-[5.75rem] xl:text-[7rem]"
+          initial={{ height: 0, opacity: 0, filter: 'blur(12px)' }}
+          animate={{ height: 'auto', opacity: 1, filter: 'blur(0px)' }}
+          transition={{ duration: 2, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className="text-heading/90">Your Business.</div>
+          <div className="italic">One Platform.</div>
+        </motion.h2>
+      </div>
 
       <motion.section
         initial={{ opacity: 0, x: 20 }}
@@ -42,7 +43,7 @@ export const HeroCopy = () => {
           intelligence. <br />
           <span className="font-bold">All in one collaborative workspace.</span>
         </div>
-        <div className="mt-6 mb-8 flex flex-col items-end gap-3 sm:mt-8 sm:flex-row sm:items-center md:mb-0 lg:gap-4">
+        <div className="mt-6 flex flex-col items-end gap-3 sm:mt-8 sm:flex-row sm:items-center md:mb-0 lg:gap-4">
           <Link
             href="/#waitlist"
             onClick={(e) => {

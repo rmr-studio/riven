@@ -16,7 +16,7 @@ export function Hero() {
           avif: 'images/city-skyline-hero.avif',
           webp: 'images/city-skyline-hero.webp',
         }}
-        className="h-[70svh] opacity-40 md:opacity-70"
+        className="h-[50svh] opacity-40 md:h-[70svh] md:opacity-70"
         alt="City skyline"
         preload
       />

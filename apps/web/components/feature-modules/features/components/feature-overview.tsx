@@ -4,7 +4,7 @@ import { VisualAccordionSection } from './feature-accordion';
 export const FeaturesOverview = () => {
   return (
     <Section id="features">
-      <section className="mx-auto mb-12 flex max-w-7xl flex-col gap-8 px-6 text-center font-serif text-3xl leading-[1.1] font-normal tracking-tight text-content/65 md:px-0 md:text-4xl lg:text-5xl">
+      <section className="mb-12 flex max-w-7xl flex-col gap-8 px-6 text-center font-serif text-3xl leading-[1.1] font-normal tracking-tight text-content/65 sm:mx-8 md:px-0 md:text-4xl lg:text-5xl">
         <article>
           <span className="text-primary italic">A true focus on structural freedom.</span>{' '}
           <span className="text-content/65">
