@@ -26,13 +26,13 @@ function EntityChips({ entities }: { entities: InsightCard['entities'] }) {
           className="flex shrink-0 items-center gap-1.5 rounded-md border border-border/60 bg-muted/40 px-2.5 py-1"
         >
           {entity.icon}
-          <span className="whitespace-nowrap text-xs font-medium -tracking-[0.02em] text-muted-foreground">
+          <span className="text-xs font-medium -tracking-[0.02em] whitespace-nowrap text-muted-foreground">
             {entity.label}
           </span>
         </div>
       ))}
       {remaining > 0 && (
-        <span className="shrink-0 whitespace-nowrap text-xs -tracking-[0.02em] text-muted-foreground/60">
+        <span className="shrink-0 text-xs -tracking-[0.02em] whitespace-nowrap text-muted-foreground/60">
           +{remaining} more
         </span>
       )}
@@ -96,7 +96,7 @@ export function CrossDomainCarousel() {
 
     intervalRef.current = setInterval(() => {
       api.scrollNext();
-    }, 5000);
+    }, 10000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -141,7 +141,7 @@ export function CrossDomainCarousel() {
         }}
         className="w-full"
       >
-        <CarouselContent className="-ml-4 md:-ml-6">
+        <CarouselContent className="-ml-4 pb-4 md:-ml-6">
           {INSIGHT_CARDS.map((card) => (
             <CarouselItem
               key={card.title}
