@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimateOnMountContext } from '../data-model/components/graphic/animate-context';
 import { FEATURE_CONTENT } from '../knowledge/config/accordion-content';
 
-const AUTO_ADVANCE_MS = 10000000;
+const AUTO_ADVANCE_MS = 200000;
 const INTERACTION_PAUSE_MS = 3000;
 
 export const VisualAccordionSection = () => {
@@ -99,7 +99,7 @@ export const VisualAccordionSection = () => {
         </div>
 
         {/* Right: Visual panel */}
-        <div className="relative my-4 flex items-start justify-center">
+        <div className="relative my-4 flex items-end justify-center">
           <div
             className="relative h-180 w-full overflow-hidden rounded-xl"
             style={{
@@ -137,14 +137,14 @@ export const VisualAccordionSection = () => {
             </div>
 
             {/* Description */}
-            <p className="mx-auto mt-3 max-w-7xl text-center text-sm leading-relaxed text-content ">
+            <p className="mx-auto mt-3 max-w-7xl text-center text-sm leading-relaxed text-content">
               {item.description}
             </p>
 
             {/* Visual — animate-on-mount bypasses unreliable IntersectionObserver
                 for SVG elements inside overflow-hidden containers on mobile */}
             <div
-              className="relative mx-auto mt-6 w-full max-w-2xl overflow-hidden rounded-lg min-h-[400px] sm:min-h-[500px]"
+              className="relative mx-auto mt-6 min-h-[400px] w-full max-w-2xl overflow-hidden rounded-lg sm:min-h-[500px]"
               style={{
                 maskImage:
                   'linear-gradient(to right, black 85%, transparent), linear-gradient(to bottom, black 30%, transparent 120%)',

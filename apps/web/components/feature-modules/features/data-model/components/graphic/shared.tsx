@@ -16,6 +16,38 @@ export function GlowEdgePaths({
   gradientId: string;
 }) {
   const onMount = useAnimateOnMount();
+
+  // On mobile (onMount), render plain <path> elements — framer-motion's pathLength
+  // animation and even simple opacity animation on SVG paths is unreliable in
+  // mobile Safari inside overflow-hidden containers.
+  if (onMount) {
+    return (
+      <>
+        <g filter={`url(#${glowFilterId})`}>
+          {edgePaths.map((edge) => (
+            <path
+              key={`glow-${edge.d}`}
+              d={edge.d}
+              fill="none"
+              stroke={`url(#${gradientId})`}
+              strokeWidth="2.5"
+              opacity="0.6"
+            />
+          ))}
+        </g>
+        {edgePaths.map((edge) => (
+          <path
+            key={`crisp-${edge.d}`}
+            d={edge.d}
+            fill="none"
+            stroke={`url(#${gradientId})`}
+            strokeWidth="1.5"
+          />
+        ))}
+      </>
+    );
+  }
+
   return (
     <>
       {/* Glow layer */}

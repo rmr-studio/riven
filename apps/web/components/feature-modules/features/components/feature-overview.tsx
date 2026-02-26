@@ -3,23 +3,25 @@ import { VisualAccordionSection } from './feature-accordion';
 
 export const FeaturesOverview = () => {
   return (
-    <Section id="features">
-      <section className="mb-12 flex max-w-7xl flex-col gap-8 px-6 text-center font-serif text-3xl leading-[1.1] font-normal tracking-tight text-content/65 sm:mx-8 md:px-0 md:text-4xl lg:text-5xl">
-        <article>
+    <Section className="pb-0!">
+      <section className="mx-auto mb-12 flex max-w-xl flex-col gap-8 text-center font-serif text-3xl leading-[1.1] font-normal tracking-tight text-content/65 md:max-w-4xl md:px-0 md:text-4xl lg:max-w-5xl lg:text-5xl xl:max-w-7xl">
+        <article className="px-8">
           <span className="text-primary italic">A true focus on structural freedom.</span>{' '}
           <span className="text-content/65">
             Our data models and relationships adapt to how you work, not the other way around.
             Because your business is unique, so your platform should be too.
           </span>
         </article>
-        <article>
+        <article className="px-8">
           All unified within an <span className="text-primary">AI powered knowledge base. </span>
           Providing you with reasoning and insights across your entire business, not just one corner
           of it.
         </article>
       </section>
 
-      <VisualAccordionSection />
+      <article id="features">
+        <VisualAccordionSection />
+      </article>
     </Section>
   );
 };

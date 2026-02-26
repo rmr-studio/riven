@@ -1,5 +1,10 @@
 'use client';
 
+import {
+  HubspotIcon,
+  IntercomIcon,
+  StripeIcon,
+} from '@/components/feature-modules/cross-domain-intelligence/icons';
 import { WindowControls } from '@/components/ui/window-controls';
 import { useContainerScale } from '@/hooks/use-container-scale';
 import { cn } from '@/lib/utils';
@@ -10,7 +15,7 @@ import { motion } from 'motion/react';
 function EntityIcon({ color, children }: { color: string; children: React.ReactNode }) {
   return (
     <div
-      className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-[4px]"
+      className="flex h-[11px] w-[11px] flex-shrink-0 items-center justify-center rounded-[2.5px]"
       style={{ backgroundColor: color }}
     >
       {children}
@@ -22,7 +27,7 @@ function EntityIcon({ color, children }: { color: string; children: React.ReactN
 
 function PersonSvg() {
   return (
-    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+    <svg width="6" height="6" viewBox="0 0 10 10" fill="none">
       <path
         d="M5 2.5C5.83 2.5 6.5 3.17 6.5 4C6.5 4.83 5.83 5.5 5 5.5C4.17 5.5 3.5 4.83 3.5 4C3.5 3.17 4.17 2.5 5 2.5ZM5 6.25C6.66 6.25 8 6.92 8 7.75V8.25H2V7.75C2 6.92 3.34 6.25 5 6.25Z"
         fill="white"
@@ -105,9 +110,7 @@ export const EntityLinkingDiagram = ({ className }: { className?: string }) => {
               className="rounded-lg border border-border/40 bg-muted/20 px-4 py-3"
             >
               <div className="flex items-center gap-2">
-                <EntityIcon color="#E8913A">
-                  <PersonSvg />
-                </EntityIcon>
+                <HubspotIcon />
                 <span className="text-[11px] font-semibold -tracking-[0.04em] text-foreground">
                   HubSpot Contact
                 </span>
@@ -145,29 +148,14 @@ export const EntityLinkingDiagram = ({ className }: { className?: string }) => {
                 delay={0.25}
               />
               <ConnectedEntity
-                icon={
-                  <EntityIcon color="rgba(197,137,208,0.8)">
-                    <PersonSvg />
-                  </EntityIcon>
-                }
+                icon={<IntercomIcon />}
                 name="Support Ticket"
                 count="912"
                 connectionField="username"
                 delay={0.3}
               />
               <ConnectedEntity
-                icon={
-                  <EntityIcon color="#635BFF">
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                      <path
-                        d="M5 3C6.1 3 7 3.9 7 5C7 6.1 6.1 7 5 7C3.9 7 3 6.1 3 5C3 3.9 3.9 3 5 3ZM3.75 4.75H6.25M5 3.5V6.5"
-                        stroke="white"
-                        strokeWidth="0.8"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </EntityIcon>
-                }
+                icon={<StripeIcon />}
                 name="Invoice"
                 count="1,204"
                 connectionField="customer_id"
@@ -180,7 +168,7 @@ export const EntityLinkingDiagram = ({ className }: { className?: string }) => {
               <ConnectedEntity
                 icon={
                   <EntityIcon color="rgba(123,197,195,0.8)">
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <svg width="6" height="6" viewBox="0 0 10 10" fill="none">
                       <path
                         d="M6.5 3.5C7.06 3.68 7.46 4.14 7.52 4.69C7.57 5.24 7.26 5.76 6.77 5.99L6.18 7.25C6.14 7.33 6.05 7.38 5.97 7.35C5.88 7.33 5.83 7.25 5.83 7.17V6H5.63C5.28 6 5 5.72 5 5.42V4.08C5 3.78 5.28 3.5 5.63 3.5H6.5ZM8.42 3.5C8.72 3.5 9 3.78 9 4.08V5.42C9 5.72 8.72 6 8.42 6H8V4.69C7.98 4.39 7.87 4.11 7.69 3.89C7.66 3.85 7.63 3.82 7.58 3.79V3.5H8.42Z"
                         fill="white"
