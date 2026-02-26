@@ -4,7 +4,7 @@ tags:
   - layer/service
   - architecture/component
 Created: 2026-02-08
-Updated: 2026-02-08
+Updated: 2026-02-21
 Domains:
   - "[[Entities]]"
 ---
@@ -78,9 +78,9 @@ class RelationshipSqlGenerator
 
 ### Key Methods
 
-#### `generate(relationshipId: UUID, condition: RelationshipFilter, paramGen: ParameterNameGenerator, entityAlias: String = "e", nestedFilterVisitor: ((QueryFilter, ParameterNameGenerator, String) -> SqlFragment)? = null): SqlFragment`
+#### `generate(relationshipId: UUID, condition: RelationshipFilter, paramGen: ParameterNameGenerator, entityAlias: String = "e", direction: QueryDirection = QueryDirection.FORWARD, nestedFilterVisitor: ((QueryFilter, ParameterNameGenerator, String) -> SqlFragment)? = null): SqlFragment`
 
-- **Purpose:** Generates a SQL fragment for filtering by a relationship condition
+- **Purpose:** Generates a SQL fragment for filtering by a relationship condition, with support for both FORWARD (entity is source) and INVERSE (entity is target) traversal directions
 - **When to use:** For each relationship filter in a filter tree
 - **Side effects:** Increments paramGen counter for aliases and parameters (pure function otherwise)
 - **Throws:**
@@ -90,10 +90,11 @@ class RelationshipSqlGenerator
 - **Returns:** SqlFragment with parameterized EXISTS/NOT EXISTS subquery SQL and bound values
 
 **Parameters:**
-- `relationshipId`: UUID of the relationship definition (maps to `relationship_field_id` column)
+- `relationshipId`: UUID of the relationship definition (maps to `relationship_definition_id` column)
 - `condition`: RelationshipFilter variant (Exists, NotExists, TargetEquals, TargetMatches, TargetTypeMatches)
 - `paramGen`: Generator for unique parameter names and table aliases (shared across query tree)
 - `entityAlias`: Table alias for the entity being filtered (default "e" for root entity, "t_N" for nested)
+- `direction`: Query direction — FORWARD correlates on `source_entity_id`, INVERSE correlates on `target_entity_id`. Caller resolves based on whether queried entity type is source or target. Default is FORWARD.
 - `nestedFilterVisitor`: Optional lambda for processing nested filters inside TargetMatches/TargetTypeMatches
   - Signature: `(filter: QueryFilter, paramGen: ParameterNameGenerator, entityAlias: String) -> SqlFragment`
   - Required for TargetMatches and TargetTypeMatches
@@ -143,15 +144,68 @@ EXISTS subqueries are preferred over JOINs for relationship filtering because th
 ```sql
 EXISTS (
     SELECT 1 FROM entity_relationships r_0
-    WHERE r_0.source_entity_id = e.id          -- Correlated to outer query
-      AND r_0.relationship_field_id = :rel_1   -- Filter by relationship type
+    WHERE r_0.source_entity_id = e.id          -- Correlated to outer query (FORWARD direction)
+      AND r_0.relationship_definition_id = :rel_1   -- Filter by relationship type
       AND r_0.deleted = false                  -- Soft-delete exclusion
 )
 ```
 
-**Correlation:** `r_0.source_entity_id = e.id` correlates subquery to outer entity.
+**Correlation:** The correlation column depends on direction — FORWARD uses `r_0.source_entity_id = e.id` (entity is the source), INVERSE uses `r_0.target_entity_id = e.id` (entity is the target). See Direction-based Correlation section below.
 
 **SELECT 1:** Returns constant (EXISTS only cares about row existence, not values).
+
+### Direction-based Correlation
+
+**Purpose:** Allows filtering entities by relationships regardless of whether the entity is the source or target of the relationship.
+
+**Why direction matters:**
+
+The `entity_relationships` table stores directed edges: `source_entity_id → target_entity_id`. When querying "which entities satisfy a relationship filter", the correlated column depends on the role the queried entity plays in that relationship:
+
+- **FORWARD** — The queried entity is the source. Correlate on `source_entity_id`; the "opposite" side is `target_entity_id`.
+- **INVERSE** — The queried entity is a target. Correlate on `target_entity_id`; the "opposite" side is `source_entity_id`.
+
+**Caller responsibility:** The direction is determined by the caller (AttributeFilterVisitor) based on whether the queried entity type is the source or target of the relationship definition. The generator applies the direction without validating it.
+
+**Extension functions:**
+
+```kotlin
+private fun QueryDirection.correlationColumn(): String = when (this) {
+    QueryDirection.FORWARD -> "source_entity_id"
+    QueryDirection.INVERSE -> "target_entity_id"
+}
+
+private fun QueryDirection.oppositeColumn(): String = when (this) {
+    QueryDirection.FORWARD -> "target_entity_id"
+    QueryDirection.INVERSE -> "source_entity_id"
+}
+```
+
+**FORWARD example (entity is source):**
+
+```sql
+EXISTS (
+    SELECT 1 FROM entity_relationships r_0
+    WHERE r_0.source_entity_id = e.id       -- correlationColumn()
+      AND r_0.relationship_definition_id = :rel_1
+      AND r_0.deleted = false
+)
+```
+
+**INVERSE example (entity is target):**
+
+```sql
+EXISTS (
+    SELECT 1 FROM entity_relationships r_0
+    WHERE r_0.target_entity_id = e.id       -- correlationColumn()
+      AND r_0.relationship_definition_id = :rel_1
+      AND r_0.deleted = false
+)
+```
+
+For TargetEquals and TargetMatches/TargetTypeMatches, the `oppositeColumn()` determines which side is joined or matched against the target entity IDs.
+
+---
 
 ### Nested Filter Visitor Callback Pattern
 
@@ -283,12 +337,22 @@ The root query (EntityQueryAssembler) adds `e.workspace_id = :ws_N` to the base 
 
 ### Exists: Has Any Related Entity
 
-**SQL pattern:**
+**SQL pattern (FORWARD):**
 ```sql
 EXISTS (
     SELECT 1 FROM entity_relationships r_0
-    WHERE r_0.source_entity_id = e.id
-      AND r_0.relationship_field_id = :rel_1
+    WHERE r_0.source_entity_id = e.id        -- correlationColumn() for FORWARD
+      AND r_0.relationship_definition_id = :rel_1
+      AND r_0.deleted = false
+)
+```
+
+**SQL pattern (INVERSE):**
+```sql
+EXISTS (
+    SELECT 1 FROM entity_relationships r_0
+    WHERE r_0.target_entity_id = e.id        -- correlationColumn() for INVERSE
+      AND r_0.relationship_definition_id = :rel_1
       AND r_0.deleted = false
 )
 ```
@@ -305,12 +369,22 @@ EXISTS (
 
 ### NotExists: Has No Related Entities
 
-**SQL pattern:**
+**SQL pattern (FORWARD):**
 ```sql
 NOT EXISTS (
     SELECT 1 FROM entity_relationships r_0
-    WHERE r_0.source_entity_id = e.id
-      AND r_0.relationship_field_id = :rel_1
+    WHERE r_0.source_entity_id = e.id        -- correlationColumn() for FORWARD
+      AND r_0.relationship_definition_id = :rel_1
+      AND r_0.deleted = false
+)
+```
+
+**SQL pattern (INVERSE):**
+```sql
+NOT EXISTS (
+    SELECT 1 FROM entity_relationships r_0
+    WHERE r_0.target_entity_id = e.id        -- correlationColumn() for INVERSE
+      AND r_0.relationship_definition_id = :rel_1
       AND r_0.deleted = false
 )
 ```
@@ -325,13 +399,24 @@ NOT EXISTS (
 
 ### TargetEquals: Related to Specific Entity IDs
 
-**SQL pattern:**
+**SQL pattern (FORWARD):**
 ```sql
 EXISTS (
     SELECT 1 FROM entity_relationships r_0
-    WHERE r_0.source_entity_id = e.id
-      AND r_0.relationship_field_id = :rel_1
-      AND r_0.target_entity_id IN (:te_2)
+    WHERE r_0.source_entity_id = e.id        -- correlationColumn() for FORWARD
+      AND r_0.relationship_definition_id = :rel_1
+      AND r_0.target_entity_id IN (:te_2)    -- oppositeColumn() for FORWARD
+      AND r_0.deleted = false
+)
+```
+
+**SQL pattern (INVERSE):**
+```sql
+EXISTS (
+    SELECT 1 FROM entity_relationships r_0
+    WHERE r_0.target_entity_id = e.id        -- correlationColumn() for INVERSE
+      AND r_0.relationship_definition_id = :rel_1
+      AND r_0.source_entity_id IN (:te_2)    -- oppositeColumn() for INVERSE
       AND r_0.deleted = false
 )
 ```
@@ -353,13 +438,25 @@ EXISTS (
 
 ### TargetMatches: Related Entity Satisfies Filter
 
-**SQL pattern:**
+**SQL pattern (FORWARD):**
 ```sql
 EXISTS (
     SELECT 1 FROM entity_relationships r_0
-    JOIN entities t_1 ON r_0.target_entity_id = t_1.id AND t_1.deleted = false
-    WHERE r_0.source_entity_id = e.id
-      AND r_0.relationship_field_id = :rel_2
+    JOIN entities t_1 ON r_0.target_entity_id = t_1.id AND t_1.deleted = false   -- oppositeColumn() for FORWARD
+    WHERE r_0.source_entity_id = e.id                                             -- correlationColumn() for FORWARD
+      AND r_0.relationship_definition_id = :rel_2
+      AND r_0.deleted = false
+      AND {nested filter SQL referencing t_1}
+)
+```
+
+**SQL pattern (INVERSE):**
+```sql
+EXISTS (
+    SELECT 1 FROM entity_relationships r_0
+    JOIN entities t_1 ON r_0.source_entity_id = t_1.id AND t_1.deleted = false   -- oppositeColumn() for INVERSE
+    WHERE r_0.target_entity_id = e.id                                             -- correlationColumn() for INVERSE
+      AND r_0.relationship_definition_id = :rel_2
       AND r_0.deleted = false
       AND {nested filter SQL referencing t_1}
 )
@@ -386,13 +483,31 @@ EXISTS (
 
 ### TargetTypeMatches: Polymorphic Relationship Filter
 
-**SQL pattern:**
+**SQL pattern (FORWARD):**
 ```sql
 EXISTS (
     SELECT 1 FROM entity_relationships r_0
-    JOIN entities t_1 ON r_0.target_entity_id = t_1.id AND t_1.deleted = false
-    WHERE r_0.source_entity_id = e.id
-      AND r_0.relationship_field_id = :rel_2
+    JOIN entities t_1 ON r_0.target_entity_id = t_1.id AND t_1.deleted = false   -- oppositeColumn() for FORWARD
+    WHERE r_0.source_entity_id = e.id                                             -- correlationColumn() for FORWARD
+      AND r_0.relationship_definition_id = :rel_2
+      AND r_0.deleted = false
+      AND (
+          (t_1.type_id = :ttm_type_3 AND {branch 1 filter SQL})
+          OR
+          (t_1.type_id = :ttm_type_4 AND {branch 2 filter SQL})
+          OR
+          (t_1.type_id = :ttm_type_5)  -- Branch with no filter
+      )
+)
+```
+
+**SQL pattern (INVERSE):**
+```sql
+EXISTS (
+    SELECT 1 FROM entity_relationships r_0
+    JOIN entities t_1 ON r_0.source_entity_id = t_1.id AND t_1.deleted = false   -- oppositeColumn() for INVERSE
+    WHERE r_0.target_entity_id = e.id                                             -- correlationColumn() for INVERSE
+      AND r_0.relationship_definition_id = :rel_2
       AND r_0.deleted = false
       AND (
           (t_1.type_id = :ttm_type_3 AND {branch 1 filter SQL})
@@ -509,7 +624,6 @@ EXISTS (
 - CountMatches not supported (deferred to v2)
 - No support for aggregations in relationship filters (e.g., "has more than 5 Clients")
 - No support for relationship metadata filtering (e.g., filter by relationship created_at)
-- No support for bi-directional relationship traversal (source→target only, not target→source)
 - TargetEquals does not support template expressions (requires UUID strings)
 
 ### Thread Safety / Concurrency
@@ -595,3 +709,4 @@ sequenceDiagram
 |Date|Change|Reason|
 |---|---|---|
 |2026-02-08|Initial documentation|Phase 2 - Entities domain documentation (Plan 02-03)|
+|2026-02-21|Added `direction: QueryDirection` parameter to `generate()`; renamed `relationship_field_id` → `relationship_definition_id` throughout all SQL; added Direction-based Correlation section with FORWARD/INVERSE extension functions and SQL examples; updated Exists/NotExists/TargetEquals/TargetMatches/TargetTypeMatches SQL patterns for both directions; removed bi-directional limitation from Known Limitations (now supported via INVERSE)|Entity relationship query engine now supports INVERSE traversal (entity as target)|

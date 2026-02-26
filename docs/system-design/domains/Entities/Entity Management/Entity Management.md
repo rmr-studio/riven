@@ -34,3 +34,4 @@ Handles the lifecycle of entity instances — creating, updating, reading, and s
 | Date | Change | Feature/ADR |
 | ---- | ------ | ----------- |
 | 2026-02-08 | Subdomain overview created | [[02-01-PLAN]] |
+| 2026-02-21 | EntityRelationshipService rewritten — removed bidirectional sync, added write-time cardinality enforcement and target type validation | Entity Relationships |

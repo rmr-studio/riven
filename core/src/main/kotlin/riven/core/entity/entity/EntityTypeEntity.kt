@@ -6,12 +6,10 @@ import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.enums.common.icon.IconColour
 import riven.core.enums.common.icon.IconType
-import riven.core.enums.entity.EntityCategory
 import riven.core.models.common.Icon
 import riven.core.models.common.display.DisplayName
 import riven.core.models.entity.EntityType
 import riven.core.models.entity.EntityTypeSchema
-import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.configuration.EntityTypeAttributeColumn
 import java.util.*
 
@@ -66,20 +64,12 @@ data class EntityTypeEntity(
     @Column(name = "protected", nullable = false)
     val protected: Boolean = false,
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
-    val type: EntityCategory,
-
     @Column(name = "version", nullable = false, columnDefinition = "integer default 1")
     var version: Int = 1,
 
     @Type(JsonBinaryType::class)
     @Column(name = "schema", columnDefinition = "jsonb", nullable = false)
     var schema: EntityTypeSchema,
-
-    @Type(JsonBinaryType::class)
-    @Column(name = "relationships", columnDefinition = "jsonb", nullable = true)
-    var relationships: List<EntityRelationshipDefinition>? = null,
 
     @Type(JsonBinaryType::class)
     @Column(name = "columns", columnDefinition = "jsonb", nullable = true)
@@ -105,9 +95,7 @@ data class EntityTypeEntity(
             description = this.description,
             workspaceId = this.workspaceId,
             protected = this.protected,
-            type = this.type,
             schema = this.schema,
-            relationships = this.relationships,
             columns = this.columns,
             createdAt = this.createdAt,
             updatedAt = this.updatedAt,

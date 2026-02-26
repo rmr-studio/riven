@@ -4,7 +4,7 @@ tags:
   - component/active
   - architecture/component
 Created: 2026-02-08
-Updated: 2026-02-08
+Updated: 2026-02-21
 Domains:
   - "[[Workflows]]"
 ---
@@ -34,7 +34,9 @@ Converts entity data to expression-compatible context maps by transforming UUID-
 - `EntityRepository` — Fetch entity by ID
 - `EntityTypeRepository` — Fetch entity type schema
 - `EntityRelationshipService` — Load related entities
-- **Cross-domain dependency:** Entity domain
+- `RelationshipDefinitionRepository` — Load relationship definitions for context building (forward and inverse-visible)
+- `RelationshipTargetRuleRepository` — Hydrate relationship definitions with target rules
+- **Cross-domain dependency:** Entity domain — deeper coupling than before; now reads directly from relationship definition repositories in addition to entity/type repositories
 
 ## Used By
 
@@ -48,9 +50,14 @@ Converts entity data to expression-compatible context maps by transforming UUID-
 **Context building flow:**
 
 1. Fetch entity by ID
-2. Fetch entity type (schema + relationship definitions)
-3. Iterate entity payload (Map<UUID, EntityAttribute>)
-4. For each UUID key:
+2. Fetch entity type schema
+3. Load relationship definitions via `loadDefinitions()`:
+   - Fetches forward definitions (entity type is source)
+   - Fetches inverse-visible definitions (entity type is target with `inverseVisible=true`)
+   - Hydrates each definition with its target rules
+   - Returns `Map<UUID, RelationshipDefinition>`
+4. Iterate entity payload (Map<UUID, EntityAttribute>)
+5. For each UUID key:
    - Lookup schema field to get human-readable label
    - Extract value (primitive or relationship)
    - Add to context map with label as key
@@ -58,6 +65,7 @@ Converts entity data to expression-compatible context maps by transforming UUID-
 **Relationship traversal:**
 
 - If `maxDepth > 0`, recursively build contexts for related entities
+- Cardinality is determined from `definition.cardinalityDefault` on the `RelationshipDefinition` object (previously read from the entity type JSONB schema field)
 - Relationship cardinality determines structure:
   - ONE_TO_ONE / MANY_TO_ONE → Single nested map
   - ONE_TO_MANY / MANY_TO_MANY → List of nested maps
@@ -95,7 +103,7 @@ Builds context with recursive relationship traversal. Returns map with nested ob
 
 ## Gotchas
 
-- **Cross-domain dependency:** This service in Workflows domain depends on Entity domain repositories. Creates coupling between domains.
+- **Cross-domain dependency:** This service in Workflows domain depends on Entity domain repositories — `EntityRepository`, `EntityTypeRepository`, `RelationshipDefinitionRepository`, and `RelationshipTargetRuleRepository`. The addition of the two relationship repositories deepens the coupling; changes to how relationship definitions are stored or queried in the Entity domain will directly affect this service.
 - **Schema label requirement:** If entity type schema is missing a label for a UUID field, throws `IllegalArgumentException`. Schema must be complete.
 - **Relationship depth explosion:** With `maxDepth=3` and entities with many relationships, context map can become very large. Consider performance for deeply nested structures.
 - **Stale relationships handled gracefully:** If related entity is deleted, logs warning and excludes from context (returns empty list or null). Doesn't fail entire context build.

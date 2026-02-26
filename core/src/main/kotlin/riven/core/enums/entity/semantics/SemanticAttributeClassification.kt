@@ -1,4 +1,4 @@
-package riven.core.enums.entity
+package riven.core.enums.entity.semantics
 
 /**
  * Classification of a semantic attribute, describing the business role it plays.

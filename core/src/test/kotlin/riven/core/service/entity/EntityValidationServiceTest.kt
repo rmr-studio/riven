@@ -17,7 +17,6 @@ import riven.core.enums.common.icon.IconType
 import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.core.DataFormat
 import riven.core.enums.core.DataType
-import riven.core.enums.entity.EntityCategory
 import riven.core.enums.entity.validation.EntityTypeChangeType
 import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.models.common.validation.Schema
@@ -1636,10 +1635,8 @@ class EntityValidationServiceTest : BaseServiceTest() {
             displayNameSingular = "Test Entity",
             displayNamePlural = "Test Entities",
             workspaceId = workspaceId,
-            type = EntityCategory.STANDARD,
             schema = schema,
             columns = emptyList(),
-            relationships = emptyList(),
             identifierKey = nameAttributeKey,
             iconType = IconType.CIRCLE_DASHED,
             iconColour = IconColour.NEUTRAL

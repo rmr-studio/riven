@@ -5,7 +5,10 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.entity.query.FilterOperator
+import riven.core.models.entity.payload.EntityAttributePrimitivePayload
+import riven.core.service.util.factory.entity.EntityFactory
 import riven.core.exceptions.query.QueryValidationException
 import riven.core.exceptions.query.RelationshipDepthExceededException
 import riven.core.models.entity.query.EntityQuery
@@ -40,12 +43,14 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
         assertEquals(10, result.entities.size)
     }
 
+
     @Test
     fun `test NOT_EXISTS returns companies without employees`() = runBlocking {
         // This test modifies shared state, so restore it afterward
         try {
             truncateAll()
             createEntityTypes()
+            createRelationshipDefinitions()
             seedEntities()
 
             // Create a company with no employees
@@ -73,6 +78,7 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
             // Restore shared state for subsequent tests
             truncateAll()
             createEntityTypes()
+            createRelationshipDefinitions()
             seedEntities()
             createRelationships()
         }
@@ -345,6 +351,117 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
         assertEquals(3, depthError.depth)
         assertEquals(2, depthError.maxDepth)
     }
+
+    // ------ Inverse relationship query tests ------
+
+    @Test
+    fun `test INVERSE EXISTS - returns employees who have a company`() = runBlocking {
+        // Company -> Employees has inverse_visible=true for Employee type
+        // Query Employee type, filter by companyEmployeesRelId which is inverse for employees
+        val query = EntityQuery(
+            entityTypeId = employeeTypeId,
+            filter = QueryFilter.Relationship(
+                relationshipId = companyEmployeesRelId,
+                condition = RelationshipFilter.Exists
+            )
+        )
+
+        val result = entityQueryService.execute(query, workspaceId, QueryPagination())
+
+        // All 20 employees have a company (every employee is linked to a company)
+        assertEquals(20, result.totalCount)
+    }
+
+    @Test
+    fun `test INVERSE TargetMatches - returns employees of technology companies`() = runBlocking {
+        // Query Employee type, filter by inverse Company->Employees relationship
+        // to find employees whose company is in Technology
+        val query = EntityQuery(
+            entityTypeId = employeeTypeId,
+            filter = QueryFilter.Relationship(
+                relationshipId = companyEmployeesRelId,
+                condition = RelationshipFilter.TargetMatches(
+                    filter = QueryFilter.Attribute(
+                        attributeId = companyIndustryAttrId,
+                        operator = FilterOperator.EQUALS,
+                        value = FilterValue.Literal("Technology")
+                    )
+                )
+            )
+        )
+
+        val result = entityQueryService.execute(query, workspaceId, QueryPagination())
+
+        // Technology companies: Acme Corp (3 employees), Beta Inc (2), Zeta Systems (3) = 8 employees
+        assertEquals(8, result.totalCount)
+
+        val resultEmployeeNames = result.entities.map { entity ->
+            employeeEntities.entries.find { it.value == entity.id }?.key
+        }
+
+        // Acme Corp employees
+        assertTrue(resultEmployeeNames.contains("Alice Anderson"))
+        assertTrue(resultEmployeeNames.contains("Bob Brown"))
+        assertTrue(resultEmployeeNames.contains("Oliver O'Brien"))
+        // Beta Inc employees
+        assertTrue(resultEmployeeNames.contains("Charlie Chen"))
+        assertTrue(resultEmployeeNames.contains("Patricia Parker"))
+        // Zeta Systems employees
+        assertTrue(resultEmployeeNames.contains("George Garcia"))
+        assertTrue(resultEmployeeNames.contains("Hannah Harris"))
+        assertTrue(resultEmployeeNames.contains("Samuel Smith"))
+    }
+
+    @Test
+    fun `test INVERSE NOT_EXISTS - returns employees without companies`() = runBlocking {
+        // All employees are linked to companies in seed data, so this should return 0
+        // unless we add an unlinked employee
+        try {
+            truncateAll()
+            createEntityTypes()
+            createRelationshipDefinitions()
+            seedEntities()
+            createRelationships()
+
+            // Add an employee with no company link
+            val freelancerId = entityRepository.save(
+                EntityFactory.createEntityEntity(
+                    workspaceId = workspaceId,
+                    typeId = employeeTypeId,
+                    typeKey = "employee",
+                    identifierKey = employeeFirstNameAttrId,
+                    payload = mapOf(
+                        employeeFirstNameAttrId.toString() to EntityAttributePrimitivePayload("Freelance", SchemaType.TEXT),
+                        employeeLastNameAttrId.toString() to EntityAttributePrimitivePayload("Dev", SchemaType.TEXT),
+                        employeeEmailAttrId.toString() to EntityAttributePrimitivePayload("freelance@dev.com", SchemaType.EMAIL),
+                        employeeSalaryAttrId.toString() to EntityAttributePrimitivePayload(50000.0, SchemaType.NUMBER),
+                        employeeDepartmentAttrId.toString() to EntityAttributePrimitivePayload("Freelance", SchemaType.TEXT)
+                    )
+                )
+            ).id!!
+
+            val query = EntityQuery(
+                entityTypeId = employeeTypeId,
+                filter = QueryFilter.Relationship(
+                    relationshipId = companyEmployeesRelId,
+                    condition = RelationshipFilter.NotExists
+                )
+            )
+
+            val result = entityQueryService.execute(query, workspaceId, QueryPagination())
+
+            assertEquals(1, result.totalCount)
+            assertEquals(freelancerId, result.entities[0].id)
+        } finally {
+            truncateAll()
+            createEntityTypes()
+            createRelationshipDefinitions()
+            seedEntities()
+            createRelationships()
+        }
+    }
+
+    // ------ Combined forward + inverse ------
 
     @Test
     fun `test AND of attribute filter and relationship filter`() = runBlocking {

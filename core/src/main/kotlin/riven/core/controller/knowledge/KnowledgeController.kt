@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import riven.core.enums.entity.SemanticMetadataTargetType
+import riven.core.enums.entity.semantics.SemanticMetadataTargetType
 import riven.core.models.entity.EntityTypeSemanticMetadata
 import riven.core.models.request.entity.type.BulkSaveSemanticMetadataRequest
 import riven.core.models.request.entity.type.SaveSemanticMetadataRequest
