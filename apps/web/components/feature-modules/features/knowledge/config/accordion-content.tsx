@@ -15,7 +15,7 @@ export const FEATURE_CONTENT: KnowledgeLayerSectionContent[] = [
   {
     title: <div className="">All your tools. Unified</div>,
     description:
-      'Query your entire data ecosystem in natural language. No exports, no cross-referencing, no spreadsheets. Ask a question that spans customers, revenue, support, and product usage — and get an answer in seconds. The kind of answer that used to take a morning now takes a sentence.',
+      'Your data, your tools, your platform. Create a unified data ecosystem that matches how your business operates, without moving your data or changing how you work. Riven allows for custom data models, and direct connections to your existing tools. Creating a unified data layer that powers every insight, answer, and agent.',
     content: <IntegrationGraphDiagram className="scale-80" />,
   },
   {
@@ -40,7 +40,7 @@ export const FEATURE_CONTENT: KnowledgeLayerSectionContent[] = [
       "Riven doesn't wait for you to ask the right question. It continuously analyses across your connected data and surfaces correlations, risks, and trends that no single tool could see — because no single tool has ever had the full picture.",
     content: (
       <div>
-        <PatternsDiagram className="scalee-120 translate-x-12 translate-y-12 sm:translate-x-48 sm:scale-130 lg:scale-140 xl:translate-x-64 xl:scale-180" />
+        <PatternsDiagram className="translate-x-12 translate-y-12 sm:translate-x-48 sm:scale-130 lg:scale-140 xl:translate-x-64 xl:scale-180" />
       </div>
     ),
   },
@@ -57,7 +57,7 @@ export const FEATURE_CONTENT: KnowledgeLayerSectionContent[] = [
   {
     title: <div className="">Build your ecosystem in minutes</div>,
     description:
-      'Start with a template built for your business type. Each one comes pre-loaded with entity types, attributes, and relationships — ready to connect your tools and start querying in minutes, not months.',
+      'Get started in minutes, not weeks with your ready-to-go business model templates. Each one comes pre-loaded with entity types, attributes, and relationships. Ready to be customized, connected to your data sources, and queried in natural language from day one.',
     content: (
       <TemplateCarouselGraphic className="translate-y-8 scale-110 sm:translate-x-16 md:translate-y-0 md:scale-100 lg:scale-120" />
     ),
