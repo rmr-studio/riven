@@ -46,7 +46,7 @@ export function HeroBackground({
   }
 
   return (
-    <div className={cn('absolute inset-x-0 bottom-0 -z-10', className)}>
+    <div className={cn('absolute inset-x-0 bottom-1/6 z-0', className)}>
       <picture className="relative block h-full w-full">
         <source srcSet={getCdnUrl(image.avif)} type="image/avif" />
         <source srcSet={getCdnUrl(image.webp)} type="image/webp" />
@@ -60,7 +60,7 @@ export function HeroBackground({
           sizes="100vw"
           className={cn(
             'object-cover object-bottom transition-opacity duration-700 ease-out',
-            isLoaded ? 'opacity-50 md:opacity-60' : 'opacity-0',
+            isLoaded ? 'opacity-100' : 'opacity-0',
           )}
           style={filterParts.length > 0 ? { filter: filterParts.join(' ') } : undefined}
           onLoad={() => setIsLoaded(true)}

@@ -35,15 +35,7 @@ const FAQ: Question[] = [
       Including tools like Stripe, HubSpot, Intercom, Gmail, Slack, and Google Ads. 
       We are prioritizing integrations based directly on waitlist feedback to ensure that teams can immediately get access to the tools they care about.
       So if your most important tool isn't listed, let us know in the form. We also plan to support webhooks and a REST API for custom data sources, with more support, and options coming post-launch.`,
-  },
-  {
-    question: 'How does the AI knowledge layer actually work?',
-    answer: `Every single piece of data, its attributes and its relationships with other data, it all mean something, and is painting a bigger picture. 
-    The model acts as a smart reasoning layer, when you ask a question, or when the system detects a pattern. It looks across your data and its internal connections in real time. 
-    The model understands and finds what's relevant to the question and draws conclusions based on the full context of your business, not just one tool at a time.
-    Your data stays exactly where it is, the intelligence itself comes from understanding the metadata and relationships between your data and the different domains it lies in.
-    `,
-  },
+  }, 
   {
     question: 'Is my data secure?',
     answer: `
@@ -76,7 +68,7 @@ export const Faq = () => {
   return (
     <Section id="faqs">
       <div className="items-cen relative z-10 mx-auto flex max-w-5xl flex-col px-4 sm:px-6">
-        <h2 className="text-center font-serif text-4xl font-normal leading-[0.95] tracking-tight text-heading md:text-5xl">
+        <h2 className="text-center font-serif text-4xl leading-[0.95] font-normal tracking-tight text-heading md:text-5xl">
           Frequently Asked Questions
         </h2>
         <Accordion type="single" collapsible className="mt-10">

@@ -1,5 +1,6 @@
 'use client';
 
+import { useId } from 'react';
 import { motion } from 'motion/react';
 import { getCdnUrl } from '@/lib/cdn-image-loader';
 import { inViewProps, useAnimateOnMount } from './animate-context';
@@ -33,6 +34,8 @@ const edgePaths = [
 ];
 
 export const IntegrationGraphDiagram = ({ className }: { className?: string }) => {
+  const uid = useId();
+  const _ = (name: string) => `${uid}-${name}`;
   const onMount = useAnimateOnMount();
   return (
     <svg
@@ -41,7 +44,7 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
-      <GlowEdgePaths edgePaths={edgePaths} glowFilterId="igEdgeGlow" gradientId="igEdgeGradient" />
+      <GlowEdgePaths edgePaths={edgePaths} glowFilterId={_('edgeGlow')} gradientId={_('edgeGrad')} />
 
       {/* ===== Riven (center) ===== */}
       <g>
@@ -51,11 +54,11 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
           width="127"
           height="127"
           rx="20"
-          fill="url(#igCardGlowGradient)"
-          filter="url(#igCardGlowFilter)"
+          fill={`url(#${_('cardGlowGrad')})`}
+          filter={`url(#${_('cardGlowFilter')})`}
           opacity="0.5"
         />
-        <g filter="url(#igCardShadow)">
+        <g filter={`url(#${_('cardShadow')})`}>
           <rect x="212" y="139" width="115" height="115" rx="16" className="fill-card" />
           <rect
             x="212.5"
@@ -69,7 +72,7 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
         {/* Riven Logo */}
         <svg x="240" y="169" width="60" height="56" viewBox="624 590 748 698">
           <mask
-            id="igLogoMask0"
+            id={_('logoMask0')}
             style={{ maskType: 'luminance' }}
             maskUnits="userSpaceOnUse"
             x="1113"
@@ -79,14 +82,14 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
           >
             <path d="M1113.33 901.333H1352V1268.29H1113.33V901.333Z" fill="white" />
           </mask>
-          <g mask="url(#igLogoMask0)">
+          <g mask={`url(#${_('logoMask0')})`}>
             <path
               d="M1343.46 1177.18L1184.63 902.141L1114.6 1023.57L1238.27 1237.82C1249.44 1257.19 1269.85 1268.22 1290.86 1268.22C1301.14 1268.22 1311.57 1265.54 1321.11 1260.03C1350.31 1243.19 1360.15 1206.24 1343.46 1177.18Z"
               className="fill-logo-primary"
             />
           </g>
           <mask
-            id="igLogoMask1"
+            id={_('logoMask1')}
             style={{ maskType: 'luminance' }}
             maskUnits="userSpaceOnUse"
             x="644"
@@ -96,7 +99,7 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
           >
             <path d="M644 610.667H1241.33V1268.29H644V610.667Z" fill="white" />
           </mask>
-          <g mask="url(#igLogoMask1)">
+          <g mask={`url(#${_('logoMask1')})`}>
             <path
               d="M1232.01 751.063L1164.66 867.724L1094.49 989.156L986.021 1177.04C953.536 1233.35 892.896 1268.37 827.938 1268.37C761.932 1268.37 702.781 1234.25 669.703 1177.04C636.63 1119.97 636.63 1051.58 669.703 994.37L859.526 665.839C879.193 631.719 914.5 611.302 953.839 611.302C993.172 611.302 1028.48 631.719 1048.3 665.839L1055.15 677.755L1074.82 711.729L1004.65 833.156L953.839 745.25L775.042 1055.01C759.099 1082.57 769.682 1107.01 775.042 1116.24C780.406 1125.48 796.203 1146.94 828.083 1146.94C849.839 1146.94 870.25 1135.17 880.979 1116.24L1024.46 867.724L1094.64 746.292L1126.82 690.422C1143.66 661.365 1180.76 651.385 1209.81 668.219C1238.86 684.906 1248.84 722.005 1232.01 751.063Z"
               className="fill-logo-primary"
@@ -117,11 +120,11 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
           width="106"
           height="49"
           rx="12"
-          fill="url(#igCardGlowGradient)"
-          filter="url(#igCardGlowFilter)"
+          fill={`url(#${_('cardGlowGrad')})`}
+          filter={`url(#${_('cardGlowFilter')})`}
           opacity="0.5"
         />
-        <g filter="url(#igCardShadow)">
+        <g filter={`url(#${_('cardShadow')})`}>
           <rect x="173" width="98" height="41" rx="8" className="fill-card" />
           <rect x="173.5" y="0.5" width="97" height="40" rx="7.5" className="stroke-border" />
         </g>
@@ -147,11 +150,11 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
           width="88"
           height="88"
           rx="20"
-          fill="url(#igCardGlowGradient)"
-          filter="url(#igCardGlowFilter)"
+          fill={`url(#${_('cardGlowGrad')})`}
+          filter={`url(#${_('cardGlowFilter')})`}
           opacity="0.5"
         />
-        <g filter="url(#igCardShadow)">
+        <g filter={`url(#${_('cardShadow')})`}>
           <rect x="417" y="33" width="80" height="80" rx="16" className="fill-card" />
           <rect x="417.5" y="33.5" width="79" height="79" rx="15.5" className="stroke-border" />
         </g>
@@ -200,11 +203,11 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
           width="83"
           height="83"
           rx="20"
-          fill="url(#igCardGlowGradient)"
-          filter="url(#igCardGlowFilter)"
+          fill={`url(#${_('cardGlowGrad')})`}
+          filter={`url(#${_('cardGlowFilter')})`}
           opacity="0.5"
         />
-        <g filter="url(#igCardShadow)">
+        <g filter={`url(#${_('cardShadow')})`}>
           <rect x="4" y="75" width="75" height="75" rx="16" className="fill-card" />
           <rect x="4.5" y="75.5" width="74" height="74" rx="15.5" className="stroke-border" />
         </g>
@@ -232,7 +235,7 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
         </g>
       </motion.g>
 
-      {/* ===== Jotform ===== */}
+      {/* ===== HubSpot ===== */}
       <motion.g
         initial={{ opacity: 0 }}
         {...inViewProps(onMount, { opacity: 0.55 })}
@@ -244,33 +247,21 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
           width="83"
           height="83"
           rx="20"
-          fill="url(#igCardGlowGradient)"
-          filter="url(#igCardGlowFilter)"
+          fill={`url(#${_('cardGlowGrad')})`}
+          filter={`url(#${_('cardGlowFilter')})`}
           opacity="0.5"
         />
-        <g filter="url(#igCardShadow)">
+        <g filter={`url(#${_('cardShadow')})`}>
           <rect x="72" y="331" width="75" height="75" rx="16" className="fill-card" />
           <rect x="72.5" y="331.5" width="74" height="74" rx="15.5" className="stroke-border" />
         </g>
-        {/* Jotform Logo */}
-        <g>
+        {/* HubSpot Logo */}
+        <svg x="85" y="344" width="50" height="50" viewBox="6.2 0.6 244.3 251.3">
           <path
-            d="M101.983 386.572C102.72 387.286 102.199 388.509 101.153 388.509H94.6069C93.3153 388.509 92.2643 387.49 92.2643 386.238V379.892C92.2643 378.878 93.5265 378.373 94.2631 379.087L101.983 386.572Z"
-            fill="#0A1551"
+            d="m191.385 85.694v-29.506a22.722 22.722 0 0 0 13.101-20.48v-.677c0-12.549-10.173-22.722-22.721-22.722h-.678c-12.549 0-22.722 10.173-22.722 22.722v.677a22.722 22.722 0 0 0 13.101 20.48v29.506a64.342 64.342 0 0 0-30.594 13.47l-80.922-63.03c.577-2.083.878-4.225.912-6.375a25.6 25.6 0 1 0-25.633 25.55 25.323 25.323 0 0 0 12.607-3.43l79.685 62.007c-14.65 22.131-14.258 50.974.987 72.7l-24.236 24.243c-1.96-.626-4-.959-6.057-.987-11.607.01-21.01 9.423-21.007 21.03.003 11.606 9.412 21.014 21.018 21.017 11.607.003 21.02-9.4 21.03-21.007a20.747 20.747 0 0 0-.988-6.056l23.976-23.985c21.423 16.492 50.846 17.913 73.759 3.562 22.912-14.352 34.475-41.446 28.985-67.918-5.49-26.473-26.873-46.734-53.603-50.792m-9.938 97.044a33.17 33.17 0 1 1 0-66.316c17.85.625 32 15.272 32.01 33.134.008 17.86-14.127 32.522-31.977 33.165"
+            fill="#FF7A59"
           />
-          <path
-            d="M112.217 387.065C110.279 385.14 110.279 382.019 112.217 380.093L119.21 373.146C121.148 371.22 124.29 371.22 126.228 373.146C128.166 375.071 128.166 378.192 126.228 380.117L119.234 387.065C117.297 388.99 114.155 388.99 112.217 387.065Z"
-            fill="#FFB629"
-          />
-          <path
-            d="M93.7414 369.607C91.8037 367.682 91.8037 364.561 93.7414 362.635L105.511 350.935C107.448 349.009 110.59 349.009 112.528 350.935C114.466 352.86 114.466 355.981 112.528 357.906L100.759 369.607C98.8209 371.532 95.6792 371.532 93.7414 369.607Z"
-            fill="#0099FF"
-          />
-          <path
-            d="M103.363 377.947C101.425 376.022 101.425 372.9 103.363 370.975L119.265 355.176C121.203 353.251 124.344 353.251 126.282 355.176C128.22 357.101 128.22 360.223 126.282 362.148L110.38 377.947C108.442 379.872 105.3 379.872 103.363 377.947Z"
-            fill="#FF6100"
-          />
-        </g>
+        </svg>
       </motion.g>
 
       {/* ===== Slack ===== */}
@@ -285,11 +276,11 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
           width="83"
           height="83"
           rx="20"
-          fill="url(#igCardGlowGradient)"
-          filter="url(#igCardGlowFilter)"
+          fill={`url(#${_('cardGlowGrad')})`}
+          filter={`url(#${_('cardGlowFilter')})`}
           opacity="0.5"
         />
-        <g filter="url(#igCardShadow)">
+        <g filter={`url(#${_('cardShadow')})`}>
           <rect x="364" y="321" width="75" height="75" rx="16" className="fill-card" />
           <rect x="364.5" y="321.5" width="74" height="74" rx="15.5" className="stroke-border" />
         </g>
@@ -306,7 +297,7 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
       <defs>
         {/* Edge gradient */}
         <linearGradient
-          id="igEdgeGradient"
+          id={_('edgeGrad')}
           x1="0"
           y1="0"
           x2="501"
@@ -318,16 +309,16 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
           <stop offset="100%" stopColor="#f43f5e" />
         </linearGradient>
         {/* Edge glow filter */}
-        <EdgeGlowFilter id="igEdgeGlow" />
+        <EdgeGlowFilter id={_('edgeGlow')} />
         {/* Card glow gradient */}
-        <linearGradient id="igCardGlowGradient" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={_('cardGlowGrad')} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#38bdf8" />
           <stop offset="50%" stopColor="#8b5cf6" />
           <stop offset="100%" stopColor="#f43f5e" />
         </linearGradient>
         {/* Card glow blur filter */}
         <filter
-          id="igCardGlowFilter"
+          id={_('cardGlowFilter')}
           x="-50%"
           y="-50%"
           width="200%"
@@ -338,7 +329,7 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
         </filter>
         {/* Card drop shadow */}
         <filter
-          id="igCardShadow"
+          id={_('cardShadow')}
           x="-10%"
           y="-10%"
           width="120%"

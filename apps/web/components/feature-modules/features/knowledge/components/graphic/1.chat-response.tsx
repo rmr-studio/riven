@@ -4,256 +4,233 @@ import { WindowControls } from '@/components/ui/window-controls';
 import { useContainerScale } from '@/hooks/use-container-scale';
 import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
-import { CalendarIcon, CommIcon, CompanyIcon, EntityIcon, GmailIcon, IntercomIcon, StripeIcon } from './icons';
+import { CalendarIcon, CompanyIcon, IntercomIcon, StripeIcon } from './icons';
 
-// ── Compact inline chip with glow ───────────────────────────────────────
+// ── Source Chip ──────────────────────────────────────────────────────────
 
-function GlowChip({
-  children,
-  className,
-  glowOpacity = 0.15,
+function SourceChip({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <div className="inline-flex items-center gap-[3px] rounded-[3px] border border-border/50 bg-card px-1 py-px">
+      {icon}
+      <span className="text-[5.5px] font-medium -tracking-[0.03em] text-muted-foreground">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+// ── Metric Card ─────────────────────────────────────────────────────────
+
+function MetricCard({
+  label,
+  value,
+  change,
+  sources,
+  delay,
 }: {
-  children: React.ReactNode;
-  className?: string;
-  glowOpacity?: number;
+  label: string;
+  value: string;
+  change: string;
+  sources: { icon: React.ReactNode; label: string }[];
+  delay: number;
 }) {
   return (
-    <div className={cn('relative', className)}>
-      <div
-        className="absolute -inset-0.5 rounded-md"
-        style={{
-          background: 'linear-gradient(135deg, #38bdf8, #8b5cf6, #f43f5e)',
-          filter: 'blur(4px)',
-          opacity: glowOpacity,
-        }}
-      />
-      <div className="relative inline-flex items-center gap-1 rounded-[3px] border border-border/60 bg-card px-[5px] py-[2px]">
-        {children}
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.4, delay }}
+      className="flex flex-col rounded-lg border border-border/40 bg-muted/20 px-3 py-2.5"
+    >
+      <p className="text-[7px] -tracking-[0.03em] text-muted-foreground">{label}</p>
+      <p className="mt-0.5 text-[13px] font-semibold -tracking-[0.04em] text-foreground">{value}</p>
+      <p className="mt-0.5 text-[6.5px] -tracking-[0.03em] text-muted-foreground">{change}</p>
+      <div className="mt-2 flex flex-wrap gap-1">
+        {sources.map((source) => (
+          <SourceChip key={source.label} icon={source.icon} label={source.label} />
+        ))}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 // ── Main Component ──────────────────────────────────────────────────────
 
+const INTERNAL_WIDTH = 620;
+
 export const ChatResponseGraphic = ({ className }: { className?: string }) => {
-  const { containerRef, scale } = useContainerScale(462);
+  const { containerRef, scale } = useContainerScale(INTERNAL_WIDTH);
 
   return (
     <div ref={containerRef} className={cn('relative w-full', className)}>
       <div
         className="origin-top-left"
         style={{
-          width: 462,
+          width: INTERNAL_WIDTH,
           fontFamily: 'var(--font-mono)',
           transform: `scale(${scale})`,
         }}
       >
         {/* ── Outer Card ── */}
-        <div className="relative overflow-hidden rounded-xl border border-border bg-card shadow-lg">
-          <div className="space-y-3 p-4 pb-3">
+        <div className="relative flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+          <div className="flex-1 space-y-4 p-6 pb-4">
             {/* ── Window Controls ── */}
-            <WindowControls size={7} />
+            <WindowControls size={6} />
 
             {/* ── User Prompt ── */}
+            <motion.div
+              initial={{ opacity: 0, y: 4 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="flex justify-end"
+            >
+              <div className="rounded-sm rounded-br-sm bg-foreground/[0.05] px-2 py-1">
+                <p className="text-[9px] leading-[1.5] -tracking-[0.03em] text-foreground">
+                  Which high-value customers are showing signs of churn?
+                </p>
+              </div>
+            </motion.div>
+
+            {/* ── AI Title ── */}
             <motion.div
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.1 }}
-              className="pt-1"
+              transition={{ duration: 0.4, delay: 0.15 }}
             >
-              <p className="-tracking-[0.05em] text-[9px] leading-[1.4] text-foreground">
-                Which high-value customers are showing signs of churn? Are we at risk of losing any
-                important customers soon?
-              </p>
+              <h3 className="text-[12px] font-semibold -tracking-[0.04em] text-foreground">
+                Churn Risk Analysis
+              </h3>
             </motion.div>
 
-            {/* ── AI Response ── */}
+            {/* ── Subtitle + Description ── */}
             <motion.div
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: 0.2 }}
-              className="border-t border-border/60 pt-2.5"
+              className="space-y-1.5"
             >
-              <p className="-tracking-[0.05em] text-[8px] leading-[1.4] text-muted-foreground">
-                I found <b className="text-foreground">3 accounts</b> likely to churn. All three
-                show declining usage over the <b className="text-foreground">past 60 days</b>,
-                correlating with increased support tickets in the{' '}
-                <b className="text-foreground">same period</b>.
+              <p className="text-[9px] font-semibold -tracking-[0.03em] text-foreground">
+                At-Risk Accounts
+              </p>
+              <p className="max-w-[85%] text-[8px] leading-[1.5] -tracking-[0.03em] text-muted-foreground">
+                3 enterprise accounts show declining engagement over the past 60 days. Revenue
+                exposure is significant, with correlated increases in support activity.
               </p>
             </motion.div>
 
-            {/* ── Entity Card + Timeline ── */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.3 }}
-              className="relative"
-            >
-              {/* Gradient edge line - glow */}
-              <div
-                className="absolute bottom-0 left-[18px] top-0 w-[5px] opacity-60"
-                style={{
-                  background:
-                    'linear-gradient(to bottom, transparent 0%, #38bdf8 5%, #8b5cf6 40%, #f43f5e 75%, transparent 100%)',
-                  filter: 'blur(6px)',
-                }}
+            {/* ── 2×2 Metric Grid ── */}
+            <div className="grid grid-cols-2 gap-2">
+              <MetricCard
+                label="Accounts at Risk"
+                value="3"
+                change="from 1 last quarter"
+                sources={[
+                  { icon: <CompanyIcon size={8} />, label: 'Companies' },
+                  { icon: <CalendarIcon size={8} />, label: 'Subscriptions' },
+                ]}
+                delay={0.3}
               />
-              {/* Gradient edge line - crisp */}
-              <div
-                className="absolute bottom-0 left-[19.5px] top-0 w-[1.5px]"
-                style={{
-                  background:
-                    'linear-gradient(to bottom, transparent 0%, #38bdf8 5%, #8b5cf6 40%, #f43f5e 75%, transparent 100%)',
-                }}
+              <MetricCard
+                label="Revenue Exposed"
+                value="$84,200"
+                change="MRR across flagged accounts"
+                sources={[
+                  { icon: <StripeIcon size={8} />, label: 'Invoices' },
+                  { icon: <CalendarIcon size={8} />, label: 'Subscriptions' },
+                ]}
+                delay={0.35}
               />
+              <MetricCard
+                label="Avg. Usage Drop"
+                value="-34%"
+                change="over past 60 days"
+                sources={[{ icon: <CompanyIcon size={8} />, label: 'Product Usage' }]}
+                delay={0.4}
+              />
+              <MetricCard
+                label="Open Tickets"
+                value="7"
+                change="across at-risk accounts"
+                sources={[{ icon: <IntercomIcon size={8} />, label: 'Support Tickets' }]}
+                delay={0.45}
+              />
+            </div>
+          </div>
 
-
-              <div className="space-y-2.5 pl-8">
-                {/* Meridian Labs */}
-                <div className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2 py-1 shadow-sm">
-                  <EntityIcon />
-                  <span className="-tracking-[0.05em] text-[10px] font-semibold text-foreground">
-                    Meridian Labs
-                  </span>
-                  <span className="rounded-[3px] border border-[#93C19E] bg-[#A0D0AC] px-1 py-px text-[7px] font-medium text-white">
-                    $32,400 MRR
-                  </span>
-                  <span className="rounded-[3px] border border-[#93C19E] bg-[#A0D0AC] px-1 py-px text-[7px] font-medium text-white">
-                    Enterprise
-                  </span>
-                </div>
-
-                {/* ── Subscription Status ── */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.35 }}
-                  className="space-y-1"
-                >
-                  <p className="-tracking-[0.05em] text-[7px] font-semibold text-muted-foreground">
-                    Subscription Status
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    <GlowChip glowOpacity={0.2}>
-                      <CalendarIcon />
-                      <span className="-tracking-[0.05em] text-[7px] font-semibold text-foreground">
-                        Subscription
-                      </span>
-                      <span className="-tracking-[0.05em] text-[5.5px] text-muted-foreground">
-                        Enterprise
-                      </span>
-                    </GlowChip>
-                    <GlowChip>
-                      <StripeIcon />
-                      <span className="-tracking-[0.05em] text-[7px] font-semibold text-foreground">
-                        Subscription Renewal
-                      </span>
-                      <span className="-tracking-[0.05em] text-[5.5px] text-muted-foreground">
-                        17th July 2026
-                      </span>
-                    </GlowChip>
-                  </div>
-                  <p className="-tracking-[0.05em] text-[6px] leading-[1.35] text-foreground">
-                    <b>Meridian Labs</b> has a subscription renewal in <b>12 days.</b> Statistics
-                    have shown that usage has <b>dropped 34%</b> over the past <b>60 days.</b> This
-                    has followed <b>3 support tickets raised</b> in the last <b>90 days</b>
-                  </p>
-                </motion.div>
-
-                {/* ── Customer Support ── */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.4 }}
-                  className="space-y-1"
-                >
-                  <p className="-tracking-[0.05em] text-[7px] font-semibold text-muted-foreground">
-                    Customer Support
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {[
-                      'OAuth token refresh failing',
-                      'Webhook delivery failing',
-                      'Data sync 6 hours behind',
-                    ].map((desc) => (
-                      <GlowChip key={desc}>
-                        <IntercomIcon />
-                        <span className="-tracking-[0.05em] text-[7px] font-semibold text-foreground">
-                          Support Ticket
-                        </span>
-                        <span className="-tracking-[0.05em] text-[5px] text-muted-foreground">
-                          {desc}
-                        </span>
-                      </GlowChip>
-                    ))}
-                  </div>
-                </motion.div>
-
-                {/* ── Recommendation + Contact ── */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.45 }}
-                  className="space-y-1"
-                >
-                  <p className="-tracking-[0.05em] text-[6px] leading-[1.35] text-foreground">
-                    Meridian labs has been a high value account for quite some time. It might be
-                    worth reaching out to understand their frustrations and drop in usage.{' '}
-                    <b>John Smith</b> has been the primary contact across <b>4 email threads</b> and{' '}
-                    <b>2 of the 3 support tickets.</b> Here&apos;s their details to reach out
-                    directly.
-                  </p>
-                  <GlowChip className="inline-flex">
-                    <GmailIcon />
-                    <span className="-tracking-[0.05em] text-[7px] font-semibold text-foreground">
-                      John Smith (PM)
-                    </span>
-                    <span className="-tracking-[0.05em] text-[5px] text-muted-foreground">
-                      jrsmith@mlabs.com
-                    </span>
-                  </GlowChip>
-                </motion.div>
-
-                {/* ── Entities Referenced ── */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.5 }}
-                  className="space-y-1"
-                >
-                  <p className="-tracking-[0.05em] text-[7px] font-semibold text-muted-foreground">
-                    Entities Referenced
-                  </p>
-                  <div className="flex flex-wrap gap-0.5">
-                    {[
-                      { icon: <IntercomIcon size={7} />, label: 'Support Tickets' },
-                      { icon: <CompanyIcon size={7} />, label: 'Companies' },
-                      { icon: <StripeIcon size={7} />, label: 'Invoices' },
-                      { icon: <CalendarIcon size={7} />, label: 'Subscriptions' },
-                      { icon: <CommIcon size={7} />, label: 'Communications' },
-                    ].map((entity) => (
-                      <div
-                        key={entity.label}
-                        className="flex items-center gap-0.5 rounded-[2px] border border-border/50 bg-card px-1 py-px"
-                      >
-                        {entity.icon}
-                        <span className="-tracking-[0.05em] text-[5px] font-semibold text-muted-foreground">
-                          {entity.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
+          {/* ── Chat Input Bar ── */}
+          <div className="border-t border-border/40 px-5 py-3">
+            <div className="mb-1.5 flex items-center rounded-lg border border-border/50 bg-card px-3 py-2">
+              <span className="text-[8px] -tracking-[0.03em] text-muted-foreground/40">
+                Who are the best contacts to reach out to? What’s their preferred channel?
+              </span>
+              <div className="ml-auto flex h-5 w-5 items-center justify-center rounded-md bg-foreground/[0.07]">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path
+                    d="M5 8V2M5 2L2.5 4.5M5 2L7.5 4.5"
+                    className="stroke-muted-foreground"
+                    strokeOpacity="0.5"
+                    strokeWidth="1.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </div>
-            </motion.div>
+            </div>
+            <div className="flex items-center gap-3">
+              {[
+                // Plus icon
+                <svg key="plus" width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path
+                    d="M5 2v6M2 5h6"
+                    stroke="currentColor"
+                    strokeWidth="1"
+                    strokeLinecap="round"
+                  />
+                </svg>,
+                // Lightning icon
+                <svg key="bolt" width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path
+                    d="M5.5 1L2.5 6H5L4.5 9L7.5 4H5L5.5 1Z"
+                    stroke="currentColor"
+                    strokeWidth="0.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>,
+                // Globe icon
+                <svg key="globe" width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <circle cx="5" cy="5" r="4" stroke="currentColor" strokeWidth="0.8" />
+                  <path
+                    d="M1 5h8M5 1c1.5 1.5 1.5 6.5 0 8M5 1c-1.5 1.5-1.5 6.5 0 8"
+                    stroke="currentColor"
+                    strokeWidth="0.8"
+                  />
+                </svg>,
+                // Refresh icon
+                <svg key="refresh" width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path
+                    d="M1.5 5a3.5 3.5 0 0 1 6.4-2M8.5 5a3.5 3.5 0 0 1-6.4 2"
+                    stroke="currentColor"
+                    strokeWidth="0.8"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M7 1.5L8 3l-1.5.5M3 8.5L2 7l1.5-.5"
+                    stroke="currentColor"
+                    strokeWidth="0.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>,
+              ].map((icon, i) => (
+                <div key={i} className="text-muted-foreground/30">
+                  {icon}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
