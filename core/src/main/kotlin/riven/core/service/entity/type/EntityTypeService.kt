@@ -325,7 +325,8 @@ class EntityTypeService(
     // ------ Public read operations ------
 
     /**
-     * Get all entity types for a workspace, optionally enriched with semantic metadata.
+     * Get all entity types for a workspace, enriched with relationship definitions
+     * and optionally with semantic metadata.
      */
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun getWorkspaceEntityTypesWithIncludes(
@@ -333,9 +334,12 @@ class EntityTypeService(
         include: List<String>,
     ): List<EntityTypeWithSemanticsResponse> {
         val entityTypes = getWorkspaceEntityTypes(workspaceId)
+        val entityTypeIds = entityTypes.map { it.id }
+
+        val relationshipMap = entityTypeRelationshipService.getDefinitionsForEntityTypes(workspaceId, entityTypeIds)
 
         val bundleMap = if ("semantics" in include) {
-            val allMetadata = semanticMetadataService.getMetadataForEntityTypes(entityTypes.map { it.id })
+            val allMetadata = semanticMetadataService.getMetadataForEntityTypes(entityTypeIds)
             val metadataByEntityType = allMetadata.groupBy { it.entityTypeId }
             entityTypes.associate { et ->
                 et.id to buildSemanticBundle(et.id, metadataByEntityType[et.id] ?: emptyList())
@@ -345,12 +349,17 @@ class EntityTypeService(
         }
 
         return entityTypes.map { et ->
-            EntityTypeWithSemanticsResponse(entityType = et, semantics = bundleMap[et.id])
+            EntityTypeWithSemanticsResponse(
+                entityType = et,
+                relationships = relationshipMap[et.id] ?: emptyList(),
+                semantics = bundleMap[et.id],
+            )
         }
     }
 
     /**
-     * Get a single entity type by key, optionally enriched with semantic metadata.
+     * Get a single entity type by key, enriched with relationship definitions
+     * and optionally with semantic metadata.
      */
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun getEntityTypeByKeyWithIncludes(
@@ -360,6 +369,8 @@ class EntityTypeService(
     ): EntityTypeWithSemanticsResponse {
         val entityType = getByKey(key, workspaceId).toModel()
 
+        val relationships = entityTypeRelationshipService.getDefinitionsForEntityType(workspaceId, entityType.id)
+
         val bundle = if ("semantics" in include) {
             val allMetadata = semanticMetadataService.getAllMetadataForEntityType(workspaceId, entityType.id)
             buildSemanticBundle(entityType.id, allMetadata)
@@ -367,7 +378,11 @@ class EntityTypeService(
             null
         }
 
-        return EntityTypeWithSemanticsResponse(entityType = entityType, semantics = bundle)
+        return EntityTypeWithSemanticsResponse(
+            entityType = entityType,
+            relationships = relationships,
+            semantics = bundle,
+        )
     }
 
     /**

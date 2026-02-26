@@ -43,6 +43,7 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
         assertEquals(10, result.entities.size)
     }
 
+
     @Test
     fun `test NOT_EXISTS returns companies without employees`() = runBlocking {
         // This test modifies shared state, so restore it afterward

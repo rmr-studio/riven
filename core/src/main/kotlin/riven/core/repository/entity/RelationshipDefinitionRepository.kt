@@ -19,4 +19,16 @@ interface RelationshipDefinitionRepository : JpaRepository<RelationshipDefinitio
         AND rd.sourceEntityTypeId IN :entityTypeIds
     """)
     fun findByWorkspaceIdAndSourceEntityTypeIdIn(workspaceId: UUID, entityTypeIds: List<UUID>): List<RelationshipDefinitionEntity>
+
+    @Query("""
+        SELECT rd, rtr FROM RelationshipDefinitionEntity rd
+        LEFT JOIN RelationshipTargetRuleEntity rtr ON rtr.relationshipDefinitionId = rd.id
+        WHERE (rd.workspaceId = :workspaceId AND rd.sourceEntityTypeId IN :entityTypeIds)
+        OR rd.id IN (
+            SELECT rtr2.relationshipDefinitionId FROM RelationshipTargetRuleEntity rtr2
+            WHERE rtr2.targetEntityTypeId IN :entityTypeIds
+            AND rtr2.inverseVisible = true
+        )
+    """)
+    fun findDefinitionsWithRulesForEntityTypes(workspaceId: UUID, entityTypeIds: List<UUID>): List<Array<Any?>>
 }

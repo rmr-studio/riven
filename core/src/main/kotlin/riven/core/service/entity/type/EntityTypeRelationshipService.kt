@@ -268,6 +268,48 @@ class EntityTypeRelationshipService(
     }
 
     /**
+     * Batch-fetches relationship definitions for multiple entity types using a single
+     * JPQL query that LEFT JOINs definitions with their target rules.
+     *
+     * Returns a map keyed by entity type ID, where each value contains both forward
+     * definitions (type is source) and inverse-visible definitions (type is target).
+     */
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun getDefinitionsForEntityTypes(
+        workspaceId: UUID,
+        entityTypeIds: List<UUID>,
+    ): Map<UUID, List<RelationshipDefinition>> {
+        if (entityTypeIds.isEmpty()) return emptyMap()
+
+        val rows = definitionRepository.findDefinitionsWithRulesForEntityTypes(workspaceId, entityTypeIds)
+
+        val definitions = linkedMapOf<UUID, RelationshipDefinitionEntity>()
+        val rulesByDefId = mutableMapOf<UUID, MutableList<RelationshipTargetRule>>()
+
+        for (row in rows) {
+            val def = row[0] as RelationshipDefinitionEntity
+            val rule = row[1] as? RelationshipTargetRuleEntity
+            val defId = requireNotNull(def.id)
+
+            definitions[defId] = def
+            if (rule != null) {
+                rulesByDefId.getOrPut(defId) { mutableListOf() }.add(rule.toModel())
+            }
+        }
+
+        val models = definitions.values.map { def ->
+            def.toModel(rulesByDefId[def.id] ?: emptyList())
+        }
+
+        return entityTypeIds.associateWith { entityTypeId ->
+            models.filter { def ->
+                def.sourceEntityTypeId == entityTypeId ||
+                    def.targetRules.any { it.targetEntityTypeId == entityTypeId && it.inverseVisible }
+            }
+        }
+    }
+
+    /**
      * Returns all relationship definitions for an entity type, keyed by definition ID.
      * Includes both forward and inverse-visible definitions.
      */
