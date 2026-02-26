@@ -85,8 +85,8 @@ export function TimeSaved() {
             Less stitching. More signal.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed tracking-normal text-secondary/80 md:text-lg">
-            Riven eliminates the manual work caused by disconnected tools — so you can focus on
-            growing your business, not reconciling it.
+            Riven eliminates the manual work caused by disconnected tools. Allowing you to focus on
+            what matters most, growing your business.
           </p>
         </motion.div>
 
