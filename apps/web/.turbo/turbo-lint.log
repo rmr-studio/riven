@@ -1,0 +1,75 @@
+
+> @riven/web@0.1.0 lint /home/jared/dev/worktrees/landing/apps/web
+> eslint
+
+
+/home/jared/dev/worktrees/landing/apps/web/components/feature-modules/cross-domain-intelligence/cross-domain-carousel.tsx
+  84:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/jared/dev/worktrees/landing/apps/web/components/feature-modules/cross-domain-intelligence/cross-domain-carousel.tsx:84:5
+  82 |   useEffect(() => {
+  83 |     if (!api) return;
+> 84 |     onSelect();
+     |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  85 |     api.on('select', onSelect);
+  86 |     api.on('reInit', onSelect);
+  87 |     return () => {  react-hooks/set-state-in-effect
+
+/home/jared/dev/worktrees/landing/apps/web/components/feature-modules/features/components/feature-accordion.tsx
+  17:27  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/home/jared/dev/worktrees/landing/apps/web/components/feature-modules/features/components/feature-accordion.tsx:17:27
+  15 |   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  16 |   const pauseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+> 17 |   const startRef = useRef(Date.now());
+     |                           ^^^^^^^^^^ Cannot call impure function
+  18 |
+  19 |   // Auto-advance timer (desktop only, controlled by CSS visibility)
+  20 |   useEffect(() => {  react-hooks/purity
+
+/home/jared/dev/worktrees/landing/apps/web/components/feature-modules/hero/components/hero-background.tsx
+  26:3  warning  'fade' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/jared/dev/worktrees/landing/apps/web/components/feature-modules/hero/components/hero-copy.tsx
+  42:16  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/jared/dev/worktrees/landing/apps/web/components/feature-modules/waitlist/components/steps/1.cta.tsx
+  8:11  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/home/jared/dev/worktrees/landing/apps/web/components/feature-modules/waitlist/components/waitlist-form.tsx
+  67:32  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+/home/jared/dev/worktrees/landing/apps/web/components/feature-modules/waitlist/components/waitlist-form.tsx:67:32
+  65 |
+  66 |   const { trigger, setValue, watch, formState } = form;
+> 67 |   const selectedIntegrations = watch('integrations');
+     |                                ^^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  68 |   const selectedPrice = watch('monthlyPrice');
+  69 |   const selectedInvolvement = watch('involvement');
+  70 |  react-hooks/incompatible-library
+
+/home/jared/dev/worktrees/landing/apps/web/components/ui/bento-carousel-container.tsx
+  198:9  warning  'isLastSlide' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  216:9  warning  'updateCurrentSlide' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/jared/dev/worktrees/landing/apps/web/components/ui/hover-border-gradient.tsx
+  55:6   warning  React Hook useEffect has missing dependencies: 'duration' and 'rotateDirection'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  58:22  warning  'event' is defined but never used                                                                                                    @typescript-eslint/no-unused-vars
+
+/home/jared/dev/worktrees/landing/apps/web/components/ui/mobile-nav-menu.tsx
+   26:3  warning  'showTrigger' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  107:9  warning  'pathName' is assigned a value but never used     @typescript-eslint/no-unused-vars
+
+✖ 12 problems (4 errors, 8 warnings)
+
+ ELIFECYCLE  Command failed with exit code 1.
