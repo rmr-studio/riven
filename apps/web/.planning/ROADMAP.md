@@ -13,8 +13,8 @@ Three phases that deliver a confirmation email to every waitlist signup — reli
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Infrastructure** - Install packages, validate API key at startup, document secret
-- [ ] **Phase 2: Email Template + Server Action** - Build branded email template and `sendConfirmationEmail` server action
-- [ ] **Phase 3: Integration** - Wire server action into existing join mutation as fire-and-forget
+- [x] **Phase 2: Email Template + Server Action** - Build branded email template and `sendConfirmationEmail` server action
+- [x] **Phase 3: Integration** - Wire server action into existing join mutation as fire-and-forget (completed 2026-02-27)
 
 ## Phase Details
 
@@ -41,7 +41,7 @@ Plans:
   4. `next build` succeeds with no `'use client'` contamination in the `emails/` directory
 **Plans:** 1 plan
 Plans:
-- [ ] 02-01-PLAN.md — Create email template, server action, and react-email preview server config
+- [x] 02-01-PLAN.md — Create email template, server action, and react-email preview server config
 
 ### Phase 3: Integration
 **Goal**: Every waitlist signup at step 2 (contact submission) triggers a confirmation email as a non-blocking side effect — the join still succeeds even if the email fails
@@ -51,7 +51,9 @@ Plans:
   1. Submitting the waitlist form in dev causes a confirmation email to arrive in the registered inbox
   2. Temporarily invalidating the API key causes the join to succeed (form advances to next step, no error shown to user) while the email silently fails
   3. The email fires after step 2 (contact submission), not after the optional survey steps
-**Plans**: TBD
+**Plans:** 1/1 plans complete
+Plans:
+- [ ] 03-01-PLAN.md — Wire sendConfirmationEmail into handleJoin onSuccess as non-blocking fire-and-forget
 
 ## Progress
 
@@ -61,5 +63,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Infrastructure | 1/1 | Complete | 2026-02-27 |
-| 2. Email Template + Server Action | 0/1 | Not started | - |
-| 3. Integration | 0/TBD | Not started | - |
+| 2. Email Template + Server Action | 1/1 | Complete | 2026-02-27 |
+| 3. Integration | 1/1 | Complete   | 2026-02-27 |

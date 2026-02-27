@@ -30,9 +30,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Integration
 
-- [ ] **INTG-01**: Server action called from existing join mutation `onSuccess` callback
-- [ ] **INTG-02**: Email send is non-blocking — failure does not prevent waitlist join
-- [ ] **INTG-03**: Email fires at step 2 (contact submission), not after survey
+- [x] **INTG-01**: Server action called from existing join mutation `onSuccess` callback
+- [x] **INTG-02**: Email send is non-blocking — failure does not prevent waitlist join
+- [x] **INTG-03**: Email fires at step 2 (contact submission), not after survey
 
 ## v2 Requirements
 
@@ -74,9 +74,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ACTN-01 | Phase 2 | Complete |
 | ACTN-02 | Phase 2 | Complete |
 | ACTN-03 | Phase 2 | Complete |
-| INTG-01 | Phase 3 | Pending |
-| INTG-02 | Phase 3 | Pending |
-| INTG-03 | Phase 3 | Pending |
+| INTG-01 | Phase 3 | Complete |
+| INTG-02 | Phase 3 | Complete |
+| INTG-03 | Phase 3 | Complete |
 
 **Coverage:**
 - v1 requirements: 15 total
@@ -85,4 +85,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-26*
-*Last updated: 2026-02-27 after Phase 1 completion (INFRA-01, INFRA-02, INFRA-03 complete)*
+*Last updated: 2026-02-27 after Phase 2 completion (TMPL-01–06, ACTN-01–03 complete)*
