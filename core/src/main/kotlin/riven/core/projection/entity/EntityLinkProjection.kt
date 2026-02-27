@@ -17,7 +17,7 @@ interface EntityLinkProjection {
     fun getId(): UUID
     fun getworkspaceId(): UUID
     fun getTypeKey(): String
-    fun getFieldId(): UUID
+    fun getDefinitionId(): UUID
     fun getSourceEntityId(): UUID
     fun getIconType(): String
     fun getIconColour(): String
@@ -30,7 +30,7 @@ interface EntityLinkProjection {
 fun EntityLinkProjection.toEntityLink(): EntityLink = EntityLink(
     id = getId(),
     workspaceId = getworkspaceId(),
-    fieldId = getFieldId(),
+    definitionId = getDefinitionId(),
     sourceEntityId = getSourceEntityId(),
     icon = Icon(
         type = IconType.valueOf(getIconType()),

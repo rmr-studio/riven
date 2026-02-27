@@ -185,12 +185,16 @@ export function CrossDomainCarousel() {
               if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
               pauseTimeoutRef.current = setTimeout(() => setPaused(false), 8000);
             }}
-            className={cn(
-              'h-2.5 rounded-full transition-all duration-300',
-              current === index ? 'w-8 bg-foreground/70' : 'w-2.5 bg-foreground/20',
-            )}
+            className="flex h-6 w-6 items-center justify-center"
             aria-label={`Go to slide ${index + 1}`}
-          />
+          >
+            <span
+              className={cn(
+                'h-2.5 rounded-full transition-all duration-300',
+                current === index ? 'w-8 bg-foreground/70' : 'w-2.5 bg-foreground/20',
+              )}
+            />
+          </button>
         ))}
       </div>
     </div>

@@ -11,14 +11,10 @@ import java.util.*
 @Entity
 @Table(
     name = "entity_relationships",
-    uniqueConstraints = [
-        UniqueConstraint(columnNames = ["source_entity_id", "relationship_field_id", "target_entity_id"])
-    ],
     indexes = [
         Index(name = "idx_entity_relationships_source", columnList = "workspace_id, source_entity_id"),
         Index(name = "idx_entity_relationships_target", columnList = "workspace_id, target_entity_id"),
-        Index(name = "idx_entity_relationships_target", columnList = "workspace_id, source_entity_type_id"),
-        Index(name = "idx_entity_relationships_target", columnList = "workspace_id, target_entity_type_id"),
+        Index(name = "idx_entity_relationships_definition", columnList = "relationship_definition_id"),
     ]
 )
 data class EntityRelationshipEntity(
@@ -33,17 +29,11 @@ data class EntityRelationshipEntity(
     @Column(name = "source_entity_id", nullable = false, columnDefinition = "uuid")
     val sourceId: UUID,
 
-    @Column(name = "source_entity_type_id", nullable = false, columnDefinition = "uuid")
-    val sourceTypeId: UUID,
-
     @Column(name = "target_entity_id", nullable = false, columnDefinition = "uuid")
     val targetId: UUID,
 
-    @Column(name = "target_entity_type_id", nullable = false, columnDefinition = "uuid")
-    val targetTypeId: UUID,
-
-    @Column(name = "relationship_field_id", nullable = false, columnDefinition = "uuid")
-    val fieldId: UUID,
+    @Column(name = "relationship_definition_id", nullable = false, columnDefinition = "uuid")
+    val definitionId: UUID,
 
 ) : AuditableSoftDeletableEntity() {
 
@@ -55,7 +45,7 @@ data class EntityRelationshipEntity(
         return EntityRelationship(
             id = id,
             workspaceId = this.workspaceId,
-            fieldId = this.fieldId,
+            definitionId = this.definitionId,
             sourceEntityId = this.sourceId,
             targetEntityId = this.targetId,
             createdAt = if (audit) this.createdAt else null,

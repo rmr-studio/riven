@@ -3,7 +3,7 @@ tags:
   - architecture/domain
   - domain/entity
 Created: 2026-02-01
-Updated: 2026-02-19
+Updated: 2026-02-21
 ---
 # Domain: Entities
 
@@ -41,7 +41,7 @@ The Entities domain provides a flexible, schema-driven data management system. E
 | --------- | ------- |
 | [[Type Definitions]] | Entity type schema management — attributes, relationships, publishing |
 | [[Entity Management]] | Entity instance lifecycle — CRUD with validation and relationship hydration |
-| [[Relationships]] | Bidirectional relationship definitions and instance data with ORIGIN/REFERENCE sync |
+| [[Relationships]] | Relationship definitions (type-level) and instance data (entity-level) with table-based architecture |
 | [[Querying]] | Query pipeline for filtered entity retrieval with JSONB attribute filters and relationship traversal |
 | [[Validation]] | Schema validation for entity instances before persistence |
 | [[Entity Semantics]] | Semantic metadata for entity types, attributes, and relationships — definitions, classifications, and tags |
@@ -63,20 +63,24 @@ The Entities domain provides a flexible, schema-driven data management system. E
 
 | Entity | Purpose | Key Fields |
 | ------ | ------- | ---------- |
-| EntityTypeEntity | Entity type schema definitions | id, key, displayNameSingular, displayNamePlural, workspaceId, schema, relationships, columns, identifierKey |
+| EntityTypeEntity | Entity type schema definitions | id, key, displayNameSingular, displayNamePlural, workspaceId, schema, columns, identifierKey |
 | EntityEntity | Entity instances with JSONB attribute data | id, typeId, typeKey, workspaceId, payload, iconType, iconColour, identifierKey |
-| EntityRelationshipEntity | Relationship instances linking entities | id, sourceId, targetId, relationshipTypeId, workspaceId |
+| EntityRelationshipEntity | Relationship instances linking entities | id, sourceId, targetId, definitionId, workspaceId |
 | EntityUniqueValueEntity | Unique constraint tracking for entity attributes | entityId, typeId, fieldId, value, workspaceId |
+| RelationshipDefinitionEntity | Relationship definitions (type-level configuration) | id, workspaceId, sourceEntityTypeId, name, iconType, iconColour, allowPolymorphic, cardinalityDefault, protected |
+| RelationshipTargetRuleEntity | Per-target-type configuration for relationship definitions | id, relationshipDefinitionId, targetEntityTypeId, semanticTypeConstraint, cardinalityOverride, inverseVisible, inverseName |
 | EntityTypeSemanticMetadataEntity | Semantic metadata records for entity types, attributes, and relationships | id, workspaceId, entityTypeId, targetType, targetId, definition, classification, tags |
 
 ### Database Tables
 
 | Table | Entity | Notes |
 | ----- | ------ | ----- |
-| entity_types | EntityTypeEntity | Entity type schemas with JSONB schema and relationships columns |
+| entity_types | EntityTypeEntity | Entity type schemas with JSONB schema column. Relationship definitions moved to dedicated tables. |
 | entities | EntityEntity | Entity instances with JSONB payload column for attribute data |
-| entity_relationships | EntityRelationshipEntity | Relationship instance data |
+| entity_relationships | EntityRelationshipEntity | Relationship instance data. References relationship_definitions via definition_id column. |
 | entity_unique_values | EntityUniqueValueEntity | Normalized unique value tracking for uniqueness constraints |
+| relationship_definitions | RelationshipDefinitionEntity | Relationship type-level configuration. Indexed on (workspace_id, source_entity_type_id) |
+| relationship_target_rules | RelationshipTargetRuleEntity | Per-target-type rules with cardinality overrides and inverse visibility. Indexed on definition_id and target_entity_type_id |
 | entity_type_semantic_metadata | EntityTypeSemanticMetadataEntity | Single-table discriminator pattern for type/attribute/relationship metadata. JSONB tags column. Partial indexes on soft-delete flag |
 
 ---
@@ -112,7 +116,9 @@ None. The Entities domain operates entirely within the application database (Pos
 | Decision | Summary |
 | -------- | ------- |
 | JSONB for attribute storage | Entity attributes stored in JSONB payload column for schema flexibility |
-| Bidirectional relationship sync | ORIGIN relationships automatically create/update inverse REFERENCE relationships |
+| No inverse row storage | Bidirectional visibility resolved at query time via inverse-visible target rules. No REFERENCE rows stored. |
+| Table-based relationship definitions | Relationship configuration stored in dedicated relationship_definitions and relationship_target_rules tables instead of JSONB field on entity_types |
+| Write-time cardinality enforcement | Cardinality limits enforced at relationship insert time, not just at schema level |
 | Mutable entity types | Entity types update in place (unlike BlockTypes which are versioned) |
 | Query pipeline architecture | Filter validation → AST traversal → SQL generation → parameterized execution |
 | Separate table for semantic metadata | Semantic metadata stored in dedicated table (not embedded in entity_types JSONB) to protect entity CRUD hot path |
@@ -124,8 +130,9 @@ None. The Entities domain operates entirely within the application database (Pos
 
 | Issue | Impact | Effort |
 | ----- | ------ | ------ |
-| Thread safety issue in relationship sync | ORIGIN/REFERENCE relationship sync assumes single-threaded execution | Medium |
+| Semantic type constraint matching stubbed | EntityRelationshipService.findMatchingRule() only matches by explicit type ID; semantic constraint lookup not yet implemented | Low |
 | Missing cross-type attribute validation in query filters | Relationship filters validate against root entity type attributes instead of target entity type | Low |
+| CountMatches filter unsupported | RelationshipSqlGenerator throws UnsupportedOperationException for CountMatches filter variant | Low |
 
 ---
 
@@ -136,3 +143,4 @@ None. The Entities domain operates entirely within the application database (Pos
 | 2026-02-01 | Domain structure created                                                                                             | Phase 2 initialization       |
 | 2026-02-08 | Domain overview and subdomain docs created                                                                           | [[02-01-PLAN]]               |
 | 2026-02-19 | Entity Semantics subdomain implemented — semantic metadata service, repository, lifecycle hooks, KnowledgeController | Semantic Metadata Foundation |
+| 2026-02-21 | Entity relationship overhaul — replaced ORIGIN/REFERENCE sync with table-based architecture, added relationship_definitions and relationship_target_rules tables, write-time cardinality enforcement, query-time inverse resolution | Entity Relationships |

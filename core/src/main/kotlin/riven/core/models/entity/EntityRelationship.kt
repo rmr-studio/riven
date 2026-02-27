@@ -9,7 +9,7 @@ import java.util.*
  */
 data class EntityRelationship(
     val id: UUID,
-    val fieldId: UUID,
+    val definitionId: UUID,
     val workspaceId: UUID,
     val sourceEntityId: UUID,
     val sourceEntity: Entity? = null, // Can be hydrated if needed

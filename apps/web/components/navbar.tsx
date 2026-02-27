@@ -123,6 +123,7 @@ export function Navbar() {
             size={'icon'}
             onClick={() => setMobileMenuOpen(true)}
             className="size-8 shrink-0 cursor-pointer md:hidden"
+            aria-label="Open menu"
           >
             <Menu className="size-6 text-primary" />
           </Button>

@@ -2,15 +2,16 @@ package riven.core.service.workflow.state
 
 import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Service
-import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.models.entity.Entity
 import riven.core.models.entity.EntityType
+import riven.core.models.entity.RelationshipDefinition
 import riven.core.models.entity.payload.EntityAttributePayload
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.entity.payload.EntityAttributeRelationPayload
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.entity.EntityRelationshipService
+import riven.core.service.entity.type.EntityTypeRelationshipService
 import java.util.*
 
 /**
@@ -24,6 +25,7 @@ class EntityContextService(
     private val entityRepository: EntityRepository,
     private val entityTypeRepository: EntityTypeRepository,
     private val entityRelationshipService: EntityRelationshipService,
+    private val entityTypeRelationshipService: EntityTypeRelationshipService,
     private val logger: KLogger
 ) {
 
@@ -92,12 +94,19 @@ class EntityContextService(
             emptyMap()
         }
 
+        // Load relationship definitions for this entity type
+        val definitions = if (currentDepth < maxDepth) {
+            loadDefinitions(workspaceId, requireNotNull(entityTypeEntity.id))
+        } else {
+            emptyMap()
+        }
+
         // Convert to domain models
         val entity = entityEntity.toModel(audit = false, relationships = relationships)
         val entityType = entityTypeEntity.toModel()
 
         // Build context from payload
-        return buildContextFromEntity(entity, entityType, workspaceId, currentDepth, maxDepth)
+        return buildContextFromEntity(entity, entityType, definitions, workspaceId, currentDepth, maxDepth)
     }
 
     /**
@@ -107,7 +116,8 @@ class EntityContextService(
      * For relationships, recursively builds nested contexts based on cardinality.
      *
      * @param entity Entity domain model with relationships
-     * @param entityType EntityType domain model with schema and relationship definitions
+     * @param entityType EntityType domain model with schema
+     * @param definitions Relationship definitions for this entity type, keyed by definition ID
      * @param workspaceId Workspace ID for authorization
      * @param currentDepth Current recursion depth
      * @param maxDepth Maximum allowed recursion depth
@@ -116,6 +126,7 @@ class EntityContextService(
     private fun buildContextFromEntity(
         entity: Entity,
         entityType: EntityType,
+        definitions: Map<UUID, RelationshipDefinition>,
         workspaceId: UUID,
         currentDepth: Int,
         maxDepth: Int
@@ -136,7 +147,7 @@ class EntityContextService(
             val value = extractValue(
                 payload = attribute.payload,
                 fieldUuid = uuid,
-                entityType = entityType,
+                definitions = definitions,
                 workspaceId = workspaceId,
                 currentDepth = currentDepth,
                 maxDepth = maxDepth
@@ -157,7 +168,7 @@ class EntityContextService(
      *
      * @param payload EntityAttributePayload (primitive or relationship)
      * @param fieldUuid UUID key of this field in entity payload
-     * @param entityType EntityType containing relationship definitions
+     * @param definitions Relationship definitions keyed by definition ID
      * @param workspaceId Workspace ID for authorization
      * @param currentDepth Current recursion depth
      * @param maxDepth Maximum allowed recursion depth
@@ -166,7 +177,7 @@ class EntityContextService(
     private fun extractValue(
         payload: EntityAttributePayload,
         fieldUuid: UUID,
-        entityType: EntityType,
+        definitions: Map<UUID, RelationshipDefinition>,
         workspaceId: UUID,
         currentDepth: Int,
         maxDepth: Int
@@ -182,10 +193,10 @@ class EntityContextService(
                 }
 
                 // Find relationship definition for this field
-                val relationshipDefinition = entityType.relationships?.find { it.id == fieldUuid }
+                val definition = definitions[fieldUuid]
 
-                if (relationshipDefinition == null) {
-                    logger.warn { "Relationship definition not found for field $fieldUuid in entity type ${entityType.key}" }
+                if (definition == null) {
+                    logger.warn { "Relationship definition not found for field $fieldUuid" }
                     return null
                 }
 
@@ -205,16 +216,17 @@ class EntityContextService(
                     }
                 }
 
-                // Return based on cardinality
-                when (relationshipDefinition.cardinality) {
-                    EntityRelationshipCardinality.ONE_TO_ONE,
-                    EntityRelationshipCardinality.MANY_TO_ONE -> {
+                // Return based on cardinality from definition
+                val cardinality = definition.cardinalityDefault
+                when (cardinality) {
+                    riven.core.enums.entity.EntityRelationshipCardinality.ONE_TO_ONE,
+                    riven.core.enums.entity.EntityRelationshipCardinality.MANY_TO_ONE -> {
                         // Return single nested map (or null if empty)
                         nestedContexts.firstOrNull()
                     }
 
-                    EntityRelationshipCardinality.ONE_TO_MANY,
-                    EntityRelationshipCardinality.MANY_TO_MANY -> {
+                    riven.core.enums.entity.EntityRelationshipCardinality.ONE_TO_MANY,
+                    riven.core.enums.entity.EntityRelationshipCardinality.MANY_TO_MANY -> {
                         // Return list of nested maps
                         nestedContexts
                     }
@@ -225,5 +237,13 @@ class EntityContextService(
             // but handle it gracefully by returning null
             else -> null
         }
+    }
+
+    /**
+     * Loads relationship definitions for an entity type, keyed by definition ID.
+     * Delegates to EntityTypeRelationshipService for forward + inverse definition loading.
+     */
+    private fun loadDefinitions(workspaceId: UUID, entityTypeId: UUID): Map<UUID, RelationshipDefinition> {
+        return entityTypeRelationshipService.getDefinitionsForEntityTypeAsMap(workspaceId, entityTypeId)
     }
 }

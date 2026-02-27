@@ -85,8 +85,8 @@ export function TimeSaved() {
             Less stitching. More signal.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed tracking-normal text-secondary/80 md:text-lg">
-            Riven eliminates the manual work caused by disconnected tools — so you can focus on
-            growing your business, not reconciling it.
+            Riven eliminates the manual work caused by disconnected tools. Allowing you to focus on
+            what matters most, growing your business.
           </p>
         </motion.div>
 
@@ -135,13 +135,15 @@ export function TimeSaved() {
               {/* Summary + compound stats (spans 2 columns) */}
               <div className="col-span-2 flex flex-col justify-between border-l border-content/50 p-7 lg:flex-row lg:items-end lg:p-8">
                 <div>
-                  <p className="mb-2 text-[0.8rem] tracking-wide text-secondary/70">Take control</p>
+                  <p className="mb-2 text-[0.8rem] tracking-wide text-secondary/70">
+                    Take back control
+                  </p>
                   <p className="mb-3 text-lg font-medium tracking-tight text-secondary lg:text-xl">
                     What you save
                   </p>
                   <p className="text-sm leading-relaxed tracking-normal text-secondary/50">
-                    No more stitching together data across tabs, tools, and spreadsheets. Just the
-                    information you need to run your business.
+                    Hours of manual work every week. The mental overhead of stitching together data,
+                    the anxiety of making decisions based on incomplete information.
                   </p>
                 </div>
                 <div className="mt-6 shrink-0 space-y-0.5 font-serif font-light tracking-tight lg:mt-0 lg:pl-8 lg:text-right">

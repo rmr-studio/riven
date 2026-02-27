@@ -5,6 +5,7 @@ import riven.core.exceptions.SchemaValidationException
 import riven.core.models.entity.query.filter.QueryFilter
 import riven.core.models.entity.query.pagination.QueryPagination
 import riven.core.service.entity.query.EntityQueryAssembler.Companion.MAX_LIMIT
+import riven.core.enums.entity.query.QueryDirection
 import java.util.*
 
 /**
@@ -62,12 +63,13 @@ class EntityQueryAssembler(
         filter: QueryFilter?,
         pagination: QueryPagination,
         paramGen: ParameterNameGenerator,
+        relationshipDirections: Map<UUID, QueryDirection> = emptyMap(),
     ): AssembledQuery {
         validatePagination(pagination)
 
         val baseFragment = buildBaseWhereClause(entityTypeId, workspaceId, paramGen)
 
-        val filterFragment = filter?.let { filterVisitor.visit(it, paramGen) }
+        val filterFragment = filter?.let { filterVisitor.visit(it, paramGen, relationshipDirections = relationshipDirections) }
 
         val whereFragment = if (filterFragment != null) {
             baseFragment.and(filterFragment)
