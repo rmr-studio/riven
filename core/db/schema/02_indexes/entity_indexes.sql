@@ -19,6 +19,21 @@ CREATE INDEX IF NOT EXISTS idx_entities_payload_gin
     ON entities USING GIN (payload)
     WHERE deleted = FALSE AND deleted_at IS NULL;
 
+-- Relationship Definitions Indexes
+DROP INDEX IF EXISTS idx_rel_def_workspace_source;
+CREATE INDEX IF NOT EXISTS idx_rel_def_workspace_source
+    ON relationship_definitions (workspace_id, source_entity_type_id)
+    WHERE deleted = FALSE;
+
+-- Relationship Target Rules Indexes
+DROP INDEX IF EXISTS idx_target_rule_def;
+CREATE INDEX IF NOT EXISTS idx_target_rule_def
+    ON relationship_target_rules (relationship_definition_id);
+
+DROP INDEX IF EXISTS idx_target_rule_type;
+CREATE INDEX IF NOT EXISTS idx_target_rule_type
+    ON relationship_target_rules (target_entity_type_id);
+
 -- Entity Relationships Indexes
 DROP INDEX IF EXISTS idx_entity_relationships_workspace_source;
 CREATE INDEX IF NOT EXISTS idx_entity_relationships_workspace_source
@@ -30,16 +45,9 @@ CREATE INDEX IF NOT EXISTS idx_entity_relationships_workspace_target
     ON entity_relationships (workspace_id, target_entity_id)
     WHERE deleted = FALSE AND deleted_at IS NULL;
 
-
-DROP INDEX IF EXISTS idx_entity_relationships_workspace_source_type;
-CREATE INDEX IF NOT EXISTS idx_entity_relationships_workspace_source_type
-    ON entity_relationships (workspace_id, source_entity_type_id)
-    WHERE deleted = FALSE AND deleted_at IS NULL;
-
-
-DROP INDEX IF EXISTS idx_entity_relationships_workspace_target_type;
-CREATE INDEX IF NOT EXISTS idx_entity_relationships_workspace_target_type
-    ON entity_relationships (workspace_id, target_entity_type_id)
+DROP INDEX IF EXISTS idx_entity_relationships_definition;
+CREATE INDEX IF NOT EXISTS idx_entity_relationships_definition
+    ON entity_relationships (relationship_definition_id)
     WHERE deleted = FALSE AND deleted_at IS NULL;
 
 -- Entity Provenance Indexes

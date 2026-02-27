@@ -7,17 +7,26 @@ import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import { useState } from 'react';
 
+interface ImageVariant {
+  src: string;
+  width: number;
+}
+
 interface HeroBackgroundProps {
   className?: string;
   fade?: boolean;
   glow?: boolean;
   image: {
-    avif: string;
-    webp: string;
+    avif: ImageVariant[];
+    webp: ImageVariant[];
   };
   alt?: string;
-  preload?: boolean;
+  priority?: boolean;
   lazy?: boolean;
+}
+
+function buildSrcSet(variants: ImageVariant[]): string {
+  return variants.map((v) => `${getCdnUrl(v.src)} ${v.width}w`).join(', ');
 }
 
 export function HeroBackground({
@@ -26,7 +35,7 @@ export function HeroBackground({
   fade,
   glow,
   alt = 'Background image',
-  preload,
+  priority,
   lazy,
 }: HeroBackgroundProps) {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -48,14 +57,14 @@ export function HeroBackground({
   return (
     <div className={cn('absolute inset-x-0 bottom-1/6 z-0', className)}>
       <picture className="relative block h-full w-full">
-        <source srcSet={getCdnUrl(image.avif)} type="image/avif" />
-        <source srcSet={getCdnUrl(image.webp)} type="image/webp" />
+        <source srcSet={buildSrcSet(image.avif)} type="image/avif" sizes="100vw" />
+        <source srcSet={buildSrcSet(image.webp)} type="image/webp" sizes="100vw" />
         <Image
           loader={cdnImageLoader}
-          src={image.webp}
+          src={image.webp[image.webp.length - 1].src}
           alt={alt}
           fill
-          preload={preload}
+          priority={priority}
           loading={lazy ? 'lazy' : undefined}
           sizes="100vw"
           className={cn(

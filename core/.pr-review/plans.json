@@ -1,0 +1,394 @@
+[
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJZ-",
+    "severity": "critical",
+    "summary": "Unique constraint must be partial index to support soft-delete re-creation",
+    "file": "core/db/schema/04_constraints/entity_constraints.sql",
+    "changes": [
+      {
+        "file": "db/schema/04_constraints/entity_constraints.sql",
+        "description": "Replace ADD CONSTRAINT uq_entity_relationship UNIQUE(...) with a partial unique index that filters WHERE deleted = FALSE AND deleted_at IS NULL, matching the existing pattern from uq_unique_attribute_per_type. This also absorbs the nitpick about the missing trailing semicolon.",
+        "lines": "6-13"
+      },
+      {
+        "file": "src/main/kotlin/riven/core/entity/entity/EntityRelationshipEntity.kt",
+        "description": "Remove the uniqueConstraints declaration from @Table since the unique constraint is now a partial index in SQL, not a JPA-managed constraint. JPA uniqueConstraints don't support WHERE clauses.",
+        "lines": "14-16"
+      }
+    ],
+    "architectural_impact": "none",
+    "impact_notes": "",
+    "test_strategy": "Existing tests cover relationship creation. The partial index is a schema-level concern — verify with ./gradlew test that no JPA constraint issues arise.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJZ_",
+    "severity": "nitpick",
+    "summary": "Missing trailing semicolon on final SQL statement",
+    "file": "core/db/schema/04_constraints/entity_constraints.sql",
+    "changes": [
+      {
+        "file": "db/schema/04_constraints/entity_constraints.sql",
+        "description": "Absorbed into critical fix for PRRT_kwDOPrHE-c5vtJZ- — the entire constraint statement is being replaced with a partial unique index that will have a proper semicolon.",
+        "lines": "13"
+      }
+    ],
+    "architectural_impact": "none",
+    "impact_notes": "",
+    "test_strategy": "Covered by the critical fix plan.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJa0",
+    "severity": "important",
+    "summary": "Inverse definitions allow semantically inverted relationship writes (polymorphic case)",
+    "file": "core/src/main/kotlin/riven/core/service/entity/EntityService.kt",
+    "changes": [
+      {
+        "file": "src/main/kotlin/riven/core/service/entity/EntityService.kt",
+        "description": "In saveRelationshipsPerDefinition, after looking up the definition, add require(definition.sourceEntityTypeId == entityTypeId) guard. This prevents clients from submitting relationship payloads keyed by inverse definition IDs, which would create flipped source/target rows. For non-polymorphic defs validateTargets catches this, but polymorphic defs skip validation entirely.",
+        "lines": "259-262"
+      }
+    ],
+    "architectural_impact": "none",
+    "impact_notes": "",
+    "test_strategy": "Add a unit test case that attempts to save a relationship using an inverse definition ID and verifies IllegalArgumentException is thrown.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJa7",
+    "severity": "important",
+    "summary": "DeleteDefinitionImpact.definitionId receives entity type ID + missing target rule cleanup for deleted entity types",
+    "file": "core/src/main/kotlin/riven/core/service/entity/type/EntityTypeService.kt",
+    "changes": [
+      {
+        "file": "src/main/kotlin/riven/core/service/entity/type/EntityTypeService.kt",
+        "description": "Sub-issue 1: Fix the impact response to pass the actual definition ID(s) rather than entityTypeId. Since multiple definitions may exist, compute aggregate link count across all definitions and use a representative name. The DeleteDefinitionImpact is used here in a slightly different context (entity type impact vs single definition impact). Create the impact with a meaningful representation.",
+        "lines": "276-285"
+      },
+      {
+        "file": "src/main/kotlin/riven/core/service/entity/type/EntityTypeService.kt",
+        "description": "Sub-issue 2: After deleting definitions WHERE sourceEntityTypeId = entityTypeId, also clean up target rules from OTHER definitions that point TO this entity type. Query RelationshipTargetRuleRepository for rules where targetEntityTypeId = entityTypeId and delete them.",
+        "lines": "288-295"
+      },
+      {
+        "file": "src/main/kotlin/riven/core/repository/entity/RelationshipTargetRuleRepository.kt",
+        "description": "Add deleteByTargetEntityTypeId(entityTypeId: UUID) method to support cleanup of orphaned target rules.",
+        "lines": "16"
+      }
+    ],
+    "architectural_impact": "low",
+    "impact_notes": "Adds a new repository method and changes cleanup behavior during entity type deletion. Other definitions that previously pointed to this type will lose those target rules, which is the correct behavior.",
+    "test_strategy": "Verify with existing tests. The cleanup is defensive — without it, orphaned rules would reference a soft-deleted entity type. ./gradlew test confirms no regressions.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJaJ",
+    "severity": "important",
+    "summary": "No application-layer enforcement of chk_target_or_semantic DB constraint",
+    "file": "core/src/main/kotlin/riven/core/entity/entity/RelationshipTargetRuleEntity.kt",
+    "changes": [
+      {
+        "file": "src/main/kotlin/riven/core/service/entity/type/EntityTypeRelationshipService.kt",
+        "description": "Add require(rule.targetEntityTypeId != null || rule.semanticTypeConstraint != null) validation in buildTargetRuleEntities for each rule. This surfaces a clean 400 error instead of an opaque DataIntegrityViolationException 500.",
+        "lines": "337-351"
+      },
+      {
+        "file": "src/main/kotlin/riven/core/service/entity/type/EntityTypeRelationshipService.kt",
+        "description": "Add the same validation in diffTargetRules when constructing new rule entities and when updating existing rules.",
+        "lines": "296-335"
+      }
+    ],
+    "architectural_impact": "none",
+    "impact_notes": "",
+    "test_strategy": "Add unit test asserting that a SaveTargetRuleRequest with both targetEntityTypeId=null and semanticTypeConstraint=null throws IllegalArgumentException.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJZ8",
+    "severity": "moderate",
+    "summary": "Add index on relationship_definition_id in SQL schema",
+    "file": "core/db/schema/02_indexes/entity_indexes.sql",
+    "changes": [
+      {
+        "file": "db/schema/02_indexes/entity_indexes.sql",
+        "description": "Add a new index on entity_relationships(relationship_definition_id) WHERE deleted = FALSE AND deleted_at IS NULL to support countByDefinitionId() and softDeleteByDefinitionId() lookups.",
+        "lines": "46-47"
+      }
+    ],
+    "architectural_impact": "none",
+    "impact_notes": "",
+    "test_strategy": "Schema-only change. ./gradlew test to confirm no regressions.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJaB",
+    "severity": "moderate",
+    "summary": "Add index on relationship_definition_id in JPA entity annotation",
+    "file": "core/src/main/kotlin/riven/core/entity/entity/EntityRelationshipEntity.kt",
+    "changes": [
+      {
+        "file": "src/main/kotlin/riven/core/entity/entity/EntityRelationshipEntity.kt",
+        "description": "Add Index(name = \"idx_entity_relationships_definition\", columnList = \"relationship_definition_id\") to the @Table indexes array.",
+        "lines": "17-20"
+      }
+    ],
+    "architectural_impact": "none",
+    "impact_notes": "",
+    "test_strategy": "Companion to SQL schema index. ./gradlew test to confirm JPA entity loads correctly.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJaG",
+    "severity": "moderate",
+    "summary": "Document why RelationshipTargetRuleEntity uses hard-delete instead of soft-delete",
+    "file": "core/src/main/kotlin/riven/core/entity/entity/RelationshipTargetRuleEntity.kt",
+    "changes": [
+      {
+        "file": "src/main/kotlin/riven/core/entity/entity/RelationshipTargetRuleEntity.kt",
+        "description": "Add a KDoc comment explaining that target rules are type-level configuration, not user data, so they use hard-delete. They are recreated via diff when the definition is updated, and are cascade-deleted when the definition is deleted.",
+        "lines": "9-11"
+      }
+    ],
+    "architectural_impact": "none",
+    "impact_notes": "",
+    "test_strategy": "Documentation only. No functional change.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJaM",
+    "severity": "moderate",
+    "summary": "inverseName missing = null default",
+    "file": "core/src/main/kotlin/riven/core/entity/entity/RelationshipTargetRuleEntity.kt",
+    "changes": [
+      {
+        "file": "src/main/kotlin/riven/core/entity/entity/RelationshipTargetRuleEntity.kt",
+        "description": "Add = null default to inverseName parameter for consistency with sibling nullable fields (semanticTypeConstraint and cardinalityOverride).",
+        "lines": "40"
+      }
+    ],
+    "architectural_impact": "none",
+    "impact_notes": "",
+    "test_strategy": "Compilation check. All existing call-sites already pass inverseName explicitly.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJaW",
+    "severity": "moderate",
+    "summary": "Move DeleteDefinitionImpact from service to models package",
+    "file": "core/src/main/kotlin/riven/core/models/response/entity/type/EntityTypeImpactResponse.kt",
+    "changes": [
+      {
+        "file": "src/main/kotlin/riven/core/models/response/entity/type/EntityTypeImpactResponse.kt",
+        "description": "Move DeleteDefinitionImpact data class to this file (or a sibling in models/response/entity/type/) so that the response DTO doesn't import from the service layer.",
+        "lines": "4"
+      },
+      {
+        "file": "src/main/kotlin/riven/core/service/entity/type/EntityTypeRelationshipService.kt",
+        "description": "Remove DeleteDefinitionImpact data class definition from this file. Update import in EntityTypeService if needed.",
+        "lines": "32-36"
+      }
+    ],
+    "architectural_impact": "low",
+    "impact_notes": "Fixes dependency inversion: models should not depend on services. Moving the DTO to models allows both services and response objects to import from models.",
+    "test_strategy": "./gradlew build to verify all imports resolve correctly.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJaZ",
+    "severity": "moderate",
+    "summary": "Prefer JPQL over native SQL for softDeleteByDefinitionId",
+    "file": "core/src/main/kotlin/riven/core/repository/entity/EntityRelationshipRepository.kt",
+    "changes": [
+      {
+        "file": "src/main/kotlin/riven/core/repository/entity/EntityRelationshipRepository.kt",
+        "description": "Replace the native SQL UPDATE with JPQL: UPDATE EntityRelationshipEntity e SET e.deleted = true, e.deletedAt = CURRENT_TIMESTAMP WHERE e.definitionId = :definitionId AND e.deleted = false. Remove nativeQuery = true.",
+        "lines": "97-108"
+      }
+    ],
+    "architectural_impact": "none",
+    "impact_notes": "",
+    "test_strategy": "Existing tests that delete definitions will exercise this path. ./gradlew test.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJac",
+    "severity": "moderate",
+    "summary": "Add DISTINCT to prevent duplicate rows in inverse link query",
+    "file": "core/src/main/kotlin/riven/core/repository/entity/EntityRelationshipRepository.kt",
+    "changes": [
+      {
+        "file": "src/main/kotlin/riven/core/repository/entity/EntityRelationshipRepository.kt",
+        "description": "Add SELECT DISTINCT to findInverseEntityLinksByTargetId query to prevent duplicate rows if multiple target rules match the same (definition_id, target_type_id) pair.",
+        "lines": "199-225"
+      }
+    ],
+    "architectural_impact": "none",
+    "impact_notes": "",
+    "test_strategy": "./gradlew test — defensive change, no behavior change in normal scenarios.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJag",
+    "severity": "moderate",
+    "summary": "Same DISTINCT issue for batch inverse query",
+    "file": "core/src/main/kotlin/riven/core/repository/entity/EntityRelationshipRepository.kt",
+    "changes": [
+      {
+        "file": "src/main/kotlin/riven/core/repository/entity/EntityRelationshipRepository.kt",
+        "description": "Add SELECT DISTINCT to findInverseEntityLinksByTargetIdIn query, same fix as thread 16.",
+        "lines": "230-258"
+      }
+    ],
+    "architectural_impact": "none",
+    "impact_notes": "",
+    "test_strategy": "./gradlew test — same defensive fix as thread 16.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJal",
+    "severity": "moderate",
+    "summary": "Add @Transactional to deleteByRelationshipDefinitionId repository method",
+    "file": "core/src/main/kotlin/riven/core/repository/entity/RelationshipTargetRuleRepository.kt",
+    "changes": [
+      {
+        "file": "src/main/kotlin/riven/core/repository/entity/RelationshipTargetRuleRepository.kt",
+        "description": "Add @Transactional annotation to deleteByRelationshipDefinitionId. Derived deleteBy* methods need explicit @Transactional for Spring Data JPA.",
+        "lines": "16"
+      }
+    ],
+    "architectural_impact": "none",
+    "impact_notes": "",
+    "test_strategy": "./gradlew test — defensive annotation, currently called from transactional context.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJa4",
+    "severity": "moderate",
+    "summary": "Duplicate loadRelationshipDefinitions pattern — consolidate to shared service",
+    "file": "core/src/main/kotlin/riven/core/service/entity/query/EntityQueryService.kt",
+    "changes": [
+      {
+        "file": "src/main/kotlin/riven/core/service/entity/type/EntityTypeRelationshipService.kt",
+        "description": "Add a new method getDefinitionsForEntityTypeAsMap(workspaceId, entityTypeId): Map<UUID, RelationshipDefinition> that returns definitions keyed by ID. This consolidates the forward+inverse loading pattern used in EntityQueryService and EntityContextService. The existing getDefinitionsForEntityType returns a List, so this companion method returns a Map for callers that need keyed lookups.",
+        "lines": "276"
+      },
+      {
+        "file": "src/main/kotlin/riven/core/service/entity/query/EntityQueryService.kt",
+        "description": "Replace private loadRelationshipDefinitions method with a call to EntityTypeRelationshipService.getDefinitionsForEntityTypeAsMap, then map QueryDirection locally. Inject EntityTypeRelationshipService, remove definitionRepository and targetRuleRepository constructor params.",
+        "lines": "49-56, 169-211"
+      }
+    ],
+    "architectural_impact": "low",
+    "impact_notes": "Changes constructor dependencies of EntityQueryService — removes 2 repositories, adds 1 service. The QueryDirection mapping stays local to EntityQueryService since it's query-specific.",
+    "test_strategy": "./gradlew test to confirm query behavior unchanged. Integration tests for relationship queries cover this path.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJa9",
+    "severity": "moderate",
+    "summary": "Duplicate loadDefinitions logic in EntityContextService — consolidate",
+    "file": "core/src/main/kotlin/riven/core/service/workflow/state/EntityContextService.kt",
+    "changes": [
+      {
+        "file": "src/main/kotlin/riven/core/service/workflow/state/EntityContextService.kt",
+        "description": "Replace private loadDefinitions method with a call to EntityTypeRelationshipService.getDefinitionsForEntityTypeAsMap. Inject EntityTypeRelationshipService, remove definitionRepository and targetRuleRepository constructor params.",
+        "lines": "249-276"
+      }
+    ],
+    "architectural_impact": "low",
+    "impact_notes": "Same consolidation as thread 25. Changes constructor dependencies of EntityContextService.",
+    "test_strategy": "./gradlew test to confirm workflow context behavior unchanged.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJaS",
+    "severity": "nitpick",
+    "summary": "Missing @Schema annotation on SaveTargetRuleRequest",
+    "file": "core/src/main/kotlin/riven/core/models/request/entity/type/SaveTypeDefinitionRequest.kt",
+    "changes": [
+      {
+        "file": "src/main/kotlin/riven/core/models/request/entity/type/SaveTypeDefinitionRequest.kt",
+        "description": "Add @Schema(name = \"SaveTargetRuleRequest\", description = \"Request to save a target rule for a relationship definition\") annotation to SaveTargetRuleRequest, matching the pattern of sibling request types in the same file.",
+        "lines": "47"
+      }
+    ],
+    "architectural_impact": "none",
+    "impact_notes": "",
+    "test_strategy": "Documentation/OpenAPI only. No functional change.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJav",
+    "severity": "nitpick",
+    "summary": "Stale variable name fieldProjections should be renamed",
+    "file": "core/src/main/kotlin/riven/core/service/entity/EntityRelationshipService.kt",
+    "changes": [
+      {
+        "file": "src/main/kotlin/riven/core/service/entity/EntityRelationshipService.kt",
+        "description": "Rename fieldProjections to defProjections in findRelatedEntities (batch variant) at line 126.",
+        "lines": "126"
+      }
+    ],
+    "architectural_impact": "none",
+    "impact_notes": "",
+    "test_strategy": "Rename only. Compilation check.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJa_",
+    "severity": "moderate",
+    "summary": "Test comment says 'polymorphic' but allowPolymorphic = false",
+    "file": "core/src/test/kotlin/riven/core/service/entity/query/EntityQueryIntegrationTestBase.kt",
+    "changes": [
+      {
+        "file": "src/test/kotlin/riven/core/service/entity/query/EntityQueryIntegrationTestBase.kt",
+        "description": "Fix misleading comment on line 431. Change from 'polymorphic: Employee or Project' to 'multiple target types: Employee or Project' since allowPolymorphic = false — the definition has explicit target rules, not polymorphic acceptance.",
+        "lines": "431"
+      }
+    ],
+    "architectural_impact": "none",
+    "impact_notes": "",
+    "test_strategy": "Comment-only change. No functional impact.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJbB",
+    "severity": "moderate",
+    "summary": "Extend EntityFactory for EntityEntity creation + fix FQN import",
+    "file": "core/src/test/kotlin/riven/core/service/entity/query/EntityQueryRelationshipIntegrationTest.kt",
+    "changes": [
+      {
+        "file": "src/test/kotlin/riven/core/service/util/factory/entity/EntityFactory.kt",
+        "description": "Add createEntityEntity() factory method to EntityFactory that takes workspaceId, typeId, typeKey, identifierKey, payload, and optional icon fields with reasonable defaults.",
+        "lines": "131"
+      },
+      {
+        "file": "src/test/kotlin/riven/core/service/entity/query/EntityQueryRelationshipIntegrationTest.kt",
+        "description": "Replace inline riven.core.entity.entity.EntityEntity(...) constructor with EntityFactory.createEntityEntity(...). Add import for EntityFactory if not present.",
+        "lines": "425-439"
+      }
+    ],
+    "architectural_impact": "none",
+    "impact_notes": "",
+    "test_strategy": "./gradlew test to confirm test still passes.",
+    "status": "fixed"
+  },
+  {
+    "triage_id": "PRRT_kwDOPrHE-c5vtJbC",
+    "severity": "moderate",
+    "summary": "Lambda parameter 'key' shadows outer function parameter",
+    "file": "core/src/test/kotlin/riven/core/service/util/factory/entity/EntityFactory.kt",
+    "changes": [
+      {
+        "file": "src/test/kotlin/riven/core/service/util/factory/entity/EntityFactory.kt",
+        "description": "In createEntityType, rename the lambda parameter 'key' in the defaultOrder mapping to 'attrId' or 'propertyId' to avoid shadowing the outer 'key: String' parameter.",
+        "lines": "33"
+      }
+    ],
+    "architectural_impact": "none",
+    "impact_notes": "",
+    "test_strategy": "Rename only. ./gradlew test to confirm.",
+    "status": "fixed"
+  }
+]

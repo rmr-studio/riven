@@ -1,14 +1,16 @@
 package riven.core.models.response.entity.type
 
 import riven.core.models.entity.EntityType
+import riven.core.models.entity.RelationshipDefinition
 
 /**
- * Response wrapper for an entity type with optional semantic metadata attached.
+ * Response wrapper for an entity type with its relationship definitions and optional semantic metadata.
  *
- * Used when `?include=semantics` is specified on entity type list or detail endpoints.
- * When semantics are not requested, the `semantics` field is null for backward compatibility.
+ * Relationship definitions are always included since they are a core part of the entity type schema.
+ * Pass `?include=semantics` to also attach semantic metadata bundles.
  */
 data class EntityTypeWithSemanticsResponse(
     val entityType: EntityType,
+    val relationships: List<RelationshipDefinition> = emptyList(),
     val semantics: SemanticMetadataBundle? = null,
 )

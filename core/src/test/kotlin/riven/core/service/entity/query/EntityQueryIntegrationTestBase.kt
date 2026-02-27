@@ -27,19 +27,23 @@ import org.testcontainers.utility.DockerImageName
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityRelationshipEntity
 import riven.core.entity.entity.EntityTypeEntity
+import riven.core.entity.entity.RelationshipDefinitionEntity
+import riven.core.entity.entity.RelationshipTargetRuleEntity
+import riven.core.enums.common.icon.IconColour
+import riven.core.enums.common.icon.IconType
 import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.core.DataType
-import riven.core.enums.entity.EntityCategory
 import riven.core.enums.entity.EntityPropertyType
 import riven.core.enums.entity.EntityRelationshipCardinality
-import riven.core.enums.entity.EntityTypeRelationshipType
 import riven.core.models.common.validation.Schema
-import riven.core.models.entity.configuration.EntityRelationshipDefinition
 import riven.core.models.entity.configuration.EntityTypeAttributeColumn
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
+import riven.core.repository.entity.RelationshipDefinitionRepository
+import riven.core.repository.entity.RelationshipTargetRuleRepository
+import riven.core.service.entity.type.EntityTypeRelationshipService
 import java.time.ZonedDateTime
 import java.time.temporal.TemporalAccessor
 import java.util.*
@@ -99,14 +103,28 @@ class EntityQueryIntegrationTestConfig {
     fun entityQueryAssembler(visitor: AttributeFilterVisitor) = EntityQueryAssembler(visitor)
 
     @Bean
+    fun entityTypeRelationshipService(
+        definitionRepository: RelationshipDefinitionRepository,
+        targetRuleRepository: RelationshipTargetRuleRepository,
+        entityRelationshipRepository: EntityRelationshipRepository,
+    ) = EntityTypeRelationshipService(
+        definitionRepository, targetRuleRepository, entityRelationshipRepository,
+        org.mockito.Mockito.mock(riven.core.service.activity.ActivityService::class.java),
+        org.mockito.Mockito.mock(riven.core.service.auth.AuthTokenService::class.java),
+        org.mockito.Mockito.mock(riven.core.service.entity.EntityTypeSemanticMetadataService::class.java),
+        org.mockito.Mockito.mock(io.github.oshai.kotlinlogging.KLogger::class.java),
+    )
+
+    @Bean
     fun entityQueryService(
         entityTypeRepository: EntityTypeRepository,
         entityRepository: EntityRepository,
         assembler: EntityQueryAssembler,
         validator: QueryFilterValidator,
+        entityTypeRelationshipService: EntityTypeRelationshipService,
         dataSource: DataSource,
         @Value("\${riven.query.timeout-seconds:10}") queryTimeoutSeconds: Long,
-    ) = EntityQueryService(entityTypeRepository, entityRepository, assembler, validator, dataSource, queryTimeoutSeconds)
+    ) = EntityQueryService(entityTypeRepository, entityRepository, assembler, validator, entityTypeRelationshipService, dataSource, queryTimeoutSeconds)
 }
 
 /**
@@ -138,6 +156,12 @@ abstract class EntityQueryIntegrationTestBase {
 
     @Autowired
     protected lateinit var entityRelationshipRepository: EntityRelationshipRepository
+
+    @Autowired
+    protected lateinit var definitionRepository: RelationshipDefinitionRepository
+
+    @Autowired
+    protected lateinit var targetRuleRepository: RelationshipTargetRuleRepository
 
     @Autowired
     protected lateinit var jdbcTemplate: JdbcTemplate
@@ -193,12 +217,12 @@ abstract class EntityQueryIntegrationTestBase {
     protected lateinit var employeeTypeId: UUID
     protected lateinit var projectTypeId: UUID
 
-    // Relationship definition IDs
-    protected val companyEmployeesRelId = UUID.fromString("40000000-0000-0000-0000-000000000001")
-    protected val companyProjectsRelId = UUID.fromString("40000000-0000-0000-0000-000000000002")
-    protected val companyOwnerRelId = UUID.fromString("40000000-0000-0000-0000-000000000003")
-    protected val employeeProjectsRelId = UUID.fromString("40000000-0000-0000-0000-000000000004")
-    protected val projectClientRelId = UUID.fromString("40000000-0000-0000-0000-000000000005")
+    // Relationship definition IDs (set during @BeforeAll)
+    protected lateinit var companyEmployeesRelId: UUID
+    protected lateinit var companyProjectsRelId: UUID
+    protected lateinit var companyOwnerRelId: UUID
+    protected lateinit var employeeProjectsRelId: UUID
+    protected lateinit var projectClientRelId: UUID
 
     // Entity IDs mapped by name
     protected val companyEntities = mutableMapOf<String, UUID>()
@@ -209,12 +233,15 @@ abstract class EntityQueryIntegrationTestBase {
     fun setupTestDomain() {
         truncateAll()
         createEntityTypes()
+        createRelationshipDefinitions()
         seedEntities()
         createRelationships()
     }
 
     protected fun truncateAll() {
         jdbcTemplate.execute("TRUNCATE TABLE entity_relationships CASCADE")
+        jdbcTemplate.execute("TRUNCATE TABLE relationship_target_rules CASCADE")
+        jdbcTemplate.execute("TRUNCATE TABLE relationship_definitions CASCADE")
         jdbcTemplate.execute("TRUNCATE TABLE entities CASCADE")
         jdbcTemplate.execute("TRUNCATE TABLE entity_types CASCADE")
         companyEntities.clear()
@@ -230,7 +257,6 @@ abstract class EntityQueryIntegrationTestBase {
             displayNameSingular = "Company",
             displayNamePlural = "Companies",
             identifierKey = companyNameAttrId,
-            type = EntityCategory.STANDARD,
             schema = Schema(
                 label = "Company",
                 key = SchemaType.OBJECT,
@@ -275,65 +301,6 @@ abstract class EntityQueryIntegrationTestBase {
                     )
                 )
             ),
-            relationships = listOf(
-                EntityRelationshipDefinition(
-                    id = companyEmployeesRelId,
-                    name = "Employees",
-                    relationshipType = EntityTypeRelationshipType.ORIGIN,
-                    sourceEntityTypeKey = "company",
-                    originRelationshipId = null,
-                    entityTypeKeys = listOf("employee"),
-                    allowPolymorphic = false,
-                    required = false,
-                    cardinality = EntityRelationshipCardinality.ONE_TO_MANY,
-                    bidirectional = true,
-                    bidirectionalEntityTypeKeys = listOf("employee"),
-                    inverseName = "Company",
-                    protected = false,
-                    createdAt = null,
-                    updatedAt = null,
-                    createdBy = null,
-                    updatedBy = null
-                ),
-                EntityRelationshipDefinition(
-                    id = companyProjectsRelId,
-                    name = "Projects",
-                    relationshipType = EntityTypeRelationshipType.ORIGIN,
-                    sourceEntityTypeKey = "company",
-                    originRelationshipId = null,
-                    entityTypeKeys = listOf("project"),
-                    allowPolymorphic = false,
-                    required = false,
-                    cardinality = EntityRelationshipCardinality.ONE_TO_MANY,
-                    bidirectional = true,
-                    bidirectionalEntityTypeKeys = listOf("project"),
-                    inverseName = "Company",
-                    protected = false,
-                    createdAt = null,
-                    updatedAt = null,
-                    createdBy = null,
-                    updatedBy = null
-                ),
-                EntityRelationshipDefinition(
-                    id = companyOwnerRelId,
-                    name = "Owner",
-                    relationshipType = EntityTypeRelationshipType.ORIGIN,
-                    sourceEntityTypeKey = "company",
-                    originRelationshipId = null,
-                    entityTypeKeys = listOf("employee", "project"),
-                    allowPolymorphic = false,
-                    required = false,
-                    cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
-                    bidirectional = false,
-                    bidirectionalEntityTypeKeys = null,
-                    inverseName = null,
-                    protected = false,
-                    createdAt = null,
-                    updatedAt = null,
-                    createdBy = null,
-                    updatedBy = null
-                )
-            ),
             columns = listOf(
                 EntityTypeAttributeColumn(companyNameAttrId, EntityPropertyType.ATTRIBUTE),
                 EntityTypeAttributeColumn(companyIndustryAttrId, EntityPropertyType.ATTRIBUTE),
@@ -353,7 +320,6 @@ abstract class EntityQueryIntegrationTestBase {
             displayNameSingular = "Employee",
             displayNamePlural = "Employees",
             identifierKey = employeeFirstNameAttrId,
-            type = EntityCategory.STANDARD,
             schema = Schema(
                 label = "Employee",
                 key = SchemaType.OBJECT,
@@ -392,27 +358,6 @@ abstract class EntityQueryIntegrationTestBase {
                     )
                 )
             ),
-            relationships = listOf(
-                EntityRelationshipDefinition(
-                    id = employeeProjectsRelId,
-                    name = "Projects",
-                    relationshipType = EntityTypeRelationshipType.ORIGIN,
-                    sourceEntityTypeKey = "employee",
-                    originRelationshipId = null,
-                    entityTypeKeys = listOf("project"),
-                    allowPolymorphic = false,
-                    required = false,
-                    cardinality = EntityRelationshipCardinality.MANY_TO_MANY,
-                    bidirectional = false,
-                    bidirectionalEntityTypeKeys = null,
-                    inverseName = null,
-                    protected = false,
-                    createdAt = null,
-                    updatedAt = null,
-                    createdBy = null,
-                    updatedBy = null
-                )
-            ),
             columns = listOf(
                 EntityTypeAttributeColumn(employeeFirstNameAttrId, EntityPropertyType.ATTRIBUTE),
                 EntityTypeAttributeColumn(employeeLastNameAttrId, EntityPropertyType.ATTRIBUTE),
@@ -431,7 +376,6 @@ abstract class EntityQueryIntegrationTestBase {
             displayNameSingular = "Project",
             displayNamePlural = "Projects",
             identifierKey = projectTitleAttrId,
-            type = EntityCategory.STANDARD,
             schema = Schema(
                 label = "Project",
                 key = SchemaType.OBJECT,
@@ -458,27 +402,6 @@ abstract class EntityQueryIntegrationTestBase {
                     )
                 )
             ),
-            relationships = listOf(
-                EntityRelationshipDefinition(
-                    id = projectClientRelId,
-                    name = "Client",
-                    relationshipType = EntityTypeRelationshipType.ORIGIN,
-                    sourceEntityTypeKey = "project",
-                    originRelationshipId = null,
-                    entityTypeKeys = listOf("company"),
-                    allowPolymorphic = false,
-                    required = false,
-                    cardinality = EntityRelationshipCardinality.MANY_TO_ONE,
-                    bidirectional = false,
-                    bidirectionalEntityTypeKeys = null,
-                    inverseName = null,
-                    protected = false,
-                    createdAt = null,
-                    updatedAt = null,
-                    createdBy = null,
-                    updatedBy = null
-                )
-            ),
             columns = listOf(
                 EntityTypeAttributeColumn(projectTitleAttrId, EntityPropertyType.ATTRIBUTE),
                 EntityTypeAttributeColumn(projectBudgetAttrId, EntityPropertyType.ATTRIBUTE),
@@ -487,6 +410,85 @@ abstract class EntityQueryIntegrationTestBase {
         )
         val savedProjectType = entityTypeRepository.save(projectType)
         projectTypeId = savedProjectType.id!!
+    }
+
+    protected fun createRelationshipDefinitions() {
+        // Company -> Employees (ONE_TO_MANY)
+        companyEmployeesRelId = definitionRepository.save(RelationshipDefinitionEntity(
+            workspaceId = workspaceId,
+            sourceEntityTypeId = companyTypeId,
+            name = "Employees",
+            cardinalityDefault = EntityRelationshipCardinality.ONE_TO_MANY,
+        )).id!!
+        targetRuleRepository.save(RelationshipTargetRuleEntity(
+            relationshipDefinitionId = companyEmployeesRelId,
+            targetEntityTypeId = employeeTypeId,
+            inverseVisible = true,
+            inverseName = "Company",
+        ))
+
+        // Company -> Projects (ONE_TO_MANY)
+        companyProjectsRelId = definitionRepository.save(RelationshipDefinitionEntity(
+            workspaceId = workspaceId,
+            sourceEntityTypeId = companyTypeId,
+            name = "Projects",
+            cardinalityDefault = EntityRelationshipCardinality.ONE_TO_MANY,
+        )).id!!
+        targetRuleRepository.save(RelationshipTargetRuleEntity(
+            relationshipDefinitionId = companyProjectsRelId,
+            targetEntityTypeId = projectTypeId,
+            inverseVisible = true,
+            inverseName = "Company",
+        ))
+
+        // Company -> Owner (MANY_TO_ONE, multiple target types: Employee or Project)
+        companyOwnerRelId = definitionRepository.save(RelationshipDefinitionEntity(
+            workspaceId = workspaceId,
+            sourceEntityTypeId = companyTypeId,
+            name = "Owner",
+            cardinalityDefault = EntityRelationshipCardinality.MANY_TO_ONE,
+            allowPolymorphic = false,
+        )).id!!
+        targetRuleRepository.save(RelationshipTargetRuleEntity(
+            relationshipDefinitionId = companyOwnerRelId,
+            targetEntityTypeId = employeeTypeId,
+            inverseVisible = false,
+            inverseName = null,
+        ))
+        targetRuleRepository.save(RelationshipTargetRuleEntity(
+            relationshipDefinitionId = companyOwnerRelId,
+            targetEntityTypeId = projectTypeId,
+            inverseVisible = false,
+            inverseName = null,
+        ))
+
+        // Employee -> Projects (MANY_TO_MANY)
+        employeeProjectsRelId = definitionRepository.save(RelationshipDefinitionEntity(
+            workspaceId = workspaceId,
+            sourceEntityTypeId = employeeTypeId,
+            name = "Projects",
+            cardinalityDefault = EntityRelationshipCardinality.MANY_TO_MANY,
+        )).id!!
+        targetRuleRepository.save(RelationshipTargetRuleEntity(
+            relationshipDefinitionId = employeeProjectsRelId,
+            targetEntityTypeId = projectTypeId,
+            inverseVisible = false,
+            inverseName = null,
+        ))
+
+        // Project -> Client (MANY_TO_ONE)
+        projectClientRelId = definitionRepository.save(RelationshipDefinitionEntity(
+            workspaceId = workspaceId,
+            sourceEntityTypeId = projectTypeId,
+            name = "Client",
+            cardinalityDefault = EntityRelationshipCardinality.MANY_TO_ONE,
+        )).id!!
+        targetRuleRepository.save(RelationshipTargetRuleEntity(
+            relationshipDefinitionId = projectClientRelId,
+            targetEntityTypeId = companyTypeId,
+            inverseVisible = false,
+            inverseName = null,
+        ))
     }
 
     protected fun seedEntities() {
@@ -630,10 +632,8 @@ abstract class EntityQueryIntegrationTestBase {
                     EntityRelationshipEntity(
                         workspaceId = workspaceId,
                         sourceId = companyId,
-                        sourceTypeId = companyTypeId,
                         targetId = employeeId,
-                        targetTypeId = employeeTypeId,
-                        fieldId = companyEmployeesRelId
+                        definitionId = companyEmployeesRelId
                     )
                 )
             }
@@ -658,10 +658,8 @@ abstract class EntityQueryIntegrationTestBase {
                     EntityRelationshipEntity(
                         workspaceId = workspaceId,
                         sourceId = companyId,
-                        sourceTypeId = companyTypeId,
                         targetId = projectId,
-                        targetTypeId = projectTypeId,
-                        fieldId = companyProjectsRelId
+                        definitionId = companyProjectsRelId
                     )
                 )
             }
@@ -674,21 +672,12 @@ abstract class EntityQueryIntegrationTestBase {
         )
 
         ownerLinks.forEach { (companyId, ownerId) ->
-            // Determine target type
-            val targetTypeId = if (employeeEntities.values.contains(ownerId)) {
-                employeeTypeId
-            } else {
-                projectTypeId
-            }
-
             entityRelationshipRepository.save(
                 EntityRelationshipEntity(
                     workspaceId = workspaceId,
                     sourceId = companyId,
-                    sourceTypeId = companyTypeId,
                     targetId = ownerId,
-                    targetTypeId = targetTypeId,
-                    fieldId = companyOwnerRelId
+                    definitionId = companyOwnerRelId
                 )
             )
         }
@@ -711,10 +700,8 @@ abstract class EntityQueryIntegrationTestBase {
                     EntityRelationshipEntity(
                         workspaceId = workspaceId,
                         sourceId = employeeId,
-                        sourceTypeId = employeeTypeId,
                         targetId = projectId,
-                        targetTypeId = projectTypeId,
-                        fieldId = employeeProjectsRelId
+                        definitionId = employeeProjectsRelId
                     )
                 )
             }
@@ -737,10 +724,8 @@ abstract class EntityQueryIntegrationTestBase {
                 EntityRelationshipEntity(
                     workspaceId = workspaceId,
                     sourceId = projectId,
-                    sourceTypeId = projectTypeId,
                     targetId = clientCompanyId,
-                    targetTypeId = companyTypeId,
-                    fieldId = projectClientRelId
+                    definitionId = projectClientRelId
                 )
             )
         }

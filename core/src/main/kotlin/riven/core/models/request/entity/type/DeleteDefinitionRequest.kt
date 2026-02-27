@@ -27,23 +27,10 @@ data class DeleteAttributeDefinitionRequest(
 )
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class DeleteRelationshipDefinitionRequest(
-
     override val key: String,
     override val id: UUID,
-    val deleteAction: DeleteAction
 ) : TypeDefinition {
     override val type: EntityTypeRequestDefinition = EntityTypeRequestDefinition.DELETE_RELATIONSHIP
-
-    enum class DeleteAction {
-        // Removes only the bi-directional reference back to the origin definition
-        REMOVE_BIDIRECTIONAL,
-
-        // Also Removes the relationship reference from the entity type, and all relationship data of that specific entity type. But keeps the relationship definition intact
-        REMOVE_ENTITY_TYPE,
-
-        // Deletes the entire relationship definition and removes the reference for every other entity type referencing the relationship
-        DELETE_RELATIONSHIP
-    }
 }
 
 data class DeleteTypeDefinitionRequest(

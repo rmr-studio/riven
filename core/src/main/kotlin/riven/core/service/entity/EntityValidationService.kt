@@ -6,7 +6,7 @@ import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.common.validation.ValidationScope
 import riven.core.enums.entity.validation.EntityTypeChangeType
 import riven.core.models.entity.EntityTypeSchema
-import riven.core.models.entity.configuration.EntityRelationshipDefinition
+import riven.core.models.entity.RelationshipDefinition
 import riven.core.models.entity.validation.EntityTypeSchemaChange
 import riven.core.models.entity.validation.EntityTypeValidationSummary
 import riven.core.models.entity.validation.EntityValidationError
@@ -44,7 +44,7 @@ class EntityValidationService(
      */
     fun validateRelationshipEntity(
         entityId: UUID,
-        relationships: List<EntityRelationshipDefinition>
+        definitions: List<RelationshipDefinition>
     ): List<String> {
         TODO()
 //        val errors = mutableListOf<String>()

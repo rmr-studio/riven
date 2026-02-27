@@ -13,6 +13,7 @@ import riven.core.enums.util.OperationType
 import riven.core.exceptions.SchemaValidationException
 import riven.core.models.common.Icon
 import riven.core.models.entity.Entity
+import riven.core.models.entity.EntityLink
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.entity.payload.EntityAttributeRelationPayloadReference
 import riven.core.models.entity.payload.EntityAttributeRequest
@@ -24,6 +25,7 @@ import riven.core.service.activity.ActivityService
 import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.entity.type.EntityTypeAttributeService
+import riven.core.service.entity.type.EntityTypeRelationshipService
 import riven.core.service.entity.type.EntityTypeService
 import riven.core.util.ServiceUtil.findManyResults
 import riven.core.util.ServiceUtil.findOrThrow
@@ -37,6 +39,7 @@ class EntityService(
     private val entityRepository: EntityRepository,
     private val entityTypeService: EntityTypeService,
     private val entityRelationshipService: EntityRelationshipService,
+    private val entityTypeRelationshipService: EntityTypeRelationshipService,
     private val entityValidationService: EntityValidationService,
     private val entityAttributeService: EntityTypeAttributeService,
     private val authTokenService: AuthTokenService,
@@ -126,7 +129,6 @@ class EntityService(
             // Check if this is an update (existing entity) or create (new entity)
             val prev: EntityEntity? = id?.let { findOrThrow { entityRepository.findById(it) } }
 
-
             val attributePayload: Map<String, EntityAttributePrimitivePayload> = payload.mapNotNull { (key, value) ->
                 key.toString() to value.payload.let {
                     when (it) {
@@ -172,7 +174,6 @@ class EntityService(
                 )
             }
 
-
             // Validate payload against schema
             entityValidationService.validateEntity(entity, type).run {
                 if (isNotEmpty()) {
@@ -186,8 +187,6 @@ class EntityService(
                 // Handle Unique Constraints
                 val uniqueAttributes = entityAttributeService.extractUniqueAttributes(type, payload)
 
-                // Check uniqueness constraints. Should any fail, an exception is thrown and the transaction rolled back.
-                // When updating, exclude the current entity from the conflict check.
                 val uniqueValuesToSave = uniqueAttributes
                     .filterValues { it != null }
                     .mapNotNull { (fieldId, value) ->
@@ -202,7 +201,6 @@ class EntityService(
                     }
                     .toMap()
 
-                // Use native SQL operations to avoid Hibernate session conflicts
                 entityAttributeService.saveUniqueValues(
                     workspaceId = workspaceId,
                     entityId = entityId,
@@ -210,13 +208,8 @@ class EntityService(
                     uniqueValues = uniqueValuesToSave
                 )
 
-
-                val relationshipResult: SaveRelationshipsResult = entityRelationshipService.saveRelationships(
-                    id = entityId,
-                    workspaceId = workspaceId,
-                    type = type,
-                    curr = relationshipPayload
-                )
+                // Save relationships per definition
+                saveRelationshipsPerDefinition(entityId, workspaceId, entityTypeId, relationshipPayload)
 
                 activityService.log(
                     activity = Activity.ENTITY,
@@ -229,30 +222,12 @@ class EntityService(
                     "category" to type.displayNameSingular
                 )
 
-                // Fetch impacted entities with their updated relationships
-                val impactedEntities: Map<UUID, List<Entity>>? =
-                    if (relationshipResult.impactedEntityIds.isNotEmpty()) {
-                        val impactedEntityEntities = entityRepository.findAllById(relationshipResult.impactedEntityIds)
-                        val impactedRelationships = entityRelationshipService.findRelatedEntities(
-                            entityIds = relationshipResult.impactedEntityIds,
-                            workspaceId = workspaceId
-                        )
-                        impactedEntityEntities
-                            .map { impactedEntity ->
-                                val impactedId = requireNotNull(impactedEntity.id)
-                                impactedEntity.toModel(
-                                    audit = true,
-                                    relationships = impactedRelationships[impactedId] ?: emptyMap()
-                                )
-                            }
-                            .groupBy { it.typeId }
-                    } else {
-                        null
-                    }
+                // Reload links after save
+                val links: Map<UUID, List<EntityLink>> = entityRelationshipService.findRelatedEntities(entityId, workspaceId)
 
                 SaveEntityResponse(
-                    entity = entity.toModel(audit = true, relationships = relationshipResult.links),
-                    impactedEntities = impactedEntities
+                    entity = entity.toModel(audit = true, relationships = links),
+                    impactedEntities = null
                 )
             }
         } catch (e: SchemaValidationException) {
@@ -261,6 +236,40 @@ class EntityService(
             )
         } catch (e: Exception) {
             throw e
+        }
+    }
+
+    /**
+     * Saves relationships for each definition in the payload.
+     *
+     * Loads relationship definitions for the entity type, then calls
+     * EntityRelationshipService.saveRelationships for each definition.
+     */
+    private fun saveRelationshipsPerDefinition(
+        entityId: UUID,
+        workspaceId: UUID,
+        entityTypeId: UUID,
+        relationshipPayload: Map<UUID, List<UUID>>,
+    ) {
+        if (relationshipPayload.isEmpty()) return
+
+        val definitions = entityTypeRelationshipService.getDefinitionsForEntityType(workspaceId, entityTypeId)
+        val definitionsById = definitions.associateBy { it.id }
+
+        relationshipPayload.forEach { (definitionId, targetIds) ->
+            val definition = definitionsById[definitionId]
+                ?: throw IllegalArgumentException("Unknown relationship definition: $definitionId")
+            require(definition.sourceEntityTypeId == entityTypeId) {
+                "Definition $definitionId belongs to source type ${definition.sourceEntityTypeId}, not $entityTypeId. " +
+                    "Inverse definitions cannot be used to create relationships."
+            }
+            entityRelationshipService.saveRelationships(
+                id = entityId,
+                workspaceId = workspaceId,
+                definitionId = definitionId,
+                definition = definition,
+                targetIds = targetIds,
+            )
         }
     }
 
