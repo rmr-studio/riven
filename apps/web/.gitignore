@@ -43,3 +43,6 @@ next-env.d.ts
 
 # planning
 .planning/
+
+# react-email preview server (generated)
+.react-email/
