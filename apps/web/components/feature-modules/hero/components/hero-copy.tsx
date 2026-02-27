@@ -13,8 +13,8 @@ export const HeroCopy = () => {
       <div className="mt-[clamp(2rem,11svh,6rem)] md:mt-0 md:contents">
         <motion.h2
           className="mb-4 flex flex-col overflow-hidden font-serif text-[clamp(1.75rem,5svh,3rem)] leading-[0.85] tracking-tighter sm:text-7xl md:flex-row md:gap-4 md:text-right md:text-[5rem] lg:gap-8 lg:text-[5.75rem] xl:text-[7rem]"
-          initial={{ height: 0, opacity: 0, filter: 'blur(12px)' }}
-          animate={{ height: 'auto', opacity: 1, filter: 'blur(0px)' }}
+          initial={{ height: 0, opacity: 0, y: 12 }}
+          animate={{ height: 'auto', opacity: 1, y: 0 }}
           transition={{ duration: 1.4, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
         >
           <div className="text-heading/90">Your Tools. </div>
@@ -22,8 +22,8 @@ export const HeroCopy = () => {
         </motion.h2>
         <motion.h2
           className="mb-4 flex flex-col overflow-hidden text-end font-serif text-[clamp(1.75rem,5svh,3rem)] leading-[0.85] tracking-tighter sm:text-7xl md:flex-row md:gap-4 lg:gap-8 lg:text-[5.75rem] xl:text-[7rem]"
-          initial={{ height: 0, opacity: 0, filter: 'blur(12px)' }}
-          animate={{ height: 'auto', opacity: 1, filter: 'blur(0px)' }}
+          initial={{ height: 0, opacity: 0, y: 12 }}
+          animate={{ height: 'auto', opacity: 1, y: 0 }}
           transition={{ duration: 2, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
         >
           <div className="text-heading/90">Your Business.</div>
