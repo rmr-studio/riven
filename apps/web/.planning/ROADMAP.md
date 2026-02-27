@@ -39,7 +39,9 @@ Plans:
   2. The email renders correctly on mobile (single-column, readable text, no horizontal scroll)
   3. The `from` address matches the verified Resend domain and is not rejected with a 403
   4. `next build` succeeds with no `'use client'` contamination in the `emails/` directory
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 02-01-PLAN.md — Create email template, server action, and react-email preview server config
 
 ### Phase 3: Integration
 **Goal**: Every waitlist signup at step 2 (contact submission) triggers a confirmation email as a non-blocking side effect — the join still succeeds even if the email fails
@@ -59,5 +61,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Infrastructure | 1/1 | Complete | 2026-02-27 |
-| 2. Email Template + Server Action | 0/TBD | Not started | - |
+| 2. Email Template + Server Action | 0/1 | Not started | - |
 | 3. Integration | 0/TBD | Not started | - |

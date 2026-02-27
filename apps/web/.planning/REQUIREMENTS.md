@@ -15,18 +15,18 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Email Template
 
-- [ ] **TMPL-01**: React Email template with personalised greeting ("Hey {name}") and waitlist confirmation copy
-- [ ] **TMPL-02**: Template includes Riven branding (logo/wordmark via CDN)
-- [ ] **TMPL-03**: Template includes `<Preview>` pre-header text
-- [ ] **TMPL-04**: Template is mobile-responsive
-- [ ] **TMPL-05**: Template lives in dedicated `emails/` directory (not `components/`)
-- [ ] **TMPL-06**: Template includes custom imagery hosted on CDN (absolute URLs, not local paths)
+- [x] **TMPL-01**: React Email template with personalised greeting ("Hey {name}") and waitlist confirmation copy
+- [x] **TMPL-02**: Template includes Riven branding (logo/wordmark via CDN)
+- [x] **TMPL-03**: Template includes `<Preview>` pre-header text
+- [x] **TMPL-04**: Template is mobile-responsive
+- [x] **TMPL-05**: Template lives in dedicated `emails/` directory (not `components/`)
+- [x] **TMPL-06**: Template includes custom imagery hosted on CDN (absolute URLs, not local paths)
 
 ### Server Action
 
-- [ ] **ACTN-01**: Server action sends email via Resend with `react` prop (JSX directly)
-- [ ] **ACTN-02**: Resend client instantiated at module scope for fail-fast validation
-- [ ] **ACTN-03**: Branded sender identity (verified domain)
+- [x] **ACTN-01**: Server action sends email via Resend with `react` prop (JSX directly)
+- [x] **ACTN-02**: Resend client instantiated at module scope for fail-fast validation
+- [x] **ACTN-03**: Branded sender identity (verified domain)
 
 ### Integration
 
@@ -65,15 +65,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFRA-01 | Phase 1 | Complete |
 | INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 1 | Complete |
-| TMPL-01 | Phase 2 | Pending |
-| TMPL-02 | Phase 2 | Pending |
-| TMPL-03 | Phase 2 | Pending |
-| TMPL-04 | Phase 2 | Pending |
-| TMPL-05 | Phase 2 | Pending |
-| TMPL-06 | Phase 2 | Pending |
-| ACTN-01 | Phase 2 | Pending |
-| ACTN-02 | Phase 2 | Pending |
-| ACTN-03 | Phase 2 | Pending |
+| TMPL-01 | Phase 2 | Complete |
+| TMPL-02 | Phase 2 | Complete |
+| TMPL-03 | Phase 2 | Complete |
+| TMPL-04 | Phase 2 | Complete |
+| TMPL-05 | Phase 2 | Complete |
+| TMPL-06 | Phase 2 | Complete |
+| ACTN-01 | Phase 2 | Complete |
+| ACTN-02 | Phase 2 | Complete |
+| ACTN-03 | Phase 2 | Complete |
 | INTG-01 | Phase 3 | Pending |
 | INTG-02 | Phase 3 | Pending |
 | INTG-03 | Phase 3 | Pending |
