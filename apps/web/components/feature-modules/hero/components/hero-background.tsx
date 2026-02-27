@@ -1,10 +1,9 @@
 'use client';
 
 import { useMounted } from '@/hooks/use-mounted';
-import { cdnImageLoader, getCdnUrl } from '@/lib/cdn-image-loader';
+import { getCdnUrl } from '@/lib/cdn-image-loader';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
-import Image from 'next/image';
 import { useState } from 'react';
 
 interface ImageVariant {
@@ -38,7 +37,7 @@ export function HeroBackground({
   priority,
   lazy,
 }: HeroBackgroundProps) {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(priority ? true : false);
   const { resolvedTheme } = useTheme();
   const mounted = useMounted();
 
@@ -54,33 +53,37 @@ export function HeroBackground({
     );
   }
 
+  // Build the fallback src from the smallest webp variant
+  const fallbackSrc = getCdnUrl(image.webp[0].src);
+
   return (
     <div className={cn('absolute inset-x-0 bottom-1/6 z-0', className)}>
       <picture className="relative block h-full w-full">
         <source srcSet={buildSrcSet(image.avif)} type="image/avif" sizes="100vw" />
         <source srcSet={buildSrcSet(image.webp)} type="image/webp" sizes="100vw" />
-        <Image
-          loader={cdnImageLoader}
-          src={image.webp[image.webp.length - 1].src}
+        <img
           alt={alt}
-          fill
-          priority={priority}
-          loading={lazy ? 'lazy' : undefined}
+          src={fallbackSrc}
           sizes="100vw"
+          fetchPriority={priority ? 'high' : undefined}
+          decoding={priority ? 'sync' : 'async'}
+          loading={lazy ? 'lazy' : undefined}
           className={cn(
-            'object-cover object-bottom transition-opacity duration-700 ease-out',
-            isLoaded ? 'opacity-100' : 'opacity-0',
+            'absolute inset-0 h-full w-full object-cover object-bottom',
+            priority
+              ? 'opacity-100'
+              : cn(
+                  'transition-opacity duration-700 ease-out',
+                  isLoaded ? 'opacity-100' : 'opacity-0',
+                ),
           )}
           style={filterParts.length > 0 ? { filter: filterParts.join(' ') } : undefined}
-          onLoad={() => setIsLoaded(true)}
+          onLoad={priority ? undefined : () => setIsLoaded(true)}
         />
       </picture>
 
-      {/* Gradient fade upward to background */}
-
       <>
         <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-background" />
-
         <div className="absolute inset-0 bg-linear-to-t from-transparent via-transparent to-background" />
       </>
     </div>
