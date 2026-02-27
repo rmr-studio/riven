@@ -13,12 +13,22 @@ export function Hero() {
       <HeroCopy />
       <HeroBackground
         image={{
-          avif: 'images/city-skyline-hero.avif',
-          webp: 'images/city-skyline-hero.webp',
+          avif: [
+            { src: 'images/hero/city-skyline-hero-640w.avif', width: 640 },
+            { src: 'images/hero/city-skyline-hero-1280w.avif', width: 1280 },
+            { src: 'images/hero/city-skyline-hero-1920w.avif', width: 1920 },
+            { src: 'images/hero/city-skyline-hero-3840w.avif', width: 3840 },
+          ],
+          webp: [
+            { src: 'images/hero/city-skyline-hero-640w.webp', width: 640 },
+            { src: 'images/hero/city-skyline-hero-1280w.webp', width: 1280 },
+            { src: 'images/hero/city-skyline-hero-1920w.webp', width: 1920 },
+            { src: 'images/hero/city-skyline-hero-3840w.webp', width: 3840 },
+          ],
         }}
         className="h-[50svh] opacity-40 md:h-[70svh] md:opacity-70"
         alt="City skyline"
-        preload
+        priority
       />
     </Section>
   );
