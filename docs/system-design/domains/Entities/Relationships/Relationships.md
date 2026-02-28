@@ -32,7 +32,7 @@ Entity-level data stored in `entity_relationships` linking source entities to ta
 
 | Issue | Impact | Effort |
 | ----- | ------ | ------ |
-| Semantic type constraint matching stubbed | Target rules with `semanticTypeConstraint` don't match at runtime — only explicit type ID matching works | Low |
+| Semantic type constraint matching stubbed | Target rules with `semanticTypeConstraint` don't match at runtime — only explicit type ID matching works. Addressed by [[Semantic Entity Groups]] which adds the `SemanticGroup` enum to entity types and enforces array-based constraint matching at link creation time. | Low |
 
 ---
 
