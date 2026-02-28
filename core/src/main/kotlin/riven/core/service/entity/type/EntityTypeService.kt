@@ -130,7 +130,6 @@ class EntityTypeService(
         workspaceId: UUID,
         request: UpdateEntityTypeConfigurationRequest,
     ): EntityType {
-        authTokenService.getUserId()
         val type = request.entityType
         requireNotNull(type.workspaceId) { "Cannot update system entity type" }
         val existing: EntityTypeEntity = ServiceUtil.findOrThrow { entityTypeRepository.findById(type.id) }
@@ -145,11 +144,11 @@ class EntityTypeService(
         }
 
         val saved = entityTypeRepository.save(existing)
+        val savedId = requireNotNull(saved.id)
 
         if (request.semantics != null) {
             semanticMetadataService.upsertMetadataInternal(
-                workspaceId, requireNotNull(saved.id),
-                SemanticMetadataTargetType.ENTITY_TYPE, requireNotNull(saved.id), request.semantics,
+                workspaceId, savedId, SemanticMetadataTargetType.ENTITY_TYPE, savedId, request.semantics,
             )
         }
 

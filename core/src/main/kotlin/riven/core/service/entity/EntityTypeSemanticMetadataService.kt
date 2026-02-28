@@ -112,7 +112,7 @@ class EntityTypeSemanticMetadataService(
         request: SaveSemanticMetadataRequest,
     ): EntityTypeSemanticMetadata {
         verifyEntityTypeBelongsToWorkspace(workspaceId, entityTypeId)
-        return performUpsert(workspaceId, entityTypeId, targetType, targetId, request)
+        return upsertMetadataInternal(workspaceId, entityTypeId, targetType, targetId, request)
     }
 
     /**
@@ -121,13 +121,6 @@ class EntityTypeSemanticMetadataService(
      * No @PreAuthorize — the caller's service method already holds workspace authorization.
      * Follows the same pattern as [initializeForTarget].
      */
-    fun upsertMetadataInternal(
-        workspaceId: UUID,
-        entityTypeId: UUID,
-        targetType: SemanticMetadataTargetType,
-        targetId: UUID,
-        request: SaveSemanticMetadataRequest,
-    ): EntityTypeSemanticMetadata = performUpsert(workspaceId, entityTypeId, targetType, targetId, request)
 
     /**
      * Bulk upsert attribute-level semantic metadata for an entity type.
@@ -284,7 +277,7 @@ class EntityTypeSemanticMetadataService(
 
     // ------ Private helpers ------
 
-    private fun performUpsert(
+    fun upsertMetadataInternal(
         workspaceId: UUID,
         entityTypeId: UUID,
         targetType: SemanticMetadataTargetType,
