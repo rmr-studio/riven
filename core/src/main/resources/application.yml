@@ -10,10 +10,7 @@ spring:
       ddl-auto: none
     show-sql: ${riven.include-stack-trace}
   flyway:
-    enabled: true
-    baseline-on-migrate: true
-    baseline-version: 0
-    locations: classpath:db/migration
+    enabled: false
   security:
     oauth2:
       resourceserver:
@@ -53,7 +50,7 @@ riven:
         initial-interval-seconds: 2
         backoff-coefficient: 2.0
         max-interval-seconds: 60
-        non-retryable-status-codes: [400, 401, 403, 404, 422]
+        non-retryable-status-codes: [ 400, 401, 403, 404, 422 ]
       crud-action:
         max-attempts: 2
         initial-interval-seconds: 1

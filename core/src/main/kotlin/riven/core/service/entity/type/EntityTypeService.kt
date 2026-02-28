@@ -9,20 +9,20 @@ import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.core.DataType
 import riven.core.enums.entity.EntityPropertyType
+import riven.core.enums.entity.semantics.SemanticMetadataTargetType
 import riven.core.enums.util.OperationType
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.EntityType
+import riven.core.models.entity.EntityTypeSemanticMetadata
 import riven.core.models.entity.configuration.EntityTypeAttributeColumn
 import riven.core.models.request.entity.type.*
-import riven.core.enums.entity.semantics.SemanticMetadataTargetType
-import riven.core.models.entity.EntityTypeSemanticMetadata
 import riven.core.models.response.entity.type.DeleteDefinitionImpact
 import riven.core.models.response.entity.type.EntityTypeImpactResponse
 import riven.core.models.response.entity.type.EntityTypeWithSemanticsResponse
 import riven.core.models.response.entity.type.SemanticMetadataBundle
+import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.repository.entity.RelationshipDefinitionRepository
-import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.RelationshipTargetRuleRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.activity.log
@@ -151,7 +151,7 @@ class EntityTypeService(
         request: SaveTypeDefinitionRequest,
         impactConfirmed: Boolean = false
     ): EntityTypeImpactResponse {
-        val (index: Int?, definition) = request
+        val (_: Int?, definition) = request
         val existing =
             ServiceUtil.findOrThrow { entityTypeRepository.findByworkspaceIdAndKey(workspaceId, definition.key) }
         val entityTypeId = requireNotNull(existing.id)
@@ -274,7 +274,8 @@ class EntityTypeService(
         // Check for relationship definition impact
         val definitions = definitionRepository.findByWorkspaceIdAndSourceEntityTypeId(workspaceId, entityTypeId)
         if (!impactConfirmed && definitions.isNotEmpty()) {
-            val totalLinks = definitions.sumOf { entityRelationshipRepository.countByDefinitionId(requireNotNull(it.id)) }
+            val totalLinks =
+                definitions.sumOf { entityRelationshipRepository.countByDefinitionId(requireNotNull(it.id)) }
             if (totalLinks > 0) {
                 val firstDef = definitions.first()
                 return EntityTypeImpactResponse(

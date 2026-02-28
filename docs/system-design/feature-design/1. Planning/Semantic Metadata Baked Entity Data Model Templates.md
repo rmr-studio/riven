@@ -30,12 +30,23 @@ There needs to be a way to get a user set up with an example template, that matc
 Your template semantic definitions feed directly into this. When a template defines that an entity type "Customer" with field "source" means acquisition channel, that semantic mapping is what tells the embedding pipeline how to enrich the context. Without it, you're just embedding raw field values with no meaning.
 ```
 
-- Templates are provided that provide ready to go definitions for all entity types, attributes and interconnecting relationships. All of these include complete semantic metadata
-	- SaaS Startup (customers, subscriptions, MRR, churn, support interactions, feature usage)
-	- DTC E-commerce (customers, orders, products, acquisition channels, support, returns)
-	- Service Business (clients, projects, invoices, communications, deliverables)
-- Templates include 3-5 pre-configured analytical briefs that demonstrate cross-domain querying
-- Templates include example queries that work well even with minimal data (scoped narrowly enough to be useful with <50 records)
+Per [[ADR-004 Declarative-First Storage for Integration Mappings and Entity Templates]], data model templates are defined as **JSON manifest files** stored in the application repository under a `templates/` directory (e.g., `templates/saas-startup/manifest.json`). This uses the same declarative-first storage pattern as integration manifests — manifest files are version-controlled, loaded into the database on application startup by the manifest loader, and queryable via standard JPA repositories at runtime.
+
+Each template manifest defines:
+- **Entity type schemas** — full attribute definitions, data types, and validation rules for all entity types in the template
+- **Relationship definitions** — how entity types within the template interconnect (e.g., Customer → Subscription, Subscription → Invoice)
+- **Complete semantic metadata** — natural language definitions, attribute classifications, and tags for every entity type, attribute, and relationship per [[Semantic Metadata Foundation]]
+- **Pre-configured analytical briefs** (3-5 per template) that demonstrate cross-domain querying
+- **Example queries** scoped narrowly enough to be useful with <50 records
+
+Initial templates:
+- SaaS Startup (customers, subscriptions, MRR, churn, support interactions, feature usage)
+- DTC E-commerce (customers, orders, products, acquisition channels, support, returns)
+- Service Business (clients, projects, invoices, communications, deliverables)
+
+When a user selects a template during workspace setup, the template's entity types, relationships, and semantic metadata are **cloned into their workspace** as editable, user-owned definitions. From that point forward, the user can modify them freely — adding attributes, changing semantic descriptions, removing entity types — as if they had created everything themselves. The template origin is recorded for reference but does not constrain editing.
+
+Community contributors add new templates by submitting a manifest file PR — no Kotlin code required. Self-hosters can drop custom template manifest files into the `templates/` directory and restart.
 ### Success Criteria
 
 _How do we know this feature is working correctly?_
@@ -359,14 +370,18 @@ _Is existing data affected? How will it be migrated?_
 
 ## Related Documents
 
-- [[ADR-xxx-decision-name]]
-- [[Flow - Related Flow]]
-- [[Domain - Relevant Domain]]
+- [[ADR-004 Declarative-First Storage for Integration Mappings and Entity Templates]]
+- [[Semantic Metadata Foundation]]
+- [[Entity Semantics]]
+- [[Predefined Integration Entity Types]] — uses the same manifest format for integration entity types
+- [[Integration Schema Mapping]] — parallel manifest structure for integration-specific definitions
+- [[Knowledge Layer]]
 
 ---
 
 ## Changelog
 
-| Date | Author | Change        |
+| Date | Author | Change |
 | ---- | ------ | ------------- |
-|      |        | Initial draft |
+| | | Initial draft |
+| 2026-02-28 | | Updated Proposed Solution to align with ADR-004 declarative-first approach — templates defined as JSON manifests loaded on startup |
