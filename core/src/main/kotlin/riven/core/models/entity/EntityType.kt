@@ -41,6 +41,8 @@ data class EntityType(
     // Configuration for how attributes are displayed in tabular/list views (ie. Column ordering, widths, etc)
     val columns: List<EntityTypeAttributeColumn>,
     val entitiesCount: Long = 0L,
+    val relationships: List<RelationshipDefinition> = emptyList(),
+    val semantics: SemanticMetadataBundle? = null,
     override var createdAt: ZonedDateTime?,
     override var updatedAt: ZonedDateTime?,
     override var createdBy: UUID?,

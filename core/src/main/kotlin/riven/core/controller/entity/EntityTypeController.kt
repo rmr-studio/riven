@@ -11,8 +11,8 @@ import riven.core.models.entity.EntityType
 import riven.core.models.request.entity.type.CreateEntityTypeRequest
 import riven.core.models.request.entity.type.DeleteTypeDefinitionRequest
 import riven.core.models.request.entity.type.SaveTypeDefinitionRequest
+import riven.core.models.request.entity.type.UpdateEntityTypeConfigurationRequest
 import riven.core.models.response.entity.type.EntityTypeImpactResponse
-import riven.core.models.response.entity.type.EntityTypeWithSemanticsResponse
 import riven.core.service.entity.type.EntityTypeService
 import java.util.*
 
@@ -37,7 +37,7 @@ class EntityTypeController(
     fun getEntityTypesForWorkspace(
         @PathVariable workspaceId: UUID,
         @RequestParam(required = false) include: List<String> = emptyList(),
-    ): ResponseEntity<List<EntityTypeWithSemanticsResponse>> {
+    ): ResponseEntity<List<EntityType>> {
         return ResponseEntity.ok(entityTypeService.getWorkspaceEntityTypesWithIncludes(workspaceId, include))
     }
 
@@ -56,7 +56,7 @@ class EntityTypeController(
         @PathVariable workspaceId: UUID,
         @PathVariable key: String,
         @RequestParam(required = false) include: List<String> = emptyList(),
-    ): ResponseEntity<EntityTypeWithSemanticsResponse> {
+    ): ResponseEntity<EntityType> {
         return ResponseEntity.ok(entityTypeService.getEntityTypeByKeyWithIncludes(workspaceId, key, include))
     }
 
@@ -90,9 +90,9 @@ class EntityTypeController(
     )
     fun updateEntityType(
         @PathVariable workspaceId: UUID,
-        @RequestBody type: EntityType,
+        @RequestBody request: UpdateEntityTypeConfigurationRequest,
     ): ResponseEntity<EntityType> {
-        val response = entityTypeService.updateEntityTypeConfiguration(workspaceId, type)
+        val response = entityTypeService.updateEntityTypeConfiguration(workspaceId, request)
         return ResponseEntity.status(HttpStatus.OK).body(response)
     }
 

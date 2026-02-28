@@ -1,6 +1,5 @@
-package riven.core.models.response.entity.type
+package riven.core.models.entity
 
-import riven.core.models.entity.EntityTypeSemanticMetadata
 import java.util.UUID
 
 /**
