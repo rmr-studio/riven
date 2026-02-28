@@ -18,8 +18,7 @@ import riven.core.models.entity.configuration.EntityTypeAttributeColumn
 import riven.core.models.request.entity.type.*
 import riven.core.models.response.entity.type.DeleteDefinitionImpact
 import riven.core.models.response.entity.type.EntityTypeImpactResponse
-import riven.core.models.response.entity.type.EntityTypeWithSemanticsResponse
-import riven.core.models.response.entity.type.SemanticMetadataBundle
+import riven.core.models.entity.SemanticMetadataBundle
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.repository.entity.RelationshipDefinitionRepository
@@ -102,6 +101,12 @@ class EntityTypeService(
             attributeIds = listOf(primaryId)
         )
 
+        if (request.semantics != null) {
+            semanticMetadataService.upsertMetadataInternal(
+                workspaceId, savedId, SemanticMetadataTargetType.ENTITY_TYPE, savedId, request.semantics,
+            )
+        }
+
         activityService.log(
             activity = Activity.ENTITY_TYPE,
             operation = OperationType.CREATE,
@@ -123,22 +128,32 @@ class EntityTypeService(
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun updateEntityTypeConfiguration(
         workspaceId: UUID,
-        type: EntityType
+        request: UpdateEntityTypeConfigurationRequest,
     ): EntityType {
         authTokenService.getUserId()
+        val type = request.entityType
         requireNotNull(type.workspaceId) { "Cannot update system entity type" }
         val existing: EntityTypeEntity = ServiceUtil.findOrThrow { entityTypeRepository.findById(type.id) }
 
-        return existing.apply {
+        existing.apply {
             displayNameSingular = type.name.singular
             displayNamePlural = type.name.plural
             description = type.description
             iconType = type.icon.type
             iconColour = type.icon.colour
             columns = type.columns
-        }.let {
-            entityTypeRepository.save(it).toModel()
         }
+
+        val saved = entityTypeRepository.save(existing)
+
+        if (request.semantics != null) {
+            semanticMetadataService.upsertMetadataInternal(
+                workspaceId, requireNotNull(saved.id),
+                SemanticMetadataTargetType.ENTITY_TYPE, requireNotNull(saved.id), request.semantics,
+            )
+        }
+
+        return saved.toModel()
     }
 
     /**
@@ -333,7 +348,7 @@ class EntityTypeService(
     fun getWorkspaceEntityTypesWithIncludes(
         workspaceId: UUID,
         include: List<String>,
-    ): List<EntityTypeWithSemanticsResponse> {
+    ): List<EntityType> {
         val entityTypes = getWorkspaceEntityTypes(workspaceId)
         val entityTypeIds = entityTypes.map { it.id }
 
@@ -350,8 +365,7 @@ class EntityTypeService(
         }
 
         return entityTypes.map { et ->
-            EntityTypeWithSemanticsResponse(
-                entityType = et,
+            et.copy(
                 relationships = relationshipMap[et.id] ?: emptyList(),
                 semantics = bundleMap[et.id],
             )
@@ -367,7 +381,7 @@ class EntityTypeService(
         workspaceId: UUID,
         key: String,
         include: List<String>,
-    ): EntityTypeWithSemanticsResponse {
+    ): EntityType {
         val entityType = getByKey(key, workspaceId).toModel()
 
         val relationships = entityTypeRelationshipService.getDefinitionsForEntityType(workspaceId, entityType.id)
@@ -379,8 +393,7 @@ class EntityTypeService(
             null
         }
 
-        return EntityTypeWithSemanticsResponse(
-            entityType = entityType,
+        return entityType.copy(
             relationships = relationships,
             semantics = bundle,
         )

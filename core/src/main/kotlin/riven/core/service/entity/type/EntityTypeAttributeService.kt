@@ -83,11 +83,21 @@ class EntityTypeAttributeService(
         }
 
         if (isNewAttribute) {
-            semanticMetadataService.initializeForTarget(
-                entityTypeId = typeId,
-                workspaceId = requireNotNull(type.workspaceId),
-                targetType = SemanticMetadataTargetType.ATTRIBUTE,
-                targetId = id,
+            if (request.semantics != null) {
+                semanticMetadataService.upsertMetadataInternal(
+                    workspaceId, typeId, SemanticMetadataTargetType.ATTRIBUTE, id, request.semantics,
+                )
+            } else {
+                semanticMetadataService.initializeForTarget(
+                    entityTypeId = typeId,
+                    workspaceId = requireNotNull(type.workspaceId),
+                    targetType = SemanticMetadataTargetType.ATTRIBUTE,
+                    targetId = id,
+                )
+            }
+        } else if (request.semantics != null) {
+            semanticMetadataService.upsertMetadataInternal(
+                workspaceId, typeId, SemanticMetadataTargetType.ATTRIBUTE, id, request.semantics,
             )
         }
     }

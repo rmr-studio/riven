@@ -73,12 +73,18 @@ class EntityTypeRelationshipService(
         val ruleEntities = buildTargetRuleEntities(defId, request.targetRules)
         val savedRules = targetRuleRepository.saveAll(ruleEntities)
 
-        semanticMetadataService.initializeForTarget(
-            entityTypeId = sourceEntityTypeId,
-            workspaceId = workspaceId,
-            targetType = SemanticMetadataTargetType.RELATIONSHIP,
-            targetId = defId,
-        )
+        if (request.semantics != null) {
+            semanticMetadataService.upsertMetadataInternal(
+                workspaceId, sourceEntityTypeId, SemanticMetadataTargetType.RELATIONSHIP, defId, request.semantics,
+            )
+        } else {
+            semanticMetadataService.initializeForTarget(
+                entityTypeId = sourceEntityTypeId,
+                workspaceId = workspaceId,
+                targetType = SemanticMetadataTargetType.RELATIONSHIP,
+                targetId = defId,
+            )
+        }
 
         activityService.log(
             activity = Activity.ENTITY_RELATIONSHIP,
@@ -119,6 +125,13 @@ class EntityTypeRelationshipService(
 
         val savedDefinition = definitionRepository.save(existing)
         val updatedRules = diffTargetRules(definitionId, request.targetRules)
+
+        if (request.semantics != null) {
+            semanticMetadataService.upsertMetadataInternal(
+                workspaceId, existing.sourceEntityTypeId,
+                SemanticMetadataTargetType.RELATIONSHIP, definitionId, request.semantics,
+            )
+        }
 
         activityService.log(
             activity = Activity.ENTITY_RELATIONSHIP,

@@ -7,5 +7,6 @@ data class CreateEntityTypeRequest(
     val name: DisplayName,
     val key: String,
     val description: String?,
-    val icon: Icon
+    val icon: Icon,
+    val semantics: SaveSemanticMetadataRequest? = null,
 )

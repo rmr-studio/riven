@@ -112,29 +112,22 @@ class EntityTypeSemanticMetadataService(
         request: SaveSemanticMetadataRequest,
     ): EntityTypeSemanticMetadata {
         verifyEntityTypeBelongsToWorkspace(workspaceId, entityTypeId)
-
-        val existing = repository.findByEntityTypeIdAndTargetTypeAndTargetId(entityTypeId, targetType, targetId)
-
-        val entity = if (existing.isPresent) {
-            existing.get().apply {
-                definition = request.definition
-                classification = request.classification
-                tags = request.tags
-            }
-        } else {
-            EntityTypeSemanticMetadataEntity(
-                workspaceId = workspaceId,
-                entityTypeId = entityTypeId,
-                targetType = targetType,
-                targetId = targetId,
-                definition = request.definition,
-                classification = request.classification,
-                tags = request.tags,
-            )
-        }
-
-        return repository.save(entity).toModel()
+        return performUpsert(workspaceId, entityTypeId, targetType, targetId, request)
     }
+
+    /**
+     * Upsert semantic metadata from within an already-secured transactional context.
+     *
+     * No @PreAuthorize — the caller's service method already holds workspace authorization.
+     * Follows the same pattern as [initializeForTarget].
+     */
+    fun upsertMetadataInternal(
+        workspaceId: UUID,
+        entityTypeId: UUID,
+        targetType: SemanticMetadataTargetType,
+        targetId: UUID,
+        request: SaveSemanticMetadataRequest,
+    ): EntityTypeSemanticMetadata = performUpsert(workspaceId, entityTypeId, targetType, targetId, request)
 
     /**
      * Bulk upsert attribute-level semantic metadata for an entity type.
@@ -290,6 +283,36 @@ class EntityTypeSemanticMetadataService(
     }
 
     // ------ Private helpers ------
+
+    private fun performUpsert(
+        workspaceId: UUID,
+        entityTypeId: UUID,
+        targetType: SemanticMetadataTargetType,
+        targetId: UUID,
+        request: SaveSemanticMetadataRequest,
+    ): EntityTypeSemanticMetadata {
+        val existing = repository.findByEntityTypeIdAndTargetTypeAndTargetId(entityTypeId, targetType, targetId)
+
+        val entity = if (existing.isPresent) {
+            existing.get().apply {
+                definition = request.definition
+                classification = request.classification
+                tags = request.tags
+            }
+        } else {
+            EntityTypeSemanticMetadataEntity(
+                workspaceId = workspaceId,
+                entityTypeId = entityTypeId,
+                targetType = targetType,
+                targetId = targetId,
+                definition = request.definition,
+                classification = request.classification,
+                tags = request.tags,
+            )
+        }
+
+        return repository.save(entity).toModel()
+    }
 
     /**
      * Fetch the entity type and assert it belongs to the given workspace.

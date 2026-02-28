@@ -20,7 +20,8 @@ import java.util.*
 data class SaveAttributeDefinitionRequest(
     override val key: String,
     override val id: UUID,
-    val schema: EntityTypeSchema
+    val schema: EntityTypeSchema,
+    val semantics: SaveSemanticMetadataRequest? = null,
 ) : TypeDefinition {
     override val type: EntityTypeRequestDefinition = EntityTypeRequestDefinition.SAVE_SCHEMA
 }
@@ -40,6 +41,7 @@ data class SaveRelationshipDefinitionRequest(
     val allowPolymorphic: Boolean = false,
     val cardinalityDefault: EntityRelationshipCardinality,
     val targetRules: List<SaveTargetRuleRequest> = emptyList(),
+    val semantics: SaveSemanticMetadataRequest? = null,
 ) : TypeDefinition {
     override val type: EntityTypeRequestDefinition = EntityTypeRequestDefinition.SAVE_RELATIONSHIP
 }
