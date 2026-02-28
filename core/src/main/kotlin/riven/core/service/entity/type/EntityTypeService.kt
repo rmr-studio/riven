@@ -1,6 +1,7 @@
 package riven.core.service.entity.type
 
 import jakarta.transaction.Transactional
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import riven.core.entity.entity.EntityTypeEntity
@@ -130,21 +131,34 @@ class EntityTypeService(
         workspaceId: UUID,
         request: UpdateEntityTypeConfigurationRequest,
     ): EntityType {
-        val type = request.entityType
-        requireNotNull(type.workspaceId) { "Cannot update system entity type" }
-        val existing: EntityTypeEntity = ServiceUtil.findOrThrow { entityTypeRepository.findById(type.id) }
+        val userId = authTokenService.getUserId()
+        val existing: EntityTypeEntity = ServiceUtil.findOrThrow { entityTypeRepository.findById(request.id) }
+
+        if (existing.workspaceId != workspaceId) {
+            throw AccessDeniedException("Entity type does not belong to the specified workspace")
+        }
 
         existing.apply {
-            displayNameSingular = type.name.singular
-            displayNamePlural = type.name.plural
-            description = type.description
-            iconType = type.icon.type
-            iconColour = type.icon.colour
-            columns = type.columns
+            displayNameSingular = request.name.singular
+            displayNamePlural = request.name.plural
+            description = request.description
+            iconType = request.icon.type
+            iconColour = request.icon.colour
+            columns = request.columns
         }
 
         val saved = entityTypeRepository.save(existing)
         val savedId = requireNotNull(saved.id)
+
+        activityService.log(
+            activity = Activity.ENTITY_TYPE,
+            operation = OperationType.UPDATE,
+            userId = userId,
+            workspaceId = workspaceId,
+            entityType = ApplicationEntityType.ENTITY_TYPE,
+            entityId = savedId,
+            "type" to existing.key,
+        )
 
         if (request.semantics != null) {
             semanticMetadataService.upsertMetadataInternal(

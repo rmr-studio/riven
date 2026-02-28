@@ -1,8 +1,15 @@
 package riven.core.models.request.entity.type
 
-import riven.core.models.entity.EntityType
+import riven.core.models.common.Icon
+import riven.core.models.common.display.DisplayName
+import riven.core.models.entity.configuration.EntityTypeAttributeColumn
+import java.util.*
 
 data class UpdateEntityTypeConfigurationRequest(
-    val entityType: EntityType,
+    val id: UUID,
+    val name: DisplayName,
+    val description: String?,
+    val icon: Icon,
+    val columns: List<EntityTypeAttributeColumn>,
     val semantics: SaveSemanticMetadataRequest? = null,
 )
