@@ -3,7 +3,7 @@ tags:
   - adr/accepted
   - architecture/decision
 Created: 2026-02-28
-Updated:
+Updated: 2026-02-28
 ---
 # ADR-004: Declarative-First Storage for Integration Mappings and Entity Templates
 
@@ -37,32 +37,253 @@ Adopt a **declarative-first storage model** with three layers:
 
 All integration entity type schemas, field mappings, semantic metadata, and data model templates are defined as **JSON manifest files stored in the application repository**. These manifests are the single source of truth for what an integration or template contains.
 
-**Integration manifests** live under a dedicated directory structure:
+The directory structure has three layers — **shared models**, **integration manifests**, and **template manifests**:
+
 ```
-integrations/
+models/                          # shared entity type definitions (reusable across templates)
+  customer.json                  # entity type schema + semantic metadata
+  invoice.json
+  communication.json
+  subscription.json
+  product.json
+  support-ticket.json
+
+integrations/                    # per-integration definitions
   hubspot/
-    manifest.json        # entity types, field mappings, semantic metadata
+    manifest.json                # entity types, field mappings, semantic metadata
   stripe/
     manifest.json
   zendesk/
     manifest.json
-```
 
-**Template manifests** live under a parallel structure:
-```
-templates/
+templates/                       # workspace bootstrapping bundles (compose from shared models)
   saas-startup/
-    manifest.json        # entity types, relationships, semantic metadata, example queries
+    manifest.json                # references shared models + adds template-specific types
   dtc-ecommerce/
     manifest.json
   service-business/
     manifest.json
 ```
 
+#### Shared Models (`models/`)
+
+Common entity types that appear across multiple templates (e.g., Customer, Invoice, Communication) are defined once as **shared model files**. Each file is a self-contained entity type definition with attributes, validation rules, and semantic metadata.
+
+Shared models are the base building blocks. They are not loaded into any workspace directly — they exist only to be referenced and composed by templates. Shared models do **not** declare relationships — they don't know what other models will be present in any given template. Relationships are declared at the composition layer (see below).
+
+#### Template Composition via `$ref` with Merge
+
+Templates declare their entity types as a mix of **references to shared models** (with optional overrides) and **template-specific inline definitions**:
+
+```json
+{
+  "manifestVersion": "1.0",
+  "key": "saas-startup",
+  "name": "SaaS Startup",
+  "entityTypes": [
+    {
+      "$ref": "models/customer",
+      "extend": {
+        "attributes": {
+          "mrr": {
+            "type": "number",
+            "label": "Monthly Recurring Revenue",
+            "semantics": {
+              "definition": "Monthly recurring revenue in USD from this customer's active subscriptions",
+              "classification": "quantitative"
+            }
+          }
+        },
+        "semantics": {
+          "tags": ["saas", "revenue"]
+        }
+      }
+    },
+    { "$ref": "models/subscription" },
+    { "$ref": "models/communication" },
+    {
+      "key": "churn-event",
+      "name": "Churn Event",
+      "attributes": { },
+      "semantics": { }
+    }
+  ],
+  "relationships": [
+    {
+      "key": "customer-to-subscription",
+      "source": "customer",
+      "target": "subscription",
+      "name": "Subscriptions",
+      "cardinality": "ONE_TO_MANY",
+      "inverseVisible": true,
+      "inverseName": "Customer",
+      "icon": { "type": "CREDIT_CARD", "colour": "GREEN" },
+      "semantics": {
+        "definition": "Customer holds active subscriptions to the platform",
+        "tags": ["revenue", "recurring"]
+      }
+    },
+    {
+      "key": "customer-financials",
+      "source": "customer",
+      "name": "Financial Records",
+      "cardinalityDefault": "ONE_TO_MANY",
+      "icon": { "type": "CREDIT_CARD", "colour": "GREEN" },
+      "targetRules": [
+        {
+          "target": "subscription",
+          "inverseVisible": true,
+          "inverseName": "Customer"
+        },
+        {
+          "target": "churn-event",
+          "cardinalityOverride": "ONE_TO_MANY",
+          "inverseVisible": true,
+          "inverseName": "Churned Subscription"
+        }
+      ],
+      "semantics": {
+        "definition": "Customer's financial and lifecycle records",
+        "tags": ["revenue", "lifecycle"]
+      }
+    },
+    {
+      "key": "subscription-to-churn",
+      "source": "subscription",
+      "target": "churn-event",
+      "name": "Churn Events",
+      "cardinality": "ONE_TO_MANY",
+      "inverseVisible": true,
+      "inverseName": "Subscription",
+      "semantics": {
+        "definition": "Subscription cancellation generates a churn event for analysis"
+      }
+    }
+  ],
+  "analyticalBriefs": [ ],
+  "exampleQueries": [ ]
+}
+```
+
+**Merge semantics:**
+- `$ref` resolves the shared model as the base definition
+- `extend` performs a **shallow merge at each level**: top-level `attributes` are merged (new keys added, existing keys untouched), top-level `semantics` fields are merged (explicit values override, omitted values preserved from base)
+- Attributes defined in `extend` are **additive** — they cannot remove or replace base attributes, only add new ones or override specific properties of existing ones
+- If no `extend` is provided, the shared model is used as-is
+- `$ref` without `extend` is the common case — most shared models are used verbatim
+
+This keeps merge logic simple and predictable: base + additions, no deep recursive merge, no deletion semantics.
+
+#### Integration Manifests
+
+Integration manifests do **not** use `$ref` composition — each integration defines its own entity types inline because integration schemas represent a specific third-party tool's data model, not a shared business concept. HubSpot Contact and Salesforce Contact have structurally different field sets from their respective APIs.
+
+Integration manifests **do** declare relationships between their own entity types (e.g., HubSpot Contact → HubSpot Deal) using the same `relationships` array format as templates. Relationships in integration manifests default to `protected: true` (system-managed, not user-deletable) since they represent the third-party platform's fixed data model. This default can be explicitly overridden with `"protected": false` if needed, but the common case is that integration relationships are structural and should not be modified by users.
+
+Example integration manifest relationships (HubSpot):
+
+```json
+{
+  "relationships": [
+    {
+      "key": "contact-to-company",
+      "source": "hubspot-contact",
+      "target": "hubspot-company",
+      "name": "Company",
+      "cardinality": "MANY_TO_ONE",
+      "inverseVisible": true,
+      "inverseName": "Contacts",
+      "icon": { "type": "BUILDING_2", "colour": "BLUE" },
+      "semantics": {
+        "definition": "Contact is associated with a company in HubSpot",
+        "tags": ["crm", "organization"]
+      }
+    },
+    {
+      "key": "contact-to-deal",
+      "source": "hubspot-contact",
+      "target": "hubspot-deal",
+      "name": "Deals",
+      "cardinality": "ONE_TO_MANY",
+      "inverseVisible": true,
+      "inverseName": "Contact",
+      "icon": { "type": "HANDSHAKE", "colour": "GREEN" },
+      "semantics": {
+        "definition": "Contact is involved in one or more sales deals"
+      }
+    }
+  ]
+}
+```
+
+Note that `protected` is omitted — the manifest loader infers `true` from the `integrations/` directory context.
+
+#### Relationship Ownership
+
+Relationships are declared at the **composition layer** — the manifest that knows which entity types are present:
+
+| Layer | Declares relationships? | Why |
+|-------|------------------------|-----|
+| Shared models (`models/`) | No | Doesn't know what other models are present in the consuming template |
+| Template manifests (`templates/`) | Yes — between all included entity types (both `$ref` and inline) | Knows the full composition; `source`/`target` reference entity type keys |
+| Integration manifests (`integrations/`) | Yes — between own entity types only | Knows its own model set |
+| Runtime (identity resolution) | Yes — cross-integration links | Discovered dynamically via [[Connected Entities for READONLY Entity Types]], not statically declarable in manifests |
+
+The `source` and `target` fields in a relationship reference entity type keys. The manifest loader validates that both ends of every declared relationship exist in the manifest's resolved entity type set. A relationship referencing a nonexistent key logs a warning and is skipped.
+
+Cross-integration relationships (e.g., HubSpot Contact relates to Stripe Invoice) are **not** declared in manifests. These connections are discovered at runtime through identity resolution and handled by the catch-all connected entities mechanism, which does not require altering readonly schemas.
+
+#### Relationship Manifest Reference
+
+Relationships use a **dual-format** design — a shorthand for single-target definitions (most common) and a full format for multi-target or polymorphic definitions.
+
+**Format detection:** Presence of `target` (string) → shorthand. Presence of `targetRules` (array) → full. Both present → validation error.
+
+**Definition-level fields:**
+
+| Field | Shorthand | Full | Required | Default | Maps to |
+|-------|:---------:|:----:|----------|---------|---------|
+| `key` | ✓ | ✓ | Yes | — | Stable identifier for idempotent upsert |
+| `source` | ✓ | ✓ | Yes | — | `sourceEntityTypeId` (resolved from entity type key) |
+| `name` | ✓ | ✓ | No | Auto-generated from target | `RelationshipDefinition.name` |
+| `icon` | ✓ | ✓ | No | `{ "type": "LINK", "colour": "NEUTRAL" }` | `iconType`, `iconColour` |
+| `protected` | ✓ | ✓ | No | `false` for templates, `true` for integrations | `RelationshipDefinition.protected` |
+| `cardinality` | ✓ | — | Shorthand: Yes | — | `cardinalityDefault` |
+| `cardinalityDefault` | — | ✓ | Full: Yes | — | `cardinalityDefault` |
+| `allowPolymorphic` | — | ✓ | No | `false` | `allowPolymorphic` |
+| `target` | ✓ | — | Shorthand: Yes | — | Creates single `RelationshipTargetRule` |
+| `targetRules` | — | ✓ | Full: Yes | — | Creates multiple `RelationshipTargetRule` records |
+| `inverseVisible` | ✓ | — | No | `false` | Single rule's `inverseVisible` |
+| `inverseName` | ✓ | — | No | `null` | Single rule's `inverseName` |
+| `semantics` | ✓ | ✓ | No | — | `EntityTypeSemanticMetadata` (targetType=RELATIONSHIP) |
+
+**Target rule fields (full format `targetRules[]`):**
+
+| Field | Required | Default | Maps to |
+|-------|----------|---------|---------|
+| `target` | Yes* | — | `targetEntityTypeId` (resolved from key) |
+| `semanticTypeConstraint` | No | `null` | `semanticTypeConstraint` |
+| `cardinalityOverride` | No | `null` | `cardinalityOverride` |
+| `inverseVisible` | No | `false` | `inverseVisible` |
+| `inverseName` | No | `null` | `inverseName` |
+
+\* Either `target` or `semanticTypeConstraint` must be specified.
+
+**Semantics object:**
+
+| Field | Required | Maps to |
+|-------|----------|---------|
+| `definition` | No | `EntityTypeSemanticMetadata.definition` |
+| `tags` | No | `EntityTypeSemanticMetadata.tags` |
+
+`classification` is omitted — not applicable to relationships (only meaningful for attribute-level semantic metadata).
+
+#### What a Manifest Defines
+
 A manifest defines:
-- **Entity type schemas** — attribute definitions, data types, validation rules
+- **Entity type schemas** — attribute definitions, data types, validation rules (inline or via `$ref` to shared models with optional `extend`)
 - **Field mappings** (integrations only) — source field to target attribute mappings with optional declarative transformations (type coercion, value mapping, default values, simple expressions)
-- **Relationship definitions** — how entity types within the manifest connect to each other
+- **Relationship definitions** — how entity types within the manifest connect to each other, using a dual-format schema (shorthand for single-target, full for multi-target/polymorphic). Definitions map 1:1 to `RelationshipDefinitionEntity` + `RelationshipTargetRuleEntity` records and support the full field set: name, icon, cardinality, inverse visibility, target rules, and semantic metadata. See **Relationship Manifest Reference** above for the complete schema.
 - **Semantic metadata** — natural language definitions, attribute classifications, tags (per [[Semantic Metadata Foundation]])
 - **Integration metadata** (integrations only) — which Nango provider key to use, sync direction, supported models
 
@@ -172,9 +393,26 @@ Expose REST endpoints that allow self-hosters to register custom integrations an
 ## Implementation Notes
 
 - **Manifest JSON Schema:** Define a JSON Schema for both integration manifests and template manifests. Publish the schema in the repository (e.g., `schemas/integration-manifest.schema.json`) so contributors can validate locally before submitting PRs. The schema covers entity type definitions, field mappings, relationship definitions, semantic metadata, and integration-specific configuration.
-- **Manifest Loader Service:** A Spring `@Component` that runs on application startup (via `@EventListener(ApplicationReadyEvent::class)` or `ApplicationRunner`). Scans the manifest directories, validates each file against the JSON Schema, and upserts definitions into the database. Uses `source = 'MANIFEST'` to distinguish manifest-loaded definitions from any future runtime-defined definitions.
+- **Manifest Loader Service:** A Spring `@Component` that runs on application startup (via `@EventListener(ApplicationReadyEvent::class)` or `ApplicationRunner`). Scans the manifest directories, validates each file against the JSON Schema, and upserts definitions into the database. Uses `source = 'MANIFEST'` to distinguish manifest-loaded definitions from any future runtime-defined definitions. For template manifests, the loader resolves `$ref` references against shared model files first, applies `extend` merges, then writes the fully resolved entity type definitions to the database. Shared models themselves are not stored in the database — they are a compile-time authoring abstraction resolved during loading.
+- **Shared Model Resolution:** The loader reads `models/` first and holds them in memory as a lookup map keyed by model slug (filename without extension). When processing a template manifest, each `$ref` entry is resolved against this map. If a `$ref` references a model that does not exist, the loader logs a warning and skips that entity type. The `extend` merge applies shallow property merging: `extend.attributes` keys are merged into the base attributes map, `extend.semantics` fields override corresponding base fields. No deep recursive merge — each merge point is one level deep.
 - **Generic Mapping Engine:** A stateless service that accepts a raw external payload (JSON) and a field mapping definition (from the manifest) and produces an entity attribute payload. The engine applies mappings sequentially: extract source value → apply transform → validate type → assign to target attribute. Transformations are a sealed class hierarchy: `DirectMapping`, `TypeCoercion`, `ValueMapping`, `JsonPathExtraction`, `DefaultValue`, `Conditional`, `PluginTransform`.
 - **Custom Plugin Registry:** A Spring bean registry where custom transformation plugins register themselves by name. Manifests reference plugins by name string. If a manifest references an unregistered plugin, the manifest loader logs a warning and skips that specific mapping (not the entire manifest).
+- **Relationship Loading:** The manifest loader processes relationships after entity types are resolved, using the following pipeline:
+  - **Format normalization:** Shorthand relationships are normalized to the full internal format before processing. A shorthand definition with `target`, `cardinality`, `inverseVisible`, and `inverseName` is converted to a full definition with `cardinalityDefault` and a single-element `targetRules` array. This ensures the loader has a single code path for all relationship formats.
+  - **Key-based upsert:** Relationships are matched by `(manifest_key, relationship_key)` for idempotent loading. On startup, existing manifest-sourced relationships not present in the current manifest are removed.
+  - **Target resolution:** `source` and `target`/`targetRules[].target` values are entity type keys resolved against the manifest's resolved entity type set. Resolution happens after all entity types (both `$ref` and inline) have been processed.
+  - **Semantic metadata creation:** Each relationship with a `semantics` object generates an `EntityTypeSemanticMetadata` record with `targetType = RELATIONSHIP` and `targetId` set to the relationship definition's ID.
+  - **Default inference:** If `name` is omitted in shorthand format, derive from the target entity type's display name (e.g., target key `subscription` → name `Subscriptions`). In full format, `name` should be explicitly provided since the definition spans multiple targets.
+  - **Protected default:** Relationships in `integrations/` directory manifests default to `protected: true`. Relationships in `templates/` directory manifests default to `protected: false`. Explicit `protected` values in the manifest override the directory-based default.
+- **Relationship Validation:** The loader validates relationships before writing to the database:
+  1. `source` references an entity type key present in the manifest's resolved entity type set
+  2. `target` (shorthand) or each `targetRules[].target` references an entity type key present in the manifest
+  3. `cardinality` (shorthand) or `cardinalityDefault` (full) is a valid `EntityRelationshipCardinality` enum value (`ONE_TO_ONE`, `ONE_TO_MANY`, `MANY_TO_ONE`, `MANY_TO_MANY`)
+  4. No duplicate `key` values across relationships within the same manifest
+  5. Shorthand and full format are mutually exclusive — a relationship cannot specify both `target` and `targetRules`
+  6. Each target rule must specify at least one of `target` or `semanticTypeConstraint`
+  7. `icon.type` and `icon.colour` must be valid `IconType` and `IconColour` enum values if specified
+  8. Invalid relationships log a warning and are skipped — they do not prevent the rest of the manifest from loading
 - **CI Validation:** A CI step validates all manifest files against the JSON Schema before merge. This provides the "compile-time" safety equivalent for declarative definitions.
 - **Migration from V005:** The existing V005 seed migration data for the 6 initial integrations (HubSpot, Salesforce, Stripe, Zendesk, Intercom, Gmail) should be converted to manifest files. V005 itself can be left as a no-op or retained for backward compatibility with existing database state.
 

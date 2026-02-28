@@ -32,19 +32,81 @@ Your template semantic definitions feed directly into this. When a template defi
 
 Per [[ADR-004 Declarative-First Storage for Integration Mappings and Entity Templates]], data model templates are defined as **JSON manifest files** stored in the application repository under a `templates/` directory (e.g., `templates/saas-startup/manifest.json`). This uses the same declarative-first storage pattern as integration manifests — manifest files are version-controlled, loaded into the database on application startup by the manifest loader, and queryable via standard JPA repositories at runtime.
 
-Each template manifest defines:
-- **Entity type schemas** — full attribute definitions, data types, and validation rules for all entity types in the template
-- **Relationship definitions** — how entity types within the template interconnect (e.g., Customer → Subscription, Subscription → Invoice)
-- **Complete semantic metadata** — natural language definitions, attribute classifications, and tags for every entity type, attribute, and relationship per [[Semantic Metadata Foundation]]
+#### Shared Models + Template Composition
+
+Common entity types that appear across multiple templates (Customer, Invoice, Communication, etc.) are defined once as **shared model files** under `models/` (e.g., `models/customer.json`). Templates **compose from shared models** using `$ref` references with optional `extend` merges, rather than duplicating definitions:
+
+```json
+{
+  "entityTypes": [
+    { "$ref": "models/customer", "extend": { "attributes": { "mrr": { ... } } } },
+    { "$ref": "models/subscription" },
+    { "key": "churn-event", "name": "Churn Event", "attributes": { ... } }
+  ]
+}
+```
+
+- `$ref` pulls in the shared model as the base definition
+- `extend` performs a **shallow merge** — adds new attributes, overrides specific semantic metadata fields. Cannot remove base attributes.
+- No `extend` = shared model used as-is (the common case)
+- Template-specific entity types that don't exist as shared models are defined inline
+
+This means "Customer" is defined once with its core attributes and semantic metadata. The SaaS Startup template references it and extends it with `mrr`. The DTC E-commerce template references it and extends it with `acquisition_channel`. A fix to the base Customer model propagates to every template that uses it.
+
+#### Relationship Ownership
+
+Shared models do **not** declare relationships — they don't know what other entity types will be present alongside them. Relationships are declared at the **template level**, where the full composition is known:
+
+```json
+{
+  "entityTypes": [
+    { "$ref": "models/customer" },
+    { "$ref": "models/subscription" },
+    { "key": "churn-event", "name": "Churn Event", "attributes": { } }
+  ],
+  "relationships": [
+    {
+      "source": "customer",
+      "target": "subscription",
+      "type": "ONE_TO_MANY",
+      "semantics": {
+        "definition": "Customer holds active subscriptions to the platform"
+      }
+    },
+    {
+      "source": "subscription",
+      "target": "churn-event",
+      "type": "ONE_TO_MANY",
+      "semantics": {
+        "definition": "Subscription cancellation generates a churn event for analysis"
+      }
+    }
+  ]
+}
+```
+
+- `source` and `target` reference entity type keys — from either `$ref` models or inline definitions
+- The manifest loader validates that both ends of every relationship exist in the resolved entity type set
+- Relationship semantic metadata (natural language definition of the connection) is declared inline alongside the relationship, not in the shared model
+- This is the same pattern used by integration manifests for their internal relationships (see [[ADR-004 Declarative-First Storage for Integration Mappings and Entity Templates]])
+
+#### What a Template Manifest Defines
+
+- **Entity type schemas** — via `$ref` to shared models (with optional `extend`) or inline for template-specific types
+- **Relationship definitions** — how entity types within the template interconnect, declared at the template level with `source`/`target` referencing entity type keys. Relationships can reference both shared and template-specific entity types. Each relationship carries its own semantic metadata.
+- **Complete semantic metadata** — natural language definitions, attribute classifications, and tags for every entity type and attribute per [[Semantic Metadata Foundation]]. Shared models carry their own base semantic metadata; `extend` can add or override. Relationship semantics are declared alongside the relationship definition.
 - **Pre-configured analytical briefs** (3-5 per template) that demonstrate cross-domain querying
 - **Example queries** scoped narrowly enough to be useful with <50 records
 
-Initial templates:
+#### Initial Templates
+
 - SaaS Startup (customers, subscriptions, MRR, churn, support interactions, feature usage)
 - DTC E-commerce (customers, orders, products, acquisition channels, support, returns)
 - Service Business (clients, projects, invoices, communications, deliverables)
 
-When a user selects a template during workspace setup, the template's entity types, relationships, and semantic metadata are **cloned into their workspace** as editable, user-owned definitions. From that point forward, the user can modify them freely — adding attributes, changing semantic descriptions, removing entity types — as if they had created everything themselves. The template origin is recorded for reference but does not constrain editing.
+#### Workspace Installation
+
+When a user selects a template during workspace setup, the manifest loader resolves all `$ref` references and `extend` merges, then **clones the fully resolved entity types** into the workspace as editable, user-owned definitions. From that point forward, the user can modify them freely — adding attributes, changing semantic descriptions, removing entity types — as if they had created everything themselves. The template origin is recorded for reference but does not constrain editing.
 
 Community contributors add new templates by submitting a manifest file PR — no Kotlin code required. Self-hosters can drop custom template manifest files into the `templates/` directory and restart.
 ### Success Criteria
@@ -385,3 +447,4 @@ _Is existing data affected? How will it be migrated?_
 | ---- | ------ | ------------- |
 | | | Initial draft |
 | 2026-02-28 | | Updated Proposed Solution to align with ADR-004 declarative-first approach — templates defined as JSON manifests loaded on startup |
+| 2026-02-28 | | Added shared models layer with `$ref` composition and `extend` merge semantics — common entity types defined once in `models/`, referenced by templates |
