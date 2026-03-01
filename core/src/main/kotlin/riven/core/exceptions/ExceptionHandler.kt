@@ -7,8 +7,6 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.authorization.AuthorizationDeniedException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
-import org.springframework.web.context.request.RequestContextHolder
-import org.springframework.web.context.request.ServletRequestAttributes
 import riven.core.configuration.properties.ApplicationConfigurationProperties
 import riven.core.models.response.common.ErrorResponse
 
@@ -17,7 +15,6 @@ class ExceptionHandler(private val logger: KLogger, private val config: Applicat
 
     @ExceptionHandler(AccessDeniedException::class)
     fun handleAccessDeniedException(ex: AccessDeniedException): ResponseEntity<ErrorResponse> {
-        storeExceptionForAnalytics(ex)
         return ErrorResponse(
             statusCode = HttpStatus.FORBIDDEN,
             error = "ACCESS DENIED",
@@ -30,7 +27,6 @@ class ExceptionHandler(private val logger: KLogger, private val config: Applicat
 
     @ExceptionHandler(InvalidRelationshipException::class)
     fun handleInvalidRelationshipException(ex: InvalidRelationshipException): ResponseEntity<ErrorResponse> {
-        storeExceptionForAnalytics(ex)
         return ErrorResponse(
             statusCode = HttpStatus.BAD_REQUEST,
             error = "INVALID RELATIONSHIP",
@@ -43,7 +39,6 @@ class ExceptionHandler(private val logger: KLogger, private val config: Applicat
 
     @ExceptionHandler(SchemaValidationException::class)
     fun handleSchemaValidationException(ex: SchemaValidationException): ResponseEntity<ErrorResponse> {
-        storeExceptionForAnalytics(ex)
         return ErrorResponse(
             statusCode = HttpStatus.BAD_REQUEST,
             error = "SCHEMA VALIDATION FAILED",
@@ -56,7 +51,6 @@ class ExceptionHandler(private val logger: KLogger, private val config: Applicat
 
     @ExceptionHandler(AuthorizationDeniedException::class)
     fun handleAuthorizationDenied(ex: AuthorizationDeniedException): ResponseEntity<ErrorResponse> {
-        storeExceptionForAnalytics(ex)
         return ErrorResponse(
             statusCode = HttpStatus.FORBIDDEN,
             error = "AUTHORIZATION DENIED",
@@ -69,7 +63,6 @@ class ExceptionHandler(private val logger: KLogger, private val config: Applicat
 
     @ExceptionHandler(NotFoundException::class)
     fun handleNotFoundException(ex: NotFoundException): ResponseEntity<ErrorResponse> {
-        storeExceptionForAnalytics(ex)
         return ErrorResponse(
             statusCode = HttpStatus.NOT_FOUND,
             error = "RESOURCE NOT FOUND",
@@ -82,7 +75,6 @@ class ExceptionHandler(private val logger: KLogger, private val config: Applicat
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgumentException(ex: IllegalArgumentException): ResponseEntity<ErrorResponse> {
-        storeExceptionForAnalytics(ex)
         return ErrorResponse(
             statusCode = HttpStatus.BAD_REQUEST,
             error = "INVALID ARGUMENT",
@@ -95,7 +87,6 @@ class ExceptionHandler(private val logger: KLogger, private val config: Applicat
 
     @ExceptionHandler(ConflictException::class)
     fun handleConflictException(ex: ConflictException): ResponseEntity<ErrorResponse> {
-        storeExceptionForAnalytics(ex)
         return ErrorResponse(
             statusCode = HttpStatus.CONFLICT,
             error = "CONFLICT",
@@ -108,7 +99,6 @@ class ExceptionHandler(private val logger: KLogger, private val config: Applicat
 
     @ExceptionHandler(UniqueConstraintViolationException::class)
     fun handleConflictException(ex: UniqueConstraintViolationException): ResponseEntity<ErrorResponse> {
-        storeExceptionForAnalytics(ex)
         return ErrorResponse(
             statusCode = HttpStatus.CONFLICT,
             error = "CONFLICT",
@@ -119,13 +109,4 @@ class ExceptionHandler(private val logger: KLogger, private val config: Applicat
         }
     }
 
-    // ------ Analytics Integration ------
-
-    private fun storeExceptionForAnalytics(ex: Exception) {
-        val requestAttributes = RequestContextHolder.getRequestAttributes()
-            as? ServletRequestAttributes ?: return
-        val request = requestAttributes.request
-        request.setAttribute("posthog.error.class", ex::class.simpleName)
-        request.setAttribute("posthog.error.message", ex.message ?: "Unknown error")
-    }
 }
