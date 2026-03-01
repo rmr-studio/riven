@@ -88,6 +88,11 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
     fun findByTargetIdAndDefinitionId(targetId: UUID, definitionId: UUID): List<EntityRelationshipEntity>
 
     /**
+     * Batch variant: find all relationships for multiple target entities with a specific definition ID.
+     */
+    fun findByTargetIdInAndDefinitionId(targetIds: Collection<UUID>, definitionId: UUID): List<EntityRelationshipEntity>
+
+    /**
      * Count relationships for a given definition ID.
      */
     fun countByDefinitionId(definitionId: UUID): Long
