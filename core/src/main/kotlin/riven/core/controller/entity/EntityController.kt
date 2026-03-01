@@ -10,10 +10,10 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import riven.core.models.entity.Entity
-import riven.core.models.request.entity.CreateConnectionRequest
+import riven.core.models.request.entity.AddRelationshipRequest
 import riven.core.models.request.entity.SaveEntityRequest
-import riven.core.models.request.entity.UpdateConnectionRequest
-import riven.core.models.response.entity.ConnectionResponse
+import riven.core.models.request.entity.UpdateRelationshipRequest
+import riven.core.models.response.entity.RelationshipResponse
 import riven.core.models.response.entity.DeleteEntityResponse
 import riven.core.models.response.entity.SaveEntityResponse
 import riven.core.service.entity.EntityRelationshipService
@@ -141,64 +141,65 @@ class EntityController(
         return ResponseEntity.ok(response)
     }
 
-    // ------ Connections ------
+    // ------ Relationships ------
 
-    @PostMapping("/workspace/{workspaceId}/entities/{entityId}/connections")
-    @Operation(summary = "Create a connection between two entities")
+    @PostMapping("/workspace/{workspaceId}/entities/{entityId}/relationships")
+    @Operation(summary = "Add a relationship between two entities")
     @ApiResponses(
-        ApiResponse(responseCode = "201", description = "Connection created successfully"),
+        ApiResponse(responseCode = "201", description = "Relationship created successfully"),
         ApiResponse(responseCode = "404", description = "Source or target entity not found"),
-        ApiResponse(responseCode = "409", description = "Connection already exists"),
+        ApiResponse(responseCode = "409", description = "Relationship already exists"),
     )
-    fun createConnection(
+    fun addRelationship(
         @PathVariable workspaceId: UUID,
         @PathVariable entityId: UUID,
-        @RequestBody request: CreateConnectionRequest,
-    ): ResponseEntity<ConnectionResponse> {
-        val response = entityRelationshipService.createConnection(workspaceId, entityId, request)
+        @RequestBody request: AddRelationshipRequest,
+    ): ResponseEntity<RelationshipResponse> {
+        val response = entityRelationshipService.addRelationship(workspaceId, entityId, request)
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
 
-    @GetMapping("/workspace/{workspaceId}/entities/{entityId}/connections")
-    @Operation(summary = "Get all connections for an entity")
+    @GetMapping("/workspace/{workspaceId}/entities/{entityId}/relationships")
+    @Operation(summary = "Get all relationships for an entity")
     @ApiResponses(
-        ApiResponse(responseCode = "200", description = "Connections retrieved successfully"),
+        ApiResponse(responseCode = "200", description = "Relationships retrieved successfully"),
         ApiResponse(responseCode = "404", description = "Entity not found"),
     )
-    fun getConnections(
+    fun getRelationships(
         @PathVariable workspaceId: UUID,
         @PathVariable entityId: UUID,
-    ): ResponseEntity<List<ConnectionResponse>> {
-        val response = entityRelationshipService.getConnections(workspaceId, entityId)
+        @RequestParam(required = false) definitionId: UUID?,
+    ): ResponseEntity<List<RelationshipResponse>> {
+        val response = entityRelationshipService.getRelationships(workspaceId, entityId, definitionId)
         return ResponseEntity.ok(response)
     }
 
-    @PutMapping("/workspace/{workspaceId}/connections/{connectionId}")
-    @Operation(summary = "Update a connection's semantic context")
+    @PutMapping("/workspace/{workspaceId}/relationships/{relationshipId}")
+    @Operation(summary = "Update a relationship's semantic context")
     @ApiResponses(
-        ApiResponse(responseCode = "200", description = "Connection updated successfully"),
-        ApiResponse(responseCode = "404", description = "Connection not found"),
+        ApiResponse(responseCode = "200", description = "Relationship updated successfully"),
+        ApiResponse(responseCode = "404", description = "Relationship not found"),
     )
-    fun updateConnection(
+    fun updateRelationship(
         @PathVariable workspaceId: UUID,
-        @PathVariable connectionId: UUID,
-        @RequestBody request: UpdateConnectionRequest,
-    ): ResponseEntity<ConnectionResponse> {
-        val response = entityRelationshipService.updateConnection(workspaceId, connectionId, request)
+        @PathVariable relationshipId: UUID,
+        @RequestBody request: UpdateRelationshipRequest,
+    ): ResponseEntity<RelationshipResponse> {
+        val response = entityRelationshipService.updateRelationship(workspaceId, relationshipId, request)
         return ResponseEntity.ok(response)
     }
 
-    @DeleteMapping("/workspace/{workspaceId}/connections/{connectionId}")
-    @Operation(summary = "Delete a connection")
+    @DeleteMapping("/workspace/{workspaceId}/relationships/{relationshipId}")
+    @Operation(summary = "Delete a relationship")
     @ApiResponses(
-        ApiResponse(responseCode = "204", description = "Connection deleted successfully"),
-        ApiResponse(responseCode = "404", description = "Connection not found"),
+        ApiResponse(responseCode = "204", description = "Relationship deleted successfully"),
+        ApiResponse(responseCode = "404", description = "Relationship not found"),
     )
-    fun deleteConnection(
+    fun removeRelationship(
         @PathVariable workspaceId: UUID,
-        @PathVariable connectionId: UUID,
+        @PathVariable relationshipId: UUID,
     ): ResponseEntity<Void> {
-        entityRelationshipService.deleteConnection(workspaceId, connectionId)
+        entityRelationshipService.removeRelationship(workspaceId, relationshipId)
         return ResponseEntity.noContent().build()
     }
 }

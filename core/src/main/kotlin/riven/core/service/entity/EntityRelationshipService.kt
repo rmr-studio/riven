@@ -16,9 +16,9 @@ import riven.core.exceptions.InvalidRelationshipException
 import riven.core.models.entity.EntityLink
 import riven.core.models.entity.RelationshipDefinition
 import riven.core.models.entity.RelationshipTargetRule
-import riven.core.models.request.entity.CreateConnectionRequest
-import riven.core.models.request.entity.UpdateConnectionRequest
-import riven.core.models.response.entity.ConnectionResponse
+import riven.core.models.request.entity.AddRelationshipRequest
+import riven.core.models.request.entity.UpdateRelationshipRequest
+import riven.core.models.response.entity.RelationshipResponse
 import riven.core.projection.entity.toEntityLink
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityRepository
@@ -167,151 +167,221 @@ class EntityRelationshipService(
         return entityRelationshipRepository.deleteEntities(ids.toTypedArray(), workspaceId)
     }
 
-    // ------ Connections ------
+    // ------ Relationship CRUD ------
 
     /**
-     * Creates a fallback connection between two entities using the CONNECTED_ENTITIES definition.
+     * Adds a single relationship between two entities.
+     *
+     * When `definitionId` is provided, creates a typed relationship with target type
+     * validation and cardinality enforcement. When omitted, creates a fallback
+     * CONNECTED_ENTITIES relationship with bidirectional duplicate detection.
      */
     @Transactional
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
-    fun createConnection(
+    fun addRelationship(
         workspaceId: UUID,
         sourceEntityId: UUID,
-        request: CreateConnectionRequest,
-    ): ConnectionResponse {
+        request: AddRelationshipRequest,
+    ): RelationshipResponse {
         val userId = authTokenService.getUserId()
         val sourceEntity = ServiceUtil.findOrThrow { entityRepository.findById(sourceEntityId) }
-        val definition = entityTypeRelationshipService.getOrCreateFallbackDefinition(workspaceId, sourceEntity.typeId)
-        val definitionId = requireNotNull(definition.id)
-
         ServiceUtil.findOrThrow { entityRepository.findById(request.targetEntityId) }
 
-        val existingForward = entityRelationshipRepository.findBySourceIdAndTargetIdAndDefinitionId(
-            sourceEntityId, request.targetEntityId, definitionId,
+        val (resolvedDefinitionId, definitionName) = resolveDefinition(
+            workspaceId, sourceEntity.typeId, sourceEntityId, request,
         )
-        val existingReverse = entityRelationshipRepository.findBySourceIdAndTargetIdAndDefinitionId(
-            request.targetEntityId, sourceEntityId, definitionId,
-        )
-        if (existingForward.isNotEmpty() || existingReverse.isNotEmpty()) {
-            throw ConflictException("Connection already exists between $sourceEntityId and ${request.targetEntityId}")
-        }
 
         val entity = EntityRelationshipEntity(
             workspaceId = workspaceId,
             sourceId = sourceEntityId,
             targetId = request.targetEntityId,
-            definitionId = definitionId,
+            definitionId = resolvedDefinitionId,
             semanticContext = request.semanticContext,
             linkSource = request.linkSource,
         )
         val saved = entityRelationshipRepository.save(entity)
 
         activityService.log(
-            activity = Activity.ENTITY_CONNECTION,
+            activity = Activity.ENTITY_RELATIONSHIP,
             operation = OperationType.CREATE,
             userId = userId,
             workspaceId = workspaceId,
             entityType = ApplicationEntityType.ENTITY,
             entityId = sourceEntityId,
-            "connectionId" to requireNotNull(saved.id).toString(),
+            "relationshipId" to requireNotNull(saved.id).toString(),
             "targetEntityId" to request.targetEntityId.toString(),
+            "definitionId" to resolvedDefinitionId.toString(),
             "semanticContext" to request.semanticContext,
         )
 
-        logger.info { "Created connection ${saved.id} from $sourceEntityId to ${request.targetEntityId}" }
-        return saved.toConnectionResponse()
+        logger.info { "Created relationship ${saved.id} from $sourceEntityId to ${request.targetEntityId} under definition $resolvedDefinitionId" }
+        return saved.toRelationshipResponse(definitionName)
     }
 
     /**
-     * Returns all connections for an entity (forward + inverse) under the fallback definition.
+     * Returns all relationships for an entity (forward + inverse), optionally filtered
+     * by a specific definition ID.
      */
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
-    fun getConnections(workspaceId: UUID, entityId: UUID): List<ConnectionResponse> {
-        val entity = ServiceUtil.findOrThrow { entityRepository.findById(entityId) }
-        val defId = entityTypeRelationshipService.getFallbackDefinitionId(entity.typeId)
-            ?: return emptyList()
+    fun getRelationships(workspaceId: UUID, entityId: UUID, definitionId: UUID? = null): List<RelationshipResponse> {
+        ServiceUtil.findOrThrow { entityRepository.findById(entityId) }
 
-        return entityRelationshipRepository.findByEntityIdAndDefinitionId(entityId, defId)
-            .map { it.toConnectionResponse() }
+        val relationships = if (definitionId != null) {
+            entityRelationshipRepository.findByEntityIdAndDefinitionId(entityId, definitionId)
+        } else {
+            entityRelationshipRepository.findAllRelationshipsForEntity(entityId)
+        }
+
+        if (relationships.isEmpty()) return emptyList()
+
+        val definitionNames = definitionRepository
+            .findAllById(relationships.map { it.definitionId }.distinct())
+            .associate { requireNotNull(it.id) to it.name }
+
+        return relationships.map { rel ->
+            rel.toRelationshipResponse(definitionNames[rel.definitionId] ?: "Unknown")
+        }
     }
 
     /**
-     * Updates the semantic context of an existing fallback connection.
+     * Updates the semantic context of an existing relationship.
      */
     @Transactional
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
-    fun updateConnection(
+    fun updateRelationship(
         workspaceId: UUID,
-        connectionId: UUID,
-        request: UpdateConnectionRequest,
-    ): ConnectionResponse {
+        relationshipId: UUID,
+        request: UpdateRelationshipRequest,
+    ): RelationshipResponse {
         val userId = authTokenService.getUserId()
-        val connection = ServiceUtil.findOrThrow {
-            entityRelationshipRepository.findByIdAndWorkspaceId(connectionId, workspaceId)
+        val relationship = ServiceUtil.findOrThrow {
+            entityRelationshipRepository.findByIdAndWorkspaceId(relationshipId, workspaceId)
         }
-        validateIsFallbackConnection(connection)
 
         val updated = entityRelationshipRepository.save(
-            connection.copy(semanticContext = request.semanticContext)
+            relationship.copy(semanticContext = request.semanticContext)
         )
 
+        val definitionName = definitionRepository.findById(relationship.definitionId)
+            .map { it.name }.orElse("Unknown")
+
         activityService.log(
-            activity = Activity.ENTITY_CONNECTION,
+            activity = Activity.ENTITY_RELATIONSHIP,
             operation = OperationType.UPDATE,
             userId = userId,
             workspaceId = workspaceId,
             entityType = ApplicationEntityType.ENTITY,
-            entityId = connection.sourceId,
-            "connectionId" to connectionId.toString(),
+            entityId = relationship.sourceId,
+            "relationshipId" to relationshipId.toString(),
             "semanticContext" to request.semanticContext,
         )
 
-        logger.info { "Updated connection $connectionId semantic context" }
-        return updated.toConnectionResponse()
+        logger.info { "Updated relationship $relationshipId semantic context" }
+        return updated.toRelationshipResponse(definitionName)
     }
 
     /**
-     * Soft-deletes a fallback connection.
+     * Soft-deletes a relationship.
      */
     @Transactional
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
-    fun deleteConnection(workspaceId: UUID, connectionId: UUID) {
+    fun removeRelationship(workspaceId: UUID, relationshipId: UUID) {
         val userId = authTokenService.getUserId()
-        val connection = ServiceUtil.findOrThrow {
-            entityRelationshipRepository.findByIdAndWorkspaceId(connectionId, workspaceId)
+        val relationship = ServiceUtil.findOrThrow {
+            entityRelationshipRepository.findByIdAndWorkspaceId(relationshipId, workspaceId)
         }
-        validateIsFallbackConnection(connection)
 
-        connection.markDeleted()
-        entityRelationshipRepository.save(connection)
+        relationship.markDeleted()
+        entityRelationshipRepository.save(relationship)
 
         activityService.log(
-            activity = Activity.ENTITY_CONNECTION,
+            activity = Activity.ENTITY_RELATIONSHIP,
             operation = OperationType.DELETE,
             userId = userId,
             workspaceId = workspaceId,
             entityType = ApplicationEntityType.ENTITY,
-            entityId = connection.sourceId,
-            "connectionId" to connectionId.toString(),
+            entityId = relationship.sourceId,
+            "relationshipId" to relationshipId.toString(),
         )
 
-        logger.info { "Deleted connection $connectionId" }
+        logger.info { "Deleted relationship $relationshipId" }
     }
 
-    // ------ Connection helpers ------
+    // ------ Relationship CRUD helpers ------
 
-    private fun validateIsFallbackConnection(connection: EntityRelationshipEntity) {
-        val definition = ServiceUtil.findOrThrow { definitionRepository.findById(connection.definitionId) }
-        require(definition.systemType == SystemRelationshipType.CONNECTED_ENTITIES) {
-            "Connection ${connection.id} does not belong to a CONNECTED_ENTITIES definition"
+    /**
+     * Resolves the definition for a new relationship, validates duplicates, and enforces
+     * cardinality for typed definitions. Returns the resolved definition ID and name.
+     */
+    private fun resolveDefinition(
+        workspaceId: UUID,
+        sourceEntityTypeId: UUID,
+        sourceEntityId: UUID,
+        request: AddRelationshipRequest,
+    ): Pair<UUID, String> {
+        if (request.definitionId != null) {
+            val definition = entityTypeRelationshipService.getDefinitionById(workspaceId, request.definitionId)
+            checkDirectionalDuplicate(sourceEntityId, request.targetEntityId, request.definitionId)
+            validateTypedRelationship(sourceEntityId, request.targetEntityId, request.definitionId, definition)
+            return request.definitionId to definition.name
+        }
+
+        val fallbackDef = entityTypeRelationshipService.getOrCreateFallbackDefinition(workspaceId, sourceEntityTypeId)
+        val defId = requireNotNull(fallbackDef.id)
+        checkBidirectionalDuplicate(sourceEntityId, request.targetEntityId, defId)
+        return defId to fallbackDef.name
+    }
+
+    private fun checkDirectionalDuplicate(sourceId: UUID, targetId: UUID, definitionId: UUID) {
+        val existing = entityRelationshipRepository.findBySourceIdAndTargetIdAndDefinitionId(
+            sourceId, targetId, definitionId,
+        )
+        if (existing.isNotEmpty()) {
+            throw ConflictException("Relationship already exists from $sourceId to $targetId under definition $definitionId")
         }
     }
 
-    private fun EntityRelationshipEntity.toConnectionResponse(): ConnectionResponse {
-        return ConnectionResponse(
+    private fun checkBidirectionalDuplicate(sourceId: UUID, targetId: UUID, definitionId: UUID) {
+        val existingForward = entityRelationshipRepository.findBySourceIdAndTargetIdAndDefinitionId(
+            sourceId, targetId, definitionId,
+        )
+        val existingReverse = entityRelationshipRepository.findBySourceIdAndTargetIdAndDefinitionId(
+            targetId, sourceId, definitionId,
+        )
+        if (existingForward.isNotEmpty() || existingReverse.isNotEmpty()) {
+            throw ConflictException("Relationship already exists between $sourceId and $targetId")
+        }
+    }
+
+    /**
+     * Validates target type and enforces cardinality for typed (non-fallback) definitions.
+     */
+    private fun validateTypedRelationship(
+        sourceEntityId: UUID,
+        targetEntityId: UUID,
+        definitionId: UUID,
+        definition: RelationshipDefinition,
+    ) {
+        val targetEntity = ServiceUtil.findOrThrow { entityRepository.findById(targetEntityId) }
+        val newTargetTypesByEntityId = mapOf(targetEntityId to targetEntity.typeId)
+
+        validateTargets(definition, newTargetTypesByEntityId)
+
+        val existingTargets = entityRelationshipRepository.findAllBySourceIdAndDefinitionId(sourceEntityId, definitionId)
+        val allTargetIds = existingTargets.map { it.targetId }.toSet() + targetEntityId
+        val allTargetEntities = entityRepository.findAllById(allTargetIds).associateBy { requireNotNull(it.id) }
+        val finalTypesByEntityId = allTargetEntities.mapValues { it.value.typeId }
+
+        enforceCardinality(definition, definitionId, finalTypesByEntityId, newTargetTypesByEntityId)
+    }
+
+    private fun EntityRelationshipEntity.toRelationshipResponse(definitionName: String): RelationshipResponse {
+        return RelationshipResponse(
             id = requireNotNull(this.id),
             sourceEntityId = this.sourceId,
             targetEntityId = this.targetId,
+            definitionId = this.definitionId,
+            definitionName = definitionName,
             semanticContext = this.semanticContext,
             linkSource = this.linkSource,
             createdAt = this.createdAt,
