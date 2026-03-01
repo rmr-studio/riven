@@ -83,6 +83,8 @@ class EntityTypeRelationshipService(
 |---|---|---|
 | [[EntityTypeService]] | Delegates create/update/delete of relationship definitions during `saveEntityTypeDefinition` and `deleteEntityType` | Primary orchestrator; calls this service within its own transaction |
 | [[EntityService]] | Calls `getDefinitionsForEntityType` to validate and resolve definition IDs during entity payload saves | Read-only usage; does not trigger mutations |
+| [[EntityRelationshipService]] | Calls `getOrCreateFallbackDefinition`, `getFallbackDefinitionId` | Resolves CONNECTED_ENTITIES definition for connection CRUD |
+| [[EntityTypeService]] | Calls `createFallbackDefinition` | Creates fallback definition at entity type publish time |
 
 ---
 
@@ -202,6 +204,58 @@ fun getDefinitionById(
 
 ---
 
+### System Definitions
+
+System definitions are managed automatically by the platform and are not user-editable. The `SystemRelationshipType` enum (`CONNECTED_ENTITIES`) identifies these definitions via the `system_type` column on `relationship_definitions`.
+
+---
+
+#### `createFallbackDefinition(workspaceId, entityTypeId): RelationshipDefinitionEntity`
+
+```kotlin
+fun createFallbackDefinition(
+    workspaceId: UUID,
+    entityTypeId: UUID,
+): RelationshipDefinitionEntity
+```
+
+- **Purpose:** Creates a CONNECTED_ENTITIES fallback definition for an entity type. Called at publish time to ensure every entity type has a system-managed connection definition.
+- **When to use:** Called by [[EntityTypeService]] during `publishEntityType`.
+- **Side effects:** Saves a `RelationshipDefinitionEntity` with `name = "Connected Entities"`, `allowPolymorphic = true`, `cardinalityDefault = MANY_TO_MANY`, `protected = true`, `systemType = CONNECTED_ENTITIES`.
+- **Returns:** The saved entity.
+
+---
+
+#### `getOrCreateFallbackDefinition(workspaceId, entityTypeId): RelationshipDefinitionEntity`
+
+```kotlin
+fun getOrCreateFallbackDefinition(
+    workspaceId: UUID,
+    entityTypeId: UUID,
+): RelationshipDefinitionEntity
+```
+
+- **Purpose:** Returns the existing fallback definition or creates one if absent. Handles concurrent creation via unique constraint (`uq_relationship_definition_system_type`) by catching `DataIntegrityViolationException` and retrying with a read.
+- **When to use:** Called by [[EntityRelationshipService]] when creating a connection. Supports lazy creation for entity types published before the fallback feature existed.
+- **Side effects:** May create a new `RelationshipDefinitionEntity` if none exists.
+- **Throws:** `NotFoundException` (via `ServiceUtil.findOrThrow`) if the concurrent-creation retry also fails (should not occur in practice).
+- **Returns:** The existing or newly created definition entity.
+
+---
+
+#### `getFallbackDefinitionId(entityTypeId): UUID?`
+
+```kotlin
+fun getFallbackDefinitionId(entityTypeId: UUID): UUID?
+```
+
+- **Purpose:** Read-only lookup returning the fallback definition ID, or null if none exists.
+- **When to use:** Called by [[EntityRelationshipService]] when listing connections — avoids creating a definition just to check if connections exist.
+- **Side effects:** None. Read-only.
+- **Returns:** The definition UUID, or `null` if no fallback definition exists for this entity type.
+
+---
+
 ## Key Logic
 
 ### Target Rule Diffing
@@ -262,6 +316,19 @@ Relationship definitions have associated semantic metadata managed by [[EntityTy
 | Definition deleted | `semanticMetadataService.deleteForTarget(sourceEntityTypeId, RELATIONSHIP, definitionId)` | Hard-deletes the semantic metadata record |
 
 Both hooks execute within the same `@Transactional` boundary as the triggering mutation.
+
+---
+
+### Fallback Definition Management
+
+Every entity type gets a system-managed `CONNECTED_ENTITIES` relationship definition created at publish time. This definition:
+- Has `protected = true` (cannot be deleted by users)
+- Has `allowPolymorphic = true` (can link to any entity type)
+- Has `cardinalityDefault = MANY_TO_MANY`
+- Has `systemType = SystemRelationshipType.CONNECTED_ENTITIES`
+- Has no target rules (polymorphic with no type restrictions)
+
+**Concurrent creation safety:** `getOrCreateFallbackDefinition` handles race conditions via a unique constraint on `(source_entity_type_id, system_type)`. If two concurrent requests both try to create the fallback definition, the second one catches `DataIntegrityViolationException` and retries with a read. This avoids distributed locking.
 
 ---
 
@@ -355,6 +422,12 @@ Activity log `entityType` is always `ApplicationEntityType.ENTITY_TYPE` with `en
 > [!warning] Polymorphic definitions may have zero target rules
 > When `allowPolymorphic = true`, target rules are optional. `buildTargetRuleEntities` will produce an empty list and `saveAll` will be a no-op. The definition is valid with no rules.
 
+> [!warning] Fallback definitions have no target rules
+> Unlike user-created definitions, CONNECTED_ENTITIES definitions have zero `RelationshipTargetRuleEntity` records. This means inverse query visibility relies on the `system_type` column match (via LEFT JOIN) rather than the `inverse_visible` flag on target rules.
+
+> [!warning] No semantic metadata hooks for fallback definitions
+> `createFallbackDefinition` does NOT call `semanticMetadataService.initializeForTarget(...)`. System definitions do not participate in the semantic metadata lifecycle.
+
 ### Known Limitations
 
 | Limitation | Impact | Severity |
@@ -431,3 +504,4 @@ Activity log `entityType` is always `ApplicationEntityType.ENTITY_TYPE` with `en
 | 2026-02-08 | Initial documentation | Phase 2 Plan 2 — Entities domain Relationships subdomain component docs |
 | 2026-02-19 | Added `EntityTypeSemanticMetadataService` dependency and lifecycle hooks for relationship metadata | Semantic Metadata Foundation |
 | 2026-02-21 | Complete rewrite — removed ORIGIN/REFERENCE bidirectional sync architecture, replaced with `relationship_definitions` + `relationship_target_rules` table model; documented two-pass impact pattern, target rule diff algorithm, inverse visibility resolution, new dependencies, and full test coverage table | Entity relationships architecture migration |
+| 2026-03-01 | Added system definition management — `createFallbackDefinition`, `getOrCreateFallbackDefinition`, `getFallbackDefinitionId` for CONNECTED_ENTITIES fallback definitions | Entity Connections |

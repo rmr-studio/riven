@@ -14,7 +14,7 @@ Part of [[Entity Management]]
 
 ## Purpose
 
-Manages instance-level relationship links between entities. Responsible for diffing and persisting desired link state against current database state, enforcing cardinality constraints at write time, validating target entity types against definition rules, and resolving bidirectional visibility at read time without storing inverse rows.
+Manages instance-level relationship links between entities. Responsible for diffing and persisting desired link state against current database state, enforcing cardinality constraints at write time, validating target entity types against definition rules, and resolving bidirectional visibility at read time without storing inverse rows. Additionally manages fallback 'connection' links between entities using a system-managed CONNECTED_ENTITIES definition, with its own CRUD operations, security annotations, and activity logging.
 
 ---
 
@@ -32,13 +32,18 @@ Manages instance-level relationship links between entities. Responsible for diff
 - Grouping `EntityLink` projections by definition ID for single and batch reads
 - Soft-deleting all relationships involving a set of entities (as source or target)
 - Providing reverse lookups (target → source) for delete cascade orchestration in [[EntityService]]
+- Creating, reading, updating, and soft-deleting fallback connection links via the `CONNECTED_ENTITIES` definition
+- Workspace access control on connection operations via `@PreAuthorize`
+- Activity logging for connection mutations (`Activity.ENTITY_CONNECTION`)
+- Resolving fallback definition IDs via `EntityTypeRelationshipService`
+- Duplicate connection detection (bidirectional — checks both forward and reverse)
 
 **NOT responsible for:**
 
 - Loading `RelationshipDefinition` from the database — the definition is passed in by the caller
 - Storing inverse rows — bidirectional visibility is handled purely at query time
-- Workspace access control — there is no `@PreAuthorize` on this service; access is enforced by [[EntityService]] before delegating
-- Activity logging — mutations are logged by [[EntityService]]
+- Workspace access control for structured relationships — access is enforced by [[EntityService]] before delegating. Connection operations have their own `@PreAuthorize` annotations.
+- Activity logging for structured relationships — mutations are logged by [[EntityService]]. Connection operations log their own activity.
 - Impact tracking for cache invalidation — [[EntityService]] derives impacted entity IDs from `findByTargetIdIn` after calling this service
 
 ---
@@ -51,6 +56,10 @@ Manages instance-level relationship links between entities. Responsible for diff
 |---|---|
 | `EntityRelationshipRepository` | All persistence operations: SELECT FOR UPDATE, insert, delete, projection queries |
 | `EntityRepository` | `findAllById` to load and type-resolve new target entities before validation |
+| `RelationshipDefinitionRepository` | Validates connection belongs to a CONNECTED_ENTITIES definition |
+| `EntityTypeRelationshipService` | Resolves fallback CONNECTED_ENTITIES definition for entity types |
+| `AuthTokenService` | Retrieves current user ID for connection activity logging |
+| `ActivityService` | Logs connection CRUD operations |
 
 ### External
 
@@ -62,6 +71,10 @@ None. The service has no external integrations.
 class EntityRelationshipService(
     private val entityRelationshipRepository: EntityRelationshipRepository,
     private val entityRepository: EntityRepository,
+    private val definitionRepository: RelationshipDefinitionRepository,
+    private val entityTypeRelationshipService: EntityTypeRelationshipService,
+    private val authTokenService: AuthTokenService,
+    private val activityService: ActivityService,
     private val logger: KLogger,
 )
 ```
@@ -73,6 +86,7 @@ class EntityRelationshipService(
 | Consumer | Methods Used | Reason |
 |---|---|---|
 | [[EntityService]] | `saveRelationships`, `findRelatedEntities` (both overloads), `findByTargetIdIn`, `archiveEntities` | Entity save, read hydration, delete cascade |
+| [[EntityController]] | `createConnection`, `getConnections`, `updateConnection`, `deleteConnection` | Connection CRUD endpoints |
 
 ---
 
@@ -178,6 +192,112 @@ fun archiveEntities(ids: Collection<UUID>, workspaceId: UUID): List<EntityRelati
 
 ---
 
+### Connection Operations
+
+These methods manage fallback connections — lightweight links between entities that use the system-managed `CONNECTED_ENTITIES` definition. Unlike structured relationships (managed via `saveRelationships`), connections have their own `@PreAuthorize` and activity logging.
+
+**Request/Response types:**
+
+- `CreateConnectionRequest(targetEntityId: UUID, semanticContext: String, linkSource: SourceType)`
+- `UpdateConnectionRequest(semanticContext: String)`
+- `ConnectionResponse(id, sourceEntityId, targetEntityId, semanticContext, linkSource, createdAt, updatedAt)`
+
+---
+
+#### `createConnection(workspaceId, sourceEntityId, request): ConnectionResponse`
+
+```kotlin
+@Transactional
+@PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+fun createConnection(
+    workspaceId: UUID,
+    sourceEntityId: UUID,
+    request: CreateConnectionRequest,
+): ConnectionResponse
+```
+
+**Purpose:** Creates a fallback connection between two entities using the CONNECTED_ENTITIES definition.
+
+**When to use:** Called by [[EntityController]] when a user links two entities via the connections API.
+
+**Side effects:**
+- Resolves (or creates) the CONNECTED_ENTITIES fallback definition for the source entity's type via `EntityTypeRelationshipService.getOrCreateFallbackDefinition`
+- Validates source and target entities exist
+- Checks for duplicate connections in both directions (source→target AND target→source)
+- Inserts a new `EntityRelationshipEntity` with `semanticContext` and `linkSource`
+- Logs `Activity.ENTITY_CONNECTION / CREATE`
+
+**Throws:**
+- `NotFoundException` — source or target entity does not exist
+- `ConflictException` — connection already exists between the two entities (in either direction)
+
+**Returns:** `ConnectionResponse` with the created connection details.
+
+---
+
+#### `getConnections(workspaceId, entityId): List<ConnectionResponse>`
+
+```kotlin
+@PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+fun getConnections(workspaceId: UUID, entityId: UUID): List<ConnectionResponse>
+```
+
+**Purpose:** Returns all connections for an entity (forward + inverse) under the fallback definition.
+
+**When to use:** Called by [[EntityController]] for the connections list endpoint.
+
+**Side effects:** None. Read-only. Returns empty list if the entity type has no fallback definition.
+
+**Returns:** List of `ConnectionResponse`. Includes both connections where the entity is source and where it is target.
+
+---
+
+#### `updateConnection(workspaceId, connectionId, request): ConnectionResponse`
+
+```kotlin
+@Transactional
+@PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+fun updateConnection(
+    workspaceId: UUID,
+    connectionId: UUID,
+    request: UpdateConnectionRequest,
+): ConnectionResponse
+```
+
+**Purpose:** Updates the semantic context of an existing fallback connection.
+
+**Side effects:**
+- Validates the connection belongs to a CONNECTED_ENTITIES definition via `validateIsFallbackConnection`
+- Saves updated entity with new `semanticContext`
+- Logs `Activity.ENTITY_CONNECTION / UPDATE`
+
+**Throws:**
+- `NotFoundException` — connection does not exist in workspace
+- `IllegalArgumentException` — connection does not belong to a CONNECTED_ENTITIES definition
+
+---
+
+#### `deleteConnection(workspaceId, connectionId)`
+
+```kotlin
+@Transactional
+@PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+fun deleteConnection(workspaceId: UUID, connectionId: UUID)
+```
+
+**Purpose:** Soft-deletes a fallback connection.
+
+**Side effects:**
+- Validates the connection belongs to a CONNECTED_ENTITIES definition
+- Calls `markDeleted()` and saves
+- Logs `Activity.ENTITY_CONNECTION / DELETE`
+
+**Throws:**
+- `NotFoundException` — connection does not exist in workspace
+- `IllegalArgumentException` — connection does not belong to a CONNECTED_ENTITIES definition
+
+---
+
 ## Key Logic
 
 ### Diff-based save
@@ -229,6 +349,18 @@ Before cardinality is enforced, `validateTargets` checks that each NEW target's 
 
 ---
 
+### Connection CRUD
+
+Connection operations work through the same `entity_relationships` table as structured relationships, but use the system-managed `CONNECTED_ENTITIES` definition rather than user-defined relationship definitions.
+
+**Fallback definition resolution:** When creating a connection, the service calls `entityTypeRelationshipService.getOrCreateFallbackDefinition(workspaceId, sourceEntity.typeId)` to resolve the definition. This handles lazy creation — if the entity type was published before the fallback definition feature existed, the definition is created on first use.
+
+**Bidirectional duplicate detection:** Before creating a connection, the service checks for existing connections in BOTH directions. A connection from A→B and B→A are considered duplicates. This uses `findBySourceIdAndTargetIdAndDefinitionId` twice (once for each direction).
+
+**Validation guard:** `validateIsFallbackConnection` ensures update and delete operations only affect connections (not structured relationships). It loads the relationship definition and checks `definition.systemType == SystemRelationshipType.CONNECTED_ENTITIES`.
+
+---
+
 ### Inverse visibility at read time
 
 There are no inverse rows stored in the database. Bidirectional visibility is resolved at query time in the repository using two separate native SQL queries:
@@ -256,12 +388,15 @@ In the inverse queries, `r.target_entity_id` is aliased as `sourceEntityId` in t
 | `deleteAllBySourceIdAndDefinitionIdAndTargetIdIn` | Spring Data derived | Deletes rows for stale targets by source, definition, and target ID list |
 | `findEntityLinksBySourceId` | Native SQL | Joins `entity_relationships` → `entities` → `relationship_definitions`. Extracts label from JSONB payload using `identifier_key`. Returns `EntityLinkProjection`. |
 | `findEntityLinksBySourceIdIn` | Native SQL | Batch variant of the above. Uses `ANY(:ids)` for PostgreSQL array binding. |
-| `findInverseEntityLinksByTargetId` | Native SQL | Joins `relationship_target_rules` and filters `inverse_visible = true` and type match. Returns `EntityLinkProjection` with `target_entity_id` aliased as `sourceEntityId`. |
-| `findInverseEntityLinksByTargetIdIn` | Native SQL | Batch variant. Joins `entities target_e` for type resolution per target. |
+| `findInverseEntityLinksByTargetId` | Native SQL | LEFT JOINs `relationship_target_rules` and filters `(inverse_visible = true AND type match) OR system_type match`. Returns `EntityLinkProjection` with `target_entity_id` aliased as `sourceEntityId`. |
+| `findInverseEntityLinksByTargetIdIn` | Native SQL | Batch variant. LEFT JOINs `relationship_target_rules` and `entities target_e` for type resolution per target. Includes system-type definitions without target rules. |
 | `findByTargetIdIn` | JPQL | Returns all rows where `targetId` is in the provided list. Used for cascade-delete lookups. |
 | `findByTargetIdAndDefinitionId` | JPQL | Returns existing rows linking a given target under a definition. Used for target-side cardinality enforcement. |
 | `deleteEntities` | Native SQL (RETURNING) | Soft-deletes all rows where source or target is in the ID array. Returns affected rows. |
 | `countByDefinitionId` | Spring Data derived | Count of all active links under a definition. Used by [[EntityTypeRelationshipService]] for impact analysis before definition deletion. |
+| `findByIdAndWorkspaceId` | Spring Data derived | Loads single connection by ID within workspace for update/delete operations |
+| `findByEntityIdAndDefinitionId` | JPQL `@Query` | Finds all relationships (source or target) for an entity under a specific definition. Used for connection listing. |
+| `findBySourceIdAndTargetIdAndDefinitionId` | Spring Data derived | Checks for existing connection between two specific entities. Used for duplicate detection. |
 
 ---
 
@@ -271,6 +406,7 @@ In the inverse queries, `r.target_entity_id` is aliased as `sourceEntityId` in t
 |---|---|---|
 | `IllegalArgumentException` | One or more `targetIds` resolve to non-existent entities; or a non-polymorphic definition rejects a target's type ID. | `400 Bad Request` via `@ControllerAdvice` |
 | `InvalidRelationshipException` | Source-side cardinality exceeded (too many targets of a type); or target-side cardinality exceeded (target already linked by another source). | `400 Bad Request` via `@ControllerAdvice` |
+| `ConflictException` | Connection already exists between two entities (checked bidirectionally) | `409 Conflict` via `@ControllerAdvice` |
 
 All exceptions propagate to `ExceptionHandler` in `riven.core.exceptions`. This service does not catch and re-wrap.
 
@@ -280,7 +416,13 @@ All exceptions propagate to `ExceptionHandler` in `riven.core.exceptions`. This 
 
 ### Log Events
 
-This service does not emit structured log events. The `KLogger` is injected for future use. Mutations are logged via `activityService` in the calling [[EntityService]].
+Structured relationship operations do not emit log events from this service (mutations are logged by [[EntityService]]).
+
+Connection operations emit:
+- `Activity.ENTITY_CONNECTION / CREATE` — connection created, with connectionId, targetEntityId, semanticContext
+- `Activity.ENTITY_CONNECTION / UPDATE` — connection updated, with connectionId, semanticContext
+- `Activity.ENTITY_CONNECTION / DELETE` — connection deleted, with connectionId
+- INFO-level structured logs for each connection CRUD operation
 
 ---
 
@@ -298,8 +440,14 @@ This service does not emit structured log events. The `KLogger` is injected for 
 > [!warning] Semantic constraint matching is not implemented
 > `findMatchingRule` performs only exact `targetEntityTypeId` match. Rules with a `semanticTypeConstraint` but no `targetEntityTypeId` will never match any target at runtime. Non-polymorphic definitions with semantic-only rules will reject all targets until semantic metadata support is added.
 
-> [!warning] No workspace access control on this service
-> `EntityRelationshipService` has no `@PreAuthorize` annotations. It is an internal service called exclusively from [[EntityService]], which enforces workspace access before delegating. Do not expose methods from this service directly to controllers.
+> [!warning] Structured relationship methods have no workspace access control
+> The structured relationship methods (`saveRelationships`, `findRelatedEntities`, etc.) have no `@PreAuthorize` annotations. They are internal methods called exclusively from [[EntityService]], which enforces workspace access before delegating. Connection methods (`createConnection`, `getConnections`, `updateConnection`, `deleteConnection`) DO have their own `@PreAuthorize` annotations and are called directly by [[EntityController]].
+
+> [!warning] Connection duplicate check is bidirectional
+> `createConnection` checks for existing connections in both directions (A→B and B→A). This means the order of source and target does not matter for uniqueness. Two separate queries are issued for this check.
+
+> [!warning] Inverse queries changed from INNER JOIN to LEFT JOIN
+> The inverse entity link queries (`findInverseEntityLinksByTargetId`, `findInverseEntityLinksByTargetIdIn`) now use LEFT JOIN on `relationship_target_rules` instead of INNER JOIN. This allows system-type definitions (which have no target rules) to appear in inverse results. The WHERE clause uses `(inverse_visible = true AND type match) OR system_type = :systemType`.
 
 > [!warning] Inverse query aliasing
 > In the inverse-link native SQL queries, `r.target_entity_id` is aliased as `sourceEntityId`. This means the `EntityLink.sourceEntityId` field for an inverse link reflects the entity being viewed (i.e. the target of the stored row), not the entity that created the stored row. Consumers group by `sourceEntityId` without needing to know which direction the link was originally stored.
@@ -376,3 +524,4 @@ Test class: `EntityRelationshipServiceTest` — `@SpringBootTest` scoped to `Ent
 |---|---|---|
 | 2026-02-08 | System | Initial document created |
 | 2026-02-21 | System | Complete rewrite — removed bidirectional sync architecture (no inverse row storage), documented write-time cardinality enforcement (two-axis: source-side and target-side), target type validation, inverse visibility at read time via UNION repository queries, diff-based save logic, pessimistic write locking, and updated all method signatures and test coverage to reflect current implementation |
+| 2026-03-01 | System | Added connection CRUD operations (createConnection, getConnections, updateConnection, deleteConnection) with own `@PreAuthorize` and activity logging. New dependencies: RelationshipDefinitionRepository, EntityTypeRelationshipService, AuthTokenService, ActivityService. Updated inverse queries from INNER JOIN to LEFT JOIN on target rules to support system-type definitions. |

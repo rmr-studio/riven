@@ -35,3 +35,4 @@ Handles the lifecycle of entity instances — creating, updating, reading, and s
 | ---- | ------ | ----------- |
 | 2026-02-08 | Subdomain overview created | [[02-01-PLAN]] |
 | 2026-02-21 | EntityRelationshipService rewritten — removed bidirectional sync, added write-time cardinality enforcement and target type validation | Entity Relationships |
+| 2026-03-01 | EntityRelationshipService expanded with connection CRUD (createConnection, getConnections, updateConnection, deleteConnection); EntityController upgraded with 4 connection endpoints | Entity Connections |

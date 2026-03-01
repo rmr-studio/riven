@@ -57,6 +57,7 @@ Entry point for entity queries, orchestrating validation → assembly → execut
 3. **Validate filter** (if present):
    - Part A: Walk tree checking attribute IDs exist in schema
    - Part B: Delegate to QueryFilterValidator, passing `RelationshipDefinition` objects (not legacy JSONB models)
+   - `QueryFilter.IsRelatedTo` nodes are skipped during attribute validation (no attribute references) and during relationship definition validation (no definition ID)
    - Collect all errors, throw QueryValidationException if any found
 4. **Assemble SQL** via EntityQueryAssembler, passing `relationshipDirections: Map<UUID, QueryDirection>` so the assembler can thread direction through to `AttributeFilterVisitor` and `RelationshipSqlGenerator`
 5. **Execute in parallel:**
@@ -124,3 +125,7 @@ Executes entity query with optional filters and pagination. Returns matching ent
 - Filter validation now passes `RelationshipDefinition` objects to `QueryFilterValidator` (replacing legacy JSONB-sourced models).
 - SQL assembly now receives `relationshipDirections` map, threading direction through assembler → `AttributeFilterVisitor` → `RelationshipSqlGenerator`.
 - Documented FORWARD vs INVERSE direction semantics and the SQL correlation column implication.
+
+### 2026-03-01 — IsRelatedTo filter support
+
+- `QueryFilter.IsRelatedTo` nodes are now handled in the validation pipeline — skipped during both attribute validation and relationship definition validation (no references to validate).

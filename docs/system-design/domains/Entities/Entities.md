@@ -65,9 +65,9 @@ The Entities domain provides a flexible, schema-driven data management system. E
 | ------ | ------- | ---------- |
 | EntityTypeEntity | Entity type schema definitions | id, key, displayNameSingular, displayNamePlural, workspaceId, schema, columns, identifierKey |
 | EntityEntity | Entity instances with JSONB attribute data | id, typeId, typeKey, workspaceId, payload, iconType, iconColour, identifierKey |
-| EntityRelationshipEntity | Relationship instances linking entities | id, sourceId, targetId, definitionId, workspaceId |
+| EntityRelationshipEntity | Relationship instances linking entities | id, sourceId, targetId, definitionId, workspaceId, semanticContext, linkSource |
 | EntityUniqueValueEntity | Unique constraint tracking for entity attributes | entityId, typeId, fieldId, value, workspaceId |
-| RelationshipDefinitionEntity | Relationship definitions (type-level configuration) | id, workspaceId, sourceEntityTypeId, name, iconType, iconColour, allowPolymorphic, cardinalityDefault, protected |
+| RelationshipDefinitionEntity | Relationship definitions (type-level configuration) | id, workspaceId, sourceEntityTypeId, name, iconType, iconColour, allowPolymorphic, cardinalityDefault, protected, systemType |
 | RelationshipTargetRuleEntity | Per-target-type configuration for relationship definitions | id, relationshipDefinitionId, targetEntityTypeId, semanticTypeConstraint, cardinalityOverride, inverseVisible, inverseName |
 | EntityTypeSemanticMetadataEntity | Semantic metadata records for entity types, attributes, and relationships | id, workspaceId, entityTypeId, targetType, targetId, definition, classification, tags |
 
@@ -119,6 +119,7 @@ None. The Entities domain operates entirely within the application database (Pos
 | No inverse row storage | Bidirectional visibility resolved at query time via inverse-visible target rules. No REFERENCE rows stored. |
 | Table-based relationship definitions | Relationship configuration stored in dedicated relationship_definitions and relationship_target_rules tables instead of JSONB field on entity_types |
 | Write-time cardinality enforcement | Cardinality limits enforced at relationship insert time, not just at schema level |
+| Fallback connection definitions | System-managed CONNECTED_ENTITIES definitions auto-created per entity type enable lightweight linking without user-defined relationship schemas |
 | Mutable entity types | Entity types update in place (unlike BlockTypes which are versioned) |
 | Query pipeline architecture | Filter validation → AST traversal → SQL generation → parameterized execution |
 | Separate table for semantic metadata | Semantic metadata stored in dedicated table (not embedded in entity_types JSONB) to protect entity CRUD hot path |
@@ -144,3 +145,4 @@ None. The Entities domain operates entirely within the application database (Pos
 | 2026-02-08 | Domain overview and subdomain docs created                                                                           | [[02-01-PLAN]]               |
 | 2026-02-19 | Entity Semantics subdomain implemented — semantic metadata service, repository, lifecycle hooks, KnowledgeController | Semantic Metadata Foundation |
 | 2026-02-21 | Entity relationship overhaul — replaced ORIGIN/REFERENCE sync with table-based architecture, added relationship_definitions and relationship_target_rules tables, write-time cardinality enforcement, query-time inverse resolution | Entity Relationships |
+| 2026-03-01 | Entity Connections — system-managed CONNECTED_ENTITIES definitions, connection CRUD API, IS_RELATED_TO query filter, bidirectional existence queries | Entity Connections |

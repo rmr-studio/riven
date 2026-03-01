@@ -27,6 +27,7 @@ Generates parameterized EXISTS/NOT EXISTS subqueries for filtering entities by t
 - Generating unique table aliases (`r_N`, `t_N`) for relationship and target entity tables
 - Supporting nested filter processing via callback pattern (avoids circular dependencies)
 - Handling 4 filter variants: Exists, NotExists, TargetEquals, TargetMatches, TargetTypeMatches
+- Generating bidirectional EXISTS/NOT EXISTS queries for IsRelatedTo filters (cross-definition existence checks)
 - Generating OR-branched type predicates for polymorphic relationship filters
 - Soft-delete filtering on relationships (`r.deleted = false`)
 - Omitting workspace isolation in subqueries (enforced at root only)
@@ -111,6 +112,22 @@ when (condition) {
     is RelationshipFilter.CountMatches -> throw UnsupportedOperationException(...)
 }
 ```
+
+#### `generateIsRelatedTo(condition: RelationshipFilter, paramGen: ParameterNameGenerator, entityAlias: String = "e"): SqlFragment`
+
+- **Purpose:** Generates a bidirectional EXISTS filter that matches entities with any relationship (source or target), regardless of definition. Unlike `generate()`, this does NOT take a `relationshipId` parameter — it checks across ALL relationship definitions.
+- **When to use:** For each `QueryFilter.IsRelatedTo` filter node in the filter tree
+- **Side effects:** Increments paramGen counter for aliases (pure function otherwise)
+- **Throws:**
+  - UnsupportedOperationException if condition is anything other than Exists or NotExists
+- **Returns:** SqlFragment with two EXISTS subqueries joined by OR (or two NOT EXISTS joined by AND for negation)
+
+**Supported conditions:**
+- `RelationshipFilter.Exists` — generates bidirectional EXISTS (entity has any relationship)
+- `RelationshipFilter.NotExists` — generates bidirectional NOT EXISTS (entity has no relationships)
+
+**Not supported:**
+- TargetEquals, TargetMatches, TargetTypeMatches, CountMatches — throws UnsupportedOperationException
 
 ---
 
@@ -543,6 +560,45 @@ EXISTS (
 
 ---
 
+### IsRelatedTo: Bidirectional Existence Check
+
+**SQL pattern (Exists):**
+```sql
+(EXISTS (
+    SELECT 1 FROM entity_relationships r_0
+    WHERE r_0.source_entity_id = e.id AND r_0.deleted = false
+) OR EXISTS (
+    SELECT 1 FROM entity_relationships r_1
+    WHERE r_1.target_entity_id = e.id AND r_1.deleted = false
+))
+```
+
+**SQL pattern (NotExists / negated):**
+```sql
+(NOT EXISTS (
+    SELECT 1 FROM entity_relationships r_0
+    WHERE r_0.source_entity_id = e.id AND r_0.deleted = false
+) AND NOT EXISTS (
+    SELECT 1 FROM entity_relationships r_1
+    WHERE r_1.target_entity_id = e.id AND r_1.deleted = false
+))
+```
+
+**Matches (Exists):** Entities with at least one relationship in ANY direction under ANY definition.
+
+**Matches (NotExists):** Entities with zero relationships in either direction.
+
+**Key differences from Exists/NotExists:**
+- No `relationship_definition_id` filter — checks all definitions
+- Two separate subqueries (forward + inverse) instead of one — each can use its own index
+- OR logic for existence (entity has forward OR inverse link), AND logic for negation (entity has no forward AND no inverse link)
+
+**Parameters:** None — no relationship ID or entity IDs to bind.
+
+**Use case:** "Show me all entities that are linked to something" / "Show me all orphaned entities"
+
+---
+
 ### CountMatches: Not Supported
 
 **Throws:** `UnsupportedOperationException("CountMatches is not supported in this version. See v2 requirements REL-09.")`
@@ -710,3 +766,4 @@ sequenceDiagram
 |---|---|---|
 |2026-02-08|Initial documentation|Phase 2 - Entities domain documentation (Plan 02-03)|
 |2026-02-21|Added `direction: QueryDirection` parameter to `generate()`; renamed `relationship_field_id` → `relationship_definition_id` throughout all SQL; added Direction-based Correlation section with FORWARD/INVERSE extension functions and SQL examples; updated Exists/NotExists/TargetEquals/TargetMatches/TargetTypeMatches SQL patterns for both directions; removed bi-directional limitation from Known Limitations (now supported via INVERSE)|Entity relationship query engine now supports INVERSE traversal (entity as target)|
+|2026-03-01|Added `generateIsRelatedTo` method for bidirectional cross-definition EXISTS queries; added IsRelatedTo filter variant section|Entity Connections — IS_RELATED_TO query filter|
