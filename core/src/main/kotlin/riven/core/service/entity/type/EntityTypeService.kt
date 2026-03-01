@@ -108,6 +108,8 @@ class EntityTypeService(
             )
         }
 
+        entityTypeRelationshipService.createFallbackDefinition(workspaceId, savedId)
+
         activityService.log(
             activity = Activity.ENTITY_TYPE,
             operation = OperationType.CREATE,

@@ -6,12 +6,17 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import riven.core.models.entity.Entity
+import riven.core.models.request.entity.CreateConnectionRequest
 import riven.core.models.request.entity.SaveEntityRequest
+import riven.core.models.request.entity.UpdateConnectionRequest
+import riven.core.models.response.entity.ConnectionResponse
 import riven.core.models.response.entity.DeleteEntityResponse
 import riven.core.models.response.entity.SaveEntityResponse
+import riven.core.service.entity.EntityRelationshipService
 import riven.core.service.entity.EntityService
 import java.util.*
 
@@ -19,7 +24,8 @@ import java.util.*
 @RequestMapping("/api/v1/entity")
 @Tag(name = "entity")
 class EntityController(
-    private val entityService: EntityService
+    private val entityService: EntityService,
+    private val entityRelationshipService: EntityRelationshipService,
 ) {
 
     @GetMapping("workspace/{workspaceId}")
@@ -133,5 +139,66 @@ class EntityController(
         }
 
         return ResponseEntity.ok(response)
+    }
+
+    // ------ Connections ------
+
+    @PostMapping("/workspace/{workspaceId}/entities/{entityId}/connections")
+    @Operation(summary = "Create a connection between two entities")
+    @ApiResponses(
+        ApiResponse(responseCode = "201", description = "Connection created successfully"),
+        ApiResponse(responseCode = "404", description = "Source or target entity not found"),
+        ApiResponse(responseCode = "409", description = "Connection already exists"),
+    )
+    fun createConnection(
+        @PathVariable workspaceId: UUID,
+        @PathVariable entityId: UUID,
+        @RequestBody request: CreateConnectionRequest,
+    ): ResponseEntity<ConnectionResponse> {
+        val response = entityRelationshipService.createConnection(workspaceId, entityId, request)
+        return ResponseEntity.status(HttpStatus.CREATED).body(response)
+    }
+
+    @GetMapping("/workspace/{workspaceId}/entities/{entityId}/connections")
+    @Operation(summary = "Get all connections for an entity")
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Connections retrieved successfully"),
+        ApiResponse(responseCode = "404", description = "Entity not found"),
+    )
+    fun getConnections(
+        @PathVariable workspaceId: UUID,
+        @PathVariable entityId: UUID,
+    ): ResponseEntity<List<ConnectionResponse>> {
+        val response = entityRelationshipService.getConnections(workspaceId, entityId)
+        return ResponseEntity.ok(response)
+    }
+
+    @PutMapping("/workspace/{workspaceId}/connections/{connectionId}")
+    @Operation(summary = "Update a connection's semantic context")
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Connection updated successfully"),
+        ApiResponse(responseCode = "404", description = "Connection not found"),
+    )
+    fun updateConnection(
+        @PathVariable workspaceId: UUID,
+        @PathVariable connectionId: UUID,
+        @RequestBody request: UpdateConnectionRequest,
+    ): ResponseEntity<ConnectionResponse> {
+        val response = entityRelationshipService.updateConnection(workspaceId, connectionId, request)
+        return ResponseEntity.ok(response)
+    }
+
+    @DeleteMapping("/workspace/{workspaceId}/connections/{connectionId}")
+    @Operation(summary = "Delete a connection")
+    @ApiResponses(
+        ApiResponse(responseCode = "204", description = "Connection deleted successfully"),
+        ApiResponse(responseCode = "404", description = "Connection not found"),
+    )
+    fun deleteConnection(
+        @PathVariable workspaceId: UUID,
+        @PathVariable connectionId: UUID,
+    ): ResponseEntity<Void> {
+        entityRelationshipService.deleteConnection(workspaceId, connectionId)
+        return ResponseEntity.noContent().build()
     }
 }

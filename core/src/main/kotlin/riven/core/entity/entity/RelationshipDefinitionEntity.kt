@@ -5,6 +5,7 @@ import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.enums.common.icon.IconColour
 import riven.core.enums.common.icon.IconType
 import riven.core.enums.entity.EntityRelationshipCardinality
+import riven.core.enums.entity.SystemRelationshipType
 import riven.core.models.common.Icon
 import riven.core.models.entity.RelationshipDefinition
 import riven.core.models.entity.RelationshipTargetRule
@@ -49,6 +50,10 @@ data class RelationshipDefinitionEntity(
 
     @Column(name = "protected", nullable = false)
     val protected: Boolean = false,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "system_type")
+    val systemType: SystemRelationshipType? = null,
 ) : AuditableSoftDeletableEntity() {
 
     fun toModel(targetRules: List<RelationshipTargetRule> = emptyList()): RelationshipDefinition {
@@ -62,6 +67,7 @@ data class RelationshipDefinitionEntity(
             allowPolymorphic = this.allowPolymorphic,
             cardinalityDefault = this.cardinalityDefault,
             protected = this.protected,
+            systemType = this.systemType,
             targetRules = targetRules,
             createdAt = this.createdAt,
             updatedAt = this.updatedAt,

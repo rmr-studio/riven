@@ -265,6 +265,10 @@ class EntityQueryService(
                 // not root entity type attributes. Skip attribute validation here;
                 // cross-type validation requires loading target entity type schemas.
             }
+
+            is QueryFilter.IsRelatedTo -> {
+                // No attribute references — nothing to validate
+            }
         }
     }
 

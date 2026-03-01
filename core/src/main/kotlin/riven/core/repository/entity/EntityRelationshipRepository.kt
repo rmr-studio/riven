@@ -92,6 +92,18 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
      */
     fun countByDefinitionId(definitionId: UUID): Long
 
+    fun findByIdAndWorkspaceId(id: UUID, workspaceId: UUID): Optional<EntityRelationshipEntity>
+
+    /**
+     * Find all relationships where the given entity is either source or target for a specific definition.
+     */
+    @Query("""
+        SELECT r FROM EntityRelationshipEntity r
+        WHERE (r.sourceId = :entityId OR r.targetId = :entityId)
+        AND r.definitionId = :definitionId
+    """)
+    fun findByEntityIdAndDefinitionId(entityId: UUID, definitionId: UUID): List<EntityRelationshipEntity>
+
     /**
      * Soft-delete all relationship links for a given definition ID.
      */
@@ -208,17 +220,19 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
             FROM entity_relationships r
             JOIN entities e ON r.source_entity_id = e.id
             JOIN relationship_definitions rd ON r.relationship_definition_id = rd.id AND rd.deleted = false
-            JOIN relationship_target_rules rtr ON rtr.relationship_definition_id = r.relationship_definition_id
+            LEFT JOIN relationship_target_rules rtr ON rtr.relationship_definition_id = r.relationship_definition_id
             WHERE r.target_entity_id = :targetId
-            AND rtr.inverse_visible = true
-            AND rtr.target_entity_type_id = (SELECT type_id FROM entities WHERE id = :targetId)
+            AND (
+                (rtr.inverse_visible = true AND rtr.target_entity_type_id = (SELECT type_id FROM entities WHERE id = :targetId))
+                OR rd.system_type = :systemType
+            )
             AND r.deleted = false
             AND e.deleted = false
             AND e.workspace_id = :workspaceId
         """,
         nativeQuery = true
     )
-    fun findInverseEntityLinksByTargetId(targetId: UUID, workspaceId: UUID): List<EntityLinkProjection>
+    fun findInverseEntityLinksByTargetId(targetId: UUID, workspaceId: UUID, systemType: String): List<EntityLinkProjection>
 
     /**
      * Batch variant: find inverse entity links for multiple target entities.
@@ -240,16 +254,18 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
             FROM entity_relationships r
             JOIN entities e ON r.source_entity_id = e.id
             JOIN relationship_definitions rd ON r.relationship_definition_id = rd.id AND rd.deleted = false
-            JOIN relationship_target_rules rtr ON rtr.relationship_definition_id = r.relationship_definition_id
+            LEFT JOIN relationship_target_rules rtr ON rtr.relationship_definition_id = r.relationship_definition_id
             JOIN entities target_e ON r.target_entity_id = target_e.id
             WHERE r.target_entity_id = ANY(:ids)
-            AND rtr.inverse_visible = true
-            AND rtr.target_entity_type_id = target_e.type_id
+            AND (
+                (rtr.inverse_visible = true AND rtr.target_entity_type_id = target_e.type_id)
+                OR rd.system_type = :systemType
+            )
             AND r.deleted = false
             AND e.deleted = false
             AND e.workspace_id = :workspaceId
         """,
         nativeQuery = true
     )
-    fun findInverseEntityLinksByTargetIdIn(ids: Array<UUID>, workspaceId: UUID): List<EntityLinkProjection>
+    fun findInverseEntityLinksByTargetIdIn(ids: Array<UUID>, workspaceId: UUID, systemType: String): List<EntityLinkProjection>
 }

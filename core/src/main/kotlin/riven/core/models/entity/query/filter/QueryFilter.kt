@@ -18,6 +18,7 @@ import java.util.*
     oneOf = [
         QueryFilter.Attribute::class,
         QueryFilter.Relationship::class,
+        QueryFilter.IsRelatedTo::class,
         QueryFilter.And::class,
         QueryFilter.Or::class
     ]
@@ -26,6 +27,7 @@ import java.util.*
 @JsonSubTypes(
     JsonSubTypes.Type(QueryFilter.Attribute::class, name = "ATTRIBUTE"),
     JsonSubTypes.Type(QueryFilter.Relationship::class, name = "RELATIONSHIP"),
+    JsonSubTypes.Type(QueryFilter.IsRelatedTo::class, name = "IS_RELATED_TO"),
     JsonSubTypes.Type(QueryFilter.And::class, name = "AND"),
     JsonSubTypes.Type(QueryFilter.Or::class, name = "OR")
 )
@@ -75,6 +77,22 @@ sealed interface QueryFilter {
 
         @param:Schema(description = "Condition to apply on the relationship.")
         val condition: RelationshipFilter
+    ) : QueryFilter
+
+    /**
+     * Cross-definition filter: entity has at least one relationship (of any definition)
+     * either as source or target.
+     *
+     * Unlike [Relationship], this does not require a specific relationship definition ID.
+     * It checks across ALL relationship definitions in the workspace.
+     *
+     * @property condition How to evaluate (defaults to Exists)
+     */
+    @Schema(description = "Filter by any relationship across all definitions.")
+    @JsonTypeName("IS_RELATED_TO")
+    data class IsRelatedTo(
+        @param:Schema(description = "Condition to apply (defaults to EXISTS).")
+        val condition: RelationshipFilter = RelationshipFilter.Exists,
     ) : QueryFilter
 
     /**

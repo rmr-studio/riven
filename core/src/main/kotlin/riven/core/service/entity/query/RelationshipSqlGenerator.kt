@@ -352,6 +352,55 @@ class RelationshipSqlGenerator {
             parameters = mapOf(relParam to relationshipId) + combinedBranches.parameters
         )
     }
+    /**
+     * Generates a bidirectional EXISTS filter that matches entities with any relationship
+     * (source or target), regardless of definition.
+     *
+     * Produces two EXISTS subqueries joined by OR — one for forward links and one for
+     * inverse links — so each can use its own index.
+     *
+     * ```sql
+     * (EXISTS (SELECT 1 FROM entity_relationships r_0
+     *          WHERE r_0.source_entity_id = e.id AND r_0.deleted = false)
+     *  OR EXISTS (SELECT 1 FROM entity_relationships r_1
+     *             WHERE r_1.target_entity_id = e.id AND r_1.deleted = false))
+     * ```
+     */
+    fun generateIsRelatedTo(
+        condition: RelationshipFilter,
+        paramGen: ParameterNameGenerator,
+        entityAlias: String = "e",
+    ): SqlFragment {
+        return when (condition) {
+            is RelationshipFilter.Exists -> generateBidirectionalExists(paramGen, entityAlias, negated = false)
+            is RelationshipFilter.NotExists -> generateBidirectionalExists(paramGen, entityAlias, negated = true)
+            else -> throw UnsupportedOperationException(
+                "IsRelatedTo only supports Exists and NotExists conditions, got: ${condition::class.simpleName}"
+            )
+        }
+    }
+
+    private fun generateBidirectionalExists(
+        paramGen: ParameterNameGenerator,
+        entityAlias: String,
+        negated: Boolean,
+    ): SqlFragment {
+        val fwdAlias = "r_${paramGen.next("a")}"
+        val invAlias = "r_${paramGen.next("a")}"
+        val prefix = if (negated) "NOT " else ""
+        val connector = if (negated) " AND " else " OR "
+
+        val sql = buildString {
+            append("(${prefix}EXISTS (\n")
+            append("    SELECT 1 FROM entity_relationships $fwdAlias\n")
+            append("    WHERE $fwdAlias.source_entity_id = $entityAlias.id AND $fwdAlias.deleted = false\n")
+            append(")${connector}${prefix}EXISTS (\n")
+            append("    SELECT 1 FROM entity_relationships $invAlias\n")
+            append("    WHERE $invAlias.target_entity_id = $entityAlias.id AND $invAlias.deleted = false\n")
+            append("))")
+        }
+        return SqlFragment(sql = sql, parameters = emptyMap())
+    }
 }
 
 /**

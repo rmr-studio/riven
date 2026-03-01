@@ -1,17 +1,33 @@
 package riven.core.service.entity
 
 import io.github.oshai.kotlinlogging.KLogger
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.entity.EntityRelationshipEntity
+import riven.core.enums.activity.Activity
+import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.entity.EntityRelationshipCardinality
+import riven.core.models.common.markDeleted
+import riven.core.enums.entity.SystemRelationshipType
+import riven.core.enums.util.OperationType
+import riven.core.exceptions.ConflictException
 import riven.core.exceptions.InvalidRelationshipException
 import riven.core.models.entity.EntityLink
 import riven.core.models.entity.RelationshipDefinition
 import riven.core.models.entity.RelationshipTargetRule
+import riven.core.models.request.entity.CreateConnectionRequest
+import riven.core.models.request.entity.UpdateConnectionRequest
+import riven.core.models.response.entity.ConnectionResponse
 import riven.core.projection.entity.toEntityLink
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityRepository
+import riven.core.repository.entity.RelationshipDefinitionRepository
+import riven.core.service.activity.ActivityService
+import riven.core.service.activity.log
+import riven.core.service.auth.AuthTokenService
+import riven.core.service.entity.type.EntityTypeRelationshipService
+import riven.core.util.ServiceUtil
 import java.util.*
 
 /**
@@ -25,6 +41,10 @@ import java.util.*
 class EntityRelationshipService(
     private val entityRelationshipRepository: EntityRelationshipRepository,
     private val entityRepository: EntityRepository,
+    private val definitionRepository: RelationshipDefinitionRepository,
+    private val entityTypeRelationshipService: EntityTypeRelationshipService,
+    private val authTokenService: AuthTokenService,
+    private val activityService: ActivityService,
     private val logger: KLogger,
 ) {
 
@@ -101,7 +121,9 @@ class EntityRelationshipService(
      */
     fun findRelatedEntities(entityId: UUID, workspaceId: UUID): Map<UUID, List<EntityLink>> {
         val forward = entityRelationshipRepository.findEntityLinksBySourceId(entityId, workspaceId)
-        val inverse = entityRelationshipRepository.findInverseEntityLinksByTargetId(entityId, workspaceId)
+        val inverse = entityRelationshipRepository.findInverseEntityLinksByTargetId(
+            entityId, workspaceId, SystemRelationshipType.CONNECTED_ENTITIES.name,
+        )
 
         return (forward + inverse)
             .groupBy { it.getDefinitionId() }
@@ -117,7 +139,9 @@ class EntityRelationshipService(
     fun findRelatedEntities(entityIds: Set<UUID>, workspaceId: UUID): Map<UUID, Map<UUID, List<EntityLink>>> {
         val ids = entityIds.toTypedArray()
         val forward = entityRelationshipRepository.findEntityLinksBySourceIdIn(ids, workspaceId)
-        val inverse = entityRelationshipRepository.findInverseEntityLinksByTargetIdIn(ids, workspaceId)
+        val inverse = entityRelationshipRepository.findInverseEntityLinksByTargetIdIn(
+            ids, workspaceId, SystemRelationshipType.CONNECTED_ENTITIES.name,
+        )
 
         return (forward + inverse)
             .groupBy { it.getSourceEntityId() }
@@ -141,6 +165,158 @@ class EntityRelationshipService(
      */
     fun archiveEntities(ids: Collection<UUID>, workspaceId: UUID): List<EntityRelationshipEntity> {
         return entityRelationshipRepository.deleteEntities(ids.toTypedArray(), workspaceId)
+    }
+
+    // ------ Connections ------
+
+    /**
+     * Creates a fallback connection between two entities using the CONNECTED_ENTITIES definition.
+     */
+    @Transactional
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun createConnection(
+        workspaceId: UUID,
+        sourceEntityId: UUID,
+        request: CreateConnectionRequest,
+    ): ConnectionResponse {
+        val userId = authTokenService.getUserId()
+        val sourceEntity = ServiceUtil.findOrThrow { entityRepository.findById(sourceEntityId) }
+        val definition = entityTypeRelationshipService.getOrCreateFallbackDefinition(workspaceId, sourceEntity.typeId)
+        val definitionId = requireNotNull(definition.id)
+
+        ServiceUtil.findOrThrow { entityRepository.findById(request.targetEntityId) }
+
+        val existingForward = entityRelationshipRepository.findBySourceIdAndTargetIdAndDefinitionId(
+            sourceEntityId, request.targetEntityId, definitionId,
+        )
+        val existingReverse = entityRelationshipRepository.findBySourceIdAndTargetIdAndDefinitionId(
+            request.targetEntityId, sourceEntityId, definitionId,
+        )
+        if (existingForward.isNotEmpty() || existingReverse.isNotEmpty()) {
+            throw ConflictException("Connection already exists between $sourceEntityId and ${request.targetEntityId}")
+        }
+
+        val entity = EntityRelationshipEntity(
+            workspaceId = workspaceId,
+            sourceId = sourceEntityId,
+            targetId = request.targetEntityId,
+            definitionId = definitionId,
+            semanticContext = request.semanticContext,
+            linkSource = request.linkSource,
+        )
+        val saved = entityRelationshipRepository.save(entity)
+
+        activityService.log(
+            activity = Activity.ENTITY_CONNECTION,
+            operation = OperationType.CREATE,
+            userId = userId,
+            workspaceId = workspaceId,
+            entityType = ApplicationEntityType.ENTITY,
+            entityId = sourceEntityId,
+            "connectionId" to requireNotNull(saved.id).toString(),
+            "targetEntityId" to request.targetEntityId.toString(),
+            "semanticContext" to request.semanticContext,
+        )
+
+        logger.info { "Created connection ${saved.id} from $sourceEntityId to ${request.targetEntityId}" }
+        return saved.toConnectionResponse()
+    }
+
+    /**
+     * Returns all connections for an entity (forward + inverse) under the fallback definition.
+     */
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun getConnections(workspaceId: UUID, entityId: UUID): List<ConnectionResponse> {
+        val entity = ServiceUtil.findOrThrow { entityRepository.findById(entityId) }
+        val defId = entityTypeRelationshipService.getFallbackDefinitionId(entity.typeId)
+            ?: return emptyList()
+
+        return entityRelationshipRepository.findByEntityIdAndDefinitionId(entityId, defId)
+            .map { it.toConnectionResponse() }
+    }
+
+    /**
+     * Updates the semantic context of an existing fallback connection.
+     */
+    @Transactional
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun updateConnection(
+        workspaceId: UUID,
+        connectionId: UUID,
+        request: UpdateConnectionRequest,
+    ): ConnectionResponse {
+        val userId = authTokenService.getUserId()
+        val connection = ServiceUtil.findOrThrow {
+            entityRelationshipRepository.findByIdAndWorkspaceId(connectionId, workspaceId)
+        }
+        validateIsFallbackConnection(connection)
+
+        val updated = entityRelationshipRepository.save(
+            connection.copy(semanticContext = request.semanticContext)
+        )
+
+        activityService.log(
+            activity = Activity.ENTITY_CONNECTION,
+            operation = OperationType.UPDATE,
+            userId = userId,
+            workspaceId = workspaceId,
+            entityType = ApplicationEntityType.ENTITY,
+            entityId = connection.sourceId,
+            "connectionId" to connectionId.toString(),
+            "semanticContext" to request.semanticContext,
+        )
+
+        logger.info { "Updated connection $connectionId semantic context" }
+        return updated.toConnectionResponse()
+    }
+
+    /**
+     * Soft-deletes a fallback connection.
+     */
+    @Transactional
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun deleteConnection(workspaceId: UUID, connectionId: UUID) {
+        val userId = authTokenService.getUserId()
+        val connection = ServiceUtil.findOrThrow {
+            entityRelationshipRepository.findByIdAndWorkspaceId(connectionId, workspaceId)
+        }
+        validateIsFallbackConnection(connection)
+
+        connection.markDeleted()
+        entityRelationshipRepository.save(connection)
+
+        activityService.log(
+            activity = Activity.ENTITY_CONNECTION,
+            operation = OperationType.DELETE,
+            userId = userId,
+            workspaceId = workspaceId,
+            entityType = ApplicationEntityType.ENTITY,
+            entityId = connection.sourceId,
+            "connectionId" to connectionId.toString(),
+        )
+
+        logger.info { "Deleted connection $connectionId" }
+    }
+
+    // ------ Connection helpers ------
+
+    private fun validateIsFallbackConnection(connection: EntityRelationshipEntity) {
+        val definition = ServiceUtil.findOrThrow { definitionRepository.findById(connection.definitionId) }
+        require(definition.systemType == SystemRelationshipType.CONNECTED_ENTITIES) {
+            "Connection ${connection.id} does not belong to a CONNECTED_ENTITIES definition"
+        }
+    }
+
+    private fun EntityRelationshipEntity.toConnectionResponse(): ConnectionResponse {
+        return ConnectionResponse(
+            id = requireNotNull(this.id),
+            sourceEntityId = this.sourceId,
+            targetEntityId = this.targetId,
+            semanticContext = this.semanticContext,
+            linkSource = this.linkSource,
+            createdAt = this.createdAt,
+            updatedAt = this.updatedAt,
+        )
     }
 
     // ------ Private validation helpers ------

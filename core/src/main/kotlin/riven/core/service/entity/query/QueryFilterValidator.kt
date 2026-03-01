@@ -90,6 +90,10 @@ class QueryFilterValidator {
                 }
             }
 
+            is QueryFilter.IsRelatedTo -> {
+                // No relationship definition validation needed — checks across all definitions
+            }
+
             is QueryFilter.Relationship -> {
                 // Check depth constraint
                 if (relationshipDepth >= context.maxDepth) {
