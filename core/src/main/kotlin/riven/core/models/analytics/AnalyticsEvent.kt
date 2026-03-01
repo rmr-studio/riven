@@ -11,8 +11,7 @@ data class ApiRequestEvent(
     val statusCode: Int,
     val latencyMs: Long,
     val isError: Boolean = false,
-    val errorClass: String? = null,
-    val errorMessage: String? = null
+    val errorClass: String? = null
 ) : AnalyticsEvent {
     override val eventName: String = "\$api_request"
     override val properties: Map<String, Any>
@@ -23,6 +22,5 @@ data class ApiRequestEvent(
             put("latencyMs", latencyMs)
             put("isError", isError)
             errorClass?.let { put("errorClass", it) }
-            errorMessage?.let { put("errorMessage", it) }
         }
 }

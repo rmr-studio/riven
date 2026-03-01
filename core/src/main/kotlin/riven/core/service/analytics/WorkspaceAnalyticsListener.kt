@@ -1,7 +1,8 @@
 package riven.core.service.analytics
 
-import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 import riven.core.models.analytics.WorkspaceCreatedEvent
 import riven.core.models.analytics.WorkspaceUpdatedEvent
 import java.time.ZonedDateTime
@@ -11,7 +12,7 @@ class WorkspaceAnalyticsListener(
     private val postHogService: PostHogService
 ) {
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun onWorkspaceCreated(event: WorkspaceCreatedEvent) {
         postHogService.groupIdentify(
             userId = event.userId,
@@ -20,7 +21,7 @@ class WorkspaceAnalyticsListener(
         )
     }
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun onWorkspaceUpdated(event: WorkspaceUpdatedEvent) {
         postHogService.groupIdentify(
             userId = event.userId,

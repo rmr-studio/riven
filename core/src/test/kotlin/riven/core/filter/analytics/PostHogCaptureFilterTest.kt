@@ -204,7 +204,6 @@ class PostHogCaptureFilterTest {
         whenever(filterChain.doFilter(any(), any())).thenAnswer {
             response.status = 404
             request.setAttribute("posthog.error.class", "NotFoundException")
-            request.setAttribute("posthog.error.message", "Entity not found")
         }
 
         filter.doFilter(request, response, filterChain)
@@ -216,7 +215,7 @@ class PostHogCaptureFilterTest {
         assertEquals(true, props["isError"])
         assertEquals(404, props["statusCode"])
         assertEquals("NotFoundException", props["errorClass"])
-        assertEquals("Entity not found", props["errorMessage"])
+        assertFalse(props.containsKey("errorMessage"))
     }
 
     @Test
@@ -228,7 +227,6 @@ class PostHogCaptureFilterTest {
         whenever(filterChain.doFilter(any(), any())).thenAnswer {
             response.status = 500
             request.setAttribute("posthog.error.class", "RuntimeException")
-            request.setAttribute("posthog.error.message", "Internal server error")
         }
 
         filter.doFilter(request, response, filterChain)
@@ -240,7 +238,7 @@ class PostHogCaptureFilterTest {
         assertEquals(true, props["isError"])
         assertEquals(500, props["statusCode"])
         assertEquals("RuntimeException", props["errorClass"])
-        assertEquals("Internal server error", props["errorMessage"])
+        assertFalse(props.containsKey("errorMessage"))
     }
 
     @Test

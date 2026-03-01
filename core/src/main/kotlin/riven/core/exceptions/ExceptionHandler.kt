@@ -126,6 +126,5 @@ class ExceptionHandler(private val logger: KLogger, private val config: Applicat
             as? ServletRequestAttributes ?: return
         val request = requestAttributes.request
         request.setAttribute("posthog.error.class", ex::class.simpleName)
-        request.setAttribute("posthog.error.message", ex.message ?: "Unknown error")
     }
 }

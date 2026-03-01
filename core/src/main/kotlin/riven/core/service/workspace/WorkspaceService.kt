@@ -109,13 +109,24 @@ class WorkspaceService(
                     "name" to name
                 )
 
-                // Publish analytics event for workspace create/update
+                if (request.id == null) {
+                    // Add the creator as the first member/owner of the workspace
+                    WorkspaceMemberEntity(
+                        workspaceId = id,
+                        userId = userId,
+                        role = WorkspaceRoles.OWNER
+                    ).run {
+                        workspaceMemberRepository.save(this)
+                    }
+                }
+
+                // Publish analytics event after membership is persisted so memberCount is accurate
                 val analyticsEvent = if (request.id == null) {
                     WorkspaceCreatedEvent(
                         workspaceId = id,
                         workspaceName = name,
                         createdAt = this.createdAt,
-                        memberCount = this.memberCount,
+                        memberCount = 1,
                         userId = userId
                     )
                 } else {
@@ -128,18 +139,6 @@ class WorkspaceService(
                     )
                 }
                 applicationEventPublisher.publishEvent(analyticsEvent)
-
-                if (request.id == null) {
-                    // Add the creator as the first member/owner of the workspace
-                    WorkspaceMemberEntity(
-                        workspaceId = id,
-                        userId = userId,
-                        role = WorkspaceRoles.OWNER
-                    ).run {
-                        workspaceMemberRepository.save(this)
-                    }
-
-                }
 
                 return this.toModel().also { workspace ->
                     userService.getUserWithWorkspacesFromSession().let {

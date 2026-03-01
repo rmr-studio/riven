@@ -61,7 +61,6 @@ class PostHogCaptureFilter(
         val statusCode = response.status
         val isError = statusCode >= 400
         val errorClass = if (isError) request.getAttribute(POSTHOG_ERROR_CLASS) as? String else null
-        val errorMessage = if (isError) request.getAttribute(POSTHOG_ERROR_MESSAGE) as? String else null
 
         val event = ApiRequestEvent(
             method = request.method,
@@ -69,8 +68,7 @@ class PostHogCaptureFilter(
             statusCode = statusCode,
             latencyMs = latencyMs,
             isError = isError,
-            errorClass = errorClass,
-            errorMessage = errorMessage
+            errorClass = errorClass
         )
 
         try {
@@ -121,6 +119,5 @@ class PostHogCaptureFilter(
             "/actuator", "/docs", "/public", "/api/auth", "/error", "/swagger-ui", "/v3/api-docs"
         )
         const val POSTHOG_ERROR_CLASS = "posthog.error.class"
-        const val POSTHOG_ERROR_MESSAGE = "posthog.error.message"
     }
 }

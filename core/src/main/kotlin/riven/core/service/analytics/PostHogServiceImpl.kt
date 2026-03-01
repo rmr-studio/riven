@@ -49,11 +49,11 @@ class PostHogServiceImpl(
     }
 
     override fun groupIdentify(userId: UUID, workspaceId: UUID, properties: Map<String, Any>) {
-        seenWorkspaces.add(workspaceId)
         try {
             circuitBreaker.executeRunnable {
                 client.group(userId.toString(), "workspace", workspaceId.toString(), properties)
             }
+            seenWorkspaces.add(workspaceId)
         } catch (e: Throwable) {
             handleFailure("groupIdentify", e)
         }
