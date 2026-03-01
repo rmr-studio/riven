@@ -141,7 +141,7 @@ class EntityTypeService(
         existing.apply {
             displayNameSingular = request.name.singular
             displayNamePlural = request.name.plural
-            semanticGroup = request.semanticGroup
+            request.semanticGroup?.let { semanticGroup = it }
             iconType = request.icon.type
             iconColour = request.icon.colour
             columns = request.columns

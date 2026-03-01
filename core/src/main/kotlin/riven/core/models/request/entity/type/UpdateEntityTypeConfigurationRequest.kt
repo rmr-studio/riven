@@ -10,7 +10,7 @@ data class UpdateEntityTypeConfigurationRequest(
     val id: UUID,
     val name: DisplayName,
     val icon: Icon,
-    val semanticGroup: SemanticGroup = SemanticGroup.UNCATEGORIZED,
+    val semanticGroup: SemanticGroup? = null,
     val columns: List<EntityTypeAttributeColumn>,
     val semantics: SaveSemanticMetadataRequest? = null,
 )

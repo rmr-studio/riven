@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import riven.core.entity.entity.EntityTypeEntity
+import riven.core.projection.entity.SemanticGroupProjection
 import java.util.*
 
 /**
@@ -31,6 +32,6 @@ interface EntityTypeRepository : JpaRepository<EntityTypeEntity, UUID> {
     /**
      * Projection query to fetch only (id, semanticGroup) pairs without loading full entity rows.
      */
-    @Query("SELECT e.id, e.semanticGroup FROM EntityTypeEntity e WHERE e.id IN :ids")
-    fun findSemanticGroupsByIds(@Param("ids") ids: Collection<UUID>): List<Array<Any>>
+    @Query("SELECT e.id AS id, e.semanticGroup AS semanticGroup FROM EntityTypeEntity e WHERE e.id IN :ids")
+    fun findSemanticGroupsByIds(@Param("ids") ids: Collection<UUID>): List<SemanticGroupProjection>
 }

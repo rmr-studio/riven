@@ -243,7 +243,7 @@ class EntityRelationshipService(
 
         // Batch-fetch all existing links for targets that need enforcement
         val existingLinksByTargetId = entityRelationshipRepository
-            .findByTargetIdInAndDefinitionId(targetsNeedingCheck.keys, definitionId)
+            .findByTargetIdInAndDefinitionIdForUpdate(targetsNeedingCheck.keys, definitionId)
             .groupBy { it.targetId }
 
         // Validate each target
@@ -306,7 +306,7 @@ class EntityRelationshipService(
     private fun resolveSemanticGroups(typeIds: Set<UUID>): Map<UUID, SemanticGroup> {
         if (typeIds.isEmpty()) return emptyMap()
         val resolved = entityTypeRepository.findSemanticGroupsByIds(typeIds)
-            .associate { (it[0] as UUID) to (it[1] as SemanticGroup) }
+            .associate { it.getId() to it.getSemanticGroup() }
         return typeIds.associateWith { resolved[it] ?: SemanticGroup.UNCATEGORIZED }
     }
 }
