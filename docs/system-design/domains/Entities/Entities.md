@@ -145,4 +145,4 @@ None. The Entities domain operates entirely within the application database (Pos
 | 2026-02-08 | Domain overview and subdomain docs created                                                                           | [[02-01-PLAN]]               |
 | 2026-02-19 | Entity Semantics subdomain implemented — semantic metadata service, repository, lifecycle hooks, KnowledgeController | Semantic Metadata Foundation |
 | 2026-02-21 | Entity relationship overhaul — replaced ORIGIN/REFERENCE sync with table-based architecture, added relationship_definitions and relationship_target_rules tables, write-time cardinality enforcement, query-time inverse resolution | Entity Relationships |
-| 2026-03-01 | Entity Connections — system-managed CONNECTED_ENTITIES definitions, connection CRUD API, IS_RELATED_TO query filter, bidirectional existence queries | Entity Connections |
+| 2026-03-01 | Entity Connections — system-managed CONNECTED_ENTITIES definitions, unified relationship CRUD API (addRelationship, getRelationships, updateRelationship, removeRelationship), IS_RELATED_TO query filter, bidirectional existence queries | Entity Connections / Unified Relationship CRUD |
