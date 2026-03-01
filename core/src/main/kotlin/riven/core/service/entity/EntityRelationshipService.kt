@@ -1,17 +1,33 @@
 package riven.core.service.entity
 
 import io.github.oshai.kotlinlogging.KLogger
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.entity.EntityRelationshipEntity
+import riven.core.enums.activity.Activity
+import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.entity.EntityRelationshipCardinality
+import riven.core.models.common.markDeleted
+import riven.core.enums.entity.SystemRelationshipType
+import riven.core.enums.util.OperationType
+import riven.core.exceptions.ConflictException
 import riven.core.exceptions.InvalidRelationshipException
 import riven.core.models.entity.EntityLink
 import riven.core.models.entity.RelationshipDefinition
 import riven.core.models.entity.RelationshipTargetRule
+import riven.core.models.request.entity.AddRelationshipRequest
+import riven.core.models.request.entity.UpdateRelationshipRequest
+import riven.core.models.response.entity.RelationshipResponse
 import riven.core.projection.entity.toEntityLink
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityRepository
+import riven.core.repository.entity.RelationshipDefinitionRepository
+import riven.core.service.activity.ActivityService
+import riven.core.service.activity.log
+import riven.core.service.auth.AuthTokenService
+import riven.core.service.entity.type.EntityTypeRelationshipService
+import riven.core.util.ServiceUtil
 import java.util.*
 
 /**
@@ -25,6 +41,10 @@ import java.util.*
 class EntityRelationshipService(
     private val entityRelationshipRepository: EntityRelationshipRepository,
     private val entityRepository: EntityRepository,
+    private val definitionRepository: RelationshipDefinitionRepository,
+    private val entityTypeRelationshipService: EntityTypeRelationshipService,
+    private val authTokenService: AuthTokenService,
+    private val activityService: ActivityService,
     private val logger: KLogger,
 ) {
 
@@ -101,7 +121,9 @@ class EntityRelationshipService(
      */
     fun findRelatedEntities(entityId: UUID, workspaceId: UUID): Map<UUID, List<EntityLink>> {
         val forward = entityRelationshipRepository.findEntityLinksBySourceId(entityId, workspaceId)
-        val inverse = entityRelationshipRepository.findInverseEntityLinksByTargetId(entityId, workspaceId)
+        val inverse = entityRelationshipRepository.findInverseEntityLinksByTargetId(
+            entityId, workspaceId, SystemRelationshipType.CONNECTED_ENTITIES.name,
+        )
 
         return (forward + inverse)
             .groupBy { it.getDefinitionId() }
@@ -117,7 +139,9 @@ class EntityRelationshipService(
     fun findRelatedEntities(entityIds: Set<UUID>, workspaceId: UUID): Map<UUID, Map<UUID, List<EntityLink>>> {
         val ids = entityIds.toTypedArray()
         val forward = entityRelationshipRepository.findEntityLinksBySourceIdIn(ids, workspaceId)
-        val inverse = entityRelationshipRepository.findInverseEntityLinksByTargetIdIn(ids, workspaceId)
+        val inverse = entityRelationshipRepository.findInverseEntityLinksByTargetIdIn(
+            ids, workspaceId, SystemRelationshipType.CONNECTED_ENTITIES.name,
+        )
 
         return (forward + inverse)
             .groupBy { it.getSourceEntityId() }
@@ -141,6 +165,229 @@ class EntityRelationshipService(
      */
     fun archiveEntities(ids: Collection<UUID>, workspaceId: UUID): List<EntityRelationshipEntity> {
         return entityRelationshipRepository.deleteEntities(ids.toTypedArray(), workspaceId)
+    }
+
+    // ------ Relationship CRUD ------
+
+    /**
+     * Adds a single relationship between two entities.
+     *
+     * When `definitionId` is provided, creates a typed relationship with target type
+     * validation and cardinality enforcement. When omitted, creates a fallback
+     * CONNECTED_ENTITIES relationship with bidirectional duplicate detection.
+     */
+    @Transactional
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun addRelationship(
+        workspaceId: UUID,
+        sourceEntityId: UUID,
+        request: AddRelationshipRequest,
+    ): RelationshipResponse {
+        val userId = authTokenService.getUserId()
+        val sourceEntity = ServiceUtil.findOrThrow { entityRepository.findByIdAndWorkspaceId(sourceEntityId, workspaceId) }
+        ServiceUtil.findOrThrow { entityRepository.findByIdAndWorkspaceId(request.targetEntityId, workspaceId) }
+
+        val (resolvedDefinitionId, definitionName) = resolveDefinition(
+            workspaceId, sourceEntity.typeId, sourceEntityId, request,
+        )
+
+        val entity = EntityRelationshipEntity(
+            workspaceId = workspaceId,
+            sourceId = sourceEntityId,
+            targetId = request.targetEntityId,
+            definitionId = resolvedDefinitionId,
+            semanticContext = request.semanticContext,
+            linkSource = request.linkSource,
+        )
+        val saved = entityRelationshipRepository.save(entity)
+
+        activityService.log(
+            activity = Activity.ENTITY_RELATIONSHIP,
+            operation = OperationType.CREATE,
+            userId = userId,
+            workspaceId = workspaceId,
+            entityType = ApplicationEntityType.ENTITY,
+            entityId = sourceEntityId,
+            "relationshipId" to requireNotNull(saved.id).toString(),
+            "targetEntityId" to request.targetEntityId.toString(),
+            "definitionId" to resolvedDefinitionId.toString(),
+            "semanticContext" to request.semanticContext,
+        )
+
+        logger.info { "Created relationship ${saved.id} from $sourceEntityId to ${request.targetEntityId} under definition $resolvedDefinitionId" }
+        return saved.toRelationshipResponse(definitionName)
+    }
+
+    /**
+     * Returns all relationships for an entity (forward + inverse), optionally filtered
+     * by a specific definition ID.
+     */
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun getRelationships(workspaceId: UUID, entityId: UUID, definitionId: UUID? = null): List<RelationshipResponse> {
+        ServiceUtil.findOrThrow { entityRepository.findByIdAndWorkspaceId(entityId, workspaceId) }
+
+        val relationships = if (definitionId != null) {
+            entityRelationshipRepository.findByEntityIdAndDefinitionId(entityId, definitionId, workspaceId)
+        } else {
+            entityRelationshipRepository.findAllRelationshipsForEntity(entityId, workspaceId)
+        }
+
+        if (relationships.isEmpty()) return emptyList()
+
+        val definitionNames = definitionRepository
+            .findAllById(relationships.map { it.definitionId }.distinct())
+            .associate { requireNotNull(it.id) to it.name }
+
+        return relationships.map { rel ->
+            rel.toRelationshipResponse(definitionNames[rel.definitionId] ?: "Unknown")
+        }
+    }
+
+    /**
+     * Updates the semantic context of an existing relationship.
+     */
+    @Transactional
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun updateRelationship(
+        workspaceId: UUID,
+        relationshipId: UUID,
+        request: UpdateRelationshipRequest,
+    ): RelationshipResponse {
+        val userId = authTokenService.getUserId()
+        val relationship = ServiceUtil.findOrThrow {
+            entityRelationshipRepository.findByIdAndWorkspaceId(relationshipId, workspaceId)
+        }
+
+        val updated = entityRelationshipRepository.save(
+            relationship.copy(semanticContext = request.semanticContext)
+        )
+
+        val definitionName = definitionRepository.findById(relationship.definitionId)
+            .map { it.name }.orElse("Unknown")
+
+        activityService.log(
+            activity = Activity.ENTITY_RELATIONSHIP,
+            operation = OperationType.UPDATE,
+            userId = userId,
+            workspaceId = workspaceId,
+            entityType = ApplicationEntityType.ENTITY,
+            entityId = relationship.sourceId,
+            "relationshipId" to relationshipId.toString(),
+            "semanticContext" to request.semanticContext,
+        )
+
+        logger.info { "Updated relationship $relationshipId semantic context" }
+        return updated.toRelationshipResponse(definitionName)
+    }
+
+    /**
+     * Soft-deletes a relationship.
+     */
+    @Transactional
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun removeRelationship(workspaceId: UUID, relationshipId: UUID) {
+        val userId = authTokenService.getUserId()
+        val relationship = ServiceUtil.findOrThrow {
+            entityRelationshipRepository.findByIdAndWorkspaceId(relationshipId, workspaceId)
+        }
+
+        relationship.markDeleted()
+        entityRelationshipRepository.save(relationship)
+
+        activityService.log(
+            activity = Activity.ENTITY_RELATIONSHIP,
+            operation = OperationType.DELETE,
+            userId = userId,
+            workspaceId = workspaceId,
+            entityType = ApplicationEntityType.ENTITY,
+            entityId = relationship.sourceId,
+            "relationshipId" to relationshipId.toString(),
+        )
+
+        logger.info { "Deleted relationship $relationshipId" }
+    }
+
+    // ------ Relationship CRUD helpers ------
+
+    /**
+     * Resolves the definition for a new relationship, validates duplicates, and enforces
+     * cardinality for typed definitions. Returns the resolved definition ID and name.
+     */
+    private fun resolveDefinition(
+        workspaceId: UUID,
+        sourceEntityTypeId: UUID,
+        sourceEntityId: UUID,
+        request: AddRelationshipRequest,
+    ): Pair<UUID, String> {
+        if (request.definitionId != null) {
+            val definition = entityTypeRelationshipService.getDefinitionById(workspaceId, request.definitionId)
+            checkDirectionalDuplicate(sourceEntityId, request.targetEntityId, request.definitionId)
+            validateTypedRelationship(workspaceId, sourceEntityId, request.targetEntityId, request.definitionId, definition)
+            return request.definitionId to definition.name
+        }
+
+        val fallbackDef = entityTypeRelationshipService.getOrCreateFallbackDefinition(workspaceId, sourceEntityTypeId)
+        val defId = requireNotNull(fallbackDef.id)
+        checkBidirectionalDuplicate(sourceEntityId, request.targetEntityId, defId)
+        return defId to fallbackDef.name
+    }
+
+    private fun checkDirectionalDuplicate(sourceId: UUID, targetId: UUID, definitionId: UUID) {
+        val existing = entityRelationshipRepository.findBySourceIdAndTargetIdAndDefinitionId(
+            sourceId, targetId, definitionId,
+        )
+        if (existing.isNotEmpty()) {
+            throw ConflictException("Relationship already exists from $sourceId to $targetId under definition $definitionId")
+        }
+    }
+
+    private fun checkBidirectionalDuplicate(sourceId: UUID, targetId: UUID, definitionId: UUID) {
+        val existingForward = entityRelationshipRepository.findBySourceIdAndTargetIdAndDefinitionId(
+            sourceId, targetId, definitionId,
+        )
+        val existingReverse = entityRelationshipRepository.findBySourceIdAndTargetIdAndDefinitionId(
+            targetId, sourceId, definitionId,
+        )
+        if (existingForward.isNotEmpty() || existingReverse.isNotEmpty()) {
+            throw ConflictException("Relationship already exists between $sourceId and $targetId")
+        }
+    }
+
+    /**
+     * Validates target type and enforces cardinality for typed (non-fallback) definitions.
+     */
+    private fun validateTypedRelationship(
+        workspaceId: UUID,
+        sourceEntityId: UUID,
+        targetEntityId: UUID,
+        definitionId: UUID,
+        definition: RelationshipDefinition,
+    ) {
+        val targetEntity = ServiceUtil.findOrThrow { entityRepository.findByIdAndWorkspaceId(targetEntityId, workspaceId) }
+        val newTargetTypesByEntityId = mapOf(targetEntityId to targetEntity.typeId)
+
+        validateTargets(definition, newTargetTypesByEntityId)
+
+        val existingTargets = entityRelationshipRepository.findAllBySourceIdAndDefinitionId(sourceEntityId, definitionId)
+        val allTargetIds = existingTargets.map { it.targetId }.toSet() + targetEntityId
+        val allTargetEntities = entityRepository.findAllById(allTargetIds).associateBy { requireNotNull(it.id) }
+        val finalTypesByEntityId = allTargetEntities.mapValues { it.value.typeId }
+
+        enforceCardinality(definition, definitionId, finalTypesByEntityId, newTargetTypesByEntityId)
+    }
+
+    private fun EntityRelationshipEntity.toRelationshipResponse(definitionName: String): RelationshipResponse {
+        return RelationshipResponse(
+            id = requireNotNull(this.id),
+            sourceEntityId = this.sourceId,
+            targetEntityId = this.targetId,
+            definitionId = this.definitionId,
+            definitionName = definitionName,
+            semanticContext = this.semanticContext,
+            linkSource = this.linkSource,
+            createdAt = this.createdAt,
+            updatedAt = this.updatedAt,
+        )
     }
 
     // ------ Private validation helpers ------

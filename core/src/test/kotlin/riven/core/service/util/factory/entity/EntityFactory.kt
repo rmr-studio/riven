@@ -77,14 +77,18 @@ object EntityFactory {
         workspaceId: UUID = UUID.randomUUID(),
         sourceId: UUID = UUID.randomUUID(),
         targetId: UUID = UUID.randomUUID(),
-        definitionId: UUID = UUID.randomUUID()
+        definitionId: UUID = UUID.randomUUID(),
+        semanticContext: String? = null,
+        linkSource: riven.core.enums.integration.SourceType = riven.core.enums.integration.SourceType.USER_CREATED,
     ): EntityRelationshipEntity {
         return EntityRelationshipEntity(
             id = id,
             workspaceId = workspaceId,
             sourceId = sourceId,
             targetId = targetId,
-            definitionId = definitionId
+            definitionId = definitionId,
+            semanticContext = semanticContext,
+            linkSource = linkSource,
         )
     }
 

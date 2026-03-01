@@ -51,6 +51,7 @@ Aggregate all errors in single tree walk rather than surfacing one at a time. Gi
 - **Relationship existence:** Checks relationship ID exists in definitions map (depth 0 only)
 - **Depth enforcement:** Tracks relationship nesting depth, throws if exceeds maxDepth
 - **Branch recursion:** Validates nested filters in TargetTypeMatches branches
+- **IsRelatedTo pass-through:** `QueryFilter.IsRelatedTo` requires no validation — it has no relationship definition ID to check and no depth implications
 
 **Depth tracking:**
 
@@ -98,3 +99,4 @@ Callers should wrap non-empty results in `QueryValidationException` if throwing.
 | Date | Change | Reason |
 | ---- | ------ | ------ |
 | 2026-02-21 | Updated to use RelationshipDefinition model (replaces EntityRelationshipDefinition from JSONB schema) | Entity Relationships |
+| 2026-03-01 | Added IsRelatedTo no-op validation branch — no relationship definition ID to validate | Entity Connections |

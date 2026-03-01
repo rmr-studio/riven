@@ -1,5 +1,29 @@
 # Architecture Changelog
 
+## 2026-03-01 — Unified Relationship CRUD (Connection → Relationship refactor)
+
+**Domains affected:** Entities
+
+**What changed:**
+
+- Replaced "connection" CRUD on `EntityRelationshipService` with unified "relationship" CRUD — `addRelationship`, `getRelationships`, `updateRelationship`, `removeRelationship`
+- `addRelationship` accepts optional `definitionId` — when provided, creates a typed relationship with target type validation and cardinality enforcement; when omitted, falls back to the system `CONNECTED_ENTITIES` definition
+- `getRelationships` returns ALL relationships for an entity (both fallback and typed), with optional `definitionId` filter — previously only returned fallback connections
+- `updateRelationship` and `removeRelationship` work on any relationship regardless of definition type — removed `validateIsFallbackConnection` guard
+- Controller endpoints renamed: `/connections` → `/relationships` with corresponding method renames
+- Request models renamed: `CreateConnectionRequest` → `AddRelationshipRequest`, `UpdateConnectionRequest` → `UpdateRelationshipRequest`
+- Response model renamed: `ConnectionResponse` → `RelationshipResponse` — now includes `definitionId` and `definitionName`
+- Activity logging uses `Activity.ENTITY_RELATIONSHIP` for new operations — `Activity.ENTITY_CONNECTION` retained in enum for backwards compatibility with existing log entries
+- Duplicate detection: bidirectional for fallback definitions (A→B or B→A), directional for typed definitions (A→B only under that definition)
+
+**New cross-domain dependencies:** No
+
+**New components introduced:**
+
+- `AddRelationshipRequest` — Request model with optional `definitionId` for unified relationship creation
+- `UpdateRelationshipRequest` — Request model for semantic context updates
+- `RelationshipResponse` — Response model including definition metadata
+
 ## 2026-02-21 — Entity Relationship Overhaul
 
 **Domains affected:** Entities, Workflows
