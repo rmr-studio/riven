@@ -57,10 +57,11 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
     @Query(
         """
         SELECT r FROM EntityRelationshipEntity r
-        WHERE r.sourceId = :entityId OR r.targetId = :entityId
+        WHERE (r.sourceId = :entityId OR r.targetId = :entityId)
+        AND r.workspaceId = :workspaceId
     """
     )
-    fun findAllRelationshipsForEntity(entityId: UUID): List<EntityRelationshipEntity>
+    fun findAllRelationshipsForEntity(entityId: UUID, workspaceId: UUID): List<EntityRelationshipEntity>
 
     /**
      * Find all relationships for a source entity across multiple definition IDs.
@@ -101,8 +102,9 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
         SELECT r FROM EntityRelationshipEntity r
         WHERE (r.sourceId = :entityId OR r.targetId = :entityId)
         AND r.definitionId = :definitionId
+        AND r.workspaceId = :workspaceId
     """)
-    fun findByEntityIdAndDefinitionId(entityId: UUID, definitionId: UUID): List<EntityRelationshipEntity>
+    fun findByEntityIdAndDefinitionId(entityId: UUID, definitionId: UUID, workspaceId: UUID): List<EntityRelationshipEntity>
 
     /**
      * Soft-delete all relationship links for a given definition ID.

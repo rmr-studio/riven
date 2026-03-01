@@ -184,8 +184,8 @@ class EntityRelationshipService(
         request: AddRelationshipRequest,
     ): RelationshipResponse {
         val userId = authTokenService.getUserId()
-        val sourceEntity = ServiceUtil.findOrThrow { entityRepository.findById(sourceEntityId) }
-        ServiceUtil.findOrThrow { entityRepository.findById(request.targetEntityId) }
+        val sourceEntity = ServiceUtil.findOrThrow { entityRepository.findByIdAndWorkspaceId(sourceEntityId, workspaceId) }
+        ServiceUtil.findOrThrow { entityRepository.findByIdAndWorkspaceId(request.targetEntityId, workspaceId) }
 
         val (resolvedDefinitionId, definitionName) = resolveDefinition(
             workspaceId, sourceEntity.typeId, sourceEntityId, request,
@@ -224,12 +224,12 @@ class EntityRelationshipService(
      */
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun getRelationships(workspaceId: UUID, entityId: UUID, definitionId: UUID? = null): List<RelationshipResponse> {
-        ServiceUtil.findOrThrow { entityRepository.findById(entityId) }
+        ServiceUtil.findOrThrow { entityRepository.findByIdAndWorkspaceId(entityId, workspaceId) }
 
         val relationships = if (definitionId != null) {
-            entityRelationshipRepository.findByEntityIdAndDefinitionId(entityId, definitionId)
+            entityRelationshipRepository.findByEntityIdAndDefinitionId(entityId, definitionId, workspaceId)
         } else {
-            entityRelationshipRepository.findAllRelationshipsForEntity(entityId)
+            entityRelationshipRepository.findAllRelationshipsForEntity(entityId, workspaceId)
         }
 
         if (relationships.isEmpty()) return emptyList()
@@ -322,7 +322,7 @@ class EntityRelationshipService(
         if (request.definitionId != null) {
             val definition = entityTypeRelationshipService.getDefinitionById(workspaceId, request.definitionId)
             checkDirectionalDuplicate(sourceEntityId, request.targetEntityId, request.definitionId)
-            validateTypedRelationship(sourceEntityId, request.targetEntityId, request.definitionId, definition)
+            validateTypedRelationship(workspaceId, sourceEntityId, request.targetEntityId, request.definitionId, definition)
             return request.definitionId to definition.name
         }
 
@@ -357,12 +357,13 @@ class EntityRelationshipService(
      * Validates target type and enforces cardinality for typed (non-fallback) definitions.
      */
     private fun validateTypedRelationship(
+        workspaceId: UUID,
         sourceEntityId: UUID,
         targetEntityId: UUID,
         definitionId: UUID,
         definition: RelationshipDefinition,
     ) {
-        val targetEntity = ServiceUtil.findOrThrow { entityRepository.findById(targetEntityId) }
+        val targetEntity = ServiceUtil.findOrThrow { entityRepository.findByIdAndWorkspaceId(targetEntityId, workspaceId) }
         val newTargetTypesByEntityId = mapOf(targetEntityId to targetEntity.typeId)
 
         validateTargets(definition, newTargetTypesByEntityId)

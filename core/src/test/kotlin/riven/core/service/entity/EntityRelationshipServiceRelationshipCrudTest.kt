@@ -151,8 +151,8 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
             linkSource = SourceType.USER_CREATED,
         )
 
-        whenever(entityRepository.findById(sourceEntityId)).thenReturn(Optional.of(sourceEntity))
-        whenever(entityRepository.findById(targetEntityId)).thenReturn(Optional.of(targetEntity))
+        whenever(entityRepository.findByIdAndWorkspaceId(sourceEntityId, workspaceId)).thenReturn(Optional.of(sourceEntity))
+        whenever(entityRepository.findByIdAndWorkspaceId(targetEntityId, workspaceId)).thenReturn(Optional.of(targetEntity))
         whenever(entityTypeRelationshipService.getOrCreateFallbackDefinition(workspaceId, sourceEntityTypeId))
             .thenReturn(fallbackDef)
         whenever(entityRelationshipRepository.findBySourceIdAndTargetIdAndDefinitionId(sourceEntityId, targetEntityId, fallbackDefId))
@@ -195,8 +195,7 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
             workspaceId = workspaceId,
         )
         val fallbackDef = buildFallbackDefinitionEntity()
-        val existingRel = EntityRelationshipEntity(
-            id = UUID.randomUUID(),
+        val existingRel = EntityFactory.createRelationshipEntity(
             workspaceId = workspaceId,
             sourceId = sourceEntityId,
             targetId = targetEntityId,
@@ -207,12 +206,53 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
             semanticContext = "duplicate",
         )
 
-        whenever(entityRepository.findById(sourceEntityId)).thenReturn(Optional.of(sourceEntity))
-        whenever(entityRepository.findById(targetEntityId)).thenReturn(Optional.of(targetEntity))
+        whenever(entityRepository.findByIdAndWorkspaceId(sourceEntityId, workspaceId)).thenReturn(Optional.of(sourceEntity))
+        whenever(entityRepository.findByIdAndWorkspaceId(targetEntityId, workspaceId)).thenReturn(Optional.of(targetEntity))
         whenever(entityTypeRelationshipService.getOrCreateFallbackDefinition(workspaceId, sourceEntityTypeId))
             .thenReturn(fallbackDef)
         whenever(entityRelationshipRepository.findBySourceIdAndTargetIdAndDefinitionId(sourceEntityId, targetEntityId, fallbackDefId))
             .thenReturn(listOf(existingRel))
+
+        assertThrows(ConflictException::class.java) {
+            service.addRelationship(workspaceId, sourceEntityId, request)
+        }
+
+        verify(entityRelationshipRepository, never()).save(any())
+    }
+
+    @Test
+    fun `addRelationship - no definitionId - reverse bidirectional duplicate - throws ConflictException`() {
+        val sourceEntity = EntityFactory.createEntityEntity(
+            id = sourceEntityId,
+            workspaceId = workspaceId,
+            typeId = sourceEntityTypeId,
+        )
+        val targetEntity = EntityFactory.createEntityEntity(
+            id = targetEntityId,
+            workspaceId = workspaceId,
+        )
+        val fallbackDef = buildFallbackDefinitionEntity()
+        val request = AddRelationshipRequest(
+            targetEntityId = targetEntityId,
+            semanticContext = "reverse duplicate",
+        )
+
+        whenever(entityRepository.findByIdAndWorkspaceId(sourceEntityId, workspaceId)).thenReturn(Optional.of(sourceEntity))
+        whenever(entityRepository.findByIdAndWorkspaceId(targetEntityId, workspaceId)).thenReturn(Optional.of(targetEntity))
+        whenever(entityTypeRelationshipService.getOrCreateFallbackDefinition(workspaceId, sourceEntityTypeId))
+            .thenReturn(fallbackDef)
+        // Forward check returns empty — no forward duplicate
+        whenever(entityRelationshipRepository.findBySourceIdAndTargetIdAndDefinitionId(sourceEntityId, targetEntityId, fallbackDefId))
+            .thenReturn(emptyList())
+        // Reverse check returns existing — target→source already exists
+        val reverseRel = EntityFactory.createRelationshipEntity(
+            workspaceId = workspaceId,
+            sourceId = targetEntityId,
+            targetId = sourceEntityId,
+            definitionId = fallbackDefId,
+        )
+        whenever(entityRelationshipRepository.findBySourceIdAndTargetIdAndDefinitionId(targetEntityId, sourceEntityId, fallbackDefId))
+            .thenReturn(listOf(reverseRel))
 
         assertThrows(ConflictException::class.java) {
             service.addRelationship(workspaceId, sourceEntityId, request)
@@ -228,7 +268,7 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
             semanticContext = "test",
         )
 
-        whenever(entityRepository.findById(sourceEntityId)).thenReturn(Optional.empty())
+        whenever(entityRepository.findByIdAndWorkspaceId(sourceEntityId, workspaceId)).thenReturn(Optional.empty())
 
         assertThrows(NotFoundException::class.java) {
             service.addRelationship(workspaceId, sourceEntityId, request)
@@ -270,8 +310,8 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
             semanticContext = "typed link",
         )
 
-        whenever(entityRepository.findById(sourceEntityId)).thenReturn(Optional.of(sourceEntity))
-        whenever(entityRepository.findById(targetEntityId)).thenReturn(Optional.of(targetEntity))
+        whenever(entityRepository.findByIdAndWorkspaceId(sourceEntityId, workspaceId)).thenReturn(Optional.of(sourceEntity))
+        whenever(entityRepository.findByIdAndWorkspaceId(targetEntityId, workspaceId)).thenReturn(Optional.of(targetEntity))
         whenever(entityTypeRelationshipService.getDefinitionById(workspaceId, typedDefId)).thenReturn(definition)
         whenever(entityRelationshipRepository.findBySourceIdAndTargetIdAndDefinitionId(sourceEntityId, targetEntityId, typedDefId))
             .thenReturn(emptyList())
@@ -321,8 +361,8 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
             definitionId = typedDefId,
         )
 
-        whenever(entityRepository.findById(sourceEntityId)).thenReturn(Optional.of(sourceEntity))
-        whenever(entityRepository.findById(targetEntityId)).thenReturn(Optional.of(targetEntity))
+        whenever(entityRepository.findByIdAndWorkspaceId(sourceEntityId, workspaceId)).thenReturn(Optional.of(sourceEntity))
+        whenever(entityRepository.findByIdAndWorkspaceId(targetEntityId, workspaceId)).thenReturn(Optional.of(targetEntity))
         whenever(entityTypeRelationshipService.getDefinitionById(workspaceId, typedDefId)).thenReturn(definition)
         whenever(entityRelationshipRepository.findBySourceIdAndTargetIdAndDefinitionId(sourceEntityId, targetEntityId, typedDefId))
             .thenReturn(emptyList())
@@ -366,8 +406,7 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
             cardinality = EntityRelationshipCardinality.ONE_TO_ONE,
             targetRules = listOf(targetRule),
         )
-        val existingRel = EntityRelationshipEntity(
-            id = UUID.randomUUID(),
+        val existingRel = EntityFactory.createRelationshipEntity(
             workspaceId = workspaceId,
             sourceId = sourceEntityId,
             targetId = existingTargetId,
@@ -378,8 +417,8 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
             definitionId = typedDefId,
         )
 
-        whenever(entityRepository.findById(sourceEntityId)).thenReturn(Optional.of(sourceEntity))
-        whenever(entityRepository.findById(targetEntityId)).thenReturn(Optional.of(targetEntity))
+        whenever(entityRepository.findByIdAndWorkspaceId(sourceEntityId, workspaceId)).thenReturn(Optional.of(sourceEntity))
+        whenever(entityRepository.findByIdAndWorkspaceId(targetEntityId, workspaceId)).thenReturn(Optional.of(targetEntity))
         whenever(entityTypeRelationshipService.getDefinitionById(workspaceId, typedDefId)).thenReturn(definition)
         whenever(entityRelationshipRepository.findBySourceIdAndTargetIdAndDefinitionId(sourceEntityId, targetEntityId, typedDefId))
             .thenReturn(emptyList())
@@ -405,8 +444,7 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
             workspaceId = workspaceId,
         )
         val definition = buildTypedDefinition(allowPolymorphic = true)
-        val existingRel = EntityRelationshipEntity(
-            id = UUID.randomUUID(),
+        val existingRel = EntityFactory.createRelationshipEntity(
             workspaceId = workspaceId,
             sourceId = sourceEntityId,
             targetId = targetEntityId,
@@ -417,8 +455,8 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
             definitionId = typedDefId,
         )
 
-        whenever(entityRepository.findById(sourceEntityId)).thenReturn(Optional.of(sourceEntity))
-        whenever(entityRepository.findById(targetEntityId)).thenReturn(Optional.of(targetEntity))
+        whenever(entityRepository.findByIdAndWorkspaceId(sourceEntityId, workspaceId)).thenReturn(Optional.of(sourceEntity))
+        whenever(entityRepository.findByIdAndWorkspaceId(targetEntityId, workspaceId)).thenReturn(Optional.of(targetEntity))
         whenever(entityTypeRelationshipService.getDefinitionById(workspaceId, typedDefId)).thenReturn(definition)
         whenever(entityRelationshipRepository.findBySourceIdAndTargetIdAndDefinitionId(sourceEntityId, targetEntityId, typedDefId))
             .thenReturn(listOf(existingRel))
@@ -441,16 +479,14 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
             workspaceId = workspaceId,
             typeId = sourceEntityTypeId,
         )
-        val fallbackRel = EntityRelationshipEntity(
-            id = UUID.randomUUID(),
+        val fallbackRel = EntityFactory.createRelationshipEntity(
             workspaceId = workspaceId,
             sourceId = sourceEntityId,
             targetId = targetEntityId,
             definitionId = fallbackDefId,
             semanticContext = "connected",
         )
-        val typedRel = EntityRelationshipEntity(
-            id = UUID.randomUUID(),
+        val typedRel = EntityFactory.createRelationshipEntity(
             workspaceId = workspaceId,
             sourceId = sourceEntityId,
             targetId = UUID.randomUUID(),
@@ -464,8 +500,8 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
             name = "Typed Relationship",
         )
 
-        whenever(entityRepository.findById(sourceEntityId)).thenReturn(Optional.of(entity))
-        whenever(entityRelationshipRepository.findAllRelationshipsForEntity(sourceEntityId))
+        whenever(entityRepository.findByIdAndWorkspaceId(sourceEntityId, workspaceId)).thenReturn(Optional.of(entity))
+        whenever(entityRelationshipRepository.findAllRelationshipsForEntity(sourceEntityId, workspaceId))
             .thenReturn(listOf(fallbackRel, typedRel))
         whenever(definitionRepository.findAllById(listOf(fallbackDefId, typedDefId)))
             .thenReturn(listOf(fallbackDefEntity, typedDefEntity))
@@ -484,8 +520,7 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
             workspaceId = workspaceId,
             typeId = sourceEntityTypeId,
         )
-        val typedRel = EntityRelationshipEntity(
-            id = UUID.randomUUID(),
+        val typedRel = EntityFactory.createRelationshipEntity(
             workspaceId = workspaceId,
             sourceId = sourceEntityId,
             targetId = targetEntityId,
@@ -498,8 +533,8 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
             name = "Typed Relationship",
         )
 
-        whenever(entityRepository.findById(sourceEntityId)).thenReturn(Optional.of(entity))
-        whenever(entityRelationshipRepository.findByEntityIdAndDefinitionId(sourceEntityId, typedDefId))
+        whenever(entityRepository.findByIdAndWorkspaceId(sourceEntityId, workspaceId)).thenReturn(Optional.of(entity))
+        whenever(entityRelationshipRepository.findByEntityIdAndDefinitionId(sourceEntityId, typedDefId, workspaceId))
             .thenReturn(listOf(typedRel))
         whenever(definitionRepository.findAllById(listOf(typedDefId)))
             .thenReturn(listOf(typedDefEntity))
@@ -518,8 +553,8 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
             typeId = sourceEntityTypeId,
         )
 
-        whenever(entityRepository.findById(sourceEntityId)).thenReturn(Optional.of(entity))
-        whenever(entityRelationshipRepository.findAllRelationshipsForEntity(sourceEntityId))
+        whenever(entityRepository.findByIdAndWorkspaceId(sourceEntityId, workspaceId)).thenReturn(Optional.of(entity))
+        whenever(entityRelationshipRepository.findAllRelationshipsForEntity(sourceEntityId, workspaceId))
             .thenReturn(emptyList())
 
         val result = service.getRelationships(workspaceId, sourceEntityId)
@@ -532,7 +567,7 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
     @Test
     fun `updateRelationship - updates semantic context`() {
         val relationshipId = UUID.randomUUID()
-        val relationship = EntityRelationshipEntity(
+        val relationship = EntityFactory.createRelationshipEntity(
             id = relationshipId,
             workspaceId = workspaceId,
             sourceId = sourceEntityId,
@@ -562,7 +597,7 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
     @Test
     fun `updateRelationship - works on typed relationships too`() {
         val relationshipId = UUID.randomUUID()
-        val relationship = EntityRelationshipEntity(
+        val relationship = EntityFactory.createRelationshipEntity(
             id = relationshipId,
             workspaceId = workspaceId,
             sourceId = sourceEntityId,
@@ -597,7 +632,7 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
     @Test
     fun `removeRelationship - soft-deletes the relationship`() {
         val relationshipId = UUID.randomUUID()
-        val relationship = EntityRelationshipEntity(
+        val relationship = EntityFactory.createRelationshipEntity(
             id = relationshipId,
             workspaceId = workspaceId,
             sourceId = sourceEntityId,
@@ -622,7 +657,7 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
     @Test
     fun `removeRelationship - works on typed relationships`() {
         val relationshipId = UUID.randomUUID()
-        val relationship = EntityRelationshipEntity(
+        val relationship = EntityFactory.createRelationshipEntity(
             id = relationshipId,
             workspaceId = workspaceId,
             sourceId = sourceEntityId,
@@ -642,4 +677,5 @@ class EntityRelationshipServiceRelationshipCrudTest : BaseServiceTest() {
             this.deleted && this.deletedAt != null
         })
     }
+
 }

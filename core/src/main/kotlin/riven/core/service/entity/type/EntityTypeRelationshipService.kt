@@ -424,6 +424,7 @@ class EntityTypeRelationshipService(
      * Creates a CONNECTED_ENTITIES fallback definition for an entity type.
      * Used at publish time to ensure every entity type has a system-managed connection definition.
      */
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun createFallbackDefinition(workspaceId: UUID, entityTypeId: UUID): RelationshipDefinitionEntity {
         val entity = RelationshipDefinitionEntity(
             workspaceId = workspaceId,
@@ -446,6 +447,7 @@ class EntityTypeRelationshipService(
      * Handles concurrent creation via unique constraint by catching DataIntegrityViolationException
      * and retrying with a read.
      */
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun getOrCreateFallbackDefinition(workspaceId: UUID, entityTypeId: UUID): RelationshipDefinitionEntity {
         val existing = definitionRepository.findBySourceEntityTypeIdAndSystemType(
             entityTypeId, SystemRelationshipType.CONNECTED_ENTITIES,
@@ -456,11 +458,9 @@ class EntityTypeRelationshipService(
             createFallbackDefinition(workspaceId, entityTypeId)
         } catch (e: DataIntegrityViolationException) {
             logger.warn { "Concurrent fallback definition creation for entity type $entityTypeId, retrying read" }
-            ServiceUtil.findOrThrow {
-                definitionRepository.findBySourceEntityTypeIdAndSystemType(
-                    entityTypeId, SystemRelationshipType.CONNECTED_ENTITIES,
-                )
-            }
+            definitionRepository.findBySourceEntityTypeIdAndSystemType(
+                entityTypeId, SystemRelationshipType.CONNECTED_ENTITIES,
+            ).orElseThrow { e }
         }
     }
 
