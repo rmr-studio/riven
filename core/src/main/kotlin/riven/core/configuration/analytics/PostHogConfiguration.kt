@@ -11,8 +11,10 @@ import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import riven.core.filter.analytics.PostHogCaptureFilter
 import riven.core.configuration.properties.PostHogConfigurationProperties
 import riven.core.service.analytics.NoOpPostHogService
 import riven.core.service.analytics.PostHogService
@@ -108,4 +110,18 @@ class PostHogConfiguration {
     ): PostHogService = NoOpPostHogService(
         captureCounter = postHogCaptureCounter
     )
+
+    // ------ HTTP Filter ------
+
+    @Bean
+    fun postHogCaptureFilterRegistration(
+        postHogService: PostHogService,
+        logger: KLogger
+    ): FilterRegistrationBean<PostHogCaptureFilter> {
+        val filter = PostHogCaptureFilter(postHogService, logger)
+        val registration = FilterRegistrationBean(filter)
+        registration.order = -99  // After Spring Security (-100), so SecurityContext is populated
+        registration.addUrlPatterns("/api/*")
+        return registration
+    }
 }
