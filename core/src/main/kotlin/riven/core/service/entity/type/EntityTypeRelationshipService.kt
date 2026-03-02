@@ -7,9 +7,12 @@ import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.entity.RelationshipDefinitionEntity
 import riven.core.entity.entity.RelationshipTargetRuleEntity
 import riven.core.enums.activity.Activity
+import org.springframework.dao.DataIntegrityViolationException
 import riven.core.enums.common.icon.IconColour
 import riven.core.enums.common.icon.IconType
 import riven.core.enums.core.ApplicationEntityType
+import riven.core.enums.entity.EntityRelationshipCardinality
+import riven.core.enums.entity.SystemRelationshipType
 import riven.core.enums.entity.semantics.SemanticMetadataTargetType
 import riven.core.enums.util.OperationType
 import riven.core.models.entity.RelationshipDefinition
@@ -413,5 +416,60 @@ class EntityTypeRelationshipService(
                 inverseName = rule.inverseName,
             )
         }
+    }
+
+    // ------ System Definitions ------
+
+    /**
+     * Creates a CONNECTED_ENTITIES fallback definition for an entity type.
+     * Used at publish time to ensure every entity type has a system-managed connection definition.
+     */
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun createFallbackDefinition(workspaceId: UUID, entityTypeId: UUID): RelationshipDefinitionEntity {
+        val entity = RelationshipDefinitionEntity(
+            workspaceId = workspaceId,
+            sourceEntityTypeId = entityTypeId,
+            name = "Connected Entities",
+            iconType = IconType.LINK,
+            iconColour = IconColour.NEUTRAL,
+            allowPolymorphic = true,
+            cardinalityDefault = EntityRelationshipCardinality.MANY_TO_MANY,
+            protected = true,
+            systemType = SystemRelationshipType.CONNECTED_ENTITIES,
+        )
+        val saved = definitionRepository.save(entity)
+        logger.info { "Created CONNECTED_ENTITIES fallback definition for entity type $entityTypeId" }
+        return saved
+    }
+
+    /**
+     * Returns the existing fallback definition or creates one if absent.
+     * Handles concurrent creation via unique constraint by catching DataIntegrityViolationException
+     * and retrying with a read.
+     */
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun getOrCreateFallbackDefinition(workspaceId: UUID, entityTypeId: UUID): RelationshipDefinitionEntity {
+        val existing = definitionRepository.findBySourceEntityTypeIdAndSystemType(
+            entityTypeId, SystemRelationshipType.CONNECTED_ENTITIES,
+        )
+        if (existing.isPresent) return existing.get()
+
+        return try {
+            createFallbackDefinition(workspaceId, entityTypeId)
+        } catch (e: DataIntegrityViolationException) {
+            logger.warn { "Concurrent fallback definition creation for entity type $entityTypeId, retrying read" }
+            definitionRepository.findBySourceEntityTypeIdAndSystemType(
+                entityTypeId, SystemRelationshipType.CONNECTED_ENTITIES,
+            ).orElseThrow { e }
+        }
+    }
+
+    /**
+     * Read-only lookup returning the fallback definition ID, or null if none exists.
+     */
+    fun getFallbackDefinitionId(entityTypeId: UUID): UUID? {
+        return definitionRepository.findBySourceEntityTypeIdAndSystemType(
+            entityTypeId, SystemRelationshipType.CONNECTED_ENTITIES,
+        ).map { it.id }.orElse(null)
     }
 }

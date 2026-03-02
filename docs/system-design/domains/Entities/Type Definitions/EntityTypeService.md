@@ -57,7 +57,8 @@ Primary entry point for entity type lifecycle operations including creation, att
 2. Identifier is UUID-based, required, unique, protected STRING field
 3. Initialize empty relationships list and single-column ordering
 4. Log CREATE activity
-5. Initialize semantic metadata via [[EntityTypeSemanticMetadataService]].initializeForEntityType() — creates ENTITY_TYPE metadata record plus one ATTRIBUTE metadata record per initial attribute
+5. Create fallback CONNECTED_ENTITIES definition via `entityTypeRelationshipService.createFallbackDefinition(workspaceId, savedId)` — ensures every published entity type has a system-managed connection definition
+6. Initialize semantic metadata via [[EntityTypeSemanticMetadataService]].initializeForEntityType() — creates ENTITY_TYPE metadata record plus one ATTRIBUTE metadata record per initial attribute
 
 **Save definition (attribute or relationship):**
 
@@ -202,3 +203,4 @@ Groups metadata records by targetType into structured bundle (entity type + attr
 - `?include=semantics` query parameter removed — semantic metadata and relationship definitions are now always loaded by `getWorkspaceEntityTypesWithIncludes()` and `getEntityTypeByKeyWithIncludes()`
 - Method signatures simplified: `include: List<String>` parameter removed from both enriched query methods
 - Return type changed from `EntityTypeWithSemanticsResponse` back to `EntityType` (semantics embedded in model)
+- Publish flow now creates CONNECTED_ENTITIES fallback definition for each new entity type via `entityTypeRelationshipService.createFallbackDefinition()`.

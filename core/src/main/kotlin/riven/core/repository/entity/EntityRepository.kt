@@ -31,6 +31,9 @@ interface EntityRepository : JpaRepository<EntityEntity, UUID> {
     )
     fun findByTypeIdIn(typeIds: List<UUID>): List<EntityEntity>
 
+    @Query("SELECT e FROM EntityEntity e WHERE e.id = :id AND e.workspaceId = :workspaceId")
+    fun findByIdAndWorkspaceId(id: UUID, workspaceId: UUID): Optional<EntityEntity>
+
     @Modifying
     @Query(
         value = """

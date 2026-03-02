@@ -15,6 +15,7 @@ import riven.core.enums.common.icon.IconColour
 import riven.core.enums.common.icon.IconType
 import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.enums.entity.semantics.SemanticGroup
+import riven.core.enums.entity.SystemRelationshipType
 import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.exceptions.InvalidRelationshipException
 import riven.core.models.common.Icon
@@ -73,6 +74,12 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
 
     @MockitoBean
     private lateinit var targetRuleRepository: RelationshipTargetRuleRepository
+
+    @MockitoBean
+    private lateinit var entityTypeRelationshipService: riven.core.service.entity.type.EntityTypeRelationshipService
+
+    @MockitoBean
+    private lateinit var activityService: riven.core.service.activity.ActivityService
 
     @Autowired
     private lateinit var service: EntityRelationshipService
@@ -915,14 +922,14 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
     fun `findRelatedEntities - forward - returns targets`() {
         whenever(entityRelationshipRepository.findEntityLinksBySourceId(sourceEntityId, workspaceId))
             .thenReturn(emptyList())
-        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(sourceEntityId, workspaceId))
+        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(eq(sourceEntityId), eq(workspaceId), eq(SystemRelationshipType.CONNECTED_ENTITIES.name)))
             .thenReturn(emptyList())
 
         val result = service.findRelatedEntities(sourceEntityId, workspaceId)
 
         assertTrue(result.isEmpty())
         verify(entityRelationshipRepository).findEntityLinksBySourceId(sourceEntityId, workspaceId)
-        verify(entityRelationshipRepository).findInverseEntityLinksByTargetId(sourceEntityId, workspaceId)
+        verify(entityRelationshipRepository).findInverseEntityLinksByTargetId(eq(sourceEntityId), eq(workspaceId), eq(SystemRelationshipType.CONNECTED_ENTITIES.name))
     }
 
     @Test
@@ -954,7 +961,7 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
 
         whenever(entityRelationshipRepository.findEntityLinksBySourceId(sourceEntityId, workspaceId))
             .thenReturn(listOf(forwardProjection))
-        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(sourceEntityId, workspaceId))
+        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(eq(sourceEntityId), eq(workspaceId), eq(SystemRelationshipType.CONNECTED_ENTITIES.name)))
             .thenReturn(listOf(inverseProjection))
 
         val result = service.findRelatedEntities(sourceEntityId, workspaceId)
@@ -970,7 +977,7 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
         // This test verifies the service correctly delegates to both queries.
         whenever(entityRelationshipRepository.findEntityLinksBySourceId(sourceEntityId, workspaceId))
             .thenReturn(emptyList())
-        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(sourceEntityId, workspaceId))
+        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(eq(sourceEntityId), eq(workspaceId), eq(SystemRelationshipType.CONNECTED_ENTITIES.name)))
             .thenReturn(emptyList()) // repo returns nothing for inverse-invisible
 
         val result = service.findRelatedEntities(sourceEntityId, workspaceId)
@@ -1006,7 +1013,7 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
 
         whenever(entityRelationshipRepository.findEntityLinksBySourceId(sourceEntityId, workspaceId))
             .thenReturn(listOf(forwardProjection))
-        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(sourceEntityId, workspaceId))
+        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(eq(sourceEntityId), eq(workspaceId), eq(SystemRelationshipType.CONNECTED_ENTITIES.name)))
             .thenReturn(listOf(inverseProjection))
 
         val result = service.findRelatedEntities(sourceEntityId, workspaceId)

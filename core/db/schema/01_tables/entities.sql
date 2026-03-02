@@ -121,6 +121,7 @@ CREATE TABLE IF NOT EXISTS public.relationship_definitions
     "allow_polymorphic"     BOOLEAN NOT NULL DEFAULT FALSE,
     "cardinality_default"   TEXT NOT NULL CHECK (cardinality_default IN ('ONE_TO_ONE','ONE_TO_MANY','MANY_TO_ONE','MANY_TO_MANY')),
     "protected"             BOOLEAN NOT NULL DEFAULT FALSE,
+    "system_type"           TEXT DEFAULT NULL,
     "created_at"            TIMESTAMP WITH TIME ZONE DEFAULT now(),
     "updated_at"            TIMESTAMP WITH TIME ZONE DEFAULT now(),
     "created_by"            UUID,
@@ -163,6 +164,11 @@ CREATE TABLE IF NOT EXISTS public.entity_relationships
     "source_entity_id"           UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
     "target_entity_id"           UUID    NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
     "relationship_definition_id" UUID    NOT NULL REFERENCES relationship_definitions (id) ON DELETE RESTRICT,
+
+    -- Semantic context for fallback connections (why these entities are linked)
+    "semantic_context"           TEXT DEFAULT NULL,
+    -- Source of this link (USER_CREATED, INTEGRATION, etc.)
+    "link_source"                TEXT NOT NULL DEFAULT 'USER_CREATED',
 
     -- Additional metadata about the relationship
     "created_at"                 TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
