@@ -57,7 +57,8 @@ Primary entry point for entity type lifecycle operations including creation, att
 2. Identifier is UUID-based, required, unique, protected STRING field
 3. Initialize empty relationships list and single-column ordering
 4. Log CREATE activity
-5. Initialize semantic metadata via [[EntityTypeSemanticMetadataService]].initializeForEntityType() — creates ENTITY_TYPE metadata record plus one ATTRIBUTE metadata record per initial attribute
+5. Create fallback CONNECTED_ENTITIES definition via `entityTypeRelationshipService.createFallbackDefinition(workspaceId, savedId)` — ensures every published entity type has a system-managed connection definition
+6. Initialize semantic metadata via [[EntityTypeSemanticMetadataService]].initializeForEntityType() — creates ENTITY_TYPE metadata record plus one ATTRIBUTE metadata record per initial attribute
 
 **Save definition (attribute or relationship):**
 
@@ -194,3 +195,7 @@ Groups metadata records by targetType into structured bundle (entity type + attr
 - `saveEntityTypeDefinition`: Relationship path now does a simple create/update dispatch via `definitionRepository.findByIdAndWorkspaceId()` — no diff calculation or impact analysis on save.
 - `removeEntityTypeDefinition`: Relationship path now delegates entirely to `entityTypeRelationshipService.deleteRelationshipDefinition()`, which owns the two-pass impact pattern.
 - `deleteEntityType`: Cascade logic rewritten — fetches definitions via `definitionRepository`, counts links via `entityRelationshipRepository`, delegates each definition delete to `entityTypeRelationshipService.deleteRelationshipDefinition(impactConfirmed=true)`.
+
+### 2026-03-01
+
+- Publish flow now creates CONNECTED_ENTITIES fallback definition for each new entity type via `entityTypeRelationshipService.createFallbackDefinition()`.

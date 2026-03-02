@@ -55,6 +55,11 @@ object WorkflowFilterTemplateUtils {
                     }
                 }
             }
+
+            is QueryFilter.IsRelatedTo -> {
+                // No template expressions in IsRelatedTo — nothing to validate
+                emptyList()
+            }
         }
     }
 
@@ -170,6 +175,11 @@ object WorkflowFilterTemplateUtils {
                     resolver
                 )
                 filter.copy(condition = resolvedCondition)
+            }
+
+            is QueryFilter.IsRelatedTo -> {
+                // No template expressions in IsRelatedTo — return as-is
+                filter
             }
         }
     }

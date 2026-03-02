@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component
 import riven.core.exceptions.query.InvalidRelationshipReferenceException
 import riven.core.exceptions.query.QueryFilterException
 import riven.core.exceptions.query.RelationshipDepthExceededException
+import riven.core.exceptions.query.UnsupportedIsRelatedToConditionException
 import riven.core.models.entity.RelationshipDefinition
 import riven.core.models.entity.query.filter.QueryFilter
 import riven.core.models.entity.query.filter.RelationshipFilter
@@ -87,6 +88,21 @@ class QueryFilterValidator {
                 // OR does not increment relationship depth
                 for (condition in filter.conditions) {
                     walkFilter(condition, context, relationshipDepth)
+                }
+            }
+
+            is QueryFilter.IsRelatedTo -> {
+                when (filter.condition) {
+                    is RelationshipFilter.Exists, is RelationshipFilter.NotExists -> {
+                        // Supported conditions for IsRelatedTo — no additional validation
+                    }
+                    else -> {
+                        context.errors.add(
+                            UnsupportedIsRelatedToConditionException(
+                                conditionType = filter.condition::class.simpleName ?: "unknown",
+                            )
+                        )
+                    }
                 }
             }
 
