@@ -511,7 +511,7 @@ Flyway manages execution order automatically. Migrations V001 and V002 ([[Entity
 | Date | Decision | Rationale | Alternatives Considered |
 |------|----------|-----------|------------------------|
 | 2026-02-13 | Use Nango as centralized integration infrastructure | Nango provides prebuilt OAuth flows, token management, rate limiting, and webhook infrastructure for 250+ integrations. Building this in-house would be a multi-month effort with ongoing maintenance burden. See [[ADR-001 Nango as Integration Infrastructure]]. | Direct OAuth implementation per provider; Unified.to; Merge.dev |
-| 2026-02-13 | Store integration catalog in the database (not code) | Database-stored definitions allow catalog queries via standard JPA, Flyway-managed versioning, and future admin UI management. Code-based enums would require redeployment to add integrations. | Kotlin enum class; YAML configuration file; External catalog service |
+| 2026-02-13 | Store integration catalog in the database (not code) | Database-stored definitions allow catalog queries via standard JPA, Flyway-managed versioning, and future admin UI management. Code-based enums would require redeployment to add integrations. Refined by [[ADR-004 Declarative-First Storage for Integration Mappings and Entity Templates]]: catalog definitions are authored as JSON manifests in the repo and loaded into the database on startup, replacing direct SQL seed migrations as the authoring format. | Kotlin enum class; YAML configuration file; External catalog service |
 | 2026-02-13 | 10-state connection lifecycle with `canTransitionTo()` state machine | Connections pass through multiple stages (authorization, syncing, error recovery, disconnection). A state machine prevents invalid transitions that could leave connections in inconsistent states. The `canTransitionTo()` method centralizes transition rules in the enum itself. | Simpler 3-state model (PENDING, ACTIVE, INACTIVE); External state machine library |
 | 2026-02-13 | One connection per integration per workspace | Enforced by `UNIQUE(workspace_id, integration_id)`. Simplifies connection management and avoids confusion about which connection is active. A workspace connecting to HubSpot has exactly one HubSpot connection. | Allow multiple connections per integration (e.g., connecting two HubSpot accounts); no constraint (managed in application logic) |
 | 2026-02-13 | No REST controllers in Phase 1 | The service layer needs to be stable and tested before exposing it via HTTP. Controllers require additional design decisions (request/response DTOs, error handling, pagination) that are better addressed when the full user flow is designed. | Build controllers alongside services; API-first development |
@@ -538,6 +538,7 @@ Flyway manages execution order automatically. Migrations V001 and V002 ([[Entity
 ## Related Documents
 
 - [[ADR-001 Nango as Integration Infrastructure]]
+- [[ADR-004 Declarative-First Storage for Integration Mappings and Entity Templates]]
 - [[Flow Integration Connection Lifecycle]]
 - [[Entity Integration Sync]]
 - [[Entity Provenance Tracking]]

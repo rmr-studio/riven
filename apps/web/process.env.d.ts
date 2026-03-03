@@ -2,6 +2,9 @@ declare namespace NodeJS {
   interface ProcessEnv {
     NODE_ENV: 'development' | 'production' | 'test';
 
+    /** Resend API key — server-only, never expose to client */
+    RESEND_API_KEY: string;
+
     /** Supabase project URL */
     NEXT_PUBLIC_SUPABASE_URL: string;
     /** Supabase anonymous/public key */

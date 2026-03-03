@@ -103,6 +103,21 @@ class InvalidTypeBranchException(
 ) : QueryFilterException("Type branch $entityTypeId for relationship $relationshipId: $reason")
 
 /**
+ * Thrown when an unsupported condition type is used with IsRelatedTo.
+ *
+ * IsRelatedTo only supports Exists and NotExists conditions.
+ * Conditions like TargetEquals, TargetMatches, TargetTypeMatches, and
+ * CountMatches are not valid for cross-definition relationship checks.
+ *
+ * @property conditionType The name of the unsupported condition
+ */
+class UnsupportedIsRelatedToConditionException(
+    val conditionType: String,
+) : QueryFilterException(
+    "IsRelatedTo only supports Exists and NotExists conditions, got: $conditionType"
+)
+
+/**
  * Wrapper exception containing all validation errors collected during
  * a single filter tree validation pass.
  *

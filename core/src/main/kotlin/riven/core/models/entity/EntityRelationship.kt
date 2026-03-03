@@ -1,6 +1,7 @@
 package riven.core.models.entity
 
 import riven.core.entity.util.AuditableModel
+import riven.core.enums.integration.SourceType
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -15,6 +16,8 @@ data class EntityRelationship(
     val sourceEntity: Entity? = null, // Can be hydrated if needed
     val targetEntityId: UUID,
     val targetEntity: Entity? = null,
+    val semanticContext: String? = null,
+    val linkSource: SourceType = SourceType.USER_CREATED,
     override var createdAt: ZonedDateTime? = null,
     override var updatedAt: ZonedDateTime? = null,
     override var createdBy: UUID? = null,

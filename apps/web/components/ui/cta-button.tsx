@@ -32,7 +32,9 @@ export const CtaButton: FC<Props> = ({ children, className, size = 'default' }) 
         )}
       >
         {children}
-        <ChevronRight className={cn('transition-transform group-hover:translate-x-0.5', iconSizes[size])} />
+        <ChevronRight
+          className={cn('transition-transform group-hover:translate-x-0.5', iconSizes[size])}
+        />
       </Button>
     </HoverBorderGradient>
   );

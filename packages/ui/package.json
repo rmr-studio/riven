@@ -20,7 +20,8 @@
     "./accordion": "./src/accordion.tsx",
     "./table": "./src/table.tsx",
     "./command": "./src/command.tsx",
-    "./logo": "./src/logo.tsx"
+    "./logo": "./src/logo.tsx",
+    "./theme-toggle": "./src/theme-toggle.tsx"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
@@ -39,6 +40,7 @@
     "radix-ui": "^1.4.3"
   },
   "peerDependencies": {
+    "next-themes": "^0.4.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

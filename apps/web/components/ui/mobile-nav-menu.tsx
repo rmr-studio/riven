@@ -1,17 +1,13 @@
 'use client';
 
 import { LinkProps, NavbarProps } from '@/lib/interface';
-
-import { scrollToSection } from '@/lib/scroll';
 import { Logo } from '@riven/ui/logo';
 import { Github, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import React, { Dispatch, FC, useState } from 'react';
+import { ThemeToggle } from '@riven/ui/theme-toggle';
 import { Button } from './button';
-import { CtaButton } from './cta-button';
-import { ThemeToggle } from './theme-toggle';
 
 interface MobileNavbarExtendedProps extends NavbarProps {
   open?: boolean;
@@ -24,7 +20,6 @@ export const MobileNavbar: FC<MobileNavbarExtendedProps> = ({
   className,
   open: externalOpen,
   setOpen: externalSetOpen,
-  showTrigger = true,
 }) => {
   const [internalOpen, setInternalOpen] = useState<boolean>(false);
 
@@ -33,191 +28,144 @@ export const MobileNavbar: FC<MobileNavbarExtendedProps> = ({
   const setIsOpen = externalSetOpen !== undefined ? externalSetOpen : setInternalOpen;
 
   return (
-    <>
-      <AnimatePresence>
-        {isOpen ? <LinkSection links={links} toggle={setIsOpen} className={className} /> : null}
-      </AnimatePresence>
-    </>
+    <AnimatePresence>
+      {isOpen ? <DrawerSheet links={links} toggle={setIsOpen} className={className} /> : null}
+    </AnimatePresence>
   );
 };
 
-const mobileLinkVars = {
-  initial: {
-    translateX: '-100%',
-    opacity: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0.37, 0, 0.63, 1] as const,
-    },
+/* ─── animation variants ─── */
+
+const backdropVars = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] as const } },
+  exit: { opacity: 0, transition: { delay: 0.3, duration: 0.25 } },
+};
+
+const drawerVars = {
+  initial: { y: '100%' },
+  animate: {
+    y: '0%',
+    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const },
   },
-  open: {
-    opacity: 1,
-    translateX: '0%',
-    y: 0,
-    transition: {
-      ease: [0, 0.55, 0.45, 1] as const,
-      duration: 0.35,
-    },
+  exit: {
+    y: '100%',
+    transition: { delay: 0.15, duration: 0.35, ease: [0.55, 0, 1, 0.45] as const },
   },
 };
 
-const menuVars = {
+const staggerContainer = {
+  initial: { transition: { staggerChildren: 0.04, staggerDirection: -1 } },
+  animate: { transition: { staggerChildren: 0.07 } },
+  exit: { transition: { staggerChildren: 0.03, staggerDirection: -1 } },
+};
+
+const linkBlockVars = {
   initial: {
     opacity: 0,
-    scaleY: 0.75,
+    y: 8,
   },
   animate: {
     opacity: 1,
-    scaleY: 1,
-    transition: {
-      duration: 0.25,
-      ease: [0.12, 0, 0.39, 0] as const,
-    },
+    y: 0,
+    transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] as const },
   },
   exit: {
     opacity: 0,
-    scaleY: 0.75,
-    transition: {
-      delay: 0.5,
-      duration: 0.25,
-      ease: [0.22, 1, 0.36, 1] as const,
-    },
+    y: 8,
+    transition: { duration: 0.15 },
   },
 };
-const containerVars = {
-  initial: {
-    transition: {
-      staggerChildren: 0.04,
-      staggerDirection: -1,
-    },
-  },
-  open: {
-    transition: {
-      delayChildren: 0.2,
-      staggerChildren: 0.04,
-      staggerDirection: 1,
-    },
-  },
-};
+
+/* ─── drawer ─── */
 
 interface NavbarMenuProps extends NavbarProps {
   toggle: Dispatch<React.SetStateAction<boolean>>;
 }
 
-const LinkSection: FC<NavbarMenuProps> = ({ links, toggle }) => {
-  const pathName = usePathname();
-
+const DrawerSheet: FC<NavbarMenuProps> = ({ links, toggle }) => {
   return (
     <motion.div
-      onClick={() => {
-        toggle(false);
-      }}
-      initial={{
-        opacity: 0,
-      }}
-      animate={{
-        opacity: 1,
-      }}
-      exit={{
-        opacity: 0,
-        transition: {
-          delay: 1,
-        },
-      }}
-      className="fixed inset-0 z-[100] h-screen w-screen bg-neutral-950/90"
+      onClick={() => toggle(false)}
+      variants={backdropVars}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="fixed inset-0 z-[100] bg-neutral-950/50 backdrop-blur-sm"
     >
-      <motion.aside
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-        className="absolute top-0 left-0 z-[99] h-screen w-full origin-top border-t-2 bg-background md:hidden"
-        variants={menuVars}
+      <motion.div
+        onClick={(e) => e.stopPropagation()}
+        variants={drawerVars}
         initial="initial"
         animate="animate"
         exit="exit"
+        className="absolute right-0 bottom-0 left-2 z-[101] rounded-tl-md border-t border-border/20 bg-background"
       >
-        <div className="flex h-[6rem] w-full items-center justify-between p-4">
-          <Link href={'/'} onClick={() => toggle(false)} className="flex items-center gap-2 px-2">
-            <Logo size={32} />
-            <div className="mt-1 font-serif text-2xl font-bold text-logo-primary">Riven</div>
-          </Link>
-
-          <div className="flex items-center gap-2">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 pt-5 pb-3">
+          <div className="flex items-center gap-3">
+            <Link href="/" onClick={() => toggle(false)} className="flex items-center gap-1.5">
+              <Logo size={22} />
+              <span className="mt-0.5 font-serif text-lg font-bold text-logo-primary">Riven</span>
+            </Link>
             <Link
               href="https://github.com/rivenmedia/riven"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted-foreground transition-colors hover:text-foreground"
+              className="ml-1 text-muted-foreground transition-colors hover:text-foreground"
             >
-              <Github className="size-5" />
+              <Github className="size-[18px]" />
             </Link>
             <ThemeToggle />
-            <Button
-              variant={'ghost'}
-              size={'icon'}
-              onClick={() => toggle(false)}
-              className="size-12"
-            >
-              <X className="size-8" />
-            </Button>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => toggle(false)}
+            className="size-9 text-muted-foreground hover:text-foreground"
+          >
+            <X className="size-5" />
+          </Button>
         </div>
-        <motion.div
-          variants={containerVars}
+
+        {/* Links + CTA */}
+        <motion.nav
+          variants={staggerContainer}
           initial="initial"
-          animate="open"
-          exit="initial"
-          className="group my-36 flex flex-col gap-4 px-12 text-center"
+          animate="animate"
+          exit="exit"
+          className="px-6 pt-4 pb-10"
         >
-          {links.map((link, index) => {
-            return (
+          <div className="ml-2">
+            {links.map((link, index) => (
               <MobileNavLink
-                toggle={toggle}
                 key={`mobile-link-${index}`}
+                toggle={toggle}
                 label={link.label}
                 href={link.href}
-                active={false}
                 external={link.external}
                 shouldCloseOnClick={link.shouldCloseOnClick}
               />
-            );
-          })}
-        </motion.div>
-        <motion.div
-          initial={{
-            opacity: 0,
-          }}
-          animate={{
-            opacity: 1,
-            transition: {
-              delay: 0.4,
-            },
-          }}
-          exit={{
-            opacity: 0,
-            transition: {},
-          }}
-          className="flex h-auto w-full grow px-12"
-        >
-          <Link
-            href="/#waitlist"
-            onClick={(e) => {
-              e.preventDefault();
-              toggle(false);
-              scrollToSection('waitlist');
-            }}
-          >
-            <CtaButton size="sm">Join the waitlist</CtaButton>
-          </Link>
-        </motion.div>
-      </motion.aside>
+            ))}
+            <MobileNavLink
+              key={`mobile-link-cta`}
+              toggle={toggle}
+              label={'Join the waitlist'}
+              href="/#waitlist"
+              external={false}
+              shouldCloseOnClick={true}
+            />
+          </div>
+        </motion.nav>
+      </motion.div>
     </motion.div>
   );
 };
 
+/* ─── link item ─── */
+
 interface NavbarItemProps extends LinkProps {
   toggle: Dispatch<React.SetStateAction<boolean>>;
-  active: boolean;
 }
 
 const MobileNavLink: FC<NavbarItemProps> = ({
@@ -236,23 +184,23 @@ const MobileNavLink: FC<NavbarItemProps> = ({
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
       window.history.replaceState(null, '', `#${hash}`);
-      if (shouldCloseOnClick) {
-        toggle(false);
-      }
-    } else {
-      if (shouldCloseOnClick) {
-        toggle(false);
-      }
+    }
+    if (shouldCloseOnClick) {
+      toggle(false);
     }
   };
 
   return (
-    <motion.div
-      variants={mobileLinkVars}
-      className="text-secondary-header pointer-events-auto text-3xl font-semibold uppercase group-hover:text-foreground/40 hover:group-hover:text-secondary-foreground"
-    >
-      <Link href={href} onClick={handleClick} target={external ? '_blank' : '_self'}>
-        <div className="flex w-fit items-center space-x-3 py-1 transition-colors">{label}</div>
+    <motion.div variants={linkBlockVars}>
+      <Link
+        href={href}
+        onClick={handleClick}
+        target={external ? '_blank' : '_self'}
+        className="group flex items-center border border-border border-t-transparent border-r-transparent py-3.5 pl-4 transition-colors hover:border-foreground/60"
+      >
+        <span className="text-lg font-semibold tracking-wide text-muted-foreground uppercase transition-colors group-hover:text-foreground">
+          {label}
+        </span>
       </Link>
     </motion.div>
   );

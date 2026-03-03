@@ -14,6 +14,8 @@ import riven.core.entity.entity.EntityRelationshipEntity
 import riven.core.enums.common.icon.IconColour
 import riven.core.enums.common.icon.IconType
 import riven.core.enums.entity.EntityRelationshipCardinality
+import riven.core.enums.entity.semantics.SemanticGroup
+import riven.core.enums.entity.SystemRelationshipType
 import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.exceptions.InvalidRelationshipException
 import riven.core.models.common.Icon
@@ -21,14 +23,17 @@ import riven.core.models.entity.RelationshipDefinition
 import riven.core.models.entity.RelationshipTargetRule
 import riven.core.enums.common.validation.SchemaType
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
+import riven.core.projection.entity.SemanticGroupProjection
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityRepository
+import riven.core.repository.entity.EntityTypeRepository
 import riven.core.repository.entity.RelationshipDefinitionRepository
 import riven.core.repository.entity.RelationshipTargetRuleRepository
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.util.BaseServiceTest
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
+import riven.core.service.util.factory.entity.EntityFactory
 import java.util.*
 
 @SpringBootTest(
@@ -62,10 +67,19 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
     private lateinit var entityRepository: EntityRepository
 
     @MockitoBean
+    private lateinit var entityTypeRepository: EntityTypeRepository
+
+    @MockitoBean
     private lateinit var definitionRepository: RelationshipDefinitionRepository
 
     @MockitoBean
     private lateinit var targetRuleRepository: RelationshipTargetRuleRepository
+
+    @MockitoBean
+    private lateinit var entityTypeRelationshipService: riven.core.service.entity.type.EntityTypeRelationshipService
+
+    @MockitoBean
+    private lateinit var activityService: riven.core.service.activity.ActivityService
 
     @Autowired
     private lateinit var service: EntityRelationshipService
@@ -78,9 +92,17 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
         reset(
             entityRelationshipRepository,
             entityRepository,
+            entityTypeRepository,
             definitionRepository,
             targetRuleRepository,
         )
+
+        // Default: resolve any entity type IDs to UNCATEGORIZED semantic group
+        whenever(entityTypeRepository.findSemanticGroupsByIds(any())).thenAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            val ids = invocation.arguments[0] as Collection<UUID>
+            ids.map { typeId -> mockSemanticGroupProjection(typeId, SemanticGroup.UNCATEGORIZED) }
+        }
     }
 
     // ------ Helper builders ------
@@ -111,7 +133,7 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
         id: UUID = UUID.randomUUID(),
         definitionId: UUID = UUID.randomUUID(),
         targetEntityTypeId: UUID? = UUID.randomUUID(),
-        semanticTypeConstraint: String? = null,
+        semanticTypeConstraint: SemanticGroup? = null,
         cardinalityOverride: EntityRelationshipCardinality? = null,
         inverseVisible: Boolean = false,
         inverseName: String? = null,
@@ -143,6 +165,12 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
         iconType = IconType.CIRCLE_DASHED,
         iconColour = IconColour.NEUTRAL,
     )
+
+    private fun mockSemanticGroupProjection(id: UUID, group: SemanticGroup): SemanticGroupProjection =
+        object : SemanticGroupProjection {
+            override fun getId(): UUID = id
+            override fun getSemanticGroup(): SemanticGroup = group
+        }
 
     // ------ Save: new links ------
 
@@ -458,7 +486,7 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
             .thenReturn(emptyList())
         whenever(entityRepository.findAllById(any<Collection<UUID>>()))
             .thenReturn(listOf(entityA1, entityB1, entityB2))
-        whenever(entityRelationshipRepository.findByTargetIdAndDefinitionId(eq(targetA1), eq(defId)))
+        whenever(entityRelationshipRepository.findByTargetIdInAndDefinitionIdForUpdate(any(), eq(defId)))
             .thenReturn(emptyList())
         whenever(entityRelationshipRepository.saveAll(any<List<EntityRelationshipEntity>>())).thenAnswer { it.arguments[0] }
 
@@ -497,7 +525,7 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
         whenever(entityRepository.findAllById(any<Collection<UUID>>()))
             .thenReturn(listOf(targetEntity))
         // Another source already links to this target
-        whenever(entityRelationshipRepository.findByTargetIdAndDefinitionId(targetId, defId))
+        whenever(entityRelationshipRepository.findByTargetIdInAndDefinitionIdForUpdate(any(), eq(defId)))
             .thenReturn(listOf(
                 EntityRelationshipEntity(
                     id = UUID.randomUUID(),
@@ -550,8 +578,8 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
         )
 
         verify(entityRelationshipRepository).saveAll(argThat<List<EntityRelationshipEntity>> { size == 1 })
-        // Should NOT call findByTargetIdAndDefinitionId for MANY_TO_MANY
-        verify(entityRelationshipRepository, never()).findByTargetIdAndDefinitionId(any(), any())
+        // Should NOT call findByTargetIdInAndDefinitionIdForUpdate for MANY_TO_MANY
+        verify(entityRelationshipRepository, never()).findByTargetIdInAndDefinitionIdForUpdate(any(), any())
     }
 
     // ------ Diff logic ------
@@ -663,7 +691,7 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
             .thenReturn(listOf(existingRel))
         // Only newTarget is in the final state (existingTarget is being removed)
         whenever(entityRepository.findAllById(any<Collection<UUID>>())).thenReturn(listOf(newEntity))
-        whenever(entityRelationshipRepository.findByTargetIdAndDefinitionId(newTarget, defId))
+        whenever(entityRelationshipRepository.findByTargetIdInAndDefinitionIdForUpdate(any(), eq(defId)))
             .thenReturn(emptyList())
         whenever(entityRelationshipRepository.saveAll(any<List<EntityRelationshipEntity>>())).thenAnswer { it.arguments[0] }
 
@@ -750,7 +778,7 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
         whenever(entityRepository.findAllById(any<Collection<UUID>>()))
             .thenReturn(listOf(targetEntity))
         // Another source already links to this target
-        whenever(entityRelationshipRepository.findByTargetIdAndDefinitionId(targetId, defId))
+        whenever(entityRelationshipRepository.findByTargetIdInAndDefinitionIdForUpdate(any(), eq(defId)))
             .thenReturn(listOf(
                 EntityRelationshipEntity(
                     id = UUID.randomUUID(),
@@ -795,9 +823,7 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
         whenever(entityRepository.findAllById(any<Collection<UUID>>()))
             .thenReturn(listOf(targetEntity1, targetEntity2))
         // Neither target is linked by another source
-        whenever(entityRelationshipRepository.findByTargetIdAndDefinitionId(eq(targetId1), eq(defId)))
-            .thenReturn(emptyList())
-        whenever(entityRelationshipRepository.findByTargetIdAndDefinitionId(eq(targetId2), eq(defId)))
+        whenever(entityRelationshipRepository.findByTargetIdInAndDefinitionIdForUpdate(any(), eq(defId)))
             .thenReturn(emptyList())
         whenever(entityRelationshipRepository.saveAll(any<List<EntityRelationshipEntity>>())).thenAnswer { it.arguments[0] }
 
@@ -838,9 +864,7 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
             .thenReturn(emptyList())
         whenever(entityRepository.findAllById(any<Collection<UUID>>()))
             .thenReturn(listOf(entityA1, entityB1))
-        whenever(entityRelationshipRepository.findByTargetIdAndDefinitionId(eq(targetA1), eq(defId)))
-            .thenReturn(emptyList())
-        whenever(entityRelationshipRepository.findByTargetIdAndDefinitionId(eq(targetB1), eq(defId)))
+        whenever(entityRelationshipRepository.findByTargetIdInAndDefinitionIdForUpdate(any(), eq(defId)))
             .thenReturn(emptyList())
         whenever(entityRelationshipRepository.saveAll(any<List<EntityRelationshipEntity>>())).thenAnswer { it.arguments[0] }
 
@@ -898,14 +922,14 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
     fun `findRelatedEntities - forward - returns targets`() {
         whenever(entityRelationshipRepository.findEntityLinksBySourceId(sourceEntityId, workspaceId))
             .thenReturn(emptyList())
-        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(sourceEntityId, workspaceId))
+        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(eq(sourceEntityId), eq(workspaceId), eq(SystemRelationshipType.CONNECTED_ENTITIES.name)))
             .thenReturn(emptyList())
 
         val result = service.findRelatedEntities(sourceEntityId, workspaceId)
 
         assertTrue(result.isEmpty())
         verify(entityRelationshipRepository).findEntityLinksBySourceId(sourceEntityId, workspaceId)
-        verify(entityRelationshipRepository).findInverseEntityLinksByTargetId(sourceEntityId, workspaceId)
+        verify(entityRelationshipRepository).findInverseEntityLinksByTargetId(eq(sourceEntityId), eq(workspaceId), eq(SystemRelationshipType.CONNECTED_ENTITIES.name))
     }
 
     @Test
@@ -937,7 +961,7 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
 
         whenever(entityRelationshipRepository.findEntityLinksBySourceId(sourceEntityId, workspaceId))
             .thenReturn(listOf(forwardProjection))
-        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(sourceEntityId, workspaceId))
+        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(eq(sourceEntityId), eq(workspaceId), eq(SystemRelationshipType.CONNECTED_ENTITIES.name)))
             .thenReturn(listOf(inverseProjection))
 
         val result = service.findRelatedEntities(sourceEntityId, workspaceId)
@@ -953,7 +977,7 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
         // This test verifies the service correctly delegates to both queries.
         whenever(entityRelationshipRepository.findEntityLinksBySourceId(sourceEntityId, workspaceId))
             .thenReturn(emptyList())
-        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(sourceEntityId, workspaceId))
+        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(eq(sourceEntityId), eq(workspaceId), eq(SystemRelationshipType.CONNECTED_ENTITIES.name)))
             .thenReturn(emptyList()) // repo returns nothing for inverse-invisible
 
         val result = service.findRelatedEntities(sourceEntityId, workspaceId)
@@ -989,12 +1013,168 @@ class EntityRelationshipServiceTest : BaseServiceTest() {
 
         whenever(entityRelationshipRepository.findEntityLinksBySourceId(sourceEntityId, workspaceId))
             .thenReturn(listOf(forwardProjection))
-        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(sourceEntityId, workspaceId))
+        whenever(entityRelationshipRepository.findInverseEntityLinksByTargetId(eq(sourceEntityId), eq(workspaceId), eq(SystemRelationshipType.CONNECTED_ENTITIES.name)))
             .thenReturn(listOf(inverseProjection))
 
         val result = service.findRelatedEntities(sourceEntityId, workspaceId)
 
         assertEquals(1, result.size)
         assertEquals(2, result[defId]!!.size)
+    }
+
+    // ------ Semantic group matching ------
+
+    @Test
+    fun `saveRelationships - semantic rule matches target with matching group`() {
+        val defId = UUID.randomUUID()
+        val targetId = UUID.randomUUID()
+        val targetTypeId = UUID.randomUUID()
+
+        val targetEntity = buildEntity(id = targetId, typeId = targetTypeId)
+        val rule = buildTargetRule(
+            definitionId = defId,
+            targetEntityTypeId = null,
+            semanticTypeConstraint = SemanticGroup.CUSTOMER,
+        )
+        val definition = buildDefinition(id = defId, targetRules = listOf(rule))
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(emptyList())
+        whenever(entityRepository.findAllById(any<Collection<UUID>>())).thenReturn(listOf(targetEntity))
+        whenever(entityRelationshipRepository.saveAll(any<List<EntityRelationshipEntity>>())).thenAnswer { it.arguments[0] }
+
+        // Override default: return entity type with CUSTOMER semantic group
+        whenever(entityTypeRepository.findSemanticGroupsByIds(any())).thenReturn(
+            listOf(mockSemanticGroupProjection(targetTypeId, SemanticGroup.CUSTOMER))
+        )
+
+        service.saveRelationships(
+            id = sourceEntityId,
+            workspaceId = workspaceId,
+            definitionId = defId,
+            definition = definition,
+            targetIds = listOf(targetId),
+        )
+
+        verify(entityRelationshipRepository).saveAll(any<List<EntityRelationshipEntity>>())
+    }
+
+    @Test
+    fun `saveRelationships - semantic rule rejects target with non-matching group`() {
+        val defId = UUID.randomUUID()
+        val targetId = UUID.randomUUID()
+        val targetTypeId = UUID.randomUUID()
+
+        val targetEntity = buildEntity(id = targetId, typeId = targetTypeId)
+        val rule = buildTargetRule(
+            definitionId = defId,
+            targetEntityTypeId = null,
+            semanticTypeConstraint = SemanticGroup.CUSTOMER,
+        )
+        val definition = buildDefinition(id = defId, targetRules = listOf(rule))
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(emptyList())
+        whenever(entityRepository.findAllById(any<Collection<UUID>>())).thenReturn(listOf(targetEntity))
+
+        // Target type has PRODUCT group, but rule requires CUSTOMER
+        whenever(entityTypeRepository.findSemanticGroupsByIds(any())).thenReturn(
+            listOf(mockSemanticGroupProjection(targetTypeId, SemanticGroup.PRODUCT))
+        )
+
+        assertThrows(IllegalArgumentException::class.java) {
+            service.saveRelationships(
+                id = sourceEntityId,
+                workspaceId = workspaceId,
+                definitionId = defId,
+                definition = definition,
+                targetIds = listOf(targetId),
+            )
+        }
+    }
+
+    @Test
+    fun `saveRelationships - UNCATEGORIZED target does not match semantic rules`() {
+        val defId = UUID.randomUUID()
+        val targetId = UUID.randomUUID()
+        val targetTypeId = UUID.randomUUID()
+
+        val targetEntity = buildEntity(id = targetId, typeId = targetTypeId)
+        val rule = buildTargetRule(
+            definitionId = defId,
+            targetEntityTypeId = null,
+            semanticTypeConstraint = SemanticGroup.CUSTOMER,
+        )
+        val definition = buildDefinition(id = defId, targetRules = listOf(rule))
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(emptyList())
+        whenever(entityRepository.findAllById(any<Collection<UUID>>())).thenReturn(listOf(targetEntity))
+
+        // Target type is UNCATEGORIZED — should not match semantic rules
+        whenever(entityTypeRepository.findSemanticGroupsByIds(any())).thenReturn(
+            listOf(mockSemanticGroupProjection(targetTypeId, SemanticGroup.UNCATEGORIZED))
+        )
+
+        assertThrows(IllegalArgumentException::class.java) {
+            service.saveRelationships(
+                id = sourceEntityId,
+                workspaceId = workspaceId,
+                definitionId = defId,
+                definition = definition,
+                targetIds = listOf(targetId),
+            )
+        }
+    }
+
+    @Test
+    fun `saveRelationships - exact type ID rule takes precedence over semantic match`() {
+        val defId = UUID.randomUUID()
+        val targetId = UUID.randomUUID()
+        val targetTypeId = UUID.randomUUID()
+
+        val targetEntity = buildEntity(id = targetId, typeId = targetTypeId)
+
+        val typeIdRule = buildTargetRule(
+            definitionId = defId,
+            targetEntityTypeId = targetTypeId,
+            cardinalityOverride = EntityRelationshipCardinality.ONE_TO_ONE,
+        )
+        val semanticRule = buildTargetRule(
+            definitionId = defId,
+            targetEntityTypeId = null,
+            semanticTypeConstraint = SemanticGroup.CUSTOMER,
+            cardinalityOverride = EntityRelationshipCardinality.MANY_TO_MANY,
+        )
+        val definition = buildDefinition(
+            id = defId,
+            targetRules = listOf(typeIdRule, semanticRule),
+            cardinalityDefault = EntityRelationshipCardinality.MANY_TO_MANY,
+        )
+
+        whenever(entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceEntityId, defId))
+            .thenReturn(emptyList())
+        whenever(entityRepository.findAllById(any<Collection<UUID>>())).thenReturn(listOf(targetEntity))
+        whenever(entityRelationshipRepository.saveAll(any<List<EntityRelationshipEntity>>())).thenAnswer { it.arguments[0] }
+
+        // Target has CUSTOMER group, so semantic rule would match — but type ID rule should take precedence
+        whenever(entityTypeRepository.findSemanticGroupsByIds(any())).thenReturn(
+            listOf(mockSemanticGroupProjection(targetTypeId, SemanticGroup.CUSTOMER))
+        )
+
+        // ONE_TO_ONE: target-side enforcement checks existing links
+        whenever(entityRelationshipRepository.findByTargetIdInAndDefinitionIdForUpdate(any(), eq(defId)))
+            .thenReturn(emptyList())
+
+        service.saveRelationships(
+            id = sourceEntityId,
+            workspaceId = workspaceId,
+            definitionId = defId,
+            definition = definition,
+            targetIds = listOf(targetId),
+        )
+
+        // Should succeed — type ID rule matched (ONE_TO_ONE with 1 target is valid)
+        verify(entityRelationshipRepository).saveAll(any<List<EntityRelationshipEntity>>())
     }
 }
