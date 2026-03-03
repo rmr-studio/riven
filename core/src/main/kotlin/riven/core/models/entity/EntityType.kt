@@ -1,6 +1,7 @@
 package riven.core.models.entity
 
 import riven.core.entity.util.AuditableModel
+import riven.core.enums.entity.semantics.SemanticGroup
 import riven.core.models.common.Icon
 import riven.core.models.common.display.DisplayName
 import riven.core.models.common.validation.Schema
@@ -33,7 +34,7 @@ data class EntityType(
      * The attribute used as the identifier key must be set to unique within the schema.
      */
     val identifierKey: UUID,
-    val description: String?,
+    val semanticGroup: SemanticGroup = SemanticGroup.UNCATEGORIZED,
     val workspaceId: UUID?,
     // Schema will always be created with a unique, non-nullable 'name' attribute
     // Each attribute in the schema will be uniquely identified with a UUID key
@@ -41,6 +42,8 @@ data class EntityType(
     // Configuration for how attributes are displayed in tabular/list views (ie. Column ordering, widths, etc)
     val columns: List<EntityTypeAttributeColumn>,
     val entitiesCount: Long = 0L,
+    val relationships: List<RelationshipDefinition> = emptyList(),
+    val semantics: SemanticMetadataBundle? = null,
     override var createdAt: ZonedDateTime?,
     override var updatedAt: ZonedDateTime?,
     override var createdBy: UUID?,

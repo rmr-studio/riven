@@ -23,6 +23,7 @@ Visitor that traverses QueryFilter trees and produces SqlFragment output, dispat
 - Walk filter tree recursively with depth tracking
 - Dispatch attribute filters to AttributeSqlGenerator
 - Dispatch relationship filters to RelationshipSqlGenerator
+- Dispatch IsRelatedTo filters to RelationshipSqlGenerator (bidirectional cross-definition check)
 - Combine fragments with AND/OR logic
 - Enforce AND/OR nesting depth limit (prevents excessive SQL complexity)
 - Enforce relationship traversal depth limit (prevents expensive subqueries)
@@ -73,6 +74,7 @@ Visitor that traverses QueryFilter trees and produces SqlFragment output, dispat
 - `QueryFilter.Or` → visit all conditions, combine with `or()`
 - `QueryFilter.Attribute` → delegate to AttributeSqlGenerator
 - `QueryFilter.Relationship` → delegate to RelationshipSqlGenerator with nested callback. Looks up direction from `relationshipDirections` map (defaults to FORWARD) and passes to RelationshipSqlGenerator.
+- `QueryFilter.IsRelatedTo` → delegate to RelationshipSqlGenerator.generateIsRelatedTo (no direction needed — checks both)
 
 **Template handling:**
 
@@ -133,3 +135,4 @@ Entry point for filter tree traversal. Returns SQL fragment with parameterized S
 | Date | Change | Reason |
 | ---- | ------ | ------ |
 | 2026-02-21 | Added `relationshipDirections` parameter for FORWARD/INVERSE query direction support | Entity Relationships |
+| 2026-03-01 | Added `IsRelatedTo` dispatch to `visitIsRelatedTo` — delegates to `RelationshipSqlGenerator.generateIsRelatedTo` for bidirectional cross-definition existence checks | Entity Connections |

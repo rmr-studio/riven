@@ -21,6 +21,7 @@ flowchart TD
     C --> D{Filter Type?}
     D -->|Attribute Filter| E[AttributeSqlGenerator]
     D -->|Relationship Filter| F[RelationshipSqlGenerator]
+    D -->|IsRelatedTo Filter| F
     E --> G[SqlFragment]
     F --> G
     B --> H[Assemble SqlFragments into AssembledQuery]
@@ -35,6 +36,7 @@ The query pipeline flow:
 3. **AttributeFilterVisitor** traverses the filter AST
 4. **AttributeSqlGenerator** generates SQL for JSONB attribute filters
 5. **RelationshipSqlGenerator** generates EXISTS subqueries for relationship filters
+5b. **RelationshipSqlGenerator** also generates bidirectional EXISTS subqueries for IsRelatedTo filters (cross-definition existence checks)
 6. SQL fragments combine into **AssembledQuery** (paired data/count queries)
 7. **EntityQueryService** executes the assembled queries via JdbcTemplate
 
@@ -66,3 +68,4 @@ The query pipeline flow:
 | ---- | ------ | ----------- |
 | 2026-02-08 | Subdomain overview created with pipeline diagram | [[02-01-PLAN]] |
 | 2026-02-21 | Query pipeline updated with FORWARD/INVERSE direction support. EntityQueryService now loads relationship definitions for direction resolution. RelationshipSqlGenerator accepts QueryDirection parameter. | Entity Relationships |
+| 2026-03-01 | Added IS_RELATED_TO filter support — new QueryFilter.IsRelatedTo variant, bidirectional EXISTS generation in RelationshipSqlGenerator, pass-through in AttributeFilterVisitor, no-op in QueryFilterValidator | Entity Connections |

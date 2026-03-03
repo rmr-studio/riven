@@ -11,8 +11,8 @@ import riven.core.models.entity.EntityType
 import riven.core.models.request.entity.type.CreateEntityTypeRequest
 import riven.core.models.request.entity.type.DeleteTypeDefinitionRequest
 import riven.core.models.request.entity.type.SaveTypeDefinitionRequest
+import riven.core.models.request.entity.type.UpdateEntityTypeConfigurationRequest
 import riven.core.models.response.entity.type.EntityTypeImpactResponse
-import riven.core.models.response.entity.type.EntityTypeWithSemanticsResponse
 import riven.core.service.entity.type.EntityTypeService
 import java.util.*
 
@@ -26,8 +26,8 @@ class EntityTypeController(
     @GetMapping("workspace/{workspaceId}")
     @Operation(
         summary = "Get all entity types for a workspace",
-        description = "Retrieves all entity types associated with the specified workspace. " +
-            "Pass `?include=semantics` to attach semantic metadata bundles alongside each entity type."
+        description = "Retrieves all entity types associated with the specified workspace, " +
+            "including relationship definitions and semantic metadata bundles."
     )
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "Entity types retrieved successfully"),
@@ -36,16 +36,15 @@ class EntityTypeController(
     )
     fun getEntityTypesForWorkspace(
         @PathVariable workspaceId: UUID,
-        @RequestParam(required = false) include: List<String> = emptyList(),
-    ): ResponseEntity<List<EntityTypeWithSemanticsResponse>> {
-        return ResponseEntity.ok(entityTypeService.getWorkspaceEntityTypesWithIncludes(workspaceId, include))
+    ): ResponseEntity<List<EntityType>> {
+        return ResponseEntity.ok(entityTypeService.getWorkspaceEntityTypesWithIncludes(workspaceId))
     }
 
     @GetMapping("/workspace/{workspaceId}/key/{key}")
     @Operation(
         summary = "Get an entity type by key for a workspace",
-        description = "Retrieves a specific entity type by its key associated with the specified workspace. " +
-            "Pass `?include=semantics` to attach the semantic metadata bundle."
+        description = "Retrieves a specific entity type by its key associated with the specified workspace, " +
+            "including relationship definitions and semantic metadata bundle."
     )
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "Entity type retrieved successfully"),
@@ -55,9 +54,8 @@ class EntityTypeController(
     fun getEntityTypeByKeyForWorkspace(
         @PathVariable workspaceId: UUID,
         @PathVariable key: String,
-        @RequestParam(required = false) include: List<String> = emptyList(),
-    ): ResponseEntity<EntityTypeWithSemanticsResponse> {
-        return ResponseEntity.ok(entityTypeService.getEntityTypeByKeyWithIncludes(workspaceId, key, include))
+    ): ResponseEntity<EntityType> {
+        return ResponseEntity.ok(entityTypeService.getEntityTypeByKeyWithIncludes(workspaceId, key))
     }
 
     @PostMapping("/workspace/{workspaceId}")
@@ -90,9 +88,9 @@ class EntityTypeController(
     )
     fun updateEntityType(
         @PathVariable workspaceId: UUID,
-        @RequestBody type: EntityType,
+        @RequestBody request: UpdateEntityTypeConfigurationRequest,
     ): ResponseEntity<EntityType> {
-        val response = entityTypeService.updateEntityTypeConfiguration(workspaceId, type)
+        val response = entityTypeService.updateEntityTypeConfiguration(workspaceId, request)
         return ResponseEntity.status(HttpStatus.OK).body(response)
     }
 

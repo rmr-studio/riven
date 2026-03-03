@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import riven.core.entity.entity.RelationshipDefinitionEntity
+import riven.core.enums.entity.SystemRelationshipType
 import java.util.*
 
 @Repository
@@ -12,6 +13,11 @@ interface RelationshipDefinitionRepository : JpaRepository<RelationshipDefinitio
     fun findByWorkspaceIdAndSourceEntityTypeId(workspaceId: UUID, sourceEntityTypeId: UUID): List<RelationshipDefinitionEntity>
 
     fun findByIdAndWorkspaceId(id: UUID, workspaceId: UUID): Optional<RelationshipDefinitionEntity>
+
+    fun findBySourceEntityTypeIdAndSystemType(
+        sourceEntityTypeId: UUID,
+        systemType: SystemRelationshipType,
+    ): Optional<RelationshipDefinitionEntity>
 
     @Query("""
         SELECT rd FROM RelationshipDefinitionEntity rd

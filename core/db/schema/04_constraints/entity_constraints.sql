@@ -13,3 +13,8 @@ DROP INDEX IF EXISTS uq_entity_relationship;
 CREATE UNIQUE INDEX uq_entity_relationship
     ON public.entity_relationships (source_entity_id, relationship_definition_id, target_entity_id)
     WHERE deleted = FALSE AND deleted_at IS NULL;
+
+DROP INDEX IF EXISTS uq_relationship_definition_system_type;
+CREATE UNIQUE INDEX uq_relationship_definition_system_type
+    ON public.relationship_definitions (workspace_id, source_entity_type_id, system_type)
+    WHERE system_type IS NOT NULL AND deleted = FALSE;

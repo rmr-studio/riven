@@ -74,8 +74,8 @@ graph TD
 
 | Decision | Rationale | Alternatives Rejected |
 |----------|-----------|----------------------|
-| Nango as integration infrastructure | Handles OAuth, token refresh, rate limits for 600+ providers — avoids building integration plumbing | Custom OAuth, Merge.dev unified API, Paragon |
-| Platform-defined schema mappings | Ensures data quality, simplifies v1 — no mapping editor UI needed | User-configurable mappings (deferred to v2) |
+| Nango as integration infrastructure | Handles OAuth, token refresh, rate limits for 600+ providers — avoids building integration plumbing. See [[ADR-001 Nango as Integration Infrastructure]]. | Custom OAuth, Merge.dev unified API, Paragon |
+| Declarative-first storage for mappings and entity types | Integration entity type schemas and field mappings are defined in JSON manifest files, loaded into DB on startup, interpreted by a generic mapping engine. No per-integration Kotlin classes for standard mappings. See [[ADR-004 Declarative-First Storage for Integration Mappings and Entity Templates]]. | Per-integration code (class per integration), database-only with SQL seeds, runtime admin API |
 | Tiered identity resolution | Balances automation (high-confidence auto-links) with accuracy (uncertain matches surfaced for review) | Binary match/no-match, ML-only resolution |
 | User overrides always win | Respects user intent — manual edits are never silently overwritten by integration syncs | Most-recent-wins for all sources, source priority only |
 | Attribute-level provenance in separate table | Supports multi-source entities without bloating entity payload, enables fine-grained conflict resolution | JSONB metadata column on entities, entity-level only |
@@ -242,6 +242,7 @@ graph LR
 | 2026-02-13 | 10-state connection lifecycle | Precise UX feedback for connection health visibility | 3-state or 5-state simplified models |
 | 2026-02-13 | Five fixed source types (enum) | Clean taxonomy covers all entity creation paths | Extensible string-based types, per-integration types |
 | 2026-02-13 | Attribute-level provenance in separate table | Supports multi-source entities, enables fine-grained conflict resolution | JSONB metadata on entity, entity-level provenance only |
+| 2026-02-28 | Declarative-first storage for integration mappings and entity types | JSON manifest files in repo, loaded into DB on startup. Generic mapping engine interprets declarative definitions — no per-integration code for standard mappings. Lowers community contribution barrier and enables self-hoster extensibility. See [[ADR-004 Declarative-First Storage for Integration Mappings and Entity Templates]]. | Per-integration Kotlin classes, SQL-only seeds, runtime admin API |
 
 ---
 
@@ -251,7 +252,9 @@ graph LR
 - [[Entity Provenance Tracking]]
 - [[Integration Schema Mapping]]
 - [[Integration Identity Resolution System]]
+- [[Predefined Integration Entity Types]]
 - [[ADR-001 Nango as Integration Infrastructure]]
+- [[ADR-004 Declarative-First Storage for Integration Mappings and Entity Templates]]
 - [[Flow Integration Connection Lifecycle]]
 - [[Entities]]
 - [[Workflows]]
