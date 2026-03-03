@@ -16,25 +16,46 @@ Sub-Domain: "[[Entity Integration Sync]]"
 ## 1. Overview
 
 ### Problem Statement
-When integration data is synced from a third party tool via the infrastructure covered in [[Integration Access Layer]], The data itself is still in its raw form, and would need to be converted into an entity model that can then be integrated into the entity ecosystem. The entity model conversion should allow for internal relationships between models from the same integration to maintain existing relationships.
+When integration data is synced from a third party tool via the infrastructure covered in [[Integration Access Layer]], the data is still in its raw form and needs to be converted into an entity model that can be integrated into the entity ecosystem. The entity model conversion should allow for internal relationships between models from the same integration to maintain existing relationships.
 
-[[2. Areas/2.1 Startup & Business/Riven/2. System Design/infrastructure/Nango|Nango]] provides the ability to inject 
+Without a structured mapping layer, each integration would require bespoke transformation code — a Kotlin class per integration defining how to convert raw payloads into entity attributes. This approach does not scale: it requires code changes for every new integration, raises the barrier for community contributors, and prevents self-hosters from adding custom integrations without forking the codebase.
+
 ### Proposed Solution
 
-- Each integration platform should have its own interface definition of 
-	- Entity Type Templates
-	- Schema Mapping Guides.
-- These can then be passed to Nango to allow for all data synced via webhooks to automatically 
+Per [[ADR-004 Declarative-First Storage for Integration Mappings and Entity Templates]], schema mappings are defined **declaratively in JSON manifest files** rather than as per-integration code implementations.
 
+Each integration's manifest (`integrations/{slug}/manifest.json`) contains:
+- **Entity type schemas** — the readonly entity types this integration introduces (e.g., HubSpot Contact, Stripe Invoice)
+- **Field mappings** — declarative rules mapping source payload fields to target entity attributes, including:
+	- Direct field mapping (`source.email` → `target.email_address`)
+	- Type coercion (string → number, date format conversion)
+	- Value mapping (enum translation between external and internal values)
+	- JSONPath extraction for nested source payloads
+	- Default values for missing fields
+	- Conditional mapping (if field exists, map it; otherwise skip)
+- **Relationship definitions** — how entity types within the same integration connect to each other (e.g., HubSpot Contact → HubSpot Deal)
+- **Semantic metadata** — natural language definitions and classifications per [[Semantic Metadata Foundation]]
 
-_High-level description of the approach (2-3 sentences max)_
+A **generic mapping engine** (single stateless service, deployed once) interprets these declarative definitions at runtime. The engine:
+1. Receives a raw external payload (JSON) from the sync pipeline
+2. Looks up the field mapping definitions for the integration and model
+3. Applies mappings sequentially: extract source value → apply transform → validate type → assign to target attribute
+4. Produces an entity attribute payload ready for persistence
+
+**Custom transformation plugins** are only written for integrations with behavior that cannot be expressed declaratively. These register by name and are referenced from the manifest:
+```json
+{ "transform": { "type": "plugin", "name": "hubspot-currency-converter" } }
+```
+
+Manifests are loaded into the database on application startup by the manifest loader (see [[ADR-004 Declarative-First Storage for Integration Mappings and Entity Templates|ADR-004]]). Application code queries mapping definitions from the database at runtime, not from the filesystem.
 
 ### Success Criteria
 
-_How do we know this feature is working correctly?_
-
-- [ ] Criterion 1
-- [ ] Criterion 2
+- [ ] A raw JSON payload from any supported integration can be transformed into a valid entity attribute payload using only the declarative mapping definitions in that integration's manifest — no per-integration code required
+- [ ] The generic mapping engine handles direct mapping, type coercion, value mapping, JSONPath extraction, default values, and conditional mapping
+- [ ] Adding a new integration requires only a manifest file — no Kotlin code changes for standard field mapping patterns
+- [ ] Manifest files are validated against a JSON Schema on application startup; invalid manifests are skipped with a warning
+- [ ] Internal relationships between entity types from the same integration are preserved during mapping (e.g., HubSpot Contact references HubSpot Deal)
 
 ---
 
@@ -351,14 +372,18 @@ _Is existing data affected? How will it be migrated?_
 
 ## Related Documents
 
-- [[ADR-xxx-decision-name]]
-- [[Flow - Related Flow]]
-- [[Domain - Relevant Domain]]
+- [[ADR-004 Declarative-First Storage for Integration Mappings and Entity Templates]]
+- [[Integration Access Layer]]
+- [[Predefined Integration Entity Types]]
+- [[Entity Integration Sync]]
+- [[Semantic Metadata Foundation]]
+- [[WorkflowNodeConfigRegistry]] — analogous registry pattern for custom transform plugins
 
 ---
 
 ## Changelog
 
-| Date | Author | Change        |
+| Date | Author | Change |
 | ---- | ------ | ------------- |
-|      |        | Initial draft |
+| | | Initial draft |
+| 2026-02-28 | | Rewrote Proposed Solution to align with ADR-004 declarative-first approach — replaced per-integration interface definitions with JSON manifest format + generic mapping engine |

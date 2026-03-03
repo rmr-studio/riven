@@ -1,8 +1,8 @@
 import { Footer } from '@/components/footer';
 import { Navbar } from '@/components/navbar';
 import { AuthProvider } from '@/providers/auth-provider';
-import { MotionProvider } from '@/providers/motion-provider';
 import { LazyQueryProvider as QueryProvider } from '@/providers/lazy-query-provider';
+import { MotionProvider } from '@/providers/motion-provider';
 import { ThemeProvider } from '@/providers/theme-provider';
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono, Instrument_Serif, Space_Mono } from 'next/font/google';

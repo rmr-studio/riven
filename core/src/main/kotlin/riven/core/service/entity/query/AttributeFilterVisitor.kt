@@ -127,6 +127,7 @@ class AttributeFilterVisitor(
         return when (filter) {
             is QueryFilter.Attribute -> visitAttribute(filter, paramGen, entityAlias)
             is QueryFilter.Relationship -> visitRelationship(filter, relationshipDepth, paramGen, entityAlias, relationshipDirections)
+            is QueryFilter.IsRelatedTo -> visitIsRelatedTo(filter, paramGen, entityAlias)
             is QueryFilter.And -> visitAnd(filter.conditions, depth, relationshipDepth, paramGen, entityAlias, relationshipDirections)
             is QueryFilter.Or -> visitOr(filter.conditions, depth, relationshipDepth, paramGen, entityAlias, relationshipDirections)
         }
@@ -274,6 +275,24 @@ class AttributeFilterVisitor(
             entityAlias = entityAlias,
             direction = direction,
             nestedFilterVisitor = nestedVisitor
+        )
+    }
+
+    /**
+     * Visits an IS_RELATED_TO filter.
+     *
+     * Delegates to [RelationshipSqlGenerator.generateIsRelatedTo] for bidirectional
+     * existence checks across all relationship definitions.
+     */
+    private fun visitIsRelatedTo(
+        filter: QueryFilter.IsRelatedTo,
+        paramGen: ParameterNameGenerator,
+        entityAlias: String,
+    ): SqlFragment {
+        return relationshipSqlGenerator.generateIsRelatedTo(
+            condition = filter.condition,
+            paramGen = paramGen,
+            entityAlias = entityAlias,
         )
     }
 

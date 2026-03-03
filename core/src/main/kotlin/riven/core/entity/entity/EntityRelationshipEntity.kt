@@ -2,6 +2,7 @@ package riven.core.entity.entity
 
 import jakarta.persistence.*
 import riven.core.entity.util.AuditableSoftDeletableEntity
+import riven.core.enums.integration.SourceType
 import riven.core.models.entity.EntityRelationship
 import java.util.*
 
@@ -35,6 +36,13 @@ data class EntityRelationshipEntity(
     @Column(name = "relationship_definition_id", nullable = false, columnDefinition = "uuid")
     val definitionId: UUID,
 
+    @Column(name = "semantic_context")
+    val semanticContext: String? = null,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "link_source", nullable = false)
+    val linkSource: SourceType = SourceType.USER_CREATED,
+
 ) : AuditableSoftDeletableEntity() {
 
     /**
@@ -48,6 +56,8 @@ data class EntityRelationshipEntity(
             definitionId = this.definitionId,
             sourceEntityId = this.sourceId,
             targetEntityId = this.targetId,
+            semanticContext = this.semanticContext,
+            linkSource = this.linkSource,
             createdAt = if (audit) this.createdAt else null,
             updatedAt = if (audit) this.updatedAt else null,
             createdBy = if (audit) this.createdBy else null,

@@ -97,6 +97,7 @@ Multi-tenant workspace-scoped backend API for a configurable data platform with 
 - **ORM:** Spring Data JPA with Hibernate. `ddl-auto: none` in production — schema is managed externally.
 - **Schema management:** Raw SQL files in `db/schema/` organized by numbered directories (`00_extensions/` through `09_grants/`). No Flyway or Liquibase.
 - **Entity conventions:** Data classes annotated with `@Entity`, `@Table(name = "snake_case")`. Extend `AuditableEntity` for audit columns. Implement `SoftDeletable` for soft-delete support. Use `@Column(name = "snake_case")`.
+- **Soft-delete filtering is automatic:** All entities extending `AuditableSoftDeletableEntity` have `@SQLRestriction("deleted = false")`, which makes Hibernate auto-append `AND deleted = false` to all JPQL, derived, and Criteria queries. You do **not** need to add `AND deleted = false` to repository queries manually — soft-deleted rows are invisible by default. Only native SQL queries bypass this restriction.
 - **Schema changes:** Add new SQL files to the appropriate `db/schema/` subdirectory. Never modify an existing table SQL file without understanding the execution order documented in `db/schema/README.md`.
 - **Transactions:** Mark service methods with `@Transactional` when they perform multiple writes. Repository-level operations are individually transactional by default.
 - **JSONB:** Use Hypersistence `JsonBinaryType` for all JSON/JSONB columns. Validate JSON payloads against schemas via `SchemaService` before persisting.

@@ -10,7 +10,7 @@ import riven.core.enums.entity.semantics.SemanticMetadataTargetType
 import riven.core.models.entity.EntityTypeSemanticMetadata
 import riven.core.models.request.entity.type.BulkSaveSemanticMetadataRequest
 import riven.core.models.request.entity.type.SaveSemanticMetadataRequest
-import riven.core.models.response.entity.type.SemanticMetadataBundle
+import riven.core.models.entity.SemanticMetadataBundle
 import riven.core.service.entity.EntityTypeSemanticMetadataService
 import java.util.*
 

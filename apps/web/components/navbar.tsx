@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { CtaButton } from '@/components/ui/cta-button';
 import { MobileNavbar } from '@/components/ui/mobile-nav-menu';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { ThemeToggle } from '@riven/ui/theme-toggle';
 import { NAV_LINKS } from '@/lib/navigation';
 import { scrollToSection } from '@/lib/scroll';
 import { useAuth } from '@/providers/auth-provider';

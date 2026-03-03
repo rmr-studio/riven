@@ -2,22 +2,27 @@
 > @riven/web@0.1.0 build /home/jared/dev/worktrees/landing/apps/web
 > dotenv -e ../../.env -- next build
 
+⚠ turbopack.root should be absolute, using: /home/jared/dev/worktrees/landing
 ▲ Next.js 16.1.1 (Turbopack)
 
   Creating an optimized production build ...
-✓ Compiled successfully in 4.1s
+✓ Compiled successfully in 4.3s
   Running TypeScript ...
-Failed to compile.
+  Collecting page data using 27 workers ...
+  Generating static pages using 27 workers (0/7) ...
+  Generating static pages using 27 workers (1/7) 
+  Generating static pages using 27 workers (3/7) 
+  Generating static pages using 27 workers (5/7) 
+✓ Generating static pages using 27 workers (7/7) in 357.3ms
+  Finalizing page optimization ...
 
-./components/feature-modules/waitlist/components/waitlist-form.tsx:118:28
-Type error: Cannot find name 'debouncedCheck'.
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /privacy
+├ ○ /robots.txt
+└ ○ /sitemap.xml
 
-[0m [90m 116 |[39m   [36mconst[39m handleEmailBlur [33m=[39m useCallback(
- [90m 117 |[39m     [36masync[39m (email[33m:[39m string) [33m=>[39m {
-[31m[1m>[22m[39m[90m 118 |[39m       [36mconst[39m exists [33m=[39m [36mawait[39m debouncedCheck(email)[33m;[39m
- [90m     |[39m                            [31m[1m^[22m[39m
- [90m 119 |[39m       [36mif[39m (exists) {
- [90m 120 |[39m         form[33m.[39msetError([32m'email'[39m[33m,[39m { message[33m:[39m [32m'This email is already on the waitlist!'[39m })[33m;[39m
- [90m 121 |[39m       }[0m
-Next.js build worker exited with code: 1 and signal: null
- ELIFECYCLE  Command failed with exit code 1.
+
+○  (Static)  prerendered as static content
+

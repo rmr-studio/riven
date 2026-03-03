@@ -1,8 +1,7 @@
 'use server';
 
-import * as React from 'react';
-import { Resend } from 'resend';
 import { WaitlistConfirmation } from '@/emails/waitlist-confirmation';
+import { Resend } from 'resend';
 
 // Module-scope instantiation = fail-fast if API key is missing at startup
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -15,7 +14,7 @@ export async function sendConfirmationEmail(
     const { data, error } = await resend.emails.send({
       from: 'Jared from Riven <jared@riven.software>',
       to: [email],
-      subject: `Hey ${name} \u2014 you're on the Riven waitlist`,
+      subject: `Hey ${name} \u2014 Thanks for joining the waitlist!`,
       react: <WaitlistConfirmation name={name} />,
     });
 

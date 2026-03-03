@@ -4,7 +4,7 @@ tags:
   - layer/service
   - architecture/component
 Created: 2026-02-08
-Updated: 2026-02-21
+Updated: 2026-03-01
 Domains:
   - "[[Entities]]"
 ---
@@ -14,7 +14,7 @@ Part of [[Entity Management]]
 
 ## Purpose
 
-Manages instance-level relationship links between entities. Responsible for diffing and persisting desired link state against current database state, enforcing cardinality constraints at write time, validating target entity types against definition rules, and resolving bidirectional visibility at read time without storing inverse rows.
+Manages instance-level relationship links between entities. Responsible for diffing and persisting desired link state against current database state, enforcing cardinality constraints at write time, validating target entity types against definition rules, and resolving bidirectional visibility at read time without storing inverse rows. Additionally provides a unified relationship CRUD API (`addRelationship`, `getRelationships`, `updateRelationship`, `removeRelationship`) that handles both typed relationships (with target type validation and cardinality enforcement) and fallback relationships using the system-managed CONNECTED_ENTITIES definition.
 
 ---
 
@@ -32,13 +32,18 @@ Manages instance-level relationship links between entities. Responsible for diff
 - Grouping `EntityLink` projections by definition ID for single and batch reads
 - Soft-deleting all relationships involving a set of entities (as source or target)
 - Providing reverse lookups (target → source) for delete cascade orchestration in [[EntityService]]
+- Creating, reading, updating, and removing relationship links via unified CRUD API — handles both typed definitions (with validation) and fallback CONNECTED_ENTITIES definitions
+- Workspace access control on relationship CRUD operations via `@PreAuthorize`
+- Activity logging for relationship mutations (`Activity.ENTITY_RELATIONSHIP`)
+- Resolving definition context — typed definitions loaded from repository, fallback definitions resolved via `EntityTypeRelationshipService`
+- Duplicate detection — bidirectional for fallback definitions (A→B or B→A), directional for typed definitions (A→B only under that definition)
 
 **NOT responsible for:**
 
 - Loading `RelationshipDefinition` from the database — the definition is passed in by the caller
 - Storing inverse rows — bidirectional visibility is handled purely at query time
-- Workspace access control — there is no `@PreAuthorize` on this service; access is enforced by [[EntityService]] before delegating
-- Activity logging — mutations are logged by [[EntityService]]
+- Workspace access control for structured relationships (via `saveRelationships`) — access is enforced by [[EntityService]] before delegating. Relationship CRUD operations have their own `@PreAuthorize` annotations.
+- Activity logging for structured relationships (via `saveRelationships`) — mutations are logged by [[EntityService]]. Relationship CRUD operations log their own activity.
 - Impact tracking for cache invalidation — [[EntityService]] derives impacted entity IDs from `findByTargetIdIn` after calling this service
 
 ---
@@ -51,6 +56,11 @@ Manages instance-level relationship links between entities. Responsible for diff
 |---|---|
 | `EntityRelationshipRepository` | All persistence operations: SELECT FOR UPDATE, insert, delete, projection queries |
 | `EntityRepository` | `findAllById` to load and type-resolve new target entities before validation |
+| `EntityTypeRepository` | `findSemanticGroupsByIds` — batch-resolve semantic group for target entity types during relationship validation |
+| `RelationshipDefinitionRepository` | Loads typed relationship definitions for validation; validates fallback definitions |
+| `EntityTypeRelationshipService` | Resolves fallback CONNECTED_ENTITIES definition for entity types |
+| `AuthTokenService` | Retrieves current user ID for relationship activity logging |
+| `ActivityService` | Logs relationship CRUD operations |
 
 ### External
 
@@ -62,6 +72,11 @@ None. The service has no external integrations.
 class EntityRelationshipService(
     private val entityRelationshipRepository: EntityRelationshipRepository,
     private val entityRepository: EntityRepository,
+    private val entityTypeRepository: EntityTypeRepository,
+    private val definitionRepository: RelationshipDefinitionRepository,
+    private val entityTypeRelationshipService: EntityTypeRelationshipService,
+    private val authTokenService: AuthTokenService,
+    private val activityService: ActivityService,
     private val logger: KLogger,
 )
 ```
@@ -73,6 +88,7 @@ class EntityRelationshipService(
 | Consumer | Methods Used | Reason |
 |---|---|---|
 | [[EntityService]] | `saveRelationships`, `findRelatedEntities` (both overloads), `findByTargetIdIn`, `archiveEntities` | Entity save, read hydration, delete cascade |
+| [[EntityController]] | `addRelationship`, `getRelationships`, `updateRelationship`, `removeRelationship` | Relationship CRUD endpoints |
 
 ---
 
@@ -178,6 +194,115 @@ fun archiveEntities(ids: Collection<UUID>, workspaceId: UUID): List<EntityRelati
 
 ---
 
+### Relationship CRUD Operations
+
+These methods provide a unified API for creating and managing entity relationships. They handle both typed relationships (with target type validation and cardinality enforcement) and fallback relationships using the system-managed `CONNECTED_ENTITIES` definition. Unlike structured relationships (managed via `saveRelationships`), these operations have their own `@PreAuthorize` and activity logging.
+
+**Request/Response types:**
+
+- `AddRelationshipRequest(targetEntityId: UUID, definitionId: UUID? = null, semanticContext: String? = null, linkSource: SourceType = USER_CREATED)`
+- `UpdateRelationshipRequest(semanticContext: String)`
+- `RelationshipResponse(id, sourceEntityId, targetEntityId, definitionId, definitionName, semanticContext, linkSource, createdAt, updatedAt)`
+
+---
+
+#### `addRelationship(workspaceId, sourceEntityId, request): RelationshipResponse`
+
+```kotlin
+@Transactional
+@PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+fun addRelationship(
+    workspaceId: UUID,
+    sourceEntityId: UUID,
+    request: AddRelationshipRequest,
+): RelationshipResponse
+```
+
+**Purpose:** Creates a relationship between two entities. Behavior depends on whether `definitionId` is provided:
+
+- **With `definitionId`:** Creates a typed relationship. Validates target entity type against definition rules, enforces cardinality constraints, and checks for directional duplicates (A→B only under that definition).
+- **Without `definitionId`:** Falls back to the CONNECTED_ENTITIES definition. Resolves (or creates) the fallback definition for the source entity's type, and checks for bidirectional duplicates (A→B or B→A).
+
+**When to use:** Called by [[EntityController]] when a user links two entities via the relationships API.
+
+**Side effects:**
+- Resolves definition via `resolveDefinition` — loads typed definition from repository or falls back to `EntityTypeRelationshipService.getOrCreateFallbackDefinition`
+- Validates source and target entities exist
+- For typed definitions: validates target type and enforces cardinality via `validateTypedRelationship`
+- For fallback definitions: checks bidirectional duplicates via `checkBidirectionalDuplicate`
+- For typed definitions: checks directional duplicates via `checkDirectionalDuplicate`
+- Inserts a new `EntityRelationshipEntity` with `semanticContext` and `linkSource`
+- Logs `Activity.ENTITY_RELATIONSHIP / CREATE`
+
+**Throws:**
+- `NotFoundException` — source or target entity does not exist, or typed `definitionId` not found
+- `ConflictException` — duplicate relationship detected
+- `IllegalArgumentException` — target type not permitted by definition rules
+- `InvalidRelationshipException` — cardinality constraint violated
+
+**Returns:** `RelationshipResponse` with the created relationship details including `definitionId` and `definitionName`.
+
+---
+
+#### `getRelationships(workspaceId, entityId, definitionId?): List<RelationshipResponse>`
+
+```kotlin
+@PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+fun getRelationships(workspaceId: UUID, entityId: UUID, definitionId: UUID? = null): List<RelationshipResponse>
+```
+
+**Purpose:** Returns all relationships for an entity (forward + inverse). When `definitionId` is provided, filters to only relationships under that definition.
+
+**When to use:** Called by [[EntityController]] for the relationships list endpoint.
+
+**Side effects:** None. Read-only.
+
+**Returns:** List of `RelationshipResponse`. Includes both relationships where the entity is source and where it is target. Returns empty list if no relationships exist.
+
+---
+
+#### `updateRelationship(workspaceId, relationshipId, request): RelationshipResponse`
+
+```kotlin
+@Transactional
+@PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+fun updateRelationship(
+    workspaceId: UUID,
+    relationshipId: UUID,
+    request: UpdateRelationshipRequest,
+): RelationshipResponse
+```
+
+**Purpose:** Updates the semantic context of an existing relationship. Works on any relationship regardless of definition type.
+
+**Side effects:**
+- Saves updated entity with new `semanticContext`
+- Logs `Activity.ENTITY_RELATIONSHIP / UPDATE`
+
+**Throws:**
+- `NotFoundException` — relationship does not exist in workspace
+
+---
+
+#### `removeRelationship(workspaceId, relationshipId)`
+
+```kotlin
+@Transactional
+@PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+fun removeRelationship(workspaceId: UUID, relationshipId: UUID)
+```
+
+**Purpose:** Soft-deletes a relationship. Works on any relationship regardless of definition type.
+
+**Side effects:**
+- Calls `markDeleted()` and saves
+- Logs `Activity.ENTITY_RELATIONSHIP / DELETE`
+
+**Throws:**
+- `NotFoundException` — relationship does not exist in workspace
+
+---
+
 ## Key Logic
 
 ### Diff-based save
@@ -210,7 +335,7 @@ Groups all final targets by their entity type ID. For each type group, resolves 
 
 **Target-side (how many sources can link to a given target):**
 
-For each NEW target only, resolves the effective cardinality and checks `maxTargetSources()`. If limited, queries `findByTargetIdAndDefinitionId` to detect an existing link from a different source.
+For each NEW target only, resolves the effective cardinality and checks `maxTargetSources()`. If limited, the service first filters to only those targets needing enforcement, then batch-fetches all existing links via `findByTargetIdInAndDefinitionId` in a single query. Each target is validated against its existing links to detect an existing link from a different source.
 
 | Cardinality | `maxTargetSources()` |
 |---|---|
@@ -225,7 +350,36 @@ The effective cardinality for a given target type is resolved by `resolveCardina
 
 ### Target type validation
 
-Before cardinality is enforced, `validateTargets` checks that each NEW target's entity type is permitted by the definition. For polymorphic definitions (`allowPolymorphic = true`), this check is skipped entirely. For non-polymorphic definitions, every new target must match a `RelationshipTargetRule` by exact `targetEntityTypeId`. Semantic constraint matching (matching by `semanticTypeConstraint`) is stubbed and returns no match at runtime until entity-type-level semantic metadata is implemented.
+Before cardinality is enforced, `validateTargets` checks that each NEW target's entity type is permitted by the definition. For polymorphic definitions (`allowPolymorphic = true`), this check is skipped entirely. For non-polymorphic definitions, every new target must match a `RelationshipTargetRule` by:
+
+1. **Exact type ID match** (takes precedence) — the rule's `targetEntityTypeId` matches the target's entity type ID.
+2. **Semantic group constraint** — if no type ID rule matches, the target's `SemanticGroup` is compared against rules that have a `semanticTypeConstraint` but no `targetEntityTypeId`. Types with `UNCATEGORIZED` semantic group never match semantic rules — they must use explicit type ID rules.
+
+Semantic groups are resolved in batch via `EntityTypeRepository.findSemanticGroupsByIds()` before validation begins, to avoid N+1 queries when validating multiple targets.
+
+---
+
+### Semantic group resolution
+
+At the start of `saveRelationships`, after computing the final target set, the service resolves the `SemanticGroup` for each distinct entity type ID involved via `resolveSemanticGroups()`. This performs a single projection query (`EntityTypeRepository.findSemanticGroupsByIds`) that returns `(id, semanticGroup)` pairs without loading full entity rows. Any type ID not found in the result defaults to `UNCATEGORIZED`.
+
+The resolved `semanticGroupByTypeId` map is threaded through `validateTargets`, `enforceCardinality`, `enforceSourceSideCardinality`, `enforceTargetSideCardinality`, `resolveCardinality`, and `findMatchingRule` — avoiding repeated lookups.
+
+---
+
+### Relationship CRUD
+
+Relationship CRUD operations work through the same `entity_relationships` table as structured relationships (via `saveRelationships`), but provide a unified API that handles both typed and fallback definitions.
+
+**Definition resolution:** `resolveDefinition` determines the definition context. When `definitionId` is provided, loads the typed definition from `RelationshipDefinitionRepository` and validates it exists. When omitted, falls back to `entityTypeRelationshipService.getOrCreateFallbackDefinition(workspaceId, sourceEntity.typeId)`, handling lazy creation for entity types published before the fallback definition feature existed.
+
+**Duplicate detection — two strategies:**
+- **Fallback definitions:** Bidirectional — checks both A→B and B→A via `checkBidirectionalDuplicate`. Uses `findBySourceIdAndTargetIdAndDefinitionId` twice (once for each direction).
+- **Typed definitions:** Directional — checks only A→B under that specific definition via `checkDirectionalDuplicate`.
+
+**Typed relationship validation:** When `definitionId` is provided, `validateTypedRelationship` validates the target entity type against definition rules and enforces cardinality constraints before creating the link.
+
+**Update and delete:** `updateRelationship` and `removeRelationship` work on any relationship regardless of definition type — the previous `validateIsFallbackConnection` guard has been removed.
 
 ---
 
@@ -256,12 +410,16 @@ In the inverse queries, `r.target_entity_id` is aliased as `sourceEntityId` in t
 | `deleteAllBySourceIdAndDefinitionIdAndTargetIdIn` | Spring Data derived | Deletes rows for stale targets by source, definition, and target ID list |
 | `findEntityLinksBySourceId` | Native SQL | Joins `entity_relationships` → `entities` → `relationship_definitions`. Extracts label from JSONB payload using `identifier_key`. Returns `EntityLinkProjection`. |
 | `findEntityLinksBySourceIdIn` | Native SQL | Batch variant of the above. Uses `ANY(:ids)` for PostgreSQL array binding. |
-| `findInverseEntityLinksByTargetId` | Native SQL | Joins `relationship_target_rules` and filters `inverse_visible = true` and type match. Returns `EntityLinkProjection` with `target_entity_id` aliased as `sourceEntityId`. |
-| `findInverseEntityLinksByTargetIdIn` | Native SQL | Batch variant. Joins `entities target_e` for type resolution per target. |
+| `findInverseEntityLinksByTargetId` | Native SQL | LEFT JOINs `relationship_target_rules` and filters `(inverse_visible = true AND type match) OR system_type match`. Returns `EntityLinkProjection` with `target_entity_id` aliased as `sourceEntityId`. |
+| `findInverseEntityLinksByTargetIdIn` | Native SQL | Batch variant. LEFT JOINs `relationship_target_rules` and `entities target_e` for type resolution per target. Includes system-type definitions without target rules. |
 | `findByTargetIdIn` | JPQL | Returns all rows where `targetId` is in the provided list. Used for cascade-delete lookups. |
-| `findByTargetIdAndDefinitionId` | JPQL | Returns existing rows linking a given target under a definition. Used for target-side cardinality enforcement. |
+| `findByTargetIdInAndDefinitionId` | Spring Data derived | Batch variant: returns existing rows linking any of the given targets under a definition. Used for target-side cardinality enforcement. |
+| `findSemanticGroupsByIds` | JPQL projection | Returns `(id, semanticGroup)` pairs for a set of entity type IDs. Used by `resolveSemanticGroups` to batch-resolve semantic groups before validation. Defined on `EntityTypeRepository`. |
 | `deleteEntities` | Native SQL (RETURNING) | Soft-deletes all rows where source or target is in the ID array. Returns affected rows. |
 | `countByDefinitionId` | Spring Data derived | Count of all active links under a definition. Used by [[EntityTypeRelationshipService]] for impact analysis before definition deletion. |
+| `findByIdAndWorkspaceId` | Spring Data derived | Loads single relationship by ID within workspace for update/remove operations |
+| `findByEntityIdAndDefinitionId` | JPQL `@Query` | Finds all relationships (source or target) for an entity under a specific definition. Used for relationship listing. |
+| `findBySourceIdAndTargetIdAndDefinitionId` | Spring Data derived | Checks for existing relationship between two specific entities under a definition. Used for duplicate detection. |
 
 ---
 
@@ -271,6 +429,7 @@ In the inverse queries, `r.target_entity_id` is aliased as `sourceEntityId` in t
 |---|---|---|
 | `IllegalArgumentException` | One or more `targetIds` resolve to non-existent entities; or a non-polymorphic definition rejects a target's type ID. | `400 Bad Request` via `@ControllerAdvice` |
 | `InvalidRelationshipException` | Source-side cardinality exceeded (too many targets of a type); or target-side cardinality exceeded (target already linked by another source). | `400 Bad Request` via `@ControllerAdvice` |
+| `ConflictException` | Duplicate relationship detected — bidirectional for fallback definitions, directional for typed definitions | `409 Conflict` via `@ControllerAdvice` |
 
 All exceptions propagate to `ExceptionHandler` in `riven.core.exceptions`. This service does not catch and re-wrap.
 
@@ -280,7 +439,13 @@ All exceptions propagate to `ExceptionHandler` in `riven.core.exceptions`. This 
 
 ### Log Events
 
-This service does not emit structured log events. The `KLogger` is injected for future use. Mutations are logged via `activityService` in the calling [[EntityService]].
+Structured relationship operations do not emit log events from this service (mutations are logged by [[EntityService]]).
+
+Relationship CRUD operations emit:
+- `Activity.ENTITY_RELATIONSHIP / CREATE` — relationship created, with relationshipId, targetEntityId, definitionId, semanticContext
+- `Activity.ENTITY_RELATIONSHIP / UPDATE` — relationship updated, with relationshipId, semanticContext
+- `Activity.ENTITY_RELATIONSHIP / DELETE` — relationship deleted, with relationshipId
+- INFO-level structured logs for each relationship CRUD operation
 
 ---
 
@@ -293,13 +458,19 @@ This service does not emit structured log events. The `KLogger` is injected for 
 > `ONE_TO_ONE` does not mean a source can have at most one target in total. It means a source can have at most one target of each distinct entity type. A source can simultaneously hold one TypeA target and one TypeB target under the same `ONE_TO_ONE` definition without violation.
 
 > [!warning] Target-side enforcement only checks new targets
-> `enforceTargetSideCardinality` queries `findByTargetIdAndDefinitionId` only for targets in `toAdd`. Retained targets are not re-checked. This is correct: a retained target that was previously linked by this source already passed target-side enforcement when it was first added.
+> `enforceTargetSideCardinality` queries `findByTargetIdInAndDefinitionId` only for targets in `toAdd`. Retained targets are not re-checked. This is correct: a retained target that was previously linked by this source already passed target-side enforcement when it was first added.
 
-> [!warning] Semantic constraint matching is not implemented
-> `findMatchingRule` performs only exact `targetEntityTypeId` match. Rules with a `semanticTypeConstraint` but no `targetEntityTypeId` will never match any target at runtime. Non-polymorphic definitions with semantic-only rules will reject all targets until semantic metadata support is added.
+> [!warning] UNCATEGORIZED types do not match semantic rules
+> Entity types with `SemanticGroup.UNCATEGORIZED` will never match a semantic constraint rule. They can only be targeted by explicit `targetEntityTypeId` rules. This is by design — it prevents unclassified types from accidentally satisfying semantic constraints.
 
-> [!warning] No workspace access control on this service
-> `EntityRelationshipService` has no `@PreAuthorize` annotations. It is an internal service called exclusively from [[EntityService]], which enforces workspace access before delegating. Do not expose methods from this service directly to controllers.
+> [!warning] Structured relationship methods have no workspace access control
+> The structured relationship methods (`saveRelationships`, `findRelatedEntities`, etc.) have no `@PreAuthorize` annotations. They are internal methods called exclusively from [[EntityService]], which enforces workspace access before delegating. Relationship CRUD methods (`addRelationship`, `getRelationships`, `updateRelationship`, `removeRelationship`) DO have their own `@PreAuthorize` annotations and are called directly by [[EntityController]].
+
+> [!warning] Duplicate detection strategy depends on definition type
+> `addRelationship` uses different duplicate detection depending on the definition. Fallback definitions check bidirectionally (A→B and B→A are considered duplicates). Typed definitions check directionally only (A→B under definition X — the reverse B→A is a separate relationship).
+
+> [!warning] Inverse queries changed from INNER JOIN to LEFT JOIN
+> The inverse entity link queries (`findInverseEntityLinksByTargetId`, `findInverseEntityLinksByTargetIdIn`) now use LEFT JOIN on `relationship_target_rules` instead of INNER JOIN. This allows system-type definitions (which have no target rules) to appear in inverse results. The WHERE clause uses `(inverse_visible = true AND type match) OR system_type = :systemType`.
 
 > [!warning] Inverse query aliasing
 > In the inverse-link native SQL queries, `r.target_entity_id` is aliased as `sourceEntityId`. This means the `EntityLink.sourceEntityId` field for an inverse link reflects the entity being viewed (i.e. the target of the stored row), not the entity that created the stored row. Consumers group by `sourceEntityId` without needing to know which direction the link was originally stored.
@@ -308,9 +479,7 @@ This service does not emit structured log events. The `KLogger` is injected for 
 
 | Limitation | Impact | Tracking |
 |---|---|---|
-| Semantic constraint matching stubbed | Non-polymorphic definitions with semantic-only rules cannot validate or enforce target types at runtime | Untracked — requires `EntityTypeSemanticMetadata` implementation |
 | No total-target limit | Cardinality limits are per-type, not a global cap on total targets for a definition | By design, but undocumented in API responses |
-| Target-side check is N queries | `enforceTargetSideCardinality` issues one query per new target. For bulk saves with many new targets this is suboptimal. | Untracked |
 
 ---
 
@@ -318,8 +487,7 @@ This service does not emit structured log events. The `KLogger` is injected for 
 
 | Item | Location | Notes |
 |---|---|---|
-| Semantic constraint matching stubbed | `findMatchingRule` private method | Marked with a TODO comment. Blocked on entity-type-level semantic classification being implemented elsewhere in the Entities domain. |
-| N+1 in target-side cardinality | `enforceTargetSideCardinality` | Issues one `findByTargetIdAndDefinitionId` query per new target. Could be batched into a single query returning all existing source links for a set of target IDs under a definition. |
+| None | - | Previous items (semantic matching stub, N+1 target-side queries) resolved by semantic group implementation |
 
 ---
 
@@ -357,6 +525,10 @@ Test class: `EntityRelationshipServiceTest` — `@SpringBootTest` scoped to `Ent
 | Inverse-visible links included | `findRelatedEntities - includes inverse-visible links` |
 | Inverse-invisible links excluded (at repository level) | `findRelatedEntities - excludes inverse-invisible links` |
 | Forward + inverse under same definition merged | `findRelatedEntities - merges forward and inverse under same definition` |
+| Semantic rule matches target with matching group | `saveRelationships - semantic rule matches target with matching group` |
+| Semantic rule rejects target with non-matching group | `saveRelationships - semantic rule rejects target with non-matching group` |
+| UNCATEGORIZED target does not match semantic rules | `saveRelationships - UNCATEGORIZED target does not match semantic rules` |
+| Exact type ID rule takes precedence over semantic match | `saveRelationships - exact type ID rule takes precedence over semantic match` |
 
 ---
 
@@ -376,3 +548,6 @@ Test class: `EntityRelationshipServiceTest` — `@SpringBootTest` scoped to `Ent
 |---|---|---|
 | 2026-02-08 | System | Initial document created |
 | 2026-02-21 | System | Complete rewrite — removed bidirectional sync architecture (no inverse row storage), documented write-time cardinality enforcement (two-axis: source-side and target-side), target type validation, inverse visibility at read time via UNION repository queries, diff-based save logic, pessimistic write locking, and updated all method signatures and test coverage to reflect current implementation |
+| 2026-03-01 | System | Semantic group matching implemented — `SemanticGroup` enum replaces stubbed semantic constraint matching. New `EntityTypeRepository` dependency for batch semantic group resolution. Target-side cardinality enforcement batch-optimized via `findByTargetIdInAndDefinitionId`. 4 new tests for semantic matching. |
+| 2026-03-01 | System | Added connection CRUD operations with own `@PreAuthorize` and activity logging. New dependencies: RelationshipDefinitionRepository, EntityTypeRelationshipService, AuthTokenService, ActivityService. Updated inverse queries from INNER JOIN to LEFT JOIN on target rules to support system-type definitions. |
+| 2026-03-01 | System | Refactored connection CRUD to unified relationship CRUD — `addRelationship`, `getRelationships`, `updateRelationship`, `removeRelationship`. Accepts optional `definitionId` for typed relationships with target type validation and cardinality enforcement; falls back to CONNECTED_ENTITIES when omitted. Removed `validateIsFallbackConnection` guard — update/remove work on any relationship. Activity logging uses `Activity.ENTITY_RELATIONSHIP`. Response model now includes `definitionId` and `definitionName`. |
