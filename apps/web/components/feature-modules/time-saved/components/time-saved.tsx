@@ -178,11 +178,10 @@ export function TimeSaved() {
             </div>
           ))}
           <div className="border-l-2 border-content/50 py-4 pr-3 pl-5">
-            <p className="text-base font-medium tracking-tight text-secondary">
-              What disappears over time
-            </p>
+            <p className="text-base font-medium tracking-tight text-secondary">What you save</p>
             <p className="mt-1.5 text-sm leading-relaxed tracking-normal text-secondary/50">
-              Manual operational work caused by tools that don&apos;t talk to each other.
+              Hours of manual work every week. The mental overhead of stitching together data, the
+              anxiety of making decisions based on incomplete information.
             </p>
             <div className="mt-4 space-y-0.5 font-serif font-light tracking-tight">
               <p className="text-2xl text-secondary/75">8–12 hours</p>

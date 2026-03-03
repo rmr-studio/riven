@@ -1,24 +1,23 @@
-"use client";
+'use client';
 
-import { useMounted } from "@/hooks/use-mounted";
-import * as React from "react";
-import { useTheme } from "next-themes";
-import { Button } from "./button";
+import { useTheme } from 'next-themes';
+import { Button } from './button';
+import { useMounted } from './use-mounted';
 
-const themes = ["light", "dark", "amber"] as const;
+const themes = ['light', 'dark', 'amber'] as const;
 type Theme = (typeof themes)[number];
 
 const themeLabels: Record<Theme, string> = {
-  light: "Light",
-  dark: "Dark",
-  amber: "Amber",
+  light: 'Light',
+  dark: 'Dark',
+  amber: 'Amber',
 };
 
 export function ThemeToggle() {
   const { setTheme, resolvedTheme, theme } = useTheme();
   const mounted = useMounted();
 
-  const activeTheme = (theme === "system" ? resolvedTheme : theme) as Theme;
+  const activeTheme = (theme === 'system' ? resolvedTheme : theme) as Theme;
 
   const cycle = () => {
     if (document.startViewTransition) {
@@ -39,7 +38,7 @@ export function ThemeToggle() {
     return (
       <Button
         disabled
-        className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-muted/50 px-2.5 py-1 text-xs font-mono tracking-widest text-muted-foreground"
+        className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-muted/50 px-2.5 py-1 font-mono text-xs tracking-widest text-muted-foreground"
       >
         <span className="flex gap-1">
           {themes.map((t) => (
@@ -56,17 +55,15 @@ export function ThemeToggle() {
   return (
     <Button
       onClick={cycle}
-      className="flex items-center gap-2 rounded-full border border-border/50 bg-muted/50 px-2.5 py-1 text-xs font-mono tracking-widest text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+      className="flex cursor-pointer items-center gap-2 rounded-full border border-border/50 bg-muted/50 px-2.5 py-1 font-mono text-xs tracking-widest text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
     >
-      <span>{themeLabels[activeTheme] ?? "Light"}</span>
+      <span>{themeLabels[activeTheme] ?? 'Light'}</span>
       <span className="flex gap-1">
         {themes.map((t) => (
           <span
             key={t}
             className={`block h-1.5 w-1.5 rounded-full transition-colors ${
-              t === activeTheme
-                ? "bg-foreground"
-                : "border border-muted-foreground/40"
+              t === activeTheme ? 'bg-foreground' : 'border border-muted-foreground/40'
             }`}
           />
         ))}
