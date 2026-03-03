@@ -1,4 +1,4 @@
-import { Body, Head, Html, Img, Link, Preview, Text } from '@react-email/components';
+import { Body, Head, Html, Link, Preview, Text } from '@react-email/components';
 
 // Amber theme palette — matches app globals.css
 const colors = {
@@ -26,10 +26,6 @@ interface WaitlistConfirmationProps {
 }
 
 export function WaitlistConfirmation({ name }: WaitlistConfirmationProps) {
-  // Hardcoded fallback ensures template renders in all environments
-  // NEXT_PUBLIC_CDN_URL is optional in env.ts — do NOT use validated env() here
-  const cdnBase = process.env.NEXT_PUBLIC_CDN_URL ?? 'https://cdn.riven.software';
-
   return (
     <Html lang="en" dir="ltr" style={{ height: '100%', margin: 0, padding: 0 }}>
       <Head />
@@ -75,38 +71,6 @@ export function WaitlistConfirmation({ name }: WaitlistConfirmationProps) {
                         </td>
                         {/* Content */}
                         <td style={{ backgroundColor: colors.card, padding: '0 36px' }}>
-                          {/* Logo + wordmark */}
-                          <table
-                            cellPadding={0}
-                            cellSpacing={0}
-                            role="presentation"
-                            style={{ marginTop: '32px' }}
-                          >
-                            <tr>
-                              <td style={{ verticalAlign: 'middle' }}>
-                                <Img
-                                  src={`${cdnBase}/images/email/email-riven-logo.png`}
-                                  width={28}
-                                  height={28}
-                                  alt=""
-                                />
-                              </td>
-                              <td style={{ verticalAlign: 'middle', paddingLeft: '4px' }}>
-                                <Text
-                                  style={{
-                                    margin: 0,
-                                    fontSize: '22px',
-                                    fontWeight: 700,
-                                    fontFamily: serifFont,
-                                    color: colors.logoPrimary,
-                                  }}
-                                >
-                                  Riven
-                                </Text>
-                              </td>
-                            </tr>
-                          </table>
-
                           {/* Greeting */}
                           <Text
                             style={{
@@ -198,7 +162,7 @@ export function WaitlistConfirmation({ name }: WaitlistConfirmationProps) {
                                     textDecoration: 'none',
                                   }}
                                 >
-                                  Follow our journey
+                                  Follow the socials
                                 </a>
                               </td>
                             </tr>
