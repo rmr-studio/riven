@@ -43,12 +43,12 @@ class IntegrationDefinitionService(
     }
 
     /**
-     * Get all active integrations.
+     * Get all active (non-stale) integrations.
      *
      * @return List of active integrations
      */
     fun getActiveIntegrations(): List<IntegrationDefinitionEntity> {
-        return repository.findByActiveTrue()
+        return repository.findByStaleIsFalse()
     }
 
     /**

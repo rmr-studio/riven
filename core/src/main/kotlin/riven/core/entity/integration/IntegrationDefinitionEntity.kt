@@ -54,8 +54,8 @@ data class IntegrationDefinitionEntity(
     @Column(name = "auth_config", columnDefinition = "jsonb", nullable = false)
     var authConfig: Map<String, Any> = emptyMap(),
 
-    @Column(name = "active", nullable = false)
-    var active: Boolean = true,
+    @Column(name = "stale", nullable = false)
+    var stale: Boolean = false,
 
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: ZonedDateTime = ZonedDateTime.now(),

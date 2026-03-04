@@ -1,0 +1,23 @@
+package riven.core.repository.catalog
+
+import org.springframework.data.jpa.repository.JpaRepository
+import riven.core.entity.catalog.CatalogFieldMappingEntity
+import java.util.*
+
+/**
+ * Repository for catalog field mappings.
+ *
+ * Provides queries for finding field mappings by manifest and by manifest+entity type key.
+ */
+interface CatalogFieldMappingRepository : JpaRepository<CatalogFieldMappingEntity, UUID> {
+
+    /**
+     * Find all field mappings belonging to a manifest.
+     */
+    fun findByManifestId(manifestId: UUID): List<CatalogFieldMappingEntity>
+
+    /**
+     * Find a specific field mapping within a manifest by entity type key.
+     */
+    fun findByManifestIdAndEntityTypeKey(manifestId: UUID, entityTypeKey: String): CatalogFieldMappingEntity?
+}

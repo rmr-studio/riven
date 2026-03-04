@@ -1,0 +1,54 @@
+package riven.core.entity.catalog
+
+import jakarta.persistence.*
+import org.hibernate.annotations.UpdateTimestamp
+import riven.core.enums.catalog.ManifestType
+import java.time.ZonedDateTime
+import java.util.*
+
+/**
+ * JPA entity for the manifest catalog (global catalog).
+ *
+ * Stores metadata about loaded manifests (models, templates, integrations).
+ * Does NOT extend AuditableEntity — global catalog, not user-owned.
+ * No soft-delete — catalog entries are permanent.
+ */
+@Entity
+@Table(
+    name = "manifest_catalog",
+    uniqueConstraints = [
+        UniqueConstraint(columnNames = ["key", "manifest_type"])
+    ]
+)
+data class ManifestCatalogEntity(
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", columnDefinition = "uuid")
+    val id: UUID? = null,
+
+    @Column(name = "key", nullable = false)
+    val key: String,
+
+    @Column(name = "name", nullable = false)
+    val name: String,
+
+    @Column(name = "description")
+    val description: String? = null,
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "manifest_type", nullable = false)
+    val manifestType: ManifestType,
+
+    @Column(name = "manifest_version")
+    val manifestVersion: String? = null,
+
+    @Column(name = "last_loaded_at")
+    var lastLoadedAt: ZonedDateTime? = null,
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    val createdAt: ZonedDateTime = ZonedDateTime.now(),
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    var updatedAt: ZonedDateTime = ZonedDateTime.now()
+)
