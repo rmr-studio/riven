@@ -85,7 +85,7 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Zod schema, form hook with useFieldArray, SemanticGroup barrel export, relationship util cleanup
+- [x] 03-01-PLAN.md — Zod schema, form hook with useFieldArray, SemanticGroup barrel export, relationship util cleanup
 - [ ] 03-02-PLAN.md — Target rule components (item + list) and complete relationship form UI composition
 - [ ] 03-03-PLAN.md — Modal integration (wire new RelationshipForm), dead overlap code removal, human verification
 
@@ -133,7 +133,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Type Foundation | 1/1 | Complete | 2026-02-28 |
 | 2. Service + Hooks | 1/1 | Complete | 2026-02-28 |
-| 3. Relationship Form | 0/3 | In progress | - |
+| 3. Relationship Form | 1/3 | In progress | - |
 | 4. Creation Form Simplification | 0/? | Not started | - |
 | 5. Attribute Semantic Configuration | 0/? | Not started | - |
 
@@ -183,4 +183,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-02-27*
-*Last updated: 2026-03-03 after Phase 3 planning*
+*Last updated: 2026-03-04 after Phase 3 Plan 01 completion*
