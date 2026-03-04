@@ -50,7 +50,7 @@ export const FEATURE_CONTENT: KnowledgeLayerSectionContent[] = [
       'Automatic entity resolution and identity matching means your data model stays up to data without manual Inverstion. New data synced is connected and linked to existing entities across your ecosystem.',
     content: (
       <>
-        <EntityLinkingDiagram className="mx-auto translate-x-8 translate-y-12 sm:translate-x-48 sm:scale-130 xl:translate-x-64 xl:scale-160" />
+        <EntityLinkingDiagram className="mx-auto translate-x-8 translate-y-12 sm:translate-x-48 sm:scale-130 xl:translate-x-64 xl:scale-160 3xl:translate-x-90" />
       </>
     ),
   },

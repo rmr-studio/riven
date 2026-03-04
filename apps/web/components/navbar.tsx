@@ -54,7 +54,7 @@ export function Navbar() {
       <nav
         data-navbar=""
         {...(isInverted ? { 'data-inverted': '' } : {})}
-        className={`content-nav mx-auto flex h-12 w-auto grow items-center justify-between rounded-md border border-border/50 shadow-sm shadow-primary/35 backdrop-blur-xl transition-colors md:h-14 md:rounded-full ${isInverted ? 'bg-background/90' : 'bg-background/60'}`}
+        className={`content-nav mx-auto flex h-12 w-auto grow items-center justify-between rounded-md border border-border/50 shadow-sm shadow-primary/35 backdrop-blur-md transition-colors md:h-14 md:rounded-full ${isInverted ? 'bg-background/90' : 'bg-background/60'}`}
       >
         {/* Left: Logo + Nav Links */}
         <div className="flex items-center">
