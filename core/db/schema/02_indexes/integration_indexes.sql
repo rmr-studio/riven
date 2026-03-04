@@ -3,7 +3,7 @@
 -- =====================================================
 
 CREATE INDEX idx_integration_definitions_category ON integration_definitions(category);
-CREATE INDEX idx_integration_definitions_active ON integration_definitions(active) WHERE active = true;
+CREATE INDEX idx_integration_definitions_stale ON integration_definitions(stale) WHERE stale = false;
 -- Note: slug index is provided by the UNIQUE constraint, no explicit index needed
 
 -- =====================================================

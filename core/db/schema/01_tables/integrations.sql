@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS integration_definitions (
     capabilities JSONB NOT NULL DEFAULT '{}'::jsonb,
     sync_config JSONB NOT NULL DEFAULT '{}'::jsonb,
     auth_config JSONB NOT NULL DEFAULT '{}'::jsonb,
-    active BOOLEAN NOT NULL DEFAULT true,
+    stale BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
