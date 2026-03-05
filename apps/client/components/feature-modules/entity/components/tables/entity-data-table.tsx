@@ -3,8 +3,8 @@
 import { Button } from '@/components/ui/button';
 import { ColumnResizingConfig, DataTable, DataTableProvider } from '@/components/ui/data-table';
 import { Form } from '@/components/ui/form';
-import { SchemaUUID } from '@/lib/types/common';
 import { ClassNameProps } from '@/lib/interfaces/interface';
+import { SchemaUUID } from '@/lib/types/common';
 import {
   Entity,
   EntityAttributePrimitivePayload,
@@ -249,10 +249,10 @@ export const EntityDataTable: FC<Props> = ({
       <div className="w-full min-w-0 space-y-4">
         {/* Draft mode controls */}
         <div>
-          <div className="flex justify-between">
+          <div className="flex flex-col justify-between gap-4 lg:flex-row">
             <div className="flex flex-col gap-2">
               <EntityTypeHeader>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground italic">
                   Manage your entities and their data
                 </div>
               </EntityTypeHeader>

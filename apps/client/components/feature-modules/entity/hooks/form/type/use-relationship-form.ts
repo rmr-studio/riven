@@ -7,6 +7,7 @@ import {
   SaveRelationshipDefinitionRequest,
   SaveTargetRuleRequest,
   SaveTypeDefinitionRequest,
+  SemanticAttributeClassification,
   SemanticGroup,
 } from '@/lib/types/entity';
 import { IconColour, IconType } from '@/lib/types/common';
@@ -210,7 +211,11 @@ export function useRelationshipForm(
         cardinalityDefault,
         targetRules,
         semantics: values.semanticDefinition
-          ? { definition: values.semanticDefinition, tags: [] }
+          ? {
+              classification: SemanticAttributeClassification.RelationalReference,
+              definition: values.semanticDefinition,
+              tags: [],
+            }
           : undefined,
       };
 

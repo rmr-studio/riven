@@ -3,6 +3,7 @@ import {
   DeleteTypeDefinitionRequest,
   EntityType,
   EntityTypeImpactResponse,
+  type DeleteDefinitionImpact,
 } from '@/lib/types/entity';
 import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -10,6 +11,7 @@ import { EntityTypeService } from '../../../service/entity-type.service';
 
 export function useDeleteDefinitionMutation(
   workspaceId: string,
+  onImpactConfirmation?: (impact: DeleteDefinitionImpact) => void,
   options?: UseMutationOptions<EntityTypeImpactResponse, Error, DeleteTypeDefinitionRequest>,
 ) {
   const queryClient = useQueryClient();
@@ -30,6 +32,14 @@ export function useDeleteDefinitionMutation(
       context: unknown,
     ) => {
       options?.onSuccess?.(response, variables, context);
+
+      // Check for impact confirmation (409 response)
+      if (response.impact) {
+        onImpactConfirmation?.(response.impact);
+        return;
+      }
+
+      toast.success('Entity type definition deleted successfully!');
 
       if (response.updatedEntityTypes) {
         Object.entries(response.updatedEntityTypes).forEach(([key, entityType]) => {

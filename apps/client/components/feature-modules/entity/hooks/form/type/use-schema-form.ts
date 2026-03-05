@@ -1,4 +1,4 @@
-import { SchemaOptions, SchemaType, OptionSortingType } from "@/lib/types/common";
+import { Icon, IconColour, IconType, SchemaOptions, SchemaType, OptionSortingType } from "@/lib/types/common";
 import {
     EntityAttributeDefinition,
     EntityType,
@@ -17,10 +17,16 @@ import { useSaveDefinitionMutation } from "../../mutation/type/use-save-definiti
 import { uuid } from "@/lib/util/utils";
 
 // Zod schema
+const iconSchema = z.object({
+    type: z.nativeEnum(IconType),
+    colour: z.nativeEnum(IconColour),
+});
+
 export const attributeFormSchema = z
     .object({
         selectedType: z.nativeEnum(SchemaType),
         name: z.string().min(1, "Name is required"),
+        icon: iconSchema,
         required: z.boolean(),
         unique: z.boolean(),
         // Attribute Schema options
@@ -78,6 +84,7 @@ export function useEntityTypeAttributeSchemaForm(
         defaultValues: {
             selectedType: SchemaType.Text,
             name: "",
+            icon: attributeTypes[SchemaType.Text].icon,
             required: false,
             unique: false,
             enumValues: [],
@@ -101,12 +108,15 @@ export function useEntityTypeAttributeSchemaForm(
     onCancel();
   }, []);
 
-  // Pre-populate schema options for specific types.
+  // Pre-populate schema options and icon for specific types.
   // Provided they have been provided default options (ie. Rating type with min/max values)
   useEffect(() => {
     if (!isEditMode) {
       const attribute = attributeTypes[currentType];
       if (!attribute) return;
+
+      // Set default icon for the selected type
+      form.setValue('icon', attribute.icon);
 
       // TODO. Expand this to cover more types as needed.
       if (attribute?.options) {
@@ -133,6 +143,7 @@ export function useEntityTypeAttributeSchemaForm(
     form.reset({
       selectedType: attributeType.key,
       name: schema.label,
+      icon: schema.icon ?? attributeType.icon,
       required: schema.required,
       unique: schema.unique,
       enumValues: schema.options?._enum,
@@ -189,7 +200,7 @@ export function useEntityTypeAttributeSchemaForm(
           format: attributeType.format,
           label: values.name,
           required: values.required,
-          icon: attributeType.icon,
+          icon: values.icon,
           unique: values.unique,
           options: options,
         },

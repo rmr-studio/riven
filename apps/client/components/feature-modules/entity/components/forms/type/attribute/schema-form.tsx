@@ -9,7 +9,9 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { IconSelector } from '@/components/ui/icon/icon-selector';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -28,6 +30,7 @@ import {
 } from '@/lib/types/entity';
 import { SchemaType } from '@/lib/types/common';
 import { cn } from '@/lib/util/utils';
+import { Settings2 } from 'lucide-react';
 import { FC, useEffect, useMemo } from 'react';
 import { EnumOptionsEditor } from '../../enum-options-editor';
 
@@ -56,11 +59,6 @@ const classificationOptions = [
     value: SemanticAttributeClassification.Freetext,
     label: 'Free Text',
     description: 'Unstructured descriptive or narrative content',
-  },
-  {
-    value: SemanticAttributeClassification.RelationalReference,
-    label: 'Relational Reference',
-    description: 'References another entity or external system',
   },
 ];
 
@@ -143,29 +141,93 @@ export const SchemaForm: FC<Props> = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col space-y-4">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter attribute name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-0">
+        {/* Section 1: Naming */}
+        <section className="space-y-4 px-6 py-5">
+          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Naming
+          </h3>
 
-        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Attribute name</FormLabel>
+                <FormDescription>How this attribute appears throughout the system</FormDescription>
+                <div className="flex items-center gap-3">
+                  <FormField
+                    control={form.control}
+                    name="icon"
+                    render={({ field: iconField }) => (
+                      <FormItem>
+                        <IconSelector
+                          onSelect={iconField.onChange}
+                          icon={iconField.value}
+                          className="size-9 bg-accent/10"
+                          displayIconClassName="size-5"
+                        />
+                      </FormItem>
+                    )}
+                  />
+                  <FormControl>
+                    <Input placeholder="Enter attribute name" {...field} />
+                  </FormControl>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </section>
+
+        <div className="border-t" />
+
+        {/* Section 2: Constraints */}
+        <section className="space-y-4 px-6 py-5">
+          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Constraints
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Define validation rules for this attribute
+          </p>
+
           <FormField
             control={form.control}
             name="required"
             render={({ field }) => (
-              <>
-                <FormItem className="mb-1 flex items-center justify-between space-y-0">
-                  <FormLabel>Required</FormLabel>
+              <FormItem className="flex items-center justify-between space-y-0">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-sm font-normal">Required</FormLabel>
+                  <FormDescription className="text-xs">
+                    {isIdentifierAttribute
+                      ? 'This attribute is the identifier key and must be required'
+                      : 'Required attributes must have a value for each record'}
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={isIdentifierAttribute}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          {allowUniqueness && (
+            <FormField
+              control={form.control}
+              name="unique"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between space-y-0">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-sm font-normal">Unique</FormLabel>
+                    <FormDescription className="text-xs">
+                      {isIdentifierAttribute
+                        ? 'This attribute is the identifier key and must be unique'
+                        : 'Unique attributes enforce distinct values across all records'}
+                    </FormDescription>
+                  </div>
                   <FormControl>
                     <Switch
                       checked={field.value}
@@ -174,172 +236,166 @@ export const SchemaForm: FC<Props> = ({
                     />
                   </FormControl>
                 </FormItem>
-                <FormDescription className="text-xs italic">
-                  {isIdentifierAttribute
-                    ? 'This attribute is the identifier key and must be required'
-                    : 'Required attributes must have a value for each record'}
-                </FormDescription>
-              </>
-            )}
-          />
-          {allowUniqueness && (
-            <FormField
-              control={form.control}
-              name="unique"
-              render={({ field }) => (
-                <>
-                  <FormItem className="mb-1 flex items-center justify-between space-y-0">
-                    <FormLabel>Unique</FormLabel>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        disabled={isIdentifierAttribute}
-                      />
-                    </FormControl>
-                  </FormItem>
-                  <FormDescription className="text-xs italic">
-                    {isIdentifierAttribute
-                      ? 'This attribute is the identifier key and must be unique'
-                      : 'Unique attributes enforce distinct values across all records. There can be only one record with a given value.'}
-                  </FormDescription>
-                </>
               )}
             />
           )}
-        </div>
 
-        {/* Schema Options */}
-        {requireEnumOptions && <EnumOptionsEditor form={form} />}
+          {/* Schema Options */}
+          {requireEnumOptions && <EnumOptionsEditor form={form} />}
 
-        {requireNumericalValidation && (
-          <div className="border-t pt-4">
-            <h3 className="mb-3 text-sm font-medium">Value Constraints</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="minimum"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Minimum Value</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Min"
-                        {...field}
-                        value={field.value ?? ''}
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value === '' ? undefined : parseFloat(e.target.value),
-                          )
-                        }
+          {/* Type-specific constraints popover */}
+          {(requireNumericalValidation || requireStringValidation) && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="text-muted-foreground"
+                >
+                  <Settings2 className="mr-2 size-4" />
+                  Value constraints
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 space-y-4" align="start">
+                {requireNumericalValidation && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="minimum"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Minimum</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="Min"
+                              {...field}
+                              value={field.value ?? ''}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value === '' ? undefined : parseFloat(e.target.value),
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="maximum"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Maximum</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="Max"
+                              {...field}
+                              value={field.value ?? ''}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value === '' ? undefined : parseFloat(e.target.value),
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+
+                {requireStringValidation && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="minLength"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Min length</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="Min"
+                                {...field}
+                                value={field.value ?? ''}
+                                onChange={(e) =>
+                                  field.onChange(
+                                    e.target.value === '' ? undefined : parseInt(e.target.value),
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="maximum"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Maximum Value</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Max"
-                        {...field}
-                        value={field.value ?? ''}
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value === '' ? undefined : parseFloat(e.target.value),
-                          )
-                        }
+                      <FormField
+                        control={form.control}
+                        name="maxLength"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Max length</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="Max"
+                                {...field}
+                                value={field.value ?? ''}
+                                onChange={(e) =>
+                                  field.onChange(
+                                    e.target.value === '' ? undefined : parseInt(e.target.value),
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="regex"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Regex pattern</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="^[A-Za-z]+$"
+                              {...field}
+                              value={field.value ?? ''}
+                            />
+                          </FormControl>
+                          <FormDescription className="text-xs">
+                            Regular expression for validation
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
                 )}
-              />
-            </div>
-          </div>
-        )}
+              </PopoverContent>
+            </Popover>
+          )}
+        </section>
 
-        {requireStringValidation && (
-          <div className="border-t pt-4">
-            <h3 className="mb-3 text-sm font-medium">String Constraints</h3>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="minLength"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Minimum Length</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="Min length"
-                          {...field}
-                          value={field.value ?? ''}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value === '' ? undefined : parseInt(e.target.value),
-                            )
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="maxLength"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Maximum Length</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="Max length"
-                          {...field}
-                          value={field.value ?? ''}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value === '' ? undefined : parseInt(e.target.value),
-                            )
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name="regex"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Regex Pattern (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="^[A-Za-z]+$" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      Regular expression pattern for validation
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-        )}
-        {/* Semantic Context */}
-        <div className="border-t pt-4">
-          <h3 className="mb-3 text-sm font-medium">Semantic Context</h3>
+        <div className="border-t" />
+
+        {/* Section 3: Semantic Context */}
+        <section className="space-y-4 px-6 py-5">
+          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Semantic Context
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Help the system understand this attribute by providing semantic metadata
+          </p>
 
           <FormField
             control={form.control}
@@ -388,13 +444,16 @@ export const SchemaForm: FC<Props> = ({
             control={form.control}
             name="definition"
             render={({ field }) => (
-              <FormItem className="mt-4">
-                <FormLabel>What does this attribute represent?</FormLabel>
+              <FormItem>
+                <FormLabel>Definition</FormLabel>
+                <FormDescription>
+                  Help the system understand this attribute by describing it in plain language
+                </FormDescription>
                 <FormControl>
                   <Textarea
                     placeholder="e.g., The primary email address used for customer communications and account recovery"
                     className="min-h-16 resize-none"
-                    rows={3}
+                    rows={2}
                     style={{ fieldSizing: 'content' } as React.CSSProperties}
                     {...field}
                     value={field.value ?? ''}
@@ -416,13 +475,14 @@ export const SchemaForm: FC<Props> = ({
               </FormItem>
             )}
           />
-        </div>
+        </section>
 
-        <footer className="mt-4 flex justify-end space-x-4 border-t pt-4">
-          <Button type="button" onClick={handleReset} variant={'destructive'}>
+        {/* Footer */}
+        <footer className="flex justify-end gap-3 border-t px-6 py-4">
+          <Button type="button" onClick={handleReset} variant="outline">
             Cancel
           </Button>
-          <Button type="submit">{attribute ? 'Update Schema' : 'Add Attribute'}</Button>
+          <Button type="submit">{attribute ? 'Update Attribute' : 'Add Attribute'}</Button>
         </footer>
       </form>
     </Form>

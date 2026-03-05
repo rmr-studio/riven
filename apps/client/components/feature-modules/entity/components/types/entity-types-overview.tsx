@@ -1,6 +1,5 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable, DataTableProvider } from '@/components/ui/data-table';
 import { IconCell } from '@/components/ui/icon/icon-cell';
@@ -44,46 +43,42 @@ export const EntityTypesOverview: FC<Props> = ({ workspaceId }) => {
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/5">
               <IconCell
                 readonly={true}
-                iconType={row.original.icon.type}
+                type={row.original.icon.type}
                 colour={row.original.icon.colour}
               />
             </div>
             <div className="flex flex-col">
               <span className="font-medium">{row.original.name.plural}</span>
-              {row.original.description && (
-                <span className="text-xs text-muted-foreground">{row.original.description}</span>
+              {row.original.semantics?.entityType?.definition && (
+                <span className="text-xs text-muted-foreground">
+                  {row.original.semantics.entityType.definition}
+                </span>
               )}
             </div>
           </div>
         ),
       },
       {
-        accessorKey: 'type',
-        header: 'Type',
-        cell: ({ row }) => {
-          const type = row.original.type;
-          const isStandard = type === 'STANDARD';
-          return (
-            <Badge variant={isStandard ? 'secondary' : 'default'}>
-              {type === 'STANDARD' ? 'Standard' : 'Relationship'}
-            </Badge>
-          );
-        },
-      },
-      {
         accessorKey: 'relationships',
         header: 'Relationships',
         cell: ({ row }) => {
-          const { second } = row.original.attributes;
-          return <span className="text-muted-foreground">{second}</span>;
+          return (
+            <span className="text-muted-foreground">
+              {row.original.relationships.length}
+            </span>
+          );
         },
       },
       {
         accessorKey: 'schema',
         header: 'Attributes',
         cell: ({ row }) => {
-          const { first, second } = row.original.attributes;
-          return <span className="text-muted-foreground">{first + second}</span>;
+          const schemaCount = Object.keys(row.original.schema.properties || {}).length;
+          return (
+            <span className="text-muted-foreground">
+              {schemaCount + row.original.relationships.length}
+            </span>
+          );
         },
       },
     ],
@@ -125,15 +120,6 @@ export const EntityTypesOverview: FC<Props> = ({ workspaceId }) => {
           filter={{
             enabled: true,
             filters: [
-              {
-                column: 'type',
-                type: 'select',
-                label: 'Type',
-                options: [
-                  { label: 'Standard', value: 'STANDARD' },
-                  { label: 'Relationship', value: 'RELATIONSHIP' },
-                ],
-              },
               {
                 column: '_protected',
                 type: 'boolean',

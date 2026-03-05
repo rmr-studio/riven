@@ -1,5 +1,6 @@
 'use client';
 
+import { useRelationshipForm } from '@/components/feature-modules/entity/hooks/form/type/use-relationship-form';
 import { useEntityTypes } from '@/components/feature-modules/entity/hooks/query/type/use-entity-types';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,15 +14,11 @@ import {
 } from '@/components/ui/form';
 import { IconSelector } from '@/components/ui/icon/icon-selector';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { DialogControl } from '@/lib/interfaces/interface';
 import { EntityType, RelationshipDefinition } from '@/lib/types/entity';
-import { cn } from '@/lib/util/utils';
 import { FC } from 'react';
-import {
-  useRelationshipForm,
-} from '../../../hooks/form/type/use-relationship-form';
 import { TargetRuleList } from './target-rule-list';
 
 // ---- Props ----
@@ -48,183 +45,175 @@ export const RelationshipForm: FC<RelationshipFormProps> = ({
 
   const { data: availableTypes = [] } = useEntityTypes(workspaceId);
 
-  const {
-    form,
-    mode,
-    handleSubmit,
-    handleReset,
-    targetRuleFieldArray,
-    cachedRulesRef,
-  } = useRelationshipForm(workspaceId, type, availableTypes, open, onSave, onCancel, relationship);
+  const { form, mode, handleSubmit, handleReset, targetRuleFieldArray, cachedRulesRef } =
+    useRelationshipForm(workspaceId, type, availableTypes, open, onSave, onCancel, relationship);
 
   const allowPolymorphic = form.watch('allowPolymorphic');
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        {/* Section 1: Icon + Name inline */}
-        <div className="flex items-start gap-4">
-          <FormField
-            control={form.control}
-            name="icon"
-            render={({ field }) => (
-              <FormItem>
-                <IconSelector
-                  onSelect={field.onChange}
-                  icon={field.value}
-                  className="size-12 bg-accent/10"
-                  displayIconClassName="size-8"
-                />
-              </FormItem>
-            )}
-          />
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-0">
+        {/* Section 1: Naming */}
+        <section className="space-y-4 px-6 py-5">
+          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Naming
+          </h3>
+
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
-              <FormItem className="flex-1">
-                <FormLabel>Relationship Name</FormLabel>
+              <FormItem>
+                <FormLabel>Relationship name</FormLabel>
+                <FormDescription>How this relationship appears throughout the system</FormDescription>
+                <div className="flex items-center gap-3">
+                  <FormField
+                    control={form.control}
+                    name="icon"
+                    render={({ field: iconField }) => (
+                      <FormItem>
+                        <IconSelector
+                          onSelect={iconField.onChange}
+                          icon={iconField.value}
+                          className="size-9 bg-accent/10"
+                          displayIconClassName="size-5"
+                        />
+                      </FormItem>
+                    )}
+                  />
+                  <FormControl>
+                    <Input placeholder="E.g. Contacts, Orders, Products" {...field} />
+                  </FormControl>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="semanticDefinition"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Definition</FormLabel>
+                <FormDescription>
+                  Help the system understand this relationship by describing it in plain language
+                </FormDescription>
                 <FormControl>
-                  <Input placeholder="E.g. Contacts, Orders, Products" {...field} />
+                  <Textarea
+                    placeholder="Describe the nature of this relationship..."
+                    className="resize-none"
+                    rows={2}
+                    {...field}
+                    value={field.value ?? ''}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-        </div>
+        </section>
 
-        {/* Section 2: Semantic definition textarea */}
-        <FormField
-          control={form.control}
-          name="semanticDefinition"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Definition</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Describe the nature of this relationship..."
-                  className="resize-none"
-                  rows={2}
-                  {...field}
-                  value={field.value ?? ''}
-                />
-              </FormControl>
-              <FormDescription>
-                Help the system understand this relationship by describing it in plain language
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="border-t" />
 
-        {/* Section 3: Cardinality toggles + polymorphic toggle */}
-        <div className="flex flex-wrap items-end gap-6">
-          <FormField
-            control={form.control}
-            name="sourceLimit"
-            render={({ field }) => (
-              <FormItem className="w-fit">
-                <FormLabel>Source cardinality</FormLabel>
-                <div className="flex items-center gap-3 py-1">
-                  <span
-                    className={cn(
-                      'text-sm font-medium',
-                      field.value === 'ONE' ? 'text-foreground' : 'text-muted-foreground',
-                    )}
-                  >
-                    1
-                  </span>
-                  <FormControl>
-                    <Switch
-                      checked={field.value === 'UNLIMITED'}
-                      onCheckedChange={(checked) => field.onChange(checked ? 'UNLIMITED' : 'ONE')}
-                    />
-                  </FormControl>
-                  <span
-                    className={cn(
-                      'text-sm font-medium',
-                      field.value === 'UNLIMITED' ? 'text-foreground' : 'text-muted-foreground',
-                    )}
-                  >
-                    Unlimited
-                  </span>
-                </div>
-              </FormItem>
-            )}
-          />
+        {/* Section 2: Cardinality */}
+        <section className="space-y-4 px-6 py-5">
+          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Cardinality
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Define how many records can be linked on each side of this relationship
+          </p>
 
-          <FormField
-            control={form.control}
-            name="targetLimit"
-            render={({ field }) => (
-              <FormItem className="w-fit">
-                <FormLabel>Target cardinality</FormLabel>
-                <div className="flex items-center gap-3 py-1">
-                  <span
-                    className={cn(
-                      'text-sm font-medium',
-                      field.value === 'ONE' ? 'text-foreground' : 'text-muted-foreground',
-                    )}
-                  >
-                    1
+          <div className="space-y-2">
+            <FormField
+              control={form.control}
+              name="sourceLimit"
+              render={({ field }) => (
+                <FormItem className="flex items-center gap-2 space-y-0">
+                  <span className="text-sm text-muted-foreground">
+                    Each{' '}
+                    <span className="font-medium text-foreground">{type.name.singular}</span>{' '}
+                    can link to
                   </span>
-                  <FormControl>
-                    <Switch
-                      checked={field.value === 'UNLIMITED'}
-                      onCheckedChange={(checked) => field.onChange(checked ? 'UNLIMITED' : 'ONE')}
-                    />
-                  </FormControl>
-                  <span
-                    className={cn(
-                      'text-sm font-medium',
-                      field.value === 'UNLIMITED' ? 'text-foreground' : 'text-muted-foreground',
-                    )}
-                  >
-                    Unlimited
-                  </span>
-                </div>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="allowPolymorphic"
-            render={({ field }) => (
-              <FormItem className="flex items-center gap-3 space-y-0">
-                <FormLabel>Allow all entity types</FormLabel>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        cachedRulesRef.current = form.getValues('targetRules');
-                        targetRuleFieldArray.remove();
-                      } else {
-                        if (mode === 'create' && cachedRulesRef.current.length > 0) {
-                          form.setValue('targetRules', cachedRulesRef.current);
-                        }
-                        // Edit mode: start fresh with empty rules per CONTEXT.md
-                      }
-                      field.onChange(checked);
+                  <ToggleGroup
+                    type="single"
+                    variant="outline"
+                    size="sm"
+                    value={field.value}
+                    onValueChange={(val) => {
+                      if (val) field.onChange(val);
                     }}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
+                  >
+                    <ToggleGroupItem value="ONE" className="text-xs px-2.5">
+                      one
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="UNLIMITED" className="text-xs px-2.5">
+                      many
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                  <span className="text-sm text-muted-foreground">
+                    {field.value === 'ONE' ? 'target' : 'targets'}
+                  </span>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="targetLimit"
+              render={({ field }) => (
+                <FormItem className="flex items-center gap-2 space-y-0">
+                  <span className="text-sm text-muted-foreground">Each target can link to</span>
+                  <ToggleGroup
+                    type="single"
+                    variant="outline"
+                    size="sm"
+                    value={field.value}
+                    onValueChange={(val) => {
+                      if (val) field.onChange(val);
+                    }}
+                  >
+                    <ToggleGroupItem value="ONE" className="text-xs px-2.5">
+                      one
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="UNLIMITED" className="text-xs px-2.5">
+                      many
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                  <span className="text-sm text-muted-foreground">
+                    {field.value === 'ONE' ? type.name.singular : type.name.plural}
+                  </span>
+                </FormItem>
+              )}
+            />
+          </div>
+        </section>
+
+        <div className="border-t" />
+
+        {/* Section 3: Target rules */}
+        <section className="space-y-4 px-6 py-5">
+          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Target Rules
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Control which entity types can be linked through this relationship
+          </p>
+
+          <TargetRuleList
+            availableTypes={availableTypes}
+            currentEntityKey={type.key}
+            targetRuleFieldArray={targetRuleFieldArray}
+            allowPolymorphic={allowPolymorphic}
+            cachedRulesRef={cachedRulesRef}
+            mode={mode}
+            form={form}
           />
-        </div>
+        </section>
 
-        {/* Section 4: Target rules list */}
-        <TargetRuleList
-          availableTypes={availableTypes}
-          currentEntityKey={type.key}
-          targetRuleFieldArray={targetRuleFieldArray}
-          disabled={allowPolymorphic}
-        />
-
-        {/* Section 5: Save/Cancel actions */}
-        <footer className="flex justify-end gap-3 border-t pt-4">
+        {/* Footer: Save/Cancel actions */}
+        <footer className="flex justify-end gap-3 border-t px-6 py-4">
           <Button type="button" onClick={handleReset} variant="outline">
             Cancel
           </Button>

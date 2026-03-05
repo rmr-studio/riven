@@ -2,6 +2,7 @@ import { useAuth } from '@/components/provider/auth-context';
 import {
   EntityType,
   SaveTypeDefinitionRequest,
+  type DeleteDefinitionImpact,
   type EntityTypeImpactResponse,
 } from '@/lib/types/entity';
 import { useMutation, useQueryClient, type UseMutationOptions } from '@tanstack/react-query';
@@ -11,6 +12,7 @@ import { EntityTypeService } from '../../../service/entity-type.service';
 
 export function useSaveDefinitionMutation(
   workspaceId: string,
+  onImpactConfirmation?: (impact: DeleteDefinitionImpact) => void,
   options?: UseMutationOptions<EntityTypeImpactResponse, Error, SaveTypeDefinitionRequest>,
 ) {
   const queryClient = useQueryClient();
@@ -38,6 +40,13 @@ export function useSaveDefinitionMutation(
       options?.onSuccess?.(response, variables, context);
       toast.dismiss(submissionToastRef.current);
       submissionToastRef.current = undefined;
+
+      // Check for impact confirmation (409 response)
+      if (response.impact) {
+        onImpactConfirmation?.(response.impact);
+        return;
+      }
+
       toast.success(`Entity type definition saved successfully!`);
 
       if (response.updatedEntityTypes) {

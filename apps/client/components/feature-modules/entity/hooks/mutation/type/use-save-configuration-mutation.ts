@@ -1,5 +1,5 @@
 import { useAuth } from '@/components/provider/auth-context';
-import { EntityType } from '@/lib/types/entity';
+import { EntityType, UpdateEntityTypeConfigurationRequest } from '@/lib/types/entity';
 import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
 import { useRef } from 'react';
 import { toast } from 'sonner';
@@ -7,26 +7,26 @@ import { EntityTypeService } from '../../../service/entity-type.service';
 
 export function useSaveEntityTypeConfiguration(
   workspaceId: string,
-  options?: UseMutationOptions<EntityType, Error, EntityType>,
+  options?: UseMutationOptions<EntityType, Error, UpdateEntityTypeConfigurationRequest>,
 ) {
   const queryClient = useQueryClient();
   const { session } = useAuth();
   const submissionToastRef = useRef<string | number | undefined>(undefined);
 
   return useMutation({
-    mutationFn: (type: EntityType) =>
-      EntityTypeService.saveEntityTypeConfiguration(session, workspaceId, type),
+    mutationFn: (request: UpdateEntityTypeConfigurationRequest) =>
+      EntityTypeService.saveEntityTypeConfiguration(session, workspaceId, request),
     onMutate: (data) => {
       options?.onMutate?.(data);
       submissionToastRef.current = toast.loading('Updating entity type...');
     },
-    onError: (error: Error, variables: EntityType, context: unknown) => {
+    onError: (error: Error, variables: UpdateEntityTypeConfigurationRequest, context: unknown) => {
       options?.onError?.(error, variables, context);
       toast.dismiss(submissionToastRef.current);
       submissionToastRef.current = undefined;
       toast.error(`Failed to update entity type: ${error.message}`);
     },
-    onSuccess: (response: EntityType, variables: EntityType, context: unknown) => {
+    onSuccess: (response: EntityType, variables: UpdateEntityTypeConfigurationRequest, context: unknown) => {
       options?.onSuccess?.(response, variables, context);
       toast.dismiss(submissionToastRef.current);
       toast.success(`Entity type updated successfully!`);
