@@ -42,7 +42,11 @@ Plans:
   3. Template manifests with $ref entries have those references fully resolved from the in-memory model index — no DB reads occur during resolution
   4. A relationship defined in shorthand format (single target + cardinality) is stored in the database in full targetRules[] format
   5. All unit tests for $ref resolution, extend merge, relationship normalization, and relationship validation pass
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 02-01-PLAN.md — Schema evolution (stale column), pipeline data classes, JSON Schema update, test fixtures
+- [ ] 02-02-PLAN.md — ManifestScannerService + ManifestResolverService with unit tests
+- [ ] 02-03-PLAN.md — ManifestUpsertService + ManifestLoaderService orchestrator with unit tests
 
 ### Phase 3: Read Surface and Integration Tests
 **Goal**: Downstream services can query the catalog, and the full startup pipeline is verified end-to-end by integration tests covering load, idempotent reload, and manifest removal reconciliation
@@ -63,5 +67,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Database Foundation | 1/1 | Complete | 2026-03-04 |
-| 2. Loader Pipeline | 0/? | Not started | - |
+| 2. Loader Pipeline | 0/3 | In progress | - |
 | 3. Read Surface and Integration Tests | 0/? | Not started | - |
