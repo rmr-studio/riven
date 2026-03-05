@@ -26,4 +26,10 @@ interface CatalogSemanticMetadataRepository : JpaRepository<CatalogSemanticMetad
         targetType: SemanticMetadataTargetType,
         targetId: String
     ): CatalogSemanticMetadataEntity?
+
+    /**
+     * Delete all semantic metadata for the given catalog entity type IDs.
+     * Used for delete-reinsert reconciliation (delete metadata before deleting entity types).
+     */
+    fun deleteByCatalogEntityTypeIdIn(catalogEntityTypeIds: List<UUID>)
 }

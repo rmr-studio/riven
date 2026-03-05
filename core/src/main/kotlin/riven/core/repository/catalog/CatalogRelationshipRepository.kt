@@ -20,4 +20,9 @@ interface CatalogRelationshipRepository : JpaRepository<CatalogRelationshipEntit
      * Find a specific relationship within a manifest by its key.
      */
     fun findByManifestIdAndKey(manifestId: UUID, key: String): CatalogRelationshipEntity?
+
+    /**
+     * Delete all relationships belonging to a manifest. Used for delete-reinsert reconciliation.
+     */
+    fun deleteByManifestId(manifestId: UUID)
 }

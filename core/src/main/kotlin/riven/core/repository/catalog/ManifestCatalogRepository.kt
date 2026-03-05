@@ -1,6 +1,8 @@
 package riven.core.repository.catalog
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
 import riven.core.entity.catalog.ManifestCatalogEntity
 import riven.core.enums.catalog.ManifestType
 import java.util.*
@@ -8,7 +10,8 @@ import java.util.*
 /**
  * Repository for manifest catalog entries.
  *
- * Provides queries for finding manifests by key, type, and key+type combination.
+ * Provides queries for finding manifests by key, type, and key+type combination,
+ * as well as bulk stale-marking operations for reconciliation.
  */
 interface ManifestCatalogRepository : JpaRepository<ManifestCatalogEntity, UUID> {
 
@@ -26,4 +29,25 @@ interface ManifestCatalogRepository : JpaRepository<ManifestCatalogEntity, UUID>
      * Find a single manifest by its unique key + type combination.
      */
     fun findByKeyAndManifestType(key: String, manifestType: ManifestType): ManifestCatalogEntity?
+
+    // ------ Stale Reconciliation ------
+
+    /**
+     * Mark all catalog entries as stale. Called at the start of a load cycle
+     * so that entries not present on disk remain stale after loading.
+     */
+    @Modifying
+    @Query("UPDATE ManifestCatalogEntity m SET m.stale = true")
+    fun markAllStale()
+
+    /**
+     * Find all catalog entries that are currently stale (not present on disk after last load).
+     */
+    fun findByStaleTrue(): List<ManifestCatalogEntity>
+
+    /**
+     * Find stale catalog entries of a specific manifest type.
+     * Used for syncing integration_definitions.stale after load cycle.
+     */
+    fun findByManifestTypeAndStaleTrue(manifestType: ManifestType): List<ManifestCatalogEntity>
 }

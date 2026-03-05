@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS manifest_catalog (
     manifest_type VARCHAR(50) NOT NULL CHECK (manifest_type IN ('MODEL', 'TEMPLATE', 'INTEGRATION')),
     manifest_version VARCHAR(50),
     last_loaded_at TIMESTAMPTZ,
+    stale BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 

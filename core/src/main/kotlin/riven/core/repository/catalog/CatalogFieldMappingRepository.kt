@@ -20,4 +20,9 @@ interface CatalogFieldMappingRepository : JpaRepository<CatalogFieldMappingEntit
      * Find a specific field mapping within a manifest by entity type key.
      */
     fun findByManifestIdAndEntityTypeKey(manifestId: UUID, entityTypeKey: String): CatalogFieldMappingEntity?
+
+    /**
+     * Delete all field mappings belonging to a manifest. Used for delete-reinsert reconciliation.
+     */
+    fun deleteByManifestId(manifestId: UUID)
 }

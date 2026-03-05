@@ -45,6 +45,9 @@ data class ManifestCatalogEntity(
     @Column(name = "last_loaded_at")
     var lastLoadedAt: ZonedDateTime? = null,
 
+    @Column(name = "stale", nullable = false)
+    var stale: Boolean = false,
+
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: ZonedDateTime = ZonedDateTime.now(),
 

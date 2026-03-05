@@ -20,4 +20,9 @@ interface CatalogEntityTypeRepository : JpaRepository<CatalogEntityTypeEntity, U
      * Find a specific entity type within a manifest by its key.
      */
     fun findByManifestIdAndKey(manifestId: UUID, key: String): CatalogEntityTypeEntity?
+
+    /**
+     * Delete all entity types belonging to a manifest. Used for delete-reinsert reconciliation.
+     */
+    fun deleteByManifestId(manifestId: UUID)
 }

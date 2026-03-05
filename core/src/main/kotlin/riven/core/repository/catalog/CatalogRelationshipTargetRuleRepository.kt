@@ -15,4 +15,10 @@ interface CatalogRelationshipTargetRuleRepository : JpaRepository<CatalogRelatio
      * Find all target rules for a given catalog relationship.
      */
     fun findByCatalogRelationshipId(catalogRelationshipId: UUID): List<CatalogRelationshipTargetRuleEntity>
+
+    /**
+     * Delete all target rules for the given catalog relationship IDs.
+     * Used for delete-reinsert reconciliation (delete target rules before deleting relationships).
+     */
+    fun deleteByCatalogRelationshipIdIn(catalogRelationshipIds: List<UUID>)
 }
