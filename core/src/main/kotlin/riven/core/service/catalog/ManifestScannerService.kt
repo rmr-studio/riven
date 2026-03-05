@@ -6,6 +6,7 @@ import com.networknt.schema.JsonSchema
 import com.networknt.schema.JsonSchemaFactory
 import com.networknt.schema.SpecVersion
 import io.github.oshai.kotlinlogging.KLogger
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.Resource
 import org.springframework.core.io.support.ResourcePatternResolver
 import org.springframework.stereotype.Service
@@ -21,7 +22,8 @@ import riven.core.models.catalog.ScannedManifest
 class ManifestScannerService(
     private val resourcePatternResolver: ResourcePatternResolver,
     private val objectMapper: ObjectMapper,
-    private val logger: KLogger
+    private val logger: KLogger,
+    @Value("\${riven.manifests.base-path:classpath:manifests}") private val basePath: String
 ) {
     private val schemaFactory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V201909)
 
@@ -29,7 +31,7 @@ class ManifestScannerService(
 
     /** Scans classpath models directory for model manifests. Key derived from filename. */
     fun scanModels(): List<ScannedManifest> {
-        val resources = resourcePatternResolver.getResources("classpath:manifests/models/*.json")
+        val resources = resourcePatternResolver.getResources("$basePath/models/*.json")
         return resources.mapNotNull { resource ->
             val filename = resource.filename ?: return@mapNotNull null
             val key = filename.removeSuffix(".json")
@@ -39,7 +41,7 @@ class ManifestScannerService(
 
     /** Scans classpath templates directory for template manifests. Key derived from directory name. */
     fun scanTemplates(): List<ScannedManifest> {
-        val resources = resourcePatternResolver.getResources("classpath:manifests/templates/*/manifest.json")
+        val resources = resourcePatternResolver.getResources("$basePath/templates/*/manifest.json")
         return resources.mapNotNull { resource ->
             val key = extractDirectoryName(resource, "templates")
             parseAndValidate(resource, key, ManifestType.TEMPLATE, "manifests/schemas/template.schema.json")
@@ -48,7 +50,7 @@ class ManifestScannerService(
 
     /** Scans classpath integrations directory for integration manifests. Key derived from directory name. */
     fun scanIntegrations(): List<ScannedManifest> {
-        val resources = resourcePatternResolver.getResources("classpath:manifests/integrations/*/manifest.json")
+        val resources = resourcePatternResolver.getResources("$basePath/integrations/*/manifest.json")
         return resources.mapNotNull { resource ->
             val key = extractDirectoryName(resource, "integrations")
             parseAndValidate(resource, key, ManifestType.INTEGRATION, "manifests/schemas/integration.schema.json")

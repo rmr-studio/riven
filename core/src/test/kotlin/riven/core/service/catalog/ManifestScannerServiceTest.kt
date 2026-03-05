@@ -74,7 +74,7 @@ class ManifestScannerServiceTest {
         resourcePatternResolver = mock()
         objectMapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
         logger = mock()
-        service = ManifestScannerService(resourcePatternResolver, objectMapper, logger)
+        service = ManifestScannerService(resourcePatternResolver, objectMapper, logger, "classpath:manifests")
     }
 
     // ------ scanModels ------
