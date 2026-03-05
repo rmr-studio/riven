@@ -1,9 +1,5 @@
 'use client';
 
-import { Button } from '@riven/ui/button';
-import { Input } from '@riven/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@riven/ui/popover';
-import { Textarea } from '@riven/ui/textarea';
 import {
   Form,
   FormControl,
@@ -22,10 +18,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { TagInput } from '@/components/ui/tag-input';
-import type { ChildNodeProps } from '@riven/utils';
 import { EntityType, SemanticGroup } from '@/lib/types/entity';
 import { cn } from '@/lib/util/utils';
 import { PopoverClose } from '@radix-ui/react-popover';
+import { Button } from '@riven/ui/button';
+import { Input } from '@riven/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@riven/ui/popover';
+import { Textarea } from '@riven/ui/textarea';
+import type { ChildNodeProps } from '@riven/utils';
 import { Plus } from 'lucide-react';
 import { FC } from 'react';
 import {
@@ -140,12 +140,14 @@ export const NewEntityTypeForm: FC<Props> = ({ workspaceId, children }) => {
                       {...field}
                     />
                   </FormControl>
-                  <p className={cn(
-                    'min-h-4 text-xs',
-                    semanticGroup === SemanticGroup.Custom
-                      ? 'text-amber-600 dark:text-amber-400'
-                      : 'invisible',
-                  )}>
+                  <p
+                    className={cn(
+                      'min-h-4 text-xs',
+                      semanticGroup === SemanticGroup.Custom
+                        ? 'text-amber-600 dark:text-amber-400'
+                        : 'invisible',
+                    )}
+                  >
                     Describing what this entity type represents helps the system understand its
                     purpose
                   </p>
@@ -173,9 +175,7 @@ export const NewEntityTypeForm: FC<Props> = ({ workspaceId, children }) => {
                             e.stopPropagation();
                           }}
                         >
-                          <SelectValue>
-                            {CATEGORY_LABELS[field.value as SemanticGroup]}
-                          </SelectValue>
+                          <SelectValue>{CATEGORY_LABELS[field.value]}</SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent

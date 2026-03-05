@@ -1,6 +1,4 @@
 import { useEntityTypeAttributeSchemaForm } from '@/components/feature-modules/entity/hooks/form/type/use-schema-form';
-import { Button } from '@riven/ui/button';
-import { Input } from '@riven/ui/input';
 import {
   Form,
   FormControl,
@@ -22,14 +20,17 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { DialogControl } from '@/lib/interfaces/interface';
+import { SchemaType } from '@/lib/types/common';
 import {
   EntityAttributeDefinition,
   EntityType,
   EntityTypeSemanticMetadata,
   SemanticAttributeClassification,
 } from '@/lib/types/entity';
-import { SchemaType } from '@/lib/types/common';
 import { cn } from '@/lib/util/utils';
+
+import { Button } from '@riven/ui/button';
+import { Input } from '@riven/ui/input';
 import { Settings2 } from 'lucide-react';
 import { FC, useEffect, useMemo } from 'react';
 import { EnumOptionsEditor } from '../../enum-options-editor';
@@ -149,7 +150,7 @@ export const SchemaForm: FC<Props> = ({
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-0">
         {/* Section 1: Naming */}
         <section className="space-y-4 px-6 py-5">
-          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <h3 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
             Naming
           </h3>
 
@@ -189,7 +190,7 @@ export const SchemaForm: FC<Props> = ({
 
         {/* Section 2: Constraints */}
         <section className="space-y-4 px-6 py-5">
-          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <h3 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
             Constraints
           </h3>
           <p className="text-sm text-muted-foreground">
@@ -252,12 +253,7 @@ export const SchemaForm: FC<Props> = ({
           {(requireNumericalValidation || requireStringValidation) && (
             <Popover>
               <PopoverTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="text-muted-foreground"
-                >
+                <Button type="button" variant="outline" size="sm" className="text-muted-foreground">
                   <Settings2 className="mr-2 size-4" />
                   Value constraints
                 </Button>
@@ -371,11 +367,7 @@ export const SchemaForm: FC<Props> = ({
                         <FormItem>
                           <FormLabel>Regex pattern</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="^[A-Za-z]+$"
-                              {...field}
-                              value={field.value ?? ''}
-                            />
+                            <Input placeholder="^[A-Za-z]+$" {...field} value={field.value ?? ''} />
                           </FormControl>
                           <FormDescription className="text-xs">
                             Regular expression for validation
@@ -395,7 +387,7 @@ export const SchemaForm: FC<Props> = ({
 
         {/* Section 3: Semantic Context */}
         <section className="space-y-4 px-6 py-5">
-          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <h3 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
             Semantic Context
           </h3>
           <p className="text-sm text-muted-foreground">
@@ -408,13 +400,14 @@ export const SchemaForm: FC<Props> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Classification</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value ?? undefined}
-                >
+                <Select onValueChange={field.onChange} value={field.value ?? undefined}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select classification..." />
+                      <SelectValue placeholder="Select classification..." >
+                        {field.value
+                          ? classificationOptions.find((o) => o.value === field.value)?.label
+                          : 'Select classification...'}
+                      </SelectValue>
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -422,10 +415,9 @@ export const SchemaForm: FC<Props> = ({
                       <SelectItem key={opt.value} value={opt.value} textValue={opt.label}>
                         <div className="flex flex-col gap-0.5">
                           <span>{opt.label}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {opt.description}
-                          </span>
-                          <span className="text-xs italic text-muted-foreground/70">
+
+                          <span className="text-xs text-muted-foreground">{opt.description}</span>
+                          <span className="text-xs text-muted-foreground/70 italic">
                             {opt.example}
                           </span>
                         </div>
@@ -470,10 +462,8 @@ export const SchemaForm: FC<Props> = ({
                 {field.value && (
                   <p
                     className={cn(
-                      'text-xs text-right',
-                      (field.value?.length ?? 0) > 500
-                        ? 'text-amber-500'
-                        : 'text-muted-foreground',
+                      'text-right text-xs',
+                      (field.value?.length ?? 0) > 500 ? 'text-amber-500' : 'text-muted-foreground',
                     )}
                   >
                     {field.value.length}/500
