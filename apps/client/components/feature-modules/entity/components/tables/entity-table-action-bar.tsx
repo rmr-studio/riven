@@ -1,6 +1,7 @@
 'use client';
 
-import { Button, Tooltip, TooltipContent, TooltipTrigger } from '@riven/ui';
+import { Button } from '@riven/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@riven/ui/tooltip';
 
 import { Ellipsis, Trash2 } from 'lucide-react';
 import { FC, useState } from 'react';

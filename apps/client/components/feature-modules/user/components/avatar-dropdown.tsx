@@ -2,14 +2,7 @@
 
 import type { User } from '@/lib/types/user';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@riven/ui';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@riven/ui/dropdown-menu';
 import { isAuthError } from '@/lib/auth';
 import { getAuthErrorMessage } from '@/lib/auth/error-messages';
 import { getInitials } from '@riven/utils';

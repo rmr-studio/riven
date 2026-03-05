@@ -2,7 +2,9 @@
 
 import { type FC, useCallback } from "react";
 import { Plus, X } from "lucide-react";
-import { Input, Label, Button } from '@riven/ui';
+import { Button } from '@riven/ui/button';
+import { Input } from '@riven/ui/input';
+import { Label } from '@riven/ui/label';
 import type { ConfigWidgetProps } from "./config-widget.types";
 
 interface KeyValuePair {

@@ -1,4 +1,4 @@
-import { Badge } from '@riven/ui';
+import { Badge } from '@riven/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ColumnFilter, FilterOption } from '@/components/ui/data-table';
 import {

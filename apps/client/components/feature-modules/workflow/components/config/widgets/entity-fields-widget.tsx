@@ -2,7 +2,11 @@
 
 import { useState, type FC } from "react";
 import { Check, ChevronsUpDown, X, Loader2 } from "lucide-react";
-import { Badge, Button, Label, Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, Popover, PopoverContent, PopoverTrigger } from '@riven/ui';
+import { Badge } from '@riven/ui/badge';
+import { Button } from '@riven/ui/button';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@riven/ui/command';
+import { Label } from '@riven/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@riven/ui/popover';
 import { cn } from '@riven/utils';
 import { useEntityTypeByKey } from "@/components/feature-modules/entity/hooks/query/type/use-entity-types";
 import type { ConfigWidgetProps } from "./config-widget.types";

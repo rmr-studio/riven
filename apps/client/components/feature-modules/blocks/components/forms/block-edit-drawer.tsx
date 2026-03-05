@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@riven/ui';
+import { Button } from '@riven/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from '@riven/utils';

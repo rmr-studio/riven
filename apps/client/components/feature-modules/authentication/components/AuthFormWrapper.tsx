@@ -1,5 +1,5 @@
 import { BackgroundBeams } from '@/components/ui/background/beams';
-import { Card } from '@riven/ui';
+import { Card } from '@riven/ui/card';
 import { FCWC, Propless } from '@/lib/interfaces/interface';
 
 export const AuthFormWrapper: FCWC<Propless> = ({ children }) => {

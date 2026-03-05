@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@riven/ui';
+import { Button } from '@riven/ui/button';
 import { ColumnResizingConfig, DataTable, DataTableProvider } from '@/components/ui/data-table';
 import { Form } from '@/components/ui/form';
 import { SchemaUUID } from '@/lib/types/common';

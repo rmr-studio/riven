@@ -7,7 +7,7 @@
 
 'use client';
 
-import { Button } from '@riven/ui';
+import { Button } from '@riven/ui/button';
 import { BlockListOrderingMode, ListFilterLogicType } from "@/lib/types/block";
 import { cn } from '@riven/utils';
 import {

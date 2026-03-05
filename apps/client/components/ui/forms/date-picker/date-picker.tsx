@@ -45,7 +45,9 @@ import * as React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DayPicker, Matcher, TZDate } from 'react-day-picker';
 
-import { Button, buttonVariants, Popover, PopoverContent, PopoverTrigger, ScrollArea } from '@riven/ui';
+import { Button, buttonVariants } from '@riven/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@riven/ui/popover';
+import { ScrollArea } from '@riven/ui/scroll-area';
 import { cn } from '@riven/utils';
 export type CalendarProps = Omit<React.ComponentProps<typeof DayPicker>, 'mode'>;
 

@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@riven/ui';
+import { Button } from '@riven/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@riven/ui/tooltip';
 import { cn } from '@riven/utils';
 import { format, getYear, isValid, parse } from 'date-fns';
 import { CalendarIcon, CircleAlert, CircleCheck } from 'lucide-react';

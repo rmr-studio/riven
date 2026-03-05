@@ -1,6 +1,10 @@
 'use client';
 
-import { Badge, Button, Popover, PopoverContent, PopoverTrigger, Tabs, TabsContent, TabsList, TabsTrigger, Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@riven/ui';
+import { Badge } from '@riven/ui/badge';
+import { Button } from '@riven/ui/button';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@riven/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@riven/ui/popover';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@riven/ui/tabs';
 import { IconCell } from "@/components/ui/icon/icon-cell";
 import {
     Entity,

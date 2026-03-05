@@ -3,7 +3,9 @@
 import { useProfile } from '@/components/feature-modules/user/hooks/useProfile';
 import { WorkspacePlan, type Workspace } from '@/lib/types/workspace';
 import { AvatarUploader } from '@/components/ui/AvatarUploader';
-import { Button, CardContent, CardFooter, Input } from '@riven/ui';
+import { Button } from '@riven/ui/button';
+import { CardContent, CardFooter } from '@riven/ui/card';
+import { Input } from '@riven/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,

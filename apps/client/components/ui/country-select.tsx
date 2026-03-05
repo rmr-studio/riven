@@ -1,11 +1,4 @@
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@riven/ui';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@riven/ui/command';
 import { cn } from '@riven/utils';
 import { useState } from 'react';
 import * as RPNInput from 'react-phone-number-input';

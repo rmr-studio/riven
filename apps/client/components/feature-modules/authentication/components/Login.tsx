@@ -1,7 +1,9 @@
 'use client';
 
 import { useAuth } from '@/components/provider/auth-context';
-import { Button, CardContent, CardHeader, Input } from '@riven/ui';
+import { Button } from '@riven/ui/button';
+import { CardContent, CardHeader } from '@riven/ui/card';
+import { Input } from '@riven/ui/input';
 import {
   Form,
   FormControl,

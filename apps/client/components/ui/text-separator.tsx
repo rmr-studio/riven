@@ -1,4 +1,4 @@
-import { Separator } from '@riven/ui';
+import { Separator } from '@riven/ui/separator';
 import { cn } from '@riven/utils';
 import * as React from 'react';
 

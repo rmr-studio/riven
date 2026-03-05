@@ -1,7 +1,8 @@
 // components/custom-attributes/custom-attributes-builder.tsx
 'use client';
 
-import { Button, Input } from '@riven/ui';
+import { Button } from '@riven/ui/button';
+import { Input } from '@riven/ui/input';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';

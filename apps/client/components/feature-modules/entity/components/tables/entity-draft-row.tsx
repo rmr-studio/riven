@@ -1,6 +1,7 @@
 'use client';
 
-import { Button, TableCell, TableRow } from '@riven/ui';
+import { Button } from '@riven/ui/button';
+import { TableCell, TableRow } from '@riven/ui/table';
 import { EntityPropertyType, EntityType } from '@/lib/types/entity';
 import { cn } from '@riven/utils';
 import { Row } from '@tanstack/react-table';

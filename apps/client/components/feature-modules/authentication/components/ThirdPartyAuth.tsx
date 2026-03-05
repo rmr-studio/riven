@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@riven/ui';
+import { Button } from '@riven/ui/button';
 import type { ClassNameProps } from '@riven/utils';
 import { OAuthProvider } from '@/lib/auth';
 import { cn } from '@riven/utils';

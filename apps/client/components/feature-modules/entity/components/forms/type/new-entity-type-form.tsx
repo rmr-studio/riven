@@ -1,6 +1,9 @@
 'use client';
 
-import { Button, Input, Popover, PopoverContent, PopoverTrigger, Textarea } from '@riven/ui';
+import { Button } from '@riven/ui/button';
+import { Input } from '@riven/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@riven/ui/popover';
+import { Textarea } from '@riven/ui/textarea';
 import {
   Form,
   FormControl,

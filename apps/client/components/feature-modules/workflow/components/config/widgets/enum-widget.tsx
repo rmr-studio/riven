@@ -1,7 +1,7 @@
 "use client";
 
 import type { FC } from "react";
-import { Label } from '@riven/ui';
+import { Label } from '@riven/ui/label';
 import {
   Select,
   SelectContent,

@@ -1,7 +1,8 @@
 'use client';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge, Tabs, TabsContent, TabsList, TabsTrigger } from '@riven/ui';
+import { Badge } from '@riven/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@riven/ui/tabs';
 import { Form } from '@/components/ui/form';
 import { type EntityType } from '@/lib/types/entity';
 import { DataType } from '@/lib/types/common';

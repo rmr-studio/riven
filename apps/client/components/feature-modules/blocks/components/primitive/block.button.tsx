@@ -1,4 +1,4 @@
-import { Button } from '@riven/ui';
+import { Button } from '@riven/ui/button';
 import { cn } from '@riven/utils';
 import Link from 'next/link';
 import { FC } from 'react';

@@ -1,6 +1,6 @@
 import { Client } from '@/components/feature-modules/client/interface/client.interface';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@riven/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@riven/ui/card';
 import { getInitials } from '@riven/utils';
 import Link from 'next/link';
 import { FC } from 'react';

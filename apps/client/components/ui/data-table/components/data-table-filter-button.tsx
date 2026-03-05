@@ -1,6 +1,9 @@
 'use client';
 
-import { Button, Input, Label, ScrollArea } from '@riven/ui';
+import { Button } from '@riven/ui/button';
+import { Input } from '@riven/ui/input';
+import { Label } from '@riven/ui/label';
+import { ScrollArea } from '@riven/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,

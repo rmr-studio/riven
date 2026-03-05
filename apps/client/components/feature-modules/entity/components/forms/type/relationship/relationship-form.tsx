@@ -1,6 +1,7 @@
 import { useEntityTypeRelationshipForm } from '@/components/feature-modules/entity/hooks/form/type/use-relationship-form';
 import { useEntityTypes } from '@/components/feature-modules/entity/hooks/query/type/use-entity-types';
-import { Button, Input } from '@riven/ui';
+import { Button } from '@riven/ui/button';
+import { Input } from '@riven/ui/input';
 import {
   Form,
   FormControl,

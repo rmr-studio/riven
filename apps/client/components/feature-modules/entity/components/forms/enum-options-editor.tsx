@@ -1,6 +1,7 @@
 'use client';
 
-import { Button, Input } from '@riven/ui';
+import { Button } from '@riven/ui/button';
+import { Input } from '@riven/ui/input';
 import { FormDescription, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import {
   Select,

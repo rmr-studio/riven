@@ -1,4 +1,4 @@
-import { CommandItem } from '@riven/ui';
+import { CommandItem } from '@riven/ui/command';
 import type { ClassNameProps } from '@riven/utils';
 import { IconColour, IconType } from '@/lib/types/common';
 import { cn } from '@riven/utils';

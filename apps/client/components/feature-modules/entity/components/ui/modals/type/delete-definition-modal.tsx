@@ -1,4 +1,6 @@
-import { Button, Label, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@riven/ui';
+import { Button } from '@riven/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@riven/ui/dialog';
+import { Label } from '@riven/ui/label';
 import {
   Form,
   FormControl,

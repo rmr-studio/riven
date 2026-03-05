@@ -6,7 +6,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input, Textarea } from '@riven/ui';
+import { Input } from '@riven/ui/input';
+import { Textarea } from '@riven/ui/textarea';
 import {
   Select,
   SelectContent,

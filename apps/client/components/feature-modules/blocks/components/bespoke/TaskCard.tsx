@@ -1,4 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge } from '@riven/ui';
+import { Badge } from '@riven/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@riven/ui/card';
 import { format, parseISO } from 'date-fns';
 import { FC } from 'react';
 

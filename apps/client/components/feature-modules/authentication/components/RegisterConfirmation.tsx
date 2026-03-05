@@ -1,7 +1,9 @@
 'use client';
 
 import { RegistrationConfirmation } from '@/components/feature-modules/authentication/interface/auth.interface';
-import { Button, CardContent, CardHeader, Separator } from '@riven/ui';
+import { Button } from '@riven/ui/button';
+import { CardContent, CardHeader } from '@riven/ui/card';
+import { Separator } from '@riven/ui/separator';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { FormOTPInput } from '@/components/ui/forms/form-otp-input';
 import { getAuthErrorMessage, isAuthError } from '@/lib/auth';

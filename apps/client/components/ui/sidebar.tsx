@@ -5,7 +5,10 @@ import { cva, VariantProps } from 'class-variance-authority';
 import { PanelLeftIcon } from 'lucide-react';
 import * as React from 'react';
 
-import { Button, Input, Separator, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@riven/ui';
+import { Button } from '@riven/ui/button';
+import { Input } from '@riven/ui/input';
+import { Separator } from '@riven/ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@riven/ui/tooltip';
 import {
   Sheet,
   SheetContent,

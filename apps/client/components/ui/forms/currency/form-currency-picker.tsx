@@ -1,6 +1,8 @@
 'use client';
 
-import { Button, Popover, PopoverContent, PopoverTrigger, Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@riven/ui';
+import { Button } from '@riven/ui/button';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@riven/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@riven/ui/popover';
 import type { ClassNameProps } from '@riven/utils';
 import { cn } from '@riven/utils';
 import { Check, ChevronsUpDown } from 'lucide-react';

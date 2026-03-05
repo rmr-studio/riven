@@ -5,13 +5,7 @@ import { Command as CommandPrimitive } from 'cmdk';
 import { SearchIcon } from 'lucide-react';
 
 import { cn } from '@riven/utils';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@riven/ui';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@riven/ui/dialog';
 
 function Command({ className, ...props }: React.ComponentProps<typeof CommandPrimitive>) {
   return (

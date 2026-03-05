@@ -14,7 +14,7 @@ import {
 } from 'react-hook-form';
 
 import { cn } from '@riven/utils';
-import { Label } from '@riven/ui';
+import { Label } from '@riven/ui/label';
 
 const Form = FormProvider;
 

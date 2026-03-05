@@ -1,7 +1,8 @@
 "use client";
 
 import type { FC } from "react";
-import { Input, Label } from '@riven/ui';
+import { Input } from '@riven/ui/input';
+import { Label } from '@riven/ui/label';
 import type { ConfigWidgetProps } from "./config-widget.types";
 
 export const StringWidget: FC<ConfigWidgetProps<string>> = ({

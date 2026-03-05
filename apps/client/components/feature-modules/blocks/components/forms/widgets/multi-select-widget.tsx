@@ -1,6 +1,10 @@
 'use client';
 
-import { Badge, Button, Label, Popover, PopoverContent, PopoverTrigger, Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@riven/ui';
+import { Badge } from '@riven/ui/badge';
+import { Button } from '@riven/ui/button';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@riven/ui/command';
+import { Label } from '@riven/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@riven/ui/popover';
 import { OptionalTooltip } from '@/components/ui/optional-tooltip';
 import { cn } from '@riven/utils';
 import { Check, ChevronsUpDown, CircleAlert, X } from 'lucide-react';

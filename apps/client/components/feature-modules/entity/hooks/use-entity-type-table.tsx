@@ -1,6 +1,7 @@
 'use client';
 
-import { Badge, Tooltip, TooltipContent, TooltipTrigger } from '@riven/ui';
+import { Badge } from '@riven/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@riven/ui/tooltip';
 import {
   EntityAttributeDefinition,
   EntityPropertyType,

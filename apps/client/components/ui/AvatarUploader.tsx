@@ -1,4 +1,6 @@
-import { Button, Input, Label } from '@riven/ui';
+import { Button } from '@riven/ui/button';
+import { Input } from '@riven/ui/input';
+import { Label } from '@riven/ui/label';
 import { Upload } from 'lucide-react';
 import Image from 'next/image';
 import { FC, useId, useRef } from 'react';

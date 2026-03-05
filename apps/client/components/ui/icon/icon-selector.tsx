@@ -2,7 +2,9 @@
 
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Popover, PopoverContent, PopoverTrigger, Command, CommandEmpty, CommandGroup, CommandInput, CommandList } from '@riven/ui';
+import { Button } from '@riven/ui/button';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandList } from '@riven/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@riven/ui/popover';
 
 import type { ClassNameProps } from '@riven/utils';
 import { IconColour, IconType } from '@/lib/types/common';

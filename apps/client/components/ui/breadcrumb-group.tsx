@@ -12,12 +12,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@riven/ui';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@riven/ui/dropdown-menu';
 import { useMediaQuery } from '@riven/hooks';
 import type { ClassNameProps } from '@riven/utils';
 import { cn } from '@riven/utils';

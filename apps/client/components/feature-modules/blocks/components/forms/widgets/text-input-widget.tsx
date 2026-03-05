@@ -1,6 +1,7 @@
 'use client';
 
-import { Input, Label } from '@riven/ui';
+import { Input } from '@riven/ui/input';
+import { Label } from '@riven/ui/label';
 import { cn } from '@riven/utils';
 
 import { OptionalTooltip } from '@/components/ui/optional-tooltip';

@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@riven/ui';
+import { Button } from '@riven/ui/button';
 import { cn } from '@riven/utils';
 import { X } from 'lucide-react';
 import { TooltipProvider } from '../../tooltip';

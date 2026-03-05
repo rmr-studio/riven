@@ -2,7 +2,7 @@
 
 import { OptionalTooltip } from '@/components/ui/optional-tooltip';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@riven/ui';
+import { Label } from '@riven/ui/label';
 import { cn } from '@riven/utils';
 import { CircleAlert } from 'lucide-react';
 import { FC } from 'react';

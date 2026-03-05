@@ -1,4 +1,5 @@
-import { Badge, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@riven/ui';
+import { Badge } from '@riven/ui/badge';
+import { CommandEmpty, CommandGroup, CommandItem, CommandList } from '@riven/ui/command';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   BoxIcon,

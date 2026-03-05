@@ -1,6 +1,7 @@
 'use client';
 
-import { Label, Textarea } from '@riven/ui';
+import { Label } from '@riven/ui/label';
+import { Textarea } from '@riven/ui/textarea';
 import { OptionalTooltip } from '@/components/ui/optional-tooltip';
 import { cn } from '@riven/utils';
 import { CircleAlert } from 'lucide-react';

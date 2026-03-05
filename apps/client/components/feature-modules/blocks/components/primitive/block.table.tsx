@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@riven/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@riven/ui/card';
 import { cn } from '@riven/utils';
 import { FC } from 'react';
 

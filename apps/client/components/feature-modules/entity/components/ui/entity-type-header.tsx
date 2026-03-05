@@ -1,4 +1,4 @@
-import { Button } from '@riven/ui';
+import { Button } from '@riven/ui/button';
 import { FormField } from '@/components/ui/form';
 import { IconSelector } from '@/components/ui/icon/icon-selector';
 import type { ChildNodeProps } from '@riven/utils';
