@@ -4,6 +4,9 @@ const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 
+    // ── Server-only vars ──
+    RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY is required'),
+
     NEXT_PUBLIC_AUTH_ENABLED: z.string().optional(),
     NEXT_PUBLIC_SUPABASE_URL: z.string().url({ message: 'NEXT_PUBLIC_SUPABASE_URL is required' }),
     NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1, 'NEXT_PUBLIC_SUPABASE_ANON_KEY is required'),
