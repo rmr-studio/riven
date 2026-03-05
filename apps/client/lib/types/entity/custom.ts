@@ -3,6 +3,7 @@ import { EntityPropertyType } from '../models/EntityPropertyType';
 import { SchemaUUID, SchemaType, DataType, Icon } from '../common';
 
 import type { EntityRelationshipCardinality, RelationshipDefinition, RelationshipTargetRule } from './models';
+import type { SemanticAttributeClassification } from '../models/SemanticAttributeClassification';
 
 export interface EntityTypeDefinition {
   id: string;
@@ -31,6 +32,9 @@ export interface EntityTypeAttributeRow {
   cardinalityDefault?: EntityRelationshipCardinality;
   allowPolymorphic?: boolean;
   targetRules?: RelationshipTargetRule[];
+  // Semantic metadata fields (optional, populated from SemanticMetadataBundle)
+  classification?: SemanticAttributeClassification;
+  definition?: string;
 }
 
 export interface EntityRelationshipCandidate {
