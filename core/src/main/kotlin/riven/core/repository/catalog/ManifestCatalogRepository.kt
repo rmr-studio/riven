@@ -3,6 +3,7 @@ package riven.core.repository.catalog
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.catalog.ManifestCatalogEntity
 import riven.core.enums.catalog.ManifestType
 import java.util.*
@@ -37,6 +38,7 @@ interface ManifestCatalogRepository : JpaRepository<ManifestCatalogEntity, UUID>
      * so that entries not present on disk remain stale after loading.
      */
     @Modifying
+    @Transactional
     @Query("UPDATE ManifestCatalogEntity m SET m.stale = true")
     fun markAllStale()
 
