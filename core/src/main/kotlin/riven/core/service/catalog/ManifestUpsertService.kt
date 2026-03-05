@@ -95,6 +95,10 @@ class ManifestUpsertService(
         catalogEntityTypeRepository.deleteByManifestId(manifestId)
 
         catalogFieldMappingRepository.deleteByManifestId(manifestId)
+
+        // Flush pending deletes before inserts to avoid unique constraint violations.
+        // Derived delete methods use em.remove() which defers SQL execution until flush time.
+        catalogEntityTypeRepository.flush()
     }
 
     private fun insertEntityTypes(manifestId: UUID, entityTypes: List<ResolvedEntityType>) {

@@ -51,7 +51,7 @@ interface ManifestCatalogRepository : JpaRepository<ManifestCatalogEntity, UUID>
      * Mark all catalog entries as stale. Called at the start of a load cycle
      * so that entries not present on disk remain stale after loading.
      */
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Transactional
     @Query("UPDATE ManifestCatalogEntity m SET m.stale = true")
     fun markAllStale()
