@@ -126,7 +126,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Knowledge API infrastructure (factory, service, query hook) + form schema extension + semantic section UI in SchemaForm
+- [x] 05-01-PLAN.md — Knowledge API infrastructure (factory, service, query hook) + form schema extension + semantic section UI in SchemaForm
 - [ ] 05-02-PLAN.md — Classification column in schema data table + human verification checkpoint
 
 ---
@@ -139,7 +139,7 @@ Plans:
 | 2. Service + Hooks | 1/1 | Complete | 2026-02-28 |
 | 3. Relationship Form | 2/3 | In progress | - |
 | 4. Creation Form Simplification | 0/? | Not started | - |
-| 5. Attribute Semantic Configuration | 0/2 | Not started | - |
+| 5. Attribute Semantic Configuration | 1/2 | In progress | - |
 
 ---
 

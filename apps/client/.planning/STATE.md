@@ -1,7 +1,7 @@
 # Project State: Entity Relationship Migration
 
-**Last updated:** 2026-03-04
-**Session:** Phase 3 Plan 03 — Modal integration + cleanup
+**Last updated:** 2026-03-05
+**Session:** Phase 5 Plan 01 — Knowledge API + Semantic Form Fields
 
 ---
 
@@ -9,7 +9,7 @@
 
 **Core value:** The entity type configuration flow must cleanly separate attribute definitions from relationship definitions while keeping the UX simple and unified.
 
-**Current focus:** Phase 3 — Relationship Form (in progress)
+**Current focus:** Phase 5 — Attribute Semantic Configuration (in progress)
 
 ---
 
@@ -17,9 +17,9 @@
 
 | Field | Value |
 |-------|-------|
-| Active phase | 3 — Relationship Form |
-| Active plan | 03-03 (awaiting human verification) |
-| Phase status | In progress |
+| Active phase | 5 — Attribute Semantic Configuration |
+| Active plan | 05-02 (next) |
+| Phase status | In progress (1/2 plans complete) |
 | Overall progress | 2 / 5 phases complete |
 
 ```
@@ -28,7 +28,7 @@ Phase 1: [x] Type Foundation
 Phase 2: [x] Service + Hooks
 Phase 3: [~] Relationship Form (3/3 plans coded, checkpoint pending)
 Phase 4: [ ] Creation Form Simplification
-Phase 5: [ ] Attribute Semantic Configuration
+Phase 5: [~] Attribute Semantic Configuration (1/2 plans complete)
 ```
 
 ---
@@ -39,7 +39,7 @@ Phase 5: [ ] Attribute Semantic Configuration
 |--------|-------|
 | Phases defined | 5 |
 | Requirements mapped | 34/34 |
-| Plans complete | 3 |
+| Plans complete | 4 |
 | Phases complete | 2/5 |
 
 ---
@@ -63,6 +63,9 @@ Phase 5: [ ] Attribute Semantic Configuration
 | EntityTypeSingleSelect inlined in target-rule-item | Single-file-per-component; tightly coupled to form context and not reused elsewhere |
 | Use RelationshipDefinition (not EntityRelationshipDefinition) in modal | EntityRelationshipDefinition was never in the entity barrel; RelationshipDefinition is the correct generated type from Plan 02 |
 | Overlap detection files deleted (not kept) | All 4 files had no consumers after Plan 02 rewrite; deferred to v2 per CONTEXT.md |
+| Classification suggestions as hint text only | Per CONTEXT.md locked decision: never auto-fill classification, only show suggestion text |
+| Tags deferred in semantics payload | Always send tags:[] -- no UI for tags in v1 attribute semantic form |
+| Definition char limit is soft (UI-only) | 500-char amber counter in UI with no hard Zod validation per CONTEXT.md locked decision |
 
 ### Critical Pitfalls (from research)
 
@@ -81,7 +84,11 @@ Phase 5: [ ] Attribute Semantic Configuration
 - [ ] After Phase 2: verify EntityType from getEntityTypeByKey still embeds relationship definitions correctly (run against live backend)
 - [x] After Phase 2: RelationshipLink/RelationshipCandidate overlap detection deferred to v2 — files deleted in Plan 03
 - [x] Before Phase 2: Read KnowledgeApi.ts to confirm request/response shapes for all 8 endpoints
-- [ ] Phase 5: Decide whether attribute semantic editing is inline in the schema table row, an expandable section, or a side panel
+- [x] Phase 5: Attribute semantic editing is inline in the schema form modal (classification dropdown + definition textarea in "Semantic Context" section)
+
+### Roadmap Evolution
+
+- Phase 6 added: 4.1 Fix entity attribute form
 
 ### Notes
 
@@ -104,5 +111,5 @@ To resume this project:
 ---
 
 *State initialized: 2026-02-27*
-*Last updated: 2026-03-04 after Phase 3 Plan 03 — modal integration + cleanup*
-*Stopped at: checkpoint:human-verify in 03-03-PLAN.md (tasks 1+2 complete, awaiting UI verification)*
+*Last updated: 2026-03-05 after Phase 5 Plan 01 — Knowledge API + Semantic Form Fields*
+*Stopped at: Completed 05-01-PLAN.md, next is 05-02-PLAN.md*
