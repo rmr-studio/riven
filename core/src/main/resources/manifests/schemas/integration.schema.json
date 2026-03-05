@@ -197,8 +197,16 @@
         },
         "mappings": {
           "type": "object",
-          "additionalProperties": true,
-          "description": "Map of external field names to internal attribute keys or mapping configuration."
+          "additionalProperties": {
+            "type": "object",
+            "required": ["source"],
+            "properties": {
+              "source": { "type": "string", "description": "Source field path from the external provider." },
+              "transform": { "type": "object", "description": "Optional transformation configuration." }
+            },
+            "additionalProperties": false
+          },
+          "description": "Map of target attribute key to mapping configuration. Each value must have a 'source' field."
         }
       }
     },
