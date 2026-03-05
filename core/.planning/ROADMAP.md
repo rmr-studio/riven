@@ -57,7 +57,10 @@ Plans:
   2. ManifestCatalogService.getManifestByKey(key) returns a single manifest with all nested entity types and relationships hydrated
   3. Integration test: running the loader twice against the same fixture set produces identical catalog row counts (idempotent reload verified)
   4. Integration test: removing a manifest from the fixture set and re-running startup results in that catalog entry having deleted=true, not a missing row (soft-delete reconciliation verified)
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 03-01-PLAN.md — ManifestCatalogService query models, repository additions, toModel() mappings, and unit tests
+- [ ] 03-02-PLAN.md — ManifestScannerService configurable path refactor and end-to-end integration tests
 
 ## Progress
 
@@ -68,4 +71,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Database Foundation | 1/1 | Complete | 2026-03-04 |
 | 2. Loader Pipeline | 2/3 | In Progress|  |
-| 3. Read Surface and Integration Tests | 0/? | Not started | - |
+| 3. Read Surface and Integration Tests | 0/2 | Not started | - |
