@@ -9,29 +9,30 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 
 ## Current Position
 
-Phase: 1 of 3 (Database Foundation) -- COMPLETE
-Plan: 1 of 1 in current phase (complete)
-Status: Phase 1 complete, ready for Phase 2 planning
-Last activity: 2026-03-04 — Phase 1 Plan 1 executed
+Phase: 2 of 3 (Loader Pipeline)
+Plan: 1 of 3 in current phase (complete)
+Status: Phase 2 Plan 1 complete, ready for Plan 2
+Last activity: 2026-03-05 — Phase 2 Plan 1 executed
 
-Progress: [###-------] 33%
+Progress: [####------] 44%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 8 minutes
-- Total execution time: 0.13 hours
+- Total plans completed: 2
+- Average duration: 5.5 minutes
+- Total execution time: 0.18 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Database Foundation | 1/1 | 8 min | 8 min |
+| 2. Loader Pipeline | 1/3 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 8 min
-- Trend: Baseline established
+- Last 5 plans: 8 min, 3 min
+- Trend: Accelerating
 
 *Updated after each plan completion*
 
@@ -42,6 +43,8 @@ Progress: [###-------] 33%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- Pipeline data classes use Map<String, Any> for schema/mappings JSONB passthrough rather than typed structures
+- Test fixtures placed in src/test/resources/manifests/ matching production directory structure
 - Schema: Catalog tables are global (no workspace_id, no RLS) — follows IntegrationDefinitionEntity precedent
 - Schema: UNIQUE(key, manifest_type) composite constraint on manifest_catalog — prevents cross-type key collision
 - Schema: No deleted/deleted_at/active columns on manifest_catalog — catalog entries are permanent (CONTEXT.md)
@@ -63,6 +66,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-04
-Stopped at: Completed Phase 1 Plan 1 (01-01-PLAN.md) — Database Foundation
+Last session: 2026-03-05
+Stopped at: Completed 02-01-PLAN.md — Schema evolution, pipeline data contracts, test fixtures
 Resume file: None

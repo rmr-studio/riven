@@ -56,7 +56,7 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [ ] **TEST-02**: Unit tests cover `extend` merge — attribute addition, semantic override, base preservation on key conflict, no-extend passthrough
 - [ ] **TEST-03**: Unit tests cover relationship normalization — shorthand to full conversion, format mutual exclusivity rejection
 - [ ] **TEST-04**: Unit tests cover relationship validation — key existence, cardinality enum, duplicate key detection
-- [ ] **TEST-05**: Test fixture manifests in `src/test/resources/` cover model, template (with `$ref` + `extend`), and integration patterns
+- [x] **TEST-05**: Test fixture manifests in `src/test/resources/` cover model, template (with `$ref` + `extend`), and integration patterns
 - [ ] **TEST-06**: Integration tests verify full startup load cycle — fixtures loaded into catalog tables with correct data
 - [ ] **TEST-07**: Integration tests verify idempotent reload — second startup produces identical catalog state
 - [ ] **TEST-08**: Integration tests verify manifest removal reconciliation — removed manifest results in inactive catalog entry
@@ -133,7 +133,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-02 | Phase 2 | Pending |
 | TEST-03 | Phase 2 | Pending |
 | TEST-04 | Phase 2 | Pending |
-| TEST-05 | Phase 2 | Pending |
+| TEST-05 | Phase 2 | Complete |
 | QUERY-01 | Phase 3 | Pending |
 | QUERY-02 | Phase 3 | Pending |
 | QUERY-03 | Phase 3 | Pending |
