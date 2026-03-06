@@ -77,12 +77,10 @@ class StorageService(
         metadata: Map<String, String>? = null
     ): UploadFileResponse {
         val userId = authTokenService.getUserId()
-        val bytes = file.bytes
+        metadata?.run { validateMetadata(this) }
 
-        metadata?.let { validateMetadata(it) }
-
-        val detectedType = detectAndValidate(bytes, file.originalFilename, domain)
-        val content = sanitizeIfSvg(bytes, detectedType)
+        val detectedType = detectAndValidate(file.bytes, file.originalFilename, domain)
+        val content = sanitizeIfSvg(file.bytes, detectedType)
         val storageKey = contentValidationService.generateStorageKey(workspaceId, domain, detectedType)
 
         storeFile(storageKey, content, detectedType)
@@ -91,6 +89,27 @@ class StorageService(
 
         val signedUrl = generateProviderSignedUrl(storageKey, signedUrlService.getDefaultExpiry())
         return UploadFileResponse(fileMetadata, signedUrl)
+    }
+
+    /**
+     * Upload a file scoped to a user rather than a workspace.
+     *
+     * Performs content validation and storage but does not persist FileMetadata
+     * (which requires workspace scope) or log workspace-scoped activity.
+     *
+     * @param userId user scope for storage key generation
+     * @param domain storage domain controlling validation rules
+     * @param file uploaded multipart file
+     * @return the permanent storage key for the uploaded file
+     */
+    fun uploadUserFile(userId: UUID, domain: StorageDomain, file: MultipartFile): String {
+        val detectedType = detectAndValidate(file.bytes, file.originalFilename, domain)
+        val content = sanitizeIfSvg(file.bytes, detectedType)
+        val storageKey = contentValidationService.generateUserStorageKey(userId, domain, detectedType)
+
+        storeFile(storageKey, content, detectedType)
+        logger.info { "Uploaded user file: storageKey=$storageKey, userId=$userId, domain=$domain" }
+        return storageKey
     }
 
     // ------ Presigned Upload ------

@@ -121,6 +121,23 @@ class ContentValidationService(
         return "$workspaceId/$domainPath/$uuid$extension"
     }
 
+    /**
+     * Generate a UUID-based storage key scoped to a user instead of a workspace.
+     *
+     * Format: `users/{userId}/{domain}/{uuid}.{ext}`
+     *
+     * @param userId user UUID
+     * @param domain storage domain
+     * @param contentType detected MIME type
+     * @return storage key string
+     */
+    fun generateUserStorageKey(userId: UUID, domain: StorageDomain, contentType: String): String {
+        val extension = deriveExtension(contentType)
+        val uuid = UUID.randomUUID()
+        val domainPath = domain.name.lowercase()
+        return "users/$userId/$domainPath/$uuid$extension"
+    }
+
     // ------ Private Helpers ------
 
     private fun deriveExtension(contentType: String): String {
