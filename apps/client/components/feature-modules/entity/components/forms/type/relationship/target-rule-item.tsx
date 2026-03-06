@@ -1,21 +1,6 @@
 'use client';
 
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { RelationshipFormValues } from '@/components/feature-modules/entity/hooks/form/type/use-relationship-form';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -25,19 +10,28 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { EntityRelationshipCardinality, EntityType, SemanticGroup } from '@/lib/types/entity';
 import { cn } from '@/lib/util/utils';
-import { Check, ChevronsUpDown, Eye, EyeOff, MoreHorizontal, Repeat, X } from 'lucide-react';
+import { Check, ChevronsUpDown, MoreHorizontal, Repeat, X } from 'lucide-react';
 import { FC, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { RelationshipFormValues } from '../../../hooks/form/type/use-relationship-form';
 
 // ---- Human-friendly labels ----
 
@@ -135,8 +129,8 @@ const EntityTypeSingleSelect: FC<EntityTypeSingleSelectProps> = ({
       <PopoverContent
         className="w-[280px] p-0"
         align="start"
-        onOpenAutoFocus={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => {
+        onOpenAutoFocus={(e: React.FocusEvent<HTMLDivElement>) => e.preventDefault()}
+        onEscapeKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
           e.stopPropagation();
           setOpen(false);
         }}
@@ -196,7 +190,6 @@ export const TargetRuleItem: FC<TargetRuleItemProps> = ({
 }) => {
   const form = useFormContext<RelationshipFormValues>();
   const ruleType = form.watch(`targetRules.${index}.ruleType`);
-  const inverseVisible = form.watch(`targetRules.${index}.inverseVisible`);
 
   // Keys already used in OTHER rules (to prevent duplicates)
   const allRules = form.watch('targetRules');
@@ -208,7 +201,7 @@ export const TargetRuleItem: FC<TargetRuleItemProps> = ({
   return (
     <div className="flex items-center gap-2 rounded-lg border p-2">
       {/* Selector - takes most of the width */}
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         {ruleType === 'entity-type' ? (
           <FormField
             control={form.control}
@@ -244,10 +237,7 @@ export const TargetRuleItem: FC<TargetRuleItemProps> = ({
                     }
                   >
                     <SelectTrigger
-                      className={cn(
-                        'w-full',
-                        fieldState.error && 'border-destructive',
-                      )}
+                      className={cn('w-full', fieldState.error && 'border-destructive')}
                     >
                       <SelectValue placeholder="Select semantic group..." />
                     </SelectTrigger>
@@ -266,31 +256,6 @@ export const TargetRuleItem: FC<TargetRuleItemProps> = ({
           />
         )}
       </div>
-
-      {/* Inline: inverse visible toggle */}
-      <TooltipProvider delayDuration={300}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="xs"
-              className={cn(
-                'shrink-0',
-                inverseVisible ? 'text-foreground' : 'text-muted-foreground',
-              )}
-              onClick={() =>
-                form.setValue(`targetRules.${index}.inverseVisible`, !inverseVisible)
-              }
-            >
-              {inverseVisible ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top">
-            <p>{inverseVisible ? 'Visible on target entity' : 'Hidden on target entity'}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
 
       {/* Overflow menu: rarely-used constraints */}
       <Popover>
@@ -343,7 +308,7 @@ export const TargetRuleItem: FC<TargetRuleItemProps> = ({
             name={`targetRules.${index}.inverseName`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Inverse name</FormLabel>
+                <FormLabel>Inverse name *</FormLabel>
                 <FormControl>
                   <Input placeholder="E.g. Company" {...field} value={field.value ?? ''} />
                 </FormControl>

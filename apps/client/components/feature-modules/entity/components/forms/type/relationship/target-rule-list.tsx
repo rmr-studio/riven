@@ -13,7 +13,7 @@ import { EntityType } from '@/lib/types/entity';
 import { Plus } from 'lucide-react';
 import { FC } from 'react';
 import { UseFieldArrayReturn, UseFormReturn } from 'react-hook-form';
-import { RelationshipFormValues } from '../../../hooks/form/type/use-relationship-form';
+import { RelationshipFormValues } from '@/components/feature-modules/entity/hooks/form/type/use-relationship-form';
 import { TargetRuleItem } from './target-rule-item';
 
 // ---- Props ----
@@ -26,6 +26,7 @@ interface TargetRuleListProps {
   cachedRulesRef: React.MutableRefObject<RelationshipFormValues['targetRules']>;
   mode: 'create' | 'edit';
   form: UseFormReturn<RelationshipFormValues>;
+  originEntityName: string;
 }
 
 // ---- Component ----
@@ -38,6 +39,7 @@ export const TargetRuleList: FC<TargetRuleListProps> = ({
   cachedRulesRef,
   mode,
   form,
+  originEntityName,
 }) => {
   const { fields, append, remove } = targetRuleFieldArray;
   const ruleValues = form.watch('targetRules');
@@ -108,7 +110,7 @@ export const TargetRuleList: FC<TargetRuleListProps> = ({
                   append({
                     ruleType: 'entity-type',
                     targetEntityTypeKey: '',
-                    inverseVisible: true,
+                    inverseName: originEntityName,
                   })
                 }
               >
@@ -118,7 +120,7 @@ export const TargetRuleList: FC<TargetRuleListProps> = ({
                 onSelect={() =>
                   append({
                     ruleType: 'semantic-group',
-                    inverseVisible: true,
+                    inverseName: originEntityName,
                   })
                 }
               >

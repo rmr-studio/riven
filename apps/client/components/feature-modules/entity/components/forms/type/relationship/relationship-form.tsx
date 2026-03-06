@@ -209,6 +209,7 @@ export const RelationshipForm: FC<RelationshipFormProps> = ({
             cachedRulesRef={cachedRulesRef}
             mode={mode}
             form={form}
+            originEntityName={type.name.plural}
           />
         </section>
 

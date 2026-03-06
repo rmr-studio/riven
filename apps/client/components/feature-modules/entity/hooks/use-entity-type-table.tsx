@@ -189,10 +189,6 @@ export function useEntityTypeTable(
             constraints.push('Polymorphic');
           }
 
-          if (isRelationship && row.original.targetRules?.some(r => r.inverseVisible)) {
-            constraints.push('Inverse Visible');
-          }
-
           return (
             <div className="flex flex-wrap gap-1">
               {constraints.map((constraint) => (
