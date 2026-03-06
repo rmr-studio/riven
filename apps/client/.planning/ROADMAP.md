@@ -140,6 +140,7 @@ Plans:
 | 3. Relationship Form | 2/3 | In progress | - |
 | 4. Creation Form Simplification | 0/? | Not started | - |
 | 5. Attribute Semantic Configuration | 1/2 | In progress | - |
+| 6. Remove bidirectional toggle | 0/2 | Not started | - |
 
 ---
 
@@ -181,20 +182,36 @@ Plans:
 | SEM-UI-02 | Phase 5 |
 | SEM-UI-03 | Phase 3 |
 | SEM-UI-04 | Phase 5 |
+| BIDIR-01 | Phase 6 |
+| BIDIR-02 | Phase 6 |
+| BIDIR-03 | Phase 6 |
+| BIDIR-04 | Phase 6 |
+| BIDIR-05 | Phase 6 |
 
-**Coverage: 34/34 -- complete**
+**Coverage: 34/34 + 5 Phase 6 requirements**
 
 ### Phase 6: Remove bidirectional toggle
 
-**Goal:** [To be planned]
-**Requirements**: TBD
-**Depends on:** Phase 6
-**Plans:** 0 plans
+**Goal:** The UI no longer references inverseVisible, DeleteAction, or EntityTypeRelationshipType. Delete behavior is contextual (origin vs target) and inverseName is required with a sensible default.
+
+**Depends on:** Phase 3 (relationship form must exist)
+
+**Requirements**: BIDIR-01, BIDIR-02, BIDIR-03, BIDIR-04, BIDIR-05
+
+**Success Criteria** (what must be TRUE):
+  1. Zero references to `inverseVisible` in any component or hook file
+  2. `inverseName` is required in the Zod schema and pre-filled with the origin entity type plural name
+  3. The delete definition modal auto-detects origin vs target context and builds the correct request
+  4. No references to `DeleteAction` or `EntityTypeRelationshipType` in any component file
+  5. TypeScript compilation succeeds with zero errors
+
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 7 to break down)
+- [ ] 06-01-PLAN.md — Remove inverseVisible from form layer (schema, hook, target rule UI, data table badge)
+- [ ] 06-02-PLAN.md — Rewrite delete modal to contextual confirmation (remove DeleteAction/RadioGroup)
 
 ---
 
 *Roadmap created: 2006-02-27*
-*Last updated: 2006-03-05 after Phase 5 planning*
+*Last updated: 2006-03-06 after Phase 6 planning*

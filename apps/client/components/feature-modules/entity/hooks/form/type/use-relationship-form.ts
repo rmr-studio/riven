@@ -1,3 +1,4 @@
+import { IconColour, IconType } from '@/lib/types/common';
 import {
   EntityRelationshipCardinality,
   EntityType,
@@ -10,78 +11,66 @@ import {
   SemanticAttributeClassification,
   SemanticGroup,
 } from '@/lib/types/entity';
-import { IconColour, IconType } from '@/lib/types/common';
-import { uuid } from '@/lib/util/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useRef } from 'react';
-import {
-  useFieldArray,
-  useForm,
-  UseFieldArrayReturn,
-  UseFormReturn,
-} from 'react-hook-form';
+import { useFieldArray, UseFieldArrayReturn, useForm, UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
+import { EntityTypeService } from '../../../service/entity-type.service';
 import {
   calculateCardinalityFromLimits,
   processCardinalityToLimits,
 } from '../../../util/relationship.util';
 import { useSaveDefinitionMutation } from '../../mutation/type/use-save-definition-mutation';
-import { EntityTypeService } from '../../../service/entity-type.service';
 
 // ---- Schemas ----
 
-const targetRuleSchema = z
-  .object({
-    id: z.string().optional(),
-    ruleType: z.enum(['entity-type', 'semantic-group']),
-    targetEntityTypeKey: z.string().optional(),
-    semanticTypeConstraint: z.nativeEnum(SemanticGroup).optional(),
-    cardinalityOverride: z.nativeEnum(EntityRelationshipCardinality).optional(),
-    inverseVisible: z.boolean().default(true),
-    inverseName: z.string().optional(),
-  })
-  .refine(
-    (data) => {
-      if (data.ruleType === 'entity-type') {
-        return typeof data.targetEntityTypeKey === 'string' && data.targetEntityTypeKey.length > 0;
-      }
-      if (data.ruleType === 'semantic-group') {
-        return data.semanticTypeConstraint !== undefined;
-      }
-      return false;
-    },
-    {
-      message: 'Each rule must have either a target entity type or a semantic group constraint',
-      path: ['targetEntityTypeKey'],
-    },
-  );
-
-export const relationshipFormSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  icon: z.object({
-    type: z.nativeEnum(IconType).default(IconType.Link2),
-    colour: z.nativeEnum(IconColour).default(IconColour.Neutral),
-  }),
-  semanticDefinition: z.string().optional(),
-  sourceLimit: z.enum(['ONE', 'UNLIMITED']).default('ONE'),
-  targetLimit: z.enum(['ONE', 'UNLIMITED']).default('UNLIMITED'),
-  allowPolymorphic: z.boolean().default(false),
-  targetRules: z.array(targetRuleSchema).default([]),
+const targetRuleSchema = z.object({
+  id: z.string().optional(),
+  ruleType: z.enum(['entity-type', 'semantic-group']),
+  targetEntityTypeKey: z.string().optional(),
+  semanticTypeConstraint: z.nativeEnum(SemanticGroup).optional(),
+  cardinalityOverride: z.nativeEnum(EntityRelationshipCardinality).optional(),
+  inverseName: z.string().min(1, 'Inverse name is required'),
 });
+
+export const relationshipFormSchema = z
+  .object({
+    name: z.string().min(1, 'Name is required'),
+    icon: z.object({
+      type: z.nativeEnum(IconType),
+      colour: z.nativeEnum(IconColour),
+    }),
+    semanticDefinition: z.string().optional(),
+    sourceLimit: z.enum(['ONE', 'UNLIMITED']),
+    targetLimit: z.enum(['ONE', 'UNLIMITED']),
+    allowPolymorphic: z.boolean(),
+    targetRules: z.array(targetRuleSchema),
+  })
+  .superRefine((data, ctx) => {
+    data.targetRules.forEach((rule, index) => {
+      if (rule.ruleType === 'entity-type') {
+        if (typeof rule.targetEntityTypeKey !== 'string' || rule.targetEntityTypeKey.length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Each rule must have either a target entity type or a semantic group constraint',
+            path: ['targetRules', index, 'targetEntityTypeKey'],
+          });
+        }
+      } else if (rule.ruleType === 'semantic-group') {
+        if (rule.semanticTypeConstraint === undefined) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Each rule must have either a target entity type or a semantic group constraint',
+            path: ['targetRules', index, 'semanticTypeConstraint'],
+          });
+        }
+      }
+    });
+  });
 
 export type RelationshipFormValues = z.infer<typeof relationshipFormSchema>;
 
 // ---- Defaults ----
-
-export const DEFAULT_RELATIONSHIP_FORM_VALUES: RelationshipFormValues = {
-  name: '',
-  icon: { type: IconType.Link2, colour: IconColour.Neutral },
-  semanticDefinition: '',
-  sourceLimit: 'ONE',
-  targetLimit: 'UNLIMITED',
-  allowPolymorphic: false,
-  targetRules: [],
-};
 
 // ---- Return type ----
 
@@ -106,8 +95,16 @@ export function useRelationshipForm(
   relationship?: RelationshipDefinition,
 ): UseRelationshipFormReturn {
   const form = useForm<RelationshipFormValues>({
+    defaultValues: {
+      name: '',
+      icon: { type: IconType.Link2, colour: IconColour.Neutral },
+      semanticDefinition: '',
+      sourceLimit: 'ONE',
+      targetLimit: 'UNLIMITED',
+      allowPolymorphic: false,
+      targetRules: [],
+    },
     resolver: zodResolver(relationshipFormSchema),
-    defaultValues: DEFAULT_RELATIONSHIP_FORM_VALUES,
   });
 
   const targetRuleFieldArray = useFieldArray({
@@ -144,7 +141,6 @@ export function useRelationshipForm(
           targetEntityTypeKey,
           semanticTypeConstraint: rule.semanticTypeConstraint,
           cardinalityOverride: rule.cardinalityOverride,
-          inverseVisible: rule.inverseVisible,
           inverseName: rule.inverseName,
         };
       },
@@ -165,7 +161,15 @@ export function useRelationshipForm(
   useEffect(() => {
     if (!open) {
       setTimeout(() => {
-        form.reset(DEFAULT_RELATIONSHIP_FORM_VALUES);
+        form.reset({
+          name: '',
+          icon: { type: IconType.Link2, colour: IconColour.Neutral },
+          semanticDefinition: '',
+          sourceLimit: 'ONE',
+          targetLimit: 'UNLIMITED',
+          allowPolymorphic: false,
+          targetRules: [],
+        });
       }, 500);
     }
   }, [open]);
@@ -178,7 +182,7 @@ export function useRelationshipForm(
 
   const handleSubmit = useCallback(
     async (values: RelationshipFormValues) => {
-      const id = relationship?.id ?? uuid();
+      const id = relationship?.id;
 
       const sourceLimit =
         values.sourceLimit === 'ONE' ? RelationshipLimit.SINGULAR : RelationshipLimit.MANY;
@@ -190,13 +194,11 @@ export function useRelationshipForm(
         ? []
         : values.targetRules.map((rule) => ({
             id: rule.id,
-            targetEntityTypeId:
-              rule.targetEntityTypeKey
-                ? EntityTypeService.resolveEntityTypeId(availableTypes, rule.targetEntityTypeKey)
-                : undefined,
+            targetEntityTypeId: rule.targetEntityTypeKey
+              ? EntityTypeService.resolveEntityTypeId(availableTypes, rule.targetEntityTypeKey)
+              : undefined,
             semanticTypeConstraint: rule.semanticTypeConstraint,
             cardinalityOverride: rule.cardinalityOverride,
-            inverseVisible: rule.inverseVisible,
             inverseName: rule.inverseName,
           }));
 
