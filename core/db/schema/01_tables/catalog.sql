@@ -11,11 +11,12 @@ CREATE TABLE IF NOT EXISTS manifest_catalog (
     key VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    manifest_type VARCHAR(50) NOT NULL CHECK (manifest_type IN ('MODEL', 'TEMPLATE', 'INTEGRATION')),
+    manifest_type VARCHAR(50) NOT NULL CHECK (manifest_type IN ('MODEL', 'TEMPLATE', 'INTEGRATION', 'BUNDLE')),
     manifest_version VARCHAR(50),
     last_loaded_at TIMESTAMPTZ,
     stale BOOLEAN NOT NULL DEFAULT false,
     content_hash VARCHAR(64),
+    template_keys JSONB,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
@@ -132,4 +133,21 @@ CREATE TABLE IF NOT EXISTS catalog_semantic_metadata (
 
     UNIQUE (catalog_entity_type_id, target_type, target_id),
     CHECK (jsonb_typeof(tags) = 'array')
+);
+
+-- =====================================================
+-- WORKSPACE TEMPLATE INSTALLATIONS TABLE
+-- =====================================================
+-- Tracks which templates have been installed into which workspaces.
+-- Enables duplication protection, merge tracking, and future uninstall support.
+
+CREATE TABLE IF NOT EXISTS workspace_template_installations (
+    id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    workspace_id       UUID NOT NULL REFERENCES workspaces(id),
+    manifest_key       VARCHAR(255) NOT NULL,
+    installed_by       UUID NOT NULL,
+    installed_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    attribute_mappings JSONB NOT NULL DEFAULT '{}'::jsonb,
+
+    UNIQUE (workspace_id, manifest_key)
 );

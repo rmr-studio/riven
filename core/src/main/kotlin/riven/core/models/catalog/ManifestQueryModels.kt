@@ -96,3 +96,12 @@ data class CatalogFieldMappingModel(
     val entityTypeKey: String,
     val mappings: Map<String, Any>
 )
+
+/** Bundle detail with list of template keys. */
+data class BundleDetail(
+    val id: UUID,
+    val key: String,
+    val name: String,
+    val description: String?,
+    val templateKeys: List<String>
+)
