@@ -1,0 +1,170 @@
+{
+  "manifestVersion": "1.0",
+  "key": "hubspot",
+  "name": "HubSpot",
+  "description": "HubSpot CRM integration providing contacts and deals from the HubSpot API.",
+  "entityTypes": [
+    {
+      "key": "hubspot-contact",
+      "name": "HubSpot Contact",
+      "description": "A contact record synced from HubSpot CRM.",
+      "displayName": {
+        "singular": "HubSpot Contact",
+        "plural": "HubSpot Contacts"
+      },
+      "icon": {
+        "type": "USER",
+        "colour": "ORANGE"
+      },
+      "semanticGroup": "CUSTOMER",
+      "identifierKey": "email",
+      "readonly": true,
+      "attributes": {
+        "email": {
+          "key": "EMAIL",
+          "label": "Email",
+          "type": "string",
+          "format": "email",
+          "required": true,
+          "unique": true,
+          "protected": true,
+          "semantics": {
+            "definition": "Primary email address from HubSpot.",
+            "classification": "IDENTIFIER",
+            "tags": ["contact", "hubspot"]
+          }
+        },
+        "firstname": {
+          "key": "TEXT",
+          "label": "First Name",
+          "type": "string",
+          "protected": true,
+          "semantics": {
+            "definition": "Contact first name from HubSpot.",
+            "classification": "IDENTIFIER",
+            "tags": ["name", "hubspot"]
+          }
+        },
+        "lastname": {
+          "key": "TEXT",
+          "label": "Last Name",
+          "type": "string",
+          "protected": true,
+          "semantics": {
+            "definition": "Contact last name from HubSpot.",
+            "classification": "IDENTIFIER",
+            "tags": ["name", "hubspot"]
+          }
+        },
+        "company": {
+          "key": "TEXT",
+          "label": "Company",
+          "type": "string",
+          "protected": true,
+          "semantics": {
+            "definition": "Company name from HubSpot contact properties.",
+            "classification": "CATEGORICAL",
+            "tags": ["organization", "hubspot"]
+          }
+        }
+      },
+      "semantics": {
+        "definition": "A contact record synced from HubSpot CRM. Read-only -- changes must be made in HubSpot.",
+        "tags": ["hubspot", "crm", "sync"]
+      }
+    },
+    {
+      "key": "hubspot-deal",
+      "name": "HubSpot Deal",
+      "description": "A deal record synced from HubSpot CRM.",
+      "displayName": {
+        "singular": "HubSpot Deal",
+        "plural": "HubSpot Deals"
+      },
+      "icon": {
+        "type": "HANDSHAKE",
+        "colour": "ORANGE"
+      },
+      "semanticGroup": "TRANSACTION",
+      "identifierKey": "dealname",
+      "readonly": true,
+      "attributes": {
+        "dealname": {
+          "key": "TEXT",
+          "label": "Deal Name",
+          "type": "string",
+          "required": true,
+          "protected": true,
+          "semantics": {
+            "definition": "Deal name from HubSpot.",
+            "classification": "IDENTIFIER",
+            "tags": ["name", "hubspot"]
+          }
+        },
+        "amount": {
+          "key": "CURRENCY",
+          "label": "Amount",
+          "type": "number",
+          "format": "currency",
+          "protected": true,
+          "semantics": {
+            "definition": "Deal amount from HubSpot.",
+            "classification": "QUANTITATIVE",
+            "tags": ["revenue", "hubspot"]
+          }
+        },
+        "dealstage": {
+          "key": "TEXT",
+          "label": "Deal Stage",
+          "type": "string",
+          "protected": true,
+          "semantics": {
+            "definition": "Current deal stage ID from HubSpot pipeline.",
+            "classification": "CATEGORICAL",
+            "tags": ["pipeline", "hubspot"]
+          }
+        }
+      },
+      "semantics": {
+        "definition": "A deal record synced from HubSpot CRM. Read-only -- changes must be made in HubSpot.",
+        "tags": ["hubspot", "crm", "sync"]
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "key": "hubspot-contact-deals",
+      "sourceEntityTypeKey": "hubspot-contact",
+      "name": "HubSpot Deals",
+      "cardinality": "ONE_TO_MANY",
+      "targetEntityTypeKey": "hubspot-deal",
+      "protected": true,
+      "semantics": {
+        "definition": "Links a HubSpot contact to their associated deals.",
+        "tags": ["hubspot", "crm"]
+      }
+    }
+  ],
+  "fieldMappings": [
+    {
+      "entityTypeKey": "hubspot-contact",
+      "mappings": {
+        "email": { "source": "properties.email" },
+        "firstname": { "source": "properties.firstname" },
+        "lastname": { "source": "properties.lastname" },
+        "company": { "source": "properties.company" }
+      }
+    },
+    {
+      "entityTypeKey": "hubspot-deal",
+      "mappings": {
+        "dealname": { "source": "properties.dealname" },
+        "amount": {
+          "source": "properties.amount",
+          "transform": { "type": "typeCoercion", "to": "number" }
+        },
+        "dealstage": { "source": "properties.dealstage" }
+      }
+    }
+  ]
+}

@@ -42,7 +42,5 @@ out/
 .kotlin
 
 ### Planning ###
-# .planning/ is tracked in git (commit_docs: true)
-
-### PR Review ###
+.planning/
 .pr-review/
