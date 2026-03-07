@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Completed 02-01 (Template Manifest Authoring)
-last_updated: "2026-03-07T06:11:55.508Z"
-last_activity: "2026-03-07 — Completed Plan 01 (Template manifest authoring: 3 shared models, 3 template manifests)"
+stopped_at: Completed 02-02 (Template Installation Service)
+last_updated: "2026-03-07T06:20:07Z"
+last_activity: "2026-03-07 — Completed Plan 02 (Template installation service with REST API and 8 unit tests)"
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 5
-  completed_plans: 4
-  percent: 25
+  completed_plans: 5
+  percent: 50
 ---
 
 # Project State
@@ -25,29 +25,29 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 
 ## Current Position
 
-Phase: 2 of 4 (Template System)
-Plan: 1 of 2 in phase — COMPLETE
-Status: Phase 2 in progress
-Last activity: 2026-03-07 — Completed Plan 01 (Template manifest authoring: 3 shared models, 3 template manifests)
+Phase: 2 of 4 (Template System) — COMPLETE
+Plan: 2 of 2 in phase — COMPLETE
+Status: Phase 2 complete
+Last activity: 2026-03-07 — Completed Plan 02 (Template installation service with REST API and 8 unit tests)
 
-Progress: [████████░░] 80%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
+- Total plans completed: 5
 - Average duration: 5 min
-- Total execution time: 20 min
+- Total execution time: 26 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-semantic-metadata-foundation | 3/3 | 13 min | 4 min |
-| 02-template-system | 1/2 | 7 min | 7 min |
+| 02-template-system | 2/2 | 13 min | 6 min |
 
 **Recent Trend:**
-- Last 5 plans: 3 min, 7 min, 3 min, 7 min
+- Last 5 plans: 3 min, 7 min, 3 min, 7 min, 6 min
 - Trend: stable
 
 *Updated after each plan completion*
@@ -70,6 +70,8 @@ Recent decisions affecting current work:
 - ?include=semantics uses batch getMetadataForEntityTypes for list endpoint (no @PreAuthorize, called within authorized context) and getAllMetadataForEntityType for single-entity detail
 - Template manifests: 7-8 entity types per template, all relationships use full targetRules format with inverseName
 - Shared models: customer (all 3 templates), invoice (SaaS + Service), support-ticket (SaaS + DTC) composed via $ref + extend
+- Template installation uses direct EntityTypeEntity construction (Option B) for batch efficiency, with DataFormat mapped via lookup table
+- Relationship semantics resolved from source entity type's CatalogSemanticMetadataModel entries (RELATIONSHIP targetType, matching key)
 
 ### Pending Todos
 
@@ -84,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-07T06:11:02Z
-Stopped at: Completed 02-01 (Template Manifest Authoring)
-Resume file: .planning/phases/02-template-system/02-01-SUMMARY.md
+Last session: 2026-03-07T06:20:07Z
+Stopped at: Completed 02-02 (Template Installation Service)
+Resume file: .planning/phases/02-template-system/02-02-SUMMARY.md

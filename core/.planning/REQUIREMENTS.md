@@ -18,11 +18,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Templates
 
-- [ ] **TMPL-01**: Template system can install a complete entity type schema (entity types, attributes, relationships, and semantic metadata) into a workspace in one action
+- [x] **TMPL-01**: Template system can install a complete entity type schema (entity types, attributes, relationships, and semantic metadata) into a workspace in one action
 - [x] **TMPL-02**: SaaS Startup template with entity types for customers, subscriptions, MRR, churn, support interactions, and feature usage — all with semantic metadata
 - [x] **TMPL-03**: DTC E-commerce template with entity types for customers, orders, products, acquisition channels, support, and returns — all with semantic metadata
 - [x] **TMPL-04**: Service Business template with entity types for clients, projects, invoices, communications, and deliverables — all with semantic metadata
-- [ ] **TMPL-05**: Template install is idempotent — re-applying does not duplicate entity types or corrupt existing data
+- [x] **TMPL-05**: Template install is idempotent — re-applying does not duplicate entity types or corrupt existing data
 - [x] **TMPL-06**: Template semantic metadata serves as the editable baseline — users can modify after install without breaking the template structure
 
 ### Enrichment Pipeline
@@ -111,11 +111,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SMETA-04 | Phase 1 | Pending |
 | SMETA-05 | Phase 1 | Pending |
 | SMETA-06 | Phase 1 | Pending |
-| TMPL-01 | Phase 2 | Pending |
+| TMPL-01 | Phase 2 | Complete |
 | TMPL-02 | Phase 2 | Complete |
 | TMPL-03 | Phase 2 | Complete |
 | TMPL-04 | Phase 2 | Complete |
-| TMPL-05 | Phase 2 | Pending |
+| TMPL-05 | Phase 2 | Complete |
 | TMPL-06 | Phase 2 | Complete |
 | ENRICH-01 | Phase 3 | Pending |
 | ENRICH-02 | Phase 3 | Pending |

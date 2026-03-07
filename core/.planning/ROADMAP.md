@@ -48,8 +48,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Shared model authoring (customer, invoice, support-ticket) and three template manifests (saas-startup, dtc-ecommerce, service-business) with full semantic metadata
-- [ ] 02-02-PLAN.md — TemplateInstallationService with catalog-to-workspace translation, TemplateController with list/install endpoints, unit tests
+- [x] 02-01-PLAN.md — Shared model authoring (customer, invoice, support-ticket) and three template manifests (saas-startup, dtc-ecommerce, service-business) with full semantic metadata
+- [x] 02-02-PLAN.md — TemplateInstallationService with catalog-to-workspace translation, TemplateController with list/install endpoints, unit tests
 
 ### Phase 3: Enrichment Pipeline
 **Goal**: Every entity create and update automatically produces a vector embedding stored in pgvector that captures the entity's business meaning using its semantic metadata, with fair multi-tenant dispatch and token-aware text construction
@@ -96,6 +96,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Semantic Metadata Foundation | 3/3 | Complete | 2026-02-19 |
-| 2. Template System | 0/2 | Not started | - |
+| 2. Template System | 2/2 | Complete | 2026-03-07 |
 | 3. Enrichment Pipeline | 0/4 | Not started | - |
 | 4. Schema Change Re-embedding | 0/2 | Not started | - |
