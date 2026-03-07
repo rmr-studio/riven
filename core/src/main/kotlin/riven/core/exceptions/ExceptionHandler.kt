@@ -11,6 +11,8 @@ import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.request.ServletRequestAttributes
 import riven.core.configuration.properties.ApplicationConfigurationProperties
 import com.fasterxml.jackson.core.JsonProcessingException
+import riven.core.exceptions.query.QueryExecutionException
+import riven.core.exceptions.query.QueryFilterException
 import riven.core.models.response.common.ErrorResponse
 
 @ControllerAdvice
@@ -127,6 +129,47 @@ class ExceptionHandler(private val logger: KLogger, private val config: Applicat
             statusCode = HttpStatus.BAD_REQUEST,
             error = "INVALID JSON",
             message = ex.originalMessage ?: "Malformed JSON in request",
+            stackTrace = config.includeStackTrace.takeIf { it }?.let { ex.stackTraceToString() }
+        ).also { logger.error { it } }.let {
+            ResponseEntity(it, it.statusCode)
+        }
+    }
+
+    // ------ Query Exception Handlers ------
+
+    @ExceptionHandler(QueryFilterException::class)
+    fun handleQueryFilterException(ex: QueryFilterException): ResponseEntity<ErrorResponse> {
+        storeExceptionForAnalytics(ex)
+        return ErrorResponse(
+            statusCode = HttpStatus.BAD_REQUEST,
+            error = "QUERY VALIDATION FAILED",
+            message = ex.message ?: "Query filter validation failed",
+            stackTrace = config.includeStackTrace.takeIf { it }?.let { ex.stackTraceToString() }
+        ).also { logger.error { it } }.let {
+            ResponseEntity(it, it.statusCode)
+        }
+    }
+
+    @ExceptionHandler(QueryExecutionException::class)
+    fun handleQueryExecutionException(ex: QueryExecutionException): ResponseEntity<ErrorResponse> {
+        storeExceptionForAnalytics(ex)
+        return ErrorResponse(
+            statusCode = HttpStatus.INTERNAL_SERVER_ERROR,
+            error = "QUERY EXECUTION FAILED",
+            message = "An error occurred while executing the query",
+            stackTrace = config.includeStackTrace.takeIf { it }?.let { ex.stackTraceToString() }
+        ).also { logger.error { it } }.let {
+            ResponseEntity(it, it.statusCode)
+        }
+    }
+
+    @ExceptionHandler(IllegalStateException::class)
+    fun handleIllegalStateException(ex: IllegalStateException): ResponseEntity<ErrorResponse> {
+        storeExceptionForAnalytics(ex)
+        return ErrorResponse(
+            statusCode = HttpStatus.BAD_REQUEST,
+            error = "INVALID STATE",
+            message = ex.message ?: "Invalid request state",
             stackTrace = config.includeStackTrace.takeIf { it }?.let { ex.stackTraceToString() }
         ).also { logger.error { it } }.let {
             ResponseEntity(it, it.statusCode)

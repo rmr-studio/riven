@@ -57,6 +57,10 @@ class EntityQueryAssembler(
      * @return [AssembledQuery] with separate data and count [SqlFragment]s
      * @throws SchemaValidationException if pagination parameters are invalid
      */
+    /**
+     * @param includeCount When false, skips count query assembly and fetches limit+1 rows
+     *   for hasNextPage detection instead.
+     */
     fun assemble(
         entityTypeId: UUID,
         workspaceId: UUID,
@@ -64,6 +68,7 @@ class EntityQueryAssembler(
         pagination: QueryPagination,
         paramGen: ParameterNameGenerator,
         relationshipDirections: Map<UUID, QueryDirection> = emptyMap(),
+        includeCount: Boolean = true,
     ): AssembledQuery {
         validatePagination(pagination)
 
@@ -77,8 +82,9 @@ class EntityQueryAssembler(
             baseFragment
         }
 
-        val dataQuery = buildDataQuery(whereFragment, pagination, paramGen)
-        val countQuery = buildCountQuery(whereFragment)
+        val effectiveLimit = if (includeCount) pagination.limit else pagination.limit + 1
+        val dataQuery = buildDataQuery(whereFragment, pagination.copy(limit = effectiveLimit), paramGen)
+        val countQuery = if (includeCount) buildCountQuery(whereFragment) else null
 
         return AssembledQuery(dataQuery, countQuery)
     }
