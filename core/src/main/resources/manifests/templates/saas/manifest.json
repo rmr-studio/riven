@@ -1,79 +1,9 @@
 {
   "manifestVersion": "1.0",
-  "key": "saas-startup",
-  "name": "SaaS Startup",
-  "description": "A CRM and billing-operations template for SaaS businesses. Covers customer management, subscription lifecycle, plan configuration, support, feature usage tracking, churn analysis, and invoicing.",
+  "key": "saas",
+  "name": "SaaS",
+  "description": "SaaS-specific entities for subscription lifecycle, plan configuration, feature usage tracking, and churn analysis.",
   "entityTypes": [
-    {
-      "$ref": "models/customer",
-      "extend": {
-        "attributes": {
-          "mrr": {
-            "key": "CURRENCY",
-            "label": "MRR",
-            "type": "number",
-            "format": "currency",
-            "semantics": {
-              "definition": "Monthly recurring revenue attributed to this customer, calculated from their active subscription value.",
-              "classification": "QUANTITATIVE",
-              "tags": ["revenue", "saas-metric", "subscription"]
-            }
-          },
-          "plan-tier": {
-            "key": "SELECT",
-            "label": "Plan Tier",
-            "type": "string",
-            "options": {
-              "enum": ["free", "starter", "professional", "enterprise"]
-            },
-            "semantics": {
-              "definition": "The pricing tier of the customer's current subscription plan, used for segmentation and upsell targeting.",
-              "classification": "CATEGORICAL",
-              "tags": ["subscription", "segmentation", "pricing"]
-            }
-          },
-          "subscription-start": {
-            "key": "DATE",
-            "label": "Subscription Start",
-            "type": "string",
-            "format": "date",
-            "semantics": {
-              "definition": "The date the customer first subscribed to a paid plan, marking the start of their paying relationship.",
-              "classification": "TEMPORAL",
-              "tags": ["subscription", "lifecycle", "onboarding"]
-            }
-          },
-          "health-score": {
-            "key": "RATING",
-            "label": "Health Score",
-            "type": "number",
-            "options": {
-              "minimum": 1,
-              "maximum": 10
-            },
-            "semantics": {
-              "definition": "A composite health score indicating the customer's engagement and retention risk, typically derived from usage, support, and billing signals.",
-              "classification": "QUANTITATIVE",
-              "tags": ["health", "retention", "customer-success"]
-            }
-          },
-          "last-login": {
-            "key": "DATETIME",
-            "label": "Last Login",
-            "type": "string",
-            "format": "date-time",
-            "semantics": {
-              "definition": "The most recent date and time the customer logged into the product, used as a proxy for engagement.",
-              "classification": "TEMPORAL",
-              "tags": ["engagement", "activity", "usage"]
-            }
-          }
-        },
-        "semantics": {
-          "tags": ["saas", "subscription", "recurring-revenue"]
-        }
-      }
-    },
     {
       "key": "subscription",
       "name": "Subscription",
@@ -89,7 +19,6 @@
           "key": "TEXT",
           "label": "Plan",
           "type": "string",
-          "required": true,
           "semantics": {
             "definition": "The name of the subscribed plan, serving as the primary identifier for this subscription record.",
             "classification": "IDENTIFIER",
@@ -100,7 +29,6 @@
           "key": "SELECT",
           "label": "Status",
           "type": "string",
-          "required": true,
           "options": {
             "enum": ["active", "trial", "past-due", "cancelled", "paused"],
             "default": "active"
@@ -129,7 +57,6 @@
           "label": "Start Date",
           "type": "string",
           "format": "date",
-          "required": true,
           "semantics": {
             "definition": "The date the subscription period began.",
             "classification": "TEMPORAL",
@@ -200,7 +127,6 @@
           "key": "TEXT",
           "label": "Name",
           "type": "string",
-          "required": true,
           "unique": true,
           "semantics": {
             "definition": "The name of the plan, used as the primary identifier in pricing pages and subscription records.",
@@ -212,7 +138,6 @@
           "key": "SELECT",
           "label": "Tier",
           "type": "string",
-          "required": true,
           "options": {
             "enum": ["free", "starter", "professional", "enterprise"]
           },
@@ -278,7 +203,6 @@
           "key": "SELECT",
           "label": "Status",
           "type": "string",
-          "required": true,
           "options": {
             "enum": ["active", "deprecated", "hidden"],
             "default": "active"
@@ -296,40 +220,6 @@
       }
     },
     {
-      "$ref": "models/support-ticket",
-      "extend": {
-        "attributes": {
-          "account-tier": {
-            "key": "SELECT",
-            "label": "Account Tier",
-            "type": "string",
-            "options": {
-              "enum": ["free", "starter", "professional", "enterprise"]
-            },
-            "semantics": {
-              "definition": "The plan tier of the customer who submitted this ticket, used for SLA routing and prioritisation.",
-              "classification": "CATEGORICAL",
-              "tags": ["sla", "prioritisation", "segmentation"]
-            }
-          },
-          "sla-deadline": {
-            "key": "DATETIME",
-            "label": "SLA Deadline",
-            "type": "string",
-            "format": "date-time",
-            "semantics": {
-              "definition": "The date and time by which this ticket must be responded to or resolved per the customer's SLA agreement.",
-              "classification": "TEMPORAL",
-              "tags": ["sla", "deadline", "compliance"]
-            }
-          }
-        },
-        "semantics": {
-          "tags": ["saas-support", "sla"]
-        }
-      }
-    },
-    {
       "key": "feature-usage",
       "name": "Feature Usage",
       "description": "Tracks how customers use specific product features, providing adoption and engagement data for product decisions.",
@@ -344,7 +234,6 @@
           "key": "TEXT",
           "label": "Feature Name",
           "type": "string",
-          "required": true,
           "semantics": {
             "definition": "The name of the product feature being tracked.",
             "classification": "IDENTIFIER",
@@ -449,7 +338,6 @@
           "label": "Churn Date",
           "type": "string",
           "format": "date",
-          "required": true,
           "semantics": {
             "definition": "The date the customer churned, marking the end of their active subscription.",
             "classification": "TEMPORAL",
@@ -536,36 +424,6 @@
         "definition": "A churn event records the loss of a customer from the active subscriber base, capturing the timing, reason, revenue impact, and potential for recovery. It is the key analytical artifact for understanding and reducing customer attrition.",
         "tags": ["churn", "retention", "revenue-impact", "saas"]
       }
-    },
-    {
-      "$ref": "models/invoice",
-      "extend": {
-        "attributes": {
-          "subscription-period": {
-            "key": "TEXT",
-            "label": "Subscription Period",
-            "type": "string",
-            "semantics": {
-              "definition": "The billing period this invoice covers, e.g. 'Jan 2026' or 'Q1 2026'.",
-              "classification": "CATEGORICAL",
-              "tags": ["billing", "period"]
-            }
-          },
-          "recurring": {
-            "key": "CHECKBOX",
-            "label": "Recurring",
-            "type": "boolean",
-            "semantics": {
-              "definition": "Whether this invoice is part of an auto-generated recurring billing cycle.",
-              "classification": "CATEGORICAL",
-              "tags": ["billing", "automation"]
-            }
-          }
-        },
-        "semantics": {
-          "tags": ["saas-billing", "subscription-invoice"]
-        }
-      }
     }
   ],
   "relationships": [
@@ -585,42 +443,6 @@
       "semantics": {
         "definition": "A customer holds one or more subscriptions that grant access to product plans. This relationship tracks the commercial agreements between the business and its customers.",
         "tags": ["billing", "subscription"]
-      }
-    },
-    {
-      "key": "customer-support-tickets",
-      "sourceEntityTypeKey": "customer",
-      "name": "Support Tickets",
-      "allowPolymorphic": false,
-      "protected": false,
-      "targetRules": [
-        {
-          "targetEntityTypeKey": "support-ticket",
-          "cardinalityOverride": "ONE_TO_MANY",
-          "inverseName": "Customer"
-        }
-      ],
-      "semantics": {
-        "definition": "A customer submits support tickets when they encounter issues, have questions, or want to request features.",
-        "tags": ["support", "customer-service"]
-      }
-    },
-    {
-      "key": "customer-invoices",
-      "sourceEntityTypeKey": "customer",
-      "name": "Invoices",
-      "allowPolymorphic": false,
-      "protected": false,
-      "targetRules": [
-        {
-          "targetEntityTypeKey": "invoice",
-          "cardinalityOverride": "ONE_TO_MANY",
-          "inverseName": "Customer"
-        }
-      ],
-      "semantics": {
-        "definition": "A customer receives invoices for their subscription charges and any additional services.",
-        "tags": ["billing", "finance"]
       }
     },
     {

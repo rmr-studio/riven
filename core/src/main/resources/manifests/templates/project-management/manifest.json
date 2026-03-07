@@ -1,78 +1,9 @@
 {
   "manifestVersion": "1.0",
-  "key": "service-business",
-  "name": "Service Business",
-  "description": "A professional services and agency template covering client management, project delivery, invoicing, team resources, time tracking, deliverables, and client communication.",
+  "key": "project-management",
+  "name": "Project Management",
+  "description": "Professional services project delivery with project tracking, deliverables, team resourcing, and time entry management.",
   "entityTypes": [
-    {
-      "$ref": "models/customer",
-      "extend": {
-        "identifierKey": "name",
-        "attributes": {
-          "contract-value": {
-            "key": "CURRENCY",
-            "label": "Contract Value",
-            "type": "number",
-            "format": "currency",
-            "semantics": {
-              "definition": "The total value of the active contract or retainer with this client.",
-              "classification": "QUANTITATIVE",
-              "tags": ["revenue", "contract"]
-            }
-          },
-          "billing-rate": {
-            "key": "CURRENCY",
-            "label": "Billing Rate",
-            "type": "number",
-            "format": "currency",
-            "semantics": {
-              "definition": "The default hourly billing rate for work performed for this client.",
-              "classification": "QUANTITATIVE",
-              "tags": ["billing", "rate"]
-            }
-          },
-          "payment-terms": {
-            "key": "SELECT",
-            "label": "Payment Terms",
-            "type": "string",
-            "options": {
-              "enum": ["net-15", "net-30", "net-45", "net-60", "on-receipt"]
-            },
-            "semantics": {
-              "definition": "The agreed payment terms for invoices sent to this client.",
-              "classification": "CATEGORICAL",
-              "tags": ["billing", "terms"]
-            }
-          },
-          "account-manager": {
-            "key": "TEXT",
-            "label": "Account Manager",
-            "type": "string",
-            "semantics": {
-              "definition": "The name of the internal team member responsible for managing this client relationship.",
-              "classification": "IDENTIFIER",
-              "tags": ["ownership", "team"]
-            }
-          },
-          "industry": {
-            "key": "SELECT",
-            "label": "Industry",
-            "type": "string",
-            "options": {
-              "enum": ["technology", "finance", "healthcare", "retail", "manufacturing", "education", "media", "other"]
-            },
-            "semantics": {
-              "definition": "The industry sector the client operates in, used for portfolio analysis and expertise matching.",
-              "classification": "CATEGORICAL",
-              "tags": ["segmentation", "industry"]
-            }
-          }
-        },
-        "semantics": {
-          "tags": ["professional-services", "agency", "client"]
-        }
-      }
-    },
     {
       "key": "project",
       "name": "Project",
@@ -88,7 +19,6 @@
           "key": "TEXT",
           "label": "Name",
           "type": "string",
-          "required": true,
           "semantics": {
             "definition": "The name of the project, used as the primary identifier.",
             "classification": "IDENTIFIER",
@@ -99,7 +29,6 @@
           "key": "SELECT",
           "label": "Status",
           "type": "string",
-          "required": true,
           "options": {
             "enum": ["planning", "active", "on-hold", "completed", "cancelled"],
             "default": "planning"
@@ -209,161 +138,6 @@
       }
     },
     {
-      "$ref": "models/invoice",
-      "extend": {
-        "attributes": {
-          "project-reference": {
-            "key": "TEXT",
-            "label": "Project Reference",
-            "type": "string",
-            "semantics": {
-              "definition": "The name or identifier of the project this invoice is billed against.",
-              "classification": "RELATIONAL_REFERENCE",
-              "tags": ["project", "billing"]
-            }
-          },
-          "billable-hours": {
-            "key": "NUMBER",
-            "label": "Billable Hours",
-            "type": "number",
-            "semantics": {
-              "definition": "The total billable hours included in this invoice.",
-              "classification": "QUANTITATIVE",
-              "tags": ["time-tracking", "billing"]
-            }
-          },
-          "hourly-rate": {
-            "key": "CURRENCY",
-            "label": "Hourly Rate",
-            "type": "number",
-            "format": "currency",
-            "semantics": {
-              "definition": "The hourly rate applied for the billable hours on this invoice.",
-              "classification": "QUANTITATIVE",
-              "tags": ["rate", "billing"]
-            }
-          }
-        },
-        "semantics": {
-          "tags": ["services-billing", "project-invoice"]
-        }
-      }
-    },
-    {
-      "key": "communication",
-      "name": "Communication",
-      "description": "A logged interaction with a client, capturing context, outcome, and follow-up actions.",
-      "displayName": {
-        "singular": "Communication",
-        "plural": "Communications"
-      },
-      "semanticGroup": "COMMUNICATION",
-      "identifierKey": "subject",
-      "attributes": {
-        "subject": {
-          "key": "TEXT",
-          "label": "Subject",
-          "type": "string",
-          "required": true,
-          "semantics": {
-            "definition": "The subject or topic of the communication.",
-            "classification": "IDENTIFIER",
-            "tags": ["display-name", "topic"]
-          }
-        },
-        "type": {
-          "key": "SELECT",
-          "label": "Type",
-          "type": "string",
-          "required": true,
-          "options": {
-            "enum": ["meeting", "call", "email", "presentation", "workshop"]
-          },
-          "semantics": {
-            "definition": "The format or medium of this communication.",
-            "classification": "CATEGORICAL",
-            "tags": ["format", "channel"]
-          }
-        },
-        "direction": {
-          "key": "SELECT",
-          "label": "Direction",
-          "type": "string",
-          "options": {
-            "enum": ["inbound", "outbound"]
-          },
-          "semantics": {
-            "definition": "Whether this communication was initiated by the client or by the team.",
-            "classification": "CATEGORICAL",
-            "tags": ["direction", "initiative"]
-          }
-        },
-        "date": {
-          "key": "DATE",
-          "label": "Date",
-          "type": "string",
-          "format": "date",
-          "required": true,
-          "semantics": {
-            "definition": "The date of the communication.",
-            "classification": "TEMPORAL",
-            "tags": ["timeline"]
-          }
-        },
-        "summary": {
-          "key": "TEXT",
-          "label": "Summary",
-          "type": "string",
-          "semantics": {
-            "definition": "A summary of what was discussed or communicated.",
-            "classification": "FREETEXT",
-            "tags": ["notes", "context"]
-          }
-        },
-        "follow-up-date": {
-          "key": "DATE",
-          "label": "Follow-up Date",
-          "type": "string",
-          "format": "date",
-          "semantics": {
-            "definition": "The date by which a follow-up action is expected.",
-            "classification": "TEMPORAL",
-            "tags": ["action-item", "deadline"]
-          }
-        },
-        "outcome": {
-          "key": "SELECT",
-          "label": "Outcome",
-          "type": "string",
-          "options": {
-            "enum": ["positive", "neutral", "needs-action", "escalated"]
-          },
-          "semantics": {
-            "definition": "The outcome or disposition of this communication.",
-            "classification": "CATEGORICAL",
-            "tags": ["result", "disposition"]
-          }
-        },
-        "channel": {
-          "key": "SELECT",
-          "label": "Channel",
-          "type": "string",
-          "options": {
-            "enum": ["phone", "video", "in-person", "email", "chat"]
-          },
-          "semantics": {
-            "definition": "The specific channel used for this communication.",
-            "classification": "CATEGORICAL",
-            "tags": ["channel", "medium"]
-          }
-        }
-      },
-      "semantics": {
-        "definition": "A communication logs a client interaction, capturing what was discussed, the outcome, and any required follow-ups. It provides the audit trail for client relationship management and ensures continuity across team members.",
-        "tags": ["client-relations", "interaction", "crm", "communication"]
-      }
-    },
-    {
       "key": "deliverable",
       "name": "Deliverable",
       "description": "A specific output or work product that must be produced and delivered as part of a project.",
@@ -378,7 +152,6 @@
           "key": "TEXT",
           "label": "Name",
           "type": "string",
-          "required": true,
           "semantics": {
             "definition": "The name of the deliverable.",
             "classification": "IDENTIFIER",
@@ -399,7 +172,6 @@
           "key": "SELECT",
           "label": "Status",
           "type": "string",
-          "required": true,
           "options": {
             "enum": ["not-started", "in-progress", "review", "delivered", "accepted"],
             "default": "not-started"
@@ -489,7 +261,6 @@
           "key": "TEXT",
           "label": "Name",
           "type": "string",
-          "required": true,
           "semantics": {
             "definition": "The full name of the team member.",
             "classification": "IDENTIFIER",
@@ -501,7 +272,6 @@
           "label": "Email",
           "type": "string",
           "format": "email",
-          "required": true,
           "unique": true,
           "semantics": {
             "definition": "The team member's email address.",
@@ -513,7 +283,6 @@
           "key": "SELECT",
           "label": "Role",
           "type": "string",
-          "required": true,
           "options": {
             "enum": ["principal", "senior", "mid-level", "junior", "intern", "contractor"]
           },
@@ -562,7 +331,6 @@
           "key": "SELECT",
           "label": "Availability",
           "type": "string",
-          "required": true,
           "options": {
             "enum": ["available", "partially-available", "fully-allocated", "on-leave"],
             "default": "available"
@@ -605,7 +373,6 @@
           "label": "Date",
           "type": "string",
           "format": "date",
-          "required": true,
           "semantics": {
             "definition": "The date the work was performed.",
             "classification": "TEMPORAL",
@@ -616,7 +383,6 @@
           "key": "NUMBER",
           "label": "Hours",
           "type": "number",
-          "required": true,
           "semantics": {
             "definition": "The number of hours worked.",
             "classification": "QUANTITATIVE",
@@ -627,7 +393,6 @@
           "key": "TEXT",
           "label": "Description",
           "type": "string",
-          "required": true,
           "semantics": {
             "definition": "A description of the work performed during this time entry.",
             "classification": "FREETEXT",
@@ -638,7 +403,6 @@
           "key": "CHECKBOX",
           "label": "Billable",
           "type": "boolean",
-          "required": true,
           "semantics": {
             "definition": "Whether this time entry is billable to the client.",
             "classification": "CATEGORICAL",
@@ -681,7 +445,6 @@
           "key": "SELECT",
           "label": "Status",
           "type": "string",
-          "required": true,
           "options": {
             "enum": ["draft", "submitted", "approved", "invoiced"],
             "default": "draft"
@@ -719,42 +482,6 @@
       }
     },
     {
-      "key": "client-invoices",
-      "sourceEntityTypeKey": "customer",
-      "name": "Invoices",
-      "allowPolymorphic": false,
-      "protected": false,
-      "targetRules": [
-        {
-          "targetEntityTypeKey": "invoice",
-          "cardinalityOverride": "ONE_TO_MANY",
-          "inverseName": "Client"
-        }
-      ],
-      "semantics": {
-        "definition": "A client receives invoices for billable work performed on their projects.",
-        "tags": ["billing", "finance"]
-      }
-    },
-    {
-      "key": "client-communications",
-      "sourceEntityTypeKey": "customer",
-      "name": "Communications",
-      "allowPolymorphic": false,
-      "protected": false,
-      "targetRules": [
-        {
-          "targetEntityTypeKey": "communication",
-          "cardinalityOverride": "ONE_TO_MANY",
-          "inverseName": "Client"
-        }
-      ],
-      "semantics": {
-        "definition": "A client has a history of communications that document the ongoing relationship and decision trail.",
-        "tags": ["crm", "interaction"]
-      }
-    },
-    {
       "key": "project-deliverables",
       "sourceEntityTypeKey": "project",
       "name": "Deliverables",
@@ -770,24 +497,6 @@
       "semantics": {
         "definition": "A project produces one or more deliverables that are the tangible outputs of the work.",
         "tags": ["delivery", "output"]
-      }
-    },
-    {
-      "key": "project-time-entries",
-      "sourceEntityTypeKey": "project",
-      "name": "Time Entries",
-      "allowPolymorphic": false,
-      "protected": false,
-      "targetRules": [
-        {
-          "targetEntityTypeKey": "time-entry",
-          "cardinalityOverride": "ONE_TO_MANY",
-          "inverseName": "Project"
-        }
-      ],
-      "semantics": {
-        "definition": "A project accumulates time entries that record the effort spent by team members on its work.",
-        "tags": ["time-tracking", "effort"]
       }
     },
     {
@@ -809,21 +518,21 @@
       }
     },
     {
-      "key": "client-deliverables",
-      "sourceEntityTypeKey": "customer",
-      "name": "Deliverables",
+      "key": "team-member-time-entries",
+      "sourceEntityTypeKey": "team-member",
+      "name": "Time Entries",
       "allowPolymorphic": false,
       "protected": false,
       "targetRules": [
         {
-          "targetEntityTypeKey": "deliverable",
+          "targetEntityTypeKey": "time-entry",
           "cardinalityOverride": "ONE_TO_MANY",
-          "inverseName": "Client"
+          "inverseName": "Team Member"
         }
       ],
       "semantics": {
-        "definition": "A client receives deliverables produced across their projects, providing a consolidated view of all work products.",
-        "tags": ["delivery", "client-view"]
+        "definition": "A team member logs time entries that record the hours they have worked on projects.",
+        "tags": ["time-tracking", "effort"]
       }
     }
   ]
