@@ -67,7 +67,7 @@ storage:
   local:
     base-path: ./storage
   signed-url:
-    secret: ${STORAGE_SIGNED_URL_SECRET:dev-secret-change-in-production}
+    secret: ${STORAGE_SIGNED_URL_SECRET}
     default-expiry-seconds: 3600
     max-expiry-seconds: 86400
   presigned-upload:

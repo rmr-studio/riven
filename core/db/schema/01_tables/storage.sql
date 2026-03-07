@@ -1,7 +1,6 @@
 -- =====================================================
 -- FILE METADATA TABLE
 -- =====================================================
-DROP TABLE IF EXISTS "file_metadata" CASCADE;
 CREATE TABLE IF NOT EXISTS "file_metadata"
 (
     "id"                UUID PRIMARY KEY         NOT NULL DEFAULT gen_random_uuid(),

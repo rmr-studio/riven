@@ -182,9 +182,13 @@ class S3StorageProvider(
             runBlocking {
                 try {
                     s3Client.headBucket(HeadBucketRequest { bucket = bucketName })
-                } catch (e: Exception) {
-                    logger.info { "Bucket '$bucketName' not found, creating it" }
-                    s3Client.createBucket(CreateBucketRequest { bucket = bucketName })
+                } catch (e: S3Exception) {
+                    if (e is NotFound || e is NoSuchBucket) {
+                        logger.info { "Bucket '$bucketName' not found, creating it" }
+                        s3Client.createBucket(CreateBucketRequest { bucket = bucketName })
+                    } else {
+                        throw e
+                    }
                 }
             }
             true

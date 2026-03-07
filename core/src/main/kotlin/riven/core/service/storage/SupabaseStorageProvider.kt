@@ -117,8 +117,12 @@ class SupabaseStorageProvider(
      * Generate a time-limited presigned URL for uploading a file directly to Supabase Storage.
      *
      * Uses createSignedUploadUrl which returns an UploadSignedUrl containing the full URL.
+     * Note: Supabase SDK does not support custom TTL on upload URLs — server-side default is used.
      */
     override fun generateUploadUrl(key: String, contentType: String, expiresIn: Duration): String {
+        if (expiresIn != Duration.ofSeconds(900)) {
+            logger.warn { "Supabase provider does not support custom TTL for presigned upload URLs; using server default" }
+        }
         try {
             val uploadSignedUrl = runBlocking {
                 bucket.createSignedUploadUrl(path = key, upsert = false)
@@ -153,6 +157,7 @@ class SupabaseStorageProvider(
                 try {
                     storagePlugin().retrieveBucketById(bucketName)
                 } catch (e: Exception) {
+                    if (!isNotFound(e)) throw e
                     logger.info { "Bucket '$bucketName' not found, creating it" }
                     storagePlugin().createBucket(id = bucketName) {
                         public = false

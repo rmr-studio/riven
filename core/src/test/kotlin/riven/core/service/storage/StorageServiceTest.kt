@@ -8,7 +8,6 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.context.annotation.Configuration
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.web.multipart.MultipartFile
 import riven.core.configuration.auth.WorkspaceSecurity
@@ -30,6 +29,7 @@ import riven.core.models.storage.StorageResult
 import riven.core.repository.storage.FileMetadataRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.util.SecurityTestConfig
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
 import riven.core.service.util.factory.storage.StorageFactory
@@ -42,7 +42,7 @@ import java.util.*
     classes = [
         AuthTokenService::class,
         WorkspaceSecurity::class,
-        StorageServiceTest.TestConfig::class,
+        SecurityTestConfig::class,
         StorageService::class,
         StorageConfigurationProperties::class
     ]
@@ -59,9 +59,6 @@ import java.util.*
     ]
 )
 class StorageServiceTest {
-
-    @Configuration
-    class TestConfig
 
     private val userId: UUID = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef0123456789")
     private val workspaceId: UUID = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef9876543210")
@@ -1179,5 +1176,73 @@ class StorageServiceTest {
         on { this.contentType } doReturn contentType
         on { bytes } doReturn content
         on { size } doReturn content.size.toLong()
+    }
+
+    // ------ Access Control Tests ------
+
+    private val unauthorizedWorkspaceId: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
+
+    @Test
+    fun `uploadFile throws AccessDeniedException for unauthorized workspace`() {
+        val file = mockMultipartFile("test.png", "image/png", ByteArray(100))
+
+        assertThrows<org.springframework.security.access.AccessDeniedException> {
+            storageService.uploadFile(unauthorizedWorkspaceId, StorageDomain.AVATAR, file)
+        }
+    }
+
+    @Test
+    fun `listFiles throws AccessDeniedException for unauthorized workspace`() {
+        assertThrows<org.springframework.security.access.AccessDeniedException> {
+            storageService.listFiles(unauthorizedWorkspaceId, null)
+        }
+    }
+
+    @Test
+    fun `getFile throws AccessDeniedException for unauthorized workspace`() {
+        assertThrows<org.springframework.security.access.AccessDeniedException> {
+            storageService.getFile(unauthorizedWorkspaceId, UUID.randomUUID())
+        }
+    }
+
+    @Test
+    fun `deleteFile throws AccessDeniedException for unauthorized workspace`() {
+        assertThrows<org.springframework.security.access.AccessDeniedException> {
+            storageService.deleteFile(unauthorizedWorkspaceId, UUID.randomUUID())
+        }
+    }
+
+    @Test
+    fun `generateSignedUrl throws AccessDeniedException for unauthorized workspace`() {
+        assertThrows<org.springframework.security.access.AccessDeniedException> {
+            storageService.generateSignedUrl(unauthorizedWorkspaceId, UUID.randomUUID(), null)
+        }
+    }
+
+    @Test
+    fun `confirmPresignedUpload throws AccessDeniedException for unauthorized workspace`() {
+        val request = ConfirmUploadRequest(
+            storageKey = "$unauthorizedWorkspaceId/avatar/${UUID.randomUUID()}.png",
+            originalFilename = "test.png"
+        )
+
+        assertThrows<org.springframework.security.access.AccessDeniedException> {
+            storageService.confirmPresignedUpload(unauthorizedWorkspaceId, request)
+        }
+    }
+
+    // ------ IDOR Protection Tests ------
+
+    @Test
+    fun `confirmPresignedUpload rejects storage key belonging to different workspace`() {
+        val otherWorkspaceId = UUID.randomUUID()
+        val storageKey = "$otherWorkspaceId/avatar/${UUID.randomUUID()}.png"
+        val request = ConfirmUploadRequest(storageKey = storageKey, originalFilename = "test.png")
+
+        assertThrows<IllegalArgumentException> {
+            storageService.confirmPresignedUpload(workspaceId, request)
+        }
+
+        verify(storageProvider, never()).exists(any())
     }
 }

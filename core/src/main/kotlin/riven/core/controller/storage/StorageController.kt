@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.http.ContentDisposition
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -206,7 +207,7 @@ class StorageController(
 
         val disposition = if (download) {
             val filename = result.originalFilename ?: "download"
-            "attachment; filename=\"$filename\""
+            ContentDisposition.attachment().filename(filename, Charsets.UTF_8).build().toString()
         } else {
             "inline"
         }

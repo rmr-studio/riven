@@ -84,11 +84,19 @@ class StorageService(
         val storageKey = contentValidationService.generateStorageKey(workspaceId, domain, detectedType)
 
         storeFile(storageKey, content, detectedType)
-        val fileMetadata = persistMetadata(workspaceId, domain, storageKey, file.originalFilename ?: "unknown", detectedType, content.size.toLong(), userId, metadata)
-        logUploadActivity(userId, workspaceId, fileMetadata)
-
-        val signedUrl = generateProviderSignedUrl(storageKey, signedUrlService.getDefaultExpiry())
-        return UploadFileResponse(fileMetadata, signedUrl)
+        return try {
+            val fileMetadata = persistMetadata(workspaceId, domain, storageKey, file.originalFilename ?: "unknown", detectedType, content.size.toLong(), userId, metadata)
+            logUploadActivity(userId, workspaceId, fileMetadata)
+            val signedUrl = generateProviderSignedUrl(storageKey, signedUrlService.getDefaultExpiry())
+            UploadFileResponse(fileMetadata, signedUrl)
+        } catch (e: Exception) {
+            try {
+                storageProvider.delete(storageKey)
+            } catch (deleteError: Exception) {
+                logger.error(deleteError) { "Failed to clean up uploaded file '$storageKey' after post-upload failure" }
+            }
+            throw e
+        }
     }
 
     /**
@@ -146,6 +154,8 @@ class StorageService(
     fun confirmPresignedUpload(workspaceId: UUID, request: ConfirmUploadRequest): UploadFileResponse {
         val userId = authTokenService.getUserId()
 
+        validateStorageKeyWorkspace(request.storageKey, workspaceId)
+
         if (!storageProvider.exists(request.storageKey)) {
             throw StorageNotFoundException("File not found at storage key: ${request.storageKey}")
         }
@@ -155,7 +165,7 @@ class StorageService(
         val detectedType = contentValidationService.detectContentType(ByteArrayInputStream(bytes), request.originalFilename)
         val domain = parseDomainFromStorageKey(request.storageKey)
 
-        validatePresignedUploadContent(request.storageKey, domain, detectedType)
+        validatePresignedUploadContent(request.storageKey, domain, detectedType, bytes.size.toLong())
 
         request.metadata?.let { validateMetadata(it) }
 
@@ -409,16 +419,35 @@ class StorageService(
         }
     }
 
-    private fun validatePresignedUploadContent(storageKey: String, domain: StorageDomain, detectedType: String) {
+    private fun validateStorageKeyWorkspace(storageKey: String, workspaceId: UUID) {
+        val parts = storageKey.split("/")
+        require(parts.isNotEmpty()) { "Invalid storage key format: $storageKey" }
+        val keyWorkspaceId = try {
+            UUID.fromString(parts[0])
+        } catch (e: IllegalArgumentException) {
+            throw IllegalArgumentException("Storage key does not contain a valid workspace ID: $storageKey")
+        }
+        require(keyWorkspaceId == workspaceId) {
+            "Storage key does not belong to workspace $workspaceId"
+        }
+    }
+
+    private fun validatePresignedUploadContent(storageKey: String, domain: StorageDomain, detectedType: String, fileSize: Long) {
         try {
             contentValidationService.validateContentType(domain, detectedType)
-        } catch (e: ContentTypeNotAllowedException) {
-            try {
-                storageProvider.delete(storageKey)
-            } catch (deleteError: Exception) {
-                logger.error(deleteError) { "Failed to delete invalid file '$storageKey' from provider after content type rejection" }
+            contentValidationService.validateFileSize(domain, fileSize)
+        } catch (e: Exception) {
+            when (e) {
+                is ContentTypeNotAllowedException, is FileSizeLimitExceededException -> {
+                    try {
+                        storageProvider.delete(storageKey)
+                    } catch (deleteError: Exception) {
+                        logger.error(deleteError) { "Failed to delete invalid file '$storageKey' from provider after validation rejection" }
+                    }
+                    throw e
+                }
+                else -> throw e
             }
-            throw e
         }
     }
 

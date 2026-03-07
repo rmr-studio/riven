@@ -26,6 +26,8 @@ class S3Configuration(
 
     @Bean
     fun s3Client(): S3Client {
+        require(storageConfig.s3.accessKeyId.isNotBlank()) { "S3 access key ID must not be blank when provider is 's3'" }
+        require(storageConfig.s3.secretAccessKey.isNotBlank()) { "S3 secret access key must not be blank when provider is 's3'" }
         val s3 = S3Client {
             region = storageConfig.s3.region
             endpointUrl = storageConfig.s3.endpointUrl?.let { Url.parse(it) }

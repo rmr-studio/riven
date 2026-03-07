@@ -1,5 +1,6 @@
 package riven.core.configuration.storage
 
+import jakarta.validation.constraints.NotBlank
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.validation.annotation.Validated
 
@@ -18,7 +19,8 @@ data class StorageConfigurationProperties(
     )
 
     data class SignedUrl(
-        val secret: String = "dev-secret-change-in-production",
+        @field:NotBlank
+        val secret: String = "",
         val defaultExpirySeconds: Long = 3600,
         val maxExpirySeconds: Long = 86400
     )

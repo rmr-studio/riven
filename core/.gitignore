@@ -43,3 +43,6 @@ out/
 
 ### Planning ###
 # .planning/ is tracked in git (commit_docs: true)
+
+### PR Review ###
+.pr-review/
