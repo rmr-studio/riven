@@ -1,0 +1,455 @@
+package riven.core.service.catalog
+
+import io.github.oshai.kotlinlogging.KLogger
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import org.mockito.kotlin.*
+import riven.core.entity.entity.EntityTypeEntity
+import riven.core.entity.entity.RelationshipDefinitionEntity
+import riven.core.enums.catalog.ManifestType
+import riven.core.enums.common.icon.IconColour
+import riven.core.enums.common.icon.IconType
+import riven.core.enums.common.validation.SchemaType
+import riven.core.enums.core.DataFormat
+import riven.core.enums.core.DataType
+import riven.core.enums.entity.EntityPropertyType
+import riven.core.enums.entity.EntityRelationshipCardinality
+import riven.core.enums.entity.semantics.SemanticAttributeClassification
+import riven.core.enums.entity.semantics.SemanticGroup
+import riven.core.enums.entity.semantics.SemanticMetadataTargetType
+import riven.core.exceptions.NotFoundException
+import riven.core.models.catalog.*
+import riven.core.models.entity.RelationshipDefinition
+import riven.core.models.common.Icon
+import riven.core.models.request.entity.type.SaveRelationshipDefinitionRequest
+import riven.core.models.request.entity.type.SaveSemanticMetadataRequest
+import riven.core.repository.entity.EntityTypeRepository
+import riven.core.service.activity.ActivityService
+import riven.core.service.auth.AuthTokenService
+import riven.core.service.entity.EntityTypeSemanticMetadataService
+import riven.core.service.entity.type.EntityTypeRelationshipService
+import java.util.*
+
+class TemplateInstallationServiceTest {
+
+    private lateinit var catalogService: ManifestCatalogService
+    private lateinit var entityTypeRepository: EntityTypeRepository
+    private lateinit var relationshipService: EntityTypeRelationshipService
+    private lateinit var semanticMetadataService: EntityTypeSemanticMetadataService
+    private lateinit var authTokenService: AuthTokenService
+    private lateinit var activityService: ActivityService
+    private lateinit var logger: KLogger
+    private lateinit var service: TemplateInstallationService
+
+    private val workspaceId = UUID.randomUUID()
+    private val userId = UUID.randomUUID()
+
+    @BeforeEach
+    fun setUp() {
+        catalogService = mock()
+        entityTypeRepository = mock()
+        relationshipService = mock()
+        semanticMetadataService = mock()
+        authTokenService = mock()
+        activityService = mock()
+        logger = mock()
+
+        service = TemplateInstallationService(
+            catalogService,
+            entityTypeRepository,
+            relationshipService,
+            semanticMetadataService,
+            authTokenService,
+            activityService,
+            logger,
+        )
+
+        whenever(authTokenService.getUserId()).thenReturn(userId)
+        whenever(activityService.logActivity(any(), any(), any(), any(), any(), anyOrNull(), any(), any())).thenReturn(mock())
+    }
+
+    // ------ Entity Type Creation ------
+
+    @Test
+    fun `installTemplate creates entity types from catalog`() {
+        val manifest = createManifestWithEntityTypes(
+            createCatalogEntityType("customer", "Customer", "Customers"),
+            createCatalogEntityType("order", "Order", "Orders"),
+        )
+        whenever(catalogService.getManifestByKey("test-template", ManifestType.TEMPLATE)).thenReturn(manifest)
+        stubEntityTypeSave()
+        stubFallbackDefinition()
+
+        val response = service.installTemplate(workspaceId, "test-template")
+
+        assertEquals(2, response.entityTypesCreated)
+        assertEquals("test-template", response.templateKey)
+        verify(entityTypeRepository, times(2)).save(any<EntityTypeEntity>())
+        verify(semanticMetadataService, times(2)).initializeForEntityType(any(), eq(workspaceId), any())
+        verify(relationshipService, times(2)).createFallbackDefinition(eq(workspaceId), any())
+    }
+
+    @Test
+    fun `installTemplate translates string-keyed schema to UUID-keyed schema`() {
+        val schema = mapOf(
+            "name" to mapOf<String, Any>("key" to "TEXT", "label" to "Name", "type" to "string", "required" to true, "unique" to true),
+            "email" to mapOf<String, Any>("key" to "EMAIL", "label" to "Email", "type" to "string", "format" to "email", "required" to true),
+            "amount" to mapOf<String, Any>("key" to "CURRENCY", "label" to "Amount", "type" to "number", "format" to "currency"),
+        )
+        val entityType = createCatalogEntityType("invoice", "Invoice", "Invoices", schema = schema, identifierKey = "email")
+
+        val manifest = createManifestWithEntityTypes(entityType)
+        whenever(catalogService.getManifestByKey("test-template", ManifestType.TEMPLATE)).thenReturn(manifest)
+        stubEntityTypeSave()
+        stubFallbackDefinition()
+
+        service.installTemplate(workspaceId, "test-template")
+
+        val captor = argumentCaptor<EntityTypeEntity>()
+        verify(entityTypeRepository).save(captor.capture())
+
+        val saved = captor.firstValue
+        val properties = saved.schema.properties!!
+        assertEquals(3, properties.size, "Should have 3 UUID-keyed properties")
+
+        // All keys should be UUIDs, not strings
+        properties.keys.forEach { key ->
+            assertDoesNotThrow { key.toString() }
+        }
+
+        // Verify identifier key is resolved to a UUID
+        assertTrue(properties.containsKey(saved.identifierKey), "identifierKey should reference a valid property UUID")
+
+        // Verify the identifier attribute has the EMAIL schema type
+        val identifierProp = properties[saved.identifierKey]!!
+        assertEquals(SchemaType.EMAIL, identifierProp.key)
+        assertTrue(identifierProp.protected, "Identifier attribute should be protected")
+
+        // Verify columns match properties
+        assertEquals(3, saved.columns.size)
+        saved.columns.forEach { col ->
+            assertEquals(EntityPropertyType.ATTRIBUTE, col.type)
+            assertTrue(properties.containsKey(col.key))
+        }
+    }
+
+    @Test
+    fun `installTemplate creates relationships with resolved entity type IDs`() {
+        val manifest = createManifestWithRelationship()
+        whenever(catalogService.getManifestByKey("test-template", ManifestType.TEMPLATE)).thenReturn(manifest)
+        stubEntityTypeSave()
+        stubFallbackDefinition()
+        stubRelationshipCreation()
+
+        service.installTemplate(workspaceId, "test-template")
+
+        val captor = argumentCaptor<SaveRelationshipDefinitionRequest>()
+        verify(relationshipService).createRelationshipDefinition(eq(workspaceId), any(), captor.capture())
+
+        val request = captor.firstValue
+        assertEquals("customer-orders", request.name)
+        assertEquals(EntityRelationshipCardinality.ONE_TO_MANY, request.cardinalityDefault)
+        assertEquals(1, request.targetRules.size)
+
+        // Target entity type ID should be a UUID (resolved from "order" key)
+        assertNotNull(request.targetRules[0].targetEntityTypeId)
+        assertEquals("Orders", request.targetRules[0].inverseName)
+    }
+
+    @Test
+    fun `installTemplate applies semantic metadata for entity types and attributes`() {
+        val semanticMetadata = listOf(
+            CatalogSemanticMetadataModel(
+                id = UUID.randomUUID(),
+                targetType = SemanticMetadataTargetType.ENTITY_TYPE,
+                targetId = "customer",
+                definition = "A customer record",
+                classification = null,
+                tags = listOf("crm"),
+            ),
+            CatalogSemanticMetadataModel(
+                id = UUID.randomUUID(),
+                targetType = SemanticMetadataTargetType.ATTRIBUTE,
+                targetId = "name",
+                definition = "Customer name",
+                classification = SemanticAttributeClassification.IDENTIFIER,
+                tags = listOf("display"),
+            ),
+        )
+
+        val entityType = createCatalogEntityType("customer", "Customer", "Customers", semanticMetadata = semanticMetadata)
+        val manifest = createManifestWithEntityTypes(entityType)
+        whenever(catalogService.getManifestByKey("test-template", ManifestType.TEMPLATE)).thenReturn(manifest)
+        stubEntityTypeSave()
+        stubFallbackDefinition()
+        whenever(semanticMetadataService.upsertMetadataInternal(any(), any(), any(), any(), any())).thenReturn(mock())
+
+        service.installTemplate(workspaceId, "test-template")
+
+        // Should be called twice: once for ENTITY_TYPE, once for ATTRIBUTE "name"
+        verify(semanticMetadataService, times(2)).upsertMetadataInternal(
+            eq(workspaceId), any(), any(), any(), any()
+        )
+
+        // Verify ENTITY_TYPE metadata call
+        verify(semanticMetadataService).upsertMetadataInternal(
+            eq(workspaceId),
+            any(),
+            eq(SemanticMetadataTargetType.ENTITY_TYPE),
+            any(),
+            argThat<SaveSemanticMetadataRequest> { definition == "A customer record" },
+        )
+
+        // Verify ATTRIBUTE metadata call
+        verify(semanticMetadataService).upsertMetadataInternal(
+            eq(workspaceId),
+            any(),
+            eq(SemanticMetadataTargetType.ATTRIBUTE),
+            any(),
+            argThat<SaveSemanticMetadataRequest> { definition == "Customer name" },
+        )
+    }
+
+    @Test
+    fun `installTemplate throws on unknown template key`() {
+        whenever(catalogService.getManifestByKey("unknown", ManifestType.TEMPLATE))
+            .thenThrow(NotFoundException("Manifest not found: unknown (type=TEMPLATE)"))
+
+        assertThrows<NotFoundException> {
+            service.installTemplate(workspaceId, "unknown")
+        }
+    }
+
+    @Test
+    fun `installTemplate returns correct response shape`() {
+        val manifest = createManifestWithRelationship()
+        whenever(catalogService.getManifestByKey("test-template", ManifestType.TEMPLATE)).thenReturn(manifest)
+        stubEntityTypeSave()
+        stubFallbackDefinition()
+        stubRelationshipCreation()
+
+        val response = service.installTemplate(workspaceId, "test-template")
+
+        assertEquals("test-template", response.templateKey)
+        assertEquals("Test Template", response.templateName)
+        assertEquals(2, response.entityTypesCreated)
+        assertEquals(1, response.relationshipsCreated)
+        assertEquals(2, response.entityTypes.size)
+
+        val customerSummary = response.entityTypes.find { it.key == "customer" }!!
+        assertEquals("Customer", customerSummary.displayName)
+        assertTrue(customerSummary.attributeCount > 0)
+        assertNotNull(customerSummary.id)
+    }
+
+    @Test
+    fun `installTemplate passes relationship semantics from source entity type metadata`() {
+        val relSemantics = CatalogSemanticMetadataModel(
+            id = UUID.randomUUID(),
+            targetType = SemanticMetadataTargetType.RELATIONSHIP,
+            targetId = "customer-orders-rel",
+            definition = "Customer purchased orders",
+            classification = null,
+            tags = listOf("commerce"),
+        )
+        val customerType = createCatalogEntityType(
+            "customer", "Customer", "Customers",
+            semanticMetadata = listOf(relSemantics),
+        )
+        val orderType = createCatalogEntityType("order", "Order", "Orders")
+
+        val relationship = CatalogRelationshipModel(
+            id = UUID.randomUUID(),
+            key = "customer-orders-rel",
+            sourceEntityTypeKey = "customer",
+            name = "Orders",
+            iconType = IconType.LINK,
+            iconColour = IconColour.NEUTRAL,
+            allowPolymorphic = false,
+            cardinalityDefault = EntityRelationshipCardinality.ONE_TO_MANY,
+            `protected` = false,
+            targetRules = listOf(
+                CatalogRelationshipTargetRuleModel(
+                    id = UUID.randomUUID(),
+                    targetEntityTypeKey = "order",
+                    semanticTypeConstraint = null,
+                    cardinalityOverride = null,
+                    inverseVisible = true,
+                    inverseName = "Customer",
+                )
+            ),
+        )
+
+        val manifest = ManifestDetail(
+            id = UUID.randomUUID(),
+            key = "test-template",
+            name = "Test Template",
+            description = "A test template",
+            manifestType = ManifestType.TEMPLATE,
+            manifestVersion = "1.0",
+            entityTypes = listOf(customerType, orderType),
+            relationships = listOf(relationship),
+            fieldMappings = emptyList(),
+        )
+
+        whenever(catalogService.getManifestByKey("test-template", ManifestType.TEMPLATE)).thenReturn(manifest)
+        stubEntityTypeSave()
+        stubFallbackDefinition()
+        stubRelationshipCreation()
+
+        service.installTemplate(workspaceId, "test-template")
+
+        val relCaptor = argumentCaptor<SaveRelationshipDefinitionRequest>()
+        verify(relationshipService).createRelationshipDefinition(eq(workspaceId), any(), relCaptor.capture())
+
+        val request = relCaptor.firstValue
+        assertNotNull(request.semantics, "Relationship semantics should be passed from catalog metadata")
+        assertEquals("Customer purchased orders", request.semantics!!.definition)
+        assertEquals(listOf("commerce"), request.semantics!!.tags)
+    }
+
+    @Test
+    fun `installTemplate handles data format mapping correctly`() {
+        val schema = mapOf(
+            "created" to mapOf<String, Any>("key" to "DATE", "label" to "Created", "type" to "string", "format" to "date"),
+            "updated" to mapOf<String, Any>("key" to "DATETIME", "label" to "Updated", "type" to "string", "format" to "date-time"),
+            "email" to mapOf<String, Any>("key" to "EMAIL", "label" to "Email", "type" to "string", "format" to "email"),
+            "phone" to mapOf<String, Any>("key" to "PHONE", "label" to "Phone", "type" to "string", "format" to "phone-number"),
+            "website" to mapOf<String, Any>("key" to "URL", "label" to "Website", "type" to "string", "format" to "uri"),
+            "rate" to mapOf<String, Any>("key" to "PERCENTAGE", "label" to "Rate", "type" to "number", "format" to "percentage"),
+            "cost" to mapOf<String, Any>("key" to "CURRENCY", "label" to "Cost", "type" to "number", "format" to "currency"),
+        )
+        val entityType = createCatalogEntityType("test", "Test", "Tests", schema = schema, identifierKey = "email")
+        val manifest = createManifestWithEntityTypes(entityType)
+        whenever(catalogService.getManifestByKey("test-template", ManifestType.TEMPLATE)).thenReturn(manifest)
+        stubEntityTypeSave()
+        stubFallbackDefinition()
+
+        service.installTemplate(workspaceId, "test-template")
+
+        val captor = argumentCaptor<EntityTypeEntity>()
+        verify(entityTypeRepository).save(captor.capture())
+
+        val props = captor.firstValue.schema.properties!!.values.toList()
+        val formats = props.mapNotNull { it.format }
+        assertTrue(formats.contains(DataFormat.DATE))
+        assertTrue(formats.contains(DataFormat.DATETIME))
+        assertTrue(formats.contains(DataFormat.EMAIL))
+        assertTrue(formats.contains(DataFormat.PHONE))
+        assertTrue(formats.contains(DataFormat.URL))
+        assertTrue(formats.contains(DataFormat.PERCENTAGE))
+        assertTrue(formats.contains(DataFormat.CURRENCY))
+    }
+
+    // ------ Test Helpers ------
+
+    private fun createCatalogEntityType(
+        key: String,
+        singular: String,
+        plural: String,
+        schema: Map<String, Any> = mapOf(
+            "name" to mapOf<String, Any>("key" to "TEXT", "label" to "Name", "type" to "string", "required" to true),
+        ),
+        identifierKey: String? = "name",
+        semanticMetadata: List<CatalogSemanticMetadataModel> = emptyList(),
+    ) = CatalogEntityTypeModel(
+        id = UUID.randomUUID(),
+        key = key,
+        displayNameSingular = singular,
+        displayNamePlural = plural,
+        iconType = IconType.CIRCLE_DASHED,
+        iconColour = IconColour.NEUTRAL,
+        semanticGroup = SemanticGroup.CUSTOMER,
+        identifierKey = identifierKey,
+        readonly = false,
+        schema = schema,
+        columns = null,
+        semanticMetadata = semanticMetadata,
+    )
+
+    private fun createManifestWithEntityTypes(
+        vararg entityTypes: CatalogEntityTypeModel,
+    ) = ManifestDetail(
+        id = UUID.randomUUID(),
+        key = "test-template",
+        name = "Test Template",
+        description = "A test template",
+        manifestType = ManifestType.TEMPLATE,
+        manifestVersion = "1.0",
+        entityTypes = entityTypes.toList(),
+        relationships = emptyList(),
+        fieldMappings = emptyList(),
+    )
+
+    private fun createManifestWithRelationship(): ManifestDetail {
+        val customer = createCatalogEntityType("customer", "Customer", "Customers")
+        val order = createCatalogEntityType("order", "Order", "Orders")
+        val relationship = CatalogRelationshipModel(
+            id = UUID.randomUUID(),
+            key = "customer-orders-rel",
+            sourceEntityTypeKey = "customer",
+            name = "customer-orders",
+            iconType = IconType.LINK,
+            iconColour = IconColour.NEUTRAL,
+            allowPolymorphic = false,
+            cardinalityDefault = EntityRelationshipCardinality.ONE_TO_MANY,
+            `protected` = false,
+            targetRules = listOf(
+                CatalogRelationshipTargetRuleModel(
+                    id = UUID.randomUUID(),
+                    targetEntityTypeKey = "order",
+                    semanticTypeConstraint = null,
+                    cardinalityOverride = null,
+                    inverseVisible = true,
+                    inverseName = "Orders",
+                )
+            ),
+        )
+        return ManifestDetail(
+            id = UUID.randomUUID(),
+            key = "test-template",
+            name = "Test Template",
+            description = "A test template",
+            manifestType = ManifestType.TEMPLATE,
+            manifestVersion = "1.0",
+            entityTypes = listOf(customer, order),
+            relationships = listOf(relationship),
+            fieldMappings = emptyList(),
+        )
+    }
+
+    private fun stubEntityTypeSave() {
+        whenever(entityTypeRepository.save(any<EntityTypeEntity>())).thenAnswer { invocation ->
+            val entity = invocation.getArgument<EntityTypeEntity>(0)
+            entity.copy(id = entity.id ?: UUID.randomUUID())
+        }
+    }
+
+    private fun stubFallbackDefinition() {
+        whenever(relationshipService.createFallbackDefinition(any(), any())).thenReturn(mock())
+    }
+
+    private fun stubRelationshipCreation() {
+        whenever(relationshipService.createRelationshipDefinition(any(), any(), any())).thenReturn(
+            RelationshipDefinition(
+                id = UUID.randomUUID(),
+                workspaceId = workspaceId,
+                sourceEntityTypeId = UUID.randomUUID(),
+                name = "test",
+                icon = Icon(IconType.LINK, IconColour.NEUTRAL),
+                allowPolymorphic = false,
+                cardinalityDefault = EntityRelationshipCardinality.ONE_TO_MANY,
+                protected = false,
+                systemType = null,
+                targetRules = emptyList(),
+                excludedEntityTypeIds = emptyList(),
+                createdAt = null,
+                updatedAt = null,
+                createdBy = null,
+                updatedBy = null,
+            )
+        )
+    }
+}
