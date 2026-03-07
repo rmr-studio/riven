@@ -6,8 +6,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import riven.core.models.catalog.BundleDetail
 import riven.core.models.catalog.ManifestSummary
+import riven.core.models.request.catalog.InstallBundleRequest
 import riven.core.models.request.catalog.InstallTemplateRequest
+import riven.core.models.response.catalog.BundleInstallationResponse
 import riven.core.models.response.catalog.TemplateInstallationResponse
 import riven.core.service.catalog.ManifestCatalogService
 import riven.core.service.catalog.TemplateInstallationService
@@ -52,4 +55,33 @@ class TemplateController(
     ): ResponseEntity<TemplateInstallationResponse> {
         return ResponseEntity.ok(installationService.installTemplate(workspaceId, request.templateKey))
     }
+
+    @GetMapping("/bundles")
+    @Operation(
+        summary = "List available bundles",
+        description = "Returns all bundles available for installation. Each bundle is a curated collection of templates."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Bundles retrieved successfully"),
+        ApiResponse(responseCode = "401", description = "Unauthorized access"),
+    )
+    fun listBundles(): ResponseEntity<List<BundleDetail>> =
+        ResponseEntity.ok(catalogService.getAvailableBundles())
+
+    @PostMapping("/{workspaceId}/install-bundle")
+    @Operation(
+        summary = "Install bundle into workspace",
+        description = "Installs all templates in a bundle into the specified workspace. " +
+            "Templates already installed are skipped. Installation is atomic."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Bundle installed successfully"),
+        ApiResponse(responseCode = "403", description = "No access to workspace"),
+        ApiResponse(responseCode = "404", description = "Bundle not found"),
+    )
+    fun installBundle(
+        @PathVariable workspaceId: UUID,
+        @RequestBody request: InstallBundleRequest,
+    ): ResponseEntity<BundleInstallationResponse> =
+        ResponseEntity.ok(installationService.installBundle(workspaceId, request.bundleKey))
 }
