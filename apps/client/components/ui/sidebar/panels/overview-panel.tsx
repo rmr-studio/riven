@@ -10,6 +10,10 @@ export function OverviewPanel() {
   const selectedWorkspaceId = useWorkspaceStore((s) => s.selectedWorkspaceId);
   const pathname = usePathname();
 
+  if (!selectedWorkspaceId) {
+    return null;
+  }
+
   const workspaceUrl = `/dashboard/workspace/${selectedWorkspaceId}`;
   const isActive = pathname === workspaceUrl;
 

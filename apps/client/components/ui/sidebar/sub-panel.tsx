@@ -49,6 +49,7 @@ export function SubPanel() {
               </span>
               <button
                 onClick={closePanel}
+                aria-label="Close panel"
                 className="flex size-7 items-center justify-center rounded-md text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
               >
                 <PanelLeftClose className="size-4" />

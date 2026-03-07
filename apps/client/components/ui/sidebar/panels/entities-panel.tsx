@@ -16,7 +16,7 @@ export function EntitiesPanel() {
 
   const basePath = `/dashboard/workspace/${selectedWorkspaceId}/entity`;
 
-  if (isLoading) {
+  if (isLoading || !selectedWorkspaceId) {
     return (
       <div className="flex flex-col gap-2">
         {Array.from({ length: 3 }).map((_, i) => (
@@ -33,7 +33,7 @@ export function EntitiesPanel() {
     <div className="flex flex-col gap-1">
       {entityTypes?.map((entityType) => {
         const url = `${basePath}/${entityType.key}`;
-        const isActive = pathname.startsWith(url);
+        const isActive = pathname === url || pathname.startsWith(url + '/');
 
         return (
           <Link

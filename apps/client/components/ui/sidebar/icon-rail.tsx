@@ -6,6 +6,7 @@ import { Logo } from '@riven/ui/logo';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@riven/ui/tooltip';
 import { cn } from '@riven/utils';
 import { Building2, CogIcon, SquareDashedMousePointer, TrendingUpDown } from 'lucide-react';
+import { Kbd, KbdGroup } from '../kbd';
 import { Skeleton } from '../skeleton';
 import { type PanelId, useIconRail } from './icon-rail-context';
 
@@ -62,6 +63,7 @@ export function IconRail() {
             <TooltipTrigger asChild>
               <button
                 onClick={() => togglePanel('workspaces')}
+                aria-label="Workspaces"
                 className={cn(
                   'mb-1 flex items-center justify-center rounded-md p-1 transition-colors hover:bg-background/10',
                   selectedPanel === 'workspaces' && 'bg-background/15',
@@ -84,6 +86,8 @@ export function IconRail() {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => togglePanel(item.id)}
+                  aria-label={item.label}
+                  aria-pressed={selectedPanel === item.id}
                   className={cn(
                     'flex size-10 items-center justify-center rounded-md text-background/60 transition-colors hover:bg-background/10 hover:text-background',
                     selectedPanel ===item.id && 'bg-background/15 text-background',
@@ -96,6 +100,16 @@ export function IconRail() {
             </Tooltip>
           ))}
         </nav>
+
+        {/* Keyboard shortcut hint */}
+        <div className="mb-3 mt-auto flex flex-col items-center">
+          <KbdGroup className="scale-75 text-background/40">
+            <Kbd className="h-4 min-w-4 bg-background/10 text-[10px] text-background/40">
+              {typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'}
+            </Kbd>
+            <Kbd className="h-4 min-w-4 bg-background/10 text-[10px] text-background/40">B</Kbd>
+          </KbdGroup>
+        </div>
       </aside>
     </TooltipProvider>
   );

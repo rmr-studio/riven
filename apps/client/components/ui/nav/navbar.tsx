@@ -7,9 +7,9 @@ import { Button } from '@riven/ui/button';
 import { ThemeToggle } from '@riven/ui/theme-toggle';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Menu, PanelLeftOpen } from 'lucide-react';
-import Link from 'next/dist/client/link';
+import Link from 'next/link';
 import { FC } from 'react';
-import { Skeleton } from '../skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export const Navbar = () => {
   const { setMobileOpen, isMobile, panelOpen, openPanel } = useIconRail();
@@ -19,7 +19,7 @@ export const Navbar = () => {
   return (
     <nav className="sticky top-0 flex h-(--header-height) w-auto flex-grow items-center border-b bg-background/40 px-4">
       {isMobile && (
-        <Button onClick={() => setMobileOpen(true)} variant="ghost" size="icon" className="mr-4">
+        <Button onClick={() => setMobileOpen(true)} variant="ghost" size="icon" className="mr-4" aria-label="Open menu">
           <Menu className="size-5" />
         </Button>
       )}
@@ -31,7 +31,7 @@ export const Navbar = () => {
             exit={{ opacity: 0, width: 0 }}
             transition={{ duration: 0.15, delay: 0.1 }}
           >
-            <Button onClick={openPanel} variant="ghost" size="icon">
+            <Button onClick={openPanel} variant="ghost" size="icon" aria-label="Open sidebar">
               <PanelLeftOpen className="size-4" />
             </Button>
           </motion.div>
@@ -53,10 +53,10 @@ export const NavbarUserProfile: FC = () => {
   if (!user)
     return (
       <div className="flex">
-        <Button variant={'outline'}>
+        <Button variant={'outline'} asChild>
           <Link href="/auth/login">Login</Link>
         </Button>
-        <Button className="ml-2">
+        <Button className="ml-2" asChild>
           <Link href="/auth/register">Get Started</Link>
         </Button>
       </div>

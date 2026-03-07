@@ -10,6 +10,10 @@ export function SettingsPanel() {
   const selectedWorkspaceId = useWorkspaceStore((s) => s.selectedWorkspaceId);
   const pathname = usePathname();
 
+  if (!selectedWorkspaceId) {
+    return null;
+  }
+
   const settingsUrl = `/dashboard/workspace/${selectedWorkspaceId}/settings`;
   const isActive = pathname.startsWith(settingsUrl);
 

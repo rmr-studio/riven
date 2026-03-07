@@ -77,6 +77,14 @@ export function IconRailProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+        const target = e.target as HTMLElement;
+        if (
+          target instanceof HTMLInputElement ||
+          target instanceof HTMLTextAreaElement ||
+          target.isContentEditable
+        ) {
+          return;
+        }
         e.preventDefault();
         if (panelOpen) {
           closePanel();

@@ -27,7 +27,7 @@ import {
   CommandList,
 } from '@riven/ui/command';
 import { Popover, PopoverAnchor, PopoverContent } from '@riven/ui/popover';
-import { EditorActions } from '.';
+import { EditorActions } from '@/components/ui/rich-editor';
 import { useEditorDispatch } from './store/editor-store';
 
 export interface CommandOption {

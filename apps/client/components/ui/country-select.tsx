@@ -74,7 +74,7 @@ export const CountrySelect = ({
         <Command>
           <CommandInput placeholder="Search country..." />
           <CommandList>
-            <ScrollArea className="h-72" onWheel={(e: Event) => e.stopPropagation()}>
+            <ScrollArea className="h-72" onWheel={(e: React.WheelEvent) => e.stopPropagation()}>
               <CommandEmpty>No country found.</CommandEmpty>
               <CommandGroup>
                 {countryList.map(({ value, label }) =>
