@@ -80,6 +80,7 @@ class ManifestResolverService(
             }
             ManifestType.TEMPLATE -> resolveTemplateEntityTypes(json, modelIndex)
             ManifestType.INTEGRATION -> resolveIntegrationEntityTypes(json)
+            ManifestType.BUNDLE -> emptyList<ResolvedEntityType>() to false
         }
     }
 
