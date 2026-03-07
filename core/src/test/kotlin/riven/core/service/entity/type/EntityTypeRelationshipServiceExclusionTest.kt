@@ -24,6 +24,7 @@ import riven.core.service.entity.EntityTypeSemanticMetadataService
 import riven.core.service.util.BaseServiceTest
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
+import riven.core.exceptions.NotFoundException
 import riven.core.service.util.factory.entity.EntityFactory
 import java.util.*
 
@@ -78,6 +79,11 @@ class EntityTypeRelationshipServiceExclusionTest : BaseServiceTest() {
     private val sourceEntityTypeId = UUID.randomUUID()
     private val targetEntityTypeId = UUID.randomUUID()
 
+    private val targetEntityType = EntityFactory.createEntityType(
+        id = targetEntityTypeId,
+        workspaceId = workspaceId,
+    )
+
     @BeforeEach
     fun setup() {
         reset(
@@ -89,6 +95,8 @@ class EntityTypeRelationshipServiceExclusionTest : BaseServiceTest() {
             activityService,
             semanticMetadataService,
         )
+        // Default: target entity type belongs to the same workspace
+        whenever(entityTypeRepository.findById(targetEntityTypeId)).thenReturn(Optional.of(targetEntityType))
     }
 
     // ------ excludeEntityTypeFromDefinition ------
@@ -165,6 +173,7 @@ class EntityTypeRelationshipServiceExclusionTest : BaseServiceTest() {
         )
         val entityType = EntityFactory.createEntityType(
             id = targetEntityTypeId,
+            workspaceId = workspaceId,
             semanticGroup = SemanticGroup.CUSTOMER,
         )
 
@@ -282,15 +291,75 @@ class EntityTypeRelationshipServiceExclusionTest : BaseServiceTest() {
             allowPolymorphic = true,
         )
 
+        val uniqueViolation = DataIntegrityViolationException(
+            "could not execute statement",
+            org.hibernate.exception.ConstraintViolationException(
+                "duplicate key value violates unique constraint \"uq_exclusion_def_type\"",
+                java.sql.SQLException("uq_exclusion_def_type"),
+                "uq_exclusion_def_type",
+            ),
+        )
+
         whenever(definitionRepository.findByIdAndWorkspaceId(defId, workspaceId)).thenReturn(Optional.of(definition))
         whenever(entityRelationshipRepository.countByDefinitionIdAndTargetEntityTypeId(defId, targetEntityTypeId)).thenReturn(0)
         whenever(exclusionRepository.save(any<RelationshipDefinitionExclusionEntity>()))
-            .thenThrow(DataIntegrityViolationException("uq_exclusion_def_type"))
+            .thenThrow(uniqueViolation)
 
         val result = service.excludeEntityTypeFromDefinition(workspaceId, defId, targetEntityTypeId, impactConfirmed = false)
 
         assertNull(result)
         verify(exclusionRepository).save(any<RelationshipDefinitionExclusionEntity>())
+    }
+
+    @Test
+    fun `excludeEntityTypeFromDefinition - non-unique integrity violation - rethrows`() {
+        val defId = UUID.randomUUID()
+        val definition = EntityFactory.createRelationshipDefinitionEntity(
+            id = defId,
+            workspaceId = workspaceId,
+            sourceEntityTypeId = sourceEntityTypeId,
+            allowPolymorphic = true,
+        )
+
+        val fkViolation = DataIntegrityViolationException(
+            "could not execute statement",
+            org.hibernate.exception.ConstraintViolationException(
+                "insert or update on table violates foreign key constraint",
+                java.sql.SQLException("fk_some_constraint"),
+                "fk_some_constraint",
+            ),
+        )
+
+        whenever(definitionRepository.findByIdAndWorkspaceId(defId, workspaceId)).thenReturn(Optional.of(definition))
+        whenever(entityRelationshipRepository.countByDefinitionIdAndTargetEntityTypeId(defId, targetEntityTypeId)).thenReturn(0)
+        whenever(exclusionRepository.save(any<RelationshipDefinitionExclusionEntity>()))
+            .thenThrow(fkViolation)
+
+        assertThrows(DataIntegrityViolationException::class.java) {
+            service.excludeEntityTypeFromDefinition(workspaceId, defId, targetEntityTypeId, impactConfirmed = false)
+        }
+    }
+
+    @Test
+    fun `excludeEntityTypeFromDefinition - entity type from different workspace - throws NotFoundException`() {
+        val defId = UUID.randomUUID()
+        val otherWorkspaceEntityTypeId = UUID.randomUUID()
+        val otherWorkspaceEntityType = EntityFactory.createEntityType(
+            id = otherWorkspaceEntityTypeId,
+            workspaceId = UUID.randomUUID(), // different workspace
+        )
+        val definition = EntityFactory.createRelationshipDefinitionEntity(
+            id = defId,
+            workspaceId = workspaceId,
+            sourceEntityTypeId = sourceEntityTypeId,
+        )
+
+        whenever(definitionRepository.findByIdAndWorkspaceId(defId, workspaceId)).thenReturn(Optional.of(definition))
+        whenever(entityTypeRepository.findById(otherWorkspaceEntityTypeId)).thenReturn(Optional.of(otherWorkspaceEntityType))
+
+        assertThrows(NotFoundException::class.java) {
+            service.excludeEntityTypeFromDefinition(workspaceId, defId, otherWorkspaceEntityTypeId, impactConfirmed = false)
+        }
     }
 
     // ------ removeExclusion ------
@@ -303,13 +372,60 @@ class EntityTypeRelationshipServiceExclusionTest : BaseServiceTest() {
             workspaceId = workspaceId,
             sourceEntityTypeId = sourceEntityTypeId,
         )
+        val exclusion = EntityFactory.createExclusionEntity(
+            relationshipDefinitionId = defId,
+            entityTypeId = targetEntityTypeId,
+        )
 
         whenever(definitionRepository.findByIdAndWorkspaceId(defId, workspaceId)).thenReturn(Optional.of(definition))
+        whenever(exclusionRepository.findByRelationshipDefinitionIdAndEntityTypeId(defId, targetEntityTypeId))
+            .thenReturn(Optional.of(exclusion))
 
         service.removeExclusion(workspaceId, defId, targetEntityTypeId)
 
         verify(exclusionRepository).deleteByRelationshipDefinitionIdAndEntityTypeId(defId, targetEntityTypeId)
         verify(entityRelationshipRepository).restoreByDefinitionIdAndTargetEntityTypeId(defId, targetEntityTypeId)
+    }
+
+    @Test
+    fun `removeExclusion - no exclusion exists - does not restore links`() {
+        val defId = UUID.randomUUID()
+        val definition = EntityFactory.createRelationshipDefinitionEntity(
+            id = defId,
+            workspaceId = workspaceId,
+            sourceEntityTypeId = sourceEntityTypeId,
+        )
+
+        whenever(definitionRepository.findByIdAndWorkspaceId(defId, workspaceId)).thenReturn(Optional.of(definition))
+        whenever(exclusionRepository.findByRelationshipDefinitionIdAndEntityTypeId(defId, targetEntityTypeId))
+            .thenReturn(Optional.empty())
+
+        service.removeExclusion(workspaceId, defId, targetEntityTypeId)
+
+        verify(exclusionRepository, never()).deleteByRelationshipDefinitionIdAndEntityTypeId(any(), any())
+        verify(entityRelationshipRepository, never()).restoreByDefinitionIdAndTargetEntityTypeId(any(), any())
+    }
+
+    @Test
+    fun `removeExclusion - entity type from different workspace - throws NotFoundException`() {
+        val defId = UUID.randomUUID()
+        val otherWorkspaceEntityTypeId = UUID.randomUUID()
+        val otherWorkspaceEntityType = EntityFactory.createEntityType(
+            id = otherWorkspaceEntityTypeId,
+            workspaceId = UUID.randomUUID(), // different workspace
+        )
+        val definition = EntityFactory.createRelationshipDefinitionEntity(
+            id = defId,
+            workspaceId = workspaceId,
+            sourceEntityTypeId = sourceEntityTypeId,
+        )
+
+        whenever(definitionRepository.findByIdAndWorkspaceId(defId, workspaceId)).thenReturn(Optional.of(definition))
+        whenever(entityTypeRepository.findById(otherWorkspaceEntityTypeId)).thenReturn(Optional.of(otherWorkspaceEntityType))
+
+        assertThrows(NotFoundException::class.java) {
+            service.removeExclusion(workspaceId, defId, otherWorkspaceEntityTypeId)
+        }
     }
 
     // ------ getDefinitionsForEntityType with exclusions ------

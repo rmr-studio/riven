@@ -30,6 +30,7 @@ import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
 import riven.core.models.response.entity.type.DeleteDefinitionImpact
 import riven.core.service.entity.EntityTypeSemanticMetadataService
+import riven.core.exceptions.NotFoundException
 import riven.core.util.ServiceUtil
 import java.util.*
 
@@ -410,6 +411,8 @@ class EntityTypeRelationshipService(
             "Cannot exclude the source entity type from its own definition"
         }
 
+        validateEntityTypeBelongsToWorkspace(entityTypeId, workspaceId)
+
         val linkCount = entityRelationshipRepository.countByDefinitionIdAndTargetEntityTypeId(definitionId, entityTypeId)
 
         if (linkCount > 0 && !impactConfirmed) {
@@ -465,9 +468,13 @@ class EntityTypeRelationshipService(
     fun removeExclusion(workspaceId: UUID, definitionId: UUID, entityTypeId: UUID) {
         val userId = authTokenService.getUserId()
         ServiceUtil.findOrThrow { definitionRepository.findByIdAndWorkspaceId(definitionId, workspaceId) }
+        validateEntityTypeBelongsToWorkspace(entityTypeId, workspaceId)
 
-        exclusionRepository.deleteByRelationshipDefinitionIdAndEntityTypeId(definitionId, entityTypeId)
-        entityRelationshipRepository.restoreByDefinitionIdAndTargetEntityTypeId(definitionId, entityTypeId)
+        val exclusionExists = exclusionRepository.findByRelationshipDefinitionIdAndEntityTypeId(definitionId, entityTypeId).isPresent
+        if (exclusionExists) {
+            exclusionRepository.deleteByRelationshipDefinitionIdAndEntityTypeId(definitionId, entityTypeId)
+            entityRelationshipRepository.restoreByDefinitionIdAndTargetEntityTypeId(definitionId, entityTypeId)
+        }
 
         activityService.log(
             activity = Activity.ENTITY_RELATIONSHIP,
@@ -484,6 +491,17 @@ class EntityTypeRelationshipService(
     }
 
     // ------ Private helpers ------
+
+    /**
+     * Validates that the given entity type belongs to the specified workspace.
+     * Inline check required because findById doesn't filter by workspace.
+     */
+    private fun validateEntityTypeBelongsToWorkspace(entityTypeId: UUID, workspaceId: UUID) {
+        val entityType = ServiceUtil.findOrThrow { entityTypeRepository.findById(entityTypeId) }
+        if (entityType.workspaceId != workspaceId) {
+            throw NotFoundException("Entity type $entityTypeId not found in workspace $workspaceId")
+        }
+    }
 
     /**
      * Checks whether an entity type is still reachable on a definition via semantic constraint rules
@@ -511,7 +529,12 @@ class EntityTypeRelationshipService(
             )
             logger.info { "Created exclusion for entity type $entityTypeId from definition $definitionId" }
         } catch (e: DataIntegrityViolationException) {
-            logger.warn { "Exclusion already exists for entity type $entityTypeId on definition $definitionId, treating as no-op" }
+            val isUniqueViolation = e.rootCause?.message?.contains("uq_exclusion_def_type") == true
+            if (isUniqueViolation) {
+                logger.warn { "Exclusion already exists for entity type $entityTypeId on definition $definitionId, treating as no-op" }
+            } else {
+                throw e
+            }
         }
     }
 
