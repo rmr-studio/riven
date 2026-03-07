@@ -258,7 +258,8 @@ class TemplateMaterializationService(
 
     /**
      * Materializes relationships from catalog definitions, resolving string entity type keys
-     * to workspace-scoped UUIDs.
+     * to workspace-scoped UUIDs. Deduplicates on reconnect: skips existing relationships,
+     * restores soft-deleted ones.
      */
     private fun materializeRelationships(
         workspaceId: UUID,
@@ -276,8 +277,8 @@ class TemplateMaterializationService(
             val sourceEntityTypeId = keyToIdMap[catalogRel.sourceEntityTypeKey] ?: continue
             val targetRules = targetRulesByRelId[catalogRel.id] ?: emptyList()
 
-            materializeRelationship(workspaceId, catalogRel, sourceEntityTypeId, targetRules, keyToIdMap)
-            relationshipsCreated++
+            val created = materializeRelationship(workspaceId, catalogRel, sourceEntityTypeId, targetRules, keyToIdMap)
+            if (created) relationshipsCreated++
         }
 
         return relationshipsCreated
@@ -285,6 +286,7 @@ class TemplateMaterializationService(
 
     /**
      * Creates a single RelationshipDefinitionEntity and its target rules.
+     * Returns true if a new relationship was created or restored, false if it already existed.
      */
     private fun materializeRelationship(
         workspaceId: UUID,
@@ -292,7 +294,26 @@ class TemplateMaterializationService(
         sourceEntityTypeId: UUID,
         catalogTargetRules: List<CatalogRelationshipTargetRuleEntity>,
         keyToIdMap: Map<String, UUID>
-    ) {
+    ): Boolean {
+        // Check for existing active relationship — skip if found
+        val existing = relationshipDefinitionRepository
+            .findByWorkspaceIdAndSourceEntityTypeIdAndName(workspaceId, sourceEntityTypeId, catalogRel.name)
+        if (existing.isPresent) {
+            logger.debug { "Relationship '${catalogRel.name}' already exists for source=$sourceEntityTypeId, skipping" }
+            return false
+        }
+
+        // Check for soft-deleted relationship — restore if found
+        val softDeleted = relationshipDefinitionRepository
+            .findSoftDeletedByWorkspaceIdAndSourceEntityTypeIdAndName(workspaceId, sourceEntityTypeId, catalogRel.name)
+        if (softDeleted != null) {
+            softDeleted.deleted = false
+            softDeleted.deletedAt = null
+            relationshipDefinitionRepository.save(softDeleted)
+            logger.info { "Restored soft-deleted relationship '${catalogRel.name}' for source=$sourceEntityTypeId" }
+            return true
+        }
+
         val savedRelDef = relationshipDefinitionRepository.save(
             RelationshipDefinitionEntity(
                 workspaceId = workspaceId,
@@ -306,15 +327,36 @@ class TemplateMaterializationService(
             )
         )
 
+        materializeTargetRules(savedRelDef.id!!, catalogTargetRules, catalogRel.name, keyToIdMap)
+        return true
+    }
+
+    /**
+     * Creates target rules for a relationship definition, skipping rules with unresolvable targets.
+     */
+    private fun materializeTargetRules(
+        relationshipDefId: UUID,
+        catalogTargetRules: List<CatalogRelationshipTargetRuleEntity>,
+        relationshipName: String,
+        keyToIdMap: Map<String, UUID>
+    ) {
         for (catalogRule in catalogTargetRules) {
             val targetEntityTypeId = keyToIdMap[catalogRule.targetEntityTypeKey]
+            if (targetEntityTypeId == null && catalogRule.semanticTypeConstraint == null) {
+                logger.warn {
+                    "Skipping target rule for relationship '$relationshipName': " +
+                        "unresolvable target key '${catalogRule.targetEntityTypeKey}' and no semantic constraint"
+                }
+                continue
+            }
+
             relationshipTargetRuleRepository.save(
                 RelationshipTargetRuleEntity(
-                    relationshipDefinitionId = savedRelDef.id!!,
+                    relationshipDefinitionId = relationshipDefId,
                     targetEntityTypeId = targetEntityTypeId,
                     semanticTypeConstraint = catalogRule.semanticTypeConstraint,
                     cardinalityOverride = catalogRule.cardinalityOverride,
-                    inverseName = catalogRule.inverseName ?: catalogRel.name
+                    inverseName = catalogRule.inverseName ?: relationshipName
                 )
             )
         }

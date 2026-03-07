@@ -41,7 +41,7 @@ interface EntityTypeRepository : JpaRepository<EntityTypeEntity, UUID> {
      * Uses native query to bypass @SQLRestriction("deleted = false").
      */
     @Query(
-        "SELECT * FROM entity_types WHERE workspace_id = :workspaceId AND key IN :keys AND deleted = true",
+        "SELECT * FROM entity_types WHERE workspace_id = :workspaceId AND key IN (:keys) AND deleted = true",
         nativeQuery = true
     )
     fun findSoftDeletedByWorkspaceIdAndKeyIn(

@@ -144,17 +144,26 @@ class IntegrationConnectionService(
             connection.connectionMetadata = (connection.connectionMetadata ?: emptyMap()) + metadata
         }
 
-        return connectionRepository.save(connection).also {
+        val saved = connectionRepository.save(connection).also {
             logger.info { "Updated connection $connectionId status: $oldStatus -> $newStatus" }
             logConnectionActivity(
                 OperationType.UPDATE, userId, workspaceId, it,
                 mapOf("oldStatus" to oldStatus.name, "newStatus" to newStatus.name)
             )
+        }
 
-            if (newStatus == ConnectionStatus.CONNECTED) {
-                triggerMaterialization(workspaceId, it.integrationId)
+        if (newStatus == ConnectionStatus.CONNECTED) {
+            try {
+                triggerMaterialization(workspaceId, saved.integrationId)
+            } catch (e: Exception) {
+                logger.error(e) {
+                    "Materialization failed for workspace=$workspaceId, " +
+                        "integration=${saved.integrationId}. Connection status remains CONNECTED."
+                }
             }
         }
+
+        return saved
     }
 
     /**

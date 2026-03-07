@@ -84,7 +84,7 @@ class SchemaMappingService(
         val sourceValue = extractSourceValue(payload, mapping.sourcePath, mapping.transform)
 
         if (sourceValue == null && mapping.transform !is FieldTransform.DefaultValue) {
-            if (!payload.containsKey(mapping.sourcePath)) {
+            if (!containsSourcePath(payload, mapping.sourcePath)) {
                 warnings.add(MappingWarning(targetKey, mapping.sourcePath, "Source field '${mapping.sourcePath}' not found in payload"))
                 return
             }
@@ -110,14 +110,49 @@ class SchemaMappingService(
     }
 
     /**
-     * Extracts the raw source value from the payload by key lookup.
+     * Extracts the raw source value from the payload.
+     * Supports dot-separated paths (e.g. "address.city") for nested map traversal.
      */
+    @Suppress("UNCHECKED_CAST")
     private fun extractSourceValue(
         payload: Map<String, Any?>,
         sourcePath: String,
         transform: FieldTransform
     ): Any? {
-        return payload[sourcePath]
+        if (!sourcePath.contains('.')) {
+            return payload[sourcePath]
+        }
+
+        val segments = sourcePath.split(".")
+        var current: Any? = payload[segments.first()] ?: return null
+
+        for (segment in segments.drop(1)) {
+            if (current !is Map<*, *>) return null
+            current = (current as Map<String, Any?>)[segment] ?: return null
+        }
+
+        return current
+    }
+
+    /**
+     * Checks whether the payload contains a value at the given source path.
+     * Supports dot-separated paths for nested map traversal.
+     */
+    @Suppress("UNCHECKED_CAST")
+    private fun containsSourcePath(payload: Map<String, Any?>, sourcePath: String): Boolean {
+        if (!sourcePath.contains('.')) {
+            return payload.containsKey(sourcePath)
+        }
+
+        val segments = sourcePath.split(".")
+        var current: Any? = payload
+
+        for (segment in segments.dropLast(1)) {
+            if (current !is Map<*, *> || !current.containsKey(segment)) return false
+            current = (current as Map<String, Any?>)[segment]
+        }
+
+        return current is Map<*, *> && (current as Map<String, Any?>).containsKey(segments.last())
     }
 
     /**
@@ -147,7 +182,7 @@ class SchemaMappingService(
         payload: Map<String, Any?>,
         sourcePath: String
     ): Any? {
-        if (!payload.containsKey(sourcePath) || value == null) {
+        if (!containsSourcePath(payload, sourcePath) || value == null) {
             return transform.value
         }
         return value

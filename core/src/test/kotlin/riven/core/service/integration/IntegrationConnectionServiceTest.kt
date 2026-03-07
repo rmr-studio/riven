@@ -93,7 +93,7 @@ class IntegrationConnectionServiceTest {
 
     @BeforeEach
     fun setup() {
-        reset(connectionRepository, definitionRepository, nangoClientWrapper, activityService, transactionTemplate)
+        reset(connectionRepository, definitionRepository, nangoClientWrapper, activityService, transactionTemplate, templateMaterializationService)
 
         testIntegrationId = UUID.randomUUID()
         testConnectionId = UUID.randomUUID()
