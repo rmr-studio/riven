@@ -1,10 +1,10 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@riven/ui/button';
 import { ColumnResizingConfig, DataTable, DataTableProvider } from '@/components/ui/data-table';
 import { Form } from '@/components/ui/form';
+import type { ClassNameProps } from '@riven/utils';
 import { SchemaUUID } from '@/lib/types/common';
-import { ClassNameProps } from '@/lib/interfaces/interface';
 import {
   Entity,
   EntityAttributePrimitivePayload,
@@ -12,14 +12,14 @@ import {
   EntityAttributeRequest,
   EntityLink,
   EntityPropertyType,
-  EntityRelationshipDefinition,
+  RelationshipDefinition,
   EntityType,
   isRelationshipPayload,
   SaveEntityRequest,
   SaveEntityResponse,
 } from '@/lib/types/entity';
 import { debounce } from '@/lib/util/debounce.util';
-import { cn } from '@/lib/util/utils';
+import { cn } from '@riven/utils';
 
 import { Row } from '@tanstack/react-table';
 import { Plus } from 'lucide-react';
@@ -178,7 +178,7 @@ export const EntityDataTable: FC<Props> = ({
 
       // Determine if updated column is an attribute or relationship
       const attributeDef: SchemaUUID | undefined = entityType.schema.properties?.[columnId];
-      const relationshipDef: EntityRelationshipDefinition | undefined =
+      const relationshipDef: RelationshipDefinition | undefined =
         entityType.relationships?.find((rel) => rel.id === columnId);
 
       // Prepare updated entity payload
@@ -249,10 +249,10 @@ export const EntityDataTable: FC<Props> = ({
       <div className="w-full min-w-0 space-y-4">
         {/* Draft mode controls */}
         <div>
-          <div className="flex justify-between">
+          <div className="flex flex-col justify-between gap-4 lg:flex-row">
             <div className="flex flex-col gap-2">
               <EntityTypeHeader>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground italic">
                   Manage your entities and their data
                 </div>
               </EntityTypeHeader>

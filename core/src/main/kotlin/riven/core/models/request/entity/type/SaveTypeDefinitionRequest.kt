@@ -35,7 +35,7 @@ data class SaveAttributeDefinitionRequest(
 @JsonDeserialize(using = JsonDeserializer.None::class)
 data class SaveRelationshipDefinitionRequest(
     override val key: String,
-    override val id: UUID,
+    override val id: UUID? = null,
     val name: String,
     val iconType: IconType?,
     val iconColour: IconColour?,
@@ -53,8 +53,7 @@ data class SaveTargetRuleRequest(
     val targetEntityTypeId: UUID? = null,
     val semanticTypeConstraint: SemanticGroup? = null,
     val cardinalityOverride: EntityRelationshipCardinality? = null,
-    val inverseVisible: Boolean = false,
-    val inverseName: String? = null,
+    val inverseName: String,
 )
 
 
