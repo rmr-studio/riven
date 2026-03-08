@@ -11,7 +11,7 @@ Updated: 2026-02-21
 
 ## Overview
 
-The Entities domain provides a flexible, schema-driven data management system. Entity types define schemas (attributes and relationships), entity instances store structured data against those schemas, and a query subsystem enables filtered retrieval with JSONB-based attribute queries and relationship traversal.
+The Entities domain provides a flexible, schema-driven data management system. Entity types define schemas (attributes and relationships), entity instances store structured data against those schemas, and a query subsystem enables filtered retrieval with attribute queries against a normalized attribute table and relationship traversal.
 
 ---
 
@@ -44,7 +44,7 @@ The Entities domain provides a flexible, schema-driven data management system. E
 | [[Type Definitions]] | Entity type schema management — attributes, relationships, publishing |
 | [[Entity Management]] | Entity instance lifecycle — CRUD with validation and relationship hydration |
 | [[Relationships]] | Relationship definitions (type-level) and instance data (entity-level) with table-based architecture |
-| [[Querying]] | Query pipeline for filtered entity retrieval with JSONB attribute filters and relationship traversal |
+| [[Querying]] | Query pipeline for filtered entity retrieval with EXISTS-based attribute filters and relationship traversal |
 | [[Validation]] | Schema validation for entity instances before persistence |
 | [[Entity Semantics]] | Semantic metadata for entity types, attributes, and relationships — definitions, classifications, and tags |
 
@@ -66,7 +66,8 @@ The Entities domain provides a flexible, schema-driven data management system. E
 | Entity | Purpose | Key Fields |
 | ------ | ------- | ---------- |
 | EntityTypeEntity | Entity type schema definitions | id, key, displayNameSingular, displayNamePlural, workspaceId, schema, columns, identifierKey |
-| EntityEntity | Entity instances with JSONB attribute data | id, typeId, typeKey, workspaceId, payload, iconType, iconColour, identifierKey |
+| EntityEntity | Entity instances (attribute data stored in entity_attributes) | id, typeId, typeKey, workspaceId, iconType, iconColour, identifierKey |
+| EntityAttributeEntity | Normalized per-attribute values for entity instances | id, entityId, workspaceId, typeId, attributeId, schemaType, value |
 | EntityRelationshipEntity | Relationship instances linking entities | id, sourceId, targetId, definitionId, workspaceId, semanticContext, linkSource |
 | EntityUniqueValueEntity | Unique constraint tracking for entity attributes | entityId, typeId, fieldId, value, workspaceId |
 | RelationshipDefinitionEntity | Relationship definitions (type-level configuration) | id, workspaceId, sourceEntityTypeId, name, iconType, iconColour, allowPolymorphic, cardinalityDefault, protected, systemType |
@@ -79,7 +80,8 @@ The Entities domain provides a flexible, schema-driven data management system. E
 | Table | Entity | Notes |
 | ----- | ------ | ----- |
 | entity_types | EntityTypeEntity | Entity type schemas with JSONB schema column. Relationship definitions moved to dedicated tables. |
-| entities | EntityEntity | Entity instances with JSONB payload column for attribute data |
+| entities | EntityEntity | Entity instances (attribute data moved to entity_attributes table) |
+| entity_attributes | EntityAttributeEntity | Normalized per-attribute storage with per-row values. Indexed on (entity_id, attribute_id), (attribute_id, type_id, value), and workspace_id |
 | entity_relationships | EntityRelationshipEntity | Relationship instance data. References relationship_definitions via definition_id column. |
 | entity_unique_values | EntityUniqueValueEntity | Normalized unique value tracking for uniqueness constraints |
 | relationship_definitions | RelationshipDefinitionEntity | Relationship type-level configuration. Indexed on (workspace_id, source_entity_type_id) |
@@ -119,7 +121,7 @@ None. The Entities domain operates entirely within the application database (Pos
 
 | Decision | Summary |
 | -------- | ------- |
-| JSONB for attribute storage | Entity attributes stored in JSONB payload column for schema flexibility |
+| Normalized attribute storage | Entity attributes stored in dedicated `entity_attributes` table (one row per attribute per entity) for indexed cross-entity queries, EXISTS-based filtering, and future trigram fuzzy matching. Replaced earlier JSONB payload approach. |
 | Always bidirectional | All relationships are always bidirectional. Inverse visibility resolved at query time by matching target types against rules. Target-side exclusions allow entity types to opt out without affecting other types. |
 | Table-based relationship definitions | Relationship configuration stored in dedicated relationship_definitions and relationship_target_rules tables instead of JSONB field on entity_types |
 | Write-time cardinality enforcement | Cardinality limits enforced at relationship insert time, not just at schema level |
@@ -151,3 +153,4 @@ None. The Entities domain operates entirely within the application database (Pos
 | 2026-02-21 | Entity relationship overhaul — replaced ORIGIN/REFERENCE sync with table-based architecture, added relationship_definitions and relationship_target_rules tables, write-time cardinality enforcement, query-time inverse resolution | Entity Relationships |
 | 2026-03-01 | Entity Connections — system-managed CONNECTED_ENTITIES definitions, unified relationship CRUD API (addRelationship, getRelationships, updateRelationship, removeRelationship), IS_RELATED_TO query filter, bidirectional existence queries | Entity Connections / Unified Relationship CRUD |
 | 2026-03-06 | Always bidirectional — removed `inverse_visible` flag. Added target-side exclusion mechanism (`relationship_definition_exclusions` table) allowing entity types to opt out of implicit relationship definitions. Exclusions respected in definition resolution and native inverse link queries. | Target-Side Exclusions / Always Bidirectional |
+| 2026-03-09 | Entity attributes normalization — extracted attribute storage from JSONB `payload` column on `entities` table into normalized `entity_attributes` table. AttributeSqlGenerator rewritten from JSONB operators to EXISTS subqueries. New EntityAttributeService, EntityAttributeRepository, EntityAttributeEntity components. | Entity Attributes Normalization |
