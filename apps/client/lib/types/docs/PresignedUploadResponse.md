@@ -1,28 +1,28 @@
 
-# Metadata
+# PresignedUploadResponse
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`deletable` | boolean
-`meta` | [BlockMeta](BlockMeta.md)
-`readonly` | boolean
-`type` | [BlockMetadataType](BlockMetadataType.md)
+`storageKey` | string
+`uploadUrl` | string
+`method` | string
+`supported` | boolean
 
 ## Example
 
 ```typescript
-import type { Metadata } from ''
+import type { PresignedUploadResponse } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "deletable": null,
-  "meta": null,
-  "readonly": null,
-  "type": null,
-} satisfies Metadata
+  "storageKey": null,
+  "uploadUrl": null,
+  "method": null,
+  "supported": null,
+} satisfies PresignedUploadResponse
 
 console.log(example)
 
@@ -31,7 +31,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as Metadata
+const exampleParsed = JSON.parse(exampleJSON) as PresignedUploadResponse
 console.log(exampleParsed)
 ```
 

@@ -1,28 +1,22 @@
 
-# Metadata
+# BatchDeleteRequest
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`deletable` | boolean
-`meta` | [BlockMeta](BlockMeta.md)
-`readonly` | boolean
-`type` | [BlockMetadataType](BlockMetadataType.md)
+`fileIds` | Array&lt;string&gt;
 
 ## Example
 
 ```typescript
-import type { Metadata } from ''
+import type { BatchDeleteRequest } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "deletable": null,
-  "meta": null,
-  "readonly": null,
-  "type": null,
-} satisfies Metadata
+  "fileIds": null,
+} satisfies BatchDeleteRequest
 
 console.log(example)
 
@@ -31,7 +25,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as Metadata
+const exampleParsed = JSON.parse(exampleJSON) as BatchDeleteRequest
 console.log(exampleParsed)
 ```
 

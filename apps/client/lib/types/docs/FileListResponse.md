@@ -1,28 +1,22 @@
 
-# Metadata
+# FileListResponse
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`deletable` | boolean
-`meta` | [BlockMeta](BlockMeta.md)
-`readonly` | boolean
-`type` | [BlockMetadataType](BlockMetadataType.md)
+`files` | [Array&lt;FileMetadata&gt;](FileMetadata.md)
 
 ## Example
 
 ```typescript
-import type { Metadata } from ''
+import type { FileListResponse } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "deletable": null,
-  "meta": null,
-  "readonly": null,
-  "type": null,
-} satisfies Metadata
+  "files": null,
+} satisfies FileListResponse
 
 console.log(example)
 
@@ -31,7 +25,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as Metadata
+const exampleParsed = JSON.parse(exampleJSON) as FileListResponse
 console.log(exampleParsed)
 ```
 

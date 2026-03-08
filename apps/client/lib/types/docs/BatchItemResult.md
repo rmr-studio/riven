@@ -1,28 +1,28 @@
 
-# Metadata
+# BatchItemResult
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`deletable` | boolean
-`meta` | [BlockMeta](BlockMeta.md)
-`readonly` | boolean
-`type` | [BlockMetadataType](BlockMetadataType.md)
+`id` | string
+`filename` | string
+`status` | number
+`error` | string
 
 ## Example
 
 ```typescript
-import type { Metadata } from ''
+import type { BatchItemResult } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "deletable": null,
-  "meta": null,
-  "readonly": null,
-  "type": null,
-} satisfies Metadata
+  "id": null,
+  "filename": null,
+  "status": null,
+  "error": null,
+} satisfies BatchItemResult
 
 console.log(example)
 
@@ -31,7 +31,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as Metadata
+const exampleParsed = JSON.parse(exampleJSON) as BatchItemResult
 console.log(exampleParsed)
 ```
 
