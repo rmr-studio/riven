@@ -29,7 +29,7 @@ sealed class FieldTransform {
 
     /** Use a fallback value when the source field is missing or null. */
     @JsonTypeName("default_value")
-    data class DefaultValue(val value: Any) : FieldTransform()
+    data class DefaultValue(val value: Any?) : FieldTransform()
 
     /** Extract a nested value using a dot-separated path (e.g. "address.city"). */
     @JsonTypeName("json_path_extraction")

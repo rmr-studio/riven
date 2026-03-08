@@ -342,6 +342,140 @@ class SchemaMappingServiceTest {
         }
     }
 
+    // ------ Dotted Source Path (non-JsonPath) ------
+
+    @Nested
+    inner class DottedSourcePath {
+
+        @Test
+        fun `Direct transform resolves dot-separated sourcePath through nested maps`() {
+            val payload = mapOf("a" to mapOf("b" to mapOf("c" to "deep-value")))
+            val fieldMappings = mapOf(
+                nameKey to ResolvedFieldMapping("a.b.c", FieldTransform.Direct, SchemaType.TEXT)
+            )
+
+            val result = schemaMappingService.mapPayload(payload, fieldMappings, defaultKeyMapping)
+
+            assertEquals(1, result.attributes.size)
+            assertEquals("deep-value", result.attributes[nameUuid.toString()]?.value)
+            assertEquals(SchemaType.TEXT, result.attributes[nameUuid.toString()]?.schemaType)
+            assertTrue(result.warnings.isEmpty())
+            assertTrue(result.errors.isEmpty())
+        }
+
+        @Test
+        fun `TypeCoercion transform resolves dot-separated sourcePath and coerces value`() {
+            val payload = mapOf("data" to mapOf("stats" to mapOf("count" to "42")))
+            val fieldMappings = mapOf(
+                ageKey to ResolvedFieldMapping("data.stats.count", FieldTransform.TypeCoercion(CoercionType.NUMBER), SchemaType.NUMBER)
+            )
+
+            val result = schemaMappingService.mapPayload(payload, fieldMappings, defaultKeyMapping)
+
+            assertEquals(1, result.attributes.size)
+            assertEquals(42.0, result.attributes[ageUuid.toString()]?.value)
+            assertEquals(SchemaType.NUMBER, result.attributes[ageUuid.toString()]?.schemaType)
+            assertTrue(result.errors.isEmpty())
+        }
+
+        @Test
+        fun `DefaultValue transform resolves dot-separated sourcePath and uses source value when present`() {
+            val payload = mapOf("profile" to mapOf("info" to mapOf("nickname" to "Bob")))
+            val fieldMappings = mapOf(
+                nameKey to ResolvedFieldMapping("profile.info.nickname", FieldTransform.DefaultValue("Anon"), SchemaType.TEXT)
+            )
+
+            val result = schemaMappingService.mapPayload(payload, fieldMappings, defaultKeyMapping)
+
+            assertEquals("Bob", result.attributes[nameUuid.toString()]?.value)
+            assertEquals(SchemaType.TEXT, result.attributes[nameUuid.toString()]?.schemaType)
+        }
+
+        @Test
+        fun `DefaultValue transform returns default when dot-separated sourcePath is missing`() {
+            val payload = mapOf("profile" to mapOf("info" to mapOf("other" to "irrelevant")))
+            val fieldMappings = mapOf(
+                nameKey to ResolvedFieldMapping("profile.info.nickname", FieldTransform.DefaultValue("Anon"), SchemaType.TEXT)
+            )
+
+            val result = schemaMappingService.mapPayload(payload, fieldMappings, defaultKeyMapping)
+
+            assertEquals("Anon", result.attributes[nameUuid.toString()]?.value)
+        }
+
+        @Test
+        fun `Direct transform with missing dotted path produces warning and empty attributes`() {
+            val payload = mapOf("a" to mapOf("b" to mapOf("wrong" to "value")))
+            val fieldMappings = mapOf(
+                nameKey to ResolvedFieldMapping("a.b.c", FieldTransform.Direct, SchemaType.TEXT)
+            )
+
+            val result = schemaMappingService.mapPayload(payload, fieldMappings, defaultKeyMapping)
+
+            assertTrue(result.attributes.isEmpty())
+            assertEquals(1, result.warnings.size)
+            assertEquals(nameKey, result.warnings[0].targetKey)
+            assertEquals("a.b.c", result.warnings[0].sourcePath)
+        }
+
+        @Test
+        fun `TypeCoercion transform with missing dotted path produces warning and empty attributes`() {
+            val payload = mapOf("x" to mapOf("y" to emptyMap<String, Any?>()))
+            val fieldMappings = mapOf(
+                ageKey to ResolvedFieldMapping("x.y.z", FieldTransform.TypeCoercion(CoercionType.NUMBER), SchemaType.NUMBER)
+            )
+
+            val result = schemaMappingService.mapPayload(payload, fieldMappings, defaultKeyMapping)
+
+            assertTrue(result.attributes.isEmpty())
+            assertEquals(1, result.warnings.size)
+            assertEquals(ageKey, result.warnings[0].targetKey)
+            assertEquals("x.y.z", result.warnings[0].sourcePath)
+        }
+
+        @Test
+        fun `Direct transform with intermediate non-map value produces warning`() {
+            val payload = mapOf("a" to mapOf("b" to "not-a-map"))
+            val fieldMappings = mapOf(
+                nameKey to ResolvedFieldMapping("a.b.c", FieldTransform.Direct, SchemaType.TEXT)
+            )
+
+            val result = schemaMappingService.mapPayload(payload, fieldMappings, defaultKeyMapping)
+
+            assertTrue(result.attributes.isEmpty())
+            assertEquals(1, result.warnings.size)
+            assertEquals(nameKey, result.warnings[0].targetKey)
+        }
+
+        @Test
+        fun `Direct transform with completely missing top-level segment produces warning`() {
+            val payload = mapOf("other" to "value")
+            val fieldMappings = mapOf(
+                nameKey to ResolvedFieldMapping("a.b.c", FieldTransform.Direct, SchemaType.TEXT)
+            )
+
+            val result = schemaMappingService.mapPayload(payload, fieldMappings, defaultKeyMapping)
+
+            assertTrue(result.attributes.isEmpty())
+            assertEquals(1, result.warnings.size)
+            assertEquals(nameKey, result.warnings[0].targetKey)
+            assertEquals("a.b.c", result.warnings[0].sourcePath)
+        }
+
+        @Test
+        fun `two-segment dotted sourcePath works with Direct transform`() {
+            val payload = mapOf("contact" to mapOf("email" to "test@example.com"))
+            val fieldMappings = mapOf(
+                emailKey to ResolvedFieldMapping("contact.email", FieldTransform.Direct, SchemaType.EMAIL)
+            )
+
+            val result = schemaMappingService.mapPayload(payload, fieldMappings, defaultKeyMapping)
+
+            assertEquals("test@example.com", result.attributes[emailUuid.toString()]?.value)
+            assertEquals(SchemaType.EMAIL, result.attributes[emailUuid.toString()]?.schemaType)
+        }
+    }
+
     // ------ JsonPathExtraction Transform ------
 
     @Nested
