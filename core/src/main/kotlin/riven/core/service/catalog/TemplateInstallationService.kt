@@ -304,11 +304,19 @@ class TemplateInstallationService(
         var count = 0
         for (catalogRel in catalogRelationships) {
             val sourceResult = creationResults[catalogRel.sourceEntityTypeKey]
-                ?: error("Unknown source entity type key: ${catalogRel.sourceEntityTypeKey}")
+                ?: throw IllegalArgumentException(
+                    "Relationship '${catalogRel.key}' references source entity type '${catalogRel.sourceEntityTypeKey}' " +
+                        "which is not present in this installation context. This is likely a cross-template dependency — " +
+                        "install the template that provides '${catalogRel.sourceEntityTypeKey}' first, or install via a bundle."
+                )
 
             val targetRules = catalogRel.targetRules.map { rule ->
                 val targetResult = creationResults[rule.targetEntityTypeKey]
-                    ?: error("Unknown target entity type key: ${rule.targetEntityTypeKey}")
+                    ?: throw IllegalArgumentException(
+                        "Relationship '${catalogRel.key}' references target entity type '${rule.targetEntityTypeKey}' " +
+                            "which is not present in this installation context. This is likely a cross-template dependency — " +
+                            "install the template that provides '${rule.targetEntityTypeKey}' first, or install via a bundle."
+                    )
                 SaveTargetRuleRequest(
                     targetEntityTypeId = targetResult.entityTypeId,
                     semanticTypeConstraint = rule.semanticTypeConstraint,

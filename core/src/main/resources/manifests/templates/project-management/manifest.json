@@ -414,9 +414,9 @@
           "label": "Project Reference",
           "type": "string",
           "semantics": {
-            "definition": "The name or identifier of the project this time was logged against.",
+            "definition": "Denormalized display label for the associated project. The authoritative link is the 'project-time-entries' relationship; this field is a convenience copy for display, search, and import mapping.",
             "classification": "RELATIONAL_REFERENCE",
-            "tags": ["project", "reference"]
+            "tags": ["project", "reference", "denormalized"]
           }
         },
         "rate": {
@@ -515,6 +515,24 @@
       "semantics": {
         "definition": "A project is staffed by one or more team members who contribute their skills and effort.",
         "tags": ["staffing", "resourcing"]
+      }
+    },
+    {
+      "key": "project-time-entries",
+      "sourceEntityTypeKey": "project",
+      "name": "Time Entries",
+      "allowPolymorphic": false,
+      "protected": false,
+      "targetRules": [
+        {
+          "targetEntityTypeKey": "time-entry",
+          "cardinalityOverride": "ONE_TO_MANY",
+          "inverseName": "Project"
+        }
+      ],
+      "semantics": {
+        "definition": "A project accumulates time entries that record effort spent by team members, used for utilisation tracking, project costing, and client invoicing.",
+        "tags": ["time-tracking", "costing", "billing"]
       }
     },
     {
