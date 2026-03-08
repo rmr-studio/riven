@@ -57,6 +57,15 @@ class ManifestScannerService(
         }
     }
 
+    /** Scans classpath bundles directory for bundle manifests. Key derived from directory name. */
+    fun scanBundles(): List<ScannedManifest> {
+        val resources = resourcePatternResolver.getResources("$basePath/bundles/*/manifest.json")
+        return resources.mapNotNull { resource ->
+            val key = extractDirectoryName(resource, "bundles")
+            parseAndValidate(resource, key, ManifestType.BUNDLE, "manifests/schemas/bundle.schema.json")
+        }
+    }
+
     // ------ Private Helpers ------
 
     /**

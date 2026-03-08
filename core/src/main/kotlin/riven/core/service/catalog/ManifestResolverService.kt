@@ -62,6 +62,24 @@ class ManifestResolverService(
         )
     }
 
+    /**
+     * Resolves a bundle manifest into a ResolvedBundle.
+     * Bundles are lightweight — they only store a list of template keys.
+     * No entity type resolution needed; that happens at installation time.
+     */
+    fun resolveBundle(scanned: ScannedManifest): ResolvedBundle {
+        require(scanned.type == ManifestType.BUNDLE) { "Expected BUNDLE manifest, got ${scanned.type}" }
+        val json = scanned.json
+
+        return ResolvedBundle(
+            key = json.get("key").asText(),
+            name = json.get("name").asText(),
+            description = json.get("description")?.asText(),
+            manifestVersion = json.get("manifestVersion")?.asText(),
+            templateKeys = json.get("templates").map { it.asText() },
+        )
+    }
+
     // ------ Entity Type Resolution ------
 
     /**
@@ -80,6 +98,7 @@ class ManifestResolverService(
             }
             ManifestType.TEMPLATE -> resolveTemplateEntityTypes(json, modelIndex)
             ManifestType.INTEGRATION -> resolveIntegrationEntityTypes(json)
+            ManifestType.BUNDLE -> emptyList<ResolvedEntityType>() to false
         }
     }
 

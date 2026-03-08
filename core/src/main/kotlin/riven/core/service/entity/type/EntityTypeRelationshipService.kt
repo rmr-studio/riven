@@ -334,8 +334,7 @@ class EntityTypeRelationshipService(
     }
 
     /**
-     * Batch-fetches relationship definitions for multiple entity types using a single
-     * JPQL query that LEFT JOINs definitions with their target rules.
+     * Batch-fetches relationship definitions for multiple entity types.
      *
      * Returns a map keyed by entity type ID, where each value contains both forward
      * definitions (type is source) and inverse definitions (type is target).
@@ -347,20 +346,16 @@ class EntityTypeRelationshipService(
     ): Map<UUID, List<RelationshipDefinition>> {
         if (entityTypeIds.isEmpty()) return emptyMap()
 
-        val rows = definitionRepository.findDefinitionsWithRulesForEntityTypes(workspaceId, entityTypeIds)
+        // Forward definitions: these types are the source
+        val forwardEntities = definitionRepository.findByWorkspaceIdAndSourceEntityTypeIdIn(workspaceId, entityTypeIds)
 
-        val definitions = linkedMapOf<UUID, RelationshipDefinitionEntity>()
-        val rulesByDefId = mutableMapOf<UUID, MutableList<RelationshipTargetRule>>()
-
-        for (row in rows) {
-            val def = row[0] as RelationshipDefinitionEntity
-            val rule = row[1] as? RelationshipTargetRuleEntity
-            val defId = requireNotNull(def.id)
-
-            definitions[defId] = def
-            if (rule != null) {
-                rulesByDefId.getOrPut(defId) { mutableListOf() }.add(rule.toModel())
-            }
+        // Inverse definitions: these types are a target in another definition's rules
+        val inverseRules = targetRuleRepository.findByTargetEntityTypeIdIn(entityTypeIds)
+        val inverseDefIds = inverseRules.map { it.relationshipDefinitionId }.distinct()
+        val inverseEntities = if (inverseDefIds.isNotEmpty()) {
+            definitionRepository.findAllById(inverseDefIds)
+        } else {
+            emptyList()
         }
 
         // Load exclusions for all queried entity types
@@ -368,20 +363,31 @@ class EntityTypeRelationshipService(
             .groupBy({ it.entityTypeId }, { it.relationshipDefinitionId })
             .mapValues { (_, defIds) -> defIds.toSet() }
 
+        // Hydrate all definitions with their rules in a single batch
+        val allDefIds = (forwardEntities.mapNotNull { it.id } + inverseDefIds).distinct()
+        val rulesByDefId = if (allDefIds.isNotEmpty()) {
+            targetRuleRepository.findByRelationshipDefinitionIdIn(allDefIds)
+                .groupBy { it.relationshipDefinitionId }
+        } else {
+            emptyMap()
+        }
+
         // Load exclusions per definition for the model
-        val defIds = definitions.keys.toList()
-        val exclusionsByDefId = if (defIds.isNotEmpty()) {
-            exclusionRepository.findByRelationshipDefinitionIdIn(defIds)
+        val exclusionsByDefId = if (allDefIds.isNotEmpty()) {
+            exclusionRepository.findByRelationshipDefinitionIdIn(allDefIds)
                 .groupBy({ it.relationshipDefinitionId }, { it.entityTypeId })
         } else {
             emptyMap()
         }
 
-        val models = definitions.values.map { def ->
-            def.toModel(
-                rulesByDefId[def.id] ?: emptyList(),
-                exclusionsByDefId[def.id] ?: emptyList(),
-            )
+        // Deduplicate definitions (a definition can appear in both forward and inverse)
+        val allDefinitions = (forwardEntities + inverseEntities)
+            .distinctBy { it.id }
+
+        val models = allDefinitions.map { entity ->
+            val rules = rulesByDefId[entity.id]?.map { it.toModel() } ?: emptyList()
+            val excl = exclusionsByDefId[entity.id] ?: emptyList()
+            entity.toModel(rules, excl)
         }
 
         // Batch-fetch semantic groups for all entity types
