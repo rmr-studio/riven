@@ -17,6 +17,13 @@
 !.planning/
 !.planning/codebase/
 !.planning/codebase/**
+!.planning/research/
+!.planning/research/**
+!.planning/PROJECT.md
+!.planning/REQUIREMENTS.md
+!.planning/ROADMAP.md
+!.planning/STATE.md
+!.planning/config.json
 
 
 # next.js
