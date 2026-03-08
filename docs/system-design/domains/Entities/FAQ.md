@@ -86,3 +86,28 @@ Protected definitions (like CONNECTED_ENTITIES) cannot be deleted and throw `Ill
 | `relationship_target_rules` | Per-target-type rules (which types can be targets, cardinality overrides, inverse names) | Hard-delete |
 | `relationship_definition_exclusions` | Target-side opt-out records (entity type excluded from a definition) | Hard-delete |
 | `entity_relationships` | Instance-level links between entities | Soft-delete |
+
+### How are entity types created from catalog templates
+
+When a user installs a template (or bundle) via `TemplateInstallationService`, entity types are created by translating catalog definitions into workspace-scoped entity types:
+
+1. Catalog entity types use string attribute keys (e.g., `"name"`, `"email"`) — these are converted to UUID keys via `UUID.randomUUID()` for each attribute
+2. Manifest `type` strings (e.g., `"string"`, `"number"`) are mapped to `DataType` enum values
+3. Manifest `format` strings (JSON Schema conventions like `"date-time"`, `"phone-number"`) are mapped to `DataFormat` enum values via a static mapping table
+4. The `identifierKey` is resolved from string to UUID
+5. Semantic metadata scaffolding is initialized via `EntityTypeSemanticMetadataService.initializeForEntityType()`
+6. A fallback `CONNECTED_ENTITIES` relationship definition is created via `EntityTypeRelationshipService.createFallbackDefinition()`
+
+The created entity types are standard workspace entity types — they can be queried, have entities created against them, and participate in relationships exactly like manually-created types. The `workspace_template_installations` table in the Catalog domain tracks which templates produced which entity types.
+
+### Can template-created entity types be modified or deleted
+
+Yes. Once created, template-installed entity types are indistinguishable from manually-created ones at the Entities domain level. They are not marked as `protected` and can be modified or deleted through the normal entity type APIs.
+
+The `workspace_template_installations` record persists even if the entity types are later modified or deleted — it tracks that the template was installed, not that its entity types are unchanged. Re-installing the same template will return early (zero-count response) based on the installation record, regardless of what happened to the entity types afterward.
+
+### How do template relationships interact with existing entity types
+
+During template installation, if an entity type key already exists in the workspace, it is **reused** rather than duplicated. The existing entity type's UUID is included in the ID map used for relationship creation. This means template relationships can reference pre-existing entity types seamlessly.
+
+For bundles, this extends further: skipped templates (already installed) have their entity type IDs resolved from the workspace so that cross-template relationships in newly-installed templates can reference entity types from previously-installed templates.
