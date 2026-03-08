@@ -1,5 +1,6 @@
 package riven.core.service.entity.query
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Component
 import riven.core.enums.entity.query.FilterOperator
 import java.util.*
@@ -25,7 +26,9 @@ import java.util.*
  * target entity uses a different alias than the root entity.
  */
 @Component
-class AttributeSqlGenerator {
+class AttributeSqlGenerator(
+    private val objectMapper: ObjectMapper,
+) {
 
     /**
      * Generates a SQL fragment for filtering by an attribute value.
@@ -276,7 +279,7 @@ class AttributeSqlGenerator {
         val valsParam = paramGen.next("nin_vals")
 
         return SqlFragment(
-            sql = "EXISTS (SELECT 1 FROM entity_attributes $alias WHERE $alias.entity_id = $entityAlias.id AND $alias.attribute_id = :$attrParam AND ($alias.value #>> '{}') NOT IN (:$valsParam) AND $alias.deleted = false)",
+            sql = "NOT EXISTS (SELECT 1 FROM entity_attributes $alias WHERE $alias.entity_id = $entityAlias.id AND $alias.attribute_id = :$attrParam AND ($alias.value #>> '{}') IN (:$valsParam) AND $alias.deleted = false)",
             parameters = mapOf(
                 attrParam to attributeId,
                 valsParam to values.map { it?.toString() ?: "" },
@@ -324,11 +327,7 @@ class AttributeSqlGenerator {
      * Serializes a value as a JSON literal string for JSONB comparison.
      * Strings are quoted, numbers/booleans are raw.
      */
-    private fun serializeJsonbValue(value: Any): String = when (value) {
-        is Number -> value.toString()
-        is Boolean -> value.toString()
-        else -> "\"${value.toString().replace("\\", "\\\\").replace("\"", "\\\"")}\""
-    }
+    private fun serializeJsonbValue(value: Any): String = objectMapper.writeValueAsString(value)
 
     private fun escapeLikePattern(value: String): String =
         value

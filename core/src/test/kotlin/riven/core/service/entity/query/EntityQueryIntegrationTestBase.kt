@@ -85,7 +85,7 @@ class EntityQueryIntegrationTestConfig {
         DateTimeProvider { Optional.of<TemporalAccessor>(ZonedDateTime.now()) }
 
     @Bean
-    fun attributeSqlGenerator() = AttributeSqlGenerator()
+    fun attributeSqlGenerator(objectMapper: ObjectMapper) = AttributeSqlGenerator(objectMapper)
 
     @Bean
     fun relationshipSqlGenerator() = RelationshipSqlGenerator()

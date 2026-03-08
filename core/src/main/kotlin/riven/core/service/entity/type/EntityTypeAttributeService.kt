@@ -12,6 +12,7 @@ import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.request.entity.type.SaveAttributeDefinitionRequest
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityUniqueValuesRepository
+import riven.core.service.entity.EntityAttributeService
 import riven.core.enums.entity.semantics.SemanticMetadataTargetType
 import riven.core.service.entity.EntityTypeSemanticMetadataService
 import riven.core.service.entity.EntityValidationService
@@ -23,7 +24,7 @@ class EntityTypeAttributeService(
     private val entityRepository: EntityRepository,
     private val uniqueEntityValueRepository: EntityUniqueValuesRepository,
     private val semanticMetadataService: EntityTypeSemanticMetadataService,
-    private val entityAttributeService: riven.core.service.entity.EntityAttributeService,
+    private val entityAttributeService: EntityAttributeService,
 ) {
 
     fun saveAttributeDefinition(

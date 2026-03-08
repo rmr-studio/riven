@@ -31,7 +31,7 @@ class EntityValidationService(
     fun validateEntity(
         entity: EntityEntity,
         entityType: EntityTypeEntity,
-        attributes: Map<UUID, EntityAttributePrimitivePayload> = emptyMap(),
+        attributes: Map<UUID, EntityAttributePrimitivePayload>,
     ): List<String> {
         val payloadForValidation: Map<String, Any?> =
             attributes.map { (key, value) -> key.toString() to value.value }.toMap()
@@ -186,7 +186,7 @@ class EntityValidationService(
     fun validateExistingEntitiesAgainstNewSchema(
         entities: List<EntityEntity>,
         newSchema: EntityTypeSchema,
-        attributesByEntityId: Map<UUID, Map<UUID, EntityAttributePrimitivePayload>> = emptyMap(),
+        attributesByEntityId: Map<UUID, Map<UUID, EntityAttributePrimitivePayload>>,
     ): EntityTypeValidationSummary {
         var validCount = 0
         var invalidCount = 0

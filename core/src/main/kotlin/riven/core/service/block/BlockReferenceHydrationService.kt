@@ -10,6 +10,7 @@ import riven.core.models.block.tree.ReferenceItem
 import riven.core.models.block.tree.ReferencePayload
 import riven.core.models.request.block.EntityReferenceRequest
 import riven.core.models.response.block.internal.BlockHydrationResult
+import riven.core.service.entity.EntityAttributeService
 import riven.core.service.entity.EntityService
 import java.util.*
 
@@ -25,7 +26,7 @@ import java.util.*
 class BlockReferenceHydrationService(
     private val entityService: EntityService,
     private val blockService: BlockService,
-    private val entityAttributeService: riven.core.service.entity.EntityAttributeService,
+    private val entityAttributeService: EntityAttributeService,
     private val logger: KLogger
 ) {
 

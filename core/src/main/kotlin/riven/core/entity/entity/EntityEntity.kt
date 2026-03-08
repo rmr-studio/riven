@@ -87,7 +87,7 @@ data class EntityEntity(
     fun toModel(
         audit: Boolean = false,
         relationships: Map<UUID, List<EntityLink>> = emptyMap(),
-        attributes: Map<UUID, EntityAttributePrimitivePayload> = emptyMap(),
+        attributes: Map<UUID, EntityAttributePrimitivePayload>,
     ): Entity {
         val id = requireNotNull(this.id) { "EntityEntity ID cannot be null" }
 

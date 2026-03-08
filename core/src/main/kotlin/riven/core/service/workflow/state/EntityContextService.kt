@@ -10,6 +10,7 @@ import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.entity.payload.EntityAttributeRelationPayload
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
+import riven.core.service.entity.EntityAttributeService
 import riven.core.service.entity.EntityRelationshipService
 import riven.core.service.entity.type.EntityTypeRelationshipService
 import java.util.*
@@ -26,7 +27,7 @@ class EntityContextService(
     private val entityTypeRepository: EntityTypeRepository,
     private val entityRelationshipService: EntityRelationshipService,
     private val entityTypeRelationshipService: EntityTypeRelationshipService,
-    private val entityAttributeService: riven.core.service.entity.EntityAttributeService,
+    private val entityAttributeService: EntityAttributeService,
     private val logger: KLogger
 ) {
 

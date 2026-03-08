@@ -245,7 +245,7 @@ class EntityService(
                 val links: Map<UUID, List<EntityLink>> = entityRelationshipService.findRelatedEntities(entityId, workspaceId)
 
                 SaveEntityResponse(
-                    entity = entity.toModel(
+                    entity = this.toModel(
                         audit = true,
                         relationships = links,
                         attributes = attributePayload,
@@ -378,6 +378,7 @@ class EntityService(
     /**
      * Get all entities for an workspace.
      */
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun getWorkspaceEntities(workspaceId: UUID): List<Entity> {
         val entities = findManyResults { entityRepository.findByWorkspaceId(workspaceId) }
         val entityIds = entities.mapNotNull { it.id }.toSet()

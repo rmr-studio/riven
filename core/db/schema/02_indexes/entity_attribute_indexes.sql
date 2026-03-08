@@ -3,7 +3,7 @@
 -- =====================================================
 
 -- Primary lookup: attributes for a given entity
-CREATE INDEX IF NOT EXISTS idx_entity_attributes_entity_id
+CREATE UNIQUE INDEX IF NOT EXISTS idx_entity_attributes_entity_id
     ON public.entity_attributes (entity_id, attribute_id) WHERE deleted = false;
 
 -- Filter by attribute across a type
