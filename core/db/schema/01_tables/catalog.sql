@@ -69,11 +69,7 @@ CREATE TABLE IF NOT EXISTS catalog_relationships (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
-    UNIQUE (manifest_id, key),
-    CONSTRAINT fk_catalog_relationships_source_entity
-        FOREIGN KEY (manifest_id, source_entity_type_key)
-        REFERENCES catalog_entity_types(manifest_id, key)
-        ON DELETE CASCADE
+    UNIQUE (manifest_id, key)
 );
 
 -- =====================================================

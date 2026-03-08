@@ -41,8 +41,13 @@ class ManifestResolverService(
             return buildStaleManifest(scanned)
         }
 
-        val entityTypeKeys = entityTypes.map { it.key }.toSet()
-        if (relationships.isNotEmpty() && !validateRelationships(relationships, entityTypeKeys)) {
+        val localEntityTypeKeys = entityTypes.map { it.key }.toSet()
+        val validEntityTypeKeys = if (scanned.type == ManifestType.TEMPLATE) {
+            localEntityTypeKeys + modelIndex.keys
+        } else {
+            localEntityTypeKeys
+        }
+        if (relationships.isNotEmpty() && !validateRelationships(relationships, validEntityTypeKeys)) {
             return buildStaleManifest(scanned)
         }
 
