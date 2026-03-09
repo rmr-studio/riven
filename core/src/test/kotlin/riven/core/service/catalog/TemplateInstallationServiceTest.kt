@@ -879,6 +879,39 @@ class TemplateInstallationServiceTest : BaseServiceTest() {
         assertNotNull(attrIdCaptor.firstValue)
     }
 
+    // ------ Prefix Validation ------
+
+    @Test
+    fun `installTemplate rejects ID attribute without prefix`() {
+        val manifest = createManifestWithEntityTypes(
+            createCatalogEntityType(
+                key = "ticket",
+                singular = "Ticket",
+                plural = "Tickets",
+                schema = mapOf(
+                    "reference" to mapOf<String, Any>(
+                        "key" to "ID",
+                        "label" to "Reference",
+                        "type" to "string",
+                        "required" to false,
+                    ),
+                    "name" to mapOf<String, Any>(
+                        "key" to "TEXT",
+                        "label" to "Name",
+                        "type" to "string",
+                        "required" to true,
+                    )
+                ),
+            )
+        )
+
+        whenever(catalogService.getManifestByKey("test-template", ManifestType.TEMPLATE)).thenReturn(manifest)
+
+        assertThrows<IllegalArgumentException> {
+            service.installTemplate(workspaceId, "test-template")
+        }
+    }
+
     // ------ Test Helpers ------
 
     private fun createTestBundle(key: String, templateKeys: List<String>) = BundleDetail(

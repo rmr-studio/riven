@@ -52,6 +52,13 @@ class EntityTypeAttributeService(
             }
         }
 
+        // Validate ID attributes have a prefix
+        if (attribute.key == SchemaType.ID) {
+            require(!attribute.options?.prefix.isNullOrBlank()) {
+                "ID attribute must have a non-blank 'prefix' in options"
+            }
+        }
+
         // Validate default value if present
         attribute.options?.default?.let { defaultValue ->
             val defaultErrors = schemaService.validateDefault(attribute, defaultValue)
