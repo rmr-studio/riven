@@ -26,5 +26,5 @@ interface EntityTypeSequenceRepository : JpaRepository<EntityTypeSequenceEntity,
         """,
         nativeQuery = true
     )
-    fun incrementAndGet(entityTypeId: UUID, attributeId: UUID): Long
+    fun incrementAndGet(entityTypeId: UUID, attributeId: UUID): Long?
 }

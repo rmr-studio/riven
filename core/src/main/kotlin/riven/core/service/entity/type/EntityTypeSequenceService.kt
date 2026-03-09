@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.entity.EntityTypeSequenceEntity
+import riven.core.entity.entity.EntityTypeSequenceId
 import riven.core.repository.entity.EntityTypeSequenceRepository
 import java.util.*
 
@@ -23,10 +24,16 @@ class EntityTypeSequenceService(
 ) {
 
     /**
-     * Initialize a sequence counter for a new ID-type attribute.
+     * Idempotently initialize a sequence counter for a new ID-type attribute.
      * Called when an ID attribute is added to an entity type (template install or manual).
+     * Safe to call multiple times — skips creation if the sequence already exists.
      */
     fun initializeSequence(entityTypeId: UUID, attributeId: UUID) {
+        val id = EntityTypeSequenceId(entityTypeId, attributeId)
+        if (sequenceRepository.existsById(id)) {
+            logger.debug { "Sequence already exists for entity type $entityTypeId, attribute $attributeId" }
+            return
+        }
         sequenceRepository.save(
             EntityTypeSequenceEntity(
                 entityTypeId = entityTypeId,
@@ -44,6 +51,10 @@ class EntityTypeSequenceService(
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun nextValue(entityTypeId: UUID, attributeId: UUID): Long {
         return sequenceRepository.incrementAndGet(entityTypeId, attributeId)
+            ?: error(
+                "Sequence row missing for entity type $entityTypeId, attribute $attributeId. " +
+                    "Call initializeSequence() before generating IDs."
+            )
     }
 
     /**

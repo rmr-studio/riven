@@ -311,10 +311,10 @@ class TemplateInstallationService(
             }
 
             // Validate ID attributes have a prefix
-            if (attrSchema.key == SchemaType.ID) {
-                require(!attrSchema.options?.prefix.isNullOrBlank()) {
-                    "ID attribute '$attrKey' must have a non-blank 'prefix' in options"
-                }
+            if (attrSchema.key == SchemaType.ID && attrSchema.options?.prefix.isNullOrBlank()) {
+                throw SchemaValidationException(
+                    listOf("ID attribute '$attrKey' must have a non-blank 'prefix' in options")
+                )
             }
 
             columns.add(EntityTypeAttributeColumn(key = attrId, type = EntityPropertyType.ATTRIBUTE))

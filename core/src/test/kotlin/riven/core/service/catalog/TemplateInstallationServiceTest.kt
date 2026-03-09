@@ -907,7 +907,7 @@ class TemplateInstallationServiceTest : BaseServiceTest() {
 
         whenever(catalogService.getManifestByKey("test-template", ManifestType.TEMPLATE)).thenReturn(manifest)
 
-        assertThrows<IllegalArgumentException> {
+        assertThrows<SchemaValidationException> {
             service.installTemplate(workspaceId, "test-template")
         }
     }

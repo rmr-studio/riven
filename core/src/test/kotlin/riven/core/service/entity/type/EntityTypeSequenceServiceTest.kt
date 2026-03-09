@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.entity.EntityTypeSequenceEntity
+import riven.core.entity.entity.EntityTypeSequenceId
 import riven.core.repository.entity.EntityTypeSequenceRepository
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.util.BaseServiceTest
@@ -52,6 +53,16 @@ class EntityTypeSequenceServiceTest : BaseServiceTest() {
     }
 
     @Test
+    fun `initializeSequence skips creation when sequence already exists`() {
+        val id = EntityTypeSequenceId(entityTypeId, attributeId)
+        whenever(sequenceRepository.existsById(id)).thenReturn(true)
+
+        service.initializeSequence(entityTypeId, attributeId)
+
+        verify(sequenceRepository, never()).save(any<EntityTypeSequenceEntity>())
+    }
+
+    @Test
     fun `nextValue increments and returns the new sequence value`() {
         whenever(sequenceRepository.incrementAndGet(entityTypeId, attributeId)).thenReturn(1L)
 
@@ -69,6 +80,17 @@ class EntityTypeSequenceServiceTest : BaseServiceTest() {
         assertEquals(1L, service.nextValue(entityTypeId, attributeId))
         assertEquals(2L, service.nextValue(entityTypeId, attributeId))
         assertEquals(3L, service.nextValue(entityTypeId, attributeId))
+    }
+
+    @Test
+    fun `nextValue throws when sequence row is missing`() {
+        whenever(sequenceRepository.incrementAndGet(entityTypeId, attributeId)).thenReturn(null)
+
+        val exception = assertThrows<IllegalStateException> {
+            service.nextValue(entityTypeId, attributeId)
+        }
+
+        assertTrue(exception.message!!.contains("Sequence row missing"))
     }
 
     @Test
