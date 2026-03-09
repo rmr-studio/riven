@@ -1,6 +1,7 @@
 package riven.core.entity.user
 
 import jakarta.persistence.*
+import org.hibernate.annotations.SQLRestriction
 import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.entity.workspace.WorkspaceEntity
 import riven.core.models.user.User
@@ -12,6 +13,7 @@ import java.util.*
 @Table(
     name = "users",
 )
+@SQLRestriction("deleted = false")
 data class UserEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

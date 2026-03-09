@@ -2,6 +2,7 @@ package riven.core.entity.entity
 
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
+import org.hibernate.annotations.SQLRestriction
 import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.enums.common.validation.SchemaType
@@ -24,6 +25,7 @@ import jakarta.persistence.Entity as JPAEntity
         Index(name = "idx_entity_attributes_workspace", columnList = "workspace_id"),
     ]
 )
+@SQLRestriction("deleted = false")
 data class EntityAttributeEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

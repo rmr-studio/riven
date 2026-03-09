@@ -231,6 +231,8 @@ class EntityTypeService(
     /**
      * Remove an attribute or relationship definition from an entity type.
      */
+    @Transactional
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun removeEntityTypeDefinition(
         workspaceId: UUID,
         request: DeleteTypeDefinitionRequest,

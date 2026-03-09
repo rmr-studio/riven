@@ -1,6 +1,7 @@
 package riven.core.entity.entity
 
 import jakarta.persistence.*
+import org.hibernate.annotations.SQLRestriction
 import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.enums.common.icon.IconColour
 import riven.core.enums.common.icon.IconType
@@ -26,6 +27,7 @@ import jakarta.persistence.Entity as JPAEntity
         Index(name = "idx_entities_workspace_id", columnList = "workspace_id"),
     ]
 )
+@SQLRestriction("deleted = false")
 data class EntityEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

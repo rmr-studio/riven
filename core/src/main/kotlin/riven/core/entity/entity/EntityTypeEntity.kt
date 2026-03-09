@@ -2,6 +2,7 @@ package riven.core.entity.entity
 
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
+import org.hibernate.annotations.SQLRestriction
 import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.enums.common.icon.IconColour
@@ -31,6 +32,7 @@ import java.util.*
         UniqueConstraint(columnNames = ["workspace_id", "key"])
     ]
 )
+@SQLRestriction("deleted = false")
 data class EntityTypeEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
