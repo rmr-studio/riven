@@ -32,16 +32,11 @@ export function usePublishEntityTypeMutation(
       submissionToastRef.current = undefined;
       toast.success(`Entity type created successfully!`);
 
-      // Update the specific entity type in cache
-      queryClient.setQueryData(['entityType', response.key, workspaceId], response);
+      // Invalidate entity type queries (partial match handles varying `include` param)
+      queryClient.invalidateQueries({ queryKey: ['entityType', response.key, workspaceId] });
 
-      // Update the entity types list in cache
-      queryClient.setQueryData<EntityType[]>(['entityTypes', workspaceId], (oldData) => {
-        if (!oldData) return [response];
-
-        // Add new entity type to the list
-        return [...oldData, response];
-      });
+      // Invalidate the entity types list
+      queryClient.invalidateQueries({ queryKey: ['entityTypes', workspaceId] });
 
       return response;
     },

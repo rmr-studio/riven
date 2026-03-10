@@ -93,6 +93,8 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
     property: EntityPropertyType,
     isFirstCell: boolean,
   ): ReactNode | null => {
+    console.log(id);
+    console.log(property);
     if (property === EntityPropertyType.Attribute) {
       const schema = entityType.schema.properties?.[id];
       if (!schema) return null;
@@ -100,6 +102,7 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
     }
 
     const relationship = type.relationships?.find((r) => r.id === id);
+    console.log(type.relationships, id);
     if (property === EntityPropertyType.Relationship && relationship) {
       return <DraftEntityRelationshipPicker relationship={relationship} />;
     }
@@ -113,6 +116,7 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
     if (columnCount === 0) return [];
     if (!entityType.columns) return [];
 
+    console.log(entityType.columns);
     return entityType.columns.map((item, index) => {
       const { key: id, type } = item;
       const isFirstCell = index === 0;

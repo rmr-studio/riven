@@ -69,6 +69,8 @@ export interface DataTableProps<TData, TValue> {
   emptyMessage?: string;
   search?: SearchConfig<TData>;
   filter?: FilterConfig<TData>;
+  /** Extra content rendered on the right side of the toolbar (e.g. action buttons) */
+  toolbarActions?: ReactNode;
   rowActions?: RowActionsConfig<TData>;
   columnResizing?: ColumnResizingConfig;
   columnOrdering?: ColumnOrderingConfig;
@@ -107,6 +109,7 @@ export function DataTable<TData, TValue>({
   emptyMessage = 'No results.',
   search,
   filter,
+  toolbarActions,
   rowActions,
   columnResizing,
   columnOrdering,
@@ -654,7 +657,7 @@ export function DataTable<TData, TValue>({
       <DataTableSelectionBar actionComponent={rowSelection?.actionComponent} />
 
       {/* Toolbar */}
-      <DataTableToolbar search={search} filter={filter} />
+      <DataTableToolbar search={search} filter={filter} actions={toolbarActions} />
 
       {/* Table */}
       {wrappedContent}

@@ -17,6 +17,7 @@ import {
   EntityTypeAttributeColumn,
   isRelationshipPayload,
   RelationshipDefinition,
+  SystemRelationshipType,
 } from '@/lib/types/entity';
 import { iconFormSchema } from '@/lib/util/form/common/icon.form';
 import { buildFieldSchema } from '@/lib/util/form/entity-instance-validation.util';
@@ -410,8 +411,16 @@ export function generateColumnsFromEntityType(
     });
   });
 
-  // Generate relationship columns
-  entityType.relationships?.forEach((relationship) => {
+  // Generate relationship columns (exclude system relationships like Connected Entities)
+  entityType.relationships
+    ?.filter((rel) => rel.systemType !== SystemRelationshipType.ConnectedEntities)
+    .forEach((relationship) => {
+    // Determine if this is a target-side relationship (defined on another entity type)
+    const isTargetSide = relationship.sourceEntityTypeId !== entityType.id;
+    const headerName = isTargetSide
+      ? relationship.targetRules?.find((r) => r.targetEntityTypeId === entityType.id)?.inverseName || relationship.name
+      : relationship.name;
+
     // Create edit config if editing is enabled
     const editConfig: ColumnEditConfig<EntityRow, EntityLink[], EntityLink[]> | undefined =
       options?.enableEditing
@@ -432,7 +441,7 @@ export function generateColumnsFromEntityType(
                 mode: 'onBlur',
               });
             },
-            render: createRelationshipRenderer<EntityRow>(relationship),
+            render: createRelationshipRenderer<EntityRow>(relationship, isTargetSide),
             parseValue: (val: EntityLink[]) => val,
             formatValue: (val: EntityLink[]) => val,
             isEqual: createRelationshipEqualityFn(relationship),
@@ -445,11 +454,11 @@ export function generateColumnsFromEntityType(
         entityType.columns?.find((col) => col.key === relationship.id)?.width ??
         DEFAULT_COLUMN_WIDTH,
       header: () => {
-        const { icon, name } = relationship;
+        const { icon } = relationship;
         return (
           <div className="flex items-center">
             <IconCell readonly type={icon.type} colour={icon.colour} className="mr-2 size-4" />
-            <span>{name}</span>
+            <span>{headerName}</span>
           </div>
         );
       },

@@ -1,9 +1,7 @@
 'use client';
 
-import { Button } from '@riven/ui/button';
 import { ColumnResizingConfig, DataTable, DataTableProvider } from '@/components/ui/data-table';
 import { Form } from '@/components/ui/form';
-import type { ClassNameProps } from '@riven/utils';
 import { SchemaUUID } from '@/lib/types/common';
 import {
   Entity,
@@ -12,23 +10,26 @@ import {
   EntityAttributeRequest,
   EntityLink,
   EntityPropertyType,
-  RelationshipDefinition,
   EntityType,
   isRelationshipPayload,
+  RelationshipDefinition,
   SaveEntityRequest,
   SaveEntityResponse,
 } from '@/lib/types/entity';
 import { debounce } from '@/lib/util/debounce.util';
+import type { ClassNameProps } from '@riven/utils';
 import { cn } from '@riven/utils';
 
+import type { QueryFilter } from '@/lib/types/models/QueryFilter';
+import { Button } from '@riven/ui/button';
 import { Row } from '@tanstack/react-table';
 import { Plus } from 'lucide-react';
-import { FC, useCallback, useMemo, useRef } from 'react';
+import { FC, useCallback, useMemo, useRef, useState } from 'react';
 import { useConfigFormState } from '../../context/configuration-provider';
 import { useEntityDraft } from '../../context/entity-provider';
 import { useSaveEntityMutation } from '../../hooks/mutation/instance/use-save-entity-mutation';
+import { EntityQueryBuilder } from '../query/entity-query-builder';
 import { EntityTypeHeader } from '../ui/entity-type-header';
-import { EntityTypeSaveButton } from '../ui/entity-type-save-button';
 import { EntityDraftRow } from './entity-draft-row';
 import EntityActionBar from './entity-table-action-bar';
 import {
@@ -108,6 +109,7 @@ export const EntityDataTable: FC<Props> = ({
   // Generate columns from entity type with inline editing enabled
   const columns = useMemo(() => {
     const generatedColumns = generateColumnsFromEntityType(entityType, { enableEditing: true });
+    console.log(generatedColumns);
     return applyColumnOrdering(generatedColumns, entityType.columns);
   }, [entityType]);
 
@@ -124,17 +126,17 @@ export const EntityDataTable: FC<Props> = ({
   const emptyMessage = loadingEntities
     ? 'Loading entities...'
     : `No ${entityType.name.plural} found.`;
-  const enableSearch = entities.length > 10;
 
-  // Search configuration
+  // Search configuration — always show when searchable columns exist
   const searchConfig = useMemo(
     () => ({
-      enabled: enableSearch && searchableColumns.length > 0,
-      searchableColumns: searchableColumns as any,
-      placeholder: 'Search entities...',
+      // enabled: searchableColumns.length > 0,
+      enabled: true,
+      searchableColumns,
+      placeholder: `Search ${entityType.name.plural.toLowerCase()}...`,
       disabled: isDraftMode,
     }),
-    [enableSearch, searchableColumns, isDraftMode],
+    [searchableColumns, isDraftMode, entityType.name.plural],
   );
 
   // Custom row renderer for draft mode
@@ -178,8 +180,9 @@ export const EntityDataTable: FC<Props> = ({
 
       // Determine if updated column is an attribute or relationship
       const attributeDef: SchemaUUID | undefined = entityType.schema.properties?.[columnId];
-      const relationshipDef: RelationshipDefinition | undefined =
-        entityType.relationships?.find((rel) => rel.id === columnId);
+      const relationshipDef: RelationshipDefinition | undefined = entityType.relationships?.find(
+        (rel) => rel.id === columnId,
+      );
 
       // Prepare updated entity payload
       if (attributeDef) {
@@ -244,31 +247,47 @@ export const EntityDataTable: FC<Props> = ({
     return !response.errors && !!response.entity;
   };
 
+  // Query filter state (EntityQueryBuilder)
+  const [_queryFilter, setQueryFilter] = useState<QueryFilter | undefined>();
+  const handleQueryFilterChange = useCallback((filter: QueryFilter | undefined) => {
+    setQueryFilter(filter);
+    // TODO: integrate with server-side entity query when API hook is wired up
+  }, []);
+
+  // Toolbar right-side actions: filter + add
+  const toolbarActions = useMemo(
+    () => (
+      <>
+        <EntityQueryBuilder
+          entityType={entityType}
+          value={_queryFilter}
+          onChange={handleQueryFilterChange}
+        />
+        <Button
+          onClick={enterDraftMode}
+          variant="outline"
+          size="icon"
+          className="size-9"
+          disabled={isDraftMode}
+        >
+          <Plus className="size-4" />
+          <span className="sr-only">Add new</span>
+        </Button>
+      </>
+    ),
+    [enterDraftMode, isDraftMode, entityType, _queryFilter, handleQueryFilterChange],
+  );
+
   return (
     <Form {...form}>
       <div className="w-full min-w-0 space-y-4">
-        {/* Draft mode controls */}
-        <div>
-          <div className="flex flex-col justify-between gap-4 lg:flex-row">
-            <div className="flex flex-col gap-2">
-              <EntityTypeHeader>
-                <div className="text-sm text-muted-foreground italic">
-                  Manage your entities and their data
-                </div>
-              </EntityTypeHeader>
-            </div>
-            <div className="flex gap-2">
-              <EntityTypeSaveButton onSubmit={handleSubmit} />
-
-              <Button onClick={enterDraftMode} variant="outline" size="sm" disabled={isDraftMode}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add New
-              </Button>
-            </div>
+        <EntityTypeHeader>
+          <div className="text-sm text-muted-foreground italic">
+            Manage your entities and their data
           </div>
-        </div>
+        </EntityTypeHeader>
 
-        {/* Data table with custom row rendering for draft */}
+        {/* Data table with toolbar: search | filter + add */}
         <DataTableProvider
           initialData={rowData}
           getRowId={getRowId}
@@ -298,6 +317,7 @@ export const EntityDataTable: FC<Props> = ({
               filters,
               disabled: isDraftMode,
             }}
+            toolbarActions={toolbarActions}
             columnResizing={columnResizingConfig}
             emptyMessage={emptyMessage}
             className={cn(className)}

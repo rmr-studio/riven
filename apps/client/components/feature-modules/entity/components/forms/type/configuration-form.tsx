@@ -14,7 +14,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@riven/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { TagInput } from '@/components/ui/tag-input';
 import { EntityAttributeDefinition, EntityPropertyType, SemanticGroup } from '@/lib/types/entity';
@@ -56,6 +56,11 @@ export const ConfigurationForm: FC<Props> = ({ availableIdentifiers }) => {
   const semanticGroup = useWatch({
     control: form.control,
     name: 'semanticGroup',
+  });
+
+  const description = useWatch({
+    control: form.control,
+    name: 'description',
   });
 
   // Watch for identifier key changes and auto-recolumns to ensure identifier is first
@@ -163,14 +168,14 @@ export const ConfigurationForm: FC<Props> = ({ availableIdentifiers }) => {
                 <Textarea
                   className={cn(
                     'max-h-72 resize-none',
-                    semanticGroup === SemanticGroup.Custom && 'border-amber-500/40',
+                    semanticGroup === SemanticGroup.Custom && !description && 'border-amber-500/40',
                   )}
                   placeholder="Describe what this entity type represents..."
                   rows={2}
                   {...field}
                 />
               </FormControl>
-              {semanticGroup === SemanticGroup.Custom && (
+              {semanticGroup === SemanticGroup.Custom && !description && (
                 <p className="flex items-center gap-1.5 pt-0.5 text-xs text-amber-600 dark:text-amber-400">
                   <Info className="size-3 shrink-0" />
                   A description helps the system understand this type&apos;s purpose
