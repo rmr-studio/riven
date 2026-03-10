@@ -52,7 +52,9 @@ docs/BulkSaveSemanticMetadataRequest.md
 docs/BulkUpdateErrorHandling.md
 docs/BundleDetail.md
 docs/BundleInstallationResponse.md
+docs/ColumnConfiguration.md
 docs/ColumnOptions.md
+docs/ColumnOverride.md
 docs/ComponentType.md
 docs/Computed.md
 docs/Condition.md
@@ -328,7 +330,9 @@ models/BulkSaveSemanticMetadataRequest.ts
 models/BulkUpdateErrorHandling.ts
 models/BundleDetail.ts
 models/BundleInstallationResponse.ts
+models/ColumnConfiguration.ts
 models/ColumnOptions.ts
+models/ColumnOverride.ts
 models/ComponentType.ts
 models/Computed.ts
 models/Condition.ts

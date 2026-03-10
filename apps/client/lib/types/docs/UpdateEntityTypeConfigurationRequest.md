@@ -10,7 +10,7 @@ Name | Type
 `name` | [DisplayName](DisplayName.md)
 `icon` | [Icon](Icon.md)
 `semanticGroup` | [SemanticGroup](SemanticGroup.md)
-`columns` | [Array&lt;EntityTypeAttributeColumn&gt;](EntityTypeAttributeColumn.md)
+`columnConfiguration` | [ColumnConfiguration](ColumnConfiguration.md)
 `semantics` | [SaveSemanticMetadataRequest](SaveSemanticMetadataRequest.md)
 
 ## Example
@@ -24,7 +24,7 @@ const example = {
   "name": null,
   "icon": null,
   "semanticGroup": null,
-  "columns": null,
+  "columnConfiguration": null,
   "semantics": null,
 } satisfies UpdateEntityTypeConfigurationRequest
 

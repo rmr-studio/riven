@@ -1,26 +1,24 @@
 
-# DeleteTypeDefinitionRequestDefinition
+# ColumnOverride
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`key` | string
-`id` | string
-`type` | [EntityTypeRequestDefinition](EntityTypeRequestDefinition.md)
+`width` | number
+`visible` | boolean
 
 ## Example
 
 ```typescript
-import type { DeleteTypeDefinitionRequestDefinition } from ''
+import type { ColumnOverride } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "key": null,
-  "id": null,
-  "type": null,
-} satisfies DeleteTypeDefinitionRequestDefinition
+  "width": null,
+  "visible": null,
+} satisfies ColumnOverride
 
 console.log(example)
 
@@ -29,7 +27,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as DeleteTypeDefinitionRequestDefinition
+const exampleParsed = JSON.parse(exampleJSON) as ColumnOverride
 console.log(exampleParsed)
 ```
 
