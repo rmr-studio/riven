@@ -436,9 +436,6 @@ class EntityTypeService(
                 impactConfirmed = impactConfirmed,
             )
         } else {
-            val targetEntityTypeIds = targetRuleRepository.findByRelationshipDefinitionId(definition.id)
-                .map { it.targetEntityTypeId }
-
             entityTypeRelationshipService.deleteRelationshipDefinition(
                 workspaceId = workspaceId,
                 definitionId = definition.id,
@@ -463,7 +460,6 @@ class EntityTypeService(
         currentOrder.add(insertIndex, definitionId)
 
         entity.columnConfiguration = config.copy(order = currentOrder)
-        entityTypeRepository.save(entity)
     }
 
     /**
@@ -477,7 +473,6 @@ class EntityTypeService(
             order = config.order.filterNot { it == definitionId },
             overrides = config.overrides.filterKeys { it != definitionId }
         )
-        entityTypeRepository.save(entity)
     }
 
     /**
@@ -508,6 +503,8 @@ class EntityTypeService(
     }
 
     companion object {
+        const val DEFAULT_COLUMN_WIDTH = 150
+
         /**
          * Derives columns at read-time from schema attributes + relationship definitions + stored configuration.
          *
@@ -542,7 +539,7 @@ class EntityTypeService(
                 EntityTypeAttributeColumn(
                     key = id,
                     type = type,
-                    width = override?.width ?: 150,
+                    width = override?.width ?: DEFAULT_COLUMN_WIDTH,
                     visible = override?.visible ?: true
                 )
             }

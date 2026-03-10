@@ -21,6 +21,7 @@ import riven.core.models.common.validation.Schema
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.ColumnConfiguration
 import riven.core.models.entity.configuration.ColumnOverride
+import riven.core.service.entity.type.EntityTypeService
 import riven.core.models.integration.materialization.MaterializationResult
 import riven.core.repository.catalog.CatalogEntityTypeRepository
 import riven.core.repository.catalog.CatalogRelationshipRepository
@@ -249,7 +250,7 @@ class TemplateMaterializationService(
                 val uuid = generateAttributeUuid(integrationSlug, entityTypeKey, stringKey)
                 order.add(uuid)
                 val width = (col["width"] as? Number)?.toInt()
-                if (width != null && width != 150) {
+                if (width != null && width != EntityTypeService.DEFAULT_COLUMN_WIDTH) {
                     overrides[uuid] = ColumnOverride(width = width)
                 }
             }

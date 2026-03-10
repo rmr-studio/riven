@@ -280,10 +280,12 @@ class TemplateMaterializationServiceTest {
 
         service.materializeIntegrationTemplates(workspaceId, integrationSlug)
 
+        val expectedEmailUuid = UUID.nameUUIDFromBytes("hubspot:hubspot-contact:email".toByteArray())
+        val expectedFirstNameUuid = UUID.nameUUIDFromBytes("hubspot:hubspot-contact:first-name".toByteArray())
+
         verify(entityTypeRepository).save(argThat { entity ->
             entity.columnConfiguration != null &&
-                entity.columnConfiguration!!.order.isNotEmpty() &&
-                entity.columnConfiguration!!.order.all { id -> id != UUID(0, 0) }
+                entity.columnConfiguration!!.order == listOf(expectedEmailUuid, expectedFirstNameUuid)
         })
     }
 

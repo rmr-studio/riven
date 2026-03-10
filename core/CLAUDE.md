@@ -157,7 +157,7 @@ Multi-tenant workspace-scoped backend API for a configurable data platform with 
 
 - Never mark a task complete without proving it works
 - Run ./gradlew test and confirm compilation with ./gradlew build before marking any task done.
-- If you are testing a singular service for a minor change. You can run an isolated version of the gradle testing suite to only run tests on that domain, or serivce class. But for any task that is not menial. You must perform the afforementioned.
+- If you are testing a singular service for a minor change. You can run an isolated version of the gradle testing suite to only run tests on that domain, or service class. But for any task that is not menial. You must perform the aforementioned.
 
 ### 5. Bug Fix Testing
 

@@ -139,12 +139,12 @@ class TemplateInstallationServiceTest : BaseServiceTest() {
         assertEquals(SchemaType.EMAIL, identifierProp.key)
         assertTrue(identifierProp.protected, "Identifier attribute should be protected")
 
-        // Verify column configuration order matches properties
+        // Verify column configuration order matches properties exactly (no duplicates, no missing)
         assertNotNull(saved.columnConfiguration)
-        assertEquals(3, saved.columnConfiguration!!.order.size)
-        saved.columnConfiguration!!.order.forEach { id ->
-            assertTrue(properties.containsKey(id))
-        }
+        val order = saved.columnConfiguration!!.order
+        assertEquals(3, order.size)
+        assertEquals(order.size, order.distinct().size, "Column order should not contain duplicates")
+        assertEquals(properties.keys, order.toSet(), "Column order should contain every property exactly once")
     }
 
     @Test

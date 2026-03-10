@@ -79,10 +79,7 @@ data class EntityAttributeEntity(
             node.isNull -> null
             node.isTextual -> node.textValue()
             node.isBoolean -> node.booleanValue()
-            node.isInt -> node.intValue()
-            node.isLong -> node.longValue()
-            node.isDouble || node.isFloat -> node.doubleValue()
-            node.isBigDecimal -> node.decimalValue()
+            node.isNumber -> node.numberValue()
             node.isArray -> node.map { unwrapJsonNode(it) }
             node.isObject -> node.properties().associate { (k, v) -> k to unwrapJsonNode(v) }
             else -> node.toString()
