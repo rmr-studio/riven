@@ -20,9 +20,10 @@ interface Props {
   dialog: DialogControl;
   type: EntityType;
   selectedAttribute?: EntityAttributeDefinition | RelationshipDefinition;
+  onSuccess?: (definitionId: string) => void;
 }
 
-export const AttributeFormModal: FC<Props> = ({ dialog, type, selectedAttribute }) => {
+export const AttributeFormModal: FC<Props> = ({ dialog, type, selectedAttribute, onSuccess }) => {
   const { open, setOpen: onOpenChange } = dialog;
   const isEditMode = Boolean(selectedAttribute);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -108,6 +109,7 @@ export const AttributeFormModal: FC<Props> = ({ dialog, type, selectedAttribute 
                 relationship={selectedAttribute as RelationshipDefinition | undefined}
                 isTargetSide={isTargetSide}
                 sourceEntityTypeKey={sourceEntityTypeKey}
+                onSuccess={onSuccess}
               />
             ) : (
               <SchemaForm
@@ -116,6 +118,7 @@ export const AttributeFormModal: FC<Props> = ({ dialog, type, selectedAttribute 
                 currentType={currentType as SchemaType}
                 type={type}
                 attribute={selectedAttribute as EntityAttributeDefinition | undefined}
+                onSuccess={onSuccess}
               />
             )}
           </section>

@@ -15,12 +15,13 @@
  */
 
 import { Checkbox } from '@/components/ui/checkbox';
-import { Table } from '@riven/ui/table';
 import { cn } from '@riven/utils';
 import {
   closestCenter,
   DndContext,
   DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
   KeyboardSensor,
   Modifier,
   PointerSensor,
@@ -32,13 +33,14 @@ import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import {
   AccessorKeyColumnDef,
   ColumnDef,
+  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
   Row,
   useReactTable,
 } from '@tanstack/react-table';
-import { ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DataTableBody } from './components/data-table-body';
 import { DataTableHeader } from './components/data-table-header';
 import { DataTableSelectionBar } from './components/data-table-selection-bar';
@@ -89,9 +91,58 @@ export interface DataTableProps<TData, TValue> {
   /** Always show action handles (drag/select) even when not hovering */
   alwaysShowActionHandles?: boolean;
   defaultColumnWidth?: number;
+  /** Callback when a column header is clicked */
+  onHeaderClick?: (columnId: string, anchorEl: HTMLElement) => void;
+  /** Content rendered after the last column header (e.g. add/visibility buttons) */
+  endOfHeaderContent?: ReactNode;
+  /** Additional classes for the scrollable table container (e.g. max-height constraints) */
+  scrollContainerClassName?: string;
+  /** Content rendered inside the scroll container below the table (e.g. "New" row action) */
+  footerContent?: ReactNode;
 }
 
 export const DEFAULT_COLUMN_WIDTH = 250;
+
+// ============================================================================
+// Drag Overlay Row
+// ============================================================================
+
+function DragOverlayRow<TData>({
+  table,
+  activeRowId,
+}: {
+  table: ReturnType<typeof useReactTable<TData>>;
+  activeRowId: UniqueIdentifier;
+}) {
+  const row = table.getRowModel().rows.find((r) => r.id === String(activeRowId));
+  if (!row) return null;
+
+  return (
+    <table className="table-fixed border-separate border-spacing-0 opacity-60" style={{ width: table.getTotalSize() }}>
+      <tbody>
+        <tr>
+          {row.getVisibleCells().map((cell) => (
+            <td
+              key={cell.id}
+              className="px-4 py-2"
+              style={{
+                width: `${cell.column.getSize()}px`,
+                minWidth: `${cell.column.getSize()}px`,
+                maxWidth: `${cell.column.getSize()}px`,
+              }}
+            >
+              <div className="overflow-hidden text-ellipsis">
+                {cell.column.id === 'actions'
+                  ? null
+                  : flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </div>
+            </td>
+          ))}
+        </tr>
+      </tbody>
+    </table>
+  );
+}
 
 // ============================================================================
 // Main Component
@@ -123,6 +174,10 @@ export function DataTable<TData, TValue>({
   editMode = 'click',
   defaultColumnWidth = DEFAULT_COLUMN_WIDTH,
   alwaysShowActionHandles = false,
+  onHeaderClick,
+  endOfHeaderContent,
+  scrollContainerClassName,
+  footerContent,
 }: DataTableProps<TData, TValue>) {
   // ========================================================================
   // Store State & Actions
@@ -136,6 +191,9 @@ export function DataTable<TData, TValue>({
     (state) => state.columnSizing,
   );
   const columnOrder = useDataTableStore<TData, string[]>((state) => state.columnOrder);
+  const columnVisibility = useDataTableStore<TData, Record<string, boolean>>(
+    (state) => state.columnVisibility,
+  );
   const rowSelectionState = useDataTableStore<TData, any>((state) => state.rowSelection);
   const activeFilterCount = useDataTableStore<TData, number>((state) =>
     state.getActiveFilterCount(),
@@ -157,6 +215,7 @@ export function DataTable<TData, TValue>({
     setSorting,
     setColumnSizing,
     setColumnOrder,
+    setColumnVisibility,
     setRowSelection,
     setTableInstance,
     reorderRows,
@@ -316,6 +375,7 @@ export function DataTable<TData, TValue>({
     ...(columnOrdering?.enabled && {
       onColumnOrderChange: setColumnOrder,
     }),
+    onColumnVisibilityChange: setColumnVisibility,
     ...(isSelectionEnabled && {
       enableRowSelection: true,
       onRowSelectionChange: setRowSelection,
@@ -327,6 +387,7 @@ export function DataTable<TData, TValue>({
       ...(search?.enabled && { globalFilter }),
       ...(columnResizing?.enabled && { columnSizing }),
       ...(columnOrdering?.enabled && { columnOrder }),
+      columnVisibility,
       ...(isSelectionEnabled && { rowSelection: rowSelectionState }),
     },
   } as any);
@@ -537,6 +598,24 @@ export function DataTable<TData, TValue>({
       .map((col) => col.id as UniqueIdentifier);
   }, [table]);
 
+  // ========================================================================
+  // DragOverlay State
+  // ========================================================================
+
+  const [activeRowId, setActiveRowId] = useState<UniqueIdentifier | null>(null);
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const isColumnDrag = columnIds.includes(active.id);
+    if (!isColumnDrag) {
+      setActiveRowId(active.id);
+    }
+  };
+
+  const handleDragCancel = () => {
+    setActiveRowId(null);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     if (resizingColumnId) return;
 
@@ -581,39 +660,63 @@ export function DataTable<TData, TValue>({
         reorderRows(oldIndex, newIndex);
       }
     }
+
+    setActiveRowId(null);
   };
 
   // ========================================================================
   // Render
   // ========================================================================
 
+  const tableClasses = cn(
+    'w-full caption-bottom text-sm',
+    (columnResizing?.enabled || hasExplicitColumnSizes) && 'table-fixed',
+  );
+
+  // Count extra (non-data) columns so body rows can render matching empty cells
+  const hasEndOfHeaderContent = !!endOfHeaderContent;
+  const hasRowActions = !!rowActions?.enabled;
+
   const tableContent = (
-    <div ref={tableContainerRef} className={cn('relative overflow-auto rounded-t-md')}>
-      <Table className={cn((columnResizing?.enabled || hasExplicitColumnSizes) && 'table-fixed')}>
-        <DataTableHeader
-          table={table}
-          enableColumnOrdering={columnOrdering?.enabled ?? false}
-          columnResizing={columnResizing}
-          rowActions={rowActions}
-          addingNewEntry={addingNewEntry}
-        />
-        <DataTableBody
-          table={table}
-          enableDragDrop={isDragDropEnabled}
-          isSelectionEnabled={isSelectionEnabled}
-          onRowClick={onRowClick}
-          rowActions={rowActions}
-          columnResizing={columnResizing}
-          customRowRenderer={customRowRenderer}
-          addingNewEntry={addingNewEntry}
-          disableDragForRow={disableDragForRow}
-          emptyMessage={emptyMessage}
-          finalColumnsCount={finalColumns.length}
-          enableInlineEdit={enableInlineEdit}
-          focusedCell={focusedCell}
-          alwaysShowActionHandles={alwaysShowActionHandles}
-        />
-      </Table>
+    <div ref={tableContainerRef} className={cn('flex flex-col rounded-t-md', scrollContainerClassName)}>
+      {/* Single scroll container for both header and body */}
+      <div
+        className="min-h-0 flex-1 overflow-auto"
+        style={{ scrollbarGutter: 'stable' }}
+      >
+        <table className={tableClasses}>
+          <DataTableHeader
+            table={table}
+            enableColumnOrdering={columnOrdering?.enabled ?? false}
+            columnResizing={columnResizing}
+            rowActions={rowActions}
+            addingNewEntry={addingNewEntry}
+            onHeaderClick={onHeaderClick}
+            endOfHeaderContent={endOfHeaderContent}
+          />
+          <DataTableBody
+            table={table}
+            enableDragDrop={isDragDropEnabled}
+            isSelectionEnabled={isSelectionEnabled}
+            onRowClick={onRowClick}
+            rowActions={rowActions}
+            columnResizing={columnResizing}
+            customRowRenderer={customRowRenderer}
+            addingNewEntry={addingNewEntry}
+            disableDragForRow={disableDragForRow}
+            emptyMessage={emptyMessage}
+            finalColumnsCount={finalColumns.length}
+            enableInlineEdit={enableInlineEdit}
+            focusedCell={focusedCell}
+            alwaysShowActionHandles={alwaysShowActionHandles}
+            hasEndOfHeaderContent={hasEndOfHeaderContent}
+            hasRowActions={hasRowActions}
+          />
+        </table>
+      </div>
+
+      {/* Fixed footer */}
+      {footerContent && <div className="shrink-0">{footerContent}</div>}
     </div>
   );
 
@@ -642,10 +745,15 @@ export function DataTable<TData, TValue>({
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
         modifiers={[axisRestrictionModifier]}
       >
         {tableContent}
+        <DragOverlay dropAnimation={null}>
+          {activeRowId ? <DragOverlayRow table={table} activeRowId={activeRowId} /> : null}
+        </DragOverlay>
       </DndContext>
     ) : (
       tableContent

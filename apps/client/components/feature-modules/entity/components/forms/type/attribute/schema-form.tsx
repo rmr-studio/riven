@@ -91,6 +91,7 @@ interface Props {
   attribute?: EntityAttributeDefinition;
   type: EntityType;
   semanticMetadata?: EntityTypeSemanticMetadata;
+  onSuccess?: (definitionId: string) => void;
 }
 
 export const SchemaForm: FC<Props> = ({
@@ -100,6 +101,7 @@ export const SchemaForm: FC<Props> = ({
   dialog,
   workspaceId,
   semanticMetadata,
+  onSuccess: onSuccessCallback,
 }) => {
   const { open, setOpen } = dialog;
 

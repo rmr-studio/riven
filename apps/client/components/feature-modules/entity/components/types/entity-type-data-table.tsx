@@ -40,7 +40,7 @@ const {
 
   const form = useConfigForm();
 
-  const columnData: EntityTypeAttributeColumn[] = form.watch('columns');
+  const columnData: EntityTypeAttributeColumn[] = form.watch('columns') ?? [];
 
   const columnSizeMap = useMemo<Map<string, number>>(() => {
     const map = new Map<string, number>();
