@@ -245,9 +245,12 @@ class TemplateMaterializationService(
             val order = mutableListOf<UUID>()
             val overrides = mutableMapOf<UUID, ColumnOverride>()
 
+            val schemaKeys = schema.properties?.keys ?: emptySet()
+
             catalogColumns.forEach { col ->
                 val stringKey = col["key"] as? String ?: return@forEach
                 val uuid = generateAttributeUuid(integrationSlug, entityTypeKey, stringKey)
+                if (uuid !in schemaKeys) return@forEach  // skip non-attribute columns (e.g. relationship type)
                 order.add(uuid)
                 val width = (col["width"] as? Number)?.toInt()
                 if (width != null && width != EntityTypeService.DEFAULT_COLUMN_WIDTH) {

@@ -156,12 +156,12 @@ Multi-tenant workspace-scoped backend API for a configurable data platform with 
 ### 4. Verification Before Marking as complete
 
 - Never mark a task complete without proving it works
-- Run ./gradlew test and confirm compilation with ./gradlew build before marking any task done.
-- If you are testing a singular service for a minor change. You can run an isolated version of the gradle testing suite to only run tests on that domain, or service class. But for any task that is not menial. You must perform the aforementioned.
+- Run ./gradlew test and confirm compilation with ./gradlew build before marking any task done. This is the final verification gate and is never optional.
+- During iteration, you may run isolated tests (e.g. a single service class or domain) for faster feedback. However, isolated tests do not replace the full verification gate above — always run the full suite before marking done.
 
 ### 5. Bug Fix Testing
 
-- Every bug reported by the user that results in a code fix **must** have an accompanying unit test that confirms the fixed behaviour.
+- Every bug reported by the user that results in a code fix **must** have an accompanying regression test at the appropriate level (unit, integration, or security) that confirms the fixed behaviour.
 - The test should include a KDoc comment with: a brief description of the original bug, a concise overview of the fix, and what the test is verifying.
 - The test must fail without the fix and pass with it — it should directly exercise the code path that was broken.
 

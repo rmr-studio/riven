@@ -186,13 +186,16 @@ class EntityTypeService(
             ServiceUtil.findOrThrow { entityTypeRepository.findByworkspaceIdAndKey(workspaceId, definition.key) }
         val entityTypeId = requireNotNull(existing.id)
 
+        var resolvedDefinitionId: UUID? = definition.id
+
         when (definition) {
             is SaveAttributeDefinitionRequest -> {
                 entityAttributeService.saveAttributeDefinition(workspaceId, existing, definition)
             }
 
             is SaveRelationshipDefinitionRequest -> {
-                val (_, impact) = handleSaveRelationshipDefinition(workspaceId, entityTypeId, definition, impactConfirmed)
+                val (resolvedId, impact) = handleSaveRelationshipDefinition(workspaceId, entityTypeId, definition, impactConfirmed)
+                resolvedDefinitionId = resolvedId
                 if (impact != null) {
                     return EntityTypeImpactResponse(impact = impact)
                 }
@@ -203,7 +206,7 @@ class EntityTypeService(
 
         // Optionally update column ordering if a specific index was requested
         if (requestIndex != null) {
-            val definitionId = definition.id ?: return buildImpactResponse(existing, workspaceId)
+            val definitionId = resolvedDefinitionId ?: return buildImpactResponse(existing, workspaceId)
             appendToColumnOrder(existing, definitionId, requestIndex)
         }
 
@@ -480,9 +483,22 @@ class EntityTypeService(
      */
     private fun buildImpactResponse(entity: EntityTypeEntity, workspaceId: UUID): EntityTypeImpactResponse {
         val saved = entityTypeRepository.save(entity)
+        val savedId = requireNotNull(saved.id)
+        val savedModel = saved.toModel()
+
+        val relationships = entityTypeRelationshipService.getDefinitionsForEntityType(workspaceId, savedId)
+        val allMetadata = semanticMetadataService.getAllMetadataForEntityType(workspaceId, savedId)
+        val bundle = buildSemanticBundle(savedId, allMetadata)
+
+        val enrichedModel = savedModel.copy(
+            relationships = relationships,
+            semantics = bundle,
+            columns = assembleColumns(savedModel.schema, relationships, savedModel.columnConfiguration),
+        )
+
         return EntityTypeImpactResponse(
             impact = null,
-            updatedEntityTypes = mapOf(saved.key to saved.toModel()),
+            updatedEntityTypes = mapOf(saved.key to enrichedModel),
             error = null
         )
     }
@@ -528,6 +544,7 @@ class EntityTypeService(
 
             val orderedIds = config?.order
                 ?.filter { it in allIds }  // skip stale IDs
+                ?.distinct()               // deduplicate
                 ?.takeIf { it.isNotEmpty() }
                 ?: (attributeIds.toList() + relationshipIds.toList())  // default order
 
