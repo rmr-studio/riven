@@ -29,7 +29,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Navigating between steps triggers smooth camera-style zoom/pan transitions on the preview panel
   4. Optional steps show a visible "Skip" affordance and required steps validate before allowing forward navigation
   5. Adding a new step requires only a config entry and components, not animation/navigation rewrites
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 01-01: Onboarding store, step config, and step navigation framework
@@ -89,7 +89,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Camera System | 1/3 | In Progress|  |
+| 1. Foundation & Camera System | 2/3 | In Progress|  |
 | 2. Required Steps | 0/2 | Not started | - |
 | 3. Optional Steps | 0/2 | Not started | - |
 | 4. Submission & Completion | 0/2 | Not started | - |

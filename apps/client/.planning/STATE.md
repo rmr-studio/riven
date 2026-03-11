@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-03-11T06:43:34.689Z"
+stopped_at: "Checkpoint: 01-02 Task 3 - awaiting visual verification"
+last_updated: "2026-03-11T06:49:15.803Z"
 last_activity: 2026-03-08 -- Roadmap created
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -51,6 +51,7 @@ Progress: [░░░░░░░░░░] 0%
 
 *Updated after each plan completion*
 | Phase 01-foundation-camera-system P01 | 3 | 2 tasks | 5 files |
+| Phase 01 P02 | 3 | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -64,6 +65,8 @@ Recent decisions affecting current work:
 - [Roadmap]: Template catalog may need mock data if backend endpoint not ready (flagged for Phase 3).
 - [Phase 01-01]: Singleton create() for onboarding store (not createStore+context) — onboarding is app-wide singleton
 - [Phase 01-01]: cameraX = index * SECTION_WIDTH (800) ensures monotonicity and extensibility
+- [Phase 01-foundation-camera-system]: Three-phase camera animation locked at 200ms each (600ms total) — not configurable per user decision
+- [Phase 01-foundation-camera-system]: isAnimating ref guards rapid navigation to prevent animation conflicts without triggering re-renders
 
 ### Pending Todos
 
@@ -76,6 +79,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-11T06:43:34.687Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-03-11T06:49:05.053Z
+Stopped at: Checkpoint: 01-02 Task 3 - awaiting visual verification
 Resume file: None
