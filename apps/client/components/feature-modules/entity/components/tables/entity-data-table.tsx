@@ -43,7 +43,6 @@ import {
   applyColumnOrdering,
   EntityRow,
   generateColumnsFromEntityType,
-  generateFiltersFromEntityType,
   generateSearchConfigFromEntityType,
   isDraftRow,
   transformEntitiesToRows,
@@ -193,17 +192,17 @@ export const EntityDataTable: FC<Props> = ({
           </TooltipTrigger>
           <TooltipContent side="top">Add property</TooltipContent>
         </Tooltip>
-        <ColumnVisibilityPopover
-          entityType={entityType}
-          columnConfiguration={form.getValues('columnConfiguration')}
-          onToggleVisibility={handleToggleVisibility}
-          onReorder={handleReorder}
-          onShowAll={handleShowAll}
-          onHideAll={handleHideAll}
-          open={visibilityPopoverOpen}
-          onOpenChange={setVisibilityPopoverOpen}
-        >
-          <Tooltip>
+        <Tooltip>
+          <ColumnVisibilityPopover
+            entityType={entityType}
+            columnConfiguration={form.getValues('columnConfiguration')}
+            onToggleVisibility={handleToggleVisibility}
+            onReorder={handleReorder}
+            onShowAll={handleShowAll}
+            onHideAll={handleHideAll}
+            open={visibilityPopoverOpen}
+            onOpenChange={setVisibilityPopoverOpen}
+          >
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
@@ -215,9 +214,9 @@ export const EntityDataTable: FC<Props> = ({
                 <span className="sr-only">Manage columns</span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="top">Column settings</TooltipContent>
-          </Tooltip>
-        </ColumnVisibilityPopover>
+          </ColumnVisibilityPopover>
+          <TooltipContent side="top">Column settings</TooltipContent>
+        </Tooltip>
       </div>
     ),
     [
@@ -260,11 +259,6 @@ export const EntityDataTable: FC<Props> = ({
     const generatedColumns = generateColumnsFromEntityType(entityType, { enableEditing: true });
     return applyColumnOrdering(generatedColumns, entityType.columnConfiguration);
   }, [entityType]);
-
-  // Generate filters from entity type and actual data
-  const filters = useMemo(() => {
-    return generateFiltersFromEntityType(entityType, entities);
-  }, [entityType, entities]);
 
   // Generate search configuration
   const searchableColumns = useMemo<string[]>(() => {
@@ -402,8 +396,8 @@ export const EntityDataTable: FC<Props> = ({
     // TODO: integrate with server-side entity query when API hook is wired up
   }, []);
 
-  // Toolbar right-side actions: filter
-  const toolbarActions = useMemo(
+  // Custom filter UI for the entity data table
+  const filterContent = useMemo(
     () => (
       <EntityQueryBuilder
         entityType={entityType}
@@ -448,12 +442,7 @@ export const EntityDataTable: FC<Props> = ({
             alwaysShowActionHandles={true}
             getRowId={(row) => row._entityId}
             search={searchConfig}
-            filter={{
-              enabled: filters.length > 0,
-              filters,
-              disabled: isDraftMode,
-            }}
-            toolbarActions={toolbarActions}
+            filterContent={filterContent}
             columnResizing={columnResizingConfig}
             emptyMessage={emptyMessage}
             className={cn(className)}

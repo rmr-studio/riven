@@ -49,7 +49,6 @@ import { useDataTableActions, useDataTableStore, useDerivedState } from './data-
 import type {
   ColumnOrderingConfig,
   ColumnResizingConfig,
-  FilterConfig,
   RowActionsConfig,
   RowSelectionConfig,
   SearchConfig,
@@ -70,7 +69,8 @@ export interface DataTableProps<TData, TValue> {
   className?: string;
   emptyMessage?: string;
   search?: SearchConfig<TData>;
-  filter?: FilterConfig<TData>;
+  /** Custom filter UI rendered in the toolbar (each consumer provides its own) */
+  filterContent?: ReactNode;
   /** Extra content rendered on the right side of the toolbar (e.g. action buttons) */
   toolbarActions?: ReactNode;
   rowActions?: RowActionsConfig<TData>;
@@ -159,7 +159,7 @@ export function DataTable<TData, TValue>({
   className,
   emptyMessage = 'No results.',
   search,
-  filter,
+  filterContent,
   toolbarActions,
   rowActions,
   columnResizing,
@@ -340,7 +340,7 @@ export function DataTable<TData, TValue>({
       getSortedRowModel: getSortedRowModel(),
       onSortingChange: setSorting,
     }),
-    ...((enableFiltering || search?.enabled || filter?.enabled) && {
+    ...((enableFiltering || search?.enabled) && {
       getFilteredRowModel: getFilteredRowModel(),
       globalFilterFn,
       filterFns: {
@@ -383,7 +383,7 @@ export function DataTable<TData, TValue>({
     getRowId: getRowId,
     state: {
       ...(enableSorting && { sorting }),
-      ...((enableFiltering || search?.enabled || filter?.enabled) && { columnFilters }),
+      ...((enableFiltering || search?.enabled) && { columnFilters }),
       ...(search?.enabled && { globalFilter }),
       ...(columnResizing?.enabled && { columnSizing }),
       ...(columnOrdering?.enabled && { columnOrder }),
@@ -765,7 +765,7 @@ export function DataTable<TData, TValue>({
       <DataTableSelectionBar actionComponent={rowSelection?.actionComponent} />
 
       {/* Toolbar */}
-      <DataTableToolbar search={search} filter={filter} actions={toolbarActions} />
+      <DataTableToolbar search={search} filterContent={filterContent} actions={toolbarActions} />
 
       {/* Table */}
       {wrappedContent}
