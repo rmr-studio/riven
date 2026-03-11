@@ -34,16 +34,16 @@ export const EntityDraftProvider = ({
   const storeRef = useRef<EntityDraftStoreApi | null>(null);
 
   // Build dynamic Zod schema from entity type
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: version increments when schema changes
   const schema = useMemo(
     () => buildZodSchemaFromEntityType(entityType),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: version increments when schema changes
     [entityType.id, entityType.version],
   );
 
   // Build default values from entity type (includes attribute defaults and relationship arrays)
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: version increments when schema changes
   const defaultValues = useMemo(
     () => buildDefaultValuesFromEntityType(entityType),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: version increments when schema changes
     [entityType.id, entityType.version],
   );
 

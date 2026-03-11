@@ -68,8 +68,8 @@ describe('normalizeApiError', () => {
 
     try {
       await normalizeApiError(apiError);
-    } catch (error: any) {
-      expect(error.cause).toBeDefined();
+    } catch (error: unknown) {
+      expect((error as Record<string, unknown>).cause).toBeDefined();
     }
   });
 });
