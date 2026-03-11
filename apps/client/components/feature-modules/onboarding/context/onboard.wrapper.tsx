@@ -2,7 +2,7 @@
 
 import { useProfile } from '@/components/feature-modules/user/hooks/useProfile';
 import { FCWC, Propless } from '@/lib/interfaces/interface';
-import { Onboard } from '../components/Onboard';
+import { OnboardShell } from '../components/onboard-shell';
 
 /**
  * Centralised Wrapper Component to Handle all the Onboarding Process
@@ -16,5 +16,5 @@ export const OnboardWrapper: FCWC<Propless> = ({ children }) => {
   // New user accounts wont have a name, indicating they haven't completed onboarding
   if (!user || user.name) return <>{children}</>;
 
-  return <Onboard />;
+  return <OnboardShell />;
 };
