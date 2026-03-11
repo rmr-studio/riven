@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { ColumnConfiguration } from './ColumnConfiguration';
+import {
+    ColumnConfigurationFromJSON,
+    ColumnConfigurationFromJSONTyped,
+    ColumnConfigurationToJSON,
+    ColumnConfigurationToJSONTyped,
+} from './ColumnConfiguration';
 import type { DisplayName } from './DisplayName';
 import {
     DisplayNameFromJSON,
@@ -20,13 +27,6 @@ import {
     DisplayNameToJSON,
     DisplayNameToJSONTyped,
 } from './DisplayName';
-import type { EntityTypeAttributeColumn } from './EntityTypeAttributeColumn';
-import {
-    EntityTypeAttributeColumnFromJSON,
-    EntityTypeAttributeColumnFromJSONTyped,
-    EntityTypeAttributeColumnToJSON,
-    EntityTypeAttributeColumnToJSONTyped,
-} from './EntityTypeAttributeColumn';
 import type { SemanticGroup } from './SemanticGroup';
 import {
     SemanticGroupFromJSON,
@@ -81,10 +81,10 @@ export interface UpdateEntityTypeConfigurationRequest {
     semanticGroup?: SemanticGroup;
     /**
      * 
-     * @type {Array<EntityTypeAttributeColumn>}
+     * @type {ColumnConfiguration}
      * @memberof UpdateEntityTypeConfigurationRequest
      */
-    columns: Array<EntityTypeAttributeColumn>;
+    columnConfiguration?: ColumnConfiguration;
     /**
      * 
      * @type {SaveSemanticMetadataRequest}
@@ -102,7 +102,6 @@ export function instanceOfUpdateEntityTypeConfigurationRequest(value: object): v
     if (!('id' in value) || value['id'] === undefined) return false;
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('icon' in value) || value['icon'] === undefined) return false;
-    if (!('columns' in value) || value['columns'] === undefined) return false;
     return true;
 }
 
@@ -120,7 +119,7 @@ export function UpdateEntityTypeConfigurationRequestFromJSONTyped(json: any, ign
         'name': DisplayNameFromJSON(json['name']),
         'icon': IconFromJSON(json['icon']),
         'semanticGroup': json['semanticGroup'] == null ? undefined : SemanticGroupFromJSON(json['semanticGroup']),
-        'columns': ((json['columns'] as Array<any>).map(EntityTypeAttributeColumnFromJSON)),
+        'columnConfiguration': json['columnConfiguration'] == null ? undefined : ColumnConfigurationFromJSON(json['columnConfiguration']),
         'semantics': json['semantics'] == null ? undefined : SaveSemanticMetadataRequestFromJSON(json['semantics']),
     };
 }
@@ -140,7 +139,7 @@ export function UpdateEntityTypeConfigurationRequestToJSONTyped(value?: UpdateEn
         'name': DisplayNameToJSON(value['name']),
         'icon': IconToJSON(value['icon']),
         'semanticGroup': SemanticGroupToJSON(value['semanticGroup']),
-        'columns': ((value['columns'] as Array<any>).map(EntityTypeAttributeColumnToJSON)),
+        'columnConfiguration': ColumnConfigurationToJSON(value['columnConfiguration']),
         'semantics': SaveSemanticMetadataRequestToJSON(value['semantics']),
     };
 }

@@ -41,6 +41,12 @@ export interface EntityTypeAttributeColumn {
     type: EntityPropertyType;
     /**
      * 
+     * @type {boolean}
+     * @memberof EntityTypeAttributeColumn
+     */
+    visible: boolean;
+    /**
+     * 
      * @type {number}
      * @memberof EntityTypeAttributeColumn
      */
@@ -55,6 +61,7 @@ export interface EntityTypeAttributeColumn {
 export function instanceOfEntityTypeAttributeColumn(value: object): value is EntityTypeAttributeColumn {
     if (!('key' in value) || value['key'] === undefined) return false;
     if (!('type' in value) || value['type'] === undefined) return false;
+    if (!('visible' in value) || value['visible'] === undefined) return false;
     if (!('width' in value) || value['width'] === undefined) return false;
     return true;
 }
@@ -71,6 +78,7 @@ export function EntityTypeAttributeColumnFromJSONTyped(json: any, ignoreDiscrimi
         
         'key': json['key'],
         'type': EntityPropertyTypeFromJSON(json['type']),
+        'visible': json['visible'],
         'width': json['width'],
     };
 }
@@ -88,6 +96,7 @@ export function EntityTypeAttributeColumnToJSONTyped(value?: EntityTypeAttribute
         
         'key': value['key'],
         'type': EntityPropertyTypeToJSON(value['type']),
+        'visible': value['visible'],
         'width': value['width'],
     };
 }

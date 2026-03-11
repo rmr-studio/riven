@@ -19,6 +19,7 @@ Name | Type
 `readonly` | boolean
 `workspaceId` | string
 `schema` | [SchemaUUID](SchemaUUID.md)
+`columnConfiguration` | [ColumnConfiguration](ColumnConfiguration.md)
 `columns` | [Array&lt;EntityTypeAttributeColumn&gt;](EntityTypeAttributeColumn.md)
 `entitiesCount` | number
 `relationships` | [Array&lt;RelationshipDefinition&gt;](RelationshipDefinition.md)
@@ -48,6 +49,7 @@ const example = {
   "readonly": null,
   "workspaceId": null,
   "schema": null,
+  "columnConfiguration": null,
   "columns": null,
   "entitiesCount": null,
   "relationships": null,

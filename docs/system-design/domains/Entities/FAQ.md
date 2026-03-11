@@ -80,6 +80,35 @@ Protected definitions (like CONNECTED_ENTITIES) cannot be deleted and throw `Ill
 | `relationship_target_rules` | Per-target-type rules (which types can be targets, cardinality overrides, inverse names) | Hard-delete |
 | `entity_relationships` | Instance-level links between entities | Soft-delete |
 
+### How are entity type columns determined
+
+Columns are **derived at read-time**, not stored. The `EntityTypeService.assembleColumns()` function computes the column list from three inputs:
+
+1. **Schema attributes** — every property key in the entity type's schema becomes an ATTRIBUTE column
+2. **Relationship definitions** — every relationship definition visible to the entity type becomes a RELATIONSHIP column
+3. **ColumnConfiguration** (optional, stored as JSONB on `entity_types.column_configuration`) — provides explicit ordering and per-column display overrides
+
+If no configuration exists, columns default to schema attributes in property-map order followed by relationships. The `EntityTypeAttributeColumn` model (key, type, width, visible) is the output — it appears in API responses but is never persisted directly.
+
+### What is ColumnConfiguration
+
+`ColumnConfiguration` is a lightweight JSONB object stored on the entity type with two fields:
+
+- `order: List<UUID>` — explicit column ordering. IDs that no longer exist in the schema or relationships are silently filtered during assembly. Newly added attributes/relationships not yet in the list are appended at the end.
+- `overrides: Map<UUID, ColumnOverride>` — per-column display customizations. `ColumnOverride` has optional `width: Int?` and `visible: Boolean?`. Only non-default values need to be stored.
+
+Clients update column configuration through `UpdateEntityTypeConfigurationRequest.columnConfiguration`. The configuration is purely cosmetic — it affects display ordering and widths, not data storage or query behavior.
+
+### Why aren't columns stored directly
+
+Previously, columns were stored as a `List<EntityTypeAttributeColumn>` JSONB array on the entity type. This required manual synchronization on every attribute and relationship CRUD operation: adding inverse columns to target entity types on relationship creation, removing them on deletion, reordering on updates. This caused:
+
+- Cross-entity writes (relationship mutations saved N+1 entity types in one transaction)
+- Race conditions on concurrent relationship mutations targeting the same entity type
+- Sync bugs when any CRUD path forgot to update columns
+
+Deriving columns at read-time makes stale or orphaned columns structurally impossible. The ~100 lines of sync code (`addInverseColumnsToTargetTypes`, `removeInverseColumnsFromTargetTypes`, `refreshSourceEntityTypeAfterTargetRemoval`, `updateColumnOrdering`, `reorderEntityTypeColumns`) were removed entirely.
+
 ### How are entity types created from catalog templates
 
 When a user installs a template (or bundle) via `TemplateInstallationService`, entity types are created by translating catalog definitions into workspace-scoped entity types:
