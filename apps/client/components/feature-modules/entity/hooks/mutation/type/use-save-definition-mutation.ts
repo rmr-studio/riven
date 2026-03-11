@@ -8,6 +8,7 @@ import { MutationFunctionContext, useMutation, useQueryClient, type UseMutationO
 import { useRef } from 'react';
 import { toast } from 'sonner';
 import { EntityTypeService } from '../../../service/entity-type.service';
+import { entityKeys } from '../../query/entity-query-keys';
 
 export function useSaveDefinitionMutation(
   workspaceId: string,
@@ -54,11 +55,11 @@ export function useSaveDefinitionMutation(
       if (response.updatedEntityTypes) {
         Object.entries(response.updatedEntityTypes).forEach(([key]) => {
           // Invalidate individual entity type queries (partial match handles varying `include` param)
-          queryClient.invalidateQueries({ queryKey: ['entityType', key, workspaceId] });
+          queryClient.invalidateQueries({ queryKey: entityKeys.entityTypes.byKey(key, workspaceId) });
         });
 
         // Invalidate the entity types list
-        queryClient.invalidateQueries({ queryKey: ['entityTypes', workspaceId] });
+        queryClient.invalidateQueries({ queryKey: entityKeys.entityTypes.list(workspaceId) });
       }
 
       return response;

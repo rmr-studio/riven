@@ -12,6 +12,7 @@ import {
 } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { EntityTypeService } from '../../../service/entity-type.service';
+import { entityKeys } from '../../query/entity-query-keys';
 
 interface DeleteDefinitionMutationVariables extends DeleteTypeDefinitionRequest {
   impactConfirmed?: boolean;
@@ -58,11 +59,11 @@ export function useDeleteDefinitionMutation(
       if (response.updatedEntityTypes) {
         Object.entries(response.updatedEntityTypes).forEach(([key]) => {
           // Invalidate all entity type queries for this key (regardless of include params)
-          queryClient.invalidateQueries({ queryKey: ['entityType', key, workspaceId] });
+          queryClient.invalidateQueries({ queryKey: entityKeys.entityTypes.byKey(key, workspaceId) });
         });
 
         // Invalidate the entity types list in cache
-        queryClient.invalidateQueries({ queryKey: ['entityTypes', workspaceId] });
+        queryClient.invalidateQueries({ queryKey: entityKeys.entityTypes.list(workspaceId) });
       }
 
       return response;
