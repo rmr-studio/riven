@@ -31,18 +31,11 @@ export function useSaveEntityTypeConfiguration(
       toast.dismiss(submissionToastRef.current);
       toast.success(`Entity type updated successfully!`);
 
-      // Update cache for all entity types that were updated
+      // Invalidate entity type queries (partial match handles varying `include` param)
+      queryClient.invalidateQueries({ queryKey: ['entityType', response.key, workspaceId] });
 
-      // Update individual entity type query cache
-      queryClient.setQueryData(['entityType', response.key, workspaceId], response);
-
-      // Update the entity types list in cache
-      queryClient.setQueryData<EntityType[]>(['entityTypes', workspaceId], (oldData) => {
-        if (!oldData) return [response];
-
-        // Replace all updated entity types in the list
-        return oldData.map((et) => (et.key === response.key ? response : et));
-      });
+      // Invalidate the entity types list
+      queryClient.invalidateQueries({ queryKey: ['entityTypes', workspaceId] });
 
       // Stay on the same page after update
       return response;
