@@ -1,4 +1,8 @@
 import React from 'react';
+import { ProfilePreview } from '../components/previews/profile-preview';
+import { WorkspacePreview } from '../components/previews/workspace-preview';
+import { TemplatesPreview } from '../components/previews/templates-preview';
+import { TeamPreview } from '../components/previews/team-preview';
 
 export const SECTION_WIDTH = 800;
 
@@ -10,46 +14,33 @@ export interface OnboardStepConfig {
   PreviewComponent: React.ComponentType;
 }
 
-// Placeholder preview components — replaced with wireframe skeletons in Plan 02
-const ProfilePreviewPlaceholder: React.FC = () =>
-  React.createElement('div', null, 'Profile Preview');
-
-const WorkspacePreviewPlaceholder: React.FC = () =>
-  React.createElement('div', null, 'Workspace Preview');
-
-const TemplatesPreviewPlaceholder: React.FC = () =>
-  React.createElement('div', null, 'Templates Preview');
-
-const TeamPreviewPlaceholder: React.FC = () =>
-  React.createElement('div', null, 'Team Preview');
-
 export const ONBOARD_STEPS: OnboardStepConfig[] = [
   {
     id: 'profile',
     label: 'Profile',
     optional: false,
     cameraX: 0,
-    PreviewComponent: ProfilePreviewPlaceholder,
+    PreviewComponent: ProfilePreview,
   },
   {
     id: 'workspace',
     label: 'Workspace',
     optional: false,
     cameraX: SECTION_WIDTH,
-    PreviewComponent: WorkspacePreviewPlaceholder,
+    PreviewComponent: WorkspacePreview,
   },
   {
     id: 'templates',
     label: 'Templates',
     optional: true,
     cameraX: SECTION_WIDTH * 2,
-    PreviewComponent: TemplatesPreviewPlaceholder,
+    PreviewComponent: TemplatesPreview,
   },
   {
     id: 'team',
     label: 'Team',
     optional: true,
     cameraX: SECTION_WIDTH * 3,
-    PreviewComponent: TeamPreviewPlaceholder,
+    PreviewComponent: TeamPreview,
   },
 ];
