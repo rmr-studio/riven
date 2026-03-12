@@ -47,6 +47,7 @@ import { DataTableSelectionBar } from './components/data-table-selection-bar';
 import { DataTableToolbar } from './components/data-table-toolbar';
 import { useDataTableActions, useDataTableStore, useDerivedState } from './data-table-provider';
 import type {
+  ActionColumnConfig,
   ColumnOrderingConfig,
   ColumnResizingConfig,
   RowActionsConfig,
@@ -88,8 +89,8 @@ export interface DataTableProps<TData, TValue> {
   onCellEdit?: (row: TData, columnId: string, newValue: any, oldValue: any) => Promise<boolean>;
   /** Edit mode trigger (click or doubleClick) */
   editMode?: 'click' | 'doubleClick';
-  /** Always show action handles (drag/select) even when not hovering */
-  alwaysShowActionHandles?: boolean;
+  /** Configuration for the action column (drag handle, checkbox visibility) */
+  actionColumnConfig?: ActionColumnConfig;
   defaultColumnWidth?: number;
   /** Callback when a column header is clicked */
   onHeaderClick?: (columnId: string, anchorEl: HTMLElement) => void;
@@ -173,7 +174,7 @@ export function DataTable<TData, TValue>({
   onCellEdit,
   editMode = 'click',
   defaultColumnWidth = DEFAULT_COLUMN_WIDTH,
-  alwaysShowActionHandles = false,
+  actionColumnConfig,
   onHeaderClick,
   endOfHeaderContent,
   scrollContainerClassName,
@@ -242,22 +243,17 @@ export function DataTable<TData, TValue>({
   // ========================================================================
 
   const finalColumns = useMemo(() => {
-    // Check if any actions are enabled
-    const hasActions = enableDragDrop || isSelectionEnabled;
-
-    // If no actions, return columns as-is
-    if (!hasActions) {
-      return columns;
-    }
-
-    // Calculate dynamic width based on enabled features (35px per icon)
     const ACTION_ICON_WIDTH = 35;
     let actionColumnWidth = 0;
 
-    if (enableDragDrop) actionColumnWidth += ACTION_ICON_WIDTH;
-    if (isSelectionEnabled) actionColumnWidth += ACTION_ICON_WIDTH;
+    const showDragHandle = enableDragDrop && (actionColumnConfig?.dragHandle?.enabled !== false);
+    const showCheckbox = isSelectionEnabled && (actionColumnConfig?.checkbox?.enabled !== false);
 
-    // Action Column includes drag handle and/or selection checkbox
+    if (showDragHandle) actionColumnWidth += ACTION_ICON_WIDTH;
+    if (showCheckbox) actionColumnWidth += ACTION_ICON_WIDTH;
+
+    if (actionColumnWidth === 0) return columns;
+
     const actionsColumn: ColumnDef<TData, TValue> = {
       id: 'actions',
       size: actionColumnWidth,
@@ -268,7 +264,7 @@ export function DataTable<TData, TValue>({
       enableHiding: false,
       header: ({ table }) => (
         <div className="flex items-center justify-center">
-          {isSelectionEnabled && (
+          {showCheckbox && (
             <Checkbox
               checked={table.getIsAllPageRowsSelected()}
               onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
@@ -281,7 +277,7 @@ export function DataTable<TData, TValue>({
     };
 
     return [actionsColumn, ...columns];
-  }, [columns, enableDragDrop, isSelectionEnabled]);
+  }, [columns, enableDragDrop, isSelectionEnabled, actionColumnConfig]);
 
   // ========================================================================
   // TanStack Table Configuration
@@ -708,7 +704,7 @@ export function DataTable<TData, TValue>({
             finalColumnsCount={finalColumns.length}
             enableInlineEdit={enableInlineEdit}
             focusedCell={focusedCell}
-            alwaysShowActionHandles={alwaysShowActionHandles}
+            actionColumnConfig={actionColumnConfig}
             hasEndOfHeaderContent={hasEndOfHeaderContent}
             hasRowActions={hasRowActions}
           />

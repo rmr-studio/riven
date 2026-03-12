@@ -56,6 +56,9 @@ export type {
   ColumnOrderingConfig,
   SelectionActionProps,
   RowSelectionConfig,
+  ActionColumnConfig,
+  ActionElementConfig,
+  ActionVisibility,
 } from './data-table.types';
 
 // ============================================================================
