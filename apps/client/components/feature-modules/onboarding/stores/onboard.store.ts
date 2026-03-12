@@ -6,6 +6,8 @@ export interface OnboardState {
   currentStep: number;
   direction: 'forward' | 'backward';
   validatedData: Record<string, unknown>;
+  liveData: Record<string, unknown>;
+  formTrigger: (() => Promise<boolean>) | null;
 }
 
 export interface OnboardActions {
@@ -13,6 +15,9 @@ export interface OnboardActions {
   goBack: () => void;
   skip: () => void;
   setStepData: (stepId: string, data: unknown) => void;
+  setLiveData: (stepId: string, data: unknown) => void;
+  registerFormTrigger: (fn: () => Promise<boolean>) => void;
+  clearFormTrigger: () => void;
   reset: () => void;
 }
 
@@ -22,6 +27,8 @@ const initialState: OnboardState = {
   currentStep: 0,
   direction: 'forward',
   validatedData: {},
+  liveData: {},
+  formTrigger: null,
 };
 
 export const useOnboardStore = create<OnboardStore>()(
@@ -65,8 +72,25 @@ export const useOnboardStore = create<OnboardStore>()(
       }));
     },
 
+    setLiveData: (stepId, data) => {
+      set((state) => ({
+        liveData: {
+          ...state.liveData,
+          [stepId]: data,
+        },
+      }));
+    },
+
+    registerFormTrigger: (fn) => {
+      set({ formTrigger: fn });
+    },
+
+    clearFormTrigger: () => {
+      set({ formTrigger: null });
+    },
+
     reset: () => {
-      set({ ...initialState, validatedData: {} });
+      set({ ...initialState, validatedData: {}, liveData: {}, formTrigger: null });
     },
   })),
 );

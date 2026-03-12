@@ -1,0 +1,41 @@
+'use client';
+
+import { AnimatePresence, motion } from 'framer-motion';
+import { FC } from 'react';
+import { ONBOARD_STEPS } from '../config/onboard-steps';
+import { useOnboardStore } from '../hooks/use-onboard-store';
+import { ProfileStepForm } from './forms/profile-step-form';
+
+const STEP_FORMS: Record<string, React.ComponentType> = {
+  profile: ProfileStepForm,
+};
+
+export const OnboardStepForm: FC = () => {
+  const currentStep = useOnboardStore((s) => s.currentStep);
+  const direction = useOnboardStore((s) => s.direction);
+
+  const xOffset = direction === 'forward' ? 40 : -40;
+  const stepConfig = ONBOARD_STEPS[currentStep];
+
+  const StepForm = STEP_FORMS[stepConfig.id];
+
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={currentStep}
+        initial={{ opacity: 0, x: xOffset }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -xOffset }}
+        transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+        className="flex h-full flex-col"
+      >
+        <h2 className="text-heading font-serif text-2xl">{stepConfig.label}</h2>
+        <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">
+          {stepConfig.description}
+        </p>
+
+        <div className="mt-6 flex-1">{StepForm ? <StepForm /> : null}</div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
