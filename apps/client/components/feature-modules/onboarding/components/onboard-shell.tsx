@@ -8,13 +8,13 @@ import { OnboardPreviewPanel } from './onboard-preview-panel';
 export const OnboardShell: FC<Propless> = () => {
   return (
     <div className="fixed inset-0 z-50 flex">
-      {/* Left panel — form area (40%) */}
-      <div className="bg-card h-full w-2/5">
+      {/* Left panel — form area (full on mobile, 40% on md+) */}
+      <div className="bg-card h-full w-full md:w-2/5">
         <OnboardFormPanel />
       </div>
 
-      {/* Right panel — preview area (60%) */}
-      <div className="bg-muted relative h-full w-3/5 overflow-hidden">
+      {/* Right panel — preview area (hidden on mobile, 60% on md+) */}
+      <div className="bg-muted relative hidden h-full w-3/5 overflow-hidden md:block">
         <OnboardPreviewPanel />
       </div>
     </div>
