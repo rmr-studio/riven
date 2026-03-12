@@ -7,7 +7,7 @@ import {
 import { MutationFunctionContext, useMutation, useQueryClient, type UseMutationOptions } from '@tanstack/react-query';
 import { useRef } from 'react';
 import { toast } from 'sonner';
-import { EntityTypeService } from '../../../service/entity-type.service';
+import { EntityTypeService } from '@/components/feature-modules/entity/service/entity-type.service';
 import { entityKeys } from '@/components/feature-modules/entity/hooks/query/entity-query-keys';
 
 export function useSaveDefinitionMutation(
@@ -50,7 +50,7 @@ export function useSaveDefinitionMutation(
 
       toast.success(`Entity type definition saved successfully!`);
 
-      queryClient.invalidateQueries({ queryKey: ['semanticMetadata'] });
+      queryClient.invalidateQueries({ queryKey: ['semanticMetadata', workspaceId] });
 
       if (response.updatedEntityTypes) {
         Object.entries(response.updatedEntityTypes).forEach(([key]) => {

@@ -3,8 +3,8 @@ import { useAuthenticatedQuery } from '@/hooks/query/use-authenticated-query';
 import { AuthenticatedMultiQueryResult, AuthenticatedQueryResult } from '@/lib/interfaces/interface';
 import { Entity } from '@/lib/types/entity';
 import { useMemo } from 'react';
-import { EntityService } from '../../service/entity.service';
-import { entityKeys } from './entity-query-keys';
+import { EntityService } from '@/components/feature-modules/entity/service/entity.service';
+import { entityKeys } from '@/components/feature-modules/entity/hooks/query/entity-query-keys';
 
 export function useEntities(
   workspaceId?: string,
