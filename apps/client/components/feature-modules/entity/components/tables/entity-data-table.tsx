@@ -253,6 +253,10 @@ export const EntityDataTable: FC<Props> = ({
             }}
             enableDragDrop
             actionColumnConfig={actionColumnConfig}
+            columnOrdering={{
+              enabled: true,
+              onColumnOrderChange: handleReorder,
+            }}
             getRowId={(row) => row._entityId}
             search={searchConfig}
             filterContent={filterContent}
