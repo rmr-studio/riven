@@ -1,32 +1,32 @@
 
-# WorkspaceDefaultCurrency
+# ManifestSummary
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`currencyCode` | string
-`displayName` | string
-`symbol` | string
-`defaultFractionDigits` | number
-`numericCode` | number
-`numericCodeAsString` | string
+`id` | string
+`key` | string
+`name` | string
+`description` | string
+`manifestVersion` | string
+`entityTypeCount` | number
 
 ## Example
 
 ```typescript
-import type { WorkspaceDefaultCurrency } from ''
+import type { ManifestSummary } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "currencyCode": null,
-  "displayName": null,
-  "symbol": null,
-  "defaultFractionDigits": null,
-  "numericCode": null,
-  "numericCodeAsString": null,
-} satisfies WorkspaceDefaultCurrency
+  "id": null,
+  "key": null,
+  "name": null,
+  "description": null,
+  "manifestVersion": null,
+  "entityTypeCount": null,
+} satisfies ManifestSummary
 
 console.log(example)
 
@@ -35,7 +35,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkspaceDefaultCurrency
+const exampleParsed = JSON.parse(exampleJSON) as ManifestSummary
 console.log(exampleParsed)
 ```
 

@@ -8,6 +8,7 @@ Name | Type
 ------------ | -------------
 `key` | string
 `type` | [EntityPropertyType](EntityPropertyType.md)
+`visible` | boolean
 `width` | number
 
 ## Example
@@ -19,6 +20,7 @@ import type { EntityTypeAttributeColumn } from ''
 const example = {
   "key": null,
   "type": null,
+  "visible": null,
   "width": null,
 } satisfies EntityTypeAttributeColumn
 

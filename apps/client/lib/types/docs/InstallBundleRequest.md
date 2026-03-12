@@ -1,32 +1,22 @@
 
-# WorkspaceDefaultCurrency
+# InstallBundleRequest
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`currencyCode` | string
-`displayName` | string
-`symbol` | string
-`defaultFractionDigits` | number
-`numericCode` | number
-`numericCodeAsString` | string
+`bundleKey` | string
 
 ## Example
 
 ```typescript
-import type { WorkspaceDefaultCurrency } from ''
+import type { InstallBundleRequest } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "currencyCode": null,
-  "displayName": null,
-  "symbol": null,
-  "defaultFractionDigits": null,
-  "numericCode": null,
-  "numericCodeAsString": null,
-} satisfies WorkspaceDefaultCurrency
+  "bundleKey": null,
+} satisfies InstallBundleRequest
 
 console.log(example)
 
@@ -35,7 +25,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkspaceDefaultCurrency
+const exampleParsed = JSON.parse(exampleJSON) as InstallBundleRequest
 console.log(exampleParsed)
 ```
 

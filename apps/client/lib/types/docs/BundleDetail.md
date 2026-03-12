@@ -1,32 +1,30 @@
 
-# WorkspaceDefaultCurrency
+# BundleDetail
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`currencyCode` | string
-`displayName` | string
-`symbol` | string
-`defaultFractionDigits` | number
-`numericCode` | number
-`numericCodeAsString` | string
+`id` | string
+`key` | string
+`name` | string
+`description` | string
+`templateKeys` | Array&lt;string&gt;
 
 ## Example
 
 ```typescript
-import type { WorkspaceDefaultCurrency } from ''
+import type { BundleDetail } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "currencyCode": null,
-  "displayName": null,
-  "symbol": null,
-  "defaultFractionDigits": null,
-  "numericCode": null,
-  "numericCodeAsString": null,
-} satisfies WorkspaceDefaultCurrency
+  "id": null,
+  "key": null,
+  "name": null,
+  "description": null,
+  "templateKeys": null,
+} satisfies BundleDetail
 
 console.log(example)
 
@@ -35,7 +33,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkspaceDefaultCurrency
+const exampleParsed = JSON.parse(exampleJSON) as BundleDetail
 console.log(exampleParsed)
 ```
 

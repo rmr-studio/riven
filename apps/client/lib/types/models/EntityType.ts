@@ -27,6 +27,13 @@ import {
     SourceTypeToJSON,
     SourceTypeToJSONTyped,
 } from './SourceType';
+import type { ColumnConfiguration } from './ColumnConfiguration';
+import {
+    ColumnConfigurationFromJSON,
+    ColumnConfigurationFromJSONTyped,
+    ColumnConfigurationToJSON,
+    ColumnConfigurationToJSONTyped,
+} from './ColumnConfiguration';
 import type { DisplayName } from './DisplayName';
 import {
     DisplayNameFromJSON,
@@ -156,6 +163,12 @@ export interface EntityType {
     schema: SchemaUUID;
     /**
      * 
+     * @type {ColumnConfiguration}
+     * @memberof EntityType
+     */
+    columnConfiguration?: ColumnConfiguration;
+    /**
+     * 
      * @type {Array<EntityTypeAttributeColumn>}
      * @memberof EntityType
      */
@@ -250,6 +263,7 @@ export function EntityTypeFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'readonly': json['readonly'],
         'workspaceId': json['workspaceId'] == null ? undefined : json['workspaceId'],
         'schema': SchemaUUIDFromJSON(json['schema']),
+        'columnConfiguration': json['columnConfiguration'] == null ? undefined : ColumnConfigurationFromJSON(json['columnConfiguration']),
         'columns': ((json['columns'] as Array<any>).map(EntityTypeAttributeColumnFromJSON)),
         'entitiesCount': json['entitiesCount'],
         'relationships': ((json['relationships'] as Array<any>).map(RelationshipDefinitionFromJSON)),
@@ -285,6 +299,7 @@ export function EntityTypeToJSONTyped(value?: EntityType | null, ignoreDiscrimin
         'readonly': value['readonly'],
         'workspaceId': value['workspaceId'],
         'schema': SchemaUUIDToJSON(value['schema']),
+        'columnConfiguration': ColumnConfigurationToJSON(value['columnConfiguration']),
         'columns': ((value['columns'] as Array<any>).map(EntityTypeAttributeColumnToJSON)),
         'entitiesCount': value['entitiesCount'],
         'relationships': ((value['relationships'] as Array<any>).map(RelationshipDefinitionToJSON)),

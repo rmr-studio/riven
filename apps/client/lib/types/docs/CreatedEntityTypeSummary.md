@@ -1,32 +1,28 @@
 
-# WorkspaceDefaultCurrency
+# CreatedEntityTypeSummary
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`currencyCode` | string
+`id` | string
+`key` | string
 `displayName` | string
-`symbol` | string
-`defaultFractionDigits` | number
-`numericCode` | number
-`numericCodeAsString` | string
+`attributeCount` | number
 
 ## Example
 
 ```typescript
-import type { WorkspaceDefaultCurrency } from ''
+import type { CreatedEntityTypeSummary } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "currencyCode": null,
+  "id": null,
+  "key": null,
   "displayName": null,
-  "symbol": null,
-  "defaultFractionDigits": null,
-  "numericCode": null,
-  "numericCodeAsString": null,
-} satisfies WorkspaceDefaultCurrency
+  "attributeCount": null,
+} satisfies CreatedEntityTypeSummary
 
 console.log(example)
 
@@ -35,7 +31,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as WorkspaceDefaultCurrency
+const exampleParsed = JSON.parse(exampleJSON) as CreatedEntityTypeSummary
 console.log(exampleParsed)
 ```
 
