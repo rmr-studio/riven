@@ -47,6 +47,9 @@ class BlockEnvironmentServiceTest : BaseServiceTest() {
     @MockitoBean
     private lateinit var defaultBlockEnvironmentService: DefaultBlockEnvironmentService
 
+    @MockitoBean
+    private lateinit var applicationEventPublisher: org.springframework.context.ApplicationEventPublisher
+
     @Autowired
     private lateinit var blockEnvironmentService: BlockEnvironmentService
 
