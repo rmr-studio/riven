@@ -482,6 +482,7 @@ class EntityTypeService(
      * Builds an EntityTypeImpactResponse after saving the entity type.
      */
     private fun buildImpactResponse(entity: EntityTypeEntity, workspaceId: UUID): EntityTypeImpactResponse {
+        entity.version += 1
         val saved = entityTypeRepository.save(entity)
         val savedId = requireNotNull(saved.id)
         val savedModel = saved.toModel()

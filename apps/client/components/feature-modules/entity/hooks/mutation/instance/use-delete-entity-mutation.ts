@@ -22,11 +22,7 @@ export function useDeleteEntityMutation(
       const ids = Object.values(entityIds).flat();
 
       if (ids.length === 0) {
-        const response: DeleteEntityResponse = {
-          deletedCount: 0,
-          error: 'No entities to delete',
-        };
-        return Promise.resolve(response);
+        return Promise.reject(new Error('No entities to delete'));
       }
 
       return EntityService.deleteEntities(session, workspaceId, ids);
@@ -45,13 +41,18 @@ export function useDeleteEntityMutation(
     ) => {
       const { deletedCount, error, updatedEntities } = response;
 
-      if (deletedCount === 0 && error) {
-        toast.error(`Failed to delete entities: ${error}`);
-        return;
+      if (error) {
+        if (deletedCount > 0) {
+          toast.warning(`${deletedCount} entities deleted, but some failed: ${error}`);
+        } else {
+          toast.error(`Failed to delete entities: ${error}`);
+          return;
+        }
+      } else {
+        toast.success(`${deletedCount} entities deleted successfully!`);
       }
 
       options?.onSuccess?.(response, variables, context);
-      toast.success(`${deletedCount} entities deleted successfully!`);
 
       // Remove deleted entities from the cache
       const { entityIds } = variables;

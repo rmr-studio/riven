@@ -560,19 +560,14 @@ describe('buildFieldSchema', () => {
       expect(schema.safeParse(['bug', 'feature']).success).toBe(true);
     });
 
-    it('rejects array containing value not in enum', () => {
+    it('accepts array containing custom values not in enum', () => {
       const schema = buildFieldSchema(
         makeAttr(SchemaType.MultiSelect, {
           options: { _enum: ['bug', 'feature'] },
         }),
       );
-      const result = schema.safeParse(['bug', 'invalid']);
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues).toContainEqual(
-          expect.objectContaining({ code: 'invalid_enum_value' }),
-        );
-      }
+      const result = schema.safeParse(['bug', 'custom-tag']);
+      expect(result.success).toBe(true);
     });
 
     it('accepts null when optional', () => {

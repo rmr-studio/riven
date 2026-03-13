@@ -21,6 +21,7 @@ jest.mock('sonner', () => ({
   toast: {
     loading: jest.fn(() => 'toast-id'),
     success: jest.fn(),
+    warning: jest.fn(),
     error: jest.fn(),
     dismiss: jest.fn(),
   },
@@ -151,7 +152,7 @@ describe('useDeleteEntityMutation', () => {
   });
 
   describe('empty entity IDs handling', () => {
-    it('does not call service and shows error toast when entityIds map is empty', async () => {
+    it('rejects and shows error toast when entityIds map is empty', async () => {
       const queryClient = createTestQueryClient();
 
       const { result } = renderHook(
@@ -163,15 +164,16 @@ describe('useDeleteEntityMutation', () => {
         result.current.mutate({ entityIds: {} });
       });
 
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      await waitFor(() => expect(result.current.isError).toBe(true));
 
       expect(mockDeleteEntities).not.toHaveBeenCalled();
+      expect(result.current.error?.message).toBe('No entities to delete');
       expect(toast.error).toHaveBeenCalledWith(
-        'Failed to delete entities: No entities to delete',
+        'Failed to delete selected entities: No entities to delete',
       );
     });
 
-    it('does not call service and shows error toast when all ID arrays are empty', async () => {
+    it('rejects and shows error toast when all ID arrays are empty', async () => {
       const queryClient = createTestQueryClient();
 
       const { result } = renderHook(
@@ -183,11 +185,12 @@ describe('useDeleteEntityMutation', () => {
         result.current.mutate({ entityIds: { [TYPE_ID_A]: [], [TYPE_ID_B]: [] } });
       });
 
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      await waitFor(() => expect(result.current.isError).toBe(true));
 
       expect(mockDeleteEntities).not.toHaveBeenCalled();
+      expect(result.current.error?.message).toBe('No entities to delete');
       expect(toast.error).toHaveBeenCalledWith(
-        'Failed to delete entities: No entities to delete',
+        'Failed to delete selected entities: No entities to delete',
       );
     });
   });
@@ -237,6 +240,35 @@ describe('useDeleteEntityMutation', () => {
       // Cache should be untouched — no entities removed
       const cache = getEntityCache(queryClient, WORKSPACE_ID, TYPE_ID_A);
       expect(cache).toHaveLength(2);
+    });
+
+    it('shows warning toast on partial failure when deletedCount > 0 with error', async () => {
+      const queryClient = createTestQueryClient();
+      const entityA = createMockEntity({ id: 'entity-1', typeId: TYPE_ID_A });
+      const entityB = createMockEntity({ id: 'entity-2', typeId: TYPE_ID_A });
+      seedEntityCache(queryClient, WORKSPACE_ID, TYPE_ID_A, [entityA, entityB]);
+
+      mockDeleteEntities.mockResolvedValue({
+        deletedCount: 1,
+        error: '1 entity could not be deleted',
+      });
+
+      const { result } = renderHook(
+        () => useDeleteEntityMutation(WORKSPACE_ID),
+        { wrapper: createWrapper(queryClient) },
+      );
+
+      await act(async () => {
+        result.current.mutate({ entityIds: { [TYPE_ID_A]: ['entity-1', 'entity-2'] } });
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(toast.warning).toHaveBeenCalledWith(
+        '1 entities deleted, but some failed: 1 entity could not be deleted',
+      );
+      expect(toast.success).not.toHaveBeenCalled();
+      expect(toast.error).not.toHaveBeenCalled();
     });
   });
 });

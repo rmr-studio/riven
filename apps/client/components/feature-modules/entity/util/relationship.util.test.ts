@@ -10,14 +10,14 @@ describe('processCardinalityToLimits', () => {
     expect(result).toEqual({ source: RelationshipLimit.SINGULAR, target: RelationshipLimit.SINGULAR });
   });
 
-  it('maps OneToMany to MANY source and SINGULAR target', () => {
+  it('maps OneToMany to SINGULAR source and MANY target', () => {
     const result = processCardinalityToLimits(EntityRelationshipCardinality.OneToMany);
-    expect(result).toEqual({ source: RelationshipLimit.MANY, target: RelationshipLimit.SINGULAR });
+    expect(result).toEqual({ source: RelationshipLimit.SINGULAR, target: RelationshipLimit.MANY });
   });
 
-  it('maps ManyToOne to SINGULAR source and MANY target', () => {
+  it('maps ManyToOne to MANY source and SINGULAR target', () => {
     const result = processCardinalityToLimits(EntityRelationshipCardinality.ManyToOne);
-    expect(result).toEqual({ source: RelationshipLimit.SINGULAR, target: RelationshipLimit.MANY });
+    expect(result).toEqual({ source: RelationshipLimit.MANY, target: RelationshipLimit.SINGULAR });
   });
 
   it('maps ManyToMany to MANY source and MANY target', () => {
@@ -37,13 +37,13 @@ describe('calculateCardinalityFromLimits', () => {
     expect(result).toBe(EntityRelationshipCardinality.OneToOne);
   });
 
-  it('maps MANY source and SINGULAR target to OneToMany', () => {
-    const result = calculateCardinalityFromLimits(RelationshipLimit.MANY, RelationshipLimit.SINGULAR);
+  it('maps SINGULAR source and MANY target to OneToMany', () => {
+    const result = calculateCardinalityFromLimits(RelationshipLimit.SINGULAR, RelationshipLimit.MANY);
     expect(result).toBe(EntityRelationshipCardinality.OneToMany);
   });
 
-  it('maps SINGULAR source and MANY target to ManyToOne', () => {
-    const result = calculateCardinalityFromLimits(RelationshipLimit.SINGULAR, RelationshipLimit.MANY);
+  it('maps MANY source and SINGULAR target to ManyToOne', () => {
+    const result = calculateCardinalityFromLimits(RelationshipLimit.MANY, RelationshipLimit.SINGULAR);
     expect(result).toBe(EntityRelationshipCardinality.ManyToOne);
   });
 

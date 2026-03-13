@@ -3,6 +3,7 @@ import React from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from '@/components/provider/auth-context';
 import { EntityService } from '@/components/feature-modules/entity/service/entity.service';
+import { toast } from 'sonner';
 import { useSaveEntityMutation } from '@/components/feature-modules/entity/hooks/mutation/instance/use-save-entity-mutation';
 import {
   createTestQueryClient,
@@ -41,19 +42,7 @@ function createWrapper(queryClient: ReturnType<typeof createTestQueryClient>) {
 }
 
 beforeEach(() => {
-  mockedUseAuth.mockReturnValue({
-    session: { access_token: 'test-token' } as never,
-    loading: false,
-    user: null,
-    signIn: jest.fn(),
-    signUp: jest.fn(),
-    signOut: jest.fn(),
-    signInWithOAuth: jest.fn(),
-    verifyOtp: jest.fn(),
-    resendOtp: jest.fn(),
-  });
   jest.clearAllMocks();
-  // Re-apply the default mock after clearAllMocks
   mockedUseAuth.mockReturnValue({
     session: { access_token: 'test-token' } as never,
     loading: false,
@@ -283,6 +272,28 @@ describe('useSaveEntityMutation', () => {
       // Cache should remain unchanged — only the original entity
       expect(cached).toHaveLength(1);
       expect(cached).toContainEqual(existingEntity);
+    });
+
+    it('shows error toast when response contains errors and no onConflict handler', async () => {
+      const queryClient = createTestQueryClient();
+
+      mockedSaveEntity.mockResolvedValueOnce({ errors: ['field X is invalid', 'missing Y'] });
+
+      const { result } = renderHook(
+        () => useSaveEntityMutation(WORKSPACE_ID, TYPE_ID),
+        { wrapper: createWrapper(queryClient) },
+      );
+
+      const request: SaveEntityRequest = { payload: {} };
+      act(() => {
+        result.current.mutate(request);
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(toast.error).toHaveBeenCalledWith(
+        'Failed to save entity: field X is invalid, missing Y',
+      );
     });
   });
 });

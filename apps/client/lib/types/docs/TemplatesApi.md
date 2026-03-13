@@ -4,11 +4,85 @@ All URIs are relative to *http://localhost:8081*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
+| [**getBundlePreview**](TemplatesApi.md#getbundlepreview) | **GET** /api/v1/templates/bundles/{bundleKey} | Get bundle preview |
 | [**installBundle**](TemplatesApi.md#installbundleoperation) | **POST** /api/v1/templates/{workspaceId}/install-bundle | Install bundle into workspace |
 | [**installTemplate**](TemplatesApi.md#installtemplateoperation) | **POST** /api/v1/templates/{workspaceId}/install | Install template into workspace |
 | [**listBundles**](TemplatesApi.md#listbundles) | **GET** /api/v1/templates/bundles | List available bundles |
 | [**listTemplates**](TemplatesApi.md#listtemplates) | **GET** /api/v1/templates | List available templates |
 
+
+
+## getBundlePreview
+
+> BundlePreview getBundlePreview(bundleKey)
+
+Get bundle preview
+
+Returns a detailed preview of a bundle including all entity types, attributes, and relationships grouped by template. Used for onboarding.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  TemplatesApi,
+} from '';
+import type { GetBundlePreviewRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: bearerAuth
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new TemplatesApi(config);
+
+  const body = {
+    // string
+    bundleKey: bundleKey_example,
+  } satisfies GetBundlePreviewRequest;
+
+  try {
+    const data = await api.getBundlePreview(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **bundleKey** | `string` |  | [Defaults to `undefined`] |
+
+### Return type
+
+[**BundlePreview**](BundlePreview.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `*/*`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Bundle preview retrieved successfully |  -  |
+| **401** | Unauthorized access |  -  |
+| **404** | Bundle not found |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
 ## installBundle
