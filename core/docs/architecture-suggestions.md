@@ -1,5 +1,11 @@
 # Architecture Suggestions
 
+## [2026-03-14] — WebSocket Infrastructure Documentation Needed
+
+**Trigger:** Added WebSocket real-time notification infrastructure as a new cross-cutting domain.
+**Affected vault notes:** System Patterns (new pattern: event-driven WebSocket notifications), Domain documentation (new websocket domain), Infrastructure (WebSocket broker topology)
+**Suggested update:** Document the WebSocket event flow (service → ApplicationEvent → WebSocketEventListener → STOMP broker → client), the topic namespace structure (/topic/workspace/{id}/{channel}), the authentication model (JWT on CONNECT, workspace auth on SUBSCRIBE), and the broker migration path (SimpleBroker → external broker).
+
 ## 2026-03-12 — Onboarding Domain Documentation Stub Needed
 
 **Trigger:** Introduced new `onboarding` domain with cross-domain orchestration service
