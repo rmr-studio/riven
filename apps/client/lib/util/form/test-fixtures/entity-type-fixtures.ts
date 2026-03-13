@@ -327,3 +327,47 @@ export const edgeCaseEntityType: EntityType = {
     },
   },
 };
+
+// ---------------------------------------------------------------------------
+// Fixture 5: Type with Id attribute — auto-generated record ID with prefix
+// ---------------------------------------------------------------------------
+export const entityTypeWithId: EntityType = {
+  id: 'entity-type-with-id',
+  key: 'tickets',
+  version: 1,
+  icon: { type: IconType.Ticket, colour: IconColour.Blue },
+  name: { singular: 'Ticket', plural: 'Tickets' },
+  _protected: false,
+  identifierKey: 'title',
+  semanticGroup: SemanticGroup.Support,
+  sourceType: 'USER_CREATED' as EntityType['sourceType'],
+  readonly: false,
+  workspaceId: WORKSPACE_ID,
+  entitiesCount: 0,
+  relationships: [],
+  columns: [
+    { key: 'record_id', type: EntityPropertyType.Attribute, visible: true, width: 120 },
+    { key: 'title', type: EntityPropertyType.Attribute, visible: true, width: 200 },
+    { key: 'status', type: EntityPropertyType.Attribute, visible: true, width: 100 },
+  ],
+  schema: {
+    key: SchemaType.Object,
+    type: DataType.Object,
+    icon: { type: IconType.Box, colour: IconColour.Neutral },
+    required: false,
+    unique: false,
+    _protected: false,
+    properties: {
+      record_id: attr(SchemaType.Id, 'Record ID', DataType.String, {
+        required: true,
+        unique: true,
+        _protected: true,
+        options: { prefix: 'TKT' },
+      }),
+      title: attr(SchemaType.Text, 'Title', DataType.String, { required: true, unique: true }),
+      status: attr(SchemaType.Select, 'Status', DataType.String, {
+        options: { _enum: ['open', 'in_progress', 'closed'] },
+      }),
+    },
+  },
+};

@@ -12,6 +12,7 @@ import {
 import {
   complexAllSchemaTypesEntityType,
   edgeCaseEntityType,
+  entityTypeWithId,
   relationshipHeavyEntityType,
   simpleContactEntityType,
 } from '@/lib/util/form/test-fixtures/entity-type-fixtures';
@@ -135,6 +136,14 @@ describe('buildZodSchemaFromEntityType', () => {
     expect(keys).toContain('status');
     expect(keys).toContain('tags');
     expect(keys).toContain('attachments');
+  });
+
+  it('includes Id attribute in schema for entityTypeWithId', () => {
+    const schema = buildZodSchemaFromEntityType(entityTypeWithId);
+    const keys = Object.keys(schema.shape);
+    expect(keys).toContain('record_id');
+    expect(keys).toContain('title');
+    expect(keys).toContain('status');
   });
 
   it('accepts valid complex entity instance', () => {
@@ -612,6 +621,23 @@ describe('buildFieldSchema', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // Id fields
+  // ---------------------------------------------------------------------------
+
+  describe('Id fields', () => {
+    it('accepts any string value (backend-generated)', () => {
+      const schema = buildFieldSchema(makeAttr(SchemaType.Id, { required: true, _protected: true }));
+      expect(schema.safeParse('TKT-1').success).toBe(true);
+      expect(schema.safeParse('ABC-99999').success).toBe(true);
+    });
+
+    it('accepts null when optional', () => {
+      const schema = buildFieldSchema(makeAttr(SchemaType.Id));
+      expect(schema.safeParse(null).success).toBe(true);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // inherent options merging
   // ---------------------------------------------------------------------------
 
@@ -744,6 +770,10 @@ describe('buildRelationshipFieldSchema', () => {
 describe('getDefaultValueForSchema', () => {
   it('returns empty string for Text fields', () => {
     expect(getDefaultValueForSchema(makeAttr(SchemaType.Text))).toBe('');
+  });
+
+  it('returns empty string for Id fields', () => {
+    expect(getDefaultValueForSchema(makeAttr(SchemaType.Id))).toBe('');
   });
 
   it('returns empty string for Email fields', () => {
@@ -898,5 +928,10 @@ describe('buildDefaultValuesFromEntityType', () => {
   it('returns empty string for select fields with no default', () => {
     const defaults = buildDefaultValuesFromEntityType(complexAllSchemaTypesEntityType);
     expect(defaults['status']).toBe('');
+  });
+
+  it('returns empty string default for Id fields', () => {
+    const defaults = buildDefaultValuesFromEntityType(entityTypeWithId);
+    expect(defaults['record_id']).toBe('');
   });
 });
