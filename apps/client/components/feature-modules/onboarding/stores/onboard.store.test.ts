@@ -192,4 +192,92 @@ describe('onboard.store', () => {
       expect(useOnboardStore.getState().formTrigger).toBeNull();
     });
   });
+
+  describe('submissionStatus', () => {
+    it('initializes to idle', () => {
+      expect(useOnboardStore.getState().submissionStatus).toBe('idle');
+    });
+
+    it('transitions to loading via setSubmissionStatus', () => {
+      useOnboardStore.getState().setSubmissionStatus('loading');
+      expect(useOnboardStore.getState().submissionStatus).toBe('loading');
+    });
+
+    it('transitions from loading to success', () => {
+      useOnboardStore.getState().setSubmissionStatus('loading');
+      useOnboardStore.getState().setSubmissionStatus('success');
+      expect(useOnboardStore.getState().submissionStatus).toBe('success');
+    });
+
+    it('transitions from loading to error', () => {
+      useOnboardStore.getState().setSubmissionStatus('loading');
+      useOnboardStore.getState().setSubmissionStatus('error');
+      expect(useOnboardStore.getState().submissionStatus).toBe('error');
+    });
+
+    it('reset() clears submissionStatus back to idle', () => {
+      useOnboardStore.getState().setSubmissionStatus('error');
+      useOnboardStore.getState().reset();
+      expect(useOnboardStore.getState().submissionStatus).toBe('idle');
+    });
+  });
+
+  describe('submissionResponse', () => {
+    it('initializes to null', () => {
+      expect(useOnboardStore.getState().submissionResponse).toBeNull();
+    });
+
+    it('stores response via setSubmissionResponse', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const fakeResponse = { workspace: { id: 'ws-1' } } as any;
+      useOnboardStore.getState().setSubmissionResponse(fakeResponse);
+      expect(useOnboardStore.getState().submissionResponse).toEqual(fakeResponse);
+    });
+
+    it('reset() clears submissionResponse to null', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const fakeResponse = { workspace: { id: 'ws-1' } } as any;
+      useOnboardStore.getState().setSubmissionResponse(fakeResponse);
+      useOnboardStore.getState().reset();
+      expect(useOnboardStore.getState().submissionResponse).toBeNull();
+    });
+  });
+
+  describe('avatar blobs', () => {
+    it('profileAvatarBlob initializes to null', () => {
+      expect(useOnboardStore.getState().profileAvatarBlob).toBeNull();
+    });
+
+    it('workspaceAvatarBlob initializes to null', () => {
+      expect(useOnboardStore.getState().workspaceAvatarBlob).toBeNull();
+    });
+
+    it('setProfileAvatarBlob stores a Blob', () => {
+      const blob = new Blob(['data'], { type: 'image/png' });
+      useOnboardStore.getState().setProfileAvatarBlob(blob);
+      expect(useOnboardStore.getState().profileAvatarBlob).toBe(blob);
+    });
+
+    it('setWorkspaceAvatarBlob stores a Blob', () => {
+      const blob = new Blob(['data'], { type: 'image/png' });
+      useOnboardStore.getState().setWorkspaceAvatarBlob(blob);
+      expect(useOnboardStore.getState().workspaceAvatarBlob).toBe(blob);
+    });
+
+    it('setProfileAvatarBlob accepts null', () => {
+      const blob = new Blob(['data'], { type: 'image/png' });
+      useOnboardStore.getState().setProfileAvatarBlob(blob);
+      useOnboardStore.getState().setProfileAvatarBlob(null);
+      expect(useOnboardStore.getState().profileAvatarBlob).toBeNull();
+    });
+
+    it('reset() clears both avatar blobs to null', () => {
+      const blob = new Blob(['data'], { type: 'image/png' });
+      useOnboardStore.getState().setProfileAvatarBlob(blob);
+      useOnboardStore.getState().setWorkspaceAvatarBlob(blob);
+      useOnboardStore.getState().reset();
+      expect(useOnboardStore.getState().profileAvatarBlob).toBeNull();
+      expect(useOnboardStore.getState().workspaceAvatarBlob).toBeNull();
+    });
+  });
 });

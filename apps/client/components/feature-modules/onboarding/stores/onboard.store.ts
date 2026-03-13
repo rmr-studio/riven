@@ -1,6 +1,9 @@
 import { ONBOARD_STEPS } from '../config/onboard-steps';
+import { CompleteOnboardingResponse } from '@/lib/types/models';
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
+
+export type SubmissionStatus = 'idle' | 'loading' | 'error' | 'success';
 
 export interface OnboardState {
   currentStep: number;
@@ -8,6 +11,10 @@ export interface OnboardState {
   validatedData: Record<string, unknown>;
   liveData: Record<string, unknown>;
   formTrigger: (() => Promise<boolean>) | null;
+  submissionStatus: SubmissionStatus;
+  submissionResponse: CompleteOnboardingResponse | null;
+  profileAvatarBlob: Blob | null;
+  workspaceAvatarBlob: Blob | null;
 }
 
 export interface OnboardActions {
@@ -18,6 +25,10 @@ export interface OnboardActions {
   setLiveData: (stepId: string, data: unknown) => void;
   registerFormTrigger: (fn: () => Promise<boolean>) => void;
   clearFormTrigger: () => void;
+  setSubmissionStatus: (status: SubmissionStatus) => void;
+  setSubmissionResponse: (response: CompleteOnboardingResponse) => void;
+  setProfileAvatarBlob: (blob: Blob | null) => void;
+  setWorkspaceAvatarBlob: (blob: Blob | null) => void;
   reset: () => void;
 }
 
@@ -29,6 +40,10 @@ const initialState: OnboardState = {
   validatedData: {},
   liveData: {},
   formTrigger: null,
+  submissionStatus: 'idle',
+  submissionResponse: null,
+  profileAvatarBlob: null,
+  workspaceAvatarBlob: null,
 };
 
 export const useOnboardStore = create<OnboardStore>()(
@@ -89,8 +104,33 @@ export const useOnboardStore = create<OnboardStore>()(
       set({ formTrigger: null });
     },
 
+    setSubmissionStatus: (status) => {
+      set({ submissionStatus: status });
+    },
+
+    setSubmissionResponse: (response) => {
+      set({ submissionResponse: response });
+    },
+
+    setProfileAvatarBlob: (blob) => {
+      set({ profileAvatarBlob: blob });
+    },
+
+    setWorkspaceAvatarBlob: (blob) => {
+      set({ workspaceAvatarBlob: blob });
+    },
+
     reset: () => {
-      set({ ...initialState, validatedData: {}, liveData: {}, formTrigger: null });
+      set({
+        ...initialState,
+        validatedData: {},
+        liveData: {},
+        formTrigger: null,
+        submissionStatus: 'idle',
+        submissionResponse: null,
+        profileAvatarBlob: null,
+        workspaceAvatarBlob: null,
+      });
     },
   })),
 );
