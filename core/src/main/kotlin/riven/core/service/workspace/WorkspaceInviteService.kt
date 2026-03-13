@@ -60,7 +60,7 @@ class WorkspaceInviteService(
      * @param invitedBy the UUID of the user sending the invitation
      */
     @Throws(IllegalArgumentException::class)
-    fun createWorkspaceInvitationInternal(workspaceId: UUID, email: String, role: WorkspaceRoles, invitedBy: UUID): WorkspaceInvite {
+    internal fun createWorkspaceInvitationInternal(workspaceId: UUID, email: String, role: WorkspaceRoles, invitedBy: UUID): WorkspaceInvite {
         if (role == WorkspaceRoles.OWNER) {
             throw IllegalArgumentException("Cannot create an invite with the Owner role. Use transfer ownership methods instead.")
         }
@@ -99,7 +99,7 @@ class WorkspaceInviteService(
             userId = invitedBy,
             workspaceId = workspaceId,
             entityType = ApplicationEntityType.WORKSPACE,
-            entityId = entity.id,
+            entityId = workspaceId,
             "inviteId" to entity.id.toString(),
             "email" to email,
             "role" to role.toString()

@@ -33,6 +33,8 @@ import riven.core.service.util.SecurityTestConfig
 import riven.core.service.util.factory.UserFactory
 import riven.core.service.workspace.WorkspaceInviteService
 import riven.core.service.workspace.WorkspaceService
+import org.springframework.transaction.TransactionStatus
+import org.springframework.transaction.support.TransactionCallback
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -113,9 +115,18 @@ class OnboardingServiceTest : BaseServiceTest() {
         val workspace = mockWorkspace()
         val user = mockUser()
         val userEntity = mockUserEntity()
+        val userWithWorkspaces = mockUser()
 
         whenever(userService.getUserById(userId)).thenReturn(userEntity)
-        whenever(transactionTemplate.execute<Pair<Workspace, User>>(any())).thenReturn(workspace to user)
+        whenever(workspaceService.saveWorkspace(any(), anyOrNull())).thenReturn(workspace)
+        whenever(userService.getUserWithWorkspacesById(userId)).thenReturn(userWithWorkspaces)
+        whenever(userService.updateUserDetails(any(), anyOrNull())).thenReturn(user)
+
+        whenever(transactionTemplate.execute<Any>(any())).thenAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            val callback = invocation.getArgument<TransactionCallback<Any>>(0)
+            callback.doInTransaction(mock<TransactionStatus>())
+        }
     }
 
     // ------ Happy Path Tests ------
@@ -172,13 +183,19 @@ class OnboardingServiceTest : BaseServiceTest() {
         val userEntity = mockUserEntity(onboardingCompletedAt = ZonedDateTime.now())
         whenever(userService.getUserById(userId)).thenReturn(userEntity)
 
+        whenever(transactionTemplate.execute<Any>(any())).thenAnswer { invocation ->
+            @Suppress("UNCHECKED_CAST")
+            val callback = invocation.getArgument<TransactionCallback<Any>>(0)
+            callback.doInTransaction(mock<TransactionStatus>())
+        }
+
         val request = defaultRequest()
 
         assertThrows<ConflictException> {
             onboardingService.completeOnboarding(request)
         }
 
-        verify(transactionTemplate, never()).execute<Any>(any())
+        verify(workspaceService, never()).saveWorkspace(any(), anyOrNull())
     }
 
     // ------ Template Partial Failure Tests ------
@@ -314,8 +331,9 @@ class OnboardingServiceTest : BaseServiceTest() {
         val request = defaultRequest()
         onboardingService.completeOnboarding(request, workspaceAvatar = avatarFile)
 
-        // TransactionTemplate.execute is mocked, so we verify the overall flow completed
-        verify(transactionTemplate).execute<Pair<Workspace, User>>(any())
+        // Verify the transaction was executed and workspace service was called
+        verify(transactionTemplate).execute<Any>(any())
+        verify(workspaceService).saveWorkspace(any(), eq(avatarFile))
     }
 
     @Test
@@ -326,7 +344,8 @@ class OnboardingServiceTest : BaseServiceTest() {
         val request = defaultRequest()
         onboardingService.completeOnboarding(request, profileAvatar = avatarFile)
 
-        verify(transactionTemplate).execute<Pair<Workspace, User>>(any())
+        verify(transactionTemplate).execute<Any>(any())
+        verify(userService).updateUserDetails(any(), eq(avatarFile))
     }
 
     // ------ Bundle Keys Test ------
@@ -362,7 +381,7 @@ class OnboardingServiceTest : BaseServiceTest() {
     fun `completeOnboarding propagates workspace creation failure`() {
         val userEntity = mockUserEntity()
         whenever(userService.getUserById(userId)).thenReturn(userEntity)
-        whenever(transactionTemplate.execute<Pair<Workspace, User>>(any()))
+        whenever(transactionTemplate.execute<Any>(any()))
             .thenThrow(RuntimeException("Workspace creation failed"))
 
         val request = defaultRequest()

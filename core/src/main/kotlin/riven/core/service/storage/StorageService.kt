@@ -82,7 +82,7 @@ class StorageService(
      * Upload a file without workspace access check. Used during onboarding when the
      * workspace role is not yet in the JWT.
      */
-    fun uploadFileInternal(
+    internal fun uploadFileInternal(
         workspaceId: UUID,
         domain: StorageDomain,
         file: MultipartFile,

@@ -167,6 +167,8 @@ class WorkspaceAvatarUploadTest {
 
         whenever(authTokenService.getUserId()).thenReturn(userId)
         whenever(workspaceRepository.findById(workspaceId)).thenReturn(Optional.of(existingEntity))
+        whenever(workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, userId))
+            .thenReturn(Optional.of(mock<WorkspaceMemberEntity>()))
         whenever(workspaceRepository.save(any<WorkspaceEntity>())).thenReturn(existingEntity)
         whenever(storageService.uploadFileInternal(eq(workspaceId), eq(StorageDomain.AVATAR), eq(mockFile), isNull()))
             .thenReturn(uploadResponse)

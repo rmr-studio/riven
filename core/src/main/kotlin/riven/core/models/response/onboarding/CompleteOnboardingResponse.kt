@@ -1,11 +1,11 @@
 package riven.core.models.response.onboarding
 
-import riven.core.models.user.User
+import riven.core.models.user.UserDisplay
 import riven.core.models.workspace.Workspace
 
 data class CompleteOnboardingResponse(
     val workspace: Workspace,
-    val user: User,
+    val user: UserDisplay,
     val templateResults: List<TemplateInstallResult> = emptyList(),
     val inviteResults: List<InviteResult> = emptyList(),
 )

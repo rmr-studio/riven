@@ -81,7 +81,7 @@ class TemplateInstallationService(
      * workspace role is not yet in the JWT.
      */
     @Transactional
-    fun installTemplateInternal(workspaceId: UUID, templateKey: String): TemplateInstallationResponse {
+    internal fun installTemplateInternal(workspaceId: UUID, templateKey: String): TemplateInstallationResponse {
         val userId = authTokenService.getUserId()
 
         val existingInstallation = installationRepository.findByWorkspaceIdAndManifestKey(workspaceId, templateKey)
@@ -131,7 +131,7 @@ class TemplateInstallationService(
      * workspace role is not yet in the JWT.
      */
     @Transactional
-    fun installBundleInternal(workspaceId: UUID, bundleKey: String): BundleInstallationResponse {
+    internal fun installBundleInternal(workspaceId: UUID, bundleKey: String): BundleInstallationResponse {
         val userId = authTokenService.getUserId()
         val bundle = catalogService.getBundleByKey(bundleKey)
 

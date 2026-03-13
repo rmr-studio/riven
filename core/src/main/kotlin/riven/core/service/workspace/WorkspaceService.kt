@@ -67,33 +67,47 @@ class WorkspaceService(
     }
 
     /**
-     * Transactional given our createWorkspace method creates both an Workspace and its first member.
+     * Creates or updates a workspace, then uploads avatar outside the transaction boundary
+     * to prevent orphaned files on rollback.
      */
     @Throws(AccessDeniedException::class, IllegalArgumentException::class)
-    @Transactional
     fun saveWorkspace(request: SaveWorkspaceRequest, avatar: MultipartFile? = null): Workspace {
+        val (workspace, entity) = saveWorkspaceTransactional(request)
+
+        avatar?.let { file ->
+            uploadWorkspaceAvatar(workspace.id, entity, file)
+        }
+
+        return workspace
+    }
+
+    @Transactional
+    private fun saveWorkspaceTransactional(request: SaveWorkspaceRequest): Pair<Workspace, WorkspaceEntity> {
         val userId = authTokenService.getUserId()
         val currency = getCurrency(request.defaultCurrency)
+        val isUpdate = request.id != null
+
+        if (isUpdate) {
+            findOrThrow { workspaceMemberRepository.findByWorkspaceIdAndUserId(request.id!!, userId) }
+        }
 
         val entity = createOrUpdateWorkspaceEntity(request, currency)
         val saved = workspaceRepository.save(entity)
         val workspaceId = requireNotNull(saved.id) { "WorkspaceEntity must have a non-null id after save" }
 
-        logWorkspaceActivity(userId, workspaceId, saved.name)
+        logWorkspaceActivity(userId, workspaceId, saved.name, isUpdate)
 
-        if (request.id == null) {
+        if (!isUpdate) {
             createOwnerMember(workspaceId, userId)
-        }
-
-        avatar?.let { file ->
-            uploadWorkspaceAvatar(workspaceId, saved, file)
         }
 
         publishWorkspaceAnalytics(saved, request, userId)
 
-        return saved.toModel().also { workspace ->
+        val workspace = saved.toModel().also { workspace ->
             setDefaultWorkspaceIfNeeded(workspace, request, userId)
         }
+
+        return workspace to saved
     }
 
     private fun createOrUpdateWorkspaceEntity(request: SaveWorkspaceRequest, currency: Currency): WorkspaceEntity {
@@ -128,10 +142,10 @@ class WorkspaceService(
         workspaceRepository.save(entity)
     }
 
-    private fun logWorkspaceActivity(userId: UUID, workspaceId: UUID, name: String) {
+    private fun logWorkspaceActivity(userId: UUID, workspaceId: UUID, name: String, isUpdate: Boolean = false) {
         activityService.log(
             activity = riven.core.enums.activity.Activity.WORKSPACE,
-            operation = riven.core.enums.util.OperationType.CREATE,
+            operation = if (isUpdate) riven.core.enums.util.OperationType.UPDATE else riven.core.enums.util.OperationType.CREATE,
             userId = userId,
             workspaceId = workspaceId,
             entityType = ApplicationEntityType.WORKSPACE,

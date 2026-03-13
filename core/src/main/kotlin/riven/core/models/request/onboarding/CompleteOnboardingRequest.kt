@@ -12,8 +12,8 @@ data class CompleteOnboardingRequest(
     val workspace: OnboardingWorkspace,
     @field:Valid
     val profile: OnboardingProfile,
-    val templateKeys: List<String>? = null,
-    val bundleKeys: List<String>? = null,
+    val templateKeys: List<@NotBlank String>? = null,
+    val bundleKeys: List<@NotBlank String>? = null,
     @field:Valid
     val invites: List<OnboardingInvite>? = null,
 )

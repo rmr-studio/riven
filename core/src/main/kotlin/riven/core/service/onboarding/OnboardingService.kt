@@ -59,10 +59,10 @@ class OnboardingService(
         workspaceAvatar: MultipartFile? = null,
     ): CompleteOnboardingResponse {
         val userId = authTokenService.getUserId()
-        validateOnboardingEligibility(userId)
 
-        // Phase 1: Atomic — create workspace + update profile
+        // Phase 1: Atomic — eligibility check + create workspace + update profile
         val (workspace, user) = transactionTemplate.execute {
+            validateOnboardingEligibility(userId)
             val workspace = createWorkspace(request, workspaceAvatar)
             val user = updateUserProfile(userId, request, workspace, profileAvatar)
             workspace to user
@@ -78,7 +78,7 @@ class OnboardingService(
 
         return CompleteOnboardingResponse(
             workspace = workspace,
-            user = user,
+            user = user.toDisplay(),
             templateResults = templateResults,
             inviteResults = inviteResults,
         )
