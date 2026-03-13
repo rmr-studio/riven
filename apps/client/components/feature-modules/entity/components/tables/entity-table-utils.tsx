@@ -38,7 +38,7 @@ export const entityReferenceFormSchema = z.array(
       id: z.string().refine(isUUID, { message: 'Invalid UUID' }),
       workspaceId: z.string().refine(isUUID, { message: 'Invalid UUID' }),
       sourceEntityId: z.string().refine(isUUID, { message: 'Invalid UUID' }),
-      fieldId: z.string().refine(isUUID, { message: 'Invalid UUID' }),
+      definitionId: z.string().refine(isUUID, { message: 'Invalid UUID' }),
       label: z.string().min(1, { message: 'Label cannot be empty' }),
       key: z.string().min(1, { message: 'Key cannot be empty' }),
     })
@@ -355,8 +355,9 @@ export function generateColumnsFromEntityType(
   // Generate attribute columns
   Object.entries(entityType.schema.properties).forEach(([attributeId, schema]) => {
     // Create edit config if editing is enabled
-    const editConfig: ColumnEditConfig<EntityRow, any, any> | undefined = options?.enableEditing
-      ? {
+    const editConfig: ColumnEditConfig<EntityRow, any, any> | undefined =
+      options?.enableEditing && schema.key !== SchemaType.Id
+        ? {
           enabled: true,
           createFormInstance: (cell: Cell<EntityRow, any>) => {
             const value = cell.getValue();

@@ -13,6 +13,7 @@ import {
   createAttributeEqualityFn,
   createRelationshipEqualityFn,
   extractUniqueAttributeValues,
+  generateColumnsFromEntityType,
   generateSearchConfigFromEntityType,
   getEntityDisplayName,
   isDraftRow,
@@ -681,5 +682,35 @@ describe('applyColumnOrdering', () => {
       overrides: {},
     });
     expect(result.map((c) => c['accessorKey'])).toEqual(['a', 'c', 'b']);
+  });
+});
+
+// ============================================================================
+// generateColumnsFromEntityType
+// ============================================================================
+
+describe('generateColumnsFromEntityType', () => {
+  it('does not create edit config for SchemaType.Id fields even when editing enabled', () => {
+    const entityType = createMockEntityType({
+      schema: createMockSchema({
+        properties: {
+          record_id: createMockSchema({ key: SchemaType.Id, type: DataType.String, _protected: true }),
+          title: createMockSchema({ key: SchemaType.Text, type: DataType.String }),
+        },
+      }),
+      columns: [
+        { key: 'record_id', type: EntityPropertyType.Attribute, visible: true, width: 120 },
+        { key: 'title', type: EntityPropertyType.Attribute, visible: true, width: 200 },
+      ],
+    });
+
+    const columns = generateColumnsFromEntityType(entityType, { enableEditing: true });
+    const idColumn = columns.find((c) => c.accessorKey === 'record_id');
+    const titleColumn = columns.find((c) => c.accessorKey === 'title');
+
+    expect(idColumn).toBeDefined();
+    expect(idColumn!.meta?.edit).toBeUndefined();
+    expect(titleColumn).toBeDefined();
+    expect(titleColumn!.meta?.edit).toBeDefined();
   });
 });
