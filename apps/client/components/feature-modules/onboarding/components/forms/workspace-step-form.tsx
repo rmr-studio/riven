@@ -125,6 +125,7 @@ export const WorkspaceStepForm: FC = () => {
     }
     const url = URL.createObjectURL(file);
     setAvatarBlob(file);
+    useOnboardStore.getState().setWorkspaceAvatarBlob(file);
     setAvatarPreviewUrl(url);
     setLiveData('workspace', { ...form.getValues(), avatarPreviewUrl: url });
   };
@@ -134,11 +135,12 @@ export const WorkspaceStepForm: FC = () => {
       URL.revokeObjectURL(avatarPreviewUrl);
     }
     setAvatarBlob(null);
+    useOnboardStore.getState().setWorkspaceAvatarBlob(null);
     setAvatarPreviewUrl(undefined);
     setLiveData('workspace', { ...form.getValues(), avatarPreviewUrl: undefined });
   };
 
-  // Suppress unused variable warning for avatarBlob
+  // avatarBlob kept as local state for managing object URL lifecycle
   void avatarBlob;
 
   const selectedPlan = form.watch('plan');

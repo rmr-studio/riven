@@ -91,6 +91,7 @@ export const ProfileStepForm: FC = () => {
     }
     const url = URL.createObjectURL(file);
     setAvatarBlob(file);
+    useOnboardStore.getState().setProfileAvatarBlob(file);
     setAvatarPreviewUrl(url);
     setLiveData('profile', { ...form.getValues(), avatarPreviewUrl: url });
   };
@@ -100,11 +101,12 @@ export const ProfileStepForm: FC = () => {
       URL.revokeObjectURL(avatarPreviewUrl);
     }
     setAvatarBlob(null);
+    useOnboardStore.getState().setProfileAvatarBlob(null);
     setAvatarPreviewUrl(undefined);
     setLiveData('profile', { ...form.getValues(), avatarPreviewUrl: undefined });
   };
 
-  // Suppress unused variable warning for avatarBlob
+  // avatarBlob kept as local state for managing object URL lifecycle
   void avatarBlob;
 
   return (

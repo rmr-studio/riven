@@ -3,18 +3,27 @@
 import { Button } from '@riven/ui/button';
 import { FC } from 'react';
 import { ONBOARD_STEPS } from '../config/onboard-steps';
+import { useCompleteOnboardingMutation } from '../hooks/mutation/use-complete-onboarding-mutation';
 import { useOnboardStore } from '../hooks/use-onboard-store';
 
 export const OnboardNavControls: FC = () => {
   const currentStep = useOnboardStore((s) => s.currentStep);
+  const submissionStatus = useOnboardStore((s) => s.submissionStatus);
   const goNext = useOnboardStore((s) => s.goNext);
   const goBack = useOnboardStore((s) => s.goBack);
   const skip = useOnboardStore((s) => s.skip);
   const setStepData = useOnboardStore((s) => s.setStepData);
 
+  const mutation = useCompleteOnboardingMutation();
+
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === ONBOARD_STEPS.length - 1;
   const isOptional = ONBOARD_STEPS[currentStep].optional;
+
+  // Hide nav controls while submission is in progress or done
+  if (submissionStatus !== 'idle') {
+    return null;
+  }
 
   const handleNext = async () => {
     const { formTrigger, liveData } = useOnboardStore.getState();
@@ -26,7 +35,11 @@ export const OnboardNavControls: FC = () => {
       setStepData(step.id, liveData[step.id]);
     }
 
-    goNext();
+    if (isLastStep) {
+      mutation.mutate();
+    } else {
+      goNext();
+    }
   };
 
   return (
