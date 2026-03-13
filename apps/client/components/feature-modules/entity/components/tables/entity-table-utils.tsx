@@ -232,8 +232,9 @@ function normalizeEmpty<T>(val: T): T | null {
  */
 function arraysEqual(arr1: unknown[], arr2: unknown[]): boolean {
   if (arr1.length !== arr2.length) return false;
-  const sorted1 = [...arr1].sort();
-  const sorted2 = [...arr2].sort();
+  const toKey = (item: unknown) => JSON.stringify(item);
+  const sorted1 = [...arr1].sort((a, b) => toKey(a).localeCompare(toKey(b)));
+  const sorted2 = [...arr2].sort((a, b) => toKey(a).localeCompare(toKey(b)));
   return JSON.stringify(sorted1) === JSON.stringify(sorted2);
 }
 
@@ -354,8 +355,9 @@ export function generateColumnsFromEntityType(
   // Generate attribute columns
   Object.entries(entityType.schema.properties).forEach(([attributeId, schema]) => {
     // Create edit config if editing is enabled
-    const editConfig: ColumnEditConfig<EntityRow, any, any> | undefined = options?.enableEditing
-      ? {
+    const editConfig: ColumnEditConfig<EntityRow, any, any> | undefined =
+      options?.enableEditing && schema.key !== SchemaType.Id
+        ? {
           enabled: true,
           createFormInstance: (cell: Cell<EntityRow, any>) => {
             const value = cell.getValue();
@@ -553,9 +555,12 @@ export function extractUniqueAttributeValues(
   const uniqueValues = new Set<string>();
 
   entities.forEach((entity) => {
-    const value = entity.payload?.[attributeId];
-    if (value !== null && value !== undefined) {
-      uniqueValues.add(String(value));
+    const attribute = entity.payload?.[attributeId];
+    if (attribute !== null && attribute !== undefined) {
+      const innerValue = attribute.payload?.value;
+      if (innerValue !== null && innerValue !== undefined) {
+        uniqueValues.add(String(innerValue));
+      }
     }
   });
 

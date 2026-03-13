@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   BundleDetail,
   BundleInstallationResponse,
+  BundlePreview,
   InstallBundleRequest,
   InstallTemplateRequest,
   ManifestSummary,
@@ -27,6 +28,8 @@ import {
     BundleDetailToJSON,
     BundleInstallationResponseFromJSON,
     BundleInstallationResponseToJSON,
+    BundlePreviewFromJSON,
+    BundlePreviewToJSON,
     InstallBundleRequestFromJSON,
     InstallBundleRequestToJSON,
     InstallTemplateRequestFromJSON,
@@ -36,6 +39,10 @@ import {
     TemplateInstallationResponseFromJSON,
     TemplateInstallationResponseToJSON,
 } from '../models/index';
+
+export interface GetBundlePreviewRequest {
+    bundleKey: string;
+}
 
 export interface InstallBundleOperationRequest {
     workspaceId: string;
@@ -51,6 +58,53 @@ export interface InstallTemplateOperationRequest {
  * 
  */
 export class TemplatesApi extends runtime.BaseAPI {
+
+    /**
+     * Returns a detailed preview of a bundle including all entity types, attributes, and relationships grouped by template. Used for onboarding.
+     * Get bundle preview
+     */
+    async getBundlePreviewRaw(requestParameters: GetBundlePreviewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BundlePreview>> {
+        if (requestParameters['bundleKey'] == null) {
+            throw new runtime.RequiredError(
+                'bundleKey',
+                'Required parameter "bundleKey" was null or undefined when calling getBundlePreview().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/api/v1/templates/bundles/{bundleKey}`;
+        urlPath = urlPath.replace(`{${"bundleKey"}}`, encodeURIComponent(String(requestParameters['bundleKey'])));
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BundlePreviewFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns a detailed preview of a bundle including all entity types, attributes, and relationships grouped by template. Used for onboarding.
+     * Get bundle preview
+     */
+    async getBundlePreview(requestParameters: GetBundlePreviewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BundlePreview> {
+        const response = await this.getBundlePreviewRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Installs all templates in a bundle into the specified workspace. Templates already installed are skipped. Installation is atomic.
