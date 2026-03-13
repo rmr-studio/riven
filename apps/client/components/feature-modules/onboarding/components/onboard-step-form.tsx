@@ -5,11 +5,13 @@ import { FC } from 'react';
 import { ONBOARD_STEPS } from '../config/onboard-steps';
 import { useOnboardStore } from '../hooks/use-onboard-store';
 import { ProfileStepForm } from './forms/profile-step-form';
+import { TeamStepForm } from './forms/team-step-form';
 import { WorkspaceStepForm } from './forms/workspace-step-form';
 
 const STEP_FORMS: Record<string, React.ComponentType> = {
   profile: ProfileStepForm,
   workspace: WorkspaceStepForm,
+  team: TeamStepForm,
 };
 
 export const OnboardStepForm: FC = () => {
