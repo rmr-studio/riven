@@ -3,6 +3,7 @@ import { type EntityTypeImpactResponse } from '@/lib/types/entity';
 import { MutationFunctionContext, useMutation, useQueryClient, type UseMutationOptions } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { EntityTypeService } from '../../../service/entity-type.service';
+import { entityKeys } from '../../query/entity-query-keys';
 
 export interface DeleteEntityTypeRequest {
   key: string;
@@ -49,14 +50,14 @@ export function useDeleteTypeMutation(
 
       // Invalidate all affected entity type queries (partial match handles varying `include` param)
       Object.entries(response.updatedEntityTypes).forEach(([key]) => {
-        queryClient.invalidateQueries({ queryKey: ['entityType', key, workspaceId] });
+        queryClient.invalidateQueries({ queryKey: entityKeys.entityTypes.byKey(key, workspaceId) });
       });
 
       // Also invalidate the deleted type's queries
-      queryClient.invalidateQueries({ queryKey: ['entityType', variables.key, workspaceId] });
+      queryClient.invalidateQueries({ queryKey: entityKeys.entityTypes.byKey(variables.key, workspaceId) });
 
       // Invalidate the entity types list
-      queryClient.invalidateQueries({ queryKey: ['entityTypes', workspaceId] });
+      queryClient.invalidateQueries({ queryKey: entityKeys.entityTypes.list(workspaceId) });
 
       return response;
     },

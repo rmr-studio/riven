@@ -18,6 +18,7 @@ import riven.core.enums.core.DataType
 import riven.core.enums.entity.EntityPropertyType
 import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.enums.workspace.WorkspaceRoles
+import riven.core.models.common.display.DisplayName
 import riven.core.models.common.Icon
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.RelationshipDefinition
@@ -509,6 +510,257 @@ class EntityTypeServiceTest : BaseServiceTest() {
 
             assertNotNull(result.impact)
             assertEquals(5L, result.impact!!.impactedLinkCount)
+        }
+    }
+
+    // ------ Version Increment Tests ------
+
+    @Nested
+    inner class VersionIncrement {
+
+        /**
+         * Verifies that saving an attribute definition increments the entity type version.
+         * The version field is used by the frontend for cache invalidation — it must bump
+         * on every schema mutation that flows through buildImpactResponse().
+         */
+        @Test
+        fun `saveEntityTypeDefinition - save attribute - increments version`() {
+            val sourceTypeId = UUID.randomUUID()
+            val attrId = UUID.randomUUID()
+
+            val sourceEntityType = EntityFactory.createEntityType(
+                id = sourceTypeId,
+                key = "company",
+                workspaceId = workspaceId,
+                version = 1,
+            )
+
+            val request = SaveTypeDefinitionRequest(
+                index = null,
+                definition = SaveAttributeDefinitionRequest(
+                    key = "company",
+                    id = attrId,
+                    schema = Schema(key = SchemaType.TEXT, type = DataType.STRING, label = "Name"),
+                )
+            )
+
+            whenever(entityTypeRepository.findByworkspaceIdAndKey(workspaceId, "company"))
+                .thenReturn(Optional.of(sourceEntityType))
+            whenever(entityTypeRepository.save(any<EntityTypeEntity>())).thenAnswer { it.arguments[0] }
+
+            service.saveEntityTypeDefinition(workspaceId, request)
+
+            val captor = argumentCaptor<EntityTypeEntity>()
+            verify(entityTypeRepository, atLeastOnce()).save(captor.capture())
+            assertEquals(2, captor.lastValue.version)
+        }
+
+        /**
+         * Verifies that saving a relationship definition increments the entity type version.
+         */
+        @Test
+        fun `saveEntityTypeDefinition - save relationship - increments version`() {
+            val sourceTypeId = UUID.randomUUID()
+            val targetTypeId = UUID.randomUUID()
+            val defId = UUID.randomUUID()
+
+            val sourceEntityType = EntityFactory.createEntityType(
+                id = sourceTypeId,
+                key = "company",
+                workspaceId = workspaceId,
+                version = 1,
+            )
+
+            val request = SaveTypeDefinitionRequest(
+                index = null,
+                definition = SaveRelationshipDefinitionRequest(
+                    key = "company",
+                    name = "Has Contacts",
+                    iconType = IconType.LINK,
+                    iconColour = IconColour.NEUTRAL,
+                    cardinalityDefault = EntityRelationshipCardinality.ONE_TO_MANY,
+                    targetRules = listOf(
+                        SaveTargetRuleRequest(targetEntityTypeId = targetTypeId, inverseName = "Belongs To")
+                    ),
+                )
+            )
+
+            whenever(entityTypeRepository.findByworkspaceIdAndKey(workspaceId, "company"))
+                .thenReturn(Optional.of(sourceEntityType))
+            whenever(entityTypeRelationshipService.createRelationshipDefinition(eq(workspaceId), eq(sourceTypeId), any()))
+                .thenReturn(EntityFactory.createRelationshipDefinitionEntity(
+                    id = defId,
+                    workspaceId = workspaceId,
+                    sourceEntityTypeId = sourceTypeId,
+                    name = "Has Contacts",
+                    cardinalityDefault = EntityRelationshipCardinality.ONE_TO_MANY,
+                ).toModel(emptyList()))
+            whenever(entityTypeRepository.save(any<EntityTypeEntity>())).thenAnswer { it.arguments[0] }
+
+            service.saveEntityTypeDefinition(workspaceId, request)
+
+            val captor = argumentCaptor<EntityTypeEntity>()
+            verify(entityTypeRepository, atLeastOnce()).save(captor.capture())
+            assertEquals(2, captor.lastValue.version)
+        }
+
+        /**
+         * Verifies that removing an attribute definition increments the entity type version.
+         */
+        @Test
+        fun `removeEntityTypeDefinition - delete attribute - increments version`() {
+            val sourceTypeId = UUID.randomUUID()
+            val attrId = UUID.randomUUID()
+
+            val schema = Schema<UUID>(
+                key = SchemaType.OBJECT,
+                type = DataType.OBJECT,
+                properties = mapOf(
+                    attrId to Schema(key = SchemaType.TEXT, type = DataType.STRING, required = true),
+                )
+            )
+
+            val sourceEntityType = EntityFactory.createEntityType(
+                id = sourceTypeId,
+                key = "company",
+                workspaceId = workspaceId,
+                schema = schema,
+                version = 3,
+            )
+
+            val request = DeleteTypeDefinitionRequest(
+                definition = DeleteAttributeDefinitionRequest(key = "company", id = attrId)
+            )
+
+            whenever(entityTypeRepository.findByworkspaceIdAndKey(workspaceId, "company"))
+                .thenReturn(Optional.of(sourceEntityType))
+            whenever(entityTypeRepository.save(any<EntityTypeEntity>())).thenAnswer { it.arguments[0] }
+
+            service.removeEntityTypeDefinition(workspaceId, request)
+
+            val captor = argumentCaptor<EntityTypeEntity>()
+            verify(entityTypeRepository, atLeastOnce()).save(captor.capture())
+            assertEquals(4, captor.lastValue.version)
+        }
+
+        /**
+         * Verifies that removing a relationship definition increments the entity type version.
+         */
+        @Test
+        fun `removeEntityTypeDefinition - delete relationship - increments version`() {
+            val sourceTypeId = UUID.randomUUID()
+            val defId = UUID.randomUUID()
+
+            val sourceEntityType = EntityFactory.createEntityType(
+                id = sourceTypeId,
+                key = "company",
+                workspaceId = workspaceId,
+                version = 1,
+            )
+
+            val request = DeleteTypeDefinitionRequest(
+                definition = DeleteRelationshipDefinitionRequest(key = "company", id = defId)
+            )
+
+            whenever(entityTypeRepository.findByworkspaceIdAndKey(workspaceId, "company"))
+                .thenReturn(Optional.of(sourceEntityType))
+            whenever(definitionRepository.findByIdAndWorkspaceId(defId, workspaceId))
+                .thenReturn(Optional.of(EntityFactory.createRelationshipDefinitionEntity(
+                    id = defId,
+                    workspaceId = workspaceId,
+                    sourceEntityTypeId = sourceTypeId,
+                    name = "Has Contacts",
+                )))
+            whenever(targetRuleRepository.findByRelationshipDefinitionId(defId)).thenReturn(emptyList())
+            whenever(entityTypeRelationshipService.deleteRelationshipDefinition(workspaceId, defId, false))
+                .thenReturn(null)
+            whenever(entityTypeRepository.save(any<EntityTypeEntity>())).thenAnswer { it.arguments[0] }
+
+            service.removeEntityTypeDefinition(workspaceId, request)
+
+            val captor = argumentCaptor<EntityTypeEntity>()
+            verify(entityTypeRepository, atLeastOnce()).save(captor.capture())
+            assertEquals(2, captor.lastValue.version)
+        }
+
+        /**
+         * Verifies that updateEntityTypeConfiguration does NOT increment version.
+         * Configuration changes (display name, icon, column order) are cosmetic and
+         * should not invalidate frontend schema caches.
+         */
+        @Test
+        @WithUserPersona(
+            userId = "f8b1c2d3-4e5f-6789-abcd-ef0123456789",
+            email = "test@test.com",
+            displayName = "Test User",
+            roles = [
+                WorkspaceRole(
+                    workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
+                    role = WorkspaceRoles.OWNER
+                )
+            ]
+        )
+        fun `updateEntityTypeConfiguration - does not increment version`() {
+            val entityTypeId = UUID.randomUUID()
+
+            val entityType = EntityFactory.createEntityType(
+                id = entityTypeId,
+                key = "company",
+                workspaceId = workspaceId,
+                version = 1,
+            )
+
+            val request = UpdateEntityTypeConfigurationRequest(
+                id = entityTypeId,
+                name = DisplayName(
+                    singular = "Updated Company",
+                    plural = "Updated Companies",
+                ),
+                icon = Icon(IconType.BUILDING, IconColour.BLUE),
+            )
+
+            whenever(entityTypeRepository.findById(entityTypeId)).thenReturn(Optional.of(entityType))
+            whenever(entityTypeRepository.save(any<EntityTypeEntity>())).thenAnswer { it.arguments[0] }
+
+            service.updateEntityTypeConfiguration(workspaceId, request)
+
+            val captor = argumentCaptor<EntityTypeEntity>()
+            verify(entityTypeRepository).save(captor.capture())
+            assertEquals(1, captor.firstValue.version)
+        }
+
+        /**
+         * Verifies that sequential schema mutations correctly increment the version each time.
+         * Starting at version 1, three consecutive attribute saves should result in version 4.
+         */
+        @Test
+        fun `sequential mutations - version increments correctly`() {
+            val sourceTypeId = UUID.randomUUID()
+
+            val sourceEntityType = EntityFactory.createEntityType(
+                id = sourceTypeId,
+                key = "company",
+                workspaceId = workspaceId,
+                version = 1,
+            )
+
+            whenever(entityTypeRepository.findByworkspaceIdAndKey(workspaceId, "company"))
+                .thenReturn(Optional.of(sourceEntityType))
+            whenever(entityTypeRepository.save(any<EntityTypeEntity>())).thenAnswer { it.arguments[0] }
+
+            repeat(3) {
+                val request = SaveTypeDefinitionRequest(
+                    index = null,
+                    definition = SaveAttributeDefinitionRequest(
+                        key = "company",
+                        id = UUID.randomUUID(),
+                        schema = Schema(key = SchemaType.TEXT, type = DataType.STRING, label = "Attr $it"),
+                    )
+                )
+                service.saveEntityTypeDefinition(workspaceId, request)
+            }
+
+            assertEquals(4, sourceEntityType.version)
         }
     }
 }
