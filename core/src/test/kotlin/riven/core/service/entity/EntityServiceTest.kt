@@ -67,6 +67,7 @@ class EntityServiceTest : BaseServiceTest() {
     @MockitoBean private lateinit var authTokenService: AuthTokenService
     @MockitoBean private lateinit var activityService: ActivityService
     @MockitoBean private lateinit var sequenceService: EntityTypeSequenceService
+    @MockitoBean private lateinit var applicationEventPublisher: org.springframework.context.ApplicationEventPublisher
 
     @Autowired
     private lateinit var service: EntityService
