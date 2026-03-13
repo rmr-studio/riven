@@ -232,8 +232,9 @@ function normalizeEmpty<T>(val: T): T | null {
  */
 function arraysEqual(arr1: unknown[], arr2: unknown[]): boolean {
   if (arr1.length !== arr2.length) return false;
-  const sorted1 = [...arr1].sort();
-  const sorted2 = [...arr2].sort();
+  const toKey = (item: unknown) => JSON.stringify(item);
+  const sorted1 = [...arr1].sort((a, b) => toKey(a).localeCompare(toKey(b)));
+  const sorted2 = [...arr2].sort((a, b) => toKey(a).localeCompare(toKey(b)));
   return JSON.stringify(sorted1) === JSON.stringify(sorted2);
 }
 
@@ -553,9 +554,12 @@ export function extractUniqueAttributeValues(
   const uniqueValues = new Set<string>();
 
   entities.forEach((entity) => {
-    const value = entity.payload?.[attributeId];
-    if (value !== null && value !== undefined) {
-      uniqueValues.add(String(value));
+    const attribute = entity.payload?.[attributeId];
+    if (attribute !== null && attribute !== undefined) {
+      const innerValue = attribute.payload?.value;
+      if (innerValue !== null && innerValue !== undefined) {
+        uniqueValues.add(String(innerValue));
+      }
     }
   });
 

@@ -144,8 +144,7 @@ describe('isEntityRow', () => {
 
 describe('transformEntitiesToRows', () => {
   it('filters out entities with null payload', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const entity = createMockEntity({ payload: null as any });
+    const entity = createMockEntity({ payload: null as unknown as Entity['payload'] });
     const rows = transformEntitiesToRows([entity]);
     expect(rows).toHaveLength(0);
   });
@@ -463,12 +462,8 @@ describe('createRelationshipEqualityFn', () => {
       expect(eq([link1, link2], [link1, link2])).toBe(true);
     });
 
-    it('returns false for same links in different order (sort is not stable for objects)', () => {
-      // arraysEqual sorts using default JS .sort(), which compares objects via toString()
-      // producing "[object Object]" for all — making order unstable but not truly reversed.
-      // In practice, objects with equal sort keys preserve insertion order, so [link2, link1]
-      // sorted remains [link2, link1], which differs from [link1, link2] in JSON comparison.
-      expect(eq([link2, link1], [link1, link2])).toBe(false);
+    it('returns true for same links in different order', () => {
+      expect(eq([link2, link1], [link1, link2])).toBe(true);
     });
 
     it('returns false for different links', () => {
@@ -513,16 +508,13 @@ describe('extractUniqueAttributeValues', () => {
   it('skips entities where the attribute is null or undefined', () => {
     const entity = createMockEntity({
       payload: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        name: null as any,
+        name: null as unknown as Entity['payload'][string],
       },
     });
     expect(extractUniqueAttributeValues([entity], 'name')).toEqual([]);
   });
 
-  it('calls String() on the full wrapper object, producing [object Object]', () => {
-    // extractUniqueAttributeValues accesses entity.payload[attributeId] which returns
-    // the EntityAttribute wrapper {payload: {...}} and calls String() on it directly.
+  it('extracts the inner attribute value from the EntityAttribute wrapper', () => {
     const entity = createMockEntity({
       payload: {
         name: {
@@ -535,9 +527,8 @@ describe('extractUniqueAttributeValues', () => {
       },
     });
     const results = extractUniqueAttributeValues([entity], 'name');
-    // The wrapper object stringifies to "[object Object]"
     expect(results).toHaveLength(1);
-    expect(results[0].value).toBe('[object Object]');
+    expect(results[0].value).toBe('John');
   });
 
   it('deduplicates values across entities', () => {
@@ -551,29 +542,27 @@ describe('extractUniqueAttributeValues', () => {
     const e1 = createMockEntity({ id: 'id-1', payload: { name: wrapper } });
     const e2 = createMockEntity({ id: 'id-2', payload: { name: wrapper } });
     const results = extractUniqueAttributeValues([e1, e2], 'name');
-    // Both produce "[object Object]", deduplicated to 1
     expect(results).toHaveLength(1);
+    expect(results[0].value).toBe('John');
   });
 
   it('returns results sorted alphabetically', () => {
-    // Two distinct wrapper objects will both stringify to "[object Object]"
-    // so effectively we get one unique value — sorting on the string representation
     const e1 = createMockEntity({
       id: 'id-1',
       payload: {
-        status: { payload: { type: EntityPropertyType.Attribute, value: 'active', schemaType: SchemaType.Text } },
+        status: { payload: { type: EntityPropertyType.Attribute, value: 'inactive', schemaType: SchemaType.Text } },
       },
     });
     const e2 = createMockEntity({
       id: 'id-2',
       payload: {
-        status: { payload: { type: EntityPropertyType.Attribute, value: 'inactive', schemaType: SchemaType.Text } },
+        status: { payload: { type: EntityPropertyType.Attribute, value: 'active', schemaType: SchemaType.Text } },
       },
     });
-    // Both payload wrappers are different object references but stringify to "[object Object]"
-    // => deduplicated to 1
     const results = extractUniqueAttributeValues([e1, e2], 'status');
-    expect(results).toHaveLength(1);
+    expect(results).toHaveLength(2);
+    expect(results[0].value).toBe('active');
+    expect(results[1].value).toBe('inactive');
   });
 });
 

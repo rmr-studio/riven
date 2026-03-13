@@ -2,21 +2,21 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from '@/components/provider/auth-context';
-import { EntityService } from '../../../service/entity.service';
-import { useSaveEntityMutation } from './use-save-entity-mutation';
+import { EntityService } from '@/components/feature-modules/entity/service/entity.service';
+import { useSaveEntityMutation } from '@/components/feature-modules/entity/hooks/mutation/instance/use-save-entity-mutation';
 import {
   createTestQueryClient,
   seedEntityCache,
   getEntityCache,
   createMockEntity,
   createSaveResponse,
-} from '../test-utils/mutation-test-helpers';
+} from '@/components/feature-modules/entity/hooks/mutation/test-utils/mutation-test-helpers';
 import type { SaveEntityRequest } from '@/lib/types/entity';
 
 jest.mock('@/components/provider/auth-context', () => ({
   useAuth: jest.fn(),
 }));
-jest.mock('../../../service/entity.service');
+jest.mock('@/components/feature-modules/entity/service/entity.service');
 jest.mock('sonner', () => ({
   toast: {
     loading: jest.fn(() => 'toast-id'),

@@ -96,6 +96,10 @@ describe('buildZodSchemaFromEntityType', () => {
     const schema = buildZodSchemaFromEntityType(simpleContactEntityType);
     const result = schema.safeParse({ name: '', age: 30, active: true });
     expect(result.success).toBe(false);
+    if (!result.success) {
+      const paths = result.error.issues.map((i) => i.path);
+      expect(paths).toContainEqual(['name']);
+    }
   });
 
   it('includes relationship fields from relationshipHeavyEntityType', () => {
