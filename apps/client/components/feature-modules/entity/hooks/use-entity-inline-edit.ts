@@ -11,9 +11,9 @@ import {
   SaveEntityResponse,
 } from '@/lib/types/entity';
 import { useCallback } from 'react';
-import { useSaveEntityMutation } from './mutation/instance/use-save-entity-mutation';
-import { buildEntityUpdatePayload } from '../util/entity-payload.util';
-import { EntityRow, isDraftRow } from '../components/tables/entity-table-utils';
+import { useSaveEntityMutation } from '@/components/feature-modules/entity/hooks/mutation/instance/use-save-entity-mutation';
+import { buildEntityUpdatePayload } from '@/components/feature-modules/entity/util/entity-payload.util';
+import { EntityRow, isDraftRow } from '@/components/feature-modules/entity/components/tables/entity-table-utils';
 
 export function useEntityInlineEdit(
   workspaceId: string,
@@ -30,7 +30,7 @@ export function useEntityInlineEdit(
   );
 
   const handleCellEdit = useCallback(
-    async (row: EntityRow, columnId: string, newValue: any, _oldValue: any): Promise<boolean> => {
+    async (row: EntityRow, columnId: string, newValue: unknown, _oldValue: unknown): Promise<boolean> => {
       if (isDraftRow(row)) return false;
       const entity = entities.find((e) => e.id === row._entityId);
       if (!entity) return false;

@@ -91,7 +91,7 @@ export const EntityTypeConfigurationProvider = ({
     );
   }
 
-  const { dirtyFields } = useFormState({
+  const { isDirty } = useFormState({
     control: form.control,
   });
 
@@ -100,15 +100,8 @@ export const EntityTypeConfigurationProvider = ({
     const store = storeRef.current?.getState();
     if (!store) return;
 
-    const subscription = form.watch(() => {
-      const dirty = Object.keys(dirtyFields).length > 0;
-      store.setDirty(dirty);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [form, dirtyFields]);
+    store.setDirty(isDirty);
+  }, [isDirty]);
 
   return (
     <EntityTypeConfigContext.Provider value={storeRef.current}>

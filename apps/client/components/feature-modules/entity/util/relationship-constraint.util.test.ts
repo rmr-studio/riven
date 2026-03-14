@@ -1,6 +1,6 @@
 import { Entity, EntityRelationshipCardinality, RelationshipDefinition } from '@/lib/types/entity';
 import { EntityPropertyType } from '@/lib/types/entity';
-import { getConstrainedEntities } from './relationship-constraint.util';
+import { getConstrainedEntities } from '@/components/feature-modules/entity/util/relationship-constraint.util';
 
 const makeRelationship = (
   cardinality: EntityRelationshipCardinality,

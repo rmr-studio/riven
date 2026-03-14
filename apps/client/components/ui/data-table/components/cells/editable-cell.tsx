@@ -5,8 +5,8 @@ import { Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useRef } from 'react';
 import { UseFormReturn, useFormState } from 'react-hook-form';
 import { toast } from 'sonner';
-import { useDataTableStore } from '../../data-table-provider';
-import { ColumnEditConfig, isEditableColumn } from '../../data-table.types';
+import { useDataTableStore } from '@/components/ui/data-table/data-table-provider';
+import { ColumnEditConfig, isEditableColumn } from '@/components/ui/data-table/data-table.types';
 
 export interface EditableCellProps<TData, TCellValue> {
   cell: Cell<TData, TCellValue>;
@@ -104,7 +104,7 @@ export function EditableCell<TData, TCellValue, TValue = TCellValue>({
     } finally {
       isSavingRef.current = false;
     }
-  }, [onSave, onCancel, cell, editConfig, form, errors, isValid]);
+  }, [onSave, onCancel, cell, editConfig, form]);
 
   handleSaveRef.current = handleSave;
 

@@ -6,7 +6,7 @@ import {
   generateSearchConfigFromEntityType,
   applyColumnOrdering,
   transformEntitiesToRows,
-} from '../components/tables/entity-table-utils';
+} from '@/components/feature-modules/entity/components/tables/entity-table-utils';
 
 export function useEntityTableData(
   entityType: EntityType,

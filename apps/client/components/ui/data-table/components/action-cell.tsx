@@ -44,7 +44,8 @@ export function ActionCell<TData>({
   cellSize,
   actionColumnConfig,
 }: ActionCellProps<TData>) {
-  const hasSelections = useDataTableStore<TData, boolean>((state) => state.hasSelections());
+  const rowSelection = useDataTableStore<TData, Record<string, boolean>>((state) => state.rowSelection);
+  const hasSelections = Object.keys(rowSelection).length > 0;
 
   const dragConfig = actionColumnConfig?.dragHandle;
   const checkboxConfig = actionColumnConfig?.checkbox;

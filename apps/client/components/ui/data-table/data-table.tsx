@@ -88,7 +88,7 @@ export interface DataTableProps<TData, TValue> {
   enableInlineEdit?: boolean;
 
   /** Callback when a cell is edited (returns true on success) */
-  onCellEdit?: (row: TData, columnId: string, newValue: any, oldValue: any) => Promise<boolean>;
+  onCellEdit?: (row: TData, columnId: string, newValue: unknown, oldValue: unknown) => Promise<boolean>;
   /** Edit mode trigger (click or doubleClick) */
   editMode?: 'click' | 'doubleClick';
   /** Configuration for the action column (drag handle, checkbox visibility) */

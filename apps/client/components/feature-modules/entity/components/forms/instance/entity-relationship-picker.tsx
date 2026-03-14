@@ -204,8 +204,8 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
                       className="size-3"
                     />
                     {link.label}
-                    <span
-                      role="button"
+                    <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
@@ -215,7 +215,7 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
                       className="ml-0.5 cursor-pointer rounded-sm opacity-50 transition-opacity hover:opacity-100"
                     >
                       <X className="size-3" />
-                    </span>
+                    </button>
                   </span>
                 ))
               ) : (
@@ -347,7 +347,7 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
                           />
                           <span className="truncate text-sm">{getEntityLabel(entity)}</span>
                           {isConstrained && (
-                            <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] leading-none text-muted-foreground">
+                            <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs leading-none text-muted-foreground">
                               {constraint.linkedLabel}
                             </span>
                           )}
