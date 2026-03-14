@@ -1,5 +1,26 @@
 # Architecture Changelog
 
+## [2026-03-14] — WebSocket Real-Time Notifications
+
+**Domains affected:** websocket (new), entity, block, workspace
+**What changed:**
+
+- Added STOMP over WebSocket infrastructure with in-memory SimpleBroker
+- Created `WorkspaceEvent` sealed interface for type-safe domain event publishing
+- Added `WebSocketEventListener` that bridges Spring ApplicationEvents to STOMP topics
+- Added `WebSocketSecurityInterceptor` for JWT auth on CONNECT and workspace-scoped subscription authorization
+- Integrated event publishing into EntityService, BlockEnvironmentService, and WorkspaceService
+
+**New cross-domain dependencies:** yes — entity, block, and workspace services now depend on `models.websocket.WorkspaceEvent` (event model only, not WebSocket infrastructure)
+**New components introduced:**
+- `WebSocketConfig` — STOMP endpoint and broker configuration
+- `WebSocketSecurityInterceptor` — JWT auth + workspace subscription authorization
+- `WebSocketEventListener` — event-to-STOMP bridge
+- `WebSocketConfigurationProperties` — externalized WebSocket configuration
+- `WorkspaceEvent` sealed interface + domain subclasses — type-safe event model
+- `WebSocketMessage` — outbound message envelope
+- `WebSocketChannel` enum — topic segment mapping
+
 ## [2026-03-12] — Unified Onboarding Endpoint
 
 **Domains affected:** Onboarding (new), Workspace, User, Catalog, Storage
