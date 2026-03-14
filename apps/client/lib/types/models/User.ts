@@ -76,6 +76,12 @@ export interface User {
      * @memberof User
      */
     defaultWorkspace?: Workspace;
+    /**
+     * 
+     * @type {Date}
+     * @memberof User
+     */
+    onboardingCompletedAt?: Date;
 }
 
 /**
@@ -106,6 +112,7 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
         'avatarUrl': json['avatarUrl'] == null ? undefined : json['avatarUrl'],
         'memberships': ((json['memberships'] as Array<any>).map(WorkspaceMemberFromJSON)),
         'defaultWorkspace': json['defaultWorkspace'] == null ? undefined : WorkspaceFromJSON(json['defaultWorkspace']),
+        'onboardingCompletedAt': json['onboardingCompletedAt'] == null ? undefined : (new Date(json['onboardingCompletedAt'])),
     };
 }
 
@@ -127,6 +134,7 @@ export function UserToJSONTyped(value?: User | null, ignoreDiscriminator: boolea
         'avatarUrl': value['avatarUrl'],
         'memberships': ((value['memberships'] as Array<any>).map(WorkspaceMemberToJSON)),
         'defaultWorkspace': WorkspaceToJSON(value['defaultWorkspace']),
+        'onboardingCompletedAt': value['onboardingCompletedAt'] == null ? value['onboardingCompletedAt'] : value['onboardingCompletedAt'].toISOString(),
     };
 }
 

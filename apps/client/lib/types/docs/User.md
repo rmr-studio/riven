@@ -13,6 +13,7 @@ Name | Type
 `avatarUrl` | string
 `memberships` | [Array&lt;WorkspaceMember&gt;](WorkspaceMember.md)
 `defaultWorkspace` | [Workspace](Workspace.md)
+`onboardingCompletedAt` | Date
 
 ## Example
 
@@ -28,6 +29,7 @@ const example = {
   "avatarUrl": null,
   "memberships": null,
   "defaultWorkspace": null,
+  "onboardingCompletedAt": null,
 } satisfies User
 
 console.log(example)
