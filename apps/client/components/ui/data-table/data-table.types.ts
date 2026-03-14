@@ -177,6 +177,29 @@ export interface RowSelectionConfig<TData> {
 }
 
 // ============================================================================
+// Action Column Configuration
+// ============================================================================
+
+/** Controls when an action element (drag handle or checkbox) is visible */
+export type ActionVisibility = 'always' | 'hover-or-selected';
+
+/** Configuration for a single action element */
+export interface ActionElementConfig {
+  /** Whether this element is rendered at all. Default: true when parent feature is enabled */
+  enabled: boolean;
+  /** When the element becomes visible. Default: 'hover-or-selected' */
+  visibility: ActionVisibility;
+}
+
+/** Configuration for the action column (drag handle + selection checkbox) */
+export interface ActionColumnConfig {
+  /** Drag handle configuration. Only applies when enableDragDrop is true */
+  dragHandle?: ActionElementConfig;
+  /** Selection checkbox configuration. Only applies when rowSelection is enabled */
+  checkbox?: ActionElementConfig;
+}
+
+// ============================================================================
 // Column Display Metadata
 // ============================================================================
 

@@ -5,6 +5,7 @@ import { cn } from '@riven/utils';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Header, flexRender } from '@tanstack/react-table';
+import { GripVertical } from 'lucide-react';
 import { useCallback } from 'react';
 import { useDataTableActions, useDataTableStore } from '../data-table-provider';
 import type { ColumnResizingConfig } from '../data-table.types';
@@ -92,18 +93,31 @@ export function DraggableColumnHeader<TData, TValue>({
       style={style}
       key={header.id}
       className={cn(
-        'relative border-l px-3 py-2 first:border-l-transparent',
-        enableColumnOrdering && !isActionsColumn && (onHeaderClick ? 'cursor-default' : 'cursor-move'),
-        onHeaderClick && !isActionsColumn && 'cursor-default',
+        'group/header relative border-l px-3 py-2 first:border-l-transparent',
+        onHeaderClick && !isActionsColumn && 'cursor-pointer hover:bg-muted/50',
       )}
       onClick={handleClick}
-      {...(isMounted && enableColumnOrdering ? attributes : {})}
-      {...(isMounted && enableColumnOrdering ? listeners : {})}
     >
       <div className="flex items-center justify-between">
-        {header.isPlaceholder
-          ? null
-          : flexRender(header.column.columnDef.header, header.getContext())}
+        <div className="flex items-center gap-1">
+          {/* Drag handle for column reordering — visible on hover */}
+          {enableColumnOrdering && !isActionsColumn && isMounted && (
+            <button
+              className={cn(
+                'cursor-grab text-muted-foreground/50 hover:text-muted-foreground active:cursor-grabbing',
+                'shrink-0 -ml-1 opacity-0 transition-opacity duration-150 group-hover/header:opacity-100',
+              )}
+              {...attributes}
+              {...listeners}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <GripVertical className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {header.isPlaceholder
+            ? null
+            : flexRender(header.column.columnDef.header, header.getContext())}
+        </div>
       </div>
 
       {columnResizing?.enabled && header.column.getCanResize() && !addingNewEntry && (
