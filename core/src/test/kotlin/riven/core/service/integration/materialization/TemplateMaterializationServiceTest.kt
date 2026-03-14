@@ -33,6 +33,9 @@ import riven.core.repository.catalog.ManifestCatalogRepository
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.repository.entity.RelationshipDefinitionRepository
 import riven.core.repository.entity.RelationshipTargetRuleRepository
+import riven.core.service.entity.EntityTypeSemanticMetadataService
+import riven.core.service.entity.type.EntityTypeRelationshipService
+import riven.core.service.entity.type.EntityTypeSequenceService
 import java.util.*
 
 /**
@@ -82,6 +85,15 @@ class TemplateMaterializationServiceTest {
     private lateinit var manifestCatalogRepository: ManifestCatalogRepository
 
     @MockitoBean
+    private lateinit var semanticMetadataService: EntityTypeSemanticMetadataService
+
+    @MockitoBean
+    private lateinit var relationshipService: EntityTypeRelationshipService
+
+    @MockitoBean
+    private lateinit var sequenceService: EntityTypeSequenceService
+
+    @MockitoBean
     private lateinit var objectMapper: ObjectMapper
 
     @MockitoBean
@@ -99,7 +111,7 @@ class TemplateMaterializationServiceTest {
         reset(
             entityTypeRepository, relationshipDefinitionRepository, relationshipTargetRuleRepository,
             catalogEntityTypeRepository, catalogRelationshipRepository, catalogRelationshipTargetRuleRepository,
-            manifestCatalogRepository
+            manifestCatalogRepository, semanticMetadataService, relationshipService, sequenceService
         )
 
         manifestEntity = ManifestCatalogEntity(
@@ -192,6 +204,17 @@ class TemplateMaterializationServiceTest {
         // Default: no existing relationships
         whenever(relationshipDefinitionRepository.findByWorkspaceIdAndSourceEntityTypeIdIn(eq(workspaceId), any()))
             .thenReturn(emptyList())
+
+        // Default: createFallbackDefinition returns a stub entity
+        whenever(relationshipService.createFallbackDefinition(any(), any())).thenReturn(
+            RelationshipDefinitionEntity(
+                id = UUID.randomUUID(),
+                workspaceId = workspaceId,
+                sourceEntityTypeId = UUID.randomUUID(),
+                name = "Connected Entities",
+                cardinalityDefault = EntityRelationshipCardinality.MANY_TO_MANY
+            )
+        )
 
         // Default: save returns the entity with an ID
         whenever(entityTypeRepository.save(any<EntityTypeEntity>())).thenAnswer { invocation ->
@@ -563,5 +586,141 @@ class TemplateMaterializationServiceTest {
         assertEquals(0, result.entityTypesRestored)
         assertEquals(0, result.relationshipsCreated)
         verify(entityTypeRepository, never()).save(any<EntityTypeEntity>())
+    }
+
+    // ========== Post-Creation Initialization Tests ==========
+
+    @Test
+    fun `materializeIntegrationTemplates - initializes semantic metadata for created entity types`() {
+        whenever(catalogEntityTypeRepository.findByManifestId(manifestId))
+            .thenReturn(listOf(catalogContactType))
+        whenever(catalogRelationshipRepository.findByManifestId(manifestId))
+            .thenReturn(emptyList())
+
+        val contactEntityId = UUID.randomUUID()
+        whenever(entityTypeRepository.save(any<EntityTypeEntity>())).thenAnswer { invocation ->
+            val entity = invocation.getArgument<EntityTypeEntity>(0)
+            entity.copy(id = contactEntityId)
+        }
+
+        service.materializeIntegrationTemplates(workspaceId, integrationSlug)
+
+        val expectedEmailUuid = UUID.nameUUIDFromBytes("$integrationSlug:hubspot-contact:email".toByteArray())
+        val expectedFirstNameUuid = UUID.nameUUIDFromBytes("$integrationSlug:hubspot-contact:first-name".toByteArray())
+
+        verify(semanticMetadataService).initializeForEntityType(
+            entityTypeId = eq(contactEntityId),
+            workspaceId = eq(workspaceId),
+            attributeIds = argThat { ids ->
+                ids.size == 2 && ids.contains(expectedEmailUuid) && ids.contains(expectedFirstNameUuid)
+            }
+        )
+    }
+
+    @Test
+    fun `materializeIntegrationTemplates - creates fallback relationship definition for each entity type`() {
+        val contactEntityId = UUID.randomUUID()
+        val companyEntityId = UUID.randomUUID()
+
+        whenever(catalogEntityTypeRepository.findByManifestId(manifestId))
+            .thenReturn(listOf(catalogContactType, catalogCompanyType))
+        whenever(catalogRelationshipRepository.findByManifestId(manifestId))
+            .thenReturn(emptyList())
+
+        whenever(entityTypeRepository.save(any<EntityTypeEntity>())).thenAnswer { invocation ->
+            val entity = invocation.getArgument<EntityTypeEntity>(0)
+            when (entity.key) {
+                "hubspot-contact" -> entity.copy(id = contactEntityId)
+                "hubspot-company" -> entity.copy(id = companyEntityId)
+                else -> entity.copy(id = UUID.randomUUID())
+            }
+        }
+
+        service.materializeIntegrationTemplates(workspaceId, integrationSlug)
+
+        verify(relationshipService).createFallbackDefinition(workspaceId, contactEntityId)
+        verify(relationshipService).createFallbackDefinition(workspaceId, companyEntityId)
+    }
+
+    @Test
+    fun `materializeIntegrationTemplates - initializes sequence for ID-type attributes`() {
+        val catalogWithIdAttr = CatalogEntityTypeEntity(
+            id = UUID.randomUUID(),
+            manifestId = manifestId,
+            key = "hubspot-ticket",
+            displayNameSingular = "HubSpot Ticket",
+            displayNamePlural = "HubSpot Tickets",
+            semanticGroup = SemanticGroup.UNCATEGORIZED,
+            readonly = true,
+            schema = mapOf(
+                "ticket-id" to mapOf(
+                    "label" to "Ticket ID",
+                    "key" to "ID",
+                    "type" to "string",
+                    "required" to true,
+                    "unique" to true,
+                    "protected" to true
+                ),
+                "subject" to mapOf(
+                    "label" to "Subject",
+                    "key" to "TEXT",
+                    "type" to "string",
+                    "required" to false,
+                    "unique" to false,
+                    "protected" to true
+                )
+            )
+        )
+
+        val ticketEntityId = UUID.randomUUID()
+
+        whenever(catalogEntityTypeRepository.findByManifestId(manifestId))
+            .thenReturn(listOf(catalogWithIdAttr))
+        whenever(catalogRelationshipRepository.findByManifestId(manifestId))
+            .thenReturn(emptyList())
+        whenever(entityTypeRepository.save(any<EntityTypeEntity>())).thenAnswer { invocation ->
+            invocation.getArgument<EntityTypeEntity>(0).copy(id = ticketEntityId)
+        }
+
+        service.materializeIntegrationTemplates(workspaceId, integrationSlug)
+
+        val expectedTicketIdUuid = UUID.nameUUIDFromBytes("$integrationSlug:hubspot-ticket:ticket-id".toByteArray())
+        verify(sequenceService).initializeSequence(ticketEntityId, expectedTicketIdUuid)
+
+        // TEXT attribute should NOT trigger sequence initialization
+        val expectedSubjectUuid = UUID.nameUUIDFromBytes("$integrationSlug:hubspot-ticket:subject".toByteArray())
+        verify(sequenceService, never()).initializeSequence(ticketEntityId, expectedSubjectUuid)
+    }
+
+    @Test
+    fun `materializeIntegrationTemplates - skips semantic metadata for restored entity types`() {
+        val softDeletedEntityType = EntityTypeEntity(
+            id = UUID.randomUUID(),
+            key = "hubspot-contact",
+            displayNameSingular = "HubSpot Contact",
+            displayNamePlural = "HubSpot Contacts",
+            identifierKey = UUID.randomUUID(),
+            workspaceId = workspaceId,
+            sourceType = SourceType.INTEGRATION,
+            readonly = true,
+            schema = riven.core.models.common.validation.Schema(
+                key = SchemaType.OBJECT,
+                type = DataType.OBJECT
+            ),
+        )
+
+        whenever(catalogEntityTypeRepository.findByManifestId(manifestId))
+            .thenReturn(listOf(catalogContactType))
+        whenever(catalogRelationshipRepository.findByManifestId(manifestId))
+            .thenReturn(emptyList())
+        whenever(entityTypeRepository.findSoftDeletedByWorkspaceIdAndKeyIn(eq(workspaceId), any()))
+            .thenReturn(listOf(softDeletedEntityType))
+
+        service.materializeIntegrationTemplates(workspaceId, integrationSlug)
+
+        // Semantic metadata should NOT be initialized for restored entity types
+        verify(semanticMetadataService, never()).initializeForEntityType(any(), any(), any())
+        verify(relationshipService, never()).createFallbackDefinition(any(), any())
+        verify(sequenceService, never()).initializeSequence(any(), any())
     }
 }

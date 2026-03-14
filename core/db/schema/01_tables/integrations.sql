@@ -41,3 +41,28 @@ CREATE TABLE IF NOT EXISTS integration_connections (
     updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
     UNIQUE(workspace_id, integration_id)
 );
+
+-- =====================================================
+-- WORKSPACE INTEGRATION INSTALLATIONS TABLE
+-- =====================================================
+-- Tracks which integrations are enabled per workspace.
+-- SoftDeletable: disable sets deleted = true, re-enable restores.
+
+CREATE TABLE IF NOT EXISTS workspace_integration_installations (
+    id                        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    workspace_id              UUID NOT NULL REFERENCES workspaces(id),
+    integration_definition_id UUID NOT NULL REFERENCES integration_definitions(id),
+    manifest_key              VARCHAR(255) NOT NULL,
+    installed_by              UUID NOT NULL,
+    installed_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+    sync_config               JSONB DEFAULT '{}',
+    last_synced_at            TIMESTAMPTZ,
+    deleted                   BOOLEAN NOT NULL DEFAULT false,
+    deleted_at                TIMESTAMPTZ,
+    created_at                TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at                TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_by                UUID,
+    updated_by                UUID,
+    CONSTRAINT uq_workspace_integration_installation
+        UNIQUE (workspace_id, integration_definition_id)
+);

@@ -21,7 +21,10 @@ import riven.core.models.common.validation.Schema
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.ColumnConfiguration
 import riven.core.models.entity.configuration.ColumnOverride
+import riven.core.service.entity.EntityTypeSemanticMetadataService
+import riven.core.service.entity.type.EntityTypeRelationshipService
 import riven.core.service.entity.type.EntityTypeService
+import riven.core.service.entity.type.EntityTypeSequenceService
 import riven.core.models.integration.materialization.MaterializationResult
 import riven.core.repository.catalog.CatalogEntityTypeRepository
 import riven.core.repository.catalog.CatalogRelationshipRepository
@@ -46,6 +49,9 @@ class TemplateMaterializationService(
     private val catalogRelationshipRepository: CatalogRelationshipRepository,
     private val catalogRelationshipTargetRuleRepository: CatalogRelationshipTargetRuleRepository,
     private val manifestCatalogRepository: ManifestCatalogRepository,
+    private val semanticMetadataService: EntityTypeSemanticMetadataService,
+    private val relationshipService: EntityTypeRelationshipService,
+    private val sequenceService: EntityTypeSequenceService,
     private val objectMapper: ObjectMapper,
     private val logger: KLogger
 ) {
@@ -160,7 +166,13 @@ class TemplateMaterializationService(
             columnConfiguration = columnConfiguration
         )
 
-        return entityTypeRepository.save(entity)
+        val savedEntity = entityTypeRepository.save(entity)
+        entityTypeRepository.flush()
+        val savedId = requireNotNull(savedEntity.id)
+
+        initializeEntityTypeMetadata(savedId, workspaceId, schema)
+
+        return savedEntity
     }
 
     /**
@@ -170,6 +182,27 @@ class TemplateMaterializationService(
         entity.deleted = false
         entity.deletedAt = null
         return entityTypeRepository.save(entity)
+    }
+
+    /**
+     * Initializes semantic metadata, fallback relationship, and ID-type attribute sequences
+     * for a newly created entity type. Brings materialization to parity with template installation.
+     */
+    private fun initializeEntityTypeMetadata(entityTypeId: UUID, workspaceId: UUID, schema: EntityTypeSchema) {
+        val attributeIds = schema.properties?.keys?.toList() ?: emptyList()
+        semanticMetadataService.initializeForEntityType(
+            entityTypeId = entityTypeId,
+            workspaceId = workspaceId,
+            attributeIds = attributeIds
+        )
+
+        relationshipService.createFallbackDefinition(workspaceId, entityTypeId)
+
+        schema.properties?.forEach { (attrId, attrSchema) ->
+            if (attrSchema.key == SchemaType.ID) {
+                sequenceService.initializeSequence(entityTypeId, attrId)
+            }
+        }
     }
 
     // ------ Schema Conversion ------
