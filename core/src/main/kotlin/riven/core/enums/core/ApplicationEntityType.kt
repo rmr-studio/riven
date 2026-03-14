@@ -18,5 +18,6 @@ enum class ApplicationEntityType {
     WORKFLOW_NODE,
     WORKFLOW_EDGE,
     INTEGRATION_CONNECTION,
-    FILE
+    FILE,
+    NOTIFICATION
 }

@@ -31,6 +31,7 @@ enum class Activity {
     FILE_UPLOAD,
     FILE_DELETE,
     FILE_UPDATE,
-    ONBOARDING
+    ONBOARDING,
+    NOTIFICATION
 }
 
