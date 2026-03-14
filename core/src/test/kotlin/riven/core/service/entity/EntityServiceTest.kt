@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Configuration
 import org.springframework.test.context.bean.override.mockito.MockitoBean
+import org.springframework.test.context.event.ApplicationEvents
+import org.springframework.test.context.event.RecordApplicationEvents
 import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
@@ -43,6 +45,7 @@ import java.util.*
         EntityService::class,
     ]
 )
+@RecordApplicationEvents
 @WithUserPersona(
     userId = "f8b1c2d3-4e5f-6789-abcd-ef0123456789",
     email = "test@test.com",
@@ -69,10 +72,12 @@ class EntityServiceTest : BaseServiceTest() {
     @MockitoBean private lateinit var authTokenService: AuthTokenService
     @MockitoBean private lateinit var activityService: ActivityService
     @MockitoBean private lateinit var sequenceService: EntityTypeSequenceService
-    @MockitoBean private lateinit var applicationEventPublisher: org.springframework.context.ApplicationEventPublisher
 
     @Autowired
     private lateinit var service: EntityService
+
+    @Autowired
+    private lateinit var applicationEvents: ApplicationEvents
 
     private val nameAttrId = UUID.randomUUID()
     private val statusAttrId = UUID.randomUUID()
@@ -294,6 +299,70 @@ class EntityServiceTest : BaseServiceTest() {
         service.saveEntity(workspaceId, entityTypeId, request)
 
         verify(sequenceService, never()).nextValue(any(), any())
+    }
+
+    @Test
+    fun `saveEntity publishes EntityEvent with CREATE operation for new entity`() {
+        val type = buildEntityType(
+            properties = mapOf(
+                nameAttrId to Schema(key = SchemaType.TEXT, type = DataType.STRING, label = "Name", required = true),
+            ),
+        )
+
+        whenever(entityTypeService.getById(entityTypeId)).thenReturn(type)
+        whenever(entityRepository.save(any<EntityEntity>())).thenAnswer {
+            (it.arguments[0] as EntityEntity).copy(id = entityId)
+        }
+
+        val request = SaveEntityRequest(
+            payload = mapOf(
+                nameAttrId to EntityAttributeRequest(
+                    payload = EntityAttributePrimitivePayload(value = "My Task", schemaType = SchemaType.TEXT)
+                ),
+            ),
+        )
+
+        service.saveEntity(workspaceId, entityTypeId, request)
+
+        val events = applicationEvents.stream(EntityEvent::class.java).toList()
+        assertEquals(1, events.size)
+
+        val event = events[0]
+        assertEquals(workspaceId, event.workspaceId)
+        assertEquals(userId, event.userId)
+        assertEquals(OperationType.CREATE, event.operation)
+        assertEquals(entityId, event.entityId)
+        assertEquals(entityTypeId, event.entityTypeId)
+        assertEquals("task", event.entityTypeKey)
+    }
+
+    @Test
+    fun `deleteEntities publishes EntityEvent with DELETE operation`() {
+        val deletedEntity = EntityEntity(
+            id = entityId,
+            workspaceId = workspaceId,
+            typeId = entityTypeId,
+            typeKey = "task",
+            identifierKey = nameAttrId,
+        )
+
+        whenever(entityRepository.deleteByIds(any(), eq(workspaceId))).thenReturn(listOf(deletedEntity))
+        whenever(entityRelationshipService.findByTargetIdIn(any())).thenReturn(emptyMap())
+
+        service.deleteEntities(workspaceId, listOf(entityId))
+
+        val events = applicationEvents.stream(EntityEvent::class.java).toList()
+        assertEquals(1, events.size)
+
+        val event = events[0]
+        assertEquals(workspaceId, event.workspaceId)
+        assertEquals(userId, event.userId)
+        assertEquals(OperationType.DELETE, event.operation)
+        assertNull(event.entityId)
+        assertEquals(entityTypeId, event.entityTypeId)
+        assertEquals("task", event.entityTypeKey)
+        assertEquals(listOf(entityId), event.summary["deletedIds"])
+        assertEquals(1, event.summary["deletedCount"])
     }
 
     @Test

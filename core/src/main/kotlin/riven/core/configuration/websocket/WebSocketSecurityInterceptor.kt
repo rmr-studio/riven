@@ -75,7 +75,8 @@ class WebSocketSecurityInterceptor(
         val destination = accessor.destination
             ?: throw IllegalArgumentException("SUBSCRIBE frame missing destination")
 
-        val workspaceId = extractWorkspaceId(destination) ?: return // Non-workspace topics are allowed
+        val workspaceId = extractWorkspaceId(destination)
+            ?: throw AccessDeniedException("Subscription to unknown destination '$destination' is not allowed")
 
         val hasAccess = auth.authorities.any { authority ->
             authority.authority.startsWith("ROLE_$workspaceId")

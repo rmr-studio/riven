@@ -22,6 +22,7 @@ class WebSocketEventListener(
     private val logger: KLogger,
 ) {
 
+    /** Forwards workspace-scoped domain events to the appropriate STOMP topic after transaction commit. */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun onWorkspaceEvent(event: WorkspaceEvent) {
         val topic = WebSocketChannel.topicPath(event.workspaceId, event.channel)
