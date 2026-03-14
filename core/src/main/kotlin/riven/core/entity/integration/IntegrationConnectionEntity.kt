@@ -5,6 +5,7 @@ import jakarta.persistence.*
 import org.hibernate.annotations.Type
 import riven.core.entity.util.AuditableEntity
 import riven.core.enums.integration.ConnectionStatus
+import riven.core.models.integration.IntegrationConnectionModel
 import java.util.*
 
 /**
@@ -46,4 +47,15 @@ data class IntegrationConnectionEntity(
     @Type(JsonBinaryType::class)
     @Column(name = "connection_metadata", columnDefinition = "jsonb")
     var connectionMetadata: Map<String, Any>? = null
-) : AuditableEntity()
+) : AuditableEntity() {
+    fun toModel() = IntegrationConnectionModel(
+        id = id!!,
+        workspaceId = workspaceId,
+        integrationId = integrationId,
+        nangoConnectionId = nangoConnectionId,
+        status = status,
+        connectionMetadata = connectionMetadata,
+        createdAt = createdAt,
+        updatedAt = updatedAt
+    )
+}
