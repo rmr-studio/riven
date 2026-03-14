@@ -24,9 +24,13 @@ import riven.core.repository.integration.IntegrationDefinitionRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.integration.materialization.TemplateMaterializationService
+import riven.core.service.util.SecurityTestConfig
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
 import riven.core.enums.workspace.WorkspaceRoles
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.assertThrows
+import org.springframework.security.access.AccessDeniedException
 import java.util.*
 
 /**
@@ -41,6 +45,7 @@ import java.util.*
     classes = [
         AuthTokenService::class,
         WorkspaceSecurity::class,
+        SecurityTestConfig::class,
         IntegrationConnectionServiceTest.TestConfig::class,
         IntegrationConnectionService::class
     ]
@@ -52,7 +57,7 @@ import java.util.*
     roles = [
         WorkspaceRole(
             workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
-            role = WorkspaceRoles.OWNER
+            role = WorkspaceRoles.ADMIN
         )
     ]
 )
@@ -497,5 +502,76 @@ class IntegrationConnectionServiceTest {
         }
 
         verify(connectionRepository, never()).save(any<IntegrationConnectionEntity>())
+    }
+
+    // ========== Security Tests ==========
+
+    @Nested
+    inner class Security {
+
+        @Test
+        @WithUserPersona(
+            userId = "f8b1c2d3-4e5f-6789-abcd-ef0123456789",
+            email = "test@test.com",
+            displayName = "Test User",
+            roles = [
+                WorkspaceRole(
+                    workspaceId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                    role = WorkspaceRoles.ADMIN
+                )
+            ]
+        )
+        fun `enableConnection - rejects user without workspace access`() {
+            assertThrows<AccessDeniedException> {
+                integrationConnectionService.enableConnection(
+                    workspaceId = workspaceId,
+                    integrationId = UUID.randomUUID(),
+                    nangoConnectionId = "nango-conn-123"
+                )
+            }
+        }
+
+        @Test
+        @WithUserPersona(
+            userId = "f8b1c2d3-4e5f-6789-abcd-ef0123456789",
+            email = "test@test.com",
+            displayName = "Test User",
+            roles = [
+                WorkspaceRole(
+                    workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
+                    role = WorkspaceRoles.MEMBER
+                )
+            ]
+        )
+        fun `enableConnection - rejects non-admin user`() {
+            assertThrows<AccessDeniedException> {
+                integrationConnectionService.enableConnection(
+                    workspaceId = workspaceId,
+                    integrationId = UUID.randomUUID(),
+                    nangoConnectionId = "nango-conn-123"
+                )
+            }
+        }
+
+        @Test
+        @WithUserPersona(
+            userId = "f8b1c2d3-4e5f-6789-abcd-ef0123456789",
+            email = "test@test.com",
+            displayName = "Test User",
+            roles = [
+                WorkspaceRole(
+                    workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
+                    role = WorkspaceRoles.MEMBER
+                )
+            ]
+        )
+        fun `disconnectConnection - rejects non-admin user`() {
+            assertThrows<AccessDeniedException> {
+                integrationConnectionService.disconnectConnection(
+                    workspaceId = workspaceId,
+                    connectionId = UUID.randomUUID()
+                )
+            }
+        }
     }
 }

@@ -29,8 +29,11 @@ import riven.core.service.auth.AuthTokenService
 import riven.core.service.entity.type.EntityTypeService
 import riven.core.service.entity.type.IntegrationSoftDeleteResult
 import riven.core.service.integration.materialization.TemplateMaterializationService
+import riven.core.service.util.SecurityTestConfig
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
+import org.junit.jupiter.api.assertThrows
+import org.springframework.security.access.AccessDeniedException
 import java.util.*
 
 /**
@@ -47,6 +50,7 @@ import java.util.*
     classes = [
         AuthTokenService::class,
         WorkspaceSecurity::class,
+        SecurityTestConfig::class,
         IntegrationEnablementServiceTest.TestConfig::class,
         IntegrationEnablementService::class
     ]
@@ -58,7 +62,7 @@ import java.util.*
     roles = [
         WorkspaceRole(
             workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
-            role = WorkspaceRoles.OWNER
+            role = WorkspaceRoles.ADMIN
         )
     ]
 )
@@ -133,7 +137,7 @@ class IntegrationEnablementServiceTest {
         roles = [
             WorkspaceRole(
                 workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
-                role = WorkspaceRoles.OWNER
+                role = WorkspaceRoles.ADMIN
             )
         ]
     )
@@ -345,7 +349,7 @@ class IntegrationEnablementServiceTest {
         roles = [
             WorkspaceRole(
                 workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
-                role = WorkspaceRoles.OWNER
+                role = WorkspaceRoles.ADMIN
             )
         ]
     )
@@ -489,7 +493,7 @@ class IntegrationEnablementServiceTest {
         roles = [
             WorkspaceRole(
                 workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
-                role = WorkspaceRoles.OWNER
+                role = WorkspaceRoles.ADMIN
             )
         ]
     )
@@ -580,6 +584,78 @@ class IntegrationEnablementServiceTest {
             verify(installationRepository).save(argThat { inst ->
                 !inst.deleted && inst.deletedAt == null
             })
+        }
+    }
+
+    // ========== Security Tests ==========
+
+    @Nested
+    inner class Security {
+
+        @Test
+        @WithUserPersona(
+            userId = "f8b1c2d3-4e5f-6789-abcd-ef0123456789",
+            email = "test@test.com",
+            displayName = "Test User",
+            roles = [
+                WorkspaceRole(
+                    workspaceId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                    role = WorkspaceRoles.ADMIN
+                )
+            ]
+        )
+        fun `enableIntegration - rejects user without workspace access`() {
+            val request = EnableIntegrationRequest(
+                integrationDefinitionId = UUID.randomUUID(),
+                nangoConnectionId = "nango-conn-123"
+            )
+
+            assertThrows<AccessDeniedException> {
+                enablementService.enableIntegration(workspaceId, request)
+            }
+        }
+
+        @Test
+        @WithUserPersona(
+            userId = "f8b1c2d3-4e5f-6789-abcd-ef0123456789",
+            email = "test@test.com",
+            displayName = "Test User",
+            roles = [
+                WorkspaceRole(
+                    workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
+                    role = WorkspaceRoles.MEMBER
+                )
+            ]
+        )
+        fun `enableIntegration - rejects non-admin user`() {
+            val request = EnableIntegrationRequest(
+                integrationDefinitionId = UUID.randomUUID(),
+                nangoConnectionId = "nango-conn-123"
+            )
+
+            assertThrows<AccessDeniedException> {
+                enablementService.enableIntegration(workspaceId, request)
+            }
+        }
+
+        @Test
+        @WithUserPersona(
+            userId = "f8b1c2d3-4e5f-6789-abcd-ef0123456789",
+            email = "test@test.com",
+            displayName = "Test User",
+            roles = [
+                WorkspaceRole(
+                    workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
+                    role = WorkspaceRoles.MEMBER
+                )
+            ]
+        )
+        fun `disableIntegration - rejects non-admin user`() {
+            val request = DisableIntegrationRequest(integrationDefinitionId = UUID.randomUUID())
+
+            assertThrows<AccessDeniedException> {
+                enablementService.disableIntegration(workspaceId, request)
+            }
         }
     }
 }
