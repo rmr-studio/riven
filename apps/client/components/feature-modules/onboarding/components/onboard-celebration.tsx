@@ -1,14 +1,14 @@
 'use client';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Button } from '@riven/ui';
 import { Propless } from '@/lib/interfaces/interface';
 import { AlertTriangle, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import { getInitials, getPaletteColor } from '../utils/avatar-helpers';
-import { useOnboardStore } from '../hooks/use-onboard-store';
+import { useOnboardSubmission, useOnboardStore } from '../hooks/use-onboard-store';
 
 const REDIRECT_SECONDS = 3;
 
@@ -36,14 +36,19 @@ function buildSetupSummary(
 
 export const OnboardCelebration: FC<Propless> = () => {
   const router = useRouter();
-  const submissionResponse = useOnboardStore((s) => s.submissionResponse);
-  const reset = useOnboardStore((s) => s.reset);
+  const { submissionResponse, reset } = useOnboardSubmission();
+  const workspaceAvatarBlob = useOnboardStore((s) => s.workspaceAvatarBlob);
 
   const [countdown, setCountdown] = useState(REDIRECT_SECONDS);
   const [warningVisible, setWarningVisible] = useState(true);
 
   const workspaceId = submissionResponse?.workspace.id ?? '';
   const workspaceName = submissionResponse?.workspace.name ?? '';
+
+  const avatarUrl = useMemo(
+    () => (workspaceAvatarBlob ? URL.createObjectURL(workspaceAvatarBlob) : null),
+    [workspaceAvatarBlob],
+  );
 
   useEffect(() => {
     if (!submissionResponse || !workspaceId) return;
@@ -88,11 +93,19 @@ export const OnboardCelebration: FC<Propless> = () => {
         className="flex w-full max-w-md flex-col items-center gap-6 text-center"
       >
         {/* Workspace avatar */}
-        <div
-          className={`flex h-20 w-20 items-center justify-center rounded-2xl text-2xl font-bold text-white ${paletteColor}`}
-        >
-          {initials}
-        </div>
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={workspaceName}
+            className="h-20 w-20 rounded-2xl object-cover"
+          />
+        ) : (
+          <div
+            className={`flex h-20 w-20 items-center justify-center rounded-2xl text-2xl font-bold text-white ${paletteColor}`}
+          >
+            {initials}
+          </div>
+        )}
 
         {/* Heading */}
         <div className="flex flex-col gap-2">

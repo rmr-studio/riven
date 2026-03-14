@@ -9,14 +9,14 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@riven/ui/input';
-import { AvatarUploader } from '@/components/ui/AvatarUploader';
+import { AvatarUploader } from '@/components/ui/avatar-uploader';
 import { WorkspacePlan } from '@/lib/types/workspace';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cn } from '@/lib/util/utils';
 import { FC, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useOnboardStore } from '../../hooks/use-onboard-store';
+import { useOnboardStore, useOnboardFormControls } from '../../hooks/use-onboard-store';
 
 export const workspaceStepSchema = z.object({
   displayName: z
@@ -69,11 +69,9 @@ const PLAN_OPTIONS: {
 ];
 
 export const WorkspaceStepForm: FC = () => {
-  const setLiveData = useOnboardStore((s) => s.setLiveData);
-  const registerFormTrigger = useOnboardStore((s) => s.registerFormTrigger);
-  const clearFormTrigger = useOnboardStore((s) => s.clearFormTrigger);
-  const restoredData = useOnboardStore(
-    (s) => s.liveData['workspace'] as WorkspaceLiveData | undefined,
+  const { setLiveData, registerFormTrigger, clearFormTrigger } = useOnboardFormControls();
+  const [restoredData] = useState(
+    () => useOnboardStore.getState().liveData['workspace'] as WorkspaceLiveData | undefined,
   );
 
   const [avatarBlob, setAvatarBlob] = useState<Blob | null>(null);

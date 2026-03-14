@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BundleDetail, ManifestSummary } from '@/lib/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import React from 'react';
-import { useOnboardStore } from '../../hooks/use-onboard-store';
+import { useOnboardLiveData } from '../../hooks/use-onboard-store';
 
 interface TemplatesLiveData {
   selectedBundleKey: string | null;
@@ -33,9 +33,7 @@ const SkeletonCard: React.FC = () => (
 );
 
 export const TemplatesPreview: React.FC = () => {
-  const liveTemplates = useOnboardStore(
-    (s) => s.liveData['templates'] as TemplatesLiveData | undefined,
-  );
+  const liveTemplates = useOnboardLiveData<TemplatesLiveData>('templates');
 
   const selectedBundleKey = liveTemplates?.selectedBundleKey ?? null;
   const bundles = liveTemplates?.bundles ?? [];

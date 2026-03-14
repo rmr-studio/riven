@@ -3,10 +3,14 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/util/utils';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import { FC, useEffect, useState } from 'react';
 import { useBundles } from '../../hooks/query/use-bundles';
-import { useOnboardStore } from '../../hooks/use-onboard-store';
+import {
+  useOnboardStore,
+  useOnboardFormControls,
+  useOnboardNavigation,
+} from '../../hooks/use-onboard-store';
 
 interface TemplatesLiveData {
   selectedBundleKey: string | null;
@@ -28,11 +32,10 @@ export function toggleBundleSelection(
 }
 
 export const TemplateStepForm: FC = () => {
-  const setLiveData = useOnboardStore((s) => s.setLiveData);
-  const registerFormTrigger = useOnboardStore((s) => s.registerFormTrigger);
-  const clearFormTrigger = useOnboardStore((s) => s.clearFormTrigger);
-  const restoredData = useOnboardStore(
-    (s) => s.liveData['templates'] as TemplatesLiveData | undefined,
+  const { setLiveData, registerFormTrigger, clearFormTrigger } = useOnboardFormControls();
+  const { skip } = useOnboardNavigation();
+  const [restoredData] = useState(
+    () => useOnboardStore.getState().liveData['templates'] as TemplatesLiveData | undefined,
   );
 
   const [selectedBundleKey, setSelectedBundleKey] = useState<string | null>(
@@ -87,8 +90,15 @@ export const TemplateStepForm: FC = () => {
     );
   }
 
+  const handleSkipTemplates = () => {
+    setSelectedBundleKey(null);
+    setLiveData('templates', { selectedBundleKey: null, bundles, templates });
+    skip();
+  };
+
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       {bundles.map((bundle) => {
         const isSelected = selectedBundleKey === bundle.key;
         const isExpanded = expandedBundleKey === bundle.key;
@@ -98,9 +108,16 @@ export const TemplateStepForm: FC = () => {
 
         return (
           <div key={bundle.key} className="flex flex-col">
-            <button
-              type="button"
+            <div
+              role="button"
+              tabIndex={0}
               onClick={() => handleBundleClick(bundle.key)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleBundleClick(bundle.key);
+                }
+              }}
               className={cn(
                 'bg-card flex flex-col rounded-xl border p-5 shadow-sm transition-all',
                 'cursor-pointer text-left',
@@ -136,7 +153,7 @@ export const TemplateStepForm: FC = () => {
                   )}
                 </button>
               </div>
-            </button>
+            </div>
 
             <AnimatePresence initial={false}>
               {isExpanded && (
@@ -185,6 +202,28 @@ export const TemplateStepForm: FC = () => {
           </div>
         );
       })}
+      </div>
+
+      <div className="flex items-center gap-3">
+        {selectedBundleKey && (
+          <button
+            type="button"
+            onClick={() => setSelectedBundleKey(null)}
+            className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs transition-colors"
+          >
+            <X className="size-3" />
+            Clear selection
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={handleSkipTemplates}
+          className="text-muted-foreground hover:text-foreground ml-auto text-xs transition-colors"
+        >
+          Skip templates
+        </button>
+      </div>
     </div>
   );
 };

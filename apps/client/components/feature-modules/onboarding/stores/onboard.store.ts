@@ -1,5 +1,6 @@
 import { ONBOARD_STEPS } from '../config/onboard-steps';
 import { CompleteOnboardingResponse } from '@/lib/types/models';
+import { useShallow } from 'zustand/react/shallow';
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
@@ -134,3 +135,35 @@ export const useOnboardStore = create<OnboardStore>()(
     },
   })),
 );
+
+// ── Selector hooks ───────────────────────────────────────────────────
+
+export const useOnboardStepState = () =>
+  useOnboardStore(useShallow((s) => ({ currentStep: s.currentStep, direction: s.direction })));
+
+export const useOnboardLiveData = <T = unknown>(stepId: string) =>
+  useOnboardStore((s) => s.liveData[stepId] as T | undefined);
+
+export const useOnboardNavigation = () =>
+  useOnboardStore(useShallow((s) => ({ goNext: s.goNext, goBack: s.goBack, skip: s.skip })));
+
+export const useOnboardFormControls = () =>
+  useOnboardStore(
+    useShallow((s) => ({
+      setLiveData: s.setLiveData,
+      setStepData: s.setStepData,
+      registerFormTrigger: s.registerFormTrigger,
+      clearFormTrigger: s.clearFormTrigger,
+    })),
+  );
+
+export const useOnboardSubmission = () =>
+  useOnboardStore(
+    useShallow((s) => ({
+      submissionStatus: s.submissionStatus,
+      submissionResponse: s.submissionResponse,
+      setSubmissionStatus: s.setSubmissionStatus,
+      setSubmissionResponse: s.setSubmissionResponse,
+      reset: s.reset,
+    })),
+  );

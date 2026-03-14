@@ -2,13 +2,17 @@
 
 import { Propless } from '@/lib/interfaces/interface';
 import { FC } from 'react';
-import { useOnboardStore } from '../hooks/use-onboard-store';
+import { useBundles } from '../hooks/query/use-bundles';
+import { useOnboardSubmission } from '../hooks/use-onboard-store';
 import { OnboardCelebration } from './onboard-celebration';
 import { OnboardFormPanel } from './onboard-form-panel';
 import { OnboardPreviewPanel } from './onboard-preview-panel';
 
 export const OnboardShell: FC<Propless> = () => {
-  const submissionStatus = useOnboardStore((s) => s.submissionStatus);
+  const { submissionStatus } = useOnboardSubmission();
+
+  // Prefetch bundles/templates so data is cached before the user reaches step 3
+  useBundles();
 
   return (
     <div className="fixed inset-0 z-50 flex">

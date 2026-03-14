@@ -1,0 +1,86 @@
+<h2>Crop Dialog Style</h2>
+<p class="subtitle">How should the crop interaction feel? Both use a modal dialog with 1:1 locked crop.</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0a0a0a;padding:24px;min-height:320px;display:flex;flex-direction:column;">
+      <!-- Dark cinematic crop modal mockup -->
+      <div style="background:#18181b;border-radius:12px;overflow:hidden;flex:1;display:flex;flex-direction:column;">
+        <div style="padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #27272a;">
+          <span style="color:#a1a1aa;font-size:13px;">Crop Image</span>
+          <span style="color:#52525b;font-size:18px;cursor:pointer;">&times;</span>
+        </div>
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;">
+          <!-- Simulated image area with crop overlay -->
+          <div style="width:200px;height:200px;background:linear-gradient(135deg,#374151,#1f2937);border-radius:8px;position:relative;overflow:hidden;">
+            <!-- Grid lines -->
+            <div style="position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr 1fr;">
+              <div style="border-right:1px solid rgba(255,255,255,0.15);border-bottom:1px solid rgba(255,255,255,0.15);"></div>
+              <div style="border-right:1px solid rgba(255,255,255,0.15);border-bottom:1px solid rgba(255,255,255,0.15);"></div>
+              <div style="border-bottom:1px solid rgba(255,255,255,0.15);"></div>
+              <div style="border-right:1px solid rgba(255,255,255,0.15);border-bottom:1px solid rgba(255,255,255,0.15);"></div>
+              <div style="border-right:1px solid rgba(255,255,255,0.15);border-bottom:1px solid rgba(255,255,255,0.15);"></div>
+              <div style="border-bottom:1px solid rgba(255,255,255,0.15);"></div>
+              <div style="border-right:1px solid rgba(255,255,255,0.15);"></div>
+              <div style="border-right:1px solid rgba(255,255,255,0.15);"></div>
+              <div></div>
+            </div>
+            <!-- Corner handles -->
+            <div style="position:absolute;top:-1px;left:-1px;width:16px;height:16px;border-top:2px solid white;border-left:2px solid white;"></div>
+            <div style="position:absolute;top:-1px;right:-1px;width:16px;height:16px;border-top:2px solid white;border-right:2px solid white;"></div>
+            <div style="position:absolute;bottom:-1px;left:-1px;width:16px;height:16px;border-bottom:2px solid white;border-left:2px solid white;"></div>
+            <div style="position:absolute;bottom:-1px;right:-1px;width:16px;height:16px;border-bottom:2px solid white;border-right:2px solid white;"></div>
+          </div>
+        </div>
+        <!-- Zoom slider -->
+        <div style="padding:12px 24px 20px;display:flex;align-items:center;gap:12px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          <div style="flex:1;height:4px;background:#27272a;border-radius:2px;position:relative;">
+            <div style="position:absolute;left:0;top:0;width:40%;height:100%;background:#f4f4f5;border-radius:2px;"></div>
+            <div style="position:absolute;left:38%;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;background:white;border-radius:50%;"></div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#71717a" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/><line x1="11" y1="8" x2="11" y2="14"/></svg>
+        </div>
+        <!-- Footer -->
+        <div style="padding:12px 20px;border-top:1px solid #27272a;display:flex;justify-content:flex-end;gap:8px;">
+          <div style="padding:6px 16px;border-radius:6px;color:#a1a1aa;font-size:13px;cursor:pointer;">Cancel</div>
+          <div style="padding:6px 16px;border-radius:6px;background:white;color:black;font-size:13px;font-weight:500;">Apply</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A: Dark Cinematic</h3>
+      <p>Dark background makes the image pop. Minimal chrome, zoom slider with magnifying glass icons, corner crop handles. Matches dark mode natively — light mode gets inverted version.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#fafafa;padding:24px;min-height:320px;display:flex;flex-direction:column;">
+      <!-- Clean light crop modal mockup -->
+      <div style="background:white;border-radius:12px;overflow:hidden;flex:1;display:flex;flex-direction:column;box-shadow:0 8px 30px rgba(0,0,0,0.12);">
+        <div style="padding:14px 20px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="color:#ef4444;font-size:13px;font-weight:500;cursor:pointer;">Clear</span>
+          <span style="color:#09090b;font-size:14px;font-weight:600;">Edit Photo</span>
+          <span style="color:#2563eb;font-size:13px;font-weight:500;cursor:pointer;">Save</span>
+        </div>
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:16px;background:#f4f4f5;">
+          <div style="width:200px;height:200px;background:linear-gradient(135deg,#d4d4d8,#a1a1aa);border-radius:50%;position:relative;overflow:hidden;box-shadow:0 0 0 2px white,0 0 0 4000px rgba(0,0,0,0.4);">
+          </div>
+        </div>
+        <!-- Zoom control -->
+        <div style="padding:16px 24px;display:flex;align-items:center;gap:12px;background:white;">
+          <span style="font-size:11px;color:#a1a1aa;">−</span>
+          <div style="flex:1;height:3px;background:#e4e4e7;border-radius:2px;position:relative;">
+            <div style="position:absolute;left:0;top:0;width:30%;height:100%;background:#09090b;border-radius:2px;"></div>
+            <div style="position:absolute;left:28%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:#09090b;border-radius:50%;"></div>
+          </div>
+          <span style="font-size:11px;color:#a1a1aa;">+</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B: Circular Preview</h3>
+      <p>Shows the crop as a circle from the start — what you see is what you get for avatar context. iOS-inspired header with Clear/Save actions. Surrounding area dimmed. Clean, light aesthetic.</p>
+    </div>
+  </div>
+</div>

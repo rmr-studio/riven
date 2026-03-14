@@ -6,12 +6,12 @@ import { motion } from 'motion/react';
 import { FC } from 'react';
 import { ONBOARD_STEPS } from '../config/onboard-steps';
 import { useCompleteOnboardingMutation } from '../hooks/mutation/use-complete-onboarding-mutation';
-import { useOnboardStore } from '../hooks/use-onboard-store';
+import { useOnboardStepState, useOnboardSubmission } from '../hooks/use-onboard-store';
 import { OnboardNavControls } from './onboard-nav-controls';
 import { OnboardStepForm } from './onboard-step-form';
 
 const OnboardProgress: FC = () => {
-  const currentStep = useOnboardStore((s) => s.currentStep);
+  const { currentStep } = useOnboardStepState();
 
   return (
     <div className="flex flex-col gap-3">
@@ -44,8 +44,7 @@ const OnboardProgress: FC = () => {
 };
 
 export const OnboardFormPanel: FC<Propless> = () => {
-  const submissionStatus = useOnboardStore((s) => s.submissionStatus);
-  const setSubmissionStatus = useOnboardStore((s) => s.setSubmissionStatus);
+  const { submissionStatus, setSubmissionStatus } = useOnboardSubmission();
   const mutation = useCompleteOnboardingMutation();
 
   return (

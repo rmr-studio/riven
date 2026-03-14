@@ -5,7 +5,7 @@ import { useAuth } from '@/components/provider/auth-context';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 import React from 'react';
-import { useOnboardStore } from '../../hooks/use-onboard-store';
+import { useOnboardLiveData } from '../../hooks/use-onboard-store';
 import { getInitials, getPaletteColor } from '../../utils/avatar-helpers';
 
 interface ProfileLiveData {
@@ -21,7 +21,7 @@ const fadeProps = {
 };
 
 export const ProfilePreview: React.FC = () => {
-  const liveProfile = useOnboardStore((s) => s.liveData['profile'] as ProfileLiveData | undefined);
+  const liveProfile = useOnboardLiveData<ProfileLiveData>('profile');
   const { user } = useAuth();
 
   const displayName = liveProfile?.displayName;

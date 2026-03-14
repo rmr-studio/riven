@@ -5,7 +5,7 @@ import { WorkspaceRoles } from '@/lib/types/models/WorkspaceRoles';
 import { cn } from '@/lib/util/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import React from 'react';
-import { useOnboardStore } from '../../hooks/use-onboard-store';
+import { useOnboardLiveData } from '../../hooks/use-onboard-store';
 import { getPaletteColor } from '../../utils/avatar-helpers';
 import { INVITE_SOFT_CAP } from '../forms/team-step-form';
 
@@ -23,7 +23,7 @@ const fadeProps = {
 const MIN_ROWS = 4;
 
 export const TeamPreview: React.FC = () => {
-  const liveTeam = useOnboardStore((s) => s.liveData['team'] as TeamLiveData | undefined);
+  const liveTeam = useOnboardLiveData<TeamLiveData>('team');
   const invites = liveTeam?.invites ?? [];
 
   const totalRows = Math.min(Math.max(invites.length, MIN_ROWS), INVITE_SOFT_CAP);

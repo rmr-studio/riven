@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { FC } from 'react';
 import { ONBOARD_STEPS } from '../config/onboard-steps';
-import { useOnboardStore } from '../hooks/use-onboard-store';
+import { useOnboardStepState } from '../hooks/use-onboard-store';
 import { ProfileStepForm } from './forms/profile-step-form';
 import { TeamStepForm } from './forms/team-step-form';
 import { TemplateStepForm } from './forms/template-step-form';
@@ -17,8 +17,7 @@ const STEP_FORMS: Record<string, React.ComponentType> = {
 };
 
 export const OnboardStepForm: FC = () => {
-  const currentStep = useOnboardStore((s) => s.currentStep);
-  const direction = useOnboardStore((s) => s.direction);
+  const { currentStep, direction } = useOnboardStepState();
 
   const xOffset = direction === 'forward' ? 40 : -40;
   const stepConfig = ONBOARD_STEPS[currentStep];

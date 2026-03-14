@@ -1,3 +1,7 @@
+/**
+ * bg-blue-500 bg-emerald-500 bg-violet-500 bg-rose-500 bg-amber-500 bg-cyan-500
+ * ^ Tailwind safelist — keeps JIT from purging dynamically-applied palette classes
+ */
 const PALETTE_COLORS = [
   'bg-blue-500',
   'bg-emerald-500',

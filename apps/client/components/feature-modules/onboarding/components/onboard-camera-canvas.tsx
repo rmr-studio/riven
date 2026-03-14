@@ -1,13 +1,13 @@
 'use client';
 
 import { ONBOARD_STEPS } from '@/components/feature-modules/onboarding/config/onboard-steps';
-import { useOnboardStore } from '@/components/feature-modules/onboarding/hooks/use-onboard-store';
+import { useOnboardStepState } from '@/components/feature-modules/onboarding/hooks/use-onboard-store';
 import { Propless } from '@/lib/interfaces/interface';
 import { useAnimate } from 'framer-motion';
 import { FC, useEffect, useRef, useState } from 'react';
 
 export const OnboardCameraCanvas: FC<Propless> = () => {
-  const currentStep = useOnboardStore((s) => s.currentStep);
+  const { currentStep } = useOnboardStepState();
   const [scope, animate] = useAnimate();
   const containerRef = useRef<HTMLDivElement>(null);
   const isAnimating = useRef(false);

@@ -22,7 +22,7 @@ import { X } from 'lucide-react';
 import { FC, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useOnboardStore } from '../../hooks/use-onboard-store';
+import { useOnboardStore, useOnboardFormControls } from '../../hooks/use-onboard-store';
 
 // ─── Constants and helpers ────────────────────────────────────────────────────
 
@@ -62,11 +62,9 @@ const ROLE_LABELS: Record<WorkspaceRoles.Admin | WorkspaceRoles.Member, string> 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export const TeamStepForm: FC = () => {
-  const setLiveData = useOnboardStore((s) => s.setLiveData);
-  const registerFormTrigger = useOnboardStore((s) => s.registerFormTrigger);
-  const clearFormTrigger = useOnboardStore((s) => s.clearFormTrigger);
-  const restoredData = useOnboardStore(
-    (s) => s.liveData['team'] as TeamLiveData | undefined,
+  const { setLiveData, registerFormTrigger, clearFormTrigger } = useOnboardFormControls();
+  const [restoredData] = useState(
+    () => useOnboardStore.getState().liveData['team'] as TeamLiveData | undefined,
   );
 
   const [invites, setInvites] = useState<PendingInvite[]>(restoredData?.invites ?? []);

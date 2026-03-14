@@ -6,7 +6,7 @@ import { cn } from '@/lib/util/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 import React from 'react';
-import { useOnboardStore } from '../../hooks/use-onboard-store';
+import { useOnboardLiveData } from '../../hooks/use-onboard-store';
 import { getInitials, getPaletteColor } from '../../utils/avatar-helpers';
 
 interface WorkspaceLiveData {
@@ -37,9 +37,7 @@ const fadeProps = {
 };
 
 export const WorkspacePreview: React.FC = () => {
-  const liveWorkspace = useOnboardStore(
-    (s) => s.liveData['workspace'] as WorkspaceLiveData | undefined,
-  );
+  const liveWorkspace = useOnboardLiveData<WorkspaceLiveData>('workspace');
 
   const displayName = liveWorkspace?.displayName;
   const plan = liveWorkspace?.plan;

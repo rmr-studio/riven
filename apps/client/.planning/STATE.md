@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 03-optional-steps 03-01-PLAN.md
-last_updated: "2026-03-13T07:27:43.744Z"
+stopped_at: Completed 04-submission-completion-04-01-PLAN.md
+last_updated: "2026-03-13T22:22:43.967Z"
 last_activity: 2026-03-08 -- Roadmap created
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 9
+  completed_plans: 8
   percent: 0
 ---
 
@@ -56,6 +56,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-required-steps P02 | 4 | 3 tasks | 6 files |
 | Phase 03-optional-steps P02 | 18 | 3 tasks | 4 files |
 | Phase 03-optional-steps P01 | 8 | 3 tasks | 7 files |
+| Phase 04-submission-completion P01 | 4 | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,9 @@ Recent decisions affecting current work:
 - [Phase 03-optional-steps]: toggleBundleSelection exported as pure helper for test isolation without React/DOM setup
 - [Phase 03-optional-steps]: useBundles fetches both listBundles and listTemplates in single Promise.all with query key ['bundles']
 - [Phase 03-optional-steps]: Optional step formTrigger pattern: always-true async function, liveData provides reactivity without validation
+- [Phase 04-submission-completion]: assemblePayload is a pure function for full unit testability without React/DOM setup
+- [Phase 04-submission-completion]: No toast on submission error — inline error state in form panel per CONTEXT.md spec
+- [Phase 04-submission-completion]: templateKeys always empty — templates installed via bundles, not individually
 
 ### Pending Todos
 
@@ -92,6 +96,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T07:27:43.742Z
-Stopped at: Completed 03-optional-steps 03-01-PLAN.md
+Last session: 2026-03-13T22:22:43.965Z
+Stopped at: Completed 04-submission-completion-04-01-PLAN.md
 Resume file: None

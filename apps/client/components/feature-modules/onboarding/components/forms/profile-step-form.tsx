@@ -9,13 +9,13 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@riven/ui/input';
-import { AvatarUploader } from '@/components/ui/AvatarUploader';
+import { AvatarUploader } from '@/components/ui/avatar-uploader';
 import { useAuth } from '@/components/provider/auth-context';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FC, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useOnboardStore } from '../../hooks/use-onboard-store';
+import { useOnboardStore, useOnboardFormControls } from '../../hooks/use-onboard-store';
 
 export const profileStepSchema = z.object({
   displayName: z
@@ -32,11 +32,9 @@ interface ProfileLiveData {
 
 export const ProfileStepForm: FC = () => {
   const { user } = useAuth();
-  const setLiveData = useOnboardStore((s) => s.setLiveData);
-  const registerFormTrigger = useOnboardStore((s) => s.registerFormTrigger);
-  const clearFormTrigger = useOnboardStore((s) => s.clearFormTrigger);
-  const restoredData = useOnboardStore(
-    (s) => s.liveData['profile'] as ProfileLiveData | undefined,
+  const { setLiveData, registerFormTrigger, clearFormTrigger } = useOnboardFormControls();
+  const [restoredData] = useState(
+    () => useOnboardStore.getState().liveData['profile'] as ProfileLiveData | undefined,
   );
 
   const [avatarBlob, setAvatarBlob] = useState<Blob | null>(null);

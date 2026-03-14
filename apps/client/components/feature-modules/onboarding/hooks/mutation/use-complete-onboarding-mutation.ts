@@ -2,14 +2,14 @@
 
 import { useAuth } from '@/components/provider/auth-context';
 import { CompleteOnboardingResponse } from '@/lib/types/models';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { assemblePayload, OnboardingService } from '../../service/onboarding.service';
-import { useOnboardStore } from '../use-onboard-store';
+import { useOnboardStore, useOnboardSubmission } from '../use-onboard-store';
 
 export function useCompleteOnboardingMutation() {
   const { session } = useAuth();
-  const setSubmissionStatus = useOnboardStore((s) => s.setSubmissionStatus);
-  const setSubmissionResponse = useOnboardStore((s) => s.setSubmissionResponse);
+  const queryClient = useQueryClient();
+  const { setSubmissionStatus, setSubmissionResponse } = useOnboardSubmission();
 
   return useMutation<CompleteOnboardingResponse, Error, void>({
     mutationFn: async () => {
@@ -34,6 +34,7 @@ export function useCompleteOnboardingMutation() {
     onSuccess: (response) => {
       setSubmissionResponse(response);
       setSubmissionStatus('success');
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
     },
   });
 }

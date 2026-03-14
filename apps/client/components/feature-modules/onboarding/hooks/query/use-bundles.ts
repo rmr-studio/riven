@@ -11,6 +11,9 @@ export interface UseBundlesResult {
   error: Error | null;
 }
 
+const EMPTY_BUNDLES: BundleDetail[] = [];
+const EMPTY_TEMPLATES: ManifestSummary[] = [];
+
 export function useBundles(): UseBundlesResult {
   const { session, loading } = useAuth();
 
@@ -31,8 +34,8 @@ export function useBundles(): UseBundlesResult {
   });
 
   return {
-    bundles: data?.bundles ?? [],
-    templates: data?.templates ?? [],
+    bundles: data?.bundles ?? EMPTY_BUNDLES,
+    templates: data?.templates ?? EMPTY_TEMPLATES,
     isLoading: loading || isLoading,
     isLoadingAuth: loading,
     error: error as Error | null,

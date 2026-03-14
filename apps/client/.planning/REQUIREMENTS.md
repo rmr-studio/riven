@@ -40,11 +40,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Template Installation
 
-- [ ] **TMPL-01**: User sees a grid of available templates fetched from the backend catalog API
-- [ ] **TMPL-02**: User can select one or more templates to install
-- [ ] **TMPL-03**: User can preview what entity types each template will create before selecting
-- [ ] **TMPL-04**: Selected templates seed workspace entity types when onboarding completes
-- [ ] **TMPL-05**: Template step is skippable -- user can set up entity types manually later
+- [x] **TMPL-01**: User sees a grid of available templates fetched from the backend catalog API
+- [x] **TMPL-02**: User can select one or more templates to install
+- [x] **TMPL-03**: User can preview what entity types each template will create before selecting
+- [x] **TMPL-04**: Selected templates seed workspace entity types when onboarding completes
+- [x] **TMPL-05**: Template step is skippable -- user can set up entity types manually later
 
 ### Team Invites
 
@@ -55,9 +55,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Submission & Completion
 
-- [ ] **SUBT-01**: All step data is collected into a consolidated payload and submitted at the end
-- [ ] **SUBT-02**: User sees loading/progress state during submission
-- [ ] **SUBT-03**: Profile update is the last API call (since user.name is the onboarding gate)
+- [x] **SUBT-01**: All step data is collected into a consolidated payload and submitted at the end
+- [x] **SUBT-02**: User sees loading/progress state during submission
+- [x] **SUBT-03**: Profile update is the last API call (since user.name is the onboarding gate)
 - [ ] **SUBT-04**: User sees a success celebration screen with animation after completion
 - [ ] **SUBT-05**: User is redirected to their new workspace dashboard after the celebration screen
 
@@ -123,18 +123,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ANIM-03 | Phase 1 | Complete |
 | ANIM-04 | Phase 1 | Complete |
 | ANIM-05 | Phase 1 | Complete |
-| TMPL-01 | Phase 3 | Pending |
-| TMPL-02 | Phase 3 | Pending |
-| TMPL-03 | Phase 3 | Pending |
-| TMPL-04 | Phase 3 | Pending |
-| TMPL-05 | Phase 3 | Pending |
+| TMPL-01 | Phase 3 | Complete |
+| TMPL-02 | Phase 3 | Complete |
+| TMPL-03 | Phase 3 | Complete |
+| TMPL-04 | Phase 3 | Complete |
+| TMPL-05 | Phase 3 | Complete |
 | INVT-01 | Phase 3 | Complete |
 | INVT-02 | Phase 3 | Complete |
 | INVT-03 | Phase 3 | Complete |
 | INVT-04 | Phase 3 | Complete |
-| SUBT-01 | Phase 4 | Pending |
-| SUBT-02 | Phase 4 | Pending |
-| SUBT-03 | Phase 4 | Pending |
+| SUBT-01 | Phase 4 | Complete |
+| SUBT-02 | Phase 4 | Complete |
+| SUBT-03 | Phase 4 | Complete |
 | SUBT-04 | Phase 4 | Pending |
 | SUBT-05 | Phase 4 | Pending |
 
