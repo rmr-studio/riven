@@ -1,5 +1,6 @@
 package riven.core.service.integration
 
+import io.github.oshai.kotlinlogging.KLogger
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -83,6 +84,9 @@ class IntegrationConnectionServiceTest {
 
     @MockitoBean
     private lateinit var transactionTemplate: TransactionTemplate
+
+    @MockitoBean
+    private lateinit var logger: KLogger
 
     @Autowired
     private lateinit var integrationConnectionService: IntegrationConnectionService
@@ -358,5 +362,140 @@ class IntegrationConnectionServiceTest {
         }
 
         verify(nangoClientWrapper, never()).deleteConnection(any(), any())
+    }
+
+    // ========== enableConnection Tests ==========
+
+    @Test
+    fun `enableConnection - creates new connection with CONNECTED status`() {
+        val savedConnection = IntegrationConnectionEntity(
+            id = testConnectionId,
+            workspaceId = workspaceId,
+            integrationId = testIntegrationId,
+            nangoConnectionId = "nango-conn-123",
+            status = ConnectionStatus.CONNECTED
+        )
+
+        whenever(definitionRepository.findById(testIntegrationId))
+            .thenReturn(Optional.of(testDefinition))
+        whenever(connectionRepository.findByWorkspaceIdAndIntegrationId(workspaceId, testIntegrationId))
+            .thenReturn(null)
+        whenever(connectionRepository.save(any<IntegrationConnectionEntity>()))
+            .thenReturn(savedConnection)
+
+        val result = integrationConnectionService.enableConnection(
+            workspaceId = workspaceId,
+            integrationId = testIntegrationId,
+            nangoConnectionId = "nango-conn-123"
+        )
+
+        assertNotNull(result)
+        assertEquals(ConnectionStatus.CONNECTED, result.status)
+        assertEquals("nango-conn-123", result.nangoConnectionId)
+        assertEquals(workspaceId, result.workspaceId)
+        assertEquals(testIntegrationId, result.integrationId)
+
+        verify(connectionRepository).save(argThat { connection ->
+            connection.workspaceId == workspaceId &&
+                connection.integrationId == testIntegrationId &&
+                connection.nangoConnectionId == "nango-conn-123" &&
+                connection.status == ConnectionStatus.CONNECTED
+        })
+        verify(activityService).logActivity(
+            activity = any(),
+            operation = any(),
+            userId = any(),
+            workspaceId = any(),
+            entityType = any(),
+            entityId = anyOrNull(),
+            timestamp = any(),
+            details = any()
+        )
+    }
+
+    @Test
+    fun `enableConnection - reconnects disconnected connection`() {
+        val disconnectedConnection = IntegrationConnectionEntity(
+            id = testConnectionId,
+            workspaceId = workspaceId,
+            integrationId = testIntegrationId,
+            nangoConnectionId = "old-nango-conn",
+            status = ConnectionStatus.DISCONNECTED
+        )
+
+        whenever(definitionRepository.findById(testIntegrationId))
+            .thenReturn(Optional.of(testDefinition))
+        whenever(connectionRepository.findByWorkspaceIdAndIntegrationId(workspaceId, testIntegrationId))
+            .thenReturn(disconnectedConnection)
+        whenever(connectionRepository.save(any<IntegrationConnectionEntity>()))
+            .thenAnswer { invocation -> invocation.getArgument(0) as IntegrationConnectionEntity }
+
+        val result = integrationConnectionService.enableConnection(
+            workspaceId = workspaceId,
+            integrationId = testIntegrationId,
+            nangoConnectionId = "new-nango-conn"
+        )
+
+        assertEquals(ConnectionStatus.CONNECTED, result.status)
+        assertEquals("new-nango-conn", result.nangoConnectionId)
+
+        verify(connectionRepository).save(argThat { connection ->
+            connection.id == testConnectionId &&
+                connection.status == ConnectionStatus.CONNECTED &&
+                connection.nangoConnectionId == "new-nango-conn"
+        })
+    }
+
+    @Test
+    fun `enableConnection - returns existing connection if already connected`() {
+        val connectedConnection = IntegrationConnectionEntity(
+            id = testConnectionId,
+            workspaceId = workspaceId,
+            integrationId = testIntegrationId,
+            nangoConnectionId = "nango-conn-123",
+            status = ConnectionStatus.CONNECTED
+        )
+
+        whenever(definitionRepository.findById(testIntegrationId))
+            .thenReturn(Optional.of(testDefinition))
+        whenever(connectionRepository.findByWorkspaceIdAndIntegrationId(workspaceId, testIntegrationId))
+            .thenReturn(connectedConnection)
+
+        val result = integrationConnectionService.enableConnection(
+            workspaceId = workspaceId,
+            integrationId = testIntegrationId,
+            nangoConnectionId = "nango-conn-123"
+        )
+
+        assertEquals(testConnectionId, result.id)
+        assertEquals(ConnectionStatus.CONNECTED, result.status)
+
+        verify(connectionRepository, never()).save(any<IntegrationConnectionEntity>())
+    }
+
+    @Test
+    fun `enableConnection - throws ConflictException for non-connected non-disconnected connection`() {
+        val syncingConnection = IntegrationConnectionEntity(
+            id = testConnectionId,
+            workspaceId = workspaceId,
+            integrationId = testIntegrationId,
+            nangoConnectionId = "nango-conn-123",
+            status = ConnectionStatus.SYNCING
+        )
+
+        whenever(definitionRepository.findById(testIntegrationId))
+            .thenReturn(Optional.of(testDefinition))
+        whenever(connectionRepository.findByWorkspaceIdAndIntegrationId(workspaceId, testIntegrationId))
+            .thenReturn(syncingConnection)
+
+        assertThrows(ConflictException::class.java) {
+            integrationConnectionService.enableConnection(
+                workspaceId = workspaceId,
+                integrationId = testIntegrationId,
+                nangoConnectionId = "nango-conn-456"
+            )
+        }
+
+        verify(connectionRepository, never()).save(any<IntegrationConnectionEntity>())
     }
 }

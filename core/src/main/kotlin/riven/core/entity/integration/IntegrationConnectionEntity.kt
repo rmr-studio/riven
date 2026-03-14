@@ -37,7 +37,7 @@ data class IntegrationConnectionEntity(
     val integrationId: UUID,
 
     @Column(name = "nango_connection_id", nullable = false)
-    val nangoConnectionId: String,
+    var nangoConnectionId: String,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 50)
