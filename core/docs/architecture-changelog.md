@@ -162,3 +162,21 @@
 
 **New cross-domain dependencies:** no
 **New components introduced:** none — this is a pure simplification/removal
+
+## [2026-03-16] — Generic Execution Queue with Job Type Discriminator (INFRA-01/02/03)
+
+**Domains affected:** workflow (execution queue), integration (SourceType enum)
+**What changed:**
+
+- Renamed `workflow_execution_queue` table to `execution_queue` in SQL schema and all JPA/repository layers
+- Added `job_type VARCHAR(30) NOT NULL DEFAULT 'WORKFLOW_EXECUTION'` discriminator column to `execution_queue`
+- Added `entity_id UUID` nullable FK column for IDENTITY_MATCH jobs (references entities table)
+- Changed `workflow_definition_id` from NOT NULL to nullable on `execution_queue`
+- Created `ExecutionJobType` enum with `WORKFLOW_EXECUTION` and `IDENTITY_MATCH` values
+- Both native queries (`claimPendingExecutions`, `findStaleClaimedItems`) now filter `AND job_type = 'WORKFLOW_EXECUTION'` ensuring workflow dispatcher never claims identity match jobs
+- Added dedup partial unique index `uq_execution_queue_pending_identity_match` on `(workspace_id, entity_id, job_type) WHERE status = 'PENDING' AND entity_id IS NOT NULL`
+- Added `IDENTITY_MATCH` to `SourceType` enum (for entity relationship source tracking in Phase 4)
+
+**New cross-domain dependencies:** no — queue change is internal to workflow domain; SourceType is an existing integration enum
+**New components introduced:**
+- `ExecutionJobType` enum — job type discriminator for the shared execution queue
