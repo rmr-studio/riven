@@ -115,23 +115,6 @@ CREATE TABLE IF NOT EXISTS public.entities_unique_values
 );
 
 -- =====================================================
--- ENTITY ATTRIBUTE PROVENANCE TABLE
--- =====================================================
-CREATE TABLE IF NOT EXISTS public.entity_attribute_provenance
-(
-    "id"                    UUID PRIMARY KEY     DEFAULT uuid_generate_v4(),
-    "entity_id"             UUID        NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
-    "attribute_id"          UUID        NOT NULL,
-    "source_type"           VARCHAR(50) NOT NULL,
-    "source_integration_id" UUID        REFERENCES integration_definitions (id) ON DELETE SET NULL,
-    "source_external_field" VARCHAR(255),
-    "last_updated_at"       TIMESTAMPTZ NOT NULL DEFAULT now(),
-    "override_by_user"      BOOLEAN     NOT NULL DEFAULT false,
-    "override_at"           TIMESTAMPTZ,
-    UNIQUE (entity_id, attribute_id)
-);
-
--- =====================================================
 -- RELATIONSHIP DEFINITIONS TABLE
 -- =====================================================
 CREATE TABLE IF NOT EXISTS public.relationship_definitions
