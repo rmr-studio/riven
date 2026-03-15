@@ -16,11 +16,15 @@ import { cn } from '@/lib/util/utils';
 import { FC, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useOnboardStore, useOnboardFormControls } from '../../hooks/use-onboard-store';
+import {
+  useOnboardStoreApi,
+  useOnboardFormControls,
+} from '@/components/feature-modules/onboarding/hooks/use-onboard-store';
 
 export const workspaceStepSchema = z.object({
   displayName: z
     .string({ required_error: 'Workspace name is required' })
+    .trim()
     .min(3, 'Must be at least 3 characters'),
   plan: z.nativeEnum(WorkspacePlan, {
     required_error: 'Please select a plan',
@@ -69,9 +73,10 @@ const PLAN_OPTIONS: {
 ];
 
 export const WorkspaceStepForm: FC = () => {
+  const storeApi = useOnboardStoreApi();
   const { setLiveData, registerFormTrigger, clearFormTrigger } = useOnboardFormControls();
   const [restoredData] = useState(
-    () => useOnboardStore.getState().liveData['workspace'] as WorkspaceLiveData | undefined,
+    () => storeApi.getState().liveData['workspace'] as WorkspaceLiveData | undefined,
   );
 
   const [avatarBlob, setAvatarBlob] = useState<Blob | null>(null);
@@ -123,7 +128,7 @@ export const WorkspaceStepForm: FC = () => {
     }
     const url = URL.createObjectURL(file);
     setAvatarBlob(file);
-    useOnboardStore.getState().setWorkspaceAvatarBlob(file);
+    storeApi.getState().setWorkspaceAvatarBlob(file);
     setAvatarPreviewUrl(url);
     setLiveData('workspace', { ...form.getValues(), avatarPreviewUrl: url });
   };
@@ -133,7 +138,7 @@ export const WorkspaceStepForm: FC = () => {
       URL.revokeObjectURL(avatarPreviewUrl);
     }
     setAvatarBlob(null);
-    useOnboardStore.getState().setWorkspaceAvatarBlob(null);
+    storeApi.getState().setWorkspaceAvatarBlob(null);
     setAvatarPreviewUrl(undefined);
     setLiveData('workspace', { ...form.getValues(), avatarPreviewUrl: undefined });
   };

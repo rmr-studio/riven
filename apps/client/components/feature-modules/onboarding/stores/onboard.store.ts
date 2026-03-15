@@ -1,7 +1,6 @@
-import { ONBOARD_STEPS } from '../config/onboard-steps';
+import { ONBOARD_STEPS } from '@/components/feature-modules/onboarding/config/onboard-steps';
 import { CompleteOnboardingResponse } from '@/lib/types/models';
-import { useShallow } from 'zustand/react/shallow';
-import { create } from 'zustand';
+import { createStore } from 'zustand/vanilla';
 import { subscribeWithSelector } from 'zustand/middleware';
 
 export type SubmissionStatus = 'idle' | 'loading' | 'error' | 'success';
@@ -47,123 +46,93 @@ const initialState: OnboardState = {
   workspaceAvatarBlob: null,
 };
 
-export const useOnboardStore = create<OnboardStore>()(
-  subscribeWithSelector((set, get) => ({
-    ...initialState,
+export function createOnboardStore() {
+  return createStore<OnboardStore>()(
+    subscribeWithSelector((set, get) => ({
+      ...initialState,
 
-    goNext: () => {
-      const { currentStep } = get();
-      set({
-        currentStep: Math.min(currentStep + 1, ONBOARD_STEPS.length - 1),
-        direction: 'forward',
-      });
-    },
-
-    goBack: () => {
-      const { currentStep } = get();
-      set({
-        currentStep: Math.max(currentStep - 1, 0),
-        direction: 'backward',
-      });
-    },
-
-    skip: () => {
-      const { currentStep } = get();
-      const step = ONBOARD_STEPS[currentStep];
-      if (step?.optional) {
+      goNext: () => {
+        const { currentStep } = get();
         set({
           currentStep: Math.min(currentStep + 1, ONBOARD_STEPS.length - 1),
           direction: 'forward',
         });
-      }
-      // no-op if step is required
-    },
+      },
 
-    setStepData: (stepId, data) => {
-      set((state) => ({
-        validatedData: {
-          ...state.validatedData,
-          [stepId]: data,
-        },
-      }));
-    },
+      goBack: () => {
+        const { currentStep } = get();
+        set({
+          currentStep: Math.max(currentStep - 1, 0),
+          direction: 'backward',
+        });
+      },
 
-    setLiveData: (stepId, data) => {
-      set((state) => ({
-        liveData: {
-          ...state.liveData,
-          [stepId]: data,
-        },
-      }));
-    },
+      skip: () => {
+        const { currentStep } = get();
+        const step = ONBOARD_STEPS[currentStep];
+        if (step?.optional) {
+          set({
+            currentStep: Math.min(currentStep + 1, ONBOARD_STEPS.length - 1),
+            direction: 'forward',
+          });
+        }
+        // no-op if step is required
+      },
 
-    registerFormTrigger: (fn) => {
-      set({ formTrigger: fn });
-    },
+      setStepData: (stepId, data) => {
+        set((state) => ({
+          validatedData: {
+            ...state.validatedData,
+            [stepId]: data,
+          },
+        }));
+      },
 
-    clearFormTrigger: () => {
-      set({ formTrigger: null });
-    },
+      setLiveData: (stepId, data) => {
+        set((state) => ({
+          liveData: {
+            ...state.liveData,
+            [stepId]: data,
+          },
+        }));
+      },
 
-    setSubmissionStatus: (status) => {
-      set({ submissionStatus: status });
-    },
+      registerFormTrigger: (fn) => {
+        set({ formTrigger: fn });
+      },
 
-    setSubmissionResponse: (response) => {
-      set({ submissionResponse: response });
-    },
+      clearFormTrigger: () => {
+        set({ formTrigger: null });
+      },
 
-    setProfileAvatarBlob: (blob) => {
-      set({ profileAvatarBlob: blob });
-    },
+      setSubmissionStatus: (status) => {
+        set({ submissionStatus: status });
+      },
 
-    setWorkspaceAvatarBlob: (blob) => {
-      set({ workspaceAvatarBlob: blob });
-    },
+      setSubmissionResponse: (response) => {
+        set({ submissionResponse: response });
+      },
 
-    reset: () => {
-      set({
-        ...initialState,
-        validatedData: {},
-        liveData: {},
-        formTrigger: null,
-        submissionStatus: 'idle',
-        submissionResponse: null,
-        profileAvatarBlob: null,
-        workspaceAvatarBlob: null,
-      });
-    },
-  })),
-);
+      setProfileAvatarBlob: (blob) => {
+        set({ profileAvatarBlob: blob });
+      },
 
-// ── Selector hooks ───────────────────────────────────────────────────
+      setWorkspaceAvatarBlob: (blob) => {
+        set({ workspaceAvatarBlob: blob });
+      },
 
-export const useOnboardStepState = () =>
-  useOnboardStore(useShallow((s) => ({ currentStep: s.currentStep, direction: s.direction })));
-
-export const useOnboardLiveData = <T = unknown>(stepId: string) =>
-  useOnboardStore((s) => s.liveData[stepId] as T | undefined);
-
-export const useOnboardNavigation = () =>
-  useOnboardStore(useShallow((s) => ({ goNext: s.goNext, goBack: s.goBack, skip: s.skip })));
-
-export const useOnboardFormControls = () =>
-  useOnboardStore(
-    useShallow((s) => ({
-      setLiveData: s.setLiveData,
-      setStepData: s.setStepData,
-      registerFormTrigger: s.registerFormTrigger,
-      clearFormTrigger: s.clearFormTrigger,
+      reset: () => {
+        set({
+          ...initialState,
+          validatedData: {},
+          liveData: {},
+          formTrigger: null,
+          submissionStatus: 'idle',
+          submissionResponse: null,
+          profileAvatarBlob: null,
+          workspaceAvatarBlob: null,
+        });
+      },
     })),
   );
-
-export const useOnboardSubmission = () =>
-  useOnboardStore(
-    useShallow((s) => ({
-      submissionStatus: s.submissionStatus,
-      submissionResponse: s.submissionResponse,
-      setSubmissionStatus: s.setSubmissionStatus,
-      setSubmissionResponse: s.setSubmissionResponse,
-      reset: s.reset,
-    })),
-  );
+}

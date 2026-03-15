@@ -16,13 +16,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { WorkspaceRoles } from '@/lib/types/models/WorkspaceRoles';
+import { WorkspaceRoles } from '@/lib/types/workspace';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { X } from 'lucide-react';
 import { FC, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useOnboardStore, useOnboardFormControls } from '../../hooks/use-onboard-store';
+import {
+  useOnboardStoreApi,
+  useOnboardFormControls,
+} from '@/components/feature-modules/onboarding/hooks/use-onboard-store';
 
 // ─── Constants and helpers ────────────────────────────────────────────────────
 
@@ -62,9 +65,10 @@ const ROLE_LABELS: Record<WorkspaceRoles.Admin | WorkspaceRoles.Member, string> 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export const TeamStepForm: FC = () => {
+  const storeApi = useOnboardStoreApi();
   const { setLiveData, registerFormTrigger, clearFormTrigger } = useOnboardFormControls();
   const [restoredData] = useState(
-    () => useOnboardStore.getState().liveData['team'] as TeamLiveData | undefined,
+    () => storeApi.getState().liveData['team'] as TeamLiveData | undefined,
   );
 
   const [invites, setInvites] = useState<PendingInvite[]>(restoredData?.invites ?? []);

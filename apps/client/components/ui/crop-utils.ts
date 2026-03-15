@@ -4,6 +4,10 @@ const MAX_OUTPUT_SIZE = 256;
 const JPEG_QUALITY = 0.85;
 
 export function getCroppedImage(imageSrc: string, cropArea: Area): Promise<Blob> {
+  if (cropArea.width <= 0 || cropArea.height <= 0) {
+    return Promise.reject(new Error('Crop area dimensions must be greater than zero'));
+  }
+
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.crossOrigin = 'anonymous';

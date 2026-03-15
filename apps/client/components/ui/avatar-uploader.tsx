@@ -127,6 +127,7 @@ export const AvatarUploader: FC<AvatarUploaderProps> = ({
           <button
             type="button"
             onClick={rawImageSrc ? openCropEditor : openFilePicker}
+            aria-label={imageURL ? 'Edit avatar' : 'Upload avatar'}
             className="relative h-18 w-18 cursor-pointer overflow-hidden rounded-full border-2 border-dashed border-border transition-colors hover:border-muted-foreground"
           >
             {imageURL ? (

@@ -3,11 +3,11 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { WorkspacePlan } from '@/lib/types/workspace';
 import { cn } from '@/lib/util/utils';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import Image from 'next/image';
 import React from 'react';
-import { useOnboardLiveData } from '../../hooks/use-onboard-store';
-import { getInitials, getPaletteColor } from '../../utils/avatar-helpers';
+import { useOnboardLiveData } from '@/components/feature-modules/onboarding/hooks/use-onboard-store';
+import { getInitials, getPaletteColor } from '@/components/feature-modules/onboarding/utils/avatar-helpers';
 
 interface WorkspaceLiveData {
   displayName?: string;

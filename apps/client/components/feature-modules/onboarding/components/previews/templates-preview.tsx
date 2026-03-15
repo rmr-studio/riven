@@ -2,9 +2,9 @@
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { BundleDetail, ManifestSummary } from '@/lib/types';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import React from 'react';
-import { useOnboardLiveData } from '../../hooks/use-onboard-store';
+import { useOnboardLiveData } from '@/components/feature-modules/onboarding/hooks/use-onboard-store';
 
 interface TemplatesLiveData {
   selectedBundleKey: string | null;

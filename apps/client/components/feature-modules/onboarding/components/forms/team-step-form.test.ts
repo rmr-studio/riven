@@ -1,10 +1,10 @@
-import { WorkspaceRoles } from '@/lib/types/models/WorkspaceRoles';
+import { WorkspaceRoles } from '@/lib/types/workspace';
 import {
   inviteEntrySchema,
   INVITE_ROLES,
   INVITE_SOFT_CAP,
   isDuplicateEmail,
-} from './team-step-form';
+} from '@/components/feature-modules/onboarding/components/forms/team-step-form';
 
 describe('inviteEntrySchema', () => {
   it('accepts valid email with Member role', () => {

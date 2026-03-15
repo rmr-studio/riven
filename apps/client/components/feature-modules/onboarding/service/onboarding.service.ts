@@ -6,9 +6,8 @@ import {
   OnboardingProfile,
   OnboardingWorkspace,
   OnboardingInvite,
-  WorkspacePlan,
-  WorkspaceRoles,
 } from '@/lib/types/models';
+import { WorkspacePlan, WorkspaceRoles } from '@/lib/types/workspace';
 import { normalizeApiError } from '@/lib/util/error/error.util';
 
 interface ProfileStepShape {

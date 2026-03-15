@@ -15,11 +15,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { FC, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useOnboardStore, useOnboardFormControls } from '../../hooks/use-onboard-store';
+import {
+  useOnboardStoreApi,
+  useOnboardFormControls,
+} from '@/components/feature-modules/onboarding/hooks/use-onboard-store';
 
 export const profileStepSchema = z.object({
   displayName: z
     .string({ required_error: 'Display name is required' })
+    .trim()
     .min(3, 'Must be at least 3 characters'),
 });
 
@@ -32,9 +36,10 @@ interface ProfileLiveData {
 
 export const ProfileStepForm: FC = () => {
   const { user } = useAuth();
+  const storeApi = useOnboardStoreApi();
   const { setLiveData, registerFormTrigger, clearFormTrigger } = useOnboardFormControls();
   const [restoredData] = useState(
-    () => useOnboardStore.getState().liveData['profile'] as ProfileLiveData | undefined,
+    () => storeApi.getState().liveData['profile'] as ProfileLiveData | undefined,
   );
 
   const [avatarBlob, setAvatarBlob] = useState<Blob | null>(null);
@@ -52,6 +57,19 @@ export const ProfileStepForm: FC = () => {
         '',
     },
   });
+
+  // Sync displayName from user metadata if form is still empty
+  useEffect(() => {
+    const current = form.getValues('displayName');
+    if (current) return;
+    const metaName =
+      (user?.metadata?.full_name as string | undefined) ??
+      (user?.metadata?.name as string | undefined);
+    if (metaName) {
+      form.setValue('displayName', metaName);
+      setLiveData('profile', { displayName: metaName, avatarPreviewUrl });
+    }
+  }, [user, form, setLiveData, avatarPreviewUrl]);
 
   // Register form trigger on mount so nav controls can call form.trigger()
   useEffect(() => {
@@ -89,7 +107,7 @@ export const ProfileStepForm: FC = () => {
     }
     const url = URL.createObjectURL(file);
     setAvatarBlob(file);
-    useOnboardStore.getState().setProfileAvatarBlob(file);
+    storeApi.getState().setProfileAvatarBlob(file);
     setAvatarPreviewUrl(url);
     setLiveData('profile', { ...form.getValues(), avatarPreviewUrl: url });
   };
@@ -99,7 +117,7 @@ export const ProfileStepForm: FC = () => {
       URL.revokeObjectURL(avatarPreviewUrl);
     }
     setAvatarBlob(null);
-    useOnboardStore.getState().setProfileAvatarBlob(null);
+    storeApi.getState().setProfileAvatarBlob(null);
     setAvatarPreviewUrl(undefined);
     setLiveData('profile', { ...form.getValues(), avatarPreviewUrl: undefined });
   };

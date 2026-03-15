@@ -4,11 +4,14 @@ import { Propless } from '@/lib/interfaces/interface';
 import { Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { FC } from 'react';
-import { ONBOARD_STEPS } from '../config/onboard-steps';
-import { useCompleteOnboardingMutation } from '../hooks/mutation/use-complete-onboarding-mutation';
-import { useOnboardStepState, useOnboardSubmission } from '../hooks/use-onboard-store';
-import { OnboardNavControls } from './onboard-nav-controls';
-import { OnboardStepForm } from './onboard-step-form';
+import { ONBOARD_STEPS } from '@/components/feature-modules/onboarding/config/onboard-steps';
+import { useCompleteOnboardingMutation } from '@/components/feature-modules/onboarding/hooks/mutation/use-complete-onboarding-mutation';
+import {
+  useOnboardStepState,
+  useOnboardSubmission,
+} from '@/components/feature-modules/onboarding/hooks/use-onboard-store';
+import { OnboardNavControls } from '@/components/feature-modules/onboarding/components/onboard-nav-controls';
+import { OnboardStepForm } from '@/components/feature-modules/onboarding/components/onboard-step-form';
 
 const OnboardProgress: FC = () => {
   const { currentStep } = useOnboardStepState();
@@ -112,7 +115,6 @@ export const OnboardFormPanel: FC<Propless> = () => {
               type="button"
               className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium transition-colors"
               onClick={() => {
-                setSubmissionStatus('idle');
                 mutation.mutate();
               }}
             >

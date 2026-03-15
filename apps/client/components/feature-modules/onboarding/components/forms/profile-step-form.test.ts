@@ -1,4 +1,4 @@
-import { profileStepSchema } from './profile-step-form';
+import { profileStepSchema } from '@/components/feature-modules/onboarding/components/forms/profile-step-form';
 
 describe('profileStepSchema', () => {
   it('accepts valid displayName with 3+ chars', () => {
@@ -38,6 +38,21 @@ describe('profileStepSchema', () => {
     expect(result.success).toBe(true);
     if (result.success) {
       expect(Object.keys(result.data)).not.toContain('phone');
+    }
+  });
+
+  it('trims whitespace before validating length', () => {
+    const result = profileStepSchema.safeParse({ displayName: '  Jo  ' });
+    expect(result.success).toBe(false);
+    const issue = result.error?.issues.find((i) => i.path.includes('displayName'));
+    expect(issue?.message).toMatch(/at least 3/i);
+  });
+
+  it('trims whitespace and passes when trimmed value has 3+ chars', () => {
+    const result = profileStepSchema.safeParse({ displayName: '  Jon  ' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.displayName).toBe('Jon');
     }
   });
 });

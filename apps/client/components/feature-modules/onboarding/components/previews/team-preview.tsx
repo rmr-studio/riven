@@ -1,13 +1,13 @@
 'use client';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import { WorkspaceRoles } from '@/lib/types/models/WorkspaceRoles';
+import { WorkspaceRoles } from '@/lib/types/workspace';
 import { cn } from '@/lib/util/utils';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import React from 'react';
-import { useOnboardLiveData } from '../../hooks/use-onboard-store';
-import { getPaletteColor } from '../../utils/avatar-helpers';
-import { INVITE_SOFT_CAP } from '../forms/team-step-form';
+import { useOnboardLiveData } from '@/components/feature-modules/onboarding/hooks/use-onboard-store';
+import { getPaletteColor } from '@/components/feature-modules/onboarding/utils/avatar-helpers';
+import { INVITE_SOFT_CAP } from '@/components/feature-modules/onboarding/components/forms/team-step-form';
 
 interface TeamLiveData {
   invites: Array<{ email: string; role: WorkspaceRoles }>;
@@ -36,14 +36,14 @@ export const TeamPreview: React.FC = () => {
       </p>
       <div className="bg-card flex flex-col gap-4 rounded-xl p-8 shadow-sm">
         {/* Live invite rows */}
-        {invites.map((invite) => {
-          const initial = invite.email[0]?.toUpperCase() ?? '?';
-          const colorClass = getPaletteColor(invite.email);
-          const isAdmin = invite.role === WorkspaceRoles.Admin;
+        <AnimatePresence mode="wait">
+          {invites.map((invite) => {
+            const initial = invite.email[0]?.toUpperCase() ?? '?';
+            const colorClass = getPaletteColor(invite.email);
+            const isAdmin = invite.role === WorkspaceRoles.Admin;
 
-          return (
-            <AnimatePresence key={`invite-${invite.email}`} mode="wait">
-              <motion.div {...fadeProps} className="flex items-center gap-4">
+            return (
+              <motion.div key={`invite-${invite.email}`} {...fadeProps} className="flex items-center gap-4">
                 {/* Initials circle */}
                 <div
                   className={cn(
@@ -69,22 +69,20 @@ export const TeamPreview: React.FC = () => {
                   {isAdmin ? 'Admin' : 'Member'}
                 </span>
               </motion.div>
-            </AnimatePresence>
-          );
-        })}
+            );
+          })}
+        </AnimatePresence>
 
         {/* Skeleton rows for remaining slots */}
         {Array.from({ length: skeletonCount }).map((_, i) => (
-          <AnimatePresence key={`skeleton-${i}`} mode="wait">
-            <motion.div {...fadeProps} className="flex items-center gap-4">
-              <Skeleton className="size-11 rounded-full" />
-              <div className="flex flex-1 flex-col gap-2">
-                <Skeleton className="h-4 w-36" />
-                <Skeleton className="h-3 w-24" />
-              </div>
-              <Skeleton className="h-6 w-20 rounded-full" />
-            </motion.div>
-          </AnimatePresence>
+          <div key={`skeleton-${i}`} className="flex items-center gap-4">
+            <Skeleton className="size-11 rounded-full" />
+            <div className="flex flex-1 flex-col gap-2">
+              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+            <Skeleton className="h-6 w-20 rounded-full" />
+          </div>
         ))}
       </div>
     </div>

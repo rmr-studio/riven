@@ -2,15 +2,15 @@
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/util/utils';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import { FC, useEffect, useState } from 'react';
-import { useBundles } from '../../hooks/query/use-bundles';
+import { useBundles } from '@/components/feature-modules/onboarding/hooks/query/use-bundles';
 import {
-  useOnboardStore,
+  useOnboardStoreApi,
   useOnboardFormControls,
   useOnboardNavigation,
-} from '../../hooks/use-onboard-store';
+} from '@/components/feature-modules/onboarding/hooks/use-onboard-store';
 
 interface TemplatesLiveData {
   selectedBundleKey: string | null;
@@ -18,12 +18,6 @@ interface TemplatesLiveData {
   templates?: import('@/lib/types').ManifestSummary[];
 }
 
-/**
- * Pure helper — exported for unit testing.
- * Returns the new selected bundle key after toggling:
- * - If current === clicked, deselect (return null)
- * - Otherwise, select clicked
- */
 export function toggleBundleSelection(
   current: string | null,
   clicked: string,
@@ -32,10 +26,11 @@ export function toggleBundleSelection(
 }
 
 export const TemplateStepForm: FC = () => {
+  const storeApi = useOnboardStoreApi();
   const { setLiveData, registerFormTrigger, clearFormTrigger } = useOnboardFormControls();
   const { skip } = useOnboardNavigation();
   const [restoredData] = useState(
-    () => useOnboardStore.getState().liveData['templates'] as TemplatesLiveData | undefined,
+    () => storeApi.getState().liveData['templates'] as TemplatesLiveData | undefined,
   );
 
   const [selectedBundleKey, setSelectedBundleKey] = useState<string | null>(
@@ -143,6 +138,7 @@ export const TemplateStepForm: FC = () => {
                 <button
                   type="button"
                   onClick={(e) => handleExpandToggle(e, bundle.key)}
+                  onKeyDown={(e) => e.stopPropagation()}
                   className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs transition-colors"
                 >
                   Preview

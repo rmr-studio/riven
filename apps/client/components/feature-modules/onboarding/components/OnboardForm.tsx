@@ -1,3 +1,5 @@
+'use client';
+
 import { useProfile } from '@/components/feature-modules/user/hooks/use-profile';
 import { updateUser } from '@/components/feature-modules/user/service/user.service';
 import { useAuth } from '@/components/provider/auth-context';

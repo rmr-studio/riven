@@ -1,8 +1,8 @@
 import React from 'react';
-import { ProfilePreview } from '../components/previews/profile-preview';
-import { WorkspacePreview } from '../components/previews/workspace-preview';
-import { TemplatesPreview } from '../components/previews/templates-preview';
-import { TeamPreview } from '../components/previews/team-preview';
+import { ProfilePreview } from '@/components/feature-modules/onboarding/components/previews/profile-preview';
+import { WorkspacePreview } from '@/components/feature-modules/onboarding/components/previews/workspace-preview';
+import { TemplatesPreview } from '@/components/feature-modules/onboarding/components/previews/templates-preview';
+import { TeamPreview } from '@/components/feature-modules/onboarding/components/previews/team-preview';
 
 export const SECTION_WIDTH = 800;
 

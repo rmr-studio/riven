@@ -10,7 +10,7 @@ import { AppSplash } from '@/components/feature-modules/authentication/component
 
 export const AuthGuard: FCWC = ({ children }) => {
   const { session, loading: authLoading } = useAuth();
-  const { data: user, isLoading: profileLoading, isLoadingAuth } = useProfile();
+  const { data: user, isLoading: profileLoading, isLoadingAuth, isError } = useProfile();
   const router = useRouter();
   const [ready, setReady] = useState(false);
 
@@ -21,6 +21,12 @@ export const AuthGuard: FCWC = ({ children }) => {
       router.replace('/auth/login');
     }
   }, [session, authLoading, router]);
+
+  useEffect(() => {
+    if (!isLoading && isError && session) {
+      router.replace('/auth/login');
+    }
+  }, [isLoading, isError, session, router]);
 
   useEffect(() => {
     if (!isLoading && session && user) {

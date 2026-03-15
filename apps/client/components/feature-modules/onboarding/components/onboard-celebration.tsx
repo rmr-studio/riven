@@ -7,8 +7,11 @@ import { AlertTriangle, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { FC, useEffect, useMemo, useState } from 'react';
-import { getInitials, getPaletteColor } from '../utils/avatar-helpers';
-import { useOnboardSubmission, useOnboardStore } from '../hooks/use-onboard-store';
+import { getInitials, getPaletteColor } from '@/components/feature-modules/onboarding/utils/avatar-helpers';
+import {
+  useOnboardSubmission,
+  useOnboardStore,
+} from '@/components/feature-modules/onboarding/hooks/use-onboard-store';
 
 const REDIRECT_SECONDS = 3;
 
@@ -49,6 +52,15 @@ export const OnboardCelebration: FC<Propless> = () => {
     () => (workspaceAvatarBlob ? URL.createObjectURL(workspaceAvatarBlob) : null),
     [workspaceAvatarBlob],
   );
+
+  // Revoke blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (avatarUrl) {
+        URL.revokeObjectURL(avatarUrl);
+      }
+    };
+  }, [avatarUrl]);
 
   useEffect(() => {
     if (!submissionResponse || !workspaceId) return;

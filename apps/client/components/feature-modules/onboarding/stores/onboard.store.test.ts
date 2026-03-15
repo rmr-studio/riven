@@ -1,134 +1,140 @@
-import { useOnboardStore } from './onboard.store';
+import { createOnboardStore } from '@/components/feature-modules/onboarding/stores/onboard.store';
+
+function createStore() {
+  return createOnboardStore();
+}
 
 describe('onboard.store', () => {
+  let store: ReturnType<typeof createStore>;
+
   beforeEach(() => {
-    useOnboardStore.getState().reset();
+    store = createStore();
   });
 
   describe('initial state', () => {
     it('starts at step 0', () => {
-      expect(useOnboardStore.getState().currentStep).toBe(0);
+      expect(store.getState().currentStep).toBe(0);
     });
 
     it('starts with direction forward', () => {
-      expect(useOnboardStore.getState().direction).toBe('forward');
+      expect(store.getState().direction).toBe('forward');
     });
 
     it('starts with empty validatedData', () => {
-      expect(useOnboardStore.getState().validatedData).toEqual({});
+      expect(store.getState().validatedData).toEqual({});
     });
 
     it('starts with empty liveData', () => {
-      expect(useOnboardStore.getState().liveData).toEqual({});
+      expect(store.getState().liveData).toEqual({});
     });
 
     it('starts with null formTrigger', () => {
-      expect(useOnboardStore.getState().formTrigger).toBeNull();
+      expect(store.getState().formTrigger).toBeNull();
     });
   });
 
   describe('goNext', () => {
     it('increments currentStep by 1', () => {
-      useOnboardStore.getState().goNext();
-      expect(useOnboardStore.getState().currentStep).toBe(1);
+      store.getState().goNext();
+      expect(store.getState().currentStep).toBe(1);
     });
 
     it('sets direction to forward', () => {
-      useOnboardStore.getState().goBack();
+      store.getState().goBack();
       // direction is now backward - use goNext to change it
-      useOnboardStore.setState({ currentStep: 1 });
-      useOnboardStore.getState().goNext();
-      expect(useOnboardStore.getState().direction).toBe('forward');
+      store.setState({ currentStep: 1 });
+      store.getState().goNext();
+      expect(store.getState().direction).toBe('forward');
     });
 
     it('does not exceed max step index', () => {
       // Go to last step (index 3)
-      useOnboardStore.setState({ currentStep: 3 });
-      useOnboardStore.getState().goNext();
-      expect(useOnboardStore.getState().currentStep).toBe(3);
+      store.setState({ currentStep: 3 });
+      store.getState().goNext();
+      expect(store.getState().currentStep).toBe(3);
     });
 
     it('clamps at ONBOARD_STEPS.length - 1', () => {
-      useOnboardStore.setState({ currentStep: 100 });
-      useOnboardStore.getState().goNext();
+      store.setState({ currentStep: 100 });
+      store.getState().goNext();
       // After goNext from 100, clamped to 3 (max index)
-      expect(useOnboardStore.getState().currentStep).toBe(3);
+      expect(store.getState().currentStep).toBe(3);
     });
   });
 
   describe('goBack', () => {
     it('decrements currentStep by 1', () => {
-      useOnboardStore.setState({ currentStep: 2 });
-      useOnboardStore.getState().goBack();
-      expect(useOnboardStore.getState().currentStep).toBe(1);
+      store.setState({ currentStep: 2 });
+      store.getState().goBack();
+      expect(store.getState().currentStep).toBe(1);
     });
 
     it('sets direction to backward', () => {
-      useOnboardStore.setState({ currentStep: 1 });
-      useOnboardStore.getState().goBack();
-      expect(useOnboardStore.getState().direction).toBe('backward');
+      store.setState({ currentStep: 1 });
+      store.getState().goBack();
+      expect(store.getState().direction).toBe('backward');
     });
 
     it('does not go below step 0', () => {
-      useOnboardStore.getState().goBack();
-      expect(useOnboardStore.getState().currentStep).toBe(0);
+      store.getState().goBack();
+      expect(store.getState().currentStep).toBe(0);
     });
   });
 
   describe('skip', () => {
     it('advances when current step is optional (templates = index 2)', () => {
-      useOnboardStore.setState({ currentStep: 2 });
-      useOnboardStore.getState().skip();
-      expect(useOnboardStore.getState().currentStep).toBe(3);
+      store.setState({ currentStep: 2 });
+      store.getState().skip();
+      expect(store.getState().currentStep).toBe(3);
     });
 
     it('sets direction to forward on optional step skip', () => {
-      useOnboardStore.setState({ currentStep: 2 });
-      useOnboardStore.getState().skip();
-      expect(useOnboardStore.getState().direction).toBe('forward');
+      store.setState({ currentStep: 2 });
+      store.getState().skip();
+      expect(store.getState().direction).toBe('forward');
     });
 
     it('does NOT advance when current step is required (profile = index 0)', () => {
-      useOnboardStore.getState().skip();
-      expect(useOnboardStore.getState().currentStep).toBe(0);
+      store.getState().skip();
+      expect(store.getState().currentStep).toBe(0);
     });
 
     it('does NOT advance when current step is required (workspace = index 1)', () => {
-      useOnboardStore.setState({ currentStep: 1 });
-      useOnboardStore.getState().skip();
-      expect(useOnboardStore.getState().currentStep).toBe(1);
+      store.setState({ currentStep: 1 });
+      store.getState().skip();
+      expect(store.getState().currentStep).toBe(1);
     });
 
     it('advances when current step is optional (team = index 3)', () => {
-      useOnboardStore.setState({ currentStep: 3 });
-      useOnboardStore.getState().skip();
+      store.setState({ currentStep: 3 });
+      store.getState().skip();
       // Clamped at last step
-      expect(useOnboardStore.getState().currentStep).toBe(3);
+      expect(store.getState().currentStep).toBe(3);
     });
   });
 
   describe('setStepData', () => {
     it('stores data under the correct stepId key', () => {
       const profileData = { name: 'John', avatar: 'url' };
-      useOnboardStore.getState().setStepData('profile', profileData);
-      expect(useOnboardStore.getState().validatedData.profile).toEqual(profileData);
+      store.getState().setStepData('profile', profileData);
+      expect(store.getState().validatedData.profile).toEqual(profileData);
     });
 
     it('merges multiple step data entries without overwriting others', () => {
-      useOnboardStore.getState().setStepData('profile', { name: 'John' });
-      useOnboardStore.getState().setStepData('workspace', { name: 'Acme' });
-      expect(useOnboardStore.getState().validatedData.profile).toEqual({ name: 'John' });
-      expect(useOnboardStore.getState().validatedData.workspace).toEqual({ name: 'Acme' });
+      store.getState().setStepData('profile', { name: 'John' });
+      store.getState().setStepData('workspace', { name: 'Acme' });
+      expect(store.getState().validatedData.profile).toEqual({ name: 'John' });
+      expect(store.getState().validatedData.workspace).toEqual({ name: 'Acme' });
     });
   });
 
   describe('reset', () => {
     it('returns to initial state after modifications', () => {
-      useOnboardStore.setState({ currentStep: 3, direction: 'backward' });
-      useOnboardStore.getState().setStepData('profile', { name: 'John' });
-      useOnboardStore.getState().reset();
+      store.setState({ currentStep: 3, direction: 'backward' });
+      store.getState().setStepData('profile', { name: 'John' });
+      store.getState().reset();
 
-      const state = useOnboardStore.getState();
+      const state = store.getState();
       expect(state.currentStep).toBe(0);
       expect(state.direction).toBe('forward');
       expect(state.validatedData).toEqual({});
@@ -137,147 +143,147 @@ describe('onboard.store', () => {
 
   describe('setLiveData', () => {
     it('stores data under the correct stepId key', () => {
-      useOnboardStore.getState().setLiveData('profile', { displayName: 'John' });
-      expect(useOnboardStore.getState().liveData['profile']).toEqual({ displayName: 'John' });
+      store.getState().setLiveData('profile', { displayName: 'John' });
+      expect(store.getState().liveData['profile']).toEqual({ displayName: 'John' });
     });
 
     it('merges multiple step data entries without overwriting others', () => {
-      useOnboardStore.getState().setLiveData('profile', { displayName: 'John' });
-      useOnboardStore.getState().setLiveData('workspace', { name: 'Acme' });
-      expect(useOnboardStore.getState().liveData['profile']).toEqual({ displayName: 'John' });
-      expect(useOnboardStore.getState().liveData['workspace']).toEqual({ name: 'Acme' });
+      store.getState().setLiveData('profile', { displayName: 'John' });
+      store.getState().setLiveData('workspace', { name: 'Acme' });
+      expect(store.getState().liveData['profile']).toEqual({ displayName: 'John' });
+      expect(store.getState().liveData['workspace']).toEqual({ name: 'Acme' });
     });
 
     it('overwrites existing step data on re-call', () => {
-      useOnboardStore.getState().setLiveData('profile', { displayName: 'John' });
-      useOnboardStore.getState().setLiveData('profile', { displayName: 'Jane' });
-      expect(useOnboardStore.getState().liveData['profile']).toEqual({ displayName: 'Jane' });
+      store.getState().setLiveData('profile', { displayName: 'John' });
+      store.getState().setLiveData('profile', { displayName: 'Jane' });
+      expect(store.getState().liveData['profile']).toEqual({ displayName: 'Jane' });
     });
   });
 
   describe('registerFormTrigger', () => {
     it('stores the trigger function', () => {
       const trigger = async () => true;
-      useOnboardStore.getState().registerFormTrigger(trigger);
-      expect(useOnboardStore.getState().formTrigger).not.toBeNull();
+      store.getState().registerFormTrigger(trigger);
+      expect(store.getState().formTrigger).not.toBeNull();
     });
 
     it('replaces a previously registered trigger', () => {
       const first = async () => true;
       const second = async () => false;
-      useOnboardStore.getState().registerFormTrigger(first);
-      useOnboardStore.getState().registerFormTrigger(second);
-      expect(useOnboardStore.getState().formTrigger).toBe(second);
+      store.getState().registerFormTrigger(first);
+      store.getState().registerFormTrigger(second);
+      expect(store.getState().formTrigger).toBe(second);
     });
   });
 
   describe('clearFormTrigger', () => {
     it('sets formTrigger to null', () => {
-      useOnboardStore.getState().registerFormTrigger(async () => true);
-      useOnboardStore.getState().clearFormTrigger();
-      expect(useOnboardStore.getState().formTrigger).toBeNull();
+      store.getState().registerFormTrigger(async () => true);
+      store.getState().clearFormTrigger();
+      expect(store.getState().formTrigger).toBeNull();
     });
   });
 
   describe('reset (extended)', () => {
     it('clears liveData on reset', () => {
-      useOnboardStore.getState().setLiveData('profile', { displayName: 'John' });
-      useOnboardStore.getState().reset();
-      expect(useOnboardStore.getState().liveData).toEqual({});
+      store.getState().setLiveData('profile', { displayName: 'John' });
+      store.getState().reset();
+      expect(store.getState().liveData).toEqual({});
     });
 
     it('clears formTrigger on reset', () => {
-      useOnboardStore.getState().registerFormTrigger(async () => true);
-      useOnboardStore.getState().reset();
-      expect(useOnboardStore.getState().formTrigger).toBeNull();
+      store.getState().registerFormTrigger(async () => true);
+      store.getState().reset();
+      expect(store.getState().formTrigger).toBeNull();
     });
   });
 
   describe('submissionStatus', () => {
     it('initializes to idle', () => {
-      expect(useOnboardStore.getState().submissionStatus).toBe('idle');
+      expect(store.getState().submissionStatus).toBe('idle');
     });
 
     it('transitions to loading via setSubmissionStatus', () => {
-      useOnboardStore.getState().setSubmissionStatus('loading');
-      expect(useOnboardStore.getState().submissionStatus).toBe('loading');
+      store.getState().setSubmissionStatus('loading');
+      expect(store.getState().submissionStatus).toBe('loading');
     });
 
     it('transitions from loading to success', () => {
-      useOnboardStore.getState().setSubmissionStatus('loading');
-      useOnboardStore.getState().setSubmissionStatus('success');
-      expect(useOnboardStore.getState().submissionStatus).toBe('success');
+      store.getState().setSubmissionStatus('loading');
+      store.getState().setSubmissionStatus('success');
+      expect(store.getState().submissionStatus).toBe('success');
     });
 
     it('transitions from loading to error', () => {
-      useOnboardStore.getState().setSubmissionStatus('loading');
-      useOnboardStore.getState().setSubmissionStatus('error');
-      expect(useOnboardStore.getState().submissionStatus).toBe('error');
+      store.getState().setSubmissionStatus('loading');
+      store.getState().setSubmissionStatus('error');
+      expect(store.getState().submissionStatus).toBe('error');
     });
 
     it('reset() clears submissionStatus back to idle', () => {
-      useOnboardStore.getState().setSubmissionStatus('error');
-      useOnboardStore.getState().reset();
-      expect(useOnboardStore.getState().submissionStatus).toBe('idle');
+      store.getState().setSubmissionStatus('error');
+      store.getState().reset();
+      expect(store.getState().submissionStatus).toBe('idle');
     });
   });
 
   describe('submissionResponse', () => {
     it('initializes to null', () => {
-      expect(useOnboardStore.getState().submissionResponse).toBeNull();
+      expect(store.getState().submissionResponse).toBeNull();
     });
 
     it('stores response via setSubmissionResponse', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const fakeResponse = { workspace: { id: 'ws-1' } } as any;
-      useOnboardStore.getState().setSubmissionResponse(fakeResponse);
-      expect(useOnboardStore.getState().submissionResponse).toEqual(fakeResponse);
+      store.getState().setSubmissionResponse(fakeResponse);
+      expect(store.getState().submissionResponse).toEqual(fakeResponse);
     });
 
     it('reset() clears submissionResponse to null', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const fakeResponse = { workspace: { id: 'ws-1' } } as any;
-      useOnboardStore.getState().setSubmissionResponse(fakeResponse);
-      useOnboardStore.getState().reset();
-      expect(useOnboardStore.getState().submissionResponse).toBeNull();
+      store.getState().setSubmissionResponse(fakeResponse);
+      store.getState().reset();
+      expect(store.getState().submissionResponse).toBeNull();
     });
   });
 
   describe('avatar blobs', () => {
     it('profileAvatarBlob initializes to null', () => {
-      expect(useOnboardStore.getState().profileAvatarBlob).toBeNull();
+      expect(store.getState().profileAvatarBlob).toBeNull();
     });
 
     it('workspaceAvatarBlob initializes to null', () => {
-      expect(useOnboardStore.getState().workspaceAvatarBlob).toBeNull();
+      expect(store.getState().workspaceAvatarBlob).toBeNull();
     });
 
     it('setProfileAvatarBlob stores a Blob', () => {
       const blob = new Blob(['data'], { type: 'image/png' });
-      useOnboardStore.getState().setProfileAvatarBlob(blob);
-      expect(useOnboardStore.getState().profileAvatarBlob).toBe(blob);
+      store.getState().setProfileAvatarBlob(blob);
+      expect(store.getState().profileAvatarBlob).toBe(blob);
     });
 
     it('setWorkspaceAvatarBlob stores a Blob', () => {
       const blob = new Blob(['data'], { type: 'image/png' });
-      useOnboardStore.getState().setWorkspaceAvatarBlob(blob);
-      expect(useOnboardStore.getState().workspaceAvatarBlob).toBe(blob);
+      store.getState().setWorkspaceAvatarBlob(blob);
+      expect(store.getState().workspaceAvatarBlob).toBe(blob);
     });
 
     it('setProfileAvatarBlob accepts null', () => {
       const blob = new Blob(['data'], { type: 'image/png' });
-      useOnboardStore.getState().setProfileAvatarBlob(blob);
-      useOnboardStore.getState().setProfileAvatarBlob(null);
-      expect(useOnboardStore.getState().profileAvatarBlob).toBeNull();
+      store.getState().setProfileAvatarBlob(blob);
+      store.getState().setProfileAvatarBlob(null);
+      expect(store.getState().profileAvatarBlob).toBeNull();
     });
 
     it('reset() clears both avatar blobs to null', () => {
       const blob = new Blob(['data'], { type: 'image/png' });
-      useOnboardStore.getState().setProfileAvatarBlob(blob);
-      useOnboardStore.getState().setWorkspaceAvatarBlob(blob);
-      useOnboardStore.getState().reset();
-      expect(useOnboardStore.getState().profileAvatarBlob).toBeNull();
-      expect(useOnboardStore.getState().workspaceAvatarBlob).toBeNull();
+      store.getState().setProfileAvatarBlob(blob);
+      store.getState().setWorkspaceAvatarBlob(blob);
+      store.getState().reset();
+      expect(store.getState().profileAvatarBlob).toBeNull();
+      expect(store.getState().workspaceAvatarBlob).toBeNull();
     });
   });
 });

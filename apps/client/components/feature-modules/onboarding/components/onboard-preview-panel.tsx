@@ -8,7 +8,7 @@ import {
 import { BGPattern } from '@/components/ui/background/grids';
 import { Propless } from '@/lib/interfaces/interface';
 import { FC } from 'react';
-import { OnboardCameraCanvas } from './onboard-camera-canvas';
+import { OnboardCameraCanvas } from '@/components/feature-modules/onboarding/components/onboard-camera-canvas';
 
 const DebugStepControls: FC<Propless> = () => {
   const { currentStep } = useOnboardStepState();

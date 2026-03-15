@@ -1,5 +1,5 @@
 import { WorkspacePlan } from '@/lib/types/workspace';
-import { workspaceStepSchema } from './workspace-step-form';
+import { workspaceStepSchema } from '@/components/feature-modules/onboarding/components/forms/workspace-step-form';
 
 describe('workspaceStepSchema', () => {
   it('accepts valid displayName and plan', () => {
@@ -73,5 +73,15 @@ describe('workspaceStepSchema', () => {
     if (result.success) {
       expect(Object.keys(result.data)).not.toContain('currency');
     }
+  });
+
+  it('trims whitespace before validating length', () => {
+    const result = workspaceStepSchema.safeParse({
+      displayName: '  Ac  ',
+      plan: WorkspacePlan.Free,
+    });
+    expect(result.success).toBe(false);
+    const issue = result.error?.issues.find((i) => i.path.includes('displayName'));
+    expect(issue?.message).toMatch(/at least 3/i);
   });
 });

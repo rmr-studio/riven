@@ -1,8 +1,9 @@
 export {
   useOnboardStore,
+  useOnboardStoreApi,
   useOnboardStepState,
   useOnboardLiveData,
   useOnboardNavigation,
   useOnboardFormControls,
   useOnboardSubmission,
-} from '../stores/onboard.store';
+} from '@/components/feature-modules/onboarding/context/onboard-provider';

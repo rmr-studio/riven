@@ -2,11 +2,11 @@
 
 import { Propless } from '@/lib/interfaces/interface';
 import { FC } from 'react';
-import { useBundles } from '../hooks/query/use-bundles';
-import { useOnboardSubmission } from '../hooks/use-onboard-store';
-import { OnboardCelebration } from './onboard-celebration';
-import { OnboardFormPanel } from './onboard-form-panel';
-import { OnboardPreviewPanel } from './onboard-preview-panel';
+import { useBundles } from '@/components/feature-modules/onboarding/hooks/query/use-bundles';
+import { useOnboardSubmission } from '@/components/feature-modules/onboarding/hooks/use-onboard-store';
+import { OnboardCelebration } from '@/components/feature-modules/onboarding/components/onboard-celebration';
+import { OnboardFormPanel } from '@/components/feature-modules/onboarding/components/onboard-form-panel';
+import { OnboardPreviewPanel } from '@/components/feature-modules/onboarding/components/onboard-preview-panel';
 
 export const OnboardShell: FC<Propless> = () => {
   const { submissionStatus } = useOnboardSubmission();

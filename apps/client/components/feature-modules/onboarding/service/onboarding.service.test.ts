@@ -1,5 +1,5 @@
-import { assemblePayload } from './onboarding.service';
-import { WorkspacePlan, WorkspaceRoles } from '@/lib/types/models';
+import { assemblePayload, OnboardingService } from '@/components/feature-modules/onboarding/service/onboarding.service';
+import { WorkspacePlan, WorkspaceRoles } from '@/lib/types/workspace';
 
 describe('assemblePayload', () => {
   const baseProfile = { displayName: 'Jane Smith', phone: '+1234567890' };
@@ -128,5 +128,17 @@ describe('assemblePayload', () => {
       });
       expect(result.profile.phone).toBeUndefined();
     });
+  });
+});
+
+describe('OnboardingService.completeOnboarding', () => {
+  it('throws when session is null', async () => {
+    const request = assemblePayload({
+      profile: { displayName: 'Jane' },
+      workspace: { displayName: 'Acme', plan: WorkspacePlan.Free },
+    });
+    await expect(
+      OnboardingService.completeOnboarding(null, request),
+    ).rejects.toThrow('Session is required');
   });
 });

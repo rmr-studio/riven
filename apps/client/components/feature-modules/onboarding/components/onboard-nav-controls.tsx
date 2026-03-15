@@ -2,21 +2,22 @@
 
 import { Button } from '@riven/ui/button';
 import { FC } from 'react';
-import { ONBOARD_STEPS } from '../config/onboard-steps';
-import { useCompleteOnboardingMutation } from '../hooks/mutation/use-complete-onboarding-mutation';
+import { ONBOARD_STEPS } from '@/components/feature-modules/onboarding/config/onboard-steps';
+import { useCompleteOnboardingMutation } from '@/components/feature-modules/onboarding/hooks/mutation/use-complete-onboarding-mutation';
 import {
-  useOnboardStore,
+  useOnboardStoreApi,
   useOnboardStepState,
   useOnboardSubmission,
   useOnboardNavigation,
   useOnboardFormControls,
-} from '../hooks/use-onboard-store';
+} from '@/components/feature-modules/onboarding/hooks/use-onboard-store';
 
 export const OnboardNavControls: FC = () => {
+  const storeApi = useOnboardStoreApi();
   const { currentStep } = useOnboardStepState();
   const { submissionStatus } = useOnboardSubmission();
   const { goNext, goBack, skip } = useOnboardNavigation();
-  const { setStepData } = useOnboardFormControls();
+  const { setStepData, setLiveData } = useOnboardFormControls();
 
   const mutation = useCompleteOnboardingMutation();
 
@@ -30,7 +31,7 @@ export const OnboardNavControls: FC = () => {
   }
 
   const handleNext = async () => {
-    const { formTrigger, liveData } = useOnboardStore.getState();
+    const { formTrigger, liveData } = storeApi.getState();
     const step = ONBOARD_STEPS[currentStep];
 
     if (formTrigger) {

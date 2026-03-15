@@ -57,7 +57,7 @@ export const AvatarCropDialog: FC<AvatarCropDialogProps> = ({
       onCropComplete(blob);
       onOpenChange(false);
     } catch {
-      onOpenChange(false);
+      setError('Failed to crop image. Please try again.');
     } finally {
       setIsApplying(false);
     }
@@ -107,7 +107,9 @@ export const AvatarCropDialog: FC<AvatarCropDialogProps> = ({
         <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-3.5">
           <span className="text-sm font-medium text-zinc-300">Crop Image</span>
           <button
+            type="button"
             onClick={handleCancel}
+            aria-label="Close crop dialog"
             className="text-lg leading-none text-zinc-500 transition-colors hover:text-zinc-300"
           >
             &times;
@@ -144,6 +146,7 @@ export const AvatarCropDialog: FC<AvatarCropDialogProps> = ({
             max={3}
             step={0.01}
             value={zoom}
+            aria-label="Zoom level"
             onChange={(e) => setZoom(Number(e.target.value))}
             className="h-1 w-full cursor-pointer appearance-none rounded-full bg-zinc-700 accent-white [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
           />

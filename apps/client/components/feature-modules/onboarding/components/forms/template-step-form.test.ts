@@ -1,4 +1,4 @@
-import { toggleBundleSelection } from './template-step-form';
+import { toggleBundleSelection } from '@/components/feature-modules/onboarding/components/forms/template-step-form';
 
 describe('toggleBundleSelection', () => {
   it('selects a bundle when nothing is selected', () => {
@@ -11,12 +11,5 @@ describe('toggleBundleSelection', () => {
 
   it('deselects the current bundle when the same bundle is clicked again', () => {
     expect(toggleBundleSelection('crm', 'crm')).toBeNull();
-  });
-});
-
-describe('template step formTrigger', () => {
-  it('formTrigger always resolves true (optional step)', async () => {
-    const formTrigger = async () => true;
-    await expect(formTrigger()).resolves.toBe(true);
   });
 });

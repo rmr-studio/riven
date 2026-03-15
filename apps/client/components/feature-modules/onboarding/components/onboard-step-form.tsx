@@ -1,13 +1,13 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import { FC } from 'react';
-import { ONBOARD_STEPS } from '../config/onboard-steps';
-import { useOnboardStepState } from '../hooks/use-onboard-store';
-import { ProfileStepForm } from './forms/profile-step-form';
-import { TeamStepForm } from './forms/team-step-form';
-import { TemplateStepForm } from './forms/template-step-form';
-import { WorkspaceStepForm } from './forms/workspace-step-form';
+import { ONBOARD_STEPS } from '@/components/feature-modules/onboarding/config/onboard-steps';
+import { useOnboardStepState } from '@/components/feature-modules/onboarding/hooks/use-onboard-store';
+import { ProfileStepForm } from '@/components/feature-modules/onboarding/components/forms/profile-step-form';
+import { TeamStepForm } from '@/components/feature-modules/onboarding/components/forms/team-step-form';
+import { TemplateStepForm } from '@/components/feature-modules/onboarding/components/forms/template-step-form';
+import { WorkspaceStepForm } from '@/components/feature-modules/onboarding/components/forms/workspace-step-form';
 
 const STEP_FORMS: Record<string, React.ComponentType> = {
   profile: ProfileStepForm,
@@ -21,6 +21,8 @@ export const OnboardStepForm: FC = () => {
 
   const xOffset = direction === 'forward' ? 40 : -40;
   const stepConfig = ONBOARD_STEPS[currentStep];
+
+  if (!stepConfig) return null;
 
   const StepForm = STEP_FORMS[stepConfig.id];
 

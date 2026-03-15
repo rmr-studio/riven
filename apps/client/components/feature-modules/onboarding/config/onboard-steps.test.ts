@@ -1,4 +1,4 @@
-import { ONBOARD_STEPS, SECTION_WIDTH } from './onboard-steps';
+import { ONBOARD_STEPS, SECTION_WIDTH } from '@/components/feature-modules/onboarding/config/onboard-steps';
 
 describe('onboard-steps', () => {
   describe('SECTION_WIDTH', () => {
