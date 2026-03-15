@@ -45,14 +45,6 @@ CREATE INDEX IF NOT EXISTS idx_entity_relationships_definition
     ON entity_relationships (relationship_definition_id)
     WHERE deleted = FALSE AND deleted_at IS NULL;
 
--- Entity Provenance Indexes
-CREATE INDEX IF NOT EXISTS idx_provenance_entity
-    ON entity_attribute_provenance (entity_id);
-
-CREATE INDEX IF NOT EXISTS idx_provenance_integration
-    ON entity_attribute_provenance (source_integration_id)
-    WHERE source_integration_id IS NOT NULL;
-
 -- Entity Integration Source Indexes
 CREATE INDEX IF NOT EXISTS idx_entities_source_integration
     ON entities (source_integration_id)
