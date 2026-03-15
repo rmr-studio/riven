@@ -21,6 +21,8 @@ import riven.core.models.workspace.Workspace
 import riven.core.models.workspace.WorkspaceMember
 import riven.core.repository.workspace.WorkspaceMemberRepository
 import riven.core.repository.workspace.WorkspaceRepository
+import riven.core.enums.util.OperationType
+import riven.core.models.websocket.WorkspaceChangeEvent
 import riven.core.service.activity.ActivityService
 import riven.core.service.activity.log
 import riven.core.service.auth.AuthTokenService
@@ -175,6 +177,16 @@ class WorkspaceService(
             )
         }
         applicationEventPublisher.publishEvent(analyticsEvent)
+
+        applicationEventPublisher.publishEvent(
+            WorkspaceChangeEvent(
+                workspaceId = id,
+                userId = userId,
+                operation = if (request.id == null) OperationType.CREATE else OperationType.UPDATE,
+                entityId = id,
+                summary = mapOf("name" to entity.name),
+            )
+        )
     }
 
     private fun setDefaultWorkspaceIfNeeded(workspace: Workspace, request: SaveWorkspaceRequest, userId: UUID) {
