@@ -449,27 +449,7 @@ CREATE OR REPLACE TRIGGER trg_update_entity_type_count
 EXECUTE FUNCTION public.update_entity_type_count();
 
 -- =====================================================
--- 3. ENTITY_ATTRIBUTE_PROVENANCE TABLE
--- =====================================================
-
-CREATE TABLE IF NOT EXISTS public.entity_attribute_provenance (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    entity_id UUID NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
-    attribute_id UUID NOT NULL,
-    source_type VARCHAR(50) NOT NULL,
-    source_integration_id UUID,
-    source_external_field VARCHAR(255),
-    last_updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    override_by_user BOOLEAN NOT NULL DEFAULT false,
-    override_at TIMESTAMPTZ,
-    UNIQUE(entity_id, attribute_id)
-);
-
-CREATE INDEX idx_provenance_entity ON entity_attribute_provenance(entity_id);
-CREATE INDEX idx_provenance_integration ON entity_attribute_provenance(source_integration_id) WHERE source_integration_id IS NOT NULL;
-
--- =====================================================
--- 4. ENTITY_RELATIONSHIPS TABLE
+-- 3. ENTITY_RELATIONSHIPS TABLE
 -- =====================================================
 
 CREATE TABLE IF NOT EXISTS public.entity_relationships

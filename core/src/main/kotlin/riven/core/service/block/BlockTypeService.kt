@@ -90,7 +90,6 @@ class BlockTypeService(
             strictness = type.strictness,
             schema = type.schema,
             displayStructure = type.display,
-            // Add this property to your entity (nullable) to record provenance.
             sourceId = existing.id
         )
 
