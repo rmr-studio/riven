@@ -342,6 +342,54 @@ class EntityServiceTest : BaseServiceTest() {
     }
 
     @Test
+    fun `saveEntity publishes EntityEvent with UPDATE operation for existing entity`() {
+        val type = buildEntityType(
+            properties = mapOf(
+                nameAttrId to Schema(key = SchemaType.TEXT, type = DataType.STRING, label = "Name", required = true),
+            ),
+        )
+
+        val existingEntity = EntityFactory.createEntityEntity(
+            id = entityId,
+            workspaceId = workspaceId,
+            typeId = entityTypeId,
+            typeKey = "task",
+            identifierKey = nameAttrId,
+        )
+
+        whenever(entityTypeService.getById(entityTypeId)).thenReturn(type)
+        whenever(entityRepository.findById(entityId)).thenReturn(Optional.of(existingEntity))
+        whenever(entityRepository.save(any<EntityEntity>())).thenAnswer { it.arguments[0] }
+        whenever(entityAttributeService.getAttributes(entityId)).thenReturn(
+            mapOf(
+                nameAttrId to EntityAttributePrimitivePayload(value = "Old Task", schemaType = SchemaType.TEXT),
+            )
+        )
+
+        val request = SaveEntityRequest(
+            id = entityId,
+            payload = mapOf(
+                nameAttrId to EntityAttributeRequest(
+                    payload = EntityAttributePrimitivePayload(value = "Updated Task", schemaType = SchemaType.TEXT)
+                ),
+            ),
+        )
+
+        service.saveEntity(workspaceId, entityTypeId, request)
+
+        val events = applicationEvents.stream(EntityEvent::class.java).toList()
+        assertEquals(1, events.size)
+
+        val event = events[0]
+        assertEquals(workspaceId, event.workspaceId)
+        assertEquals(userId, event.userId)
+        assertEquals(OperationType.UPDATE, event.operation)
+        assertEquals(entityId, event.entityId)
+        assertEquals(entityTypeId, event.entityTypeId)
+        assertEquals("task", event.entityTypeKey)
+    }
+
+    @Test
     fun `deleteEntities publishes EntityEvent with DELETE operation`() {
         val deletedEntity = EntityFactory.createEntityEntity(
             id = entityId,
