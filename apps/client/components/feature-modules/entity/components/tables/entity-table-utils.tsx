@@ -355,11 +355,11 @@ export function generateColumnsFromEntityType(
   // Generate attribute columns
   Object.entries(entityType.schema.properties).forEach(([attributeId, schema]) => {
     // Create edit config if editing is enabled
-    const editConfig: ColumnEditConfig<EntityRow, any, any> | undefined =
+    const editConfig: ColumnEditConfig<EntityRow, unknown, unknown> | undefined =
       options?.enableEditing && schema.key !== SchemaType.Id
         ? {
           enabled: true,
-          createFormInstance: (cell: Cell<EntityRow, any>) => {
+          createFormInstance: (cell: Cell<EntityRow, unknown>) => {
             const value = cell.getValue();
 
             // Build Zod schema for this attribute based on its type
@@ -368,16 +368,16 @@ export function generateColumnsFromEntityType(
               value: fieldSchema,
             });
 
-            return useForm({
-              resolver: zodResolver(formSchema) as any,
+            return useForm<{ value: unknown }>({
+              resolver: zodResolver(formSchema),
               defaultValues: {
                 value: value ?? null,
               },
             });
           },
           render: createAttributeRenderer<EntityRow>(schema),
-          parseValue: (val: any) => val,
-          formatValue: (val: any) => val,
+          parseValue: (val: unknown) => val,
+          formatValue: (val: unknown) => val,
           isEqual: createAttributeEqualityFn(schema),
         }
       : undefined;

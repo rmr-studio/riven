@@ -55,14 +55,24 @@ export function useDeleteEntityMutation(
       options?.onSuccess?.(response, variables, context);
 
       // Remove deleted entities from the cache
-      const { entityIds } = variables;
-      Object.entries(entityIds).forEach(([typeId, ids]) => {
-        const set = new Set(ids);
-        queryClient.setQueryData<Entity[]>(entityKeys.entities.list(workspaceId, typeId), (oldData) => {
-          if (!oldData) return oldData;
-          return oldData.filter((entity) => !set.has(entity.id));
+      // On partial failure, avoid evicting all requested IDs — refetch for consistency instead
+      if (error && deletedCount > 0) {
+        const { entityIds } = variables;
+        Object.keys(entityIds).forEach((typeId) => {
+          queryClient.invalidateQueries({
+            queryKey: entityKeys.entities.list(workspaceId, typeId),
+          });
         });
-      });
+      } else {
+        const { entityIds } = variables;
+        Object.entries(entityIds).forEach(([typeId, ids]) => {
+          const set = new Set(ids);
+          queryClient.setQueryData<Entity[]>(entityKeys.entities.list(workspaceId, typeId), (oldData) => {
+            if (!oldData) return oldData;
+            return oldData.filter((entity) => !set.has(entity.id));
+          });
+        });
+      }
 
       // Adjust data cache for updated entities. Payload only includes entities that were updated as a result of deletion, grouped by their type IDs
       if (!updatedEntities) return;

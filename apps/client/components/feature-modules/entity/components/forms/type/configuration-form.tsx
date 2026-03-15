@@ -23,7 +23,7 @@ import { cn } from '@/lib/util/utils';
 import { Info } from 'lucide-react';
 import { FC, useEffect, useMemo } from 'react';
 import { useWatch } from 'react-hook-form';
-import { useConfigCurrentType, useConfigForm } from '../../../context/configuration-provider';
+import { useConfigCurrentType, useConfigForm } from '@/components/feature-modules/entity/context/configuration-provider';
 
 const CATEGORY_LABELS: Record<SemanticGroup, string> = {
   [SemanticGroup.Customer]: 'Customer',

@@ -54,15 +54,22 @@ export function deriveSchemaOptionsUpdate(
     case SchemaType.MultiSelect: {
       if (!Array.isArray(newValue)) return null;
       const existing = schema.options?._enum ?? [];
-      const newEntries = (newValue as string[]).filter((v) => !existing.includes(v));
-      if (newEntries.length === 0) return null;
-      return { _enum: [...existing, ...newEntries] };
+      const newEntries = (newValue as unknown[])
+        .filter((v): v is string => typeof v === 'string')
+        .map((v) => v.trim())
+        .filter((v) => v !== '' && !existing.includes(v));
+      // Deduplicate within newEntries
+      const uniqueNew = [...new Set(newEntries)];
+      if (uniqueNew.length === 0) return null;
+      return { _enum: [...existing, ...uniqueNew] };
     }
     case SchemaType.Select: {
-      if (typeof newValue !== 'string' || newValue === '') return null;
+      if (typeof newValue !== 'string') return null;
+      const trimmed = newValue.trim();
+      if (trimmed === '') return null;
       const existing = schema.options?._enum ?? [];
-      if (existing.includes(newValue)) return null;
-      return { _enum: [...existing, newValue] };
+      if (existing.includes(trimmed)) return null;
+      return { _enum: [...existing, trimmed] };
     }
     default:
       return null;

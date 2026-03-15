@@ -135,7 +135,12 @@ const useEntityTypeConfigurationStore = <T,>(selector: (store: EntityTypeConfigS
 };
 
 export const useConfigFormState = () => {
-  return useEntityTypeConfigurationStore((state) => state);
+  return useEntityTypeConfigurationStore((state) => ({
+    form: state.form,
+    isDirty: state.isDirty,
+    handleSubmit: state.handleSubmit,
+    reset: state.reset,
+  }));
 };
 
 export const useConfigCurrentType = () => {

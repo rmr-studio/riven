@@ -9,6 +9,7 @@ import {
   buildZodSchemaFromEntityType,
   getDefaultValueForSchema,
 } from '@/lib/util/form/entity-instance-validation.util';
+import { attributeTypes } from '@/lib/util/form/schema.util';
 import {
   complexAllSchemaTypesEntityType,
   edgeCaseEntityType,
@@ -27,10 +28,11 @@ const VALID_UUID_3 = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
 const VALID_UUID_4 = '6ba7b812-9dad-11d1-80b4-00c04fd430c8';
 
 function makeAttr(key: SchemaType, overrides: Partial<SchemaUUID> = {}): SchemaUUID {
+  const attrType = attributeTypes[key];
   return {
     key,
     label: 'Test Field',
-    type: DataType.String,
+    type: attrType.type,
     icon: { type: IconType.Circle, colour: IconColour.Neutral },
     required: false,
     unique: false,

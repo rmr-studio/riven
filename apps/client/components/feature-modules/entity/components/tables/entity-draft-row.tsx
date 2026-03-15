@@ -128,12 +128,19 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
       return !rel || rel.systemType !== SystemRelationshipType.ConnectedEntities;
     });
 
+    // Compute the first editable cell index (skip SchemaType.Id cells)
+    const firstEditableIndex = filteredColumns.findIndex((col) => {
+      if (col.type !== EntityPropertyType.Attribute) return true;
+      const schema = entityType.schema.properties?.[col.key];
+      return !schema || schema.key !== SchemaType.Id;
+    });
+
     return filteredColumns.map((item, index) => {
       const { key: id, type } = item;
-      const isFirstCell = index === 0;
+      const isFirstEditableCell = index === firstEditableIndex;
 
-      // Create element with autoFocus on first cell
-      const element = getElement(id, entityType, type, isFirstCell);
+      // Create element with autoFocus on first editable cell
+      const element = getElement(id, entityType, type, isFirstEditableCell);
       if (!element) return null;
 
       const width = columnSizeMap.get(id);

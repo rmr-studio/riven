@@ -122,17 +122,20 @@ export const createEntityTypeConfigStore = (
 
         if (idEntry && values.idPrefix !== undefined) {
           const [attrId, attrSchema] = idEntry;
-          await saveDefinitionMutation({
-            definition: {
-              key: entityType.key,
-              id: attrId,
-              type: EntityTypeRequestDefinition.SaveSchema,
-              schema: {
-                ...attrSchema,
-                options: { ...attrSchema.options, prefix: values.idPrefix },
+          const existingPrefix = attrSchema.options?.prefix;
+          if (values.idPrefix !== (existingPrefix ?? '')) {
+            await saveDefinitionMutation({
+              definition: {
+                key: entityType.key,
+                id: attrId,
+                type: EntityTypeRequestDefinition.SaveSchema,
+                schema: {
+                  ...attrSchema,
+                  options: { ...attrSchema.options, prefix: values.idPrefix },
+                },
               },
-            },
-          });
+            });
+          }
         }
         // Reset form dirty state
         form.reset(form.getValues());

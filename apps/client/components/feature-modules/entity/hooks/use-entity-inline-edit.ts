@@ -110,7 +110,7 @@ export function useEntityInlineEdit(
 
       return false;
     },
-    [entities, entityType, saveEntity],
+    [entities, entityType, saveEntity, session, workspaceId, queryClient],
   );
 
   return { handleCellEdit };
