@@ -1,4 +1,8 @@
 spring:
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 10MB
   application:
     name: core
   datasource:
@@ -28,6 +32,8 @@ riven:
     jwt-issuer: ${SUPABASE_URL}
     allowed-origins:
       - ${ORIGIN_API_URL}
+      - http://localhost:3000
+      - http://localhost:3002
   include-stack-trace: true
   supabase-url: ${SUPABASE_URL}
   supabase-key: ${SUPABASE_KEY}
