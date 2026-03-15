@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS workspace_integration_installations (
     workspace_id              UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     integration_definition_id UUID NOT NULL REFERENCES integration_definitions(id) ON DELETE RESTRICT,
     manifest_key              VARCHAR(255) NOT NULL,
-    installed_by              UUID NOT NULL,
+    installed_by              UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     installed_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
     sync_config               JSONB DEFAULT '{}',
     last_synced_at            TIMESTAMPTZ,
@@ -61,8 +61,8 @@ CREATE TABLE IF NOT EXISTS workspace_integration_installations (
     deleted_at                TIMESTAMPTZ,
     created_at                TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at                TIMESTAMPTZ NOT NULL DEFAULT now(),
-    created_by                UUID,
-    updated_by                UUID,
+    created_by                UUID REFERENCES users(id) ON DELETE SET NULL,
+    updated_by                UUID REFERENCES users(id) ON DELETE SET NULL,
     CONSTRAINT uq_workspace_integration_installation
         UNIQUE (workspace_id, integration_definition_id)
 );

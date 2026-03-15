@@ -170,7 +170,7 @@ class EntityTypeService(
             "type" to existing.key,
         )
 
-        if (request.semantics != null) {
+        if (!existing.readonly && request.semantics != null) {
             semanticMetadataService.upsertMetadataInternal(
                 workspaceId, savedId, SemanticMetadataTargetType.ENTITY_TYPE, savedId, request.semantics,
             )

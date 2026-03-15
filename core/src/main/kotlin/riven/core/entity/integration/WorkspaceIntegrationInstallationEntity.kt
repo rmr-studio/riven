@@ -51,7 +51,7 @@ data class WorkspaceIntegrationInstallationEntity(
 
     @Type(JsonBinaryType::class)
     @Column(name = "sync_config", columnDefinition = "jsonb")
-    val syncConfig: SyncConfiguration = SyncConfiguration(),
+    var syncConfig: SyncConfiguration = SyncConfiguration(),
 
     @Column(name = "last_synced_at")
     var lastSyncedAt: ZonedDateTime? = null,

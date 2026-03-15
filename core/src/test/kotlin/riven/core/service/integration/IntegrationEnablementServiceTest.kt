@@ -178,7 +178,7 @@ class IntegrationEnablementServiceTest {
                 .thenReturn(null)
             whenever(connectionService.enableConnection(workspaceId, testIntegrationId, "nango-conn-123"))
                 .thenReturn(connectionEntity)
-            whenever(materializationService.materializeIntegrationTemplates(workspaceId, "hubspot"))
+            whenever(materializationService.materializeIntegrationTemplates(workspaceId, "hubspot", testIntegrationId))
                 .thenReturn(materializationResult)
             whenever(installationRepository.save(any<WorkspaceIntegrationInstallationEntity>()))
                 .thenReturn(savedInstallation)
@@ -193,7 +193,7 @@ class IntegrationEnablementServiceTest {
             assertEquals(2, result.relationshipsCreated)
 
             verify(connectionService).enableConnection(workspaceId, testIntegrationId, "nango-conn-123")
-            verify(materializationService).materializeIntegrationTemplates(workspaceId, "hubspot")
+            verify(materializationService).materializeIntegrationTemplates(workspaceId, "hubspot", testIntegrationId)
             verify(installationRepository).save(any<WorkspaceIntegrationInstallationEntity>())
             verify(activityService).logActivity(
                 activity = any(),
@@ -237,7 +237,7 @@ class IntegrationEnablementServiceTest {
                 .thenReturn(null)
             whenever(connectionService.enableConnection(workspaceId, testIntegrationId, "nango-conn-123"))
                 .thenReturn(connectionEntity)
-            whenever(materializationService.materializeIntegrationTemplates(workspaceId, "hubspot"))
+            whenever(materializationService.materializeIntegrationTemplates(workspaceId, "hubspot", testIntegrationId))
                 .thenReturn(MaterializationResult(0, 0, 0, "hubspot"))
             whenever(installationRepository.save(any<WorkspaceIntegrationInstallationEntity>()))
                 .thenReturn(savedInstallation)
@@ -274,7 +274,7 @@ class IntegrationEnablementServiceTest {
             assertEquals(0, result.relationshipsCreated)
 
             verify(connectionService, never()).enableConnection(any(), any(), any())
-            verify(materializationService, never()).materializeIntegrationTemplates(any(), any())
+            verify(materializationService, never()).materializeIntegrationTemplates(any(), any(), any())
         }
 
         @Test
@@ -308,7 +308,7 @@ class IntegrationEnablementServiceTest {
                 .thenReturn(softDeletedInstallation)
             whenever(connectionService.enableConnection(workspaceId, testIntegrationId, "nango-conn-456"))
                 .thenReturn(connectionEntity)
-            whenever(materializationService.materializeIntegrationTemplates(workspaceId, "hubspot"))
+            whenever(materializationService.materializeIntegrationTemplates(workspaceId, "hubspot", testIntegrationId))
                 .thenReturn(MaterializationResult(1, 2, 1, "hubspot"))
             whenever(installationRepository.save(any<WorkspaceIntegrationInstallationEntity>()))
                 .thenAnswer { invocation -> invocation.getArgument(0) as WorkspaceIntegrationInstallationEntity }
@@ -525,7 +525,7 @@ class IntegrationEnablementServiceTest {
                 .thenReturn(null)
             whenever(connectionService.enableConnection(workspaceId, testIntegrationId, "nango-conn-123"))
                 .thenReturn(connectionEntity)
-            whenever(materializationService.materializeIntegrationTemplates(workspaceId, "hubspot"))
+            whenever(materializationService.materializeIntegrationTemplates(workspaceId, "hubspot", testIntegrationId))
                 .thenReturn(MaterializationResult(3, 0, 2, "hubspot"))
             whenever(installationRepository.save(any<WorkspaceIntegrationInstallationEntity>()))
                 .thenReturn(savedInstallation)
@@ -569,7 +569,7 @@ class IntegrationEnablementServiceTest {
                 .thenReturn(softDeletedInstallation)
             whenever(connectionService.enableConnection(workspaceId, testIntegrationId, "nango-conn-456"))
                 .thenReturn(connectionEntity.copy(nangoConnectionId = "nango-conn-456"))
-            whenever(materializationService.materializeIntegrationTemplates(workspaceId, "hubspot"))
+            whenever(materializationService.materializeIntegrationTemplates(workspaceId, "hubspot", testIntegrationId))
                 .thenReturn(MaterializationResult(0, 3, 2, "hubspot"))
             whenever(installationRepository.save(any<WorkspaceIntegrationInstallationEntity>()))
                 .thenAnswer { invocation -> invocation.getArgument(0) as WorkspaceIntegrationInstallationEntity }

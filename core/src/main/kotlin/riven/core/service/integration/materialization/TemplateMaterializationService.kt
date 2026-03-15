@@ -69,7 +69,7 @@ class TemplateMaterializationService(
      * @return result with counts of created/restored entity types and relationships
      */
     @Transactional
-    fun materializeIntegrationTemplates(workspaceId: UUID, integrationSlug: String): MaterializationResult {
+    fun materializeIntegrationTemplates(workspaceId: UUID, integrationSlug: String, integrationDefinitionId: UUID): MaterializationResult {
         val manifest = manifestCatalogRepository.findByKeyAndManifestType(integrationSlug, ManifestType.INTEGRATION)
             ?: throw NotFoundException("Integration manifest not found for slug: $integrationSlug")
 
@@ -85,7 +85,7 @@ class TemplateMaterializationService(
         val softDeletedEntityTypes = entityTypeRepository.findSoftDeletedByWorkspaceIdAndKeyIn(workspaceId, entityTypeKeys)
 
         val entityTypeMaterializationResult = materializeEntityTypes(
-            workspaceId, integrationSlug, catalogEntityTypes, existingEntityTypes, softDeletedEntityTypes
+            workspaceId, integrationSlug, integrationDefinitionId, catalogEntityTypes, existingEntityTypes, softDeletedEntityTypes
         )
 
         val relationshipsCreated = materializeRelationships(
@@ -110,6 +110,7 @@ class TemplateMaterializationService(
     private fun materializeEntityTypes(
         workspaceId: UUID,
         integrationSlug: String,
+        integrationDefinitionId: UUID,
         catalogEntityTypes: List<CatalogEntityTypeEntity>,
         existingEntityTypes: List<EntityTypeEntity>,
         softDeletedEntityTypes: List<EntityTypeEntity>
@@ -129,11 +130,13 @@ class TemplateMaterializationService(
 
             if (softDeleted != null) {
                 val restoredEntity = restoreEntityType(softDeleted)
-                keyToIdMap[catalogType.key] = restoredEntity.id!!
+                val restoredId = requireNotNull(restoredEntity.id)
+                relationshipService.createFallbackDefinition(restoredEntity.workspaceId!!, restoredId)
+                keyToIdMap[catalogType.key] = restoredId
                 entityTypeSummaries.add(buildEntityTypeSummary(restoredEntity))
                 restored++
             } else if (catalogType.key !in existingKeys) {
-                val newEntity = createEntityType(workspaceId, integrationSlug, catalogType)
+                val newEntity = createEntityType(workspaceId, integrationSlug, integrationDefinitionId, catalogType)
                 keyToIdMap[catalogType.key] = newEntity.id!!
                 entityTypeSummaries.add(buildEntityTypeSummary(newEntity))
                 created++
@@ -149,6 +152,7 @@ class TemplateMaterializationService(
     private fun createEntityType(
         workspaceId: UUID,
         integrationSlug: String,
+        integrationDefinitionId: UUID,
         catalogType: CatalogEntityTypeEntity
     ): EntityTypeEntity {
         val schema = buildWorkspaceSchema(catalogType.schema, integrationSlug, catalogType.key)
@@ -163,6 +167,7 @@ class TemplateMaterializationService(
             iconColour = catalogType.iconColour,
             semanticGroup = catalogType.semanticGroup,
             sourceType = SourceType.INTEGRATION,
+            sourceIntegrationId = integrationDefinitionId,
             readonly = true,
             `protected` = true,
             identifierKey = identifierKey,

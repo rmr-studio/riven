@@ -268,7 +268,7 @@ class IntegrationConnectionService(
     private fun triggerMaterialization(workspaceId: UUID, integrationId: UUID) {
         val integration = definitionRepository.findById(integrationId).orElse(null)
         if (integration != null) {
-            val result = templateMaterializationService.materializeIntegrationTemplates(workspaceId, integration.slug)
+            val result = templateMaterializationService.materializeIntegrationTemplates(workspaceId, integration.slug, integrationId)
             logger.info {
                 "Materialized integration templates for workspace=$workspaceId, integration=${integration.slug}: " +
                     "created=${result.entityTypesCreated}, restored=${result.entityTypesRestored}, " +

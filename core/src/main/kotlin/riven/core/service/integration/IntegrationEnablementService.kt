@@ -15,6 +15,8 @@ import riven.core.models.request.integration.DisableIntegrationRequest
 import riven.core.models.request.integration.EnableIntegrationRequest
 import riven.core.models.response.integration.IntegrationDisableResponse
 import riven.core.models.response.integration.IntegrationEnablementResponse
+import riven.core.entity.integration.IntegrationDefinitionEntity
+import riven.core.models.integration.IntegrationSoftDeleteResult
 import riven.core.repository.integration.IntegrationDefinitionRepository
 import riven.core.repository.integration.WorkspaceIntegrationInstallationRepository
 import riven.core.service.activity.ActivityService
@@ -71,7 +73,7 @@ class IntegrationEnablementService(
             workspaceId, request.integrationDefinitionId
         )
         if (existing != null) {
-            return buildAlreadyEnabledResponse(request.integrationDefinitionId, definition.name, definition.slug, syncConfig)
+            return buildAlreadyEnabledResponse(request.integrationDefinitionId, definition.name, definition.slug, existing.syncConfig)
         }
 
         val softDeleted = installationRepository.findSoftDeletedByWorkspaceIdAndIntegrationDefinitionId(
@@ -80,7 +82,9 @@ class IntegrationEnablementService(
 
         connectionService.enableConnection(workspaceId, request.integrationDefinitionId, request.nangoConnectionId)
 
-        val materializationResult = materializationService.materializeIntegrationTemplates(workspaceId, definition.slug)
+        val materializationResult = materializationService.materializeIntegrationTemplates(
+            workspaceId, definition.slug, request.integrationDefinitionId
+        )
 
         val installation = trackInstallation(softDeleted, workspaceId, request.integrationDefinitionId, definition.slug, userId, syncConfig)
 
@@ -110,9 +114,27 @@ class IntegrationEnablementService(
      * @return disable response with soft-delete counts
      * @throws NotFoundException if the integration is not enabled or the definition does not exist
      */
-    @Transactional
     @PreAuthorize("@workspaceSecurity.hasWorkspaceRole(#workspaceId, T(riven.core.enums.workspace.WorkspaceRoles).ADMIN)")
     fun disableIntegration(workspaceId: UUID, request: DisableIntegrationRequest): IntegrationDisableResponse {
+        val (definition, installation, deleteResult) = disableIntegrationTransactional(workspaceId, request)
+
+        disconnectIfConnected(workspaceId, request.integrationDefinitionId)
+
+        return IntegrationDisableResponse(
+            integrationDefinitionId = request.integrationDefinitionId,
+            integrationName = definition.name,
+            entityTypesSoftDeleted = deleteResult.entityTypesSoftDeleted,
+            relationshipsSoftDeleted = deleteResult.relationshipsSoftDeleted
+        )
+    }
+
+    /**
+     * Performs the transactional DB mutations for disabling an integration:
+     * soft-deletes entity types/relationships and marks the installation as deleted.
+     * Separated so the Nango disconnect can run outside the transaction.
+     */
+    @Transactional
+    fun disableIntegrationTransactional(workspaceId: UUID, request: DisableIntegrationRequest): DisableTransactionResult {
         val userId = authTokenService.getUserId()
         val definition = findOrThrow { definitionRepository.findById(request.integrationDefinitionId) }
 
@@ -122,20 +144,13 @@ class IntegrationEnablementService(
 
         val deleteResult = entityTypeService.softDeleteByIntegration(workspaceId, request.integrationDefinitionId)
 
-        disconnectIfConnected(workspaceId, request.integrationDefinitionId)
-
         installation.lastSyncedAt = ZonedDateTime.now()
         installation.markDeleted()
         installationRepository.save(installation)
 
-        logDisableActivity(userId, workspaceId, installation.id!!, definition.slug, deleteResult.entityTypesSoftDeleted)
+        logDisableActivity(userId, workspaceId, requireNotNull(installation.id), definition.slug, deleteResult.entityTypesSoftDeleted)
 
-        return IntegrationDisableResponse(
-            integrationDefinitionId = request.integrationDefinitionId,
-            integrationName = definition.name,
-            entityTypesSoftDeleted = deleteResult.entityTypesSoftDeleted,
-            relationshipsSoftDeleted = deleteResult.relationshipsSoftDeleted
-        )
+        return DisableTransactionResult(definition, installation, deleteResult)
     }
 
     // ------ Private Helpers ------
@@ -154,6 +169,7 @@ class IntegrationEnablementService(
         if (softDeleted != null) {
             softDeleted.deleted = false
             softDeleted.deletedAt = null
+            softDeleted.syncConfig = syncConfig
             return installationRepository.save(softDeleted)
         }
 
@@ -244,4 +260,12 @@ class IntegrationEnablementService(
             )
         )
     }
+
+    // ------ Internal Data Classes ------
+
+    data class DisableTransactionResult(
+        val definition: IntegrationDefinitionEntity,
+        val installation: WorkspaceIntegrationInstallationEntity,
+        val deleteResult: IntegrationSoftDeleteResult
+    )
 }
