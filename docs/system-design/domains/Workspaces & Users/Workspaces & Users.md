@@ -46,6 +46,7 @@ flowchart TD
 - JWT authentication and authority extraction (token decoding, claims parsing)
 - Role-based authorization (@PreAuthorize expressions via WorkspaceSecurity)
 - Row-level security activation via workspace_members table
+- Real-time event broadcasting (WebSocket/STOMP infrastructure, event listener, security interceptor)
 
 ### This Domain Does NOT Own
 
@@ -65,6 +66,7 @@ flowchart TD
 | [[User Management]] | User profile CRUD, session-based user retrieval, default workspace |
 | [[2. Areas/2.1 Startup & Business/Riven/2. System Design/domains/Workspaces & Users/Onboarding/Onboarding]] | Single-request onboarding flow: workspace creation, profile setup, template installation, team invites |
 | [[Auth & Authorization]] | JWT decoding, authority extraction, role-based access control, workspace security checks |
+| [[Real-time Events]] | WebSocket/STOMP infrastructure for broadcasting workspace-scoped domain events to connected clients |
 
 ### Integrations
 
@@ -80,6 +82,7 @@ flowchart TD
 | ----------- | ------------------------ | ----------- |
 | [[Auth & Authorization]] | User-facing | JWT decode -> authority extraction -> @PreAuthorize -> RLS (Phase 4) |
 | [[Invitation Acceptance]] | User-facing | Create invite -> token -> accept -> add member (Phase 4) |
+| [[Flow - Domain Event Broadcasting]] | Internal | Service → ApplicationEventPublisher → WebSocketEventListener → STOMP topic (cross-domain) |
 
 ---
 
@@ -159,3 +162,4 @@ flowchart TD
 | ---- | ------ | ----------- |
 | 2026-02-08 | Domain structure created | [[03-01-PLAN]] |
 | 2026-03-12 | Added [[2. Areas/2.1 Startup & Business/Riven/2. System Design/domains/Workspaces & Users/Onboarding/Onboarding]] subdomain; `onboardingCompletedAt` field on User; new dependency on [[Catalog]] domain | [[2. Areas/2.1 Startup & Business/Riven/2. System Design/domains/Workspaces & Users/Onboarding/Onboarding]] |
+| 2026-03-14 | Added [[Real-time Events]] subdomain — WebSocket/STOMP infrastructure with JWT security interceptor, transactional event listener, workspace-scoped topic broadcasting | WebSocket Notifications |

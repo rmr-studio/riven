@@ -66,6 +66,13 @@ riven:
         initial-interval-seconds: 1
         backoff-coefficient: 2.0
         max-interval-seconds: 10
+  websocket:
+    endpoint: /ws
+    server-heartbeat-ms: 10000
+    client-heartbeat-ms: 10000
+    max-message-size-bytes: 65536
+    send-buffer-size-bytes: 524288
+    send-timeout-ms: 15000
   query:
     timeout-seconds: 10
 storage:
