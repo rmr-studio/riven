@@ -134,6 +134,38 @@ class IdentityInfrastructureIntegrationTest {
     private val sourceId    = UUID.fromString("10000000-0000-0000-0000-000000000001")
     private val targetId    = UUID.fromString("20000000-0000-0000-0000-000000000002")
 
+    @org.junit.jupiter.api.BeforeAll
+    fun installExtensionsAndConstraints() {
+        // Install pg_trgm extension (not applied by Hibernate create-drop, only by our schema DDL)
+        jdbcTemplate.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
+
+        // Apply canonical UUID ordering CHECK constraint (Hibernate create-drop does not run identity_constraints.sql)
+        jdbcTemplate.execute(
+            """ALTER TABLE match_suggestions
+               DROP CONSTRAINT IF EXISTS chk_match_suggestions_canonical_order"""
+        )
+        jdbcTemplate.execute(
+            """ALTER TABLE match_suggestions
+               ADD CONSTRAINT chk_match_suggestions_canonical_order
+               CHECK (source_entity_id < target_entity_id)"""
+        )
+
+        // Apply unique active pair index (partial — WHERE deleted = false)
+        jdbcTemplate.execute("DROP INDEX IF EXISTS uq_match_suggestions_pair")
+        jdbcTemplate.execute(
+            """CREATE UNIQUE INDEX IF NOT EXISTS uq_match_suggestions_pair
+               ON match_suggestions (workspace_id, source_entity_id, target_entity_id)
+               WHERE deleted = false"""
+        )
+
+        // Apply one-cluster-per-entity unique index
+        jdbcTemplate.execute("DROP INDEX IF EXISTS idx_identity_cluster_members_entity")
+        jdbcTemplate.execute(
+            """CREATE UNIQUE INDEX IF NOT EXISTS idx_identity_cluster_members_entity
+               ON identity_cluster_members (entity_id)"""
+        )
+    }
+
     @BeforeEach
     fun truncate() {
         // Use native SQL to bypass soft-delete filters and clean all rows between tests
