@@ -80,6 +80,9 @@ class WebSocketSecurityInterceptorTest {
         assertNotNull(result)
         verify(jwtDecoder).decode("valid-token")
         verify(tokenConverter).convert(jwt)
+
+        val accessor = StompHeaderAccessor.wrap(result!!)
+        assertEquals(authToken, accessor.user, "Session principal should be set to the authenticated token")
     }
 
     @Test
@@ -145,12 +148,13 @@ class WebSocketSecurityInterceptorTest {
     }
 
     @Test
-    fun `SUBSCRIBE to non-workspace topic is allowed without workspace check`() {
-        val auth = buildAuthToken(emptyList()) // No workspace roles
+    fun `SUBSCRIBE to non-workspace topic is rejected with default-deny`() {
+        val auth = buildAuthToken(emptyList())
         val message = buildSubscribeMessage("/topic/system/health", auth)
 
-        val result = interceptor.preSend(message, channel)
-        assertNotNull(result)
+        assertThrows<AccessDeniedException> {
+            interceptor.preSend(message, channel)
+        }
     }
 
     // ------ extractWorkspaceId Tests ------

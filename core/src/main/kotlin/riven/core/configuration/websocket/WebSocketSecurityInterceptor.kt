@@ -58,7 +58,7 @@ class WebSocketSecurityInterceptor(
             accessor.user = authentication
         } catch (e: JwtException) {
             logger.warn { "WebSocket CONNECT rejected — invalid JWT: ${e.message}" }
-            throw AuthenticationCredentialsNotFoundException("Invalid JWT token: ${e.message}")
+            throw AuthenticationCredentialsNotFoundException("Invalid JWT token: ${e.message}", e)
         }
     }
 
@@ -75,10 +75,11 @@ class WebSocketSecurityInterceptor(
         val destination = accessor.destination
             ?: throw IllegalArgumentException("SUBSCRIBE frame missing destination")
 
-        val workspaceId = extractWorkspaceId(destination) ?: return // Non-workspace topics are allowed
+        val workspaceId = extractWorkspaceId(destination)
+            ?: throw AccessDeniedException("Subscription to unknown destination '$destination' is not allowed")
 
         val hasAccess = auth.authorities.any { authority ->
-            authority.authority.startsWith("ROLE_$workspaceId")
+            authority.authority.startsWith("ROLE_${workspaceId}_")
         }
 
         if (!hasAccess) {
@@ -92,7 +93,7 @@ class WebSocketSecurityInterceptor(
         return if (authHeader.startsWith("Bearer ", ignoreCase = true)) {
             authHeader.substring(7)
         } else {
-            authHeader
+            null
         }
     }
 

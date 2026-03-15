@@ -31,6 +31,9 @@ class WebSocketConfig(
     }
 
     override fun configureWebSocketTransport(registration: WebSocketTransportRegistration) {
+        require(wsProperties.sendTimeoutMs in 0..Int.MAX_VALUE) {
+            "riven.websocket.send-timeout-ms (${wsProperties.sendTimeoutMs}) must be between 0 and ${Int.MAX_VALUE}"
+        }
         registration
             .setMessageSizeLimit(wsProperties.maxMessageSizeBytes)
             .setSendBufferSizeLimit(wsProperties.sendBufferSizeBytes)

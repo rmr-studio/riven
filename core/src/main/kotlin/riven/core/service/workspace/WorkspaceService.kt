@@ -1,6 +1,7 @@
 package riven.core.service.workspace
 
 import io.github.oshai.kotlinlogging.KLogger
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
@@ -9,22 +10,21 @@ import org.springframework.web.multipart.MultipartFile
 import riven.core.entity.workspace.WorkspaceEntity
 import riven.core.entity.workspace.WorkspaceMemberEntity
 import riven.core.enums.core.ApplicationEntityType
+import riven.core.enums.storage.StorageDomain
 import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.exceptions.NotFoundException
+import riven.core.models.analytics.WorkspaceCreatedEvent
+import riven.core.models.analytics.WorkspaceUpdatedEvent
+import riven.core.models.common.markDeleted
 import riven.core.models.request.workspace.SaveWorkspaceRequest
 import riven.core.models.workspace.Workspace
 import riven.core.models.workspace.WorkspaceMember
 import riven.core.repository.workspace.WorkspaceMemberRepository
 import riven.core.repository.workspace.WorkspaceRepository
-import org.springframework.context.ApplicationEventPublisher
 import riven.core.enums.util.OperationType
-import riven.core.models.analytics.WorkspaceCreatedEvent
-import riven.core.models.analytics.WorkspaceUpdatedEvent
 import riven.core.models.websocket.WorkspaceChangeEvent
-import riven.core.models.common.markDeleted
 import riven.core.service.activity.ActivityService
 import riven.core.service.activity.log
-import riven.core.enums.storage.StorageDomain
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.storage.StorageService
 import riven.core.service.user.UserService
@@ -84,7 +84,7 @@ class WorkspaceService(
     }
 
     @Transactional
-    private fun saveWorkspaceTransactional(request: SaveWorkspaceRequest): Pair<Workspace, WorkspaceEntity> {
+    fun saveWorkspaceTransactional(request: SaveWorkspaceRequest): Pair<Workspace, WorkspaceEntity> {
         val userId = authTokenService.getUserId()
         val currency = getCurrency(request.defaultCurrency)
         val isUpdate = request.id != null

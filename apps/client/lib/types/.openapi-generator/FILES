@@ -1,6 +1,7 @@
 apis/BlockApi.ts
 apis/EntityApi.ts
 apis/KnowledgeApi.ts
+apis/OnboardingApi.ts
 apis/StorageApi.ts
 apis/TemplatesApi.ts
 apis/UserApi.ts
@@ -52,9 +53,17 @@ docs/BulkSaveSemanticMetadataRequest.md
 docs/BulkUpdateErrorHandling.md
 docs/BundleDetail.md
 docs/BundleInstallationResponse.md
+docs/BundlePreview.md
+docs/BundleTemplatePreview.md
+docs/CatalogEntityTypeModel.md
+docs/CatalogRelationshipModel.md
+docs/CatalogRelationshipTargetRuleModel.md
+docs/CatalogSemanticMetadataModel.md
 docs/ColumnConfiguration.md
 docs/ColumnOptions.md
 docs/ColumnOverride.md
+docs/CompleteOnboardingRequest.md
+docs/CompleteOnboardingResponse.md
 docs/ComponentType.md
 docs/Computed.md
 docs/Condition.md
@@ -118,6 +127,7 @@ docs/IconColour.md
 docs/IconType.md
 docs/InstallBundleRequest.md
 docs/InstallTemplateRequest.md
+docs/InviteResult.md
 docs/IsRelatedTo.md
 docs/KnowledgeApi.md
 docs/LayoutGrid.md
@@ -132,6 +142,10 @@ docs/MoveBlockOperation.md
 docs/Node.md
 docs/NodeType.md
 docs/NotExists.md
+docs/OnboardingApi.md
+docs/OnboardingInvite.md
+docs/OnboardingProfile.md
+docs/OnboardingWorkspace.md
 docs/Op.md
 docs/Operand.md
 docs/OperationType.md
@@ -213,6 +227,7 @@ docs/TargetEquals.md
 docs/TargetMatches.md
 docs/TargetTypeMatches.md
 docs/Template.md
+docs/TemplateInstallResult.md
 docs/TemplateInstallationResponse.md
 docs/TemplatesApi.md
 docs/ThemeTokens.md
@@ -330,9 +345,17 @@ models/BulkSaveSemanticMetadataRequest.ts
 models/BulkUpdateErrorHandling.ts
 models/BundleDetail.ts
 models/BundleInstallationResponse.ts
+models/BundlePreview.ts
+models/BundleTemplatePreview.ts
+models/CatalogEntityTypeModel.ts
+models/CatalogRelationshipModel.ts
+models/CatalogRelationshipTargetRuleModel.ts
+models/CatalogSemanticMetadataModel.ts
 models/ColumnConfiguration.ts
 models/ColumnOptions.ts
 models/ColumnOverride.ts
+models/CompleteOnboardingRequest.ts
+models/CompleteOnboardingResponse.ts
 models/ComponentType.ts
 models/Computed.ts
 models/Condition.ts
@@ -395,6 +418,7 @@ models/IconColour.ts
 models/IconType.ts
 models/InstallBundleRequest.ts
 models/InstallTemplateRequest.ts
+models/InviteResult.ts
 models/IsRelatedTo.ts
 models/LayoutGrid.ts
 models/LayoutGridItem.ts
@@ -408,6 +432,9 @@ models/MoveBlockOperation.ts
 models/Node.ts
 models/NodeType.ts
 models/NotExists.ts
+models/OnboardingInvite.ts
+models/OnboardingProfile.ts
+models/OnboardingWorkspace.ts
 models/Op.ts
 models/Operand.ts
 models/OperationType.ts
@@ -488,6 +515,7 @@ models/TargetEquals.ts
 models/TargetMatches.ts
 models/TargetTypeMatches.ts
 models/Template.ts
+models/TemplateInstallResult.ts
 models/TemplateInstallationResponse.ts
 models/ThemeTokens.ts
 models/TreeLayout.ts
