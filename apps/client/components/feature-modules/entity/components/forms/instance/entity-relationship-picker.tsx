@@ -20,9 +20,9 @@ import { cn } from '@riven/utils';
 import { Check, ChevronDown, Minus, X } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { FC, useEffect, useMemo, useState } from 'react';
-import { useEntityTypes } from '../../../hooks/query/type/use-entity-types';
-import { useEntitiesFromManyTypes } from '../../../hooks/query/use-entities';
-import { getConstrainedEntities } from '../../../util/relationship-constraint.util';
+import { useEntityTypes } from '@/components/feature-modules/entity/hooks/query/type/use-entity-types';
+import { useEntitiesFromManyTypes } from '@/components/feature-modules/entity/hooks/query/use-entities';
+import { getConstrainedEntities } from '@/components/feature-modules/entity/util/relationship-constraint.util';
 
 export interface EntityRelationshipPickerProps {
   relationship: RelationshipDefinition;
@@ -285,6 +285,7 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
                         </div>
                         <button
                           type="button"
+                          aria-label={`Remove ${link.label}`}
                           onClick={() => handleRemove(link.id)}
                           className="flex size-5 shrink-0 items-center justify-center rounded opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100"
                         >
@@ -303,7 +304,12 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} className="flex items-center gap-2 px-2 py-1">
                     <Skeleton className="size-4 rounded" />
-                    <Skeleton className="h-3.5 rounded" style={{ width: `${50 + (i * 17) % 40}%` }} />
+                    <Skeleton
+                      className={cn(
+                        'h-3.5 rounded',
+                        ['w-1/2', 'w-2/3', 'w-3/5', 'w-1/3', 'w-3/4'][i % 5],
+                      )}
+                    />
                   </div>
                 ))}
               </div>

@@ -201,8 +201,8 @@ describe('getConstrainedEntities', () => {
     });
   });
 
-  it('does not constrain when no currentSourceEntityId provided and link id matches undefined', () => {
-    // Without currentSourceEntityId, linkedId !== undefined is always true when linkedId is set
+  it('constrains when no currentSourceEntityId provided and entity has existing links', () => {
+    // Without currentSourceEntityId, any existing link is treated as a constraint
     const relationship = makeRelationship(EntityRelationshipCardinality.OneToMany);
     const entities = [
       makeEntity('emp-1', 'rel-1', [

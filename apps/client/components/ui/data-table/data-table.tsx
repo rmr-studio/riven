@@ -163,8 +163,12 @@ function DragOverlayRow<TData>({
 // ============================================================================
 
 function createGlobalFilterFn<TData>(searchableColumns: string[]) {
-  const getNestedValue = (obj: any, path: string): any => {
-    return path.split('.').reduce((current, prop) => current?.[prop], obj);
+  const getNestedValue = (obj: unknown, path: string): unknown => {
+    return path.split('.').reduce<unknown>(
+      (current, prop) =>
+        current != null && typeof current === 'object' ? (current as Record<string, unknown>)[prop] : undefined,
+      obj,
+    );
   };
 
   return (row: Row<TData>, _columnId: string, filterValue: string): boolean => {
@@ -173,7 +177,7 @@ function createGlobalFilterFn<TData>(searchableColumns: string[]) {
     const searchLower = filterValue.toLowerCase();
 
     return searchableColumns.some((colId) => {
-      let value: any;
+      let value: unknown;
 
       if (colId.includes('.')) {
         value = getNestedValue(row.original, colId);
@@ -184,7 +188,7 @@ function createGlobalFilterFn<TData>(searchableColumns: string[]) {
       if (value == null) return false;
 
       if (typeof value === 'object' && !Array.isArray(value)) {
-        return Object.values(value).some(
+        return Object.values(value as Record<string, unknown>).some(
           (v) => v != null && String(v).toLowerCase().includes(searchLower),
         );
       }

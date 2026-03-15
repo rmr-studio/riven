@@ -7,7 +7,7 @@ import { OptionalTooltip } from '@/components/ui/optional-tooltip';
 import { cn } from '@riven/utils';
 import { Check, CircleAlert, Plus, X } from 'lucide-react';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
-import { FormWidgetProps } from '@/components/feature-modules/blocks/components/forms/form-widget.types';
+import type { FormWidgetProps } from '@/components/feature-modules/blocks/components/forms/form-widget.types';
 
 export const MultiSelectWidget: FC<FormWidgetProps<string[]>> = ({
   value = [],

@@ -11,6 +11,7 @@ import {
   SaveEntityResponse,
 } from '@/lib/types/entity';
 import { useCallback } from 'react';
+import { toast } from 'sonner';
 import { useSaveEntityMutation } from '@/components/feature-modules/entity/hooks/mutation/instance/use-save-entity-mutation';
 import { buildEntityUpdatePayload } from '@/components/feature-modules/entity/util/entity-payload.util';
 import { EntityRow, isDraftRow } from '@/components/feature-modules/entity/components/tables/entity-table-utils';
@@ -20,7 +21,10 @@ export function useEntityInlineEdit(
   entityType: EntityType,
   entities: Entity[],
 ) {
-  const handleConflict = (_request: SaveEntityRequest, _response: SaveEntityResponse) => {};
+  const handleConflict = (_request: SaveEntityRequest, response: SaveEntityResponse) => {
+    const message = response.errors?.join(', ') ?? 'Edit conflict: this record was modified. Please refresh and try again.';
+    toast.error(message);
+  };
 
   const { mutateAsync: saveEntity } = useSaveEntityMutation(
     workspaceId,
@@ -53,7 +57,7 @@ export function useEntityInlineEdit(
       }
 
       if (relationshipDef) {
-        const relationship: EntityLink[] = newValue;
+        const relationship = newValue as EntityLink[];
         const relationshipEntry: EntityAttributeRelationPayloadReference = {
           type: EntityPropertyType.Relationship,
           relations: relationship.map((rel) => rel.id),
