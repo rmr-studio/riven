@@ -713,7 +713,7 @@ class TemplateInstallationService(
 
     /**
      * Records a template installation for idempotency tracking.
-     * Stores attribute key mappings so future operations can trace template provenance.
+     * Stores attribute key mappings for idempotent re-installation and key traceability.
      */
     private fun recordTemplateInstallation(
         workspaceId: UUID,
