@@ -5,7 +5,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Row, Table as TanStackTable } from '@tanstack/react-table';
 import { ReactNode, useMemo } from 'react';
 import { useDataTableStore } from '../data-table-provider';
-import type { ColumnResizingConfig, RowActionsConfig } from '../data-table.types';
+import type { ActionColumnConfig, ColumnResizingConfig, RowActionsConfig } from '../data-table.types';
 import { DraggableRow } from './draggable-row';
 
 interface DataTableBodyProps<TData> {
@@ -22,7 +22,7 @@ interface DataTableBodyProps<TData> {
   finalColumnsCount: number;
   enableInlineEdit?: boolean;
   focusedCell?: { rowId: string; columnId: string } | null;
-  alwaysShowActionHandles?: boolean;
+  actionColumnConfig?: ActionColumnConfig;
   /** Whether the header has an end-of-header content column (needs matching empty td) */
   hasEndOfHeaderContent?: boolean;
   /** Whether the header has a row actions column (needs matching td) */
@@ -43,7 +43,7 @@ export function DataTableBody<TData>({
   finalColumnsCount,
   enableInlineEdit,
   focusedCell,
-  alwaysShowActionHandles = false,
+  actionColumnConfig,
   hasEndOfHeaderContent = false,
   hasRowActions = false,
 }: DataTableBodyProps<TData>) {
@@ -104,7 +104,7 @@ export function DataTableBody<TData>({
             isSelectionEnabled={isSelectionEnabled}
             enableInlineEdit={enableInlineEdit}
             focusedCell={focusedCell}
-            alwaysShowActionHandles={alwaysShowActionHandles}
+            actionColumnConfig={actionColumnConfig}
             hasEndOfHeaderContent={hasEndOfHeaderContent}
           />
         );
