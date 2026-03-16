@@ -5,12 +5,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
+import riven.core.configuration.properties.QueryConfigurationProperties
 import riven.core.exceptions.NotFoundException
 import riven.core.exceptions.query.InvalidAttributeReferenceException
 import riven.core.exceptions.query.QueryExecutionException
@@ -24,6 +24,7 @@ import riven.core.models.entity.query.filter.QueryFilter
 import riven.core.models.entity.query.pagination.QueryPagination
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
+import riven.core.service.entity.EntityAttributeService
 import riven.core.service.entity.type.EntityTypeRelationshipService
 import java.util.*
 import javax.sql.DataSource
@@ -51,17 +52,18 @@ class EntityQueryService(
     private val assembler: EntityQueryAssembler,
     private val validator: QueryFilterValidator,
     private val entityTypeRelationshipService: EntityTypeRelationshipService,
+    private val entityAttributeService: EntityAttributeService,
     dataSource: DataSource,
-    @Value("\${riven.query.timeout-seconds}") queryTimeoutSeconds: Long,
+    queryProperties: QueryConfigurationProperties,
 ) {
 
     private val jdbcTemplate: NamedParameterJdbcTemplate
 
     init {
         val innerTemplate = JdbcTemplate(dataSource)
-        innerTemplate.queryTimeout = queryTimeoutSeconds.toInt()
+        innerTemplate.queryTimeout = queryProperties.timeoutSeconds.toInt()
         jdbcTemplate = NamedParameterJdbcTemplate(innerTemplate)
-        logger.debug { "EntityQueryService initialized with query timeout: ${queryTimeoutSeconds}s" }
+        logger.debug { "EntityQueryService initialized with query timeout: ${queryProperties.timeoutSeconds}s" }
     }
 
     /**
@@ -81,11 +83,13 @@ class EntityQueryService(
         workspaceId: UUID,
         pagination: QueryPagination = QueryPagination(),
         projection: QueryProjection? = null,
+        includeCount: Boolean = true,
     ): EntityQueryResult {
         logger.debug {
             "Executing entity query for entity type ${query.entityTypeId} " +
                     "with filter: ${query.filter != null}, " +
                     "pagination: limit=${pagination.limit} offset=${pagination.offset}, " +
+                    "includeCount: $includeCount, " +
                     "maxDepth: ${query.maxDepth}"
         }
 
@@ -112,24 +116,41 @@ class EntityQueryService(
         // Step 3: Assemble SQL
         val relationshipDirections = resolvedDefinitions.mapValues { it.value.second }
         val paramGen = ParameterNameGenerator()
-        val assembled = assembler.assemble(entityTypeId, workspaceId, query.filter, pagination, paramGen, relationshipDirections)
+        val assembled = assembler.assemble(entityTypeId, workspaceId, query.filter, pagination, paramGen, relationshipDirections, includeCount)
 
         logger.debug {
-            "Assembled SQL with ${assembled.dataQuery.parameters.size} data parameters " +
-                    "and ${assembled.countQuery.parameters.size} count parameters"
+            "Assembled SQL with ${assembled.dataQuery.parameters.size} data parameters" +
+                    if (assembled.countQuery != null) " and ${assembled.countQuery.parameters.size} count parameters" else " (count skipped)"
         }
 
-        // Step 4: Execute Queries in Parallel
-        val (entityIds, totalCount) = coroutineScope {
-            val dataDeferred = async(Dispatchers.IO) { executeDataQuery(assembled.dataQuery) }
-            val countDeferred = async(Dispatchers.IO) { executeCountQuery(assembled.countQuery) }
-            Pair(dataDeferred.await(), countDeferred.await())
+        // Step 4: Execute Queries
+        val (entityIds, totalCount) = if (includeCount) {
+            coroutineScope {
+                val dataDeferred = async(Dispatchers.IO) { executeDataQuery(assembled.dataQuery) }
+                val countDeferred = async(Dispatchers.IO) { executeCountQuery(assembled.countQuery!!) }
+                Pair(dataDeferred.await(), countDeferred.await())
+            }
+        } else {
+            val ids = withContext(Dispatchers.IO) { executeDataQuery(assembled.dataQuery) }
+            Pair(ids, null)
         }
 
         logger.debug { "Query returned ${entityIds.size} entity IDs with totalCount=$totalCount" }
 
-        // Step 5: Load Entities by IDs
-        if (entityIds.isEmpty()) {
+        // Step 5: Determine hasNextPage and trim results
+        val hasNextPage = if (includeCount) {
+            (pagination.offset + pagination.limit) < (totalCount ?: 0L)
+        } else {
+            entityIds.size > pagination.limit
+        }
+        val trimmedIds = if (!includeCount && entityIds.size > pagination.limit) {
+            entityIds.take(pagination.limit)
+        } else {
+            entityIds
+        }
+
+        // Step 6: Load Entities by IDs
+        if (trimmedIds.isEmpty()) {
             return EntityQueryResult(
                 entities = emptyList(),
                 totalCount = totalCount,
@@ -139,18 +160,25 @@ class EntityQueryService(
         }
 
         val entityEntities = withContext(Dispatchers.IO) {
-            entityRepository.findByIdIn(entityIds)
+            entityRepository.findByIdIn(trimmedIds)
         }
 
-        // Convert to domain models (no relationships loaded in Phase 5)
-        val entities = entityEntities.map { it.toModel(audit = true, relationships = emptyMap()) }
+        // Load attributes and convert to domain models
+        val allAttributes = withContext(Dispatchers.IO) {
+            entityAttributeService.getAttributesForEntities(trimmedIds)
+        }
+        val entities = entityEntities.map {
+            val eid = requireNotNull(it.id)
+            it.toModel(
+                audit = true,
+                relationships = emptyMap(),
+                attributes = allAttributes[eid] ?: emptyMap(),
+            )
+        }
 
-        // Step 6: Re-sort to match original SQL order
-        val idToIndex = entityIds.withIndex().associate { it.value to it.index }
+        // Step 7: Re-sort to match original SQL order
+        val idToIndex = trimmedIds.withIndex().associate { it.value to it.index }
         val sortedEntities = entities.sortedBy { idToIndex[it.id] ?: Int.MAX_VALUE }
-
-        // Step 7: Build Result
-        val hasNextPage = (pagination.offset + pagination.limit) < totalCount
 
         return EntityQueryResult(
             entities = sortedEntities,

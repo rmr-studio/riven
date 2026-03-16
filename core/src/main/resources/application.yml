@@ -1,4 +1,8 @@
 spring:
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 10MB
   application:
     name: core
   datasource:
@@ -28,6 +32,8 @@ riven:
     jwt-issuer: ${SUPABASE_URL}
     allowed-origins:
       - ${ORIGIN_API_URL}
+      - http://localhost:3000
+      - http://localhost:3002
   include-stack-trace: true
   supabase-url: ${SUPABASE_URL}
   supabase-key: ${SUPABASE_KEY}
@@ -35,7 +41,6 @@ riven:
   nango:
     secret-key: ${NANGO_SECRET_KEY:}
     base-url: ${NANGO_BASE_URL:https://api.nango.dev}
-    webhook-secret: ${NANGO_WEBHOOK_SECRET:}
   posthog:
     enabled: ${POSTHOG_ENABLED:false}
     api-key: ${POSTHOG_API_KEY:}
@@ -43,25 +48,33 @@ riven:
   workflow:
     engine:
       target: ${TEMPORAL_SERVER_ADDRESS}
-    retry:
-      default:
-        max-attempts: 3
-        initial-interval-seconds: 1
-        backoff-coefficient: 2.0
-        max-interval-seconds: 30
-      http-action:
-        max-attempts: 3
-        initial-interval-seconds: 2
-        backoff-coefficient: 2.0
-        max-interval-seconds: 60
-        non-retryable-status-codes: [ 400, 401, 403, 404, 422 ]
-      crud-action:
-        max-attempts: 2
-        initial-interval-seconds: 1
-        backoff-coefficient: 2.0
-        max-interval-seconds: 10
+  websocket:
+    endpoint: /ws
+    server-heartbeat-ms: 10000
+    client-heartbeat-ms: 10000
+    max-message-size-bytes: 65536
+    send-buffer-size-bytes: 524288
+    send-timeout-ms: 15000
   query:
     timeout-seconds: 10
+storage:
+  provider: local
+  local:
+    base-path: ./storage
+  signed-url:
+    secret: ${STORAGE_SIGNED_URL_SECRET}
+    default-expiry-seconds: 3600
+    max-expiry-seconds: 86400
+  presigned-upload:
+    expiry-seconds: 900
+  supabase:
+    bucket: ${STORAGE_SUPABASE_BUCKET:riven-storage}
+  s3:
+    bucket: ${STORAGE_S3_BUCKET:riven-storage}
+    region: ${STORAGE_S3_REGION:us-east-1}
+    access-key-id: ${STORAGE_S3_ACCESS_KEY_ID:}
+    secret-access-key: ${STORAGE_S3_SECRET_ACCESS_KEY:}
+    endpoint-url: ${STORAGE_S3_ENDPOINT_URL:}
 springdoc:
   api-docs:
     path: /docs/v3/api-docs

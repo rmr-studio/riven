@@ -2,8 +2,6 @@
 -- USERS TABLE
 -- =====================================================
 
-DROP TABLE IF EXISTS "users" CASCADE;
-
 CREATE TABLE IF NOT EXISTS "users"
 (
     "id"                   UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
@@ -19,6 +17,8 @@ CREATE TABLE IF NOT EXISTS "users"
     "updated_by"           UUID,
 
     "deleted"              BOOLEAN          NOT NULL DEFAULT FALSE,
-    "deleted_at"           TIMESTAMP WITH TIME ZONE  DEFAULT NULL
+    "deleted_at"           TIMESTAMP WITH TIME ZONE  DEFAULT NULL,
+
+    "onboarding_completed_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL
 );
 

@@ -12,15 +12,11 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useMediaQuery } from '@/hooks/use-media-query';
-import { ClassNameProps } from '@/lib/interfaces/interface';
-import { cn } from '@/lib/util/utils';
+import { useMediaQuery } from '@riven/hooks';
+import { Button } from '@riven/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@riven/ui/dropdown-menu';
+import type { ClassNameProps } from '@riven/utils';
+import { cn } from '@riven/utils';
 import Link from 'next/link';
 import {
   Breadcrumb,
@@ -31,7 +27,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from './breadcrumb';
-import { Button } from './button';
 
 export interface BreadCrumbTrail {
   label: string;

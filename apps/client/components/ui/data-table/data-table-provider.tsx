@@ -53,7 +53,7 @@ export interface DataTableProviderProps<TData> extends CreateDataTableStoreOptio
   /** Callback when selection changes */
   onSelectionChange?: (selectedRows: TData[]) => void;
   /** Callback when a cell is edited (returns true on success) */
-  onCellEdit?: (row: TData, columnId: string, newValue: any, oldValue: any) => Promise<boolean>;
+  onCellEdit?: (row: TData, columnId: string, newValue: unknown, oldValue: unknown) => Promise<boolean>;
 }
 
 export function DataTableProvider<TData>({
@@ -61,6 +61,7 @@ export function DataTableProvider<TData>({
   initialData,
   initialColumnSizing,
   initialColumnOrder,
+  initialColumnVisibility,
   onReorder,
   onColumnWidthsChange,
   onColumnOrderChange,
@@ -78,6 +79,7 @@ export function DataTableProvider<TData>({
       initialData,
       initialColumnSizing,
       initialColumnOrder,
+      initialColumnVisibility,
       getRowId,
       onCellEdit,
     });
@@ -301,13 +303,11 @@ export function useSelection<TData>() {
     TData,
     {
       rowSelection: DataTableStore<TData>['rowSelection'];
-      hoveredRowId: string | null;
       selectedCount: number;
       hasSelections: boolean;
     }
   >((state) => ({
     rowSelection: state.rowSelection,
-    hoveredRowId: state.hoveredRowId,
     selectedCount: state.getSelectedCount(),
     hasSelections: state.hasSelections(),
   }));

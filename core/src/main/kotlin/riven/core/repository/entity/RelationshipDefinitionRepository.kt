@@ -26,14 +26,32 @@ interface RelationshipDefinitionRepository : JpaRepository<RelationshipDefinitio
     """)
     fun findByWorkspaceIdAndSourceEntityTypeIdIn(workspaceId: UUID, entityTypeIds: List<UUID>): List<RelationshipDefinitionEntity>
 
+    fun findByWorkspaceIdAndSourceEntityTypeIdAndName(
+        workspaceId: UUID,
+        sourceEntityTypeId: UUID,
+        name: String
+    ): Optional<RelationshipDefinitionEntity>
+
+    @Query(
+        "SELECT * FROM relationship_definitions WHERE workspace_id = :workspaceId AND source_entity_type_id = :sourceEntityTypeId AND name = :name AND deleted = true",
+        nativeQuery = true
+    )
+    fun findSoftDeletedByWorkspaceIdAndSourceEntityTypeIdAndName(
+        workspaceId: UUID,
+        sourceEntityTypeId: UUID,
+        name: String
+    ): RelationshipDefinitionEntity?
+
     @Query("""
         SELECT rd, rtr FROM RelationshipDefinitionEntity rd
         LEFT JOIN RelationshipTargetRuleEntity rtr ON rtr.relationshipDefinitionId = rd.id
-        WHERE (rd.workspaceId = :workspaceId AND rd.sourceEntityTypeId IN :entityTypeIds)
-        OR rd.id IN (
-            SELECT rtr2.relationshipDefinitionId FROM RelationshipTargetRuleEntity rtr2
-            WHERE rtr2.targetEntityTypeId IN :entityTypeIds
-            AND rtr2.inverseVisible = true
+        WHERE rd.workspaceId = :workspaceId
+        AND (
+            rd.sourceEntityTypeId IN :entityTypeIds
+            OR rd.id IN (
+                SELECT rtr2.relationshipDefinitionId FROM RelationshipTargetRuleEntity rtr2
+                WHERE rtr2.targetEntityTypeId IN :entityTypeIds
+            )
         )
     """)
     fun findDefinitionsWithRulesForEntityTypes(workspaceId: UUID, entityTypeIds: List<UUID>): List<Array<Any?>>

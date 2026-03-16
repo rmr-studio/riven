@@ -22,19 +22,25 @@ Multi-tenant workspace-scoped backend API for a configurable data platform with 
 - **Security enforcement:** Workspace access control via `@PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")` and `@PostAuthorize` on **service methods**, not controllers. Controllers delegate to services and return `ResponseEntity`.
 - **API versioning:** All routes prefixed with `/api/v1/`. Tagged with `@Tag(name = "domain")` for OpenAPI grouping.
 - **Soft delete:** All major entities implement `SoftDeletable` (`deleted` flag + `deletedAt` timestamp). Never hard-delete unless explicitly required.
+- **Entity base class rules — user vs system entities:**
+  - **User-facing entities** (workspace-scoped, user-created data): Extend `AuditableEntity` and implement `SoftDeletable`. These are entities like blocks, entity types, workflows, etc. that users create and manage.
+  - **System-managed entities** (catalog entries, manifest data, integration definitions): Do NOT extend `AuditableEntity` or implement `SoftDeletable`. These are seeded/managed by the system, not by users. They use their own lifecycle tracking (e.g. `stale` flags) rather than soft-delete.
 
 ## Coding Standards
 
 - **Constructor injection only.** All Spring beans use constructor injection. KLogger is injected as a prototype-scoped bean via `LoggerConfig` — inject it as a constructor parameter, not a companion object.
-- **Data classes** for JPA entities, domain models, DTOs, and request/response objects. Entities extend `AuditableEntity` and implement `SoftDeletable`.
+- **Data classes** for JPA entities, domain models, DTOs, and request/response objects. User-facing entities extend `AuditableEntity` and implement `SoftDeletable` (see entity base class rules in Architecture Rules). System-managed entities do not.
 - **Entity-to-model mapping** via `toModel()` methods defined on the JPA entity class. Do not use MapStruct or separate mapper classes.
 - **Repository lookups:** Use `ServiceUtil.findOrThrow { repository.findById(id) }` for single-entity fetches. This throws `NotFoundException` on miss.
 - **Preconditions:** Use `require()` and `requireNotNull()` for argument validation in services. These produce `IllegalArgumentException`, caught by the global `@ControllerAdvice`.
 - **Error handling:** Throw domain-specific exceptions (`NotFoundException`, `ConflictException`, `SchemaValidationException`, `UniqueConstraintViolationException`, `WorkflowValidationException`). These are mapped to HTTP status codes by `ExceptionHandler` in `riven.core.exceptions`. Do not catch-and-swallow — let exceptions propagate to the advice.
 - **Swagger annotations:** Add `@Operation`, `@ApiResponses` to all controller endpoints. Use `@Tag(name = "domain")` at class level.
 - **UUID everywhere:** All primary keys are `UUID` with `@GeneratedValue(strategy = GenerationType.UUID)`. Use `UUID` for path variables and request fields.
+- **Never use `!!` for nullable ID assertions.** In `toModel()` methods and anywhere else a nullable `id` must be non-null, always use `requireNotNull(id) { "descriptive message" }` instead of `id!!`. The `!!` operator produces an unhelpful `NullPointerException`; `requireNotNull` produces a clear `IllegalArgumentException` with context. This applies to all entities, not just new ones.
 - **JSONB columns:** Use Hypersistence `@Type(JsonBinaryType::class)` with `columnDefinition = "jsonb"` for dynamic payload columns.
+- **Enums over string literals:** Always use enums for fixed sets of values (types, statuses, categories). Never use raw strings in `when` branches, model fields, or API contracts when the set of valid values is known and finite. Use `@JsonProperty` on enum values for JSON serialization. This ensures compile-time exhaustiveness checks, IDE discoverability, and catches invalid values at deserialization rather than deep in business logic.
 - **Naming:** Services are `{Domain}Service`, repositories are `{Domain}Repository`, controllers are `{Domain}Controller`, entities are `{Domain}Entity`. Enums live in `enums.{domain}`.
+- **Configuration properties:** Always access application configuration via `@ConfigurationProperties` data classes in `configuration/properties/` (or the relevant `configuration/{domain}/` package). Do not use `@Value` annotations to inject individual properties — use a typed configuration bean instead. This ensures type safety, IDE discoverability, and centralised defaults. Existing properties classes follow the pattern: `@ConfigurationProperties(prefix = "riven.{domain}")` on a data class with default values.
 
 ## Service and Function Design
 
@@ -85,8 +91,8 @@ Multi-tenant workspace-scoped backend API for a configurable data platform with 
 
 - **Frameworks:** JUnit 5, Mockito via `mockito-kotlin` (prefer `whenever`/`verify` over `Mockito.when`/`Mockito.verify`).
 - **Unit tests:** `@SpringBootTest` with targeted `classes = [...]` to load only the service under test + its security config. Mock all dependencies with `@MockitoBean`.
-- **Security in tests:** Use the custom `@WithUserPersona` annotation (in `service.util`) to set up JWT security context with workspace roles.
-- **Test data:** Use factory classes in `src/test/kotlin/riven/core/service/util/factory/` — extend these for new domains.
+- **Security in tests:** Use the custom `@WithUserPersona` annotation (in `service.util`) to set up JWT security context with workspace roles. This is **mandatory** for any test that touches JWT-authenticated code paths — it sets up a real `JwtAuthenticationToken` with a signed JWT in the `SecurityContext`, which both `@PreAuthorize` (authority checks) and `AuthTokenService.getUserId()` (principal extraction) depend on. Apply it at **class level** for a test-wide persona, or at **method level** to override for specific test cases. **Important:** JUnit 5 `@Nested` inner classes do **not** inherit the outer class's `@WithUserPersona` — you must re-apply it on the nested class or on individual methods within it if those tests call code that reads the JWT principal (e.g. `authTokenService.getUserId()`).
+- **Test data:** Use factory classes in `src/test/kotlin/riven/core/service/util/factory/` — extend these for new domains. **Never construct JPA entities inline in tests** — always use or create a factory method. If a factory doesn't exist for the entity, add one. This applies to all entity construction in test files, including mock return values and argument captors.
 - **Integration tests:** Use `@ActiveProfiles("integration")` with Testcontainers PostgreSQL. Base classes provide shared container and `@DynamicPropertySource` wiring. Exclude security and Temporal auto-configuration.
 - **Unit test profile:** `application-test.yml` uses H2 in PostgreSQL-compat mode with `ddl-auto: create-drop`.
 - **Run tests:** `./gradlew test`
@@ -95,7 +101,7 @@ Multi-tenant workspace-scoped backend API for a configurable data platform with 
 ## Database and Persistence
 
 - **ORM:** Spring Data JPA with Hibernate. `ddl-auto: none` in production — schema is managed externally.
-- **Schema management:** Raw SQL files in `db/schema/` organized by numbered directories (`00_extensions/` through `09_grants/`). No Flyway or Liquibase.
+- **Schema management:** Raw SQL files in `db/schema/` organized by numbered directories (`00_extensions/` through `09_grants/`). No Flyway or Liquibase. **Schema files are declarative, not incremental** — there are no migration scripts. Each SQL file represents the current desired state of its object. When a table definition changes (e.g. renaming or replacing a column), edit the original table file directly instead of creating a separate migration file. Migration tooling (Flyway/Liquibase) does not exist yet, so standalone migration scripts will not be executed and must not be created.
 - **Entity conventions:** Data classes annotated with `@Entity`, `@Table(name = "snake_case")`. Extend `AuditableEntity` for audit columns. Implement `SoftDeletable` for soft-delete support. Use `@Column(name = "snake_case")`.
 - **Soft-delete filtering is automatic:** All entities extending `AuditableSoftDeletableEntity` have `@SQLRestriction("deleted = false")`, which makes Hibernate auto-append `AND deleted = false` to all JPQL, derived, and Criteria queries. You do **not** need to add `AND deleted = false` to repository queries manually — soft-deleted rows are invisible by default. Only native SQL queries bypass this restriction.
 - **Schema changes:** Add new SQL files to the appropriate `db/schema/` subdirectory. Never modify an existing table SQL file without understanding the execution order documented in `db/schema/README.md`.
@@ -148,12 +154,17 @@ Multi-tenant workspace-scoped backend API for a configurable data platform with 
 
 - If you encounter ANY correction from the user. Point out the mistake made, and suggest to the user if they would like to add this to the relevant CLAUDE.md that this mistake should never be repeated again. Write it as a result to prevent yourself from making the same mistake again.
 
-### 4.Verification Before Marking as complete
+### 4. Verification Before Marking as complete
 
 - Never mark a task complete without proving it works
-- Run ./gradlew test and confirm compilation with ./gradlew build before marking any task done.
-- If you are testing a singular service for a minor change. You can run an isolated version of the gradle testing suite to only run tests on that domain, or serivce class. But for any task that is not menial. You must perform the afforementioned.
--
+- Run ./gradlew test and confirm compilation with ./gradlew build before marking any task done. This is the final verification gate and is never optional.
+- During iteration, you may run isolated tests (e.g. a single service class or domain) for faster feedback. However, isolated tests do not replace the full verification gate above — always run the full suite before marking done.
+
+### 5. Bug Fix Testing
+
+- Every bug reported by the user that results in a code fix **must** have an accompanying regression test at the appropriate level (unit, integration, or security) that confirms the fixed behaviour.
+- The test should include a KDoc comment with: a brief description of the original bug, a concise overview of the fix, and what the test is verifying.
+- The test must fail without the fix and pass with it — it should directly exercise the code path that was broken.
 
 ## Known Inconsistencies
 

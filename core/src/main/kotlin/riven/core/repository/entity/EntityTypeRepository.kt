@@ -4,7 +4,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import riven.core.entity.entity.EntityTypeEntity
-import riven.core.projection.entity.SemanticGroupProjection
 import java.util.*
 
 /**
@@ -30,8 +29,36 @@ interface EntityTypeRepository : JpaRepository<EntityTypeEntity, UUID> {
     ): List<EntityTypeEntity>
 
     /**
-     * Projection query to fetch only (id, semanticGroup) pairs without loading full entity rows.
+     * Find soft-deleted entity types by workspace and keys.
+     * Uses native query to bypass @SQLRestriction("deleted = false").
      */
-    @Query("SELECT e.id AS id, e.semanticGroup AS semanticGroup FROM EntityTypeEntity e WHERE e.id IN :ids")
-    fun findSemanticGroupsByIds(@Param("ids") ids: Collection<UUID>): List<SemanticGroupProjection>
+    @Query(
+        "SELECT * FROM entity_types WHERE workspace_id = :workspaceId AND key IN (:keys) AND deleted = true",
+        nativeQuery = true
+    )
+    fun findSoftDeletedByWorkspaceIdAndKeyIn(
+        @Param("workspaceId") workspaceId: UUID,
+        @Param("keys") keys: List<String>
+    ): List<EntityTypeEntity>
+
+    @Query("SELECT e FROM EntityTypeEntity e WHERE e.sourceIntegrationId = :integrationId AND e.workspaceId = :workspaceId")
+    fun findBySourceIntegrationIdAndWorkspaceId(
+        @Param("integrationId") integrationId: UUID,
+        @Param("workspaceId") workspaceId: UUID
+    ): List<EntityTypeEntity>
+
+    @Query(
+        value = """
+            SELECT * FROM entity_types
+            WHERE source_integration_id = :integrationId
+              AND workspace_id = :workspaceId
+              AND deleted = true
+        """,
+        nativeQuery = true
+    )
+    fun findSoftDeletedBySourceIntegrationIdAndWorkspaceId(
+        @Param("integrationId") integrationId: UUID,
+        @Param("workspaceId") workspaceId: UUID
+    ): List<EntityTypeEntity>
+
 }

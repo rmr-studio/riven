@@ -12,7 +12,6 @@ data class RelationshipDefinition(
     val sourceEntityTypeId: UUID,
     val name: String,
     val icon: Icon,
-    val allowPolymorphic: Boolean,
     val cardinalityDefault: EntityRelationshipCardinality,
     val protected: Boolean,
     val systemType: SystemRelationshipType? = null,
@@ -21,4 +20,7 @@ data class RelationshipDefinition(
     val updatedAt: ZonedDateTime?,
     val createdBy: UUID?,
     val updatedBy: UUID?,
-)
+) {
+    /** Polymorphic relationships are only supported for system-managed definitions (e.g. CONNECTED_ENTITIES). */
+    val isPolymorphic: Boolean get() = systemType != null
+}

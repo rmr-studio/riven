@@ -18,9 +18,9 @@ interface IntegrationDefinitionRepository : JpaRepository<IntegrationDefinitionE
     fun findBySlug(slug: String): IntegrationDefinitionEntity?
 
     /**
-     * Find all active integrations.
+     * Find all active (non-stale) integrations.
      */
-    fun findByActiveTrue(): List<IntegrationDefinitionEntity>
+    fun findByStaleIsFalse(): List<IntegrationDefinitionEntity>
 
     /**
      * Find all integrations in a specific category.

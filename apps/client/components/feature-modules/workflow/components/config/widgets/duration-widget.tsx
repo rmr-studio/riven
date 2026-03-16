@@ -1,15 +1,15 @@
 "use client";
 
 import type { FC } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from '@riven/ui/input';
+import { Label } from '@riven/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@riven/ui/select';
 import type { ConfigWidgetProps } from "./config-widget.types";
 
 const DURATION_UNITS = {

@@ -2,12 +2,13 @@
 import { EntityPropertyType } from '../models/EntityPropertyType';
 import { SchemaUUID, SchemaType, DataType, Icon } from '../common';
 
-import type { EntityRelationshipCardinality, EntityRelationshipDefinition } from './models';
+import type { EntityRelationshipCardinality, RelationshipDefinition, RelationshipTargetRule } from './models';
+import type { SemanticAttributeClassification } from '../models/SemanticAttributeClassification';
 
 export interface EntityTypeDefinition {
   id: string;
   type: EntityPropertyType;
-  definition: EntityAttributeDefinition | EntityRelationshipDefinition;
+  definition: EntityAttributeDefinition | RelationshipDefinition;
 }
 
 export interface EntityAttributeDefinition {
@@ -27,18 +28,28 @@ export interface EntityTypeAttributeRow {
   additionalConstraints: string[];
   dataType?: DataType;
   unique?: boolean;
+  // Icon for this attribute or relationship
+  icon?: Icon;
   // Relationship-specific fields (optional for attributes)
-  cardinality?: EntityRelationshipCardinality;
-  entityTypeKeys?: string[];
+  cardinalityDefault?: EntityRelationshipCardinality;
   allowPolymorphic?: boolean;
-  bidirectional?: boolean;
+  targetRules?: RelationshipTargetRule[];
+  // Resolved target entity type names (for relationships)
+  targetEntityTypeNames?: string[];
+  // Target-side relationship metadata
+  isTargetSide?: boolean;
+  sourceEntityTypeId?: string;
+  sourceEntityTypeKey?: string;
+  // Semantic metadata fields (optional, populated from SemanticMetadataBundle)
+  classification?: SemanticAttributeClassification;
+  definition?: string;
 }
 
 export interface EntityRelationshipCandidate {
   icon: Icon;
   name: string;
   key: string;
-  existingRelationship: EntityRelationshipDefinition;
+  existingRelationship: RelationshipDefinition;
 }
 
 export enum RelationshipLimit {
@@ -51,7 +62,7 @@ export enum RelationshipLimit {
  * Used for selecting related entities in draft rows
  */
 export interface RelationshipPickerProps {
-  relationship: EntityRelationshipDefinition;
+  relationship: RelationshipDefinition;
   value: string | string[] | null;
   onChange: (value: string | string[] | null) => void;
   onBlur: () => void;
@@ -59,26 +70,3 @@ export interface RelationshipPickerProps {
   disabled?: boolean;
 }
 
-// Overlap detection types
-export interface RelationshipOverlap {
-  type: 'polymorphic' | 'multi-type';
-  targetEntityKey: string;
-  targetEntityName: string;
-  existingRelationship: EntityRelationshipDefinition;
-  suggestedAction: OverlapResolution;
-  description: string;
-}
-
-export interface OverlapResolution {
-  type: 'add-to-bidirectional' | 'create-new';
-  details: {
-    relationshipKey?: string;
-    sourceEntityToAdd?: string;
-    newRelationshipName?: string;
-  };
-}
-
-export interface OverlapDetectionResult {
-  hasOverlaps: boolean;
-  overlaps: RelationshipOverlap[];
-}

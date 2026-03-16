@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ColumnFilter, FilterOption } from '@/components/ui/data-table';
 import {
@@ -8,23 +7,23 @@ import {
 import { DEFAULT_COLUMN_WIDTH } from '@/components/ui/data-table/data-table';
 import { ColumnEditConfig } from '@/components/ui/data-table/data-table.types';
 import { IconCell } from '@/components/ui/icon/icon-cell';
-import { SchemaUUID, DataType, SchemaType } from '@/lib/types/common';
-import { DataFormat } from '@/lib/types/common';
+import { DataFormat, DataType, SchemaType, SchemaUUID } from '@/lib/types/common';
 import {
+  ColumnConfiguration,
   Entity,
   EntityAttribute,
   EntityLink,
-  EntityPropertyType,
   EntityRelationshipCardinality,
-  EntityRelationshipDefinition,
   EntityType,
-  EntityTypeAttributeColumn,
   isRelationshipPayload,
+  RelationshipDefinition,
+  SystemRelationshipType,
 } from '@/lib/types/entity';
 import { iconFormSchema } from '@/lib/util/form/common/icon.form';
 import { buildFieldSchema } from '@/lib/util/form/entity-instance-validation.util';
-import { toTitleCase } from '@/lib/util/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Badge } from '@riven/ui/badge';
+import { toTitleCase } from '@riven/utils';
 import { AccessorKeyColumnDef, Cell } from '@tanstack/react-table';
 import { ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
@@ -39,7 +38,7 @@ export const entityReferenceFormSchema = z.array(
       id: z.string().refine(isUUID, { message: 'Invalid UUID' }),
       workspaceId: z.string().refine(isUUID, { message: 'Invalid UUID' }),
       sourceEntityId: z.string().refine(isUUID, { message: 'Invalid UUID' }),
-      fieldId: z.string().refine(isUUID, { message: 'Invalid UUID' }),
+      definitionId: z.string().refine(isUUID, { message: 'Invalid UUID' }),
       label: z.string().min(1, { message: 'Label cannot be empty' }),
       key: z.string().min(1, { message: 'Key cannot be empty' }),
     })
@@ -301,11 +300,11 @@ export function createAttributeEqualityFn(
  * Creates an equality function for relationship values based on cardinality
  */
 export function createRelationshipEqualityFn(
-  relationship: EntityRelationshipDefinition,
+  relationship: RelationshipDefinition,
 ): (oldValue: EntityLink[], newValue: EntityLink[]) => boolean {
   const isSingleSelect =
-    relationship.cardinality === EntityRelationshipCardinality.OneToOne ||
-    relationship.cardinality === EntityRelationshipCardinality.ManyToOne;
+    relationship.cardinalityDefault === EntityRelationshipCardinality.OneToOne ||
+    relationship.cardinalityDefault === EntityRelationshipCardinality.ManyToOne;
 
   return (value1: EntityLink[], value2: EntityLink[]): boolean => {
     const normalized1 = normalizeEmpty(value1);
@@ -384,14 +383,14 @@ export function generateColumnsFromEntityType(
     columns.push({
       accessorKey: attributeId,
       size:
-        entityType.columns?.find((col) => col.key === attributeId)?.width ?? DEFAULT_COLUMN_WIDTH,
+        entityType.columnConfiguration?.overrides[attributeId]?.width ?? DEFAULT_COLUMN_WIDTH,
       header: (_) => {
         const { icon, label } = schema;
         const { type, colour } = icon;
 
         return (
           <div className="flex items-center">
-            <IconCell readonly iconType={type} colour={colour} className="mr-2 size-4" />
+            <IconCell readonly type={type} colour={colour} className="mr-2 size-4" />
             <span>{label}</span>
           </div>
         );
@@ -412,8 +411,16 @@ export function generateColumnsFromEntityType(
     });
   });
 
-  // Generate relationship columns
-  entityType.relationships?.forEach((relationship) => {
+  // Generate relationship columns (exclude system relationships like Connected Entities)
+  entityType.relationships
+    ?.filter((rel) => rel.systemType !== SystemRelationshipType.ConnectedEntities)
+    .forEach((relationship) => {
+    // Determine if this is a target-side relationship (defined on another entity type)
+    const isTargetSide = relationship.sourceEntityTypeId !== entityType.id;
+    const headerName = isTargetSide
+      ? relationship.targetRules?.find((r) => r.targetEntityTypeId === entityType.id)?.inverseName || relationship.name
+      : relationship.name;
+
     // Create edit config if editing is enabled
     const editConfig: ColumnEditConfig<EntityRow, EntityLink[], EntityLink[]> | undefined =
       options?.enableEditing
@@ -434,7 +441,7 @@ export function generateColumnsFromEntityType(
                 mode: 'onBlur',
               });
             },
-            render: createRelationshipRenderer<EntityRow>(relationship),
+            render: createRelationshipRenderer<EntityRow>(relationship, isTargetSide),
             parseValue: (val: EntityLink[]) => val,
             formatValue: (val: EntityLink[]) => val,
             isEqual: createRelationshipEqualityFn(relationship),
@@ -444,14 +451,14 @@ export function generateColumnsFromEntityType(
     columns.push({
       accessorKey: relationship.id,
       size:
-        entityType.columns?.find((col) => col.key === relationship.id)?.width ??
+        entityType.columnConfiguration?.overrides[relationship.id]?.width ??
         DEFAULT_COLUMN_WIDTH,
       header: () => {
-        const { icon, name } = relationship;
+        const { icon } = relationship;
         return (
           <div className="flex items-center">
-            <IconCell readonly iconType={icon.type} colour={icon.colour} className="mr-2 size-4" />
-            <span>{name}</span>
+            <IconCell readonly type={icon.type} colour={icon.colour} className="mr-2 size-4" />
+            <span>{headerName}</span>
           </div>
         );
       },
@@ -466,20 +473,20 @@ export function generateColumnsFromEntityType(
           return (
             <div className="flex flex-wrap gap-1">
               {value.map((item: EntityLink) => {
-                const { icon, label, fieldId, id, workspaceId, key } = item;
-                const { icon: type, colour } = icon;
+                const { icon, label, definitionId, id, workspaceId, key } = item;
+                const { type, colour } = icon;
 
                 return (
                   <Link
                     href={`/dashboard/workspace/${workspaceId}/entity/${key}/${id}`}
-                    key={`${fieldId}-${id}`}
+                    key={`${definitionId}-${id}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Badge
                       variant="secondary"
                       className="group font-normal transition-all hover:bg-border"
                     >
-                      <IconCell readonly iconType={type} colour={colour} className="mr-2 size-4" />
+                      <IconCell readonly type={type} colour={colour} className="mr-2 size-4" />
                       <span className="group-hover:underline">{label}</span>
                       <ArrowUpRight className="ml-2 size-4 opacity-0 transition-opacity group-hover:opacity-100" />
                     </Badge>
@@ -495,7 +502,6 @@ export function generateColumnsFromEntityType(
       meta: {
         edit: editConfig,
         displayMeta: {
-          required: relationship.required,
           protected: relationship._protected,
         },
       },
@@ -506,29 +512,31 @@ export function generateColumnsFromEntityType(
 }
 
 /**
- * Apply column ordering based on entity type columns array
+ * Apply column ordering and visibility based on columnConfiguration
  */
 export function applyColumnOrdering(
   columns: AccessorKeyColumnDef<EntityRow>[],
-  columnsOrder: EntityTypeAttributeColumn[],
+  columnConfiguration?: ColumnConfiguration,
 ): AccessorKeyColumnDef<EntityRow>[] {
-  console.log(columns);
+  if (!columnConfiguration) return columns;
+
+  const { order, overrides } = columnConfiguration;
   const orderedColumns: AccessorKeyColumnDef<EntityRow>[] = [];
   const columnMap = new Map(columns.map((col) => [col['accessorKey'], col]));
 
-  // Add columns in order array sequence
-  columnsOrder.forEach((orderItem) => {
-    if (orderItem.type === EntityPropertyType.Attribute) {
-      const column = columnMap.get(orderItem.key);
-      if (column) {
-        orderedColumns.push(column);
-        columnMap.delete(orderItem.key);
-      }
+  // Add columns in order array sequence, filtering out hidden columns
+  order.forEach((key) => {
+    if (overrides[key]?.visible === false) return;
+    const column = columnMap.get(key);
+    if (column) {
+      orderedColumns.push(column);
+      columnMap.delete(key);
     }
   });
 
-  // Add remaining columns (not in order array)
-  columnMap.forEach((column) => {
+  // Add remaining columns (not in order array), filtering out hidden columns
+  columnMap.forEach((column, key) => {
+    if (overrides[key]?.visible === false) return;
     orderedColumns.push(column);
   });
 

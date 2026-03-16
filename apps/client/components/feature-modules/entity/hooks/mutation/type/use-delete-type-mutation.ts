@@ -1,8 +1,9 @@
 import { useAuth } from '@/components/provider/auth-context';
-import { EntityType, type EntityTypeImpactResponse } from '@/lib/types/entity';
-import { useMutation, useQueryClient, type UseMutationOptions } from '@tanstack/react-query';
+import { type EntityTypeImpactResponse } from '@/lib/types/entity';
+import { MutationFunctionContext, useMutation, useQueryClient, type UseMutationOptions } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { EntityTypeService } from '../../../service/entity-type.service';
+import { entityKeys } from '../../query/entity-query-keys';
 
 export interface DeleteEntityTypeRequest {
   key: string;
@@ -22,19 +23,20 @@ export function useDeleteTypeMutation(
       const { key, impactConfirmed = false } = request;
       return EntityTypeService.deleteEntityType(session, workspaceId, key, impactConfirmed);
     },
-    onMutate: (data) => {
-      options?.onMutate?.(data);
+    onMutate: (data: DeleteEntityTypeRequest, context: MutationFunctionContext) => {
+      options?.onMutate?.(data, context);
     },
-    onError: (error: Error, variables: DeleteEntityTypeRequest, context: unknown) => {
-      options?.onError?.(error, variables, context);
+    onError: (error: Error, variables: DeleteEntityTypeRequest, onMutateResult: unknown, context: MutationFunctionContext) => {
+      options?.onError?.(error, variables, onMutateResult, context);
       toast.error(`Failed to delete entity type definition: ${error.message}`);
     },
     onSuccess: (
       response: EntityTypeImpactResponse,
       variables: DeleteEntityTypeRequest,
-      context: unknown,
+      onMutateResult: unknown,
+      context: MutationFunctionContext,
     ) => {
-      options?.onSuccess?.(response, variables, context);
+      options?.onSuccess?.(response, variables, onMutateResult, context);
 
       // If there is an impact, invoke the impact confirmation callback and return early
       if (response.impact) {
@@ -46,34 +48,16 @@ export function useDeleteTypeMutation(
 
       if (!response.updatedEntityTypes) return;
 
-      Object.entries(response.updatedEntityTypes).forEach(([key, entityType]) => {
-        // Update individual entity type query cache
-        queryClient.setQueryData(['entityType', key, workspaceId], entityType);
+      // Invalidate all affected entity type queries (partial match handles varying `include` param)
+      Object.entries(response.updatedEntityTypes).forEach(([key]) => {
+        queryClient.invalidateQueries({ queryKey: entityKeys.entityTypes.byKey(key, workspaceId) });
       });
 
-      queryClient.invalidateQueries({
-        queryKey: ['entityType', variables.key, workspaceId],
-      });
+      // Also invalidate the deleted type's queries
+      queryClient.invalidateQueries({ queryKey: entityKeys.entityTypes.byKey(variables.key, workspaceId) });
 
-      // Update the entity types list in cache
-      queryClient.setQueryData<EntityType[]>(['entityTypes', workspaceId], (oldData) => {
-        if (!response.updatedEntityTypes) return;
-
-        if (!oldData)
-          return Object.values(response.updatedEntityTypes).filter(
-            (et) => et.key !== variables.key,
-          );
-
-        // Create a map of updated entity types for efficient lookup
-        const updatedTypesMap = new Map(
-          Object.entries(response.updatedEntityTypes!).map(([key, type]) => [key, type]),
-        );
-
-        // Replace all updated entity types in the list and remove the delete entity type
-        return oldData
-          .map((et) => updatedTypesMap.get(et.key) ?? et)
-          .filter((et) => et.key !== variables.key);
-      });
+      // Invalidate the entity types list
+      queryClient.invalidateQueries({ queryKey: entityKeys.entityTypes.list(workspaceId) });
 
       return response;
     },

@@ -13,6 +13,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.cors.CorsConfigurationSource
+import riven.core.configuration.properties.WebSocketConfigurationProperties
 import javax.crypto.spec.SecretKeySpec
 
 @Configuration
@@ -20,7 +21,8 @@ import javax.crypto.spec.SecretKeySpec
 @EnableMethodSecurity(prePostEnabled = true)
 class SecurityConfig(
     private val securityConfig: SecurityConfigurationProperties,
-    private val tokenDecoder: CustomAuthenticationTokenConverter
+    private val tokenDecoder: CustomAuthenticationTokenConverter,
+    private val wsProperties: WebSocketConfigurationProperties,
 ) {
 
     private val secretKey = SecretKeySpec(securityConfig.jwtSecretKey.toByteArray(Charsets.UTF_8), "HmacSHA256")
@@ -37,6 +39,9 @@ class SecurityConfig(
                     .requestMatchers("/actuator/**").permitAll() // Allow actuator endpoints
                     .requestMatchers("/docs/**").permitAll() // Allow OpenAPI documentation
                     .requestMatchers("/public/**").permitAll() // Allow public endpoints
+                    .requestMatchers("/api/v1/storage/download/{token}").permitAll() // Allow signed URL downloads (token is the auth)
+                    .requestMatchers("/api/v1/avatars/**").permitAll() // Allow avatar access (entity ID is the lookup key)
+                    .requestMatchers("${wsProperties.endpoint}/**").permitAll() // WebSocket upgrade handled by STOMP interceptor
                     .anyRequest().authenticated() // Require authentication for all other endpoints
             }
             .oauth2ResourceServer { oauth2 ->

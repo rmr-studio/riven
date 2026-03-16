@@ -104,6 +104,29 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
     fun findByIdAndWorkspaceId(id: UUID, workspaceId: UUID): Optional<EntityRelationshipEntity>
 
     /**
+     * Count relationship links for a definition where the target entity belongs to a specific entity type.
+     */
+    @Query("""
+        SELECT COUNT(r) FROM EntityRelationshipEntity r
+        JOIN EntityEntity e ON r.targetId = e.id
+        WHERE r.definitionId = :definitionId AND e.typeId = :targetEntityTypeId AND r.deleted = false
+    """)
+    fun countByDefinitionIdAndTargetEntityTypeId(definitionId: UUID, targetEntityTypeId: UUID): Long
+
+    /**
+     * Soft-delete relationship links for a definition where the target entity belongs to a specific entity type.
+     */
+    @Modifying
+    @Query("""
+        UPDATE EntityRelationshipEntity r
+        SET r.deleted = true, r.deletedAt = CURRENT_TIMESTAMP
+        WHERE r.definitionId = :definitionId
+        AND r.deleted = false
+        AND r.targetId IN (SELECT e.id FROM EntityEntity e WHERE e.typeId = :targetEntityTypeId)
+    """)
+    fun softDeleteByDefinitionIdAndTargetEntityTypeId(definitionId: UUID, targetEntityTypeId: UUID)
+
+    /**
      * Find all relationships where the given entity is either source or target for a specific definition.
      */
     @Query("""
@@ -160,12 +183,10 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
                 e.icon_type as iconType,
                 e.icon_colour as iconColour,
                 e.type_key as typeKey,
-                COALESCE(
-                    e.payload -> e.identifier_key::text ->> 'value',
-                    e.id::text
-                ) as label
+                COALESCE(ea.value #>> '{}', e.id::text) as label
             FROM entity_relationships r
             JOIN entities e ON r.target_entity_id = e.id
+            LEFT JOIN entity_attributes ea ON ea.entity_id = e.id AND ea.attribute_id = e.identifier_key AND ea.deleted = false
             JOIN relationship_definitions rd ON r.relationship_definition_id = rd.id AND rd.deleted = false
             WHERE r.source_entity_id = :sourceId
             AND r.deleted = false
@@ -190,12 +211,10 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
                 e.icon_type as iconType,
                 e.icon_colour as iconColour,
                 e.type_key as typeKey,
-                COALESCE(
-                    e.payload -> e.identifier_key::text ->> 'value',
-                    e.id::text
-                ) as label
+                COALESCE(ea.value #>> '{}', e.id::text) as label
             FROM entity_relationships r
             JOIN entities e ON r.target_entity_id = e.id
+            LEFT JOIN entity_attributes ea ON ea.entity_id = e.id AND ea.attribute_id = e.identifier_key AND ea.deleted = false
             JOIN relationship_definitions rd ON r.relationship_definition_id = rd.id AND rd.deleted = false
             WHERE r.source_entity_id = ANY(:ids)
             AND r.deleted = false
@@ -207,8 +226,7 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
     fun findEntityLinksBySourceIdIn(ids: Array<UUID>, workspaceId: UUID): List<EntityLinkProjection>
 
     /**
-     * Find inverse entity links where the given entity is a target,
-     * only for definitions where the target rule has inverse_visible = true.
+     * Find inverse entity links where the given entity is a target.
      *
      * The sourceEntityId column aliases r.target_entity_id (the entity being viewed),
      * keeping the EntityLink contract consistent.
@@ -223,17 +241,16 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
                 e.icon_type as iconType,
                 e.icon_colour as iconColour,
                 e.type_key as typeKey,
-                COALESCE(
-                    e.payload -> e.identifier_key::text ->> 'value',
-                    e.id::text
-                ) as label
+                COALESCE(ea.value #>> '{}', e.id::text) as label
             FROM entity_relationships r
             JOIN entities e ON r.source_entity_id = e.id
+            LEFT JOIN entity_attributes ea ON ea.entity_id = e.id AND ea.attribute_id = e.identifier_key AND ea.deleted = false
             JOIN relationship_definitions rd ON r.relationship_definition_id = rd.id AND rd.deleted = false
+            JOIN entities target_e ON r.target_entity_id = target_e.id
             LEFT JOIN relationship_target_rules rtr ON rtr.relationship_definition_id = r.relationship_definition_id
             WHERE r.target_entity_id = :targetId
             AND (
-                (rtr.inverse_visible = true AND rtr.target_entity_type_id = (SELECT type_id FROM entities WHERE id = :targetId))
+                rtr.target_entity_type_id = target_e.type_id
                 OR rd.system_type = :systemType
             )
             AND r.deleted = false
@@ -257,18 +274,16 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
                 e.icon_type as iconType,
                 e.icon_colour as iconColour,
                 e.type_key as typeKey,
-                COALESCE(
-                    e.payload -> e.identifier_key::text ->> 'value',
-                    e.id::text
-                ) as label
+                COALESCE(ea.value #>> '{}', e.id::text) as label
             FROM entity_relationships r
             JOIN entities e ON r.source_entity_id = e.id
+            LEFT JOIN entity_attributes ea ON ea.entity_id = e.id AND ea.attribute_id = e.identifier_key AND ea.deleted = false
             JOIN relationship_definitions rd ON r.relationship_definition_id = rd.id AND rd.deleted = false
             LEFT JOIN relationship_target_rules rtr ON rtr.relationship_definition_id = r.relationship_definition_id
             JOIN entities target_e ON r.target_entity_id = target_e.id
             WHERE r.target_entity_id = ANY(:ids)
             AND (
-                (rtr.inverse_visible = true AND rtr.target_entity_type_id = target_e.type_id)
+                rtr.target_entity_type_id = target_e.type_id
                 OR rd.system_type = :systemType
             )
             AND r.deleted = false

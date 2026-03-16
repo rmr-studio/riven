@@ -14,11 +14,6 @@ CREATE INDEX IF NOT EXISTS idx_entities_workspace_type
     ON entities (workspace_id, type_id)
     WHERE deleted = FALSE;
 
-DROP INDEX IF EXISTS idx_entities_payload_gin;
-CREATE INDEX IF NOT EXISTS idx_entities_payload_gin
-    ON entities USING GIN (payload)
-    WHERE deleted = FALSE AND deleted_at IS NULL;
-
 -- Relationship Definitions Indexes
 DROP INDEX IF EXISTS idx_rel_def_workspace_source;
 CREATE INDEX IF NOT EXISTS idx_rel_def_workspace_source
@@ -50,14 +45,6 @@ CREATE INDEX IF NOT EXISTS idx_entity_relationships_definition
     ON entity_relationships (relationship_definition_id)
     WHERE deleted = FALSE AND deleted_at IS NULL;
 
--- Entity Provenance Indexes
-CREATE INDEX IF NOT EXISTS idx_provenance_entity
-    ON entity_attribute_provenance (entity_id);
-
-CREATE INDEX IF NOT EXISTS idx_provenance_integration
-    ON entity_attribute_provenance (source_integration_id)
-    WHERE source_integration_id IS NOT NULL;
-
 -- Entity Integration Source Indexes
 CREATE INDEX IF NOT EXISTS idx_entities_source_integration
     ON entities (source_integration_id)
@@ -66,3 +53,23 @@ CREATE INDEX IF NOT EXISTS idx_entities_source_integration
 CREATE INDEX IF NOT EXISTS idx_entities_source_external_id
     ON entities (source_external_id)
     WHERE source_external_id IS NOT NULL;
+
+-- =====================================================
+-- ENTITY ATTRIBUTE INDEXES
+-- =====================================================
+
+-- Primary lookup: attributes for a given entity
+CREATE UNIQUE INDEX IF NOT EXISTS idx_entity_attributes_entity_id
+    ON public.entity_attributes (entity_id, attribute_id) WHERE deleted = false;
+
+-- Filter by attribute across a type
+CREATE INDEX IF NOT EXISTS idx_entity_attributes_type_attribute
+    ON public.entity_attributes (attribute_id, type_id) WHERE deleted = false;
+
+-- Value lookup for equality/range filters
+CREATE INDEX IF NOT EXISTS idx_entity_attributes_value_lookup
+    ON public.entity_attributes (attribute_id, type_id, value) WHERE deleted = false;
+
+-- Workspace-scoped queries
+CREATE INDEX IF NOT EXISTS idx_entity_attributes_workspace
+    ON public.entity_attributes (workspace_id) WHERE deleted = false;

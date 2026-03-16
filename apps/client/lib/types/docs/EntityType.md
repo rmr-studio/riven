@@ -13,18 +13,21 @@ Name | Type
 `name` | [DisplayName](DisplayName.md)
 `_protected` | boolean
 `identifierKey` | string
-`description` | string
+`semanticGroup` | [SemanticGroup](SemanticGroup.md)
+`sourceType` | [SourceType](SourceType.md)
+`sourceIntegrationId` | string
+`readonly` | boolean
 `workspaceId` | string
-`type` | [EntityCategory](EntityCategory.md)
 `schema` | [SchemaUUID](SchemaUUID.md)
-`relationships` | [Array&lt;EntityRelationshipDefinition&gt;](EntityRelationshipDefinition.md)
+`columnConfiguration` | [ColumnConfiguration](ColumnConfiguration.md)
 `columns` | [Array&lt;EntityTypeAttributeColumn&gt;](EntityTypeAttributeColumn.md)
 `entitiesCount` | number
+`relationships` | [Array&lt;RelationshipDefinition&gt;](RelationshipDefinition.md)
+`semantics` | [SemanticMetadataBundle](SemanticMetadataBundle.md)
 `createdAt` | Date
 `updatedAt` | Date
 `createdBy` | string
 `updatedBy` | string
-`attributes` | [PairIntegerInteger](PairIntegerInteger.md)
 
 ## Example
 
@@ -40,18 +43,21 @@ const example = {
   "name": null,
   "_protected": null,
   "identifierKey": null,
-  "description": null,
+  "semanticGroup": null,
+  "sourceType": null,
+  "sourceIntegrationId": null,
+  "readonly": null,
   "workspaceId": null,
-  "type": null,
   "schema": null,
-  "relationships": null,
+  "columnConfiguration": null,
   "columns": null,
   "entitiesCount": null,
+  "relationships": null,
+  "semantics": null,
   "createdAt": null,
   "updatedAt": null,
   "createdBy": null,
   "updatedBy": null,
-  "attributes": null,
 } satisfies EntityType
 
 console.log(example)

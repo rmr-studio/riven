@@ -44,7 +44,7 @@ Users create their own custom entity types and link them to integration entities
 
 ### Why This Matters for Intelligence
 
-- **Data integrity & provenance** — Read-only types preserve exactly what Stripe said vs what Zendesk said. No data mixing at the storage layer.
+- **Data integrity** — Read-only types preserve exactly what Stripe said vs what Zendesk said. No data mixing at the storage layer.
 - **User mental model** — User-defined types represent how the user thinks about their business, not how SaaS tools organize data.
 - **Cross-domain reasoning** — The knowledge layer operates on the user's model, pulling data through relationships to integration types. Intelligence follows the user's structure, not the provider's.
 - **Semantic grounding** — The knowledge layer reasons over semantic metadata from both layers, enabling queries like "show me customers where revenue is declining and support tickets are increasing."
@@ -96,13 +96,13 @@ Cross-reference of domain priorities against Riven's core intelligence outcomes.
 
 **Read-only entity types:**
 
-| Type | Key Attributes | Semantic Classification |
-|---|---|---|
-| `STRIPE_CUSTOMER` | stripe_customer_id, email | identifier, identifier |
+| Type                  | Key Attributes                                    | Semantic Classification                          |
+| --------------------- | ------------------------------------------------- | ------------------------------------------------ |
+| `STRIPE_CUSTOMER`     | stripe_customer_id, email                         | identifier, identifier                           |
 | `STRIPE_SUBSCRIPTION` | mrr, plan_tier, renewal_date, subscription_status | quantitative, categorical, temporal, categorical |
-| `STRIPE_INVOICE` | amount_due, due_date, payment_status | quantitative, temporal, categorical |
-| `STRIPE_PAYMENT` | amount_paid, payment_date, payment_method | quantitative, temporal, categorical |
-| `STRIPE_PLAN` | plan_name, price, billing_interval | identifier, quantitative, categorical |
+| `STRIPE_INVOICE`      | amount_due, due_date, payment_status              | quantitative, temporal, categorical              |
+| `STRIPE_PAYMENT`      | amount_paid, payment_date, payment_method         | quantitative, temporal, categorical              |
+| `STRIPE_PLAN`         | plan_name, price, billing_interval                | identifier, quantitative, categorical            |
 
 **Internal relationships:**
 - STRIPE_SUBSCRIPTION to STRIPE_CUSTOMER — many-to-one

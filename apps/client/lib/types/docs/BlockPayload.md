@@ -6,9 +6,9 @@
 
 Name | Type
 ------------ | -------------
+`deletable` | boolean
 `meta` | [BlockMeta](BlockMeta.md)
 `readonly` | boolean
-`deletable` | boolean
 `type` | [BlockMetadataType](BlockMetadataType.md)
 `fetchPolicy` | [BlockReferenceFetchPolicy](BlockReferenceFetchPolicy.md)
 `path` | string
@@ -31,9 +31,9 @@ import type { BlockPayload } from ''
 
 // TODO: Update the object below with actual values
 const example = {
+  "deletable": null,
   "meta": null,
   "readonly": null,
-  "deletable": null,
   "type": null,
   "fetchPolicy": null,
   "path": null,

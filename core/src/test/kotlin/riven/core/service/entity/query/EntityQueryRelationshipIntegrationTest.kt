@@ -356,7 +356,7 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
 
     @Test
     fun `test INVERSE EXISTS - returns employees who have a company`() = runBlocking {
-        // Company -> Employees has inverse_visible=true for Employee type
+        // Company -> Employees targets Employee type (inverse from Employee perspective)
         // Query Employee type, filter by companyEmployeesRelId which is inverse for employees
         val query = EntityQuery(
             entityTypeId = employeeTypeId,
@@ -430,13 +430,6 @@ class EntityQueryRelationshipIntegrationTest : EntityQueryIntegrationTestBase() 
                     typeId = employeeTypeId,
                     typeKey = "employee",
                     identifierKey = employeeFirstNameAttrId,
-                    payload = mapOf(
-                        employeeFirstNameAttrId.toString() to EntityAttributePrimitivePayload("Freelance", SchemaType.TEXT),
-                        employeeLastNameAttrId.toString() to EntityAttributePrimitivePayload("Dev", SchemaType.TEXT),
-                        employeeEmailAttrId.toString() to EntityAttributePrimitivePayload("freelance@dev.com", SchemaType.EMAIL),
-                        employeeSalaryAttrId.toString() to EntityAttributePrimitivePayload(50000.0, SchemaType.NUMBER),
-                        employeeDepartmentAttrId.toString() to EntityAttributePrimitivePayload("Freelance", SchemaType.TEXT)
-                    )
                 )
             ).id!!
 

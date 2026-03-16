@@ -4,7 +4,7 @@ tags:
   - component/active
   - architecture/component
 Created: 2026-02-08
-Updated: 2026-02-19
+Updated: 2026-03-09
 Domains:
   - "[[Entities]]"
 ---
@@ -36,6 +36,7 @@ Utility service for attribute schema operations including definition save/remove
 - `EntityRepository` — Fetch existing entities for validation
 - `EntityUniqueValuesRepository` — Normalized unique constraint table
 - [[EntityTypeSemanticMetadataService]] — Lifecycle hooks for attribute semantic metadata
+- [[EntityAttributeService]] — Loading entity attributes during breaking change validation
 
 ## Used By
 
@@ -53,7 +54,8 @@ Utility service for attribute schema operations including definition save/remove
 3. Detect breaking changes via [[EntityValidationService]]
 4. If breaking changes exist:
    - Fetch all existing entities of this type
-   - Validate each against new schema
+   - Batch-load attributes via [[EntityAttributeService]].getAttributesForEntities()
+   - Validate each against new schema using pre-loaded attributes
    - If any invalid: throw `SchemaValidationException` with sample errors
 5. Apply schema update to type (caller saves entity)
 6. If attribute is new: initialize semantic metadata via `semanticMetadataService.initializeForTarget(entityTypeId, workspaceId, ATTRIBUTE, attributeId)`
@@ -61,6 +63,10 @@ Utility service for attribute schema operations including definition save/remove
 **Remove attribute definition (semantic metadata):**
 
 When an attribute is removed, calls `semanticMetadataService.deleteForTarget(entityTypeId, ATTRIBUTE, attributeId)` to hard-delete the metadata record. Hard-delete (not soft-delete) prevents orphaned metadata for non-existent attributes.
+
+**Readonly guards:**
+
+Both `saveAttributeDefinition` and `removeAttributeDefinition` check `type.readonly` before proceeding. Integration-sourced entity types (readonly = true) cannot have their attributes modified through these methods.
 
 **Unique constraint enforcement:**
 
@@ -127,3 +133,17 @@ Deletes all unique values for entity type. Returns count of deleted rows.
 - [[EntityService]] — Uses for unique constraint checks during save
 - [[EntityValidationService]] — Breaking change detection
 - [[Type Definitions]] — Parent subdomain
+
+---
+
+## Changelog
+
+### 2026-03-09 — EntityAttributeService dependency for breaking change validation
+
+- Added `EntityAttributeService` as a constructor dependency.
+- Breaking change validation now loads attributes from normalized `entity_attributes` table via `entityAttributeService.getAttributesForEntities()` instead of reading from entity payload.
+- Attributes passed to `entityValidationService.validateExistingEntitiesAgainstNewSchema()` via new `attributesByEntityId` parameter.
+
+### 2025-07-17 — Readonly guards for integration-sourced entity types
+
+- Added readonly guards on `saveAttributeDefinition` and `removeAttributeDefinition` to protect integration-sourced entity types.

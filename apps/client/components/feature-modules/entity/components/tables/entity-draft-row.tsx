@@ -1,11 +1,8 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { TableCell, TableRow } from '@/components/ui/table';
-import { EntityPropertyType, EntityType } from '@/lib/types/entity';
-import { cn } from '@/lib/util/utils';
+import { EntityPropertyType, EntityType, SystemRelationshipType } from '@/lib/types/entity';
+import { TableCell, TableRow } from '@riven/ui/table';
 import { Row } from '@tanstack/react-table';
-import { Check, X } from 'lucide-react';
 import { FC, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormState } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -99,7 +96,7 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
       return <EntityFieldCell attributeId={id} schema={schema} autoFocus={isFirstCell} />;
     }
 
-    const relationship = entityType.relationships?.find((r) => r.id === id);
+    const relationship = type.relationships?.find((r) => r.id === id);
     if (property === EntityPropertyType.Relationship && relationship) {
       return <DraftEntityRelationshipPicker relationship={relationship} />;
     }
@@ -107,13 +104,20 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
     return null;
   };
 
-// Build ordered cells based on entityType.columns
+  // Build ordered cells based on entityType.columns
   const orderedCells = useMemo(() => {
     const columnCount = entityType.columns ? entityType.columns.length : 0;
     if (columnCount === 0) return [];
     if (!entityType.columns) return [];
 
-    return entityType.columns.map((item, index) => {
+    // Filter out system relationship columns (e.g. ConnectedEntities)
+    const filteredColumns = entityType.columns.filter((col) => {
+      if (col.type !== EntityPropertyType.Relationship) return true;
+      const rel = entityType.relationships?.find((r) => r.id === col.key);
+      return !rel || rel.systemType !== SystemRelationshipType.ConnectedEntities;
+    });
+
+    return filteredColumns.map((item, index) => {
       const { key: id, type } = item;
       const isFirstCell = index === 0;
 
@@ -137,43 +141,50 @@ export const EntityDraftRow: FC<EntityDraftRowProps> = ({ entityType, row }) => 
     });
   }, [entityType, columnSizeMap, isSubmitting, hasErrors]);
 
-  const submitDisabled = isSubmitting || hasErrors;
-
   return (
     <>
       <TableRow className="relative border-dashed bg-muted/30 hover:bg-muted/40">
-        {/* // Action buttons cell (This is rendered inside the action column instead of the drag handle etc) */}
-        <TableCell className="justify-start px-0">
-          <div className="z-30 flex flex-wrap">
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
-              onClick={handleReset}
-              disabled={isSubmitting}
-              title="Cancel and discard draft"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className={cn(
-                `h-8 w-8 p-0 text-green-600 hover:bg-green-50 hover:text-green-700`,
-                submitDisabled && 'text-primary/40',
-              )}
-              onClick={handleSubmit}
-              disabled={submitDisabled}
-            >
-              <Check className="h-4 w-4" />
-            </Button>
+        {/* Empty action column cell */}
+        <TableCell className="px-0">
+          <div className="flex h-full items-center justify-center">
+            <div className="size-1.5 rounded-full bg-primary/30" />
           </div>
         </TableCell>
 
         {/* Ordered cells (attributes and relationships) */}
         {orderedCells}
 
-        {/* Action buttons cell */}
+        {/* Empty cell to match endOfHeaderContent column */}
+        <TableCell />
+      </TableRow>
+
+      {/* Keyboard hint row */}
+      <TableRow className="border-none hover:bg-transparent">
+        <TableCell
+          colSpan={orderedCells.length + 1}
+          className="px-3 py-1.5"
+        >
+          <div className="flex items-center gap-3 text-xs text-muted-foreground/50">
+            <span className="flex items-center gap-1">
+              <kbd className="rounded border border-border/40 bg-muted/50 px-1 py-0.5 font-mono text-[10px]">
+                Enter
+              </kbd>
+              <span>save</span>
+            </span>
+            <span className="flex items-center gap-1">
+              <kbd className="rounded border border-border/40 bg-muted/50 px-1 py-0.5 font-mono text-[10px]">
+                Esc
+              </kbd>
+              <span>cancel</span>
+            </span>
+            {isSubmitting && (
+              <span className="text-primary/60">Saving...</span>
+            )}
+            {hasErrors && (
+              <span className="text-destructive/60">Fix errors to save</span>
+            )}
+          </div>
+        </TableCell>
       </TableRow>
     </>
   );

@@ -1,37 +1,46 @@
 import { useWorkspace } from '@/components/feature-modules/workspace/hooks/query/use-workspace';
+import { useEntityTypes } from '@/components/feature-modules/entity/hooks/query/type/use-entity-types';
 import { AttributeTypeDropdown } from '@/components/ui/attribute-type-dropdown';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@riven/ui/dialog';
 import { DialogControl } from '@/lib/interfaces/interface';
 import {
   EntityAttributeDefinition,
-  EntityRelationshipDefinition,
+  RelationshipDefinition,
   EntityType,
   isRelationshipDefinition,
 } from '@/lib/types/entity';
 import { Loader2 } from 'lucide-react';
+import { useParams } from 'next/navigation';
 import { FC, useEffect, useMemo, useState } from 'react';
 import { SchemaForm } from '../../../forms/type/attribute/schema-form';
-import { RelationshipAttributeForm } from '../../../forms/type/relationship/relationship-form';
+import { RelationshipForm } from '../../../forms/type/relationship/relationship-form';
 import { SchemaType } from '@/lib/types/common';
 
 interface Props {
   dialog: DialogControl;
   type: EntityType;
-  selectedAttribute?: EntityAttributeDefinition | EntityRelationshipDefinition;
+  selectedAttribute?: EntityAttributeDefinition | RelationshipDefinition;
+  onSuccess?: (definitionId: string) => void;
 }
 
-export const AttributeFormModal: FC<Props> = ({ dialog, type, selectedAttribute }) => {
+export const AttributeFormModal: FC<Props> = ({ dialog, type, selectedAttribute, onSuccess }) => {
   const { open, setOpen: onOpenChange } = dialog;
   const isEditMode = Boolean(selectedAttribute);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [currentType, setCurrentType] = useState<SchemaType | 'RELATIONSHIP'>(SchemaType.Text);
   const { data: workspace } = useWorkspace();
+  const { workspaceId } = useParams<{ workspaceId: string }>();
+  const { data: allEntityTypes } = useEntityTypes(workspaceId);
+
+  const isTargetSide = useMemo(() => {
+    if (!selectedAttribute || !isRelationshipDefinition(selectedAttribute)) return false;
+    return selectedAttribute.sourceEntityTypeId !== type.id;
+  }, [selectedAttribute, type.id]);
+
+  const sourceEntityTypeKey = useMemo(() => {
+    if (!isTargetSide || !selectedAttribute || !isRelationshipDefinition(selectedAttribute)) return undefined;
+    return allEntityTypes?.find((et) => et.id === selectedAttribute.sourceEntityTypeId)?.key;
+  }, [isTargetSide, selectedAttribute, allEntityTypes]);
 
   useEffect(() => {
     if (!selectedAttribute) {
@@ -93,11 +102,14 @@ export const AttributeFormModal: FC<Props> = ({ dialog, type, selectedAttribute 
               />
             )}
             {isRelationship ? (
-              <RelationshipAttributeForm
+              <RelationshipForm
                 workspaceId={workspace.id}
                 dialog={dialog}
                 type={type}
-                relationship={selectedAttribute as EntityRelationshipDefinition | undefined}
+                relationship={selectedAttribute as RelationshipDefinition | undefined}
+                isTargetSide={isTargetSide}
+                sourceEntityTypeKey={sourceEntityTypeKey}
+                onSuccess={onSuccess}
               />
             ) : (
               <SchemaForm
@@ -106,6 +118,7 @@ export const AttributeFormModal: FC<Props> = ({ dialog, type, selectedAttribute 
                 currentType={currentType as SchemaType}
                 type={type}
                 attribute={selectedAttribute as EntityAttributeDefinition | undefined}
+                onSuccess={onSuccess}
               />
             )}
           </section>

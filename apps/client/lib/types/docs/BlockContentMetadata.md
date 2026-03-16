@@ -6,9 +6,9 @@
 
 Name | Type
 ------------ | -------------
+`deletable` | boolean
 `meta` | [BlockMeta](BlockMeta.md)
 `readonly` | boolean
-`deletable` | boolean
 `type` | [BlockMetadataType](BlockMetadataType.md)
 `data` | { [key: string]: any; }
 `listConfig` | [BlockListConfiguration](BlockListConfiguration.md)
@@ -20,9 +20,9 @@ import type { BlockContentMetadata } from ''
 
 // TODO: Update the object below with actual values
 const example = {
+  "deletable": null,
   "meta": null,
   "readonly": null,
-  "deletable": null,
   "type": null,
   "data": null,
   "listConfig": null,

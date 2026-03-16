@@ -1,21 +1,24 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Badge } from '@riven/ui/badge';
+import { IconCell } from '@/components/ui/icon/icon-cell';
+import { attributeTypes } from '@/lib/util/form/schema.util';
 import {
   EntityAttributeDefinition,
   EntityPropertyType,
-  EntityRelationshipDefinition,
+  RelationshipDefinition,
   EntityType,
   EntityTypeAttributeRow,
   EntityTypeDefinition,
+  SystemRelationshipType,
+  type SemanticMetadataBundle,
+  type EntityTypeSemanticMetadata,
 } from '@/lib/types/entity';
-import { toTitleCase } from '@/lib/util/utils';
-import { ColumnDef, Row } from '@tanstack/react-table';
-import { Key, Link2, ListTodo, ListX } from 'lucide-react';
-import { ReactNode, useMemo } from 'react';
-
-// Common type for data table rows (both attributes and relationships)
+import { SchemaType } from '@/lib/types/common';
+import { toTitleCase } from '@riven/utils';
+import { ColumnDef } from '@tanstack/react-table';
+import { ArrowDownLeft } from 'lucide-react';
+import { useMemo } from 'react';
 
 interface UseEntityTypeTableReturn {
   columns: ColumnDef<EntityTypeAttributeRow>[];
@@ -29,11 +32,13 @@ export function useEntityTypeTable(
   identifierKey: string,
   editCB: (definition: EntityTypeDefinition) => void,
   deleteCB: (definition: EntityTypeDefinition) => void,
+  semanticBundle?: SemanticMetadataBundle,
+  allEntityTypes?: EntityType[],
 ): UseEntityTypeTableReturn {
   // Create a lookup map for attributes and relationships by their IDs. This should allow for quick access when choosing the correct item to edit
-  const attributeLookup: Map<string, EntityAttributeDefinition | EntityRelationshipDefinition> =
+  const attributeLookup: Map<string, EntityAttributeDefinition | RelationshipDefinition> =
     useMemo(() => {
-      const map = new Map<string, EntityAttributeDefinition | EntityRelationshipDefinition>();
+      const map = new Map<string, EntityAttributeDefinition | RelationshipDefinition>();
 
       if (type.schema.properties) {
         Object.entries(type.schema.properties).forEach(([id, attr]) => {
@@ -44,72 +49,22 @@ export function useEntityTypeTable(
         });
       }
 
-      type.relationships?.forEach((rel) => {
-        map.set(rel.id, rel);
-      });
+      type.relationships
+        ?.filter((rel) => rel.systemType !== SystemRelationshipType.ConnectedEntities)
+        .forEach((rel) => {
+          map.set(rel.id, rel);
+        });
       return map;
     }, [type]);
 
-  const IconWithTooltip = ({
-    icon: Icon,
-    tooltip,
-  }: {
-    icon: typeof Key;
-    tooltip: string;
-  }): ReactNode => (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Icon className="size-4 text-muted-foreground" />
-      </TooltipTrigger>
-      <TooltipContent className="font-mono text-xs italic">{tooltip}</TooltipContent>
-    </Tooltip>
-  );
-
-  const getIndicatorIcons = (row: Row<EntityTypeAttributeRow>): ReactNode => {
-    const icons: ReactNode[] = [];
-
-    if (identifierKey === row.original.id) {
-      return [
-        <IconWithTooltip
-          key="identifier"
-          icon={Key}
-          tooltip="This attribute represents the primary identifier for this entity"
-        />,
-      ];
-    }
-
-    if (row.original.type === EntityPropertyType.Relationship) {
-      icons.push(
-        <IconWithTooltip
-          key="relationship"
-          icon={Link2}
-          tooltip="This attribute references a relationship to another entity type"
-        />,
-      );
-    }
-
-    if (row.original.required) {
-      icons.push(
-        <IconWithTooltip
-          key="required"
-          icon={ListTodo}
-          tooltip="This attribute is required and must have a value for each entity"
-        />,
-      );
-    }
-
-    if (row.original.unique) {
-      icons.push(
-        <IconWithTooltip
-          key="unique"
-          icon={ListX}
-          tooltip="This attribute must have a unique value for each entity"
-        />,
-      );
-    }
-
-    return <div className="flex items-center gap-1.5">{icons}</div>;
-  };
+  // Create entity type name lookup from allEntityTypes
+  const entityTypeNameLookup = useMemo(() => {
+    const map = new Map<string, string>();
+    allEntityTypes?.forEach((et) => {
+      map.set(et.id, et.name.plural);
+    });
+    return map;
+  }, [allEntityTypes]);
 
   // Unified columns for both attributes and relationships
   const fieldColumns: ColumnDef<EntityTypeAttributeRow>[] = useMemo(
@@ -118,44 +73,71 @@ export function useEntityTypeTable(
         accessorKey: 'label',
         header: 'Name',
         cell: ({ row }) => {
-          return <span className="font-medium">{row.original.label}</span>;
+          const { icon, label, type: rowType, targetEntityTypeNames, isTargetSide } =
+            row.original;
+          const isRelationship = rowType === EntityPropertyType.Relationship;
+
+          return (
+            <div className="flex items-center gap-2">
+              {icon && (
+                <div className="relative shrink-0">
+                  <IconCell
+                    type={icon.type}
+                    colour={icon.colour}
+                    readonly
+                    className="size-4"
+                  />
+                  {isTargetSide && (
+                    <ArrowDownLeft className="absolute -bottom-0.5 -right-0.5 size-2.5 text-muted-foreground" />
+                  )}
+                </div>
+              )}
+              <span className="font-medium">{label}</span>
+              {isRelationship && targetEntityTypeNames && targetEntityTypeNames.length > 0 && (
+                <div className="flex items-center gap-1">
+                  {targetEntityTypeNames.map((name) => (
+                    <Badge
+                      key={name}
+                      variant="outline"
+                      className="px-1.5 py-0 text-xs font-normal text-muted-foreground"
+                    >
+                      {name}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
         },
       },
-      {
-        id: 'properties',
-        size: 60,
-        header: 'Properties',
-        enableResizing: false,
-        cell: ({ row }) => getIndicatorIcons(row),
-      },
-
       {
         accessorKey: 'rowType',
         header: 'Type',
         cell: ({ row }) => {
-          return <Badge variant="outline">{toTitleCase(row.original.schemaType)}</Badge>;
+          const { schemaType } = row.original;
+          const label =
+            schemaType === 'RELATIONSHIP'
+              ? 'Relationship'
+              : (attributeTypes[schemaType as SchemaType]?.label ?? toTitleCase(schemaType));
+
+          return <span className="text-muted-foreground">{label}</span>;
         },
       },
       {
         id: 'constraints',
         header: 'Constraints',
         cell: ({ row }) => {
-          const isRelationship = row.original.type === EntityPropertyType.Relationship;
+          const { type: rowType, required, unique, allowPolymorphic } = row.original;
+          const isIdentifier = row.original.id === identifierKey;
+          const isRelationship = rowType === EntityPropertyType.Relationship;
           const constraints: string[] = [];
 
-          if (row.original.required) constraints.push('Required');
+          if (isIdentifier) constraints.push('Identifier');
+          if (required) constraints.push('Required');
+          if (!isRelationship && unique) constraints.push('Unique');
+          if (isRelationship && allowPolymorphic) constraints.push('Polymorphic');
 
-          if (!isRelationship && row.original.unique) {
-            constraints.push('Unique');
-          }
-
-          if (isRelationship && row.original.allowPolymorphic) {
-            constraints.push('Polymorphic');
-          }
-
-          if (isRelationship && row.original.bidirectional) {
-            constraints.push('Bidirectional');
-          }
+          if (constraints.length === 0) return null;
 
           return (
             <div className="flex flex-wrap gap-1">
@@ -164,9 +146,6 @@ export function useEntityTypeTable(
                   {constraint}
                 </Badge>
               ))}
-              {constraints.length === 0 && (
-                <span className="text-xs text-muted-foreground">None</span>
-              )}
             </div>
           );
         },
@@ -176,22 +155,70 @@ export function useEntityTypeTable(
   );
 
   const convertRelationshipToRow = (
-    relationship: EntityRelationshipDefinition,
-  ): EntityTypeAttributeRow => ({
-    id: relationship.id,
-    label: relationship.name || relationship.id,
-    type: EntityPropertyType.Relationship,
-    required: relationship.required || false,
-    schemaType: 'RELATIONSHIP',
-    additionalConstraints: [],
-    cardinality: relationship.cardinality,
-    entityTypeKeys: relationship.entityTypeKeys || [],
-    allowPolymorphic: relationship.allowPolymorphic || false,
-    bidirectional: relationship.bidirectional || false,
-  });
+    relationship: RelationshipDefinition,
+  ): EntityTypeAttributeRow => {
+    const isTargetSide = relationship.sourceEntityTypeId !== type.id;
+
+    if (isTargetSide) {
+      // Find the target rule where this entity type is the target
+      const matchingRule = relationship.targetRules?.find(
+        (rule) => rule.targetEntityTypeId === type.id,
+      );
+
+      // Resolve source entity type name for badge display
+      const sourceEntityType = allEntityTypes?.find(
+        (et) => et.id === relationship.sourceEntityTypeId,
+      );
+      const sourceTypeName = sourceEntityType?.name.plural;
+
+      return {
+        id: relationship.id,
+        label: matchingRule?.inverseName || relationship.name || relationship.id,
+        type: EntityPropertyType.Relationship,
+        protected: relationship._protected,
+        required: false,
+        schemaType: 'RELATIONSHIP',
+        additionalConstraints: [],
+        icon: relationship.icon,
+        cardinalityDefault: relationship.cardinalityDefault,
+        targetRules: relationship.targetRules,
+        allowPolymorphic: relationship.allowPolymorphic,
+        targetEntityTypeNames: sourceTypeName ? [sourceTypeName] : [],
+        isTargetSide: true,
+        sourceEntityTypeId: relationship.sourceEntityTypeId,
+        sourceEntityTypeKey: sourceEntityType?.key,
+      };
+    }
+
+    // Source-side: keep existing logic unchanged
+    const targetNames = relationship.targetRules
+      ?.map((rule) => {
+        if (rule.targetEntityTypeId) {
+          return entityTypeNameLookup.get(rule.targetEntityTypeId);
+        }
+        return undefined;
+      })
+      .filter((name): name is string => !!name);
+
+    return {
+      id: relationship.id,
+      label: relationship.name || relationship.id,
+      type: EntityPropertyType.Relationship,
+      protected: relationship._protected,
+      required: false,
+      schemaType: 'RELATIONSHIP',
+      additionalConstraints: [],
+      icon: relationship.icon,
+      cardinalityDefault: relationship.cardinalityDefault,
+      targetRules: relationship.targetRules,
+      allowPolymorphic: relationship.allowPolymorphic,
+      targetEntityTypeNames: targetNames,
+    };
+  };
 
   const convertSchemaPropertyToRow = (
     attribute: EntityAttributeDefinition,
+    semanticMeta?: EntityTypeSemanticMetadata,
   ): EntityTypeAttributeRow => {
     const { id, schema } = attribute;
     return {
@@ -200,10 +227,12 @@ export function useEntityTypeTable(
       type: EntityPropertyType.Attribute,
       required: schema.required || false,
       schemaType: schema.key,
-      // Todo. Set up additional constraints properly
       additionalConstraints: [],
       dataType: schema.type,
       unique: schema.unique || false,
+      icon: schema.icon,
+      classification: semanticMeta?.classification,
+      definition: semanticMeta?.definition,
     };
   };
 
@@ -211,9 +240,11 @@ export function useEntityTypeTable(
     const { schema, columns, relationships } = type;
     const rows: EntityTypeAttributeRow[] = [
       ...Object.entries(schema.properties || {}).map(([id, attr]) =>
-        convertSchemaPropertyToRow({ id, schema: attr }),
+        convertSchemaPropertyToRow({ id, schema: attr }, semanticBundle?.attributes?.[id]),
       ),
-      ...(relationships || []).map((rel) => convertRelationshipToRow(rel)),
+      ...(relationships || [])
+        .filter((rel) => rel.systemType !== SystemRelationshipType.ConnectedEntities)
+        .map((rel) => convertRelationshipToRow(rel)),
     ];
 
     return rows.toSorted((a, b) => {
@@ -230,7 +261,7 @@ export function useEntityTypeTable(
       // If neither is in columns array, maintain current columns
       return 0;
     });
-  }, [type]);
+  }, [type, semanticBundle, entityTypeNameLookup]);
 
   const onEdit = (row: EntityTypeAttributeRow) => {
     const definition = attributeLookup.get(row.id);

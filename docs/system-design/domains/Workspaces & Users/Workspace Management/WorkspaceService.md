@@ -6,7 +6,7 @@ tags:
 Domains:
   - "[[Workspaces & Users]]"
 Created: 2026-02-08
-Updated: 2026-02-08
+Updated: 2026-03-12
 ---
 # WorkspaceService
 
@@ -26,6 +26,7 @@ Manages workspace lifecycle (CRUD) and workspace membership. On workspace creati
 - Member management (add, remove, role update) with ownership protection
 - Activity logging for all workspace and member operations
 - Currency validation for workspace defaultCurrency
+- Workspace avatar upload via StorageService during workspace creation
 
 ---
 
@@ -36,12 +37,14 @@ Manages workspace lifecycle (CRUD) and workspace membership. On workspace creati
 - [[UserService]] — retrieve user for default workspace assignment
 - [[AuthTokenService]] — get current user ID from JWT
 - `ActivityService` — audit logging
+- [[StorageService]] — avatar file upload for workspace creation/update
 - [[WorkspaceSecurity]] — used indirectly via @PreAuthorize on methods
 
 ## Used By
 
 - `WorkspaceController` — REST API layer
 - [[WorkspaceInviteService]] — calls addMemberToWorkspace on invitation acceptance
+- [[OnboardingService]] — creates workspace during onboarding flow
 
 ---
 
@@ -50,9 +53,13 @@ Manages workspace lifecycle (CRUD) and workspace membership. On workspace creati
 **saveWorkspace:**
 - Creates workspace + OWNER member in single transaction
 - If request.id is null, creates new; otherwise updates existing
-- On creation: adds creator as OWNER with WorkspaceMemberEntity
-- Default workspace logic: if user has no memberships OR request.isDefault flag set, assigns workspace as user's defaultWorkspace via UserService
+- Refactored into extracted private methods for readability: `createOrUpdateWorkspaceEntity`, `createOwnerMember`, `uploadWorkspaceAvatar`, `logWorkspaceActivity`, `publishWorkspaceAnalytics`, `setDefaultWorkspaceIfNeeded`
+- On creation: adds creator as OWNER via `createOwnerMember`
+- Default workspace logic: `setDefaultWorkspaceIfNeeded` checks if user has no memberships OR request.isDefault flag set, assigns workspace as user's defaultWorkspace via UserService
 - Currency validation: uses Java Currency.getInstance, throws IllegalArgumentException for invalid codes
+- Avatar upload: if avatar file provided, `uploadWorkspaceAvatar` calls `storageService.uploadFileInternal(workspaceId, StorageDomain.AVATAR, file)` (uses internal method to bypass @PreAuthorize, since workspace role may not yet be in JWT during onboarding). Sets `entity.avatarUrl = uploadResponse.file.storageKey` and saves again
+- Analytics publishing: `publishWorkspaceAnalytics` publishes `WorkspaceCreatedEvent` or `WorkspaceUpdatedEvent` via ApplicationEventPublisher
+- Real-time event publishing: `saveWorkspaceTransactional` publishes `WorkspaceChangeEvent` via `ApplicationEventPublisher` with CREATE or UPDATE operation and workspace name in summary. This is separate from the analytics events — it targets the WebSocket event listener for real-time client updates.
 
 **deleteWorkspace:**
 - Soft-delete (sets deleted=true, deletedAt=now)
@@ -113,7 +120,6 @@ Updates member's role. Cannot assign or remove OWNER role.
 
 ## Gotchas
 
-- **Avatar upload TODO:** avatar parameter exists but implementation is marked TODO (line 90)
 - **Ownership transfer missing:** No dedicated method for ownership transfer — updateMemberRole explicitly blocks OWNER role changes with error message directing to "dedicated transfer ownership method"
 - **Soft delete incomplete:** deleteWorkspace does soft-delete but comment on line 160 says "Delete all members" with no implementation — member cascade unclear
 - **Transactional boundaries:** saveWorkspace is @Transactional, ensuring workspace + OWNER member creation is atomic
@@ -125,4 +131,15 @@ Updates member's role. Cannot assign or remove OWNER role.
 
 - [[WorkspaceSecurity]] — Authorization component
 - [[WorkspaceInviteService]] — Invitation workflow
+- [[StorageService]] — File storage for avatars
 - [[UserService]] — User profile management
+
+---
+
+## Changelog
+
+### 2026-03-14 — WebSocket event publishing
+
+- `saveWorkspaceTransactional` now publishes `WorkspaceChangeEvent` alongside existing analytics events.
+- Event includes workspace ID, user ID, operation type (CREATE/UPDATE), and workspace name in summary.
+- Consumed by [[WebSocketEventListener]] and broadcast to `/topic/workspace/{workspaceId}/workspace` after transaction commit.

@@ -13,13 +13,27 @@
  */
 
 import { mapValues } from '../runtime';
-import type { EntityRelationshipDefinition } from './EntityRelationshipDefinition';
+import type { SemanticMetadataBundle } from './SemanticMetadataBundle';
 import {
-    EntityRelationshipDefinitionFromJSON,
-    EntityRelationshipDefinitionFromJSONTyped,
-    EntityRelationshipDefinitionToJSON,
-    EntityRelationshipDefinitionToJSONTyped,
-} from './EntityRelationshipDefinition';
+    SemanticMetadataBundleFromJSON,
+    SemanticMetadataBundleFromJSONTyped,
+    SemanticMetadataBundleToJSON,
+    SemanticMetadataBundleToJSONTyped,
+} from './SemanticMetadataBundle';
+import type { SourceType } from './SourceType';
+import {
+    SourceTypeFromJSON,
+    SourceTypeFromJSONTyped,
+    SourceTypeToJSON,
+    SourceTypeToJSONTyped,
+} from './SourceType';
+import type { ColumnConfiguration } from './ColumnConfiguration';
+import {
+    ColumnConfigurationFromJSON,
+    ColumnConfigurationFromJSONTyped,
+    ColumnConfigurationToJSON,
+    ColumnConfigurationToJSONTyped,
+} from './ColumnConfiguration';
 import type { DisplayName } from './DisplayName';
 import {
     DisplayNameFromJSON,
@@ -34,13 +48,20 @@ import {
     EntityTypeAttributeColumnToJSON,
     EntityTypeAttributeColumnToJSONTyped,
 } from './EntityTypeAttributeColumn';
-import type { PairIntegerInteger } from './PairIntegerInteger';
+import type { RelationshipDefinition } from './RelationshipDefinition';
 import {
-    PairIntegerIntegerFromJSON,
-    PairIntegerIntegerFromJSONTyped,
-    PairIntegerIntegerToJSON,
-    PairIntegerIntegerToJSONTyped,
-} from './PairIntegerInteger';
+    RelationshipDefinitionFromJSON,
+    RelationshipDefinitionFromJSONTyped,
+    RelationshipDefinitionToJSON,
+    RelationshipDefinitionToJSONTyped,
+} from './RelationshipDefinition';
+import type { SemanticGroup } from './SemanticGroup';
+import {
+    SemanticGroupFromJSON,
+    SemanticGroupFromJSONTyped,
+    SemanticGroupToJSON,
+    SemanticGroupToJSONTyped,
+} from './SemanticGroup';
 import type { SchemaUUID } from './SchemaUUID';
 import {
     SchemaUUIDFromJSON,
@@ -55,13 +76,6 @@ import {
     IconToJSON,
     IconToJSONTyped,
 } from './Icon';
-import type { EntityCategory } from './EntityCategory';
-import {
-    EntityCategoryFromJSON,
-    EntityCategoryFromJSONTyped,
-    EntityCategoryToJSON,
-    EntityCategoryToJSONTyped,
-} from './EntityCategory';
 
 /**
  * 
@@ -113,10 +127,28 @@ export interface EntityType {
     identifierKey: string;
     /**
      * 
+     * @type {SemanticGroup}
+     * @memberof EntityType
+     */
+    semanticGroup: SemanticGroup;
+    /**
+     * 
+     * @type {SourceType}
+     * @memberof EntityType
+     */
+    sourceType: SourceType;
+    /**
+     * 
      * @type {string}
      * @memberof EntityType
      */
-    description?: string;
+    sourceIntegrationId?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof EntityType
+     */
+    readonly: boolean;
     /**
      * 
      * @type {string}
@@ -125,22 +157,16 @@ export interface EntityType {
     workspaceId?: string;
     /**
      * 
-     * @type {EntityCategory}
-     * @memberof EntityType
-     */
-    type: EntityCategory;
-    /**
-     * 
      * @type {SchemaUUID}
      * @memberof EntityType
      */
     schema: SchemaUUID;
     /**
      * 
-     * @type {Array<EntityRelationshipDefinition>}
+     * @type {ColumnConfiguration}
      * @memberof EntityType
      */
-    relationships?: Array<EntityRelationshipDefinition>;
+    columnConfiguration?: ColumnConfiguration;
     /**
      * 
      * @type {Array<EntityTypeAttributeColumn>}
@@ -153,6 +179,18 @@ export interface EntityType {
      * @memberof EntityType
      */
     entitiesCount: number;
+    /**
+     * 
+     * @type {Array<RelationshipDefinition>}
+     * @memberof EntityType
+     */
+    relationships: Array<RelationshipDefinition>;
+    /**
+     * 
+     * @type {SemanticMetadataBundle}
+     * @memberof EntityType
+     */
+    semantics?: SemanticMetadataBundle;
     /**
      * 
      * @type {Date}
@@ -177,12 +215,6 @@ export interface EntityType {
      * @memberof EntityType
      */
     updatedBy?: string;
-    /**
-     * 
-     * @type {PairIntegerInteger}
-     * @memberof EntityType
-     */
-    attributes: PairIntegerInteger;
 }
 
 
@@ -198,11 +230,13 @@ export function instanceOfEntityType(value: object): value is EntityType {
     if (!('name' in value) || value['name'] === undefined) return false;
     if (!('_protected' in value) || value['_protected'] === undefined) return false;
     if (!('identifierKey' in value) || value['identifierKey'] === undefined) return false;
-    if (!('type' in value) || value['type'] === undefined) return false;
+    if (!('semanticGroup' in value) || value['semanticGroup'] === undefined) return false;
+    if (!('sourceType' in value) || value['sourceType'] === undefined) return false;
+    if (!('readonly' in value) || value['readonly'] === undefined) return false;
     if (!('schema' in value) || value['schema'] === undefined) return false;
     if (!('columns' in value) || value['columns'] === undefined) return false;
     if (!('entitiesCount' in value) || value['entitiesCount'] === undefined) return false;
-    if (!('attributes' in value) || value['attributes'] === undefined) return false;
+    if (!('relationships' in value) || value['relationships'] === undefined) return false;
     return true;
 }
 
@@ -223,18 +257,21 @@ export function EntityTypeFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'name': DisplayNameFromJSON(json['name']),
         '_protected': json['protected'],
         'identifierKey': json['identifierKey'],
-        'description': json['description'] == null ? undefined : json['description'],
+        'semanticGroup': SemanticGroupFromJSON(json['semanticGroup']),
+        'sourceType': SourceTypeFromJSON(json['sourceType']),
+        'sourceIntegrationId': json['sourceIntegrationId'] == null ? undefined : json['sourceIntegrationId'],
+        'readonly': json['readonly'],
         'workspaceId': json['workspaceId'] == null ? undefined : json['workspaceId'],
-        'type': EntityCategoryFromJSON(json['type']),
         'schema': SchemaUUIDFromJSON(json['schema']),
-        'relationships': json['relationships'] == null ? undefined : ((json['relationships'] as Array<any>).map(EntityRelationshipDefinitionFromJSON)),
+        'columnConfiguration': json['columnConfiguration'] == null ? undefined : ColumnConfigurationFromJSON(json['columnConfiguration']),
         'columns': ((json['columns'] as Array<any>).map(EntityTypeAttributeColumnFromJSON)),
         'entitiesCount': json['entitiesCount'],
+        'relationships': ((json['relationships'] as Array<any>).map(RelationshipDefinitionFromJSON)),
+        'semantics': json['semantics'] == null ? undefined : SemanticMetadataBundleFromJSON(json['semantics']),
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'updatedBy': json['updatedBy'] == null ? undefined : json['updatedBy'],
-        'attributes': PairIntegerIntegerFromJSON(json['attributes']),
     };
 }
 
@@ -256,18 +293,21 @@ export function EntityTypeToJSONTyped(value?: EntityType | null, ignoreDiscrimin
         'name': DisplayNameToJSON(value['name']),
         'protected': value['_protected'],
         'identifierKey': value['identifierKey'],
-        'description': value['description'],
+        'semanticGroup': SemanticGroupToJSON(value['semanticGroup']),
+        'sourceType': SourceTypeToJSON(value['sourceType']),
+        'sourceIntegrationId': value['sourceIntegrationId'],
+        'readonly': value['readonly'],
         'workspaceId': value['workspaceId'],
-        'type': EntityCategoryToJSON(value['type']),
         'schema': SchemaUUIDToJSON(value['schema']),
-        'relationships': value['relationships'] == null ? undefined : ((value['relationships'] as Array<any>).map(EntityRelationshipDefinitionToJSON)),
+        'columnConfiguration': ColumnConfigurationToJSON(value['columnConfiguration']),
         'columns': ((value['columns'] as Array<any>).map(EntityTypeAttributeColumnToJSON)),
         'entitiesCount': value['entitiesCount'],
+        'relationships': ((value['relationships'] as Array<any>).map(RelationshipDefinitionToJSON)),
+        'semantics': SemanticMetadataBundleToJSON(value['semantics']),
         'createdAt': value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
         'updatedAt': value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
         'createdBy': value['createdBy'],
         'updatedBy': value['updatedBy'],
-        'attributes': PairIntegerIntegerToJSON(value['attributes']),
     };
 }
 

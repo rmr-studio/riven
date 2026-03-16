@@ -1,6 +1,6 @@
 package riven.core.service.integration
 
-import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -19,6 +19,7 @@ import riven.core.repository.integration.IntegrationConnectionRepository
 import riven.core.repository.integration.IntegrationDefinitionRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.integration.materialization.TemplateMaterializationService
 import riven.core.util.ServiceUtil.findOrThrow
 import java.util.*
 
@@ -34,11 +35,12 @@ class IntegrationConnectionService(
     private val connectionRepository: IntegrationConnectionRepository,
     private val definitionRepository: IntegrationDefinitionRepository,
     private val nangoClientWrapper: NangoClientWrapper,
+    private val templateMaterializationService: TemplateMaterializationService,
     private val activityService: ActivityService,
     private val authTokenService: AuthTokenService,
-    private val transactionTemplate: TransactionTemplate
+    private val transactionTemplate: TransactionTemplate,
+    private val logger: KLogger
 ) {
-    private val logger = KotlinLogging.logger {}
 
     // ------ Public Read Operations ------
 
@@ -142,13 +144,26 @@ class IntegrationConnectionService(
             connection.connectionMetadata = (connection.connectionMetadata ?: emptyMap()) + metadata
         }
 
-        return connectionRepository.save(connection).also {
+        val saved = connectionRepository.save(connection).also {
             logger.info { "Updated connection $connectionId status: $oldStatus -> $newStatus" }
             logConnectionActivity(
                 OperationType.UPDATE, userId, workspaceId, it,
                 mapOf("oldStatus" to oldStatus.name, "newStatus" to newStatus.name)
             )
         }
+
+        if (newStatus == ConnectionStatus.CONNECTED) {
+            try {
+                triggerMaterialization(workspaceId, saved.integrationId)
+            } catch (e: Exception) {
+                logger.error(e) {
+                    "Materialization failed for workspace=$workspaceId, " +
+                        "integration=${saved.integrationId}. Connection status remains CONNECTED."
+                }
+            }
+        }
+
+        return saved
     }
 
     /**
@@ -177,7 +192,90 @@ class IntegrationConnectionService(
         return transitionToDisconnected(workspaceId, connectionId, userId)
     }
 
+    /**
+     * Enable an integration connection in a single action.
+     *
+     * Creates a new connection with CONNECTED status (Nango has already handled OAuth),
+     * or reconnects a DISCONNECTED connection. Returns existing connection if already CONNECTED.
+     *
+     * @param workspaceId the workspace ID
+     * @param integrationId the integration definition ID
+     * @param nangoConnectionId the Nango connection ID from the frontend OAuth flow
+     * @return the connection entity
+     * @throws ConflictException if a connection exists in a non-terminal state
+     */
+    @Transactional
+    @PreAuthorize("@workspaceSecurity.hasWorkspaceRole(#workspaceId, T(riven.core.enums.workspace.WorkspaceRoles).ADMIN)")
+    fun enableConnection(
+        workspaceId: UUID,
+        integrationId: UUID,
+        nangoConnectionId: String
+    ): IntegrationConnectionEntity {
+        val userId = authTokenService.getUserId()
+        findOrThrow { definitionRepository.findById(integrationId) }
+
+        val existing = connectionRepository.findByWorkspaceIdAndIntegrationId(workspaceId, integrationId)
+
+        if (existing != null) {
+            return when (existing.status) {
+                ConnectionStatus.CONNECTED -> existing
+                ConnectionStatus.DISCONNECTED -> reconnectConnection(existing, nangoConnectionId, userId, workspaceId)
+                else -> throw ConflictException(
+                    "Connection exists with status ${existing.status} — cannot enable"
+                )
+            }
+        }
+
+        val connection = IntegrationConnectionEntity(
+            workspaceId = workspaceId,
+            integrationId = integrationId,
+            nangoConnectionId = nangoConnectionId,
+            status = ConnectionStatus.CONNECTED
+        )
+
+        return connectionRepository.save(connection).also {
+            logger.info { "Created integration connection for workspace=$workspaceId, integration=$integrationId" }
+            logConnectionActivity(OperationType.CREATE, userId, workspaceId, it)
+        }
+    }
+
     // ------ Private Helpers ------
+
+    /**
+     * Reconnects a DISCONNECTED connection by updating its status and Nango connection ID.
+     */
+    private fun reconnectConnection(
+        connection: IntegrationConnectionEntity,
+        nangoConnectionId: String,
+        userId: UUID,
+        workspaceId: UUID
+    ): IntegrationConnectionEntity {
+        connection.status = ConnectionStatus.CONNECTED
+        connection.nangoConnectionId = nangoConnectionId
+        return connectionRepository.save(connection).also {
+            logger.info { "Reconnected integration connection ${connection.id} for workspace=$workspaceId" }
+            logConnectionActivity(
+                OperationType.UPDATE, userId, workspaceId, it,
+                mapOf("previousStatus" to ConnectionStatus.DISCONNECTED.name, "newStatus" to ConnectionStatus.CONNECTED.name)
+            )
+        }
+    }
+
+    /**
+     * Triggers template materialization when an integration connection becomes CONNECTED.
+     * Creates workspace-scoped entity types and relationships from catalog definitions.
+     */
+    private fun triggerMaterialization(workspaceId: UUID, integrationId: UUID) {
+        val integration = definitionRepository.findById(integrationId).orElse(null)
+        if (integration != null) {
+            val result = templateMaterializationService.materializeIntegrationTemplates(workspaceId, integration.slug, integrationId)
+            logger.info {
+                "Materialized integration templates for workspace=$workspaceId, integration=${integration.slug}: " +
+                    "created=${result.entityTypesCreated}, restored=${result.entityTypesRestored}, " +
+                    "relationships=${result.relationshipsCreated}"
+            }
+        }
+    }
 
     /**
      * Transitions a connection to DISCONNECTING state in its own transaction,

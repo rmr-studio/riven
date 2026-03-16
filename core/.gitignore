@@ -42,5 +42,9 @@ out/
 .kotlin
 
 ### Planning ###
-.planning/*
-!.planning/codebase/.pr-review/
+.planning/
+.pr-review/
+
+docs/plans
+docs/superpowers
+storage

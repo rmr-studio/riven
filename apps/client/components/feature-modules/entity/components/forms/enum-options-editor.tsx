@@ -1,15 +1,15 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@riven/ui/button';
+import { Input } from '@riven/ui/input';
 import { FormDescription, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@riven/ui/select';
 import { OptionSortingType } from '@/lib/types/common';
 import {
   DndContext,

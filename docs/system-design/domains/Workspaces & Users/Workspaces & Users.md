@@ -4,7 +4,7 @@ tags:
   - domain/workspace
   - domain/user
 Created: 2026-02-08
-Updated: 2026-02-09
+Updated: 2026-03-07
 ---
 # Domain: Workspaces & Users
 
@@ -46,6 +46,7 @@ flowchart TD
 - JWT authentication and authority extraction (token decoding, claims parsing)
 - Role-based authorization (@PreAuthorize expressions via WorkspaceSecurity)
 - Row-level security activation via workspace_members table
+- Real-time event broadcasting (WebSocket/STOMP infrastructure, event listener, security interceptor)
 
 ### This Domain Does NOT Own
 
@@ -63,7 +64,9 @@ flowchart TD
 | [[Workspace Management]] | Workspace CRUD, membership management, activity logging |
 | [[Team Management]] | Invitation workflow, member onboarding (future: team features) |
 | [[User Management]] | User profile CRUD, session-based user retrieval, default workspace |
+| [[2. Areas/2.1 Startup & Business/Riven/2. System Design/domains/Workspaces & Users/Onboarding/Onboarding]] | Single-request onboarding flow: workspace creation, profile setup, template installation, team invites |
 | [[Auth & Authorization]] | JWT decoding, authority extraction, role-based access control, workspace security checks |
+| [[Real-time Events]] | WebSocket/STOMP infrastructure for broadcasting workspace-scoped domain events to connected clients |
 
 ### Integrations
 
@@ -79,6 +82,7 @@ flowchart TD
 | ----------- | ------------------------ | ----------- |
 | [[Auth & Authorization]] | User-facing | JWT decode -> authority extraction -> @PreAuthorize -> RLS (Phase 4) |
 | [[Invitation Acceptance]] | User-facing | Create invite -> token -> accept -> add member (Phase 4) |
+| [[Flow - Domain Event Broadcasting]] | Internal | Service → ApplicationEventPublisher → WebSocketEventListener → STOMP topic (cross-domain) |
 
 ---
 
@@ -91,7 +95,7 @@ flowchart TD
 | Workspace | Multi-tenant container | id, name, plan, defaultCurrency, memberCount, deleted |
 | WorkspaceMember | User-workspace association with role | workspaceId, userId, role |
 | WorkspaceInvite | Pending invitation | workspaceId, email, role, inviteStatus, token, invitedBy |
-| User | Application user profile | id, name, email, phone, avatarUrl, defaultWorkspace |
+| User | Application user profile | id, name, email, phone, avatarUrl, defaultWorkspace, onboardingCompletedAt |
 
 ### Database Tables
 
@@ -119,7 +123,8 @@ flowchart TD
 
 | Domain | What We Consume | Via Component | Related Flow |
 |--------|----------------|---------------|--------------|
-| (None — infrastructure domain) | — | — | — |
+| [[Storage]] | File upload for workspace and user avatars | [[StorageService]] | [[Flow - File Upload]] |
+| [[Catalog]] | Template and bundle installation during onboarding | [[TemplateInstallationService]] | [[2. Areas/2.1 Startup & Business/Riven/2. System Design/domains/Workspaces & Users/Onboarding/Onboarding]] |
 
 ### Consumed By
 
@@ -127,6 +132,7 @@ flowchart TD
 |----------|------------------|---------------|--------------|
 | [[Workflows]] | Workspace scoping (RLS), @PreAuthorize authorization | [[WorkspaceSecurity]], RLS via workspace_members | [[Auth & Authorization]], [[Queue Processing]] |
 | [[Entities]] | Workspace scoping (RLS), @PreAuthorize authorization, user context | [[WorkspaceSecurity]], [[AuthTokenService]], RLS via workspace_members | [[Auth & Authorization]], [[Entity CRUD]] |
+| [[Storage]] | User identity, workspace authorization | [[AuthTokenService]], [[WorkspaceSecurity]] | [[Flow - File Upload]] |
 
 ---
 
@@ -155,3 +161,5 @@ flowchart TD
 | Date | Change | Feature/ADR |
 | ---- | ------ | ----------- |
 | 2026-02-08 | Domain structure created | [[03-01-PLAN]] |
+| 2026-03-12 | Added [[2. Areas/2.1 Startup & Business/Riven/2. System Design/domains/Workspaces & Users/Onboarding/Onboarding]] subdomain; `onboardingCompletedAt` field on User; new dependency on [[Catalog]] domain | [[2. Areas/2.1 Startup & Business/Riven/2. System Design/domains/Workspaces & Users/Onboarding/Onboarding]] |
+| 2026-03-14 | Added [[Real-time Events]] subdomain — WebSocket/STOMP infrastructure with JWT security interceptor, transactional event listener, workspace-scoped topic broadcasting | WebSocket Notifications |

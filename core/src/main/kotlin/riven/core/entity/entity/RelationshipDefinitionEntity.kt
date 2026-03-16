@@ -1,6 +1,7 @@
 package riven.core.entity.entity
 
 import jakarta.persistence.*
+import org.hibernate.annotations.SQLRestriction
 import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.enums.common.icon.IconColour
 import riven.core.enums.common.icon.IconType
@@ -18,6 +19,7 @@ import java.util.*
         Index(name = "idx_rel_def_workspace_source", columnList = "workspace_id, source_entity_type_id"),
     ]
 )
+@SQLRestriction("deleted = false")
 data class RelationshipDefinitionEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -41,9 +43,6 @@ data class RelationshipDefinitionEntity(
     @Column(name = "icon_value", nullable = false)
     var iconColour: IconColour = IconColour.NEUTRAL,
 
-    @Column(name = "allow_polymorphic", nullable = false)
-    var allowPolymorphic: Boolean = false,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "cardinality_default", nullable = false)
     var cardinalityDefault: EntityRelationshipCardinality,
@@ -56,7 +55,9 @@ data class RelationshipDefinitionEntity(
     val systemType: SystemRelationshipType? = null,
 ) : AuditableSoftDeletableEntity() {
 
-    fun toModel(targetRules: List<RelationshipTargetRule> = emptyList()): RelationshipDefinition {
+    fun toModel(
+        targetRules: List<RelationshipTargetRule> = emptyList(),
+    ): RelationshipDefinition {
         val id = requireNotNull(this.id) { "RelationshipDefinitionEntity ID cannot be null" }
         return RelationshipDefinition(
             id = id,
@@ -64,7 +65,6 @@ data class RelationshipDefinitionEntity(
             sourceEntityTypeId = this.sourceEntityTypeId,
             name = this.name,
             icon = Icon(this.iconType, this.iconColour),
-            allowPolymorphic = this.allowPolymorphic,
             cardinalityDefault = this.cardinalityDefault,
             protected = this.protected,
             systemType = this.systemType,

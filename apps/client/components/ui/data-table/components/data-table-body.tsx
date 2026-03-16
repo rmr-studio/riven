@@ -1,10 +1,11 @@
 'use client';
 
-import { TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { TableBody, TableCell, TableRow } from '@riven/ui/table';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Row, Table as TanStackTable } from '@tanstack/react-table';
 import { ReactNode, useMemo } from 'react';
-import type { ColumnResizingConfig, RowActionsConfig } from '../data-table.types';
+import { useDataTableStore } from '../data-table-provider';
+import type { ActionColumnConfig, ColumnResizingConfig, RowActionsConfig } from '../data-table.types';
 import { DraggableRow } from './draggable-row';
 
 interface DataTableBodyProps<TData> {
@@ -21,7 +22,11 @@ interface DataTableBodyProps<TData> {
   finalColumnsCount: number;
   enableInlineEdit?: boolean;
   focusedCell?: { rowId: string; columnId: string } | null;
-  alwaysShowActionHandles?: boolean;
+  actionColumnConfig?: ActionColumnConfig;
+  /** Whether the header has an end-of-header content column (needs matching empty td) */
+  hasEndOfHeaderContent?: boolean;
+  /** Whether the header has a row actions column (needs matching td) */
+  hasRowActions?: boolean;
 }
 
 export function DataTableBody<TData>({
@@ -38,11 +43,15 @@ export function DataTableBody<TData>({
   finalColumnsCount,
   enableInlineEdit,
   focusedCell,
-  alwaysShowActionHandles = false,
+  actionColumnConfig,
+  hasEndOfHeaderContent = false,
+  hasRowActions = false,
 }: DataTableBodyProps<TData>) {
+  const tableData = useDataTableStore<TData, TData[]>((state) => state.tableData);
+
   const rowIds = useMemo(() => {
     return table.getRowModel().rows.map((row) => row.id);
-  }, [table]);
+  }, [table, tableData]);
 
   // Filter out disabled rows from sortable context to keep them fixed in position
   const sortableRowIds = useMemo(() => {
@@ -57,11 +66,14 @@ export function DataTableBody<TData>({
 
   const rows = table.getRowModel().rows;
 
+  // Total columns including extra header-only columns (for colSpan on empty state)
+  const totalColSpan = finalColumnsCount + (hasRowActions ? 1 : 0) + (hasEndOfHeaderContent ? 1 : 0);
+
   if (!rows?.length) {
     return (
       <TableBody>
         <TableRow>
-          <TableCell colSpan={finalColumnsCount} className="h-24 text-center text-muted-foreground">
+          <TableCell colSpan={totalColSpan} className="h-24 text-center text-muted-foreground">
             {emptyMessage}
           </TableCell>
         </TableRow>
@@ -92,7 +104,8 @@ export function DataTableBody<TData>({
             isSelectionEnabled={isSelectionEnabled}
             enableInlineEdit={enableInlineEdit}
             focusedCell={focusedCell}
-            alwaysShowActionHandles={alwaysShowActionHandles}
+            actionColumnConfig={actionColumnConfig}
+            hasEndOfHeaderContent={hasEndOfHeaderContent}
           />
         );
       })}

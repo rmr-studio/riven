@@ -25,7 +25,7 @@ Riven is a unified business tooling SaaS platform that aims to connect all tools
 
 **Feature organization:** Hybrid. Feature code lives in `components/feature-modules/{feature}/` with subdirectories: `components/`, `hooks/query/`, `hooks/mutation/`, `hooks/form/`, `service/`, `store/` (or `stores/`), `context/`. Shared UI lives in `components/ui/`. Shared hooks in `hooks/`. Shared utils in `lib/util/`.
 
-**Import conventions:** Path alias `@/*` maps to project root. Direct imports — no barrel exports at feature-module level. Domain type barrels exist at `lib/types/{domain}/index.ts`. Import generated types from domain barrels (`@/lib/types/entity`), not from `@/lib/types/models/` directly.
+**Import conventions:** Always use the `@/*` path alias — never use relative imports. This applies to all imports: intra-feature, cross-feature, shared, library, and test files. Direct imports — no barrel exports at feature-module level. Domain type barrels exist at `lib/types/{domain}/index.ts`. Import generated types from domain barrels (`@/lib/types/entity`), not from `@/lib/types/models/` directly.
 
 ## Data Fetching and State
 
@@ -52,15 +52,35 @@ Riven is a unified business tooling SaaS platform that aims to connect all tools
 
 ### Zustand
 
-- **5 stores**, all feature-scoped:
+All new stores **must** follow the factory + context + provider pattern. Do not use global singletons (`create()` at module level).
+
+**Required pattern (3 files):**
+
+1. **Store file** (`stores/{name}.store.ts`):
+   - Separate `State` and `Actions` interfaces, combined as `type XxxStore = XxxState & XxxActions`.
+   - Export a `createXxxStore()` factory function that returns `StoreApi<XxxStore>`.
+   - Use `createStore` (from `zustand`) with `subscribeWithSelector` middleware.
+   - Do not export selector hooks from this file — those belong in the provider.
+
+2. **Provider file** (`context/{name}-provider.tsx`):
+   - `'use client'` directive.
+   - Create a `React.createContext<XxxStoreApi | undefined>(undefined)`.
+   - Provider component creates the store once via `useRef` + factory, passes it through context.
+   - Export a `useXxxStore<T>(selector: (store: XxxStore) => T): T` hook that calls `useStore(context, selector)` with a guard that throws if context is missing.
+   - Export convenience selector hooks here (e.g., `useXxxNodes`, `useXxxActions`) that call `useXxxStore` internally.
+
+3. **Consumers** import hooks from the provider, never from the store file directly.
+
+**Reference implementations:** `workspace-provider.tsx`, `entity-provider.tsx`, `workflow-canvas-provider.tsx`.
+
+**Existing stores:**
   - `workspace.store.ts` — selected workspace ID. Simple `createStore`, no middleware. Persists to localStorage manually.
-  - `entity.store.ts` — entity draft mode (new entity creation). `create` + `subscribeWithSelector`. Holds react-hook-form instance.
-  - `configuration.store.ts` — entity type config editing. `create` + `subscribeWithSelector`. localStorage draft persistence with 7-day staleness.
-  - `workflow-canvas.store.ts` — React Flow nodes/edges/selection. `create` + `subscribeWithSelector`.
-  - `editor-store.ts` — Rich text editor state. Global singleton (`create` not `createStore`). `subscribeWithSelector`. Reducer-based dispatch pattern.
-- Pattern: Separate `State` and `Actions` interfaces. Factory function `createXxxStore()` returns `StoreApi`. Context provider wraps children. Custom hook with selector: `useXxxStore(selector)`.
-- **Exception:** `editor-store.ts` is a global singleton with exported selector hooks (`useBlockNode`, `useIsNodeActive`, etc.) and uses `useShallow` for array/object selectors.
-- Access via selectors — the codebase follows this correctly (e.g., `useWorkspaceStore((s) => s.selectedWorkspaceId)`).
+  - `entity.store.ts` — entity draft mode (new entity creation). `createStore` + `subscribeWithSelector`. Holds react-hook-form instance.
+  - `configuration.store.ts` — entity type config editing. `createStore` + `subscribeWithSelector`. localStorage draft persistence with 7-day staleness.
+  - `workflow-canvas.store.ts` — React Flow nodes/edges/selection. `createStore` + `subscribeWithSelector`.
+  - `editor-store.ts` — Rich text editor state. Legacy global singleton — do not follow this pattern for new stores.
+
+**Do not:** use `create()` for global singletons, export `useShallow` selector hooks from store files, or access stores without going through the provider's context hook.
 
 ## Component Conventions
 
@@ -84,6 +104,7 @@ Riven is a unified business tooling SaaS platform that aims to connect all tools
 
 ## Styling Rules
 
+- **Always use Tailwind's built-in utility classes** — never use arbitrary values (e.g., `text-[11px]`, `w-[200px]`) when a standard class exists (`text-xs`, `w-52`). Arbitrary values are a last resort for truly custom one-off values with no Tailwind equivalent.
 - Tailwind 4 with CSS-based config in `app/globals.css` (no `tailwind.config.ts`).
 - Color tokens via CSS custom properties using oklch. Semantic tokens: `--background`, `--foreground`, `--card`, `--primary`, `--muted`, `--destructive`, `--edit`, `--archive`, plus sidebar and chart variants.
 - Dark mode: class-based toggling via `next-themes`. `.dark` class on `<html>`. Custom variant: `@custom-variant dark (&:is(.dark *))`.

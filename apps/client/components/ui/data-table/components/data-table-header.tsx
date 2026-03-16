@@ -1,10 +1,10 @@
 'use client';
 
-import { TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { cn } from '@/lib/util/utils';
+import { TableHead, TableHeader, TableRow } from '@riven/ui/table';
+import { cn } from '@riven/utils';
 import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { Table as TanStackTable, flexRender } from '@tanstack/react-table';
-import { useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { useDataTableStore } from '../data-table-provider';
 import type { ColumnResizingConfig, RowActionsConfig } from '../data-table.types';
 import { DraggableColumnHeader } from './draggable-column-header';
@@ -15,6 +15,8 @@ interface DataTableHeaderProps<TData> {
   columnResizing?: ColumnResizingConfig;
   rowActions?: RowActionsConfig<TData>;
   addingNewEntry: boolean;
+  onHeaderClick?: (columnId: string, anchorEl: HTMLElement) => void;
+  endOfHeaderContent?: ReactNode;
 }
 
 export function DataTableHeader<TData>({
@@ -23,6 +25,8 @@ export function DataTableHeader<TData>({
   columnResizing,
   rowActions,
   addingNewEntry,
+  onHeaderClick,
+  endOfHeaderContent,
 }: DataTableHeaderProps<TData>) {
   const isMounted = useDataTableStore<TData, boolean>((state) => state.isMounted);
 
@@ -36,7 +40,7 @@ export function DataTableHeader<TData>({
   }, [table]);
 
   return (
-    <TableHeader className="bg-background">
+    <TableHeader className="sticky top-0 z-10 bg-background">
       {table.getHeaderGroups().map((headerGroup) => (
         <TableRow key={headerGroup.id}>
           {/* Column headers */}
@@ -49,18 +53,28 @@ export function DataTableHeader<TData>({
                   enableColumnOrdering={enableColumnOrdering}
                   columnResizing={columnResizing}
                   addingNewEntry={addingNewEntry}
+                  onHeaderClick={onHeaderClick}
                 />
               ))}
             </SortableContext>
           ) : (
             headerGroup.headers.map((header) => {
+              const isActionsColumn = header.id === 'actions';
               return (
                 <TableHead
                   key={header.id}
-                  className={cn('relative border-l px-3 py-2 first:border-l-transparent')}
+                  className={cn(
+                    'relative border-l px-3 py-2 first:border-l-transparent',
+                    onHeaderClick && !isActionsColumn && 'cursor-pointer hover:bg-muted/50',
+                  )}
                   style={{
                     width: `${header.getSize()}px`,
                   }}
+                  onClick={
+                    onHeaderClick && !isActionsColumn
+                      ? (e) => onHeaderClick(header.id, e.currentTarget)
+                      : undefined
+                  }
                 >
                   <div className="flex items-center justify-between">
                     {header.isPlaceholder
@@ -91,6 +105,13 @@ export function DataTableHeader<TData>({
           {rowActions?.enabled && (
             <TableHead className="w-[50px]">
               <span className="sr-only">Actions</span>
+            </TableHead>
+          )}
+
+          {/* End-of-header content (e.g. add property, visibility buttons) */}
+          {endOfHeaderContent && (
+            <TableHead className="w-auto border-l px-1">
+              {endOfHeaderContent}
             </TableHead>
           )}
         </TableRow>

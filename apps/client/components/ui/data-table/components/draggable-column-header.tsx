@@ -1,10 +1,11 @@
 'use client';
 
-import { TableHead } from '@/components/ui/table';
-import { cn } from '@/lib/util/utils';
+import { TableHead } from '@riven/ui/table';
+import { cn } from '@riven/utils';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Header, flexRender } from '@tanstack/react-table';
+import { GripVertical } from 'lucide-react';
 import { useCallback } from 'react';
 import { useDataTableActions, useDataTableStore } from '../data-table-provider';
 import type { ColumnResizingConfig } from '../data-table.types';
@@ -14,6 +15,7 @@ interface DraggableColumnHeaderProps<TData, TValue> {
   enableColumnOrdering: boolean;
   columnResizing?: ColumnResizingConfig;
   addingNewEntry: boolean;
+  onHeaderClick?: (columnId: string, anchorEl: HTMLElement) => void;
 }
 
 export function DraggableColumnHeader<TData, TValue>({
@@ -21,6 +23,7 @@ export function DraggableColumnHeader<TData, TValue>({
   enableColumnOrdering,
   columnResizing,
   addingNewEntry,
+  onHeaderClick,
 }: DraggableColumnHeaderProps<TData, TValue>) {
   const isMounted = useDataTableStore<TData, boolean>((state) => state.isMounted);
   const resizingColumnId = useDataTableStore<TData, string | null>(
@@ -65,6 +68,14 @@ export function DraggableColumnHeader<TData, TValue>({
     [header, setResizingColumnId],
   );
 
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLTableCellElement>) => {
+      if (!onHeaderClick || isActionsColumn || isAnyColumnResizing || isDragging) return;
+      onHeaderClick(header.id, e.currentTarget);
+    },
+    [onHeaderClick, header.id, isActionsColumn, isAnyColumnResizing, isDragging],
+  );
+
   const style = isMounted
     ? {
         transform: isAnyColumnResizing ? undefined : CSS.Transform.toString(transform),
@@ -82,16 +93,31 @@ export function DraggableColumnHeader<TData, TValue>({
       style={style}
       key={header.id}
       className={cn(
-        'relative border-l px-3 py-2 first:border-l-transparent',
-        enableColumnOrdering && !isActionsColumn && 'cursor-move',
+        'group/header relative border-l px-3 py-2 first:border-l-transparent',
+        onHeaderClick && !isActionsColumn && 'cursor-pointer hover:bg-muted/50',
       )}
-      {...(isMounted && enableColumnOrdering ? attributes : {})}
-      {...(isMounted && enableColumnOrdering ? listeners : {})}
+      onClick={handleClick}
     >
       <div className="flex items-center justify-between">
-        {header.isPlaceholder
-          ? null
-          : flexRender(header.column.columnDef.header, header.getContext())}
+        <div className="flex items-center gap-1">
+          {/* Drag handle for column reordering — visible on hover */}
+          {enableColumnOrdering && !isActionsColumn && isMounted && (
+            <button
+              className={cn(
+                'cursor-grab text-muted-foreground/50 hover:text-muted-foreground active:cursor-grabbing',
+                'shrink-0 -ml-1 opacity-0 transition-opacity duration-150 group-hover/header:opacity-100',
+              )}
+              {...attributes}
+              {...listeners}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <GripVertical className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {header.isPlaceholder
+            ? null
+            : flexRender(header.column.columnDef.header, header.getContext())}
+        </div>
       </div>
 
       {columnResizing?.enabled && header.column.getCanResize() && !addingNewEntry && (

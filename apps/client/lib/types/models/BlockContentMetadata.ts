@@ -43,6 +43,12 @@ import {
 export interface BlockContentMetadata {
     /**
      * 
+     * @type {boolean}
+     * @memberof BlockContentMetadata
+     */
+    deletable: boolean;
+    /**
+     * 
      * @type {BlockMeta}
      * @memberof BlockContentMetadata
      */
@@ -53,12 +59,6 @@ export interface BlockContentMetadata {
      * @memberof BlockContentMetadata
      */
     readonly: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof BlockContentMetadata
-     */
-    deletable: boolean;
     /**
      * 
      * @type {BlockMetadataType}
@@ -85,9 +85,9 @@ export interface BlockContentMetadata {
  * Check if a given object implements the BlockContentMetadata interface.
  */
 export function instanceOfBlockContentMetadata(value: object): value is BlockContentMetadata {
+    if (!('deletable' in value) || value['deletable'] === undefined) return false;
     if (!('meta' in value) || value['meta'] === undefined) return false;
     if (!('readonly' in value) || value['readonly'] === undefined) return false;
-    if (!('deletable' in value) || value['deletable'] === undefined) return false;
     if (!('type' in value) || value['type'] === undefined) return false;
     if (!('data' in value) || value['data'] === undefined) return false;
     return true;
@@ -103,9 +103,9 @@ export function BlockContentMetadataFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
+        'deletable': json['deletable'],
         'meta': BlockMetaFromJSON(json['meta']),
         'readonly': json['readonly'],
-        'deletable': json['deletable'],
         'type': BlockMetadataTypeFromJSON(json['type']),
         'data': json['data'],
         'listConfig': json['listConfig'] == null ? undefined : BlockListConfigurationFromJSON(json['listConfig']),
@@ -123,9 +123,9 @@ export function BlockContentMetadataToJSONTyped(value?: BlockContentMetadata | n
 
     return {
         
+        'deletable': value['deletable'],
         'meta': BlockMetaToJSON(value['meta']),
         'readonly': value['readonly'],
-        'deletable': value['deletable'],
         'type': BlockMetadataTypeToJSON(value['type']),
         'data': value['data'],
         'listConfig': BlockListConfigurationToJSON(value['listConfig']),

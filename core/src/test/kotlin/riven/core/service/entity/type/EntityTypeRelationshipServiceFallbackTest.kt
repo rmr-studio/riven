@@ -99,7 +99,6 @@ class EntityTypeRelationshipServiceFallbackTest : BaseServiceTest() {
 
         assertNotNull(result.id)
         assertTrue(result.protected)
-        assertTrue(result.allowPolymorphic)
         assertEquals(EntityRelationshipCardinality.MANY_TO_MANY, result.cardinalityDefault)
         assertEquals(SystemRelationshipType.CONNECTED_ENTITIES, result.systemType)
         assertEquals(workspaceId, result.workspaceId)
@@ -108,7 +107,6 @@ class EntityTypeRelationshipServiceFallbackTest : BaseServiceTest() {
 
         verify(definitionRepository).save(argThat<RelationshipDefinitionEntity> {
             this.protected &&
-                allowPolymorphic &&
                 cardinalityDefault == EntityRelationshipCardinality.MANY_TO_MANY &&
                 systemType == SystemRelationshipType.CONNECTED_ENTITIES
         })
@@ -124,7 +122,6 @@ class EntityTypeRelationshipServiceFallbackTest : BaseServiceTest() {
             sourceEntityTypeId = entityTypeId,
             name = "Connected Entities",
             protected = true,
-            allowPolymorphic = true,
         )
 
         whenever(
