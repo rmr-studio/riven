@@ -21,6 +21,11 @@ export interface SearchConfig<T> {
   debounceMs?: number;
   disabled?: boolean;
   onSearchChange?: (value: string) => void;
+  /**
+   * When true, disables client-side globalFilterFn.
+   * The parent handles filtering server-side; the search input just calls onSearchChange.
+   */
+  serverSide?: boolean;
 }
 
 // ============================================================================
@@ -53,6 +58,32 @@ export interface FilterConfig<T> {
   filters: ColumnFilter<T>[];
   disabled?: boolean;
   onFiltersChange?: (filters: Record<string, any>) => void;
+}
+
+// ============================================================================
+// Infinite Scroll Configuration
+// ============================================================================
+
+export interface InfiniteScrollConfig {
+  /** Called when the sentinel element becomes visible — fetch next page */
+  onLoadMore: () => void;
+  /** Whether a next-page fetch is in progress */
+  isLoadingMore: boolean;
+  /** Whether more pages exist */
+  hasMore: boolean;
+}
+
+// ============================================================================
+// Server-Side Sorting Configuration
+// ============================================================================
+
+export interface ServerSideSortingConfig {
+  /** Enable server-side sorting (disables client-side getSortedRowModel) */
+  enabled: boolean;
+  /** Current sorting state (controlled by parent) */
+  sorting: import('@tanstack/react-table').SortingState;
+  /** Called when user toggles column sort — parent updates queryKey */
+  onSortingChange: (sorting: import('@tanstack/react-table').SortingState) => void;
 }
 
 // ============================================================================
