@@ -15,6 +15,14 @@ export function DataTableSearchInput<TData>({ config }: DataTableSearchInputProp
 
   // Debounce search value to global filter
   useEffect(() => {
+    if (config.serverSide) {
+      // In server-side mode, call onSearchChange immediately (no debounce here —
+      // the parent's useEntitySearch hook handles debouncing before the queryKey)
+      config.onSearchChange?.(searchValue);
+      return;
+    }
+
+    // Client-side mode: debounce before setting globalFilter for in-memory filtering
     const debounceMs = config.debounceMs ?? 300;
     const timer = setTimeout(() => {
       setGlobalFilter(searchValue);
@@ -22,9 +30,10 @@ export function DataTableSearchInput<TData>({ config }: DataTableSearchInputProp
     }, debounceMs);
 
     return () => clearTimeout(timer);
-  }, [searchValue, config.debounceMs, setGlobalFilter, config]);
+  }, [searchValue, config.debounceMs, config.serverSide, setGlobalFilter, config]);
 
   const resultCount = table ? table.getFilteredRowModel().rows.length : 0;
+  const showResultCount = searchValue && !config.serverSide;
 
   return (
     <div className="flex min-w-[200px] flex-1 items-center gap-2">
@@ -46,7 +55,7 @@ export function DataTableSearchInput<TData>({ config }: DataTableSearchInputProp
           </button>
         )}
       </div>
-      {searchValue && (
+      {showResultCount && (
         <p className="text-sm whitespace-nowrap text-muted-foreground">
           {resultCount} result{resultCount !== 1 ? 's' : ''}
         </p>
