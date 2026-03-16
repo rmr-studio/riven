@@ -98,7 +98,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Infrastructure | 3/3 | Complete   | 2026-03-15 |
-| 2. Matching Pipeline | 0/4 | Planning complete | - |
+| 2. Matching Pipeline | 1/4 | In Progress|  |
 | 3. Trigger and Dispatch | 0/TBD | Not started | - |
 | 4. Confirmation and Clusters | 0/TBD | Not started | - |
 | 5. REST API | 0/TBD | Not started | - |

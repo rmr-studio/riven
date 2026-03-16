@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-infrastructure-02-PLAN.md
-last_updated: "2026-03-15T23:24:17.181Z"
+stopped_at: Completed 02-matching-pipeline-01-PLAN.md
+last_updated: "2026-03-16T07:45:37.274Z"
 last_activity: 2026-03-16 — Roadmap created
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 7
+  completed_plans: 4
   percent: 20
 ---
 
@@ -52,6 +52,7 @@ Progress: [██░░░░░░░░] 20%
 *Updated after each plan completion*
 | Phase 01-infrastructure P01 | 9 | 2 tasks | 11 files |
 | Phase 01-infrastructure P02 | 35min | 2 tasks | 16 files |
+| Phase 02-matching-pipeline P01 | 3min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,9 @@ Recent decisions affecting current work:
 - [Phase 01-infrastructure]: JSONB signals use Map<String, Any?> not kotlinx.serialization.json.JsonObject — Jackson cannot deserialize non-null kotlinx JsonObject from DB (MissingKotlinParameterException)
 - [Phase 01-infrastructure]: Integration tests install pg_trgm + DB constraints in @BeforeAll — Hibernate ddl-auto:create-drop does not execute SQL schema files
 - [Phase 01-infrastructure plan 00]: @EntityScan must be scoped to riven.core.entity.identity not riven.core.entity — broad scan causes uuid_generate_v4() DDL failures in test container
+- [Phase 02-matching-pipeline]: signals is List<Map<String, Any?>> not Map — JSONB array allows multi-signal breakdown per suggestion; rejectionSignals stays flat JsonObject (snapshot at rejection time)
+- [Phase 02-matching-pipeline]: MatchSignal.toMap() uses type.name (String) for JSONB serialization — avoids deserialization coupling when reading JSONB back from DB
+- [Phase 02-matching-pipeline]: fromSchemaType() maps EMAIL/PHONE directly; all others fall to CUSTOM_IDENTIFIER — NAME/COMPANY are contextual derivations handled by scoring service heuristics
 
 ### Pending Todos
 
@@ -84,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T23:08:51.870Z
-Stopped at: Completed 01-infrastructure-02-PLAN.md
+Last session: 2026-03-16T07:45:37.272Z
+Stopped at: Completed 02-matching-pipeline-01-PLAN.md
 Resume file: None
