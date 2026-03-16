@@ -8,13 +8,13 @@ import { useForm, useFormState } from 'react-hook-form';
 import { isUUID } from 'validator';
 import { z } from 'zod';
 import { useStore } from 'zustand';
-import { baseEntityTypeFormSchema } from '../hooks/form/type/use-new-type-form';
-import { useSaveEntityTypeConfiguration } from '../hooks/mutation/type/use-save-configuration-mutation';
-import { useSaveDefinitionMutation } from '../hooks/mutation/type/use-save-definition-mutation';
+import { baseEntityTypeFormSchema } from '@/components/feature-modules/entity/hooks/form/type/use-new-type-form';
+import { useSaveEntityTypeConfiguration } from '@/components/feature-modules/entity/hooks/mutation/type/use-save-configuration-mutation';
+import { useSaveDefinitionMutation } from '@/components/feature-modules/entity/hooks/mutation/type/use-save-definition-mutation';
 import {
   createEntityTypeConfigStore,
   EntityTypeConfigStore,
-} from '../stores/type/configuration.store';
+} from '@/components/feature-modules/entity/stores/type/configuration.store';
 
 type EntityTypeConfigStoreApi = ReturnType<typeof createEntityTypeConfigStore>;
 

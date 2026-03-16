@@ -124,7 +124,7 @@ export const createEntityTypeConfigStore = (
           const [attrId, attrSchema] = idEntry;
           const existingPrefix = attrSchema.options?.prefix;
           if (values.idPrefix !== (existingPrefix ?? '')) {
-            await saveDefinitionMutation({
+            const result = await saveDefinitionMutation({
               definition: {
                 key: entityType.key,
                 id: attrId,
@@ -135,6 +135,8 @@ export const createEntityTypeConfigStore = (
                 },
               },
             });
+            // If there's an impact requiring confirmation, don't reset
+            if (result.impact) return;
           }
         }
         // Reset form dirty state

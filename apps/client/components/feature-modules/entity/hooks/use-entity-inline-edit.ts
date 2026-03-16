@@ -1,4 +1,3 @@
-import { useAuth } from '@/components/provider/auth-context';
 import { SchemaUUID } from '@/lib/types/common';
 import {
   Entity,
@@ -13,22 +12,19 @@ import {
   SaveEntityResponse,
   SaveTypeDefinitionRequest,
 } from '@/lib/types/entity';
-import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { useSaveEntityMutation } from '@/components/feature-modules/entity/hooks/mutation/instance/use-save-entity-mutation';
-import { entityKeys } from '@/components/feature-modules/entity/hooks/query/entity-query-keys';
+import { useSaveDefinitionMutation } from '@/components/feature-modules/entity/hooks/mutation/type/use-save-definition-mutation';
 import { buildEntityUpdatePayload, deriveSchemaOptionsUpdate } from '@/components/feature-modules/entity/util/entity-payload.util';
 import { EntityRow, isDraftRow } from '@/components/feature-modules/entity/components/tables/entity-table-utils';
-import { EntityTypeService } from '@/components/feature-modules/entity/service/entity-type.service';
 
 export function useEntityInlineEdit(
   workspaceId: string,
   entityType: EntityType,
   entities: Entity[],
 ) {
-  const { session } = useAuth();
-  const queryClient = useQueryClient();
+  const { mutateAsync: saveDefinition } = useSaveDefinitionMutation(workspaceId);
   const handleConflict = (_request: SaveEntityRequest, response: SaveEntityResponse) => {
     const message = response.errors?.join(', ') ?? 'Edit conflict: this record was modified. Please refresh and try again.';
     toast.error(message);
@@ -69,7 +65,7 @@ export function useEntityInlineEdit(
             const definitionRequest: SaveTypeDefinitionRequest = {
               definition: {
                 key: entityType.key,
-                id: entityType.id,
+                id: columnId,
                 type: EntityTypeRequestDefinition.SaveSchema,
                 schema: {
                   ...attributeDef,
@@ -78,18 +74,7 @@ export function useEntityInlineEdit(
               },
             };
 
-            EntityTypeService.saveEntityTypeDefinition(session, workspaceId, definitionRequest)
-              .then(() => {
-                queryClient.invalidateQueries({
-                  queryKey: entityKeys.entityTypes.list(workspaceId),
-                });
-                queryClient.invalidateQueries({
-                  queryKey: entityKeys.entityTypes.byKey(entityType.key, workspaceId),
-                });
-              })
-              .catch((error) => {
-                console.warn('Failed to sync schema options to type definition:', error);
-              });
+            saveDefinition(definitionRequest);
           }
         }
 
@@ -110,7 +95,7 @@ export function useEntityInlineEdit(
 
       return false;
     },
-    [entities, entityType, saveEntity, session, workspaceId, queryClient],
+    [entities, entityType, saveEntity, saveDefinition, workspaceId],
   );
 
   return { handleCellEdit };

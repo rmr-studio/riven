@@ -62,8 +62,8 @@ export function buildFieldSchema(schema: SchemaUUID): z.ZodTypeAny {
       fieldSchema = z.any();
   }
 
-  // Handle required/optional
-  if (!schema.required) {
+  // Handle required/optional — protected fields are backend-generated, so skip client-side required checks
+  if (!schema.required || schema._protected) {
     fieldSchema = fieldSchema.optional().nullable();
   } else {
     fieldSchema = fieldSchema.refine((val) => val !== null && val !== undefined, {
@@ -81,7 +81,7 @@ function buildStringSchema(schema: SchemaUUID, mergedOptions: Partial<SchemaOpti
   let stringSchema = z.string();
 
   const options = mergedOptions;
-  if (schema.required && !exists(options?.minLength)) {
+  if (schema.required && !schema._protected && !exists(options?.minLength)) {
     stringSchema = stringSchema.min(1, `${schema.label || 'Field'} is required`);
   }
 

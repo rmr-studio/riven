@@ -263,6 +263,8 @@ export const ConfigurationForm: FC<Props> = ({ availableIdentifiers }) => {
                       maxLength={10}
                       className="w-full max-w-xs uppercase"
                       {...field}
+                      onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                      value={field.value}
                     />
                   </FormControl>
                   <FormMessage />

@@ -307,7 +307,13 @@ describe('buildFieldSchema', () => {
 
     it('rejects empty string when required', () => {
       const schema = buildFieldSchema(makeAttr(SchemaType.Email, { required: true }));
-      expect(schema.safeParse('').success).toBe(false);
+      const result = schema.safeParse('');
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues).toContainEqual(
+          expect.objectContaining({ code: 'too_small' }),
+        );
+      }
     });
   });
 
@@ -628,6 +634,11 @@ describe('buildFieldSchema', () => {
       expect(schema.safeParse('ABC-99999').success).toBe(true);
     });
 
+    it('accepts empty string as draft default value', () => {
+      const schema = buildFieldSchema(makeAttr(SchemaType.Id, { required: true, _protected: true }));
+      expect(schema.safeParse('').success).toBe(true);
+    });
+
     it('accepts null when optional', () => {
       const schema = buildFieldSchema(makeAttr(SchemaType.Id));
       expect(schema.safeParse(null).success).toBe(true);
@@ -657,6 +668,16 @@ describe('buildFieldSchema', () => {
       expect(schema.safeParse(0).success).toBe(true);
       expect(schema.safeParse(10).success).toBe(true);
       expect(schema.safeParse(11).success).toBe(false);
+    });
+
+    it('partial per-instance override merges with inherent options', () => {
+      const schema = buildFieldSchema(
+        makeAttr(SchemaType.Rating, { options: { minimum: 0 } }),
+      );
+      // minimum overridden to 0, maximum inherits 5 from inherent
+      expect(schema.safeParse(0).success).toBe(true);
+      expect(schema.safeParse(5).success).toBe(true);
+      expect(schema.safeParse(6).success).toBe(false);
     });
 
     it('does not interfere when attributeType has no inherent options', () => {
