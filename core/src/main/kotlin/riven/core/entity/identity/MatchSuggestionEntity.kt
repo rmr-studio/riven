@@ -51,7 +51,7 @@ data class MatchSuggestionEntity(
 
     @Type(JsonBinaryType::class)
     @Column(name = "signals", nullable = false, columnDefinition = "jsonb")
-    var signals: JsonObject = emptyMap(),
+    var signals: List<Map<String, Any?>> = emptyList(),
 
     @Type(JsonBinaryType::class)
     @Column(name = "rejection_signals", columnDefinition = "jsonb")

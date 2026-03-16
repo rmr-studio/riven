@@ -16,7 +16,7 @@ data class MatchSuggestion(
     val targetEntityId: UUID,
     val status: MatchSuggestionStatus,
     val confidenceScore: BigDecimal,
-    val signals: JsonObject,
+    val signals: List<Map<String, Any?>>,
     val rejectionSignals: JsonObject?,
     val resolvedBy: UUID?,
     val resolvedAt: ZonedDateTime?,
