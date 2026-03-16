@@ -116,11 +116,27 @@ export class EntityService {
         ...(filter ? { filter } : {}),
       };
 
-      return await api.queryEntities({
-        workspaceId,
-        entityTypeId,
-        entityQueryRequest: request,
-      });
+      // The generated QueryFilterToJSON has infinite mutual recursion for
+      // discriminated union variants (Or/And). OrToJSON spreads
+      // ...QueryFilterToJSONTyped(value, true) which ignores ignoreDiscriminator
+      // and dispatches back to OrToJSON → stack overflow.
+      //
+      // Workaround: pass a filter-free request to avoid the recursive ToJSON,
+      // then override the body with our own plain-object serialization.
+      const safeRequest: EntityQueryRequest = {
+        pagination,
+        includeCount: false,
+        maxDepth: 1,
+      };
+
+      const response = await api.queryEntitiesRaw(
+        { workspaceId, entityTypeId, entityQueryRequest: safeRequest },
+        filter
+          ? async () => ({ body: request } as RequestInit)
+          : undefined,
+      );
+
+      return await response.value();
     } catch (error) {
       return await normalizeApiError(error);
     }

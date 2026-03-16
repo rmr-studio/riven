@@ -11,23 +11,29 @@ const workspaceId = '550e8400-e29b-41d4-a716-446655440000';
 const entityTypeId = '660e8400-e29b-41d4-a716-446655440001';
 
 describe('EntityService.queryEntities', () => {
-  const mockQueryEntities = jest.fn();
+  const mockQueryEntitiesRaw = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
     (createEntityApi as jest.Mock).mockReturnValue({
-      queryEntities: mockQueryEntities,
+      queryEntitiesRaw: mockQueryEntitiesRaw,
     });
   });
 
-  it('calls API with correct pagination params', async () => {
+  function mockRawResponse(data: EntityQueryResponse) {
+    mockQueryEntitiesRaw.mockResolvedValue({
+      value: () => Promise.resolve(data),
+    });
+  }
+
+  it('calls API with correct pagination params (no filter)', async () => {
     const expectedResponse: EntityQueryResponse = {
       entities: [],
       hasNextPage: false,
       limit: 50,
       offset: 0,
     };
-    mockQueryEntities.mockResolvedValue(expectedResponse);
+    mockRawResponse(expectedResponse);
 
     const result = await EntityService.queryEntities(
       mockSession,
@@ -36,26 +42,29 @@ describe('EntityService.queryEntities', () => {
       { limit: 50, offset: 0 },
     );
 
-    expect(mockQueryEntities).toHaveBeenCalledWith({
-      workspaceId,
-      entityTypeId,
-      entityQueryRequest: {
-        pagination: { limit: 50, offset: 0 },
-        includeCount: false,
-        maxDepth: 1,
+    expect(mockQueryEntitiesRaw).toHaveBeenCalledWith(
+      {
+        workspaceId,
+        entityTypeId,
+        entityQueryRequest: {
+          pagination: { limit: 50, offset: 0 },
+          includeCount: false,
+          maxDepth: 1,
+        },
       },
-    });
+      undefined, // no initOverrides when no filter
+    );
     expect(result).toEqual(expectedResponse);
   });
 
-  it('includes filter when provided', async () => {
+  it('passes filter via initOverrides to bypass recursive ToJSON', async () => {
     const filter = {
       type: 'Attribute' as const,
       attributeId: 'attr-1',
       operator: FilterOperator.Contains,
       value: { kind: 'Literal' as const, value: 'test' },
     };
-    mockQueryEntities.mockResolvedValue({
+    mockRawResponse({
       entities: [],
       hasNextPage: false,
       limit: 50,
@@ -70,15 +79,28 @@ describe('EntityService.queryEntities', () => {
       filter,
     );
 
-    expect(mockQueryEntities).toHaveBeenCalledWith({
-      workspaceId,
-      entityTypeId,
-      entityQueryRequest: {
-        filter,
-        pagination: { limit: 50, offset: 0 },
-        includeCount: false,
-        maxDepth: 1,
+    // Safe request (without filter) is passed to the API to avoid recursive ToJSON
+    expect(mockQueryEntitiesRaw).toHaveBeenCalledWith(
+      {
+        workspaceId,
+        entityTypeId,
+        entityQueryRequest: {
+          pagination: { limit: 50, offset: 0 },
+          includeCount: false,
+          maxDepth: 1,
+        },
       },
+      expect.any(Function), // initOverrides function when filter present
+    );
+
+    // Verify the override function returns the full body with filter
+    const overrideFn = mockQueryEntitiesRaw.mock.calls[0][1];
+    const overrideResult = await overrideFn();
+    expect(overrideResult.body).toEqual({
+      pagination: { limit: 50, offset: 0 },
+      includeCount: false,
+      maxDepth: 1,
+      filter,
     });
   });
 
@@ -102,7 +124,7 @@ describe('EntityService.queryEntities', () => {
       json: () => Promise.resolve({ statusCode: 400, error: 'BAD_REQUEST', message: 'Invalid filter' }),
     } as Response;
     const apiError = new ResponseError(mockResponse, 'Bad Request');
-    mockQueryEntities.mockRejectedValue(apiError);
+    mockQueryEntitiesRaw.mockRejectedValue(apiError);
 
     await expect(
       EntityService.queryEntities(mockSession, workspaceId, entityTypeId, { limit: 50, offset: 0 }),
