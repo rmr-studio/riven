@@ -13,9 +13,9 @@
 
 ### Connection Status
 
-- [ ] **CONN-01**: ConnectionStatus enum removes PENDING_AUTHORIZATION and AUTHORIZING states
-- [ ] **CONN-02**: ConnectionStatus state machine supports CONNECTED → SYNCING → HEALTHY/DEGRADED/FAILED transitions
-- [ ] **CONN-03**: IntegrationConnectionService extracts reusable create-or-reconnect logic as private method
+- [x] **CONN-01**: ConnectionStatus enum removes PENDING_AUTHORIZATION and AUTHORIZING states
+- [x] **CONN-02**: ConnectionStatus state machine supports CONNECTED → SYNCING → HEALTHY/DEGRADED/FAILED transitions
+- [x] **CONN-03**: IntegrationConnectionService extracts reusable create-or-reconnect logic as private method
 
 ### Webhook
 
@@ -47,7 +47,7 @@
 
 - [x] **NANGO-01**: `fetchRecords()` method on NangoClientWrapper for paginated record retrieval
 - [x] **NANGO-02**: `triggerSync()` method on NangoClientWrapper
-- [ ] **NANGO-03**: `findByNangoConnectionId()` repository query on IntegrationConnectionRepository
+- [x] **NANGO-03**: `findByNangoConnectionId()` repository query on IntegrationConnectionRepository
 
 ### JPA / Enums
 
@@ -100,12 +100,12 @@
 | JPA-03 | Phase 1 | Complete |
 | JPA-04 | Phase 1 | Complete |
 | JPA-05 | Phase 1 | Complete |
-| CONN-01 | Phase 2 | Pending |
-| CONN-02 | Phase 2 | Pending |
-| CONN-03 | Phase 2 | Pending |
+| CONN-01 | Phase 2 | Complete |
+| CONN-02 | Phase 2 | Complete |
+| CONN-03 | Phase 2 | Complete |
 | NANGO-01 | Phase 2 | Complete |
 | NANGO-02 | Phase 2 | Complete |
-| NANGO-03 | Phase 2 | Pending |
+| NANGO-03 | Phase 2 | Complete |
 | HOOK-01 | Phase 2 | Pending |
 | HOOK-02 | Phase 2 | Pending |
 | HOOK-03 | Phase 2 | Pending |
