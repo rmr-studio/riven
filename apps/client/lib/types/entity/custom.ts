@@ -58,6 +58,21 @@ export enum RelationshipLimit {
 }
 
 /**
+ * Discriminator values for the QueryFilter sealed hierarchy.
+ *
+ * Must match the backend's @JsonTypeName annotations exactly (uppercase).
+ * The OpenAPI generator maps these to PascalCase in the TypeScript union type,
+ * but when bypassing the generated ToJSON serializer we must use the raw values.
+ */
+export enum QueryFilterType {
+  Attribute = 'ATTRIBUTE',
+  Relationship = 'RELATIONSHIP',
+  IsRelatedTo = 'IS_RELATED_TO',
+  And = 'AND',
+  Or = 'OR',
+}
+
+/**
  * Props interface for relationship picker component
  * Used for selecting related entities in draft rows
  */

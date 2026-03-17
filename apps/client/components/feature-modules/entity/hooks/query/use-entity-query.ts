@@ -4,6 +4,7 @@ import {
   FilterOperator,
   OrderByClause,
   QueryFilter,
+  QueryFilterType,
   SortDirection,
 } from '@/lib/types/entity';
 import {
@@ -58,7 +59,7 @@ export function buildCompositeFilter(
 
   if (searchFilter && queryFilter) {
     return {
-      type: 'AND',
+      type: QueryFilterType.And,
       conditions: [searchFilter, queryFilter],
     } as QueryFilter;
   }
@@ -75,7 +76,7 @@ function buildSearchFilter(
   }
 
   const conditions: QueryFilter[] = attributeIds.map((attributeId) => ({
-    type: 'ATTRIBUTE' as const,
+    type: QueryFilterType.Attribute,
     attributeId,
     operator: FilterOperator.Contains,
     value: { kind: 'Literal' as const, value: search },
@@ -86,7 +87,7 @@ function buildSearchFilter(
   }
 
   return {
-    type: 'OR',
+    type: QueryFilterType.Or,
     conditions,
   } as QueryFilter;
 }
