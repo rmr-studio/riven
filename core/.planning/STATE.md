@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 02-03-PLAN.md
-last_updated: "2026-03-17T09:10:57.546Z"
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-03-18T08:49:44.459Z"
 last_activity: 2026-03-16 — Roadmap revised (4-phase restructure)
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 7
+  completed_plans: 6
   percent: 0
 ---
 
@@ -55,6 +55,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02 P02 | 15 | 3 tasks | 4 files |
 | Phase 02-01 P01 | 25 | 2 tasks | 9 files |
 | Phase 02-connection-model-nango-client-and-auth-webhook P03 | 6 | 2 tasks | 7 files |
+| Phase 03 P01 | 45 | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,9 @@ Recent decisions affecting current work:
 - [Phase 02-03]: HMAC filter uses secretKey (not webhookSecret) per established project decision
 - [Phase 02-03]: Webhook controller has no @PreAuthorize — HMAC filter handles all security for the webhook endpoint
 - [Phase 02-03]: Materialization failure uses compensation write pattern: catch block sets installation FAILED and saves without rethrow, preserving CONNECTED connection
+- [Phase 03-01]: Nullable IntegrationSyncActivities in TemporalWorkerConfiguration: Plan 02 provides impl; nullable param with default null keeps Plan 01 compilable; Plan 02 removes nullable
+- [Phase 03-01]: TestWorkflowEnvironment avoided: documented hanging issue in project; pure unit tests verify config/contracts; activity sequencing deferred to Plan 02 integration tests
+- [Phase 03-01]: Temporal workflow dedup via deterministic ID sync-{connectionId}-{model} with WorkflowExecutionAlreadyStarted catch for Nango at-least-once delivery
 
 ### Pending Todos
 
@@ -95,6 +99,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T09:05:02.699Z
-Stopped at: Completed 02-03-PLAN.md
+Last session: 2026-03-18T08:49:44.457Z
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None

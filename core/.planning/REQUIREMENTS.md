@@ -22,7 +22,7 @@
 - [x] **HOOK-01**: `POST /api/v1/webhooks/nango` endpoint with HMAC-SHA256 signature verification
 - [x] **HOOK-02**: Auth webhook creates connection in CONNECTED state and triggers materialization
 - [x] **HOOK-03**: Auth webhook updates installation status to ACTIVE
-- [ ] **HOOK-04**: Sync webhook starts Temporal workflow with deterministic ID for dedup
+- [x] **HOOK-04**: Sync webhook starts Temporal workflow with deterministic ID for dedup
 - [x] **HOOK-05**: Invalid/missing webhook signatures return 401
 - [x] **HOOK-06**: Missing tags or missing installation log errors and return 200 (graceful failure)
 
@@ -35,7 +35,7 @@
 - [ ] **SYNC-05**: DELETED records soft-delete entity; DELETED + not found is no-op
 - [ ] **SYNC-06**: Per-record try-catch error isolation — one bad record doesn't fail the batch
 - [ ] **SYNC-07**: Two-pass relationship resolution (Pass 1: upsert entities, Pass 2: resolve relationships)
-- [ ] **SYNC-08**: Dedicated `integration.sync` Temporal queue with retry policy (3 attempts, 30s initial, 2x backoff)
+- [x] **SYNC-08**: Dedicated `integration.sync` Temporal queue with retry policy (3 attempts, 30s initial, 2x backoff)
 
 ### Health
 
@@ -111,7 +111,7 @@
 | HOOK-03 | Phase 2 | Complete |
 | HOOK-05 | Phase 2 | Complete |
 | HOOK-06 | Phase 2 | Complete |
-| HOOK-04 | Phase 3 | Pending |
+| HOOK-04 | Phase 3 | Complete |
 | SYNC-01 | Phase 3 | Pending |
 | SYNC-02 | Phase 3 | Pending |
 | SYNC-03 | Phase 3 | Pending |
@@ -119,7 +119,7 @@
 | SYNC-05 | Phase 3 | Pending |
 | SYNC-06 | Phase 3 | Pending |
 | SYNC-07 | Phase 3 | Pending |
-| SYNC-08 | Phase 3 | Pending |
+| SYNC-08 | Phase 3 | Complete |
 | HLTH-01 | Phase 4 | Pending |
 | HLTH-02 | Phase 4 | Pending |
 | HLTH-03 | Phase 4 | Pending |

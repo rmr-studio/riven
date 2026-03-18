@@ -48,9 +48,7 @@ class TemporalWorkerConfiguration(
     private val completionActivity: WorkflowCompletionActivityImpl,
     private val retryProperties: WorkflowRetryConfigurationProperties,
     private val logger: KLogger,
-    // Nullable until IntegrationSyncActivitiesImpl is created in Plan 02.
-    // Plan 02 will remove the nullable/conditional pattern.
-    private val integrationSyncActivities: IntegrationSyncActivities? = null
+    private val integrationSyncActivities: IntegrationSyncActivities,
 ) {
 
     companion object {
@@ -143,10 +141,8 @@ class TemporalWorkerConfiguration(
             IntegrationSyncWorkflowImpl(retryProperties.integrationSync)
         }
         logger.info { "Registered workflow: IntegrationSyncWorkflowImpl with retry config: ${retryProperties.integrationSync}" }
-        integrationSyncActivities?.let { activities ->
-            syncWorker.registerActivitiesImplementations(activities)
-            logger.info { "Registered activities: IntegrationSyncActivities" }
-        }
+        syncWorker.registerActivitiesImplementations(integrationSyncActivities)
+        logger.info { "Registered activities: IntegrationSyncActivities" }
 
         // Start workers (non-blocking - workers poll Temporal Service in background)
         factory.start()
