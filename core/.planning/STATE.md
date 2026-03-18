@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 05-rest-api/05-01-PLAN.md
-last_updated: "2026-03-18T08:39:02.999Z"
+stopped_at: Completed 05-rest-api/05-02-PLAN.md
+last_updated: "2026-03-18T08:46:49.647Z"
 last_activity: 2026-03-16 — Roadmap created
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 13
-  completed_plans: 12
+  completed_plans: 13
   percent: 20
 ---
 
@@ -61,6 +61,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase 04-confirmation-and-clusters P01 | 12min | 2 tasks | 5 files |
 | Phase 04-confirmation-and-clusters P02 | 8min | 1 tasks | 5 files |
 | Phase 05-rest-api P01 | 4min | 2 tasks | 9 files |
+| Phase 05-rest-api P02 | 5min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,9 @@ Recent decisions affecting current work:
 - [Phase 04-confirmation-and-clusters]: Cluster merge tie-breaking favors source entity's cluster — source is in canonical (lower UUID) position, consistent with DB ordering constraint
 - [Phase 05-rest-api]: SuggestionResponse excludes rejectionSignals — internal state not part of public API
 - [Phase 05-rest-api]: countPendingForEntity uses native query with explicit deleted=false — @SQLRestriction does not apply to native queries
+- [Phase 05-rest-api]: addEntityToCluster returns 404 for both missing and wrong-workspace entities — prevents information leakage
+- [Phase 05-rest-api]: findByClusterIdAndEntityId added to IdentityClusterMemberRepository for O(1) target member existence check
+- [Phase 05-rest-api]: renameCluster returns IdentityCluster domain model (not ClusterDetailResponse) — simple rename does not need full member enrichment
 
 ### Pending Todos
 
@@ -114,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-18T08:39:02.996Z
-Stopped at: Completed 05-rest-api/05-01-PLAN.md
+Last session: 2026-03-18T08:46:49.645Z
+Stopped at: Completed 05-rest-api/05-02-PLAN.md
 Resume file: None

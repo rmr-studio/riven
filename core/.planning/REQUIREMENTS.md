@@ -45,8 +45,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **API-01**: `GET /api/v1/identity/{workspaceId}/suggestions` — list suggestions filterable by status, paginated
 - [x] **API-02**: `GET /api/v1/identity/{workspaceId}/suggestions/{id}` — suggestion detail with signal breakdown
-- [ ] **API-03**: `POST /api/v1/identity/{workspaceId}/suggestions/{id}/confirm` — confirm match
-- [ ] **API-04**: `POST /api/v1/identity/{workspaceId}/suggestions/{id}/reject` — reject match
+- [x] **API-03**: `POST /api/v1/identity/{workspaceId}/suggestions/{id}/confirm` — confirm match
+- [x] **API-04**: `POST /api/v1/identity/{workspaceId}/suggestions/{id}/reject` — reject match
 - [x] **API-05**: `GET /api/v1/identity/{workspaceId}/clusters` — list identity clusters
 - [x] **API-06**: `GET /api/v1/identity/{workspaceId}/clusters/{id}` — cluster detail with member entities
 - [x] **API-07**: `GET /api/v1/identity/{workspaceId}/entities/{id}/matches` — pending match count for entity
@@ -113,8 +113,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CONF-05 | Phase 4 | Complete |
 | API-01 | Phase 5 | Complete |
 | API-02 | Phase 5 | Complete |
-| API-03 | Phase 5 | Pending |
-| API-04 | Phase 5 | Pending |
+| API-03 | Phase 5 | Complete |
+| API-04 | Phase 5 | Complete |
 | API-05 | Phase 5 | Complete |
 | API-06 | Phase 5 | Complete |
 | API-07 | Phase 5 | Complete |

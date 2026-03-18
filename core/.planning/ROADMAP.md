@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 2: Matching Pipeline** - Scoring, candidate selection, Temporal workflow, and suggestion state machine
 - [ ] **Phase 3: Trigger and Dispatch** - Entity save event listener and queue-to-Temporal dispatcher
 - [ ] **Phase 4: Confirmation and Clusters** - Confirm/reject with Union-Find cluster management and relationship creation
-- [ ] **Phase 5: REST API** - Suggestion review, cluster browsing, and per-entity pending count endpoints
+- [x] **Phase 5: REST API** - Suggestion review, cluster browsing, and per-entity pending count endpoints (completed 2026-03-18)
 
 ## Phase Details
 
@@ -113,4 +113,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Matching Pipeline | 2/4 | In Progress|  |
 | 3. Trigger and Dispatch | 1/2 | In Progress|  |
 | 4. Confirmation and Clusters | 1/2 | In Progress|  |
-| 5. REST API | 1/2 | In Progress|  |
+| 5. REST API | 2/2 | Complete   | 2026-03-18 |
