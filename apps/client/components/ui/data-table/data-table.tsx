@@ -296,6 +296,10 @@ export function DataTable<TData, TValue>({
   // Infinite scroll sentinel
   const sentinelRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const onLoadMoreRef = useRef(infiniteScroll?.onLoadMore);
+  useEffect(() => {
+    onLoadMoreRef.current = infiniteScroll?.onLoadMore;
+  }, [infiniteScroll?.onLoadMore]);
 
   useEffect(() => {
     if (!infiniteScroll?.hasMore || infiniteScroll.isLoadingMore) return;
@@ -307,7 +311,7 @@ export function DataTable<TData, TValue>({
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
-          infiniteScroll.onLoadMore();
+          onLoadMoreRef.current?.();
         }
       },
       { root: scrollContainer, rootMargin: '200px' },
@@ -315,7 +319,7 @@ export function DataTable<TData, TValue>({
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [infiniteScroll?.hasMore, infiniteScroll?.isLoadingMore, infiniteScroll?.onLoadMore]);
+  }, [infiniteScroll?.hasMore, infiniteScroll?.isLoadingMore]);
 
   // Derived state
   const { isDragDropEnabled, isSelectionEnabled } = useDerivedState<TData>(

@@ -6,7 +6,6 @@ import { TableCell } from '@riven/ui/table';
 import { cn } from '@riven/utils';
 import { GripVertical } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useDataTableStore } from '@/components/ui/data-table/data-table-provider';
 import type { ActionColumnConfig, ActionVisibility } from '@/components/ui/data-table/data-table.types';
 
 interface ActionCellProps<TData> {
@@ -22,13 +21,9 @@ interface ActionCellProps<TData> {
   actionColumnConfig?: ActionColumnConfig;
 }
 
-function getVisibilityClass(
-  visibility: ActionVisibility,
-  isSelected: boolean,
-  hasSelections: boolean,
-) {
+function getVisibilityClass(visibility: ActionVisibility, isSelected: boolean) {
   if (visibility === 'always') return 'opacity-100';
-  if (isSelected || hasSelections) return 'opacity-100';
+  if (isSelected) return 'opacity-100';
   return 'opacity-0 group-hover/row:opacity-100 transition-opacity duration-150';
 }
 
@@ -44,9 +39,6 @@ export function ActionCell<TData>({
   cellSize,
   actionColumnConfig,
 }: ActionCellProps<TData>) {
-  const rowSelection = useDataTableStore<TData, Record<string, boolean>>((state) => state.rowSelection);
-  const hasSelections = Object.keys(rowSelection).length > 0;
-
   const dragConfig = actionColumnConfig?.dragHandle;
   const checkboxConfig = actionColumnConfig?.checkbox;
 
@@ -73,7 +65,7 @@ export function ActionCell<TData>({
             className={cn(
               'cursor-grab text-muted-foreground transition-colors hover:text-foreground active:cursor-grabbing',
               isDragDisabled && 'cursor-not-allowed opacity-30',
-              getVisibilityClass(dragVisibility, isSelected, hasSelections),
+              getVisibilityClass(dragVisibility, isSelected),
             )}
             {...(!isDragDisabled ? dragAttributes : {})}
             {...(!isDragDisabled ? dragListeners : {})}
@@ -83,7 +75,7 @@ export function ActionCell<TData>({
           </button>
         )}
         {showCheckbox && (
-          <span className={getVisibilityClass(checkboxVisibility, isSelected, hasSelections)}>
+          <span className={getVisibilityClass(checkboxVisibility, isSelected)}>
             <Checkbox
               checked={isSelected}
               onCheckedChange={(value) => onToggleSelected(!!value)}

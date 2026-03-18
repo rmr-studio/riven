@@ -1,12 +1,13 @@
-import { EntityService } from './entity.service';
+import { EntityService } from '@/components/feature-modules/entity/service/entity.service';
 import { createEntityApi } from '@/lib/api/entity-api';
 import { EntityQueryResponse } from '@/lib/types/entity';
 import { FilterOperator } from '@/lib/types/entity';
+import type { Session } from '@/lib/auth/auth.types';
 
 // Mock the API factory
 jest.mock('@/lib/api/entity-api');
 
-const mockSession = { access_token: 'test-token' } as any;
+const mockSession: Session = { access_token: 'test-token', expires_at: 9999999999, user: { id: 'test-user', metadata: {} } };
 const workspaceId = '550e8400-e29b-41d4-a716-446655440000';
 const entityTypeId = '660e8400-e29b-41d4-a716-446655440001';
 

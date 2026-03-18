@@ -89,7 +89,7 @@ export const EntityDataTable: FC<Props> = ({
   // Surface query errors as toasts
   useEffect(() => {
     if (isError && error) {
-      toast.error(`Failed to load entities: ${error.message}`);
+      toast.error(`Failed to load entities: ${error.message}`, { id: 'entity-query-error' });
     }
   }, [isError, error]);
 

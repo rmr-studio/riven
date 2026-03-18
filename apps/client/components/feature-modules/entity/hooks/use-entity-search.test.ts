@@ -19,7 +19,7 @@ describe('useEntitySearch', () => {
     expect(result.current.debouncedSearch).toBe('hello');
   });
 
-  it('reflects the latest value after rapid typing', () => {
+  it('reflects the latest value after sequential updates', () => {
     const { result } = renderHook(() => useEntitySearch());
 
     act(() => {

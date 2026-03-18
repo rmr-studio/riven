@@ -1,5 +1,5 @@
 import { entityKeys } from './entity-query-keys';
-import { QueryFilter } from '@/lib/types/entity';
+import { QueryFilter, OrderByClause } from '@/lib/types/entity';
 
 describe('entityKeys', () => {
   const workspaceId = 'ws-123';
@@ -88,6 +88,33 @@ describe('entityKeys', () => {
         typeId,
         'query',
         { search: 'hello', filter },
+      ]);
+    });
+
+    it('includes orderBy in query key when provided', () => {
+      const orderBy: OrderByClause[] = [{ attributeId: 'a1', direction: 'ASC' } as OrderByClause];
+      expect(
+        entityKeys.entities.query(workspaceId, typeId, undefined, undefined, orderBy),
+      ).toEqual([
+        'entities',
+        workspaceId,
+        typeId,
+        'query',
+        { orderBy },
+      ]);
+    });
+
+    it('includes search, filter, and orderBy when all provided', () => {
+      const filter = { type: 'Attribute' as const, attributeId: 'a1', operator: 'CONTAINS' as const, value: { kind: 'Literal' as const, value: 'x' } } as QueryFilter;
+      const orderBy: OrderByClause[] = [{ attributeId: 'a1', direction: 'DESC' } as OrderByClause];
+      expect(
+        entityKeys.entities.query(workspaceId, typeId, 'hello', filter, orderBy),
+      ).toEqual([
+        'entities',
+        workspaceId,
+        typeId,
+        'query',
+        { search: 'hello', filter, orderBy },
       ]);
     });
   });

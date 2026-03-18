@@ -250,6 +250,8 @@ export const EntityRelationshipPicker: FC<EntityRelationshipPickerProps> = ({
                         <button
                           type="button"
                           onClick={() => setHideConstrained((prev) => !prev)}
+                          aria-label={hideConstrained ? 'Show all entities' : 'Hide unavailable entities'}
+                          aria-pressed={hideConstrained}
                           className={cn(
                             'flex shrink-0 items-center justify-center rounded-md p-1 text-xs transition-colors',
                             hideConstrained
