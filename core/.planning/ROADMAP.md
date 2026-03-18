@@ -67,7 +67,11 @@ Plans:
   6. A single record that throws during processing is logged and skipped — the rest of the batch continues and completes
   7. After all upserts complete, a second pass resolves relationships between the newly persisted entities
   8. The workflow runs on the `integration.sync` Temporal queue with retry policy: 3 attempts, 30s initial interval, 2x backoff
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — DTOs, workflow/activity interfaces, Temporal config, webhook dispatch + tests
+- [ ] 03-02-PLAN.md — Activity implementation (fetch, process, upsert, relationship resolution, finalize) + tests
 
 ### Phase 4: Health, Auth Flow Refactor, and Documentation
 **Goal**: Connection health is computed from per-entity-type sync state, the auth flow no longer pre-creates connections, installation status reflects real auth outcomes, and sync script design guidance is documented
@@ -90,5 +94,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 |-------|----------------|--------|-----------|
 | 1. Schema and Persistence Foundation | 2/2 | Complete   | 2026-03-16 |
 | 2. Connection Model, Nango Client, and Auth Webhook | 1/3 | In Progress|  |
-| 3. Sync Webhook and Temporal Sync Workflow | 0/TBD | Not started | - |
+| 3. Sync Webhook and Temporal Sync Workflow | 0/2 | Not started | - |
 | 4. Health, Auth Flow Refactor, and Documentation | 0/TBD | Not started | - |
