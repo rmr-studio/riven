@@ -163,6 +163,21 @@
 **New cross-domain dependencies:** no
 **New components introduced:** none — this is a pure simplification/removal
 
+## [2026-03-18] — Phase 4 Feature Design: Confirmation and Clusters
+
+**Domains affected:** Identity Resolution, Entities
+**What changed:**
+
+- Generated feature design for Identity Cluster Confirmation and Union-Find Management
+- Documents confirmation state machine (PENDING → CONFIRMED/REJECTED with ConflictException guard), five-case Union-Find cluster assignment, merge algorithm (smaller → larger), and CONNECTED_ENTITIES relationship creation on confirm
+- Documents rejection move from IdentityMatchSuggestionService to new IdentityConfirmationService
+- Documents cluster-aware re-suggestion skip in persistSuggestions
+
+**New cross-domain dependencies:** yes — Identity Resolution → Entities (EntityRelationshipService for CONNECTED_ENTITIES creation on confirm), Identity Resolution → Notifications (confirmation broadcast to all workspace members)
+**New components introduced:**
+- `IdentityConfirmationService` — confirm/reject state machine with cluster orchestration, relationship creation, notification publishing, and activity logging
+- `IdentityClusterService` — cluster CRUD, Union-Find merge, auto-naming from NAME-signal attributes
+
 ## [2026-03-17] — Identity Resolution Domain
 
 **Domains affected:** identity (new), workflow (queue management, execution engine)
@@ -194,6 +209,23 @@
 - `IdentityClusterEntity` / `IdentityClusterMemberEntity` — scaffolded cluster entities
 - `MatchSignalType` — signal type enum with default weights
 - `MatchSuggestionStatus` — suggestion lifecycle enum
+
+## [2026-03-18] — IdentityConfirmationService with Cluster Management (Phase 04 Plan 02)
+
+**Domains affected:** identity
+**What changed:**
+
+- Added `IdentityConfirmationService` as the single owner of the suggestion confirm/reject state machine
+- `confirmSuggestion` creates a `CONNECTED_ENTITIES` relationship via `EntityRelationshipService` with `SourceType.IDENTITY_MATCH`, runs 5-case cluster resolution, logs activity, and publishes a `REVIEW_REQUEST` notification to all workspace members
+- `rejectSuggestion` transitions `PENDING -> REJECTED` with rejectionSignals snapshot, soft-delete, and activity logging
+- 5-case cluster resolution: (1) create new cluster, (2) expand source cluster, (3) expand target cluster, (4) merge clusters (smaller dissolved into larger, tie favors source entity's cluster), (5) same-cluster no-op
+- Cluster merge hard-deletes dissolving members, re-inserts them into surviving cluster preserving `joinedAt`/`joinedBy`, and soft-deletes the dissolving cluster
+- Removed `rejectSuggestion`, `validateRejectable`, `applyRejection`, and `logRejectionActivity` from `IdentityMatchSuggestionService` — rejection is now fully owned by `IdentityConfirmationService`
+- Integration test updated to reject via raw SQL instead of service call (avoids JWT context requirement in minimal integration test config)
+
+**New cross-domain dependencies:** yes — identity domain → entity domain via `EntityRelationshipService.addRelationship` with `SourceType.IDENTITY_MATCH`; identity domain → notification domain via `NotificationService.createInternalNotification`
+**New components introduced:**
+- `IdentityConfirmationService` — confirm/reject state machine with 5-case cluster management
 
 ## [2026-03-16] — Generic Execution Queue with Job Type Discriminator (INFRA-01/02/03)
 

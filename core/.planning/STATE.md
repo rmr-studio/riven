@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 04-confirmation-and-clusters/04-01-PLAN.md
-last_updated: "2026-03-18T05:23:51.061Z"
+stopped_at: Completed 04-confirmation-and-clusters/04-02-PLAN.md
+last_updated: "2026-03-18T05:35:19.289Z"
 last_activity: 2026-03-16 — Roadmap created
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
   percent: 20
 ---
 
@@ -59,6 +59,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase 03-trigger-and-dispatch P01 | 4min | 2 tasks | 8 files |
 | Phase 03-trigger-and-dispatch P02 | 7min | 2 tasks | 8 files |
 | Phase 04-confirmation-and-clusters P01 | 12min | 2 tasks | 5 files |
+| Phase 04-confirmation-and-clusters P02 | 8min | 1 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,8 @@ Recent decisions affecting current work:
 - [Phase 03-trigger-and-dispatch]: publishIdentityMatchTriggerEvent() extracted as private method in EntityService — keeps saveEntity() readable and single-purpose
 - [Phase 04-confirmation-and-clusters]: inSameCluster check placed before active/rejected checks in createOrResuggest — cluster membership is a cheaper skip condition
 - [Phase 04-confirmation-and-clusters]: deleteByClusterId uses native hard-delete — identity_cluster_members is system-managed join table with no SoftDeletable, consistent with EntityAttributeRepository.hardDeleteByEntityId pattern
+- [Phase 04-confirmation-and-clusters]: rejectSuggestion removed from IdentityMatchSuggestionService — IdentityConfirmationService is the single state machine owner for both confirm and reject transitions
+- [Phase 04-confirmation-and-clusters]: Cluster merge tie-breaking favors source entity's cluster — source is in canonical (lower UUID) position, consistent with DB ordering constraint
 
 ### Pending Todos
 
@@ -108,6 +111,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-18T05:23:39.253Z
-Stopped at: Completed 04-confirmation-and-clusters/04-01-PLAN.md
+Last session: 2026-03-18T05:35:19.283Z
+Stopped at: Completed 04-confirmation-and-clusters/04-02-PLAN.md
 Resume file: None
