@@ -18,6 +18,7 @@ import riven.core.models.request.onboarding.CompleteOnboardingRequest
 import riven.core.models.request.onboarding.OnboardingInvite
 import riven.core.models.request.onboarding.OnboardingProfile
 import riven.core.models.request.onboarding.OnboardingWorkspace
+import riven.core.models.request.user.SaveUserRequest
 import riven.core.models.request.workspace.SaveWorkspaceRequest
 import riven.core.models.response.catalog.BundleInstallationResponse
 import riven.core.models.response.catalog.TemplateInstallationResponse
@@ -120,7 +121,7 @@ class OnboardingServiceTest : BaseServiceTest() {
         whenever(userService.getUserById(userId)).thenReturn(userEntity)
         whenever(workspaceService.saveWorkspace(any(), anyOrNull())).thenReturn(workspace)
         whenever(userService.getUserWithWorkspacesById(userId)).thenReturn(userWithWorkspaces)
-        whenever(userService.updateUserDetails(any(), anyOrNull())).thenReturn(user)
+        whenever(userService.updateUserDetails(any<SaveUserRequest>(), anyOrNull())).thenReturn(user)
 
         whenever(transactionTemplate.execute<Any>(any())).thenAnswer { invocation ->
             @Suppress("UNCHECKED_CAST")
@@ -345,7 +346,7 @@ class OnboardingServiceTest : BaseServiceTest() {
         onboardingService.completeOnboarding(request, profileAvatar = avatarFile)
 
         verify(transactionTemplate).execute<Any>(any())
-        verify(userService).updateUserDetails(any(), eq(avatarFile))
+        verify(userService).updateUserDetails(any<SaveUserRequest>(), eq(avatarFile))
     }
 
     // ------ Bundle Keys Test ------

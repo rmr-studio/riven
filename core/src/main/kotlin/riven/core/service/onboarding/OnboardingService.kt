@@ -14,6 +14,7 @@ import riven.core.models.request.workspace.SaveWorkspaceRequest
 import riven.core.models.response.onboarding.CompleteOnboardingResponse
 import riven.core.models.response.onboarding.InviteResult
 import riven.core.models.response.onboarding.TemplateInstallResult
+import riven.core.models.request.user.SaveUserRequest
 import riven.core.models.user.User
 import riven.core.models.workspace.Workspace
 import riven.core.service.activity.ActivityService
@@ -115,14 +116,15 @@ class OnboardingService(
         profileAvatar: MultipartFile?,
     ): User {
         val currentUser = userService.getUserWithWorkspacesById(userId)
-        val updatedUser = currentUser.copy(
+        val saveRequest = SaveUserRequest(
             name = request.profile.name,
+            email = currentUser.email,
             phone = request.profile.phone,
-            defaultWorkspace = workspace,
+            defaultWorkspaceId = workspace.id,
             onboardingCompletedAt = ZonedDateTime.now(),
         )
 
-        val user = userService.updateUserDetails(updatedUser, profileAvatar)
+        val user = userService.updateUserDetails(saveRequest, profileAvatar)
 
         activityService.log(
             activity = Activity.ONBOARDING,
