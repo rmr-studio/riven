@@ -2,7 +2,7 @@
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Form } from '@/components/ui/form';
-import { DataType } from '@/lib/types/common';
+import { DataType, SchemaType } from '@/lib/types/common';
 import { SystemRelationshipType, type EntityType } from '@/lib/types/entity';
 import { Badge } from '@riven/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@riven/ui/tabs';
@@ -81,6 +81,7 @@ export const EntityTypeOverview: FC<EntityTypeOverviewProps> = ({ entityType }) 
         ([, attr]) =>
           attr.unique &&
           attr.required &&
+          attr.key !== SchemaType.Id &&
           (attr.type === DataType.String || attr.type === DataType.Number),
       )
       .map(([id, attr]) => ({
