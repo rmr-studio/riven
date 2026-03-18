@@ -1,5 +1,7 @@
 package riven.core.service.util.factory.identity
 
+import riven.core.entity.identity.IdentityClusterEntity
+import riven.core.entity.identity.IdentityClusterMemberEntity
 import riven.core.entity.identity.MatchSuggestionEntity
 import riven.core.enums.identity.MatchSignalType
 import riven.core.enums.identity.MatchSuggestionStatus
@@ -91,5 +93,31 @@ object IdentityFactory {
         targetEntityId = targetEntityId,
         compositeScore = compositeScore,
         signals = signals,
+    )
+
+    /**
+     * Creates an [IdentityClusterEntity] with sensible defaults.
+     */
+    fun createIdentityClusterEntity(
+        workspaceId: UUID = UUID.randomUUID(),
+        name: String? = "Test Cluster",
+        memberCount: Int = 1,
+    ): IdentityClusterEntity = IdentityClusterEntity(
+        workspaceId = workspaceId,
+        name = name,
+        memberCount = memberCount,
+    )
+
+    /**
+     * Creates an [IdentityClusterMemberEntity] with sensible defaults.
+     */
+    fun createIdentityClusterMemberEntity(
+        clusterId: UUID = UUID.randomUUID(),
+        entityId: UUID = UUID.randomUUID(),
+        joinedBy: UUID? = null,
+    ): IdentityClusterMemberEntity = IdentityClusterMemberEntity(
+        clusterId = clusterId,
+        entityId = entityId,
+        joinedBy = joinedBy,
     )
 }

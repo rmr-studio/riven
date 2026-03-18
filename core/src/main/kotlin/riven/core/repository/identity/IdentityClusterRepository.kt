@@ -7,4 +7,10 @@ import java.util.UUID
 /**
  * Repository for IdentityClusterEntity instances.
  */
-interface IdentityClusterRepository : JpaRepository<IdentityClusterEntity, UUID>
+interface IdentityClusterRepository : JpaRepository<IdentityClusterEntity, UUID> {
+
+    /**
+     * Returns all clusters belonging to the given workspace.
+     */
+    fun findByWorkspaceId(workspaceId: UUID): List<IdentityClusterEntity>
+}
