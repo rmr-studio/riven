@@ -2,6 +2,7 @@ package riven.core.service.identity
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
@@ -24,10 +25,14 @@ import riven.core.enums.util.OperationType
 import riven.core.exceptions.ConflictException
 import riven.core.exceptions.NotFoundException
 import riven.core.models.common.json.JsonObject
+import riven.core.repository.identity.IdentityClusterMemberRepository
 import riven.core.repository.identity.MatchSuggestionRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.util.BaseServiceTest
+import riven.core.service.util.WithUserPersona
+import riven.core.service.util.WorkspaceRole
 import riven.core.service.util.factory.identity.IdentityFactory
+import riven.core.enums.workspace.WorkspaceRoles
 import java.math.BigDecimal
 import java.time.ZonedDateTime
 import java.util.Optional
@@ -53,6 +58,9 @@ class IdentityMatchSuggestionServiceTest : BaseServiceTest() {
 
     @MockitoBean
     private lateinit var repository: MatchSuggestionRepository
+
+    @MockitoBean
+    private lateinit var memberRepository: IdentityClusterMemberRepository
 
     @MockitoBean
     private lateinit var activityService: ActivityService
@@ -427,6 +435,128 @@ class IdentityMatchSuggestionServiceTest : BaseServiceTest() {
 
         assertThrows<NotFoundException> {
             service.rejectSuggestion(suggestionId, userId)
+        }
+    }
+
+    // ------ persistSuggestions — cluster awareness ------
+
+    /**
+     * Tests for the same-cluster guard that prevents redundant suggestions when both
+     * entities are already members of the same identity cluster.
+     *
+     * JUnit 5 @Nested classes do not inherit the outer class's @WithUserPersona, so it is
+     * re-applied here since tests in this class call code that reads the JWT principal.
+     */
+    @Nested
+    @WithUserPersona(
+        userId = "f8b1c2d3-4e5f-6789-abcd-ef0123456789",
+        email = "test@example.com",
+        displayName = "Test User",
+        roles = [
+            WorkspaceRole(
+                workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
+                role = WorkspaceRoles.ADMIN
+            )
+        ]
+    )
+    inner class ClusterAwareness {
+
+        /**
+         * When both source and target entities are members of the SAME cluster,
+         * persistSuggestions skips the candidate and returns 0.
+         *
+         * This prevents re-suggesting pairs that have already been confirmed and merged
+         * into the same identity cluster.
+         */
+        @Test
+        fun `persistSuggestions skips candidate when both entities are in the same cluster`() {
+            val sharedClusterId = UUID.randomUUID()
+            val sourceId = UUID.randomUUID()
+            val targetId = UUID.randomUUID()
+            val candidate = IdentityFactory.createScoredCandidate(
+                sourceEntityId = sourceId,
+                targetEntityId = targetId,
+                compositeScore = 0.9,
+            )
+
+            val sourceMember = IdentityFactory.createIdentityClusterMemberEntity(
+                clusterId = sharedClusterId,
+                entityId = sourceId,
+            )
+            val targetMember = IdentityFactory.createIdentityClusterMemberEntity(
+                clusterId = sharedClusterId,
+                entityId = targetId,
+            )
+
+            whenever(memberRepository.findByEntityId(sourceId)).thenReturn(sourceMember)
+            whenever(memberRepository.findByEntityId(targetId)).thenReturn(targetMember)
+
+            val count = service.persistSuggestions(workspaceId, listOf(candidate), userId)
+
+            assertEquals(0, count)
+            verify(repository, never()).saveAndFlush(any())
+        }
+
+        /**
+         * When source and target entities are members of DIFFERENT clusters,
+         * persistSuggestions proceeds normally and creates a suggestion.
+         */
+        @Test
+        fun `persistSuggestions proceeds when entities are in different clusters`() {
+            val sourceId = UUID.randomUUID()
+            val targetId = UUID.randomUUID()
+            val candidate = IdentityFactory.createScoredCandidate(
+                sourceEntityId = sourceId,
+                targetEntityId = targetId,
+                compositeScore = 0.9,
+            )
+
+            val sourceMember = IdentityFactory.createIdentityClusterMemberEntity(
+                clusterId = UUID.randomUUID(),
+                entityId = sourceId,
+            )
+            val targetMember = IdentityFactory.createIdentityClusterMemberEntity(
+                clusterId = UUID.randomUUID(), // different cluster
+                entityId = targetId,
+            )
+
+            whenever(memberRepository.findByEntityId(sourceId)).thenReturn(sourceMember)
+            whenever(memberRepository.findByEntityId(targetId)).thenReturn(targetMember)
+            whenever(repository.findActiveSuggestion(any(), any(), any())).thenReturn(null)
+            whenever(repository.findRejectedSuggestion(any(), any(), any())).thenReturn(null)
+            whenever(repository.saveAndFlush(any())).thenAnswer { invocation ->
+                buildSavedEntity(invocation.getArgument(0))
+            }
+            whenever(activityService.logActivity(any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(buildActivityLog())
+
+            val count = service.persistSuggestions(workspaceId, listOf(candidate), userId)
+
+            assertEquals(1, count)
+            verify(repository).saveAndFlush(any())
+        }
+
+        /**
+         * When neither entity belongs to any cluster (findByEntityId returns null for both),
+         * persistSuggestions proceeds normally and creates a suggestion.
+         */
+        @Test
+        fun `persistSuggestions proceeds when neither entity is in any cluster`() {
+            val candidate = IdentityFactory.createScoredCandidate(compositeScore = 0.85)
+
+            whenever(memberRepository.findByEntityId(any())).thenReturn(null)
+            whenever(repository.findActiveSuggestion(any(), any(), any())).thenReturn(null)
+            whenever(repository.findRejectedSuggestion(any(), any(), any())).thenReturn(null)
+            whenever(repository.saveAndFlush(any())).thenAnswer { invocation ->
+                buildSavedEntity(invocation.getArgument(0))
+            }
+            whenever(activityService.logActivity(any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(buildActivityLog())
+
+            val count = service.persistSuggestions(workspaceId, listOf(candidate), userId)
+
+            assertEquals(1, count)
+            verify(repository).saveAndFlush(any())
         }
     }
 
