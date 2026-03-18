@@ -45,7 +45,7 @@ import { ImageBlock } from './image-block';
 import {
   useBlockNode,
   useEditorDispatch,
-  useEditorStore
+  useEditorStoreApi
 } from './store/editor-store';
 import { TableBuilder } from './table-builder';
 import { ContainerNode, EditorNode, getNodeTextContent, TextNode } from './types';
@@ -150,40 +150,44 @@ export const Block = React.memo(
     // Thanks to structural sharing, this only causes re-render when THIS node changes
     const node = useBlockNode(nodeId);
 
-    // If node not found, return null (shouldn't happen but safe guard)
-    if (!node) {
-      console.warn(`Block: Node ${nodeId} not found`);
-      return null;
-    }
+    // ZUSTAND: Get dispatch function (never changes, no re-renders)
+    const dispatch = useEditorDispatch();
+    const storeApi = useEditorStoreApi();
 
+    // All hooks must be called before any early return (React rules of hooks)
     const localRef = useRef<HTMLElement | null>(null);
     const isComposingRef = useRef(false);
     const shouldPreserveSelectionRef = useRef(false);
     const [isHovering, setIsHovering] = useState(false);
     const coverImageInputRef = useRef<HTMLInputElement>(null);
     const [isUploadingCover, setIsUploadingCover] = useState(false);
+    const renderCountRef = useRef(0);
+    const [showCommandMenu, setShowCommandMenu] = useState(false);
+    const [commandMenuAnchor, setCommandMenuAnchor] = useState<HTMLElement | null>(null);
+    const [addBlockPopoverOpen, setAddBlockPopoverOpen] = useState(false);
+    const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+    const [isDraggingTouch, setIsDraggingTouch] = useState(false);
+
+    // Update the node cache on every render so the memo comparison function
+    // can detect changes without needing direct store access
+    React.useEffect(() => {
+      if (node) {
+        nodeCache.set(nodeId, node);
+      }
+    });
+
+    // If node not found, return null (shouldn't happen but safe guard)
+    if (!node) {
+      console.warn(`Block: Node ${nodeId} not found`);
+      return null;
+    }
 
     // DEV: Track renders to verify optimization
-    const renderCountRef = useRef(0);
     renderCountRef.current += 1;
 
     if (process.env.NODE_ENV === 'development') {
       console.log(`🔄testBlock ${nodeId} render #${renderCountRef.current}`);
     }
-
-    // ZUSTAND: Get dispatch function (never changes, no re-renders)
-    const dispatch = useEditorDispatch();
-
-    // Command menu state
-    const [showCommandMenu, setShowCommandMenu] = useState(false);
-    const [commandMenuAnchor, setCommandMenuAnchor] = useState<HTMLElement | null>(null);
-
-    // Add block popover state
-    const [addBlockPopoverOpen, setAddBlockPopoverOpen] = useState(false);
-
-    // Touch/drag state for mobile
-    const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-    const [isDraggingTouch, setIsDraggingTouch] = useState(false);
 
     // Determine how to render this node
     const renderType = getNodeRenderType(node);
@@ -461,8 +465,10 @@ export const Block = React.memo(
         onInsertImage,
         onCreateList,
         // ✅ Pass getter function - only called when needed, doesn't cause re-renders
-        currentContainer: () =>
-          useEditorStore.getState().history[useEditorStore.getState().historyIndex],
+        currentContainer: () => {
+          const state = storeApi.getState();
+          return state.history[state.historyIndex];
+        },
         dispatch,
         localRef,
         isComposingRef,
@@ -903,25 +909,14 @@ export const Block = React.memo(
       return false;
     }
 
-    // Get the current node from store to check if its content changed
-    const { useEditorStore } = require('./store/editor-store');
-    const store = useEditorStore.getState();
-    const currentNode = store.getNode(nextProps.nodeId);
-
-    // Check if node reference changed (thanks to Zustand structural sharing)
+    // Check if node reference changed (thanks to Zustand structural sharing).
+    // The node cache is updated in the component body via useEffect, so we can
+    // detect store changes without direct store access (which isn't possible
+    // with the context-based store pattern).
     const cachedNode = nodeCache.get(nextProps.nodeId);
 
-    // Update cache with current node for next comparison
-    nodeCache.set(nextProps.nodeId, currentNode);
-
-    // If node reference changed, content must have changed
-    // This is the KEY optimization - structural sharing ensures same reference = same data
-    if (cachedNode !== undefined && cachedNode !== currentNode) {
-      if (DEBUG) {
-        console.log(`🔄 Block ${nextProps.nodeId} → node data changed in store`);
-        console.log('  Previous node:', cachedNode);
-        console.log('  Current node:', currentNode);
-      }
+    // If we have no cached node yet, allow render so the component can populate the cache
+    if (cachedNode === undefined) {
       return false;
     }
 

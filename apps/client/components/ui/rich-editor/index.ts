@@ -49,7 +49,9 @@ export { editorReducer, createInitialState } from './lib/reducer/editor-reducer'
 // Zustand Store and Hooks
 // ============================================================================
 export {
+  createEditorStore,
   EditorProvider,
+  useEditorStoreApi,
   useEditorState,
   useEditorDispatch,
   useBlockNode,
@@ -61,7 +63,7 @@ export {
   useSelection,
 } from './store/editor-store';
 
-export type { EditorProviderProps } from './store/editor-store';
+export type { EditorProviderProps, EditorStoreApi } from './store/editor-store';
 
 // ============================================================================
 // Utilities

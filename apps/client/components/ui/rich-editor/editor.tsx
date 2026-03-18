@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useStore } from 'zustand';
 
 import { useToast } from '@/components/ui/rich-editor/hooks/use-toast';
 
@@ -76,7 +77,7 @@ import { SelectionToolbar } from './SelectionToolbar';
 import {
   useContainer,
   useEditorDispatch,
-  useEditorStore,
+  useEditorStoreApi,
   useSelection,
   useSelectionManager,
 } from './store/editor-store';
@@ -108,11 +109,12 @@ export function Editor({
 EditorProps = {}) {
   // ✅ OPTIMIZATION: Subscribe to specific state pieces instead of full state
   // This prevents Editor from re-rendering on every state change
-  const activeNodeId = useEditorStore((state) => state.activeNodeId);
-  const historyIndex = useEditorStore((state) => state.historyIndex);
-  const historyLength = useEditorStore((state) => state.history.length);
-  const coverImage = useEditorStore((state) => state.coverImage);
-  const currentSelection = useEditorStore((state) => state.currentSelection);
+  const storeApi = useEditorStoreApi();
+  const activeNodeId = useStore(storeApi, (state) => state.activeNodeId);
+  const historyIndex = useStore(storeApi, (state) => state.historyIndex);
+  const historyLength = useStore(storeApi, (state) => state.history.length);
+  const coverImage = useStore(storeApi, (state) => state.coverImage);
+  const currentSelection = useStore(storeApi, (state) => state.currentSelection);
 
   const dispatch = useEditorDispatch();
   const container = useContainer();

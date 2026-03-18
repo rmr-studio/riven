@@ -1,13 +1,17 @@
 import React from 'react';
-import { create } from 'zustand';
+import { createStore, type StoreApi } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
+import { useStore } from 'zustand';
 
 import { EditorAction } from '../lib/reducer/actions';
 import { createInitialState, editorReducer } from '../lib/reducer/editor-reducer';
 import { ContainerNode, EditorNode, EditorState, SelectionInfo, TextNode } from '../types';
 
+// ============================================================================
 // Store interface
+// ============================================================================
+
 interface EditorStore extends EditorState {
   // Actions
   dispatch: (action: EditorAction) => void;
@@ -31,7 +35,12 @@ interface EditorStore extends EditorState {
   _selectionSubscribers: Set<(selection: SelectionInfo | null) => void>;
 }
 
-// Helper function to find node by ID in tree
+export type EditorStoreApi = StoreApi<EditorStore>;
+
+// ============================================================================
+// Helper
+// ============================================================================
+
 function findNodeById(container: ContainerNode, nodeId: string): EditorNode | undefined {
   if (container.id === nodeId) return container;
 
@@ -50,129 +59,149 @@ function findNodeById(container: ContainerNode, nodeId: string): EditorNode | un
 // Static empty Set to avoid creating new instances
 const EMPTY_SELECTED_BLOCKS = new Set<string>();
 
-// Create the store with subscribeWithSelector middleware for fine-grained subscriptions
-export const useEditorStore = create<EditorStore>()(
-  subscribeWithSelector((set, get) => {
-    // Initialize selection subscribers
-    const selectionSubscribers = new Set<(selection: SelectionInfo | null) => void>();
+// ============================================================================
+// Factory function — creates an independent store instance
+// ============================================================================
 
-    return {
-      // Initialize with default state
-      ...createInitialState(),
+export function createEditorStore(
+  initialContainer?: ContainerNode,
+  initialState?: EditorState,
+): EditorStoreApi {
+  const initial = initialState
+    ? initialState
+    : initialContainer
+      ? createInitialState(initialContainer)
+      : createInitialState();
 
-      // Selection state (non-reactive)
-      _selection: null,
-      _selectionSubscribers: selectionSubscribers,
+  return createStore<EditorStore>()(
+    subscribeWithSelector((set, get) => {
+      const selectionSubscribers = new Set<(selection: SelectionInfo | null) => void>();
 
-      // Main dispatch function
-      dispatch: (action: EditorAction) => {
-        const currentState = get();
-        const newState = editorReducer(currentState, action);
+      return {
+        ...initial,
 
-        // Update the store with new state
-        set(newState);
-      },
+        _selection: null,
+        _selectionSubscribers: selectionSubscribers,
 
-      // Optimized selectors (these don't cause subscriptions)
-      getNode: (nodeId: string) => {
-        const container = get().history[get().historyIndex];
-        return findNodeById(container, nodeId);
-      },
-
-      getContainer: () => {
-        return get().history[get().historyIndex];
-      },
-
-      isNodeActive: (nodeId: string) => {
-        return get().activeNodeId === nodeId;
-      },
-
-      getActiveNodeId: () => {
-        return get().activeNodeId;
-      },
-
-      getContainerChildrenIds: () => {
-        const container = get().history[get().historyIndex];
-        return container.children.map((child) => child.id);
-      },
-
-      // Selection manager (optimized to avoid re-renders)
-      selectionManager: {
-        getSelection: () => get()._selection,
-
-        setSelection: (selection: SelectionInfo | null) => {
-          // Update internal selection without triggering re-renders
-          set({ _selection: selection });
-
-          // Notify subscribers (e.g., toolbar) but don't trigger full re-render
-          const subscribers = get()._selectionSubscribers;
-          subscribers.forEach((callback) => callback(selection));
+        dispatch: (action: EditorAction) => {
+          const currentState = get();
+          const newState = editorReducer(currentState, action);
+          set(newState);
         },
 
-        subscribe: (callback: (selection: SelectionInfo | null) => void) => {
-          const subscribers = get()._selectionSubscribers;
-          subscribers.add(callback);
-          return () => {
-            subscribers.delete(callback);
-          };
+        getNode: (nodeId: string) => {
+          const container = get().history[get().historyIndex];
+          return findNodeById(container, nodeId);
         },
-      },
-    };
-  }),
-);
 
-// Specialized hooks for components to subscribe to specific data
+        getContainer: () => {
+          return get().history[get().historyIndex];
+        },
+
+        isNodeActive: (nodeId: string) => {
+          return get().activeNodeId === nodeId;
+        },
+
+        getActiveNodeId: () => {
+          return get().activeNodeId;
+        },
+
+        getContainerChildrenIds: () => {
+          const container = get().history[get().historyIndex];
+          return container.children.map((child) => child.id);
+        },
+
+        selectionManager: {
+          getSelection: () => get()._selection,
+
+          setSelection: (selection: SelectionInfo | null) => {
+            set({ _selection: selection });
+            const subscribers = get()._selectionSubscribers;
+            subscribers.forEach((callback) => callback(selection));
+          },
+
+          subscribe: (callback: (selection: SelectionInfo | null) => void) => {
+            const subscribers = get()._selectionSubscribers;
+            subscribers.add(callback);
+            return () => {
+              subscribers.delete(callback);
+            };
+          },
+        },
+      };
+    }),
+  );
+}
+
+// ============================================================================
+// Context + context hook
+// ============================================================================
+
+const EditorStoreContext = React.createContext<EditorStoreApi | undefined>(undefined);
+
+function useEditorStoreContext<T>(selector: (state: EditorStore) => T): T {
+  const store = React.useContext(EditorStoreContext);
+  if (!store) {
+    throw new Error('Editor hooks must be used within an EditorProvider');
+  }
+  return useStore(store, selector);
+}
 
 /**
- * Hook for blocks to subscribe only to their specific node data
- * This prevents re-renders when other nodes change
- *
- * OPTIMIZATION: Uses subscribeWithSelector to ONLY subscribe to this specific node.
- * The selector function extracts just this node, and Zustand only notifies us
- * when the RETURN VALUE changes (using Object.is for reference equality).
- *
- * How it works:
- * 1. Selector extracts ONLY this specific node from state
- * 2. Zustand tracks the selector's return value
- * 3. On state change, Zustand re-runs selector and compares old vs new return value
- * 4. Only triggers re-render if the node reference actually changed
- * 5. Combined with structural sharing in reducer, unchanged nodes keep same reference
- *
- * Result:
- * - Type in block A → only block A's node reference changes → only block A re-renders ✅
- * - All other blocks keep same reference → selector returns same value → no re-render ✅
+ * Returns the raw store API for non-reactive access (e.g., in callbacks or memo comparisons).
+ * Use this instead of the old `useEditorStore.getState()` pattern.
+ */
+export function useEditorStoreApi(): EditorStoreApi {
+  const store = React.useContext(EditorStoreContext);
+  if (!store) {
+    throw new Error('useEditorStoreApi must be used within an EditorProvider');
+  }
+  return store;
+}
+
+// ============================================================================
+// Selector hooks — same signatures as before, now context-based
+// ============================================================================
+
+/**
+ * Hook for blocks to subscribe only to their specific node data.
+ * Prevents re-renders when other nodes change via structural sharing.
  */
 export function useBlockNode(nodeId: string) {
-  return useEditorStore((state) => {
+  return useEditorStoreContext((state) => {
     const container = state.history[state.historyIndex];
     return findNodeById(container, nodeId);
   });
 }
 
 /**
- * Hook to check if a specific node is active
- * Only re-renders when the active status of THIS node changes
+ * Hook to check if a specific node is active.
+ * Only re-renders when the active status of THIS node changes.
  */
 export function useIsNodeActive(nodeId: string): boolean {
-  return useEditorStore((state) => state.activeNodeId === nodeId);
+  return useEditorStoreContext((state) => state.activeNodeId === nodeId);
 }
 
 /**
- * Hook to get the current active node ID
- * Only re-renders when the active node ID changes
+ * Hook to get the current active node ID.
+ * Only re-renders when the active node ID changes.
  */
 export function useActiveNodeId(): string | null {
-  return useEditorStore((state) => state.activeNodeId);
+  return useEditorStoreContext((state) => state.activeNodeId);
 }
 
 /**
- * Hook to get the current container's children IDs
- * Only re-renders when the children array changes
- * Uses useShallow to prevent unnecessary re-renders from array recreation
+ * Hook to get the current container's children IDs.
+ * Uses useShallow to prevent unnecessary re-renders from array recreation.
  */
 export function useContainerChildrenIds(): string[] {
-  return useEditorStore(
-    useShallow((state) => {
+  const store = React.useContext(EditorStoreContext);
+  if (!store) {
+    throw new Error('useContainerChildrenIds must be used within an EditorProvider');
+  }
+  return useStore(
+    store,
+    useShallow((state: EditorStore) => {
       const container = state.history[state.historyIndex];
       return container.children.map((child) => child.id);
     }),
@@ -180,40 +209,61 @@ export function useContainerChildrenIds(): string[] {
 }
 
 /**
- * Hook to get the current container
- * Use sparingly - prefer more specific hooks when possible
- * Uses useShallow to prevent unnecessary re-renders when container reference hasn't changed
+ * Hook to get the current container.
+ * Use sparingly — prefer more specific hooks when possible.
  */
 export function useContainer(): ContainerNode {
-  return useEditorStore(useShallow((state) => state.history[state.historyIndex]));
+  const store = React.useContext(EditorStoreContext);
+  if (!store) {
+    throw new Error('useContainer must be used within an EditorProvider');
+  }
+  return useStore(
+    store,
+    useShallow((state: EditorStore) => state.history[state.historyIndex]),
+  );
 }
 
 /**
- * Hook to get the current container (non-reactive, for use in callbacks)
- * This doesn't subscribe to changes, use it for one-time reads in event handlers
- * Uses shallow equality since the getter function should be stable
+ * Hook to get the current container (non-reactive, for use in callbacks).
  */
 export function useContainerGetter(): () => ContainerNode {
-  return useEditorStore(useShallow((state) => () => state.history[state.historyIndex]));
+  const store = React.useContext(EditorStoreContext);
+  if (!store) {
+    throw new Error('useContainerGetter must be used within an EditorProvider');
+  }
+  return useStore(
+    store,
+    useShallow((state: EditorStore) => () => state.history[state.historyIndex]),
+  );
 }
 
 /**
- * Hook to get the dispatch function
- * This never changes so no re-renders
- * Uses shallow equality to ensure stable reference
+ * Hook to get the dispatch function.
+ * This never changes so no re-renders.
  */
 export function useEditorDispatch() {
-  return useEditorStore(useShallow((state) => state.dispatch));
+  const store = React.useContext(EditorStoreContext);
+  if (!store) {
+    throw new Error('useEditorDispatch must be used within an EditorProvider');
+  }
+  return useStore(
+    store,
+    useShallow((state: EditorStore) => state.dispatch),
+  );
 }
 
 /**
- * Hook to get the full editor state
- * Use only when you need the complete state (like for toolbars)
- * Uses useShallow to prevent infinite loops by caching the result
+ * Hook to get the full editor state.
+ * Use only when you need the complete state (like for toolbars).
  */
 export function useEditorState(): EditorState {
-  return useEditorStore(
-    useShallow((state) => ({
+  const store = React.useContext(EditorStoreContext);
+  if (!store) {
+    throw new Error('useEditorState must be used within an EditorProvider');
+  }
+  return useStore(
+    store,
+    useShallow((state: EditorStore) => ({
       history: state.history,
       historyIndex: state.historyIndex,
       activeNodeId: state.activeNodeId,
@@ -228,16 +278,21 @@ export function useEditorState(): EditorState {
 }
 
 /**
- * Hook for selection management (optimized to avoid re-renders)
- * Uses shallow equality since selectionManager is a stable object
+ * Hook for selection management (optimized to avoid re-renders).
  */
 export function useSelectionManager() {
-  return useEditorStore(useShallow((state) => state.selectionManager));
+  const store = React.useContext(EditorStoreContext);
+  if (!store) {
+    throw new Error('useSelectionManager must be used within an EditorProvider');
+  }
+  return useStore(
+    store,
+    useShallow((state: EditorStore) => state.selectionManager),
+  );
 }
 
 /**
- * Hook to subscribe to selection changes (for toolbar/UI updates)
- * Only components that need to react to selection changes should use this
+ * Hook to subscribe to selection changes (for toolbar/UI updates).
  */
 export function useSelection(): SelectionInfo | null {
   const selectionManager = useSelectionManager();
@@ -253,7 +308,10 @@ export function useSelection(): SelectionInfo | null {
   return selection;
 }
 
-// Provider component for initialization
+// ============================================================================
+// Provider component
+// ============================================================================
+
 export interface EditorProviderProps {
   children: React.ReactNode;
   initialContainer?: ContainerNode;
@@ -269,25 +327,17 @@ export function EditorProvider({
   onChange,
   debug = false,
 }: EditorProviderProps) {
-  const store = useEditorStore();
+  const storeRef = React.useRef<EditorStoreApi | null>(null);
 
-  // Initialize store with provided state
-  React.useEffect(() => {
-    if (initialState) {
-      // Set the initial state
-      useEditorStore.setState(initialState);
-    } else if (initialContainer) {
-      // Create initial state from container
-      const newState = createInitialState(initialContainer);
-      useEditorStore.setState(newState);
-    }
-  }, [initialContainer, initialState]);
+  if (!storeRef.current) {
+    storeRef.current = createEditorStore(initialContainer, initialState);
+  }
 
   // Subscribe to state changes for onChange callback
   React.useEffect(() => {
-    if (!onChange) return;
+    if (!onChange || !storeRef.current) return;
 
-    return useEditorStore.subscribe((state) => {
+    return storeRef.current.subscribe((state) => {
       const editorState: EditorState = {
         history: state.history,
         historyIndex: state.historyIndex,
@@ -305,10 +355,10 @@ export function EditorProvider({
 
   // Debug logging
   React.useEffect(() => {
-    if (!debug) return;
+    if (!debug || !storeRef.current) return;
 
-    let prevState = useEditorStore.getState();
-    return useEditorStore.subscribe((state) => {
+    let prevState = storeRef.current.getState();
+    return storeRef.current.subscribe((state) => {
       console.group('🎬 [Mina Editor] State Change');
       console.log('Previous:', prevState);
       console.log('Current:', state);
@@ -317,5 +367,9 @@ export function EditorProvider({
     });
   }, [debug]);
 
-  return React.createElement(React.Fragment, null, children);
+  return (
+    <EditorStoreContext.Provider value={storeRef.current}>
+      {children}
+    </EditorStoreContext.Provider>
+  );
 }
