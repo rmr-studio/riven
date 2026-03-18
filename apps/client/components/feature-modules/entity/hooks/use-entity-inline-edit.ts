@@ -22,7 +22,7 @@ import { EntityRow, isDraftRow } from '@/components/feature-modules/entity/compo
 export function useEntityInlineEdit(
   workspaceId: string,
   entityType: EntityType,
-  entities: Entity[],
+  getEntityById: (id: string) => Entity | undefined,
 ) {
   const { mutateAsync: saveDefinition } = useSaveDefinitionMutation(workspaceId);
   const handleConflict = (_request: SaveEntityRequest, response: SaveEntityResponse) => {
@@ -40,7 +40,7 @@ export function useEntityInlineEdit(
   const handleCellEdit = useCallback(
     async (row: EntityRow, columnId: string, newValue: unknown, _oldValue: unknown): Promise<boolean> => {
       if (isDraftRow(row)) return false;
-      const entity = entities.find((e) => e.id === row._entityId);
+      const entity = getEntityById(row._entityId);
       if (!entity) return false;
 
       const attributeDef: SchemaUUID | undefined = entityType.schema.properties?.[columnId];
@@ -95,7 +95,7 @@ export function useEntityInlineEdit(
 
       return false;
     },
-    [entities, entityType, saveEntity, saveDefinition, workspaceId],
+    [getEntityById, entityType, saveEntity, saveDefinition],
   );
 
   return { handleCellEdit };

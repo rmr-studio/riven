@@ -1,3 +1,59 @@
+import { InfiniteData } from '@tanstack/react-query';
+import { EntityQueryResponse, Entity } from '@/lib/types/entity';
+import { removeEntitiesFromPages, replaceEntitiesInPages } from './entity-cache.utils';
+
+function makeEntity(id: string): Entity {
+  return { id, payload: {}, identifierKey: 'name', createdAt: new Date().toISOString() } as any;
+}
+
+function makePages(...pages: Entity[][]): InfiniteData<EntityQueryResponse> {
+  return {
+    pages: pages.map((entities, i) => ({
+      entities,
+      hasNextPage: i < pages.length - 1,
+      limit: 50,
+      offset: i * 50,
+    })),
+    pageParams: pages.map((_, i) => i * 50),
+  };
+}
+
+describe('Delete mutation cache updates', () => {
+  it('removes a single entity from the correct page', () => {
+    const data = makePages([makeEntity('e1'), makeEntity('e2')], [makeEntity('e3')]);
+    const result = removeEntitiesFromPages(data, new Set(['e2']));
+
+    expect(result!.pages[0].entities).toHaveLength(1);
+    expect(result!.pages[0].entities[0].id).toBe('e1');
+    expect(result!.pages[1].entities).toHaveLength(1);
+  });
+
+  it('removes entities across multiple pages', () => {
+    const data = makePages([makeEntity('e1'), makeEntity('e2')], [makeEntity('e3')]);
+    const result = removeEntitiesFromPages(data, new Set(['e1', 'e3']));
+
+    expect(result!.pages[0].entities).toHaveLength(1);
+    expect(result!.pages[0].entities[0].id).toBe('e2');
+    expect(result!.pages[1].entities).toHaveLength(0);
+  });
+
+  it('handles removing non-existent IDs gracefully', () => {
+    const data = makePages([makeEntity('e1')]);
+    const result = removeEntitiesFromPages(data, new Set(['missing']));
+
+    expect(result!.pages[0].entities).toHaveLength(1);
+  });
+
+  it('replaces impacted entities after deletion', () => {
+    const data = makePages([makeEntity('e1'), makeEntity('e2')]);
+    const updated = { ...makeEntity('e2'), payload: { status: 'orphaned' } } as any;
+    const result = replaceEntitiesInPages(data, new Map([['e2', updated]]));
+
+    expect(result!.pages[0].entities[1]).toEqual(updated);
+    expect(result!.pages[0].entities[0].id).toBe('e1');
+  });
+});
+
 import { renderHook, act, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -196,7 +252,7 @@ describe('useDeleteEntityMutation', () => {
   });
 
   describe('error response handling', () => {
-    it('shows error toast when deletedCount is 0 with an error message', async () => {
+    it('throws and shows error toast when deletedCount is 0 with an error message', async () => {
       const queryClient = createTestQueryClient();
       const entity = createMockEntity({ id: 'entity-1', typeId: TYPE_ID_A });
       seedEntityCache(queryClient, WORKSPACE_ID, TYPE_ID_A, [entity]);
@@ -212,9 +268,12 @@ describe('useDeleteEntityMutation', () => {
         result.current.mutate({ entityIds: { [TYPE_ID_A]: ['entity-1'] } });
       });
 
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      await waitFor(() => expect(result.current.isError).toBe(true));
 
-      expect(toast.error).toHaveBeenCalledWith('Failed to delete entities: Permission denied');
+      expect(result.current.error?.message).toBe('Permission denied');
+      expect(toast.error).toHaveBeenCalledWith(
+        'Failed to delete selected entities: Permission denied',
+      );
       expect(toast.success).not.toHaveBeenCalled();
     });
 
@@ -235,7 +294,7 @@ describe('useDeleteEntityMutation', () => {
         result.current.mutate({ entityIds: { [TYPE_ID_A]: ['entity-1'] } });
       });
 
-      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      await waitFor(() => expect(result.current.isError).toBe(true));
 
       // Cache should be untouched — no entities removed
       const cache = getEntityCache(queryClient, WORKSPACE_ID, TYPE_ID_A);
