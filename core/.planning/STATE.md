@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-03-19T01:43:38.384Z"
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-03-19T01:53:05.506Z"
 last_activity: 2026-03-18 — Phase 03 execution complete (plans 01 + 02)
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
   percent: 75
 ---
 
@@ -58,6 +58,7 @@ Progress: [███████░░░] 75%
 | Phase 03 P01 | 45 | 3 tasks | 11 files |
 | Phase 03 P02 | 30 | 2 tasks | 3 files |
 | Phase 04 P02 | 15 | 2 tasks | 2 files |
+| Phase 04 P01 | 30 | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,10 @@ Recent decisions affecting current work:
 - [Phase 03-02]: Lazy sync state creation in finalizeSyncState — creates IntegrationSyncStateEntity if not found, no pre-seeding required
 - [Phase 04]: AUTH-01/02/03 marked superseded (not completed) — Phase 2 webhook flow made original enablement requirements obsolete
 - [Phase 04]: Sync script guide written as full practical reference (not architectural stub) — documents model naming, batchSave, relationship IDs, _nango_metadata semantics
+- [Phase 04-01]: IntegrationHealthService has no @PreAuthorize — called from Temporal activity, no JWT context available
+- [Phase 04-01]: aggregateHealth() priority: DEGRADED (any consecutiveFailureCount >= 3) > FAILED (all FAILED) > HEALTHY
+- [Phase 04-01]: evaluateHealth is 4th activity for independent transaction boundary from finalizeSyncState
+- [Phase 04-01]: ConnectionStatus recovery paths: DEGRADED->SYNCING and FAILED->SYNCING now valid transitions
 
 ### Pending Todos
 
@@ -106,6 +111,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T01:43:38.382Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-03-19T01:49:08.249Z
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None

@@ -39,9 +39,9 @@
 
 ### Health
 
-- [ ] **HLTH-01**: Connection health aggregates across entity types: all SUCCESS → HEALTHY
-- [ ] **HLTH-02**: Any entity type with 3+ consecutive failures → DEGRADED
-- [ ] **HLTH-03**: All entity types FAILED → FAILED
+- [x] **HLTH-01**: Connection health aggregates across entity types: all SUCCESS → HEALTHY
+- [x] **HLTH-02**: Any entity type with 3+ consecutive failures → DEGRADED
+- [x] **HLTH-03**: All entity types FAILED → FAILED
 
 ### Nango Client
 
@@ -120,9 +120,9 @@
 | SYNC-06 | Phase 3 | Pending |
 | SYNC-07 | Phase 3 | Pending |
 | SYNC-08 | Phase 3 | Complete |
-| HLTH-01 | Phase 4 | Pending |
-| HLTH-02 | Phase 4 | Pending |
-| HLTH-03 | Phase 4 | Pending |
+| HLTH-01 | Phase 4 | Complete |
+| HLTH-02 | Phase 4 | Complete |
+| HLTH-03 | Phase 4 | Complete |
 | AUTH-01 | Phase 4 (Superseded) | Superseded by Phase 2 auth webhook handler |
 | AUTH-02 | Phase 4 (Superseded) | Superseded by Phase 2 auth webhook handler |
 | AUTH-03 | Phase 4 (Superseded) | Superseded by Phase 2 auth webhook handler |
