@@ -8,6 +8,7 @@
     "plural": "Support Tickets"
   },
   "semanticGroup": "SUPPORT",
+  "lifecycleDomain": "SUPPORT",
   "identifierKey": "subject",
   "attributes": {
     "subject": {

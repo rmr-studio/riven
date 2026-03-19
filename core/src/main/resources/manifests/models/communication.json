@@ -8,6 +8,7 @@
     "plural": "Communications"
   },
   "semanticGroup": "COMMUNICATION",
+  "lifecycleDomain": "UNCATEGORIZED",
   "identifierKey": "subject",
   "attributes": {
     "subject": {

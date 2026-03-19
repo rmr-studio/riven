@@ -8,6 +8,7 @@
     "plural": "Invoices"
   },
   "semanticGroup": "FINANCIAL",
+  "lifecycleDomain": "BILLING",
   "identifierKey": "invoice-number",
   "attributes": {
     "invoice-number": {
