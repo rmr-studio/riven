@@ -18,9 +18,15 @@ import riven.core.models.entity.EntityLink
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.entity.payload.EntityAttributeRelationPayloadReference
 import riven.core.models.entity.payload.EntityAttributeRequest
+import riven.core.models.entity.query.EntityQuery
+import riven.core.models.entity.query.pagination.QueryPagination
+import riven.core.models.request.entity.BulkDeleteEntityRequest
 import riven.core.models.request.entity.SaveEntityRequest
 import riven.core.models.response.entity.DeleteEntityResponse
 import riven.core.models.response.entity.SaveEntityResponse
+import riven.core.enums.entity.EntitySelectType
+import riven.core.service.entity.query.EntityQueryService
+import kotlinx.coroutines.runBlocking
 import riven.core.repository.entity.EntityRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.activity.log
@@ -52,6 +58,7 @@ class EntityService(
     private val activityService: ActivityService,
     private val sequenceService: EntityTypeSequenceService,
     private val applicationEventPublisher: ApplicationEventPublisher,
+    private val entityQueryService: EntityQueryService,
 ) {
 
 
@@ -503,6 +510,113 @@ class EntityService(
     }
 
 
+    // ------ Bulk Delete ------
+
+    /**
+     * Bulk deletes entities by explicit IDs or filter-based selection.
+     * Processes deletes in batches of 500. Logs one activity entry per bulk operation.
+     */
+    @Transactional
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun bulkDeleteEntities(workspaceId: UUID, request: BulkDeleteEntityRequest): DeleteEntityResponse {
+        val userId = authTokenService.getUserId()
+
+        val idsToDelete = resolveEntityIds(request, workspaceId)
+        if (idsToDelete.isEmpty()) {
+            return DeleteEntityResponse(
+                error = "No entities matched the selection criteria"
+            )
+        }
+
+        // Detect impacted entities before any deletes
+        val impactedEntityIds = entityRelationshipService.findByTargetIdIn(idsToDelete)
+            .flatMap { it.value }
+            .map { it.sourceId }
+            .toSet()
+            .filter { it !in idsToDelete }
+
+        // Batch cascade delete
+        val allDeletedEntities = idsToDelete.chunked(BULK_DELETE_BATCH_SIZE).flatMap { batch ->
+            executeCascadeDelete(batch, workspaceId)
+        }
+        val deletedCount = allDeletedEntities.mapNotNull { it.id }.toSet().size
+
+        if (deletedCount == 0) {
+            return DeleteEntityResponse(
+                error = "No entities were deleted. Please check the selection criteria."
+            )
+        }
+
+        // Log one bulk activity entry
+        activityService.logActivities(
+            listOf(
+                ActivityLogEntity(
+                    activity = Activity.ENTITY,
+                    operation = OperationType.DELETE,
+                    userId = userId,
+                    workspaceId = workspaceId,
+                    entityId = null,
+                    entityType = ApplicationEntityType.ENTITY,
+                    details = mapOf(
+                        "bulkDelete" to true,
+                        "deletedCount" to deletedCount,
+                        "selectionType" to request.type.name,
+                    )
+                )
+            )
+        )
+
+        publishDeleteEvents(allDeletedEntities, workspaceId, userId)
+
+        val updatedEntities = fetchImpactedEntities(impactedEntityIds, workspaceId)
+
+        return DeleteEntityResponse(
+            deletedCount = deletedCount,
+            updatedEntities = updatedEntities
+        )
+    }
+
+    /**
+     * Resolves entity IDs to delete based on the request type.
+     * For BY_ID: returns entityIds directly.
+     * For ALL: queries via EntityQueryService with pagination, removes excludeIds.
+     */
+    private fun resolveEntityIds(request: BulkDeleteEntityRequest, workspaceId: UUID): List<UUID> {
+        return when (request.type) {
+            EntitySelectType.BY_ID -> requireNotNull(request.entityIds) { "entityIds required for BY_ID" }
+
+            EntitySelectType.ALL -> {
+                val entityTypeId = requireNotNull(request.entityTypeId) { "entityTypeId required for ALL" }
+                val filter = requireNotNull(request.filter) { "filter required for ALL" }
+                val query = EntityQuery(entityTypeId = entityTypeId, filter = filter)
+                val excludeIds = request.excludeIds?.toSet() ?: emptySet()
+
+                val allIds = mutableListOf<UUID>()
+                var offset = 0
+                val pageSize = 500
+
+                do {
+                    val result = runBlocking {
+                        entityQueryService.execute(
+                            query = query,
+                            workspaceId = workspaceId,
+                            pagination = QueryPagination(limit = pageSize, offset = offset),
+                            includeCount = false,
+                        )
+                    }
+                    allIds.addAll(result.entities.map { it.id })
+                    offset += pageSize
+                } while (result.hasNextPage)
+
+                if (excludeIds.isNotEmpty()) {
+                    allIds.filter { it !in excludeIds }
+                } else {
+                    allIds
+                }
+            }
+        }
+    }
+
     /**
      * Get all entities for an workspace.
      */
@@ -520,5 +634,7 @@ class EntityService(
         }
     }
 
-
+    companion object {
+        const val BULK_DELETE_BATCH_SIZE = 500
+    }
 }
