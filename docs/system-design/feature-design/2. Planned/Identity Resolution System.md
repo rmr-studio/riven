@@ -38,6 +38,11 @@ The system:
 
 Integration entities remain readonly and separate — confirming a match creates a relationship, not a merge. This keeps integration data pristine and traceable to its source while giving workspace members a unified view across all connected tools.
 
+### Short Comings
+This system is sound in theory. But heavily relies on the user correctly labelling each relevant entity attribute as an identifier.
+- The first line of defence would be that all core models installed via a template would be semantically labelled appropriately, and cannot be changed by the user
+- But for new custom data models, it may be skewed. There would need to be either additional focus, better ease of use, or some other mechanism to ensure that users can appropriatetly define Identifier columns to make use of this resolution technique.
+
 ### Success Criteria
 
 - [ ] An entity save with IDENTIFIER-classified attributes triggers an async match job that produces suggestions when similar entities exist in the same workspace

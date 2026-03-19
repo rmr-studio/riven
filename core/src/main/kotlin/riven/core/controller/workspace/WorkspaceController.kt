@@ -47,7 +47,8 @@ class WorkspaceController(
         @RequestPart("file", required = false) file: MultipartFile? = null
     ): ResponseEntity<Workspace> {
         val response: Workspace = this.workspaceService.saveWorkspace(
-            workspace
+            workspace,
+            file
         )
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
