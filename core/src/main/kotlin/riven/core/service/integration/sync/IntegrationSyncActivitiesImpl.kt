@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KLogger
 import io.temporal.activity.Activity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionTemplate
 import riven.core.entity.catalog.CatalogEntityTypeEntity
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityRelationshipEntity
@@ -67,6 +68,7 @@ class IntegrationSyncActivitiesImpl(
     private val catalogEntityTypeRepository: CatalogEntityTypeRepository,
     private val entityTypeRepository: EntityTypeRepository,
     private val integrationHealthService: IntegrationHealthService,
+    private val transactionTemplate: TransactionTemplate,
     private val logger: KLogger,
 ) : IntegrationSyncActivities {
 
@@ -82,6 +84,11 @@ class IntegrationSyncActivitiesImpl(
         val connection = connectionRepository.findById(connectionId).orElse(null)
         if (connection == null) {
             logger.warn { "Connection $connectionId not found, skipping transitionToSyncing" }
+            return
+        }
+
+        if (connection.workspaceId != workspaceId) {
+            logger.error { "Connection $connectionId belongs to workspace ${connection.workspaceId}, not $workspaceId — skipping transitionToSyncing" }
             return
         }
 
@@ -106,11 +113,10 @@ class IntegrationSyncActivitiesImpl(
      * Resolves model context, paginates through all records with heartbeating, processes each
      * batch with deduplication, and runs a second pass to resolve pending relationships.
      */
-    @Transactional
     override fun fetchAndProcessRecords(input: IntegrationSyncWorkflowInput): SyncProcessingResult {
         val context = resolveModelContext(input) ?: return buildFailureResult(
-            UUID(0, 0),
-            "Failed to resolve model context for model ${input.model}"
+            entityTypeId = null,
+            message = "Failed to resolve model context for model ${input.model}",
         )
 
         val resolvedCursor = resolveStartCursor(input, context.entityTypeId)
@@ -306,6 +312,7 @@ class IntegrationSyncActivitiesImpl(
         startCursor: String?,
     ): SyncProcessingResult {
         var cursor = startCursor
+        var lastSuccessfulCursor: String? = startCursor
         val relationshipPending = mutableListOf<RelationshipPending>()
         var recordsSynced = 0
         var recordsFailed = 0
@@ -333,19 +340,22 @@ class IntegrationSyncActivitiesImpl(
             recordsFailed += batchResult.failed
             if (batchResult.lastError != null) lastErrorMessage = batchResult.lastError
 
+            lastSuccessfulCursor = cursor
             cursor = page.nextCursor
             heartbeat(cursor)
         } while (cursor != null)
 
         resolveRelationships(relationshipPending, input.workspaceId, input.integrationId)
 
+        val success = recordsSynced > 0 || recordsFailed == 0
+
         return SyncProcessingResult(
             entityTypeId = context.entityTypeId,
-            cursor = cursor,
+            cursor = lastSuccessfulCursor,
             recordsSynced = recordsSynced,
             recordsFailed = recordsFailed,
             lastErrorMessage = lastErrorMessage,
-            success = true,
+            success = success,
         )
     }
 
@@ -359,8 +369,8 @@ class IntegrationSyncActivitiesImpl(
     internal open fun heartbeat(cursor: String?) {
         try {
             Activity.getExecutionContext().heartbeat(cursor)
-        } catch (_: Exception) {
-            // In test environments, Temporal's static context is not available.
+        } catch (_: IllegalStateException) {
+            // In test environments, Temporal's static activity execution context is not available.
         }
     }
 
@@ -407,15 +417,17 @@ class IntegrationSyncActivitiesImpl(
                 }
 
                 val existing = existingByExternalId[externalId]
-                val recordProcessed = processRecord(
-                    record = record,
-                    externalId = externalId,
-                    existing = existing,
-                    workspaceId = workspaceId,
-                    integrationId = integrationId,
-                    context = context,
-                    relationshipPending = relationshipPending,
-                )
+                val recordProcessed = transactionTemplate.execute {
+                    processRecord(
+                        record = record,
+                        externalId = externalId,
+                        existing = existing,
+                        workspaceId = workspaceId,
+                        integrationId = integrationId,
+                        context = context,
+                        relationshipPending = relationshipPending,
+                    )
+                } ?: false
 
                 if (recordProcessed) synced++ else failed++
             } catch (e: Exception) {
@@ -586,67 +598,100 @@ class IntegrationSyncActivitiesImpl(
 
         for ((definitionKey, items) in byDefinitionKey) {
             try {
-                val sourceEntityId = items.first().sourceEntityId
-                val sourceEntityTypeId = entityRepository.findById(sourceEntityId).orElse(null)?.typeId
-                if (sourceEntityTypeId == null) {
-                    logger.warn { "Source entity $sourceEntityId not found — skipping definition '$definitionKey'" }
-                    continue
-                }
-
-                val definitions = relationshipDefinitionRepository
-                    .findByWorkspaceIdAndSourceEntityTypeId(workspaceId, sourceEntityTypeId)
-
-                val definition = definitions.firstOrNull { it.name == definitionKey }
-                if (definition == null) {
-                    logger.warn { "Relationship definition '$definitionKey' not found — skipping" }
-                    continue
-                }
-
-                val definitionId = requireNotNull(definition.id) { "RelationshipDefinitionEntity.id must not be null" }
-
-                val allTargetExternalIds = items.flatMap { it.targetExternalIds }.distinct()
-                val targetEntityMap = entityRepository.findByWorkspaceIdAndSourceIntegrationIdAndSourceExternalIdIn(
-                    workspaceId, integrationId, allTargetExternalIds
-                ).associateBy {
-                    requireNotNull(it.sourceExternalId) { "EntityEntity.sourceExternalId must not be null" }
-                }
-
-                for (item in items) {
-                    try {
-                        val targetEntityIds = item.targetExternalIds.mapNotNull { extId ->
-                            targetEntityMap[extId]?.id
-                        }
-                        if (targetEntityIds.isEmpty()) continue
-
-                        for (targetId in targetEntityIds) {
-                            val existing = entityRelationshipRepository
-                                .findBySourceIdAndTargetIdAndDefinitionId(
-                                    item.sourceEntityId, targetId, definitionId
-                                )
-                            if (existing.isEmpty()) {
-                                entityRelationshipRepository.save(
-                                    EntityRelationshipEntity(
-                                        workspaceId = workspaceId,
-                                        sourceId = item.sourceEntityId,
-                                        targetId = targetId,
-                                        definitionId = definitionId,
-                                    )
-                                )
-                            }
-                        }
-                    } catch (e: Exception) {
-                        logger.warn(e) { "Failed to resolve relationship for source=${item.sourceEntityId} — skipping" }
-                    }
-                }
+                val resolved = resolveDefinitionForKey(definitionKey, items, workspaceId) ?: continue
+                val targetEntityMap = buildTargetEntityMap(items, workspaceId, integrationId)
+                createMissingRelationships(items, resolved.definitionId, targetEntityMap, workspaceId)
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to resolve relationships for definition '$definitionKey' — skipping group" }
             }
         }
     }
 
+    /**
+     * Looks up the source entity type and finds the matching relationship definition.
+     *
+     * @return Resolved definition ID and metadata, or null if not found.
+     */
+    private fun resolveDefinitionForKey(
+        definitionKey: String,
+        items: List<RelationshipPending>,
+        workspaceId: UUID,
+    ): ResolvedDefinition? {
+        val sourceEntityId = items.first().sourceEntityId
+        val sourceEntityTypeId = entityRepository.findById(sourceEntityId).orElse(null)?.typeId
+        if (sourceEntityTypeId == null) {
+            logger.warn { "Source entity $sourceEntityId not found — skipping definition '$definitionKey'" }
+            return null
+        }
+
+        val definitions = relationshipDefinitionRepository
+            .findByWorkspaceIdAndSourceEntityTypeId(workspaceId, sourceEntityTypeId)
+
+        val definition = definitions.firstOrNull { it.name == definitionKey }
+        if (definition == null) {
+            logger.warn { "Relationship definition '$definitionKey' not found — skipping" }
+            return null
+        }
+
+        val definitionId = requireNotNull(definition.id) { "RelationshipDefinitionEntity.id must not be null" }
+        return ResolvedDefinition(definitionId)
+    }
+
+    /** Batch-fetches target entities by external ID and returns a lookup map. */
+    private fun buildTargetEntityMap(
+        items: List<RelationshipPending>,
+        workspaceId: UUID,
+        integrationId: UUID,
+    ): Map<String, EntityEntity> {
+        val allTargetExternalIds = items.flatMap { it.targetExternalIds }.distinct()
+        return entityRepository.findByWorkspaceIdAndSourceIntegrationIdAndSourceExternalIdIn(
+            workspaceId, integrationId, allTargetExternalIds
+        ).associateBy {
+            requireNotNull(it.sourceExternalId) { "EntityEntity.sourceExternalId must not be null" }
+        }
+    }
+
+    /** Dedup-checks and saves relationship entities for each pending item. */
+    private fun createMissingRelationships(
+        items: List<RelationshipPending>,
+        definitionId: UUID,
+        targetEntityMap: Map<String, EntityEntity>,
+        workspaceId: UUID,
+    ) {
+        for (item in items) {
+            try {
+                val targetEntityIds = item.targetExternalIds.mapNotNull { extId ->
+                    targetEntityMap[extId]?.id
+                }
+                if (targetEntityIds.isEmpty()) continue
+
+                for (targetId in targetEntityIds) {
+                    transactionTemplate.execute {
+                        val existing = entityRelationshipRepository
+                            .findBySourceIdAndTargetIdAndDefinitionId(
+                                item.sourceEntityId, targetId, definitionId
+                            )
+                        if (existing.isEmpty()) {
+                            entityRelationshipRepository.save(
+                                EntityRelationshipEntity(
+                                    workspaceId = workspaceId,
+                                    sourceId = item.sourceEntityId,
+                                    targetId = targetId,
+                                    definitionId = definitionId,
+                                )
+                            )
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                logger.warn(e) { "Failed to resolve relationship for source=${item.sourceEntityId} — skipping" }
+            }
+        }
+    }
+
     // ------ Helpers ------
 
-    private fun buildFailureResult(entityTypeId: UUID, message: String): SyncProcessingResult {
+    private fun buildFailureResult(entityTypeId: UUID?, message: String): SyncProcessingResult {
         logger.error { "fetchAndProcessRecords failed: $message" }
         return SyncProcessingResult(
             entityTypeId = entityTypeId,
@@ -675,5 +720,10 @@ class IntegrationSyncActivitiesImpl(
         val synced: Int,
         val failed: Int,
         val lastError: String?,
+    )
+
+    /** Resolved relationship definition metadata for Pass 2. */
+    private data class ResolvedDefinition(
+        val definitionId: UUID,
     )
 }

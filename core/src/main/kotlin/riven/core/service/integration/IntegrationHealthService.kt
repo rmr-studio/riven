@@ -75,9 +75,10 @@ class IntegrationHealthService(
             return
         }
 
+        val previousStatus = connection.status
         connection.status = targetStatus
         connectionRepository.save(connection)
-        logger.info { "Updated connection $connectionId health: ${connection.status} -> $targetStatus" }
+        logger.info { "Updated connection $connectionId health: $previousStatus -> $targetStatus" }
     }
 
     // ------ Private Helpers ------

@@ -129,8 +129,32 @@ class IntegrationSyncWorkflowImplTest {
             workflow.execute(input)
 
             val order = inOrder(activities)
+            order.verify(activities).transitionToSyncing(connectionId, input.workspaceId)
+            order.verify(activities).fetchAndProcessRecords(input)
             order.verify(activities).finalizeSyncState(connectionId, entityTypeId, successResult)
             order.verify(activities).evaluateHealth(connectionId)
+        }
+
+        @Test
+        fun `workflow skips finalizeSyncState when entityTypeId is null`() {
+            val activities = mock<IntegrationSyncActivities>()
+            val nullEntityTypeResult = SyncProcessingResult(
+                entityTypeId = null,
+                cursor = null,
+                recordsSynced = 0,
+                recordsFailed = 0,
+                lastErrorMessage = "Failed to resolve model context",
+                success = false,
+            )
+            whenever(activities.fetchAndProcessRecords(any())).thenReturn(nullEntityTypeResult)
+
+            val workflow = createTestableWorkflow(activities)
+            workflow.execute(input)
+
+            verify(activities).transitionToSyncing(connectionId, input.workspaceId)
+            verify(activities).fetchAndProcessRecords(input)
+            verify(activities, org.mockito.kotlin.never()).finalizeSyncState(any(), any(), any())
+            verify(activities).evaluateHealth(connectionId)
         }
 
         @Test

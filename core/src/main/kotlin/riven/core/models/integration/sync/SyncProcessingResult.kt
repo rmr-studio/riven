@@ -9,7 +9,7 @@ import java.util.UUID
  * Passed from fetchAndProcessRecords to finalizeSyncState to update the
  * IntegrationSyncStateEntity with the final sync outcome.
  *
- * @property entityTypeId UUID of the EntityType that was synced into
+ * @property entityTypeId UUID of the EntityType that was synced into, or null if model context resolution failed
  * @property cursor New cursor value to persist for incremental sync (null if full sync or no cursor)
  * @property recordsSynced Total number of records successfully upserted
  * @property recordsFailed Number of records that failed to upsert
@@ -17,7 +17,7 @@ import java.util.UUID
  * @property success Whether the sync completed without fatal errors
  */
 data class SyncProcessingResult(
-    val entityTypeId: UUID,
+    val entityTypeId: UUID?,
     val cursor: String? = null,
     val recordsSynced: Int,
     val recordsFailed: Int,

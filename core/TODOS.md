@@ -1,6 +1,7 @@
 # TODOs
 
 ## STALE connection detection
+
 **What:** Implement STALE detection — connections with no recent sync activity should transition to STALE status.
 **Why:** ConnectionStatus has a STALE state but nothing transitions to it. Connections that stop syncing (e.g., Nango sync disabled, provider API revoked) would remain in HEALTHY/DEGRADED indefinitely.
 **Pros:** Users see accurate connection health; STALE connections surface in UI for investigation.
@@ -9,6 +10,7 @@
 **Depends on / blocked by:** Phase 4 health service must be complete first.
 
 ## SYNC-01 through SYNC-07 traceability cleanup
+
 **What:** Update SYNC-01 through SYNC-07 from "Pending" to "Complete" in the REQUIREMENTS.md traceability table.
 **Why:** These requirements were implemented in Phase 3 but the traceability table wasn't updated. The table currently shows them as Pending, which is inaccurate.
 **Pros:** Accurate project tracking; prevents confusion about what's done.

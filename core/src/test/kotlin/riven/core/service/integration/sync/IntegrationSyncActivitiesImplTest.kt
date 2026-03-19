@@ -1,6 +1,10 @@
 package riven.core.service.integration.sync
 
 import io.github.oshai.kotlinlogging.KLogger
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -19,21 +23,16 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.test.context.bean.override.mockito.MockitoBean
-import riven.core.entity.catalog.CatalogEntityTypeEntity
-import riven.core.entity.catalog.CatalogFieldMappingEntity
-import riven.core.entity.catalog.ManifestCatalogEntity
+import org.springframework.transaction.support.TransactionTemplate
 import riven.core.entity.integration.IntegrationConnectionEntity
-import riven.core.entity.integration.IntegrationDefinitionEntity
 import riven.core.entity.integration.IntegrationSyncStateEntity
 import riven.core.enums.catalog.ManifestType
 import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.core.DataType
 import riven.core.enums.integration.ConnectionStatus
-import riven.core.enums.integration.IntegrationCategory
 import riven.core.enums.integration.SourceType
 import riven.core.enums.integration.SyncStatus
 import riven.core.models.common.validation.Schema
-import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.ColumnConfiguration
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.integration.NangoRecord
@@ -43,7 +42,6 @@ import riven.core.models.integration.NangoRecordsPage
 import riven.core.models.integration.mapping.FieldCoverage
 import riven.core.models.integration.mapping.MappingResult
 import riven.core.models.integration.mapping.MappingError
-import riven.core.models.integration.mapping.ResolvedFieldMapping
 import riven.core.models.integration.sync.IntegrationSyncWorkflowInput
 import riven.core.models.integration.sync.SyncProcessingResult
 import riven.core.repository.catalog.CatalogEntityTypeRepository
@@ -60,9 +58,9 @@ import riven.core.service.entity.EntityAttributeService
 import riven.core.service.integration.IntegrationHealthService
 import riven.core.service.integration.NangoClientWrapper
 import riven.core.service.integration.mapping.SchemaMappingService
+import riven.core.service.util.factory.catalog.CatalogFactory
 import riven.core.service.util.factory.entity.EntityFactory
 import riven.core.service.util.factory.integration.IntegrationFactory
-import java.time.ZonedDateTime
 import java.util.*
 
 /**
@@ -105,6 +103,7 @@ class IntegrationSyncActivitiesImplTest {
             catalogEntityTypeRepository: CatalogEntityTypeRepository,
             entityTypeRepository: EntityTypeRepository,
             integrationHealthService: IntegrationHealthService,
+            transactionTemplate: TransactionTemplate,
             logger: KLogger,
         ): IntegrationSyncActivitiesImpl {
             return object : IntegrationSyncActivitiesImpl(
@@ -122,6 +121,7 @@ class IntegrationSyncActivitiesImplTest {
                 catalogEntityTypeRepository = catalogEntityTypeRepository,
                 entityTypeRepository = entityTypeRepository,
                 integrationHealthService = integrationHealthService,
+                transactionTemplate = transactionTemplate,
                 logger = logger,
             ) {
                 // Override heartbeat to be a no-op in tests (Temporal static context not available)
@@ -173,6 +173,9 @@ class IntegrationSyncActivitiesImplTest {
 
     @MockitoBean
     private lateinit var integrationHealthService: IntegrationHealthService
+
+    @MockitoBean
+    private lateinit var transactionTemplate: TransactionTemplate
 
     @MockitoBean
     private lateinit var logger: KLogger
@@ -228,38 +231,6 @@ class IntegrationSyncActivitiesImplTest {
         columnConfiguration = ColumnConfiguration(order = listOf(attributeId)),
     )
 
-    private fun buildCatalogEntityType(
-        manifestId: UUID = this.manifestId,
-        key: String = model,
-    ) = CatalogEntityTypeEntity(
-        id = UUID.randomUUID(),
-        manifestId = manifestId,
-        key = key,
-        displayNameSingular = "Contact",
-        displayNamePlural = "Contacts",
-        identifierKey = "email",
-        schema = linkedMapOf("email" to mapOf("key" to "TEXT", "label" to "Email", "type" to "string")),
-    )
-
-    private fun buildManifest() = ManifestCatalogEntity(
-        id = manifestId,
-        key = "hubspot",
-        name = "HubSpot",
-        manifestType = ManifestType.INTEGRATION,
-    )
-
-    private fun buildFieldMapping(
-        manifestId: UUID = this.manifestId,
-        entityTypeKey: String = model,
-    ) = CatalogFieldMappingEntity(
-        id = UUID.randomUUID(),
-        manifestId = manifestId,
-        entityTypeKey = entityTypeKey,
-        mappings = mapOf(
-            "email" to mapOf<String, Any>("source" to "email", "transform" to mapOf("type" to "direct"))
-        ),
-    )
-
     private fun buildDefinition() = IntegrationFactory.createIntegrationDefinition(
         id = integrationId,
         slug = "hubspot",
@@ -294,13 +265,30 @@ class IntegrationSyncActivitiesImplTest {
         whenever(definitionRepository.findById(integrationId))
             .thenReturn(Optional.of(buildDefinition()))
         whenever(manifestCatalogRepository.findByKey("hubspot"))
-            .thenReturn(listOf(buildManifest()))
+            .thenReturn(listOf(CatalogFactory.createManifestEntity(
+                type = ManifestType.INTEGRATION,
+                id = manifestId,
+                key = "hubspot",
+                name = "HubSpot",
+            )))
         whenever(catalogFieldMappingRepository.findByManifestIdAndEntityTypeKey(manifestId, model))
-            .thenReturn(buildFieldMapping())
+            .thenReturn(CatalogFactory.createFieldMappingEntity(
+                manifestId = manifestId,
+                entityTypeKey = model,
+                mappings = mapOf(
+                    "email" to mapOf<String, Any>("source" to "email", "transform" to mapOf("type" to "direct"))
+                ),
+            ))
         whenever(entityTypeRepository.findBySourceIntegrationIdAndWorkspaceId(integrationId, workspaceId))
             .thenReturn(listOf(entityType))
         whenever(catalogEntityTypeRepository.findByManifestIdAndKey(manifestId, model))
-            .thenReturn(buildCatalogEntityType())
+            .thenReturn(CatalogFactory.createEntityTypeEntity(
+                manifestId = manifestId,
+                key = model,
+                displayNameSingular = "Contact",
+                displayNamePlural = "Contacts",
+                schema = linkedMapOf("email" to mapOf("key" to "TEXT", "label" to "Email", "type" to "string")),
+            ))
         whenever(syncStateRepository.findByIntegrationConnectionIdAndEntityTypeId(any(), any()))
             .thenReturn(null)
         whenever(relationshipDefinitionRepository.findByWorkspaceIdAndSourceEntityTypeId(any(), any()))
@@ -314,8 +302,13 @@ class IntegrationSyncActivitiesImplTest {
             entityRepository, entityAttributeService, entityRelationshipRepository,
             relationshipDefinitionRepository, definitionRepository, manifestCatalogRepository,
             catalogFieldMappingRepository, catalogEntityTypeRepository, entityTypeRepository,
-            integrationHealthService,
+            integrationHealthService, transactionTemplate,
         )
+
+        whenever(transactionTemplate.execute<Any>(any())).thenAnswer { invocation ->
+            val callback = invocation.arguments[0] as org.springframework.transaction.support.TransactionCallback<*>
+            callback.doInTransaction(org.mockito.Mockito.mock(org.springframework.transaction.TransactionStatus::class.java))
+        }
 
         // Default entity save: return entity with ID
         whenever(entityRepository.save(any())).thenAnswer { invocation ->
@@ -335,6 +328,7 @@ class IntegrationSyncActivitiesImplTest {
         fun `connected transitions to syncing`() {
             val connection = IntegrationFactory.createIntegrationConnection(
                 id = connectionId,
+                workspaceId = workspaceId,
                 status = ConnectionStatus.CONNECTED,
             )
             whenever(connectionRepository.findById(connectionId)).thenReturn(Optional.of(connection))
@@ -343,13 +337,14 @@ class IntegrationSyncActivitiesImplTest {
 
             val captor = argumentCaptor<IntegrationConnectionEntity>()
             verify(connectionRepository).save(captor.capture())
-            assert(captor.firstValue.status == ConnectionStatus.SYNCING)
+            assertEquals(ConnectionStatus.SYNCING, captor.firstValue.status)
         }
 
         @Test
         fun `already syncing skips silently`() {
             val connection = IntegrationFactory.createIntegrationConnection(
                 id = connectionId,
+                workspaceId = workspaceId,
                 status = ConnectionStatus.SYNCING,
             )
             whenever(connectionRepository.findById(connectionId)).thenReturn(Optional.of(connection))
@@ -363,6 +358,7 @@ class IntegrationSyncActivitiesImplTest {
         fun `disconnected state cannot transition — skips with warning`() {
             val connection = IntegrationFactory.createIntegrationConnection(
                 id = connectionId,
+                workspaceId = workspaceId,
                 status = ConnectionStatus.DISCONNECTED,
             )
             whenever(connectionRepository.findById(connectionId)).thenReturn(Optional.of(connection))
@@ -375,6 +371,21 @@ class IntegrationSyncActivitiesImplTest {
         @Test
         fun `connection not found returns without error`() {
             whenever(connectionRepository.findById(connectionId)).thenReturn(Optional.empty())
+
+            assertDoesNotThrow { activitiesImpl.transitionToSyncing(connectionId, workspaceId) }
+
+            verify(connectionRepository, never()).save(any())
+        }
+
+        @Test
+        fun `connection with mismatched workspaceId skips without saving`() {
+            val otherWorkspaceId = UUID.randomUUID()
+            val connection = IntegrationFactory.createIntegrationConnection(
+                id = connectionId,
+                workspaceId = otherWorkspaceId,
+                status = ConnectionStatus.CONNECTED,
+            )
+            whenever(connectionRepository.findById(connectionId)).thenReturn(Optional.of(connection))
 
             assertDoesNotThrow { activitiesImpl.transitionToSyncing(connectionId, workspaceId) }
 
@@ -407,11 +418,11 @@ class IntegrationSyncActivitiesImplTest {
             val captor = argumentCaptor<riven.core.entity.entity.EntityEntity>()
             verify(entityRepository).save(captor.capture())
             val saved = captor.firstValue
-            assert(saved.sourceType == SourceType.INTEGRATION)
-            assert(saved.sourceExternalId == externalId)
-            assert(saved.sourceIntegrationId == integrationId)
-            assert(result.recordsSynced == 1)
-            assert(result.success)
+            assertEquals(SourceType.INTEGRATION, saved.sourceType)
+            assertEquals(externalId, saved.sourceExternalId)
+            assertEquals(integrationId, saved.sourceIntegrationId)
+            assertEquals(1, result.recordsSynced)
+            assertTrue(result.success)
         }
 
         @Test
@@ -437,8 +448,8 @@ class IntegrationSyncActivitiesImplTest {
             // Should update the existing entity (save called with existing entity)
             val captor = argumentCaptor<riven.core.entity.entity.EntityEntity>()
             verify(entityRepository).save(captor.capture())
-            assert(captor.firstValue.id == entityId) // Updates existing, doesn't create new
-            assert(result.recordsSynced == 1)
+            assertEquals(entityId, captor.firstValue.id) // Updates existing, doesn't create new
+            assertEquals(1, result.recordsSynced)
         }
 
         @Test
@@ -461,7 +472,7 @@ class IntegrationSyncActivitiesImplTest {
             val result = activitiesImpl.fetchAndProcessRecords(workflowInput)
 
             verify(entityAttributeService).saveAttributes(eq(entityId), eq(workspaceId), eq(entityTypeId), any())
-            assert(result.recordsSynced == 1)
+            assertEquals(1, result.recordsSynced)
         }
 
         @Test
@@ -478,8 +489,8 @@ class IntegrationSyncActivitiesImplTest {
 
             val captor = argumentCaptor<riven.core.entity.entity.EntityEntity>()
             verify(entityRepository).save(captor.capture())
-            assert(captor.firstValue.sourceExternalId == externalId)
-            assert(result.recordsSynced == 1)
+            assertEquals(externalId, captor.firstValue.sourceExternalId)
+            assertEquals(1, result.recordsSynced)
         }
 
         @Test
@@ -501,9 +512,9 @@ class IntegrationSyncActivitiesImplTest {
 
             val captor = argumentCaptor<riven.core.entity.entity.EntityEntity>()
             verify(entityRepository).save(captor.capture())
-            assert(captor.firstValue.deleted)
-            assert(captor.firstValue.deletedAt != null)
-            assert(result.recordsSynced == 1)
+            assertTrue(captor.firstValue.deleted)
+            assertNotNull(captor.firstValue.deletedAt)
+            assertEquals(1, result.recordsSynced)
         }
 
         @Test
@@ -517,7 +528,7 @@ class IntegrationSyncActivitiesImplTest {
             val result = activitiesImpl.fetchAndProcessRecords(workflowInput)
 
             verify(entityRepository, never()).save(any())
-            assert(result.recordsSynced == 1) // DELETED no-op still counts as processed
+            assertEquals(1, result.recordsSynced) // DELETED no-op still counts as processed
         }
 
         @Test
@@ -539,8 +550,8 @@ class IntegrationSyncActivitiesImplTest {
             val result = activitiesImpl.fetchAndProcessRecords(workflowInput)
 
             verify(entityRepository, never()).save(any())
-            assert(result.recordsFailed == 1)
-            assert(result.recordsSynced == 0)
+            assertEquals(1, result.recordsFailed)
+            assertEquals(0, result.recordsSynced)
         }
 
         @Test
@@ -559,8 +570,8 @@ class IntegrationSyncActivitiesImplTest {
             val result = activitiesImpl.fetchAndProcessRecords(workflowInput)
 
             verify(entityRepository).save(any())
-            assert(result.recordsSynced == 1)
-            assert(result.recordsFailed == 0)
+            assertEquals(1, result.recordsSynced)
+            assertEquals(0, result.recordsFailed)
         }
 
         @Test
@@ -579,9 +590,9 @@ class IntegrationSyncActivitiesImplTest {
 
             val result = activitiesImpl.fetchAndProcessRecords(workflowInput)
 
-            assert(result.recordsFailed == 1)
-            assert(result.recordsSynced == 1)
-            assert(result.lastErrorMessage != null)
+            assertEquals(1, result.recordsFailed)
+            assertEquals(1, result.recordsSynced)
+            assertNotNull(result.lastErrorMessage)
         }
 
         @Test
@@ -601,7 +612,7 @@ class IntegrationSyncActivitiesImplTest {
             val result = activitiesImpl.fetchAndProcessRecords(workflowInput)
 
             verify(nangoClientWrapper, times(2)).fetchRecords(any(), any(), any(), anyOrNull(), anyOrNull(), anyOrNull())
-            assert(result.recordsSynced == 2)
+            assertEquals(2, result.recordsSynced)
         }
 
         @Test
@@ -724,10 +735,10 @@ class IntegrationSyncActivitiesImplTest {
             val captor = argumentCaptor<IntegrationSyncStateEntity>()
             verify(syncStateRepository).save(captor.capture())
             val saved = captor.firstValue
-            assert(saved.status == SyncStatus.SUCCESS)
-            assert(saved.lastCursor == "cursor-final")
-            assert(saved.lastRecordsSynced == 10)
-            assert(saved.lastRecordsFailed == 0)
+            assertEquals(SyncStatus.SUCCESS, saved.status)
+            assertEquals("cursor-final", saved.lastCursor)
+            assertEquals(10, saved.lastRecordsSynced)
+            assertEquals(0, saved.lastRecordsFailed)
         }
 
         @Test
@@ -753,7 +764,7 @@ class IntegrationSyncActivitiesImplTest {
 
             val captor = argumentCaptor<IntegrationSyncStateEntity>()
             verify(syncStateRepository).save(captor.capture())
-            assert(captor.firstValue.consecutiveFailureCount == 0)
+            assertEquals(0, captor.firstValue.consecutiveFailureCount)
         }
 
         @Test
@@ -782,10 +793,10 @@ class IntegrationSyncActivitiesImplTest {
             val captor = argumentCaptor<IntegrationSyncStateEntity>()
             verify(syncStateRepository).save(captor.capture())
             val saved = captor.firstValue
-            assert(saved.status == SyncStatus.FAILED)
-            assert(saved.lastCursor == "cursor-previous") // Cursor NOT updated on failure
-            assert(saved.consecutiveFailureCount == 2)
-            assert(saved.lastErrorMessage == "Something went wrong")
+            assertEquals(SyncStatus.FAILED, saved.status)
+            assertEquals("cursor-previous", saved.lastCursor) // Cursor NOT updated on failure
+            assertEquals(2, saved.consecutiveFailureCount)
+            assertEquals("Something went wrong", saved.lastErrorMessage)
         }
 
         @Test
@@ -807,10 +818,10 @@ class IntegrationSyncActivitiesImplTest {
             val captor = argumentCaptor<IntegrationSyncStateEntity>()
             verify(syncStateRepository).save(captor.capture())
             val saved = captor.firstValue
-            assert(saved.status == SyncStatus.SUCCESS)
-            assert(saved.lastRecordsSynced == 8)
-            assert(saved.lastRecordsFailed == 2)
-            assert(saved.lastCursor == "cursor-partial")
+            assertEquals(SyncStatus.SUCCESS, saved.status)
+            assertEquals(8, saved.lastRecordsSynced)
+            assertEquals(2, saved.lastRecordsFailed)
+            assertEquals("cursor-partial", saved.lastCursor)
         }
 
         @Test
@@ -831,9 +842,9 @@ class IntegrationSyncActivitiesImplTest {
             val captor = argumentCaptor<IntegrationSyncStateEntity>()
             verify(syncStateRepository).save(captor.capture())
             val saved = captor.firstValue
-            assert(saved.integrationConnectionId == connectionId)
-            assert(saved.entityTypeId == entityTypeId)
-            assert(saved.id == null) // New entity has no ID before persistence
+            assertEquals(connectionId, saved.integrationConnectionId)
+            assertEquals(entityTypeId, saved.entityTypeId)
+            assertNull(saved.id) // New entity has no ID before persistence
         }
     }
 

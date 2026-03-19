@@ -47,8 +47,13 @@ open class IntegrationSyncWorkflowImpl(
                 "synced=${result.recordsSynced}, failed=${result.recordsFailed}, success=${result.success}"
         )
 
-        activities.finalizeSyncState(input.connectionId, result.entityTypeId, result)
-        logger.info("Finalized sync state for connection=${input.connectionId}, entityType=${result.entityTypeId}")
+        val entityTypeId = result.entityTypeId
+        if (entityTypeId == null) {
+            logger.warn("Skipping finalizeSyncState — model context resolution failed for connection=${input.connectionId}, model=${input.model}")
+        } else {
+            activities.finalizeSyncState(input.connectionId, entityTypeId, result)
+            logger.info("Finalized sync state for connection=${input.connectionId}, entityType=$entityTypeId")
+        }
 
         try {
             activities.evaluateHealth(input.connectionId)

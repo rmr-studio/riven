@@ -146,7 +146,7 @@ class TemporalWorkerConfiguration(
 
         // Start workers (non-blocking - workers poll Temporal Service in background)
         factory.start()
-        logger.info { "Temporal WorkerFactory started, listening on task queue: $WORKFLOWS_DEFAULT_QUEUE" }
+        logger.info { "Temporal WorkerFactory started, listening on task queues: $WORKFLOWS_DEFAULT_QUEUE, $INTEGRATION_SYNC_QUEUE" }
 
         // Store instance for shutdown
         workerFactoryInstance = factory

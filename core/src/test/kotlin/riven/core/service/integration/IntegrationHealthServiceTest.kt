@@ -1,6 +1,7 @@
 package riven.core.service.integration
 
 import io.github.oshai.kotlinlogging.KLogger
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -97,7 +98,7 @@ class IntegrationHealthServiceTest {
 
             val captor = argumentCaptor<IntegrationConnectionEntity>()
             verify(connectionRepository).save(captor.capture())
-            assert(captor.firstValue.status == ConnectionStatus.HEALTHY)
+            assertEquals(ConnectionStatus.HEALTHY, captor.firstValue.status)
         }
     }
 
@@ -132,7 +133,7 @@ class IntegrationHealthServiceTest {
 
             val captor = argumentCaptor<IntegrationConnectionEntity>()
             verify(connectionRepository).save(captor.capture())
-            assert(captor.firstValue.status == ConnectionStatus.DEGRADED)
+            assertEquals(ConnectionStatus.DEGRADED, captor.firstValue.status)
         }
 
         @Test
@@ -163,7 +164,7 @@ class IntegrationHealthServiceTest {
 
             val captor = argumentCaptor<IntegrationConnectionEntity>()
             verify(connectionRepository).save(captor.capture())
-            assert(captor.firstValue.status == ConnectionStatus.DEGRADED)
+            assertEquals(ConnectionStatus.DEGRADED, captor.firstValue.status)
         }
     }
 
@@ -198,7 +199,7 @@ class IntegrationHealthServiceTest {
 
             val captor = argumentCaptor<IntegrationConnectionEntity>()
             verify(connectionRepository).save(captor.capture())
-            assert(captor.firstValue.status == ConnectionStatus.FAILED)
+            assertEquals(ConnectionStatus.FAILED, captor.firstValue.status)
         }
     }
 
