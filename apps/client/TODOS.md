@@ -5,6 +5,7 @@ Deferred work tracked from plan reviews and implementation decisions.
 ## NOTE Schema Type — Deferred Items
 
 ### Note Chip Hover Tooltip Preview
+
 **Priority:** P2 | **Effort:** S | **Depends on:** NOTE feature shipped
 
 When hovering a note chip in the data table cell, show a rich tooltip with the first ~150 words of the note rendered with formatting (bold, lists, headings). Gives instant context about note contents without opening the drawer for each one.
@@ -16,6 +17,7 @@ When hovering a note chip in the data table cell, show a rich tooltip with the f
 ---
 
 ### Full-Text Search Across Note Content
+
 **Priority:** P2 | **Effort:** L | **Depends on:** NOTE feature + backend search infrastructure
 
 Ability to search note content from the entity table search bar, surfacing entities whose notes contain matching text. Without this, notes become write-only as usage scales.
@@ -27,6 +29,7 @@ Ability to search note content from the entity table search bar, surfacing entit
 ---
 
 ### @Mention Autocomplete Picker
+
 **Priority:** P2 | **Effort:** M | **Depends on:** NOTE feature + EntityMention node type (defined in NOTE plan)
 
 Build the autocomplete UI for entity cross-references within notes. When typing `@` in the note editor, show a dropdown that searches entities across the workspace. Selecting inserts an `EntityMention` inline Slate element that renders as a clickable chip linking to the referenced entity.
@@ -38,6 +41,7 @@ Build the autocomplete UI for entity cross-references within notes. When typing 
 ---
 
 ### Note Templates
+
 **Priority:** P3 | **Effort:** M | **Depends on:** NOTE feature
 
 Pre-filled Slate content for common note types. When creating a new note, offer template options: "Blank", "Meeting Notes", "Action Items", "Follow-up". Templates provide pre-structured content with headings, checkboxes, and placeholder text.
