@@ -20,7 +20,7 @@ import riven.core.models.entity.payload.EntityAttributeRelationPayloadReference
 import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.entity.query.EntityQuery
 import riven.core.models.entity.query.pagination.QueryPagination
-import riven.core.models.request.entity.BulkDeleteEntityRequest
+import riven.core.models.request.entity.DeleteEntityRequest
 import riven.core.models.request.entity.SaveEntityRequest
 import riven.core.models.response.entity.DeleteEntityResponse
 import riven.core.models.response.entity.SaveEntityResponse
@@ -385,60 +385,6 @@ class EntityService(
     }
 
 
-    @Transactional
-    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
-    fun deleteEntities(workspaceId: UUID, ids: List<UUID>): DeleteEntityResponse {
-        val userId = authTokenService.getUserId()
-        if (ids.isEmpty()) {
-            return DeleteEntityResponse(
-                error = "No entity IDs provided for deletion"
-            )
-        }
-
-        // Find all relationships where deleted entities are targets (to identify impacted entities)
-        val impactedEntityIds: List<UUID> = entityRelationshipService.findByTargetIdIn(ids).flatMap { it.value }
-            .map { it.sourceId }
-            .toSet()
-            .filter { !ids.contains(it) }
-
-        // Execute cascade delete
-        val deletedEntities = executeCascadeDelete(ids, workspaceId)
-        val deletedRowIds = deletedEntities.mapNotNull { it.id }.toSet()
-
-        if (deletedRowIds.isEmpty()) {
-            return DeleteEntityResponse(
-                error = "No entities were deleted. Please check the provided IDs."
-            )
-        }
-
-        // Log activity for each deleted entity
-        activityService.logActivities(
-            deletedEntities.map { entity ->
-                ActivityLogEntity(
-                    activity = Activity.ENTITY,
-                    operation = OperationType.DELETE,
-                    userId = userId,
-                    workspaceId = workspaceId,
-                    entityId = entity.id,
-                    entityType = ApplicationEntityType.ENTITY,
-                    details = mapOf(
-                        "typeId" to entity.typeId.toString(),
-                        "typeKey" to entity.typeKey
-                    )
-                )
-            }
-        )
-
-        publishDeleteEvents(deletedEntities, workspaceId, userId)
-
-        val updatedEntities = fetchImpactedEntities(impactedEntityIds, workspaceId)
-
-        return DeleteEntityResponse(
-            deletedCount = deletedRowIds.size,
-            updatedEntities = updatedEntities
-        )
-    }
-
     /**
      * Executes the core soft-delete cascade for a batch of entity IDs:
      * soft-deletes entities, their unique constraint values, attributes, and relationships.
@@ -518,7 +464,7 @@ class EntityService(
      */
     @Transactional
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
-    fun bulkDeleteEntities(workspaceId: UUID, request: BulkDeleteEntityRequest): DeleteEntityResponse {
+    fun bulkDeleteEntities(workspaceId: UUID, request: DeleteEntityRequest): DeleteEntityResponse {
         val userId = authTokenService.getUserId()
 
         val idsToDelete = resolveEntityIds(request, workspaceId)
@@ -558,8 +504,8 @@ class EntityService(
                     entityId = null,
                     entityType = ApplicationEntityType.ENTITY,
                     details = mapOf(
-                        "bulkDelete" to true,
                         "deletedCount" to deletedCount,
+                        "deletedIds" to allDeletedEntities.mapNotNull { it.id },
                         "selectionType" to request.type.name,
                     )
                 )
@@ -581,7 +527,7 @@ class EntityService(
      * For BY_ID: returns entityIds directly.
      * For ALL: queries via EntityQueryService with pagination, removes excludeIds.
      */
-    private fun resolveEntityIds(request: BulkDeleteEntityRequest, workspaceId: UUID): List<UUID> {
+    private fun resolveEntityIds(request: DeleteEntityRequest, workspaceId: UUID): List<UUID> {
         return when (request.type) {
             EntitySelectType.BY_ID -> requireNotNull(request.entityIds) { "entityIds required for BY_ID" }
 

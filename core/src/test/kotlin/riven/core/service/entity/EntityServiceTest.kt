@@ -28,7 +28,7 @@ import riven.core.models.entity.payload.EntityAttributeRequest
 import riven.core.models.entity.query.EntityQueryResult
 import riven.core.models.entity.query.filter.FilterValue
 import riven.core.models.entity.query.filter.QueryFilter
-import riven.core.models.request.entity.BulkDeleteEntityRequest
+import riven.core.models.request.entity.DeleteEntityRequest
 import riven.core.models.request.entity.SaveEntityRequest
 import riven.core.repository.entity.EntityRepository
 import riven.core.service.activity.ActivityService
@@ -401,7 +401,7 @@ class EntityServiceTest : BaseServiceTest() {
     }
 
     @Test
-    fun `deleteEntities publishes EntityEvent with DELETE operation`() {
+    fun `bulkDeleteEntities publishes EntityEvent with DELETE operation`() {
         val deletedEntity = EntityFactory.createEntityEntity(
             id = entityId,
             workspaceId = workspaceId,
@@ -413,7 +413,11 @@ class EntityServiceTest : BaseServiceTest() {
         whenever(entityRepository.deleteByIds(any(), eq(workspaceId))).thenReturn(listOf(deletedEntity))
         whenever(entityRelationshipService.findByTargetIdIn(any())).thenReturn(emptyMap())
 
-        service.deleteEntities(workspaceId, listOf(entityId))
+        val request = DeleteEntityRequest(
+            type = EntitySelectType.BY_ID,
+            entityIds = listOf(entityId),
+        )
+        service.bulkDeleteEntities(workspaceId, request)
 
         val events = applicationEvents.stream(EntityEvent::class.java).toList()
         assertEquals(1, events.size)
@@ -520,15 +524,19 @@ class EntityServiceTest : BaseServiceTest() {
         }
 
         /**
-         * Verifies that deleteEntities rejects requests when the authenticated user
+         * Verifies that bulkDeleteEntities rejects requests when the authenticated user
          * does not have access to the target workspace. The @PreAuthorize annotation
          * on the service method should trigger an AccessDeniedException before any
          * business logic executes.
          */
         @Test
-        fun `deleteEntities throws AccessDeniedException for unauthorized workspace`() {
+        fun `bulkDeleteEntities throws AccessDeniedException for unauthorized workspace`() {
+            val request = DeleteEntityRequest(
+                type = EntitySelectType.BY_ID,
+                entityIds = listOf(entityId),
+            )
             assertThrows(AccessDeniedException::class.java) {
-                service.deleteEntities(workspaceId, listOf(entityId))
+                service.bulkDeleteEntities(workspaceId, request)
             }
         }
     }
@@ -574,7 +582,7 @@ class EntityServiceTest : BaseServiceTest() {
             whenever(entityRepository.deleteByIds(any(), eq(workspaceId))).thenReturn(listOf(entity1, entity2))
             whenever(entityTypeAttributeService.deleteEntities(eq(workspaceId), any())).thenReturn(0)
 
-            val request = BulkDeleteEntityRequest(
+            val request = DeleteEntityRequest(
                 type = EntitySelectType.BY_ID,
                 entityIds = ids,
             )
@@ -588,6 +596,8 @@ class EntityServiceTest : BaseServiceTest() {
             verify(activityService).logActivities(captor.capture())
             assertEquals(1, captor.firstValue.size)
             assertEquals(OperationType.DELETE, captor.firstValue[0].operation)
+            val details = captor.firstValue[0].details
+            assertEquals(true, (details?.get("deletedIds") as? List<*>)?.isNotEmpty())
         }
 
         @Test
@@ -635,7 +645,7 @@ class EntityServiceTest : BaseServiceTest() {
             whenever(entityTypeAttributeService.deleteEntities(eq(workspaceId), any())).thenReturn(0)
 
             val attrId = UUID.randomUUID()
-            val request = BulkDeleteEntityRequest(
+            val request = DeleteEntityRequest(
                 type = EntitySelectType.ALL,
                 entityTypeId = typeId,
                 filter = QueryFilter.Attribute(
@@ -663,7 +673,7 @@ class EntityServiceTest : BaseServiceTest() {
             whenever(entityRelationshipService.findByTargetIdIn(any())).thenReturn(emptyMap())
             whenever(entityRepository.deleteByIds(any(), eq(workspaceId))).thenReturn(emptyList())
 
-            val request = BulkDeleteEntityRequest(
+            val request = DeleteEntityRequest(
                 type = EntitySelectType.BY_ID,
                 entityIds = listOf(UUID.randomUUID(), UUID.randomUUID()),
             )
@@ -711,7 +721,7 @@ class EntityServiceTest : BaseServiceTest() {
             whenever(entityAttributeService.getAttributesForEntities(any()))
                 .thenReturn(emptyMap())
 
-            val request = BulkDeleteEntityRequest(
+            val request = DeleteEntityRequest(
                 type = EntitySelectType.BY_ID,
                 entityIds = listOf(deletedId),
             )
