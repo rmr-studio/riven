@@ -61,7 +61,7 @@
           "additionalProperties": false
         },
         {
-          "required": ["key", "name", "displayName", "attributes"],
+          "required": ["key", "name", "displayName", "semanticGroup", "lifecycleDomain", "attributes"],
           "properties": {
             "key": {
               "type": "string",
@@ -96,6 +96,18 @@
                 "FINANCIAL",
                 "OPERATIONAL",
                 "CUSTOM",
+                "UNCATEGORIZED"
+              ]
+            },
+            "lifecycleDomain": {
+              "type": "string",
+              "enum": [
+                "ACQUISITION",
+                "ONBOARDING",
+                "USAGE",
+                "SUPPORT",
+                "BILLING",
+                "RETENTION",
                 "UNCATEGORIZED"
               ]
             },
@@ -138,6 +150,18 @@
             "FINANCIAL",
             "OPERATIONAL",
             "CUSTOM",
+            "UNCATEGORIZED"
+          ]
+        },
+        "lifecycleDomain": {
+          "type": "string",
+          "enum": [
+            "ACQUISITION",
+            "ONBOARDING",
+            "USAGE",
+            "SUPPORT",
+            "BILLING",
+            "RETENTION",
             "UNCATEGORIZED"
           ]
         },
