@@ -10,14 +10,16 @@ import java.util.*
  *
  *   READONLY   (integration types)  — blocks ALL structural modifications
  *   PROTECTED  (lifecycle spine)    — blocks deletion + core attribute removal/modification, allows adding new attributes
- *   NONE       (user types)         — fully editable
+ *   NONE       (user types)         — fully editable (except individually protected attributes)
  *
  * Protection hierarchy:
  *   entity_types.readonly=true    → READONLY tier
  *   entity_types.protected=true   → PROTECTED tier
- *   both false                    → user tier (no restrictions)
+ *   both false                    → user tier
  *
- * Per-attribute protection uses Schema.protected on individual attributes within the JSONB schema.
+ * Per-attribute protection (Schema.protected) is enforced **regardless of entity type tier**.
+ * Any attribute with protected=true is immutable, whether on a PROTECTED spine type or a
+ * user-created type (e.g. identifier attributes marked protected during template installation).
  * Core spine attributes are marked protected=true during manifest installation.
  * User-added attributes default to protected=false.
  */
@@ -49,7 +51,7 @@ class EntityTypeProtectionGuard {
 
     /**
      * Assert a specific attribute can be modified (label, type, required, etc.).
-     * Blocked for READONLY types and for protected attributes on PROTECTED types.
+     * Blocked for READONLY types and for any individually protected attribute (regardless of type tier).
      */
     fun assertCanModifyAttribute(type: EntityTypeEntity, attributeId: UUID) {
         require(!type.readonly) {

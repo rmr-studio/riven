@@ -2,8 +2,13 @@ package riven.core.lifecycle
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.Assertions.*
 import riven.core.enums.catalog.ManifestType
+import riven.core.enums.common.validation.SchemaType
+import riven.core.enums.core.DataType
+import riven.core.enums.entity.EntityRelationshipCardinality
+import riven.core.enums.entity.LifecycleDomain
 
 class CoreModelRegistryTest {
 
@@ -77,7 +82,7 @@ class CoreModelRegistryTest {
         }
         assertEquals("Customer", customer.displayNameSingular)
         assertEquals("CUSTOMER", customer.semanticGroup)
-        assertEquals("UNCATEGORIZED", customer.lifecycleDomain)
+        assertEquals(LifecycleDomain.UNCATEGORIZED, customer.lifecycleDomain)
         assertFalse(customer.readonly)
         assertTrue(customer.schema.containsKey("email"))
     }
@@ -96,6 +101,48 @@ class CoreModelRegistryTest {
         // Additional relationships (from B2CSaasModels)
         val subscriptionRel = manifest.relationships.find { it.key == "customer-subscriptions" }
         assertNotNull(subscriptionRel, "Should include additional model set relationship")
+    }
+
+    /**
+     * Regression: CoreModelRegistry previously only validated targetModelKey for additional
+     * relationships, allowing a typo in sourceModelKey to pass validation silently. The fix
+     * adds sourceModelKey validation. This test verifies that an invalid sourceModelKey is
+     * caught at validation time.
+     */
+    @Test
+    fun `validateModelSetRelationships rejects additional relationship with invalid sourceModelKey`() {
+        val stubModel = object : CoreModelDefinition(
+            key = "stub-a",
+            displayNameSingular = "Stub A",
+            displayNamePlural = "Stub As",
+            identifierKey = "name",
+            attributes = mapOf(
+                "name" to CoreModelAttribute(
+                    key = "name", schemaType = SchemaType.TEXT, label = "Name", dataType = DataType.STRING,
+                )
+            ),
+        ) {}
+
+        val modelSet = CoreModelSet(
+            manifestKey = "test-set",
+            name = "Test",
+            description = "Test model set",
+            models = listOf(stubModel),
+            additionalRelationships = listOf(
+                CoreModelRelationship(
+                    key = "bad-rel",
+                    name = "Bad Relationship",
+                    sourceModelKey = "nonexistent-model",
+                    targetModelKey = "stub-a",
+                    cardinality = EntityRelationshipCardinality.ONE_TO_MANY,
+                )
+            )
+        )
+
+        val ex = assertThrows<IllegalStateException> {
+            CoreModelRegistry.validateModelSetRelationships(modelSet)
+        }
+        assertTrue(ex.message!!.contains("nonexistent-model"), "Error should name the invalid source key")
     }
 
     @Test

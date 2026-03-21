@@ -5,6 +5,8 @@ import riven.core.enums.common.icon.IconType
 import riven.core.enums.entity.LifecycleDomain
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
 import riven.core.enums.entity.semantics.SemanticGroup
+import riven.core.enums.common.validation.SchemaType
+import riven.core.enums.core.DataType
 import riven.core.lifecycle.AttributeOptions
 import riven.core.lifecycle.AttributeSemantics
 import riven.core.lifecycle.CoreModelAttribute
@@ -26,7 +28,7 @@ object BillingEventModel : CoreModelDefinition(
     semanticTags = listOf("billing", "finance", "revenue", "subscription"),
     attributes = mapOf(
         "description" to CoreModelAttribute(
-            key = "description", schemaType = "TEXT", label = "Description", dataType = "string",
+            key = "description", schemaType = SchemaType.TEXT, label = "Description", dataType = DataType.STRING,
             semantics = AttributeSemantics(
                 definition = "Description of the billing event.",
                 classification = SemanticAttributeClassification.IDENTIFIER,
@@ -34,7 +36,7 @@ object BillingEventModel : CoreModelDefinition(
             ),
         ),
         "type" to CoreModelAttribute(
-            key = "type", schemaType = "SELECT", label = "Type", dataType = "string",
+            key = "type", schemaType = SchemaType.SELECT, label = "Type", dataType = DataType.STRING,
             options = AttributeOptions(enum = listOf("charge", "refund", "credit", "adjustment", "payout", "trial-start", "trial-end")),
             semantics = AttributeSemantics(
                 definition = "The type of billing event.",
@@ -43,7 +45,7 @@ object BillingEventModel : CoreModelDefinition(
             ),
         ),
         "amount" to CoreModelAttribute(
-            key = "amount", schemaType = "CURRENCY", label = "Amount", dataType = "number",
+            key = "amount", schemaType = SchemaType.CURRENCY, label = "Amount", dataType = DataType.NUMBER,
             format = "currency",
             semantics = AttributeSemantics(
                 definition = "Monetary value of this billing event.",
@@ -52,7 +54,7 @@ object BillingEventModel : CoreModelDefinition(
             ),
         ),
         "date" to CoreModelAttribute(
-            key = "date", schemaType = "DATE", label = "Date", dataType = "string",
+            key = "date", schemaType = SchemaType.DATE, label = "Date", dataType = DataType.STRING,
             format = "date",
             semantics = AttributeSemantics(
                 definition = "Date the billing event occurred.",

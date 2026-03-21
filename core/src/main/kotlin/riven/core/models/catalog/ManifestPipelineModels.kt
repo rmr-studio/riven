@@ -3,6 +3,7 @@ package riven.core.models.catalog
 import com.fasterxml.jackson.databind.JsonNode
 import riven.core.enums.catalog.ManifestType
 import riven.core.enums.entity.EntityRelationshipCardinality
+import riven.core.enums.entity.LifecycleDomain
 
 /** Output of ManifestScannerService -- parsed and schema-validated JSON. */
 data class ScannedManifest(
@@ -31,7 +32,7 @@ data class ResolvedEntityType(
     val iconType: String,
     val iconColour: String,
     val semanticGroup: String,
-    val lifecycleDomain: String? = null,
+    val lifecycleDomain: LifecycleDomain? = null,
     val identifierKey: String?,
     val readonly: Boolean,
     val schema: Map<String, Any>,

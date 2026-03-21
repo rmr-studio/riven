@@ -5,6 +5,8 @@ import riven.core.enums.common.icon.IconType
 import riven.core.enums.entity.LifecycleDomain
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
 import riven.core.enums.entity.semantics.SemanticGroup
+import riven.core.enums.common.validation.SchemaType
+import riven.core.enums.core.DataType
 import riven.core.lifecycle.AttributeOptions
 import riven.core.lifecycle.AttributeSemantics
 import riven.core.lifecycle.CoreModelAttribute
@@ -26,7 +28,7 @@ object SubscriptionModel : CoreModelDefinition(
     semanticTags = listOf("subscription", "recurring-revenue", "saas", "billing"),
     attributes = mapOf(
         "plan-name" to CoreModelAttribute(
-            key = "plan-name", schemaType = "TEXT", label = "Plan", dataType = "string",
+            key = "plan-name", schemaType = SchemaType.TEXT, label = "Plan", dataType = DataType.STRING,
             semantics = AttributeSemantics(
                 definition = "Name of the subscription plan.",
                 classification = SemanticAttributeClassification.IDENTIFIER,
@@ -34,7 +36,7 @@ object SubscriptionModel : CoreModelDefinition(
             ),
         ),
         "status" to CoreModelAttribute(
-            key = "status", schemaType = "SELECT", label = "Status", dataType = "string",
+            key = "status", schemaType = SchemaType.SELECT, label = "Status", dataType = DataType.STRING,
             options = AttributeOptions(enum = listOf("trialing", "active", "past-due", "cancelled", "paused"), default = "trialing"),
             semantics = AttributeSemantics(
                 definition = "Current subscription status.",
@@ -43,7 +45,7 @@ object SubscriptionModel : CoreModelDefinition(
             ),
         ),
         "mrr" to CoreModelAttribute(
-            key = "mrr", schemaType = "CURRENCY", label = "MRR", dataType = "number",
+            key = "mrr", schemaType = SchemaType.CURRENCY, label = "MRR", dataType = DataType.NUMBER,
             format = "currency",
             semantics = AttributeSemantics(
                 definition = "Monthly recurring revenue from this subscription.",
@@ -52,7 +54,7 @@ object SubscriptionModel : CoreModelDefinition(
             ),
         ),
         "billing-interval" to CoreModelAttribute(
-            key = "billing-interval", schemaType = "SELECT", label = "Billing Interval", dataType = "string",
+            key = "billing-interval", schemaType = SchemaType.SELECT, label = "Billing Interval", dataType = DataType.STRING,
             options = AttributeOptions(enum = listOf("monthly", "quarterly", "annual")),
             semantics = AttributeSemantics(
                 definition = "How frequently the subscription is billed.",
@@ -61,7 +63,7 @@ object SubscriptionModel : CoreModelDefinition(
             ),
         ),
         "start-date" to CoreModelAttribute(
-            key = "start-date", schemaType = "DATE", label = "Start Date", dataType = "string",
+            key = "start-date", schemaType = SchemaType.DATE, label = "Start Date", dataType = DataType.STRING,
             format = "date",
             semantics = AttributeSemantics(
                 definition = "Date the subscription started.",
@@ -70,7 +72,7 @@ object SubscriptionModel : CoreModelDefinition(
             ),
         ),
         "cancel-date" to CoreModelAttribute(
-            key = "cancel-date", schemaType = "DATE", label = "Cancel Date", dataType = "string",
+            key = "cancel-date", schemaType = SchemaType.DATE, label = "Cancel Date", dataType = DataType.STRING,
             format = "date",
             semantics = AttributeSemantics(
                 definition = "Date the subscription was cancelled, if applicable.",

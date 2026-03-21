@@ -1,5 +1,7 @@
 package riven.core.lifecycle
 
+import riven.core.enums.common.validation.SchemaType
+import riven.core.enums.core.DataType
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
 
 /**
@@ -10,9 +12,9 @@ import riven.core.enums.entity.semantics.SemanticAttributeClassification
  */
 data class CoreModelAttribute(
     val key: String,
-    val schemaType: String,
+    val schemaType: SchemaType,
     val label: String,
-    val dataType: String,
+    val dataType: DataType,
     val format: String? = null,
     val required: Boolean = false,
     val unique: Boolean = false,

@@ -5,6 +5,8 @@ import riven.core.enums.common.icon.IconType
 import riven.core.enums.entity.LifecycleDomain
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
 import riven.core.enums.entity.semantics.SemanticGroup
+import riven.core.enums.common.validation.SchemaType
+import riven.core.enums.core.DataType
 import riven.core.lifecycle.AttributeOptions
 import riven.core.lifecycle.AttributeSemantics
 import riven.core.lifecycle.CoreModelAttribute
@@ -26,7 +28,7 @@ object ProductModel : CoreModelDefinition(
     semanticTags = listOf("catalogue", "inventory", "ecommerce"),
     attributes = mapOf(
         "name" to CoreModelAttribute(
-            key = "name", schemaType = "TEXT", label = "Name", dataType = "string",
+            key = "name", schemaType = SchemaType.TEXT, label = "Name", dataType = DataType.STRING,
             semantics = AttributeSemantics(
                 definition = "Product name as displayed to customers.",
                 classification = SemanticAttributeClassification.IDENTIFIER,
@@ -34,7 +36,7 @@ object ProductModel : CoreModelDefinition(
             ),
         ),
         "sku" to CoreModelAttribute(
-            key = "sku", schemaType = "TEXT", label = "SKU", dataType = "string",
+            key = "sku", schemaType = SchemaType.TEXT, label = "SKU", dataType = DataType.STRING,
             unique = true,
             semantics = AttributeSemantics(
                 definition = "Stock keeping unit for inventory tracking.",
@@ -43,7 +45,7 @@ object ProductModel : CoreModelDefinition(
             ),
         ),
         "price" to CoreModelAttribute(
-            key = "price", schemaType = "CURRENCY", label = "Price", dataType = "number",
+            key = "price", schemaType = SchemaType.CURRENCY, label = "Price", dataType = DataType.NUMBER,
             format = "currency",
             semantics = AttributeSemantics(
                 definition = "Retail selling price.",
@@ -52,7 +54,7 @@ object ProductModel : CoreModelDefinition(
             ),
         ),
         "category" to CoreModelAttribute(
-            key = "category", schemaType = "SELECT", label = "Category", dataType = "string",
+            key = "category", schemaType = SchemaType.SELECT, label = "Category", dataType = DataType.STRING,
             options = AttributeOptions(enum = listOf("apparel", "electronics", "home", "beauty", "food", "accessories", "other")),
             semantics = AttributeSemantics(
                 definition = "Product category for organisation and reporting.",

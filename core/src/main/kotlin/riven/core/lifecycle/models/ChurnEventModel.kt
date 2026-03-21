@@ -5,6 +5,8 @@ import riven.core.enums.common.icon.IconType
 import riven.core.enums.entity.LifecycleDomain
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
 import riven.core.enums.entity.semantics.SemanticGroup
+import riven.core.enums.common.validation.SchemaType
+import riven.core.enums.core.DataType
 import riven.core.lifecycle.AttributeOptions
 import riven.core.lifecycle.AttributeSemantics
 import riven.core.lifecycle.CoreModelAttribute
@@ -26,7 +28,7 @@ object ChurnEventModel : CoreModelDefinition(
     semanticTags = listOf("churn", "retention", "lifecycle", "revenue"),
     attributes = mapOf(
         "reason" to CoreModelAttribute(
-            key = "reason", schemaType = "SELECT", label = "Reason", dataType = "string",
+            key = "reason", schemaType = SchemaType.SELECT, label = "Reason", dataType = DataType.STRING,
             options = AttributeOptions(enum = listOf("price", "competitor", "no-longer-needed", "poor-experience", "missing-feature", "onboarding-failure", "product-issue", "unknown")),
             semantics = AttributeSemantics(
                 definition = "The stated or inferred reason for churning.",
@@ -35,7 +37,7 @@ object ChurnEventModel : CoreModelDefinition(
             ),
         ),
         "date" to CoreModelAttribute(
-            key = "date", schemaType = "DATE", label = "Date", dataType = "string",
+            key = "date", schemaType = SchemaType.DATE, label = "Date", dataType = DataType.STRING,
             format = "date", required = true,
             semantics = AttributeSemantics(
                 definition = "Date the churn event occurred.",
@@ -44,7 +46,7 @@ object ChurnEventModel : CoreModelDefinition(
             ),
         ),
         "type" to CoreModelAttribute(
-            key = "type", schemaType = "SELECT", label = "Type", dataType = "string",
+            key = "type", schemaType = SchemaType.SELECT, label = "Type", dataType = DataType.STRING,
             options = AttributeOptions(enum = listOf("voluntary", "involuntary"), default = "voluntary"),
             semantics = AttributeSemantics(
                 definition = "Whether the customer chose to cancel (voluntary) or was lost due to payment failure etc. (involuntary).",
@@ -53,7 +55,7 @@ object ChurnEventModel : CoreModelDefinition(
             ),
         ),
         "mrr-lost" to CoreModelAttribute(
-            key = "mrr-lost", schemaType = "CURRENCY", label = "MRR Lost", dataType = "number",
+            key = "mrr-lost", schemaType = SchemaType.CURRENCY, label = "MRR Lost", dataType = DataType.NUMBER,
             format = "currency",
             semantics = AttributeSemantics(
                 definition = "Monthly recurring revenue lost from this churn event.",
@@ -62,7 +64,7 @@ object ChurnEventModel : CoreModelDefinition(
             ),
         ),
         "notes" to CoreModelAttribute(
-            key = "notes", schemaType = "TEXT", label = "Notes", dataType = "string",
+            key = "notes", schemaType = SchemaType.TEXT, label = "Notes", dataType = DataType.STRING,
             semantics = AttributeSemantics(
                 definition = "Additional context about the churn event.",
                 classification = SemanticAttributeClassification.FREETEXT,

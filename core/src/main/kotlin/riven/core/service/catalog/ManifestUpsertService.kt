@@ -148,8 +148,7 @@ class ManifestUpsertService(
                 iconType = safeValueOf(et.iconType, IconType.CIRCLE_DASHED),
                 iconColour = safeValueOf(et.iconColour, IconColour.NEUTRAL),
                 semanticGroup = safeValueOf(et.semanticGroup, SemanticGroup.UNCATEGORIZED),
-                lifecycleDomain = et.lifecycleDomain?.let { safeValueOf(it, LifecycleDomain.UNCATEGORIZED) }
-                    ?: LifecycleDomain.UNCATEGORIZED,
+                lifecycleDomain = et.lifecycleDomain ?: LifecycleDomain.UNCATEGORIZED,
                 identifierKey = et.identifierKey,
                 readonly = et.readonly,
                 schema = et.schema,

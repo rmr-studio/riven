@@ -73,7 +73,7 @@ object CoreModelRegistry {
         }
     }
 
-    private fun validateModelSetRelationships(modelSet: CoreModelSet) {
+    internal fun validateModelSetRelationships(modelSet: CoreModelSet) {
         val modelKeys = modelSet.models.map { it.key }.toSet()
 
         // Validate relationships declared on models
@@ -88,6 +88,10 @@ object CoreModelRegistry {
 
         // Validate additional relationships declared on the model set
         for (rel in modelSet.additionalRelationships) {
+            check(rel.sourceModelKey in modelKeys) {
+                "Model set '${modelSet.manifestKey}' additional relationship '${rel.key}' has source " +
+                    "'${rel.sourceModelKey}' which is not in this model set"
+            }
             check(rel.targetModelKey in modelKeys) {
                 "Model set '${modelSet.manifestKey}' additional relationship '${rel.key}' targets " +
                     "'${rel.targetModelKey}' which is not in this model set"

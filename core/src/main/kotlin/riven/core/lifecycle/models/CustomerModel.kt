@@ -6,6 +6,8 @@ import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.enums.entity.LifecycleDomain
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
 import riven.core.enums.entity.semantics.SemanticGroup
+import riven.core.enums.common.validation.SchemaType
+import riven.core.enums.core.DataType
 import riven.core.lifecycle.*
 
 /**
@@ -25,7 +27,7 @@ object CustomerModel : CoreModelDefinition(
     semanticTags = listOf("crm", "contact", "revenue", "lifecycle"),
     attributes = mapOf(
         "name" to CoreModelAttribute(
-            key = "name", schemaType = "TEXT", label = "Name", dataType = "string",
+            key = "name", schemaType = SchemaType.TEXT, label = "Name", dataType = DataType.STRING,
             required = true,
             semantics = AttributeSemantics(
                 definition = "The full name of the customer, used as the primary human-readable identifier in listings and communications.",
@@ -34,7 +36,7 @@ object CustomerModel : CoreModelDefinition(
             ),
         ),
         "email" to CoreModelAttribute(
-            key = "email", schemaType = "EMAIL", label = "Email", dataType = "string",
+            key = "email", schemaType = SchemaType.EMAIL, label = "Email", dataType = DataType.STRING,
             format = "email", required = true, unique = true,
             semantics = AttributeSemantics(
                 definition = "The primary email address for the customer, used for communication, login identification, and deduplication.",
@@ -43,7 +45,7 @@ object CustomerModel : CoreModelDefinition(
             ),
         ),
         "phone" to CoreModelAttribute(
-            key = "phone", schemaType = "PHONE", label = "Phone", dataType = "string",
+            key = "phone", schemaType = SchemaType.PHONE, label = "Phone", dataType = DataType.STRING,
             format = "phone-number",
             semantics = AttributeSemantics(
                 definition = "The customer's phone number for direct contact, support escalation, or SMS communication.",
@@ -52,7 +54,7 @@ object CustomerModel : CoreModelDefinition(
             ),
         ),
         "company" to CoreModelAttribute(
-            key = "company", schemaType = "TEXT", label = "Company", dataType = "string",
+            key = "company", schemaType = SchemaType.TEXT, label = "Company", dataType = DataType.STRING,
             semantics = AttributeSemantics(
                 definition = "The name of the organisation or business the customer is associated with, used for B2B segmentation and account grouping.",
                 classification = SemanticAttributeClassification.CATEGORICAL,
@@ -60,7 +62,7 @@ object CustomerModel : CoreModelDefinition(
             ),
         ),
         "status" to CoreModelAttribute(
-            key = "status", schemaType = "SELECT", label = "Status", dataType = "string",
+            key = "status", schemaType = SchemaType.SELECT, label = "Status", dataType = DataType.STRING,
             required = true,
             options = AttributeOptions(enum = listOf("active", "inactive", "churned"), default = "active"),
             semantics = AttributeSemantics(
@@ -70,7 +72,7 @@ object CustomerModel : CoreModelDefinition(
             ),
         ),
         "source" to CoreModelAttribute(
-            key = "source", schemaType = "SELECT", label = "Source", dataType = "string",
+            key = "source", schemaType = SchemaType.SELECT, label = "Source", dataType = DataType.STRING,
             options = AttributeOptions(enum = listOf("organic", "referral", "paid", "partner")),
             semantics = AttributeSemantics(
                 definition = "The acquisition channel through which the customer was first obtained, used for attribution and marketing analysis.",
@@ -79,7 +81,7 @@ object CustomerModel : CoreModelDefinition(
             ),
         ),
         "created-date" to CoreModelAttribute(
-            key = "created-date", schemaType = "DATE", label = "Created Date", dataType = "string",
+            key = "created-date", schemaType = SchemaType.DATE, label = "Created Date", dataType = DataType.STRING,
             format = "date",
             semantics = AttributeSemantics(
                 definition = "The date the customer record was first created, marking the start of the business relationship.",
@@ -88,7 +90,7 @@ object CustomerModel : CoreModelDefinition(
             ),
         ),
         "notes" to CoreModelAttribute(
-            key = "notes", schemaType = "TEXT", label = "Notes", dataType = "string",
+            key = "notes", schemaType = SchemaType.TEXT, label = "Notes", dataType = DataType.STRING,
             semantics = AttributeSemantics(
                 definition = "Free-form notes about the customer, capturing context, preferences, or history that does not fit structured fields.",
                 classification = SemanticAttributeClassification.FREETEXT,

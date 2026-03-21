@@ -8,6 +8,7 @@ import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Service
 import riven.core.enums.catalog.ManifestType
 import riven.core.enums.entity.EntityRelationshipCardinality
+import riven.core.enums.entity.LifecycleDomain
 import riven.core.models.catalog.*
 
 /**
@@ -205,7 +206,9 @@ class ManifestResolverService(
             iconType = icon?.get("type")?.asText() ?: "BOX",
             iconColour = icon?.get("colour")?.asText() ?: "NEUTRAL",
             semanticGroup = json.get("semanticGroup")?.asText() ?: "UNCATEGORIZED",
-            lifecycleDomain = json.get("lifecycleDomain")?.asText(),
+            lifecycleDomain = json.get("lifecycleDomain")?.asText()?.let { value ->
+                enumValues<LifecycleDomain>().firstOrNull { it.name == value }
+            },
             identifierKey = json.get("identifierKey")?.asText(),
             readonly = json.get("readonly")?.asBoolean() ?: readonlyDefault,
             schema = attributesMap,

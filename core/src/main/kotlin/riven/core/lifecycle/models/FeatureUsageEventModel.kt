@@ -5,6 +5,8 @@ import riven.core.enums.common.icon.IconType
 import riven.core.enums.entity.LifecycleDomain
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
 import riven.core.enums.entity.semantics.SemanticGroup
+import riven.core.enums.common.validation.SchemaType
+import riven.core.enums.core.DataType
 import riven.core.lifecycle.AttributeOptions
 import riven.core.lifecycle.AttributeSemantics
 import riven.core.lifecycle.CoreModelAttribute
@@ -26,7 +28,7 @@ object FeatureUsageEventModel : CoreModelDefinition(
     semanticTags = listOf("product-analytics", "engagement", "activation"),
     attributes = mapOf(
         "feature-name" to CoreModelAttribute(
-            key = "feature-name", schemaType = "TEXT", label = "Feature", dataType = "string",
+            key = "feature-name", schemaType = SchemaType.TEXT, label = "Feature", dataType = DataType.STRING,
             semantics = AttributeSemantics(
                 definition = "Name of the feature that was used.",
                 classification = SemanticAttributeClassification.IDENTIFIER,
@@ -34,7 +36,7 @@ object FeatureUsageEventModel : CoreModelDefinition(
             ),
         ),
         "action" to CoreModelAttribute(
-            key = "action", schemaType = "SELECT", label = "Action", dataType = "string",
+            key = "action", schemaType = SchemaType.SELECT, label = "Action", dataType = DataType.STRING,
             options = AttributeOptions(enum = listOf("viewed", "used", "completed", "error")),
             semantics = AttributeSemantics(
                 definition = "What the user did with the feature.",
@@ -43,7 +45,7 @@ object FeatureUsageEventModel : CoreModelDefinition(
             ),
         ),
         "date" to CoreModelAttribute(
-            key = "date", schemaType = "DATE", label = "Date", dataType = "string",
+            key = "date", schemaType = SchemaType.DATE, label = "Date", dataType = DataType.STRING,
             format = "date",
             semantics = AttributeSemantics(
                 definition = "When the usage event occurred.",
@@ -52,7 +54,7 @@ object FeatureUsageEventModel : CoreModelDefinition(
             ),
         ),
         "count" to CoreModelAttribute(
-            key = "count", schemaType = "NUMBER", label = "Count", dataType = "number",
+            key = "count", schemaType = SchemaType.NUMBER, label = "Count", dataType = DataType.NUMBER,
             semantics = AttributeSemantics(
                 definition = "Number of times this action was performed in this event.",
                 classification = SemanticAttributeClassification.QUANTITATIVE,

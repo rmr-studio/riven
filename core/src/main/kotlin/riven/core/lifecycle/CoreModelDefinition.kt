@@ -55,7 +55,7 @@ abstract class CoreModelDefinition(
             iconType = iconType.name,
             iconColour = iconColour.name,
             semanticGroup = semanticGroup.name,
-            lifecycleDomain = lifecycleDomain.name,
+            lifecycleDomain = lifecycleDomain,
             identifierKey = identifierKey,
             readonly = false,
             schema = schema,
@@ -91,8 +91,8 @@ abstract class CoreModelDefinition(
 
     private fun buildAttributeMap(attr: CoreModelAttribute): Map<String, Any> {
         val map = mutableMapOf<String, Any>(
-            "key" to attr.schemaType,
-            "type" to attr.dataType,
+            "key" to attr.schemaType.name,
+            "type" to attr.dataType.jsonValue,
         )
         map["label"] = attr.label
         if (attr.required) map["required"] = true

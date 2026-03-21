@@ -1,23 +1,31 @@
 package riven.core.service.lifecycle
 
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.kotlin.*
+import io.github.oshai.kotlinlogging.KLogger
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.mockito.kotlin.*
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.models.catalog.ResolvedManifest
 import riven.core.service.catalog.ManifestUpsertService
-import io.github.oshai.kotlinlogging.KLogger
 
-@ExtendWith(org.mockito.junit.jupiter.MockitoExtension::class)
+@SpringBootTest(classes = [CoreModelCatalogService::class])
 class CoreModelCatalogServiceTest {
 
-    private val upsertService: ManifestUpsertService = mock()
-    private val logger: KLogger = mock { on { isInfoEnabled() } doReturn true }
+    @MockitoBean
+    private lateinit var upsertService: ManifestUpsertService
+
+    @MockitoBean
+    private lateinit var logger: KLogger
+
+    @Autowired
     private lateinit var service: CoreModelCatalogService
 
     @BeforeEach
     fun setUp() {
-        service = CoreModelCatalogService(upsertService, logger)
+        // Clear invocations from ApplicationReadyEvent firing during context startup
+        clearInvocations(upsertService)
     }
 
     @Test
