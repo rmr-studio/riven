@@ -81,8 +81,9 @@ export function TimeSaved() {
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           className="mb-14 text-center md:mb-20"
         >
-          <h2 className="font-serif text-4xl leading-[1.1] tracking-tight text-secondary md:text-5xl">
-            Less stitching. More signal.
+          <h2 className="text-4xl leading-[1.1] -tracking-[0.02em] text-secondary md:text-5xl">
+            <span className="font-sans font-bold">Less stitching.</span>{' '}
+            <span className="font-serif font-normal italic">More signal.</span>
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed tracking-normal text-secondary/80 md:text-lg">
             Riven eliminates the manual work caused by disconnected tools. Allowing you to focus on
@@ -109,7 +110,7 @@ export function TimeSaved() {
                     i > 0 && 'border-l border-content/50',
                   )}
                 >
-                  <p className="mb-2 text-[0.8rem] tracking-wide text-secondary/70">{item.label}</p>
+                  <p className="mb-2 text-xs tracking-wide text-secondary/70">{item.label}</p>
                   <p className="mb-3 text-lg font-medium tracking-tight text-secondary lg:text-xl">
                     {item.metric}
                   </p>
@@ -121,9 +122,7 @@ export function TimeSaved() {
 
               {/* Row 2: last item + summary (col-span-2) */}
               <div className="flex flex-col justify-end p-7 lg:p-8">
-                <p className="mb-2 text-[0.8rem] tracking-wide text-secondary/70">
-                  {items[3].label}
-                </p>
+                <p className="mb-2 text-xs tracking-wide text-secondary/70">{items[3].label}</p>
                 <p className="mb-3 text-lg font-medium tracking-tight text-secondary lg:text-xl">
                   {items[3].metric}
                 </p>
@@ -135,9 +134,7 @@ export function TimeSaved() {
               {/* Summary + compound stats (spans 2 columns) */}
               <div className="col-span-2 flex flex-col justify-between border-l border-content/50 p-7 lg:flex-row lg:items-end lg:p-8">
                 <div>
-                  <p className="mb-2 text-[0.8rem] tracking-wide text-secondary/70">
-                    Take back control
-                  </p>
+                  <p className="mb-2 text-xs tracking-wide text-secondary/70">Take back control</p>
                   <p className="mb-3 text-lg font-medium tracking-tight text-secondary lg:text-xl">
                     What you save
                   </p>

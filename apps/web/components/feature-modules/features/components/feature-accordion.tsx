@@ -72,7 +72,7 @@ export const VisualAccordionSection = () => {
                 <div className="min-w-0 flex-1">
                   <div
                     className={cn(
-                      'text-lg font-medium transition-colors duration-300',
+                      'text-lg font-semibold transition-colors duration-300',
                       isActive ? 'text-heading' : 'text-content/40',
                     )}
                   >

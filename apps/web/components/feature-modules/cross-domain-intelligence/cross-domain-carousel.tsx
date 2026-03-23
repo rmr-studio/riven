@@ -44,12 +44,12 @@ function InsightCardComponent({ card }: { card: InsightCard }) {
   return (
     <div className="flex h-full flex-col">
       {/* Card title */}
-      <h3 className="mb-4 font-serif text-2xl font-normal -tracking-[0.02em] text-heading italic md:text-[28px]">
+      <h3 className="mb-4 font-serif text-2xl leading-[1.3] font-normal -tracking-[0.01em] text-heading italic md:text-3xl">
         {card.title}
       </h3>
 
       {/* Mock browser window */}
-      <div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
+      <div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-card/70 shadow-lg">
         <div className="flex flex-col gap-4 p-5 md:p-7">
           {/* Browser chrome row */}
           <div className="flex items-center justify-between gap-4">
@@ -117,21 +117,14 @@ export function CrossDomainCarousel() {
   );
 
   return (
-    <div className="relative w-full">
-      {/* Fade masks — desktop only */}
-      <div
-        className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-[12%] md:block lg:w-[18%]"
-        style={{
-          background: 'linear-gradient(to right, var(--background) 20%, transparent)',
-        }}
-      />
-      <div
-        className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-[12%] md:block lg:w-[18%]"
-        style={{
-          background: 'linear-gradient(to left, var(--background) 20%, transparent)',
-        }}
-      />
-
+    <div
+      className="relative w-full"
+      style={{
+        maskImage: 'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
+        WebkitMaskImage:
+          'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
+      }}
+    >
       <Carousel
         setApi={setApi}
         opts={{

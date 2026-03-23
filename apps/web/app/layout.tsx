@@ -1,5 +1,7 @@
 import { Footer } from '@/components/footer';
 import { Navbar } from '@/components/navbar';
+import { PageStage } from '@/components/page-stage';
+import { getCdnUrl } from '@/lib/cdn-image-loader';
 import { AuthProvider } from '@/providers/auth-provider';
 import { LazyQueryProvider as QueryProvider } from '@/providers/lazy-query-provider';
 import { MotionProvider } from '@/providers/motion-provider';
@@ -120,6 +122,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} ${spaceMono.variable} antialiased`}
+        style={
+          {
+            '--paper-texture': `url(${getCdnUrl('images/black-paper.webp')})`,
+          } as React.CSSProperties
+        }
       >
         <ThemeProvider
           attribute="class"
@@ -131,8 +138,10 @@ export default function RootLayout({
             <QueryProvider>
               <AuthProvider>
                 <Navbar />
-                {children}
-                <Footer />
+                <PageStage>
+                  {children}
+                  <Footer />
+                </PageStage>
               </AuthProvider>
             </QueryProvider>
           </MotionProvider>

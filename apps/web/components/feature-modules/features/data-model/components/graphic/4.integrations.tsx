@@ -1,8 +1,8 @@
 'use client';
 
-import { useId } from 'react';
-import { motion } from 'motion/react';
 import { getCdnUrl } from '@/lib/cdn-image-loader';
+import { motion } from 'motion/react';
+import { useId } from 'react';
 import { inViewProps, useAnimateOnMount } from './animate-context';
 import { EdgeGlowFilter, GlowEdgePaths } from './shared';
 
@@ -44,7 +44,11 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
-      <GlowEdgePaths edgePaths={edgePaths} glowFilterId={_('edgeGlow')} gradientId={_('edgeGrad')} />
+      <GlowEdgePaths
+        edgePaths={edgePaths}
+        glowFilterId={_('edgeGlow')}
+        gradientId={_('edgeGrad')}
+      />
 
       {/* ===== Riven (center) ===== */}
       <g>
@@ -60,14 +64,7 @@ export const IntegrationGraphDiagram = ({ className }: { className?: string }) =
         />
         <g filter={`url(#${_('cardShadow')})`}>
           <rect x="212" y="139" width="115" height="115" rx="16" className="fill-card" />
-          <rect
-            x="212.5"
-            y="139.5"
-            width="114"
-            height="114"
-            rx="15.5"
-            className="stroke-border"
-          />
+          <rect x="212.5" y="139.5" width="114" height="114" rx="15.5" className="stroke-border" />
         </g>
         {/* Riven Logo */}
         <svg x="240" y="169" width="60" height="56" viewBox="624 590 748 698">

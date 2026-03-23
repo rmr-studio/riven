@@ -10,8 +10,9 @@ export function CrossDomainIntelligence() {
           <SectionDivider name="Cross-Domain Intelligence" />
 
           <div className="mx-auto max-w-3xl text-center">
-            <h2 className="font-serif text-3xl font-normal italic leading-[1.1] tracking-tight text-primary md:text-4xl lg:text-5xl">
-              Insights that no single tool could see.
+            <h2 className="text-3xl -tracking-[0.02em] leading-[1.2] text-primary md:text-4xl lg:text-5xl">
+              <span className="font-sans font-semibold">Insights that</span>{' '}
+              <span className="font-serif font-normal italic">no single tool could see.</span>
             </h2>
             <p className="mt-4 text-sm leading-relaxed text-content/65 md:text-base">
               Riven connects the dots across every data source you use — surfacing patterns, risks,

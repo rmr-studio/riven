@@ -68,8 +68,9 @@ export const Faq = () => {
   return (
     <Section id="faqs" size={24}>
       <div className="content-container relative z-10 flex flex-col">
-        <h2 className="text-center font-serif text-4xl leading-[0.95] font-normal tracking-tight text-heading md:text-5xl">
-          Frequently Asked Questions
+        <h2 className="text-center text-4xl -tracking-[0.02em] leading-[1.1] text-heading md:text-5xl">
+          <span className="font-sans font-bold">Frequently Asked</span>{' '}
+          <span className="font-serif font-normal italic">Questions</span>
         </h2>
         <Accordion type="single" collapsible className="mt-10">
           {FAQ.map((item, i) => (

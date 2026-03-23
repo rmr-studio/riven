@@ -35,7 +35,7 @@ export function Footer() {
           <div className="flex flex-col gap-5">
             <Link href="/" className="flex items-center gap-2.5">
               <Logo size={64} />
-              <span className="mt-2 font-serif text-5xl font-bold tracking-tight text-logo-primary">
+              <span className="mt-2 font-serif text-5xl font-normal tracking-tight text-logo-primary">
                 Riven
               </span>
             </Link>
@@ -47,7 +47,7 @@ export function Footer() {
 
           <div className="flex gap-16 md:gap-20">
             <div className="flex flex-col gap-3">
-              <h3 className="font-mono text-sm font-semibold tracking-wide text-foreground">
+              <h3 className="font-display text-xs font-bold uppercase tracking-[0.05em] text-foreground">
                 Product
               </h3>
               <ul className="flex flex-col gap-2.5">
@@ -72,7 +72,7 @@ export function Footer() {
             </div>
 
             <div className="flex flex-col gap-3">
-              <h3 className="font-mono text-sm font-semibold tracking-wide text-foreground">
+              <h3 className="font-display text-xs font-bold uppercase tracking-[0.05em] text-foreground">
                 Legal
               </h3>
               <ul className="flex flex-col gap-2.5">

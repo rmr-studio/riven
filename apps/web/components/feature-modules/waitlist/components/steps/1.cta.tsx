@@ -4,8 +4,9 @@ import { ArrowRight } from 'lucide-react';
 export function CtaStep({ onStart }: { onStart: () => void }) {
   return (
     <div className="py-16 text-center md:py-24">
-      <h2 className="font-serif text-4xl leading-[1.05] font-normal tracking-tight text-heading md:text-5xl">
-        It's time to take control of your business
+      <h2 className="text-4xl -tracking-[0.02em] leading-[1.1] text-heading md:text-5xl">
+        <span className="font-sans font-bold">It's time to</span>{' '}
+        <span className="font-serif font-normal italic">take control of your business</span>
       </h2>
       <div className="mx-auto mt-5 flex max-w-3xl flex-col space-y-6 text-lg leading-relaxed text-muted-foreground">
         <p>
