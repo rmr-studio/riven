@@ -23,10 +23,13 @@ export function useSaveNoteMutation(workspaceId: string) {
       }
       return NoteService.createNote(session, workspaceId, entityId, request as CreateNoteRequest);
     },
-    onError: (error) => {
-      toast.error(`Failed to save note: ${error.message}`);
+    onError: (error, variables) => {
+      toast.error(variables.noteId ? 'Failed to save note' : `Failed to create note: ${error.message}`);
     },
     onSuccess: (_data, variables) => {
+      if (!variables.noteId) {
+        toast.success('Note created');
+      }
       queryClient.invalidateQueries({
         queryKey: noteKeys.list(workspaceId, variables.entityId),
       });

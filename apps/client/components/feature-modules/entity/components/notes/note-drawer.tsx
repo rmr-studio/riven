@@ -72,7 +72,7 @@ export interface NoteDrawerProps {
 }
 
 export const NoteDrawer: FC<NoteDrawerProps> = ({ open, onClose, entityId, workspaceId }) => {
-  const { data: notes = [], isLoading } = useNotes(workspaceId, entityId);
+  const { data: notes = [], isLoading, isLoadingAuth, isError } = useNotes(workspaceId, entityId);
   const { mutate: saveNote } = useSaveNoteMutation(workspaceId);
   const { mutate: deleteNote } = useDeleteNoteMutation(workspaceId);
 
@@ -82,37 +82,44 @@ export const NoteDrawer: FC<NoteDrawerProps> = ({ open, onClose, entityId, works
   // Track whether mutations happened for cache invalidation on close
   const mutatedRef = useRef(false);
 
-  // Auto-save debounce
-  const debouncedSave = useRef(
-    debounce((noteId: string, content: PartialBlock[], title: string) => {
-      saveNote({
-        noteId,
-        entityId,
-        request: { content: content as Array<Record<string, unknown>>, title },
-      });
-    }, 2500),
-  ).current;
+  // Auto-save debounce — recreate when entityId changes so the closure is fresh
+  const debouncedSaveRef = useRef<ReturnType<typeof debounce>>(null!);
+  useEffect(() => {
+    debouncedSaveRef.current = debounce(
+      (noteId: string, content: PartialBlock[], title: string) => {
+        saveNote({
+          noteId,
+          entityId,
+          request: { content: content as Array<Record<string, unknown>>, title },
+        });
+      },
+      2500,
+    );
+    return () => {
+      debouncedSaveRef.current.cancel();
+    };
+  }, [entityId, saveNote]);
 
   // Flush on unmount
   useEffect(() => {
     return () => {
-      debouncedSave.flush();
+      debouncedSaveRef.current?.flush();
     };
-  }, [debouncedSave]);
+  }, []);
 
   const handleClose = useCallback(() => {
-    debouncedSave.flush();
+    debouncedSaveRef.current?.flush();
     setActiveNoteId(null);
     onClose();
-  }, [debouncedSave, onClose]);
+  }, [onClose]);
 
   const handleChange = useCallback(
     (blocks: PartialBlock[]) => {
       if (!activeNoteId) return;
       const title = extractNoteTitle(blocks);
-      debouncedSave(activeNoteId, blocks, title);
+      debouncedSaveRef.current(activeNoteId, blocks, title);
     },
-    [activeNoteId, debouncedSave],
+    [activeNoteId],
   );
 
   const handleCreateNote = useCallback(() => {
@@ -142,7 +149,7 @@ export const NoteDrawer: FC<NoteDrawerProps> = ({ open, onClose, entityId, works
   const handleDeleteNote = useCallback(
     (noteId: string) => {
       mutatedRef.current = true;
-      debouncedSave.cancel();
+      debouncedSaveRef.current?.cancel();
       deleteNote(
         { noteId, entityId },
         {
@@ -154,13 +161,13 @@ export const NoteDrawer: FC<NoteDrawerProps> = ({ open, onClose, entityId, works
         },
       );
     },
-    [deleteNote, entityId, activeNoteId, debouncedSave],
+    [deleteNote, entityId, activeNoteId],
   );
 
   const handleBack = useCallback(() => {
-    debouncedSave.flush();
+    debouncedSaveRef.current?.flush();
     setActiveNoteId(null);
-  }, [debouncedSave]);
+  }, []);
 
   return (
     <Sheet open={open} onOpenChange={(isOpen: boolean) => !isOpen && handleClose()}>
@@ -232,11 +239,15 @@ export const NoteDrawer: FC<NoteDrawerProps> = ({ open, onClose, entityId, works
             </SheetHeader>
 
             <div className="flex-1 overflow-y-auto">
-              {isLoading ? (
+              {isLoading || isLoadingAuth ? (
                 <div className="space-y-3 p-2">
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="h-16 animate-pulse rounded-md bg-muted/30" />
                   ))}
+                </div>
+              ) : isError ? (
+                <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+                  <p className="text-sm text-destructive">Failed to load notes</p>
                 </div>
               ) : notes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
@@ -314,6 +325,11 @@ const NoteCard: FC<NoteCardProps> = ({ note, onClick, onDelete }) => {
         onClick={(e) => {
           e.stopPropagation();
           onDelete();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.stopPropagation();
+          }
         }}
       >
         <Trash2 className="size-3.5" />
