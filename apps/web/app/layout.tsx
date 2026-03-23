@@ -1,6 +1,7 @@
 import { Footer } from '@/components/footer';
 import { Navbar } from '@/components/navbar';
 import { PageStage } from '@/components/page-stage';
+import { BGPattern } from '@/components/ui/background/grids';
 import { getCdnUrl } from '@/lib/cdn-image-loader';
 import { AuthProvider } from '@/providers/auth-provider';
 import { LazyQueryProvider as QueryProvider } from '@/providers/lazy-query-provider';
@@ -121,13 +122,19 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} ${spaceMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} ${spaceMono.variable} relative min-h-screen antialiased`}
         style={
           {
             '--paper-texture': `url(${getCdnUrl('images/black-paper.webp')})`,
           } as React.CSSProperties
         }
       >
+        <BGPattern
+          variant={'diagonal-stripes'}
+          size={24}
+          fill="color-mix(in srgb, var(--primary) 15%, transparent)"
+          className="bg-primary/5"
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

@@ -20,7 +20,7 @@ export function ProductShowcaseGraphic({ className }: { className?: string }) {
       </div>
 
       {/* Mobile: vertical stacked layout */}
-      <div className="block translate-x-8 translate-y-8 scale-120 overflow-hidden px-4 sm:translate-x-24 sm:scale-110 md:translate-y-0 lg:hidden">
+      <div className="mt-24 block translate-x-8 scale-160 overflow-hidden px-4 sm:translate-x-24 sm:scale-120 md:translate-y-0 lg:hidden">
         <MobileShowcase activeScenario={activeScenario} onScenarioChange={handleScenarioChange} />
       </div>
     </div>

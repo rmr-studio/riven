@@ -1,19 +1,21 @@
 'use client';
 
+import { ShaderContainer } from '@/components/ui/shader-container';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AnimateOnMountContext } from '../data-model/components/graphic/animate-context';
-import { FEATURE_CONTENT } from '../knowledge/config/accordion-content';
+import { ACTION_CONTENT } from '../config/accordion-content';
+import { AnimateOnMountContext } from './animate-context';
 
 const AUTO_ADVANCE_MS = 200000;
 const INTERACTION_PAUSE_MS = 3000;
 
-export const VisualAccordionSection = () => {
+export const DailyActionAccordion = () => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [paused, setPaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pauseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // eslint-disable-next-line react-hooks/purity
   const startRef = useRef(Date.now());
 
   // Auto-advance timer (desktop only, controlled by CSS visibility)
@@ -26,7 +28,7 @@ export const VisualAccordionSection = () => {
       const elapsed = Date.now() - startRef.current;
 
       if (elapsed >= AUTO_ADVANCE_MS) {
-        setActiveIndex((prev) => (prev + 1) % FEATURE_CONTENT.length);
+        setActiveIndex((prev) => (prev + 1) % ACTION_CONTENT.length);
         startRef.current = Date.now();
       }
     }, 200);
@@ -46,10 +48,25 @@ export const VisualAccordionSection = () => {
   return (
     <div className="w-full">
       {/* Desktop: item list left, visual right */}
-      <div className="hidden lg:grid lg:grid-cols-2 lg:items-center lg:gap-12">
+
+      <div className="hidden lg:flex">
         {/* Left: Item selector list */}
-        <div className="flex flex-col">
-          {FEATURE_CONTENT.map((item, index) => {
+        <div className="flex">
+          <div className="z-20 flex flex-col px-8 py-10 lg:w-5/12 lg:px-12 lg:py-16">
+            <div className="flex items-center gap-2.5">
+              <h3 className="font-serif text-xl font-semibold tracking-tight text-background sm:text-3xl dark:text-foreground">
+                Powerful alone. Unstoppable together.
+              </h3>
+            </div>
+
+            <p className="mt-4 max-w-lg text-base leading-tight tracking-tight text-primary-foreground/50 md:max-w-md md:text-lg dark:text-content">
+              Riven explores and surfaces patterns trends and insights hidden deep in your data.
+              From channel performance to cohort health to churn risks. Answer critical questions at
+              a glance with the most powerful, connected dashboard you've ever seen.
+            </p>
+          </div>
+
+          {ACTION_CONTENT.map((item, index) => {
             const isActive = activeIndex === index;
             return (
               <button
@@ -99,37 +116,39 @@ export const VisualAccordionSection = () => {
         </div>
 
         {/* Right: Visual panel */}
-        <div className="relative my-4 flex items-end justify-center">
-          <div
-            className="relative h-180 w-full overflow-hidden rounded-xl"
-            style={{
-              maskImage:
-                'linear-gradient(to right, transparent, black 10%, black 75%, transparent), linear-gradient(to bottom, black 0%, black 95%, transparent)',
-              maskComposite: 'intersect',
-              WebkitMaskImage:
-                'linear-gradient(to right, transparent, black 10%, black 75%, transparent), linear-gradient(to bottom, black 0%, black 95%, transparent)',
-              WebkitMaskComposite: 'source-in',
-            }}
-          >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeIndex}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.3, ease: 'easeInOut' }}
-                className="flex h-full items-center pt-4"
-              >
-                {FEATURE_CONTENT[activeIndex]?.content}
-              </motion.div>
-            </AnimatePresence>
+        <ShaderContainer className="mt-0 w-full">
+          <div className="relative my-4 flex items-end justify-center">
+            <div
+              className="relative h-180 w-full overflow-hidden rounded-xl"
+              style={{
+                maskImage:
+                  'linear-gradient(to right, transparent, black 10%, black 75%, transparent), linear-gradient(to bottom, black 0%, black 95%, transparent)',
+                maskComposite: 'intersect',
+                WebkitMaskImage:
+                  'linear-gradient(to right, transparent, black 10%, black 75%, transparent), linear-gradient(to bottom, black 0%, black 95%, transparent)',
+                WebkitMaskComposite: 'source-in',
+              }}
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeIndex}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  className="flex h-full items-center pt-4"
+                >
+                  {ACTION_CONTENT[activeIndex]?.content}
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </div>
-        </div>
+        </ShaderContainer>
       </div>
 
       {/* Mobile: all items fully expanded in scroll */}
       <div className="flex flex-col gap-16 lg:hidden">
-        {FEATURE_CONTENT.map((item, index) => (
+        {ACTION_CONTENT.map((item, index) => (
           <div key={index} className="flex flex-col items-center">
             {/* Title */}
             <div className="mx-auto max-w-7xl text-center text-2xl font-medium text-heading">

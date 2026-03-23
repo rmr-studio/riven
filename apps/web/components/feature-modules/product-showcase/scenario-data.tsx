@@ -9,7 +9,6 @@ import {
   Users,
 } from 'lucide-react';
 
-import type { ShowcaseScenario } from './scenario-types';
 import {
   BrandFacebook,
   BrandGmail,
@@ -23,8 +22,9 @@ import {
   BrandShopify,
   BrandSlack,
   BrandStripe,
-} from './brand-icons';
-import { EntityChip, PlatformChip, StatusDot } from './ui-primitives';
+} from '../../ui/diagrams/brand-icons';
+import { EntityChip, PlatformChip, StatusDot } from '../../ui/diagrams/brand-ui-primitives';
+import type { ShowcaseScenario } from './scenario-types';
 
 // ── Scenario 1: Customers ──────────────────────────────────────────────
 
@@ -47,7 +47,9 @@ export const customerScenario: ShowcaseScenario = {
   tableRows: [
     {
       cells: [
-        <span key="n" className="text-sm text-foreground">Kenneth Hernandez</span>,
+        <span key="n" className="text-sm text-foreground">
+          Kenneth Hernandez
+        </span>,
         <div key="c" className="flex flex-wrap gap-1">
           <EntityChip icon={<BrandGmail size={12} />} label="Gmail" />
           <EntityChip icon={<BrandLinkedIn size={12} />} label="LinkedIn" />
@@ -57,12 +59,16 @@ export const customerScenario: ShowcaseScenario = {
           <EntityChip icon={<BrandIntercom size={12} />} label="INC-4891" />
           <EntityChip icon={<BrandIntercom size={12} />} label="INC-4722" />
         </div>,
-        <span key="e" className="truncate text-sm text-muted-foreground">kenneth.h@example.com</span>,
+        <span key="e" className="truncate text-sm text-muted-foreground">
+          kenneth.h@example.com
+        </span>,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm text-foreground">Sarah Chen</span>,
+        <span key="n" className="text-sm text-foreground">
+          Sarah Chen
+        </span>,
         <div key="c" className="flex flex-wrap gap-1">
           <EntityChip icon={<BrandGmail size={12} />} label="Gmail" />
           <EntityChip icon={<BrandHubSpot size={12} />} label="HubSpot" />
@@ -70,23 +76,33 @@ export const customerScenario: ShowcaseScenario = {
         <div key="t" className="flex flex-wrap gap-1">
           <EntityChip icon={<BrandStripe size={12} />} label="pi_3QxM" />
         </div>,
-        <span key="e" className="truncate text-sm text-muted-foreground">sarah.chen@rivendor.io</span>,
+        <span key="e" className="truncate text-sm text-muted-foreground">
+          sarah.chen@rivendor.io
+        </span>,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm text-foreground">Marcus Webb</span>,
+        <span key="n" className="text-sm text-foreground">
+          Marcus Webb
+        </span>,
         <div key="c" className="flex flex-wrap gap-1">
           <EntityChip icon={<BrandLinkedIn size={12} />} label="LinkedIn" />
           <EntityChip icon={<BrandFacebook size={12} />} label="Facebook" />
         </div>,
-        <span key="t" className="text-xs text-muted-foreground/30">&mdash;</span>,
-        <span key="e" className="truncate text-sm text-muted-foreground">marcus.webb@stoic.co</span>,
+        <span key="t" className="text-xs text-muted-foreground/30">
+          &mdash;
+        </span>,
+        <span key="e" className="truncate text-sm text-muted-foreground">
+          marcus.webb@stoic.co
+        </span>,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm text-foreground">Priya Patel</span>,
+        <span key="n" className="text-sm text-foreground">
+          Priya Patel
+        </span>,
         <div key="c" className="flex flex-wrap gap-1">
           <EntityChip icon={<BrandGmail size={12} />} label="Gmail" />
           <EntityChip icon={<BrandSlack size={12} />} label="Slack" />
@@ -94,12 +110,16 @@ export const customerScenario: ShowcaseScenario = {
         <div key="t" className="flex flex-wrap gap-1">
           <EntityChip icon={<BrandIntercom size={12} />} label="INC-5012" />
         </div>,
-        <span key="e" className="truncate text-sm text-muted-foreground">priya.p@quasar.io</span>,
+        <span key="e" className="truncate text-sm text-muted-foreground">
+          priya.p@quasar.io
+        </span>,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm text-foreground">Julian Voet</span>,
+        <span key="n" className="text-sm text-foreground">
+          Julian Voet
+        </span>,
         <div key="c" className="flex flex-wrap gap-1">
           <EntityChip icon={<BrandLinkedIn size={12} />} label="LinkedIn" />
           <EntityChip icon={<BrandHubSpot size={12} />} label="HubSpot" />
@@ -108,22 +128,32 @@ export const customerScenario: ShowcaseScenario = {
           <EntityChip icon={<BrandStripe size={12} />} label="dp_9xKl" />
           <EntityChip icon={<BrandIntercom size={12} />} label="INC-4953" />
         </div>,
-        <span key="e" className="truncate text-sm text-muted-foreground">julian.voet@nexus.dev</span>,
+        <span key="e" className="truncate text-sm text-muted-foreground">
+          julian.voet@nexus.dev
+        </span>,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm text-foreground">Elena Rodriguez</span>,
+        <span key="n" className="text-sm text-foreground">
+          Elena Rodriguez
+        </span>,
         <div key="c" className="flex flex-wrap gap-1">
           <EntityChip icon={<BrandGmail size={12} />} label="Gmail" />
         </div>,
-        <span key="t" className="text-xs text-muted-foreground/30">&mdash;</span>,
-        <span key="e" className="truncate text-sm text-muted-foreground">elena.r@zenith.com</span>,
+        <span key="t" className="text-xs text-muted-foreground/30">
+          &mdash;
+        </span>,
+        <span key="e" className="truncate text-sm text-muted-foreground">
+          elena.r@zenith.com
+        </span>,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm text-foreground">David Reyes</span>,
+        <span key="n" className="text-sm text-foreground">
+          David Reyes
+        </span>,
         <div key="c" className="flex flex-wrap gap-1">
           <EntityChip icon={<BrandSlack size={12} />} label="Slack" />
           <EntityChip icon={<BrandLinkedIn size={12} />} label="LinkedIn" />
@@ -132,18 +162,26 @@ export const customerScenario: ShowcaseScenario = {
         <div key="t" className="flex flex-wrap gap-1">
           <EntityChip icon={<BrandShopify size={12} />} label="ORD-1847" />
         </div>,
-        <span key="e" className="truncate text-sm text-muted-foreground">david.reyes@terra.co</span>,
+        <span key="e" className="truncate text-sm text-muted-foreground">
+          david.reyes@terra.co
+        </span>,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm text-foreground">Martha Rogers</span>,
+        <span key="n" className="text-sm text-foreground">
+          Martha Rogers
+        </span>,
         <div key="c" className="flex flex-wrap gap-1">
           <EntityChip icon={<BrandHubSpot size={12} />} label="HubSpot" />
           <EntityChip icon={<BrandFacebook size={12} />} label="Facebook" />
         </div>,
-        <span key="t" className="text-xs text-muted-foreground/30">&mdash;</span>,
-        <span key="e" className="truncate text-sm text-muted-foreground">martha.r@quasar.io</span>,
+        <span key="t" className="text-xs text-muted-foreground/30">
+          &mdash;
+        </span>,
+        <span key="e" className="truncate text-sm text-muted-foreground">
+          martha.r@quasar.io
+        </span>,
       ],
     },
   ],
@@ -191,8 +229,8 @@ export const customerScenario: ShowcaseScenario = {
   kbRetrieved: ['Sarah Chen', 'Marcus Webb', 'Priya Patel', 'Julian Voet', 'Elena Rodriguez'],
   kbAnalysedTitle: (
     <>
-      342 support tickets for{' '}
-      <PlatformChip icon={<BrandInstagram size={11} />} label="Instagram" /> cohort
+      342 support tickets for <PlatformChip icon={<BrandInstagram size={11} />} label="Instagram" />{' '}
+      cohort
     </>
   ),
   kbAnalysedCards: [
@@ -219,8 +257,8 @@ export const customerScenario: ShowcaseScenario = {
         acquisition channels. The{' '}
         <PlatformChip icon={<BrandInstagram size={11} />} label="Instagram" /> cohort shows a churn
         rate of <strong>14.2%</strong>, whereas the{' '}
-        <PlatformChip icon={<BrandGoogle size={11} />} label="Google Search" /> cohort remains stable
-        at <strong>6.8%</strong>.
+        <PlatformChip icon={<BrandGoogle size={11} />} label="Google Search" /> cohort remains
+        stable at <strong>6.8%</strong>.
       </p>
 
       <div className="rounded-md border-l-2 border-foreground/20 pl-3">
@@ -240,8 +278,8 @@ export const customerScenario: ShowcaseScenario = {
           <span className="rounded bg-muted px-1 text-foreground/70">Sarah Chen</span> ,{' '}
           <span className="rounded bg-muted px-1 text-foreground/70">Marcus Webb</span> ,{' '}
           <span className="rounded bg-muted px-1 text-foreground/70">Priya Patel</span> , and{' '}
-          <span className="rounded bg-muted px-1 text-muted-foreground">+15 more</span> who
-          reported issues with the mobile landing page loading times.
+          <span className="rounded bg-muted px-1 text-muted-foreground">+15 more</span> who reported
+          issues with the mobile landing page loading times.
         </p>
       </div>
 
@@ -281,66 +319,114 @@ export const subscriptionScenario: ShowcaseScenario = {
   tableRows: [
     {
       cells: [
-        <span key="n" className="text-sm text-foreground">Pro Monthly — Acme Corp</span>,
+        <span key="n" className="text-sm text-foreground">
+          Pro Monthly — Acme Corp
+        </span>,
         <StatusDot key="s" color="oklch(0.55 0.15 145)" label="Active" />,
-        <span key="m" className="text-sm tabular-nums text-foreground/80">$2,400</span>,
-        <span key="d" className="text-sm text-muted-foreground">Apr 12, 2026</span>,
+        <span key="m" className="text-sm text-foreground/80 tabular-nums">
+          $2,400
+        </span>,
+        <span key="d" className="text-sm text-muted-foreground">
+          Apr 12, 2026
+        </span>,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm text-foreground">Enterprise — Nexus Dev</span>,
+        <span key="n" className="text-sm text-foreground">
+          Enterprise — Nexus Dev
+        </span>,
         <StatusDot key="s" color="oklch(0.55 0.15 145)" label="Active" />,
-        <span key="m" className="text-sm tabular-nums text-foreground/80">$8,900</span>,
-        <span key="d" className="text-sm text-muted-foreground">May 1, 2026</span>,
+        <span key="m" className="text-sm text-foreground/80 tabular-nums">
+          $8,900
+        </span>,
+        <span key="d" className="text-sm text-muted-foreground">
+          May 1, 2026
+        </span>,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm text-foreground">Pro Monthly — Stoic Co</span>,
+        <span key="n" className="text-sm text-foreground">
+          Pro Monthly — Stoic Co
+        </span>,
         <StatusDot key="s" color="oklch(0.577 0.245 27.325)" label="Churned" />,
-        <span key="m" className="text-sm tabular-nums text-foreground/80">$0</span>,
-        <span key="d" className="text-sm text-muted-foreground">&mdash;</span>,
+        <span key="m" className="text-sm text-foreground/80 tabular-nums">
+          $0
+        </span>,
+        <span key="d" className="text-sm text-muted-foreground">
+          &mdash;
+        </span>,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm text-foreground">Starter — Quasar IO</span>,
+        <span key="n" className="text-sm text-foreground">
+          Starter — Quasar IO
+        </span>,
         <StatusDot key="s" color="oklch(0.75 0.15 75)" label="Trial" />,
-        <span key="m" className="text-sm tabular-nums text-foreground/80">$0</span>,
-        <span key="d" className="text-sm text-muted-foreground">Mar 28, 2026</span>,
+        <span key="m" className="text-sm text-foreground/80 tabular-nums">
+          $0
+        </span>,
+        <span key="d" className="text-sm text-muted-foreground">
+          Mar 28, 2026
+        </span>,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm text-foreground">Enterprise — Zenith</span>,
+        <span key="n" className="text-sm text-foreground">
+          Enterprise — Zenith
+        </span>,
         <StatusDot key="s" color="oklch(0.55 0.15 145)" label="Active" />,
-        <span key="m" className="text-sm tabular-nums text-foreground/80">$12,500</span>,
-        <span key="d" className="text-sm text-muted-foreground">Jun 15, 2026</span>,
+        <span key="m" className="text-sm text-foreground/80 tabular-nums">
+          $12,500
+        </span>,
+        <span key="d" className="text-sm text-muted-foreground">
+          Jun 15, 2026
+        </span>,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm text-foreground">Pro Annual — Terra Co</span>,
+        <span key="n" className="text-sm text-foreground">
+          Pro Annual — Terra Co
+        </span>,
         <StatusDot key="s" color="oklch(0.55 0.15 145)" label="Active" />,
-        <span key="m" className="text-sm tabular-nums text-foreground/80">$1,800</span>,
-        <span key="d" className="text-sm text-muted-foreground">Nov 3, 2026</span>,
+        <span key="m" className="text-sm text-foreground/80 tabular-nums">
+          $1,800
+        </span>,
+        <span key="d" className="text-sm text-muted-foreground">
+          Nov 3, 2026
+        </span>,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm text-foreground">Starter — Rivendor IO</span>,
+        <span key="n" className="text-sm text-foreground">
+          Starter — Rivendor IO
+        </span>,
         <StatusDot key="s" color="oklch(0.75 0.15 75)" label="Trial" />,
-        <span key="m" className="text-sm tabular-nums text-foreground/80">$0</span>,
-        <span key="d" className="text-sm text-muted-foreground">Apr 2, 2026</span>,
+        <span key="m" className="text-sm text-foreground/80 tabular-nums">
+          $0
+        </span>,
+        <span key="d" className="text-sm text-muted-foreground">
+          Apr 2, 2026
+        </span>,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm text-foreground">Pro Monthly — Helix Labs</span>,
+        <span key="n" className="text-sm text-foreground">
+          Pro Monthly — Helix Labs
+        </span>,
         <StatusDot key="s" color="oklch(0.577 0.245 27.325)" label="Churned" />,
-        <span key="m" className="text-sm tabular-nums text-foreground/80">$0</span>,
-        <span key="d" className="text-sm text-muted-foreground">&mdash;</span>,
+        <span key="m" className="text-sm text-foreground/80 tabular-nums">
+          $0
+        </span>,
+        <span key="d" className="text-sm text-muted-foreground">
+          &mdash;
+        </span>,
       ],
     },
   ],
@@ -378,16 +464,12 @@ export const subscriptionScenario: ShowcaseScenario = {
     },
   ],
 
-  kbQuery: (
-    <>
-      Which subscription tiers have the highest expansion revenue this quarter?
-    </>
-  ),
+  kbQuery: <>Which subscription tiers have the highest expansion revenue this quarter?</>,
   kbRetrieved: ['Acme Corp', 'Nexus Dev', 'Zenith', 'Terra Co', 'Helix Labs'],
   kbAnalysedTitle: (
     <>
-      87 upgrade events across{' '}
-      <PlatformChip icon={<BrandStripe size={11} />} label="Stripe" /> billing data
+      87 upgrade events across <PlatformChip icon={<BrandStripe size={11} />} label="Stripe" />{' '}
+      billing data
     </>
   ),
   kbAnalysedCards: [
@@ -421,8 +503,8 @@ export const subscriptionScenario: ShowcaseScenario = {
         <p className="text-sm font-semibold text-foreground">Upgrade Catalyst</p>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
           Teams hitting the 80% usage threshold on{' '}
-          <PlatformChip icon={<BrandStripe size={10} />} label="Pro" /> plans convert within 14
-          days at a rate of <strong>34%</strong>. Usage-based nudges via{' '}
+          <PlatformChip icon={<BrandStripe size={10} />} label="Pro" /> plans convert within 14 days
+          at a rate of <strong>34%</strong>. Usage-based nudges via{' '}
           <PlatformChip icon={<BrandIntercom size={10} />} label="Intercom" /> drive 2.1x higher
           conversion than email-only outreach.
         </p>
@@ -435,8 +517,8 @@ export const subscriptionScenario: ShowcaseScenario = {
           <span className="rounded bg-muted px-1 text-foreground/70">Acme Corp</span> ,{' '}
           <span className="rounded bg-muted px-1 text-foreground/70">Nexus Dev</span> ,{' '}
           <span className="rounded bg-muted px-1 text-foreground/70">Zenith</span> , and{' '}
-          <span className="rounded bg-muted px-1 text-muted-foreground">+9 more</span> who
-          upgraded after exceeding seat or storage limits.
+          <span className="rounded bg-muted px-1 text-muted-foreground">+9 more</span> who upgraded
+          after exceeding seat or storage limits.
         </p>
       </div>
 
@@ -476,64 +558,96 @@ export const supportTicketScenario: ShowcaseScenario = {
   tableRows: [
     {
       cells: [
-        <span key="n" className="text-sm font-mono text-foreground">INC-4891</span>,
-        <span key="c" className="text-sm text-foreground">Kenneth Hernandez</span>,
+        <span key="n" className="font-mono text-sm text-foreground">
+          INC-4891
+        </span>,
+        <span key="c" className="text-sm text-foreground">
+          Kenneth Hernandez
+        </span>,
         <StatusDot key="p" color="oklch(0.577 0.245 27.325)" label="High" />,
         <StatusDot key="s" color="oklch(0.75 0.15 75)" label="Open" />,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm font-mono text-foreground">INC-5012</span>,
-        <span key="c" className="text-sm text-foreground">Priya Patel</span>,
+        <span key="n" className="font-mono text-sm text-foreground">
+          INC-5012
+        </span>,
+        <span key="c" className="text-sm text-foreground">
+          Priya Patel
+        </span>,
         <StatusDot key="p" color="oklch(0.577 0.245 27.325)" label="High" />,
         <StatusDot key="s" color="oklch(0.585 0.204 277.12)" label="In Progress" />,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm font-mono text-foreground">INC-4953</span>,
-        <span key="c" className="text-sm text-foreground">Julian Voet</span>,
+        <span key="n" className="font-mono text-sm text-foreground">
+          INC-4953
+        </span>,
+        <span key="c" className="text-sm text-foreground">
+          Julian Voet
+        </span>,
         <StatusDot key="p" color="oklch(0.75 0.15 75)" label="Med" />,
         <StatusDot key="s" color="oklch(0.585 0.204 277.12)" label="In Progress" />,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm font-mono text-foreground">INC-4722</span>,
-        <span key="c" className="text-sm text-foreground">Kenneth Hernandez</span>,
+        <span key="n" className="font-mono text-sm text-foreground">
+          INC-4722
+        </span>,
+        <span key="c" className="text-sm text-foreground">
+          Kenneth Hernandez
+        </span>,
         <StatusDot key="p" color="oklch(0.55 0.15 145)" label="Low" />,
         <StatusDot key="s" color="oklch(0.55 0.15 145)" label="Resolved" />,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm font-mono text-foreground">INC-5044</span>,
-        <span key="c" className="text-sm text-foreground">Sarah Chen</span>,
+        <span key="n" className="font-mono text-sm text-foreground">
+          INC-5044
+        </span>,
+        <span key="c" className="text-sm text-foreground">
+          Sarah Chen
+        </span>,
         <StatusDot key="p" color="oklch(0.577 0.245 27.325)" label="High" />,
         <StatusDot key="s" color="oklch(0.75 0.15 75)" label="Open" />,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm font-mono text-foreground">INC-4998</span>,
-        <span key="c" className="text-sm text-foreground">Elena Rodriguez</span>,
+        <span key="n" className="font-mono text-sm text-foreground">
+          INC-4998
+        </span>,
+        <span key="c" className="text-sm text-foreground">
+          Elena Rodriguez
+        </span>,
         <StatusDot key="p" color="oklch(0.75 0.15 75)" label="Med" />,
         <StatusDot key="s" color="oklch(0.55 0.15 145)" label="Resolved" />,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm font-mono text-foreground">INC-5067</span>,
-        <span key="c" className="text-sm text-foreground">David Reyes</span>,
+        <span key="n" className="font-mono text-sm text-foreground">
+          INC-5067
+        </span>,
+        <span key="c" className="text-sm text-foreground">
+          David Reyes
+        </span>,
         <StatusDot key="p" color="oklch(0.55 0.15 145)" label="Low" />,
         <StatusDot key="s" color="oklch(0.585 0.204 277.12)" label="In Progress" />,
       ],
     },
     {
       cells: [
-        <span key="n" className="text-sm font-mono text-foreground">INC-5081</span>,
-        <span key="c" className="text-sm text-foreground">Martha Rogers</span>,
+        <span key="n" className="font-mono text-sm text-foreground">
+          INC-5081
+        </span>,
+        <span key="c" className="text-sm text-foreground">
+          Martha Rogers
+        </span>,
         <StatusDot key="p" color="oklch(0.75 0.15 75)" label="Med" />,
         <StatusDot key="s" color="oklch(0.75 0.15 75)" label="Open" />,
       ],
@@ -573,16 +687,11 @@ export const supportTicketScenario: ShowcaseScenario = {
     },
   ],
 
-  kbQuery: (
-    <>
-      What are the most common support themes this month?
-    </>
-  ),
+  kbQuery: <>What are the most common support themes this month?</>,
   kbRetrieved: ['INC-4891', 'INC-5012', 'INC-4953', 'INC-5044', 'INC-5067'],
   kbAnalysedTitle: (
     <>
-      218 tickets across{' '}
-      <PlatformChip icon={<BrandIntercom size={11} />} label="Intercom" /> and{' '}
+      218 tickets across <PlatformChip icon={<BrandIntercom size={11} />} label="Intercom" /> and{' '}
       <PlatformChip icon={<BrandGmail size={11} />} label="Gmail" /> channels
     </>
   ),
@@ -607,18 +716,18 @@ export const supportTicketScenario: ShowcaseScenario = {
     <>
       <p className="text-sm leading-relaxed text-foreground/80">
         Support volume analysis for March shows{' '}
-        <PlatformChip icon={<BrandIntercom size={11} />} label="Billing disputes" /> as the
-        dominant theme at <strong>47 tickets (21.6%)</strong>, up from 12% last month. Onboarding
-        issues via <PlatformChip icon={<BrandGmail size={11} />} label="Gmail" /> account for{' '}
+        <PlatformChip icon={<BrandIntercom size={11} />} label="Billing disputes" /> as the dominant
+        theme at <strong>47 tickets (21.6%)</strong>, up from 12% last month. Onboarding issues via{' '}
+        <PlatformChip icon={<BrandGmail size={11} />} label="Gmail" /> account for{' '}
         <strong>31 tickets (14.2%)</strong>.
       </p>
 
       <div className="rounded-md border-l-2 border-foreground/20 pl-3">
         <p className="text-sm font-semibold text-foreground">Root Cause — Billing</p>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-          A{' '}
-          <PlatformChip icon={<BrandStripe size={10} />} label="Stripe" /> webhook misconfiguration
-          on March 8 caused duplicate charge events for 23 accounts. Affected customers include{' '}
+          A <PlatformChip icon={<BrandStripe size={10} />} label="Stripe" /> webhook
+          misconfiguration on March 8 caused duplicate charge events for 23 accounts. Affected
+          customers include{' '}
           <span className="rounded bg-muted px-1 text-foreground/70">Kenneth Hernandez</span> ,{' '}
           <span className="rounded bg-muted px-1 text-foreground/70">Sarah Chen</span> , and{' '}
           <span className="rounded bg-muted px-1 text-muted-foreground">+21 more</span>.
@@ -628,8 +737,8 @@ export const supportTicketScenario: ShowcaseScenario = {
       <div className="rounded-md border-l-2 border-foreground/20 pl-3">
         <p className="text-sm font-semibold text-foreground">SLA Impact</p>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-          Average first-response time for billing tickets is{' '}
-          <strong>6.2 hours</strong>, exceeding the 4-hour SLA target. Tickets routed via{' '}
+          Average first-response time for billing tickets is <strong>6.2 hours</strong>, exceeding
+          the 4-hour SLA target. Tickets routed via{' '}
           <PlatformChip icon={<BrandSlack size={10} />} label="Slack" /> auto-assignment resolve{' '}
           <strong>1.8x faster</strong> than manual triage through{' '}
           <PlatformChip icon={<BrandIntercom size={10} />} label="Intercom" /> queue.
@@ -637,10 +746,9 @@ export const supportTicketScenario: ShowcaseScenario = {
       </div>
 
       <p className="text-sm leading-relaxed text-foreground/80">
-        Recommendation: Implement{' '}
-        <PlatformChip icon={<BrandStripe size={11} />} label="Stripe" /> idempotency checks and
-        prioritize billing-tagged tickets in the auto-assignment rules. The 23 affected accounts
-        should receive proactive refund notifications.
+        Recommendation: Implement <PlatformChip icon={<BrandStripe size={11} />} label="Stripe" />{' '}
+        idempotency checks and prioritize billing-tagged tickets in the auto-assignment rules. The
+        23 affected accounts should receive proactive refund notifications.
       </p>
 
       <div className="flex items-center gap-1.5 pt-1 text-sm font-medium text-foreground">
@@ -651,4 +759,8 @@ export const supportTicketScenario: ShowcaseScenario = {
   ),
 };
 
-export const scenarios: ShowcaseScenario[] = [customerScenario, subscriptionScenario, supportTicketScenario];
+export const scenarios: ShowcaseScenario[] = [
+  customerScenario,
+  subscriptionScenario,
+  supportTicketScenario,
+];

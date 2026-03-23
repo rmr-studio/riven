@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import { ArrowUp, CogIcon, Download, LayoutGrid, Search, Sparkles } from 'lucide-react';
 
-import { ShowcaseIconRail } from '@/components/feature-modules/product-showcase/ui-primitives';
+import { ShowcaseIconRail } from '@/components/ui/diagrams/brand-ui-primitives';
 
 const DASHBOARD_NAV_ICONS = [
   { icon: <LayoutGrid className="size-5" />, active: false },

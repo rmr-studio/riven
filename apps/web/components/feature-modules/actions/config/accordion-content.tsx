@@ -1,6 +1,5 @@
-import { IntegrationGraphDiagram } from '../../data-model/components/graphic/4.integrations';
-import { EntityLinkingDiagram } from '../../data-model/components/graphic/entity-linking';
-import { ChatResponseGraphic } from '../components/graphic/1.chat-response';
+import { EntityLinkingDiagram } from '../components/diagrams/entity-linking';
+import { ChatResponseGraphic } from '../components/diagrams/knowledge-chat';
 
 export interface KnowledgeLayerSectionContent {
   title: React.ReactNode;
@@ -8,13 +7,7 @@ export interface KnowledgeLayerSectionContent {
   content: React.ReactNode;
 }
 
-export const FEATURE_CONTENT: KnowledgeLayerSectionContent[] = [
-  {
-    title: <div className="">All your tools. Unified</div>,
-    description:
-      'Your data, your tools, your platform. Create a unified data ecosystem that matches how your business operates, without moving your data or changing how you work. Riven allows for custom data models, and direct connections to your existing tools. Creating a unified data layer that powers every insight, answer, and agent.',
-    content: <IntegrationGraphDiagram className="scale-80" />,
-  },
+export const ACTION_CONTENT: KnowledgeLayerSectionContent[] = [
   {
     title: <div className="">Understand your data. Ask anything.</div>,
     description:

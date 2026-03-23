@@ -17,12 +17,12 @@ import {
   BrandKlaviyo,
   BrandShopify,
   BrandStripe,
-} from '../product-showcase/brand-icons';
+} from '../../ui/diagrams/brand-icons';
 import {
   MockBreadcrumb,
   ShowcaseIconRail,
   ShowcaseSubPanel,
-} from '../product-showcase/ui-primitives';
+} from '../../ui/diagrams/brand-ui-primitives';
 
 // ── Icon Rail Config ────────────────────────────────────────────────
 

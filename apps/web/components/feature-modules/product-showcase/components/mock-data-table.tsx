@@ -2,8 +2,8 @@ import { cn } from '@/lib/utils';
 import { CogIcon, Filter, Search } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
+import { MockBreadcrumb, TableHeader } from '../../../ui/diagrams/brand-ui-primitives';
 import type { ShowcaseScenario } from '../scenario-types';
-import { MockBreadcrumb, TableHeader } from '../ui-primitives';
 
 export function MockDataTable({ scenario }: { scenario: ShowcaseScenario }) {
   return (

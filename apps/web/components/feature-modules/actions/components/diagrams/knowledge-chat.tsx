@@ -4,7 +4,8 @@ import { WindowControls } from '@/components/ui/window-controls';
 import { useContainerScale } from '@/hooks/use-container-scale';
 import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
-import { CalendarIcon, CompanyIcon, IntercomIcon, StripeIcon } from './icons';
+import {  BrandIntercom, BrandStripe } from '@/components/ui/diagrams/brand-icons'
+import {Building, Calendar} from 'lucide-react'
 
 // ── Source Chip ──────────────────────────────────────────────────────────
 
@@ -128,8 +129,8 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
                 value="3"
                 change="from 1 last quarter"
                 sources={[
-                  { icon: <CompanyIcon size={8} />, label: 'Companies' },
-                  { icon: <CalendarIcon size={8} />, label: 'Subscriptions' },
+                  { icon: <Building size={8} />, label: 'Companies' },
+                  { icon: <Calendar size={8} />, label: 'Subscriptions' },
                 ]}
                 delay={0.3}
               />
@@ -138,8 +139,8 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
                 value="$84,200"
                 change="MRR across flagged accounts"
                 sources={[
-                  { icon: <StripeIcon size={8} />, label: 'Invoices' },
-                  { icon: <CalendarIcon size={8} />, label: 'Subscriptions' },
+                  { icon: <BrandStripe size={8} />, label: 'Invoices' },
+                  { icon: <Calendar size={8} />, label: 'Subscriptions' },
                 ]}
                 delay={0.35}
               />
@@ -147,14 +148,14 @@ export const ChatResponseGraphic = ({ className }: { className?: string }) => {
                 label="Avg. Usage Drop"
                 value="-34%"
                 change="over past 60 days"
-                sources={[{ icon: <CompanyIcon size={8} />, label: 'Product Usage' }]}
+                sources={[{ icon: <Building size={8} />, label: 'Product Usage' }]}
                 delay={0.4}
               />
               <MetricCard
                 label="Open Tickets"
                 value="7"
                 change="across at-risk accounts"
-                sources={[{ icon: <IntercomIcon size={8} />, label: 'Support Tickets' }]}
+                sources={[{ icon: <BrandIntercom size={8} />, label: 'Support Tickets' }]}
                 delay={0.45}
               />
             </div>

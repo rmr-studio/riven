@@ -15,7 +15,7 @@ import {
   Users,
 } from 'lucide-react';
 
-import { ShowcaseIconRail, ShowcaseSubPanel } from '../ui-primitives';
+import { ShowcaseIconRail, ShowcaseSubPanel } from '../../../ui/diagrams/brand-ui-primitives';
 
 // Map of entity names that have scenarios (clickable in sidebar)
 const SCENARIO_ENTITIES = new Set(['Customers', 'Support Tickets', 'Subscriptions']);

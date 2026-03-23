@@ -1,8 +1,8 @@
 import { useContainerScale } from '@/hooks/use-container-scale';
 import { motion } from 'motion/react';
 
+import { FeatureTag } from '../../../ui/diagrams/brand-ui-primitives';
 import { scenarios } from '../scenario-data';
-import { FeatureTag } from '../ui-primitives';
 import { MockActivityTimeline } from './mock-activity-timeline';
 import { MockDataTable } from './mock-data-table';
 import { MockKnowledgePanel } from './mock-knowledge-panel';
@@ -48,8 +48,8 @@ export function DesktopShowcase({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="absolute inset-x-0 top-0 flex overflow-hidden rounded-xl border border-border bg-card shadow-lg"
-            style={{ height: 800 }}
+            className="absolute inset-x-0 top-0 flex overflow-hidden rounded-xl border border-border shadow-lg"
+            style={{ height: 1000 }}
           >
             <MockIconRail />
             <MockSubPanel
@@ -68,7 +68,7 @@ export function DesktopShowcase({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="absolute top-80 left-0 z-10"
+            className="absolute top-120 -left-10 z-10"
           >
             <div className="relative">
               <MockActivityTimeline scenario={scenario} />
@@ -84,7 +84,7 @@ export function DesktopShowcase({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.5 }}
-            className="absolute top-56 right-0 z-10"
+            className="absolute top-40 -right-10 z-10"
           >
             <div className="relative">
               <MockKnowledgePanel scenario={scenario} />

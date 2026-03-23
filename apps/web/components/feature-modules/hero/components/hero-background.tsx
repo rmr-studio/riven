@@ -1,7 +1,7 @@
 'use client';
 
-import { StarsBackground } from '@/components/ui/background/stars';
 import { BGPattern } from '@/components/ui/background/grids';
+import { StarsBackground } from '@/components/ui/background/stars';
 import { cdnImageLoader, getCdnUrl } from '@/lib/cdn-image-loader';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';

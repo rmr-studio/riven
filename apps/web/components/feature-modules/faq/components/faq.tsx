@@ -14,7 +14,7 @@ interface Question {
 
 const FAQ: Question[] = [
   {
-    question: 'How is this different from Notion / Airtable / HubSpot / Salesforce?',
+    question: 'How is this different from Notion, Airtable or other tool?',
     answer: `
       All of these tools are extremely great at what they do, but they each own and operate within a single domain.
       Notion and Airtables are fantastic databases but they don't have access to the data in your email or CRM. 
@@ -23,13 +23,55 @@ const FAQ: Question[] = [
       None of them see the full picture. Riven fixes this by creating one singular data ecosystem to connect your tools together seamlessly, with an AI layer that reasons across everything`,
   },
   {
+    question: 'What is a customer lifecycle intelligence platform?',
+    answer: `
+    No. Riven sits alongside, and wraps your existing stack, providing integration capabilities to connect your tools together in one platform. 
+    Riven builds context by linking your data together with meaningful relationships, surfacing patterns and insights that would be impossible to find across multiple disconnected tools.`,
+  },
+  {
     question: 'Does Riven replace my existing tools?',
     answer: `
     No. Riven sits alongside, and wraps your existing stack, providing integration capabilities to connect your tools together in one platform. 
     Riven builds context by linking your data together with meaningful relationships, surfacing patterns and insights that would be impossible to find across multiple disconnected tools.`,
   },
   {
-    question: 'What integrations do you support?',
+    question: 'Who uses Riven?',
+    answer: `
+    Riven is built for scaling consumer-facing businesses that have outgrown their current tooling. 
+    If you're constantly switching between tabs, manually cross-referencing data across tools to make decisions, and feeling like you've become the human integration layer holding it all together, Riven is the platform built for your stage. 
+    Designed for the gap between lightweight startup tools and overbuilt enterprise platforms.`,
+  },
+  {
+    question: 'How does Riven ensure AI answers are accurate?',
+    answer: `
+    Riven is built for scaling consumer-facing businesses that have outgrown their current tooling. 
+    If you're constantly switching between tabs, manually cross-referencing data across tools to make decisions, and feeling like you've become the human integration layer holding it all together, Riven is the platform built for your stage. 
+    Designed for the gap between lightweight startup tools and overbuilt enterprise platforms.`,
+  },
+  {
+    question: 'Can business users access data and patterns without knowing SQL?',
+    answer: `
+    Riven is built for scaling consumer-facing businesses that have outgrown their current tooling. 
+    If you're constantly switching between tabs, manually cross-referencing data across tools to make decisions, and feeling like you've become the human integration layer holding it all together, Riven is the platform built for your stage. 
+    Designed for the gap between lightweight startup tools and overbuilt enterprise platforms.`,
+  },
+  {
+    question: 'How is Riven different from just using N8Ns/Zapier and ChatGPT?',
+    answer: `
+    Riven is built for scaling consumer-facing businesses that have outgrown their current tooling. 
+    If you're constantly switching between tabs, manually cross-referencing data across tools to make decisions, and feeling like you've become the human integration layer holding it all together, Riven is the platform built for your stage. 
+    Designed for the gap between lightweight startup tools and overbuilt enterprise platforms.`,
+  },
+  {
+    question: 'How is Riven different than other Analytics tools?',
+    answer: `
+    Riven is built for scaling consumer-facing businesses that have outgrown their current tooling. 
+    If you're constantly switching between tabs, manually cross-referencing data across tools to make decisions, and feeling like you've become the human integration layer holding it all together, Riven is the platform built for your stage. 
+    Designed for the gap between lightweight startup tools and overbuilt enterprise platforms.`,
+  },
+
+  {
+    question: 'What integrations do you support? Do you support custom integrations?',
     answer: `
       At launch, we plan to support tooling across CRM, payments, support, communication, and marketing based domains. 
       Including tools like Stripe, HubSpot, Intercom, Gmail, Slack, and Google Ads. 
@@ -55,27 +97,20 @@ const FAQ: Question[] = [
       More involvement means earlier access, and a bigger say in what features and integrations we prioritize.
       `,
   },
-  {
-    question: 'Who is this built for?',
-    answer: `
-    Riven is built for scaling consumer-facing businesses that have outgrown their current tooling. 
-    If you're constantly switching between tabs, manually cross-referencing data across tools to make decisions, and feeling like you've become the human integration layer holding it all together, Riven is the platform built for your stage. 
-    Designed for the gap between lightweight startup tools and overbuilt enterprise platforms.`,
-  },
 ];
 
 export const Faq = () => {
   return (
     <Section id="faqs" size={24}>
-      <div className="content-container relative z-10 flex flex-col">
-        <h2 className="text-center text-4xl -tracking-[0.02em] leading-[1.1] text-heading md:text-5xl">
+      <div className="clamp relative z-10 flex flex-col">
+        <h2 className="text-center text-4xl leading-[1.1] -tracking-[0.02em] text-heading md:text-5xl">
           <span className="font-sans font-bold">Frequently Asked</span>{' '}
           <span className="font-serif font-normal italic">Questions</span>
         </h2>
-        <Accordion type="single" collapsible className="mt-10">
+        <Accordion type="single" collapsible className="mx-auto mt-10 w-full max-w-4xl px-4">
           {FAQ.map((item, i) => (
             <AccordionItem key={i} value={`item-${i}`}>
-              <AccordionTrigger className="text-base">{item.question}</AccordionTrigger>
+              <AccordionTrigger className="text-sm sm:text-base">{item.question}</AccordionTrigger>
               <AccordionContent className="text-muted-foreground">{item.answer}</AccordionContent>
             </AccordionItem>
           ))}

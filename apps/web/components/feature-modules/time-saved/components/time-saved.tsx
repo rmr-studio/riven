@@ -1,5 +1,6 @@
 'use client';
 
+import { AtmosphericOrbs } from '@/components/ui/atmospheric-orbs';
 import { Section } from '@/components/ui/section';
 import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
@@ -41,51 +42,24 @@ export function TimeSaved() {
       size={12}
       mask="none"
       gridClassName="bg-foreground"
+      className="pb-20"
     >
-      {/* Atmospheric gradient orbs */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-        <div
-          className="absolute h-[600px] w-[600px] rounded-full opacity-40 blur-[150px]"
-          style={{
-            background: 'oklch(0.22 0.09 350)',
-            top: '10%',
-            left: '15%',
-            transform: 'translate(-50%, -50%)',
-          }}
-        />
-        <div
-          className="absolute h-[500px] w-[500px] rounded-full opacity-25 blur-[130px]"
-          style={{
-            background: 'oklch(0.18 0.06 240)',
-            bottom: '15%',
-            right: '10%',
-            transform: 'translate(50%, 50%)',
-          }}
-        />
-        <div
-          className="absolute h-[350px] w-[350px] rounded-full opacity-15 blur-[100px]"
-          style={{
-            background: 'oklch(0.2 0.07 200)',
-            top: '55%',
-            left: '50%',
-          }}
-        />
-      </div>
+      <AtmosphericOrbs variant="inner" />
 
-      <div className="content-container relative z-10">
+      <div className="clamp relative z-10 px-4 sm:px-8">
         {/* Heading */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-14 text-center md:mb-20"
+          className="mb-14 md:mb-20"
         >
           <h2 className="text-4xl leading-[1.1] -tracking-[0.02em] text-secondary md:text-5xl">
             <span className="font-sans font-bold">Less stitching.</span>{' '}
             <span className="font-serif font-normal italic">More signal.</span>
           </h2>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed tracking-normal text-secondary/80 md:text-lg">
+          <p className="mt-5 max-w-2xl text-base leading-relaxed tracking-normal text-secondary/80 md:text-lg">
             Riven eliminates the manual work caused by disconnected tools. Allowing you to focus on
             what matters most, growing your business.
           </p>

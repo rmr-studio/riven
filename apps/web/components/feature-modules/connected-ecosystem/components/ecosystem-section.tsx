@@ -1,13 +1,17 @@
 import { Section } from '@/components/ui/section';
 import { SectionDivider } from '@/components/ui/section-divider';
-import { ProductShowcaseGraphic } from '../../product-showcase/components/product-showcase';
 
 export function ConnectedEcosystem() {
   return (
     <Section id="connected-ecosystem" size={24}>
-      <div className="content-container">
+      <div className="clamp">
         <div className="space-y-10 md:space-y-14">
-          <SectionDivider name="One Connected Ecosystem. One Connected Business. " />
+          <SectionDivider>
+            <div className="flex gap-1">
+              <div className="hidden sm:block">One Connected Ecosystem. </div>
+              <div>One Connected Business.</div>
+            </div>
+          </SectionDivider>
 
           <div className="mx-w-4xl mx-auto text-center xl:max-w-6xl">
             <h2 className="text-3xl leading-[1.2] -tracking-[0.02em] text-primary md:text-4xl lg:text-5xl">
@@ -24,9 +28,7 @@ export function ConnectedEcosystem() {
           </div>
         </div>
 
-        <div className="mt-10 md:mt-14">
-          <ProductShowcaseGraphic />
-        </div>
+        <div className="mt-10 md:mt-14"></div>
       </div>
     </Section>
   );

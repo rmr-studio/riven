@@ -16,7 +16,7 @@ export const ChurnShowcase = () => {
   return (
     <div
       ref={containerRef}
-      className="relative w-full translate-x-12 scale-120 px-0 md:translate-x-0 md:scale-100 md:px-12"
+      className="relative w-full translate-x-24 translate-y-8 scale-150 px-0 sm:translate-x-12 sm:scale-130 md:px-12 lg:translate-x-0 lg:translate-y-0 lg:scale-100"
     >
       <div
         className="origin-top-left"

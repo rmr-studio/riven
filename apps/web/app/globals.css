@@ -365,18 +365,9 @@ html {
   display: none;
 }
 
-.content-container {
-  @apply mx-auto w-full px-2 md:px-4 lg:px-0;
 
-  @media (width >= theme(--breakpoint-lg)) {
-    max-width: min(92dvw, var(--breakpoint-3xl));
-  }
-}
-
-.content-nav {
-  @media (width >= theme(--breakpoint-lg)) {
-    max-width: min(92dvw, var(--breakpoint-3xl));
-  }
+.clamp {
+  @apply lg:max-w-[min(95dvw,var(--breakpoint-3xl))];
 }
 
 nav[data-navbar] {

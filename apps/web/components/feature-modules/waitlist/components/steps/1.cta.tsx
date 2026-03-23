@@ -4,13 +4,14 @@ import { ArrowRight } from 'lucide-react';
 export function CtaStep({ onStart }: { onStart: () => void }) {
   return (
     <div className="py-16 text-center md:py-24">
-      <h2 className="text-4xl -tracking-[0.02em] leading-[1.1] text-heading md:text-5xl">
-        <span className="font-sans font-bold">It's time to</span>{' '}
-        <span className="font-serif font-normal italic">take control of your business</span>
+      <h2 className="text-4xl leading-[1.1] -tracking-[0.02em] text-heading md:text-5xl">
+        <span className="font-sans font-bold">Know more,</span>{' '}
+        <span className="font-serif font-normal italic">Do More,</span>{' '}
+        <span className="font-sans font-bold">Earn more</span>{' '}
       </h2>
-      <div className="mx-auto mt-5 flex max-w-3xl flex-col space-y-6 text-lg leading-relaxed text-muted-foreground">
+      <div className="mx-auto mt-5 flex max-w-3xl flex-col space-y-6 leading-tight tracking-tight text-muted-foreground sm:text-lg">
         <p>
-          Join the Waitlist, receive updates and secure your spot as a founding team and help shape
+          Join the waitlist, receive updates and secure your spot as a founding team and help shape
           the platform before it launches. Join the waitlist and lock in early-access pricing, with
           up to 50% off your first year when Riven goes live.{' '}
           <span className="font-bold">Takes under 2 minutes.</span>

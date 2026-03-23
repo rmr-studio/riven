@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 
+import { MockBreadcrumb } from '../../../ui/diagrams/brand-ui-primitives';
 import type { ShowcaseScenario } from '../scenario-types';
-import { MockBreadcrumb } from '../ui-primitives';
 
 export function MockActivityTimeline({ scenario }: { scenario: ShowcaseScenario }) {
   return (

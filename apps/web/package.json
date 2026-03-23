@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@paper-design/shaders-react": "^0.0.72",
     "@radix-ui/react-accordion": "^1.2.12",
     "@react-email/components": "^1.0.8",
     "@riven/hooks": "workspace:*",

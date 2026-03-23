@@ -1,15 +1,15 @@
 import { useContainerScale } from '@/hooks/use-container-scale';
 import { motion } from 'motion/react';
 
+import { FeatureTag } from '../../../ui/diagrams/brand-ui-primitives';
 import { scenarios } from '../scenario-data';
-import { FeatureTag } from '../ui-primitives';
 import { MockActivityTimeline } from './mock-activity-timeline';
 import { MockDataTable } from './mock-data-table';
 import { MockKnowledgePanel } from './mock-knowledge-panel';
 import { MockIconRail, MockSubPanel } from './mock-shell';
 
 const MOBILE_WIDTH = 1100;
-const MOBILE_CONTENT_HEIGHT = 1500;
+const MOBILE_CONTENT_HEIGHT = 1800;
 
 export function MobileShowcase({
   activeScenario,
@@ -49,8 +49,8 @@ export function MobileShowcase({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="absolute inset-x-0 top-0 flex overflow-hidden rounded-xl border border-border bg-card shadow-lg"
-            style={{ height: 620 }}
+            className="absolute inset-x-0 top-0 flex overflow-hidden rounded-xl shadow-lg"
+            style={{ height: 820 }}
           >
             <MockIconRail />
             <MockSubPanel
@@ -69,8 +69,7 @@ export function MobileShowcase({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="absolute right-0 z-10"
-            style={{ top: 380 }}
+            className="absolute top-80 right-20 z-10"
           >
             <div className="relative">
               <MockKnowledgePanel scenario={scenario} />
@@ -81,7 +80,7 @@ export function MobileShowcase({
           </motion.div>
 
           {/* Activity Timeline — bottom left, overlapping */}
-          <motion.div className="absolute left-0 z-20" style={{ top: 600 }}>
+          <motion.div className="absolute right-20 bottom-40 z-20">
             <div className="relative">
               <MockActivityTimeline scenario={scenario} />
               <div className="absolute right-4 -bottom-4">

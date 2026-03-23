@@ -72,14 +72,21 @@ export function Navbar() {
 
   return (
     <header className="fixed top-0 right-0 left-0 z-50">
+      <nav
+        data-navbar=""
+        {...(isInverted ? { 'data-inverted': '' } : {})}
+        className="mx-auto h-2 w-full bg-background md:h-4"
+      >
+        <div className="clamp w-inherit mx-auto flex h-full grow border-x" />
+      </nav>
       {/* Full-width navbar bar with top + bottom borders spanning the entire viewport */}
       <nav
         data-navbar=""
         {...(isInverted ? { 'data-inverted': '' } : {})}
-        className={`paper flex h-12 w-full items-center justify-between border-y transition-colors md:h-14 ${isInverted ? 'bg-background' : 'bg-background'}`}
+        className={`paper-lite flex h-12 w-full items-center justify-between border-y bg-background shadow-lg transition-colors md:h-14`}
       >
         {/* Inner content clamped to panel width */}
-        <div className="content-nav mx-auto flex h-full w-full items-center justify-between">
+        <div className="clamp mx-auto flex h-full w-full items-center justify-between border-x">
           {/* Left: Logo + Nav Links */}
           <div className="flex items-center">
             <Link href="/" className="flex shrink-0 gap-1 px-3 md:px-4">
@@ -153,8 +160,6 @@ export function Navbar() {
             </Button>
           </div>
         </div>
-
-      
       </nav>
 
       <MobileNavbar links={NAV_LINKS} open={mobileMenuOpen} setOpen={setMobileMenuOpen} />
