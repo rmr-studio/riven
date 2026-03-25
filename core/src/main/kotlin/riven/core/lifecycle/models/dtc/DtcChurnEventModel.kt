@@ -31,6 +31,7 @@ object DtcChurnEventModel : CoreModelDefinition(
     attributes = ChurnEventBase.attributes + mapOf(
         "reason" to CoreModelAttribute(
             schemaType = SchemaType.SELECT, label = "Reason", dataType = DataType.STRING,
+            required = true,
             options = AttributeOptions(enum = listOf("price", "competitor", "no-longer-needed", "poor-experience", "product-quality", "shipping-issues", "sizing-issues", "unknown")),
             semantics = AttributeSemantics(
                 definition = "The stated or inferred reason for the customer stopping purchases.",

@@ -29,6 +29,7 @@ object SubscriptionModel : CoreModelDefinition(
     attributes = mapOf(
         "plan-name" to CoreModelAttribute(
             schemaType = SchemaType.TEXT, label = "Plan", dataType = DataType.STRING,
+            required = true,
             semantics = AttributeSemantics(
                 definition = "Name of the subscription plan.",
                 classification = SemanticAttributeClassification.IDENTIFIER,

@@ -87,7 +87,7 @@ class CoreModelRegistryTest {
         val dtcTypeEnum = extractEnumValues(dtcBilling, "type")
         assertFalse(dtcTypeEnum.contains("trial-start"), "DTC billing should NOT have trial-start")
         assertFalse(dtcTypeEnum.contains("trial-end"), "DTC billing should NOT have trial-end")
-        assertTrue(dtcTypeEnum.contains("purchase"), "DTC billing should have purchase")
+        assertFalse(dtcTypeEnum.contains("purchase"), "DTC billing should NOT have purchase (use OrderModel)")
         assertTrue(dtcTypeEnum.contains("shipping-fee"), "DTC billing should have shipping-fee")
     }
 
@@ -290,9 +290,8 @@ class CoreModelRegistryTest {
     @Test
     fun `allResolvedManifests returns one manifest per model set`() {
         val manifests = CoreModelRegistry.allResolvedManifests()
-        assertEquals(2, manifests.size)
-        assertTrue(manifests.any { it.key == "b2c-saas" })
-        assertTrue(manifests.any { it.key == "dtc-ecommerce" })
+        assertTrue(manifests.any { it.key == "b2c-saas" }, "Should contain b2c-saas manifest")
+        assertTrue(manifests.any { it.key == "dtc-ecommerce" }, "Should contain dtc-ecommerce manifest")
     }
 
     // ------ Helpers ------

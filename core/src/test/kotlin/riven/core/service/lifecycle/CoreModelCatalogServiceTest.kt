@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.models.catalog.ResolvedManifest
+import riven.core.service.catalog.ManifestCatalogHealthIndicator
 import riven.core.service.catalog.ManifestUpsertService
 
 @SpringBootTest(classes = [CoreModelCatalogService::class])
@@ -15,6 +16,9 @@ class CoreModelCatalogServiceTest {
 
     @MockitoBean
     private lateinit var upsertService: ManifestUpsertService
+
+    @MockitoBean
+    private lateinit var healthIndicator: ManifestCatalogHealthIndicator
 
     @MockitoBean
     private lateinit var logger: KLogger
@@ -52,5 +56,41 @@ class CoreModelCatalogServiceTest {
         verify(upsertService).upsertManifest(argThat<ResolvedManifest> {
             key == "dtc-ecommerce" && entityTypes.any { it.key == "order" }
         })
+    }
+
+    // ------ Error Resilience Tests ------
+
+    @Test
+    fun `upsert failure for one model set does not crash and sets health indicator to FAILED`() {
+        whenever(upsertService.upsertManifest(any()))
+            .thenThrow(RuntimeException("simulated failure"))
+            .thenAnswer { } // second call succeeds
+
+        service.onApplicationReady()
+
+        verify(upsertService, times(2)).upsertManifest(any())
+        verify(healthIndicator).loadState = ManifestCatalogHealthIndicator.LoadState.FAILED
+        verify(healthIndicator).lastError = argThat<String> { contains("1/2") }
+    }
+
+    @Test
+    fun `upsert failure for all model sets sets health indicator to FAILED`() {
+        whenever(upsertService.upsertManifest(any()))
+            .thenThrow(RuntimeException("simulated failure"))
+
+        service.onApplicationReady()
+
+        verify(upsertService, times(2)).upsertManifest(any())
+        verify(healthIndicator).loadState = ManifestCatalogHealthIndicator.LoadState.FAILED
+        verify(healthIndicator).lastError = argThat<String> { contains("2/2") }
+    }
+
+    @Test
+    fun `successful load does not set health indicator to FAILED`() {
+        service.onApplicationReady()
+
+        verify(upsertService, times(2)).upsertManifest(any())
+        verify(healthIndicator, never()).loadState = ManifestCatalogHealthIndicator.LoadState.FAILED
+        verify(healthIndicator, never()).lastError = any()
     }
 }

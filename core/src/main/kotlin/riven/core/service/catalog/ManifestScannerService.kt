@@ -101,7 +101,8 @@ class ManifestScannerService(
     private fun safeGetResources(pattern: String): Array<Resource> {
         return try {
             resourcePatternResolver.getResources(pattern) ?: emptyArray()
-        } catch (_: java.io.FileNotFoundException) {
+        } catch (e: java.io.FileNotFoundException) {
+            logger.warn(e) { "Manifest directory not found for pattern: $pattern" }
             emptyArray()
         }
     }

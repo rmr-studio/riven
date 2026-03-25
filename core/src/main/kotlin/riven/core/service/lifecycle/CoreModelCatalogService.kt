@@ -5,6 +5,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Service
 import riven.core.lifecycle.CoreModelRegistry
+import riven.core.service.catalog.ManifestCatalogHealthIndicator
 import riven.core.service.catalog.ManifestUpsertService
 
 /**
@@ -15,29 +16,48 @@ import riven.core.service.catalog.ManifestUpsertService
  * ManifestUpsertService which is idempotent — content hash matching prevents duplicate
  * work regardless of execution order.
  *
- * Flow:
- *   1. CoreModelRegistry self-validates on first access (fail fast on broken definitions)
- *   2. For each model set: convert to ResolvedManifest → upsert to catalog
- *   3. Log summary
- *
- * ManifestUpsertService handles idempotency — re-running on the same definitions
- * with matching content hash skips child reconciliation.
+ * Error handling: individual model set failures are logged and skipped. The health indicator
+ * reflects partial failures. A model set that fails transiently will succeed on next restart
+ * due to content hash idempotency. Deterministic failures (malformed definitions) require a
+ * code fix but do not crash the application.
  */
 @Service
 class CoreModelCatalogService(
     private val upsertService: ManifestUpsertService,
+    private val healthIndicator: ManifestCatalogHealthIndicator,
     private val logger: KLogger,
 ) {
 
     @EventListener(ApplicationReadyEvent::class)
     fun onApplicationReady() {
-        val manifests = CoreModelRegistry.allResolvedManifests()
-        for (manifest in manifests) {
-            upsertService.upsertManifest(manifest)
-            logger.info { "Core model set '${manifest.key}' loaded: ${manifest.entityTypes.size} entity types, ${manifest.relationships.size} relationships" }
-        }
+        try {
+            val manifests = CoreModelRegistry.allResolvedManifests()
+            var loaded = 0
+            var failed = 0
 
-        val totalEntityTypes = manifests.sumOf { it.entityTypes.size }
-        logger.info { "Core model catalog populated: ${manifests.size} model sets, $totalEntityTypes total entity types" }
+            for (manifest in manifests) {
+                try {
+                    upsertService.upsertManifest(manifest)
+                    loaded++
+                    logger.info { "Core model set '${manifest.key}' loaded: ${manifest.entityTypes.size} entity types, ${manifest.relationships.size} relationships" }
+                } catch (e: Exception) {
+                    failed++
+                    logger.error(e) { "Failed to load core model set '${manifest.key}'" }
+                }
+            }
+
+            if (failed > 0) {
+                healthIndicator.loadState = ManifestCatalogHealthIndicator.LoadState.FAILED
+                healthIndicator.lastError = "$failed/${manifests.size} core model sets failed to load"
+                logger.error { "Core model catalog partially loaded: $loaded succeeded, $failed failed" }
+            } else {
+                val totalEntityTypes = manifests.sumOf { it.entityTypes.size }
+                logger.info { "Core model catalog populated: ${manifests.size} model sets, $totalEntityTypes total entity types" }
+            }
+        } catch (e: Exception) {
+            healthIndicator.loadState = ManifestCatalogHealthIndicator.LoadState.FAILED
+            healthIndicator.lastError = "Core model registry validation failed: ${e.message}"
+            logger.error(e) { "Core model registry validation failed — no core models loaded" }
+        }
     }
 }

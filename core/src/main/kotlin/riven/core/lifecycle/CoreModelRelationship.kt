@@ -15,7 +15,7 @@ data class CoreModelRelationship(
     val sourceModelKey: String,
     val targetModelKey: String,
     val cardinality: EntityRelationshipCardinality = EntityRelationshipCardinality.ONE_TO_MANY,
-    val inverseName: String = "",
+    val inverseName: String? = null,
     val semantics: RelationshipSemantics? = null,
 ) {
     /** Converts to the pipeline's NormalizedRelationship format. */
@@ -29,7 +29,7 @@ data class CoreModelRelationship(
             NormalizedTargetRule(
                 targetEntityTypeKey = targetModelKey,
                 cardinalityOverride = cardinality,
-                inverseName = inverseName,
+                inverseName = inverseName?.takeIf { it.isNotEmpty() },
             )
         ),
         semantics = semantics?.let { s ->

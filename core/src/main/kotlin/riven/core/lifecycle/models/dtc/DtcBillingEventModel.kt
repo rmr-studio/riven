@@ -31,7 +31,7 @@ object DtcBillingEventModel : CoreModelDefinition(
     attributes = BillingEventBase.attributes + mapOf(
         "type" to CoreModelAttribute(
             schemaType = SchemaType.SELECT, label = "Type", dataType = DataType.STRING,
-            options = AttributeOptions(enum = listOf("charge", "refund", "credit", "adjustment", "purchase", "shipping-fee")),
+            options = AttributeOptions(enum = listOf("charge", "refund", "credit", "adjustment", "shipping-fee")),
             semantics = AttributeSemantics(
                 definition = "The type of billing event in the ecommerce transaction flow.",
                 classification = SemanticAttributeClassification.CATEGORICAL,

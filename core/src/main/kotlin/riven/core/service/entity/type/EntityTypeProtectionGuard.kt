@@ -2,7 +2,6 @@ package riven.core.service.entity.type
 
 import org.springframework.stereotype.Component
 import riven.core.entity.entity.EntityTypeEntity
-import riven.core.models.entity.EntityTypeSchema
 import java.util.*
 
 /**

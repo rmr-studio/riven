@@ -29,7 +29,7 @@ object OrderModel : CoreModelDefinition(
     attributes = mapOf(
         "order-number" to CoreModelAttribute(
             schemaType = SchemaType.TEXT, label = "Order Number", dataType = DataType.STRING,
-            unique = true,
+            required = true, unique = true,
             semantics = AttributeSemantics(
                 definition = "Unique order identifier from the e-commerce platform.",
                 classification = SemanticAttributeClassification.IDENTIFIER,

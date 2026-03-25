@@ -29,6 +29,7 @@ object ProductModel : CoreModelDefinition(
     attributes = mapOf(
         "name" to CoreModelAttribute(
             schemaType = SchemaType.TEXT, label = "Name", dataType = DataType.STRING,
+            required = true,
             semantics = AttributeSemantics(
                 definition = "Product name as displayed to customers.",
                 classification = SemanticAttributeClassification.IDENTIFIER,

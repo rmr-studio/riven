@@ -1,6 +1,7 @@
 package riven.core.service.catalog
 
 import io.github.oshai.kotlinlogging.KLogger
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.entity.EntityTypeEntity
@@ -64,10 +65,12 @@ class TemplateInstallationService(
      * (non-deletable), core attributes are marked Schema.protected=true (immutable), and
      * sourceType is set to TEMPLATE.
      *
-     * Called during workspace onboarding — always installs, never optional.
+     * Called during workspace onboarding, or via the recovery endpoint if onboarding
+     * installation failed. Idempotent — returns early if already installed.
      */
     @Transactional
-    internal fun installTemplate(workspaceId: UUID, spineKey: String): TemplateInstallationResponse {
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun installTemplate(workspaceId: UUID, spineKey: String): TemplateInstallationResponse {
         val userId = authTokenService.getUserId()
 
         val existingInstallation = installationRepository.findByWorkspaceIdAndManifestKey(workspaceId, spineKey)

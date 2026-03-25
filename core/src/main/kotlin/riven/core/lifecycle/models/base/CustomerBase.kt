@@ -54,15 +54,6 @@ object CustomerBase {
                 tags = listOf("lifecycle", "segmentation", "health"),
             ),
         ),
-        "source" to CoreModelAttribute(
-            schemaType = SchemaType.SELECT, label = "Source", dataType = DataType.STRING,
-            options = AttributeOptions(enum = listOf("organic", "referral", "paid", "partner")),
-            semantics = AttributeSemantics(
-                definition = "The acquisition channel through which the customer was first obtained, used for attribution and marketing analysis.",
-                classification = SemanticAttributeClassification.CATEGORICAL,
-                tags = listOf("acquisition", "attribution", "marketing"),
-            ),
-        ),
         "created-date" to CoreModelAttribute(
             schemaType = SchemaType.DATE, label = "Created Date", dataType = DataType.STRING,
             format = "date",

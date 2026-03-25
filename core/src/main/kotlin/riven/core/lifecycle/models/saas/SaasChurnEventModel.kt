@@ -31,6 +31,7 @@ object SaasChurnEventModel : CoreModelDefinition(
     attributes = ChurnEventBase.attributes + mapOf(
         "reason" to CoreModelAttribute(
             schemaType = SchemaType.SELECT, label = "Reason", dataType = DataType.STRING,
+            required = true,
             options = AttributeOptions(enum = listOf("price", "competitor", "no-longer-needed", "poor-experience", "missing-feature", "onboarding-failure", "product-issue", "unknown")),
             semantics = AttributeSemantics(
                 definition = "The stated or inferred reason for churning from the SaaS product.",
