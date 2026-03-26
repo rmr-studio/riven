@@ -1,42 +1,43 @@
-import { Hero } from '@/components/feature-modules/hero/components/hero';
+import { FeaturedPosts } from '@/components/feature-modules/blogs/components/featured-posts';
+import { DailyActions } from '@/components/feature-modules/landing/actions/components/daily-actions';
+import { ChurnRetrospective } from '@/components/feature-modules/landing/churn-retrospective/churn-retro';
+import { DashboardShowcase } from '@/components/feature-modules/landing/hero/components/dashboard/dashboard-showcase';
+import { Hero } from '@/components/feature-modules/landing/hero/components/hero';
+import { getAllPosts, getFeaturedPost } from '@/lib/blog';
 import dynamic from 'next/dynamic';
 
-const FeaturesOverview = dynamic(() =>
-  import('@/components/feature-modules/features/components/feature-overview').then(
-    (m) => m.FeaturesOverview,
-  ),
-);
 const CrossDomainIntelligence = dynamic(() =>
-  import('@/components/feature-modules/cross-domain-intelligence/cross-domain-section').then(
+  import('@/components/feature-modules/landing/cross-domain-intelligence/cross-domain-section').then(
     (m) => m.CrossDomainIntelligence,
   ),
 );
 const TimeSaved = dynamic(() =>
-  import('@/components/feature-modules/time-saved/components/time-saved').then(
+  import('@/components/feature-modules/landing/time-saved/components/time-saved').then(
     (m) => m.TimeSaved,
   ),
 );
 const Faq = dynamic(() =>
-  import('@/components/feature-modules/faq/components/faq').then((m) => m.Faq),
+  import('@/components/feature-modules/landing/faq/components/faq').then((m) => m.Faq),
 );
-const OpenSource = dynamic(() =>
-  import('@/components/feature-modules/open-source/components/open-source').then(
-    (m) => m.OpenSource,
-  ),
-);
+
 const Waitlist = dynamic(() =>
   import('@/components/feature-modules/waitlist/components/waitlist').then((m) => m.Waitlist),
 );
 
-export default function Home() {
+export default async function Home() {
+  const [featured, posts] = await Promise.all([getFeaturedPost(), getAllPosts()]);
+  const recent = posts.filter((p) => p.slug !== featured?.slug).slice(0, 3);
+
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen overflow-x-clip">
       <Hero />
-      <FeaturesOverview />
+      <DashboardShowcase />
       <CrossDomainIntelligence />
       <TimeSaved />
-      <Faq />
-      <OpenSource />
+      <ChurnRetrospective />
+      <DailyActions />
+      <FeaturedPosts featured={featured} recent={recent} />
+      <Faq preview />
       <Waitlist />
     </main>
   );
