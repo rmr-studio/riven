@@ -1,6 +1,6 @@
 package riven.core.util
 
-import java.util.UUID
+import java.util.*
 
 object AvatarUrlResolver {
 
