@@ -11,7 +11,7 @@ import Link from 'next/link';
 const blurIn = (delay: number) => ({
   initial: { opacity: 0, filter: 'blur(8px)' },
   animate: { opacity: 1, filter: 'blur(0px)' },
-  transition: { duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] },
+  transition: { duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] as const },
 });
 
 export const HeroCopy = () => {
