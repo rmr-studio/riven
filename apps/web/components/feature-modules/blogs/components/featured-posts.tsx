@@ -22,7 +22,7 @@ export function FeaturedPosts({ featured, recent }: FeaturedPostsProps) {
       <div className="grid gap-8 lg:grid-cols-5">
         {/* Featured post — large with cover image */}
         <Link href={`/resources/blog/${featured.slug}`} className="group lg:col-span-3">
-          <article className="overflow-hidden rounded-lg border border-border transition-colors hover:border-muted-foreground/30">
+          <article className="overflow-hidden rounded-sm border border-foreground/30 bg-card/20 shadow-lg transition-colors hover:border-muted-foreground/30">
             {featured.coverImage && (
               <div className="aspect-video overflow-hidden">
                 <Image
@@ -53,7 +53,7 @@ export function FeaturedPosts({ featured, recent }: FeaturedPostsProps) {
         <div className="flex flex-col gap-6 lg:col-span-2">
           {recent.map((post) => (
             <Link key={post.slug} href={`/resources/blog/${post.slug}`} className="group block">
-              <article className="rounded-lg border border-border p-5 transition-colors hover:border-muted-foreground/30">
+              <article className="rounded-sm border border-foreground/10 bg-card/20 p-5 shadow transition-colors hover:border-muted-foreground/30">
                 <span className="font-mono text-xs font-bold tracking-widest text-muted-foreground uppercase">
                   {CATEGORY_LABELS[post.category]}
                 </span>
@@ -72,7 +72,7 @@ export function FeaturedPosts({ featured, recent }: FeaturedPostsProps) {
         </div>
       </div>
 
-      <div className="mt-8 text-center">
+      <div className="mt-8 text-center lg:text-right">
         <Link
           href="/resources/blog"
           className="font-mono text-sm tracking-widest text-muted-foreground uppercase transition-colors hover:text-foreground"

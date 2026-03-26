@@ -57,9 +57,10 @@ export function useWaitlistUpdateMutation() {
       const { error } = await createClient()
         .from("waitlist_submissions")
         .update({
-          operational_headache: data.operationalHeadache || null,
+          business_overview: data.businessOverview || null,
+          pain_points: data.painPoints,
+          pain_points_other: data.painPointsOther || null,
           integrations: data.integrations,
-          monthly_price: data.monthlyPrice,
           involvement: data.involvement,
         })
         .eq("email", data.email);

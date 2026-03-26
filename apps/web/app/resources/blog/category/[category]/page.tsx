@@ -1,5 +1,5 @@
 import { BlogFeed } from '@/components/feature-modules/blogs/components/blog-feed';
-import { CategoryFeatured } from '@/components/feature-modules/blogs/components/category-featured';
+import { BlogHeroHeader } from '@/components/feature-modules/blogs/components/blog-hero-header';
 import { CategoryPills } from '@/components/feature-modules/blogs/components/category-pills';
 import { getCategories, getPostsByCategory } from '@/lib/blog';
 import { CATEGORY_LABELS, type BlogCategory } from '@/lib/blog-types';
@@ -39,8 +39,16 @@ export default async function CategoryPage({ params }: Props) {
   const latest = posts[0];
 
   return (
-    <main className="mt-18 min-h-screen overflow-x-clip">
-      <CategoryFeatured post={latest} categoryLabel={CATEGORY_LABELS[category as BlogCategory]} />
+    <main className="min-h-screen overflow-x-clip">
+      <BlogHeroHeader
+        post={latest}
+        variant="category"
+        topSlot={
+          <h1 className="mb-14 font-mono text-xs font-bold tracking-widest uppercase">
+            {CATEGORY_LABELS[category as BlogCategory]}
+          </h1>
+        }
+      />
 
       <div className="mx-auto max-w-5xl px-6 pt-12 pb-20 lg:px-8">
         <CategoryPills categories={categories} />

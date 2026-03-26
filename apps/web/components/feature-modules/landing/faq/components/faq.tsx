@@ -15,88 +15,84 @@ interface Question {
 
 const FAQ: Question[] = [
   {
-    question: 'How is this different from Notion, Airtable or other tool?',
-    answer: `
-      All of these tools are extremely great at what they do, but they each own and operate within a single domain.
-      Notion and Airtables are fantastic databases but they don't have access to the data in your email or CRM. 
-      Stripe knows about your payments, but not your customer conversations.
-      Intercom knows your support history, but doesn't know where each customer came from. 
-      None of them see the full picture. Riven fixes this by creating one singular data ecosystem to connect your tools together seamlessly, with an AI layer that reasons across everything`,
-  },
-  {
     question: 'What is a customer lifecycle intelligence platform?',
-    answer: `
-    No. Riven sits alongside, and wraps your existing stack, providing integration capabilities to connect your tools together in one platform. 
-    Riven builds context by linking your data together with meaningful relationships, surfacing patterns and insights that would be impossible to find across multiple disconnected tools.`,
+    answer: `From marketing, to sales, to product usage, to support, and to the moment your customer picks ups their stuff and leaves. Each of these tools sees will only even see it's own slice. Stripe sees payments, Intercom sees tickets, Google Ads sees clicks. Nobody sees the whole customer.
+    A customer lifecycle intelligence platform connects all of them so you can follow someone from the ad they clicked
+    to the subscription they cancelled. Riven does that, and gives your team a workspace to do something about what it finds.`,
   },
   {
     question: 'Does Riven replace my existing tools?',
     answer: `
-    No. Riven sits alongside, and wraps your existing stack, providing integration capabilities to connect your tools together in one platform. 
-    Riven builds context by linking your data together with meaningful relationships, surfacing patterns and insights that would be impossible to find across multiple disconnected tools.`,
+    No. Riven wraps around the tools you already use. It connects them and links the data between them
+    so you can see relationships and patterns that are impossible to spot when everything lives in separate tabs.`,
+  },
+  {
+    question: 'How is this different from Notion, Airtable or other tool?',
+    answer: `
+      Notion and Airtable are great databases, but they can only see what you put into them.
+      Stripe knows your payments but not your customer conversations.
+      Intercom knows your support history but has no idea where each customer came from.
+      They're all good at their own thing. None of them see the full picture.
+      Riven connects them into one shared data layer with an AI that can reason across all of it at once.`,
   },
   {
     question: 'Who uses Riven?',
     answer: `
-    Riven is built for scaling consumer-facing businesses that have outgrown their current tooling. 
-    If you're constantly switching between tabs, manually cross-referencing data across tools to make decisions, and feeling like you've become the human integration layer holding it all together, Riven is the platform built for your stage. 
-    Designed for the gap between lightweight startup tools and overbuilt enterprise platforms.`,
+    B2C SaaS and DTC e-commerce teams that don't have a data person. Maybe you're the founder who is also somehow the entire analytics department.
+    Maybe you're the head of ops who spends half the week pulling reports instead of acting on them.
+    You've outgrown your starter tools but you're nowhere near a six-figure Looker contract.
+    You just need to know what's going on without it becoming your whole day.`,
   },
   {
     question: 'How does Riven ensure AI answers are accurate?',
     answer: `
-    Riven is built for scaling consumer-facing businesses that have outgrown their current tooling. 
-    If you're constantly switching between tabs, manually cross-referencing data across tools to make decisions, and feeling like you've become the human integration layer holding it all together, Riven is the platform built for your stage. 
-    Designed for the gap between lightweight startup tools and overbuilt enterprise platforms.`,
+    The AI only works with your actual connected data. It's not guessing from training data.
+    Every answer links back to the source records so you can check what it's referencing.
+    You can also set your own rules and thresholds for alerts, so automated flags are based on numbers you defined, not some black box.`,
+  },
+  {
+    question: 'What happens when I join the waitlist?',
+    answer: `
+      We'll ask a few questions about your tool stack and what's giving you headaches.
+      After that you'll get periodic updates as we build, and you'll be first in line for early access.
+      If you opt into early testing, you can try the platform before launch and have a direct say in what ships first.
+      Waitlist members also lock in early-access pricing, up to 50% off their first year.
+      Want to go deeper? We're happy to talk through your use case directly. More involvement means earlier access.`,
   },
   {
     question: 'Can business users access data and patterns without knowing SQL?',
     answer: `
-    Riven is built for scaling consumer-facing businesses that have outgrown their current tooling. 
-    If you're constantly switching between tabs, manually cross-referencing data across tools to make decisions, and feeling like you've become the human integration layer holding it all together, Riven is the platform built for your stage. 
-    Designed for the gap between lightweight startup tools and overbuilt enterprise platforms.`,
+    Yes. Anyone on your team can ask questions in plain English like "Which customers from our March campaign have an open support ticket?"
+    and get an actual list back. No SQL, no exports. There are also visual filters, saved views, and tagging for people who prefer to click around.`,
   },
   {
-    question: 'How is Riven different from just using N8Ns/Zapier and ChatGPT?',
+    question: 'How is Riven different from just using N8N/Zapier and ChatGPT?',
     answer: `
-    Riven is built for scaling consumer-facing businesses that have outgrown their current tooling. 
-    If you're constantly switching between tabs, manually cross-referencing data across tools to make decisions, and feeling like you've become the human integration layer holding it all together, Riven is the platform built for your stage. 
-    Designed for the gap between lightweight startup tools and overbuilt enterprise platforms.`,
+    Automation tools like N8N and Zapier are powerful for collecting current data from many different tools, feeding into an AI model like ChatGPT in order to produce extremely valuable answers. 
+    But it falls short in a few key ways. One of the main differentiators of Riven is its focus of continuous contextual compounding. Our platform get's smarter over time as it builds a shared data model across all of your tools, and continues to build its knowledge base with patterns that arise from trends and changes between current and historic data.
+    We don't just see what's happening right now, we see it in the context of what happened before, and what it means for what happens next. It's a system that learns and evolves with your business, not just a snapshot of the moment you ask.`,
   },
   {
-    question: 'How is Riven different than other Analytics tools?',
+    question: 'How is Riven different from other analytics tools?',
     answer: `
-    Riven is built for scaling consumer-facing businesses that have outgrown their current tooling. 
-    If you're constantly switching between tabs, manually cross-referencing data across tools to make decisions, and feeling like you've become the human integration layer holding it all together, Riven is the platform built for your stage. 
-    Designed for the gap between lightweight startup tools and overbuilt enterprise platforms.`,
+    Most analytics tools show you charts about what happened. Many data sources. One flat dashboard.
+    Riven connects all of your tools and lets you go further: tag accounts, set rules, push segments to other platforms, and track what happens next.
+    It's a place your team works from, not just looks at.`,
   },
 
   {
     question: 'What integrations do you support? Do you support custom integrations?',
     answer: `
-      At launch, we plan to support tooling across CRM, payments, support, communication, and marketing based domains. 
-      Including tools like Stripe, HubSpot, Intercom, Gmail, Slack, and Google Ads. 
-      We are prioritizing integrations based directly on waitlist feedback to ensure that teams can immediately get access to the tools they care about.
-      So if your most important tool isn't listed, let us know in the form. We also plan to support webhooks and a REST API for custom data sources, with more support, and options coming post-launch.`,
+      At launch we're covering CRM, payments, support, comms, and marketing. Think Stripe, HubSpot, Intercom, Gmail, Slack, Google Ads.
+      We're picking which to build first based on what the waitlist tells us, so if your most important tool isn't on the list, mention it in the form.
+      We'll also support webhooks and a REST API for custom data sources after launch.`,
   },
   {
     question: 'Is my data secure?',
     answer: `
-    Your data is encrypted at rest and in transit, and we will never use your data to train AI models. 
-    Riven is open source, so you can inspect the system to see exactly how your data is handled. 
-    For teams that need full control, self-hosting is available so your data never leaves your own infrastructure. We're working toward SOC 2 compliance ahead of launch.`,
-  },
-  {
-    question: 'What happens when I join the waitlist?',
-    answer: `
-      You will be asked a few questions that will help us better understand your issues, tool stack and priorities. 
-      Once you're on the list, you'll receive periodic updates as we build and will be one of the first to secure early access when we launch. 
-      Founding cohort members who opted into early testing will be invited to try the platform before it goes live. 
-      Allowing you to directly shape the app, and what ships first. 
-      Waitlist members will also lock in early-access pricing, with generous discounts up to 50% off their first year.
-      We are also offering direct communication with anyone who wants to go deeper on their use case and help shape the product. 
-      More involvement means earlier access, and a bigger say in what features and integrations we prioritize.
-      `,
+    Encrypted at rest and in transit. We will never use your data to train AI models.
+    Riven is open source, so you can read the code and see exactly how your data is handled.
+    If you need full control, self-hosting is an option. Your data never has to leave your infrastructure. We're also working toward SOC 2 before launch.`,
   },
 ];
 

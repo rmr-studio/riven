@@ -1,15 +1,13 @@
+import { BlogHeroHeader } from '@/components/feature-modules/blogs/components/blog-hero-header';
 import { Breadcrumbs } from '@/components/feature-modules/blogs/components/breadcrumbs';
 import { ReadingProgress } from '@/components/feature-modules/blogs/components/reading-progress';
 import { RelatedPosts } from '@/components/feature-modules/blogs/components/related-posts';
 import { TableOfContents } from '@/components/feature-modules/blogs/components/table-of-contents';
 import { mdxComponents } from '@/components/feature-modules/blogs/mdx/mdx-components';
-import { BGPattern } from '@/components/ui/background/grids';
 import { getAllPosts, getPostBySlug, getRelatedPosts } from '@/lib/blog';
 import { CATEGORY_LABELS } from '@/lib/blog-types';
-import { getCdnUrl } from '@/lib/cdn-image-loader';
 import type { Metadata } from 'next';
 import { MDXRemote } from 'next-mdx-remote/rsc';
-import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypeExternalLinks from 'rehype-external-links';
@@ -120,83 +118,21 @@ export default async function BlogPostPage({ params }: Props) {
       <ArticleJsonLd post={post} />
       <BreadcrumbJsonLd post={post} />
 
-      {/* ── Dark hero header ── */}
-      <div className="paper-lite relative mt-18 bg-foreground/90 text-background">
-        <BGPattern
-          variant="dots"
-          size={12}
-          fill="color-mix(in srgb, var(--background) 40%, transparent)"
-          mask="none"
-          className="z-20"
-          style={{
-            maskImage:
-              'radial-gradient(ellipse at center, black 30%, transparent 75%), linear-gradient(to bottom, black 0%, black 40%, transparent 65%)',
-            maskComposite: 'intersect',
-            WebkitMaskImage:
-              'radial-gradient(ellipse at center, black 30%, transparent 75%), linear-gradient(to bottom, black 0%, black 40%, transparent 65%)',
-            WebkitMaskComposite: 'source-in' as string,
-          }}
-        />
-        <div className="mx-auto max-w-5xl px-6 pt-10 pb-12 lg:px-8">
+      <BlogHeroHeader
+        post={post}
+        variant="post"
+        topSlot={
           <Breadcrumbs category={post.category} postTitle={post.title} variant="inverse" />
-
-          <header className="mt-4 max-w-3xl">
-            <span className="font-mono text-xs font-bold tracking-widest text-background/50 uppercase">
-              {CATEGORY_LABELS[post.category]}
-            </span>
-
-            <h1 className="mt-4 font-[family-name:var(--font-instrument-serif)] text-4xl tracking-tight lg:text-5xl">
-              {post.title}
-            </h1>
-
-            <p className="mt-4 text-lg leading-snug text-background/60">{post.description}</p>
-
-            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-background/10 pt-5">
-              <span className="font-mono text-xs tracking-widest text-background/50 uppercase">
-                {post.author}
-              </span>
-              {post.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="font-mono text-xs tracking-widest text-background/40 uppercase"
-                >
-                  {tag.replace(/-/g, ' ')}
-                </span>
-              ))}
-              <time
-                dateTime={post.date}
-                className="font-mono text-xs tracking-widest text-background/50 uppercase"
-              >
-                {new Date(post.date).toLocaleDateString('en-US', {
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
-              </time>
-            </div>
-          </header>
-        </div>
-
-        {/* Extra bottom padding when cover image will overlap */}
-        {post.coverImage && <div className="pb-44 sm:pb-52 lg:pb-64" />}
-      </div>
-
-      {/* Cover image — straddles the dark/light boundary */}
-      {post.coverImage && (
-        <div className="relative z-10 mx-auto -mt-44 max-w-5xl px-6 sm:-mt-52 lg:-mt-64 lg:px-8">
-          <div className="overflow-hidden rounded-lg shadow-lg shadow-foreground/40 dark:shadow-none">
-            <Image
-              src={getCdnUrl(post.coverImage)}
-              alt={`Cover image for ${post.title}`}
-              width={1260}
-              height={720}
-              className="w-full object-cover"
-              priority
-              unoptimized
-            />
-          </div>
-        </div>
-      )}
+        }
+        metaSlot={post.tags.map((tag) => (
+          <span
+            key={tag}
+            className="font-mono text-xs tracking-widest text-background/40 uppercase"
+          >
+            {tag.replace(/-/g, ' ')}
+          </span>
+        ))}
+      />
 
       {/* ── Content body ── */}
       <main className="mx-auto max-w-5xl px-6 pt-12 pb-20 lg:px-8">

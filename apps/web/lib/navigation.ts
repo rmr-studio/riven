@@ -10,9 +10,8 @@ export const NAV_LINKS_FLAT: NavLink[] = [
   // { label: 'Solutions', href: '/solutions' },
   { label: 'Story', href: '/story' },
   { label: 'Blog', href: '/resources/blog' },
-  { label: 'Changelog', href: '/changelog' },
-  { label: 'Contact', href: '/contact' },
-  { label: 'FAQ', href: '/faq' },
+  { label: 'Changelog', href: '/resources/blog/category/changelog' },
+  { label: 'FAQ', href: '/resources/faq' },
 ];
 
 /** Alias used by Footer and MobileNavbar */

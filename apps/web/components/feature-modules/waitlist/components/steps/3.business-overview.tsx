@@ -4,11 +4,12 @@ import type { WaitlistMultiStepFormData } from '@/lib/validations';
 import type { UseFormReturn } from 'react-hook-form';
 
 const STEP_CONFIG = {
-  title: "What's your biggest operational headache right now?",
-  placeholder: 'e.g. "I spend 2 hours a day switching between tools to find what I need..."',
+  title: 'Tell us about your business',
+  placeholder:
+    'e.g. "DTC skincare brand doing $2M/yr on Shopify, team of 5, B2C SaaS doing $10M/yr with 20 employees, etc."',
 };
 
-export function OperationalHeadacheStep({
+export function BusinessOverviewStep({
   form,
   onNext,
 }: {
@@ -29,7 +30,7 @@ export function OperationalHeadacheStep({
       </div>
       <div className="mt-8">
         <Textarea
-          {...register('operationalHeadache')}
+          {...register('businessOverview')}
           placeholder={STEP_CONFIG.placeholder}
           rows={3}
           autoFocus

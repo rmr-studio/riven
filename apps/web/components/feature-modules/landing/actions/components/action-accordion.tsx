@@ -41,9 +41,9 @@ export const DailyActionAccordion = () => {
           </h3>
 
           <p className="mt-4 max-w-md text-base leading-none tracking-tighter text-primary-foreground/65 dark:text-content">
-            Riven explores and surfaces patterns trends and insights hidden deep in your data. From
-            channel performance to cohort health to churn risks. Answer critical questions at a
-            glance with the most powerful, connected dashboard you have ever seen.
+            Each one works on its own. Put them together and your connected data becomes something
+            your team actually works from. Query across tools, tag what matters, set rules, act on
+            what comes up.
           </p>
 
           <div className="mt-8 border-t border-white/10" />

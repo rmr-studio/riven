@@ -81,7 +81,7 @@ export function ResourcesMenu() {
             shaders={shaders}
           >
             <Link
-              href={'/resources/blogs'}
+              href={'/resources/blog'}
               className="z-20 flex w-auto grow flex-row items-center gap-3 rounded-sm p-3 transition-colors"
             >
               <BookOpen className="size-10 text-white" />

@@ -1,18 +1,16 @@
-import {
-  ShowcaseCard,
-  ShowcaseSection,
-  type FeatureCard,
-} from '@/components/ui/showcase-section';
 import { DailyActionAccordion } from '@/components/feature-modules/landing/actions/components/action-accordion';
+import { ShowcaseCard, ShowcaseSection, type FeatureCard } from '@/components/ui/showcase-section';
 
 const FEATURES: FeatureCard[] = [
   {
-    title: 'Cross-domain view',
-    description: 'Unified lifecycle data from every connected tool in one glance',
+    title: 'One platform',
+    description:
+      'Keep your tools, ditch the tabs. Perform your most important actions in one place.',
   },
   {
-    title: 'AI-powered briefs',
-    description: 'Your morning brief learns what matters most to your business',
+    title: 'Real-time monitoring and results',
+    description:
+      'See the impact of your actions as it happens, and keep an eye on what matters most.',
   },
 ];
 
@@ -22,7 +20,7 @@ export const DailyActions = () => {
       lazyRender
       heading={
         <h2 className="mt-4 font-sans text-3xl text-primary-foreground md:text-4xl lg:text-5xl">
-          More Results. <span className="font-serif font-normal italic">Less Tabs</span>
+          More Results. <span className="font-serif font-normal italic">Fewer Tabs</span>
         </h2>
       }
       features={FEATURES}

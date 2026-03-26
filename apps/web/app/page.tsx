@@ -26,7 +26,7 @@ const Waitlist = dynamic(() =>
 
 export default async function Home() {
   const [featured, posts] = await Promise.all([getFeaturedPost(), getAllPosts()]);
-  const recent = posts.filter((p) => p.slug !== featured?.slug).slice(0, 2);
+  const recent = posts.filter((p) => p.slug !== featured?.slug).slice(0, 3);
 
   return (
     <main className="min-h-screen overflow-x-clip">

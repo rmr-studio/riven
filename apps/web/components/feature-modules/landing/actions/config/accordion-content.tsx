@@ -44,7 +44,7 @@ export const ACTION_CONTENT: KnowledgeLayerSectionContent[] = [
   {
     title: <div>Understand your data. Ask anything.</div>,
     description:
-      'Query your entire data ecosystem in natural language. No exports, no cross-referencing, no spreadsheets. Ask a question that spans customers, revenue, support, and product usage — and get an answer in seconds. The kind of answer that used to take a morning now takes a sentence.',
+      'Ask a question in plain English that touches customers, revenue, support, and product usage at the same time. No exports, no cross-referencing. You get an actual answer back in seconds. The kind of thing that used to eat a whole morning.',
     content: (
       <>
         <GlowBorder className="absolute bottom-8 left-8 z-30 w-full max-w-xl">
@@ -60,7 +60,7 @@ export const ACTION_CONTENT: KnowledgeLayerSectionContent[] = [
   {
     title: <div>New data finds its home automatically</div>,
     description:
-      'Automatic entity resolution and identity matching means your data model stays up to date without manual intervention. New data synced is connected and linked to existing entities across your ecosystem.',
+      'When new data syncs, Riven figures out where it belongs. A new Stripe charge gets matched to the right company, linked to their support tickets, ad spend, and everything else. You don\'t have to map it yourself.',
     content: (
       <EntityDetailShowcase className="absolute -right-12 scale-130 sm:-right-48 sm:-bottom-16 md:bottom-8" />
     ),

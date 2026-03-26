@@ -61,17 +61,19 @@ export const HeroCopy = () => {
 
 const Heading = () => (
   <h1 className="text-start font-sans text-[clamp(1.75rem,8vw,2.75rem)] leading-none tracking-tighter text-heading sm:text-5xl md:text-[4rem] lg:text-[5rem]">
-    Get more customers.
+    One Workspace. <span className="font-serif italic">Every Tool.</span>
     <br />
-    Know what <span className="font-serif italic">keeps them paying.</span>
+    Immediate insight <span className="font-serif italic">to action.</span>
   </h1>
 );
 
 const Subtitle = () => (
   <>
-    Finally. A customer lifecycle intelligence platform to elevate your strategy and drive growth
-    with powerful, data-driven insights and actions.
-    <br className="block md:hidden" /> <span className="font-semibold">Built for your entire team.</span>
+    Finally. The intelligence layer that unifies and operates across your entire customer lifecycle
+    stack. Learn how to engage customers, and know what keeps them paying. One platform to elevate
+    your strategy and drive growth with powerful, data-driven insights and actions.
+    <br className="block md:hidden" />{' '}
+    <span className="font-semibold">Built for your entire team.</span>
   </>
 );
 

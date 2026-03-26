@@ -76,7 +76,7 @@
     opacity: 0;
   }
   to {
-    opacity: calc(var(--paper-texture-opacity) / 1.5);
+    opacity: calc(var(--paper-texture-opacity) / 1.25);
   }
 }
 
@@ -356,7 +356,6 @@ html {
     opacity: 0;
     animation: paper-lite-fade-in 0.6s ease-out 0.1s forwards;
   }
-
 
   body > * {
     position: relative;

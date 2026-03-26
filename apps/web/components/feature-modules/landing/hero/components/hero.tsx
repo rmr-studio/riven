@@ -36,7 +36,7 @@ export function Hero() {
 
       <ShaderContainer
         staticImages={gradients}
-        className="z-50 mt-10 ml-4 rounded-r-none px-8 shadow-foreground/50 sm:ml-8 sm:py-16 sm:shadow-lg lg:ml-0 dark:border-[1.5px] dark:border-foreground/40 dark:border-r-transparent dark:shadow-none dark:lg:border-r-foreground/40"
+        className="z-50 mt-10 ml-4 rounded-r-none px-8 shadow-foreground/50 sm:ml-8 sm:py-16 sm:shadow-lg lg:ml-0 lg:rounded-r-lg dark:border-[1.5px] dark:border-foreground/40 dark:border-r-transparent dark:shadow-none dark:lg:border-r-foreground/40"
       >
         <ProductShowcaseGraphic />
       </ShaderContainer>

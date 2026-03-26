@@ -94,14 +94,14 @@ export function DashboardShowcase() {
         </ShaderContainer>
 
         <section className="z-20 flex flex-col px-8 py-6 lg:w-2/5">
-          <h3 className="mt-12 font-sans text-2xl text-background sm:text-4xl dark:text-foreground/80">
+          <h3 className="mt-8 font-sans text-2xl text-background sm:text-4xl dark:text-foreground/80">
             Keep powerful insights <span className="font-serif font-normal italic">in sight.</span>
           </h3>
 
           <p className="mt-4 max-w-lg text-base leading-tight text-primary-foreground/50 md:max-w-md md:text-lg dark:text-content">
-            Riven explores and surfaces patterns trends and insights hidden deep in your data. From
-            channel performance to cohort health to churn risks. Answer critical questions at a
-            glance with the most powerful, connected dashboard you've ever seen.
+            Riven explores and surfaces patterns, trends and insights hidden deep in your data. From
+            channel performance to cohort health to churn risks, it has never been easier to
+            understand your customers from a singular glance
           </p>
         </section>
       </ShowcaseCard>

@@ -1,6 +1,6 @@
+import { CrossDomainCarousel } from '@/components/feature-modules/landing/cross-domain-intelligence/cross-domain-carousel';
 import { Section } from '@/components/ui/section';
 import { SectionDivider } from '@/components/ui/section-divider';
-import { CrossDomainCarousel } from '@/components/feature-modules/landing/cross-domain-intelligence/cross-domain-carousel';
 
 export function CrossDomainIntelligence() {
   return (
@@ -15,7 +15,7 @@ export function CrossDomainIntelligence() {
               <span className="font-serif font-normal italic">no single tool could see.</span>
             </h2>
             <p className="mt-4 text-sm leading-none text-content/90 md:text-base">
-              Riven connects the dots across every data source you use — surfacing patterns, risks,
+              Riven connects the dots across every data source you use. Presenting the patterns, risks,
               and opportunities that only emerge when your entire business is understood as one
               system.
             </p>
