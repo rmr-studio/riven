@@ -6,8 +6,10 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
@@ -18,7 +20,6 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.identity.IdentityClusterEntity
-import riven.core.entity.identity.IdentityClusterMemberEntity
 import riven.core.entity.identity.MatchSuggestionEntity
 import riven.core.enums.activity.Activity
 import riven.core.enums.core.ApplicationEntityType
@@ -28,11 +29,8 @@ import riven.core.enums.notification.NotificationType
 import riven.core.enums.util.OperationType
 import riven.core.exceptions.ConflictException
 import riven.core.models.common.json.JsonObject
-import riven.core.models.identity.MatchSuggestion
 import riven.core.models.notification.Notification
 import riven.core.models.request.notification.CreateNotificationRequest
-import riven.core.repository.identity.IdentityClusterMemberRepository
-import riven.core.repository.identity.IdentityClusterRepository
 import riven.core.repository.identity.MatchSuggestionRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
@@ -54,10 +52,12 @@ import java.util.UUID
  *
  * Covers CONF-01 through CONF-05:
  * - CONF-01: Confirming creates a CONNECTED_ENTITIES relationship with SourceType.IDENTITY_MATCH
- * - CONF-02: 5-case cluster resolution (neither, source only, target only, different clusters, same cluster)
- * - CONF-03: Cluster merge — smaller dissolved into larger, dissolving cluster soft-deleted
+ * - CONF-02: Cluster resolution is delegated to [IdentityClusterService.resolveClusterMembership]
  * - CONF-04: Rejecting transitions PENDING -> REJECTED with resolvedBy/At, rejectionSignals snapshot, soft-delete
  * - CONF-05: Invalid state transitions throw ConflictException (double-confirm, double-reject, cross-transitions)
+ *
+ * Cluster resolution logic (5-case) is tested in [IdentityClusterServiceTest]. This test verifies
+ * delegation only — that resolveClusterMembership is called with correct arguments.
  *
  * @WithUserPersona is required at class level because this service uses @PreAuthorize and authTokenService.getUserId().
  * JUnit 5 @Nested inner classes do not inherit this annotation — it is re-applied on each Nested class.
@@ -91,10 +91,7 @@ class IdentityConfirmationServiceTest : BaseServiceTest() {
     private lateinit var matchSuggestionRepository: MatchSuggestionRepository
 
     @MockitoBean
-    private lateinit var clusterRepository: IdentityClusterRepository
-
-    @MockitoBean
-    private lateinit var memberRepository: IdentityClusterMemberRepository
+    private lateinit var identityClusterService: IdentityClusterService
 
     @MockitoBean
     private lateinit var entityRelationshipService: EntityRelationshipService
@@ -172,44 +169,26 @@ class IdentityConfirmationServiceTest : BaseServiceTest() {
         }
 
         /**
-         * CONF-02, Case 1: When neither entity is in a cluster, a new cluster is created
-         * with memberCount=2 and both entities are saved as members.
+         * CONF-02: Confirming delegates cluster resolution to IdentityClusterService.resolveClusterMembership
+         * with the correct workspaceId, sourceEntityId, targetEntityId, clusterName, and userId.
          */
         @Test
-        fun `confirmSuggestion creates new cluster when neither entity is clustered (Case 1)`() {
+        fun `confirmSuggestion delegates cluster resolution to IdentityClusterService`() {
             val suggestion = buildPendingSuggestion()
             val suggestionId = UUID.randomUUID()
             val entityWithId = buildEntityWithId(suggestion, suggestionId)
 
-            whenever(authTokenService.getUserId()).thenReturn(userId)
-            whenever(matchSuggestionRepository.findById(suggestionId)).thenReturn(Optional.of(entityWithId))
-            whenever(entityRelationshipService.addRelationship(any(), any(), any())).thenReturn(buildRelationshipResponse())
-            // Neither entity has a cluster membership
-            whenever(memberRepository.findByEntityId(any())).thenReturn(null)
-            // Cluster save returns entity with ID
-            whenever(clusterRepository.save(any())).thenAnswer { invocation ->
-                val cluster = invocation.getArgument<IdentityClusterEntity>(0)
-                buildSavedCluster(cluster)
-            }
-            whenever(memberRepository.save(any<IdentityClusterMemberEntity>())).thenAnswer { invocation ->
-                invocation.getArgument<IdentityClusterMemberEntity>(0)
-            }
-            whenever(matchSuggestionRepository.save(any())).thenAnswer { invocation ->
-                buildSavedEntity(invocation.getArgument(0))
-            }
-            whenever(activityService.logActivity(any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(buildActivityLog())
-            whenever(notificationService.createInternalNotification(any())).thenReturn(buildNotification())
+            stubBasicConfirmFlow(entityWithId)
 
             service.confirmSuggestion(workspaceId, suggestionId)
 
-            // Should save a new cluster
-            val clusterCaptor = argumentCaptor<IdentityClusterEntity>()
-            verify(clusterRepository).save(clusterCaptor.capture())
-            assertEquals(2, clusterCaptor.firstValue.memberCount)
-
-            // Should save 2 member rows
-            verify(memberRepository, org.mockito.kotlin.times(2)).save(any<IdentityClusterMemberEntity>())
+            verify(identityClusterService).resolveClusterMembership(
+                workspaceId = eq(workspaceId),
+                sourceEntityId = eq(suggestion.sourceEntityId),
+                targetEntityId = eq(suggestion.targetEntityId),
+                clusterName = isNull(),
+                userId = eq(userId),
+            )
         }
 
         /**
@@ -265,7 +244,7 @@ class IdentityConfirmationServiceTest : BaseServiceTest() {
         }
     }
 
-    // ------ ConfirmClusterCases — CONF-02 and CONF-03 ------
+    // ------ ConfirmClusterDelegation — CONF-02 ------
 
     @Nested
     @WithUserPersona(
@@ -279,287 +258,98 @@ class IdentityConfirmationServiceTest : BaseServiceTest() {
             )
         ]
     )
-    inner class ConfirmClusterCases {
+    inner class ConfirmClusterDelegation {
 
         /**
-         * CONF-02, Case 2: Source entity is already in a cluster, target is not.
-         * Target should be added to the source cluster, and memberCount incremented.
+         * CONF-02: Cluster resolution is delegated to IdentityClusterService with correct args.
+         * The 5-case cluster logic is tested in IdentityClusterServiceTest — here we verify delegation.
          */
         @Test
-        fun `confirmSuggestion adds target to source cluster when source is already clustered (Case 2)`() {
+        fun `confirmSuggestion delegates to resolveClusterMembership with correct arguments`() {
             val suggestion = buildPendingSuggestion()
             val suggestionId = UUID.randomUUID()
             val entityWithId = buildEntityWithId(suggestion, suggestionId)
-            val existingClusterId = UUID.randomUUID()
-            val existingCluster = buildSavedClusterWithId(
-                IdentityFactory.createIdentityClusterEntity(workspaceId = workspaceId, memberCount = 3),
-                existingClusterId,
-            )
 
-            whenever(authTokenService.getUserId()).thenReturn(userId)
-            whenever(matchSuggestionRepository.findById(suggestionId)).thenReturn(Optional.of(entityWithId))
-            whenever(entityRelationshipService.addRelationship(any(), any(), any())).thenReturn(buildRelationshipResponse())
-            // Source entity is clustered, target is not
-            val sourceMember = IdentityFactory.createIdentityClusterMemberEntity(
-                clusterId = existingClusterId,
-                entityId = suggestion.sourceEntityId,
-            )
-            whenever(memberRepository.findByEntityId(suggestion.sourceEntityId)).thenReturn(sourceMember)
-            whenever(memberRepository.findByEntityId(suggestion.targetEntityId)).thenReturn(null)
-            whenever(clusterRepository.findById(existingClusterId)).thenReturn(Optional.of(existingCluster))
-            whenever(memberRepository.save(any<IdentityClusterMemberEntity>())).thenAnswer { invocation ->
-                invocation.getArgument<IdentityClusterMemberEntity>(0)
-            }
-            whenever(clusterRepository.save(any())).thenAnswer { invocation ->
-                buildSavedCluster(invocation.getArgument(0))
-            }
-            whenever(matchSuggestionRepository.save(any())).thenAnswer { invocation ->
-                buildSavedEntity(invocation.getArgument(0))
-            }
-            whenever(activityService.logActivity(any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(buildActivityLog())
-            whenever(notificationService.createInternalNotification(any())).thenReturn(buildNotification())
+            stubBasicConfirmFlow(entityWithId)
 
             service.confirmSuggestion(workspaceId, suggestionId)
 
-            // A new member should be saved for the target entity
-            val memberCaptor = argumentCaptor<IdentityClusterMemberEntity>()
-            verify(memberRepository).save(memberCaptor.capture())
-            assertEquals(existingClusterId, memberCaptor.firstValue.clusterId)
-            assertEquals(suggestion.targetEntityId, memberCaptor.firstValue.entityId)
+            verify(identityClusterService).resolveClusterMembership(
+                workspaceId = eq(workspaceId),
+                sourceEntityId = eq(suggestion.sourceEntityId),
+                targetEntityId = eq(suggestion.targetEntityId),
+                clusterName = isNull(),
+                userId = eq(userId),
+            )
         }
 
         /**
-         * CONF-02, Case 3: Target entity is already in a cluster, source is not.
-         * Source should be added to the target cluster.
+         * CONF-02: When the suggestion has a NAME signal, clusterName is resolved from sourceValue.
          */
         @Test
-        fun `confirmSuggestion adds source to target cluster when target is already clustered (Case 3)`() {
-            val suggestion = buildPendingSuggestion()
+        fun `confirmSuggestion passes NAME signal sourceValue as clusterName`() {
+            val nameSignal = mapOf<String, Any?>(
+                "type" to "NAME",
+                "sourceValue" to "Acme Corp",
+                "targetValue" to "ACME Corporation",
+            )
+            val suggestion = IdentityFactory.createMatchSuggestionEntity(
+                workspaceId = workspaceId,
+                status = MatchSuggestionStatus.PENDING,
+                confidenceScore = BigDecimal("0.8500"),
+                signals = listOf(nameSignal),
+            )
             val suggestionId = UUID.randomUUID()
             val entityWithId = buildEntityWithId(suggestion, suggestionId)
-            val existingClusterId = UUID.randomUUID()
-            val existingCluster = buildSavedClusterWithId(
-                IdentityFactory.createIdentityClusterEntity(workspaceId = workspaceId, memberCount = 2),
-                existingClusterId,
-            )
 
-            whenever(authTokenService.getUserId()).thenReturn(userId)
-            whenever(matchSuggestionRepository.findById(suggestionId)).thenReturn(Optional.of(entityWithId))
-            whenever(entityRelationshipService.addRelationship(any(), any(), any())).thenReturn(buildRelationshipResponse())
-            // Target entity is clustered, source is not
-            whenever(memberRepository.findByEntityId(suggestion.sourceEntityId)).thenReturn(null)
-            val targetMember = IdentityFactory.createIdentityClusterMemberEntity(
-                clusterId = existingClusterId,
-                entityId = suggestion.targetEntityId,
-            )
-            whenever(memberRepository.findByEntityId(suggestion.targetEntityId)).thenReturn(targetMember)
-            whenever(clusterRepository.findById(existingClusterId)).thenReturn(Optional.of(existingCluster))
-            whenever(memberRepository.save(any<IdentityClusterMemberEntity>())).thenAnswer { invocation ->
-                invocation.getArgument<IdentityClusterMemberEntity>(0)
-            }
-            whenever(clusterRepository.save(any())).thenAnswer { invocation ->
-                buildSavedCluster(invocation.getArgument(0))
-            }
-            whenever(matchSuggestionRepository.save(any())).thenAnswer { invocation ->
-                buildSavedEntity(invocation.getArgument(0))
-            }
-            whenever(activityService.logActivity(any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(buildActivityLog())
-            whenever(notificationService.createInternalNotification(any())).thenReturn(buildNotification())
+            stubBasicConfirmFlow(entityWithId)
 
             service.confirmSuggestion(workspaceId, suggestionId)
 
-            // A new member should be saved for the source entity
-            val memberCaptor = argumentCaptor<IdentityClusterMemberEntity>()
-            verify(memberRepository).save(memberCaptor.capture())
-            assertEquals(existingClusterId, memberCaptor.firstValue.clusterId)
-            assertEquals(suggestion.sourceEntityId, memberCaptor.firstValue.entityId)
+            verify(identityClusterService).resolveClusterMembership(
+                workspaceId = eq(workspaceId),
+                sourceEntityId = eq(suggestion.sourceEntityId),
+                targetEntityId = eq(suggestion.targetEntityId),
+                clusterName = eq("Acme Corp"),
+                userId = eq(userId),
+            )
         }
 
         /**
-         * CONF-02 + CONF-03, Case 4: Both entities are in different clusters.
-         * The smaller cluster is dissolved into the larger cluster (surviving).
-         * Dissolving cluster members are hard-deleted and re-inserted, dissolving cluster is soft-deleted.
+         * The returned cluster entity is used in activity logging and notification.
+         * Verifies that the cluster returned by resolveClusterMembership flows through to activity details.
          */
         @Test
-        fun `confirmSuggestion merges smaller cluster into larger when both are in different clusters (Case 4)`() {
+        fun `confirmSuggestion uses returned cluster for activity and notification`() {
             val suggestion = buildPendingSuggestion()
             val suggestionId = UUID.randomUUID()
             val entityWithId = buildEntityWithId(suggestion, suggestionId)
-
-            val largerClusterId = UUID.randomUUID()
-            val smallerClusterId = UUID.randomUUID()
-
-            val largerCluster = buildSavedClusterWithId(
+            val returnedClusterId = UUID.randomUUID()
+            val returnedCluster = buildSavedClusterWithId(
                 IdentityFactory.createIdentityClusterEntity(workspaceId = workspaceId, memberCount = 5),
-                largerClusterId,
-            )
-            val smallerCluster = buildSavedClusterWithId(
-                IdentityFactory.createIdentityClusterEntity(workspaceId = workspaceId, memberCount = 2),
-                smallerClusterId,
+                returnedClusterId,
             )
 
-            // Source entity is in the larger cluster, target in the smaller
-            val sourceMember = IdentityFactory.createIdentityClusterMemberEntity(
-                clusterId = largerClusterId,
-                entityId = suggestion.sourceEntityId,
-            )
-            val targetMember = IdentityFactory.createIdentityClusterMemberEntity(
-                clusterId = smallerClusterId,
-                entityId = suggestion.targetEntityId,
-            )
-            val dissolvingMembers = listOf(
-                IdentityFactory.createIdentityClusterMemberEntity(clusterId = smallerClusterId),
-                IdentityFactory.createIdentityClusterMemberEntity(clusterId = smallerClusterId),
-            )
-
-            whenever(authTokenService.getUserId()).thenReturn(userId)
-            whenever(matchSuggestionRepository.findById(suggestionId)).thenReturn(Optional.of(entityWithId))
-            whenever(entityRelationshipService.addRelationship(any(), any(), any())).thenReturn(buildRelationshipResponse())
-            whenever(memberRepository.findByEntityId(suggestion.sourceEntityId)).thenReturn(sourceMember)
-            whenever(memberRepository.findByEntityId(suggestion.targetEntityId)).thenReturn(targetMember)
-            whenever(clusterRepository.findById(largerClusterId)).thenReturn(Optional.of(largerCluster))
-            whenever(clusterRepository.findById(smallerClusterId)).thenReturn(Optional.of(smallerCluster))
-            whenever(memberRepository.findByClusterId(smallerClusterId)).thenReturn(dissolvingMembers)
-            whenever(memberRepository.save(any<IdentityClusterMemberEntity>())).thenAnswer { invocation ->
-                invocation.getArgument<IdentityClusterMemberEntity>(0)
-            }
-            whenever(clusterRepository.save(any())).thenAnswer { invocation ->
-                buildSavedCluster(invocation.getArgument(0))
-            }
-            whenever(matchSuggestionRepository.save(any())).thenAnswer { invocation ->
-                buildSavedEntity(invocation.getArgument(0))
-            }
-            whenever(activityService.logActivity(any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(buildActivityLog())
-            whenever(notificationService.createInternalNotification(any())).thenReturn(buildNotification())
+            stubBasicConfirmFlow(entityWithId)
+            whenever(identityClusterService.resolveClusterMembership(any(), any(), any(), anyOrNull(), any()))
+                .thenReturn(returnedCluster)
 
             service.confirmSuggestion(workspaceId, suggestionId)
 
-            // Dissolving members should be hard-deleted
-            verify(memberRepository).deleteByClusterId(smallerClusterId)
-
-            // Dissolving members should be re-inserted into the surviving cluster
-            verify(memberRepository, org.mockito.kotlin.times(dissolvingMembers.size)).save(any<IdentityClusterMemberEntity>())
-
-            // Dissolving cluster should be soft-deleted
-            val clusterCaptor = argumentCaptor<IdentityClusterEntity>()
-            verify(clusterRepository, org.mockito.kotlin.times(2)).save(clusterCaptor.capture())
-            val savedClusters = clusterCaptor.allValues
-            val deletedCluster = savedClusters.find { it.deleted }
-            assertNotNull(deletedCluster)
-        }
-
-        /**
-         * CONF-03: On tie (equal member counts), the source entity's cluster is the surviving cluster.
-         */
-        @Test
-        fun `confirmSuggestion keeps source cluster as survivor on memberCount tie (CONF-03)`() {
-            val suggestion = buildPendingSuggestion()
-            val suggestionId = UUID.randomUUID()
-            val entityWithId = buildEntityWithId(suggestion, suggestionId)
-
-            val sourceClusterId = UUID.randomUUID()
-            val targetClusterId = UUID.randomUUID()
-
-            val sourceCluster = buildSavedClusterWithId(
-                IdentityFactory.createIdentityClusterEntity(workspaceId = workspaceId, memberCount = 3),
-                sourceClusterId,
+            // Verify activity log references the returned cluster
+            val detailsCaptor = argumentCaptor<JsonObject>()
+            verify(activityService).logActivity(
+                eq(Activity.MATCH_SUGGESTION),
+                eq(OperationType.UPDATE),
+                eq(userId),
+                eq(workspaceId),
+                eq(ApplicationEntityType.MATCH_SUGGESTION),
+                any(),
+                any(),
+                detailsCaptor.capture(),
             )
-            val targetCluster = buildSavedClusterWithId(
-                IdentityFactory.createIdentityClusterEntity(workspaceId = workspaceId, memberCount = 3),
-                targetClusterId,
-            )
-
-            val sourceMember = IdentityFactory.createIdentityClusterMemberEntity(
-                clusterId = sourceClusterId,
-                entityId = suggestion.sourceEntityId,
-            )
-            val targetMember = IdentityFactory.createIdentityClusterMemberEntity(
-                clusterId = targetClusterId,
-                entityId = suggestion.targetEntityId,
-            )
-            val dissolvingMembers = listOf(
-                IdentityFactory.createIdentityClusterMemberEntity(clusterId = targetClusterId),
-                IdentityFactory.createIdentityClusterMemberEntity(clusterId = targetClusterId),
-                IdentityFactory.createIdentityClusterMemberEntity(clusterId = targetClusterId),
-            )
-
-            whenever(authTokenService.getUserId()).thenReturn(userId)
-            whenever(matchSuggestionRepository.findById(suggestionId)).thenReturn(Optional.of(entityWithId))
-            whenever(entityRelationshipService.addRelationship(any(), any(), any())).thenReturn(buildRelationshipResponse())
-            whenever(memberRepository.findByEntityId(suggestion.sourceEntityId)).thenReturn(sourceMember)
-            whenever(memberRepository.findByEntityId(suggestion.targetEntityId)).thenReturn(targetMember)
-            whenever(clusterRepository.findById(sourceClusterId)).thenReturn(Optional.of(sourceCluster))
-            whenever(clusterRepository.findById(targetClusterId)).thenReturn(Optional.of(targetCluster))
-            whenever(memberRepository.findByClusterId(targetClusterId)).thenReturn(dissolvingMembers)
-            whenever(memberRepository.save(any<IdentityClusterMemberEntity>())).thenAnswer { invocation ->
-                invocation.getArgument<IdentityClusterMemberEntity>(0)
-            }
-            whenever(clusterRepository.save(any())).thenAnswer { invocation ->
-                buildSavedCluster(invocation.getArgument(0))
-            }
-            whenever(matchSuggestionRepository.save(any())).thenAnswer { invocation ->
-                buildSavedEntity(invocation.getArgument(0))
-            }
-            whenever(activityService.logActivity(any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(buildActivityLog())
-            whenever(notificationService.createInternalNotification(any())).thenReturn(buildNotification())
-
-            service.confirmSuggestion(workspaceId, suggestionId)
-
-            // Target cluster (dissolving on tie) should be hard-deleted
-            verify(memberRepository).deleteByClusterId(targetClusterId)
-
-            // Source cluster should NOT be deleted
-            verify(memberRepository, never()).deleteByClusterId(sourceClusterId)
-        }
-
-        /**
-         * CONF-02, Case 5: Both entities are already in the same cluster.
-         * No cluster mutations should occur — no saves or deletes on cluster repositories.
-         */
-        @Test
-        fun `confirmSuggestion is no-op for clusters when both entities are in the same cluster (Case 5)`() {
-            val suggestion = buildPendingSuggestion()
-            val suggestionId = UUID.randomUUID()
-            val entityWithId = buildEntityWithId(suggestion, suggestionId)
-            val sharedClusterId = UUID.randomUUID()
-            val sharedCluster = buildSavedClusterWithId(
-                IdentityFactory.createIdentityClusterEntity(workspaceId = workspaceId, memberCount = 2),
-                sharedClusterId,
-            )
-
-            val sourceMember = IdentityFactory.createIdentityClusterMemberEntity(
-                clusterId = sharedClusterId,
-                entityId = suggestion.sourceEntityId,
-            )
-            val targetMember = IdentityFactory.createIdentityClusterMemberEntity(
-                clusterId = sharedClusterId,
-                entityId = suggestion.targetEntityId,
-            )
-
-            whenever(authTokenService.getUserId()).thenReturn(userId)
-            whenever(matchSuggestionRepository.findById(suggestionId)).thenReturn(Optional.of(entityWithId))
-            whenever(entityRelationshipService.addRelationship(any(), any(), any())).thenReturn(buildRelationshipResponse())
-            whenever(memberRepository.findByEntityId(suggestion.sourceEntityId)).thenReturn(sourceMember)
-            whenever(memberRepository.findByEntityId(suggestion.targetEntityId)).thenReturn(targetMember)
-            // Return shared cluster for the findById call used in resolveCluster
-            whenever(clusterRepository.findById(sharedClusterId)).thenReturn(Optional.of(sharedCluster))
-            whenever(matchSuggestionRepository.save(any())).thenAnswer { invocation ->
-                buildSavedEntity(invocation.getArgument(0))
-            }
-            whenever(activityService.logActivity(any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(buildActivityLog())
-            whenever(notificationService.createInternalNotification(any())).thenReturn(buildNotification())
-
-            service.confirmSuggestion(workspaceId, suggestionId)
-
-            // No cluster saves or member saves or deletes should happen
-            verify(clusterRepository, never()).save(any())
-            verify(memberRepository, never()).save(any<IdentityClusterMemberEntity>())
-            verify(memberRepository, never()).deleteByClusterId(any())
+            assertEquals(returnedClusterId.toString(), detailsCaptor.firstValue["clusterId"])
+            assertEquals(5, detailsCaptor.firstValue["clusterMemberCount"])
         }
     }
 
@@ -990,19 +780,20 @@ class IdentityConfirmationServiceTest : BaseServiceTest() {
         )
 
     /**
-     * Stubs the common happy-path confirm flow where neither entity is clustered (Case 1).
+     * Stubs the common happy-path confirm flow with cluster resolution delegated to IdentityClusterService.
      */
     private fun stubBasicConfirmFlow(entityWithId: MatchSuggestionEntity) {
+        val defaultCluster = buildSavedClusterWithId(
+            IdentityFactory.createIdentityClusterEntity(workspaceId = workspaceId, memberCount = 2),
+            UUID.randomUUID(),
+        )
+
         whenever(authTokenService.getUserId()).thenReturn(userId)
-        whenever(matchSuggestionRepository.findById(entityWithId.id!!)).thenReturn(Optional.of(entityWithId))
+        whenever(matchSuggestionRepository.findById(requireNotNull(entityWithId.id) { "Entity ID required for stub" }))
+            .thenReturn(Optional.of(entityWithId))
         whenever(entityRelationshipService.addRelationship(any(), any(), any())).thenReturn(buildRelationshipResponse())
-        whenever(memberRepository.findByEntityId(any())).thenReturn(null)
-        whenever(clusterRepository.save(any())).thenAnswer { invocation ->
-            buildSavedCluster(invocation.getArgument(0))
-        }
-        whenever(memberRepository.save(any<IdentityClusterMemberEntity>())).thenAnswer { invocation ->
-            invocation.getArgument<IdentityClusterMemberEntity>(0)
-        }
+        whenever(identityClusterService.resolveClusterMembership(any(), any(), any(), anyOrNull(), any()))
+            .thenReturn(defaultCluster)
         whenever(matchSuggestionRepository.save(any())).thenAnswer { invocation ->
             buildSavedEntity(invocation.getArgument(0))
         }
