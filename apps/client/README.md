@@ -1,17 +1,17 @@
 # @riven/client
 
-The main Riven dashboard application — a multi-tenant SaaS platform for managing entities, workflows, integrations and knowledge.
+The main Riven dashboard. This is where users manage entities, build workflows, connect integrations and interact with the knowledge base.
 
-## Tech Stack
+## Tech stack
 
-- **Framework:** Next.js 15 (App Router, React 19, TypeScript strict)
-- **Styling:** Tailwind CSS 4 + shadcn/ui (new-york) + Framer Motion
-- **State:** Zustand (factory + context pattern) + TanStack Query 5
-- **Forms:** react-hook-form + Zod
-- **Auth:** Supabase (via adapter pattern)
-- **API:** OpenAPI-generated TypeScript client
-- **Rich Text:** BlockNote editor
-- **Visualisation:** React Flow, Recharts, dnd-kit
+- Next.js 15 (App Router, React 19, TypeScript strict)
+- Tailwind CSS 4 + shadcn/ui (new-york) + Framer Motion
+- Zustand (factory + context pattern) + TanStack Query 5
+- react-hook-form + Zod
+- Supabase auth (via adapter pattern)
+- OpenAPI-generated TypeScript client
+- BlockNote (rich text editor)
+- React Flow, Recharts, dnd-kit
 
 ## Development
 
@@ -20,9 +20,9 @@ The main Riven dashboard application — a multi-tenant SaaS platform for managi
 pnpm --filter @riven/client dev
 ```
 
-Runs on [http://localhost:3001](http://localhost:3001). Requires the backend API running on `:8081`.
+Runs on [http://localhost:3001](http://localhost:3001). Needs the backend API running on `:8081`.
 
-### Environment Variables
+### Environment variables
 
 Create `apps/client/.env.local`:
 
@@ -34,15 +34,15 @@ NEXT_PUBLIC_HOSTED_URL=http://localhost:3001
 NEXT_PUBLIC_AUTH_PROVIDER=supabase
 ```
 
-### Type Generation
+### Type generation
 
-Regenerate API types from the backend OpenAPI spec (requires the backend running):
+Regenerate API types from the backend OpenAPI spec (backend must be running):
 
 ```sh
 npm run types
 ```
 
-## Project Structure
+## Project structure
 
 ```
 app/

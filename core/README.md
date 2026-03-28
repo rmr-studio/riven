@@ -1,19 +1,19 @@
 # Riven Core
 
-Backend API server for the Riven platform.
+Backend API server.
 
-## Tech Stack
+## Tech stack
 
-- **Language:** Kotlin 2.1 on Java 21
-- **Framework:** Spring Boot 3.5
-- **Database:** PostgreSQL + Flyway migrations
-- **Orchestration:** Temporal (workflow engine)
-- **Auth:** Supabase JWT (OAuth2 Resource Server)
-- **Storage:** S3-compatible (Cloudflare, AWS, MinIO)
-- **API Docs:** Springdoc OpenAPI (Swagger)
-- **Resilience:** Resilience4j circuit breaker
-- **PDF:** OpenPDF
-- **Scheduling:** ShedLock (distributed locking)
+- Kotlin 2.1 on Java 21
+- Spring Boot 3.5
+- PostgreSQL + Flyway migrations
+- Temporal (workflow orchestration)
+- Supabase JWT (OAuth2 Resource Server)
+- S3-compatible storage (Cloudflare, AWS, MinIO)
+- Springdoc OpenAPI (Swagger)
+- Resilience4j circuit breaker
+- OpenPDF
+- ShedLock (distributed locking)
 
 ## Development
 
@@ -21,13 +21,13 @@ Backend API server for the Riven platform.
 ./gradlew bootRun
 ```
 
-Runs on [http://localhost:8081](http://localhost:8081). Requires a running PostgreSQL instance, Supabase project and Temporal server.
+Runs on [http://localhost:8081](http://localhost:8081). Needs PostgreSQL, a Supabase project, and a Temporal server.
 
-### API Documentation
+### API docs
 
-OpenAPI spec is served at `/docs/v3/api-docs` when the server is running. Swagger UI is available at `/docs/swagger-ui.html`.
+OpenAPI spec at `/docs/v3/api-docs` when the server is running. Swagger UI at `/docs/swagger-ui.html`.
 
-### Environment Variables
+### Environment variables
 
 Configure via `core/.env` or Spring Boot `application.properties`:
 
@@ -41,12 +41,12 @@ Configure via `core/.env` or Spring Boot `application.properties`:
 | `ORIGIN_API_URL` | Allowed CORS origin |
 | `TEMPORAL_SERVER_ADDRESS` | Temporal server address (default: `localhost:7233`) |
 
-## Project Structure
+## Project structure
 
 ```
 src/main/kotlin/riven/core/
   configuration/    # Spring beans, security, properties
-  controller/       # REST API endpoints (by domain)
+  controller/       # REST endpoints (by domain)
   service/          # Business logic (by domain)
   repository/       # JPA repositories (by domain)
   entity/           # JPA entities (by domain)
@@ -69,4 +69,4 @@ src/main/resources/
 ./gradlew test
 ```
 
-Uses JUnit 5, Mockito and Testcontainers.
+JUnit 5, Mockito, Testcontainers.

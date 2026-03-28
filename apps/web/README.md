@@ -1,14 +1,14 @@
 # @riven/web
 
-Marketing website and landing page for Riven.
+Marketing website and landing page.
 
-## Tech Stack
+## Tech stack
 
-- **Framework:** Next.js 16 (App Router)
-- **Styling:** Tailwind CSS 4 + Framer Motion
-- **Fonts:** Geist, Instrument Serif, Space Mono, Geist Mono
-- **Media:** Cloudflare CDN via `getCdnUrl()` helper
-- **Email:** React Email templates
+- Next.js 16 (App Router)
+- Tailwind CSS 4 + Framer Motion
+- Fonts: Geist, Instrument Serif, Space Mono, Geist Mono
+- Media served from Cloudflare CDN via `getCdnUrl()`
+- React Email for transactional templates
 
 ## Development
 
@@ -19,7 +19,7 @@ pnpm --filter @riven/web dev
 
 Runs on [http://localhost:3000](http://localhost:3000).
 
-### Environment Variables
+### Environment variables
 
 Create `apps/web/.env.local`:
 
@@ -30,7 +30,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_CDN_URL=https://cdn.riven.software
 ```
 
-## Project Structure
+## Project structure
 
 ```
 app/              # App Router pages and layouts

@@ -5,11 +5,7 @@
 <h1 align="center">Riven</h1>
 
 <p align="center">
-  AI-powered data platform enabling cross-domain intelligence
-</p>
-
-<p align="center">
-  Unify and integrate your SaaS tools into one centralised platform, uncovering patterns, relationships and insights between data otherwise hidden away in siloed databases and dashboards.
+  Connect your SaaS tools into one workspace. Ask questions across all of them.
 </p>
 
 <p align="center">
@@ -25,42 +21,25 @@
   <img src="https://cdn.riven.software/images/og-image.png" alt="Riven Dashboard" width="100%" />
 </p>
 
-## About
+## What is Riven?
 
-Riven is a unified data platform that connects your SaaS tools — CRM, project management, support, billing — into a single, intelligent workspace. Instead of switching between dashboards, Riven pulls everything together and uses AI to surface cross-domain patterns, relationships and insights that would otherwise stay buried.
+Riven pulls data from your CRM, project management, support, billing, and other SaaS tools into a single workspace. You define your own entity types, schemas and relationships, then query across all of it with AI.
 
-**One Unified Data Ecosystem** — Data models and relationships that adapt to how your business works, not the other way around. Define your own entity types, schemas and relationships.
+Most platforms force you into their data model. Riven lets you define your own entity types, attributes and relationships so the schema fits your business.
 
-**Cross-Domain Intelligence** — AI-powered knowledge base that reasons across your entire business, not just one corner of it. Ask questions that span multiple data sources and get answers with full context.
+The knowledge base has context across every connected source, so you can ask a question that touches your CRM and your support desk without switching tabs. Workflows are built visually as DAGs and run on Temporal.
 
-**Workflow Automation** — Visual DAG-based workflow builder powered by Temporal for reliable, observable orchestration across all your connected tools.
+## Tech stack
 
-## Tech Stack
-
-- [Next.js](https://nextjs.org/) – Frontend framework
-- [React 19](https://react.dev/) – UI library
-- [Tailwind CSS 4](https://tailwindcss.com/) – Styling
-- [shadcn/ui](https://ui.shadcn.com/) – Component library
-- [Framer Motion](https://www.framer.com/motion/) – Animations
-- [Zustand](https://zustand-demo.pmnd.rs/) – State management
-- [TanStack Query](https://tanstack.com/query) – Server state
-- [Spring Boot 3](https://spring.io/projects/spring-boot) – Backend framework
-- [Kotlin](https://kotlinlang.org/) – Backend language
-- [PostgreSQL](https://www.postgresql.org/) – Database
-- [Flyway](https://flywaydb.org/) – Database migrations
-- [Temporal](https://temporal.io/) – Workflow orchestration
-- [Supabase](https://supabase.com/) – Authentication & storage
-- [Docker](https://www.docker.com/) – Containerisation
-- [Turborepo](https://turbo.build/) – Monorepo build system
-- [pnpm](https://pnpm.io/) – Package manager
+[Next.js](https://nextjs.org/) · [React 19](https://react.dev/) · [Tailwind CSS 4](https://tailwindcss.com/) · [shadcn/ui](https://ui.shadcn.com/) · [Framer Motion](https://www.framer.com/motion/) · [Zustand](https://zustand-demo.pmnd.rs/) · [TanStack Query](https://tanstack.com/query) · [Spring Boot 3](https://spring.io/projects/spring-boot) · [Kotlin](https://kotlinlang.org/) · [PostgreSQL](https://www.postgresql.org/) · [Flyway](https://flywaydb.org/) · [Temporal](https://temporal.io/) · [Supabase](https://supabase.com/) · [Docker](https://www.docker.com/) · [Turborepo](https://turbo.build/) · [pnpm](https://pnpm.io/)
 
 ## Architecture
 
 ```
 riven/
 ├── apps/
-│   ├── web/          # Marketing & landing page (Next.js 16)
-│   └── client/       # Dashboard application (Next.js 15)
+│   ├── web/          # Marketing site (Next.js 16)
+│   └── client/       # Dashboard app (Next.js 15)
 ├── core/             # Backend API (Spring Boot + Kotlin)
 │   ├── src/          # Application source
 │   └── db/           # Database schemas & migrations
@@ -72,30 +51,30 @@ riven/
 └── docs/             # System design & architecture docs
 ```
 
-### Backend Domains
+### Backend domains
 
-| Domain | Description |
+| Domain | What it does |
 |--------|-------------|
-| **Entities** | User-defined data models with dynamic schemas, attributes and relationships |
-| **Integrations** | SaaS connectors with sync pipelines for pulling external data |
-| **Workflows** | DAG-based orchestration engine built on Temporal |
-| **Identity Resolution** | Deduplication and entity matching across data sources |
-| **Knowledge** | AI reasoning engine with retrieval and enrichment |
-| **Catalog** | System templates, manifests and core model definitions |
-| **Storage** | File management with S3-compatible providers |
-| **Notifications** | Event-driven alerting system |
+| Entities | User-defined data models with dynamic schemas and relationships |
+| Integrations | SaaS connectors and sync pipelines |
+| Workflows | DAG orchestration on Temporal |
+| Identity Resolution | Deduplication and matching across sources |
+| Knowledge | AI reasoning, retrieval and enrichment |
+| Catalog | System templates and core model definitions |
+| Storage | Files on S3-compatible providers |
+| Notifications | Alerts triggered by system events |
 
-## Getting Started
+## Getting started
 
 ### Prerequisites
 
 - [Node.js 22+](https://nodejs.org/)
 - [pnpm 10+](https://pnpm.io/)
-- [Java 21+](https://adoptium.net/) (for the backend)
-- [Docker](https://www.docker.com/) (optional, for containerised deployment)
+- [Java 21+](https://adoptium.net/) (backend)
+- [Docker](https://www.docker.com/) (optional)
 - A [Supabase](https://supabase.com/) project
 - A [PostgreSQL](https://www.postgresql.org/) instance
-- A [Temporal](https://temporal.io/) server (for workflow orchestration)
+- A [Temporal](https://temporal.io/) server
 
 ### 1. Clone the repository
 
@@ -130,11 +109,11 @@ Fill in the required values:
 | `TEMPORAL_SERVER_ADDRESS` | Temporal server address |
 | `NEXT_PUBLIC_API_URL` | Backend API base URL |
 
-See `.env.example` for the full list of configuration options.
+See `.env.example` for the full list.
 
 ### 4. Run locally
 
-You only need to start the services you're working on:
+Start whichever services you need:
 
 | Working on | Commands |
 |------------|----------|
@@ -143,11 +122,11 @@ You only need to start the services you're working on:
 | Backend API | `cd core && ./gradlew bootRun` |
 | Full stack | All of the above |
 
-Default ports: **Web** `:3000` · **Client** `:3001` · **API** `:8081`
+Default ports: Web `:3000` · Client `:3001` · API `:8081`
 
-### Docker Deployment
+### Docker deployment
 
-Three Docker Compose profiles are available:
+Three Docker Compose profiles:
 
 ```sh
 # Landing page only
@@ -168,4 +147,4 @@ CLIENT_PORT=3001
 SERVER_PORT=8081
 ```
 
-See [`apps/README.md`](apps/README.md) for full deployment documentation including environment variables, build args and teardown instructions.
+See [`apps/README.md`](apps/README.md) for full deployment docs, env vars, build args and teardown.
