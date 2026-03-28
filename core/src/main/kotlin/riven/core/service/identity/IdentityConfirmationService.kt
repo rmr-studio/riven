@@ -72,7 +72,7 @@ class IdentityConfirmationService(
             throw NotFoundException("Suggestion not found")
         }
 
-        validateConfirmable(entity)
+        validatePending(entity)
         createRelationship(entity)
 
         val cluster = identityClusterService.resolveClusterMembership(
@@ -118,7 +118,7 @@ class IdentityConfirmationService(
             throw NotFoundException("Suggestion not found")
         }
 
-        validateRejectable(entity)
+        validatePending(entity)
         applyRejection(entity, userId)
         val saved = matchSuggestionRepository.save(entity)
 
@@ -131,16 +131,7 @@ class IdentityConfirmationService(
 
     // ------ State validation ------
 
-    private fun validateConfirmable(entity: MatchSuggestionEntity) {
-        if (entity.status != MatchSuggestionStatus.PENDING) {
-            throw ConflictException("Suggestion is already ${entity.status}")
-        }
-    }
-
-    private fun validateRejectable(entity: MatchSuggestionEntity) {
-        if (entity.status != MatchSuggestionStatus.PENDING) {
-            throw ConflictException("Suggestion is already ${entity.status}")
-        }
+    private fun validatePending(entity: MatchSuggestionEntity) {
     }
 
     // ------ Relationship creation ------
