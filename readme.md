@@ -29,6 +29,10 @@ Most platforms force you into their data model. Riven lets you define your own e
 
 The knowledge base has context across every connected source, so you can ask a question that touches your CRM and your support desk without switching tabs. Workflows are built visually as DAGs and run on Temporal.
 
+## Activity
+
+![Alt](https://repobeats.axiom.co/api/embed/d19c02d268f41f632d0d4e81648544b93ffd1ae8.svg "Repobeats analytics image")
+
 ## Tech stack
 
 [Next.js](https://nextjs.org/) · [React 19](https://react.dev/) · [Tailwind CSS 4](https://tailwindcss.com/) · [shadcn/ui](https://ui.shadcn.com/) · [Framer Motion](https://www.framer.com/motion/) · [Zustand](https://zustand-demo.pmnd.rs/) · [TanStack Query](https://tanstack.com/query) · [Spring Boot 3](https://spring.io/projects/spring-boot) · [Kotlin](https://kotlinlang.org/) · [PostgreSQL](https://www.postgresql.org/) · [Flyway](https://flywaydb.org/) · [Temporal](https://temporal.io/) · [Supabase](https://supabase.com/) · [Docker](https://www.docker.com/) · [Turborepo](https://turbo.build/) · [pnpm](https://pnpm.io/)
