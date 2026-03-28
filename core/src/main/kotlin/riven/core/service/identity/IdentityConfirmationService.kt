@@ -132,6 +132,9 @@ class IdentityConfirmationService(
     // ------ State validation ------
 
     private fun validatePending(entity: MatchSuggestionEntity) {
+        if (entity.status != MatchSuggestionStatus.PENDING) {
+            throw ConflictException("Suggestion is already ${entity.status.name.lowercase()} and cannot be modified")
+        }
     }
 
     // ------ Relationship creation ------
