@@ -8,6 +8,9 @@ import jakarta.annotation.PreDestroy
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import riven.core.service.integration.sync.IntegrationSyncActivities
+import riven.core.service.integration.sync.IntegrationSyncWorkflow
+import riven.core.service.integration.sync.IntegrationSyncWorkflowImpl
 import riven.core.service.workflow.engine.WorkflowOrchestration
 import riven.core.service.workflow.engine.WorkflowOrchestrationService
 import riven.core.service.workflow.engine.completion.WorkflowCompletionActivityImpl
@@ -48,7 +51,8 @@ class TemporalWorkerConfiguration(
     private val completionActivity: WorkflowCompletionActivityImpl,
     private val retryProperties: WorkflowRetryConfigurationProperties,
     private val identityMatchActivities: IdentityMatchActivitiesImpl,
-    private val logger: KLogger
+    private val logger: KLogger,
+    private val integrationSyncActivities: IntegrationSyncActivities,
 ) {
 
     companion object {
@@ -76,6 +80,15 @@ class TemporalWorkerConfiguration(
          * from affecting existing workflow engine execution.
          */
         const val IDENTITY_MATCH_QUEUE = "identity.match"
+
+        /**
+         * Queue for integration sync workflows.
+         *
+         * Dedicated queue for Nango sync webhook-triggered workflows.
+         * Isolation ensures that long-running sync activities do not block
+         * the default workflow queue.
+         */
+        const val INTEGRATION_SYNC_QUEUE = "integration.sync"
 
         /**
          * Generate task queue name for a workspace.
@@ -142,9 +155,18 @@ class TemporalWorkerConfiguration(
         identityWorker.registerActivitiesImplementations(identityMatchActivities)
         logger.info { "Registered identity match workflow and activities on task queue: $IDENTITY_MATCH_QUEUE" }
 
+        // Create worker for integration sync queue
+        val syncWorker = factory.newWorker(INTEGRATION_SYNC_QUEUE)
+        syncWorker.registerWorkflowImplementationFactory(IntegrationSyncWorkflow::class.java) {
+            IntegrationSyncWorkflowImpl(retryProperties.integrationSync)
+        }
+        logger.info { "Registered workflow: IntegrationSyncWorkflowImpl with retry config: ${retryProperties.integrationSync}" }
+        syncWorker.registerActivitiesImplementations(integrationSyncActivities)
+        logger.info { "Registered activities: IntegrationSyncActivities" }
+
         // Start workers (non-blocking - workers poll Temporal Service in background)
         factory.start()
-        logger.info { "Temporal WorkerFactory started, listening on task queue: $WORKFLOWS_DEFAULT_QUEUE" }
+        logger.info { "Temporal WorkerFactory started, listening on task queues: $WORKFLOWS_DEFAULT_QUEUE, $IDENTITY_MATCH_QUEUE, $INTEGRATION_SYNC_QUEUE" }
 
         // Store instance for shutdown
         workerFactoryInstance = factory
