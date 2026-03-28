@@ -104,6 +104,7 @@ class IdentityMatchPipelineIntegrationTestConfig {
         IdentityMatchPipelineIntegrationTestConfig::class,
         LoggerConfig::class,
         IdentityMatchCandidateService::class,
+        IdentityNormalizationService::class,
         IdentityMatchScoringService::class,
         IdentityMatchSuggestionService::class,
     ],
