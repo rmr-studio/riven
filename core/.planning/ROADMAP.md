@@ -45,7 +45,7 @@ Plans:
   3. A candidate matched on 2+ signals passes regardless of individual signal weights
   4. An EMAIL value matched against a NAME attribute receives a 0.5x score multiplier
   5. Signal type (NAME, COMPANY, PHONE, EMAIL, CUSTOM) is readable from semantic metadata and flows into MatchSignalType resolution
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
 - [ ] 02-01-PLAN.md — Model extensions, MatchSource enum, signal_type schema/JPA/cache, candidate query wiring
 - [ ] 02-02-PLAN.md — Confidence gate + cross-type discount in scoring service with unit tests
@@ -101,7 +101,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Signal-Type-Aware Normalization + Candidate Query Fixes | 2/2 | Complete   | 2026-03-28 |
-| 2. Scoring Improvements + Signal Classification | 0/TBD | Not started | - |
+| 2. Scoring Improvements + Signal Classification | 1/2 | In Progress|  |
 | 3. Nickname Lookup + Token-Set Similarity | 0/TBD | Not started | - |
 | 4. Email Decomposition Strategy | 0/TBD | Not started | - |
 | 5. Phonetic Matching + Method Consolidation | 0/TBD | Not started | - |

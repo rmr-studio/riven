@@ -1,0 +1,92 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: planning
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-03-29T05:11:36.392Z"
+last_activity: 2026-03-28 — Roadmap created
+progress:
+  total_phases: 5
+  completed_phases: 1
+  total_plans: 4
+  completed_plans: 3
+  percent: 0
+---
+
+# Project State
+
+## Project Reference
+
+See: .planning/PROJECT.md (updated 2026-03-28)
+
+**Core value:** Match the entities that a human reviewer would recognize as the same real-world identity, even when the character-level representation differs significantly.
+**Current focus:** Phase 1 - Signal-Type-Aware Normalization + Candidate Query Fixes
+
+## Current Position
+
+Phase: 1 of 5 (Signal-Type-Aware Normalization + Candidate Query Fixes)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-03-28 — Roadmap created
+
+Progress: [░░░░░░░░░░] 0%
+
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed: 0
+- Average duration: -
+- Total execution time: 0 hours
+
+**By Phase:**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| - | - | - | - |
+
+**Recent Trend:**
+- Last 5 plans: -
+- Trend: -
+
+*Updated after each plan completion*
+| Phase 01 P01 | 3 | 1 tasks | 2 files |
+| Phase 01 P02 | 15 | 2 tasks | 4 files |
+| Phase 02 P01 | 67 | 2 tasks | 12 files |
+
+## Accumulated Context
+
+### Decisions
+
+Decisions are logged in PROJECT.md Key Decisions table.
+Recent decisions affecting current work:
+
+- Project: Private methods over strategy interface — 4 strategies don't justify a plugin system
+- Project: Exact-digits query for PHONE — pg_trgm blocking can't match differently-formatted phones
+- Project: Static FREE_EMAIL_DOMAINS skip-set — ~30 hardcoded domains, no query overhead
+- Project: signal_type tag on semantic metadata — makes signal type first-class workspace config
+- Project: matchSource field on CandidateMatch — default TRIGRAM for backward compat
+- [Phase 01]: Hardcoded NAME_STOPWORDS and COMPANY_STOPWORDS as companion object Set constants in IdentityNormalizationService — no dynamic config needed
+- [Phase 01]: COMPANY strips stopwords from end only; NAME strips from both start and end (position-aware)
+- [Phase 01]: Country code strip targets only 11+ digit numbers starting with 1 (North America) — non-US numbers preserved
+- [Phase 01]: Kotlin union for phone exact-digits (not SQL UNION) — simpler, dedup handled by mergeCandidates
+- [Phase 01]: CANDIDATE_LIMIT bumped to 100 (was 50) to compensate for DISTINCT ON removal
+- [Phase 01]: mergeCandidates groupBy key changed to (entityId, attributeId) to preserve multi-attribute entities
+- [Phase 02-01]: fromColumnValue() chosen over valueOf() for CUSTOM->CUSTOM_IDENTIFIER mapping
+- [Phase 02-01]: CUSTOM_IDENTIFIER as fallback when signal_type column is null (pre-existing rows)
+- [Phase 02-01]: matchSource defaults to TRIGRAM for backward Temporal serialization compatibility
+
+### Pending Todos
+
+None yet.
+
+### Blockers/Concerns
+
+- Phase 5 introduces fuzzystrmatch PostgreSQL extension — requires discussion before adding (per CLAUDE.md rules). Already pre-approved in PROJECT.md constraints.
+- CandidateMatch crosses Temporal activity boundaries — new fields (candidateSchemaType, matchSource) need Jackson-compatible defaults.
+
+## Session Continuity
+
+Last session: 2026-03-29T05:11:36.391Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None
