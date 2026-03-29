@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-03-29T05:11:36.392Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-03-29T05:16:07.925Z"
 last_activity: 2026-03-28 — Roadmap created
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -53,6 +53,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P01 | 3 | 1 tasks | 2 files |
 | Phase 01 P02 | 15 | 2 tasks | 4 files |
 | Phase 02 P01 | 67 | 2 tasks | 12 files |
+| Phase 02 P02 | 2 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,8 @@ Recent decisions affecting current work:
 - [Phase 02-01]: fromColumnValue() chosen over valueOf() for CUSTOM->CUSTOM_IDENTIFIER mapping
 - [Phase 02-01]: CUSTOM_IDENTIFIER as fallback when signal_type column is null (pre-existing rows)
 - [Phase 02-01]: matchSource defaults to TRIGRAM for backward Temporal serialization compatibility
+- [Phase 02]: Confidence gate checks DEFAULT_WEIGHTS base weight, not discounted MatchSignal.weight — prevents cross-type double-penalty
+- [Phase 02]: Null candidateSignalType treated as same-type (no discount) for backward Temporal serialization compatibility
 
 ### Pending Todos
 
@@ -87,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T05:11:36.391Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-03-29T05:16:07.923Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None
