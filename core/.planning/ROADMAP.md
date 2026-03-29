@@ -12,7 +12,7 @@ Five incremental phases replace the single-strategy pg_trgm pipeline with a mult
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Signal-Type-Aware Normalization + Candidate Query Fixes** - Foundation normalization pipeline and structural query bug fixes that unblock all downstream phases
+- [x] **Phase 1: Signal-Type-Aware Normalization + Candidate Query Fixes** - Foundation normalization pipeline and structural query bug fixes that unblock all downstream phases (completed 2026-03-28)
 - [ ] **Phase 2: Scoring Improvements + Signal Classification** - Confidence gate, cross-type discounting, and signal_type tag that make scores trustworthy
 - [ ] **Phase 3: Nickname Lookup + Token-Set Similarity** - Name variant matching via nickname expansion and word-token overlap
 - [ ] **Phase 4: Email Decomposition Strategy** - Domain-aware candidate discovery with local-part tokenization and free-domain exclusion
@@ -30,7 +30,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Text with diacritics ("Jose Garcia") normalizes to plain ASCII before comparison
   4. Title/suffix stopwords (Dr., PhD, Inc.) are stripped before matching
   5. An entity with two matching attributes produces two candidate rows (not one collapsed by DISTINCT ON), and the requireNotNull replacement compiles cleanly
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 01-01-PLAN.md — Create IdentityNormalizationService with signal-type-aware dispatch and unit tests
 - [ ] 01-02-PLAN.md — Wire normalization into CandidateService, remove DISTINCT ON, add phone exact-digits query, fix requireNotNull
@@ -45,7 +45,10 @@ Plans:
   3. A candidate matched on 2+ signals passes regardless of individual signal weights
   4. An EMAIL value matched against a NAME attribute receives a 0.5x score multiplier
   5. Signal type (NAME, COMPANY, PHONE, EMAIL, CUSTOM) is readable from semantic metadata and flows into MatchSignalType resolution
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 02-01-PLAN.md — Model extensions, MatchSource enum, signal_type schema/JPA/cache, candidate query wiring
+- [ ] 02-02-PLAN.md — Confidence gate + cross-type discount in scoring service with unit tests
 
 ### Phase 3: Nickname Lookup + Token-Set Similarity
 **Goal**: NAME signal types produce candidates for known nickname pairs and for name inversions
@@ -56,7 +59,10 @@ Plans:
   2. NicknameExpander.expand() returns all known variants for a given canonical name
   3. Token-set overlap correctly identifies "Smith John" and "John Smith" as equivalent via TokenSimilarity
   4. A pipeline integration test confirms William/Bill nickname match produces a merge suggestion
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 02-01-PLAN.md — Model extensions, MatchSource enum, signal_type schema/JPA/cache, candidate query wiring
+- [ ] 02-02-PLAN.md — Confidence gate + cross-type discount in scoring service with unit tests
 
 ### Phase 4: Email Decomposition Strategy
 **Goal**: EMAIL signal types discover candidates with same domain and similar local parts, while free email domains are excluded to prevent candidate explosion
@@ -67,7 +73,10 @@ Plans:
   2. "jsmith@gmail.com" does NOT trigger the domain-aware query (gmail is in the free-domain skip set)
   3. EmailMatcher.tokenizeLocal("john.smith") returns ["john", "smith"]
   4. A pipeline integration test confirms email domain match produces a suggestion for a corporate domain
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 02-01-PLAN.md — Model extensions, MatchSource enum, signal_type schema/JPA/cache, candidate query wiring
+- [ ] 02-02-PLAN.md — Confidence gate + cross-type discount in scoring service with unit tests
 
 ### Phase 5: Phonetic Matching + Method Consolidation
 **Goal**: NAME signal types discover phonetically similar candidates via dmetaphone, and all candidate query paths are consolidated into a single when(signalType) dispatch
@@ -79,7 +88,10 @@ Plans:
   3. All candidate query strategies are dispatched from a single when(signalType) expression with private methods — no inline if-chains
   4. A pipeline integration test confirms phonetic match (Smith/Smythe) produces a suggestion
   5. A pipeline integration test confirms multi-strategy merge produces correct composite scores
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 02-01-PLAN.md — Model extensions, MatchSource enum, signal_type schema/JPA/cache, candidate query wiring
+- [ ] 02-02-PLAN.md — Confidence gate + cross-type discount in scoring service with unit tests
 
 ## Progress
 
@@ -88,7 +100,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Signal-Type-Aware Normalization + Candidate Query Fixes | 1/2 | In Progress|  |
+| 1. Signal-Type-Aware Normalization + Candidate Query Fixes | 2/2 | Complete   | 2026-03-28 |
 | 2. Scoring Improvements + Signal Classification | 0/TBD | Not started | - |
 | 3. Nickname Lookup + Token-Set Similarity | 0/TBD | Not started | - |
 | 4. Email Decomposition Strategy | 0/TBD | Not started | - |
