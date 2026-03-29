@@ -14,9 +14,9 @@ export function Hero() {
   };
 
   const gradients2: ThemeStaticImages = {
-    light: 'images/texture/static-gradient-5.webp',
-    dark: 'images/texture/static-gradient-5.webp',
-    amber: 'images/texture/static-gradient-5.webp',
+    light: 'images/texture/static-gradient-4.webp',
+    dark: 'images/texture/static-gradient-4.webp',
+    amber: 'images/texture/static-gradient-4.webp',
   };
 
   const dashboardShaders = {
@@ -59,7 +59,7 @@ export function Hero() {
         <ShaderContainer
           priority
           staticImages={gradients}
-          className="z-50 mr-0! ml-12! w-full p-0 shadow-lg shadow-foreground/30 lg:mr-4! lg:ml-0! dark:shadow-none"
+          className="z-50 mx-0! w-full p-0 shadow-lg shadow-foreground/30 lg:mr-4! lg:ml-0! dark:shadow-none"
         >
           <section className="p-4">
             <div className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-24 bg-gradient-to-r from-black/60 via-black/25 to-transparent md:w-40 3xl:block" />
@@ -73,7 +73,7 @@ export function Hero() {
           priority
           shaders={dashboardShaders}
           staticImages={gradients2}
-          className="z-50 mr-8! ml-0! rounded-l-none rounded-r-lg! p-0 shadow-lg shadow-foreground/40 lg:mr-0! lg:ml-4! lg:rounded-l-lg xl:w-2/5 dark:shadow-none"
+          className="z-50 mx-0! rounded-l-none rounded-r-lg! p-0 shadow-lg shadow-foreground/40 lg:mr-0! lg:ml-4! lg:rounded-l-lg xl:w-2/5 dark:shadow-none"
         >
           <section className="p-4">
             <div className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-24 bg-gradient-to-r from-black/60 via-black/25 to-transparent md:w-40 3xl:block" />
