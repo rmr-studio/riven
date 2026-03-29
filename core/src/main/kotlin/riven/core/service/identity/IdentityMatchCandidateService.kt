@@ -5,6 +5,7 @@ import jakarta.persistence.EntityManager
 import org.springframework.stereotype.Service
 import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.identity.MatchSignalType
+import riven.core.enums.identity.MatchSource
 import riven.core.models.identity.CandidateMatch
 import java.util.UUID
 
@@ -152,7 +153,8 @@ class IdentityMatchCandidateService(
             SELECT ea.entity_id AS candidate_entity_id,
                    ea.attribute_id AS candidate_attribute_id,
                    ea.value->>'value' AS candidate_value,
-                   similarity(ea.value->>'value', :inputValue) AS sim_score
+                   similarity(ea.value->>'value', :inputValue) AS sim_score,
+                   sm.signal_type AS candidate_signal_type
             FROM entity_attributes ea
             JOIN entity_type_semantic_metadata sm
                 ON sm.workspace_id = :workspaceId
@@ -170,7 +172,7 @@ class IdentityMatchCandidateService(
         """.trimIndent()
 
         // NOTE: Candidates are not filtered by schema type — cross-type matches use the trigger's
-        // signal type. See TODO-IR-008 for planned cross-type score discounting.
+        // signal type. candidateSignalType from sm.signal_type enables cross-type discounting downstream.
         val query = entityManager.createNativeQuery(sql)
         query.setParameter("workspaceId", workspaceId)
         query.setParameter("triggerEntityId", triggerEntityId)
@@ -178,12 +180,16 @@ class IdentityMatchCandidateService(
 
         val rows = query.resultList as List<Array<Any>>
         return rows.map { row ->
+            val rawSignalType = row[4]?.toString()
+            val candidateSignalType = MatchSignalType.fromColumnValue(rawSignalType)
             CandidateMatch(
                 candidateEntityId = parseUuid(row[0]),
                 candidateAttributeId = parseUuid(row[1]),
                 candidateValue = row[2].toString(),
                 signalType = signalType,
                 similarityScore = (row[3] as Number).toDouble(),
+                candidateSignalType = candidateSignalType,
+                matchSource = MatchSource.TRIGRAM,
             )
         }
     }
@@ -212,7 +218,8 @@ class IdentityMatchCandidateService(
             SELECT ea.entity_id   AS candidate_entity_id,
                    ea.attribute_id AS candidate_attribute_id,
                    ea.value->>'value' AS candidate_value,
-                   1.0            AS sim_score
+                   1.0            AS sim_score,
+                   sm.signal_type AS candidate_signal_type
             FROM entity_attributes ea
             JOIN entity_type_semantic_metadata sm
                 ON sm.workspace_id = :workspaceId
@@ -234,12 +241,16 @@ class IdentityMatchCandidateService(
 
         val rows = query.resultList as List<Array<Any>>
         return rows.map { row ->
+            val rawSignalType = row[4]?.toString()
+            val candidateSignalType = MatchSignalType.fromColumnValue(rawSignalType)
             CandidateMatch(
                 candidateEntityId = parseUuid(row[0]),
                 candidateAttributeId = parseUuid(row[1]),
                 candidateValue = row[2].toString(),
                 signalType = MatchSignalType.PHONE,
                 similarityScore = (row[3] as Number).toDouble(),
+                candidateSignalType = candidateSignalType,
+                matchSource = MatchSource.EXACT_NORMALIZED,
             )
         }
     }

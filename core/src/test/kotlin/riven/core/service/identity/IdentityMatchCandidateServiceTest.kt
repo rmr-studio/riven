@@ -73,9 +73,10 @@ class IdentityMatchCandidateServiceTest {
     /**
      * Creates a mock Query for the candidate similarity search.
      *
-     * Each row is Array<Any>: [candidateEntityId, candidateAttributeId, candidateValue, simScore]
+     * Each row is Array<Any?>: [candidateEntityId, candidateAttributeId, candidateValue, simScore, candidateSignalType]
+     * candidateSignalType defaults to null (no signal_type stored on metadata row).
      */
-    private fun candidateQuery(rows: List<Array<Any>>): Query = mock<Query>().also {
+    private fun candidateQuery(rows: List<Array<Any?>>): Query = mock<Query>().also {
         whenever(it.setParameter(any<String>(), any())).thenReturn(it)
         whenever(it.resultList).thenReturn(rows)
     }
@@ -152,13 +153,13 @@ class IdentityMatchCandidateServiceTest {
 
             // Trigram query returns a candidate at score 0.7
             val trigramRows = listOf(
-                arrayOf<Any>(candidateEntityId.toString(), candidateAttributeId.toString(), "(555) 123-4567", 0.7),
+                arrayOf<Any?>(candidateEntityId.toString(), candidateAttributeId.toString(), "(555) 123-4567", 0.7, null),
             )
             val trigramQ = candidateQuery(trigramRows)
 
             // Exact-digits query returns the SAME candidate at score 1.0
             val exactDigitsRows = listOf(
-                arrayOf<Any>(candidateEntityId.toString(), candidateAttributeId.toString(), "(555) 123-4567", 1.0),
+                arrayOf<Any?>(candidateEntityId.toString(), candidateAttributeId.toString(), "(555) 123-4567", 1.0, null),
             )
             val exactDigitsQ = candidateQuery(exactDigitsRows)
 
@@ -190,10 +191,10 @@ class IdentityMatchCandidateServiceTest {
 
             // Trigram returns one entity, exact-digits returns a DIFFERENT entity
             val trigramRows = listOf(
-                arrayOf<Any>(entityFromTrigram.toString(), attrFromTrigram.toString(), "555-1234567", 0.85),
+                arrayOf<Any?>(entityFromTrigram.toString(), attrFromTrigram.toString(), "555-1234567", 0.85, null),
             )
             val exactDigitsRows = listOf(
-                arrayOf<Any>(entityFromExactDigits.toString(), attrFromExactDigits.toString(), "(555) 123-4567", 1.0),
+                arrayOf<Any?>(entityFromExactDigits.toString(), attrFromExactDigits.toString(), "(555) 123-4567", 1.0, null),
             )
 
             whenever(entityManager.createNativeQuery(any()))
@@ -227,8 +228,8 @@ class IdentityMatchCandidateServiceTest {
             val candidateAttrId1 = UUID.randomUUID()
             val candidateAttrId2 = UUID.randomUUID()
             val candidateRows = listOf(
-                arrayOf<Any>(candidateEntityId.toString(), candidateAttrId1.toString(), "test@example.com", 0.95),
-                arrayOf<Any>(candidateEntityId.toString(), candidateAttrId2.toString(), "test+alias@example.com", 0.70),
+                arrayOf<Any?>(candidateEntityId.toString(), candidateAttrId1.toString(), "test@example.com", 0.95, null),
+                arrayOf<Any?>(candidateEntityId.toString(), candidateAttrId2.toString(), "test+alias@example.com", 0.70, null),
             )
             val candidateQMock = candidateQuery(candidateRows)
 
@@ -255,8 +256,8 @@ class IdentityMatchCandidateServiceTest {
 
             // Two rows for the same (entityId, attributeId) pair — same attribute, different scores
             val candidateRows = listOf(
-                arrayOf<Any>(candidateEntityId.toString(), candidateAttributeId.toString(), "test@example.com", 0.95),
-                arrayOf<Any>(candidateEntityId.toString(), candidateAttributeId.toString(), "test@example.com", 0.70),
+                arrayOf<Any?>(candidateEntityId.toString(), candidateAttributeId.toString(), "test@example.com", 0.95, null),
+                arrayOf<Any?>(candidateEntityId.toString(), candidateAttributeId.toString(), "test@example.com", 0.70, null),
             )
             val candidateQMock = candidateQuery(candidateRows)
 
