@@ -127,13 +127,11 @@ class EntityProjectionServiceTest : BaseServiceTest() {
         entityId: UUID,
         attributeId: UUID = UUID.randomUUID(),
         value: String = "test-value",
-    ): EntityAttributeEntity = EntityAttributeEntity(
-        id = UUID.randomUUID(),
+    ): EntityAttributeEntity = EntityFactory.createEntityAttributeEntity(
         entityId = entityId,
         workspaceId = workspaceId,
         typeId = targetEntityTypeId,
         attributeId = attributeId,
-        schemaType = SchemaType.TEXT,
         value = JsonNodeFactory.instance.textNode(value),
     )
 

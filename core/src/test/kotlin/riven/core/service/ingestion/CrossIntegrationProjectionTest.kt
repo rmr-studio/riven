@@ -11,8 +11,8 @@ import org.junit.jupiter.api.TestMethodOrder
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.testcontainers.junit.jupiter.Testcontainers
-import riven.core.entity.entity.EntityRelationshipEntity
 import riven.core.entity.entity.EntityTypeEntity
+import riven.core.service.util.factory.entity.EntityFactory
 import riven.core.enums.integration.SourceType
 import java.util.UUID
 
@@ -154,7 +154,8 @@ class CrossIntegrationProjectionTest : ProjectionPipelineIntegrationTestBase() {
 
             // Manually create a relationship link between a projected customer and a projected ticket
             entityRelationshipRepository.save(
-                EntityRelationshipEntity(
+                EntityFactory.createRelationshipEntity(
+                    id = null,
                     workspaceId = workspaceId,
                     sourceId = customerEntityId,
                     targetId = ticketEntityId,

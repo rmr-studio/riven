@@ -85,7 +85,7 @@ object IntegrationFactory {
         workspaceId: UUID? = UUID.randomUUID(),
         sourceEntityTypeId: UUID = UUID.randomUUID(),
         targetEntityTypeId: UUID = UUID.randomUUID(),
-        relationshipDefId: UUID? = UUID.randomUUID(),
+        relationshipDefId: UUID? = null,
         autoCreate: Boolean = true,
     ): ProjectionRuleEntity {
         return ProjectionRuleEntity(

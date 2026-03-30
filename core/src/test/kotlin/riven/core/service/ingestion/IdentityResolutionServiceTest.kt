@@ -13,8 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Configuration
 import org.springframework.test.context.bean.override.mockito.MockitoBean
-import riven.core.entity.entity.EntityAttributeEntity
-import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.integration.SourceType
 import riven.core.models.ingestion.MatchType
 import riven.core.models.ingestion.ResolutionResult
@@ -127,26 +125,22 @@ class IdentityResolutionServiceTest {
                 .thenReturn(setOf(identifierAttrId))
 
             // Integration entity has an attribute with the identifier value
-            val integrationAttr = EntityAttributeEntity(
-                id = UUID.randomUUID(),
+            val integrationAttr = EntityFactory.createEntityAttributeEntity(
                 entityId = integrationEntityId,
                 workspaceId = workspaceId,
                 typeId = integrationTypeId,
                 attributeId = identifierAttrId,
-                schemaType = SchemaType.TEXT,
                 value = valueNode,
             )
             whenever(entityAttributeRepository.findByEntityIdIn(listOf(integrationEntityId)))
                 .thenReturn(listOf(integrationAttr))
 
             // Core entity attribute matches the identifier value
-            val coreAttr = EntityAttributeEntity(
-                id = UUID.randomUUID(),
+            val coreAttr = EntityFactory.createEntityAttributeEntity(
                 entityId = coreEntityId,
                 workspaceId = workspaceId,
                 typeId = targetEntityTypeId,
                 attributeId = identifierAttrId,
-                schemaType = SchemaType.TEXT,
                 value = valueNode,
             )
             whenever(
@@ -227,35 +221,29 @@ class IdentityResolutionServiceTest {
                 .thenReturn(setOf(identifierAttrId))
 
             // Integration entity has an identifier attribute
-            val integrationAttr = EntityAttributeEntity(
-                id = UUID.randomUUID(),
+            val integrationAttr = EntityFactory.createEntityAttributeEntity(
                 entityId = integrationEntityId,
                 workspaceId = workspaceId,
                 typeId = integrationTypeId,
                 attributeId = identifierAttrId,
-                schemaType = SchemaType.TEXT,
                 value = valueNode,
             )
             whenever(entityAttributeRepository.findByEntityIdIn(listOf(integrationEntityId)))
                 .thenReturn(listOf(integrationAttr))
 
             // Two different core entities match the same identifier value
-            val coreAttr1 = EntityAttributeEntity(
-                id = UUID.randomUUID(),
+            val coreAttr1 = EntityFactory.createEntityAttributeEntity(
                 entityId = coreEntityId1,
                 workspaceId = workspaceId,
                 typeId = targetEntityTypeId,
                 attributeId = identifierAttrId,
-                schemaType = SchemaType.TEXT,
                 value = valueNode,
             )
-            val coreAttr2 = EntityAttributeEntity(
-                id = UUID.randomUUID(),
+            val coreAttr2 = EntityFactory.createEntityAttributeEntity(
                 entityId = coreEntityId2,
                 workspaceId = workspaceId,
                 typeId = targetEntityTypeId,
                 attributeId = identifierAttrId,
-                schemaType = SchemaType.TEXT,
                 value = valueNode,
             )
             whenever(

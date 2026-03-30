@@ -28,6 +28,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 import riven.core.entity.entity.EntityAttributeEntity
 import riven.core.entity.entity.EntityEntity
+import riven.core.service.util.factory.entity.EntityFactory
 import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.integration.SourceType
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
@@ -134,10 +135,7 @@ class ProjectionPipelineIntegrationTestConfig {
     fun authTokenService(logger: KLogger): riven.core.service.auth.AuthTokenService {
         val testUserId = UUID.fromString("e0000000-0000-0000-0000-000000000099")
         return object : riven.core.service.auth.AuthTokenService(logger) {
-            override fun getUserId(): UUID {
-                System.err.println("[AUTH-OVERRIDE] getUserId called, returning $testUserId")
-                return testUserId
-            }
+            override fun getUserId(): UUID = testUserId
             override fun getUserEmail(): String = "e2e@test.com"
         }
     }
@@ -311,7 +309,7 @@ abstract class ProjectionPipelineIntegrationTestBase {
         val entityIds = mutableListOf<UUID>()
         for ((externalId, attributes) in records) {
             val entity = entityRepository.save(
-                EntityEntity(
+                EntityFactory.createEntityEntity(
                     workspaceId = workspaceId,
                     typeId = entityTypeId,
                     typeKey = entityType.key,

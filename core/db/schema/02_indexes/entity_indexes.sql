@@ -73,7 +73,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_entities_integration_dedup
 -- Distinct from the dedup index (which includes source_integration_id) because
 -- projection matches across integration boundaries by entity_type_id.
 CREATE INDEX IF NOT EXISTS idx_entities_identity_resolution
-    ON entities (entity_type_id, workspace_id, source_external_id)
+    ON entities (type_id, workspace_id, source_external_id)
     WHERE deleted = false AND source_external_id IS NOT NULL;
 
 -- =====================================================

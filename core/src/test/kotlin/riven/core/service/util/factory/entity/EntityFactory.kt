@@ -89,7 +89,7 @@ object EntityFactory {
      * Creates an EntityRelationshipEntity (relationship instance) with the given parameters.
      */
     fun createRelationshipEntity(
-        id: UUID = UUID.randomUUID(),
+        id: UUID? = UUID.randomUUID(),
         workspaceId: UUID = UUID.randomUUID(),
         sourceId: UUID = UUID.randomUUID(),
         targetId: UUID = UUID.randomUUID(),
@@ -149,6 +149,29 @@ object EntityFactory {
     }
 
     /**
+     * Creates an EntityAttributeEntity with the given parameters and reasonable defaults.
+     */
+    fun createEntityAttributeEntity(
+        id: UUID? = UUID.randomUUID(),
+        entityId: UUID = UUID.randomUUID(),
+        workspaceId: UUID = UUID.randomUUID(),
+        typeId: UUID = UUID.randomUUID(),
+        attributeId: UUID = UUID.randomUUID(),
+        schemaType: SchemaType = SchemaType.TEXT,
+        value: com.fasterxml.jackson.databind.JsonNode = com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.textNode("test-value"),
+    ): riven.core.entity.entity.EntityAttributeEntity {
+        return riven.core.entity.entity.EntityAttributeEntity(
+            id = id,
+            entityId = entityId,
+            workspaceId = workspaceId,
+            typeId = typeId,
+            attributeId = attributeId,
+            schemaType = schemaType,
+            value = value,
+        )
+    }
+
+    /**
      * Creates an EntityEntity with the given parameters and reasonable defaults.
      */
     fun createEntityEntity(
@@ -162,6 +185,8 @@ object EntityFactory {
         sourceType: SourceType = SourceType.USER_CREATED,
         sourceIntegrationId: UUID? = null,
         sourceExternalId: String? = null,
+        firstSyncedAt: java.time.ZonedDateTime? = null,
+        lastSyncedAt: java.time.ZonedDateTime? = null,
     ): EntityEntity {
         return EntityEntity(
             id = id,
@@ -174,6 +199,8 @@ object EntityFactory {
             sourceType = sourceType,
             sourceIntegrationId = sourceIntegrationId,
             sourceExternalId = sourceExternalId,
+            firstSyncedAt = firstSyncedAt,
+            lastSyncedAt = lastSyncedAt,
         )
     }
 }

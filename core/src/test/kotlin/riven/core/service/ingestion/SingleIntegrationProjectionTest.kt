@@ -12,6 +12,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.testcontainers.junit.jupiter.Testcontainers
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.integration.SourceType
+import riven.core.service.util.factory.entity.EntityFactory
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import java.util.*
 
@@ -315,7 +316,7 @@ class SingleIntegrationProjectionTest : ProjectionPipelineIntegrationTestBase() 
         val entityType = entityTypeRepository.findById(customerTypeId).orElseThrow()
 
         val entity = entityRepository.save(
-            riven.core.entity.entity.EntityEntity(
+            EntityFactory.createEntityEntity(
                 workspaceId = workspaceId,
                 typeId = customerTypeId,
                 typeKey = entityType.key,

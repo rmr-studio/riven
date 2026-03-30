@@ -2,6 +2,7 @@ package riven.core.service.ingestion
 
 import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Service
+import riven.core.entity.entity.EntityAttributeEntity
 import riven.core.entity.entity.EntityEntity
 import riven.core.models.ingestion.MatchType
 import riven.core.models.ingestion.ResolutionResult
@@ -119,11 +120,35 @@ class IdentityResolutionService(
         val identifierAttrIds = classificationService.getIdentifierAttributeIds(targetEntityTypeId)
         if (identifierAttrIds.isEmpty()) return emptyMap()
 
-        // Extract identifier values from integration entities' attributes
+        val identifierValueToEntityId = extractIdentifierValues(entities, identifierAttrIds)
+        if (identifierValueToEntityId.isEmpty()) return emptyMap()
+
+        val matchingAttributes = entityAttributeRepository.findByIdentifierValuesForEntityType(
+            workspaceId = workspaceId,
+            entityTypeId = targetEntityTypeId,
+            attributeIds = identifierAttrIds,
+            textValues = identifierValueToEntityId.keys,
+        )
+
+        val results = buildResolutionResults(identifierValueToEntityId, matchingAttributes)
+
+        if (results.isNotEmpty()) {
+            logger.debug { "Check 2 (identifierKey): matched ${results.count { it.value is ResolutionResult.ExistingEntity }}/${entities.size} entities" }
+        }
+
+        return results
+    }
+
+    /**
+     * Extracts identifier attribute values from integration entities, returning a map of
+     * text value to the integration entity ID that owns it.
+     */
+    private fun extractIdentifierValues(
+        entities: List<EntityEntity>,
+        identifierAttrIds: Set<UUID>,
+    ): Map<String, UUID> {
         val entityIds = entities.mapNotNull { it.id }
         val allAttributes = entityAttributeRepository.findByEntityIdIn(entityIds)
-
-        // Group by entity and extract identifier values
         val attrsByEntity = allAttributes.groupBy { it.entityId }
         val identifierValueToEntityId = mutableMapOf<String, UUID>()
 
@@ -141,20 +166,20 @@ class IdentityResolutionService(
             }
         }
 
-        if (identifierValueToEntityId.isEmpty()) return emptyMap()
+        return identifierValueToEntityId
+    }
 
-        // Batch query: find target entity attributes matching these identifier values
-        val matchingAttributes = entityAttributeRepository.findByIdentifierValuesForEntityType(
-            workspaceId = workspaceId,
-            entityTypeId = targetEntityTypeId,
-            attributeIds = identifierAttrIds,
-            textValues = identifierValueToEntityId.keys,
-        )
-
-        // Group matched attributes by their text value to detect ambiguous matches
+    /**
+     * Groups matched attributes by identifier value and builds resolution results,
+     * handling ambiguous matches (multiple core entities sharing an identifier value).
+     */
+    private fun buildResolutionResults(
+        identifierValueToEntityId: Map<String, UUID>,
+        matchingAttributes: List<EntityAttributeEntity>,
+    ): Map<UUID, ResolutionResult> {
         val matchesByValue = matchingAttributes.groupBy { it.value?.get("value")?.asText() }
-
         val results = mutableMapOf<UUID, ResolutionResult>()
+
         for ((textValue, integrationEntityId) in identifierValueToEntityId) {
             val coreMatches = matchesByValue[textValue] ?: continue
             val distinctCoreEntityIds = coreMatches.map { it.entityId }.distinct()
@@ -173,10 +198,6 @@ class IdentityResolutionService(
                     warnings = listOf("Ambiguous match: ${distinctCoreEntityIds.size} entities share identifier value '$textValue'"),
                 )
             }
-        }
-
-        if (results.isNotEmpty()) {
-            logger.debug { "Check 2 (identifierKey): matched ${results.count { it.value is ResolutionResult.ExistingEntity }}/${entities.size} entities" }
         }
 
         return results
