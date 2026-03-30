@@ -3,6 +3,7 @@ package riven.core.service.identity
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import riven.core.enums.identity.MatchSource
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Test
@@ -176,6 +177,24 @@ class IdentityMatchPipelineIntegrationTest {
         val attrRowBPhone = UUID.fromString("50000000-0000-0000-0000-000000000004")
         val attrRowCEmail = UUID.fromString("50000000-0000-0000-0000-000000000005")
         val attrRowDEmail = UUID.fromString("50000000-0000-0000-0000-000000000006")
+
+        // TEST-07: Phone formatting variation
+        // Two new attribute type IDs for phone formatting test (separate from main test fixtures)
+        val attrPhoneFormattedId = UUID.fromString("40000000-0000-0000-0000-000000000010")  // semantic metadata target
+        val entityPhoneFormattedA = UUID.fromString("30000000-0000-0000-0000-000000000010")
+        val entityPhoneFormattedB = UUID.fromString("30000000-0000-0000-0000-000000000011")
+        val attrRowPhoneFormattedA = UUID.fromString("50000000-0000-0000-0000-000000000010")
+        val attrRowPhoneFormattedB = UUID.fromString("50000000-0000-0000-0000-000000000011")
+
+        // TEST-08: William/Bill nickname match with corroborating PHONE signal
+        val attrNameNicknameId = UUID.fromString("40000000-0000-0000-0000-000000000020")   // semantic: NAME signal
+        val attrPhoneNicknameId = UUID.fromString("40000000-0000-0000-0000-000000000021")   // semantic: PHONE signal
+        val entityNicknameA = UUID.fromString("30000000-0000-0000-0000-000000000020")  // "William"
+        val entityNicknameB = UUID.fromString("30000000-0000-0000-0000-000000000021")  // "Bill" (B > A for canonical check)
+        val attrRowNicknameAName = UUID.fromString("50000000-0000-0000-0000-000000000020")
+        val attrRowNicknameAPhone = UUID.fromString("50000000-0000-0000-0000-000000000021")
+        val attrRowNicknameBName = UUID.fromString("50000000-0000-0000-0000-000000000022")
+        val attrRowNicknameBPhone = UUID.fromString("50000000-0000-0000-0000-000000000023")
     }
 
     @org.junit.jupiter.api.BeforeAll
@@ -203,6 +222,28 @@ class IdentityMatchPipelineIntegrationTest {
         // Seed semantic metadata: mark email and phone attribute IDs as IDENTIFIER
         insertSemanticMetadata(attrEmailIdForTypeA, "ATTRIBUTE", "IDENTIFIER")
         insertSemanticMetadata(attrPhoneIdForTypeA, "ATTRIBUTE", "IDENTIFIER")
+
+        // TEST-07: Seed phone formatting variation test data.
+        // Entity A stores phone in international format, entity B in a hyphenated local format.
+        // These share the same digits ("8009876543") but differ enough in character composition
+        // that the pg_trgm similarity is below 0.3 — so only the exact-digits query finds the match.
+        // Both use "800" prefix, deliberately different from "555" used by the primary test entities.
+        insertSemanticMetadata(attrPhoneFormattedId, "ATTRIBUTE", "IDENTIFIER", "PHONE")
+        insertAttribute(attrRowPhoneFormattedA, entityPhoneFormattedA, workspaceId, entityTypeId, attrPhoneFormattedId, "PHONE", "+1 (800) 987-6543")
+        insertAttribute(attrRowPhoneFormattedB, entityPhoneFormattedB, workspaceId, entityTypeId, attrPhoneFormattedId, "PHONE", "(800) 987-65-43")
+
+        // TEST-08: Seed William/Bill nickname match with corroborating PHONE signal.
+        // Name attributes use TEXT schema type with signal_type='NAME' in semantic metadata.
+        // Phone attributes use PHONE schema type with signal_type='PHONE' in semantic metadata.
+        // Phone number "7776543210" is deliberately different from other test phone numbers.
+        insertSemanticMetadata(attrNameNicknameId, "ATTRIBUTE", "IDENTIFIER", "NAME")
+        insertSemanticMetadata(attrPhoneNicknameId, "ATTRIBUTE", "IDENTIFIER", "PHONE")
+        // Entity A: "william" + corroborating phone
+        insertAttribute(attrRowNicknameAName, entityNicknameA, workspaceId, entityTypeId, attrNameNicknameId, "TEXT", "william")
+        insertAttribute(attrRowNicknameAPhone, entityNicknameA, workspaceId, entityTypeId, attrPhoneNicknameId, "PHONE", "7776543210")
+        // Entity B: "bill" (nickname for William) + same phone
+        insertAttribute(attrRowNicknameBName, entityNicknameB, workspaceId, entityTypeId, attrNameNicknameId, "TEXT", "bill")
+        insertAttribute(attrRowNicknameBPhone, entityNicknameB, workspaceId, entityTypeId, attrPhoneNicknameId, "PHONE", "7776543210")
 
         // Entity A: email="john@example.com", phone="555-1234" (trigger)
         insertAttribute(attrRowAEmail, entityAId, workspaceId, entityTypeId, attrEmailIdForTypeA, "EMAIL", "john@example.com")
@@ -234,6 +275,28 @@ class IdentityMatchPipelineIntegrationTest {
                VALUES (gen_random_uuid(), ?, ?, ?::text, ?, ?::text, '[]'::jsonb, false, NOW(), NOW())
                ON CONFLICT (entity_type_id, target_type, target_id) DO NOTHING""",
             workspaceId, entityTypeId, targetType, targetId, classification,
+        )
+    }
+
+    /**
+     * Inserts semantic metadata with an optional signal_type column for signal-routing tests.
+     *
+     * The signal_type column is required for NAME and COMPANY signals since those are not
+     * derivable from SchemaType alone. When null, fromColumnValue() falls back to fromSchemaType().
+     */
+    private fun insertSemanticMetadata(
+        targetId: UUID,
+        targetType: String,
+        classification: String,
+        signalType: String?,
+    ) {
+        jdbcTemplate.update(
+            """INSERT INTO entity_type_semantic_metadata
+               (id, workspace_id, entity_type_id, target_type, target_id, classification, signal_type, tags,
+                deleted, created_at, updated_at)
+               VALUES (gen_random_uuid(), ?, ?, ?::text, ?, ?::text, ?, '[]'::jsonb, false, NOW(), NOW())
+               ON CONFLICT (entity_type_id, target_type, target_id) DO NOTHING""",
+            workspaceId, entityTypeId, targetType, targetId, classification, signalType,
         )
     }
 
@@ -452,5 +515,92 @@ class IdentityMatchPipelineIntegrationTest {
             requireNotNull(pendingRows) { "queryForObject returned null for pending match_suggestions count" } >= 1,
             "Expected a new PENDING suggestion to be created after rejection and score improvement",
         )
+    }
+
+    /**
+     * TEST-07: Phone formatting variation produces match via exact-digits query.
+     *
+     * Entity A has phone "+1 (800) 987-6543" (international format → normalized to "8009876543").
+     * Entity B has phone "(800) 987-65-43" (unusual hyphenation → different character composition).
+     * The pg_trgm similarity of the normalized trigger "8009876543" vs raw "(800) 987-65-43" is
+     * below the 0.3 blocking threshold, so trigram blocking FAILS. The exact-digits query strips
+     * all non-digit chars from the stored value and compares to the normalized digits — matching.
+     *
+     * Expected: Entity B appears as a candidate with matchSource=EXACT_NORMALIZED (score=1.0).
+     */
+    @Test
+    @org.junit.jupiter.api.Order(6)
+    fun `phone formatting variation produces match via exact-digits query`() {
+        val candidates = candidateService.findCandidates(entityPhoneFormattedA, workspaceId)
+
+        assertTrue(candidates.isNotEmpty(), "Expected at least one candidate for phone-formatted entity A")
+
+        val entityBCandidate = candidates.firstOrNull { it.candidateEntityId == entityPhoneFormattedB }
+        assertNotNull(entityBCandidate, "Expected entity B (raw digits) to appear as candidate for entity A (+1 (555) 123-4567)")
+
+        assertEquals(
+            MatchSource.EXACT_NORMALIZED, entityBCandidate!!.matchSource,
+            "Expected matchSource=EXACT_NORMALIZED for phone formatting variation match",
+        )
+        assertEquals(1.0, entityBCandidate.similarityScore, 1e-6, "Expected similarity score=1.0 for exact-digits match")
+    }
+
+    /**
+     * TEST-08: William/Bill nickname match with corroborating PHONE signal produces a merge suggestion.
+     *
+     * Entity A (nickname-A) has NAME="william" + PHONE="5559876543".
+     * Entity B (nickname-B) has NAME="bill" + PHONE="5559876543".
+     * "william" expands to include "bill" via NicknameExpander, so the nickname query finds entity B.
+     * The PHONE signal (same digits, exact match) corroborates the NAME signal, pushing the
+     * composite score above the 0.85 confidence gate.
+     *
+     * Expected:
+     * - Entity B appears in candidates with a NICKNAME match on the NAME attribute.
+     * - The scored result exceeds the confidence gate.
+     * - A PENDING suggestion is created.
+     */
+    @Test
+    @org.junit.jupiter.api.Order(7)
+    fun `william bill nickname match with corroborating phone signal produces merge suggestion`() {
+        val candidates = candidateService.findCandidates(entityNicknameA, workspaceId)
+
+        assertTrue(candidates.isNotEmpty(), "Expected candidates for entity A (william)")
+
+        // Verify entity B appears with NICKNAME matchSource on the NAME attribute
+        val nicknameCandidate = candidates.firstOrNull { candidate ->
+            candidate.candidateEntityId == entityNicknameB &&
+                candidate.matchSource == MatchSource.NICKNAME
+        }
+        assertNotNull(
+            nicknameCandidate,
+            "Expected entity B (bill) to appear as NICKNAME candidate for entity A (william). " +
+                "Found candidates: ${candidates.map { "${it.candidateEntityId} matchSource=${it.matchSource}" }}",
+        )
+
+        // Run full pipeline: score + persist suggestions
+        val triggerAttributes = candidateService.getTriggerAttributes(entityNicknameA, workspaceId)
+        val scored = scoringService.scoreCandidates(entityNicknameA, triggerAttributes, candidates)
+
+        val entityBScored = scored.filter { it.targetEntityId == entityNicknameB || it.sourceEntityId == entityNicknameB }
+        assertTrue(
+            entityBScored.isNotEmpty(),
+            "Expected entity B to appear in scored candidates above confidence gate",
+        )
+
+        val count = suggestionService.persistSuggestions(workspaceId, scored, null)
+        assertTrue(count >= 1, "Expected at least one suggestion to be persisted for William/Bill match")
+
+        // Verify PENDING suggestion exists
+        val suggestions = jdbcTemplate.queryForList(
+            "SELECT * FROM match_suggestions WHERE workspace_id = ? AND deleted = false AND status = 'PENDING'",
+            workspaceId,
+        )
+        val nicknameSuggestion = suggestions.firstOrNull { row ->
+            val source = row["source_entity_id"].toString()
+            val target = row["target_entity_id"].toString()
+            source == entityNicknameA.toString() || target == entityNicknameA.toString() ||
+                source == entityNicknameB.toString() || target == entityNicknameB.toString()
+        }
+        assertNotNull(nicknameSuggestion, "Expected a PENDING suggestion for William/Bill pair")
     }
 }
