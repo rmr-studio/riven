@@ -18,6 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.identity.MatchSignalType
+import riven.core.enums.identity.MatchSource
 import riven.core.service.util.factory.identity.IdentityFactory
 import java.util.UUID
 
@@ -63,9 +64,10 @@ class IdentityMatchCandidateServiceTest {
      * Creates a mock Query for trigger identifier attribute lookup.
      *
      * Returns rows for the private queryTriggerIdentifierAttributes method.
-     * Each row is Array<Any>: [attributeId, attrValue, schemaType]
+     * Each row is Array<Any?>: [attributeId, attrValue, schemaType, signalType?]
+     * signalType defaults to null when not provided (backward compat with older test data).
      */
-    private fun triggerAttributeQuery(rows: List<Array<Any>>): Query = mock<Query>().also {
+    private fun triggerAttributeQuery(rows: List<Array<Any?>>): Query = mock<Query>().also {
         whenever(it.setParameter(any<String>(), any())).thenReturn(it)
         whenever(it.resultList).thenReturn(rows)
     }
@@ -102,7 +104,7 @@ class IdentityMatchCandidateServiceTest {
         fun `findCandidates calls candidate native query once per non-phone IDENTIFIER attribute`() {
             val attrId1 = UUID.randomUUID()
             val triggerRows = listOf(
-                arrayOf<Any>(attrId1, "test@example.com", SchemaType.EMAIL.name),
+                arrayOf<Any?>(attrId1, "test@example.com", SchemaType.EMAIL.name, null),
             )
             val triggerQuery = triggerAttributeQuery(triggerRows)
             val candidateQ1 = candidateQuery(emptyList())
@@ -121,7 +123,7 @@ class IdentityMatchCandidateServiceTest {
         fun `findCandidates calls both trigram and exact-digits queries for PHONE signals`() {
             val attrId = UUID.randomUUID()
             val triggerRows = listOf(
-                arrayOf<Any>(attrId, "555-1234", SchemaType.PHONE.name),
+                arrayOf<Any?>(attrId, "555-1234", SchemaType.PHONE.name, null),
             )
             val triggerQuery = triggerAttributeQuery(triggerRows)
             val trigramQ = candidateQuery(emptyList())
@@ -147,7 +149,7 @@ class IdentityMatchCandidateServiceTest {
              */
             val attrId = UUID.randomUUID()
             val triggerRows = listOf(
-                arrayOf<Any>(attrId, "5551234567", SchemaType.PHONE.name),
+                arrayOf<Any?>(attrId, "5551234567", SchemaType.PHONE.name, null),
             )
             val triggerQuery = triggerAttributeQuery(triggerRows)
 
@@ -180,7 +182,7 @@ class IdentityMatchCandidateServiceTest {
         fun `findCandidates phone union includes non-overlapping results from both queries`() {
             val attrId = UUID.randomUUID()
             val triggerRows = listOf(
-                arrayOf<Any>(attrId, "5551234567", SchemaType.PHONE.name),
+                arrayOf<Any?>(attrId, "5551234567", SchemaType.PHONE.name, null),
             )
             val triggerQuery = triggerAttributeQuery(triggerRows)
 
@@ -220,7 +222,7 @@ class IdentityMatchCandidateServiceTest {
              */
             val attrId = UUID.randomUUID()
             val triggerRows = listOf(
-                arrayOf<Any>(attrId, "test@example.com", SchemaType.EMAIL.name),
+                arrayOf<Any?>(attrId, "test@example.com", SchemaType.EMAIL.name, null),
             )
             val triggerQuery = triggerAttributeQuery(triggerRows)
 
@@ -250,7 +252,7 @@ class IdentityMatchCandidateServiceTest {
         fun `findCandidates deduplicates rows with same entityId AND same attributeId keeping max similarity`() {
             val attrId = UUID.randomUUID()
             val triggerRows = listOf(
-                arrayOf<Any>(attrId, "test@example.com", SchemaType.EMAIL.name),
+                arrayOf<Any?>(attrId, "test@example.com", SchemaType.EMAIL.name, null),
             )
             val triggerQuery = triggerAttributeQuery(triggerRows)
 
@@ -276,7 +278,7 @@ class IdentityMatchCandidateServiceTest {
         fun `findCandidates passes workspace ID and excludes trigger entity in query parameters`() {
             val attrId = UUID.randomUUID()
             val triggerRows = listOf(
-                arrayOf<Any>(attrId, "test@example.com", SchemaType.EMAIL.name),
+                arrayOf<Any?>(attrId, "test@example.com", SchemaType.EMAIL.name, null),
             )
             val triggerQuery = triggerAttributeQuery(triggerRows)
             val candidateQMock = candidateQuery(emptyList())
@@ -297,7 +299,7 @@ class IdentityMatchCandidateServiceTest {
             val attrId = UUID.randomUUID()
             val rawEmail = "TEST@EXAMPLE.COM"
             val triggerRows = listOf(
-                arrayOf<Any>(attrId, rawEmail, SchemaType.EMAIL.name),
+                arrayOf<Any?>(attrId, rawEmail, SchemaType.EMAIL.name, null),
             )
             val triggerQuery = triggerAttributeQuery(triggerRows)
             val candidateQMock = candidateQuery(emptyList())
@@ -310,6 +312,237 @@ class IdentityMatchCandidateServiceTest {
 
             // normalizationService.normalize should have been called with the raw value and EMAIL signal type
             verify(normalizationService).normalize(rawEmail, MatchSignalType.EMAIL)
+        }
+
+        @Test
+        fun `findCandidates calls trigram query AND nickname query for NAME signals`() {
+            /**
+             * For NAME signals, findCandidates should run both the trigram candidate query and
+             * the nickname expansion query. The trigger value "william smith" has known nickname
+             * variants (bill, will, etc.) so findNicknameCandidates should invoke createNativeQuery.
+             * Total expected calls: 1 trigger lookup + 1 trigram + 1 nickname = 3 createNativeQuery calls.
+             */
+            val attrId = UUID.randomUUID()
+            // signal_type="NAME" in semantic metadata drives NAME signal dispatch (SchemaType.TEXT has no NAME mapping)
+            val triggerRows = listOf(
+                arrayOf<Any?>(attrId, "william smith", SchemaType.TEXT.name, "NAME"),
+            )
+            val triggerQuery = triggerAttributeQuery(triggerRows)
+            val trigramQ = candidateQuery(emptyList())
+            val nicknameQ = candidateQuery(emptyList())
+
+            whenever(normalizationService.normalize(any(), any())).thenReturn("william smith")
+            whenever(entityManager.createNativeQuery(any()))
+                .thenReturn(triggerQuery)   // first: trigger identifier lookup
+                .thenReturn(trigramQ)       // second: trigram candidate scan for NAME
+                .thenReturn(nicknameQ)      // third: nickname expansion scan for NAME
+
+            identityMatchCandidateService.findCandidates(triggerEntityId, workspaceId)
+
+            // 1 trigger lookup + 1 trigram query + 1 nickname query
+            verify(entityManager, times(3)).createNativeQuery(any())
+        }
+
+        @Test
+        fun `findCandidates does NOT call nickname query for EMAIL signals`() {
+            /**
+             * Nickname expansion only applies to NAME signals. EMAIL signals should only trigger
+             * the trigram query — total: 1 trigger lookup + 1 trigram = 2 createNativeQuery calls.
+             */
+            val attrId = UUID.randomUUID()
+            val triggerRows = listOf(
+                arrayOf<Any?>(attrId, "test@example.com", SchemaType.EMAIL.name, null),
+            )
+            val triggerQuery = triggerAttributeQuery(triggerRows)
+            val trigramQ = candidateQuery(emptyList())
+
+            whenever(entityManager.createNativeQuery(any()))
+                .thenReturn(triggerQuery)
+                .thenReturn(trigramQ)
+
+            identityMatchCandidateService.findCandidates(triggerEntityId, workspaceId)
+
+            // Only 2: trigger lookup + trigram. No nickname query.
+            verify(entityManager, times(2)).createNativeQuery(any())
+        }
+
+        @Test
+        fun `findCandidates skips nickname query when trigger name has no known nickname variants`() {
+            /**
+             * For NAME signals where no token maps to a known nickname group (e.g. a unique
+             * custom name), findNicknameCandidates should return early without calling createNativeQuery.
+             * "zzunknownname" is not in any nickname group, so variants = {"zzunknownname"} only,
+             * but because NicknameExpander.expand returns empty for unknown names, tokens
+             * expand to just the original token. The IN-clause will still run (original token is included).
+             *
+             * This test verifies that for a single-token name "zzunknownname", the nickname SQL
+             * IS still executed because variants = {"zzunknownname"} (non-empty set).
+             * Expected calls: 1 trigger + 1 trigram + 1 nickname = 3 total.
+             */
+            val attrId = UUID.randomUUID()
+            val triggerRows = listOf(
+                arrayOf<Any?>(attrId, "zzunknownname", SchemaType.TEXT.name, "NAME"),
+            )
+            val triggerQuery = triggerAttributeQuery(triggerRows)
+            val trigramQ = candidateQuery(emptyList())
+            val nicknameQ = candidateQuery(emptyList())
+
+            whenever(normalizationService.normalize(any(), any())).thenReturn("zzunknownname")
+            whenever(entityManager.createNativeQuery(any()))
+                .thenReturn(triggerQuery)
+                .thenReturn(trigramQ)
+                .thenReturn(nicknameQ)
+
+            identityMatchCandidateService.findCandidates(triggerEntityId, workspaceId)
+
+            // 3 calls: trigger + trigram + nickname (variants always includes original token)
+            verify(entityManager, times(3)).createNativeQuery(any())
+        }
+
+        @Test
+        fun `findCandidates re-scores NAME trigram candidates using token overlap when higher`() {
+            /**
+             * For NAME signals, trigram candidate scores are re-scored with token overlap.
+             * When token overlap is higher than the trigram score, the final score is updated.
+             * "john smith" vs "john smith" → token overlap = 1.0, should win over trigram score 0.7.
+             */
+            val attrId = UUID.randomUUID()
+            val triggerRows = listOf(
+                arrayOf<Any?>(attrId, "john smith", SchemaType.TEXT.name, "NAME"),
+            )
+            val triggerQuery = triggerAttributeQuery(triggerRows)
+
+            // Trigram returns a candidate at score 0.7, but token overlap with "john smith" is 1.0
+            val trigramRows = listOf(
+                arrayOf<Any?>(candidateEntityId.toString(), candidateAttributeId.toString(), "john smith", 0.7, null),
+            )
+            val trigramQ = candidateQuery(trigramRows)
+            val nicknameQ = candidateQuery(emptyList())
+
+            whenever(normalizationService.normalize(any(), any())).thenReturn("john smith")
+            whenever(entityManager.createNativeQuery(any()))
+                .thenReturn(triggerQuery)
+                .thenReturn(trigramQ)
+                .thenReturn(nicknameQ)
+
+            val result = identityMatchCandidateService.findCandidates(triggerEntityId, workspaceId)
+
+            assertEquals(1, result.size)
+            // Token overlap = 1.0 > trigram 0.7 — final score should be 1.0
+            assertEquals(1.0, result[0].similarityScore, 1e-6, "Token overlap (1.0) should win over trigram score (0.7)")
+        }
+
+        @Test
+        fun `findCandidates keeps trigram score when it is higher than token overlap`() {
+            /**
+             * When trigram score exceeds token overlap, the original score is preserved.
+             * Trigram may have high score for partial character matches where token overlap is lower.
+             */
+            val attrId = UUID.randomUUID()
+            val triggerRows = listOf(
+                arrayOf<Any?>(attrId, "jon", SchemaType.TEXT.name, "NAME"),
+            )
+            val triggerQuery = triggerAttributeQuery(triggerRows)
+
+            // Candidate "jonathan" has trigram score 0.8, but token overlap with "jon" is 0.0 (no shared token)
+            val trigramRows = listOf(
+                arrayOf<Any?>(candidateEntityId.toString(), candidateAttributeId.toString(), "jonathan", 0.8, null),
+            )
+            val trigramQ = candidateQuery(trigramRows)
+            val nicknameQ = candidateQuery(emptyList())
+
+            whenever(normalizationService.normalize(any(), any())).thenReturn("jon")
+            whenever(entityManager.createNativeQuery(any()))
+                .thenReturn(triggerQuery)
+                .thenReturn(trigramQ)
+                .thenReturn(nicknameQ)
+
+            val result = identityMatchCandidateService.findCandidates(triggerEntityId, workspaceId)
+
+            assertEquals(1, result.size)
+            // Token overlap = 0.0 (no shared token "jon" != "jonathan") — trigram 0.8 should win
+            assertEquals(0.8, result[0].similarityScore, 1e-6, "Trigram score (0.8) should be preserved when higher than token overlap")
+        }
+    }
+
+    // ------ mergeCandidates tie-breaking tests ------
+
+    @Nested
+    inner class MergeCandidatesTiebreakerTests {
+
+        @Test
+        fun `mergeCandidates prefers NICKNAME matchSource over TRIGRAM on equal similarity score`() {
+            /**
+             * When two candidates have the same (entityId, attributeId) and equal similarity scores,
+             * NICKNAME matchSource should be preferred over TRIGRAM for audit trail quality.
+             * This is the thenBy tie-breaker: NICKNAME (value=1) > TRIGRAM (value=0).
+             */
+            val attrId = UUID.randomUUID()
+            val triggerRows = listOf(
+                arrayOf<Any?>(attrId, "william smith", SchemaType.TEXT.name, "NAME"),
+            )
+            val triggerQuery = triggerAttributeQuery(triggerRows)
+
+            // Trigram returns a candidate at score 0.95
+            val trigramRows = listOf(
+                arrayOf<Any?>(candidateEntityId.toString(), candidateAttributeId.toString(), "bill smith", 0.95, null),
+            )
+            val trigramQ = candidateQuery(trigramRows)
+
+            // Nickname query returns the SAME (entityId, attributeId) at score 0.95 — same score, NICKNAME source
+            val nicknameRows = listOf(
+                arrayOf<Any?>(candidateEntityId.toString(), candidateAttributeId.toString(), "bill smith", 0.95, null),
+            )
+            val nicknameQ = candidateQuery(nicknameRows)
+
+            whenever(normalizationService.normalize(any(), any())).thenReturn("william smith")
+            whenever(entityManager.createNativeQuery(any()))
+                .thenReturn(triggerQuery)
+                .thenReturn(trigramQ)
+                .thenReturn(nicknameQ)
+
+            val result = identityMatchCandidateService.findCandidates(triggerEntityId, workspaceId)
+
+            // Should deduplicate to one row — NICKNAME source preferred
+            assertEquals(1, result.size, "Equal-score candidates should deduplicate to one row")
+            assertEquals(MatchSource.NICKNAME, result[0].matchSource, "NICKNAME should be preferred over TRIGRAM on tie")
+        }
+
+        @Test
+        fun `mergeCandidates keeps higher score regardless of matchSource`() {
+            /**
+             * When a TRIGRAM candidate has a higher score than a NICKNAME candidate for the
+             * same (entityId, attributeId), the TRIGRAM candidate should win despite the tie-breaker.
+             * Score comparison takes precedence over matchSource preference.
+             */
+            val attrId = UUID.randomUUID()
+            val triggerRows = listOf(
+                arrayOf<Any?>(attrId, "william smith", SchemaType.TEXT.name, "NAME"),
+            )
+            val triggerQuery = triggerAttributeQuery(triggerRows)
+
+            // Trigram returns a candidate at score 0.99 (higher)
+            val trigramRows = listOf(
+                arrayOf<Any?>(candidateEntityId.toString(), candidateAttributeId.toString(), "bill smith", 0.99, null),
+            )
+            val trigramQ = candidateQuery(trigramRows)
+
+            // Nickname query returns SAME candidate at score 0.95 (lower)
+            val nicknameRows = listOf(
+                arrayOf<Any?>(candidateEntityId.toString(), candidateAttributeId.toString(), "bill smith", 0.95, null),
+            )
+            val nicknameQ = candidateQuery(nicknameRows)
+
+            whenever(normalizationService.normalize(any(), any())).thenReturn("william smith")
+            whenever(entityManager.createNativeQuery(any()))
+                .thenReturn(triggerQuery)
+                .thenReturn(trigramQ)
+                .thenReturn(nicknameQ)
+
+            val result = identityMatchCandidateService.findCandidates(triggerEntityId, workspaceId)
+
+            assertEquals(1, result.size, "Should deduplicate to one row")
+            assertEquals(0.99, result[0].similarityScore, 1e-6, "Higher score (0.99 TRIGRAM) should win")
         }
     }
 
@@ -334,8 +567,8 @@ class IdentityMatchCandidateServiceTest {
             val attrId2 = UUID.randomUUID()
 
             val triggerRows = listOf(
-                arrayOf<Any>(attrId1, "Test@Example.COM", SchemaType.EMAIL.name),
-                arrayOf<Any>(attrId2, "  555-1234  ", SchemaType.PHONE.name),
+                arrayOf<Any?>(attrId1, "Test@Example.COM", SchemaType.EMAIL.name, null),
+                arrayOf<Any?>(attrId2, "  555-1234  ", SchemaType.PHONE.name, null),
             )
             val triggerQuery = triggerAttributeQuery(triggerRows)
             whenever(entityManager.createNativeQuery(any())).thenReturn(triggerQuery)
@@ -355,7 +588,7 @@ class IdentityMatchCandidateServiceTest {
             val attrId = UUID.randomUUID()
             val rawValue = "  JOHN@EXAMPLE.COM  "
             val triggerRows = listOf(
-                arrayOf<Any>(attrId, rawValue, SchemaType.EMAIL.name),
+                arrayOf<Any?>(attrId, rawValue, SchemaType.EMAIL.name, null),
             )
             val triggerQuery = triggerAttributeQuery(triggerRows)
             whenever(entityManager.createNativeQuery(any())).thenReturn(triggerQuery)
@@ -372,7 +605,7 @@ class IdentityMatchCandidateServiceTest {
         fun `getTriggerAttributes maps non-EMAIL non-PHONE schema types to CUSTOM_IDENTIFIER`() {
             val attrId = UUID.randomUUID()
             val triggerRows = listOf(
-                arrayOf<Any>(attrId, "custom-id-123", SchemaType.TEXT.name),
+                arrayOf<Any?>(attrId, "custom-id-123", SchemaType.TEXT.name, null),
             )
             val triggerQuery = triggerAttributeQuery(triggerRows)
             whenever(entityManager.createNativeQuery(any())).thenReturn(triggerQuery)

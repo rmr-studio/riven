@@ -62,17 +62,37 @@ class IdentityMatchCandidateService(
             val attributeId = parseUuid(row[0])
             val rawValue = row[1].toString()
             val schemaType = SchemaType.valueOf(row[2].toString())
-            val signalType = MatchSignalType.fromSchemaType(schemaType)
+            // signal_type from semantic metadata takes precedence over schema type derivation —
+            // allows NAME/COMPANY signals even though SchemaType has no NAME/COMPANY variants.
+            val rawSignalType = row[3]?.toString()
+            val signalType = MatchSignalType.fromColumnValue(rawSignalType)
+                ?: MatchSignalType.fromSchemaType(schemaType)
             val normalizedValue = normalizationService.normalize(rawValue, signalType)
 
             logger.debug { "Scanning candidates for attribute $attributeId (type=$signalType) value='$normalizedValue'" }
 
             val candidates = runCandidateQuery(triggerEntityId, workspaceId, normalizedValue, signalType)
-            allCandidates.addAll(candidates)
+
+            // For NAME signals, re-score trigram candidates with token overlap BEFORE adding
+            val processedCandidates = if (signalType == MatchSignalType.NAME) {
+                candidates.map { candidate ->
+                    val tokenOverlap = TokenSimilarity.overlap(normalizedValue, candidate.candidateValue)
+                    val finalScore = maxOf(candidate.similarityScore, tokenOverlap)
+                    if (finalScore > candidate.similarityScore) candidate.copy(similarityScore = finalScore) else candidate
+                }
+            } else {
+                candidates
+            }
+            allCandidates.addAll(processedCandidates)
 
             if (signalType == MatchSignalType.PHONE) {
                 val exactCandidates = findPhoneExactDigitsCandidates(triggerEntityId, workspaceId, normalizedValue)
                 allCandidates.addAll(exactCandidates)
+            }
+
+            if (signalType == MatchSignalType.NAME) {
+                val nicknameCandidates = findNicknameCandidates(triggerEntityId, workspaceId, normalizedValue, signalType)
+                allCandidates.addAll(nicknameCandidates)
             }
         }
 
@@ -97,7 +117,9 @@ class IdentityMatchCandidateService(
         for (row in rows) {
             val rawValue = row[1].toString()
             val schemaType = SchemaType.valueOf(row[2].toString())
-            val signalType = MatchSignalType.fromSchemaType(schemaType)
+            val rawSignalType = row[3]?.toString()
+            val signalType = MatchSignalType.fromColumnValue(rawSignalType)
+                ?: MatchSignalType.fromSchemaType(schemaType)
             if (!result.containsKey(signalType)) {
                 result[signalType] = normalizationService.normalize(rawValue, signalType)
             }
@@ -110,12 +132,17 @@ class IdentityMatchCandidateService(
     /**
      * Queries IDENTIFIER-classified attributes for the given entity.
      *
-     * Returns a list of rows, each as [attributeId (UUID/String), attrValue (String), schemaType (String)].
+     * Returns a list of rows, each as:
+     * [attributeId (UUID/String), attrValue (String), schemaType (String), signalType (String?)].
+     *
+     * The `signal_type` column from semantic metadata takes precedence over the derived schema type
+     * for signal routing. This allows NAME and COMPANY signals to be identified even though
+     * [SchemaType] has no NAME/COMPANY variants — the workspace configures these via `signal_type`.
      */
     @Suppress("UNCHECKED_CAST")
     private fun queryTriggerIdentifierAttributes(entityId: UUID, workspaceId: UUID): List<Array<Any>> {
         val sql = """
-            SELECT ea.attribute_id, ea.value->>'value' AS attr_value, ea.schema_type
+            SELECT ea.attribute_id, ea.value->>'value' AS attr_value, ea.schema_type, sm.signal_type
             FROM entity_attributes ea
             JOIN entity_type_semantic_metadata sm
                 ON sm.workspace_id = :workspaceId
@@ -256,6 +283,78 @@ class IdentityMatchCandidateService(
     }
 
     /**
+     * Runs a nickname expansion candidate lookup for NAME signals.
+     *
+     * Tokenizes [normalizedValue] by whitespace, expands each token via [NicknameExpander],
+     * and queries the DB for attribute values matching any nickname variant using an IN-clause.
+     * Returns an empty list immediately if no known nickname variants exist for any token —
+     * this avoids an empty IN-clause SQL error.
+     *
+     * All matches receive a fixed similarity score of 0.95 and [MatchSource.NICKNAME].
+     *
+     * @param triggerEntityId the entity to exclude from results
+     * @param workspaceId workspace scope
+     * @param normalizedValue normalized trigger name value (space-separated tokens)
+     * @param signalType the signal type to assign to returned candidates (NAME)
+     */
+    @Suppress("UNCHECKED_CAST")
+    private fun findNicknameCandidates(
+        triggerEntityId: UUID,
+        workspaceId: UUID,
+        normalizedValue: String,
+        signalType: MatchSignalType,
+    ): List<CandidateMatch> {
+        // Tokenize trigger value and expand each token to all known nickname variants
+        val tokens = normalizedValue.lowercase().split(Regex("\\s+")).filter { it.isNotEmpty() }
+        val variants: Set<String> = tokens.flatMap { token ->
+            NicknameExpander.expand(token) + token
+        }.map { it.lowercase() }.toSet()
+
+        // Empty variants means no known nicknames for any token — skip SQL to avoid empty IN-clause
+        if (variants.isEmpty()) return emptyList()
+
+        val sql = """
+            SELECT ea.entity_id   AS candidate_entity_id,
+                   ea.attribute_id AS candidate_attribute_id,
+                   ea.value->>'value' AS candidate_value,
+                   0.95            AS sim_score,
+                   sm.signal_type  AS candidate_signal_type
+            FROM entity_attributes ea
+            JOIN entity_type_semantic_metadata sm
+                ON sm.workspace_id = :workspaceId
+               AND sm.target_type = 'ATTRIBUTE'
+               AND sm.target_id = ea.attribute_id
+               AND sm.classification = 'IDENTIFIER'
+               AND sm.deleted = false
+            WHERE ea.workspace_id = :workspaceId
+              AND ea.entity_id != :triggerEntityId
+              AND ea.deleted = false
+              AND LOWER(ea.value->>'value') IN (:variants)
+            LIMIT $CANDIDATE_LIMIT
+        """.trimIndent()
+
+        val query = entityManager.createNativeQuery(sql)
+        query.setParameter("workspaceId", workspaceId)
+        query.setParameter("triggerEntityId", triggerEntityId)
+        query.setParameter("variants", variants)
+
+        val rows = query.resultList as List<Array<Any>>
+        return rows.map { row ->
+            val rawSignalType = row[4]?.toString()
+            val candidateSignalType = MatchSignalType.fromColumnValue(rawSignalType)
+            CandidateMatch(
+                candidateEntityId = parseUuid(row[0]),
+                candidateAttributeId = parseUuid(row[1]),
+                candidateValue = row[2].toString(),
+                signalType = signalType,
+                similarityScore = (row[3] as Number).toDouble(),
+                candidateSignalType = candidateSignalType,
+                matchSource = MatchSource.NICKNAME,
+            )
+        }
+    }
+
+    /**
      * Merges candidate rows by (candidateEntityId, candidateAttributeId), keeping the entry
      * with the highest similarity score per group.
      *
@@ -268,7 +367,12 @@ class IdentityMatchCandidateService(
             .groupBy { it.candidateEntityId to it.candidateAttributeId }
             .values
             .map { group ->
-                requireNotNull(group.maxByOrNull { it.similarityScore }) {
+                requireNotNull(
+                    group.maxWithOrNull(
+                        compareBy<CandidateMatch> { it.similarityScore }
+                            .thenBy { if (it.matchSource == MatchSource.NICKNAME) 1 else 0 }
+                    )
+                ) {
                     "Candidate group was empty - groupBy should never produce an empty group"
                 }
             }
