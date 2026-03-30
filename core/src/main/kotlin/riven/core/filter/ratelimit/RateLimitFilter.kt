@@ -12,7 +12,10 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher
 import org.springframework.security.web.util.matcher.IpAddressMatcher
+import org.springframework.security.web.util.matcher.OrRequestMatcher
 import org.springframework.web.filter.OncePerRequestFilter
 import riven.core.configuration.properties.RateLimitConfigurationProperties
 import riven.core.enums.common.ApiError
@@ -44,14 +47,20 @@ class RateLimitFilter(
 ) : OncePerRequestFilter() {
 
     private val trustedProxyMatchers: List<IpAddressMatcher> =
-        properties.trustedProxyCidrs.map { IpAddressMatcher(it) }
+        properties.trustedProxyCidrs.filter { it.isNotBlank() }.map { IpAddressMatcher(it) }
+
+    private val publicEndpointMatcher = OrRequestMatcher(
+        AntPathRequestMatcher.antMatcher("/api/v1/webhooks/nango"),
+        AntPathRequestMatcher.antMatcher("/api/v1/storage/download/{token}"),
+        AntPathRequestMatcher.antMatcher("/api/v1/avatars/**"),
+    )
 
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
         filterChain: FilterChain,
     ) {
-        if (!properties.enabled || isCorsPreflightRequest(request)) {
+        if (!properties.enabled || isCorsPreflightRequest(request) || publicEndpointMatcher.matches(request)) {
             filterChain.doFilter(request, response)
             return
         }
@@ -115,7 +124,10 @@ class RateLimitFilter(
 
     private fun extractJwt(): Jwt? {
         val authentication = SecurityContextHolder.getContext().authentication ?: return null
-        return authentication.principal as? Jwt
+        return when (authentication) {
+            is JwtAuthenticationToken -> authentication.token
+            else -> authentication.principal as? Jwt
+        }
     }
 
     private fun extractFirstForwardedIp(request: HttpServletRequest): String? =
