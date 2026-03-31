@@ -13,19 +13,21 @@ import { debounce } from '@/lib/util/debounce.util';
 import type { ClassNameProps } from '@riven/utils';
 import { cn } from '@riven/utils';
 
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@riven/ui/button';
 import { Row, SortingState } from '@tanstack/react-table';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { MoreHorizontal, Plus, StickyNote } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { useConfigFormState } from '../../context/configuration-provider';
 import { useEntityDraft } from '../../context/entity-provider';
+import { useEntityQuery } from '../../hooks/query/use-entity-query';
 import { useEntityColumnConfig } from '../../hooks/use-entity-column-config';
 import { useEntityInlineEdit } from '../../hooks/use-entity-inline-edit';
-import { useEntityTableData } from '../../hooks/use-entity-table-data';
-import { useEntityQuery } from '../../hooks/query/use-entity-query';
 import { useEntitySearch } from '../../hooks/use-entity-search';
+import { useEntitySelection } from '../../hooks/use-entity-selection';
+import { useEntityTableData } from '../../hooks/use-entity-table-data';
 import { EntityQueryBuilder } from '../query/entity-query-builder';
 import { EntityTypeHeader } from '../ui/entity-type-header';
 import { AttributeFormModal } from '../ui/modals/type/attribute-form-modal';
@@ -34,8 +36,7 @@ import { ColumnHeaderPopover } from './column-header-popover';
 import { ColumnVisibilityPopover } from './column-visibility-popover';
 import { EntityDraftRow } from './entity-draft-row';
 import EntityActionBar from './entity-table-action-bar';
-import { EntityRow, isDraftRow, generateSearchConfigFromEntityType, isEntityRow } from './entity-table-utils';
-import { toast } from 'sonner';
+import { EntityRow, generateSearchConfigFromEntityType, isDraftRow, isEntityRow } from './entity-table-utils';
 
 const noteDrawerImport = () =>
   import('@/components/feature-modules/entity/components/notes/note-drawer').then((m) => m.NoteDrawer);
@@ -63,6 +64,9 @@ export const EntityDataTable: FC<Props> = ({
   // Search state (debounced)
   const { searchTerm, setSearchTerm, debouncedSearch, clearSearch } = useEntitySearch();
 
+  // Server-aware selection state
+  const entitySelection = useEntitySelection();
+
   // Sorting state (server-side via queryEntities)
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -80,7 +84,7 @@ export const EntityDataTable: FC<Props> = ({
 
   // Infinite query — owns all entity fetching
   const {
-    data,
+    data: entityResponse,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -97,6 +101,9 @@ export const EntityDataTable: FC<Props> = ({
     sorting,
   });
 
+  // Extract totalCount from first page (only included when offset=0)
+  const totalCount = entityResponse?.pages[0]?.totalCount;
+
   // Surface query errors as toasts
   useEffect(() => {
     if (isError && error) {
@@ -104,10 +111,16 @@ export const EntityDataTable: FC<Props> = ({
     }
   }, [isError, error]);
 
+  // Reset selection when filter, search, or sort changes
+  useEffect(() => {
+    entitySelection.deselectAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally reset on query dependency changes
+  }, [debouncedSearch, queryFilter, sorting]);
+
   // Flatten pages into a single entity list
   const entities = useMemo(
-    () => data?.pages.flatMap((page) => page.entities) ?? [],
-    [data?.pages],
+    () => entityResponse?.pages.flatMap((page) => page.entities) ?? [],
+    [entityResponse?.pages],
   );
 
   // Full table data (rows, columns) from flattened entities
@@ -352,12 +365,27 @@ export const EntityDataTable: FC<Props> = ({
             rowSelection={{
               enabled: true,
               clearOnFilterChange: true,
+              onSelectAllChange: (checked) => {
+                if (checked && totalCount !== undefined) {
+                  entitySelection.selectAll(totalCount);
+                  return true; // prevent default TanStack behavior
+                } else if (!checked) {
+                  entitySelection.deselectAll();
+                  return true;
+                }
+                return false;
+              },
               actionComponent: ({ selectedRows, clearSelection }) => (
                 <EntityActionBar
                   selectedRows={selectedRows}
-                  clearSelection={clearSelection}
+                  clearSelection={() => {
+                    clearSelection();
+                    entitySelection.deselectAll();
+                  }}
                   workspaceId={workspaceId}
                   entityTypeId={entityType.id}
+                  entitySelection={entitySelection}
+                  queryFilter={queryFilter}
                 />
               ),
             }}
