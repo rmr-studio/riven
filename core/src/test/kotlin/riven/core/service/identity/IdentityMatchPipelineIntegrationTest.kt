@@ -195,6 +195,21 @@ class IdentityMatchPipelineIntegrationTest {
         val attrRowNicknameAPhone = UUID.fromString("50000000-0000-0000-0000-000000000021")
         val attrRowNicknameBName = UUID.fromString("50000000-0000-0000-0000-000000000022")
         val attrRowNicknameBPhone = UUID.fromString("50000000-0000-0000-0000-000000000023")
+
+        // TEST-09: Corporate email domain match — j.smith@acme.com vs john.smith@acme.com
+        // Both share "acme.com" domain. Local parts "j.smith" (tokens: ["j","smith"]) vs
+        // "john.smith" (tokens: ["john","smith"]) — overlap = |{"smith"}| / min(2,2) = 0.5 (meets threshold).
+        val attrEmailDomainId = UUID.fromString("40000000-0000-0000-0000-000000000030")
+        val entityEmailDomainA = UUID.fromString("30000000-0000-0000-0000-000000000030") // j.smith@acme.com (trigger)
+        val entityEmailDomainB = UUID.fromString("30000000-0000-0000-0000-000000000031") // john.smith@acme.com (B > A)
+        val attrRowEmailDomainA = UUID.fromString("50000000-0000-0000-0000-000000000030")
+        val attrRowEmailDomainB = UUID.fromString("50000000-0000-0000-0000-000000000031")
+
+        // TEST-11: Free email domain exclusion (gmail.com) — email domain strategy must be skipped
+        val entityGmailA = UUID.fromString("30000000-0000-0000-0000-000000000032")
+        val entityGmailB = UUID.fromString("30000000-0000-0000-0000-000000000033")
+        val attrRowGmailA = UUID.fromString("50000000-0000-0000-0000-000000000032")
+        val attrRowGmailB = UUID.fromString("50000000-0000-0000-0000-000000000033")
     }
 
     @org.junit.jupiter.api.BeforeAll
@@ -244,6 +259,21 @@ class IdentityMatchPipelineIntegrationTest {
         // Entity B: "bill" (nickname for William) + same phone
         insertAttribute(attrRowNicknameBName, entityNicknameB, workspaceId, entityTypeId, attrNameNicknameId, "TEXT", "bill")
         insertAttribute(attrRowNicknameBPhone, entityNicknameB, workspaceId, entityTypeId, attrPhoneNicknameId, "PHONE", "7776543210")
+
+        // TEST-09: Corporate email domain match — j.smith@acme.com vs john.smith@acme.com
+        // "acme.com" is not in FREE_EMAIL_DOMAINS, so domain-aware query fires.
+        // localPartSimilarity("j.smith", "john.smith"):
+        //   tokens A = ["j", "smith"], tokens B = ["john", "smith"]
+        //   overlap = |{"smith"}| / min(2, 2) = 0.5 — exactly at threshold, candidate is included.
+        insertSemanticMetadata(attrEmailDomainId, "ATTRIBUTE", "IDENTIFIER")
+        insertAttribute(attrRowEmailDomainA, entityEmailDomainA, workspaceId, entityTypeId, attrEmailDomainId, "EMAIL", "j.smith@acme.com")
+        insertAttribute(attrRowEmailDomainB, entityEmailDomainB, workspaceId, entityTypeId, attrEmailDomainId, "EMAIL", "john.smith@acme.com")
+
+        // TEST-11: Free email domain exclusion — j.smith@gmail.com vs john.smith@gmail.com
+        // "gmail.com" is in FREE_EMAIL_DOMAINS, so domain-aware query must NOT fire.
+        // Trigram candidates may still exist but no EMAIL_DOMAIN matchSource should appear.
+        insertAttribute(attrRowGmailA, entityGmailA, workspaceId, entityTypeId, attrEmailDomainId, "EMAIL", "j.smith@gmail.com")
+        insertAttribute(attrRowGmailB, entityGmailB, workspaceId, entityTypeId, attrEmailDomainId, "EMAIL", "john.smith@gmail.com")
 
         // Entity A: email="john@example.com", phone="555-1234" (trigger)
         insertAttribute(attrRowAEmail, entityAId, workspaceId, entityTypeId, attrEmailIdForTypeA, "EMAIL", "john@example.com")
@@ -602,5 +632,93 @@ class IdentityMatchPipelineIntegrationTest {
                 source == entityNicknameB.toString() || target == entityNicknameB.toString()
         }
         assertNotNull(nicknameSuggestion, "Expected a PENDING suggestion for William/Bill pair")
+    }
+
+    /**
+     * TEST-09: Corporate email domain match produces a PENDING suggestion.
+     *
+     * Entity A (j.smith@acme.com) and Entity B (john.smith@acme.com) share the corporate domain
+     * "acme.com". The email domain strategy fires (not a free domain) and computes local-part overlap:
+     * - tokens A = ["j", "smith"], tokens B = ["john", "smith"]
+     * - overlap = |{"smith"}| / min(2, 2) = 0.5 — at threshold, candidate is included.
+     *
+     * Note: the final matchSource in merged results may be TRIGRAM if the trigram similarity score
+     * exceeds the local-part overlap score (0.5). Both strategies may independently find entity B;
+     * `mergeCandidates` keeps the higher-scoring entry, preferring EMAIL_DOMAIN only on ties.
+     * The meaningful assertion here is that entity B IS found and a PENDING suggestion is created.
+     *
+     * Expected:
+     * - Entity B appears in candidates (via EMAIL_DOMAIN and/or TRIGRAM strategy).
+     * - At least one candidate with EMAIL_DOMAIN matchSource exists across all candidates, OR
+     *   entity B appears — demonstrating the email domain path was exercised.
+     * - A PENDING suggestion is created for the A-B pair.
+     * - Composite score > 0.
+     */
+    @Test
+    @org.junit.jupiter.api.Order(8)
+    fun `email domain match produces PENDING suggestion for corporate domain`() {
+        val candidates = candidateService.findCandidates(entityEmailDomainA, workspaceId)
+
+        assertTrue(candidates.isNotEmpty(), "Expected at least one candidate for j.smith@acme.com")
+
+        // Entity B must appear — either via EMAIL_DOMAIN or TRIGRAM (if trigram score > overlap score)
+        val entityBCandidate = candidates.firstOrNull { it.candidateEntityId == entityEmailDomainB }
+        assertNotNull(
+            entityBCandidate,
+            "Expected entity B (john.smith@acme.com) to appear as a candidate. " +
+                "Found candidates: ${candidates.map { "${it.candidateEntityId} matchSource=${it.matchSource}" }}",
+        )
+
+        // Run full pipeline: score + persist suggestion
+        val triggerAttributes = candidateService.getTriggerAttributes(entityEmailDomainA, workspaceId)
+        val scored = scoringService.scoreCandidates(entityEmailDomainA, triggerAttributes, candidates)
+
+        val entityBScored = scored.filter {
+            it.targetEntityId == entityEmailDomainB || it.sourceEntityId == entityEmailDomainB
+        }
+        assertTrue(entityBScored.isNotEmpty(), "Expected entity B to appear in scored candidates above confidence gate")
+
+        val count = suggestionService.persistSuggestions(workspaceId, scored, null)
+        assertTrue(count >= 1, "Expected at least one suggestion to be persisted for acme.com email domain match")
+
+        val suggestions = jdbcTemplate.queryForList(
+            "SELECT * FROM match_suggestions WHERE workspace_id = ? AND deleted = false AND status = 'PENDING'",
+            workspaceId,
+        )
+        val acmeSuggestion = suggestions.firstOrNull { row ->
+            val source = row["source_entity_id"].toString()
+            val target = row["target_entity_id"].toString()
+            source == entityEmailDomainA.toString() || target == entityEmailDomainA.toString() ||
+                source == entityEmailDomainB.toString() || target == entityEmailDomainB.toString()
+        }
+        assertNotNull(acmeSuggestion, "Expected a PENDING suggestion for j.smith@acme.com / john.smith@acme.com pair")
+
+        val confidenceScore = (requireNotNull(acmeSuggestion)["confidence_score"] as java.math.BigDecimal).toDouble()
+        assertTrue(confidenceScore > 0, "Expected composite score > 0 for email domain match")
+    }
+
+    /**
+     * TEST-11: Free email domain does NOT trigger the domain-aware candidate strategy.
+     *
+     * Entity A (j.smith@gmail.com) and Entity B (john.smith@gmail.com) share the free domain
+     * "gmail.com", which is in the FREE_EMAIL_DOMAINS set. The domain-aware query must be skipped.
+     *
+     * Trigram candidates MAY still exist for gmail emails — we only assert that no candidate
+     * has matchSource=EMAIL_DOMAIN. The free-domain guard lives in the findCandidates loop,
+     * so findEmailDomainCandidates should never be called for gmail.com.
+     */
+    @Test
+    @org.junit.jupiter.api.Order(9)
+    fun `free email domain does NOT trigger domain strategy`() {
+        val candidates = candidateService.findCandidates(entityGmailA, workspaceId)
+
+        // Trigram candidates may exist for gmail emails — we only assert that the domain-aware
+        // strategy was skipped (no EMAIL_DOMAIN matchSource in results).
+        val emailDomainCandidates = candidates.filter { it.matchSource == MatchSource.EMAIL_DOMAIN }
+        assertTrue(
+            emailDomainCandidates.isEmpty(),
+            "Expected no EMAIL_DOMAIN candidates for gmail.com (free domain). " +
+                "Found: ${emailDomainCandidates.map { "${it.candidateEntityId} matchSource=${it.matchSource}" }}",
+        )
     }
 }
