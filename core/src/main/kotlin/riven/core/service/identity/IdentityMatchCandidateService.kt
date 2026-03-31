@@ -94,6 +94,16 @@ class IdentityMatchCandidateService(
                 val nicknameCandidates = findNicknameCandidates(triggerEntityId, workspaceId, normalizedValue, signalType)
                 allCandidates.addAll(nicknameCandidates)
             }
+
+            if (signalType == MatchSignalType.EMAIL) {
+                val domain = EmailMatcher.extractDomain(normalizedValue)
+                if (domain != null && !EmailMatcher.isFreeEmailDomain(domain)) {
+                    val emailDomainCandidates = findEmailDomainCandidates(
+                        triggerEntityId, workspaceId, normalizedValue, domain, signalType
+                    )
+                    allCandidates.addAll(emailDomainCandidates)
+                }
+            }
         }
 
         return mergeCandidates(allCandidates)
@@ -355,6 +365,82 @@ class IdentityMatchCandidateService(
     }
 
     /**
+     * Finds candidates sharing the same corporate email domain as the trigger entity.
+     *
+     * Two-phase approach:
+     * 1. SQL phase: fetches all same-domain candidates in the workspace using a domain substring
+     *    match. Only the domain is checked at this stage — no similarity filtering in SQL.
+     * 2. Kotlin phase: extracts the local part from each candidate email and computes overlap
+     *    coefficient via [EmailMatcher.localPartSimilarity]. Candidates with overlap below 0.5
+     *    are discarded; the remainder are returned with [MatchSource.EMAIL_DOMAIN].
+     *
+     * The free-domain guard (skip gmail.com, yahoo.com, etc.) is enforced in the [findCandidates]
+     * loop before calling this method — so this method assumes the domain is already known to
+     * be corporate.
+     *
+     * @param triggerEntityId the entity to exclude from results
+     * @param workspaceId workspace scope
+     * @param normalizedEmail normalized trigger email address
+     * @param domain the corporate domain extracted from [normalizedEmail]
+     * @param signalType the signal type to assign to returned candidates (EMAIL)
+     */
+    @Suppress("UNCHECKED_CAST")
+    private fun findEmailDomainCandidates(
+        triggerEntityId: UUID,
+        workspaceId: UUID,
+        normalizedEmail: String,
+        domain: String,
+        signalType: MatchSignalType,
+    ): List<CandidateMatch> {
+        val sql = """
+            SELECT ea.entity_id   AS candidate_entity_id,
+                   ea.attribute_id AS candidate_attribute_id,
+                   ea.value->>'value' AS candidate_value,
+                   sm.signal_type  AS candidate_signal_type
+            FROM entity_attributes ea
+            JOIN entity_type_semantic_metadata sm
+                ON sm.workspace_id = :workspaceId
+               AND sm.target_type = 'ATTRIBUTE'
+               AND sm.target_id = ea.attribute_id
+               AND sm.classification = 'IDENTIFIER'
+               AND sm.deleted = false
+            WHERE ea.workspace_id = :workspaceId
+              AND ea.entity_id != :triggerEntityId
+              AND ea.deleted = false
+              AND substring(ea.value->>'value' from '@(.+)${'$'}') = :domain
+            LIMIT $CANDIDATE_LIMIT
+        """.trimIndent()
+
+        val query = entityManager.createNativeQuery(sql)
+        query.setParameter("workspaceId", workspaceId)
+        query.setParameter("triggerEntityId", triggerEntityId)
+        query.setParameter("domain", domain)
+
+        val rows = query.resultList as List<Array<Any>>
+
+        val triggerLocal = EmailMatcher.extractLocal(normalizedEmail) ?: return emptyList()
+
+        return rows.mapNotNull { row ->
+            val candidateValue = row[2].toString()
+            val candidateLocal = EmailMatcher.extractLocal(candidateValue) ?: return@mapNotNull null
+            val overlap = EmailMatcher.localPartSimilarity(triggerLocal, candidateLocal)
+            if (overlap < 0.5) return@mapNotNull null
+
+            val rawSignalType = row[3]?.toString()
+            val candidateSignalType = MatchSignalType.fromColumnValue(rawSignalType)
+            CandidateMatch(
+                candidateEntityId = parseUuid(row[0]),
+                candidateAttributeId = parseUuid(row[1]),
+                candidateValue = candidateValue,
+                signalType = signalType,
+                similarityScore = overlap,
+                candidateSignalType = candidateSignalType,
+                matchSource = MatchSource.EMAIL_DOMAIN,
+            )
+        }
+    }
+
+    /**
      * Merges candidate rows by (candidateEntityId, candidateAttributeId), keeping the entry
      * with the highest similarity score per group.
      *
@@ -370,7 +456,12 @@ class IdentityMatchCandidateService(
                 requireNotNull(
                     group.maxWithOrNull(
                         compareBy<CandidateMatch> { it.similarityScore }
-                            .thenBy { if (it.matchSource == MatchSource.NICKNAME) 1 else 0 }
+                            .thenBy {
+                                when (it.matchSource) {
+                                    MatchSource.NICKNAME, MatchSource.EMAIL_DOMAIN -> 1
+                                    else -> 0
+                                }
+                            }
                     )
                 ) {
                     "Candidate group was empty - groupBy should never produce an empty group"

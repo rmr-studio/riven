@@ -73,7 +73,7 @@ Plans:
   2. "jsmith@gmail.com" does NOT trigger the domain-aware query (gmail is in the free-domain skip set)
   3. EmailMatcher.tokenizeLocal("john.smith") returns ["john", "smith"]
   4. A pipeline integration test confirms email domain match produces a suggestion for a corporate domain
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
 - [ ] 04-01-PLAN.md — EmailMatcher Kotlin object utility with unit tests (TDD)
 - [ ] 04-02-PLAN.md — Wire email domain query into CandidateService, pipeline integration tests
@@ -103,5 +103,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Signal-Type-Aware Normalization + Candidate Query Fixes | 2/2 | Complete   | 2026-03-28 |
 | 2. Scoring Improvements + Signal Classification | 2/2 | Complete   | 2026-03-29 |
 | 3. Nickname Lookup + Token-Set Similarity | 2/2 | Complete   | 2026-03-30 |
-| 4. Email Decomposition Strategy | 0/2 | Planning complete | - |
+| 4. Email Decomposition Strategy | 1/2 | In Progress|  |
 | 5. Phonetic Matching + Method Consolidation | 0/TBD | Not started | - |

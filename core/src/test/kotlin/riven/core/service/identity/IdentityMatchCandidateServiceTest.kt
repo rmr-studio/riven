@@ -108,15 +108,17 @@ class IdentityMatchCandidateServiceTest {
             )
             val triggerQuery = triggerAttributeQuery(triggerRows)
             val candidateQ1 = candidateQuery(emptyList())
+            val emailDomainQ = candidateQuery(emptyList())
 
             whenever(entityManager.createNativeQuery(any()))
                 .thenReturn(triggerQuery)   // first call: trigger identifier lookup
-                .thenReturn(candidateQ1)    // second call: candidate scan for EMAIL
+                .thenReturn(candidateQ1)    // second call: trigram candidate scan for EMAIL
+                .thenReturn(emailDomainQ)   // third call: email domain candidate scan for example.com
 
             identityMatchCandidateService.findCandidates(triggerEntityId, workspaceId)
 
-            // 1 trigger lookup + 1 candidate query for EMAIL
-            verify(entityManager, times(2)).createNativeQuery(any())
+            // 1 trigger lookup + 1 trigram query + 1 email domain query for corporate EMAIL
+            verify(entityManager, times(3)).createNativeQuery(any())
         }
 
         @Test
@@ -234,10 +236,12 @@ class IdentityMatchCandidateServiceTest {
                 arrayOf<Any?>(candidateEntityId.toString(), candidateAttrId2.toString(), "test+alias@example.com", 0.70, null),
             )
             val candidateQMock = candidateQuery(candidateRows)
+            val emailDomainQ = candidateQuery(emptyList())
 
             whenever(entityManager.createNativeQuery(any()))
                 .thenReturn(triggerQuery)
                 .thenReturn(candidateQMock)
+                .thenReturn(emailDomainQ)   // email domain scan for example.com (corporate domain)
 
             val result = identityMatchCandidateService.findCandidates(triggerEntityId, workspaceId)
 
@@ -262,10 +266,12 @@ class IdentityMatchCandidateServiceTest {
                 arrayOf<Any?>(candidateEntityId.toString(), candidateAttributeId.toString(), "test@example.com", 0.70, null),
             )
             val candidateQMock = candidateQuery(candidateRows)
+            val emailDomainQ = candidateQuery(emptyList())
 
             whenever(entityManager.createNativeQuery(any()))
                 .thenReturn(triggerQuery)
                 .thenReturn(candidateQMock)
+                .thenReturn(emailDomainQ)   // email domain scan for example.com (corporate domain)
 
             val result = identityMatchCandidateService.findCandidates(triggerEntityId, workspaceId)
 
@@ -282,10 +288,12 @@ class IdentityMatchCandidateServiceTest {
             )
             val triggerQuery = triggerAttributeQuery(triggerRows)
             val candidateQMock = candidateQuery(emptyList())
+            val emailDomainQ = candidateQuery(emptyList())
 
             whenever(entityManager.createNativeQuery(any()))
                 .thenReturn(triggerQuery)
                 .thenReturn(candidateQMock)
+                .thenReturn(emailDomainQ)   // email domain scan for example.com (corporate domain)
 
             identityMatchCandidateService.findCandidates(triggerEntityId, workspaceId)
 
@@ -303,10 +311,12 @@ class IdentityMatchCandidateServiceTest {
             )
             val triggerQuery = triggerAttributeQuery(triggerRows)
             val candidateQMock = candidateQuery(emptyList())
+            val emailDomainQ = candidateQuery(emptyList())
 
             whenever(entityManager.createNativeQuery(any()))
                 .thenReturn(triggerQuery)
                 .thenReturn(candidateQMock)
+                .thenReturn(emailDomainQ)   // email domain scan for example.com (corporate domain)
 
             identityMatchCandidateService.findCandidates(triggerEntityId, workspaceId)
 
@@ -346,8 +356,10 @@ class IdentityMatchCandidateServiceTest {
         @Test
         fun `findCandidates does NOT call nickname query for EMAIL signals`() {
             /**
-             * Nickname expansion only applies to NAME signals. EMAIL signals should only trigger
-             * the trigram query — total: 1 trigger lookup + 1 trigram = 2 createNativeQuery calls.
+             * Nickname expansion only applies to NAME signals. EMAIL signals trigger the trigram
+             * query and the email domain query (for corporate domains), but never the nickname query.
+             * Total: 1 trigger lookup + 1 trigram + 1 email domain = 3 createNativeQuery calls.
+             * Using a corporate domain (example.com) to exercise the email domain path.
              */
             val attrId = UUID.randomUUID()
             val triggerRows = listOf(
@@ -355,15 +367,68 @@ class IdentityMatchCandidateServiceTest {
             )
             val triggerQuery = triggerAttributeQuery(triggerRows)
             val trigramQ = candidateQuery(emptyList())
+            val emailDomainQ = candidateQuery(emptyList())
 
+            whenever(entityManager.createNativeQuery(any()))
+                .thenReturn(triggerQuery)
+                .thenReturn(trigramQ)
+                .thenReturn(emailDomainQ)   // email domain scan for example.com (corporate domain)
+
+            identityMatchCandidateService.findCandidates(triggerEntityId, workspaceId)
+
+            // 3 calls: trigger lookup + trigram + email domain. No nickname query (that's NAME-only).
+            verify(entityManager, times(3)).createNativeQuery(any())
+        }
+
+        @Test
+        fun `findCandidates does NOT call email domain query for free email domains`() {
+            /**
+             * The free-domain guard in the EMAIL branch must skip findEmailDomainCandidates when
+             * the extracted domain is in the FREE_EMAIL_DOMAINS set (e.g. gmail.com).
+             * Total calls: 1 trigger lookup + 1 trigram = 2 createNativeQuery calls (no email domain query).
+             */
+            val attrId = UUID.randomUUID()
+            val triggerRows = listOf(
+                arrayOf<Any?>(attrId, "test@gmail.com", SchemaType.EMAIL.name, null),
+            )
+            val triggerQuery = triggerAttributeQuery(triggerRows)
+            val trigramQ = candidateQuery(emptyList())
+
+            whenever(normalizationService.normalize(any(), any())).thenReturn("test@gmail.com")
             whenever(entityManager.createNativeQuery(any()))
                 .thenReturn(triggerQuery)
                 .thenReturn(trigramQ)
 
             identityMatchCandidateService.findCandidates(triggerEntityId, workspaceId)
 
-            // Only 2: trigger lookup + trigram. No nickname query.
+            // Only 2: trigger lookup + trigram. No email domain query for free domain.
             verify(entityManager, times(2)).createNativeQuery(any())
+        }
+
+        @Test
+        fun `findCandidates calls email domain query for corporate EMAIL signals`() {
+            /**
+             * For EMAIL signals with a corporate domain (not in the free-domain set), findCandidates
+             * must also invoke findEmailDomainCandidates. Total: 1 trigger + 1 trigram + 1 email domain = 3.
+             */
+            val attrId = UUID.randomUUID()
+            val triggerRows = listOf(
+                arrayOf<Any?>(attrId, "alice@acme.com", SchemaType.EMAIL.name, null),
+            )
+            val triggerQuery = triggerAttributeQuery(triggerRows)
+            val trigramQ = candidateQuery(emptyList())
+            val emailDomainQ = candidateQuery(emptyList())
+
+            whenever(normalizationService.normalize(any(), any())).thenReturn("alice@acme.com")
+            whenever(entityManager.createNativeQuery(any()))
+                .thenReturn(triggerQuery)
+                .thenReturn(trigramQ)
+                .thenReturn(emailDomainQ)   // email domain scan for acme.com
+
+            identityMatchCandidateService.findCandidates(triggerEntityId, workspaceId)
+
+            // 3 calls: trigger lookup + trigram + email domain scan.
+            verify(entityManager, times(3)).createNativeQuery(any())
         }
 
         @Test
@@ -506,6 +571,60 @@ class IdentityMatchCandidateServiceTest {
             // Should deduplicate to one row — NICKNAME source preferred
             assertEquals(1, result.size, "Equal-score candidates should deduplicate to one row")
             assertEquals(MatchSource.NICKNAME, result[0].matchSource, "NICKNAME should be preferred over TRIGRAM on tie")
+        }
+
+        @Test
+        fun `mergeCandidates prefers EMAIL_DOMAIN matchSource over TRIGRAM on equal similarity score`() {
+            /**
+             * EMAIL_DOMAIN matchSource should be preferred over TRIGRAM when deduplicating the same
+             * (entityId, attributeId) pair on equal similarity score — same tiebreaker logic as NICKNAME.
+             * This ensures the audit trail reflects the domain-aware strategy over a raw trigram match.
+             *
+             * The trigger "a.smith@acme.com" and candidate "alice.smith@acme.com" share domain "acme.com"
+             * and local-part tokens ["smith"] — overlap coefficient = 1/2 = 0.5, at the threshold.
+             * The trigram query also returns the same candidate at the same score (0.5), triggering
+             * the EMAIL_DOMAIN vs TRIGRAM tiebreaker.
+             *
+             * Note: findEmailDomainCandidates returns 4-column rows [entityId, attributeId, value, signalType]
+             * (no SQL sim_score column — similarity is computed Kotlin-side from local-part overlap).
+             */
+            val attrId = UUID.randomUUID()
+            // "a.smith@acme.com" tokens: ["a", "smith"] vs "alice.smith@acme.com" tokens: ["alice", "smith"]
+            // overlap = |{"smith"}| / min(2, 2) = 0.5 — exactly at threshold, so candidate is included
+            val triggerEmail = "a.smith@acme.com"
+            val candidateEmail = "alice.smith@acme.com"
+            val triggerRows = listOf(
+                arrayOf<Any?>(attrId, triggerEmail, SchemaType.EMAIL.name, null),
+            )
+            val triggerQuery = triggerAttributeQuery(triggerRows)
+
+            // Trigram returns the candidate at score 0.5 (same as email domain overlap score below)
+            val trigramRows = listOf(
+                arrayOf<Any?>(candidateEntityId.toString(), candidateAttributeId.toString(), candidateEmail, 0.5, null),
+            )
+            val trigramQ = candidateQuery(trigramRows)
+
+            // Email domain query returns 4-column rows [entityId, attributeId, value, signalType]
+            // The Kotlin-side localPartSimilarity("a.smith", "alice.smith") = 0.5 (shared token "smith")
+            val emailDomainRows: List<Array<Any?>> = listOf(
+                arrayOf(candidateEntityId.toString(), candidateAttributeId.toString(), candidateEmail, null),
+            )
+            val emailDomainQ = mock<Query>().also {
+                whenever(it.setParameter(any<String>(), any())).thenReturn(it)
+                whenever(it.resultList).thenReturn(emailDomainRows)
+            }
+
+            whenever(normalizationService.normalize(any(), any())).thenReturn(triggerEmail)
+            whenever(entityManager.createNativeQuery(any()))
+                .thenReturn(triggerQuery)
+                .thenReturn(trigramQ)
+                .thenReturn(emailDomainQ)
+
+            val result = identityMatchCandidateService.findCandidates(triggerEntityId, workspaceId)
+
+            // Should deduplicate to one row — EMAIL_DOMAIN source preferred over TRIGRAM on tie
+            assertEquals(1, result.size, "Equal-score candidates should deduplicate to one row")
+            assertEquals(MatchSource.EMAIL_DOMAIN, result[0].matchSource, "EMAIL_DOMAIN should be preferred over TRIGRAM on tie")
         }
 
         @Test
