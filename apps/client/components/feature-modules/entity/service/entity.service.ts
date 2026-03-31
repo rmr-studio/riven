@@ -3,6 +3,7 @@ import { createEntityApi } from '@/lib/api/entity-api';
 import { Session } from '@/lib/auth';
 import { ResponseError } from '@/lib/types';
 import {
+  DeleteEntityRequest,
   DeleteEntityResponse,
   Entity,
   EntityQueryRequest,
@@ -146,12 +147,11 @@ export class EntityService {
   static async deleteEntities(
     session: Session | null,
     workspaceId: string,
-    entityIds: string[],
+    request: DeleteEntityRequest,
   ): Promise<DeleteEntityResponse> {
     validateSession(session);
     validateUuid(workspaceId);
-    entityIds.forEach((id) => validateUuid(id));
     const api = createEntityApi(session!);
-    return api.deleteEntity({ workspaceId, requestBody: entityIds });
+    return api.deleteEntities({ workspaceId, deleteEntityRequest: request });
   }
 }

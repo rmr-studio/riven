@@ -1,7 +1,8 @@
 import { EntityService } from '@/components/feature-modules/entity/service/entity.service';
 import { createEntityApi } from '@/lib/api/entity-api';
-import { EntityQueryResponse } from '@/lib/types/entity';
+import { EntityQueryResponse, EntitySelectType } from '@/lib/types/entity';
 import { FilterOperator } from '@/lib/types/entity';
+import type { DeleteEntityRequest } from '@/lib/types/entity';
 import type { Session } from '@/lib/auth/auth.types';
 
 // Mock the API factory
@@ -133,5 +134,80 @@ describe('EntityService.queryEntities', () => {
       status: 400,
       message: 'Invalid filter',
     });
+  });
+});
+
+describe('EntityService.deleteEntities', () => {
+  const mockDeleteEntities = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (createEntityApi as jest.Mock).mockReturnValue({
+      deleteEntities: mockDeleteEntities,
+    });
+  });
+
+  it('sends a BY_ID request with entity IDs', async () => {
+    const request: DeleteEntityRequest = {
+      type: EntitySelectType.ById,
+      entityTypeId,
+      entityIds: ['id-1', 'id-2'],
+    };
+
+    mockDeleteEntities.mockResolvedValue({ deletedCount: 2 });
+
+    const result = await EntityService.deleteEntities(mockSession, workspaceId, request);
+
+    expect(mockDeleteEntities).toHaveBeenCalledWith({
+      workspaceId,
+      deleteEntityRequest: request,
+    });
+    expect(result.deletedCount).toBe(2);
+  });
+
+  it('sends an ALL request with filter and exclusions', async () => {
+    const request: DeleteEntityRequest = {
+      type: EntitySelectType.All,
+      entityTypeId,
+      filter: {
+        type: 'And',
+        conditions: [],
+      } as any,
+      excludeIds: ['exclude-1'],
+    };
+
+    mockDeleteEntities.mockResolvedValue({ deletedCount: 99 });
+
+    const result = await EntityService.deleteEntities(mockSession, workspaceId, request);
+
+    expect(mockDeleteEntities).toHaveBeenCalledWith({
+      workspaceId,
+      deleteEntityRequest: request,
+    });
+    expect(result.deletedCount).toBe(99);
+  });
+
+  it('validates session before calling API', async () => {
+    const request: DeleteEntityRequest = {
+      type: EntitySelectType.ById,
+      entityTypeId,
+      entityIds: ['id-1'],
+    };
+
+    await expect(
+      EntityService.deleteEntities(null, workspaceId, request),
+    ).rejects.toMatchObject({ error: 'NO_SESSION' });
+  });
+
+  it('validates workspaceId is a UUID', async () => {
+    const request: DeleteEntityRequest = {
+      type: EntitySelectType.ById,
+      entityTypeId,
+      entityIds: ['id-1'],
+    };
+
+    await expect(
+      EntityService.deleteEntities(mockSession, 'not-a-uuid', request),
+    ).rejects.toMatchObject({ error: 'INVALID_ID' });
   });
 });
