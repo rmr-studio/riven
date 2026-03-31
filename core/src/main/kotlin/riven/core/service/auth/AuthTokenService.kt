@@ -41,6 +41,20 @@ open class AuthTokenService(private val logger: KLogger) {
     }
 
 
+    /**
+     * Retrieves the user's display name from the JWT user_metadata claim.
+     * Falls back to email if no name is available.
+     */
+    open fun getUserDisplayName(): String {
+        val jwt = getJwt()
+        val metadata = jwt.claims["user_metadata"]
+        if (metadata is Map<*, *>) {
+            val name = metadata["full_name"] ?: metadata["name"]
+            if (name != null) return name.toString()
+        }
+        return jwt.claims["email"]?.toString() ?: "Unknown"
+    }
+
     open fun getUserEmail(): String {
         return getJwt().claims["email"].let {
             if (it == null) {
