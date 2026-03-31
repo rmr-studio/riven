@@ -10,6 +10,7 @@ import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.activity.Activity
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.util.OperationType
+import riven.core.exceptions.NotFoundException
 import riven.core.exceptions.SchemaValidationException
 import riven.core.models.common.Icon
 import riven.core.models.common.validation.Schema
@@ -27,6 +28,7 @@ import riven.core.models.response.entity.SaveEntityResponse
 import riven.core.enums.entity.EntitySelectType
 import riven.core.service.entity.query.EntityQueryService
 import kotlinx.coroutines.runBlocking
+import java.util.concurrent.CompletableFuture
 import riven.core.repository.entity.EntityRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.activity.log
@@ -485,12 +487,22 @@ class EntityService(
     private fun fetchImpactedEntities(impactedEntityIds: List<UUID>, workspaceId: UUID): Map<UUID, List<Entity>>? {
         if (impactedEntityIds.isEmpty()) return null
 
-        val impactedEntityEntities = entityRepository.findAllById(impactedEntityIds)
-        val impactedRelationships = entityRelationshipService.findRelatedEntities(
-            entityIds = impactedEntityIds.toSet(),
-            workspaceId = workspaceId
-        )
-        val impactedAttributes = entityAttributeService.getAttributesForEntities(impactedEntityIds.toSet())
+        val entitiesFuture = CompletableFuture.supplyAsync {
+            entityRepository.findAllById(impactedEntityIds)
+        }
+        val relationshipsFuture = CompletableFuture.supplyAsync {
+            entityRelationshipService.findRelatedEntities(
+                entityIds = impactedEntityIds.toSet(),
+                workspaceId = workspaceId,
+            )
+        }
+        val attributesFuture = CompletableFuture.supplyAsync {
+            entityAttributeService.getAttributesForEntities(impactedEntityIds.toSet())
+        }
+
+        val impactedEntityEntities = entitiesFuture.get()
+        val impactedRelationships = relationshipsFuture.get()
+        val impactedAttributes = attributesFuture.get()
 
         return impactedEntityEntities
             .map { impactedEntity ->
@@ -518,9 +530,7 @@ class EntityService(
 
         val idsToDelete = resolveEntityIds(request, workspaceId)
         if (idsToDelete.isEmpty()) {
-            return DeleteEntityResponse(
-                error = "No entities matched the selection criteria"
-            )
+            throw NotFoundException("No entities matched the selection criteria")
         }
 
         // Detect impacted entities before any deletes
@@ -537,9 +547,7 @@ class EntityService(
         val deletedCount = allDeletedEntities.mapNotNull { it.id }.toSet().size
 
         if (deletedCount == 0) {
-            return DeleteEntityResponse(
-                error = "No entities were deleted. Please check the selection criteria."
-            )
+            throw NotFoundException("No entities were deleted. Please check the selection criteria.")
         }
 
         // Log one bulk activity entry
@@ -588,19 +596,18 @@ class EntityService(
 
                 val allIds = mutableListOf<UUID>()
                 var offset = 0
-                val pageSize = 500
 
                 do {
                     val result = runBlocking {
                         entityQueryService.execute(
                             query = query,
                             workspaceId = workspaceId,
-                            pagination = QueryPagination(limit = pageSize, offset = offset),
+                            pagination = QueryPagination(limit = BULK_DELETE_BATCH_SIZE, offset = offset),
                             includeCount = false,
                         )
                     }
                     allIds.addAll(result.entities.map { it.id })
-                    offset += pageSize
+                    offset += BULK_DELETE_BATCH_SIZE
                 } while (result.hasNextPage)
 
                 if (excludeIds.isNotEmpty()) {

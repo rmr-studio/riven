@@ -163,11 +163,6 @@ data class WorkflowDeleteEntityActionConfig(
             )
         )
 
-        // Check for errors
-        if (result.error != null) {
-            throw IllegalStateException("Failed to delete entity: ${result.error}")
-        }
-
         // Return typed output
         return DeleteEntityOutput(
             entityId = resolvedEntityId,

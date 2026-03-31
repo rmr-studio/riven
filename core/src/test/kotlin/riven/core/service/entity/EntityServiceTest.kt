@@ -724,7 +724,6 @@ class EntityServiceTest : BaseServiceTest() {
             val result = service.deleteEntities(workspaceId, request)
 
             assertEquals(2, result.deletedCount)
-            assertNull(result.error)
 
             val captor = argumentCaptor<List<ActivityLogEntity>>()
             verify(activityService).logActivities(captor.capture())
@@ -793,7 +792,6 @@ class EntityServiceTest : BaseServiceTest() {
             val result = service.deleteEntities(workspaceId, request)
 
             assertEquals(2, result.deletedCount)
-            assertNull(result.error)
 
             // Verify deleteByIds was called with IDs that do NOT contain the excluded ID
             val idsCaptor = argumentCaptor<Array<UUID>>()
@@ -803,7 +801,7 @@ class EntityServiceTest : BaseServiceTest() {
         }
 
         @Test
-        fun `empty result returns error and does not log activity`() {
+        fun `empty result throws NotFoundException and does not log activity`() {
             whenever(entityRelationshipService.findByTargetIdIn(any())).thenReturn(emptyMap())
             whenever(entityRepository.deleteByIds(any(), eq(workspaceId))).thenReturn(emptyList())
 
@@ -812,10 +810,9 @@ class EntityServiceTest : BaseServiceTest() {
                 entityIds = listOf(UUID.randomUUID(), UUID.randomUUID()),
             )
 
-            val result = service.deleteEntities(workspaceId, request)
-
-            assertEquals(0, result.deletedCount)
-            assertNotNull(result.error)
+            assertThrows(riven.core.exceptions.NotFoundException::class.java) {
+                service.deleteEntities(workspaceId, request)
+            }
 
             verify(activityService, never()).logActivities(any())
         }
@@ -865,6 +862,161 @@ class EntityServiceTest : BaseServiceTest() {
             assertNotNull(result.updatedEntities)
             val allUpdated = result.updatedEntities!!.values.flatten()
             assertTrue(allUpdated.any { it.id == impactedId })
+        }
+
+        @Test
+        fun `BY_ID with more than 500 entities processes in multiple batches`() {
+            val batchSize = 500
+            val totalCount = 502
+            val entities = (1..totalCount).map { _ ->
+                EntityFactory.createEntityEntity(
+                    id = UUID.randomUUID(),
+                    workspaceId = workspaceId,
+                    typeId = typeId,
+                    typeKey = "task",
+                )
+            }
+            val ids = entities.map { requireNotNull(it.id) }
+
+            whenever(entityRelationshipService.findByTargetIdIn(any())).thenReturn(emptyMap())
+            // First batch returns 500, second returns 2
+            whenever(entityRepository.deleteByIds(any(), eq(workspaceId)))
+                .thenReturn(entities.take(batchSize))
+                .thenReturn(entities.drop(batchSize))
+            whenever(entityTypeAttributeService.deleteEntities(eq(workspaceId), any())).thenReturn(0)
+
+            val request = DeleteEntityRequest(
+                type = EntitySelectType.BY_ID,
+                entityIds = ids,
+            )
+
+            val result = service.deleteEntities(workspaceId, request)
+
+            assertEquals(totalCount, result.deletedCount)
+
+            // Verify deleteByIds called twice (once per batch)
+            verify(entityRepository, times(2)).deleteByIds(any(), eq(workspaceId))
+
+            // Verify cascade operations called for each batch
+            verify(entityTypeAttributeService, times(2)).deleteEntities(eq(workspaceId), any())
+            verify(entityAttributeService, times(2)).softDeleteByEntityIds(eq(workspaceId), any())
+            verify(entityRelationshipService, times(2)).archiveEntities(any(), eq(workspaceId))
+        }
+
+        @Test
+        fun `ALL mode with multi-page results resolves all pages`() {
+            val page1Entities = (1..3).map { _ ->
+                EntityFactory.createEntityEntity(
+                    id = UUID.randomUUID(),
+                    workspaceId = workspaceId,
+                    typeId = typeId,
+                    typeKey = "task",
+                )
+            }
+            val page2Entities = (1..2).map { _ ->
+                EntityFactory.createEntityEntity(
+                    id = UUID.randomUUID(),
+                    workspaceId = workspaceId,
+                    typeId = typeId,
+                    typeKey = "task",
+                )
+            }
+            val allEntities = page1Entities + page2Entities
+
+            val page1Result = EntityQueryResult(
+                entities = page1Entities.map {
+                    it.toModel(audit = false, relationships = emptyMap(), attributes = emptyMap())
+                },
+                hasNextPage = true,
+                totalCount = null,
+                projection = null,
+            )
+            val page2Result = EntityQueryResult(
+                entities = page2Entities.map {
+                    it.toModel(audit = false, relationships = emptyMap(), attributes = emptyMap())
+                },
+                hasNextPage = false,
+                totalCount = null,
+                projection = null,
+            )
+
+            runBlocking {
+                whenever(entityQueryService.execute(any(), eq(workspaceId), any(), isNull(), eq(false)))
+                    .thenReturn(page1Result)
+                    .thenReturn(page2Result)
+            }
+
+            whenever(entityRelationshipService.findByTargetIdIn(any())).thenReturn(emptyMap())
+            whenever(entityRepository.deleteByIds(any(), eq(workspaceId))).thenReturn(allEntities)
+            whenever(entityTypeAttributeService.deleteEntities(eq(workspaceId), any())).thenReturn(0)
+
+            val attrId = UUID.randomUUID()
+            val request = DeleteEntityRequest(
+                type = EntitySelectType.ALL,
+                entityTypeId = typeId,
+                filter = QueryFilter.Attribute(
+                    attributeId = attrId,
+                    operator = FilterOperator.EQUALS,
+                    value = FilterValue.Literal("active"),
+                ),
+            )
+
+            val result = service.deleteEntities(workspaceId, request)
+
+            assertEquals(5, result.deletedCount)
+
+            // Verify all 5 entity IDs were passed to deleteByIds
+            val idsCaptor = argumentCaptor<Array<UUID>>()
+            verify(entityRepository).deleteByIds(idsCaptor.capture(), eq(workspaceId))
+            assertEquals(5, idsCaptor.firstValue.size)
+
+            // Verify query service called twice (two pages)
+            runBlocking {
+                verify(entityQueryService, times(2)).execute(any(), eq(workspaceId), any(), isNull(), eq(false))
+            }
+        }
+
+        @Test
+        fun `impacted entity that is also being deleted is excluded from updated entities`() {
+            val entityA = EntityFactory.createEntityEntity(
+                id = UUID.randomUUID(),
+                workspaceId = workspaceId,
+                typeId = typeId,
+                typeKey = "task",
+            )
+            val entityB = EntityFactory.createEntityEntity(
+                id = UUID.randomUUID(),
+                workspaceId = workspaceId,
+                typeId = typeId,
+                typeKey = "task",
+            )
+            val idA = requireNotNull(entityA.id)
+            val idB = requireNotNull(entityB.id)
+
+            // B has a relationship targeting A, so B would be "impacted" by A's deletion
+            val relationship = EntityFactory.createRelationshipEntity(
+                workspaceId = workspaceId,
+                sourceId = idB,
+                targetId = idA,
+            )
+
+            // But we're deleting BOTH A and B, so B should not appear in updatedEntities
+            whenever(entityRelationshipService.findByTargetIdIn(any()))
+                .thenReturn(mapOf(idA to listOf(relationship)))
+            whenever(entityRepository.deleteByIds(any(), eq(workspaceId)))
+                .thenReturn(listOf(entityA, entityB))
+            whenever(entityTypeAttributeService.deleteEntities(eq(workspaceId), any())).thenReturn(0)
+
+            val request = DeleteEntityRequest(
+                type = EntitySelectType.BY_ID,
+                entityIds = listOf(idA, idB),
+            )
+
+            val result = service.deleteEntities(workspaceId, request)
+
+            assertEquals(2, result.deletedCount)
+            // B is in the delete set, so it should be filtered out of impacted entities
+            assertNull(result.updatedEntities, "Entities being deleted should not appear as impacted")
         }
     }
 
