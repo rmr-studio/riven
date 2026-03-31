@@ -21,8 +21,8 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **CAND-02**: DISTINCT ON (ea.entity_id) removed from candidate query so mergeCandidates handles dedup (stops hiding multi-attribute matches)
 - [x] **CAND-03**: Existing `!!` on mergeCandidates line 187 replaced with requireNotNull (CLAUDE.md compliance)
 - [x] **CAND-04**: NAME signal types run nickname expansion query (expands trigger name to known variants, queries for any match)
-- [ ] **CAND-05**: EMAIL signal types run domain-aware query (same domain candidates with local-part similarity scoring)
-- [ ] **CAND-06**: Free email domains (gmail, yahoo, outlook, ~30 total) are excluded from domain-aware query (prevents candidate explosion)
+- [x] **CAND-05**: EMAIL signal types run domain-aware query (same domain candidates with local-part similarity scoring)
+- [x] **CAND-06**: Free email domains (gmail, yahoo, outlook, ~30 total) are excluded from domain-aware query (prevents candidate explosion)
 - [ ] **CAND-07**: NAME signal types run phonetic query via dmetaphone() (catches phonetically similar names: Smith/Smythe)
 - [ ] **CAND-08**: All candidate query methods consolidated into when(signalType) dispatch with private methods (no strategy interface)
 
@@ -43,8 +43,8 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 - [x] **UTIL-01**: NicknameExpander utility with ~150 bidirectional English name groups (William<->Bill, Robert<->Bob, etc.)
 - [x] **UTIL-02**: TokenSimilarity utility computing overlap coefficient on word token sets
-- [ ] **UTIL-03**: EmailMatcher utility parsing emails into local+domain parts with similarity computation
-- [ ] **UTIL-04**: EmailMatcher includes local-part tokenization (john.smith -> {john, smith})
+- [x] **UTIL-03**: EmailMatcher utility parsing emails into local+domain parts with similarity computation
+- [x] **UTIL-04**: EmailMatcher includes local-part tokenization (john.smith -> {john, smith})
 
 ### Database
 
@@ -55,14 +55,14 @@ Requirements for this milestone. Each maps to roadmap phases.
 - [x] **TEST-01**: Unit tests for all normalization functions (phone digit extraction, diacritics, title stripping, email plus-addressing)
 - [x] **TEST-02**: Unit tests for NicknameExpander (expand, areEquivalent, unknown names)
 - [x] **TEST-03**: Unit tests for TokenSimilarity (partial overlap, identical, no overlap)
-- [ ] **TEST-04**: Unit tests for EmailMatcher (parse, similarity, tokenizeLocal)
+- [x] **TEST-04**: Unit tests for EmailMatcher (parse, similarity, tokenizeLocal)
 - [x] **TEST-05**: Unit tests for scoring confidence gate (single NAME rejected, single EMAIL accepted, two signals accepted)
 - [x] **TEST-06**: Unit tests for cross-type score discounting
 - [x] **TEST-07**: Pipeline integration test: phone formatting variation produces match via exact-digits query
 - [x] **TEST-08**: Pipeline integration test: nickname match produces suggestion (William<->Bill)
-- [ ] **TEST-09**: Pipeline integration test: email domain match produces suggestion (jsmith@acme.com<->john.smith@acme.com)
+- [x] **TEST-09**: Pipeline integration test: email domain match produces suggestion (jsmith@acme.com<->john.smith@acme.com)
 - [ ] **TEST-10**: Pipeline integration test: phonetic match produces suggestion (Smith<->Smythe)
-- [ ] **TEST-11**: Pipeline integration test: free email domain (gmail.com) does NOT trigger domain strategy
+- [x] **TEST-11**: Pipeline integration test: free email domain (gmail.com) does NOT trigger domain strategy
 - [ ] **TEST-12**: Pipeline integration test: multi-strategy merge produces correct composite scores
 
 ## v2 Requirements
@@ -117,13 +117,13 @@ Deferred to future release. Tracked but not in current roadmap.
 | TEST-03 | Phase 3 | Complete |
 | TEST-07 | Phase 3 | Complete |
 | TEST-08 | Phase 3 | Complete |
-| UTIL-03 | Phase 4 | Pending |
-| UTIL-04 | Phase 4 | Pending |
-| CAND-05 | Phase 4 | Pending |
-| CAND-06 | Phase 4 | Pending |
-| TEST-04 | Phase 4 | Pending |
-| TEST-09 | Phase 4 | Pending |
-| TEST-11 | Phase 4 | Pending |
+| UTIL-03 | Phase 4 | Complete |
+| UTIL-04 | Phase 4 | Complete |
+| CAND-05 | Phase 4 | Complete |
+| CAND-06 | Phase 4 | Complete |
+| TEST-04 | Phase 4 | Complete |
+| TEST-09 | Phase 4 | Complete |
+| TEST-11 | Phase 4 | Complete |
 | CAND-07 | Phase 5 | Pending |
 | CAND-08 | Phase 5 | Pending |
 | DB-01 | Phase 5 | Pending |

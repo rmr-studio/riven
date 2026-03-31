@@ -368,8 +368,9 @@ class IdentityMatchCandidateService(
      * Finds candidates sharing the same corporate email domain as the trigger entity.
      *
      * Two-phase approach:
-     * 1. SQL phase: fetches all same-domain candidates in the workspace using a domain substring
-     *    match. Only the domain is checked at this stage — no similarity filtering in SQL.
+     * 1. SQL phase: fetches all same-domain candidates in the workspace using `split_part` to
+     *    extract and compare the domain from stored email values. Only the domain is checked at
+     *    this stage — no similarity filtering in SQL.
      * 2. Kotlin phase: extracts the local part from each candidate email and computes overlap
      *    coefficient via [EmailMatcher.localPartSimilarity]. Candidates with overlap below 0.5
      *    are discarded; the remainder are returned with [MatchSource.EMAIL_DOMAIN].
@@ -407,7 +408,7 @@ class IdentityMatchCandidateService(
             WHERE ea.workspace_id = :workspaceId
               AND ea.entity_id != :triggerEntityId
               AND ea.deleted = false
-              AND substring(ea.value->>'value' from '@(.+)${'$'}') = :domain
+              AND LOWER(split_part(ea.value->>'value', '@', 2)) = :domain
             LIMIT $CANDIDATE_LIMIT
         """.trimIndent()
 
