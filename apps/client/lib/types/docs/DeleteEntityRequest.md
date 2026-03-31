@@ -1,24 +1,30 @@
 
-# DeleteEntityResponse
+# DeleteEntityRequest
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`deletedCount` | number
-`updatedEntities` | { [key: string]: Array&lt;Entity&gt;; }
+`type` | [EntitySelectType](EntitySelectType.md)
+`entityTypeId` | string
+`entityIds` | Array&lt;string&gt;
+`filter` | [QueryFilter](QueryFilter.md)
+`excludeIds` | Array&lt;string&gt;
 
 ## Example
 
 ```typescript
-import type { DeleteEntityResponse } from ''
+import type { DeleteEntityRequest } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "deletedCount": null,
-  "updatedEntities": null,
-} satisfies DeleteEntityResponse
+  "type": null,
+  "entityTypeId": null,
+  "entityIds": null,
+  "filter": null,
+  "excludeIds": null,
+} satisfies DeleteEntityRequest
 
 console.log(example)
 
@@ -27,7 +33,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as DeleteEntityResponse
+const exampleParsed = JSON.parse(exampleJSON) as DeleteEntityRequest
 console.log(exampleParsed)
 ```
 

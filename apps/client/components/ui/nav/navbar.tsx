@@ -43,11 +43,9 @@ export const Navbar = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="mr-2 flex w-auto grow justify-end">
+      <div className="flex w-auto grow items-center justify-end space-x-2">
         <NavbarUserProfile />
-      </div>
-      <div className="flex items-center">
-        <ThemeToggle />
+        <ThemeToggle className="rounded-sm border" />
       </div>
     </nav>
   );

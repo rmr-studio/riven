@@ -1,24 +1,20 @@
 
-# DeleteEntityResponse
+# EntitySelectType
 
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`deletedCount` | number
-`updatedEntities` | { [key: string]: Array&lt;Entity&gt;; }
 
 ## Example
 
 ```typescript
-import type { DeleteEntityResponse } from ''
+import type { EntitySelectType } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "deletedCount": null,
-  "updatedEntities": null,
-} satisfies DeleteEntityResponse
+} satisfies EntitySelectType
 
 console.log(example)
 
@@ -27,7 +23,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as DeleteEntityResponse
+const exampleParsed = JSON.parse(exampleJSON) as EntitySelectType
 console.log(exampleParsed)
 ```
 
