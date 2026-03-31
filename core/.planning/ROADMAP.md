@@ -90,8 +90,8 @@ Plans:
   5. A pipeline integration test confirms multi-strategy merge produces correct composite scores
 **Plans:** 2 plans
 Plans:
-- [ ] 05-01-PLAN.md — TBD
-- [ ] 05-02-PLAN.md — TBD
+- [ ] 05-01-PLAN.md — Add fuzzystrmatch extension, findPhoneticCandidates, when() dispatch consolidation, unit tests
+- [ ] 05-02-PLAN.md — Pipeline integration tests for phonetic match (TEST-10) and multi-strategy merge (TEST-12)
 
 ## Progress
 
@@ -104,4 +104,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Scoring Improvements + Signal Classification | 2/2 | Complete   | 2026-03-29 |
 | 3. Nickname Lookup + Token-Set Similarity | 2/2 | Complete   | 2026-03-30 |
 | 4. Email Decomposition Strategy | 1/2 | In Progress|  |
-| 5. Phonetic Matching + Method Consolidation | 0/TBD | Not started | - |
+| 5. Phonetic Matching + Method Consolidation | 0/2 | Not started | - |
