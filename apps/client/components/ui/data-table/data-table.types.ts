@@ -205,6 +205,8 @@ export interface RowSelectionConfig<TData> {
   onSelectionChange?: (selectedRows: TData[]) => void;
   actionComponent?: React.ComponentType<SelectionActionProps<TData>>;
   clearOnFilterChange?: boolean;
+  /** Called when the header "select all" checkbox is toggled. Return true to prevent default TanStack Table behavior. */
+  onSelectAllChange?: (checked: boolean) => boolean;
 }
 
 // ============================================================================

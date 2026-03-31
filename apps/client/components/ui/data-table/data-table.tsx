@@ -357,7 +357,12 @@ export function DataTable<TData, TValue>({
           {showCheckbox && (
             <Checkbox
               checked={table.getIsAllPageRowsSelected()}
-              onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+              onCheckedChange={(value) => {
+                const intercepted = rowSelection?.onSelectAllChange?.(!!value);
+                if (!intercepted) {
+                  table.toggleAllPageRowsSelected(!!value);
+                }
+              }}
               aria-label="Select all"
               onClick={(e) => e.stopPropagation()}
             />
