@@ -36,6 +36,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@riven/utils": "workspace:*",
+    "@riven/tsconfig": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "cmdk": "^1.1.1",
     "lucide-react": "^0.522.0",
