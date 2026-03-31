@@ -29,6 +29,13 @@ class IdentityMatchCandidateService(
          * 2x this count before mergeCandidates deduplication.
          */
         private const val CANDIDATE_LIMIT = 100
+
+        /**
+         * Higher fetch limit for email domain candidates. The SQL query fetches same-domain
+         * rows before Kotlin-side local-part scoring filters them down. A larger window
+         * prevents the best local-part matches from being lost on large corporate domains.
+         */
+        private const val EMAIL_DOMAIN_FETCH_LIMIT = 500
     }
 
     // ------ Public operations ------
@@ -67,8 +74,12 @@ class IdentityMatchCandidateService(
             val signalType = MatchSignalType.fromColumnValue(rawSignalType)
                 ?: MatchSignalType.fromSchemaType(schemaType)
             val normalizedValue = normalizationService.normalize(rawValue, signalType)
+            if (normalizedValue.isBlank()) {
+                logger.debug { "Normalized value is blank for attribute $attributeId (type=$signalType) — skipping candidate scan" }
+                continue
+            }
 
-            logger.debug { "Scanning candidates for attribute $attributeId (type=$signalType) value='$normalizedValue'" }
+            logger.debug { "Scanning candidates for attribute $attributeId (type=$signalType)" }
 
             val candidates = when (signalType) {
                 MatchSignalType.NAME              -> findNameCandidates(triggerEntityId, workspaceId, normalizedValue, signalType)
@@ -487,7 +498,6 @@ class IdentityMatchCandidateService(
      * @param normalizedValue normalized trigger name value (space-separated tokens)
      * @param signalType the signal type to assign to returned candidates (NAME)
      */
-    @Suppress("UNCHECKED_CAST")
     private fun findPhoneticCandidates(
         triggerEntityId: UUID,
         workspaceId: UUID,
@@ -496,10 +506,19 @@ class IdentityMatchCandidateService(
     ): List<CandidateMatch> {
         val tokens = normalizedValue.lowercase().split(Regex("\\s+")).filter { it.isNotEmpty() }
         val phoneticCodes = computePhoneticCodes(tokens)
-
-        // Early return guards against empty-collection SQL parameter error
         if (phoneticCodes.isEmpty()) return emptyList()
 
+        val rows = executePhoneticQuery(triggerEntityId, workspaceId, phoneticCodes)
+        return mapPhoneticRows(rows, signalType)
+    }
+
+    /** Executes the dmetaphone phonetic candidate SQL query and returns raw result rows. */
+    @Suppress("UNCHECKED_CAST")
+    private fun executePhoneticQuery(
+        triggerEntityId: UUID,
+        workspaceId: UUID,
+        phoneticCodes: Set<String>,
+    ): List<Array<Any>> {
         val sql = """
             SELECT ea.entity_id   AS candidate_entity_id,
                    ea.attribute_id AS candidate_attribute_id,
@@ -530,8 +549,11 @@ class IdentityMatchCandidateService(
         query.setParameter("workspaceId", workspaceId)
         query.setParameter("triggerEntityId", triggerEntityId)
         query.setParameter("phoneticCodes", phoneticCodes.toTypedArray())
+        return query.resultList as List<Array<Any>>
+    }
 
-        val rows = query.resultList as List<Array<Any>>
+    /** Maps raw phonetic query result rows to [CandidateMatch] instances. */
+    private fun mapPhoneticRows(rows: List<Array<Any>>, signalType: MatchSignalType): List<CandidateMatch> {
         return rows.map { row ->
             val rawSignalType = row[4]?.toString()
             val candidateSignalType = MatchSignalType.fromColumnValue(rawSignalType)
@@ -592,16 +614,39 @@ class IdentityMatchCandidateService(
               AND ea.entity_id != :triggerEntityId
               AND ea.deleted = false
               AND LOWER(split_part(ea.value->>'value', '@', 2)) = :domain
-            LIMIT $CANDIDATE_LIMIT
+            LIMIT $EMAIL_DOMAIN_FETCH_LIMIT
         """.trimIndent()
 
+        val rows = executeEmailDomainQuery(sql, workspaceId, triggerEntityId, domain)
+        return scoreAndFilterByLocalPart(rows, normalizedEmail, signalType)
+    }
+
+    /** Executes the email domain SQL query and returns raw result rows. */
+    @Suppress("UNCHECKED_CAST")
+    private fun executeEmailDomainQuery(
+        sql: String,
+        workspaceId: UUID,
+        triggerEntityId: UUID,
+        domain: String,
+    ): List<Array<Any>> {
         val query = entityManager.createNativeQuery(sql)
         query.setParameter("workspaceId", workspaceId)
         query.setParameter("triggerEntityId", triggerEntityId)
         query.setParameter("domain", domain)
+        return query.resultList as List<Array<Any>>
+    }
 
-        val rows = query.resultList as List<Array<Any>>
-
+    /**
+     * Scores email domain candidate rows by local-part overlap and filters below threshold.
+     *
+     * Extracts the local part from each candidate email and computes overlap coefficient
+     * via [EmailMatcher.localPartSimilarity]. Candidates with overlap below 0.5 are discarded.
+     */
+    private fun scoreAndFilterByLocalPart(
+        rows: List<Array<Any>>,
+        normalizedEmail: String,
+        signalType: MatchSignalType,
+    ): List<CandidateMatch> {
         val triggerLocal = EmailMatcher.extractLocal(normalizedEmail) ?: return emptyList()
 
         return rows.mapNotNull { row ->

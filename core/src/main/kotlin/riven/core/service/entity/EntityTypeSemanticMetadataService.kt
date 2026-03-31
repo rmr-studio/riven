@@ -6,12 +6,12 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.entity.entity.EntityTypeSemanticMetadataEntity
-import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
 import riven.core.enums.entity.semantics.SemanticMetadataTargetType
 import riven.core.enums.entity.semantics.SemanticMetadataTargetType.ATTRIBUTE
 import riven.core.enums.entity.semantics.SemanticMetadataTargetType.ENTITY_TYPE
 import riven.core.enums.entity.semantics.SemanticMetadataTargetType.RELATIONSHIP
+import riven.core.enums.identity.MatchSignalType
 import riven.core.models.entity.EntityTypeSemanticMetadata
 import riven.core.models.request.entity.type.BulkSaveSemanticMetadataRequest
 import riven.core.models.request.entity.type.SaveSemanticMetadataRequest
@@ -147,7 +147,7 @@ class EntityTypeSemanticMetadataService(
             .associateBy { it.targetId }
 
         val entitiesToSave = requests.map { req ->
-            val derivedSignalType = deriveSignalType(req.classification, schemaType = null)
+            val derivedSignalType = deriveSignalType(req.classification)
             val existing = existingByTargetId[req.targetId]
             if (existing != null) {
                 existing.apply {
@@ -290,7 +290,7 @@ class EntityTypeSemanticMetadataService(
         request: SaveSemanticMetadataRequest,
     ): EntityTypeSemanticMetadata {
         val existing = repository.findByEntityTypeIdAndTargetTypeAndTargetId(entityTypeId, targetType, targetId)
-        val derivedSignalType = deriveSignalType(request.classification, schemaType = null)
+        val derivedSignalType = deriveSignalType(request.classification)
 
         val entity = if (existing.isPresent) {
             existing.get().apply {
@@ -316,23 +316,17 @@ class EntityTypeSemanticMetadataService(
     }
 
     /**
-     * Derives the signal_type column value from the classification and optional schema type.
+     * Derives the [MatchSignalType] from the classification.
      *
-     * Returns a non-null string when classification is IDENTIFIER:
-     * - EMAIL schema type -> "EMAIL"
-     * - PHONE schema type -> "PHONE"
-     * - All others (including null schemaType) -> "CUSTOM"
-     *
+     * Returns [MatchSignalType.CUSTOM_IDENTIFIER] when classification is IDENTIFIER
+     * (the JPA converter handles the CUSTOM_IDENTIFIER <-> "CUSTOM" DB mapping).
      * Returns null when classification is not IDENTIFIER, clearing any previously stored signal type.
      */
     private fun deriveSignalType(
         classification: SemanticAttributeClassification?,
-        schemaType: SchemaType?,
-    ): String? = when {
-        classification != SemanticAttributeClassification.IDENTIFIER -> null
-        schemaType == SchemaType.EMAIL -> "EMAIL"
-        schemaType == SchemaType.PHONE -> "PHONE"
-        else -> "CUSTOM"
+    ): MatchSignalType? = when (classification) {
+        SemanticAttributeClassification.IDENTIFIER -> MatchSignalType.CUSTOM_IDENTIFIER
+        else -> null
     }
 
     /**

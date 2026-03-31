@@ -65,7 +65,7 @@ enum class MatchSignalType {
             "COMPANY" -> COMPANY
             "CUSTOM" -> CUSTOM_IDENTIFIER
             null -> null
-            else -> null
+            else -> throw IllegalArgumentException("Unrecognized signal_type value: '$value'")
         }
     }
 }

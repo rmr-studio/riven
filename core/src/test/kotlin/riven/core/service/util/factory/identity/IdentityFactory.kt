@@ -120,7 +120,7 @@ object IdentityFactory {
         targetType: SemanticMetadataTargetType = SemanticMetadataTargetType.ATTRIBUTE,
         targetId: UUID = UUID.randomUUID(),
         classification: SemanticAttributeClassification? = SemanticAttributeClassification.IDENTIFIER,
-        signalType: String? = null,
+        signalType: MatchSignalType? = null,
         definition: String? = null,
         tags: List<String> = emptyList(),
     ): EntityTypeSemanticMetadataEntity = EntityTypeSemanticMetadataEntity(

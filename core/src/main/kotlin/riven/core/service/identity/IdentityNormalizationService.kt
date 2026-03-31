@@ -60,11 +60,11 @@ class IdentityNormalizationService(
 
     /**
      * Strips all non-digit characters from [value], then removes a leading "1" country
-     * code if the result is 11+ digits and starts with "1" (US/Canada numbers only).
+     * code if the result is exactly 11 digits and starts with "1" (NANP US/Canada numbers only).
      */
     private fun normalizePhone(value: String): String {
         val digits = value.replace(Regex("[^0-9]"), "")
-        return if (digits.length >= 11 && digits.startsWith("1")) {
+        return if (digits.length == 11 && digits.startsWith("1")) {
             digits.substring(1)
         } else {
             digits
@@ -101,6 +101,7 @@ class IdentityNormalizationService(
         val normalized = Normalizer.normalize(value.trim(), Normalizer.Form.NFKD)
             .replace(Regex("\\p{Mn}"), "")
             .lowercase()
+            .replace(Regex("[,;:!?]"), " ")
 
         val tokens = normalized.split(Regex("\\s+")).filter { it.isNotEmpty() }.toMutableList()
 

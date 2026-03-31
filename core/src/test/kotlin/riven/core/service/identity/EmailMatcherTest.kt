@@ -40,6 +40,16 @@ class EmailMatcherTest {
         fun `empty string returns null`() {
             assertNull(EmailMatcher.extractDomain(""))
         }
+
+        @Test
+        fun `malformed email with empty domain returns null`() {
+            assertNull(EmailMatcher.extractDomain("john@"))
+        }
+
+        @Test
+        fun `bare at sign returns null for domain`() {
+            assertNull(EmailMatcher.extractDomain("@"))
+        }
     }
 
     // ------ extractLocal ------
@@ -60,6 +70,11 @@ class EmailMatcherTest {
         @Test
         fun `email with no at sign returns null`() {
             assertNull(EmailMatcher.extractLocal("noatsign"))
+        }
+
+        @Test
+        fun `malformed email with empty local part returns null`() {
+            assertNull(EmailMatcher.extractLocal("@acme.com"))
         }
     }
 

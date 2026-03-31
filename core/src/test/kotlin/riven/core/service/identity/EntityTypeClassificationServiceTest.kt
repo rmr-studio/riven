@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
@@ -190,7 +191,7 @@ class EntityTypeClassificationServiceTest {
                     entityTypeId = entityTypeId,
                     targetId = attrId,
                     classification = SemanticAttributeClassification.IDENTIFIER,
-                    signalType = "EMAIL",
+                    signalType = MatchSignalType.EMAIL,
                 )
             ))
 
@@ -217,7 +218,7 @@ class EntityTypeClassificationServiceTest {
                     entityTypeId = entityTypeId,
                     targetId = attrId,
                     classification = SemanticAttributeClassification.IDENTIFIER,
-                    signalType = "EMAIL",
+                    signalType = MatchSignalType.EMAIL,
                 )
             ))
 
@@ -237,7 +238,7 @@ class EntityTypeClassificationServiceTest {
                     entityTypeId = entityTypeId,
                     targetId = attrId,
                     classification = SemanticAttributeClassification.IDENTIFIER,
-                    signalType = "PHONE",
+                    signalType = MatchSignalType.PHONE,
                 )
             ))
 
@@ -257,7 +258,7 @@ class EntityTypeClassificationServiceTest {
                     entityTypeId = entityTypeId,
                     targetId = attrId,
                     classification = SemanticAttributeClassification.IDENTIFIER,
-                    signalType = "CUSTOM",
+                    signalType = MatchSignalType.CUSTOM_IDENTIFIER,
                 )
             ))
 
@@ -301,21 +302,21 @@ class EntityTypeClassificationServiceTest {
                     entityTypeId = entityTypeId,
                     targetId = emailAttrId,
                     classification = SemanticAttributeClassification.IDENTIFIER,
-                    signalType = "EMAIL",
+                    signalType = MatchSignalType.EMAIL,
                 ),
                 IdentityFactory.createEntityTypeSemanticMetadataEntity(
                     workspaceId = workspaceId,
                     entityTypeId = entityTypeId,
                     targetId = phoneAttrId,
                     classification = SemanticAttributeClassification.IDENTIFIER,
-                    signalType = "PHONE",
+                    signalType = MatchSignalType.PHONE,
                 ),
                 IdentityFactory.createEntityTypeSemanticMetadataEntity(
                     workspaceId = workspaceId,
                     entityTypeId = entityTypeId,
                     targetId = customAttrId,
                     classification = SemanticAttributeClassification.IDENTIFIER,
-                    signalType = "CUSTOM",
+                    signalType = MatchSignalType.CUSTOM_IDENTIFIER,
                 ),
             ))
 
@@ -339,7 +340,7 @@ class EntityTypeClassificationServiceTest {
                     entityTypeId = entityTypeId,
                     targetId = identifierAttrId,
                     classification = SemanticAttributeClassification.IDENTIFIER,
-                    signalType = "EMAIL",
+                    signalType = MatchSignalType.EMAIL,
                 ),
                 IdentityFactory.createEntityTypeSemanticMetadataEntity(
                     workspaceId = workspaceId,
@@ -368,7 +369,7 @@ class EntityTypeClassificationServiceTest {
                     entityTypeId = entityTypeId,
                     targetId = attrId,
                     classification = SemanticAttributeClassification.IDENTIFIER,
-                    signalType = "EMAIL",
+                    signalType = MatchSignalType.EMAIL,
                 )
             ))
 
@@ -418,8 +419,10 @@ class EntityTypeClassificationServiceTest {
         }
 
         @Test
-        fun `fromColumnValue returns null for unknown value`() {
-            assertNull(MatchSignalType.fromColumnValue("UNKNOWN_VALUE"))
+        fun `fromColumnValue throws for unrecognized non-null value`() {
+            assertThrows<IllegalArgumentException> {
+                MatchSignalType.fromColumnValue("EMAILL")
+            }
         }
     }
 

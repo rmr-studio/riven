@@ -55,7 +55,8 @@ object EmailMatcher {
     fun extractDomain(email: String): String? {
         val idx = email.lastIndexOf('@')
         if (idx < 0) return null
-        return email.substring(idx + 1).lowercase()
+        val domain = email.substring(idx + 1).lowercase()
+        return domain.ifEmpty { null }
     }
 
     /**
@@ -67,7 +68,8 @@ object EmailMatcher {
     fun extractLocal(email: String): String? {
         val idx = email.lastIndexOf('@')
         if (idx < 0) return null
-        return email.substring(0, idx)
+        val local = email.substring(0, idx)
+        return local.ifEmpty { null }
     }
 
     /**

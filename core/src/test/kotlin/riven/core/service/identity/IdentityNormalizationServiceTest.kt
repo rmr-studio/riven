@@ -32,9 +32,21 @@ class IdentityNormalizationServiceTest {
         }
 
         @Test
-        fun `non-US 11-digit number not starting with 1 keeps leading digit`() {
+        fun `non-US 12-digit number not starting with 1 keeps all digits`() {
             // "44 20 7946 0958" -> "442079460958" — 12 digits, starts with 4, no strip
             assertEquals("442079460958", service.normalize("44 20 7946 0958", MatchSignalType.PHONE))
+        }
+
+        @Test
+        fun `non-US 11-digit number not starting with 1 keeps all digits`() {
+            // "44 207 946 095" -> "44207946095" — 11 digits, starts with 4, no strip
+            assertEquals("44207946095", service.normalize("44 207 946 095", MatchSignalType.PHONE))
+        }
+
+        @Test
+        fun `12-digit number starting with 1 is NOT stripped`() {
+            // "180055512345" — 12 digits, starts with 1, but not exactly 11 digits so no strip
+            assertEquals("180055512345", service.normalize("180055512345", MatchSignalType.PHONE))
         }
 
         @Test
@@ -116,6 +128,12 @@ class IdentityNormalizationServiceTest {
         fun `strips period-terminated stopword like Dr dot`() {
             assertEquals("jane doe", service.normalize("Dr. Jane Doe", MatchSignalType.NAME))
         }
+
+        @Test
+        fun `strips comma from reversed name format`() {
+            // "Smith, John Sr" — comma becomes space, Sr stripped from end
+            assertEquals("smith john", service.normalize("Smith, John Sr", MatchSignalType.NAME))
+        }
     }
 
     // ------ Company normalization ------
@@ -142,6 +160,12 @@ class IdentityNormalizationServiceTest {
         @Test
         fun `strips Inc suffix with period`() {
             assertEquals("global tech", service.normalize("Global Tech Inc.", MatchSignalType.COMPANY))
+        }
+
+        @Test
+        fun `strips comma and legal suffix from company name`() {
+            // "Acme, Inc." — comma becomes space, Inc stripped from end
+            assertEquals("acme", service.normalize("Acme, Inc.", MatchSignalType.COMPANY))
         }
 
         @Test

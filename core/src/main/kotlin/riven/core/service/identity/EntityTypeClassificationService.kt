@@ -70,8 +70,7 @@ class EntityTypeClassificationService(
                 .findByEntityTypeIdAndTargetType(entityTypeId, SemanticMetadataTargetType.ATTRIBUTE)
                 .filter { it.classification == SemanticAttributeClassification.IDENTIFIER }
                 .associate { entity ->
-                    val signalType = MatchSignalType.fromColumnValue(entity.signalType)
-                        ?: MatchSignalType.CUSTOM_IDENTIFIER
+                    val signalType = entity.signalType ?: MatchSignalType.CUSTOM_IDENTIFIER
                     entity.targetId to signalType
                 }
         }
