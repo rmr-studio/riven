@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 type SelectionMode = 'manual' | 'all';
 
@@ -19,20 +19,43 @@ const INITIAL_STATE: EntitySelectionState = {
   totalCount: undefined,
 };
 
-export function useEntitySelection() {
+/**
+ * Server-aware entity selection state.
+ *
+ * @param queryTotalCount - Total count from the query's first page response.
+ *   Kept in sync automatically — when filters/search change the query resets,
+ *   a new page 0 is fetched with `includeCount`, and this value updates.
+ */
+export function useEntitySelection(queryTotalCount: number | undefined) {
   const [state, setState] = useState<EntitySelectionState>(INITIAL_STATE);
 
-  const selectAll = useCallback((totalCount: number) => {
-    setState({
+  // Sync totalCount from the query into selection state
+  useEffect(() => {
+    if (queryTotalCount === undefined) return;
+
+    setState((prev) => {
+      if (prev.totalCount === queryTotalCount) return prev;
+
+      // In "all" mode, auto-revert if everything is now excluded
+      if (prev.mode === 'all' && prev.excludedIds.size >= queryTotalCount) {
+        return { ...INITIAL_STATE };
+      }
+
+      return { ...prev, totalCount: queryTotalCount };
+    });
+  }, [queryTotalCount]);
+
+  const selectAll = useCallback(() => {
+    setState((prev) => ({
       mode: 'all',
       includedIds: new Set(),
       excludedIds: new Set(),
-      totalCount,
-    });
+      totalCount: prev.totalCount,
+    }));
   }, []);
 
   const deselectAll = useCallback(() => {
-    setState(INITIAL_STATE);
+    setState((prev) => ({ ...INITIAL_STATE, totalCount: prev.totalCount }));
   }, []);
 
   const toggleId = useCallback((id: string) => {
@@ -57,23 +80,10 @@ export function useEntitySelection() {
 
       // Auto-revert: if every item is excluded, reset to manual
       if (prev.totalCount !== undefined && next.size >= prev.totalCount) {
-        return { ...INITIAL_STATE };
+        return { ...INITIAL_STATE, totalCount: prev.totalCount };
       }
 
       return { ...prev, excludedIds: next };
-    });
-  }, []);
-
-  const updateTotalCount = useCallback((totalCount: number) => {
-    setState((prev) => {
-      if (prev.mode !== 'all') return prev;
-
-      // Auto-revert if new count makes everything excluded
-      if (prev.excludedIds.size >= totalCount) {
-        return { ...INITIAL_STATE };
-      }
-
-      return { ...prev, totalCount };
     });
   }, []);
 
@@ -101,7 +111,6 @@ export function useEntitySelection() {
     selectAll,
     deselectAll,
     toggleId,
-    updateTotalCount,
     isSelected,
     selectedCount,
     hasSelection,

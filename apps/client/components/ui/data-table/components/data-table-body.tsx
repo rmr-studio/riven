@@ -27,6 +27,10 @@ interface DataTableBodyProps<TData> {
   hasEndOfHeaderContent?: boolean;
   /** Whether the header has a row actions column (needs matching td) */
   hasRowActions?: boolean;
+  /** External selection override: determines if a row is selected */
+  getIsRowSelected?: (rowId: string) => boolean;
+  /** External selection override: called when a row's selection is toggled */
+  onRowToggle?: (rowId: string) => void;
 }
 
 function DataTableBodyComponent<TData>({
@@ -46,6 +50,8 @@ function DataTableBodyComponent<TData>({
   actionColumnConfig,
   hasEndOfHeaderContent = false,
   hasRowActions = false,
+  getIsRowSelected,
+  onRowToggle,
 }: DataTableBodyProps<TData>) {
   const tableData = useDataTableStore<TData, TData[]>((state) => state.tableData);
 
@@ -91,6 +97,8 @@ function DataTableBodyComponent<TData>({
         }
 
         // Default rendering
+        const isSelected = getIsRowSelected ? getIsRowSelected(row.id) : row.getIsSelected();
+
         return (
           <DraggableRow
             key={row.id}
@@ -102,6 +110,10 @@ function DataTableBodyComponent<TData>({
             disabled={addingNewEntry}
             disableDragForRow={disableDragForRow}
             isSelectionEnabled={isSelectionEnabled}
+            isSelected={isSelected}
+            onToggleSelected={onRowToggle
+              ? () => onRowToggle(row.id)
+              : (value) => row.toggleSelected(value)}
             enableInlineEdit={enableInlineEdit}
             focusedCell={focusedCell}
             actionColumnConfig={actionColumnConfig}

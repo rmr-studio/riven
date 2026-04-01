@@ -6,13 +6,11 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import { FC, useMemo, useState } from 'react';
 import { useDeleteEntityMutation } from '../../../../hooks/mutation/instance/use-delete-entity-mutation';
 import type { EntitySelection } from '../../../../hooks/use-entity-selection';
-import { EntityRow, isEntityRow } from '../../../tables/entity-table-utils';
 import { DeleteEntityRequest, EntitySelectType, QueryFilter } from '@/lib/types/entity';
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedRows: EntityRow[];
   workspaceId: string;
   entityTypeId: string;
   entitySelection: EntitySelection;
@@ -23,7 +21,6 @@ interface Props {
 export const DeleteEntityModal: FC<Props> = ({
   open,
   onOpenChange,
-  selectedRows,
   workspaceId,
   entityTypeId,
   entitySelection,
@@ -45,8 +42,8 @@ export const DeleteEntityModal: FC<Props> = ({
       };
     }
 
-    // Manual mode — use selected row entity IDs (filter out drafts)
-    const entityIds = selectedRows.filter(isEntityRow).map((row) => row._entityId);
+    // Manual mode — use IDs from the selection hook
+    const entityIds = Array.from(entitySelection.includedIds);
     if (entityIds.length === 0) return null;
 
     return {
@@ -54,11 +51,9 @@ export const DeleteEntityModal: FC<Props> = ({
       entityTypeId,
       entityIds,
     };
-  }, [entitySelection, entityTypeId, queryFilter, selectedRows]);
+  }, [entitySelection, entityTypeId, queryFilter]);
 
-  const entityCount = entitySelection.mode === 'all'
-    ? entitySelection.selectedCount
-    : selectedRows.filter(isEntityRow).length;
+  const entityCount = entitySelection.selectedCount;
 
   const { mutateAsync: deleteEntities } = useDeleteEntityMutation(workspaceId, {
     onMutate: () => {

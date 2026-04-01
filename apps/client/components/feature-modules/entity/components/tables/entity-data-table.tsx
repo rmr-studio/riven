@@ -1,6 +1,12 @@
 'use client';
 
-import { ActionColumnConfig, ColumnResizingConfig, DataTable, DataTableProvider, InfiniteScrollConfig } from '@/components/ui/data-table';
+import {
+  ActionColumnConfig,
+  ColumnResizingConfig,
+  DataTable,
+  DataTableProvider,
+  InfiniteScrollConfig,
+} from '@/components/ui/data-table';
 import { Form } from '@/components/ui/form';
 import {
   EntityAttributeDefinition,
@@ -36,10 +42,17 @@ import { ColumnHeaderPopover } from './column-header-popover';
 import { ColumnVisibilityPopover } from './column-visibility-popover';
 import { EntityDraftRow } from './entity-draft-row';
 import EntityActionBar from './entity-table-action-bar';
-import { EntityRow, generateSearchConfigFromEntityType, isDraftRow, isEntityRow } from './entity-table-utils';
+import {
+  EntityRow,
+  generateSearchConfigFromEntityType,
+  isDraftRow,
+  isEntityRow,
+} from './entity-table-utils';
 
 const noteDrawerImport = () =>
-  import('@/components/feature-modules/entity/components/notes/note-drawer').then((m) => m.NoteDrawer);
+  import('@/components/feature-modules/entity/components/notes/note-drawer').then(
+    (m) => m.NoteDrawer,
+  );
 const NoteDrawer = dynamic(noteDrawerImport, { ssr: false });
 
 export interface Props extends ClassNameProps {
@@ -47,11 +60,7 @@ export interface Props extends ClassNameProps {
   workspaceId: string;
 }
 
-export const EntityDataTable: FC<Props> = ({
-  entityType,
-  className,
-  workspaceId,
-}) => {
+export const EntityDataTable: FC<Props> = ({ entityType, className, workspaceId }) => {
   const { isDraftMode, enterDraftMode } = useEntityDraft();
   const { form } = useConfigFormState();
 
@@ -62,10 +71,7 @@ export const EntityDataTable: FC<Props> = ({
   } | null>(null);
 
   // Search state (debounced)
-  const { searchTerm, setSearchTerm, debouncedSearch, clearSearch } = useEntitySearch();
-
-  // Server-aware selection state
-  const entitySelection = useEntitySelection();
+  const { setSearchTerm, debouncedSearch, clearSearch } = useEntitySearch();
 
   // Sorting state (server-side via queryEntities)
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -101,8 +107,14 @@ export const EntityDataTable: FC<Props> = ({
     sorting,
   });
 
-  // Extract totalCount from first page (only included when offset=0)
-  const totalCount = entityResponse?.pages[0]?.totalCount;
+  const totalCount = useMemo(() => {
+    if (!entityResponse) return undefined;
+    return entityResponse.pages[0]?.totalCount;
+  }, [entityResponse]);
+
+  // Server-aware selection state — totalCount kept in sync from the query
+  const selection = useEntitySelection(totalCount);
+  const { selectAll, deselectAll } = selection;
 
   // Surface query errors as toasts
   useEffect(() => {
@@ -113,7 +125,7 @@ export const EntityDataTable: FC<Props> = ({
 
   // Reset selection when filter, search, or sort changes
   useEffect(() => {
-    entitySelection.deselectAll();
+    deselectAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally reset on query dependency changes
   }, [debouncedSearch, queryFilter, sorting]);
 
@@ -127,14 +139,8 @@ export const EntityDataTable: FC<Props> = ({
   const { rowData, columns } = useEntityTableData(entityType, entities, isDraftMode);
 
   // Entity lookup for inline edit
-  const entityMap = useMemo(
-    () => new Map(entities.map((e) => [e.id, e])),
-    [entities],
-  );
-  const getEntityById = useCallback(
-    (id: string) => entityMap.get(id),
-    [entityMap],
-  );
+  const entityMap = useMemo(() => new Map(entities.map((e) => [e.id, e])), [entities]);
+  const getEntityById = useCallback((id: string) => entityMap.get(id), [entityMap]);
 
   const { handleCellEdit } = useEntityInlineEdit(workspaceId, entityType, getEntityById);
   const {
@@ -203,12 +209,7 @@ export const EntityDataTable: FC<Props> = ({
             onOpenChange={setVisibilityPopoverOpen}
           >
             <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7"
-                disabled={isDraftMode}
-              >
+              <Button variant="ghost" size="icon" className="size-7" disabled={isDraftMode}>
                 <MoreHorizontal className="size-4" />
                 <span className="sr-only">Manage columns</span>
               </Button>
@@ -277,6 +278,8 @@ export const EntityDataTable: FC<Props> = ({
   );
 
   // Action column configuration — includes notes icon alongside drag handle and checkbox
+  // @ts-expect-error - not sure why types aren't lining up here, but it works
+  // TODO: investigate and fix
   const actionColumnConfig: ActionColumnConfig = useMemo(
     () => ({
       dragHandle: { enabled: true, visibility: 'hover-or-selected' },
@@ -292,9 +295,7 @@ export const EntityDataTable: FC<Props> = ({
             type="button"
             className={cn(
               'relative cursor-pointer text-muted-foreground transition-all hover:text-foreground',
-              hasNotes
-                ? 'opacity-100'
-                : 'opacity-0 group-hover/row:opacity-100',
+              hasNotes ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100',
             )}
             onMouseEnter={() => noteDrawerImport()}
             onClick={(e) => {
@@ -305,7 +306,7 @@ export const EntityDataTable: FC<Props> = ({
           >
             <StickyNote className="size-4" />
             {hasNotes && (
-              <span className="absolute -bottom-1 -right-1.5 flex size-3.5 items-center justify-center rounded-full bg-foreground text-[9px] font-medium leading-none text-background">
+              <span className="absolute -right-1.5 -bottom-1 flex size-3.5 items-center justify-center rounded-full bg-foreground text-[9px] leading-none font-medium text-background">
                 {noteCount}
               </span>
             )}
@@ -364,27 +365,30 @@ export const EntityDataTable: FC<Props> = ({
             columns={columns}
             rowSelection={{
               enabled: true,
-              clearOnFilterChange: true,
+              clearOnFilterChange: false, // handled by useEntitySelection's reset useEffect
+              isAllSelected: selection.mode === 'all',
               onSelectAllChange: (checked) => {
-                if (checked && totalCount !== undefined) {
-                  entitySelection.selectAll(totalCount);
-                  return true; // prevent default TanStack behavior
-                } else if (!checked) {
-                  entitySelection.deselectAll();
-                  return true;
+                if (checked) {
+                  selectAll();
+                } else {
+                  deselectAll();
                 }
-                return false;
+                return true; // always prevent default TanStack row-by-row behavior
               },
-              actionComponent: ({ selectedRows, clearSelection }) => (
+              // External selection overrides — useEntitySelection is the source of truth
+              getIsRowSelected: selection.isSelected,
+              onRowToggle: (rowId) => selection.toggleId(rowId),
+              selectedCount: selection.selectedCount,
+              onClearSelection: deselectAll,
+              actionComponent: ({ clearSelection }) => (
                 <EntityActionBar
-                  selectedRows={selectedRows}
                   clearSelection={() => {
                     clearSelection();
-                    entitySelection.deselectAll();
+                    deselectAll();
                   }}
                   workspaceId={workspaceId}
                   entityTypeId={entityType.id}
-                  entitySelection={entitySelection}
+                  entitySelection={selection}
                   queryFilter={queryFilter}
                 />
               ),

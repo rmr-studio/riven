@@ -8,10 +8,8 @@ import { Ellipsis, Trash2 } from 'lucide-react';
 import { FC, useState } from 'react';
 import type { EntitySelection } from '../../hooks/use-entity-selection';
 import { DeleteEntityModal } from '../ui/modals/instance/delete-entity-modal';
-import { EntityRow } from './entity-table-utils';
 
 interface Props {
-  selectedRows: EntityRow[];
   clearSelection: () => void;
   workspaceId: string;
   entityTypeId: string;
@@ -20,7 +18,6 @@ interface Props {
 }
 
 const EntityActionBar: FC<Props> = ({
-  selectedRows,
   clearSelection,
   workspaceId,
   entityTypeId,
@@ -62,7 +59,6 @@ const EntityActionBar: FC<Props> = ({
       <DeleteEntityModal
         open={deleteModalOpen}
         onOpenChange={setDeleteModalOpen}
-        selectedRows={selectedRows}
         workspaceId={workspaceId}
         entityTypeId={entityTypeId}
         entitySelection={entitySelection}
