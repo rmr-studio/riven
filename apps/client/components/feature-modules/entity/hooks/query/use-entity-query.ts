@@ -1,17 +1,16 @@
 import { useAuth } from '@/components/provider/auth-context';
 import {
   EntityQueryResponse,
-  FilterOperator,
-  FilterValueKind,
   OrderByClause,
   QueryFilter,
-  QueryFilterType,
   SortDirection,
 } from '@/lib/types/entity';
+import { buildCompositeFilter } from '@/lib/util/query/filter.util';
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 import { SortingState } from '@tanstack/react-table';
 import { EntityService } from '../../service/entity.service';
 import { entityKeys } from './entity-query-keys';
+
 
 export const ENTITY_PAGE_SIZE = 50;
 const MAX_PAGES = 10;
@@ -39,57 +38,6 @@ export function sortingStateToOrderBy(sorting: SortingState): OrderByClause[] | 
     attributeId: sort.id,
     direction: sort.desc ? SortDirection.Desc : SortDirection.Asc,
   }));
-}
-
-/**
- * Builds a composite QueryFilter from search term and/or query builder filter.
- *
- * - Search only → OR filter across searchable attributes with CONTAINS
- * - Filter only → use as-is
- * - Both → AND(search OR-group, filter)
- */
-export function buildCompositeFilter(
-  debouncedSearch?: string,
-  searchableAttributeIds?: string[],
-  queryFilter?: QueryFilter,
-): QueryFilter | undefined {
-  const searchFilter = buildSearchFilter(debouncedSearch, searchableAttributeIds);
-
-  if (searchFilter && queryFilter) {
-    return {
-      conditions: [searchFilter, queryFilter],
-      type: QueryFilterType.And,
-    } as QueryFilter;
-  }
-
-  return searchFilter ?? queryFilter;
-}
-
-function buildSearchFilter(search?: string, attributeIds?: string[]): QueryFilter | undefined {
-  if (!search || !attributeIds || attributeIds.length === 0) {
-    return undefined;
-  }
-
-  const conditions: QueryFilter[] = attributeIds.map((attributeId) => {
-    const filter: QueryFilter = {
-      type: QueryFilterType.Attribute,
-      attributeId,
-      operator: FilterOperator.Contains,
-      // @ts-expect-error - TS doesn't understand the backend's sealed class hierarchy with discriminator properties
-      value: { kind: FilterValueKind.Literal, value: search },
-    };
-
-    return filter;
-  });
-
-  if (conditions.length === 1) {
-    return conditions[0];
-  }
-
-  return {
-    type: QueryFilterType.Or,
-    conditions,
-  } as QueryFilter;
 }
 
 /**

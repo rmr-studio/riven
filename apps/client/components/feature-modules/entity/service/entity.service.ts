@@ -144,6 +144,9 @@ export class EntityService {
   ): Promise<DeleteEntityResponse> {
     validateSession(session);
     validateUuid(workspaceId);
+    if (request.entityTypeId) validateUuid(request.entityTypeId);
+    request.entityIds?.forEach(validateUuid);
+    request.excludeIds?.forEach(validateUuid);
     const api = createEntityApi(session!);
 
     try {

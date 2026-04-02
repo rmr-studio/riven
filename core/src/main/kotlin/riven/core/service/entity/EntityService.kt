@@ -27,8 +27,6 @@ import riven.core.models.response.entity.DeleteEntityResponse
 import riven.core.models.response.entity.SaveEntityResponse
 import riven.core.enums.entity.EntitySelectType
 import riven.core.service.entity.query.EntityQueryService
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import riven.core.repository.entity.EntityRepository
 import riven.core.service.activity.ActivityService
@@ -488,18 +486,13 @@ class EntityService(
     private fun fetchImpactedEntities(impactedEntityIds: List<UUID>, workspaceId: UUID): Map<UUID, List<Entity>>? {
         if (impactedEntityIds.isEmpty()) return null
 
-        // Three independent queries — fan out for parallel I/O
-        val (impactedEntityEntities, impactedRelationships, impactedAttributes) = runBlocking(Dispatchers.IO) {
-            val entities = async { entityRepository.findAllById(impactedEntityIds) }
-            val relationships = async {
-                entityRelationshipService.findRelatedEntities(
-                    entityIds = impactedEntityIds.toSet(),
-                    workspaceId = workspaceId,
-                )
-            }
-            val attributes = async { entityAttributeService.getAttributesForEntities(impactedEntityIds.toSet()) }
-            Triple(entities.await(), relationships.await(), attributes.await())
-        }
+        // Run on the current transaction thread to preserve @Transactional context
+        val impactedEntityEntities = entityRepository.findByIdInAndWorkspaceId(impactedEntityIds, workspaceId)
+        val impactedRelationships = entityRelationshipService.findRelatedEntities(
+            entityIds = impactedEntityIds.toSet(),
+            workspaceId = workspaceId,
+        )
+        val impactedAttributes = entityAttributeService.getAttributesForEntities(impactedEntityIds.toSet())
 
         return impactedEntityEntities
             .map { impactedEntity ->
@@ -587,8 +580,7 @@ class EntityService(
 
             EntitySelectType.ALL -> {
                 val entityTypeId = requireNotNull(request.entityTypeId) { "entityTypeId required for ALL" }
-                val filter = requireNotNull(request.filter) { "filter required for ALL" }
-                val query = EntityQuery(entityTypeId = entityTypeId, filter = filter)
+                val query = EntityQuery(entityTypeId = entityTypeId, filter = request.filter)
                 val excludeIds = request.excludeIds?.toSet() ?: emptySet()
 
                 val allIds = mutableListOf<UUID>()

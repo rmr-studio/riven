@@ -228,9 +228,9 @@
     animation: paper-fade-in 0.6s ease-out 0.1s forwards;
   }
 
-  .paper-lite::before {
+  body.paper-lite::before {
     content: '';
-    position: absolute;
+    position: fixed;
     inset: 0;
     z-index: 0;
     pointer-events: none;
@@ -241,7 +241,7 @@
     animation: paper-lite-fade-in 0.6s ease-out 0.1s forwards;
   }
 
-  body > * {
+  body > *:not([data-slot*="portal"]) {
     position: relative;
     z-index: 1;
   }

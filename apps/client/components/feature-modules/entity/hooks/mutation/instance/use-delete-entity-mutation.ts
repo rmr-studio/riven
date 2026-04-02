@@ -75,6 +75,11 @@ export function useDeleteEntityMutation(
             },
           );
         }
+      } else {
+        // No entityTypeId — broad workspace-level invalidation to clear stale caches
+        queryClient.invalidateQueries({
+          queryKey: ['entities', workspaceId],
+        });
       }
 
       // Update impacted entities across both cache types

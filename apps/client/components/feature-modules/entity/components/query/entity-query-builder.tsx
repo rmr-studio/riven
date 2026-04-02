@@ -73,17 +73,19 @@ export function EntityQueryBuilder({
 
   const handleEntityTypeChange = useCallback(
     (id: string) => {
+      debouncedOnChange.cancel();
       setSelectedEntityTypeId(id);
       setFilterGroup(createDefaultGroup());
       onChange(undefined, id);
     },
-    [onChange],
+    [debouncedOnChange, onChange],
   );
 
   const handleClearAll = useCallback(() => {
+    debouncedOnChange.cancel();
     setFilterGroup(createDefaultGroup());
     onChange(undefined, selectedEntityTypeId);
-  }, [onChange, selectedEntityTypeId]);
+  }, [debouncedOnChange, onChange, selectedEntityTypeId]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

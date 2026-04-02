@@ -122,6 +122,8 @@ class EntityController(
         value = [
             ApiResponse(responseCode = "200", description = "Entities deleted successfully"),
             ApiResponse(responseCode = "400", description = "Invalid request"),
+            ApiResponse(responseCode = "401", description = "Unauthorized"),
+            ApiResponse(responseCode = "404", description = "No entities found matching selection criteria"),
         ]
     )
     fun deleteEntities(

@@ -845,7 +845,7 @@ class EntityServiceTest : BaseServiceTest() {
             whenever(entityRepository.deleteByIds(any(), eq(workspaceId)))
                 .thenReturn(listOf(deletedEntity))
             whenever(entityTypeAttributeService.deleteEntities(eq(workspaceId), any())).thenReturn(0)
-            whenever(entityRepository.findAllById(any<Collection<UUID>>()))
+            whenever(entityRepository.findByIdInAndWorkspaceId(any(), eq(workspaceId)))
                 .thenReturn(listOf(impactedEntity))
             whenever(entityRelationshipService.findRelatedEntities(any<Set<UUID>>(), eq(workspaceId)))
                 .thenReturn(emptyMap())

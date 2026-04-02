@@ -211,6 +211,7 @@ export const DraggableRow = React.memo(DraggableRowComponent, (prevProps, nextPr
     prevProps.focusedCell?.columnId === nextProps.focusedCell?.columnId &&
     prevProps.hasEndOfHeaderContent === nextProps.hasEndOfHeaderContent &&
     prevProps.actionColumnConfig === nextProps.actionColumnConfig &&
-    prevProps.enableInlineEdit === nextProps.enableInlineEdit
+    prevProps.enableInlineEdit === nextProps.enableInlineEdit &&
+    prevProps.onToggleSelected === nextProps.onToggleSelected
   );
 }) as typeof DraggableRowComponent;
