@@ -2,6 +2,7 @@
 
 import { UserProfileDropdown } from '@/components/feature-modules/user/components/avatar-dropdown';
 import { useProfile } from '@/components/feature-modules/user/hooks/use-profile';
+import { ConnectionStatus } from '@/components/feature-modules/workspace/components/connection-status';
 import { useIconRail } from '@/components/ui/sidebar/icon-rail-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@riven/ui/button';
@@ -44,8 +45,9 @@ export const Navbar = () => {
         )}
       </AnimatePresence>
       <div className="flex w-auto grow items-center justify-end space-x-2">
+        <ConnectionStatus />
+        <ThemeToggle />
         <NavbarUserProfile />
-        <ThemeToggle className="rounded-sm border" />
       </div>
     </nav>
   );
