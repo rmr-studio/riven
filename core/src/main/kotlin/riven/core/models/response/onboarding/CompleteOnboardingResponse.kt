@@ -13,9 +13,8 @@ data class CompleteOnboardingResponse(
 
 data class TemplateInstallResult(
     val key: String,
-    val success: Boolean,
-    val error: String? = null,
     val entityTypesCreated: Int = 0,
+    val relationshipsCreated: Int = 0,
 )
 
 data class InviteResult(

@@ -37,8 +37,8 @@ import java.util.*
 /**
  * Orchestrates the complete user onboarding flow in a single request.
  *
- * Phase 1 (atomic): Creates workspace and updates user profile within a transaction.
- * Phase 2 (best-effort): Installs templates and sends invitations after commit.
+ * Phase 1 (atomic): Creates workspace, installs template, and updates user profile within a transaction.
+ * Phase 2 (best-effort): Sends invitations and saves business definitions after commit.
  */
 @Service
 class OnboardingService(
@@ -69,26 +69,25 @@ class OnboardingService(
     ): CompleteOnboardingResponse {
         val userId = authTokenService.getUserId()
 
-        // Phase 1: Atomic — eligibility check + create workspace + update profile
-        val (workspace, user) = transactionTemplate.execute {
+        // Phase 1: Atomic — eligibility check + create workspace + install template + update profile
+        val (workspace, user, templateResult) = transactionTemplate.execute {
             validateOnboardingEligibility(userId)
             val workspace = createWorkspace(request, workspaceAvatar)
+            val templateResult = populateWorkspace(workspace.id, request.businessType, userId)
             val user = updateUserProfile(userId, request, workspace, profileAvatar)
-            workspace to user
+            Triple(workspace, user, templateResult)
         }!!
 
         val workspaceId = workspace.id
 
-        // After initial transaction, we can start populating workspace specific data without blocking the user. These operations are best-effort and won't fail the entire flow if they encounter issues.
-        val templateResult = populateWorkspace(workspaceId, request.businessType)
+        // Phase 2: Best-effort — invites and definitions don't block onboarding completion
         val inviteResults = request.invites?.let {
             sendWorkspaceInvites(workspaceId, userId, it)
         }.orEmpty()
 
         val definitionResults = request.businessDefinitions?.let {
             saveWorkspaceDefinitions(workspaceId, userId, it)
-         }.orEmpty()
-
+        }.orEmpty()
 
         logger.info { "Onboarding completed for user $userId, workspace $workspaceId" }
 
@@ -162,23 +161,15 @@ class OnboardingService(
 
     private fun populateWorkspace(
         id: UUID,
-        type: BusinessType
+        type: BusinessType,
+        userId: UUID,
     ): TemplateInstallResult {
-        return try {
-            val response = templateInstallationService.installTemplate(id, type.templateKey)
-            TemplateInstallResult(
-                key = type.templateKey,
-                success = true,
-                entityTypesCreated = response.entityTypesCreated,
-            )
-        } catch (e: Exception) {
-            logger.error(e) { "Failed to install template '${type.templateKey}' during onboarding" }
-            TemplateInstallResult(
-                key = type.templateKey,
-                success = false,
-                error = e.message,
-            )
-        }
+        val response = templateInstallationService.installTemplateInternal(id, type.templateKey, userId)
+        return TemplateInstallResult(
+            key = type.templateKey,
+            entityTypesCreated = response.entityTypesCreated,
+            relationshipsCreated = response.relationshipsCreated,
+        )
     }
 
     private fun sendWorkspaceInvites(id: UUID, userId: UUID, invites: List<OnboardingInvite>): List<InviteResult> {
