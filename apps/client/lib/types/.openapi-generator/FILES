@@ -92,6 +92,7 @@ docs/DefinitionSource.md
 docs/DefinitionStatus.md
 docs/DeleteAttributeDefinitionRequest.md
 docs/DeleteDefinitionImpact.md
+docs/DeleteEntityRequest.md
 docs/DeleteEntityResponse.md
 docs/DeleteRelationshipDefinitionRequest.md
 docs/DeleteTypeDefinitionRequest.md
@@ -117,6 +118,7 @@ docs/EntityReference.md
 docs/EntityReferenceMetadata.md
 docs/EntityReferenceRequest.md
 docs/EntityRelationshipCardinality.md
+docs/EntitySelectType.md
 docs/EntityType.md
 docs/EntityTypeAttributeColumn.md
 docs/EntityTypeImpactResponse.md
@@ -426,6 +428,7 @@ models/DefinitionSource.ts
 models/DefinitionStatus.ts
 models/DeleteAttributeDefinitionRequest.ts
 models/DeleteDefinitionImpact.ts
+models/DeleteEntityRequest.ts
 models/DeleteEntityResponse.ts
 models/DeleteRelationshipDefinitionRequest.ts
 models/DeleteTypeDefinitionRequest.ts
@@ -450,6 +453,7 @@ models/EntityReference.ts
 models/EntityReferenceMetadata.ts
 models/EntityReferenceRequest.ts
 models/EntityRelationshipCardinality.ts
+models/EntitySelectType.ts
 models/EntityType.ts
 models/EntityTypeAttributeColumn.ts
 models/EntityTypeImpactResponse.ts
