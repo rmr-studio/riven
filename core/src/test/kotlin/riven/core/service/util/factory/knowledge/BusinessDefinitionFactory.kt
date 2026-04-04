@@ -20,6 +20,7 @@ object BusinessDefinitionFactory {
         compiledParams: Map<String, Any>? = null,
         entityTypeRefs: List<UUID> = emptyList(),
         attributeRefs: List<UUID> = emptyList(),
+        isCustomized: Boolean = false,
         version: Int = 0,
         deleted: Boolean = false,
     ): WorkspaceBusinessDefinitionEntity = WorkspaceBusinessDefinitionEntity(
@@ -34,6 +35,7 @@ object BusinessDefinitionFactory {
         compiledParams = compiledParams,
         entityTypeRefs = entityTypeRefs,
         attributeRefs = attributeRefs,
+        isCustomized = isCustomized,
         version = version,
     ).also {
         it.deleted = deleted

@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS public.workspace_business_definitions
     "source"           VARCHAR(50) NOT NULL     DEFAULT 'MANUAL',
     "entity_type_refs" JSONB       NOT NULL     DEFAULT '[]',
     "attribute_refs"   JSONB       NOT NULL     DEFAULT '[]',
+    "is_customised"    BOOLEAN     NOT NULL     DEFAULT FALSE,                   -- Whether the user modified the default definition text during onboarding.
     "version"          INTEGER     NOT NULL     DEFAULT 0,
 
     "created_by"       UUID        REFERENCES public.users (id) ON DELETE SET NULL,

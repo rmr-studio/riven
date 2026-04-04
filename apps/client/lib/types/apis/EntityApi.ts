@@ -622,7 +622,7 @@ export class EntityApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves all entity types associated with the specified workspace, including relationship definitions and semantic metadata bundles.
+     * Retrieves all entity types associated with the specified workspace, including relationship definitions and semantic metadata bundles. 
      * Get all entity types for a workspace
      */
     async getEntityTypesForWorkspaceRaw(requestParameters: GetEntityTypesForWorkspaceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EntityType>>> {
@@ -660,7 +660,7 @@ export class EntityApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves all entity types associated with the specified workspace, including relationship definitions and semantic metadata bundles.
+     * Retrieves all entity types associated with the specified workspace, including relationship definitions and semantic metadata bundles. 
      * Get all entity types for a workspace
      */
     async getEntityTypesForWorkspace(requestParameters: GetEntityTypesForWorkspaceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EntityType>> {

@@ -64,6 +64,9 @@ data class WorkspaceBusinessDefinitionEntity(
     @Column(name = "attribute_refs", columnDefinition = "jsonb", nullable = false)
     var attributeRefs: List<UUID> = emptyList(),
 
+    @Column(name = "is_customised", nullable = false)
+    var isCustomized: Boolean = false,
+
     @Version
     @Column(name = "version", nullable = false)
     var version: Int = 0,
@@ -83,6 +86,7 @@ data class WorkspaceBusinessDefinitionEntity(
             source = this.source,
             entityTypeRefs = this.entityTypeRefs,
             attributeRefs = this.attributeRefs,
+            isCustomized = this.isCustomized,
             version = this.version,
             createdBy = this.createdBy,
             createdAt = this.createdAt,

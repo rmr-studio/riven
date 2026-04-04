@@ -216,6 +216,7 @@ class OnboardingService(
                     definition = definition.definition,
                     category = definition.category,
                     source = DefinitionSource.ONBOARDING,
+                    isCustomized = definition.isCustomized,
                 )
                 businessDefinitionService.createDefinitionInternal(id, userId, createRequest)
                 BusinessDefinitionResult(term = definition.term, success = true)

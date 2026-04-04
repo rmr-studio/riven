@@ -283,6 +283,26 @@ class OnboardingServiceTest : BaseServiceTest() {
         }
 
         @Test
+        fun `passes isCustomized flag to definition service`() {
+            val request = defaultRequest(
+                businessDefinitions = listOf(
+                    OnboardingBusinessDefinition(term = "Churn", definition = "Custom churn def", category = DefinitionCategory.METRIC, isCustomized = true),
+                )
+            )
+
+            whenever(businessDefinitionService.createDefinitionInternal(any(), any(), any<CreateBusinessDefinitionRequest>()))
+                .thenReturn(mock())
+
+            onboardingService.completeOnboarding(request)
+
+            verify(businessDefinitionService).createDefinitionInternal(
+                eq(newWorkspaceId),
+                eq(userId),
+                argThat<CreateBusinessDefinitionRequest> { isCustomized }
+            )
+        }
+
+        @Test
         fun `definition service failure returns error result without failing onboarding`() {
             val request = defaultRequest(
                 businessDefinitions = listOf(

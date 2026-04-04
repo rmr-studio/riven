@@ -645,7 +645,7 @@ example().catch(console.error);
 
 Get all entity types for a workspace
 
-Retrieves all entity types associated with the specified workspace, including relationship definitions and semantic metadata bundles.
+Retrieves all entity types associated with the specified workspace, including relationship definitions and semantic metadata bundles. 
 
 ### Example
 

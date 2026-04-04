@@ -54,4 +54,5 @@ data class OnboardingBusinessDefinition(
     val definition: String,
     @field:NotNull
     val category: DefinitionCategory,
+    val isCustomized: Boolean = false,
 )

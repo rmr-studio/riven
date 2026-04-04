@@ -90,6 +90,7 @@ class WorkspaceBusinessDefinitionService(
             source = request.source,
             entityTypeRefs = request.entityTypeRefs,
             attributeRefs = request.attributeRefs,
+            isCustomized = request.isCustomized,
         )
 
         val saved = repository.save(entity)
@@ -219,6 +220,7 @@ class WorkspaceBusinessDefinitionService(
             source = request.source,
             entityTypeRefs = request.entityTypeRefs,
             attributeRefs = request.attributeRefs,
+            isCustomized = request.isCustomized,
         )
 
         val saved = repository.save(entity)

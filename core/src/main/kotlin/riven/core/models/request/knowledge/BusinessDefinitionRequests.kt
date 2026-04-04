@@ -11,6 +11,7 @@ data class CreateBusinessDefinitionRequest(
     val source: DefinitionSource = DefinitionSource.MANUAL,
     val entityTypeRefs: List<UUID> = emptyList(),
     val attributeRefs: List<UUID> = emptyList(),
+    val isCustomized: Boolean = false,
 )
 
 data class UpdateBusinessDefinitionRequest(
