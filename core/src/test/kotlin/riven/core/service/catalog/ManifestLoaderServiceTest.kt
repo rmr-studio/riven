@@ -92,9 +92,10 @@ class ManifestLoaderServiceTest {
 
         service.loadAllManifests()
 
-        verify(reconciliationService).reconcileStaleEntries(argThat {
-            contains("i1" to ManifestType.INTEGRATION) && size == 1
-        })
+        verify(reconciliationService).reconcileStaleEntries(
+            argThat { contains("i1" to ManifestType.INTEGRATION) && size == 1 },
+            eq(setOf(ManifestType.INTEGRATION))
+        )
     }
 
     @Test
@@ -108,16 +109,17 @@ class ManifestLoaderServiceTest {
 
         service.loadAllManifests()
 
-        verify(reconciliationService).reconcileStaleEntries(argThat {
-            isEmpty()
-        })
+        verify(reconciliationService).reconcileStaleEntries(
+            argThat { isEmpty() },
+            eq(setOf(ManifestType.INTEGRATION))
+        )
     }
 
     @Test
     fun `loadAllManifests skips reconciliation when zero manifests scanned`() {
         service.loadAllManifests()
 
-        verify(reconciliationService, never()).reconcileStaleEntries(any())
+        verify(reconciliationService, never()).reconcileStaleEntries(any(), any())
         verify(logger).warn(any<() -> Any?>())
     }
 
