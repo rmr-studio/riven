@@ -8,17 +8,17 @@ import { ArrowLeft, Puzzle, Check, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@riven/ui/button';
 import { Badge } from '@riven/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { IntegrationDetailSkeleton } from '@/components/feature-modules/integrations/components/integration-detail-skeleton';
 import { useIntegrations } from '@/components/feature-modules/integrations/hooks/query/use-integrations';
 import { useIntegrationStatus } from '@/components/feature-modules/integrations/hooks/query/use-integration-status';
 import { useDisableIntegration } from '@/components/feature-modules/integrations/hooks/mutation/use-disable-integration';
-import { ConnectionStatus } from '@/lib/types/models';
+import { ConnectionStatus } from '@/lib/types/integration';
 import { IntegrationDisconnectDialog } from '@/components/feature-modules/integrations/components/integration-disconnect-dialog';
 
 export function IntegrationDetail() {
   const { workspaceId, slug } = useParams<{ workspaceId: string; slug: string }>();
-  const { data: integrations, isLoading: isLoadingIntegrations } = useIntegrations();
-  const { data: connections, isLoading: isLoadingStatus } = useIntegrationStatus(workspaceId);
+  const { data: integrations, isLoading: isLoadingIntegrations, isError: isIntegrationsError } = useIntegrations();
+  const { data: connections, isLoading: isLoadingStatus, isError: isStatusError } = useIntegrationStatus(workspaceId);
   const disableMutation = useDisableIntegration(workspaceId);
 
   const integration = useMemo(
@@ -40,6 +40,19 @@ export function IntegrationDetail() {
 
   if (isLoading) {
     return <IntegrationDetailSkeleton backHref={backHref} />;
+  }
+
+  if (isIntegrationsError || isStatusError) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-24">
+        <Puzzle className="h-12 w-12 text-muted-foreground/40" />
+        <p className="text-lg font-medium text-foreground">Failed to load integration</p>
+        <p className="text-sm text-muted-foreground">Something went wrong. Please try refreshing the page.</p>
+        <Link href={backHref} className="text-sm text-muted-foreground hover:text-foreground">
+          &larr; Back to Integrations
+        </Link>
+      </div>
+    );
   }
 
   if (!integration) {
@@ -154,36 +167,6 @@ export function IntegrationDetail() {
             </div>
           )}
         </div>
-      </div>
-    </div>
-  );
-}
-
-function IntegrationDetailSkeleton({ backHref }: { backHref: string }) {
-  return (
-    <div className="flex flex-col">
-      <Link
-        href={backHref}
-        className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Back to Integrations
-      </Link>
-      <Skeleton className="h-32 w-full rounded-lg" />
-      <div className="-mt-8 flex items-end gap-4 px-4">
-        <Skeleton className="h-16 w-16 rounded-lg" />
-        <div className="flex flex-col gap-2 pb-1">
-          <Skeleton className="h-7 w-48" />
-          <Skeleton className="h-5 w-24" />
-        </div>
-      </div>
-      <div className="mt-6 space-y-2 px-4">
-        <Skeleton className="h-4 w-full max-w-2xl" />
-        <Skeleton className="h-4 w-3/4 max-w-2xl" />
-      </div>
-      <div className="mt-8 border-t px-4 pt-6">
-        <Skeleton className="h-6 w-32" />
-        <Skeleton className="mt-3 h-10 w-28" />
       </div>
     </div>
   );

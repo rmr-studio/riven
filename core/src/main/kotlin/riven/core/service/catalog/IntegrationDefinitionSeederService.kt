@@ -2,13 +2,11 @@ package riven.core.service.catalog
 
 import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import riven.core.entity.integration.IntegrationDefinitionEntity
 import riven.core.enums.integration.IntegrationCategory
 import riven.core.models.catalog.ScannedManifest
 import riven.core.repository.integration.IntegrationDefinitionRepository
 import java.time.ZonedDateTime
-import java.util.*
 
 /**
  * Seeds integration_definitions rows from scanned integration manifests.
@@ -30,7 +28,6 @@ class IntegrationDefinitionSeederService(
      * Seeds or updates integration definitions from scanned manifests.
      * Only processes non-stale manifests that were successfully loaded.
      */
-    @Transactional
     fun seedFromManifests(scannedManifests: List<ScannedManifest>) {
         var created = 0
         var updated = 0
@@ -68,7 +65,6 @@ class IntegrationDefinitionSeederService(
 
         integrationDefinitionRepository.save(
             IntegrationDefinitionEntity(
-                id = UUID.randomUUID(),
                 slug = slug,
                 name = name,
                 iconUrl = iconUrl,
@@ -77,9 +73,7 @@ class IntegrationDefinitionSeederService(
                 nangoProviderKey = nangoProviderKey,
                 capabilities = emptyMap(),
                 syncConfig = emptyMap(),
-                authConfig = emptyMap(),
-                createdAt = ZonedDateTime.now(),
-                updatedAt = ZonedDateTime.now()
+                authConfig = emptyMap()
             )
         )
         return UpsertResult.CREATED

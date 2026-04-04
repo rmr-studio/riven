@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRef } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/provider/auth-context';
 import { IntegrationService } from '@/components/feature-modules/integrations/service/integration.service';
@@ -7,15 +8,16 @@ import { integrationKeys } from '@/components/feature-modules/integrations/hooks
 export function useDisableIntegration(workspaceId: string) {
   const { session } = useAuth();
   const queryClient = useQueryClient();
+  const submissionToastRef = useRef<string | number | undefined>(undefined);
 
   return useMutation({
     mutationFn: (integrationDefinitionId: string) =>
       IntegrationService.disableIntegration(session, workspaceId, integrationDefinitionId),
     onMutate: () => {
-      toast.loading('Disconnecting integration...');
+      submissionToastRef.current = toast.loading('Disconnecting integration...');
     },
     onSuccess: (data) => {
-      toast.dismiss();
+      toast.dismiss(submissionToastRef.current);
       toast.success(
         `${data.integrationName} disconnected. ${data.entityTypesSoftDeleted} entity types removed.`,
       );
@@ -24,7 +26,7 @@ export function useDisableIntegration(workspaceId: string) {
       });
     },
     onError: (error) => {
-      toast.dismiss();
+      toast.dismiss(submissionToastRef.current);
       toast.error(error.message || 'Failed to disconnect integration');
     },
   });

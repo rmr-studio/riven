@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Search } from 'lucide-react';
 
@@ -10,6 +10,8 @@ import { useIntegrationStatus } from '@/components/feature-modules/integrations/
 import { IntegrationCard } from '@/components/feature-modules/integrations/components/integration-card';
 import { IntegrationCatalogSkeleton } from '@/components/feature-modules/integrations/components/integration-catalog-skeleton';
 import { cn } from '@/lib/util/utils';
+import { ConnectionStatus } from '@/lib/types/integration';
+import { toast } from 'sonner';
 
 const CATEGORY_TABS = [
   { label: 'All', value: 'ALL' },
@@ -27,12 +29,16 @@ export function IntegrationCatalog() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<CategoryValue>('ALL');
 
-  const { data: integrations, isLoading: isLoadingIntegrations } = useIntegrations();
-  const { data: connections, isLoading: isLoadingConnections } = useIntegrationStatus(workspaceId);
+  const { data: integrations, isLoading: isLoadingIntegrations, isError: isIntegrationsError } = useIntegrations();
+  const { data: connections, isLoading: isLoadingConnections, isError: isConnectionsError } = useIntegrationStatus(workspaceId);
 
   const connectedIds = useMemo(() => {
     if (!connections) return new Set<string>();
-    return new Set(connections.map((c) => c.integrationId));
+    return new Set(
+      connections
+        .filter((c) => c.status !== ConnectionStatus.Disconnected && c.status !== ConnectionStatus.Failed)
+        .map((c) => c.integrationId),
+    );
   }, [connections]);
 
   const filtered = useMemo(() => {
@@ -45,6 +51,13 @@ export function IntegrationCatalog() {
   }, [integrations, activeCategory, search]);
 
   const isLoading = isLoadingIntegrations || isLoadingConnections;
+  const isError = isIntegrationsError || isConnectionsError;
+
+  useEffect(() => {
+    if (isError) {
+      toast.error('Failed to load integrations. Please try refreshing the page.');
+    }
+  }, [isError]);
 
   return (
     <div className="space-y-6">

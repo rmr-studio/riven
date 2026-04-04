@@ -1,13 +1,13 @@
 import { createIntegrationApi, createPublicIntegrationApi } from '@/lib/api/integration-api';
 import { Session } from '@/lib/auth';
-import { IntegrationDefinitionModel, IntegrationConnectionModel } from '@/lib/types/models';
+import { IntegrationDefinitionModel, IntegrationConnectionModel } from '@/lib/types/integration';
 import { normalizeApiError } from '@/lib/util/error/error.util';
 import { validateSession, validateUuid } from '@/lib/util/service/service.util';
 
 export class IntegrationService {
   static async getAvailableIntegrations(): Promise<IntegrationDefinitionModel[]> {
-    const api = createPublicIntegrationApi();
     try {
+      const api = createPublicIntegrationApi();
       return await api.listAvailableIntegrations();
     } catch (error) {
       return await normalizeApiError(error);
@@ -20,8 +20,8 @@ export class IntegrationService {
   ): Promise<IntegrationConnectionModel[]> {
     validateSession(session);
     validateUuid(workspaceId);
-    const api = createIntegrationApi(session);
     try {
+      const api = createIntegrationApi(session);
       return await api.getWorkspaceIntegrationStatus({ workspaceId });
     } catch (error) {
       return await normalizeApiError(error);
@@ -36,8 +36,8 @@ export class IntegrationService {
     validateSession(session);
     validateUuid(workspaceId);
     validateUuid(integrationDefinitionId);
-    const api = createIntegrationApi(session);
     try {
+      const api = createIntegrationApi(session);
       return await api.disableIntegration({
         workspaceId,
         disableIntegrationRequest: { integrationDefinitionId },

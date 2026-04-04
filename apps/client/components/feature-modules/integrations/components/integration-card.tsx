@@ -7,7 +7,7 @@ import { Check, Clock, Puzzle } from 'lucide-react';
 import { Badge } from '@riven/ui/badge';
 import { Card } from '@riven/ui/card';
 import { cn } from '@/lib/util/utils';
-import { IntegrationDefinitionModel } from '@/lib/types/models';
+import { IntegrationDefinitionModel } from '@/lib/types/integration';
 
 interface IntegrationCardProps {
   integration: IntegrationDefinitionModel;

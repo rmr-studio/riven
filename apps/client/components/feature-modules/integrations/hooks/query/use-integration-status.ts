@@ -1,7 +1,7 @@
 import { useAuth } from '@/components/provider/auth-context';
 import { useAuthenticatedQuery } from '@/hooks/query/use-authenticated-query';
 import { AuthenticatedQueryResult } from '@/lib/interfaces/interface';
-import { IntegrationConnectionModel } from '@/lib/types/models';
+import { IntegrationConnectionModel } from '@/lib/types/integration';
 import { IntegrationService } from '@/components/feature-modules/integrations/service/integration.service';
 import { integrationKeys } from '@/components/feature-modules/integrations/hooks/query/integration-query-keys';
 
