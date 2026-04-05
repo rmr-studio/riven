@@ -5,7 +5,7 @@ import {
   WorkspaceBusinessDefinition,
   DefinitionStatus,
   DefinitionCategory,
-} from '@/lib/types/models';
+} from '@/lib/types/workspace';
 import { DefinitionService } from '@/components/feature-modules/knowledge/service/definition.service';
 import { definitionKeys } from '@/components/feature-modules/knowledge/hooks/query/definition-query-keys';
 
@@ -22,6 +22,7 @@ export function useDefinitions(
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     enabled: !!workspaceId,
+    retry: 2,
     refetchOnWindowFocus: false,
   });
 }

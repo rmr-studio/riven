@@ -32,6 +32,16 @@ class TermNormalizationUtilTest {
 
     @Test
     fun `preserves words with double s like address`() {
-        assertEquals("addres", TermNormalizationUtil.normalize("address"))
+        assertEquals("address", TermNormalizationUtil.normalize("address"))
+    }
+
+    @Test
+    fun `preserves words with double s like business`() {
+        assertEquals("business", TermNormalizationUtil.normalize("business"))
+    }
+
+    @Test
+    fun `strips trailing s from simple plural words`() {
+        assertEquals("car", TermNormalizationUtil.normalize("cars"))
     }
 }

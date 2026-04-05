@@ -7,7 +7,7 @@ import {
   DefinitionCategory,
   DefinitionStatus,
   WorkspaceBusinessDefinition,
-} from '@/lib/types/models';
+} from '@/lib/types/workspace';
 import { cn } from '@/lib/util/utils';
 import { Plus, Search } from 'lucide-react';
 import Link from 'next/link';
@@ -102,7 +102,7 @@ export const DefinitionsManagement: FC = () => {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<DefinitionCategory | undefined>(undefined);
 
-  const { data: definitions, isLoading, isLoadingAuth } = useDefinitions(
+  const { data: definitions, isLoading, isLoadingAuth, isError } = useDefinitions(
     workspaceId,
     undefined,
     categoryFilter,
@@ -128,6 +128,17 @@ export const DefinitionsManagement: FC = () => {
     );
   }
 
+  if (isError) {
+    return (
+      <div className="mx-auto max-w-5xl px-8 py-8">
+        <p className="text-sm text-muted-foreground">Failed to load definitions</p>
+      </div>
+    );
+  }
+
+  const hasActiveFilters = !!search.trim() || !!categoryFilter;
+  const isEmpty = !definitions || definitions.length === 0;
+
   return (
     <div className="mx-auto max-w-5xl px-8 py-8">
       <div className="mb-6 flex items-center justify-between">
@@ -140,7 +151,7 @@ export const DefinitionsManagement: FC = () => {
         </Button>
       </div>
 
-      {definitions && definitions.length === 0 ? (
+      {isEmpty && !hasActiveFilters ? (
         <DefinitionsEmpty workspaceId={workspaceId} />
       ) : (
         <>
@@ -176,7 +187,7 @@ export const DefinitionsManagement: FC = () => {
           <div className="bg-card rounded-lg border">
             {filtered.length === 0 ? (
               <p className="text-muted-foreground px-4 py-8 text-center text-sm">
-                No definitions match your search.
+                No definitions match your {search.trim() ? 'search' : 'filters'}.
               </p>
             ) : (
               filtered.map((def) => (

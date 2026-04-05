@@ -1,7 +1,7 @@
 'use client';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import { AcquisitionChannel } from '@/lib/types/models';
+import { AcquisitionChannel } from '@/lib/types/workspace';
 import { AnimatePresence, motion } from 'motion/react';
 import React from 'react';
 import { useOnboardLiveData } from '@/components/feature-modules/onboarding/hooks/use-onboard-store';

@@ -1,6 +1,6 @@
 import { assemblePayload, OnboardingService } from '@/components/feature-modules/onboarding/service/onboarding.service';
 import { WorkspacePlan, WorkspaceRoles } from '@/lib/types/workspace';
-import { BusinessType, DefinitionCategory } from '@/lib/types/models';
+import { BusinessType, DefinitionCategory, AcquisitionChannel } from '@/lib/types/workspace';
 
 describe('assemblePayload', () => {
   const baseProfile = { displayName: 'Jane Smith', phone: '+1234567890' };
@@ -176,7 +176,7 @@ describe('assemblePayload', () => {
       const result = assemblePayload({
         profile: baseProfile,
         workspace: baseWorkspace,
-        channels: { selectedChannels: ['GOOGLE_ADS', 'REFERRAL'] as never[] },
+        channels: { selectedChannels: ['GOOGLE_ADS', 'REFERRAL'] as AcquisitionChannel[] },
       });
       expect(result.acquisitionChannels).toEqual(['GOOGLE_ADS', 'REFERRAL']);
     });

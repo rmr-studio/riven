@@ -90,6 +90,8 @@ class EntityTypeRelationshipServiceFallbackTest : BaseServiceTest() {
 
     @Test
     fun `createFallbackDefinition - creates with correct properties`() {
+        val entityType = EntityFactory.createEntityType(id = entityTypeId, workspaceId = workspaceId)
+        whenever(entityTypeRepository.findById(entityTypeId)).thenReturn(Optional.of(entityType))
         whenever(definitionRepository.save(any<RelationshipDefinitionEntity>())).thenAnswer { invocation ->
             val entity = invocation.arguments[0] as RelationshipDefinitionEntity
             if (entity.id == null) entity.copy(id = UUID.randomUUID()) else entity
@@ -138,6 +140,9 @@ class EntityTypeRelationshipServiceFallbackTest : BaseServiceTest() {
 
     @Test
     fun `getOrCreateFallbackDefinition - handles concurrent creation with retry`() {
+        val entityType = EntityFactory.createEntityType(id = entityTypeId, workspaceId = workspaceId)
+        whenever(entityTypeRepository.findById(entityTypeId)).thenReturn(Optional.of(entityType))
+
         // First call: no existing definition
         whenever(
             definitionRepository.findBySourceEntityTypeIdAndSystemType(

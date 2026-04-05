@@ -103,7 +103,7 @@ const RegisterConfirmation: FC<RegisterConfirmationProps> = ({
       <CardContent>
         <Form {...userDetailsForm}>
           <form
-            className="md:w-[25rem]"
+            className="md:w-96"
             onSubmit={userDetailsForm.handleSubmit(handleSubmission)}
           >
             <FormField
@@ -122,7 +122,7 @@ const RegisterConfirmation: FC<RegisterConfirmationProps> = ({
                   </div>
                   <FormMessage className="font-semibold" />
                   <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                    Please enter your 6 digit OTP sent to{' '}
+                    Please enter your 6-digit OTP sent to{' '}
                     <span className="font-semibold text-secondary-foreground">
                       {formDetails.email}
                     </span>
@@ -133,7 +133,7 @@ const RegisterConfirmation: FC<RegisterConfirmationProps> = ({
                     variant={'link'}
                     className="cursor-pointer p-0 text-sm text-muted-foreground underline underline-offset-4 hover:text-primary"
                   >
-                    Didn't Receive an Email?
+                    Didn&apos;t Receive an Email?
                   </Button>
                 </FormItem>
               )}

@@ -2,7 +2,8 @@
 
 import { useDefinitions } from '@/components/feature-modules/knowledge/hooks/query/use-definitions';
 import { useWorkspaceStore } from '@/components/feature-modules/workspace/provider/workspace-provider';
-import { DefinitionCategory } from '@/lib/types/models';
+import { Skeleton } from '@/components/ui/skeleton';
+import { DefinitionCategory } from '@/lib/types/workspace';
 import { BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { FC, useMemo } from 'react';
@@ -21,12 +22,17 @@ interface Props {
 
 export const LinkedDefinitionsSection: FC<Props> = ({ entityTypeId }) => {
   const selectedWorkspaceId = useWorkspaceStore((s) => s.selectedWorkspaceId);
-  const { data: definitions } = useDefinitions(selectedWorkspaceId);
+  const { data: definitions, isLoading, isError, isLoadingAuth } = useDefinitions(selectedWorkspaceId);
 
   const linked = useMemo(() => {
     if (!definitions) return [];
     return definitions.filter((d) => d.entityTypeRefs?.includes(entityTypeId));
   }, [definitions, entityTypeId]);
+
+  if (isLoading || isLoadingAuth) {
+    return <Skeleton className="h-20 w-full rounded" />;
+  }
+  if (isError) return null;
 
   return (
     <div className="p-5">

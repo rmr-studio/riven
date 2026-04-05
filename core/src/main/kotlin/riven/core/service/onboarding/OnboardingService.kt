@@ -25,12 +25,14 @@ import riven.core.models.user.User
 import riven.core.models.workspace.Workspace
 import riven.core.service.activity.ActivityService
 import riven.core.service.activity.log
+import riven.core.repository.user.UserRepository
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.catalog.TemplateInstallationService
 import riven.core.service.knowledge.WorkspaceBusinessDefinitionService
 import riven.core.service.user.UserService
 import riven.core.service.workspace.WorkspaceInviteService
 import riven.core.service.workspace.WorkspaceService
+import riven.core.util.ServiceUtil
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -44,6 +46,7 @@ import java.util.*
 class OnboardingService(
     private val workspaceService: WorkspaceService,
     private val userService: UserService,
+    private val userRepository: UserRepository,
     private val templateInstallationService: TemplateInstallationService,
     private val workspaceInviteService: WorkspaceInviteService,
     private val businessDefinitionService: WorkspaceBusinessDefinitionService,
@@ -71,7 +74,10 @@ class OnboardingService(
 
         // Phase 1: Atomic — eligibility check + create workspace + install template + update profile
         val (workspace, user, templateResult) = transactionTemplate.execute {
-            validateOnboardingEligibility(userId)
+            val userEntity = ServiceUtil.findOrThrow { userRepository.findByIdForUpdate(userId) }
+            if (userEntity.onboardingCompletedAt != null) {
+                throw ConflictException("User has already completed onboarding")
+            }
             val workspace = createWorkspace(request, workspaceAvatar)
             val templateResult = populateWorkspace(workspace.id, request.businessType, userId)
             val user = updateUserProfile(userId, request, workspace, profileAvatar)
@@ -101,18 +107,6 @@ class OnboardingService(
     }
 
     // ------ Phase 1: Atomic Operations ------
-
-    /**
-     * Validates that the user has not already completed onboarding.
-     *
-     * @throws ConflictException if onboarding has already been completed
-     */
-    private fun validateOnboardingEligibility(userId: UUID) {
-        val userEntity = userService.getUserById(userId)
-        if (userEntity.onboardingCompletedAt != null) {
-            throw ConflictException("Onboarding has already been completed for this user")
-        }
-    }
 
     private fun createWorkspace(request: CompleteOnboardingRequest, avatar: MultipartFile?): Workspace {
         val saveRequest = SaveWorkspaceRequest(

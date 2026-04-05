@@ -1,4 +1,4 @@
-import { DefinitionCategory } from '@/lib/types/models';
+import { DefinitionCategory } from '@/lib/types/workspace';
 import { definitionSchema } from '@/components/feature-modules/knowledge/hooks/form/use-definition-form';
 
 describe('definitionSchema', () => {
@@ -21,8 +21,8 @@ describe('definitionSchema', () => {
     expect(result.error?.issues.some((i) => i.path.includes('term'))).toBe(true);
   });
 
-  it('rejects term exceeding 200 characters', () => {
-    const result = definitionSchema.safeParse({ ...validData, term: 'x'.repeat(201) });
+  it('rejects term exceeding 255 characters', () => {
+    const result = definitionSchema.safeParse({ ...validData, term: 'x'.repeat(256) });
     expect(result.success).toBe(false);
     expect(result.error?.issues.some((i) => i.path.includes('term'))).toBe(true);
   });
@@ -33,8 +33,8 @@ describe('definitionSchema', () => {
     expect(result.error?.issues.some((i) => i.path.includes('definition'))).toBe(true);
   });
 
-  it('rejects definition exceeding 5000 characters', () => {
-    const result = definitionSchema.safeParse({ ...validData, definition: 'x'.repeat(5001) });
+  it('rejects definition exceeding 2000 characters', () => {
+    const result = definitionSchema.safeParse({ ...validData, definition: 'x'.repeat(2001) });
     expect(result.success).toBe(false);
     expect(result.error?.issues.some((i) => i.path.includes('definition'))).toBe(true);
   });
@@ -110,13 +110,13 @@ describe('definitionSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('accepts term at exactly 200 characters', () => {
-    const result = definitionSchema.safeParse({ ...validData, term: 'x'.repeat(200) });
+  it('accepts term at exactly 255 characters', () => {
+    const result = definitionSchema.safeParse({ ...validData, term: 'x'.repeat(255) });
     expect(result.success).toBe(true);
   });
 
-  it('accepts definition at exactly 5000 characters', () => {
-    const result = definitionSchema.safeParse({ ...validData, definition: 'x'.repeat(5000) });
+  it('accepts definition at exactly 2000 characters', () => {
+    const result = definitionSchema.safeParse({ ...validData, definition: 'x'.repeat(2000) });
     expect(result.success).toBe(true);
   });
 });

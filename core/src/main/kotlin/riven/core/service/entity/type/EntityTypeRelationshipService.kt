@@ -83,6 +83,7 @@ class EntityTypeRelationshipService(
         userId: UUID,
     ): RelationshipDefinition {
         val sourceEntityType = ServiceUtil.findOrThrow { entityTypeRepository.findById(sourceEntityTypeId) }
+        require(sourceEntityType.workspaceId == workspaceId) { "Entity type $sourceEntityTypeId not found in workspace $workspaceId" }
         require(!sourceEntityType.readonly) { "Cannot create relationships on a readonly entity type '${sourceEntityType.key}'" }
 
         val entity = RelationshipDefinitionEntity(
@@ -551,6 +552,9 @@ class EntityTypeRelationshipService(
      * when the JWT does not yet contain the new workspace's role authorities.
      */
     internal fun createFallbackDefinitionInternal(workspaceId: UUID, entityTypeId: UUID): RelationshipDefinitionEntity {
+        val entityType = ServiceUtil.findOrThrow { entityTypeRepository.findById(entityTypeId) }
+        require(entityType.workspaceId == workspaceId) { "Entity type $entityTypeId not found in workspace $workspaceId" }
+
         val entity = RelationshipDefinitionEntity(
             workspaceId = workspaceId,
             sourceEntityTypeId = entityTypeId,

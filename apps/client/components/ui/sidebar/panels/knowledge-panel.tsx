@@ -2,14 +2,14 @@
 
 import { useDefinitions } from '@/components/feature-modules/knowledge/hooks/query/use-definitions';
 import { useWorkspaceStore } from '@/components/feature-modules/workspace/provider/workspace-provider';
-import { DefinitionCategory, WorkspaceBusinessDefinition } from '@/lib/types/models';
+import { DefinitionCategory, WorkspaceBusinessDefinition } from '@/lib/types/workspace';
 import { Button } from '@riven/ui/button';
 import { Input } from '@riven/ui/input';
 import { cn } from '@riven/utils';
 import { BookOpen, Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { Skeleton } from '../../skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const CATEGORY_LABELS: Record<DefinitionCategory, string> = {
   [DefinitionCategory.Metric]: 'Metric',
@@ -61,7 +61,7 @@ export function KnowledgePanel() {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<DefinitionCategory | undefined>(undefined);
 
-  const { data, isLoading } = useDefinitions(selectedWorkspaceId, undefined, categoryFilter);
+  const { data, isLoading, isError, isLoadingAuth } = useDefinitions(selectedWorkspaceId, undefined, categoryFilter);
 
   const filtered = useMemo(() => {
     if (!data) return [];
@@ -75,6 +75,21 @@ export function KnowledgePanel() {
   const basePath = `/dashboard/workspace/${selectedWorkspaceId}/definitions`;
 
   if (!selectedWorkspaceId) return null;
+
+  if (isLoadingAuth) {
+    return (
+      <div className="flex flex-col gap-2">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="flex flex-col gap-1.5 px-3 py-2.5">
+            <Skeleton className="h-4 w-3/4 rounded" />
+            <Skeleton className="h-3 w-1/2 rounded" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (isError) return null;
 
   return (
     <div className="flex flex-col gap-3">

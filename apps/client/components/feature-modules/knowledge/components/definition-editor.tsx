@@ -12,7 +12,7 @@ import { Input } from '@riven/ui/input';
 import { Button } from '@riven/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
-import { DefinitionCategory } from '@/lib/types/models';
+import { DefinitionCategory } from '@/lib/types/workspace';
 import { cn } from '@/lib/util/utils';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -52,7 +52,7 @@ function DefinitionEditorForm({
   const router = useRouter();
   const isEdit = !!definitionId;
 
-  const { data: existing, isLoading } = useDefinition(
+  const { data: existing, isLoading, isError } = useDefinition(
     isEdit ? workspaceId : undefined,
     definitionId,
   );
@@ -68,6 +68,14 @@ function DefinitionEditorForm({
   );
 
   if (isEdit && isLoading) return <EditorSkeleton />;
+
+  if (isEdit && (isError || !existing)) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-16">
+        <p className="text-sm text-muted-foreground">Failed to load definition</p>
+      </div>
+    );
+  }
 
   const selectedCategory = form.watch('category');
 

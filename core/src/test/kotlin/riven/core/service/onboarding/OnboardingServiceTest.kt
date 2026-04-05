@@ -32,6 +32,7 @@ import riven.core.service.util.SecurityTestConfig
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
 import riven.core.models.user.User
+import riven.core.repository.user.UserRepository
 import riven.core.service.util.factory.UserFactory
 import riven.core.service.util.factory.WorkspaceFactory
 import riven.core.service.workspace.WorkspaceInviteService
@@ -54,6 +55,7 @@ class OnboardingServiceTest : BaseServiceTest() {
 
     @MockitoBean private lateinit var workspaceService: WorkspaceService
     @MockitoBean private lateinit var userService: UserService
+    @MockitoBean private lateinit var userRepository: UserRepository
     @MockitoBean private lateinit var templateInstallationService: TemplateInstallationService
     @MockitoBean private lateinit var workspaceInviteService: WorkspaceInviteService
     @MockitoBean private lateinit var businessDefinitionService: WorkspaceBusinessDefinitionService
@@ -87,7 +89,7 @@ class OnboardingServiceTest : BaseServiceTest() {
     @BeforeEach
     fun setUp() {
         reset(
-            workspaceService, userService, templateInstallationService,
+            workspaceService, userService, userRepository, templateInstallationService,
             workspaceInviteService, businessDefinitionService,
             authTokenService, activityService, transactionTemplate,
         )
@@ -107,6 +109,7 @@ class OnboardingServiceTest : BaseServiceTest() {
 
         val userEntity = UserFactory.createUser(id = userId, name = "Test User", email = "test@example.com")
         val userModel = User(id = userId, email = "test@example.com", name = "Test User", phone = "1234567890")
+        whenever(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(userEntity))
         whenever(userService.getUserById(userId)).thenReturn(userEntity)
         whenever(userService.getUserWithWorkspacesById(userId)).thenReturn(userModel)
         whenever(userService.updateUserDetails(any<SaveUserRequest>(), anyOrNull())).thenReturn(userModel)
@@ -157,7 +160,7 @@ class OnboardingServiceTest : BaseServiceTest() {
             val alreadyOnboardedUser = UserFactory.createUser(id = userId).apply {
                 onboardingCompletedAt = java.time.ZonedDateTime.now()
             }
-            whenever(userService.getUserById(userId)).thenReturn(alreadyOnboardedUser)
+            whenever(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(alreadyOnboardedUser))
 
             val request = defaultRequest()
 

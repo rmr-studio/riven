@@ -24,7 +24,9 @@ CREATE TABLE IF NOT EXISTS public.workspace_business_definitions
     "updated_at"       TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
     "deleted"          BOOLEAN     NOT NULL     DEFAULT FALSE,
-    "deleted_at"       TIMESTAMP WITH TIME ZONE DEFAULT NULL,
-
-    UNIQUE (workspace_id, normalized_term)
+    "deleted_at"       TIMESTAMP WITH TIME ZONE DEFAULT NULL
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_workspace_business_definitions_active_term
+    ON public.workspace_business_definitions (workspace_id, normalized_term)
+    WHERE deleted = FALSE;

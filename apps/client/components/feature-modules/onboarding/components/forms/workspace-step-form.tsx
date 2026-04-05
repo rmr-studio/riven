@@ -11,7 +11,7 @@ import {
 import { Input } from '@riven/ui/input';
 import { AvatarUploader } from '@/components/ui/avatar-uploader';
 import { WorkspacePlan } from '@/lib/types/workspace';
-import { BusinessType } from '@/lib/types/models';
+import { BusinessType } from '@/lib/types/workspace';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cn } from '@/lib/util/utils';
 import { FC, useEffect, useState } from 'react';

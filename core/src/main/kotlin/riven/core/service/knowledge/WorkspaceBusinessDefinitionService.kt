@@ -1,7 +1,7 @@
 package riven.core.service.knowledge
 
 import io.github.oshai.kotlinlogging.KLogger
-import jakarta.transaction.Transactional
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
@@ -147,7 +147,7 @@ class WorkspaceBusinessDefinitionService(
         val saved = try {
             repository.save(entity)
         } catch (e: ObjectOptimisticLockingFailureException) {
-            throw ConflictException("Definition '${entity.term}' was modified concurrently. Please refresh and try again.")
+            throw ConflictException("Definition '${entity.term}' was modified concurrently. Please refresh and try again.", e)
         }
 
         activityService.log(

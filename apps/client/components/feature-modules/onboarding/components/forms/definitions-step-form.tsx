@@ -10,8 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { BusinessType } from '@/lib/types/models';
-import { DefinitionCategory } from '@/lib/types/models';
+import { BusinessType, DefinitionCategory } from '@/lib/types/workspace';
 import { Plus, RotateCcw, X } from 'lucide-react';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -27,6 +26,7 @@ import {
 } from '@/components/feature-modules/onboarding/config/definition-defaults';
 
 export interface DefinitionEntry {
+  id: string;
   term: string;
   definition: string;
   category: DefinitionCategory;
@@ -61,6 +61,7 @@ export const DefinitionsStepForm: FC = () => {
 
     const defaults = businessType ? DEFINITION_DEFAULTS[businessType] ?? [] : [];
     return defaults.map((d) => ({
+      id: crypto.randomUUID(),
       term: d.term,
       definition: d.defaultDefinition,
       category: d.category,
@@ -106,7 +107,7 @@ export const DefinitionsStepForm: FC = () => {
   const addCustomTerm = useCallback(() => {
     setDefinitions((prev) => [
       ...prev,
-      { term: '', definition: '', category: DefinitionCategory.Custom, isCustom: true },
+      { id: crypto.randomUUID(), term: '', definition: '', category: DefinitionCategory.Custom, isCustom: true },
     ]);
   }, []);
 
@@ -155,13 +156,13 @@ export const DefinitionsStepForm: FC = () => {
             </p>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {items.map(({ originalIndex, term, definition, isCustom, defaultDefinition }) => {
+            {items.map(({ originalIndex, id, term, definition, isCustom, defaultDefinition }) => {
               const isModified =
                 !isCustom && defaultDefinition != null && definition !== defaultDefinition;
 
               return (
                 <div
-                  key={originalIndex}
+                  key={id}
                   className="bg-card flex flex-col gap-2 rounded-lg border p-4"
                 >
                   {isCustom ? (

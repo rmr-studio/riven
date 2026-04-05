@@ -1,6 +1,6 @@
 'use client';
 
-import { AcquisitionChannel } from '@/lib/types/models';
+import { AcquisitionChannel } from '@/lib/types/workspace';
 import { cn } from '@/lib/util/utils';
 import { FC, useEffect, useState } from 'react';
 import {
@@ -75,6 +75,7 @@ export const ChannelsStepForm: FC = () => {
               key={channel}
               type="button"
               onClick={() => toggleChannel(channel)}
+              aria-pressed={isSelected}
               className={cn(
                 'rounded-lg border px-3 py-2.5 text-left text-sm transition-colors',
                 isSelected

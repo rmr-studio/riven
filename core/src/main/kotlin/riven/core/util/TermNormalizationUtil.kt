@@ -12,6 +12,13 @@ object TermNormalizationUtil {
         return term
             .trim()
             .lowercase()
-            .removeSuffix("s")
+            .split("\\s+".toRegex())
+            .joinToString(" ") { word ->
+                if (word.endsWith("s") && !word.endsWith("ss")) {
+                    word.dropLast(1)
+                } else {
+                    word
+                }
+            }
     }
 }

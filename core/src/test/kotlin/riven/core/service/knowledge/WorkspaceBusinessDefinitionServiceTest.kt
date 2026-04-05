@@ -9,6 +9,7 @@ import org.mockito.kotlin.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.orm.ObjectOptimisticLockingFailureException
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
 import riven.core.entity.knowledge.WorkspaceBusinessDefinitionEntity
@@ -476,6 +477,61 @@ class WorkspaceBusinessDefinitionServiceTest : BaseServiceTest() {
 
             assertThrows<NotFoundException> {
                 service.deleteDefinition(workspaceId, defId)
+            }
+        }
+    }
+
+    // ------ Access control ------
+
+    @Nested
+    @WithUserPersona(
+        userId = "f8b1c2d3-4e5f-6789-abcd-ef0123456789",
+        email = "test@test.com",
+        displayName = "Test User",
+        roles = [WorkspaceRole(workspaceId = "a1b2c3d4-5e6f-7890-abcd-ef1234567890", role = WorkspaceRoles.ADMIN)]
+    )
+    inner class AccessControl {
+
+        private val otherWorkspaceId: UUID = UUID.fromString("f8b1c2d3-4e5f-6789-abcd-ef9876543210")
+
+        @Test
+        fun `listDefinitions throws AccessDeniedException for unauthorized workspace`() {
+            assertThrows<AccessDeniedException> {
+                service.listDefinitions(otherWorkspaceId)
+            }
+        }
+
+        @Test
+        fun `createDefinition throws AccessDeniedException for unauthorized workspace`() {
+            val request = CreateBusinessDefinitionRequest(
+                term = "Test Term",
+                definition = "Test definition",
+                category = DefinitionCategory.METRIC,
+            )
+
+            assertThrows<AccessDeniedException> {
+                service.createDefinition(otherWorkspaceId, request)
+            }
+        }
+
+        @Test
+        fun `updateDefinition throws AccessDeniedException for unauthorized workspace`() {
+            val request = UpdateBusinessDefinitionRequest(
+                term = "Test Term",
+                definition = "Updated definition",
+                category = DefinitionCategory.METRIC,
+                version = 0,
+            )
+
+            assertThrows<AccessDeniedException> {
+                service.updateDefinition(otherWorkspaceId, UUID.randomUUID(), request)
+            }
+        }
+
+        @Test
+        fun `deleteDefinition throws AccessDeniedException for unauthorized workspace`() {
+            assertThrows<AccessDeniedException> {
+                service.deleteDefinition(otherWorkspaceId, UUID.randomUUID())
             }
         }
     }
