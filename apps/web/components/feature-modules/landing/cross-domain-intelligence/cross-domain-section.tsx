@@ -13,16 +13,11 @@ export function CrossDomainIntelligence() {
       base: '#8dbaa4',
       colors: ['#0f3d5c', '#1a2a3f', '#0d1f2d'] as [string, string, string],
     },
-    amber: {
-      base: '#0a0d12',
-      colors: ['#2a6878', '#0d1f2d', '#7ab0a8'] as [string, string, string],
-    },
   };
 
   const gradients: ThemeStaticImages = {
     light: 'images/texture/static-gradient-4.webp',
     dark: 'images/texture/static-gradient-4.webp',
-    amber: 'images/texture/static-gradient-4.webp',
   };
 
   return (
@@ -46,7 +41,7 @@ export function CrossDomainIntelligence() {
         <ShaderContainer
           staticImages={gradients}
           shaders={dashboardShaders}
-          className="relative z-30 mx-0! w-full rounded-none border-none! px-0! py-0! shadow-lg shadow-foreground/40 3xl:rounded-l-lg"
+          className="relative z-30 mx-0! w-full rounded-none border-none! px-0! py-0! shadow-lg shadow-foreground/40 3xl:rounded-l-lg dark:shadow-none"
         >
           <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-black/60 via-black/25 to-transparent md:w-40" />
           <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-black/60 via-black/25 to-transparent md:w-40" />
