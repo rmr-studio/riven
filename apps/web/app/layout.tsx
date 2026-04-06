@@ -51,9 +51,9 @@ const spaceMono = Space_Mono({
   weight: ['400', '700'],
 });
 
-const SITE_TITLE = 'Riven | Advanced Customer Lifecycle Intelligence';
+const SITE_TITLE = 'Riven | Autonomous Intelligence & Growth Platform';
 const SITE_DESCRIPTION =
-  'One workspace for your customer lifecycle stack. From marketing to CRMs to payments, analytics and support. Cross-domain intelligence surfaces churn risks, hidden patterns, and growth opportunities no single tool can see. Query across every platform in plain English, tag and track accounts, and act on insights without leaving the tab.';
+  'Move fast. Act fast. Grow Fast. One workspace for your customer lifecycle stack. From marketing to CRMs to payments, analytics and support. Cross-domain intelligence surfaces churn risks, hidden patterns, and growth opportunities no single tool can see. Query across every platform in plain English, tag and track accounts, and act on insights without leaving the tab.';
 
 const ogImage = process.env.NEXT_PUBLIC_CDN_URL
   ? `${process.env.NEXT_PUBLIC_CDN_URL}/images/og-image.png`
@@ -71,6 +71,9 @@ export const metadata: Metadata = {
 
   keywords: [
     'customer lifecycle intelligence',
+    'customer insights platform',
+    'SaaS customer analytics',
+    'Ecommerce customer insights',
     'cross-domain intelligence',
     'churn analysis',
     'churn retrospective',
@@ -151,7 +154,7 @@ export default function RootLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
-          themes={['light', 'dark', 'amber']}
+          themes={['light', 'dark']}
           disableTransitionOnChange
         >
           <QueryProvider>
