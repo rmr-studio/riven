@@ -4,13 +4,12 @@ import { useTheme } from 'next-themes';
 import { Button } from './button';
 import { useMounted } from './use-mounted';
 
-const themes = ['light', 'dark', 'amber'] as const;
+const themes = ['light', 'dark'] as const;
 type Theme = (typeof themes)[number];
 
 const themeLabels: Record<Theme, string> = {
   light: 'Light',
   dark: 'Dark',
-  amber: 'Amber',
 };
 
 export function ThemeToggle() {
