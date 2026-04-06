@@ -20,10 +20,9 @@ export const HeroCopy = () => {
       <h2
         className={`mx-auto mt-8 max-w-6xl text-center text-base leading-[1.1] tracking-tighter text-heading/85 sm:px-0 md:text-lg lg:mt-3`}
       >
-        The <span className="font-bold">autonomous intelligence and growth platform.</span> Connect
-        your tools. Unlock immediate insights, patterns and trends about your most valuable cohorts
-        stitched from all parts of the customer lifecycle. All actionable to efficiently alter
-        operations and expand quickly with confidence.
+        Unite the customer lifecycle data spread across every tool in your stack your tools. Unlock
+        immediate insights, patterns and trends about your most valuable cohorts. All immediately
+        actionable to double down and expand quickly with confidence.
       </h2>
 
       <section
