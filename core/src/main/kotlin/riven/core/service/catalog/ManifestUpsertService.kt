@@ -64,7 +64,7 @@ class ManifestUpsertService(
         deleteChildren(manifestId)
         insertEntityTypes(manifestId, resolved.entityTypes)
         insertRelationships(manifestId, resolved.relationships)
-        insertFieldMappings(manifestId, resolved.fieldMappings)
+        insertFieldMappings(manifestId, resolved.fieldMappings, resolved.syncModels)
     }
 
     // ------ Private Helpers ------
@@ -218,11 +218,19 @@ class ManifestUpsertService(
             }
     }
 
-    private fun insertFieldMappings(manifestId: UUID, fieldMappings: List<ResolvedFieldMapping>) {
+    private fun insertFieldMappings(
+        manifestId: UUID,
+        fieldMappings: List<ResolvedFieldMapping>,
+        syncModels: Map<String, String>
+    ) {
+        val entityTypeKeyToNangoModel = syncModels.entries
+            .associate { (nangoModel, entityTypeKey) -> entityTypeKey to nangoModel }
+
         val entities = fieldMappings.map { fm ->
             CatalogFieldMappingEntity(
                 manifestId = manifestId,
                 entityTypeKey = fm.entityTypeKey,
+                nangoModel = entityTypeKeyToNangoModel[fm.entityTypeKey],
                 mappings = fm.mappings
             )
         }
