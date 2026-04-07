@@ -213,25 +213,27 @@ class IntegrationSyncActivitiesImpl(
 
         val manifestId = requireNotNull(manifest.id) { "ManifestCatalogEntity.id must not be null" }
 
-        val fieldMappingEntity = catalogFieldMappingRepository.findByManifestIdAndEntityTypeKey(manifestId, input.model)
+        // Resolve Nango model name -> entity type key via nangoModel on field mapping
+        val fieldMappingEntity = catalogFieldMappingRepository.findByManifestIdAndNangoModel(manifestId, input.model)
         if (fieldMappingEntity == null) {
-            logger.error { "CatalogFieldMapping not found for manifestId=$manifestId model=${input.model}" }
+            logger.error { "CatalogFieldMapping not found for manifestId=$manifestId nangoModel=${input.model}" }
             return null
         }
+        val entityTypeKey = fieldMappingEntity.entityTypeKey
 
         val entityType = entityTypeRepository
             .findBySourceIntegrationIdAndWorkspaceId(input.integrationId, input.workspaceId)
-            .firstOrNull { it.key == input.model }
+            .firstOrNull { it.key == entityTypeKey }
         if (entityType == null) {
-            logger.error { "EntityType not found for integrationId=${input.integrationId} workspaceId=${input.workspaceId} model=${input.model}" }
+            logger.error { "EntityType not found for integrationId=${input.integrationId} workspaceId=${input.workspaceId} entityTypeKey=$entityTypeKey" }
             return null
         }
 
         val entityTypeId = requireNotNull(entityType.id) { "EntityTypeEntity.id must not be null" }
 
-        val catalogEntityType = catalogEntityTypeRepository.findByManifestIdAndKey(manifestId, input.model)
+        val catalogEntityType = catalogEntityTypeRepository.findByManifestIdAndKey(manifestId, entityTypeKey)
         if (catalogEntityType == null) {
-            logger.error { "CatalogEntityType not found for manifestId=$manifestId model=${input.model}" }
+            logger.error { "CatalogEntityType not found for manifestId=$manifestId entityTypeKey=$entityTypeKey" }
             return null
         }
 
