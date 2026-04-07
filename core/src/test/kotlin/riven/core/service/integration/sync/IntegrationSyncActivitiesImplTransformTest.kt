@@ -206,6 +206,10 @@ class IntegrationSyncActivitiesImplTransformTest {
                 )
             ),
             columnConfiguration = ColumnConfiguration(order = listOf(emailAttrUuid, createdDateAttrUuid)),
+            attributeKeyMapping = mapOf(
+                "email" to emailAttrUuid.toString(),
+                "created-date" to createdDateAttrUuid.toString(),
+            ),
         )
         whenever(entityTypeRepository.findBySourceIntegrationIdAndWorkspaceId(integrationId, workspaceId))
             .thenReturn(listOf(entityType))

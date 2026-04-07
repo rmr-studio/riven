@@ -234,6 +234,7 @@ class IntegrationSyncActivitiesImplTest {
             )
         ),
         columnConfiguration = ColumnConfiguration(order = listOf(attributeId)),
+        attributeKeyMapping = mapOf("email" to attributeId.toString()),
     )
 
     private fun buildDefinition() = IntegrationFactory.createIntegrationDefinition(

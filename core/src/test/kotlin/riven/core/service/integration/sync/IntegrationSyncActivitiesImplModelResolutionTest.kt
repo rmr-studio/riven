@@ -217,6 +217,7 @@ class IntegrationSyncActivitiesImplModelResolutionTest {
                     )
                 ),
                 columnConfiguration = ColumnConfiguration(order = listOf(attributeUuid)),
+                attributeKeyMapping = mapOf("email" to attributeUuid.toString()),
             )
             whenever(entityTypeRepository.findBySourceIntegrationIdAndWorkspaceId(integrationId, workspaceId))
                 .thenReturn(listOf(entityType))

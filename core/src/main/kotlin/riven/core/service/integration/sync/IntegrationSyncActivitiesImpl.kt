@@ -238,7 +238,13 @@ class IntegrationSyncActivitiesImpl(
             return null
         }
 
-        val keyMapping = buildKeyMapping(catalogEntityType, entityType)
+        val keyMapping = entityType.attributeKeyMapping
+            ?.mapValues { (_, uuidString) -> UUID.fromString(uuidString) }
+        if (keyMapping == null) {
+            logger.error { "EntityType ${entityType.key} has no attributeKeyMapping — was it materialized before this fix?" }
+            return null
+        }
+
         val fieldMappings = resolveFieldMappings(fieldMappingEntity.mappings, keyMapping, entityType)
         val externalIdField = resolveExternalIdField(fieldMappingEntity.mappings)
 
@@ -250,22 +256,6 @@ class IntegrationSyncActivitiesImpl(
             keyMapping = keyMapping,
             externalIdField = externalIdField,
         )
-    }
-
-    /**
-     * Builds the attribute string-key-to-UUID mapping by zipping the ordered catalog schema
-     * string keys with the installed entity type's column order (UUIDs).
-     *
-     * Both lists are in the same insertion order from the original manifest, so zipping
-     * them produces the correct string-key-to-UUID map.
-     */
-    private fun buildKeyMapping(
-        catalogEntityType: CatalogEntityTypeEntity,
-        entityType: EntityTypeEntity,
-    ): Map<String, UUID> {
-        val stringKeys = catalogEntityType.schema.keys.toList()
-        val uuidKeys = entityType.columnConfiguration?.order ?: emptyList()
-        return stringKeys.zip(uuidKeys).associate { (stringKey, uuid) -> stringKey to uuid }
     }
 
     /**
