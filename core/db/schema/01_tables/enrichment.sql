@@ -23,21 +23,5 @@ CREATE TABLE IF NOT EXISTS public.entity_embeddings
     UNIQUE (entity_id)
 );
 
--- =====================================================
--- ENRICHMENT QUEUE TABLE
--- =====================================================
--- Queue for pending enrichment work items. System-managed, accessed by service role.
--- Uses SKIP LOCKED for concurrent-safe claiming.
-CREATE TABLE IF NOT EXISTS public.enrichment_queue
-(
-    "id"              UUID PRIMARY KEY     DEFAULT uuid_generate_v4(),
-    "workspace_id"    UUID        NOT NULL REFERENCES workspaces (id) ON DELETE CASCADE,
-    "entity_id"       UUID        NOT NULL REFERENCES entities (id) ON DELETE CASCADE,
-    "priority"        TEXT        NOT NULL DEFAULT 'NORMAL',
-    "status"          TEXT        NOT NULL DEFAULT 'PENDING',
-    "created_at"      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "claimed_at"      TIMESTAMPTZ,
-    "dispatched_at"   TIMESTAMPTZ,
-    "attempts"        INTEGER     NOT NULL DEFAULT 0,
-    "last_error"      TEXT
-);
+-- Enrichment jobs use the common execution_queue table (job_type = 'ENRICHMENT')
+-- in db/schema/01_tables/workflow.sql. No separate enrichment queue table needed.

@@ -6,12 +6,13 @@ import io.temporal.client.WorkflowOptions
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import riven.core.configuration.workflow.TemporalWorkerConfiguration
-import riven.core.entity.enrichment.EnrichmentQueueEntity
 import riven.core.entity.enrichment.EntityEmbeddingEntity
 import riven.core.entity.entity.EntityTypeSemanticMetadataEntity
 import riven.core.entity.entity.RelationshipDefinitionEntity
-import riven.core.enums.enrichment.EnrichmentQueueStatus
+import riven.core.entity.workflow.ExecutionQueueEntity
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
+import riven.core.enums.workflow.ExecutionJobType
+import riven.core.enums.workflow.ExecutionQueueStatus
 import riven.core.enums.entity.semantics.SemanticMetadataTargetType
 import riven.core.enums.integration.SourceType
 import riven.core.exceptions.NotFoundException
@@ -21,8 +22,8 @@ import riven.core.models.enrichment.EnrichmentContext
 import riven.core.models.enrichment.EnrichmentRelationshipDefinitionContext
 import riven.core.models.enrichment.EnrichmentRelationshipSummary
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
-import riven.core.repository.enrichment.EnrichmentQueueRepository
 import riven.core.repository.enrichment.EntityEmbeddingRepository
+import riven.core.repository.workflow.ExecutionQueueRepository
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
@@ -51,7 +52,7 @@ import java.util.*
  */
 @Service
 class EnrichmentService(
-    private val enrichmentQueueRepository: EnrichmentQueueRepository,
+    private val executionQueueRepository: ExecutionQueueRepository,
     private val entityEmbeddingRepository: EntityEmbeddingRepository,
     private val entityRepository: EntityRepository,
     private val entityTypeRepository: EntityTypeRepository,
@@ -86,15 +87,16 @@ class EnrichmentService(
             return
         }
 
-        val queueItem = enrichmentQueueRepository.save(
-            EnrichmentQueueEntity(
+        val queueItem = executionQueueRepository.save(
+            ExecutionQueueEntity(
                 workspaceId = workspaceId,
+                jobType = ExecutionJobType.ENRICHMENT,
                 entityId = entityId,
-                status = EnrichmentQueueStatus.PENDING,
+                status = ExecutionQueueStatus.PENDING,
             )
         )
 
-        val queueItemId = requireNotNull(queueItem.id) { "Persisted EnrichmentQueueEntity must have an ID" }
+        val queueItemId = requireNotNull(queueItem.id) { "Persisted ExecutionQueueEntity must have an ID" }
 
         val stub = workflowClient.newWorkflowStub(
             EnrichmentWorkflow::class.java,
@@ -128,14 +130,14 @@ class EnrichmentService(
      */
     @Transactional
     fun fetchContext(queueItemId: UUID): EnrichmentContext {
-        val queueItem = ServiceUtil.findOrThrow { enrichmentQueueRepository.findById(queueItemId) }
+        val queueItem = ServiceUtil.findOrThrow { executionQueueRepository.findById(queueItemId) }
 
         val claimedItem = claimQueueItem(queueItem)
+        val entityId = requireNotNull(claimedItem.entityId) { "ENRICHMENT queue item must have an entityId" }
 
-        val entity = ServiceUtil.findOrThrow { entityRepository.findById(claimedItem.entityId) }
+        val entity = ServiceUtil.findOrThrow { entityRepository.findById(entityId) }
         val entityType = ServiceUtil.findOrThrow { entityTypeRepository.findById(entity.typeId) }
 
-        val entityId = requireNotNull(entity.id) { "EntityEntity must have an ID" }
         val allMetadata = semanticMetadataRepository.findByEntityTypeId(entity.typeId)
         val metadataByTargetId = allMetadata.associateBy { it.targetId }
 
@@ -192,8 +194,8 @@ class EnrichmentService(
             )
         )
 
-        val queueItem = ServiceUtil.findOrThrow { enrichmentQueueRepository.findById(queueItemId) }
-        enrichmentQueueRepository.save(queueItem.copy(status = EnrichmentQueueStatus.COMPLETED))
+        val queueItem = ServiceUtil.findOrThrow { executionQueueRepository.findById(queueItemId) }
+        executionQueueRepository.save(queueItem.copy(status = ExecutionQueueStatus.COMPLETED))
 
         logger.info { "Stored embedding for entity ${context.entityId}, queue item $queueItemId completed" }
     }
@@ -216,12 +218,12 @@ class EnrichmentService(
      * claimedAt timestamp and saves again. This prevents duplicate processing while
      * allowing safe retries.
      */
-    private fun claimQueueItem(queueItem: EnrichmentQueueEntity): EnrichmentQueueEntity {
+    private fun claimQueueItem(queueItem: ExecutionQueueEntity): ExecutionQueueEntity {
         val claimed = queueItem.copy(
-            status = EnrichmentQueueStatus.CLAIMED,
+            status = ExecutionQueueStatus.CLAIMED,
             claimedAt = ZonedDateTime.now(),
         )
-        return enrichmentQueueRepository.save(claimed)
+        return executionQueueRepository.save(claimed)
     }
 
     /**

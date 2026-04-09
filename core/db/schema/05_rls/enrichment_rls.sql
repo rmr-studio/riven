@@ -33,4 +33,4 @@ CREATE POLICY "entity_embeddings_write" ON entity_embeddings
                      WHERE user_id = auth.uid())
     );
 
--- No RLS on enrichment_queue: system-managed, accessed by service role only
+-- No RLS on enrichment queue items: they use execution_queue which is system-managed, accessed by service role only

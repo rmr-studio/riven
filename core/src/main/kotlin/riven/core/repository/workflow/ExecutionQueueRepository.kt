@@ -135,4 +135,47 @@ interface ExecutionQueueRepository : JpaRepository<ExecutionQueueEntity, UUID> {
         nativeQuery = true
     )
     fun findStaleClaimedIdentityMatchItems(@Param("minutesAgo") minutesAgo: Int): List<ExecutionQueueEntity>
+
+    /**
+     * Claim pending ENRICHMENT jobs for dispatch.
+     *
+     * Mirrors [claimPendingExecutions] but filters exclusively on ENRICHMENT job type.
+     * Uses SKIP LOCKED so multiple dispatcher instances do not compete for the same rows.
+     *
+     * @param batchSize Maximum items to claim in one poll cycle.
+     * @return Claimed entities — caller must transition status to CLAIMED.
+     */
+    @Query(
+        """
+        SELECT * FROM execution_queue
+        WHERE status = 'PENDING'
+        AND job_type = 'ENRICHMENT'
+        ORDER BY created_at ASC
+        LIMIT :batchSize
+        FOR UPDATE SKIP LOCKED
+        """,
+        nativeQuery = true
+    )
+    fun claimPendingEnrichmentJobs(@Param("batchSize") batchSize: Int): List<ExecutionQueueEntity>
+
+    /**
+     * Find stale CLAIMED ENRICHMENT items for recovery.
+     *
+     * Items that were claimed but not completed within the timeout window are candidates
+     * for being reset to PENDING. Mirrors [findStaleClaimedItems] for ENRICHMENT jobs.
+     *
+     * @param minutesAgo Threshold in minutes — items claimed more than this many minutes ago.
+     * @return Stale claimed items eligible for retry.
+     */
+    @Query(
+        """
+        SELECT * FROM execution_queue
+        WHERE status = 'CLAIMED'
+        AND job_type = 'ENRICHMENT'
+        AND claimed_at < (CURRENT_TIMESTAMP - INTERVAL '1 minute' * :minutesAgo)
+        FOR UPDATE SKIP LOCKED
+        """,
+        nativeQuery = true
+    )
+    fun findStaleClaimedEnrichmentItems(@Param("minutesAgo") minutesAgo: Int): List<ExecutionQueueEntity>
 }

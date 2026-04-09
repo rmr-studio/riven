@@ -1,10 +1,7 @@
 package riven.core.service.util.factory.enrichment
 
 import riven.core.entity.enrichment.EntityEmbeddingEntity
-import riven.core.entity.enrichment.EnrichmentQueueEntity
 import riven.core.enums.common.validation.SchemaType
-import riven.core.enums.enrichment.EnrichmentQueuePriority
-import riven.core.enums.enrichment.EnrichmentQueueStatus
 import riven.core.enums.entity.LifecycleDomain
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
 import riven.core.enums.entity.semantics.SemanticGroup
@@ -25,33 +22,6 @@ import java.util.*
  * sensible defaults for unit and integration tests.
  */
 object EnrichmentFactory {
-
-    /**
-     * Creates an [EnrichmentQueueEntity] with sensible defaults.
-     */
-    fun enrichmentQueueEntity(
-        id: UUID = UUID.randomUUID(),
-        workspaceId: UUID = UUID.randomUUID(),
-        entityId: UUID = UUID.randomUUID(),
-        priority: EnrichmentQueuePriority = EnrichmentQueuePriority.NORMAL,
-        status: EnrichmentQueueStatus = EnrichmentQueueStatus.PENDING,
-        createdAt: ZonedDateTime = ZonedDateTime.now(),
-        claimedAt: ZonedDateTime? = null,
-        dispatchedAt: ZonedDateTime? = null,
-        attempts: Int = 0,
-        lastError: String? = null
-    ): EnrichmentQueueEntity = EnrichmentQueueEntity(
-        id = id,
-        workspaceId = workspaceId,
-        entityId = entityId,
-        priority = priority,
-        status = status,
-        createdAt = createdAt,
-        claimedAt = claimedAt,
-        dispatchedAt = dispatchedAt,
-        attempts = attempts,
-        lastError = lastError
-    )
 
     /**
      * Creates an [EnrichmentContext] with sensible defaults including sample

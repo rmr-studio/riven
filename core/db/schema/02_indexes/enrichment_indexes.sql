@@ -7,11 +7,6 @@ CREATE INDEX IF NOT EXISTS idx_entity_embeddings_hnsw
     ON entity_embeddings USING hnsw (embedding vector_cosine_ops)
     WITH (m = 16, ef_construction = 64);
 
--- Deduplication: only one PENDING queue item per entity at a time
-CREATE UNIQUE INDEX IF NOT EXISTS idx_enrichment_queue_dedup
-    ON enrichment_queue (entity_id)
-    WHERE status = 'PENDING';
-
--- Composite index for workspace-scoped queue queries and round-robin dispatch
-CREATE INDEX IF NOT EXISTS idx_enrichment_queue_workspace_status
-    ON enrichment_queue (workspace_id, status);
+-- Enrichment queue deduplication is handled by the existing partial unique index
+-- uq_execution_queue_pending_identity_match on execution_queue (workspace_id, entity_id, job_type)
+-- which covers all job types including ENRICHMENT.

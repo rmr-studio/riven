@@ -10,8 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
-import riven.core.entity.enrichment.EnrichmentQueueEntity
 import riven.core.entity.enrichment.EntityEmbeddingEntity
+import riven.core.entity.workflow.ExecutionQueueEntity
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.entity.entity.EntityTypeSemanticMetadataEntity
@@ -22,7 +22,7 @@ import riven.core.entity.identity.IdentityClusterMemberEntity
 import riven.core.enums.common.icon.IconColour
 import riven.core.enums.common.icon.IconType
 import riven.core.enums.common.validation.SchemaType
-import riven.core.enums.enrichment.EnrichmentQueueStatus
+import riven.core.enums.workflow.ExecutionQueueStatus
 import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.enums.entity.LifecycleDomain
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
@@ -32,8 +32,8 @@ import riven.core.enums.integration.SourceType
 import riven.core.exceptions.NotFoundException
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
-import riven.core.repository.enrichment.EnrichmentQueueRepository
 import riven.core.repository.enrichment.EntityEmbeddingRepository
+import riven.core.repository.workflow.ExecutionQueueRepository
 import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.entity.EntityTypeRepository
@@ -48,6 +48,7 @@ import riven.core.service.util.BaseServiceTest
 import riven.core.service.workflow.enrichment.EnrichmentWorkflow
 import riven.core.service.util.SecurityTestConfig
 import riven.core.service.util.factory.enrichment.EnrichmentFactory
+import riven.core.service.util.factory.workflow.ExecutionQueueFactory
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -62,7 +63,7 @@ import java.util.*
 class EnrichmentServiceTest : BaseServiceTest() {
 
     @MockitoBean
-    private lateinit var enrichmentQueueRepository: EnrichmentQueueRepository
+    private lateinit var executionQueueRepository: ExecutionQueueRepository
 
     @MockitoBean
     private lateinit var entityEmbeddingRepository: EntityEmbeddingRepository
@@ -112,7 +113,7 @@ class EnrichmentServiceTest : BaseServiceTest() {
 
         enrichmentService.enqueueAndProcess(entityId, workspaceId)
 
-        verify(enrichmentQueueRepository, never()).save(any())
+        verify(executionQueueRepository, never()).save(any())
         verify(workflowClient, never()).newWorkflowStub(any<Class<*>>(), any<WorkflowOptions>())
     }
 
@@ -121,17 +122,17 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val entityId = UUID.randomUUID()
         val queueItemId = UUID.randomUUID()
         val entity = buildEntityEntity(entityId, sourceType = SourceType.USER_CREATED)
-        val savedQueueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val savedQueueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
 
         whenever(entityRepository.findById(entityId)).thenReturn(Optional.of(entity))
-        whenever(enrichmentQueueRepository.save(any<EnrichmentQueueEntity>())).thenReturn(savedQueueItem)
+        whenever(executionQueueRepository.save(any<ExecutionQueueEntity>())).thenReturn(savedQueueItem)
 
         val workflowStub = mock<EnrichmentWorkflow>()
         whenever(workflowClient.newWorkflowStub(eq(EnrichmentWorkflow::class.java), any<WorkflowOptions>())).thenReturn(workflowStub)
 
         enrichmentService.enqueueAndProcess(entityId, workspaceId)
 
-        verify(enrichmentQueueRepository).save(any())
+        verify(executionQueueRepository).save(any())
         verify(workflowClient).newWorkflowStub(eq(EnrichmentWorkflow::class.java), any<WorkflowOptions>())
     }
 
@@ -140,17 +141,17 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val entityId = UUID.randomUUID()
         val queueItemId = UUID.randomUUID()
         val entity = buildEntityEntity(entityId, sourceType = SourceType.IMPORT)
-        val savedQueueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val savedQueueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
 
         whenever(entityRepository.findById(entityId)).thenReturn(Optional.of(entity))
-        whenever(enrichmentQueueRepository.save(any<EnrichmentQueueEntity>())).thenReturn(savedQueueItem)
+        whenever(executionQueueRepository.save(any<ExecutionQueueEntity>())).thenReturn(savedQueueItem)
 
         val workflowStub = mock<EnrichmentWorkflow>()
         whenever(workflowClient.newWorkflowStub(eq(EnrichmentWorkflow::class.java), any<WorkflowOptions>())).thenReturn(workflowStub)
 
         enrichmentService.enqueueAndProcess(entityId, workspaceId)
 
-        verify(enrichmentQueueRepository).save(any())
+        verify(executionQueueRepository).save(any())
     }
 
     // ------------------------------------------------------------------
@@ -162,12 +163,12 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val queueItemId = UUID.randomUUID()
         val entityId = UUID.randomUUID()
         val typeId = UUID.randomUUID()
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
         val entityEntity = buildEntityEntity(entityId, typeId = typeId)
         val entityType = buildEntityTypeEntity(typeId)
 
-        whenever(enrichmentQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
-        whenever(enrichmentQueueRepository.save(any())).thenReturn(queueItem)
+        whenever(executionQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
+        whenever(executionQueueRepository.save(any())).thenReturn(queueItem)
         whenever(entityRepository.findById(entityId)).thenReturn(Optional.of(entityEntity))
         whenever(entityTypeRepository.findById(typeId)).thenReturn(Optional.of(entityType))
         whenever(semanticMetadataRepository.findByEntityTypeId(typeId)).thenReturn(emptyList())
@@ -189,12 +190,12 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val queueItemId = UUID.randomUUID()
         val entityId = UUID.randomUUID()
         val typeId = UUID.randomUUID()
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
         val entityEntity = buildEntityEntity(entityId, typeId = typeId)
         val entityType = buildEntityTypeEntity(typeId)
 
-        whenever(enrichmentQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
-        whenever(enrichmentQueueRepository.save(any())).thenReturn(queueItem)
+        whenever(executionQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
+        whenever(executionQueueRepository.save(any())).thenReturn(queueItem)
         whenever(entityRepository.findById(entityId)).thenReturn(Optional.of(entityEntity))
         whenever(entityTypeRepository.findById(typeId)).thenReturn(Optional.of(entityType))
         whenever(semanticMetadataRepository.findByEntityTypeId(typeId)).thenReturn(emptyList())
@@ -204,10 +205,10 @@ class EnrichmentServiceTest : BaseServiceTest() {
 
         enrichmentService.fetchContext(queueItemId)
 
-        val captor = ArgumentCaptor.forClass(EnrichmentQueueEntity::class.java)
-        verify(enrichmentQueueRepository, atLeast(1)).save(captor.capture())
-        val claimedItem = captor.allValues.first { it.status == EnrichmentQueueStatus.CLAIMED }
-        assertEquals(EnrichmentQueueStatus.CLAIMED, claimedItem.status)
+        val captor = ArgumentCaptor.forClass(ExecutionQueueEntity::class.java)
+        verify(executionQueueRepository, atLeast(1)).save(captor.capture())
+        val claimedItem = captor.allValues.first { it.status == ExecutionQueueStatus.CLAIMED }
+        assertEquals(ExecutionQueueStatus.CLAIMED, claimedItem.status)
         assertNotNull(claimedItem.claimedAt)
     }
 
@@ -217,12 +218,12 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val entityId = UUID.randomUUID()
         val typeId = UUID.randomUUID()
         val version = 5
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
         val entityEntity = buildEntityEntity(entityId, typeId = typeId)
         val entityType = buildEntityTypeEntity(typeId, version = version)
 
-        whenever(enrichmentQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
-        whenever(enrichmentQueueRepository.save(any())).thenReturn(queueItem)
+        whenever(executionQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
+        whenever(executionQueueRepository.save(any())).thenReturn(queueItem)
         whenever(entityRepository.findById(entityId)).thenReturn(Optional.of(entityEntity))
         whenever(entityTypeRepository.findById(typeId)).thenReturn(Optional.of(entityType))
         whenever(semanticMetadataRepository.findByEntityTypeId(typeId)).thenReturn(emptyList())
@@ -243,15 +244,15 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val attrId = UUID.randomUUID()
         val semanticLabel = "Acquisition Channel"
 
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
         val entityEntity = buildEntityEntity(entityId, typeId = typeId)
         val entityType = buildEntityTypeEntity(typeId)
 
         val metadata = buildSemanticMetadata(typeId, SemanticMetadataTargetType.ATTRIBUTE, attrId, definition = semanticLabel)
         val attribute = EntityAttributePrimitivePayload(value = "Social Media", schemaType = SchemaType.TEXT)
 
-        whenever(enrichmentQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
-        whenever(enrichmentQueueRepository.save(any())).thenReturn(queueItem)
+        whenever(executionQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
+        whenever(executionQueueRepository.save(any())).thenReturn(queueItem)
         whenever(entityRepository.findById(entityId)).thenReturn(Optional.of(entityEntity))
         whenever(entityTypeRepository.findById(typeId)).thenReturn(Optional.of(entityType))
         whenever(semanticMetadataRepository.findByEntityTypeId(typeId)).thenReturn(listOf(metadata))
@@ -273,13 +274,13 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val typeId = UUID.randomUUID()
         val attrId = UUID.randomUUID()
 
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
         val entityEntity = buildEntityEntity(entityId, typeId = typeId)
         val entityType = buildEntityTypeEntity(typeId)
         val attribute = EntityAttributePrimitivePayload(value = "Some Value", schemaType = SchemaType.TEXT)
 
-        whenever(enrichmentQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
-        whenever(enrichmentQueueRepository.save(any())).thenReturn(queueItem)
+        whenever(executionQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
+        whenever(executionQueueRepository.save(any())).thenReturn(queueItem)
         whenever(entityRepository.findById(entityId)).thenReturn(Optional.of(entityEntity))
         whenever(entityTypeRepository.findById(typeId)).thenReturn(Optional.of(entityType))
         whenever(semanticMetadataRepository.findByEntityTypeId(typeId)).thenReturn(emptyList())
@@ -301,7 +302,7 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val typeId = UUID.randomUUID()
         val definitionId = UUID.randomUUID()
 
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
         val entityEntity = buildEntityEntity(entityId, typeId = typeId)
         val entityType = buildEntityTypeEntity(typeId)
 
@@ -309,8 +310,8 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val relationship2 = buildRelationshipEntity(entityId, UUID.randomUUID(), definitionId, workspaceId)
         val definition = buildRelationshipDefinition(definitionId, typeId, "Support Tickets", workspaceId)
 
-        whenever(enrichmentQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
-        whenever(enrichmentQueueRepository.save(any())).thenReturn(queueItem)
+        whenever(executionQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
+        whenever(executionQueueRepository.save(any())).thenReturn(queueItem)
         whenever(entityRepository.findById(entityId)).thenReturn(Optional.of(entityEntity))
         whenever(entityTypeRepository.findById(typeId)).thenReturn(Optional.of(entityType))
         whenever(semanticMetadataRepository.findByEntityTypeId(typeId)).thenReturn(emptyList())
@@ -328,7 +329,7 @@ class EnrichmentServiceTest : BaseServiceTest() {
     @Test
     fun `fetchContext throws NotFoundException for missing queue item`() {
         val queueItemId = UUID.randomUUID()
-        whenever(enrichmentQueueRepository.findById(queueItemId)).thenReturn(Optional.empty())
+        whenever(executionQueueRepository.findById(queueItemId)).thenReturn(Optional.empty())
 
         assertThrows(NotFoundException::class.java) {
             enrichmentService.fetchContext(queueItemId)
@@ -351,7 +352,7 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val typeId = UUID.randomUUID()
         val attrId = UUID.randomUUID()
 
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
         val entityEntity = buildEntityEntity(entityId, typeId = typeId)
         val entityType = buildEntityTypeEntity(typeId)
 
@@ -381,7 +382,7 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val typeId = UUID.randomUUID()
         val attrId = UUID.randomUUID()
 
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
         val entityEntity = buildEntityEntity(entityId, typeId = typeId)
         val entityType = buildEntityTypeEntity(typeId)
 
@@ -413,7 +414,7 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val memberEntityId = UUID.randomUUID()
         val memberTypeId = UUID.randomUUID()
 
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
         val entityEntity = buildEntityEntity(entityId, typeId = typeId)
         val entityType = buildEntityTypeEntity(typeId)
 
@@ -445,7 +446,7 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val entityId = UUID.randomUUID()
         val typeId = UUID.randomUUID()
 
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
         val entityEntity = buildEntityEntity(entityId, typeId = typeId)
         val entityType = buildEntityTypeEntity(typeId)
 
@@ -468,7 +469,7 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val typeId = UUID.randomUUID()
         val clusterId = UUID.randomUUID()
 
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
         val entityEntity = buildEntityEntity(entityId, typeId = typeId)
         val entityType = buildEntityTypeEntity(typeId)
 
@@ -502,7 +503,7 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val referencedTypeId = UUID.randomUUID()
         val identifierAttrId = UUID.randomUUID()
 
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
         val entityEntity = buildEntityEntity(entityId, typeId = typeId)
         val entityType = buildEntityTypeEntity(typeId)
 
@@ -546,7 +547,7 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val referencedEntityId = UUID.randomUUID()
         val referencedTypeId = UUID.randomUUID()
 
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
         val entityEntity = buildEntityEntity(entityId, typeId = typeId)
         val entityType = buildEntityTypeEntity(typeId)
 
@@ -580,7 +581,7 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val entityId = UUID.randomUUID()
         val typeId = UUID.randomUUID()
 
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
         val entityEntity = buildEntityEntity(entityId, typeId = typeId)
         val entityType = buildEntityTypeEntity(typeId)
 
@@ -607,7 +608,7 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val typeId = UUID.randomUUID()
         val definitionId = UUID.randomUUID()
 
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
         val entityEntity = buildEntityEntity(entityId, typeId = typeId)
         val entityType = buildEntityTypeEntity(typeId)
 
@@ -637,7 +638,7 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val entityId = UUID.randomUUID()
         val typeId = UUID.randomUUID()
 
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
         val entityEntity = buildEntityEntity(entityId, typeId = typeId)
         val entityType = buildEntityTypeEntity(typeId)
 
@@ -664,7 +665,7 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val typeId = UUID.randomUUID()
         val definitionId = UUID.randomUUID()
 
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
         val entityEntity = buildEntityEntity(entityId, typeId = typeId)
         val entityType = buildEntityTypeEntity(typeId)
 
@@ -700,7 +701,7 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val targetTypeId = UUID.randomUUID()
         val statusAttrId = UUID.randomUUID()
 
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
         val entityEntity = buildEntityEntity(entityId, typeId = typeId)
         val entityType = buildEntityTypeEntity(typeId)
 
@@ -752,7 +753,7 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val targetEntityId = UUID.randomUUID()
         val targetTypeId = UUID.randomUUID()
 
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
         val entityEntity = buildEntityEntity(entityId, typeId = typeId)
         val entityType = buildEntityTypeEntity(typeId)
 
@@ -785,11 +786,11 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val queueItemId = UUID.randomUUID()
         val context = EnrichmentFactory.enrichmentContext(workspaceId = workspaceId)
         val embedding = FloatArray(1536) { 0.1f }
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = context.entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = context.entityId, workspaceId = workspaceId)
         val modelName = "text-embedding-3-small"
 
-        whenever(enrichmentQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
-        whenever(enrichmentQueueRepository.save(any())).thenReturn(queueItem)
+        whenever(executionQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
+        whenever(executionQueueRepository.save(any())).thenReturn(queueItem)
         whenever(entityEmbeddingRepository.save(any())).thenAnswer { it.arguments[0] }
         whenever(embeddingProvider.getModelName()).thenReturn(modelName)
 
@@ -812,10 +813,10 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val queueItemId = UUID.randomUUID()
         val context = EnrichmentFactory.enrichmentContext(workspaceId = workspaceId)
         val embedding = FloatArray(1536) { 0.1f }
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = context.entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = context.entityId, workspaceId = workspaceId)
 
-        whenever(enrichmentQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
-        whenever(enrichmentQueueRepository.save(any())).thenReturn(queueItem)
+        whenever(executionQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
+        whenever(executionQueueRepository.save(any())).thenReturn(queueItem)
         whenever(entityEmbeddingRepository.save(any())).thenAnswer { it.arguments[0] }
         whenever(embeddingProvider.getModelName()).thenReturn("text-embedding-3-small")
 
@@ -831,19 +832,19 @@ class EnrichmentServiceTest : BaseServiceTest() {
         val queueItemId = UUID.randomUUID()
         val context = EnrichmentFactory.enrichmentContext(workspaceId = workspaceId)
         val embedding = FloatArray(1536) { 0.1f }
-        val queueItem = EnrichmentFactory.enrichmentQueueEntity(id = queueItemId, entityId = context.entityId, workspaceId = workspaceId)
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = context.entityId, workspaceId = workspaceId)
 
-        whenever(enrichmentQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
-        whenever(enrichmentQueueRepository.save(any())).thenReturn(queueItem)
+        whenever(executionQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
+        whenever(executionQueueRepository.save(any())).thenReturn(queueItem)
         whenever(entityEmbeddingRepository.save(any())).thenAnswer { it.arguments[0] }
         whenever(embeddingProvider.getModelName()).thenReturn("text-embedding-3-small")
 
         enrichmentService.storeEmbedding(queueItemId, context, embedding, truncated = false)
 
-        val captor = ArgumentCaptor.forClass(EnrichmentQueueEntity::class.java)
-        verify(enrichmentQueueRepository, atLeast(1)).save(captor.capture())
-        val completedItem = captor.allValues.first { it.status == EnrichmentQueueStatus.COMPLETED }
-        assertEquals(EnrichmentQueueStatus.COMPLETED, completedItem.status)
+        val captor = ArgumentCaptor.forClass(ExecutionQueueEntity::class.java)
+        verify(executionQueueRepository, atLeast(1)).save(captor.capture())
+        val completedItem = captor.allValues.first { it.status == ExecutionQueueStatus.COMPLETED }
+        assertEquals(ExecutionQueueStatus.COMPLETED, completedItem.status)
     }
 
     // ------------------------------------------------------------------
@@ -854,12 +855,12 @@ class EnrichmentServiceTest : BaseServiceTest() {
         queueItemId: UUID,
         entityId: UUID,
         typeId: UUID,
-        queueItem: EnrichmentQueueEntity,
+        queueItem: ExecutionQueueEntity,
         entityEntity: EntityEntity,
         entityType: EntityTypeEntity,
     ) {
-        whenever(enrichmentQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
-        whenever(enrichmentQueueRepository.save(any())).thenReturn(queueItem)
+        whenever(executionQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
+        whenever(executionQueueRepository.save(any())).thenReturn(queueItem)
         whenever(entityRepository.findById(entityId)).thenReturn(Optional.of(entityEntity))
         whenever(entityTypeRepository.findById(typeId)).thenReturn(Optional.of(entityType))
     }
