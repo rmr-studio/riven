@@ -1,0 +1,786 @@
+package riven.core.service.catalog
+
+import io.github.oshai.kotlinlogging.KLogger
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import riven.core.entity.catalog.CatalogEntityTypeEntity
+import riven.core.entity.entity.EntityTypeEntity
+import riven.core.enums.activity.Activity
+import riven.core.enums.common.validation.SchemaType
+import riven.core.enums.core.ApplicationEntityType
+import riven.core.enums.core.DataFormat
+import riven.core.enums.core.DataType
+import riven.core.enums.entity.validation.EntityTypeChangeType
+import riven.core.enums.util.OperationType
+import riven.core.models.catalog.EntityTypeHealthStatus
+import riven.core.models.catalog.EntityTypeImpact
+import riven.core.models.catalog.PendingSchemaChange
+import riven.core.models.catalog.ReconciliationImpact
+import riven.core.models.catalog.ReconciliationResult
+import riven.core.models.catalog.ReconciledEntityType
+import riven.core.models.catalog.SchemaChange
+import riven.core.models.catalog.SchemaHealthResponse
+import riven.core.models.catalog.SchemaHealthStatusType
+import riven.core.models.catalog.SchemaHealthSummary
+import riven.core.models.common.validation.Schema
+import riven.core.models.entity.EntityTypeSchema
+import riven.core.models.entity.configuration.ColumnConfiguration
+import riven.core.repository.catalog.CatalogEntityTypeRepository
+import riven.core.repository.entity.EntityAttributeRepository
+import riven.core.repository.entity.EntityTypeRepository
+import riven.core.service.activity.ActivityService
+import riven.core.service.auth.AuthTokenService
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+
+/**
+ * Compares workspace entity types against their catalog source definitions and
+ * applies non-breaking changes automatically. Breaking changes are flagged with
+ * `pendingSchemaUpdate = true` until explicitly confirmed via [applyBreakingChanges].
+ *
+ * Uses [EntityTypeEntity.attributeKeyMapping] as the bridge between string-keyed
+ * catalog schemas and UUID-keyed workspace schemas.
+ */
+@Service
+class SchemaReconciliationService(
+    private val logger: KLogger,
+    private val catalogEntityTypeRepository: CatalogEntityTypeRepository,
+    private val entityTypeRepository: EntityTypeRepository,
+    private val entityAttributeRepository: EntityAttributeRepository,
+    private val activityService: ActivityService,
+    private val authTokenService: AuthTokenService,
+) {
+
+    /** Process-local concurrency guard keyed by entity type ID. */
+    private val reconciliationLocks = ConcurrentHashMap<UUID, Boolean>()
+
+    // ------ Public Reconciliation Entry Point ------
+
+    /**
+     * Reconciles workspace entity types against their catalog sources.
+     * Called from EntityTypeService on workspace access. Skips entity types
+     * that have no [EntityTypeEntity.sourceManifestId] or are already up to date.
+     */
+    @Transactional
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun reconcileIfNeeded(workspaceId: UUID, entityTypes: List<EntityTypeEntity>) {
+        val userId = authTokenService.getUserId()
+
+        entityTypes
+            .filter { it.sourceManifestId != null }
+            .forEach { entityType -> reconcileSingle(entityType, userId, workspaceId) }
+    }
+
+    // ------ Breaking Change Application ------
+
+    /**
+     * Applies breaking schema changes for the given entity types after user confirmation.
+     * If [impactConfirmed] is false, returns an impact analysis without mutating anything.
+     * If true, applies all changes (breaking + non-breaking), clears pending flag, and logs activity.
+     */
+    @Transactional
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun applyBreakingChanges(
+        workspaceId: UUID,
+        entityTypeIds: List<UUID>,
+        impactConfirmed: Boolean,
+    ): Any {
+        val userId = authTokenService.getUserId()
+
+        val entityTypes = entityTypeRepository.findAllById(entityTypeIds)
+            .filter { it.workspaceId == workspaceId && it.pendingSchemaUpdate }
+
+        if (!impactConfirmed) {
+            return buildImpactAnalysis(entityTypes)
+        }
+
+        return applyConfirmedBreakingChanges(entityTypes, userId, workspaceId)
+    }
+
+    // ------ Health Check ------
+
+    /**
+     * Returns schema health status for all catalog-sourced entity types in the workspace.
+     * Does NOT trigger reconciliation — read-only inspection.
+     */
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
+    fun getSchemaHealth(workspaceId: UUID, entityTypes: List<EntityTypeEntity>): SchemaHealthResponse {
+        val statuses = entityTypes
+            .filter { it.sourceManifestId != null }
+            .map { buildHealthStatus(it) }
+
+        return SchemaHealthResponse(
+            entityTypes = statuses,
+            summary = buildHealthSummary(statuses),
+        )
+    }
+
+    // ------ Single Entity Type Reconciliation ------
+
+    private fun reconcileSingle(entityType: EntityTypeEntity, userId: UUID, workspaceId: UUID) {
+        val entityTypeId = requireNotNull(entityType.id) { "EntityTypeEntity ID must not be null for reconciliation" }
+
+        if (entityType.attributeKeyMapping == null) {
+            logger.warn { "Skipping reconciliation for entity type $entityTypeId: no attributeKeyMapping (legacy)" }
+            return
+        }
+
+        if (!reconciliationLocks.putIfAbsent(entityTypeId, true).let { it == null }) {
+            logger.debug { "Reconciliation already in progress for entity type $entityTypeId, skipping" }
+            return
+        }
+
+        try {
+            val catalogEntry = lookupCatalogEntry(entityType) ?: return
+            if (isUpToDate(entityType, catalogEntry)) return
+
+            stampHashIfLegacy(entityType, catalogEntry)
+
+            val changes = computeSchemaDiff(
+                catalogSchema = catalogEntry.schema,
+                workspaceSchema = entityType.schema,
+                attributeKeyMapping = entityType.attributeKeyMapping!!,
+            )
+
+            if (changes.isEmpty()) {
+                entityType.sourceSchemaHash = catalogEntry.schemaHash
+                entityTypeRepository.save(entityType)
+                return
+            }
+
+            val hasBreaking = changes.any { it.breaking }
+
+            if (hasBreaking) {
+                handleBreakingDetected(entityType, changes, userId, workspaceId)
+            } else {
+                handleNonBreakingAutoApply(entityType, changes, catalogEntry, userId, workspaceId)
+            }
+        } finally {
+            reconciliationLocks.remove(entityTypeId)
+        }
+    }
+
+    private fun lookupCatalogEntry(entityType: EntityTypeEntity): CatalogEntityTypeEntity? {
+        val manifestId = requireNotNull(entityType.sourceManifestId) { "sourceManifestId must not be null" }
+        val entry = catalogEntityTypeRepository.findByManifestIdAndKey(manifestId, entityType.key)
+        if (entry == null) {
+            logger.debug { "No catalog entry found for manifest ${entityType.sourceManifestId}, key ${entityType.key}" }
+        }
+        return entry
+    }
+
+    private fun isUpToDate(entityType: EntityTypeEntity, catalogEntry: CatalogEntityTypeEntity): Boolean {
+        val entityHash = entityType.sourceSchemaHash ?: return false
+        return entityHash == catalogEntry.schemaHash
+    }
+
+    /**
+     * If the entity type has no hash yet (legacy), stamp it with the current catalog hash
+     * so future comparisons have a baseline.
+     */
+    private fun stampHashIfLegacy(entityType: EntityTypeEntity, catalogEntry: CatalogEntityTypeEntity) {
+        if (entityType.sourceSchemaHash == null) {
+            logger.info { "Stamping initial schema hash for entity type ${entityType.id}" }
+        }
+    }
+
+    // ------ Schema Diff Engine ------
+
+    /**
+     * Compares a catalog schema (string-keyed) against a workspace schema (UUID-keyed)
+     * using the attributeKeyMapping as the bridge. Returns a list of [SchemaChange]
+     * describing every difference found.
+     */
+    fun computeSchemaDiff(
+        catalogSchema: Map<String, Any>,
+        workspaceSchema: EntityTypeSchema,
+        attributeKeyMapping: Map<String, String>,
+    ): List<SchemaChange> {
+        val changes = mutableListOf<SchemaChange>()
+        val workspaceProperties = workspaceSchema.properties ?: emptyMap()
+
+        detectExistingFieldChanges(catalogSchema, workspaceProperties, attributeKeyMapping, changes)
+        detectAddedFields(catalogSchema, attributeKeyMapping, changes)
+        detectRemovedFields(catalogSchema, attributeKeyMapping, workspaceProperties, changes)
+
+        return changes
+    }
+
+    private fun detectExistingFieldChanges(
+        catalogSchema: Map<String, Any>,
+        workspaceProperties: Map<UUID, Schema<UUID>>,
+        attributeKeyMapping: Map<String, String>,
+        changes: MutableList<SchemaChange>,
+    ) {
+        for ((stringKey, rawDef) in catalogSchema) {
+            val uuidStr = attributeKeyMapping[stringKey] ?: continue
+            val uuid = UUID.fromString(uuidStr)
+            val workspaceAttr = workspaceProperties[uuid] ?: continue
+            val catalogAttr = toStringMap(rawDef)
+
+            detectTypeChange(stringKey, catalogAttr, workspaceAttr, uuid, changes)
+            detectRequiredAdded(stringKey, catalogAttr, workspaceAttr, uuid, changes)
+            detectUniqueAdded(stringKey, catalogAttr, workspaceAttr, uuid, changes)
+            detectMetadataChange(stringKey, catalogAttr, workspaceAttr, uuid, changes)
+        }
+    }
+
+    private fun detectTypeChange(
+        key: String,
+        catalogAttr: Map<String, Any>,
+        workspaceAttr: Schema<UUID>,
+        uuid: UUID,
+        changes: MutableList<SchemaChange>,
+    ) {
+        val catalogKey = (catalogAttr["key"] as? String)?.uppercase() ?: return
+        if (catalogKey != workspaceAttr.key.name) {
+            changes.add(
+                SchemaChange(
+                    type = EntityTypeChangeType.FIELD_TYPE_CHANGED,
+                    attributeKey = key,
+                    description = "Type changed from ${workspaceAttr.key.name} to $catalogKey",
+                    breaking = true,
+                    workspaceAttributeId = uuid,
+                )
+            )
+        }
+    }
+
+    private fun detectRequiredAdded(
+        key: String,
+        catalogAttr: Map<String, Any>,
+        workspaceAttr: Schema<UUID>,
+        uuid: UUID,
+        changes: MutableList<SchemaChange>,
+    ) {
+        val catalogRequired = catalogAttr["required"] as? Boolean ?: false
+        if (catalogRequired && !workspaceAttr.required) {
+            changes.add(
+                SchemaChange(
+                    type = EntityTypeChangeType.FIELD_REQUIRED_ADDED,
+                    attributeKey = key,
+                    description = "Field '$key' changed from optional to required",
+                    breaking = true,
+                    workspaceAttributeId = uuid,
+                )
+            )
+        }
+    }
+
+    private fun detectUniqueAdded(
+        key: String,
+        catalogAttr: Map<String, Any>,
+        workspaceAttr: Schema<UUID>,
+        uuid: UUID,
+        changes: MutableList<SchemaChange>,
+    ) {
+        val catalogUnique = catalogAttr["unique"] as? Boolean ?: false
+        if (catalogUnique && !workspaceAttr.unique) {
+            changes.add(
+                SchemaChange(
+                    type = EntityTypeChangeType.FIELD_UNIQUE_ADDED,
+                    attributeKey = key,
+                    description = "Field '$key' changed from non-unique to unique",
+                    breaking = true,
+                    workspaceAttributeId = uuid,
+                )
+            )
+        }
+    }
+
+    private fun detectMetadataChange(
+        key: String,
+        catalogAttr: Map<String, Any>,
+        workspaceAttr: Schema<UUID>,
+        uuid: UUID,
+        changes: MutableList<SchemaChange>,
+    ) {
+        val diffs = mutableListOf<String>()
+
+        val catalogLabel = catalogAttr["label"] as? String
+        if (catalogLabel != null && catalogLabel != workspaceAttr.label) {
+            diffs.add("label: '${workspaceAttr.label}' -> '$catalogLabel'")
+        }
+
+        val catalogFormat = catalogAttr["format"] as? String
+        val workspaceFormat = workspaceAttr.format?.jsonValue
+        if (catalogFormat != workspaceFormat) {
+            diffs.add("format: '$workspaceFormat' -> '$catalogFormat'")
+        }
+
+        if (diffs.isNotEmpty()) {
+            changes.add(
+                SchemaChange(
+                    type = EntityTypeChangeType.METADATA_CHANGED,
+                    attributeKey = key,
+                    description = "Metadata changed for '$key': ${diffs.joinToString(", ")}",
+                    breaking = false,
+                    workspaceAttributeId = uuid,
+                )
+            )
+        }
+    }
+
+    private fun detectAddedFields(
+        catalogSchema: Map<String, Any>,
+        attributeKeyMapping: Map<String, String>,
+        changes: MutableList<SchemaChange>,
+    ) {
+        for (stringKey in catalogSchema.keys) {
+            if (stringKey !in attributeKeyMapping) {
+                changes.add(
+                    SchemaChange(
+                        type = EntityTypeChangeType.FIELD_ADDED,
+                        attributeKey = stringKey,
+                        description = "New field '$stringKey' added in catalog",
+                        breaking = false,
+                    )
+                )
+            }
+        }
+    }
+
+    private fun detectRemovedFields(
+        catalogSchema: Map<String, Any>,
+        attributeKeyMapping: Map<String, String>,
+        workspaceProperties: Map<UUID, Schema<UUID>>,
+        changes: MutableList<SchemaChange>,
+    ) {
+        for ((stringKey, uuidStr) in attributeKeyMapping) {
+            if (stringKey !in catalogSchema) {
+                val uuid = UUID.fromString(uuidStr)
+                val label = workspaceProperties[uuid]?.label ?: stringKey
+                changes.add(
+                    SchemaChange(
+                        type = EntityTypeChangeType.FIELD_REMOVED,
+                        attributeKey = stringKey,
+                        description = "Field '$label' ($stringKey) removed from catalog",
+                        breaking = true,
+                        workspaceAttributeId = uuid,
+                    )
+                )
+            }
+        }
+    }
+
+    // ------ Non-Breaking Auto-Apply ------
+
+    private fun handleNonBreakingAutoApply(
+        entityType: EntityTypeEntity,
+        changes: List<SchemaChange>,
+        catalogEntry: CatalogEntityTypeEntity,
+        userId: UUID,
+        workspaceId: UUID,
+    ) {
+        applyNonBreakingChanges(entityType, changes, catalogEntry.schema)
+        entityType.sourceSchemaHash = catalogEntry.schemaHash
+        entityTypeRepository.save(entityType)
+
+        logReconciliationActivity(
+            entityType = entityType,
+            operation = OperationType.UPDATE,
+            userId = userId,
+            workspaceId = workspaceId,
+            details = mapOf(
+                "action" to "AUTO_APPLY",
+                "changesApplied" to changes.size,
+                "changeTypes" to changes.map { it.type.name }.distinct(),
+            ),
+        )
+
+        logger.info { "Auto-applied ${changes.size} non-breaking changes to entity type ${entityType.id}" }
+    }
+
+    /**
+     * Applies non-breaking changes (FIELD_ADDED, METADATA_CHANGED) to the workspace entity type.
+     */
+    private fun applyNonBreakingChanges(
+        entityType: EntityTypeEntity,
+        changes: List<SchemaChange>,
+        catalogSchema: Map<String, Any>,
+    ) {
+        val mutableProperties = entityType.schema.properties?.toMutableMap() ?: mutableMapOf()
+        val mutableMapping = entityType.attributeKeyMapping?.toMutableMap() ?: mutableMapOf()
+        val mutableColumnOrder = entityType.columnConfiguration?.order?.toMutableList() ?: mutableListOf()
+        val columnOverrides = entityType.columnConfiguration?.overrides ?: emptyMap()
+
+        for (change in changes) {
+            when (change.type) {
+                EntityTypeChangeType.FIELD_ADDED -> applyFieldAdded(
+                    change, entityType.key, catalogSchema, mutableProperties, mutableMapping, mutableColumnOrder,
+                )
+                EntityTypeChangeType.METADATA_CHANGED -> applyMetadataChanged(
+                    change, catalogSchema, mutableProperties,
+                )
+                else -> {} // Non-breaking filter should prevent other types
+            }
+        }
+
+        entityType.schema = entityType.schema.copy(properties = mutableProperties)
+        entityType.attributeKeyMapping = mutableMapping
+        entityType.columnConfiguration = ColumnConfiguration(order = mutableColumnOrder, overrides = columnOverrides)
+    }
+
+    private fun applyFieldAdded(
+        change: SchemaChange,
+        entityTypeKey: String,
+        catalogSchema: Map<String, Any>,
+        properties: MutableMap<UUID, Schema<UUID>>,
+        mapping: MutableMap<String, String>,
+        columnOrder: MutableList<UUID>,
+    ) {
+        val catalogAttr = toStringMap(catalogSchema[change.attributeKey] ?: return)
+        val uuid = generateAttributeUuid(entityTypeKey, change.attributeKey)
+
+        properties[uuid] = buildAttributeSchema(catalogAttr)
+        mapping[change.attributeKey] = uuid.toString()
+        columnOrder.add(uuid)
+    }
+
+    private fun applyMetadataChanged(
+        change: SchemaChange,
+        catalogSchema: Map<String, Any>,
+        properties: MutableMap<UUID, Schema<UUID>>,
+    ) {
+        val uuid = requireNotNull(change.workspaceAttributeId) { "workspaceAttributeId required for METADATA_CHANGED" }
+        val catalogAttr = toStringMap(catalogSchema[change.attributeKey] ?: return)
+        val existing = properties[uuid] ?: return
+
+        properties[uuid] = existing.copy(
+            label = catalogAttr["label"] as? String ?: existing.label,
+            format = parseDataFormat(catalogAttr["format"] as? String) ?: existing.format,
+        )
+    }
+
+    // ------ Breaking Change Handling ------
+
+    private fun handleBreakingDetected(
+        entityType: EntityTypeEntity,
+        changes: List<SchemaChange>,
+        userId: UUID,
+        workspaceId: UUID,
+    ) {
+        entityType.pendingSchemaUpdate = true
+        entityTypeRepository.save(entityType)
+
+        logReconciliationActivity(
+            entityType = entityType,
+            operation = OperationType.UPDATE,
+            userId = userId,
+            workspaceId = workspaceId,
+            details = mapOf(
+                "action" to "BREAKING_DETECTED",
+                "breakingChanges" to changes.filter { it.breaking }.map { it.attributeKey },
+                "totalChanges" to changes.size,
+            ),
+        )
+
+        logger.info {
+            "Breaking changes detected for entity type ${entityType.id}: " +
+                changes.filter { it.breaking }.joinToString { it.attributeKey }
+        }
+    }
+
+    private fun buildImpactAnalysis(entityTypes: List<EntityTypeEntity>): ReconciliationImpact {
+        val impacts = entityTypes.associate { entityType ->
+            val entityTypeId = requireNotNull(entityType.id) { "EntityTypeEntity ID must not be null" }
+            val catalogEntry = lookupCatalogEntry(entityType)
+            val mapping = entityType.attributeKeyMapping ?: emptyMap()
+
+            val impact = if (catalogEntry != null) {
+                val changes = computeSchemaDiff(catalogEntry.schema, entityType.schema, mapping)
+                buildEntityTypeImpact(entityTypeId, changes)
+            } else {
+                EntityTypeImpact(affectedEntities = 0, fieldsRemoved = emptyList(), dataLoss = false)
+            }
+
+            entityTypeId to impact
+        }
+
+        return ReconciliationImpact(impacts = impacts)
+    }
+
+    private fun buildEntityTypeImpact(entityTypeId: UUID, changes: List<SchemaChange>): EntityTypeImpact {
+        val removedFields = changes
+            .filter { it.type == EntityTypeChangeType.FIELD_REMOVED }
+            .map { it.attributeKey }
+
+        val affectedEntities = changes
+            .filter { it.workspaceAttributeId != null && it.breaking }
+            .maxOfOrNull { change ->
+                entityAttributeRepository.countByTypeIdAndAttributeId(
+                    entityTypeId, requireNotNull(change.workspaceAttributeId),
+                )
+            } ?: 0L
+
+        return EntityTypeImpact(
+            affectedEntities = affectedEntities,
+            fieldsRemoved = removedFields,
+            dataLoss = removedFields.isNotEmpty(),
+        )
+    }
+
+    private fun applyConfirmedBreakingChanges(
+        entityTypes: List<EntityTypeEntity>,
+        userId: UUID,
+        workspaceId: UUID,
+    ): ReconciliationResult {
+        val reconciled = mutableListOf<ReconciledEntityType>()
+        val errors = mutableListOf<String>()
+
+        for (entityType in entityTypes) {
+            try {
+                val result = applyAllChangesForEntityType(entityType)
+                reconciled.add(result)
+
+                logReconciliationActivity(
+                    entityType = entityType,
+                    operation = OperationType.UPDATE,
+                    userId = userId,
+                    workspaceId = workspaceId,
+                    details = mapOf(
+                        "action" to "BREAKING_APPLIED",
+                        "changesApplied" to result.changesApplied,
+                        "breakingChangesApplied" to result.breakingChangesApplied,
+                    ),
+                )
+            } catch (e: Exception) {
+                val entityTypeId = entityType.id?.toString() ?: "unknown"
+                logger.error(e) { "Failed to apply breaking changes for entity type $entityTypeId" }
+                errors.add("Entity type $entityTypeId: ${e.message}")
+            }
+        }
+
+        return ReconciliationResult(reconciled = reconciled, errors = errors)
+    }
+
+    private fun applyAllChangesForEntityType(entityType: EntityTypeEntity): ReconciledEntityType {
+        val entityTypeId = requireNotNull(entityType.id) { "EntityTypeEntity ID must not be null" }
+        val catalogEntry = requireNotNull(lookupCatalogEntry(entityType)) {
+            "Catalog entry not found for entity type $entityTypeId"
+        }
+        val mapping = requireNotNull(entityType.attributeKeyMapping) {
+            "attributeKeyMapping must not be null for reconciliation"
+        }
+
+        val changes = computeSchemaDiff(catalogEntry.schema, entityType.schema, mapping)
+
+        applyNonBreakingChanges(entityType, changes.filter { !it.breaking }, catalogEntry.schema)
+        applyBreakingFieldChanges(entityType, changes.filter { it.breaking }, catalogEntry.schema)
+
+        entityType.sourceSchemaHash = catalogEntry.schemaHash
+        entityType.pendingSchemaUpdate = false
+        entityTypeRepository.save(entityType)
+
+        return ReconciledEntityType(
+            entityTypeId = entityTypeId,
+            changesApplied = changes.size,
+            breakingChangesApplied = changes.count { it.breaking },
+        )
+    }
+
+    /**
+     * Applies breaking changes: FIELD_REMOVED deletes attribute data, FIELD_TYPE_CHANGED
+     * updates the schema type, FIELD_REQUIRED_ADDED/FIELD_UNIQUE_ADDED update constraints.
+     */
+    private fun applyBreakingFieldChanges(
+        entityType: EntityTypeEntity,
+        changes: List<SchemaChange>,
+        catalogSchema: Map<String, Any>,
+    ) {
+        val entityTypeId = requireNotNull(entityType.id) { "EntityTypeEntity ID must not be null" }
+        val mutableProperties = entityType.schema.properties?.toMutableMap() ?: mutableMapOf()
+        val mutableMapping = entityType.attributeKeyMapping?.toMutableMap() ?: mutableMapOf()
+        val mutableColumnOrder = entityType.columnConfiguration?.order?.toMutableList() ?: mutableListOf()
+        val columnOverrides = entityType.columnConfiguration?.overrides?.toMutableMap() ?: mutableMapOf()
+
+        for (change in changes) {
+            val uuid = change.workspaceAttributeId ?: continue
+
+            when (change.type) {
+                EntityTypeChangeType.FIELD_REMOVED -> {
+                    entityAttributeRepository.deleteAllByTypeIdAndAttributeId(entityTypeId, uuid)
+                    mutableProperties.remove(uuid)
+                    mutableMapping.remove(change.attributeKey)
+                    mutableColumnOrder.remove(uuid)
+                    columnOverrides.remove(uuid)
+                }
+
+                EntityTypeChangeType.FIELD_TYPE_CHANGED -> {
+                    val catalogAttr = toStringMap(catalogSchema[change.attributeKey] ?: continue)
+                    val existing = mutableProperties[uuid] ?: continue
+                    mutableProperties[uuid] = existing.copy(
+                        key = parseSchemaType(catalogAttr["key"] as? String),
+                        type = parseDataType(catalogAttr["type"] as? String),
+                        format = parseDataFormat(catalogAttr["format"] as? String),
+                    )
+                }
+
+                EntityTypeChangeType.FIELD_REQUIRED_ADDED -> {
+                    val existing = mutableProperties[uuid] ?: continue
+                    mutableProperties[uuid] = existing.copy(required = true)
+                }
+
+                EntityTypeChangeType.FIELD_UNIQUE_ADDED -> {
+                    val existing = mutableProperties[uuid] ?: continue
+                    mutableProperties[uuid] = existing.copy(unique = true)
+                }
+
+                else -> {}
+            }
+        }
+
+        entityType.schema = entityType.schema.copy(properties = mutableProperties)
+        entityType.attributeKeyMapping = mutableMapping
+        entityType.columnConfiguration = ColumnConfiguration(order = mutableColumnOrder, overrides = columnOverrides)
+    }
+
+    // ------ Health Status ------
+
+    private fun buildHealthStatus(entityType: EntityTypeEntity): EntityTypeHealthStatus {
+        val entityTypeId = requireNotNull(entityType.id) { "EntityTypeEntity ID must not be null" }
+        val catalogEntry = lookupCatalogEntry(entityType)
+
+        if (catalogEntry == null || entityType.attributeKeyMapping == null) {
+            return EntityTypeHealthStatus(
+                entityTypeId = entityTypeId,
+                entityTypeKey = entityType.key,
+                displayName = entityType.displayNameSingular,
+                status = SchemaHealthStatusType.UNKNOWN,
+                sourceSchemaHash = entityType.sourceSchemaHash,
+                catalogSchemaHash = null,
+                pendingChanges = emptyList(),
+            )
+        }
+
+        val hashMatch = entityType.sourceSchemaHash == catalogEntry.schemaHash
+
+        if (hashMatch && !entityType.pendingSchemaUpdate) {
+            return EntityTypeHealthStatus(
+                entityTypeId = entityTypeId,
+                entityTypeKey = entityType.key,
+                displayName = entityType.displayNameSingular,
+                status = SchemaHealthStatusType.UP_TO_DATE,
+                sourceSchemaHash = entityType.sourceSchemaHash,
+                catalogSchemaHash = catalogEntry.schemaHash,
+                pendingChanges = emptyList(),
+            )
+        }
+
+        val changes = computeSchemaDiff(catalogEntry.schema, entityType.schema, entityType.attributeKeyMapping!!)
+        val hasBreaking = changes.any { it.breaking }
+
+        val pendingChanges = changes.map { change ->
+            val affectedCount = if (change.workspaceAttributeId != null) {
+                entityAttributeRepository.countByTypeIdAndAttributeId(entityTypeId, change.workspaceAttributeId)
+            } else {
+                0L
+            }
+            PendingSchemaChange(
+                type = change.type,
+                attributeKey = change.attributeKey,
+                description = change.description,
+                breaking = change.breaking,
+                affectedEntityCount = affectedCount,
+            )
+        }
+
+        return EntityTypeHealthStatus(
+            entityTypeId = entityTypeId,
+            entityTypeKey = entityType.key,
+            displayName = entityType.displayNameSingular,
+            status = if (hasBreaking) SchemaHealthStatusType.PENDING_BREAKING else SchemaHealthStatusType.PENDING_NON_BREAKING,
+            sourceSchemaHash = entityType.sourceSchemaHash,
+            catalogSchemaHash = catalogEntry.schemaHash,
+            pendingChanges = pendingChanges,
+        )
+    }
+
+    private fun buildHealthSummary(statuses: List<EntityTypeHealthStatus>): SchemaHealthSummary {
+        return SchemaHealthSummary(
+            total = statuses.size,
+            upToDate = statuses.count { it.status == SchemaHealthStatusType.UP_TO_DATE },
+            pendingNonBreaking = statuses.count { it.status == SchemaHealthStatusType.PENDING_NON_BREAKING },
+            pendingBreaking = statuses.count { it.status == SchemaHealthStatusType.PENDING_BREAKING },
+            unknown = statuses.count { it.status == SchemaHealthStatusType.UNKNOWN },
+        )
+    }
+
+    // ------ Activity Logging ------
+
+    private fun logReconciliationActivity(
+        entityType: EntityTypeEntity,
+        operation: OperationType,
+        userId: UUID,
+        workspaceId: UUID,
+        details: Map<String, Any?>,
+    ) {
+        activityService.logActivity(
+            activity = Activity.ENTITY_TYPE,
+            operation = operation,
+            userId = userId,
+            workspaceId = workspaceId,
+            entityType = ApplicationEntityType.ENTITY_TYPE,
+            entityId = entityType.id,
+            details = details,
+        )
+    }
+
+    // ------ Schema Building Helpers ------
+
+    /**
+     * Generates a deterministic UUID v3 from the entity type key and attribute key.
+     * Uses the same namespace convention as [TemplateMaterializationService.generateAttributeUuid]
+     * with "integration" as the prefix for catalog-sourced attributes.
+     */
+    private fun generateAttributeUuid(entityTypeKey: String, attributeKey: String): UUID {
+        return UUID.nameUUIDFromBytes("integration:$entityTypeKey:$attributeKey".toByteArray())
+    }
+
+    /**
+     * Builds a workspace [Schema] from a catalog attribute definition map.
+     * Mirrors the logic in [TemplateMaterializationService.buildAttributeSchema].
+     */
+    private fun buildAttributeSchema(attributeDef: Map<String, Any>): Schema<UUID> {
+        val schemaType = parseSchemaType(attributeDef["key"] as? String)
+        val dataType = parseDataType(attributeDef["type"] as? String)
+        val dataFormat = parseDataFormat(attributeDef["format"] as? String)
+
+        return Schema(
+            label = attributeDef["label"] as? String,
+            key = schemaType,
+            type = dataType,
+            format = dataFormat,
+            required = attributeDef["required"] as? Boolean ?: false,
+            unique = attributeDef["unique"] as? Boolean ?: false,
+            `protected` = attributeDef["protected"] as? Boolean ?: false,
+        )
+    }
+
+    // ------ Parsing Helpers ------
+
+    private fun parseSchemaType(value: String?): SchemaType {
+        if (value == null) return SchemaType.TEXT
+        return try {
+            SchemaType.valueOf(value.uppercase())
+        } catch (_: Exception) {
+            SchemaType.TEXT
+        }
+    }
+
+    private fun parseDataType(value: String?): DataType {
+        if (value == null) return DataType.STRING
+        return DataType.entries.find { it.jsonValue == value } ?: DataType.STRING
+    }
+
+    private fun parseDataFormat(value: String?): DataFormat? {
+        if (value == null) return null
+        return DataFormat.entries.find { it.jsonValue == value }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun toStringMap(value: Any): Map<String, Any> {
+        return value as? Map<String, Any> ?: emptyMap()
+    }
+}

@@ -76,6 +76,32 @@ interface EntityAttributeRepository : JpaRepository<EntityAttributeEntity, UUID>
     ): List<EntityAttributeEntity>
 
     /**
+     * Count entity attributes for a given entity type and attribute definition.
+     * Used by schema reconciliation to assess impact of breaking changes.
+     */
+    @Query(
+        value = """
+            SELECT COUNT(*) FROM entity_attributes ea
+            WHERE ea.type_id = :typeId
+              AND ea.attribute_id = :attributeId
+              AND ea.deleted = false
+        """,
+        nativeQuery = true
+    )
+    fun countByTypeIdAndAttributeId(typeId: UUID, attributeId: UUID): Long
+
+    /**
+     * Hard-delete all attributes for a given entity type and attribute definition.
+     * Used by schema reconciliation when applying FIELD_REMOVED breaking changes.
+     */
+    @Modifying
+    @Query(
+        value = "DELETE FROM entity_attributes WHERE type_id = :typeId AND attribute_id = :attributeId",
+        nativeQuery = true
+    )
+    fun deleteAllByTypeIdAndAttributeId(typeId: UUID, attributeId: UUID)
+
+    /**
      * Find entity attributes whose JSONB value column contains a text value matching the given string.
      *
      * Uses the ->> operator to extract the JSON text as a plain string for comparison.
