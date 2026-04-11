@@ -2,16 +2,14 @@
 
 import { cdnImageLoader } from '@/lib/cdn-image-loader';
 import { cn } from '@/lib/utils';
+import { GrainGradient } from '@paper-design/shaders-react';
+import { useMounted } from '@riven/hooks';
 import { useTheme } from 'next-themes';
-import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import type { ReactNode } from 'react';
 import { useShaderVisibility } from './use-shader-visibility';
 
-const GrainGradient = dynamic(
-  () => import('@paper-design/shaders-react').then((m) => m.GrainGradient),
-  { ssr: false, loading: () => null },
-);
+
 
 interface ShaderColors {
   base: string;
@@ -34,10 +32,6 @@ const defaultShaders: Record<string, ShaderColors> = {
   dark: {
     base: '#75618c',
     colors: ['#1a3a4a', '#2a2a3a', '#1a1a2a'],
-  },
-  amber: {
-    base: '#1a1a2a',
-    colors: ['#c6750c', '#1a1a2a', '#1a3a4a'],
   },
 };
 
@@ -85,7 +79,13 @@ export function ShaderContainer({
   className,
 }: ShaderContainerProps) {
   const { theme } = useTheme();
-  const key = theme || 'light';
+  const mounted = useMounted();
+  // Until next-themes resolves on the client, treat the theme as 'dark' to
+  // match ThemeProvider's defaultTheme. Without this gate the inline
+  // backgroundColor and fallback gradient differ between SSR and CSR for
+  // dark-mode users (the default), producing per-shader hydration warnings
+  // and a flash as React patches the styles after hydration.
+  const key = (mounted ? theme : 'dark') || 'dark';
   const { containerRef, shaderWrapperRef, showAnimated, isVisible, shaderReady } =
     useShaderVisibility();
 

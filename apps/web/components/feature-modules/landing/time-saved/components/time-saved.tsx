@@ -32,7 +32,7 @@ const items = [
 
 export function TimeSaved() {
   return (
-    <Section id="time-saved" navbarInverse size={24} mask="none" className="pb-20">
+    <Section id="time-saved" size={24} mask="none" className="pb-20">
       <div className="clamp relative z-10 px-4 sm:px-8">
         {/* Heading */}
         <div className="mb-14 md:mb-20">
@@ -40,8 +40,8 @@ export function TimeSaved() {
             Less stitching. More signal.
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-none tracking-tighter text-content/90">
-            Riven eliminates the manual work caused by disconnected tools. Allowing you to focus on
-            what matters most, growing your business.
+            Riven kills the manual work disconnected tools create, so the hours wasted
+            cross-referencing go back into running the business.
           </p>
         </div>
 

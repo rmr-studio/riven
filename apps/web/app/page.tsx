@@ -2,9 +2,7 @@ import { FeaturedPosts } from '@/components/feature-modules/blogs/components/fea
 import { getAllPosts, getFeaturedPost } from '@/lib/blog';
 import dynamic from 'next/dynamic';
 
-const Hero = dynamic(() =>
-  import('@/components/feature-modules/landing/hero/components/hero').then((m) => m.Hero),
-);
+import { Hero } from '@/components/feature-modules/landing/hero/components/hero';
 const DashboardShowcase = dynamic(() =>
   import('@/components/feature-modules/landing/dashboard/components/dashboard-showcase').then(
     (m) => m.DashboardShowcase,
@@ -15,14 +13,21 @@ const CrossDomainIntelligence = dynamic(() =>
     (m) => m.CrossDomainIntelligence,
   ),
 );
+
+const KnowledgeRuleBase = dynamic(() =>
+  import('@/components/feature-modules/landing/knowledge-rule-base/rule-base-section').then(
+    (m) => m.RuleBaseSection,
+  ),
+);
+
 const TimeSaved = dynamic(() =>
   import('@/components/feature-modules/landing/time-saved/components/time-saved').then(
     (m) => m.TimeSaved,
   ),
 );
-const ChurnRetrospective = dynamic(() =>
-  import('@/components/feature-modules/landing/churn-retrospective/churn-retro').then(
-    (m) => m.ChurnRetrospective,
+const CohortBehaviour = dynamic(() =>
+  import('@/components/feature-modules/landing/valuable-cohorts/valuable-cohorts').then(
+    (m) => m.CohortBehaviour,
   ),
 );
 const DailyActions = dynamic(() =>
@@ -44,10 +49,11 @@ export default async function Home() {
   return (
     <main className="min-h-screen overflow-x-clip">
       <Hero />
+      <KnowledgeRuleBase />
+      <TimeSaved />
+      <CohortBehaviour />
       <DashboardShowcase />
       <CrossDomainIntelligence />
-      <TimeSaved />
-      <ChurnRetrospective />
       <DailyActions />
       <FeaturedPosts featured={featured} recent={recent} />
       <Faq preview />

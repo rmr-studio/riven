@@ -2,13 +2,14 @@ import { Footer } from '@/components/footer';
 import { Navbar } from '@/components/navbar';
 import { getCdnUrl } from '@/lib/cdn-image-loader';
 import { AuthProvider } from '@/providers/auth-provider';
-import { LazyQueryProvider as QueryProvider } from '@/providers/lazy-query-provider';
+import { QueryProvider } from '@/providers/query-provider';
 
-import { PageStage } from '@/components/page-stage';
 import { ThemeProvider } from '@/providers/theme-provider';
+import { GoogleTagManager } from '@next/third-parties/google';
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono, Space_Mono } from 'next/font/google';
 import localFont from 'next/font/local';
+import { GoogleTagManager } from '@next/third-parties/google';
 import { Toaster } from 'sonner';
 import './globals.css';
 
@@ -51,9 +52,9 @@ const spaceMono = Space_Mono({
   weight: ['400', '700'],
 });
 
-const SITE_TITLE = 'Riven | Advanced Customer Lifecycle Intelligence';
+const SITE_TITLE = 'Riven | Autonomous Intelligence & Growth Platform';
 const SITE_DESCRIPTION =
-  'One workspace for your customer lifecycle stack. From marketing to CRMs to payments, analytics and support. Cross-domain intelligence surfaces churn risks, hidden patterns, and growth opportunities no single tool can see. Query across every platform in plain English, tag and track accounts, and act on insights without leaving the tab.';
+  'Move fast. Act fast. Grow Fast. One workspace for your customer lifecycle stack. From marketing to CRMs to payments, analytics and support. Cross-domain intelligence surfaces churn risks, hidden patterns, and growth opportunities no single tool can see. Query across every platform in plain English, tag and track accounts, and act on insights without leaving the tab.';
 
 const ogImage = process.env.NEXT_PUBLIC_CDN_URL
   ? `${process.env.NEXT_PUBLIC_CDN_URL}/images/og-image.png`
@@ -71,6 +72,9 @@ export const metadata: Metadata = {
 
   keywords: [
     'customer lifecycle intelligence',
+    'customer insights platform',
+    'SaaS customer analytics',
+    'Ecommerce customer insights',
     'cross-domain intelligence',
     'churn analysis',
     'churn retrospective',
@@ -140,6 +144,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      {process.env.NEXT_PUBLIC_GTM_ID && (
+        <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID} />
+      )}
       <body
         className={`paper-lite ${geistSans.variable} ${redaction.variable} ${geistMono.variable} ${spaceMono.variable} relative min-h-screen antialiased`}
         style={
@@ -151,13 +158,15 @@ export default function RootLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
-          themes={['light', 'dark', 'amber']}
+          themes={['light', 'dark']}
           disableTransitionOnChange
         >
           <QueryProvider>
             <AuthProvider>
               <Navbar />
-              <PageStage>{children}</PageStage>
+              <section className="relative mx-auto w-full lg:max-w-[min(100dvw,var(--breakpoint-3xl))]">
+                {children}
+              </section>
               <Footer />
             </AuthProvider>
           </QueryProvider>
