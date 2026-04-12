@@ -17,9 +17,9 @@
 
 - [x] **CONN-01**: `CustomSourceConnectionEntity` extends AuditableEntity, implements SoftDeletable
 - [x] **CONN-02**: Credentials stored as encrypted JSONB (AES-256-GCM, app-level key)
-- [ ] **CONN-03**: `CustomSourceConnectionService` CRUD with `@PreAuthorize` workspace scoping
+- [x] **CONN-03**: `CustomSourceConnectionService` CRUD with `@PreAuthorize` workspace scoping
 - [x] **CONN-04**: Connection string NEVER logged (KLogger redaction patterns for `postgresql://`, `jdbc:postgresql://`)
-- [ ] **CONN-05**: User can create, view, update, soft-delete Postgres connections via `/api/v1/custom-sources/connections`
+- [x] **CONN-05**: User can create, view, update, soft-delete Postgres connections via `/api/v1/custom-sources/connections`
 
 ### Security Gates (SEC)
 
@@ -177,9 +177,9 @@
 | ADPT-05 | Phase 1 | Complete |
 | CONN-01 | Phase 2 | Complete |
 | CONN-02 | Phase 2 | Complete |
-| CONN-03 | Phase 2 | Pending |
+| CONN-03 | Phase 2 | Complete |
 | CONN-04 | Phase 2 | Complete |
-| CONN-05 | Phase 2 | Pending |
+| CONN-05 | Phase 2 | Complete |
 | SEC-01 | Phase 2 | Complete |
 | SEC-02 | Phase 2 | Complete |
 | SEC-03 | Phase 2 | Complete |

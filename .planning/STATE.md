@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-03-PLAN.md
-last_updated: "2026-04-12T22:50:22.801Z"
+stopped_at: Completed 02-04-PLAN.md
+last_updated: "2026-04-12T23:04:17.225Z"
 progress:
   total_phases: 8
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 8
-  completed_plans: 7
-  percent: 88
+  completed_plans: 8
+  percent: 100
 ---
 
 # STATE
@@ -27,10 +27,10 @@ progress:
 
 ## Current Position
 
-- **Phase:** 2 — Secure Connection Management (IN PROGRESS 3/5 plans)
-- **Plan:** 02-02 complete (CredentialEncryptionService + global Logback TurboFilter); ready for Wave 2 parallel siblings (02-03 SSRF/RO verifier) and Wave 3 (02-04 service+controller)
-- **Status:** Ready to execute
-- **Progress:** [█████████░] 88%
+- **Phase:** 2 — Secure Connection Management (COMPLETE 5/5 plans)
+- **Plan:** 02-04 complete (CustomSourceConnectionService + Controller + 6 REST endpoints); Phase 2 shipping-blockers all satisfied (CONN-01..05, SEC-01..03, SEC-05, SEC-06)
+- **Status:** Ready to execute Phase 3
+- **Progress:** [██████████] 100%
 
 ```
 [........] 0% (0/8 phases)
@@ -52,6 +52,7 @@ progress:
 | Phase 02-secure-connection-management P01 | 20min | 2 tasks | 7 files |
 | Phase 02-secure-connection-management P02 | 4 min | 2 tasks | 8 files |
 | Phase 02-secure-connection-management P03 | 9min | 2 tasks | 4 files |
+| Phase 02-secure-connection-management P04 | 9min | 3 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,11 @@ progress:
 - [Phase 02-secure-connection-management]: Plan 02-03: ReadOnlyRoleVerifier uses DriverManager (never HikariCP); reflective test asserts no Hikari/DataSource references on the service class so a future @Autowire DataSource refactor gets caught
 - [Phase 02-secure-connection-management]: Plan 02-03: SAVEPOINT probe uses CREATE TABLE (not INSERT) — rejects any schema-mutation capability; cheapest write that doesn't need a pre-existing target; pass iff fails with SQLState 42501
 - [Phase 02-secure-connection-management]: Plan 02-03: Test role teardown uses PL/pgSQL DO + DROP OWNED BY <role> + DROP ROLE instead of DROP ROLE IF EXISTS — direct drop fails on re-runs with 'role cannot be dropped because some objects depend on it'
+- [Phase 02-secure-connection-management]: Plan 02-04: CryptoException/DataCorruptionException at read-time NEVER propagate to HTTP — they transition ConnectionStatus to FAILED with a user-safe message. Credential failures are operational state, not API errors.
+- [Phase 02-secure-connection-management]: Plan 02-04: update() credential-touching branch decrypts current payload, merges PATCH fields (preserving unset fields including password), re-runs gate chain on merged payload, re-encrypts with fresh IV. Cosmetic-only (name) path skips gates entirely via UpdateCustomSourceConnectionRequest.touchesCredentials().
+- [Phase 02-secure-connection-management]: Plan 02-04: listByWorkspace isolates per-row decrypt failures — one bad row returns a FAILED model with [unavailable] fields, remaining rows hydrate normally. No list-level failure from a single corrupt credential.
+- [Phase 02-secure-connection-management]: Plan 02-04: @PreAuthorize cross-workspace blocking asserted at the SpringBootTest service-layer test rather than MockMvc — standalone MockMvc does not load method security. Controller test focuses on wire format + bean-validation + ExceptionHandler mapping.
+- [Phase 02-secure-connection-management]: Plan 02-04: SslMode uses libpq-canonical kebab strings (require/verify-ca/verify-full/prefer) via @JsonValue so JDBC driver consumes stored string directly; @JsonCreator throws IllegalArgumentException on unknown values (Jackson wraps in JsonMappingException).
 
 ### Key Decisions (from PROJECT.md)
 
@@ -117,7 +123,7 @@ Completed Plan 01-03 (NangoAdapter + Registry). Phase 01 closes with: NangoAdapt
 Begin Phase 02 planning (per ROADMAP.md).
 
 ### Last session
-- **Stopped at:** Completed 02-03-PLAN.md
+- **Stopped at:** Completed 02-04-PLAN.md
 - **Timestamp:** 2026-04-12T07:43:39Z
 
 ### Files of Record
