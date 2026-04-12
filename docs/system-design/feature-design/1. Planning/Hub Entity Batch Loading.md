@@ -110,7 +110,7 @@ Hub Entity Query (Customer list view with aggregations)
 - [[SQL Aggregation Column Engine]] — aggregation engine benefits from hub designation
 - [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/5. Backlog/Churn Retrospective Timeline]] — requires full relationship fan-out from Customer
 - [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/1. Planning/Lifecycle Analytics Views]] — GROUP BY customer with multi-relationship aggregation
-- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/1. Planning/Action Primitives - Tags Segments Alerts Write-back]] — segments filter customers by aggregated properties
+- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/5. Backlog/Action Primitives - Tags Segments Alerts Write-back]] — segments filter customers by aggregated properties
 - Eng Review: Lifecycle Spine (2026-03-25)
 
 ---

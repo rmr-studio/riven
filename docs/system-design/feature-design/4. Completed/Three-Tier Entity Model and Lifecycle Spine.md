@@ -13,7 +13,7 @@ Domains:
   - "[[riven/docs/system-design/domains/Catalog/Catalog]]"
   - "[[riven/docs/system-design/domains/Knowledge/Knowledge]]"
 blocked by:
-  - "[[riven/docs/system-design/feature-design/3. Active/Semantic Entity Groups]]"
+  - "[[riven/docs/system-design/feature-design/4. Completed/Semantic Entity Groups]]"
 ---
 # Feature: Three-Tier Entity Model and Lifecycle Spine
 
@@ -91,10 +91,10 @@ Guards added to existing services — no new service needed. Extract shared `Ent
 
 ## Related Documents
 
-- [[riven/docs/system-design/feature-design/3. Active/Semantic Entity Groups]] — prerequisite (SemanticGroup enum)
-- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/1. Planning/Lifecycle Domain Model]] — LifecycleDomain enum on entity types
-- [[riven/docs/system-design/feature-design/3. Active/Predefined Integration Entity Types]] — Tier 2 pattern this extends
-- [[riven/docs/system-design/feature-design/3. Active/Semantic Metadata Baked Entity Data Model Templates]] — template manifest format
+- [[riven/docs/system-design/feature-design/4. Completed/Semantic Entity Groups]] — prerequisite (SemanticGroup enum)
+- [[riven/docs/system-design/feature-design/4. Completed/Lifecycle Domain Model]] — LifecycleDomain enum on entity types
+- [[riven/docs/system-design/feature-design/4. Completed/Predefined Integration Entity Types]] — Tier 2 pattern this extends
+- [[riven/docs/system-design/feature-design/4. Completed/Semantic Metadata Baked Entity Data Model Templates]] — template manifest format
 - [[riven/docs/system-design/feature-design/3. Active/Declarative Manifest Catalog and Consumption Pipeline]] — manifest loading pipeline
 - CEO Plan: Lifecycle Vertical Scoping (2026-03-18)
 

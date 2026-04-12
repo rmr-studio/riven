@@ -13,15 +13,15 @@ Domains:
   - "[[riven/docs/system-design/domains/Knowledge/Knowledge]]"
   - "[[riven/docs/system-design/domains/Workflows/Workflows]]"
 blocked by:
-  - "[[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/1. Planning/Data Extraction and Retrieval from Queries]]"
-  - "[[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/1. Planning/Prompt Construction for Knowledge Model Queries]]"
+  - "[[riven/docs/system-design/feature-design/1. Planning/Data Extraction and Retrieval from Queries]]"
+  - "[[riven/docs/system-design/feature-design/1. Planning/Prompt Construction for Knowledge Model Queries]]"
 ---
 # Feature: Knowledge Layer Sub-agents
 
 ---
 ## 1. Overview
 ### Problem Statement
-- While the overarching knowledge layer, accessible through [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/1. Planning/Prompt Construction for Knowledge Model Queries]] would grant users with the ability to possess cross-domain intelligence in order to answer their questions on demand, there needs to also be a more proactive approach to how data and knowledge is surfaced and observed, the platform also needs to feel like its alive, through the use of `agentic` capabilities 
+- While the overarching knowledge layer, accessible through [[riven/docs/system-design/feature-design/1. Planning/Prompt Construction for Knowledge Model Queries]] would grant users with the ability to possess cross-domain intelligence in order to answer their questions on demand, there needs to also be a more proactive approach to how data and knowledge is surfaced and observed, the platform also needs to feel like its alive, through the use of `agentic` capabilities 
 
 ### Proposed Solution
 
@@ -34,7 +34,7 @@ blocked by:
 		- *Watch for customers who go inactive for more than 14 days after their first purchase*
 		- *Monitor product-revenue patterns*
 		- *Tracking support to churn correlations*
-- These workers would then be further extends upon by [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/1. Planning/Extrapolate Agentic Perspectives from Entity Schema]]
+- These workers would then be further extends upon by [[riven/docs/system-design/feature-design/1. Planning/Extrapolate Agentic Perspectives from Entity Schema]]
 - These agents are provided set analytical briefs that ask a singular question or ask for the observation of a particular area of relationship between domains. These are then triggered via a schedule or data event, the output of this may include
 	- A daily overview that is updated per day
 	- A report sent to the workspace's notifications

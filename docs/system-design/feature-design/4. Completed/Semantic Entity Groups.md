@@ -37,7 +37,7 @@ This enables:
 2. Categorical schema scaffolding for knowledge layer prompt construction
 3. Embedding metadata filtering by `semantic_group` in the [[riven/docs/system-design/feature-design/1. Planning/Data Chunking and Enrichment Pipeline]]
 4. Automated cross-domain gap detection for [[riven/docs/system-design/feature-design/1. Planning/Extrapolate Agentic Perspectives from Entity Schema]]
-5. Template manifest entity types declare their group — flows into [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/4. Completed/Semantic Metadata Baked Entity Data Model Templates]]
+5. Template manifest entity types declare their group — flows into [[riven/docs/system-design/feature-design/4. Completed/Semantic Metadata Baked Entity Data Model Templates]]
 
 ### Success Criteria
 
@@ -398,14 +398,14 @@ All resolved — see Decisions Log.
 ## Related Documents
 
 - [[riven/docs/system-design/domains/Entities/Entity Semantics/Entity Semantics]] — parent subdomain for semantic metadata
-- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/3. Active/Entity Type Polymorphic Relationship Support for Semantic Categories]] — prior quick design (superseded by this document)
+- [[riven/docs/system-design/feature-design/3. Active/Entity Type Polymorphic Relationship Support for Semantic Categories]] — prior quick design (superseded by this document)
 - [[riven/docs/system-design/domains/Entities/Relationships/Relationships]] — `semanticTypeConstraint` on target rules (already stubbed)
 - [[riven/docs/system-design/domains/Knowledge/Knowledge]] — domain overview first proposed entity type categories
 - [[riven/docs/system-design/feature-design/1. Planning/Data Chunking and Enrichment Pipeline]] — `semantic_category` field on embeddings table will be sourced from this
 - [[riven/docs/system-design/feature-design/1. Planning/Prompt Construction for Knowledge Model Queries]] — categorical schema scaffolding for prompts
 - [[riven/docs/system-design/feature-design/1. Planning/Extrapolate Agentic Perspectives from Entity Schema]] — cross-domain gap detection using groups
 - [[riven/docs/system-design/domains/Knowledge/Schema Change Handling/Schema Change Handling]] — semantic group changes trigger re-enrichment
-- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/4. Completed/Semantic Metadata Baked Entity Data Model Templates]] — templates declare groups on entity type definitions
+- [[riven/docs/system-design/feature-design/4. Completed/Semantic Metadata Baked Entity Data Model Templates]] — templates declare groups on entity type definitions
 
 ---
 

@@ -12,8 +12,8 @@ Domains:
   - "[[riven/docs/system-design/domains/Knowledge/Knowledge]]"
   - "[[riven/docs/system-design/domains/Entities/Entities]]"
 blocked by:
-  - "[[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/5. Backlog/Three-Tier Entity Model and Lifecycle Spine]]"
-  - "[[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/1. Planning/Lifecycle Domain Model]]"
+  - "[[riven/docs/system-design/feature-design/4. Completed/Three-Tier Entity Model and Lifecycle Spine]]"
+  - "[[riven/docs/system-design/feature-design/4. Completed/Lifecycle Domain Model]]"
   - "[[riven/docs/system-design/feature-design/2. Planned/Identity Resolution System]]"
 ---
 # Feature: Churn Retrospective Timeline
@@ -63,11 +63,11 @@ CHURN EVENT (2026-03-15)
 
 ## Related Documents
 
-- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/5. Backlog/Three-Tier Entity Model and Lifecycle Spine]] — entity types forming the timeline
-- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/1. Planning/Lifecycle Domain Model]] — cross-domain traversal logic
+- [[riven/docs/system-design/feature-design/4. Completed/Three-Tier Entity Model and Lifecycle Spine]] — entity types forming the timeline
+- [[riven/docs/system-design/feature-design/4. Completed/Lifecycle Domain Model]] — cross-domain traversal logic
 - [[riven/docs/system-design/feature-design/2. Planned/Identity Resolution System]] — linking customer across integration types to spine types
-- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/5. Backlog/Knowledge Layer Sub-Agents]] — churn signals trigger retrospective generation
-- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/1. Planning/Lifecycle Operations Dashboard]] — drill-in from churn signals
+- [[riven/docs/system-design/feature-design/5. Backlog/Knowledge Layer Sub-Agents]] — churn signals trigger retrospective generation
+- [[riven/docs/system-design/feature-design/1. Planning/Lifecycle Operations Dashboard]] — drill-in from churn signals
 - CEO Plan: Lifecycle Vertical Scoping (2026-03-18)
 
 ---

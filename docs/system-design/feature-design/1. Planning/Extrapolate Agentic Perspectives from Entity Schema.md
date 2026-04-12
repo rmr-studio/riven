@@ -1,29 +1,29 @@
 ---
 tags:
   - "#status/draft"
-  - priority/high
+  - priority/low
   - architecture/feature
-  - domain/knowledge
 Created:
 Updated:
 Domains:
   - "[[riven/docs/system-design/domains/Knowledge/Knowledge]]"
 blocked by:
-  - "[[riven/docs/system-design/feature-design/1. Planning/Data Chunking and Enrichment Pipeline]]"
-  - "[[Semantically Imbued Entity Attributes]]"
+  - "[[riven/docs/system-design/feature-design/5. Backlog/Knowledge Layer Sub-Agents]]"
 ---
-# Feature: Querying and Reasoning - Data Extraction 
+# Feature: Extrapolate Agentic Perspectives from Entity Schema
 
 ---
+
 ## 1. Overview
 
 ### Problem Statement
-The core fundamental aspect of the knowledge layer, would need to be how the embedded data is accessed and reasoned with by an LLM model in order to observe data, perform data analysis and identify patterns and trends.
-The user should have ability to perform queries on the access layer, in order to ask questions and extract information at a base layer
-When a user performs a query, it will need to run through a parser, that will extract all important information from the query in order to retrieve all relevant metadata, entity types and vectors from the stored database.
+- The whole proactive approach to an agentic based knowledge layer, would be to surface and observe data, patterns and trends that the workspace has not currently seen yet.
+- A user should not need to rely on manually asking the knowledge layer model manual questions or setting manual agents to scour data, if the application is able to provide the capability itself by extrapolating the schema against the data that is currently being observed
 
 ### Proposed Solution
-
+The system would need to provide the ability to suggest different agentic perspectives to be running within the workspace to observe particular trends, or combinations of data sources to further bridge the multi domain knowledge capabilities
+- If a user has entities with revenue data and churn data, but nothing watching the correlation, this could be flagged.
+- If a user is asking the same common questions in the flat query layer, these should also be turned into agents
 
 ### Success Criteria
 

@@ -126,7 +126,7 @@ After validation queries are running:
 - [[SQL Aggregation Column Engine]] — the aggregation engine these queries exercise
 - [[Aggregation Query Benchmark]] — raw performance validation (runs before this)
 - [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/5. Backlog/Three-Tier Entity Model and Lifecycle Spine]] — the entity type foundation
-- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/1. Planning/Lifecycle Domain Model]] — cross-domain traversal this validates
+- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/4. Completed/Lifecycle Domain Model]] — cross-domain traversal this validates
 - [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/1. Planning/Smart Projection Architecture]] — next major feature after validation passes
 - [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/5. Backlog/Churn Retrospective Timeline]] — example of a feature that depends on this validation passing
 - [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/1. Planning/Lifecycle Analytics Views]] — example of a feature that depends on this validation passing

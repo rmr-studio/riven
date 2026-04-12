@@ -375,7 +375,7 @@ _Is existing data affected? How will it be migrated?_
 
 - [[riven/docs/system-design/decisions/ADR-004 Declarative-First Storage for Integration Mappings and Entity Templates]]
 - [[riven/docs/system-design/feature-design/3. Active/Integration Access Layer]]
-- [[riven/docs/system-design/feature-design/3. Active/Predefined Integration Entity Types]]
+- [[riven/docs/system-design/feature-design/4. Completed/Predefined Integration Entity Types]]
 - [[riven/docs/system-design/feature-design/_Sub-Domain Plans/Entity Integration Sync]]
 - [[riven/docs/system-design/feature-design/2. Planned/Semantic Metadata Foundation]]
 - [[riven/docs/system-design/domains/Workflows/Node Execution/WorkflowNodeConfigRegistry]] — analogous registry pattern for custom transform plugins

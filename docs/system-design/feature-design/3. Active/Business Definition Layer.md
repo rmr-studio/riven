@@ -525,7 +525,7 @@ No backfill needed. Existing workspaces start with empty definitions and receive
 - [[riven/docs/system-design/domains/Knowledge/Knowledge]] — parent domain for business definition endpoints
 - [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/1. Planning/Prompt Construction for Knowledge Model Queries]] — AI prompt pipeline that consumes definitions
 - [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/1. Planning/Lifecycle Analytics Views]] — views that consume compiled definition parameters
-- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/1. Planning/Lifecycle-Aware Onboarding Flow]] — onboarding flow gains definition prompt step
+- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/feature-design/4. Completed/Lifecycle-Aware Onboarding Flow]] — onboarding flow gains definition prompt step
 - [[1. Application Overview]] — problem statement and ICP context
 - [[Launch Scope and Phasing]] — Phase 1 scope includes this feature
 
