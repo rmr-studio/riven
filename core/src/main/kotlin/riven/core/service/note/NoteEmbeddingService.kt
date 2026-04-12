@@ -6,7 +6,10 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.support.TransactionTemplate
 import riven.core.entity.note.NoteEntity
 import riven.core.entity.note.NoteEntityAttachment
+import riven.core.enums.activity.Activity
+import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.note.NoteSourceType
+import riven.core.enums.util.OperationType
 import riven.core.models.integration.NangoRecord
 import riven.core.models.integration.NangoRecordAction
 import riven.core.models.note.NoteContentFormat
@@ -14,6 +17,8 @@ import riven.core.models.note.NoteEmbeddingConfig
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.note.NoteEntityAttachmentRepository
 import riven.core.repository.note.NoteRepository
+import riven.core.service.activity.ActivityService
+import riven.core.service.activity.log
 import riven.core.service.note.converter.HtmlToBlockConverter
 import riven.core.service.note.converter.NoteContentConverter
 import riven.core.service.note.converter.PlaintextToBlockConverter
@@ -38,6 +43,7 @@ class NoteEmbeddingService(
     private val htmlToBlockConverter: HtmlToBlockConverter,
     private val plaintextToBlockConverter: PlaintextToBlockConverter,
     private val transactionTemplate: TransactionTemplate,
+    private val activityService: ActivityService,
     private val logger: KLogger,
 ) {
 
@@ -96,14 +102,16 @@ class NoteEmbeddingService(
             ?: throw IllegalArgumentException("Note record missing 'id' field")
 
         when (record.nangoMetadata.lastAction) {
-            NangoRecordAction.DELETED -> handleDelete(externalId)
+            NangoRecordAction.DELETED -> handleDelete(externalId, workspaceId, integrationId)
             NangoRecordAction.ADDED, NangoRecordAction.UPDATED ->
                 handleUpsert(record, externalId, config, workspaceId, integrationId)
         }
     }
 
-    private fun handleDelete(externalId: String) {
-        val existing = noteRepository.findBySourceExternalId(externalId)
+    private fun handleDelete(externalId: String, workspaceId: UUID, integrationId: UUID) {
+        val existing = noteRepository.findByWorkspaceIdAndSourceIntegrationIdAndSourceExternalId(
+            workspaceId, integrationId, externalId
+        )
         if (existing == null) {
             logger.debug { "Note with sourceExternalId=$externalId not found for delete — no-op" }
             return
@@ -111,6 +119,16 @@ class NoteEmbeddingService(
         val noteId = requireNotNull(existing.id) { "NoteEntity.id must not be null" }
         attachmentRepository.deleteByNoteId(noteId)
         noteRepository.delete(existing)
+        activityService.log(
+            activity = Activity.NOTE,
+            operation = OperationType.DELETE,
+            userId = SYSTEM_USER_ID,
+            workspaceId = workspaceId,
+            entityType = ApplicationEntityType.NOTE,
+            entityId = noteId,
+            "sourceExternalId" to externalId,
+            "integrationId" to integrationId,
+        )
         logger.info { "Hard-deleted note $noteId (sourceExternalId=$externalId)" }
     }
 
@@ -124,9 +142,23 @@ class NoteEmbeddingService(
         val body = extractBody(record.payload, config)
         val conversionResult = convertBody(body, config.contentFormat)
 
-        val existing = noteRepository.findBySourceExternalId(externalId)
+        val existing = noteRepository.findByWorkspaceIdAndSourceIntegrationIdAndSourceExternalId(
+            workspaceId, integrationId, externalId
+        )
+        val isNew = existing == null
         val note = upsertNote(existing, externalId, conversionResult, workspaceId, integrationId)
         val noteId = requireNotNull(note.id) { "NoteEntity.id must not be null after save" }
+
+        activityService.log(
+            activity = Activity.NOTE,
+            operation = if (isNew) OperationType.CREATE else OperationType.UPDATE,
+            userId = SYSTEM_USER_ID,
+            workspaceId = workspaceId,
+            entityType = ApplicationEntityType.NOTE,
+            entityId = noteId,
+            "sourceExternalId" to externalId,
+            "integrationId" to integrationId,
+        )
 
         val associations = extractAssociations(record.payload)
         val targetEntityIds = resolveTargets(associations, config, workspaceId, integrationId)

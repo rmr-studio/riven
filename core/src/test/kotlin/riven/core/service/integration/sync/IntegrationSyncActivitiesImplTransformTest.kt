@@ -169,6 +169,7 @@ class IntegrationSyncActivitiesImplTransformTest {
             relationshipDefinitionRepository, definitionRepository, manifestCatalogRepository,
             catalogFieldMappingRepository, catalogEntityTypeRepository, entityTypeRepository,
             integrationHealthService, entityProjectionService, transactionTemplate,
+            noteEmbeddingService, objectMapper, resourceLoader,
         )
 
         whenever(transactionTemplate.execute<Any>(any())).thenAnswer { invocation ->

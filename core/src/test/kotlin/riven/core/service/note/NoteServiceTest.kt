@@ -54,7 +54,10 @@ class NoteServiceTest : BaseServiceTest() {
 
         whenever(noteRepository.findByEntityIdAndWorkspaceId(entityId, workspaceId))
             .thenReturn(listOf(note2, note1))
-        whenever(attachmentRepository.findEntityIdsByNoteId(any())).thenReturn(listOf(entityId))
+        whenever(attachmentRepository.findByNoteIdIn(any())).thenAnswer { inv ->
+            @Suppress("UNCHECKED_CAST") val ids = inv.arguments[0] as List<UUID>
+            ids.map { NoteFactory.createAttachment(noteId = it, entityId = entityId) }
+        }
 
         val result = noteService.getNotesForEntity(workspaceId, entityId)
 
@@ -70,7 +73,10 @@ class NoteServiceTest : BaseServiceTest() {
 
         whenever(noteRepository.searchByEntityIdAndWorkspaceId(entityId, workspaceId, "test"))
             .thenReturn(listOf(note))
-        whenever(attachmentRepository.findEntityIdsByNoteId(any())).thenReturn(listOf(entityId))
+        whenever(attachmentRepository.findByNoteIdIn(any())).thenAnswer { inv ->
+            @Suppress("UNCHECKED_CAST") val ids = inv.arguments[0] as List<UUID>
+            ids.map { NoteFactory.createAttachment(noteId = it, entityId = entityId) }
+        }
 
         val result = noteService.getNotesForEntity(workspaceId, entityId, "test")
 
@@ -269,7 +275,7 @@ class NoteServiceTest : BaseServiceTest() {
         whenever(noteRepository.findByWorkspaceId(eq(workspaceId), any(), any(), any()))
             .thenReturn(listOf(note1, note2))
         whenever(noteRepository.countByWorkspaceId(workspaceId)).thenReturn(5L)
-        whenever(attachmentRepository.findByNoteId(any()))
+        whenever(attachmentRepository.findByNoteIdIn(any()))
             .thenReturn(listOf(NoteFactory.createAttachment(entityId = entityId)))
         whenever(noteRepository.findEntityContext(any()))
             .thenReturn(listOf(
@@ -296,7 +302,7 @@ class NoteServiceTest : BaseServiceTest() {
         whenever(noteRepository.findByWorkspaceId(eq(workspaceId), any(), any(), any()))
             .thenReturn(listOf(note))
         whenever(noteRepository.countByWorkspaceId(workspaceId)).thenReturn(1L)
-        whenever(attachmentRepository.findByNoteId(any()))
+        whenever(attachmentRepository.findByNoteIdIn(any()))
             .thenReturn(listOf(NoteFactory.createAttachment(entityId = entityId)))
         whenever(noteRepository.findEntityContext(any()))
             .thenReturn(listOf(arrayOf<Any?>(entityId, "Acme", "company", "BUILDING", "BLUE")))
@@ -365,7 +371,7 @@ class NoteServiceTest : BaseServiceTest() {
         whenever(noteRepository.findByWorkspaceId(eq(workspaceId), any(), any(), any()))
             .thenReturn(listOf(note))
         whenever(noteRepository.countByWorkspaceId(workspaceId)).thenReturn(1L)
-        whenever(attachmentRepository.findByNoteId(any()))
+        whenever(attachmentRepository.findByNoteIdIn(any()))
             .thenReturn(listOf(NoteFactory.createAttachment(entityId = entityId)))
         whenever(noteRepository.findEntityContext(any()))
             .thenReturn(listOf(arrayOf<Any?>(entityId, null, "company", "BUILDING", "BLUE")))
@@ -389,7 +395,7 @@ class NoteServiceTest : BaseServiceTest() {
         whenever(noteRepository.findByWorkspaceId(eq(workspaceId), any(), any(), any()))
             .thenReturn(listOf(note))
         whenever(noteRepository.countByWorkspaceId(workspaceId)).thenReturn(1L)
-        whenever(attachmentRepository.findByNoteId(any()))
+        whenever(attachmentRepository.findByNoteIdIn(any()))
             .thenReturn(listOf(NoteFactory.createAttachment(entityId = deletedEntityId)))
         whenever(noteRepository.findEntityContext(any())).thenReturn(emptyList())
 
@@ -409,7 +415,7 @@ class NoteServiceTest : BaseServiceTest() {
 
         whenever(noteRepository.findByIdAndWorkspaceId(NoteFactory.DEFAULT_NOTE_ID, workspaceId))
             .thenReturn(note)
-        whenever(attachmentRepository.findByNoteId(NoteFactory.DEFAULT_NOTE_ID))
+        whenever(attachmentRepository.findByNoteIdIn(listOf(NoteFactory.DEFAULT_NOTE_ID)))
             .thenReturn(listOf(NoteFactory.createAttachment(entityId = entityId)))
         whenever(noteRepository.findEntityContext(any()))
             .thenReturn(listOf(arrayOf<Any?>(entityId, "Acme Corp", "company", "BUILDING", "BLUE")))
@@ -454,8 +460,12 @@ class NoteServiceTest : BaseServiceTest() {
 
         whenever(noteRepository.findByEntityIdAndWorkspaceId(entityId, workspaceId))
             .thenReturn(listOf(note))
-        whenever(attachmentRepository.findEntityIdsByNoteId(NoteFactory.DEFAULT_NOTE_ID))
-            .thenReturn(listOf(entityId, secondEntityId))
+        whenever(attachmentRepository.findByNoteIdIn(any())).thenReturn(
+            listOf(
+                NoteFactory.createAttachment(noteId = NoteFactory.DEFAULT_NOTE_ID, entityId = entityId),
+                NoteFactory.createAttachment(noteId = NoteFactory.DEFAULT_NOTE_ID, entityId = secondEntityId),
+            )
+        )
 
         val result = noteService.getNotesForEntity(workspaceId, entityId)
 

@@ -14,6 +14,7 @@ import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.integration.CoercionType
 import riven.core.enums.integration.ConnectionStatus
 import riven.core.enums.integration.SourceType
+import riven.core.enums.integration.SyncKeyType
 import riven.core.enums.integration.SyncStatus
 import riven.core.models.integration.NangoRecord
 import riven.core.models.integration.NangoRecordAction
@@ -371,7 +372,7 @@ class IntegrationSyncActivitiesImpl(
     companion object {
         /** Sentinel entityTypeId for note embedding sync state — not a real entity type. */
         val NOTE_EMBEDDING_SENTINEL_ENTITY_TYPE_ID: UUID = UUID(0, 1)
-        const val NOTE_EMBEDDING_SYNC_KEY = "note-embedding"
+        val NOTE_EMBEDDING_SYNC_KEY: SyncKeyType = SyncKeyType.NOTE_EMBEDDING
     }
 
     // ------ Model Context Resolution ------

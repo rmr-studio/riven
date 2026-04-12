@@ -44,11 +44,15 @@ class NoteService(
         } else {
             noteRepository.findByEntityIdAndWorkspaceId(entityId, workspaceId)
         }
+        val noteIds = entities.mapNotNull { it.id }
+        val entityIdsByNoteId = if (noteIds.isNotEmpty()) {
+            attachmentRepository.findByNoteIdIn(noteIds).groupBy({ it.noteId }, { it.entityId })
+        } else {
+            emptyMap()
+        }
         return entities.map { note ->
-            val entityIds = attachmentRepository.findEntityIdsByNoteId(
-                requireNotNull(note.id) { "Note ID must not be null" }
-            )
-            note.toModel(entityIds)
+            val noteId = requireNotNull(note.id) { "Note ID must not be null" }
+            note.toModel(entityIdsByNoteId[noteId] ?: emptyList())
         }
     }
 
@@ -225,7 +229,11 @@ class NoteService(
         if (notes.isEmpty()) return emptyList()
 
         val noteIds = notes.mapNotNull { it.id }
-        val allAttachments = noteIds.flatMap { attachmentRepository.findByNoteId(it) }
+        val allAttachments = if (noteIds.isNotEmpty()) {
+            attachmentRepository.findByNoteIdIn(noteIds)
+        } else {
+            emptyList()
+        }
         val attachmentsByNoteId = allAttachments.groupBy { it.noteId }
 
         val allEntityIds = allAttachments.map { it.entityId }.distinct()

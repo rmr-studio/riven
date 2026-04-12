@@ -28,6 +28,7 @@ import riven.core.models.note.NoteEmbeddingConfig
 import riven.core.repository.entity.EntityRepository
 import riven.core.repository.note.NoteEntityAttachmentRepository
 import riven.core.repository.note.NoteRepository
+import riven.core.service.activity.ActivityService
 import riven.core.service.note.converter.HtmlToBlockConverter
 import riven.core.service.note.converter.NoteConversionResult
 import riven.core.service.note.converter.PlaintextToBlockConverter
@@ -42,6 +43,7 @@ class NoteEmbeddingServiceTest {
     @Mock private lateinit var entityRepository: EntityRepository
     @Mock private lateinit var htmlToBlockConverter: HtmlToBlockConverter
     @Mock private lateinit var plaintextToBlockConverter: PlaintextToBlockConverter
+    @Mock private lateinit var activityService: ActivityService
     @Mock private lateinit var logger: KLogger
 
     @Captor private lateinit var noteCaptor: ArgumentCaptor<NoteEntity>
@@ -86,6 +88,7 @@ class NoteEmbeddingServiceTest {
             htmlToBlockConverter,
             plaintextToBlockConverter,
             transactionTemplate,
+            activityService,
             logger,
         )
     }
@@ -144,7 +147,7 @@ class NoteEmbeddingServiceTest {
         fun `ADDED action creates NoteEntity with sourceType INTEGRATION and readonly true`() {
             stubHtmlConverter()
             val noteId = stubNoteSave()
-            whenever(noteRepository.findBySourceExternalId("ext-123")).thenReturn(null)
+            whenever(noteRepository.findByWorkspaceIdAndSourceIntegrationIdAndSourceExternalId(workspaceId, integrationId,"ext-123")).thenReturn(null)
 
             val record = nangoRecord(
                 externalId = "ext-123",
@@ -185,7 +188,7 @@ class NoteEmbeddingServiceTest {
                 sourceIntegrationId = integrationId,
                 readonly = true,
             )
-            whenever(noteRepository.findBySourceExternalId("ext-123")).thenReturn(existingNote)
+            whenever(noteRepository.findByWorkspaceIdAndSourceIntegrationIdAndSourceExternalId(workspaceId, integrationId,"ext-123")).thenReturn(existingNote)
             whenever(noteRepository.save(any<NoteEntity>())).thenAnswer { it.arguments[0] }
 
             val record = nangoRecord(
@@ -221,7 +224,7 @@ class NoteEmbeddingServiceTest {
                 sourceType = NoteSourceType.INTEGRATION,
                 sourceExternalId = "ext-456",
             )
-            whenever(noteRepository.findBySourceExternalId("ext-456")).thenReturn(existingNote)
+            whenever(noteRepository.findByWorkspaceIdAndSourceIntegrationIdAndSourceExternalId(workspaceId, integrationId,"ext-456")).thenReturn(existingNote)
 
             val record = nangoRecord(
                 externalId = "ext-456",
@@ -245,7 +248,7 @@ class NoteEmbeddingServiceTest {
         @Test
         fun `null body field skips record gracefully creating note with empty paragraph block`() {
             val noteId = stubNoteSave()
-            whenever(noteRepository.findBySourceExternalId("ext-123")).thenReturn(null)
+            whenever(noteRepository.findByWorkspaceIdAndSourceIntegrationIdAndSourceExternalId(workspaceId, integrationId,"ext-123")).thenReturn(null)
 
             val record = nangoRecord(
                 payload = mapOf("id" to "ext-123"),
@@ -268,7 +271,7 @@ class NoteEmbeddingServiceTest {
         @Test
         fun `empty body creates NoteEntity with empty paragraph block`() {
             val noteId = stubNoteSave()
-            whenever(noteRepository.findBySourceExternalId("ext-123")).thenReturn(null)
+            whenever(noteRepository.findByWorkspaceIdAndSourceIntegrationIdAndSourceExternalId(workspaceId, integrationId,"ext-123")).thenReturn(null)
 
             val record = nangoRecord(
                 payload = mapOf("id" to "ext-123", "hs_note_body" to ""),
@@ -288,7 +291,7 @@ class NoteEmbeddingServiceTest {
         fun `body exceeding MAX_BODY_SIZE truncates to plaintext fallback`() {
             stubPlaintextConverter()
             val noteId = stubNoteSave()
-            whenever(noteRepository.findBySourceExternalId("ext-123")).thenReturn(null)
+            whenever(noteRepository.findByWorkspaceIdAndSourceIntegrationIdAndSourceExternalId(workspaceId, integrationId,"ext-123")).thenReturn(null)
 
             val longBody = "x".repeat(NoteEmbeddingService.MAX_BODY_SIZE + 1000)
             val record = nangoRecord(
@@ -312,7 +315,7 @@ class NoteEmbeddingServiceTest {
         fun `all targets resolved creates correct attachment rows`() {
             stubHtmlConverter()
             val noteId = stubNoteSave()
-            whenever(noteRepository.findBySourceExternalId("ext-123")).thenReturn(null)
+            whenever(noteRepository.findByWorkspaceIdAndSourceIntegrationIdAndSourceExternalId(workspaceId, integrationId,"ext-123")).thenReturn(null)
             whenever(attachmentRepository.save(any<NoteEntityAttachment>())).thenAnswer { it.arguments[0] }
 
             val entityId1 = UUID.randomUUID()
@@ -351,7 +354,7 @@ class NoteEmbeddingServiceTest {
              */
             stubHtmlConverter()
             val noteId = stubNoteSave()
-            whenever(noteRepository.findBySourceExternalId("ext-123")).thenReturn(null)
+            whenever(noteRepository.findByWorkspaceIdAndSourceIntegrationIdAndSourceExternalId(workspaceId, integrationId,"ext-123")).thenReturn(null)
             whenever(attachmentRepository.save(any<NoteEntityAttachment>())).thenAnswer { it.arguments[0] }
 
             val entityId1 = UUID.randomUUID()
@@ -384,7 +387,7 @@ class NoteEmbeddingServiceTest {
         fun `no targets found stores pending_associations with zero attachments`() {
             stubHtmlConverter()
             val noteId = stubNoteSave()
-            whenever(noteRepository.findBySourceExternalId("ext-123")).thenReturn(null)
+            whenever(noteRepository.findByWorkspaceIdAndSourceIntegrationIdAndSourceExternalId(workspaceId, integrationId,"ext-123")).thenReturn(null)
 
             // No entities resolve
             whenever(
@@ -417,7 +420,7 @@ class NoteEmbeddingServiceTest {
         fun `empty associations map creates NoteEntity with zero attachments`() {
             stubHtmlConverter()
             val noteId = stubNoteSave()
-            whenever(noteRepository.findBySourceExternalId("ext-123")).thenReturn(null)
+            whenever(noteRepository.findByWorkspaceIdAndSourceIntegrationIdAndSourceExternalId(workspaceId, integrationId,"ext-123")).thenReturn(null)
 
             val configNoAssoc = config.copy(associations = emptyMap())
 
@@ -459,7 +462,7 @@ class NoteEmbeddingServiceTest {
                 externalId = "ext-good",
                 payload = mapOf("id" to "ext-good", "hs_note_body" to "<p>Good</p>"),
             )
-            whenever(noteRepository.findBySourceExternalId("ext-good")).thenReturn(null)
+            whenever(noteRepository.findByWorkspaceIdAndSourceIntegrationIdAndSourceExternalId(workspaceId, integrationId,"ext-good")).thenReturn(null)
 
             val result = service.processBatch(listOf(badRecord, goodRecord), config, workspaceId, integrationId)
 
@@ -491,7 +494,7 @@ class NoteEmbeddingServiceTest {
                 sourceIntegrationId = integrationId,
                 readonly = true,
             )
-            whenever(noteRepository.findBySourceExternalId("ext-123")).thenReturn(existingNote)
+            whenever(noteRepository.findByWorkspaceIdAndSourceIntegrationIdAndSourceExternalId(workspaceId, integrationId,"ext-123")).thenReturn(existingNote)
             whenever(noteRepository.save(any<NoteEntity>())).thenAnswer { it.arguments[0] }
             whenever(attachmentRepository.save(any<NoteEntityAttachment>())).thenAnswer { it.arguments[0] }
 

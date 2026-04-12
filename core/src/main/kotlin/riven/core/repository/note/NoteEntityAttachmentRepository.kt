@@ -10,9 +10,14 @@ import java.util.*
 
 interface NoteEntityAttachmentRepository : JpaRepository<NoteEntityAttachment, NoteEntityAttachmentId> {
 
-    fun findByNoteId(noteId: UUID): List<NoteEntityAttachment>
+    @Query("SELECT a FROM NoteEntityAttachment a WHERE a.noteId = :noteId")
+    fun findByNoteId(@Param("noteId") noteId: UUID): List<NoteEntityAttachment>
 
-    fun findByEntityId(entityId: UUID): List<NoteEntityAttachment>
+    @Query("SELECT a FROM NoteEntityAttachment a WHERE a.entityId = :entityId")
+    fun findByEntityId(@Param("entityId") entityId: UUID): List<NoteEntityAttachment>
+
+    @Query("SELECT a FROM NoteEntityAttachment a WHERE a.noteId IN (:noteIds)")
+    fun findByNoteIdIn(@Param("noteIds") noteIds: List<UUID>): List<NoteEntityAttachment>
 
     @Modifying
     @Query("DELETE FROM NoteEntityAttachment a WHERE a.noteId = :noteId")

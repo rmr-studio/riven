@@ -5,7 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import riven.core.entity.note.NoteEntity
-import riven.core.entity.note.NoteEntityAttachment
 import java.time.ZonedDateTime
 import java.util.*
 
@@ -46,7 +45,19 @@ interface NoteRepository : JpaRepository<NoteEntity, UUID> {
         @Param("searchTerm") searchTerm: String,
     ): List<NoteEntity>
 
-    fun findBySourceExternalId(sourceExternalId: String): NoteEntity?
+    @Query(
+        """
+        SELECT n FROM NoteEntity n
+        WHERE n.workspaceId = :workspaceId
+        AND n.sourceIntegrationId = :sourceIntegrationId
+        AND n.sourceExternalId = :sourceExternalId
+        """
+    )
+    fun findByWorkspaceIdAndSourceIntegrationIdAndSourceExternalId(
+        @Param("workspaceId") workspaceId: UUID,
+        @Param("sourceIntegrationId") sourceIntegrationId: UUID,
+        @Param("sourceExternalId") sourceExternalId: String,
+    ): NoteEntity?
 
     // ------ Workspace-scoped queries ------
 

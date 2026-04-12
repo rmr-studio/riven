@@ -657,7 +657,8 @@
     "associations": {
       "contact": "hubspot-contact",
       "deal": "hubspot-deal",
-      "ticket": "hubspot-ticket"
+      "ticket": "hubspot-ticket",
+      "company": "hubspot-company"
     }
   }
 }

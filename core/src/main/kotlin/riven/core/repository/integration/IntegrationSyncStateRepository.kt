@@ -3,6 +3,7 @@ package riven.core.repository.integration
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import riven.core.entity.integration.IntegrationSyncStateEntity
+import riven.core.enums.integration.SyncKeyType
 import java.util.*
 
 /**
@@ -23,6 +24,6 @@ interface IntegrationSyncStateRepository : JpaRepository<IntegrationSyncStateEnt
     fun findByIntegrationConnectionIdAndEntityTypeIdAndSyncKey(
         connectionId: UUID,
         entityTypeId: UUID,
-        syncKey: String,
+        syncKey: SyncKeyType,
     ): IntegrationSyncStateEntity?
 }
