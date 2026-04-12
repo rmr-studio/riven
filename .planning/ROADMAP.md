@@ -46,7 +46,12 @@ Brownfield additive milestone: introduce the IngestionAdapter abstraction, build
   3. A user attempting to connect with a role that has INSERT/UPDATE/DELETE on target tables is rejected with a clear error.
   4. No connection string ever appears in logs (regex redaction for `postgresql://` and `jdbc:postgresql://`), and credential decryption/corruption failures surface as `ConnectionStatus=FAILED` with user-safe messages.
   5. All connection operations are workspace-scoped via `@PreAuthorize` and support soft-delete.
-**Plans**: TBD
+**Plans**: 5 plans
+  - [ ] 02-00-PLAN.md — Wave 0 test scaffolding + CustomSourceConnectionEntityFactory stub
+  - [ ] 02-01-PLAN.md — Entity + repository + SQL DDL + sealed ConnectionException hierarchy + response model
+  - [ ] 02-02-PLAN.md — CredentialEncryptionService (AES-256-GCM) + Logback redaction (PatternConverter)
+  - [ ] 02-03-PLAN.md — SsrfValidatorService (resolve-once, pin-IP) + ReadOnlyRoleVerifierService (SAVEPOINT probe + privilege sweep)
+  - [ ] 02-04-PLAN.md — DTOs + CustomSourceConnectionService (gate chain) + CustomSourceConnectionController (6 REST endpoints) + ExceptionHandler mappings
 
 ### Phase 3: Postgres Adapter & Schema Mapping
 **Goal**: A user can introspect a connected Postgres database, map columns to entity-type attributes (with NL-assisted suggestions and index warnings), and have readonly `CUSTOM_SOURCE` entity types produced — with FK-inferred relationships where possible.
@@ -121,7 +126,7 @@ Brownfield additive milestone: introduce the IngestionAdapter abstraction, build
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Adapter Foundation | 0/3 | Planned | - |
-| 2. Secure Connection Management | 0/? | Not started | - |
+| 2. Secure Connection Management | 0/5 | Planned | - |
 | 3. Postgres Adapter & Schema Mapping | 0/? | Not started | - |
 | 4. Ingestion Orchestration & Sync Workflow | 0/? | Not started | - |
 | 5. Projection & Identity Generalization | 0/? | Not started | - |
