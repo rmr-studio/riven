@@ -27,7 +27,7 @@ export const ReinstallTemplateDialog: FC<Props> = ({ workspaceId, open, onOpenCh
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     mutation.mutate(
-      { templateKey },
+      { templateKey: templateKey.trim() },
       {
         onSuccess: () => {
           setTemplateKey('');

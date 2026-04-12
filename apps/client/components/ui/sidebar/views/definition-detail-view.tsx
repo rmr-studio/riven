@@ -6,11 +6,12 @@ import { useDisableIntegration } from '@/components/feature-modules/integrations
 import { useIntegrationStatus } from '@/components/feature-modules/integrations/hooks/query/use-integration-status';
 import { ConnectionStatus } from '@/lib/types';
 import { Badge, Button } from '@riven/ui';
-import { Check, Clock, Link, Puzzle } from 'lucide-react';
+import { Check, Clock, Puzzle } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { FC, useMemo } from 'react';
 import { toast } from 'sonner';
-import type { DefinitionDetailView as Props } from '../types/side-panel.types';
+import type { DefinitionDetailView as Props } from '@/components/ui/sidebar/types/side-panel.types';
 
 export const DefinitionDetailView: FC<Props> = ({ integration, workspaceId }) => {
   const {

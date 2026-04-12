@@ -1,11 +1,11 @@
-import type { PanelId, PanelRegistryEntry } from '../types/side-panel.types';
-import { BillingPanel } from '../panels/billing-panel';
-import { EntitiesPanel } from '../panels/entities-panel';
-import { KnowledgePanel } from '../panels/knowledge-panel';
-import { NotesPanel } from '../panels/notes-panel';
-import { OverviewPanel } from '../panels/overview-panel';
-import { SettingsPanel } from '../panels/settings-panel';
-import { WorkspacesPanel } from '../panels/workspaces-panel';
+import type { PanelId, PanelRegistryEntry } from '@/components/ui/sidebar/types/side-panel.types';
+import { BillingPanel } from '@/components/ui/sidebar/panels/billing-panel';
+import { EntitiesPanel } from '@/components/ui/sidebar/panels/entities-panel';
+import { KnowledgePanel } from '@/components/ui/sidebar/panels/knowledge-panel';
+import { NotesPanel } from '@/components/ui/sidebar/panels/notes-panel';
+import { OverviewPanel } from '@/components/ui/sidebar/panels/overview-panel';
+import { SettingsPanel } from '@/components/ui/sidebar/panels/settings-panel';
+import { WorkspacesPanel } from '@/components/ui/sidebar/panels/workspaces-panel';
 
 /**
  * Single registry for all root panel sections.

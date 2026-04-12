@@ -43,10 +43,25 @@ export function IntegrationCard({
     onClick(view);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (isComingSoon) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleSelect();
+    }
+  };
+
   return (
     <Card
-      className={cn('group p-5 transition-shadow hover:shadow-md', isComingSoon && 'opacity-60')}
+      role="button"
+      tabIndex={isComingSoon ? -1 : 0}
+      aria-disabled={isComingSoon}
       onClick={handleSelect}
+      onKeyDown={handleKeyDown}
+      className={cn(
+        'group cursor-pointer p-5 outline-none transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        isComingSoon && 'cursor-not-allowed opacity-60',
+      )}
     >
       <div className="flex items-start gap-3">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-muted">

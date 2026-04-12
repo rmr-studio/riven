@@ -218,9 +218,12 @@ export function buildRelationshipFieldSchema(relationship: RelationshipDefinitio
  * Get default value for a schema field
  */
 export function getDefaultValueForSchema(schema: SchemaUUID): unknown {
-  // Check for custom default value in options first
+  // Check for custom default value in options first. If the custom default
+  // cannot be resolved (e.g. unknown dynamic function), fall through to the
+  // type-based fallback instead of returning undefined.
   if (schema.options?.defaultValue != null) {
-    return resolveDefaultValue(schema.options.defaultValue);
+    const resolved = resolveDefaultValue(schema.options.defaultValue);
+    if (resolved !== undefined) return resolved;
   }
 
   const attributeType = attributeTypes[schema.key];

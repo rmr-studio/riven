@@ -2,11 +2,15 @@
 
 import { Component, Suspense, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useCurrentView, useStackDepth, useSidePanelActions } from '../context/side-panel-provider';
-import { viewRegistry } from './panel-view-registry';
-import { PanelSkeleton } from './panel-skeleton';
-import { PanelViewFrame } from './panel-view-frame';
-import { PanelErrorFallback } from './panel-error-fallback';
+import {
+  useCurrentView,
+  useStackDepth,
+  useSidePanelActions,
+} from '@/components/ui/sidebar/context/side-panel-provider';
+import { viewRegistry } from '@/components/ui/sidebar/components/panel-view-registry';
+import { PanelSkeleton } from '@/components/ui/sidebar/components/panel-skeleton';
+import { PanelViewFrame } from '@/components/ui/sidebar/components/panel-view-frame';
+import { PanelErrorFallback } from '@/components/ui/sidebar/components/panel-error-fallback';
 
 // Error boundary for lazy-loaded view components
 interface ErrorBoundaryState { hasError: boolean }
@@ -53,7 +57,7 @@ export function PanelViewRenderer() {
   return (
     <PanelViewFrame
       title={currentView.title}
-      onBack={stackDepth > 0 ? popView : undefined}
+      onBack={stackDepth > 1 ? popView : undefined}
       onClose={clearStack}
     >
       <PanelErrorBoundary

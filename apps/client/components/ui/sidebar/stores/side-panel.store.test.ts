@@ -1,5 +1,5 @@
-import type { SidePanelView } from '../types/side-panel.types';
-import { createSidePanelStore } from './side-panel.store';
+import type { SidePanelView } from '@/components/ui/sidebar/types/side-panel.types';
+import { createSidePanelStore } from '@/components/ui/sidebar/stores/side-panel.store';
 
 const makeView = (type: SidePanelView['type'], suffix = ''): SidePanelView => {
   switch (type) {
@@ -66,16 +66,19 @@ describe('SidePanelStore', () => {
   });
 
   describe('closePanel / openPanel', () => {
-    it('closePanel sets panelOpen to false', () => {
+    it('closePanel sets panelOpen and mobileOpen to false', () => {
       const store = createSidePanelStore();
+      store.getState().setMobileOpen(true);
       store.getState().closePanel();
       expect(store.getState().panelOpen).toBe(false);
+      expect(store.getState().mobileOpen).toBe(false);
     });
 
-    it('openPanel sets panelOpen to true', () => {
+    it('openPanel sets panelOpen and mobileOpen to true', () => {
       const store = createSidePanelStore({ panelOpen: false });
       store.getState().openPanel();
       expect(store.getState().panelOpen).toBe(true);
+      expect(store.getState().mobileOpen).toBe(true);
     });
   });
 
@@ -96,10 +99,11 @@ describe('SidePanelStore', () => {
       expect(store.getState().viewStack).toEqual([v1, v2]);
     });
 
-    it('opens the panel if it was closed', () => {
+    it('opens the panel and mobile sheet if they were closed', () => {
       const store = createSidePanelStore({ panelOpen: false });
       store.getState().pushView(makeView('definition-detail', '1'));
       expect(store.getState().panelOpen).toBe(true);
+      expect(store.getState().mobileOpen).toBe(true);
     });
 
     it('caps stack at max depth, dropping oldest entries', () => {
@@ -148,10 +152,11 @@ describe('SidePanelStore', () => {
       expect(store.getState().viewStack).toEqual([v1]);
     });
 
-    it('opens the panel if it was closed', () => {
+    it('opens the panel and mobile sheet if they were closed', () => {
       const store = createSidePanelStore({ panelOpen: false });
       store.getState().replaceView(makeView('definition-detail', '1'));
       expect(store.getState().panelOpen).toBe(true);
+      expect(store.getState().mobileOpen).toBe(true);
     });
   });
 

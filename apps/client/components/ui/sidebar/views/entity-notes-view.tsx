@@ -1,6 +1,6 @@
 'use client';
 
-import type { SidePanelView } from '../types/side-panel.types';
+import type { SidePanelView } from '@/components/ui/sidebar/types/side-panel.types';
 
 type Props = Extract<SidePanelView, { type: 'entity-notes' }>;
 

@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@riven/ui/select';
-import { FC, useEffect } from 'react';
+import { FC, useEffect, useMemo } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 
 export const TYPES_WITHOUT_DEFAULT = new Set([
@@ -54,29 +54,46 @@ export const DefaultValueInput: FC<DefaultValueInputProps> = ({
   if (TYPES_WITHOUT_DEFAULT.has(currentType)) return null;
 
   const mode = form.watch('defaultValueMode') as DefaultValueMode;
-  const availableDynamicFunctions = dynamicFunctionsForType[currentType] ?? [];
+  const availableDynamicFunctions = useMemo<DynamicDefaultFunction[]>(
+    () => dynamicFunctionsForType[currentType] ?? [],
+    [currentType],
+  );
   const hasDynamicOptions = availableDynamicFunctions.length > 0;
 
   const availableModes: DefaultValueMode[] = hasDynamicOptions
     ? ['none', 'static', 'dynamic']
     : ['none', 'static'];
 
-  // Clear the other mode's value when switching
+  // Clear the other mode's value when switching, and handle the case where
+  // the schema type no longer has dynamic function options available.
   useEffect(() => {
     if (mode === 'none') {
       form.setValue('defaultStaticValue', undefined);
       form.setValue('defaultDynamicFunction', null);
-    } else if (mode === 'static') {
-      form.setValue('defaultDynamicFunction', null);
-    } else if (mode === 'dynamic') {
-      form.setValue('defaultStaticValue', undefined);
-      // Auto-select the first available function if none is set
-      const currentFn = form.getValues('defaultDynamicFunction');
-      if (!currentFn && availableDynamicFunctions.length > 0) {
-        form.setValue('defaultDynamicFunction', availableDynamicFunctions[0]);
-      }
+      return;
     }
-  }, [mode]);
+
+    if (mode === 'static') {
+      form.setValue('defaultDynamicFunction', null);
+      return;
+    }
+
+    // mode === 'dynamic'
+    form.setValue('defaultStaticValue', undefined);
+
+    if (availableDynamicFunctions.length === 0) {
+      // The current schema type has no dynamic options — clear selection and
+      // fall back to 'none' so the UI doesn't render an empty dynamic selector.
+      form.setValue('defaultDynamicFunction', null);
+      form.setValue('defaultValueMode', 'none');
+      return;
+    }
+
+    const currentFn = form.getValues('defaultDynamicFunction');
+    if (!currentFn || !availableDynamicFunctions.includes(currentFn)) {
+      form.setValue('defaultDynamicFunction', availableDynamicFunctions[0]);
+    }
+  }, [mode, availableDynamicFunctions]);
 
   return (
     <div className="space-y-3">

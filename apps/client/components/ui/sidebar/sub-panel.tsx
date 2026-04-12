@@ -6,9 +6,9 @@ import {
   usePanelOpen,
   useSelectedPanel,
   useSidePanelActions,
-} from './context/side-panel-provider';
-import { panelRootRegistry } from './components/panel-root-registry';
-import { PanelViewRenderer } from './components/panel-view-renderer';
+} from '@/components/ui/sidebar/context/side-panel-provider';
+import { panelRootRegistry } from '@/components/ui/sidebar/components/panel-root-registry';
+import { PanelViewRenderer } from '@/components/ui/sidebar/components/panel-view-renderer';
 
 /**
  * The side panel content area.

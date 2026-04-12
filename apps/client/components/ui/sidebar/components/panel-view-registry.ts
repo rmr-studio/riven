@@ -1,5 +1,5 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
-import type { SidePanelView, SidePanelViewType } from '../types/side-panel.types';
+import type { SidePanelView, SidePanelViewType } from '@/components/ui/sidebar/types/side-panel.types';
 
 /**
  * Props that every detail view component receives.
@@ -20,13 +20,19 @@ export type ViewComponentProps<T extends SidePanelViewType> = Extract<SidePanelV
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const viewRegistry: Record<SidePanelViewType, LazyExoticComponent<ComponentType<any>>> = {
   'definition-detail': lazy(() =>
-    import('../views/definition-detail-view').then((m) => ({ default: m.DefinitionDetailView })),
+    import('@/components/ui/sidebar/views/definition-detail-view').then((m) => ({
+      default: m.DefinitionDetailView,
+    })),
   ),
   'entity-notes': lazy(() =>
-    import('../views/entity-notes-view').then((m) => ({ default: m.EntityNotesView })),
+    import('@/components/ui/sidebar/views/entity-notes-view').then((m) => ({
+      default: m.EntityNotesView,
+    })),
   ),
   'integration-detail': lazy(() =>
-    import('../views/integration-detail-view').then((m) => ({ default: m.IntegrationDetailView })),
+    import('@/components/ui/sidebar/views/integration-detail-view').then((m) => ({
+      default: m.IntegrationDetailView,
+    })),
   ),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } satisfies Record<SidePanelViewType, LazyExoticComponent<ComponentType<any>>>;

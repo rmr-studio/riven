@@ -2,21 +2,10 @@ import { IntegrationDefinitionModel } from '@/lib/types';
 import type { ComponentType } from 'react';
 
 /**
- * Identifies which root panel is selected in the icon rail.
+ * All valid panel IDs — used for runtime validation (e.g. localStorage hydration)
+ * and as the source of truth for the PanelId union.
  */
-export type PanelId =
-  | 'workspaces'
-  | 'overview'
-  | 'entities'
-  | 'knowledge'
-  | 'notes'
-  | 'billing'
-  | 'settings';
-
-/**
- * All valid panel IDs — used for runtime validation (e.g. localStorage hydration).
- */
-export const PANEL_IDS: PanelId[] = [
+export const PANEL_IDS = [
   'workspaces',
   'overview',
   'entities',
@@ -24,7 +13,12 @@ export const PANEL_IDS: PanelId[] = [
   'notes',
   'billing',
   'settings',
-];
+] as const;
+
+/**
+ * Identifies which root panel is selected in the icon rail.
+ */
+export type PanelId = (typeof PANEL_IDS)[number];
 
 /**
  * Discriminated union of all views that can be pushed onto the side panel stack.

@@ -1,5 +1,6 @@
 import { useAuth } from '@/components/provider/auth-context';
 import { DevService } from '@/components/feature-modules/dev/service/dev.service';
+import { entityKeys } from '@/components/feature-modules/entity/hooks/query/entity-query-keys';
 import { DevSeedResponse } from '@/lib/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -27,8 +28,8 @@ export function useSeedWorkspaceMutation(workspaceId: string | undefined) {
         );
       }
       if (workspaceId) {
-        queryClient.invalidateQueries({ queryKey: ['entities', workspaceId] });
-        queryClient.invalidateQueries({ queryKey: ['entityTypes', workspaceId] });
+        queryClient.invalidateQueries({ queryKey: entityKeys.entities.base(workspaceId) });
+        queryClient.invalidateQueries({ queryKey: entityKeys.entityTypes.list(workspaceId) });
       }
     },
     onError: (error) => {

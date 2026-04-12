@@ -8,13 +8,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@riven
 import { cn } from '@riven/utils';
 import { useIsMobile } from '@riven/hooks';
 import { BookOpen, Building2, CogIcon, SquareDashedMousePointer, StickyNote, TrendingUpDown } from 'lucide-react';
-import { Kbd, KbdGroup } from '../kbd';
-import { Skeleton } from '../skeleton';
+import { Kbd, KbdGroup } from '@/components/ui/kbd';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   useSelectedPanel,
   useSidePanelActions,
-} from './context/side-panel-provider';
-import type { PanelId } from './types/side-panel.types';
+} from '@/components/ui/sidebar/context/side-panel-provider';
+import type { PanelId } from '@/components/ui/sidebar/types/side-panel.types';
 
 interface RailButton {
   id: PanelId;

@@ -1,5 +1,5 @@
-import { viewRegistry } from './panel-view-registry';
-import type { SidePanelViewType } from '../types/side-panel.types';
+import { viewRegistry } from '@/components/ui/sidebar/components/panel-view-registry';
+import type { SidePanelViewType } from '@/components/ui/sidebar/types/side-panel.types';
 
 /**
  * This test ensures every member of the SidePanelView discriminated union

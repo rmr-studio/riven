@@ -1,6 +1,6 @@
 import { render, screen, act } from '@testing-library/react';
-import { SidePanelProvider, useSidePanelStore } from '../context/side-panel-provider';
-import type { SidePanelView } from '../types/side-panel.types';
+import { SidePanelProvider, useSidePanelStore } from '@/components/ui/sidebar/context/side-panel-provider';
+import type { SidePanelView } from '@/components/ui/sidebar/types/side-panel.types';
 
 // Mock @riven/hooks
 jest.mock('@riven/hooks', () => ({

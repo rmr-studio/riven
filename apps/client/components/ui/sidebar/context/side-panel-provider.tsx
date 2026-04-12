@@ -7,8 +7,12 @@ import {
   createSidePanelStore,
   type SidePanelStore,
   type SidePanelStoreApi,
-} from '../stores/side-panel.store';
-import { DEFAULT_PANEL, PANEL_IDS, type PanelId } from '../types/side-panel.types';
+} from '@/components/ui/sidebar/stores/side-panel.store';
+import {
+  DEFAULT_PANEL,
+  PANEL_IDS,
+  type PanelId,
+} from '@/components/ui/sidebar/types/side-panel.types';
 
 // ---------------------------------------------------------------------------
 // Context
@@ -63,14 +67,15 @@ export function SidePanelProvider({ children }: { children: ReactNode }) {
         target instanceof HTMLTextAreaElement ||
         target.isContentEditable;
 
-      // Ctrl/Cmd+B: toggle panel
+      // Ctrl/Cmd+B: toggle panel (covers desktop panelOpen + mobile sheet)
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
         if (isInput) return;
         e.preventDefault();
         const store = storeRef.current;
         if (!store) return;
-        const { panelOpen, closePanel, openPanel } = store.getState();
-        if (panelOpen) {
+        const { panelOpen, mobileOpen, closePanel, openPanel } = store.getState();
+        const isVisible = panelOpen || mobileOpen;
+        if (isVisible) {
           closePanel();
         } else {
           openPanel();
@@ -83,8 +88,9 @@ export function SidePanelProvider({ children }: { children: ReactNode }) {
         if (isInput) return;
         const store = storeRef.current;
         if (!store) return;
-        const { panelOpen, viewStack, popView, closePanel } = store.getState();
-        if (!panelOpen) return;
+        const { panelOpen, mobileOpen, viewStack, popView, closePanel } = store.getState();
+        const isVisible = panelOpen || mobileOpen;
+        if (!isVisible) return;
         e.preventDefault();
         if (viewStack.length > 0) {
           popView();

@@ -53,7 +53,7 @@ export const attributeFormSchema = z
     regex: z.string().optional().nullable(),
     // Default value for backfilling when toggling required on existing attributes
     defaultValueMode: z.enum(['none', 'static', 'dynamic']).default('none'),
-    defaultStaticValue: z.any().optional().nullable(),
+    defaultStaticValue: z.unknown().optional().nullable(),
     defaultDynamicFunction: z.nativeEnum(DynamicDefaultFunction).optional().nullable(),
     // Semantic context fields
     classification: z.nativeEnum(SemanticAttributeClassification).optional().nullable(),

@@ -5,7 +5,7 @@ import {
   SIDE_PANEL_MAX_STACK_DEPTH,
   type PanelId,
   type SidePanelView,
-} from '../types/side-panel.types';
+} from '@/components/ui/sidebar/types/side-panel.types';
 
 // ---------------------------------------------------------------------------
 // State
@@ -69,15 +69,16 @@ export const createSidePanelStore = (init?: SidePanelInitState) => {
       togglePanel: (id: PanelId) => {
         const { selectedPanel, panelOpen } = get();
         if (selectedPanel === id) {
-          set({ panelOpen: !panelOpen });
+          const next = !panelOpen;
+          set({ panelOpen: next, mobileOpen: next });
         } else {
-          set({ selectedPanel: id, panelOpen: true, viewStack: [] });
+          set({ selectedPanel: id, panelOpen: true, mobileOpen: true, viewStack: [] });
         }
       },
 
-      closePanel: () => set({ panelOpen: false }),
+      closePanel: () => set({ panelOpen: false, mobileOpen: false }),
 
-      openPanel: () => set({ panelOpen: true }),
+      openPanel: () => set({ panelOpen: true, mobileOpen: true }),
 
       pushView: (view: SidePanelView) => {
         const { viewStack } = get();
@@ -85,7 +86,7 @@ export const createSidePanelStore = (init?: SidePanelInitState) => {
         if (next.length > SIDE_PANEL_MAX_STACK_DEPTH) {
           next = next.slice(next.length - SIDE_PANEL_MAX_STACK_DEPTH);
         }
-        set({ viewStack: next, panelOpen: true });
+        set({ viewStack: next, panelOpen: true, mobileOpen: true });
       },
 
       popView: () => {
@@ -97,7 +98,7 @@ export const createSidePanelStore = (init?: SidePanelInitState) => {
       replaceView: (view: SidePanelView) => {
         const { viewStack } = get();
         const nextStack = viewStack.length === 0 ? [view] : [...viewStack.slice(0, -1), view];
-        set({ viewStack: nextStack, panelOpen: true });
+        set({ viewStack: nextStack, panelOpen: true, mobileOpen: true });
       },
 
       clearStack: () => set({ viewStack: [] }),
