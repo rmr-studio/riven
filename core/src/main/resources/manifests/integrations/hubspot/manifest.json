@@ -9,6 +9,9 @@
     "deals": "hubspot-deal",
     "tickets": "hubspot-ticket"
   },
+  "category": "CRM",
+  "nangoProviderKey": "hubspot",
+  "iconUrl": "/integrations/hubspot.svg",
   "entityTypes": [
     {
       "key": "hubspot-contact",
@@ -361,12 +364,7 @@
           "required": false,
           "protected": true,
           "options": {
-            "enum": [
-              "new",
-              "waiting",
-              "open",
-              "closed"
-            ]
+            "enum": ["new", "waiting", "open", "closed"]
           }
         },
         "priority": {
@@ -376,11 +374,7 @@
           "required": false,
           "protected": true,
           "options": {
-            "enum": [
-              "low",
-              "medium",
-              "high"
-            ]
+            "enum": ["low", "medium", "high"]
           }
         },
         "category": {

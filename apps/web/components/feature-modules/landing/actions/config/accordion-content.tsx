@@ -2,12 +2,8 @@
 
 import { EntityDetailShowcase } from '@/components/feature-modules/landing/actions/components/diagrams/entity-detail-showcase';
 import { QueryBuilderGraphic } from '@/components/feature-modules/landing/actions/components/diagrams/query-builder';
-import { RulesEngineGraphic } from '@/components/feature-modules/landing/actions/components/diagrams/rules-engine';
 import { TaggingViewShowcase } from '@/components/feature-modules/landing/actions/components/diagrams/tagging-view-showcase';
-import { GlowBorder } from '@/components/ui/glow-border';
-import { DashboardPromptInput } from '../../dashboard/components/mock-dashboard';
-import { MockKnowledgePanel } from '../../hero/components/showcase/mock-knowledge-panel';
-import { customerScenario } from '../../hero/components/showcase/scenario-data';
+import { MockDashboard } from '../../dashboard/components/mock-dashboard';
 
 export interface KnowledgeLayerSectionContent {
   title: React.ReactNode;
@@ -18,11 +14,23 @@ export interface KnowledgeLayerSectionContent {
 export const ACTION_CONTENT: KnowledgeLayerSectionContent[] = [
   {
     title: <div>One question. Five tools</div>,
-    description: `Which customers from our March Instagram campaign have an open support ticket and haven't opened an
-  email in 30 days? 5 Platforms, hours of manual work. We answer it in seconds
-  because your data is already connected. You get the actual list of customers back — click through, flag
-  them, push them to a Klaviyo list.`,
+    description: `Which customers from our best-performing cohort made a repeat purchase in the last 30 days — and what channel brought them in? Five platforms, hours of manual work. Riven answers it in seconds because your data is already connected. You get the actual list of customers back — click through, flag them, push them to a Klaviyo list.`,
     content: <QueryBuilderGraphic />,
+  },
+  {
+    title: <div>We know where it belongs</div>,
+    description: `When a new Stripe charge syncs, Riven already knows which company it belongs to, which support tickets are open on 
+  ▎ that account, and what they cost you in ad spend. No manual mapping`,
+    content: (
+      <EntityDetailShowcase className="dark absolute -right-12 -bottom-16 sm:-right-48 sm:scale-130 md:bottom-8" />
+    ),
+  },
+  {
+    title: <div>Track performance</div>,
+    description: `Every action you take in Riven is tracked back to the customers, channels and cohorts it touched. See which moves correlate with better retention and higher LTV. Experiment, learn, repeat. All without the guesswork.`,
+    content: (
+      <MockDashboard className="translate-x-12 translate-x-48! translate-y-12 scale-120 sm:translate-x-32 sm:translate-y-24 md:scale-140! lg:translate-y-0 xl:translate-x-64!" />
+    ),
   },
   {
     title: <div>Tag it. Flag it. Bag it.</div>,
@@ -31,36 +39,6 @@ export const ACTION_CONTENT: KnowledgeLayerSectionContent[] = [
   Seventeen still at risk. No spreadsheet required.`,
     content: (
       <TaggingViewShowcase className="dark translate-x-8 translate-y-0 translate-y-4 scale-90 sm:translate-x-0 sm:scale-80 md:m-6 md:scale-60 lg:scale-100" />
-    ),
-  },
-  {
-    title: <div>Set Rules. Get Morning updates.</div>,
-    description: `Tell Riven what to watch. "Alert me when Instagram churn crosses 10%." "Flag when the at-risk segment grows
-  by more than 10 in a week." Rules run overnight and results land in your morning queue.`,
-    content: <RulesEngineGraphic />,
-  },
-  {
-    title: <div>Understand your data. Ask anything.</div>,
-    description:
-      'Ask a question in plain English that touches customers, revenue, support, and product usage at the same time. No exports, no cross-referencing. You get an actual answer back in seconds. The kind of thing that used to eat a whole morning.',
-    content: (
-      <>
-        <GlowBorder className="dark absolute bottom-8 left-8 z-30 w-full max-w-xl rounded-lg">
-          <DashboardPromptInput className="glass-panel mt-0 rounded-lg backdrop-blur-lg" />
-        </GlowBorder>
-        <MockKnowledgePanel
-          scenario={customerScenario}
-          className="dark relative hidden scale-80 md:translate-x-80 lg:block"
-        />
-      </>
-    ),
-  },
-  {
-    title: <div>New data finds its home automatically</div>,
-    description:
-      "When new data syncs, Riven figures out where it belongs. A new Stripe charge gets matched to the right company, linked to their support tickets, ad spend, and everything else. You don't have to map it yourself.",
-    content: (
-      <EntityDetailShowcase className="dark absolute -right-12 -bottom-16 sm:-right-48 sm:scale-130 md:bottom-8" />
     ),
   },
 ];

@@ -5,15 +5,15 @@ tags:
   - architecture/component
 Created: 2026-03-18
 Domains:
-  - "[[Integrations]]"
+  - "[[riven/docs/system-design/domains/Integrations/Integrations]]"
 ---
 # NangoWebhookService
 
-Part of [[Webhook Authentication]]
+Part of [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Webhook Authentication/Webhook Authentication]]
 
 ## Purpose
 
-Routes and processes inbound Nango webhook events. Auth events (successful OAuth completion) trigger connection creation, installation tracking, and template materialization. Sync events are logged but not yet processed (Phase 3 stub). All exceptions are caught internally — the controller must always return 200 to Nango regardless of processing outcome.
+Routes and processes inbound Nango webhook events. Auth events (successful OAuth completion) trigger connection creation, installation tracking, and template materialization. Sync events trigger integration sync workflow dispatch via Temporal. All exceptions are caught internally — the controller must always return 200 to Nango regardless of processing outcome.
 
 ---
 
@@ -26,6 +26,7 @@ Routes and processes inbound Nango webhook events. Auth events (successful OAuth
 - Find or create workspace integration installations (including soft-deleted restoration)
 - Trigger template materialization with error isolation — materialization failures mark installation as FAILED but preserve the CONNECTED connection
 - Log connection activity for audit trail
+- Queue integration sync workflows when sync events are received
 - Swallow all exceptions to guarantee 200 response to Nango
 
 ---
@@ -35,14 +36,14 @@ Routes and processes inbound Nango webhook events. Auth events (successful OAuth
 - `IntegrationConnectionRepository` — Connection persistence and lookup
 - `IntegrationDefinitionRepository` — Integration definition validation
 - `WorkspaceIntegrationInstallationRepository` — Installation persistence, soft-delete queries
-- [[TemplateMaterializationService]] — Creates workspace-scoped entity types from catalog templates
+- [[riven/docs/system-design/domains/Integrations/Enablement/TemplateMaterializationService]] — Creates workspace-scoped entity types from catalog templates
 - `ActivityService` — Audit logging
 - `TransactionTemplate` — Programmatic transaction management (Spring AOP cannot intercept private methods)
 - `KLogger` — Structured logging
 
 ## Used By
 
-- [[NangoWebhookController]] — Delegates all webhook processing to this service
+- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Webhook Authentication/NangoWebhookController]] — Delegates all webhook processing to this service
 
 ---
 
@@ -53,7 +54,7 @@ Routes and processes inbound Nango webhook events. Auth events (successful OAuth
 The `handleWebhook()` entry point inspects `payload.type` and routes to the appropriate handler:
 
 - `"auth"` -> `handleAuthEvent()` — processes OAuth completion
-- `"sync"` -> `handleSyncEvent()` — logs and ignores (Phase 3 stub)
+- `"sync"` -> `handleSyncEvent()` — queues integration sync workflow via Temporal
 - Unknown -> logged and ignored
 
 The entire routing is wrapped in a try-catch that swallows all exceptions. Nango requires a 200 response regardless of processing outcome.
@@ -116,7 +117,7 @@ The `endUserEmail` field is pragmatically repurposed because Nango only provides
 
 ### `handleWebhook(payload: NangoWebhookPayload)`
 
-Routes an inbound Nango webhook payload to the correct handler. Swallows all exceptions to guarantee the caller (controller) can return 200. Called by [[NangoWebhookController]].
+Routes an inbound Nango webhook payload to the correct handler. Swallows all exceptions to guarantee the caller (controller) can return 200. Called by [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Webhook Authentication/NangoWebhookController]].
 
 ---
 
@@ -130,17 +131,17 @@ Routes an inbound Nango webhook payload to the correct handler. Swallows all exc
 
 > **Tag validation is defensive.** Missing tags, malformed UUIDs, or null fields cause early returns with error logging — not exceptions. This prevents partial processing from leaving orphaned state.
 
-> **Sync events are not yet processed.** The `handleSyncEvent()` method only logs. Phase 3 will add Temporal workflow dispatch.
+> **Sync events now dispatch Temporal workflows.** The `handleSyncEvent()` method queues an `IntegrationSyncWorkflow` for the connection, triggering the full fetch-process-project pipeline.
 
 ---
 
 ## Related
 
-- [[NangoWebhookController]] — REST endpoint
-- [[NangoWebhookHmacFilter]] — HMAC signature verification
-- [[IntegrationConnectionService]] — Also manages connections; `createOrReconnect` is the internal (webhook-only) creation path
-- [[TemplateMaterializationService]] — Materialization engine
-- [[Webhook Authentication]] — Parent subdomain
+- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Webhook Authentication/NangoWebhookController]] — REST endpoint
+- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Webhook Authentication/NangoWebhookHmacFilter]] — HMAC signature verification
+- [[riven/docs/system-design/domains/Integrations/Connection Management/IntegrationConnectionService]] — Also manages connections; `createOrReconnect` is the internal (webhook-only) creation path
+- [[riven/docs/system-design/domains/Integrations/Enablement/TemplateMaterializationService]] — Materialization engine
+- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Webhook Authentication/Webhook Authentication]] — Parent subdomain
 
 ---
 
@@ -150,3 +151,7 @@ Routes an inbound Nango webhook payload to the correct handler. Swallows all exc
 
 - Initial implementation — auth event handling with connection creation, installation tracking, and materialization with error isolation
 - Sync event stub for Phase 3
+
+### 2026-04-11
+
+- `handleSyncEvent()` now dispatches Temporal integration sync workflow instead of logging (Phase 3 stub removed)
