@@ -8,10 +8,10 @@ tags:
 Created: 2026-03-18
 Updated:
 Domains:
-  - "[[Entities]]"
-  - "[[Knowledge]]"
+  - "[[riven/docs/system-design/domains/Entities/Entities]]"
+  - "[[riven/docs/system-design/domains/Knowledge/Knowledge]]"
 blocked by:
-  - "[[Semantic Entity Groups]]"
+  - "[[riven/docs/system-design/feature-design/3. Active/Semantic Entity Groups]]"
 ---
 # Feature: Lifecycle Domain Model
 
@@ -57,7 +57,7 @@ These relationships inform prompt construction and perspective scoping — when 
 
 ### Open Design Consideration (Eng Review 2026-03-19)
 
-**Instance-level lifecycle domain classification:** Entity types like Communication and Customer span multiple lifecycle domains. A welcome email is ONBOARDING, a marketing email is ACQUISITION, a support response is SUPPORT. Type-level classification (`lifecycleDomain` on `entity_types`) is UNCATEGORIZED for these types. Instance-level classification should be handled in the [[Data Chunking and Enrichment Pipeline]] using content analysis + relationship context to determine each entity instance's lifecycle domain during embedding enrichment. See TODO.
+**Instance-level lifecycle domain classification:** Entity types like Communication and Customer span multiple lifecycle domains. A welcome email is ONBOARDING, a marketing email is ACQUISITION, a support response is SUPPORT. Type-level classification (`lifecycleDomain` on `entity_types`) is UNCATEGORIZED for these types. Instance-level classification should be handled in the [[riven/docs/system-design/feature-design/1. Planning/Data Chunking and Enrichment Pipeline]] using content analysis + relationship context to determine each entity instance's lifecycle domain during embedding enrichment. See TODO.
 
 ### Success Criteria
 
@@ -72,10 +72,10 @@ These relationships inform prompt construction and perspective scoping — when 
 
 ## Related Documents
 
-- [[Semantic Entity Groups]] — orthogonal classification (SemanticGroup = WHAT, LifecycleDomain = WHERE)
-- [[Three-Tier Entity Model and Lifecycle Spine]] — spine types carry pre-assigned lifecycle domains
-- [[Prompt Construction for Knowledge Model Queries]] — uses lifecycle domain for context selection
-- [[Knowledge Layer Sub-Agents]] — perspectives scoped to lifecycle domains
+- [[riven/docs/system-design/feature-design/3. Active/Semantic Entity Groups]] — orthogonal classification (SemanticGroup = WHAT, LifecycleDomain = WHERE)
+- [[riven/docs/system-design/feature-design/4. Completed/Three-Tier Entity Model and Lifecycle Spine]] — spine types carry pre-assigned lifecycle domains
+- [[riven/docs/system-design/feature-design/1. Planning/Prompt Construction for Knowledge Model Queries]] — uses lifecycle domain for context selection
+- [[riven/docs/system-design/feature-design/1. Planning/Knowledge Layer Sub-Agents]] — perspectives scoped to lifecycle domains
 - CEO Plan: Lifecycle Vertical Scoping (2026-03-18)
 
 ---

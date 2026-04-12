@@ -9,12 +9,12 @@ tags:
 Created: 2026-03-18
 Updated:
 Domains:
-  - "[[Catalog]]"
-  - "[[Entities]]"
-  - "[[Integrations]]"
+  - "[[riven/docs/system-design/domains/Catalog/Catalog]]"
+  - "[[riven/docs/system-design/domains/Entities/Entities]]"
+  - "[[riven/docs/system-design/domains/Integrations/Integrations]]"
 blocked by:
-  - "[[Three-Tier Entity Model and Lifecycle Spine]]"
-  - "[[Integration Access Layer]]"
+  - "[[riven/docs/system-design/feature-design/4. Completed/Three-Tier Entity Model and Lifecycle Spine]]"
+  - "[[riven/docs/system-design/feature-design/3. Active/Integration Access Layer]]"
 ---
 # Feature: Lifecycle-Aware Onboarding Flow
 
@@ -53,11 +53,11 @@ Replace generic template selection with a lifecycle-aware onboarding flow:
 
 ## Related Documents
 
-- [[Three-Tier Entity Model and Lifecycle Spine]] — spine installed during onboarding
-- [[Lifecycle Domain Model]] — coverage summary shows domain-level connectivity
-- [[Lifecycle Domain Coverage Indicator]] — reused in onboarding summary
-- [[Integration Access Layer]] — tool connection during onboarding
-- [[Lifecycle Operations Dashboard]] — landing page after onboarding
+- [[riven/docs/system-design/feature-design/4. Completed/Three-Tier Entity Model and Lifecycle Spine]] — spine installed during onboarding
+- [[riven/docs/system-design/feature-design/4. Completed/Lifecycle Domain Model]] — coverage summary shows domain-level connectivity
+- [[riven/docs/system-design/feature-design/1. Planning/Lifecycle Domain Coverage Indicator]] — reused in onboarding summary
+- [[riven/docs/system-design/feature-design/3. Active/Integration Access Layer]] — tool connection during onboarding
+- [[riven/docs/system-design/feature-design/1. Planning/Lifecycle Operations Dashboard]] — landing page after onboarding
 - CEO Plan: Lifecycle Vertical Scoping (2026-03-18)
 
 ---

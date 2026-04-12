@@ -13,11 +13,14 @@ Updated:
 Domains:
   - "[[Domain]]"
 ---
-# Quick Design: Entity Type Relationship Overlap + Bidirectional Detection
+# Quick Design: CLI and MCP Server for Agent Interaction
 
 ## What & Why
 
 _One paragraph: what are we building and why?_
+
+One of the most prevelant trends in the B2B and tech world is the move from traditional dashboards and UI/UX into DX and cli interaction, especially interacting with the application via a terminal (mainly targeting tech companies) or an agent to provide workflow automations through natural queries to claude or another AI agent. 
+
 
 ---
 

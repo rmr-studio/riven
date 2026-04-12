@@ -6,10 +6,10 @@ tags:
 Created: 2026-03-20
 Updated: 2026-03-20
 Domains:
-  - "[[Integrations]]"
-  - "[[Entities]]"
+  - "[[riven/docs/system-design/domains/Integrations/Integrations]]"
+  - "[[riven/docs/system-design/domains/Entities/Entities]]"
 blocked-by:
-  - "[[Identity Resolution System]]"
+  - "[[riven/docs/system-design/feature-design/2. Planned/Identity Resolution System]]"
 ---
 # Feature: Smart Projection Architecture — Entity Integration Bridging
 
@@ -772,12 +772,12 @@ Implementation follows a 4-phase sequencing. Each phase is independently deploya
 
 ## Related Documents
 
-- [[Identity Resolution System]] — Matching engine that prevents duplicate suggestions for projected pairs
-- [[Integrations]] — Parent domain for integration data flow and sync pipeline
-- [[Entities]] — Entity domain providing entity types, attributes, relationships
-- [[Three-Tier Entity Model and Lifecycle Spine]] — LifecycleDomain classification used for smart routing
-- [[Integration Data Sync Pipeline]] — Temporal sync workflow extended with Pass 3
-- [[Integration Schema Mapping]] — SchemaMappingService used for attribute transformation
+- [[riven/docs/system-design/feature-design/2. Planned/Identity Resolution System]] — Matching engine that prevents duplicate suggestions for projected pairs
+- [[riven/docs/system-design/domains/Integrations/Integrations]] — Parent domain for integration data flow and sync pipeline
+- [[riven/docs/system-design/domains/Entities/Entities]] — Entity domain providing entity types, attributes, relationships
+- [[riven/docs/system-design/feature-design/4. Completed/Three-Tier Entity Model and Lifecycle Spine]] — LifecycleDomain classification used for smart routing
+- [[riven/docs/system-design/feature-design/1. Planning/Integration Data Sync Pipeline]] — Temporal sync workflow extended with Pass 3
+- [[riven/docs/system-design/feature-design/1. Planning/Integration Schema Mapping]] — SchemaMappingService used for attribute transformation
 - [[SaaS Decline & Strategic Positioning]] — Strategic thesis driving system-agnostic design
 
 ---

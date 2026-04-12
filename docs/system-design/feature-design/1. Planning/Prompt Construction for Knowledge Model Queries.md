@@ -6,9 +6,9 @@ tags:
 Created: 2026-02-06
 Updated:
 Domains:
-  - "[[Knowledge]]"
+  - "[[riven/docs/system-design/domains/Knowledge/Knowledge]]"
 blocked by:
-  - "[[Data Extraction and Retrieval from Queries]]"
+  - "[[riven/docs/system-design/feature-design/1. Planning/Data Extraction and Retrieval from Queries]]"
 ---
 # Feature: Prompt Construction for Knowledge Model
 

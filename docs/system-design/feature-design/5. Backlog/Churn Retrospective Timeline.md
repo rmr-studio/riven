@@ -9,12 +9,12 @@ tags:
 Created: 2026-03-18
 Updated:
 Domains:
-  - "[[Knowledge]]"
-  - "[[Entities]]"
+  - "[[riven/docs/system-design/domains/Knowledge/Knowledge]]"
+  - "[[riven/docs/system-design/domains/Entities/Entities]]"
 blocked by:
-  - "[[Three-Tier Entity Model and Lifecycle Spine]]"
-  - "[[Lifecycle Domain Model]]"
-  - "[[Identity Resolution System]]"
+  - "[[riven/docs/system-design/feature-design/4. Completed/Three-Tier Entity Model and Lifecycle Spine]]"
+  - "[[riven/docs/system-design/feature-design/4. Completed/Lifecycle Domain Model]]"
+  - "[[riven/docs/system-design/feature-design/2. Planned/Identity Resolution System]]"
 ---
 # Feature: Churn Retrospective Timeline
 
@@ -63,11 +63,11 @@ CHURN EVENT (2026-03-15)
 
 ## Related Documents
 
-- [[Three-Tier Entity Model and Lifecycle Spine]] — entity types forming the timeline
-- [[Lifecycle Domain Model]] — cross-domain traversal logic
-- [[Identity Resolution System]] — linking customer across integration types to spine types
-- [[Knowledge Layer Sub-Agents]] — churn signals trigger retrospective generation
-- [[Lifecycle Operations Dashboard]] — drill-in from churn signals
+- [[riven/docs/system-design/feature-design/4. Completed/Three-Tier Entity Model and Lifecycle Spine]] — entity types forming the timeline
+- [[riven/docs/system-design/feature-design/4. Completed/Lifecycle Domain Model]] — cross-domain traversal logic
+- [[riven/docs/system-design/feature-design/2. Planned/Identity Resolution System]] — linking customer across integration types to spine types
+- [[riven/docs/system-design/feature-design/1. Planning/Knowledge Layer Sub-Agents]] — churn signals trigger retrospective generation
+- [[riven/docs/system-design/feature-design/1. Planning/Lifecycle Operations Dashboard]] — drill-in from churn signals
 - CEO Plan: Lifecycle Vertical Scoping (2026-03-18)
 
 ---
