@@ -1,15 +1,16 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
 import { Check, Clock, Puzzle } from 'lucide-react';
+import Image from 'next/image';
 
+import { DefinitionDetailView } from '@/components/ui/sidebar/types/side-panel.types';
+import { IntegrationDefinitionModel } from '@/lib/types/integration';
+import { cn } from '@/lib/util/utils';
 import { Badge } from '@riven/ui/badge';
 import { Card } from '@riven/ui/card';
-import { cn } from '@/lib/util/utils';
-import { IntegrationDefinitionModel } from '@/lib/types/integration';
 
 interface IntegrationCardProps {
+  onClick: (view: DefinitionDetailView) => void;
   integration: IntegrationDefinitionModel;
   isConnected: boolean;
   workspaceId: string;
@@ -23,15 +24,29 @@ const CATEGORY_LABELS: Record<string, string> = {
   PRODUCT_ANALYTICS: 'Analytics',
 };
 
-export function IntegrationCard({ integration, isConnected, workspaceId }: IntegrationCardProps) {
+export function IntegrationCard({
+  integration,
+  isConnected,
+  workspaceId,
+  onClick,
+}: IntegrationCardProps) {
   const isComingSoon = !integration.nangoProviderKey;
 
-  const content = (
+  const handleSelect = () => {
+    if (isComingSoon) return;
+
+    const view: DefinitionDetailView = {
+      type: 'definition-detail',
+      integration,
+      workspaceId,
+    };
+    onClick(view);
+  };
+
+  return (
     <Card
-      className={cn(
-        'group p-5 transition-shadow hover:shadow-md',
-        isComingSoon && 'opacity-60',
-      )}
+      className={cn('group p-5 transition-shadow hover:shadow-md', isComingSoon && 'opacity-60')}
+      onClick={handleSelect}
     >
       <div className="flex items-start gap-3">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-muted">
@@ -56,7 +71,7 @@ export function IntegrationCard({ integration, isConnected, workspaceId }: Integ
               {CATEGORY_LABELS[integration.category] ?? integration.category}
             </Badge>
             {isConnected && (
-              <Badge className="gap-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-transparent text-xs">
+              <Badge className="gap-1 border-transparent bg-emerald-500/15 text-xs text-emerald-700 dark:text-emerald-400">
                 <Check className="size-3" />
                 Connected
               </Badge>
@@ -71,20 +86,8 @@ export function IntegrationCard({ integration, isConnected, workspaceId }: Integ
         </div>
       </div>
       {integration.description && (
-        <p className="mt-3 line-clamp-2 text-xs text-muted-foreground">
-          {integration.description}
-        </p>
+        <p className="mt-3 line-clamp-2 text-xs text-muted-foreground">{integration.description}</p>
       )}
     </Card>
-  );
-
-  if (isComingSoon) {
-    return content;
-  }
-
-  return (
-    <Link href={`/dashboard/workspace/${workspaceId}/integrations/${integration.slug}`}>
-      {content}
-    </Link>
   );
 }

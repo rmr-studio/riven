@@ -1,29 +1,30 @@
 
-# ContentNode
+# DevSeedResponse
 
-Content node containing a block with optional children
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`block` | [Block](Block.md)
-`warnings` | Array&lt;string&gt;
-`type` | [NodeType](NodeType.md)
-`children` | [Array&lt;Node&gt;](Node.md)
+`alreadySeeded` | boolean
+`templateKey` | string
+`entitiesCreated` | number
+`relationshipsCreated` | number
+`details` | [{ [key: string]: EntityTypeSeedDetail; }](EntityTypeSeedDetail.md)
 
 ## Example
 
 ```typescript
-import type { ContentNode } from ''
+import type { DevSeedResponse } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "block": null,
-  "warnings": null,
-  "type": null,
-  "children": null,
-} satisfies ContentNode
+  "alreadySeeded": null,
+  "templateKey": null,
+  "entitiesCreated": null,
+  "relationshipsCreated": null,
+  "details": null,
+} satisfies DevSeedResponse
 
 console.log(example)
 
@@ -32,7 +33,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as ContentNode
+const exampleParsed = JSON.parse(exampleJSON) as DevSeedResponse
 console.log(exampleParsed)
 ```
 

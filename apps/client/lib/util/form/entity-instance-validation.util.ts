@@ -8,6 +8,7 @@ import {
 } from '@/lib/types/entity';
 import { z } from 'zod';
 import { exists } from '../utils';
+import { resolveDefaultValue } from './default-value.util';
 import { attributeTypes } from './schema.util';
 
 /**
@@ -218,8 +219,8 @@ export function buildRelationshipFieldSchema(relationship: RelationshipDefinitio
  */
 export function getDefaultValueForSchema(schema: SchemaUUID): unknown {
   // Check for custom default value in options first
-  if (schema.options?._default !== undefined && schema.options?._default !== null) {
-    return schema.options._default;
+  if (schema.options?.defaultValue != null) {
+    return resolveDefaultValue(schema.options.defaultValue);
   }
 
   const attributeType = attributeTypes[schema.key];

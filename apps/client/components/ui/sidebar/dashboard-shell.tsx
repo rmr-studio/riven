@@ -1,11 +1,13 @@
 'use client';
 
 import { useIsMobile } from '@riven/hooks';
+import { PanelLeftClose } from 'lucide-react';
 import { type ReactNode, useEffect, useRef } from 'react';
 import { type ImperativePanelHandle } from 'react-resizable-panels';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '../resizable';
-import { IconRail } from './icon-rail';
-import { SubPanel } from './sub-panel';
+import { Sheet, SheetContent } from '../sheet';
+import { panelRootRegistry } from './components/panel-root-registry';
+import { PanelViewRenderer } from './components/panel-view-renderer';
 import {
   useCurrentView,
   useMobileOpen,
@@ -13,15 +15,13 @@ import {
   useSelectedPanel,
   useSidePanelActions,
 } from './context/side-panel-provider';
+import { IconRail } from './icon-rail';
+import { SubPanel } from './sub-panel';
 import {
   PANEL_DEFAULT_SIZE_PCT,
   PANEL_MAX_SIZE_PCT,
   PANEL_MIN_SIZE_PCT,
 } from './types/side-panel.types';
-import { Sheet, SheetContent } from '../sheet';
-import { panelRootRegistry } from './components/panel-root-registry';
-import { PanelViewRenderer } from './components/panel-view-renderer';
-import { PanelLeftClose } from 'lucide-react';
 
 interface DashboardShellProps {
   children: ReactNode;
@@ -69,10 +69,7 @@ function DesktopShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen w-full bg-primary py-0.5 dark:bg-secondary">
       <IconRail />
-      <ResizablePanelGroup
-        direction="horizontal"
-        className="h-full"
-      >
+      <ResizablePanelGroup direction="horizontal" className="h-full">
         <ResizablePanel
           ref={panelRef}
           defaultSize={PANEL_DEFAULT_SIZE_PCT}
@@ -88,14 +85,10 @@ function DesktopShell({ children }: { children: ReactNode }) {
           <SubPanel />
         </ResizablePanel>
         {/* Invisible resize handle — reveals subtle border on hover, focus ring for keyboard */}
-        <ResizableHandle className="w-0 bg-transparent transition-colors duration-150 hover:bg-border active:bg-border/80 focus-visible:ring-1 focus-visible:ring-ring" />
-        <ResizablePanel
-          defaultSize={100 - PANEL_DEFAULT_SIZE_PCT}
-          minSize={40}
-          order={2}
-        >
-          <div className="min-w-0 flex-1 overflow-hidden rounded-l-lg bg-background">
-            <div className="h-full min-w-0 overflow-auto">{children}</div>
+        <ResizableHandle className="w-0 bg-transparent transition-colors duration-150 hover:bg-border focus-visible:ring-1 focus-visible:ring-ring active:bg-border/80" />
+        <ResizablePanel defaultSize={100 - PANEL_DEFAULT_SIZE_PCT} minSize={40} order={2}>
+          <div className="h-full min-w-0 flex-1 overflow-hidden rounded-l-lg bg-background">
+            <div className="flex h-full min-w-0 flex-col overflow-auto">{children}</div>
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

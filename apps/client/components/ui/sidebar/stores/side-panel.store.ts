@@ -96,11 +96,8 @@ export const createSidePanelStore = (init?: SidePanelInitState) => {
 
       replaceView: (view: SidePanelView) => {
         const { viewStack } = get();
-        if (viewStack.length === 0) {
-          set({ viewStack: [view] });
-        } else {
-          set({ viewStack: [...viewStack.slice(0, -1), view] });
-        }
+        const nextStack = viewStack.length === 0 ? [view] : [...viewStack.slice(0, -1), view];
+        set({ viewStack: nextStack, panelOpen: true });
       },
 
       clearStack: () => set({ viewStack: [] }),

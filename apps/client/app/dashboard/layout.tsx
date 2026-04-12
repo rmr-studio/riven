@@ -2,8 +2,8 @@ import { AuthGuard } from '@/components/feature-modules/authentication/component
 import { OnboardWrapper } from '@/components/feature-modules/onboarding/context/onboard-handler';
 import { WebSocketSubscriptionManager } from '@/components/feature-modules/workspace/components/websocket-subscription-manager';
 import { Navbar } from '@/components/ui/nav/navbar';
-import { DashboardShell } from '@/components/ui/sidebar/dashboard-shell';
 import { SidePanelProvider } from '@/components/ui/sidebar/context/side-panel-provider';
+import { DashboardShell } from '@/components/ui/sidebar/dashboard-shell';
 import type { ChildNodeProps } from '@riven/utils';
 import { FC } from 'react';
 

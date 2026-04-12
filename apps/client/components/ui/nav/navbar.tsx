@@ -1,5 +1,6 @@
 'use client';
 
+import { DevToolsDropdown } from '@/components/feature-modules/dev/components/dev-tools-dropdown';
 import { UserProfileDropdown } from '@/components/feature-modules/user/components/avatar-dropdown';
 import { useProfile } from '@/components/feature-modules/user/hooks/use-profile';
 import { ConnectionStatus } from '@/components/feature-modules/workspace/components/connection-status';
@@ -52,6 +53,7 @@ export const Navbar = () => {
       </AnimatePresence>
       <div className="flex w-auto grow items-center justify-end space-x-2">
         <ConnectionStatus />
+        {process.env.NODE_ENV === 'development' && <DevToolsDropdown />}
         <ThemeToggle />
         <NavbarUserProfile />
       </div>

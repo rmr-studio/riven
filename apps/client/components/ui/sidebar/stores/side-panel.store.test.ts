@@ -1,10 +1,17 @@
-import { createSidePanelStore } from './side-panel.store';
 import type { SidePanelView } from '../types/side-panel.types';
+import { createSidePanelStore } from './side-panel.store';
 
 const makeView = (type: SidePanelView['type'], suffix = ''): SidePanelView => {
   switch (type) {
     case 'definition-detail':
-      return { type, title: `Def${suffix}`, definitionId: `def-${suffix}`, workspaceId: 'ws-1' };
+      return {
+        type,
+        integration: {
+          id: `def-${suffix}`,
+          name: `Integration ${suffix}`,
+        } as any,
+        workspaceId: 'ws-1',
+      };
     case 'entity-notes':
       return { type, title: `Notes${suffix}`, entityId: `ent-${suffix}`, workspaceId: 'ws-1' };
     case 'integration-detail':
@@ -139,6 +146,12 @@ describe('SidePanelStore', () => {
       const v1 = makeView('definition-detail', '1');
       store.getState().replaceView(v1);
       expect(store.getState().viewStack).toEqual([v1]);
+    });
+
+    it('opens the panel if it was closed', () => {
+      const store = createSidePanelStore({ panelOpen: false });
+      store.getState().replaceView(makeView('definition-detail', '1'));
+      expect(store.getState().panelOpen).toBe(true);
     });
   });
 

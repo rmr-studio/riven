@@ -1,29 +1,22 @@
 
-# ContentNode
+# DefaultValue
 
-Content node containing a block with optional children
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`block` | [Block](Block.md)
-`warnings` | Array&lt;string&gt;
-`type` | [NodeType](NodeType.md)
-`children` | [Array&lt;Node&gt;](Node.md)
+`type` | string
 
 ## Example
 
 ```typescript
-import type { ContentNode } from ''
+import type { DefaultValue } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "block": null,
-  "warnings": null,
   "type": null,
-  "children": null,
-} satisfies ContentNode
+} satisfies DefaultValue
 
 console.log(example)
 
@@ -32,7 +25,7 @@ const exampleJSON: string = JSON.stringify(example)
 console.log(exampleJSON)
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as ContentNode
+const exampleParsed = JSON.parse(exampleJSON) as DefaultValue
 console.log(exampleParsed)
 ```
 

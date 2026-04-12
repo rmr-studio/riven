@@ -1,3 +1,4 @@
+import { IntegrationDefinitionModel } from '@/lib/types';
 import type { ComponentType } from 'react';
 
 /**
@@ -34,10 +35,28 @@ export const PANEL_IDS: PanelId[] = [
  * - `title`: display title for the panel header
  * - any data props the detail component needs
  */
-export type SidePanelView =
-  | { type: 'definition-detail'; title: string; definitionId: string; workspaceId: string }
-  | { type: 'entity-notes'; title: string; entityId: string; workspaceId: string }
-  | { type: 'integration-detail'; title: string; integrationId: string; workspaceId: string };
+
+export type DefinitionDetailView = {
+  type: 'definition-detail';
+  integration: IntegrationDefinitionModel;
+  workspaceId: string;
+};
+
+export type EntityNotesView = {
+  type: 'entity-notes';
+  title: string;
+  entityId: string;
+  workspaceId: string;
+};
+
+export type IntegrationDetailView = {
+  type: 'integration-detail';
+  title: string;
+  integrationId: string;
+  workspaceId: string;
+};
+
+export type SidePanelView = DefinitionDetailView | EntityNotesView | IntegrationDetailView;
 
 /**
  * Extract the `type` literal union from SidePanelView.
