@@ -1,5 +1,8 @@
 package riven.core.service.util.factory.entity
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import riven.core.entity.entity.EntityAttributeEntity
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityRelationshipEntity
 import riven.core.entity.entity.EntityTypeEntity
@@ -10,8 +13,8 @@ import riven.core.enums.common.icon.IconType
 import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.core.DataType
 import riven.core.enums.entity.EntityRelationshipCardinality
-import riven.core.enums.integration.SourceType
 import riven.core.enums.entity.semantics.SemanticGroup
+import riven.core.enums.integration.SourceType
 import riven.core.models.common.validation.Schema
 import riven.core.models.entity.EntityTypeSchema
 import riven.core.models.entity.configuration.ColumnConfiguration
@@ -30,6 +33,7 @@ object EntityFactory {
         workspaceId: UUID = UUID.randomUUID(),
         schema: EntityTypeSchema = createSimpleSchema(),
         columnConfiguration: ColumnConfiguration? = null,
+        attributeKeyMapping: Map<String, String>? = null,
         version: Int = 1,
         protected: Boolean = false,
         readonly: Boolean = false,
@@ -51,6 +55,7 @@ object EntityFactory {
             workspaceId = workspaceId,
             schema = schema,
             columnConfiguration = defaultConfig,
+            attributeKeyMapping = attributeKeyMapping,
             version = version,
             protected = protected,
             readonly = readonly,
@@ -87,17 +92,21 @@ object EntityFactory {
 
     /**
      * Creates an EntityRelationshipEntity (relationship instance) with the given parameters.
+     *
+     * Pass [createdAt] to override the audit timestamp set by JPA — useful for tests
+     * that assert on relative recency (e.g. enrichment context "latestActivityAt").
      */
     fun createRelationshipEntity(
-        id: UUID = UUID.randomUUID(),
+        id: UUID? = UUID.randomUUID(),
         workspaceId: UUID = UUID.randomUUID(),
         sourceId: UUID = UUID.randomUUID(),
         targetId: UUID = UUID.randomUUID(),
         definitionId: UUID = UUID.randomUUID(),
         semanticContext: String? = null,
         linkSource: riven.core.enums.integration.SourceType = riven.core.enums.integration.SourceType.USER_CREATED,
+        createdAt: java.time.ZonedDateTime? = null,
     ): EntityRelationshipEntity {
-        return EntityRelationshipEntity(
+        val rel = EntityRelationshipEntity(
             id = id,
             workspaceId = workspaceId,
             sourceId = sourceId,
@@ -106,6 +115,10 @@ object EntityFactory {
             semanticContext = semanticContext,
             linkSource = linkSource,
         )
+        if (createdAt != null) {
+            rel.createdAt = createdAt
+        }
+        return rel
     }
 
     /**
@@ -149,6 +162,29 @@ object EntityFactory {
     }
 
     /**
+     * Creates an EntityAttributeEntity with the given parameters and reasonable defaults.
+     */
+    fun createEntityAttributeEntity(
+        id: UUID? = UUID.randomUUID(),
+        entityId: UUID = UUID.randomUUID(),
+        workspaceId: UUID = UUID.randomUUID(),
+        typeId: UUID = UUID.randomUUID(),
+        attributeId: UUID = UUID.randomUUID(),
+        schemaType: SchemaType = SchemaType.TEXT,
+        value: JsonNode = JsonNodeFactory.instance.textNode("test-value"),
+    ): EntityAttributeEntity {
+        return EntityAttributeEntity(
+            id = id,
+            entityId = entityId,
+            workspaceId = workspaceId,
+            typeId = typeId,
+            attributeId = attributeId,
+            schemaType = schemaType,
+            value = value,
+        )
+    }
+
+    /**
      * Creates an EntityEntity with the given parameters and reasonable defaults.
      */
     fun createEntityEntity(
@@ -162,6 +198,8 @@ object EntityFactory {
         sourceType: SourceType = SourceType.USER_CREATED,
         sourceIntegrationId: UUID? = null,
         sourceExternalId: String? = null,
+        firstSyncedAt: java.time.ZonedDateTime? = null,
+        lastSyncedAt: java.time.ZonedDateTime? = null,
     ): EntityEntity {
         return EntityEntity(
             id = id,
@@ -174,6 +212,8 @@ object EntityFactory {
             sourceType = sourceType,
             sourceIntegrationId = sourceIntegrationId,
             sourceExternalId = sourceExternalId,
+            firstSyncedAt = firstSyncedAt,
+            lastSyncedAt = lastSyncedAt,
         )
     }
 }

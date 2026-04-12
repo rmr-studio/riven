@@ -5,11 +5,11 @@ tags:
   - architecture/component
 Created: 2026-03-06
 Domains:
-  - "[[Catalog]]"
+  - "[[riven/docs/system-design/domains/Catalog/Catalog]]"
 ---
 # ManifestResolverService
 
-Part of [[Manifest Pipeline]]
+Part of [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Catalog/Manifest Pipeline/Manifest Pipeline]]
 
 ## Purpose
 
@@ -26,6 +26,7 @@ Pure in-memory transformation service that resolves scanned manifests into fully
 - Validate relationship source/target keys against the manifest's entity type set
 - Detect duplicate relationship keys
 - Validate field mapping attribute keys against resolved entity type schemas
+- Resolve `syncModels` mapping from integration manifests (Nango model name → entity type key)
 - Degrade gracefully to stale manifests on any resolution failure
 - Resolve bundle manifests into lightweight `ResolvedBundle` objects (template key list extraction, no entity type resolution)
 
@@ -38,7 +39,7 @@ Pure in-memory transformation service that resolves scanned manifests into fully
 
 ## Used By
 
-- [[ManifestLoaderService]] — Invokes resolver as part of the [[Flow - Manifest Loading Pipeline|manifest loading pipeline]]
+- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Catalog/Manifest Pipeline/ManifestLoaderService]] — Invokes resolver as part of the [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Catalog/Manifest Pipeline/Flow - Manifest Loading Pipeline|manifest loading pipeline]]
 
 ---
 
@@ -79,6 +80,10 @@ Pure in-memory transformation service that resolves scanned manifests into fully
 - Each mapping key is validated against the target entity type's attribute key set
 - Invalid keys are skipped with a WARN log rather than failing the manifest
 
+**SyncModel resolution:**
+
+Extracts the `syncModels` object from integration manifest JSON, producing a `Map<String, String>` mapping Nango sync model names (e.g. `"HubSpotContact"`) to entity type keys (e.g. `"contact"`). Returns an empty map if the field is absent. Only meaningful for INTEGRATION manifests — template and model manifests do not declare sync models.
+
 **Graceful degradation:**
 
 Any resolution failure (unresolved `$ref`, mutual exclusivity violation, invalid relationship keys) returns a `ResolvedManifest` with `stale=true` and empty entity types, relationships, and field mappings.
@@ -89,11 +94,11 @@ Any resolution failure (unresolved `$ref`, mutual exclusivity violation, invalid
 
 ### `resolveManifest(scanned: ScannedManifest, modelIndex: Map<String, JsonNode>): ResolvedManifest`
 
-Resolves a single scanned manifest through all four phases: entity type resolution, relationship normalization, relationship validation, and field mapping resolution. Returns a manifest with `stale=true` if any phase fails.
+Resolves a single scanned manifest through all four phases: entity type resolution, relationship normalization, relationship validation, and field mapping resolution. Includes syncModel resolution for integration manifests. Returns a manifest with `stale=true` if any phase fails.
 
 ### `resolveBundle(scanned: ScannedManifest): ResolvedBundle`
 
-Resolves a bundle manifest into a `ResolvedBundle`. Lightweight — extracts key, name, description, manifestVersion, and templateKeys list from the JSON. No entity type resolution; that happens at installation time via [[TemplateInstallationService]]. Requires `scanned.type == BUNDLE`.
+Resolves a bundle manifest into a `ResolvedBundle`. Lightweight — extracts key, name, description, manifestVersion, and templateKeys list from the JSON. No entity type resolution; that happens at installation time via [[riven/docs/system-design/domains/Catalog/Template Installation/TemplateInstallationService]]. Requires `scanned.type == BUNDLE`.
 
 ---
 
@@ -104,14 +109,14 @@ Resolves a bundle manifest into a `ResolvedBundle`. Lightweight — extracts key
 - **Field mappings are lenient:** Unlike entity types and relationships, invalid field mapping keys do not mark the manifest stale — they are silently skipped with a warning. This allows partial field mappings to succeed
 - **Full format cardinality:** Relationships using the full `targetRules` format always default to `ONE_TO_MANY`. Per-rule overrides are specified via `cardinalityOverride` on individual target rules
 - **Shorthand requires both fields:** A shorthand relationship must have both `targetEntityTypeKey` and `cardinality` present. Missing either returns null for that relationship
-- **Bundle resolution is trivial:** `resolveBundle()` does pure field extraction with no validation beyond the `require(type == BUNDLE)` check. Schema validation happens upstream in [[ManifestScannerService]]. Entity type resolution happens downstream at installation time.
+- **Bundle resolution is trivial:** `resolveBundle()` does pure field extraction with no validation beyond the `require(type == BUNDLE)` check. Schema validation happens upstream in [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Catalog/Manifest Pipeline/ManifestScannerService]]. Entity type resolution happens downstream at installation time.
 
 ---
 
 ## Related
 
-- [[ManifestScannerService]] — Produces the `ScannedManifest` input
-- [[ManifestUpsertService]] — Consumes the `ResolvedManifest` output for persistence
-- [[ManifestLoaderService]] — Orchestrates the full pipeline
-- [[Flow - Manifest Loading Pipeline]] — End-to-end flow
-- [[Manifest Pipeline]] — Parent subdomain
+- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Catalog/Manifest Pipeline/ManifestScannerService]] — Produces the `ScannedManifest` input
+- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Catalog/Manifest Pipeline/ManifestUpsertService]] — Consumes the `ResolvedManifest` output for persistence
+- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Catalog/Manifest Pipeline/ManifestLoaderService]] — Orchestrates the full pipeline
+- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Catalog/Manifest Pipeline/Flow - Manifest Loading Pipeline]] — End-to-end flow
+- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Catalog/Manifest Pipeline/Manifest Pipeline]] — Parent subdomain

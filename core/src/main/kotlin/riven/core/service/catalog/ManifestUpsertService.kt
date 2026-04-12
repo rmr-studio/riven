@@ -8,6 +8,7 @@ import riven.core.entity.catalog.*
 import riven.core.enums.catalog.ManifestType
 import riven.core.enums.common.icon.IconColour
 import riven.core.enums.common.icon.IconType
+import riven.core.enums.entity.LifecycleDomain
 import riven.core.enums.entity.semantics.SemanticGroup
 import riven.core.enums.entity.semantics.SemanticMetadataTargetType
 import riven.core.models.catalog.*
@@ -63,49 +64,7 @@ class ManifestUpsertService(
         deleteChildren(manifestId)
         insertEntityTypes(manifestId, resolved.entityTypes)
         insertRelationships(manifestId, resolved.relationships)
-        insertFieldMappings(manifestId, resolved.fieldMappings)
-    }
-
-    /**
-     * Persists a resolved bundle to the catalog. Bundles have no child rows
-     * (no entity types or relationships) — only the catalog entry with templateKeys JSONB.
-     */
-    @Transactional
-    fun upsertBundle(resolved: ResolvedBundle) {
-        val contentHash = computeBundleContentHash(resolved)
-        val existing = manifestCatalogRepository.findByKeyAndManifestType(resolved.key, ManifestType.BUNDLE)
-
-        if (existing != null && contentHash == existing.contentHash && existing.stale == resolved.stale) {
-            existing.lastLoadedAt = ZonedDateTime.now()
-            manifestCatalogRepository.save(existing)
-            return
-        }
-
-        val entity = if (existing != null) {
-            existing.copy(
-                name = resolved.name,
-                description = resolved.description,
-                manifestVersion = resolved.manifestVersion,
-                lastLoadedAt = ZonedDateTime.now(),
-                stale = resolved.stale,
-                contentHash = contentHash,
-                templateKeys = resolved.templateKeys,
-            )
-        } else {
-            ManifestCatalogEntity(
-                key = resolved.key,
-                name = resolved.name,
-                description = resolved.description,
-                manifestType = ManifestType.BUNDLE,
-                manifestVersion = resolved.manifestVersion,
-                lastLoadedAt = ZonedDateTime.now(),
-                stale = resolved.stale,
-                contentHash = contentHash,
-                templateKeys = resolved.templateKeys,
-            )
-        }
-
-        manifestCatalogRepository.save(entity)
+        insertFieldMappings(manifestId, resolved.fieldMappings, resolved.syncModels)
     }
 
     // ------ Private Helpers ------
@@ -148,21 +107,8 @@ class ManifestUpsertService(
                 "manifestVersion" to resolved.manifestVersion,
                 "entityTypes" to resolved.entityTypes,
                 "relationships" to resolved.relationships,
-                "fieldMappings" to resolved.fieldMappings
-            )
-        )
-        return MessageDigest.getInstance("SHA-256")
-            .digest(content.toByteArray())
-            .joinToString("") { "%02x".format(it) }
-    }
-
-    private fun computeBundleContentHash(resolved: ResolvedBundle): String {
-        val content = objectMapper.writeValueAsString(
-            mapOf(
-                "name" to resolved.name,
-                "description" to resolved.description,
-                "manifestVersion" to resolved.manifestVersion,
-                "templateKeys" to resolved.templateKeys,
+                "fieldMappings" to resolved.fieldMappings,
+                "syncModels" to resolved.syncModels
             )
         )
         return MessageDigest.getInstance("SHA-256")
@@ -200,9 +146,10 @@ class ManifestUpsertService(
                 key = et.key,
                 displayNameSingular = et.displayNameSingular,
                 displayNamePlural = et.displayNamePlural,
-                iconType = IconType.valueOf(et.iconType),
-                iconColour = IconColour.valueOf(et.iconColour),
-                semanticGroup = SemanticGroup.valueOf(et.semanticGroup),
+                iconType = safeValueOf(et.iconType, IconType.CIRCLE_DASHED),
+                iconColour = safeValueOf(et.iconColour, IconColour.NEUTRAL),
+                semanticGroup = safeValueOf(et.semanticGroup, SemanticGroup.UNCATEGORIZED),
+                lifecycleDomain = et.lifecycleDomain ?: LifecycleDomain.UNCATEGORIZED,
                 identifierKey = et.identifierKey,
                 readonly = et.readonly,
                 schema = et.schema,
@@ -238,8 +185,8 @@ class ManifestUpsertService(
                     key = rel.key,
                     sourceEntityTypeKey = rel.sourceEntityTypeKey,
                     name = rel.name,
-                    iconType = IconType.valueOf(rel.iconType),
-                    iconColour = IconColour.valueOf(rel.iconColour),
+                    iconType = safeValueOf(rel.iconType, IconType.LINK),
+                    iconColour = safeValueOf(rel.iconColour, IconColour.NEUTRAL),
                     cardinalityDefault = rel.cardinalityDefault,
                     `protected` = rel.`protected`
                 )
@@ -260,11 +207,38 @@ class ManifestUpsertService(
         }
     }
 
-    private fun insertFieldMappings(manifestId: UUID, fieldMappings: List<ResolvedFieldMapping>) {
+    /**
+     * Safely converts a string to an enum value, returning the fallback if the string
+     * doesn't match any enum constant. Logs a warning on fallback to aid manifest debugging.
+     */
+    private inline fun <reified T : Enum<T>> safeValueOf(value: String, fallback: T): T {
+        return enumValues<T>().firstOrNull { it.name == value }
+            ?: run {
+                logger.warn { "Unknown ${T::class.simpleName} value '$value', falling back to $fallback" }
+                fallback
+            }
+    }
+
+    private fun insertFieldMappings(
+        manifestId: UUID,
+        fieldMappings: List<ResolvedFieldMapping>,
+        syncModels: Map<String, String>
+    ) {
+        val groupedByEntityTypeKey = syncModels.entries.groupBy { it.value }
+        val duplicates = groupedByEntityTypeKey.filter { it.value.size > 1 }
+        require(duplicates.isEmpty()) {
+            "Multiple nango models map to the same entity type key: ${
+                duplicates.map { (key, entries) -> "$key <- [${entries.joinToString { it.key }}]" }
+            }"
+        }
+        val entityTypeKeyToNangoModel = syncModels.entries
+            .associate { (nangoModel, entityTypeKey) -> entityTypeKey to nangoModel }
+
         val entities = fieldMappings.map { fm ->
             CatalogFieldMappingEntity(
                 manifestId = manifestId,
                 entityTypeKey = fm.entityTypeKey,
+                nangoModel = entityTypeKeyToNangoModel[fm.entityTypeKey],
                 mappings = fm.mappings
             )
         }

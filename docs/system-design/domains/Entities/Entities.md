@@ -3,7 +3,7 @@ tags:
   - architecture/domain
   - domain/entity
 Created: 2026-02-01
-Updated: 2026-02-21
+Updated: 2026-03-27
 ---
 # Domain: Entities
 
@@ -15,7 +15,7 @@ The Entities domain provides a flexible, schema-driven data management system. E
 
 ---
 
-# [[2. Areas/2.1 Startup & Business/Riven/2. System Design/domains/Entities/FAQ|FAQ]]
+# [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Entities/FAQ|FAQ]]
 
 ## Boundaries
 
@@ -41,12 +41,12 @@ The Entities domain provides a flexible, schema-driven data management system. E
 
 | Component | Purpose |
 | --------- | ------- |
-| [[Type Definitions]] | Entity type schema management — attributes, relationships, publishing |
-| [[Entity Management]] | Entity instance lifecycle — CRUD with validation and relationship hydration |
-| [[Relationships]] | Relationship definitions (type-level) and instance data (entity-level) with table-based architecture |
-| [[Querying]] | Query pipeline for filtered entity retrieval with EXISTS-based attribute filters and relationship traversal |
-| [[Validation]] | Schema validation for entity instances before persistence |
-| [[Entity Semantics]] | Semantic metadata for entity types, attributes, and relationships — definitions, classifications, and tags |
+| [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Entities/Type Definitions/Type Definitions]] | Entity type schema management — attributes, relationships, publishing |
+| [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Entities/Entity Management/Entity Management]] | Entity instance lifecycle — CRUD with validation and relationship hydration |
+| [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Entities/Relationships/Relationships]] | Relationship definitions (type-level) and instance data (entity-level) with table-based architecture |
+| [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Entities/Querying/Querying]] | Query pipeline for filtered entity retrieval with EXISTS-based attribute filters and relationship traversal |
+| [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Entities/Validation/Validation]] | Schema validation for entity instances before persistence |
+| [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Entities/Entity Semantics/Entity Semantics]] | Semantic metadata for entity types, attributes, and relationships — definitions, classifications, and tags |
 
 ---
 
@@ -54,8 +54,8 @@ The Entities domain provides a flexible, schema-driven data management system. E
 
 | Flow        | Type                     | Description |
 | ----------- | ------------------------ | ----------- |
-| [[Entity CRUD]] | User-facing | Entity creation, update, and deletion flow (Phase 4) |
-| [[Entity Type Definition]] | User-facing | Entity type schema definition and modification flow (Phase 4) |
+| [[riven/docs/system-design/flows/Entity CRUD]] | User-facing | Entity creation, update, and deletion flow (Phase 4) |
+| [[riven/docs/system-design/flows/Entity Type Definition]] | User-facing | Entity type schema definition and modification flow (Phase 4) |
 
 ---
 
@@ -65,7 +65,7 @@ The Entities domain provides a flexible, schema-driven data management system. E
 
 | Entity | Purpose | Key Fields |
 | ------ | ------- | ---------- |
-| EntityTypeEntity | Entity type schema definitions | id, key, displayNameSingular, displayNamePlural, workspaceId, schema, columns, identifierKey |
+| EntityTypeEntity | Entity type schema definitions | id, key, displayNameSingular, displayNamePlural, workspaceId, schema, columns, identifierKey, lifecycleDomain |
 | EntityEntity | Entity instances (attribute data stored in entity_attributes) | id, typeId, typeKey, workspaceId, iconType, iconColour, identifierKey |
 | EntityAttributeEntity | Normalized per-attribute values for entity instances | id, entityId, workspaceId, typeId, attributeId, schemaType, value |
 | EntityRelationshipEntity | Relationship instances linking entities | id, sourceId, targetId, definitionId, workspaceId, semanticContext, linkSource |
@@ -101,17 +101,17 @@ None. The Entities domain operates entirely within the application database (Pos
 
 | Domain | What We Consume | Via Component | Related Flow |
 |--------|----------------|---------------|--------------|
-| [[Workspaces & Users]] | Workspace scoping via RLS | PostgreSQL RLS policies | [[Auth & Authorization]] |
-| [[Workspaces & Users]] | @PreAuthorize authorization checks | [[WorkspaceSecurity]] | [[Auth & Authorization]] |
-| [[Workspaces & Users]] | User context for activity logging | [[AuthTokenService]] | [[Entity CRUD]] |
+| [[riven/docs/system-design/domains/Workspaces & Users/Workspaces & Users]] | Workspace scoping via RLS | PostgreSQL RLS policies | [[riven/docs/system-design/flows/Auth & Authorization]] |
+| [[riven/docs/system-design/domains/Workspaces & Users/Workspaces & Users]] | @PreAuthorize authorization checks | [[riven/docs/system-design/domains/Workspaces & Users/Auth & Authorization/WorkspaceSecurity]] | [[riven/docs/system-design/flows/Auth & Authorization]] |
+| [[riven/docs/system-design/domains/Workspaces & Users/Workspaces & Users]] | User context for activity logging | [[riven/docs/system-design/domains/Workspaces & Users/Auth & Authorization/AuthTokenService]] | [[riven/docs/system-design/flows/Entity CRUD]] |
 
 ### Consumed By
 
 | Consumer | What They Consume | Via Component | Related Flow |
 |----------|------------------|---------------|--------------|
-| [[Workflows]] | Entity CRUD for workflow node actions | [[EntityService]], [[EntityContextService]] | [[Workflow Execution]] |
-| REST API | Entity and entity type management | EntityController, EntityTypeController | [[Entity CRUD]], [[Entity Type Definition]] |
-| [[Knowledge]] | Semantic metadata CRUD endpoints | [[EntityTypeSemanticMetadataService]] via [[KnowledgeController]] | |
+| [[riven/docs/system-design/domains/Workflows/Workflows]] | Entity CRUD for workflow node actions | [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Entities/Entity Management/EntityService]], [[riven/docs/system-design/domains/Workflows/State Management/EntityContextService]] | [[riven/docs/system-design/flows/Workflow Execution]] |
+| REST API | Entity and entity type management | EntityController, EntityTypeController | [[riven/docs/system-design/flows/Entity CRUD]], [[riven/docs/system-design/flows/Entity Type Definition]] |
+| [[riven/docs/system-design/domains/Knowledge/Knowledge]] | Semantic metadata CRUD endpoints | [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Entities/Entity Semantics/EntityTypeSemanticMetadataService]] via [[riven/docs/system-design/domains/Knowledge/KnowledgeController]] | |
 
 ---
 
@@ -152,3 +152,40 @@ None. The Entities domain operates entirely within the application database (Pos
 | 2026-03-06 | Always bidirectional — removed `inverse_visible` flag. Inverse visibility resolved at query time via explicit target rules. | Always Bidirectional |
 | 2026-03-09 | Relationship simplification — removed `allowPolymorphic` field (replaced with computed `isPolymorphic` derived from `systemType != null`), removed `semanticTypeConstraint` from target rules, removed `relationship_definition_exclusions` table and exclusion mechanism, made `targetEntityTypeId` non-nullable. Only system definitions (CONNECTED_ENTITIES) are polymorphic. Repository queries converted from native SQL to JPQL. | Relationship Simplification |
 | 2026-03-09 | Entity attributes normalization — extracted attribute storage from JSONB `payload` column on `entities` table into normalized `entity_attributes` table. AttributeSqlGenerator rewritten from JSONB operators to EXISTS subqueries. New EntityAttributeService, EntityAttributeRepository, EntityAttributeEntity components. | Entity Attributes Normalization |
+| 2026-03-26 | lifecycle_domain column added to entity_types — classifies entity types into lifecycle stages (ACQUISITION, ONBOARDING, USAGE, SUPPORT, BILLING, RETENTION, UNCATEGORIZED) | Lifecycle Spine |
+| 2026-03-27 | Projected entities and hub model — PROJECTED source type, field ownership model, timestamp-based conflict resolution | Entity Ingestion Pipeline |
+
+---
+
+## Projected Entities and the Hub Model
+
+Core entity types serve as the user-facing **hub** — all user interaction (viewing, editing, querying) happens against core entities. The ingestion pipeline can now automatically create entity instances from integration data.
+
+### Source Types
+
+Entities can have `sourceType = PROJECTED` (auto-created by the ingestion pipeline from integration data). PROJECTED entities coexist alongside `USER_CREATED` entities in the same entity type table. The `SourceType` enum has been extended with the `PROJECTED` value.
+
+### Field Ownership
+
+> [!info] Field ownership model
+> **Mapped fields** on projected entities are owned by the integration source — they are overwritten on each sync cycle. **Unmapped fields** are user-owned and are never touched by the sync pipeline.
+
+This allows users to enrich projected entities with custom data while keeping integration-sourced fields in sync.
+
+### Conflict Resolution
+
+When two integrations project to the same core entity (via identity resolution), **most recent sync wins** — timestamp-based conflict resolution determines which source's values are persisted for overlapping mapped fields.
+
+### Audit Trail
+
+Field-level change logging via `activityService` tracks when sync overwrites user-edited values on mapped fields, providing visibility into data provenance.
+
+### Model Changes
+
+- `SourceType` enum extended with `PROJECTED` value
+- `ProjectionAcceptRule` changed from nullable single value to `List<ProjectionAcceptRule>` on `CoreModelDefinition`
+
+### References
+
+- [[2. Areas/2.1 Startup & Content/Riven/7. Todo/Entity Ingestion Pipeline]]
+- [[riven/docs/system-design/feature-design/1. Planning/Smart Projection Architecture]]

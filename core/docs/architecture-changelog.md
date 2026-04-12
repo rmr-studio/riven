@@ -1,5 +1,145 @@
 # Architecture Changelog
 
+## [2026-04-10] — Enrichment Pipeline (Knowledge Subdomain Activation)
+
+**Domains affected:** Knowledge (new subdomain populated: Enrichment Pipeline), Workflows (TemporalWorkerConfiguration extended), Entities (read-only consumer of Entity-domain repositories)
+
+**What changed:**
+
+- Added `entity_embeddings` table with pgvector `vector(1536)` column, HNSW cosine index (`m = 16`, `ef_construction = 64`), and workspace-scoped RLS policies — first pgvector usage in the system
+- Added `EntityEmbeddingEntity` (JPA, system-managed — no audit, no soft-delete) and `EntityEmbeddingModel` in `entity.enrichment` / `models.enrichment`
+- Added `EntityEmbeddingRepository` with `findByEntityId`, `findByWorkspaceId`, `deleteByEntityId` (no similarity-search query yet)
+- Created `EnrichmentService` orchestrating the pipeline lifecycle: queue claim, batched context assembly, embedding storage. Injects 10 Entity-domain repositories directly to assemble the snapshot
+- Created `SemanticTextBuilderService` rendering `EnrichmentContext` into 6-section Markdown text with a 4-step progressive truncation algorithm under a 27 k character budget
+- Added `EmbeddingProvider` interface plus `OpenAiEmbeddingProvider` (default, `matchIfMissing=true`) and `OllamaEmbeddingProvider` (explicit `riven.enrichment.provider=ollama`); both blocking, both `@ConditionalOnProperty`-gated
+- Added `EnrichmentClientConfiguration` (`@Configuration` exposing two qualified `WebClient` beans) and `EnrichmentConfigurationProperties` (`@ConfigurationProperties(prefix = "riven.enrichment")`)
+- Added Temporal `EnrichmentWorkflow` interface and `EnrichmentWorkflowImpl` (NOT a Spring bean — Temporal-managed lifecycle, uses `Workflow.getLogger()` for determinism, 60s `startToCloseTimeout`, 3-attempt exponential backoff)
+- Added Temporal `EnrichmentActivities` interface and `EnrichmentActivitiesImpl` (`@Component`, thin delegation to services)
+- Added `ENRICHMENT_EMBED_QUEUE = "enrichment.embed"` constant to `TemporalWorkerConfiguration` and registered enrichment workflow + activities on the dedicated worker
+- Extended `ExecutionJobType` enum with `ENRICHMENT` and `ExecutionQueueStatus` enum with `COMPLETED`
+- Added `claimPendingEnrichmentJobs` and `findStaleClaimedEnrichmentItems` queries to `ExecutionQueueRepository`
+- Added `riven.enrichment.*` configuration block to `application.yml` with env-var defaults
+
+**New cross-domain dependencies:** yes
+
+- Knowledge → Entities: `EnrichmentService` injects 10 Entity-domain repositories (entities, types, attributes, relationships, identity cluster members, semantic metadata) for batched context assembly. Previously the Knowledge domain delegated everything via `EntityTypeSemanticMetadataService` — this is the first time it touches Entity repositories directly.
+- Knowledge → Workflows: Worker registration for `enrichment.embed` happens in `TemporalWorkerConfiguration`, which now constructor-injects `EnrichmentActivitiesImpl`.
+- Knowledge → External: First-time HTTP integrations with OpenAI Embeddings API and Ollama (alternative).
+
+**New components introduced:**
+
+- `EnrichmentService` — Pipeline orchestration: queue lifecycle, batched context assembly, embedding storage
+- `SemanticTextBuilderService` — Renders entity context into 6-section enriched text with progressive truncation
+- `EnrichmentWorkflow` / `EnrichmentWorkflowImpl` — Temporal workflow orchestrating the 4-step pipeline with retry
+- `EnrichmentActivities` / `EnrichmentActivitiesImpl` — Spring-managed activity layer registered on `enrichment.embed`
+- `EmbeddingProvider` / `OpenAiEmbeddingProvider` / `OllamaEmbeddingProvider` — Pluggable embedding API client abstraction
+- `EnrichmentClientConfiguration` — `@Configuration` wiring qualified `WebClient` beans
+- `EnrichmentConfigurationProperties` — Typed properties for `riven.enrichment.*`
+- `EntityEmbeddingEntity` / `EntityEmbeddingModel` / `EntityEmbeddingRepository` — Persistence trio for vector embeddings
+
+## [2026-04-09] — Note Embedding Pipeline + Entity-Spanning Notes
+
+**Domains affected:** Note, Integration, Catalog
+**What changed:**
+
+- Notes now support multi-entity attachment via `note_entity_attachments` join table — one note can be attached to multiple entities
+- `NoteEntity.entityId` is now nullable (denormalized primary kept for backward compat); authoritative source of truth is the join table
+- Added source tracking to notes: `source_type` (USER/INTEGRATION), `source_integration_id`, `source_external_id`, `readonly`, `pending_associations`
+- Note model breaking change: `Note.entityId: UUID` → `Note.entityIds: List<UUID>`, `WorkspaceNote` now uses `entityContexts: List<NoteEntityContext>` instead of single entity context fields
+- New `NoteEmbeddingService` routes integration note records directly to `NoteEntity` creation, bypassing the entity creation pipeline entirely
+- Sync pipeline routing: `fetchAndProcessRecords()` checks for `noteEmbedding` manifest config before entity model resolution; matching models are routed to note embedding
+- HubSpot manifest: removed `hubspot-note` entity type, field mappings, and relationships; replaced with `noteEmbedding` config block
+- Added `sync_key` column to `integration_sync_state` for disambiguating note embedding sync state from entity sync state
+- Post-sync reconciliation: unattached notes (whose target entities hadn't synced yet) are automatically resolved after subsequent model syncs
+- `note_count` trigger moved from `notes` table to `note_entity_attachments` table — correctly counts notes per entity when notes span multiple entities
+- Added `HtmlToBlockConverter` (Jsoup-based) for converting integration HTML content to BlockNote blocks
+- Readonly enforcement: PUT/DELETE on readonly notes throws `AccessDeniedException` (403)
+- System user seed (`00000000-...`) for `createdBy`/`updatedBy` on integration-managed records
+
+**New cross-domain dependencies:** yes — Integration → Note via NoteEmbeddingService (sync pipeline routes note models to note domain instead of entity domain)
+**New components introduced:**
+
+- `NoteEmbeddingService` — processes integration note records into NoteEntity with BlockNote content and entity attachments
+- `HtmlToBlockConverter` / `PlaintextToBlockConverter` — content format converters for note embedding
+- `NoteEntityAttachment` / `NoteEntityAttachmentRepository` — join table entity and repository for multi-entity note attachments
+- `NoteEmbeddingConfig` / `NoteContentFormat` — manifest config models for note embedding
+- `NoteSourceType` enum — USER or INTEGRATION source type for notes
+
+## [2026-04-01] — Business Definition Layer (Phase 1: CRUD Foundation)
+
+**Domains affected:** Knowledge (new subdomain: Business Definitions)
+**What changed:**
+
+- Added `workspace_business_definitions` table for workspace-scoped natural language business definitions (e.g., "retention", "active customer")
+- Created `WorkspaceBusinessDefinitionEntity` (JPA) and `WorkspaceBusinessDefinition` (domain model) in `entity.knowledge` / `models.knowledge`
+- Created `WorkspaceBusinessDefinitionService` with CRUD operations, term normalization, optimistic locking (`@Version`), and soft-delete
+- Created `WorkspaceBusinessDefinitionRepository` with workspace-scoped queries
+- Created `TermNormalizationUtil` for normalizing business terms (lowercase, trim, strip trailing 's')
+- Added 6 REST endpoints to `KnowledgeController`: list, get, create, update, delete, export — under `/workspace/{workspaceId}/definitions`
+- Added 3 new enums: `DefinitionCategory`, `DefinitionStatus`, `DefinitionSource` in `enums.knowledge`
+- Added `BUSINESS_DEFINITION` to `Activity` and `ApplicationEntityType` enums
+- Admin-only mutations via `@PreAuthorize` with `hasWorkspaceRoleOrHigher(..., 'ADMIN')`
+
+**New cross-domain dependencies:** no — Knowledge domain is self-contained for Phase 1
+**New components introduced:**
+
+- `WorkspaceBusinessDefinitionService` — CRUD lifecycle for workspace business definitions
+- `WorkspaceBusinessDefinitionRepository` — persistence layer for business definitions
+- `TermNormalizationUtil` — pure function for business term normalization
+
+## [2026-03-29] — Entity Projection Pipeline Implementation
+
+**Domains affected:** Entity, Integration, Ingestion (new), Identity, Lifecycle
+**What changed:**
+
+- Implemented the projection pipeline: integration entities are now projected into core lifecycle entities via domain-based routing rules
+- Created `service.ingestion` package with `EntityProjectionService` and `IdentityResolutionService` — batch identity resolution using 2-query strategy (sourceExternalId match → IDENTIFIER attribute match)
+- Added `entity_type_projection_rules` table and `ProjectionRuleEntity` — maps source (integration) entity types to target (core lifecycle) entity types
+- Projection rules are installed automatically during integration template materialization in `TemplateMaterializationService`, using `CoreModelRegistry.findModelsAccepting()` to match (lifecycleDomain, semanticGroup) pairs
+- Added `projectionAccepts` rules to all 15 core model definitions — each declares which (domain, group) pairs route integration data into it
+- Wired `executeProjections` activity stub in `IntegrationSyncActivitiesImpl` to call `EntityProjectionService.processProjections()`
+- Added entity visibility filter: `includeInternal` query parameter on entity type listing (default: false) hides integration-sourced entity types
+- Added `readonly` parameter to `assembleColumns()` — readonly entity types skip relationship columns
+- Added `lastPipelineStep` and `projectionResult` (JSONB) columns to `IntegrationSyncStateEntity` for pipeline observability
+
+**New cross-domain dependencies:** yes — `service.ingestion.EntityProjectionService` depends on `service.identity.IdentityClusterService` and `service.identity.EntityTypeClassificationService` for cluster assignment and identifier resolution
+**New components introduced:**
+
+- `EntityProjectionService` — core projection pipeline: rule loading, identity resolution, entity create/update, relationship linking
+- `IdentityResolutionService` — batch identity resolution with 2-query strategy
+- `ProjectionRuleEntity` / `ProjectionRuleRepository` — projection rule storage
+- `ProjectionResult` / `ResolutionResult` — pipeline result models in `models.ingestion`
+- `CoreModelRegistry.findModelsAccepting()` — lookup method for projection routing
+
+## [2026-03-27] — Entity Ingestion Pipeline Architecture (Engineering Review)
+
+**Domains affected:** Entity, Integration, Identity Resolution, Catalog
+**What changed:**
+
+- Defined the 4-step Entity Ingestion Pipeline: Classify → Route → Map → Resolve. This is the missing bridge between integration entity sync and core entity hub population.
+- Confirmed Hub Model architecture: core entity types (Customer, Support Ticket) are the user-facing hub where all interaction happens. Integration entity types + rows are hidden readonly infrastructure for sync fidelity, identity resolution, and audit.
+- Established field ownership rules: "Source wins" — mapped fields on projected entities are owned by the integration source and overwritten on next sync. Unmapped fields are user-owned and preserved.
+- Established multi-source conflict resolution: "Most recent sync wins" — timestamp-based, no configuration needed. When two integrations project to the same core entity, the most recently synced values for mapped fields win.
+- Added field-level audit trail requirement: when sync overwrites user-edited values, log old → new via `activityService.logActivity()`.
+- Changed `ProjectionAcceptRule` from nullable single value to `List<ProjectionAcceptRule>` on `CoreModelDefinition` to support multiple projection sources per core type.
+- Added `SourceType.PROJECTED` to discriminate auto-created core entities from user-created ones.
+- Defined new service layer: `FieldMappingService`, `IdentityResolutionService`, `EntityProjectionService` in `service.ingestion` package. `IntegrationSyncWorkflow` + `IntegrationSyncActivities` in `workflow.integration` package.
+- Identified backfill projection need: when a new core model is installed that matches existing unmatched integration entities, retroactive projection required (deferred as P2 TODO).
+
+**New cross-domain dependencies:** yes
+
+- Integration → Entity: ingestion pipeline creates entities in core entity types from integration sync data
+- Integration → Identity Resolution: ingestion pipeline's Step 4 (Resolve) uses identity resolution for entity matching
+- Catalog → Integration: `CatalogFieldMappingEntity` consumed by `FieldMappingService` during ingestion
+
+**New components introduced:**
+
+- `FieldMappingService` — transforms integration source fields → core entity type schema using catalog field mappings
+- `IdentityResolutionService` — matches incoming integration data to existing entities (sourceExternalId + identifier key)
+- `EntityProjectionService` — creates/updates core entities from integration data, manages identity clusters via relationships
+- `IntegrationSyncWorkflow` — Temporal workflow orchestrating the 4-step ingestion pipeline with activity-level retry and cursor pagination
+- `IntegrationSyncActivities` — Temporal activities for each pipeline step
+
 ## [2026-03-17] — Nango Webhook Endpoint with HMAC Security
 
 **Domains affected:** Integration
@@ -13,6 +153,7 @@
 
 **New cross-domain dependencies:** no — NangoWebhookService calls TemplateMaterializationService which is already in the Integration domain.
 **New components introduced:**
+
 - `NangoWebhookHmacFilter` — HMAC-SHA256 request signature verification filter
 - `NangoWebhookFilterConfiguration` — filter registration configuration
 - `NangoWebhookController` — webhook entry point
@@ -32,6 +173,7 @@
 
 **New cross-domain dependencies:** no — all changes within existing integration and entity domain boundaries
 **New components introduced:**
+
 - Documentation only — no new code components. Documents the planned architecture for: NangoWebhookController, NangoWebhookService, IntegrationSyncWorkflow, IntegrationSyncActivities, IntegrationConnectionHealthService, IntegrationSyncTemporalConfiguration
 
 ## [2026-03-16] — Integration Sync Persistence Foundation
@@ -52,6 +194,7 @@
 
 **New cross-domain dependencies:** no — changes extend existing integration and entity domains
 **New components introduced:**
+
 - `IntegrationSyncStateEntity` — JPA entity for sync state tracking (system-managed, no soft-delete)
 - `IntegrationSyncStateRepository` — data access for sync state
 - `IntegrationSyncState` — domain model mirroring sync state entity
@@ -74,6 +217,7 @@
 
 **New cross-domain dependencies:** yes — notification depends on activity (audit logging), websocket (event publishing via WorkspaceEvent), auth (workspace security)
 **New components introduced:**
+
 - `NotificationService` — CRUD, inbox, read-state, resolution, soft-delete
 - `NotificationDeliveryService` — domain event translation facade
 - `NotificationController` — REST endpoints for inbox, read-state, create, delete
@@ -96,6 +240,7 @@
 
 **New cross-domain dependencies:** yes — entity, block, and workspace services now depend on `models.websocket.WorkspaceEvent` (event model only, not WebSocket infrastructure)
 **New components introduced:**
+
 - `WebSocketConfig` — STOMP endpoint and broker configuration
 - `WebSocketSecurityInterceptor` — JWT auth + workspace subscription authorization
 - `WebSocketEventListener` — event-to-STOMP bridge
@@ -103,6 +248,7 @@
 - `WorkspaceEvent` sealed interface + domain subclasses — type-safe event model
 - `WebSocketMessage` — outbound message envelope
 - `WebSocketChannel` enum — topic segment mapping
+
 ## [2026-03-14] — Integration Enablement Feature
 
 **Domains affected:** Integration, Entity, Catalog
@@ -119,6 +265,7 @@
 
 **New cross-domain dependencies:** yes — Integration domain now depends on Entity domain's `EntityTypeService` for soft-delete/restore operations. Previously only Catalog → Entity dependency existed via `TemplateMaterializationService`.
 **New components introduced:**
+
 - `IntegrationEnablementService` — orchestrator for integration enable/disable lifecycle
 - `IntegrationController` — REST API for integration management
 - `WorkspaceIntegrationInstallationEntity` — installation tracking entity
@@ -140,6 +287,7 @@
 
 **New cross-domain dependencies:** yes — Onboarding → Workspace, User, Catalog (TemplateInstallation), Storage, Activity
 **New components introduced:**
+
 - `OnboardingService` — orchestrates the full onboarding flow with TransactionTemplate for atomicity
 - `OnboardingController` — single endpoint for complete onboarding
 - `CompleteOnboardingRequest` / `CompleteOnboardingResponse` — request/response models
@@ -178,6 +326,7 @@
 
 **New cross-domain dependencies:** No — Entity and Catalog already have existing dependency
 **New components introduced:**
+
 - `EntityTypeSequenceService` — manages atomic counter increment for ID generation
 - `EntityTypeSequenceEntity` / `EntityTypeSequenceRepository` — persistence for sequence counters
 - `SchemaService.validateDefault()` — validates default values against attribute schema constraints
@@ -197,6 +346,7 @@
 
 **New cross-domain dependencies:** Yes — Storage depends on Workspaces & Users (workspace scoping via @PreAuthorize, JWT auth via AuthTokenService) and Activity (audit logging via ActivityService)
 **New components introduced:**
+
 - StorageProvider interface — provider-agnostic abstraction for file operations
 - LocalStorageProvider — local filesystem implementation, activated via @ConditionalOnProperty
 - ContentValidationService — Apache Tika magic byte detection, domain-based validation, SVG sanitization
@@ -210,6 +360,7 @@
 
 **Domains affected:** Entity, Catalog
 **What changed:**
+
 - Removed semantic group-based targeting from relationship target rules — all rules now require explicit `targetEntityTypeId`
 - Removed `allowPolymorphic` column from relationship definitions — polymorphic behavior is now derived from `systemType` (only system-managed CONNECTED_ENTITIES definitions are polymorphic)
 - Removed `relationship_definition_exclusions` table and all exclusion infrastructure (entity, repository, service methods, tests)
@@ -220,3 +371,89 @@
 
 **New cross-domain dependencies:** no
 **New components introduced:** none — this is a pure simplification/removal
+
+## [2026-03-18] — Phase 4 Feature Design: Confirmation and Clusters
+
+**Domains affected:** Identity Resolution, Entities
+**What changed:**
+
+- Generated feature design for Identity Cluster Confirmation and Union-Find Management
+- Documents confirmation state machine (PENDING → CONFIRMED/REJECTED with ConflictException guard), five-case Union-Find cluster assignment, merge algorithm (smaller → larger), and CONNECTED_ENTITIES relationship creation on confirm
+- Documents rejection move from IdentityMatchSuggestionService to new IdentityConfirmationService
+- Documents cluster-aware re-suggestion skip in persistSuggestions
+
+**New cross-domain dependencies:** yes — Identity Resolution → Entities (EntityRelationshipService for CONNECTED_ENTITIES creation on confirm), Identity Resolution → Notifications (confirmation broadcast to all workspace members)
+**New components introduced:**
+
+- `IdentityConfirmationService` — confirm/reject state machine with cluster orchestration, relationship creation, notification publishing, and activity logging
+- `IdentityClusterService` — cluster CRUD, Union-Find merge, auto-naming from NAME-signal attributes
+
+## [2026-03-17] — Identity Resolution Domain
+
+**Domains affected:** identity (new), workflow (queue management, execution engine)
+**What changed:**
+
+- Introduced Identity Resolution domain — Temporal-orchestrated pipeline for detecting duplicate entities using pg_trgm trigram similarity, weighted scoring, and human-reviewable match suggestions
+- New matching pipeline: IdentityMatchCandidateService (pg_trgm blocking), IdentityMatchScoringService (weighted average), IdentityMatchSuggestionService (idempotent persistence with re-suggestion logic)
+- New Temporal workflow/activities on dedicated `identity.match` task queue, isolated from default workflow queue
+- Event-driven trigger: EntityService publishes IdentityMatchTriggerEvent → IdentityMatchTriggerListener → queue dispatch → Temporal pipeline
+- Queue management services: IdentityMatchQueueService (dedup enqueue), IdentityMatchDispatcherService (ShedLock polling), IdentityMatchQueueProcessorService (REQUIRES_NEW dispatch)
+- EntityTypeClassificationService caches IDENTIFIER-classified attributes per entity type
+- Scaffolded cluster entities (IdentityClusterEntity, IdentityClusterMemberEntity) for future phase
+- New SQL schema: match_suggestions, identity_clusters, identity_cluster_members with pg_trgm extension, canonical UUID ordering constraints, partial unique indexes
+- TemporalWorkerConfiguration now registers identity match worker on IDENTITY_MATCH_QUEUE
+
+**New cross-domain dependencies:** yes — Identity Resolution → Entities (native SQL on entity_attributes + entity_type_semantic_metadata), Identity Resolution → Workflows (ExecutionQueueEntity for IDENTITY_MATCH jobs), Identity Resolution → Activity (audit logging)
+**New components introduced:**
+
+- `IdentityMatchCandidateService` — two-phase pg_trgm candidate finding
+- `IdentityMatchScoringService` — weighted average scoring with configurable signal weights
+- `IdentityMatchSuggestionService` — idempotent suggestion persistence with re-suggestion and rejection
+- `EntityTypeClassificationService` — cached IDENTIFIER attribute lookup
+- `IdentityMatchQueueService` — IDENTITY_MATCH job enqueueing with deduplication
+- `IdentityMatchDispatcherService` — scheduled queue polling with ShedLock
+- `IdentityMatchQueueProcessorService` — per-item Temporal dispatch with REQUIRES_NEW transactions
+- `IdentityMatchWorkflow/Impl` — Temporal workflow orchestrating 3-activity pipeline
+- `IdentityMatchActivities/Impl` — Temporal activities delegating to domain services
+- `IdentityMatchTriggerListener` — @TransactionalEventListener bridging entity saves to queue
+- `MatchSuggestionEntity` — candidate pair entity with JSONB signals and canonical UUID ordering
+- `IdentityClusterEntity` / `IdentityClusterMemberEntity` — scaffolded cluster entities
+- `MatchSignalType` — signal type enum with default weights
+- `MatchSuggestionStatus` — suggestion lifecycle enum
+
+## [2026-03-18] — IdentityConfirmationService with Cluster Management (Phase 04 Plan 02)
+
+**Domains affected:** identity
+**What changed:**
+
+- Added `IdentityConfirmationService` as the single owner of the suggestion confirm/reject state machine
+- `confirmSuggestion` creates a `CONNECTED_ENTITIES` relationship via `EntityRelationshipService` with `SourceType.IDENTITY_MATCH`, runs 5-case cluster resolution, logs activity, and publishes a `REVIEW_REQUEST` notification to all workspace members
+- `rejectSuggestion` transitions `PENDING -> REJECTED` with rejectionSignals snapshot, soft-delete, and activity logging
+- 5-case cluster resolution: (1) create new cluster, (2) expand source cluster, (3) expand target cluster, (4) merge clusters (smaller dissolved into larger, tie favors source entity's cluster), (5) same-cluster no-op
+- Cluster merge hard-deletes dissolving members, re-inserts them into surviving cluster preserving `joinedAt`/`joinedBy`, and soft-deletes the dissolving cluster
+- Removed `rejectSuggestion`, `validateRejectable`, `applyRejection`, and `logRejectionActivity` from `IdentityMatchSuggestionService` — rejection is now fully owned by `IdentityConfirmationService`
+- Integration test updated to reject via raw SQL instead of service call (avoids JWT context requirement in minimal integration test config)
+
+**New cross-domain dependencies:** yes — identity domain → entity domain via `EntityRelationshipService.addRelationship` with `SourceType.IDENTITY_MATCH`; identity domain → notification domain via `NotificationService.createInternalNotification`
+**New components introduced:**
+
+- `IdentityConfirmationService` — confirm/reject state machine with 5-case cluster management
+
+## [2026-03-16] — Generic Execution Queue with Job Type Discriminator (INFRA-01/02/03)
+
+**Domains affected:** workflow (execution queue), integration (SourceType enum)
+**What changed:**
+
+- Renamed `workflow_execution_queue` table to `execution_queue` in SQL schema and all JPA/repository layers
+- Added `job_type VARCHAR(30) NOT NULL DEFAULT 'WORKFLOW_EXECUTION'` discriminator column to `execution_queue`
+- Added `entity_id UUID` nullable FK column for IDENTITY_MATCH jobs (references entities table)
+- Changed `workflow_definition_id` from NOT NULL to nullable on `execution_queue`
+- Created `ExecutionJobType` enum with `WORKFLOW_EXECUTION` and `IDENTITY_MATCH` values
+- Both native queries (`claimPendingExecutions`, `findStaleClaimedItems`) now filter `AND job_type = 'WORKFLOW_EXECUTION'` ensuring workflow dispatcher never claims identity match jobs
+- Added dedup partial unique index `uq_execution_queue_pending_identity_match` on `(workspace_id, entity_id, job_type) WHERE status = 'PENDING' AND entity_id IS NOT NULL`
+- Added `IDENTITY_MATCH` to `SourceType` enum (for entity relationship source tracking in Phase 4)
+
+**New cross-domain dependencies:** no — queue change is internal to workflow domain; SourceType is an existing integration enum
+**New components introduced:**
+
+- `ExecutionJobType` enum — job type discriminator for the shared execution queue

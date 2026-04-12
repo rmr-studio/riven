@@ -1,6 +1,5 @@
 package riven.core.service.catalog
 
-import com.fasterxml.jackson.databind.JsonNode
 import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
@@ -24,6 +23,7 @@ class ManifestLoaderService(
     private val upsertService: ManifestUpsertService,
     private val reconciliationService: ManifestReconciliationService,
     private val integrationDefinitionStaleSyncService: IntegrationDefinitionStaleSyncService,
+    private val integrationDefinitionSeederService: IntegrationDefinitionSeederService,
     private val manifestCatalogRepository: ManifestCatalogRepository,
     private val healthIndicator: ManifestCatalogHealthIndicator,
     private val manifestProperties: ManifestConfigurationProperties,
@@ -51,85 +51,27 @@ class ManifestLoaderService(
     // ------ Core Orchestration ------
 
     /**
-     * Loads all manifests from classpath: scans and upserts models -> templates -> integrations,
+     * Loads integration manifests from classpath: scans and upserts integrations,
      * reconciles stale entries based on what was successfully loaded, syncs integration definitions,
-     * and logs a summary.
+     * and logs a summary. Core model manifests (templates) are loaded separately by CoreModelCatalogService.
      */
     fun loadAllManifests() {
         val seenManifests = mutableSetOf<Pair<String, ManifestType>>()
-
-        val scannedModels = scannerService.scanModels()
-        val scannedTemplates = scannerService.scanTemplates()
         val scannedIntegrations = scannerService.scanIntegrations()
-        val scannedBundles = scannerService.scanBundles()
 
-        val (modelIndex, modelsResult) = loadModels(scannedModels, seenManifests)
-        val templatesResult = loadTemplates(scannedTemplates, modelIndex, seenManifests)
-        val integrationsResult = loadIntegrations(scannedIntegrations, seenManifests)
-        val bundlesResult = loadBundles(scannedBundles, seenManifests)
+        val result = loadIntegrations(scannedIntegrations, seenManifests)
 
-        reconcileStaleEntries(scannedModels.size + scannedTemplates.size + scannedIntegrations.size + scannedBundles.size, seenManifests)
+        reconcileStaleEntries(scannedIntegrations.size, seenManifests)
         integrationDefinitionStaleSyncService.syncStaleFlags()
+        integrationDefinitionSeederService.seedFromManifests(scannedIntegrations)
 
-        val totalSkipped = modelsResult.skipped + templatesResult.skipped + integrationsResult.skipped + bundlesResult.skipped
         val staleCount = manifestCatalogRepository.findByStaleTrue().size
-        logger.info { "Manifest load complete: ${modelsResult.loaded} models, ${templatesResult.loaded} templates, ${integrationsResult.loaded} integrations, ${bundlesResult.loaded} bundles loaded. $staleCount stale. $totalSkipped skipped." }
+        logger.info { "Manifest load complete: ${result.loaded} integrations loaded. $staleCount stale. ${result.skipped} skipped." }
     }
 
     // ------ Phase Loaders ------
 
     private data class PhaseResult(val loaded: Int, val skipped: Int)
-
-    private fun loadModels(
-        scannedModels: List<ScannedManifest>,
-        seenManifests: MutableSet<Pair<String, ManifestType>>
-    ): Pair<Map<String, JsonNode>, PhaseResult> {
-        val modelIndex = mutableMapOf<String, JsonNode>()
-        var loaded = 0
-        var skipped = 0
-
-        for (scanned in scannedModels) {
-            try {
-                val resolved = resolverService.resolveManifest(scanned, emptyMap())
-                upsertService.upsertManifest(resolved)
-                if (!resolved.stale) {
-                    modelIndex[scanned.key] = scanned.json
-                    loaded++
-                    seenManifests.add(scanned.key to scanned.type)
-                }
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to load model manifest: ${scanned.key}" }
-                skipped++
-            }
-        }
-
-        return modelIndex to PhaseResult(loaded, skipped)
-    }
-
-    private fun loadTemplates(
-        scannedTemplates: List<ScannedManifest>,
-        modelIndex: Map<String, JsonNode>,
-        seenManifests: MutableSet<Pair<String, ManifestType>>
-    ): PhaseResult {
-        var loaded = 0
-        var skipped = 0
-
-        for (scanned in scannedTemplates) {
-            try {
-                val resolved = resolverService.resolveManifest(scanned, modelIndex)
-                upsertService.upsertManifest(resolved)
-                if (!resolved.stale) {
-                    loaded++
-                    seenManifests.add(scanned.key to scanned.type)
-                }
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to load template manifest: ${scanned.key}" }
-                skipped++
-            }
-        }
-
-        return PhaseResult(loaded, skipped)
-    }
 
     private fun loadIntegrations(
         scannedIntegrations: List<ScannedManifest>,
@@ -140,7 +82,7 @@ class ManifestLoaderService(
 
         for (scanned in scannedIntegrations) {
             try {
-                val resolved = resolverService.resolveManifest(scanned, emptyMap())
+                val resolved = resolverService.resolveManifest(scanned)
                 upsertService.upsertManifest(resolved)
                 if (!resolved.stale) {
                     loaded++
@@ -155,30 +97,6 @@ class ManifestLoaderService(
         return PhaseResult(loaded, skipped)
     }
 
-    private fun loadBundles(
-        scannedBundles: List<ScannedManifest>,
-        seenManifests: MutableSet<Pair<String, ManifestType>>
-    ): PhaseResult {
-        var loaded = 0
-        var skipped = 0
-
-        for (scanned in scannedBundles) {
-            try {
-                val resolved = resolverService.resolveBundle(scanned)
-                upsertService.upsertBundle(resolved)
-                if (!resolved.stale) {
-                    loaded++
-                    seenManifests.add(scanned.key to scanned.type)
-                }
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to load bundle manifest: ${scanned.key}" }
-                skipped++
-            }
-        }
-
-        return PhaseResult(loaded, skipped)
-    }
-
     // ------ Post-Load Reconciliation ------
 
     private fun reconcileStaleEntries(
@@ -186,7 +104,7 @@ class ManifestLoaderService(
         seenManifests: Set<Pair<String, ManifestType>>
     ) {
         if (totalScanned > 0) {
-            reconciliationService.reconcileStaleEntries(seenManifests)
+            reconciliationService.reconcileStaleEntries(seenManifests, setOf(ManifestType.INTEGRATION))
         } else {
             logger.warn { "No manifests found on classpath — skipping stale reconciliation" }
         }

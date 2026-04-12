@@ -3,13 +3,13 @@ package riven.core.service.workflow.queue
 import io.github.oshai.kotlinlogging.KLogger
 import io.temporal.client.WorkflowClient
 import io.temporal.client.WorkflowOptions
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import riven.core.configuration.workflow.TemporalWorkerConfiguration
 import riven.core.entity.workflow.ExecutionQueueEntity
 import riven.core.entity.workflow.execution.WorkflowExecutionEntity
+import riven.core.enums.workflow.ExecutionJobType
 import riven.core.enums.workflow.WorkflowStatus
 import riven.core.enums.workflow.WorkflowTriggerType
 import riven.core.enums.workspace.WorkspaceTier
@@ -34,7 +34,6 @@ import java.util.*
  * - Long-running dispatches don't block the entire batch
  */
 @Service
-@ConditionalOnProperty(name = ["riven.workflow.engine.enabled"], havingValue = "true", matchIfMissing = true)
 class WorkflowExecutionQueueProcessorService(
     private val workflowExecutionQueueService: WorkflowExecutionQueueService,
     private val workflowExecutionRepository: WorkflowExecutionRepository,
@@ -54,7 +53,7 @@ class WorkflowExecutionQueueProcessorService(
      */
     @Transactional
     fun claimBatch(size: Int): List<ExecutionQueueEntity> {
-        return executionQueueRepository.claimPendingExecutions(size)
+        return executionQueueRepository.claimPendingByJobType(ExecutionJobType.WORKFLOW_EXECUTION, size)
     }
 
     companion object {
@@ -121,8 +120,15 @@ class WorkflowExecutionQueueProcessorService(
     private fun dispatchToTemporal(item: ExecutionQueueEntity) {
         logger.info { "Dispatching queue item ${item.id} for workflow ${item.workflowDefinitionId}" }
 
+        // WORKFLOW_EXECUTION jobs require a workflow definition ID
+        val workflowDefinitionId = item.workflowDefinitionId
+        if (workflowDefinitionId == null) {
+            workflowExecutionQueueService.markFailed(item, "Workflow definition ID is required for WORKFLOW_EXECUTION jobs")
+            return
+        }
+
         // Fetch workflow definition and version
-        val workflowDefinition = workflowDefinitionRepository.findById(item.workflowDefinitionId).orElse(null)
+        val workflowDefinition = workflowDefinitionRepository.findById(workflowDefinitionId).orElse(null)
         if (workflowDefinition == null) {
             workflowExecutionQueueService.markFailed(item, "Workflow definition not found")
             return
@@ -130,7 +136,7 @@ class WorkflowExecutionQueueProcessorService(
 
         val workflowVersion = workflowDefinitionVersionRepository
             .findByWorkflowDefinitionIdAndVersionNumber(
-                item.workflowDefinitionId,
+                workflowDefinitionId,
                 workflowDefinition.versionNumber
             )
         if (workflowVersion == null) {
@@ -142,8 +148,9 @@ class WorkflowExecutionQueueProcessorService(
         val nodeIds = workflowVersion.workflow.nodeIds.toList()
 
         // Get or create workflow execution entity
-        val record = getOrCreateExecution(item, workflowVersion.id!!)
-        val id = requireNotNull(record.id)
+        val workflowVersionId = requireNotNull(workflowVersion.id) { "Persisted workflow version must have an ID" }
+        val record = getOrCreateExecution(item, workflowDefinitionId, workflowVersionId)
+        val id = requireNotNull(record.id) { "Persisted workflow execution must have an ID" }
 
         // Persist execution ID to queue item before starting Temporal workflow.
         // This ensures the execution can be reused on retry if Temporal start fails.
@@ -163,7 +170,7 @@ class WorkflowExecutionQueueProcessorService(
             )
 
             val workflowInput = WorkflowExecutionInput(
-                workflowDefinitionId = item.workflowDefinitionId,
+                workflowDefinitionId = workflowDefinitionId,
                 nodeIds = nodeIds,
                 workspaceId = item.workspaceId
             )
@@ -193,10 +200,14 @@ class WorkflowExecutionQueueProcessorService(
      * If item.executionId is set (retry scenario), loads the existing execution
      * and updates its status to RUNNING. Otherwise creates a new execution.
      *
-     * @return Pair of the execution entity and its ID
+     * @param item The queue entity being processed
+     * @param workflowDefinitionId The resolved (non-null) workflow definition ID
+     * @param workflowVersionId The workflow version UUID to associate with the execution
+     * @return The execution entity
      */
     private fun getOrCreateExecution(
         item: ExecutionQueueEntity,
+        workflowDefinitionId: UUID,
         workflowVersionId: UUID
     ): WorkflowExecutionEntity {
         val existingExecutionId = item.executionId
@@ -222,7 +233,7 @@ class WorkflowExecutionQueueProcessorService(
         // Create new execution
         val executionEntity = WorkflowExecutionEntity(
             workspaceId = item.workspaceId,
-            workflowDefinitionId = item.workflowDefinitionId,
+            workflowDefinitionId = workflowDefinitionId,
             workflowVersionId = workflowVersionId,
 
             status = WorkflowStatus.RUNNING,

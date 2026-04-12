@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import riven.core.entity.user.UserEntity
-import riven.core.enums.storage.StorageDomain
 import riven.core.exceptions.NotFoundException
 import riven.core.models.request.user.SaveUserRequest
 import riven.core.models.user.User
@@ -107,6 +106,7 @@ class UserService(
      * @param avatar Optional new avatar file to upload.
      * @return The updated User model.
      */
+    @Transactional
     @Throws(NotFoundException::class, IllegalArgumentException::class)
     fun updateUserDetails(request: SaveUserRequest, avatar: MultipartFile? = null): User {
         val sessionUserId = authTokenService.getUserId()
@@ -118,6 +118,7 @@ class UserService(
             email = request.email
             phone = request.phone
             onboardingCompletedAt = request.onboardingCompletedAt ?: onboardingCompletedAt
+            acquisitionChannels = request.acquisitionChannels ?: acquisitionChannels
 
             defaultWorkspace = request.defaultWorkspaceId?.let { workspaceId ->
                 findOrThrow { workspaceRepository.findById(workspaceId) }
@@ -126,15 +127,11 @@ class UserService(
 
         if (request.removeAvatar) {
             entity.avatarUrl = null
+            storageService.removeAvatar(previousAvatarKey)
         }
 
         avatar?.let { file ->
-            entity.avatarUrl = storageService.uploadUserFile(sessionUserId, StorageDomain.AVATAR, file)
-        }
-
-        // Delete old avatar from storage if it was removed or replaced
-        if (previousAvatarKey != null && previousAvatarKey != entity.avatarUrl) {
-            storageService.deleteByStorageKey(previousAvatarKey)
+            entity.avatarUrl = storageService.updateUserAvatar(sessionUserId, file, previousAvatarKey)
         }
 
         repository.save(entity)

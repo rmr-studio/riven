@@ -8,9 +8,10 @@ Name | Type
 ------------ | -------------
 `workspace` | [OnboardingWorkspace](OnboardingWorkspace.md)
 `profile` | [OnboardingProfile](OnboardingProfile.md)
-`templateKeys` | Array&lt;string&gt;
-`bundleKeys` | Array&lt;string&gt;
+`businessType` | [BusinessType](BusinessType.md)
 `invites` | [Array&lt;OnboardingInvite&gt;](OnboardingInvite.md)
+`businessDefinitions` | [Array&lt;OnboardingBusinessDefinition&gt;](OnboardingBusinessDefinition.md)
+`acquisitionChannels` | [Array&lt;AcquisitionChannel&gt;](AcquisitionChannel.md)
 
 ## Example
 
@@ -21,9 +22,10 @@ import type { CompleteOnboardingRequest } from ''
 const example = {
   "workspace": null,
   "profile": null,
-  "templateKeys": null,
-  "bundleKeys": null,
+  "businessType": null,
   "invites": null,
+  "businessDefinitions": null,
+  "acquisitionChannels": null,
 } satisfies CompleteOnboardingRequest
 
 console.log(example)

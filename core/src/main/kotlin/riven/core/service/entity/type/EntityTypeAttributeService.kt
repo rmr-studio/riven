@@ -29,6 +29,7 @@ class EntityTypeAttributeService(
     private val entityAttributeService: EntityAttributeService,
     private val schemaService: SchemaService,
     private val sequenceService: EntityTypeSequenceService,
+    private val protectionGuard: EntityTypeProtectionGuard,
 ) {
 
     fun saveAttributeDefinition(
@@ -36,7 +37,7 @@ class EntityTypeAttributeService(
         type: EntityTypeEntity,
         request: SaveAttributeDefinitionRequest
     ) {
-        require(!type.readonly) { "Cannot modify schema attributes of a readonly entity type '${type.key}'" }
+        protectionGuard.assertCanModifyAttribute(type, request.id)
         val typeId = requireNotNull(type.id) { "Entity type ID must not be null when saving attribute definition" }
         val (_, id: UUID, attribute: EntityTypeSchema) = request
 
@@ -61,8 +62,9 @@ class EntityTypeAttributeService(
         }
 
         // Validate default value if present
-        attribute.options?.default?.let { defaultValue ->
-            val defaultErrors = schemaService.validateDefault(attribute, defaultValue)
+        val staticDefault = attribute.options?.extractStaticDefault()
+        if (staticDefault != null) {
+            val defaultErrors = schemaService.validateDefault(attribute, staticDefault)
             if (defaultErrors.isNotEmpty()) {
                 throw SchemaValidationException(
                     defaultErrors.map { "Attribute '${id}': $it" }
@@ -132,7 +134,7 @@ class EntityTypeAttributeService(
         type: EntityTypeEntity,
         attributeId: UUID
     ) {
-        require(!type.readonly) { "Cannot remove schema attributes from a readonly entity type '${type.key}'" }
+        protectionGuard.assertCanRemoveAttribute(type, attributeId)
         val updatedSchema = type.schema.copy(
             properties = type.schema.properties?.toMutableMap()?.also {
                 // Remove attribute definition

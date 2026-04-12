@@ -77,6 +77,10 @@ dependencies {
     // PostHog Analytics
     implementation("com.posthog:posthog-server:2.3.2")
 
+    // Rate Limiting
+    implementation("com.bucket4j:bucket4j-core:8.10.1")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.2.0")
+
     // Resilience4j Circuit Breaker
     implementation("io.github.resilience4j:resilience4j-spring-boot3:2.3.0")
     implementation("org.springframework.boot:spring-boot-starter-aop")
@@ -86,6 +90,7 @@ dependencies {
 
     // Postgres/JPA
     implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.9.2")
+    implementation("org.hibernate.orm:hibernate-vector:6.6.18.Final")
     runtimeOnly("org.postgresql:postgresql")
 
     // Flyway Database Migrations
@@ -94,6 +99,9 @@ dependencies {
 
     // Schema Validation
     implementation("com.networknt:json-schema-validator:1.0.83")
+
+    // HTML Parsing
+    implementation("org.jsoup:jsoup:1.18.3")
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     // Testing
@@ -124,6 +132,10 @@ allOpen {
     annotation("jakarta.persistence.Entity")
     annotation("jakarta.persistence.MappedSuperclass")
     annotation("jakarta.persistence.Embeddable")
+}
+
+tasks.bootRun {
+    systemProperty("spring.profiles.active", "dev")
 }
 
 tasks.withType<Test> {

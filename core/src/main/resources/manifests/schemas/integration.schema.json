@@ -4,7 +4,7 @@
   "title": "Integration Manifest",
   "description": "Schema for integration manifests. An integration defines entity types for external data sources (HubSpot, Salesforce, etc.) with optional field mappings. Entity types are always inline (no $ref) and typically readonly.",
   "type": "object",
-  "required": ["manifestVersion", "key", "name", "entityTypes"],
+  "required": ["manifestVersion", "key", "name", "category", "entityTypes"],
   "additionalProperties": false,
   "properties": {
     "manifestVersion": {
@@ -24,6 +24,19 @@
     "description": {
       "type": "string",
       "description": "Optional description of the integration's purpose."
+    },
+    "category": {
+      "type": "string",
+      "enum": ["CRM", "PAYMENTS", "SUPPORT", "EMAIL", "PROJECT_MANAGEMENT", "COMMUNICATION", "PRODUCT_ANALYTICS", "OTHER"],
+      "description": "Integration category for catalog grouping. Must match IntegrationCategory enum."
+    },
+    "nangoProviderKey": {
+      "type": "string",
+      "description": "Nango provider config key for OAuth. Empty string means the integration is not yet connectable (coming soon)."
+    },
+    "iconUrl": {
+      "type": "string",
+      "description": "Relative path to the integration icon asset (e.g., '/integrations/hubspot.svg')."
     },
     "entityTypes": {
       "type": "array",
@@ -45,6 +58,29 @@
         "$ref": "#/$defs/fieldMapping"
       },
       "description": "Optional array of field mapping entries that map external provider fields to entity type attributes."
+    },
+    "syncModels": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "description": "Entity type key this Nango model maps to."
+      },
+      "description": "Maps Nango sync model names (e.g. 'contacts') to entity type keys (e.g. 'hubspot-contact'). Required for sync webhook dispatch to resolve the correct entity type."
+    },
+    "noteEmbedding": {
+      "type": "object",
+      "properties": {
+        "syncModel": { "type": "string", "description": "Nango model name that triggers note embedding" },
+        "bodyField": { "type": "string", "description": "Source payload field containing note content" },
+        "contentFormat": { "type": "string", "enum": ["html", "plaintext"] },
+        "timestampField": { "type": "string", "description": "Source field for note timestamp" },
+        "associations": {
+          "type": "object",
+          "description": "Maps association type names to target entity type keys",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "required": ["syncModel", "bodyField", "contentFormat", "associations"]
     }
   },
   "$defs": {
@@ -89,6 +125,10 @@
             "CUSTOM",
             "UNCATEGORIZED"
           ]
+        },
+        "lifecycleDomain": {
+          "type": "string",
+          "description": "Optional lifecycle domain for projection routing. Defaults to UNCATEGORIZED if omitted."
         },
         "identifierKey": {
           "type": "string"

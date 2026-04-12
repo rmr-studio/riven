@@ -6,9 +6,9 @@ tags:
 Created: 2026-02-08
 Updated: 2026-02-08
 Domains:
-  - "[[Workflows]]"
+  - "[[riven/docs/system-design/domains/Workflows/Workflows]]"
 ---
-Part of [[Queue Management]]
+Part of [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Workflows/Queue Management/Queue Management]]
 
 # WorkflowExecutionQueueProcessorService
 
@@ -16,7 +16,7 @@ Part of [[Queue Management]]
 
 ## Purpose
 
-Processes individual queue items in isolated transactions, checking workspace capacity and dispatching available executions to Temporal. Ensures that row locks are released immediately after each item completes and failures in one item don't affect others.
+Processes individual WORKFLOW_EXECUTION queue items in isolated transactions, checking workspace capacity and dispatching available executions to Temporal. Ensures that row locks are released immediately after each item completes and failures in one item don't affect others. Identity match jobs (IDENTITY_MATCH) are handled by IdentityMatchQueueProcessorService in the Identity Resolution domain.
 
 ---
 
@@ -45,12 +45,12 @@ Processes individual queue items in isolated transactions, checking workspace ca
 
 |Component|Purpose|Coupling|
 |---|---|---|
-|[[WorkflowExecutionQueueService]]|Queue item state transitions (markClaimed, markDispatched, markFailed, releaseToPending)|High|
-|[[WorkflowExecutionRepository]]|CRUD operations for WorkflowExecutionEntity, counting active executions|High|
-|[[WorkflowDefinitionRepository]]|Loading workflow definitions for dispatch|Medium|
-|[[ExecutionQueueRepository]]|Claiming pending items via SKIP LOCKED query|High|
-|[[WorkflowDefinitionVersionRepository]]|Loading workflow version for node ID extraction|Medium|
-|[[WorkspaceRepository]]|Loading workspace to check tier capacity|Medium|
+|[[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Workflows/Queue Management/WorkflowExecutionQueueService]]|Queue item state transitions (markClaimed, markDispatched, markFailed, releaseToPending)|High|
+|[[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Workflows/Queue Management/WorkflowExecutionRepository]]|CRUD operations for WorkflowExecutionEntity, counting active executions|High|
+|[[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Workflows/Queue Management/WorkflowDefinitionRepository]]|Loading workflow definitions for dispatch|Medium|
+|[[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Workflows/Queue Management/ExecutionQueueRepository]]|Claiming pending items via SKIP LOCKED query|High|
+|[[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Workflows/Queue Management/WorkflowDefinitionVersionRepository]]|Loading workflow version for node ID extraction|Medium|
+|[[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Workflows/Queue Management/WorkspaceRepository]]|Loading workspace to check tier capacity|Medium|
 
 ### External Dependencies
 
@@ -82,7 +82,7 @@ class WorkflowExecutionQueueProcessorService(
 
 |Component|How It Uses This|Notes|
 |---|---|---|
-|[[WorkflowExecutionDispatcherService]]|Calls claimBatch() to get pending items, then processItem() for each|Dispatcher orchestrates the batch loop|
+|[[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Workflows/Queue Management/WorkflowExecutionDispatcherService]]|Calls claimBatch() to get pending items, then processItem() for each|Dispatcher orchestrates the batch loop|
 
 ---
 
@@ -174,8 +174,10 @@ fun processItem(item: ExecutionQueueEntity)
 
 **Queue Item Processing Flow:**
 
+> **Note:** `claimPendingExecutions` now filters by `job_type='WORKFLOW_EXECUTION'`, so identity match items are never claimed by this processor.
+
 ```
-1. Claim batch (SKIP LOCKED)
+1. Claim batch (SKIP LOCKED, filtered to WORKFLOW_EXECUTION job_type)
    └─> Short transaction, releases locks immediately
 
 2. For each item (REQUIRES_NEW transaction per item):
@@ -243,14 +245,14 @@ _This component is NOT the source of truth for any entities - it coordinates bet
 
 |Entity|Operations|Notes|
 |---|---|---|
-|[[ExecutionQueueEntity]]|Read, Update (via WorkflowExecutionQueueService)|Updates status transitions only|
-|[[WorkflowExecutionEntity]]|Create, Read, Update, Delete|Creates on dispatch, deletes on Temporal start failure|
+|[[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Workflows/Queue Management/ExecutionQueueEntity]]|Read, Update (via WorkflowExecutionQueueService)|Updates status transitions only|
+|[[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Workflows/Queue Management/WorkflowExecutionEntity]]|Create, Read, Update, Delete|Creates on dispatch, deletes on Temporal start failure|
 
 ### Queries
 
 |Query|Purpose|Performance Notes|
 |---|---|---|
-|claimPendingExecutions(size)|Claim batch via SKIP LOCKED|FOR UPDATE SKIP LOCKED prevents lock contention|
+|claimPendingExecutions(size)|Claim batch via SKIP LOCKED, filtered by job_type='WORKFLOW_EXECUTION'|FOR UPDATE SKIP LOCKED prevents lock contention|
 |countActiveByWorkspace(workspaceId)|Check capacity before dispatch|Indexed on workspace_id + status|
 |findById (various entities)|Load workflow definitions, versions, workspace|Standard PK lookups|
 
@@ -398,10 +400,10 @@ Integration tests should verify:
 
 ## Related
 
-- [[Queue Management]] - Parent subdomain
-- [[WorkflowExecutionDispatcherService]] - Orchestrates batch processing loop
-- [[WorkflowExecutionQueueService]] - State transition operations
-- [[WorkflowOrchestrationService]] - Temporal workflow that executes after dispatch
+- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Workflows/Queue Management/Queue Management]] - Parent subdomain
+- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Workflows/Queue Management/WorkflowExecutionDispatcherService]] - Orchestrates batch processing loop
+- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Workflows/Queue Management/WorkflowExecutionQueueService]] - State transition operations
+- [[riven/docs/system-design/domains/Workflows/Execution Engine/WorkflowOrchestrationService]] - Temporal workflow that executes after dispatch
 
 ---
 
@@ -435,3 +437,4 @@ graph TD
 |Date|Change|Reason|
 |---|---|---|
 |2026-02-08|Initial documentation|Phase 1 - Workflows domain documentation|
+| 2026-03-17 | claimPendingExecutions now filters by job_type='WORKFLOW_EXECUTION' | Identity Resolution genericized queue |

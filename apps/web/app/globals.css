@@ -2,8 +2,6 @@
 @import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
-@custom-variant amber (&:is(.amber *));
-
 @theme inline {
   --breakpoint-3xl: 120rem;
   --color-background: var(--background);
@@ -11,9 +9,9 @@
   --color-content: var(--content);
   --color-heading: var(--heading);
   --color-logo-primary: var(--logo-primary);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-geist);
   --font-mono: var(--font-geist-mono);
-  --font-serif: var(--font-instrument-serif);
+  --font-serif: var(--font-redaction);
   --font-display: var(--font-space-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -28,6 +26,7 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-inverse-card: var(--inverse-card);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -61,7 +60,26 @@
   }
 }
 
+@keyframes paper-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: var(--paper-texture-opacity);
+  }
+}
+
+@keyframes paper-lite-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: calc(var(--paper-texture-opacity) / 2.2);
+  }
+}
+
 :root {
+  --panel-inset: max(4dvw, calc((100vw - var(--breakpoint-3xl)) / 2));
   --wash-opacity: 0.2;
   --logo-primary: oklch(0.35 0 0);
   --radius: 0.625rem;
@@ -115,6 +133,9 @@
   --cta-g2: #8b5cf6;
   --cta-g3: #f43f5e;
   --cta-muted: oklch(0.556 0 0 / 0.2);
+  --inverse-card: var(--foreground);
+
+  --paper-texture-opacity: 0.5;
 }
 
 .dark {
@@ -157,10 +178,13 @@
   --sidebar-ring: oklch(0.556 0 0);
 
   /* CTA gradient stops — muted blue → soft violet → dusty mauve */
-  --cta-g1: oklch(0.60 0.10 240);
+  --cta-g1: oklch(0.6 0.1 240);
   --cta-g2: oklch(0.55 0.14 285);
-  --cta-g3: oklch(0.58 0.10 330);
+  --cta-g3: oklch(0.58 0.1 330);
   --cta-muted: oklch(0.3 0 0 / 0.3);
+
+  --inverse-card: var(--card);
+  --paper-texture-opacity: 0.85;
 
   /* Navbar inverse values (light-on-dark → dark-on-light) */
   --nav-inv-background: oklch(1 0 0);
@@ -170,61 +194,6 @@
   --nav-inv-muted: oklch(0.97 0 0);
   --nav-inv-primary: oklch(0.205 0 0);
   --nav-inv-logo-primary: oklch(0.35 0 0);
-}
-
-.amber {
-  --wash-opacity: 0.7;
-  --logo-primary: oklch(0.35 0 0);
-  --background: oklch(0.93 0.032 80);
-  --foreground: oklch(0.25 0.02 60);
-  --card: oklch(0.91 0.035 78);
-  --card-foreground: oklch(0.25 0.02 60);
-  --popover: oklch(0.91 0.035 78);
-  --popover-foreground: oklch(0.25 0.02 60);
-  --primary: oklch(0.35 0.04 65);
-  --content: oklch(0.45 0.04 65);
-  --heading: oklch(0.38 0.03 65);
-  --primary-foreground: oklch(0.93 0.032 80);
-  --secondary: oklch(0.9 0.038 76);
-  --secondary-foreground: oklch(0.25 0.02 60);
-  --muted: oklch(0.88 0.04 75);
-  --muted-foreground: oklch(0.45 0.03 65);
-  --accent: oklch(0.75 0.1 70);
-  --accent-foreground: oklch(0.25 0.02 60);
-  --edit: oklch(0.8366 0.117 66.29);
-  --archive: oklch(0.585 0.204 277.12);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.25 0.02 60 / 15%);
-  --input: oklch(0.25 0.02 60 / 15%);
-  --ring: oklch(0.55 0.06 70);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.91 0.035 78);
-  --sidebar-foreground: oklch(0.25 0.02 60);
-  --sidebar-primary: oklch(0.35 0.04 65);
-  --sidebar-primary-foreground: oklch(0.93 0.032 80);
-  --sidebar-accent: oklch(0.88 0.04 75);
-  --sidebar-accent-foreground: oklch(0.25 0.02 60);
-  --sidebar-border: oklch(0.25 0.02 60 / 15%);
-  --sidebar-ring: oklch(0.55 0.06 70);
-
-  /* CTA gradient stops — warm gold → copper → terracotta */
-  --cta-g1: oklch(0.75 0.13 80);
-  --cta-g2: oklch(0.62 0.15 50);
-  --cta-g3: oklch(0.65 0.12 25);
-  --cta-muted: oklch(0.45 0.03 65 / 0.2);
-
-  /* Navbar inverse values (amber bg/fg swapped) */
-  --nav-inv-background: oklch(0.25 0.02 60);
-  --nav-inv-foreground: oklch(0.93 0.032 80);
-  --nav-inv-muted-foreground: oklch(0.75 0.06 70);
-  --nav-inv-border: oklch(0.93 0.032 80 / 15%);
-  --nav-inv-muted: oklch(0.35 0.04 65);
-  --nav-inv-primary: oklch(0.93 0.032 80);
-  --nav-inv-logo-primary: oklch(0.85 0 0);
 }
 
 html {
@@ -250,13 +219,95 @@ html {
   }
 }
 
+.nav-link-stable {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.nav-link-stable::after {
+  content: attr(data-text) / '';
+  font-weight: 600;
+  height: 0;
+  visibility: hidden;
+  overflow: hidden;
+  pointer-events: none;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background font-mono leading-[0.9] tracking-tighter text-foreground;
+    @apply bg-background font-sans leading-none tracking-tighter text-foreground;
   }
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: var(--foreground);
+    opacity: 0.05;
+  }
+  :is(.dark) body::after {
+    background: black;
+    opacity: 0.3;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: var(--paper-texture);
+    background-repeat: repeat;
+    background-size: 256px 256px;
+    opacity: 0;
+    animation: paper-fade-in 0.6s ease-out 0.1s forwards;
+  }
+
+  .paper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: var(--paper-texture);
+    background-repeat: repeat;
+    background-size: 256px 256px;
+    opacity: 0;
+    animation: paper-fade-in 0.6s ease-out 0.1s forwards;
+  }
+
+  .paper-lite::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: var(--paper-texture);
+    background-repeat: repeat;
+    background-size: 256px 256px;
+    opacity: 0;
+    animation: paper-lite-fade-in 0.6s ease-out 0.1s forwards;
+  }
+
+  body > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* Frosted glass panel — faked glassmorphism that works inside CSS transforms
+   (where backdrop-filter breaks). Uses semi-transparent bg + noise + inner highlight. */
+.glass-panel {
+  position: relative;
+  background: oklch(0.15 0 0 / 0.8);
+  box-shadow:
+    inset 0 1px 0 0 oklch(1 0 0 / 0.06),
+    inset 0 0 24px 0 oklch(1 0 0 / 0.02),
+    0 0 0 1px oklch(1 0 0 / 0.08);
 }
 
 .logo-fill {
@@ -276,22 +327,8 @@ html {
   display: none;
 }
 
-.section {
-  @apply relative overflow-hidden py-16 md:py-24 lg:py-32;
-}
-
-.content-container {
-  @apply mx-auto w-full px-2 md:px-4 lg:px-0;
-
-  @media (width >= theme(--breakpoint-lg)) {
-    max-width: min(80dvw, var(--breakpoint-3xl));
-  }
-}
-
-.content-nav {
-  @media (width >= theme(--breakpoint-lg)) {
-    max-width: min(80dvw, var(--breakpoint-3xl));
-  }
+.clamp {
+  @apply lg:max-w-[min(95dvw,var(--breakpoint-3xl))];
 }
 
 nav[data-navbar] {
@@ -319,6 +356,50 @@ nav[data-inverted] {
   body[data-scroll-locked] {
     margin-right: 0 !important;
   }
+}
+
+/* ── Scroll-triggered animations ─────────────────────────── */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stars-scroll {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-2000px);
+  }
+}
+
+.animate-stars {
+  animation: stars-scroll linear infinite;
+}
+
+@keyframes blur-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-blur-in {
+  animation: blur-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 /* ── Reduced-motion override ────────────────────────────── */

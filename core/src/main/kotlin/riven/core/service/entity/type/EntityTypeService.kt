@@ -1,6 +1,6 @@
 package riven.core.service.entity.type
 
-import jakarta.transaction.Transactional
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
@@ -54,6 +54,7 @@ class EntityTypeService(
     private val authTokenService: AuthTokenService,
     private val activityService: ActivityService,
     private val semanticMetadataService: EntityTypeSemanticMetadataService,
+    private val protectionGuard: EntityTypeProtectionGuard,
 ) {
 
     /**
@@ -72,6 +73,7 @@ class EntityTypeService(
             workspaceId = workspaceId,
             identifierKey = primaryId,
             semanticGroup = request.semanticGroup,
+            lifecycleDomain = request.lifecycleDomain,
             iconType = request.icon.type,
             iconColour = request.icon.colour,
             protected = false,
@@ -147,14 +149,18 @@ class EntityTypeService(
             // Readonly entity types only allow column configuration changes
             request.columnConfiguration?.let { existing.columnConfiguration = it }
         } else {
-            existing.apply {
-                displayNameSingular = request.name.singular
-                displayNamePlural = request.name.plural
-                request.semanticGroup?.let { semanticGroup = it }
-                iconType = request.icon.type
-                iconColour = request.icon.colour
-                request.columnConfiguration?.let { columnConfiguration = it }
-            }
+            protectionGuard.assertCanUpdateConfiguration(
+                existing,
+                changingSemanticGroup = request.semanticGroup != null && request.semanticGroup != existing.semanticGroup,
+                changingLifecycleDomain = request.lifecycleDomain != null && request.lifecycleDomain != existing.lifecycleDomain,
+            )
+            existing.displayNameSingular = request.name.singular
+            existing.displayNamePlural = request.name.plural
+            request.semanticGroup?.let { existing.semanticGroup = it }
+            request.lifecycleDomain?.let { existing.lifecycleDomain = it }
+            existing.iconType = request.icon.type
+            existing.iconColour = request.icon.colour
+            request.columnConfiguration?.let { existing.columnConfiguration = it }
         }
 
         val saved = entityTypeRepository.save(existing)
@@ -192,7 +198,7 @@ class EntityTypeService(
         val (requestIndex: Int?, definition) = request
         val existing =
             ServiceUtil.findOrThrow { entityTypeRepository.findByworkspaceIdAndKey(workspaceId, definition.key) }
-        require(!existing.readonly) { "Cannot modify definitions on a readonly entity type '${existing.key}'" }
+        protectionGuard.assertCanModifySchema(existing)
         val entityTypeId = requireNotNull(existing.id)
 
         var resolvedDefinitionId: UUID? = definition.id
@@ -235,7 +241,7 @@ class EntityTypeService(
         val (definition) = request
         val existing =
             ServiceUtil.findOrThrow { entityTypeRepository.findByworkspaceIdAndKey(workspaceId, definition.key) }
-        require(!existing.readonly) { "Cannot remove definitions from a readonly entity type '${existing.key}'" }
+        protectionGuard.assertCanModifySchema(existing)
 
         when (definition) {
             is DeleteAttributeDefinitionRequest -> {
@@ -261,6 +267,7 @@ class EntityTypeService(
     }
 
 
+    @Transactional
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun deleteEntityType(
         workspaceId: UUID,
@@ -269,7 +276,7 @@ class EntityTypeService(
     ): EntityTypeImpactResponse {
         val userId = authTokenService.getUserId()
         val existing = ServiceUtil.findOrThrow { entityTypeRepository.findByworkspaceIdAndKey(workspaceId, key) }
-        require(!existing.readonly) { "Cannot delete a readonly entity type '${existing.key}'" }
+        protectionGuard.assertCanDelete(existing)
         val entityTypeId = requireNotNull(existing.id)
         requireNotNull(existing.workspaceId) { "Cannot delete system entity type" }
 
@@ -373,7 +380,7 @@ class EntityTypeService(
      * semantic metadata, and derived columns.
      */
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
-    fun getWorkspaceEntityTypesWithIncludes(workspaceId: UUID): List<EntityType> {
+    fun getEntityTypes(workspaceId: UUID): List<EntityType> {
         val entityTypes = getWorkspaceEntityTypes(workspaceId)
         val entityTypeIds = entityTypes.map { it.id }
 
@@ -390,7 +397,7 @@ class EntityTypeService(
             et.copy(
                 relationships = relationships,
                 semantics = bundleMap[et.id],
-                columns = assembleColumns(et.schema, relationships, et.columnConfiguration),
+                columns = assembleColumns(et.schema, relationships, et.columnConfiguration, readonly = et.readonly),
             )
         }
     }
@@ -617,10 +624,12 @@ class EntityTypeService(
         fun assembleColumns(
             schema: EntityTypeSchema,
             relationships: List<RelationshipDefinition>,
-            config: ColumnConfiguration?
+            config: ColumnConfiguration?,
+            readonly: Boolean = false,
         ): List<EntityTypeAttributeColumn> {
             val attributeIds = schema.properties?.keys ?: emptySet()
-            val relationshipIds = relationships.map { it.id }.toSet()
+            // Readonly entity types (integration-sourced) skip inverse/relationship columns
+            val relationshipIds = if (readonly) emptySet() else relationships.map { it.id }.toSet()
             val allIds = attributeIds + relationshipIds
 
             val orderedIds = config?.order

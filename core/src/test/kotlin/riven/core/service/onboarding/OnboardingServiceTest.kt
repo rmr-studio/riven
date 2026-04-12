@@ -1,42 +1,42 @@
 package riven.core.service.onboarding
 
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Configuration
 import org.springframework.test.context.bean.override.mockito.MockitoBean
+import org.springframework.transaction.support.TransactionCallback
 import org.springframework.transaction.support.TransactionTemplate
-import org.springframework.web.multipart.MultipartFile
 import riven.core.configuration.auth.WorkspaceSecurity
-import riven.core.entity.user.UserEntity
+import riven.core.enums.knowledge.DefinitionCategory
+import riven.core.enums.workspace.BusinessType
 import riven.core.enums.workspace.WorkspacePlan
 import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.exceptions.ConflictException
-import riven.core.models.request.onboarding.CompleteOnboardingRequest
-import riven.core.models.request.onboarding.OnboardingInvite
-import riven.core.models.request.onboarding.OnboardingProfile
-import riven.core.models.request.onboarding.OnboardingWorkspace
+import riven.core.models.request.knowledge.CreateBusinessDefinitionRequest
+import riven.core.models.request.onboarding.*
 import riven.core.models.request.user.SaveUserRequest
 import riven.core.models.request.workspace.SaveWorkspaceRequest
-import riven.core.models.response.catalog.BundleInstallationResponse
 import riven.core.models.response.catalog.TemplateInstallationResponse
-import riven.core.models.user.User
-import riven.core.models.workspace.Workspace
-import riven.core.models.workspace.WorkspaceInvite
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.catalog.TemplateInstallationService
+import riven.core.service.knowledge.WorkspaceBusinessDefinitionService
 import riven.core.service.user.UserService
 import riven.core.service.util.BaseServiceTest
 import riven.core.service.util.SecurityTestConfig
+import riven.core.service.util.WithUserPersona
+import riven.core.service.util.WorkspaceRole
+import riven.core.models.user.User
+import riven.core.repository.user.UserRepository
 import riven.core.service.util.factory.UserFactory
+import riven.core.service.util.factory.WorkspaceFactory
 import riven.core.service.workspace.WorkspaceInviteService
 import riven.core.service.workspace.WorkspaceService
-import org.springframework.transaction.TransactionStatus
-import org.springframework.transaction.support.TransactionCallback
-import java.time.ZonedDateTime
 import java.util.*
 
 @SpringBootTest(
@@ -44,38 +44,33 @@ import java.util.*
         AuthTokenService::class,
         WorkspaceSecurity::class,
         SecurityTestConfig::class,
+        OnboardingServiceTest.TestConfig::class,
         OnboardingService::class,
     ]
 )
 class OnboardingServiceTest : BaseServiceTest() {
 
-    @MockitoBean
-    private lateinit var workspaceService: WorkspaceService
+    @Configuration
+    class TestConfig
 
-    @MockitoBean
-    private lateinit var userService: UserService
-
-    @MockitoBean
-    private lateinit var templateInstallationService: TemplateInstallationService
-
-    @MockitoBean
-    private lateinit var workspaceInviteService: WorkspaceInviteService
-
-    @MockitoBean
-    private lateinit var activityService: ActivityService
-
-    @MockitoBean
-    private lateinit var transactionTemplate: TransactionTemplate
+    @MockitoBean private lateinit var workspaceService: WorkspaceService
+    @MockitoBean private lateinit var userService: UserService
+    @MockitoBean private lateinit var userRepository: UserRepository
+    @MockitoBean private lateinit var templateInstallationService: TemplateInstallationService
+    @MockitoBean private lateinit var workspaceInviteService: WorkspaceInviteService
+    @MockitoBean private lateinit var businessDefinitionService: WorkspaceBusinessDefinitionService
+    @MockitoBean private lateinit var authTokenService: AuthTokenService
+    @MockitoBean private lateinit var activityService: ActivityService
+    @MockitoBean private lateinit var transactionTemplate: TransactionTemplate
 
     @Autowired
     private lateinit var onboardingService: OnboardingService
 
-    private val testWorkspaceId = UUID.randomUUID()
+    private val newWorkspaceId = UUID.randomUUID()
 
     private fun defaultRequest(
-        templateKeys: List<String>? = null,
-        bundleKeys: List<String>? = null,
         invites: List<OnboardingInvite>? = null,
+        businessDefinitions: List<OnboardingBusinessDefinition>? = null,
     ) = CompleteOnboardingRequest(
         workspace = OnboardingWorkspace(
             name = "My Workspace",
@@ -86,312 +81,245 @@ class OnboardingServiceTest : BaseServiceTest() {
             name = "Test User",
             phone = "1234567890",
         ),
-        templateKeys = templateKeys,
-        bundleKeys = bundleKeys,
+        businessType = BusinessType.B2C_SAAS,
         invites = invites,
+        businessDefinitions = businessDefinitions,
     )
 
-    private fun mockWorkspace(): Workspace = Workspace(
-        id = testWorkspaceId,
-        name = "My Workspace",
-        plan = WorkspacePlan.FREE,
-        memberCount = 1,
-    )
+    @BeforeEach
+    fun setUp() {
+        reset(
+            workspaceService, userService, userRepository, templateInstallationService,
+            workspaceInviteService, businessDefinitionService,
+            authTokenService, activityService, transactionTemplate,
+        )
 
-    private fun mockUser(): User = User(
-        id = userId,
+        whenever(authTokenService.getUserId()).thenReturn(userId)
+        whenever(authTokenService.getUserEmail()).thenReturn("test@example.com")
+
+        // TransactionTemplate.execute should run the callback immediately
+        whenever(transactionTemplate.execute(any<TransactionCallback<*>>())).thenAnswer { invocation ->
+            val callback = invocation.getArgument<TransactionCallback<*>>(0)
+            callback.doInTransaction(mock())
+        }
+
+        val workspaceEntity = WorkspaceFactory.createWorkspace(id = newWorkspaceId, name = "My Workspace")
+        val workspace = workspaceEntity.toModel()
+        whenever(workspaceService.saveWorkspace(any<SaveWorkspaceRequest>(), anyOrNull())).thenReturn(workspace)
+
+        val userEntity = UserFactory.createUser(id = userId, name = "Test User", email = "test@example.com")
+        val userModel = User(id = userId, email = "test@example.com", name = "Test User", phone = "1234567890")
+        whenever(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(userEntity))
+        whenever(userService.getUserById(userId)).thenReturn(userEntity)
+        whenever(userService.getUserWithWorkspacesById(userId)).thenReturn(userModel)
+        whenever(userService.updateUserDetails(any<SaveUserRequest>(), anyOrNull())).thenReturn(userModel)
+
+        whenever(templateInstallationService.installTemplateInternal(any(), any(), any())).thenReturn(
+            TemplateInstallationResponse(
+                templateKey = "saas",
+                templateName = "SaaS Template",
+                entityTypesCreated = 3,
+                relationshipsCreated = 2,
+                entityTypes = emptyList(),
+            )
+        )
+
+        whenever(activityService.logActivity(any(), any(), any(), any(), any(), anyOrNull(), any(), any())).thenReturn(mock())
+    }
+
+    @Nested
+    @WithUserPersona(
+        userId = "f8b1c2d3-4e5f-6789-abcd-ef0123456789",
         email = "test@example.com",
-        name = "Test User",
-        phone = "1234567890",
-        defaultWorkspace = mockWorkspace(),
-        onboardingCompletedAt = ZonedDateTime.now(),
+        displayName = "Test User",
+        roles = [WorkspaceRole(workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210", role = WorkspaceRoles.OWNER)]
     )
+    inner class CompleteOnboarding {
 
-    private fun mockUserEntity(onboardingCompletedAt: ZonedDateTime? = null): UserEntity =
-        UserFactory.createUser(id = userId).apply {
-            this.onboardingCompletedAt = onboardingCompletedAt
+        @Test
+        fun `happy path creates workspace, installs template, and updates profile atomically`() {
+            val request = defaultRequest()
+
+            val response = onboardingService.completeOnboarding(request)
+
+            assertNotNull(response.workspace)
+            assertEquals(newWorkspaceId, response.workspace.id)
+            assertNotNull(response.user)
+            assertEquals(3, response.templateResult.entityTypesCreated)
+            assertEquals(2, response.templateResult.relationshipsCreated)
+            assertTrue(response.inviteResults.isEmpty())
+            assertTrue(response.definitionResults.isEmpty())
+
+            // Verify template installation uses internal (auth-bypass) method
+            verify(templateInstallationService).installTemplateInternal(eq(newWorkspaceId), any(), eq(userId))
+            verify(templateInstallationService, never()).installTemplate(any(), any())
         }
 
-    private fun setupHappyPath() {
-        val workspace = mockWorkspace()
-        val user = mockUser()
-        val userEntity = mockUserEntity()
-        val userWithWorkspaces = mockUser()
+        @Test
+        fun `rejects user who has already completed onboarding`() {
+            val alreadyOnboardedUser = UserFactory.createOnboardedUser(id = userId)
+            whenever(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(alreadyOnboardedUser))
 
-        whenever(userService.getUserById(userId)).thenReturn(userEntity)
-        whenever(workspaceService.saveWorkspace(any(), anyOrNull())).thenReturn(workspace)
-        whenever(userService.getUserWithWorkspacesById(userId)).thenReturn(userWithWorkspaces)
-        whenever(userService.updateUserDetails(any<SaveUserRequest>(), anyOrNull())).thenReturn(user)
+            val request = defaultRequest()
 
-        whenever(transactionTemplate.execute<Any>(any())).thenAnswer { invocation ->
-            @Suppress("UNCHECKED_CAST")
-            val callback = invocation.getArgument<TransactionCallback<Any>>(0)
-            callback.doInTransaction(mock<TransactionStatus>())
+            assertThrows(ConflictException::class.java) {
+                onboardingService.completeOnboarding(request)
+            }
+
+            verify(workspaceService, never()).saveWorkspace(any<SaveWorkspaceRequest>(), anyOrNull())
+        }
+
+        @Test
+        fun `template installation failure propagates exception — workspace is not silently created without schema`() {
+            whenever(templateInstallationService.installTemplateInternal(any(), any(), any()))
+                .thenThrow(RuntimeException("Template manifest not found"))
+
+            val request = defaultRequest()
+
+            assertThrows(RuntimeException::class.java) {
+                onboardingService.completeOnboarding(request)
+            }
         }
     }
 
-    // ------ Happy Path Tests ------
+    @Nested
+    @WithUserPersona(
+        userId = "f8b1c2d3-4e5f-6789-abcd-ef0123456789",
+        email = "test@example.com",
+        displayName = "Test User",
+        roles = [WorkspaceRole(workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210", role = WorkspaceRoles.OWNER)]
+    )
+    inner class InviteEdgeCases {
 
-    @Test
-    fun `completeOnboarding succeeds with all fields`() {
-        setupHappyPath()
+        @Test
+        fun `self-invite returns failure result without throwing`() {
+            val request = defaultRequest(
+                invites = listOf(OnboardingInvite(email = "test@example.com", role = WorkspaceRoles.MEMBER))
+            )
 
-        val templateResponse = TemplateInstallationResponse(
-            templateKey = "crm",
-            templateName = "CRM",
-            entityTypesCreated = 3,
-            relationshipsCreated = 1,
-            entityTypes = emptyList(),
-        )
-        whenever(templateInstallationService.installTemplateInternal(testWorkspaceId, "crm"))
-            .thenReturn(templateResponse)
+            val response = onboardingService.completeOnboarding(request)
 
-        val invite = mock<WorkspaceInvite>()
-        whenever(workspaceInviteService.createWorkspaceInvitationInternal(eq(testWorkspaceId), eq("colleague@example.com"), eq(WorkspaceRoles.MEMBER), eq(userId)))
-            .thenReturn(invite)
-
-        val request = defaultRequest(
-            templateKeys = listOf("crm"),
-            invites = listOf(OnboardingInvite(email = "colleague@example.com", role = WorkspaceRoles.MEMBER)),
-        )
-
-        val response = onboardingService.completeOnboarding(request)
-
-        assertEquals(testWorkspaceId, response.workspace.id)
-        assertEquals(1, response.templateResults.size)
-        assertTrue(response.templateResults[0].success)
-        assertEquals(3, response.templateResults[0].entityTypesCreated)
-        assertEquals(1, response.inviteResults.size)
-        assertTrue(response.inviteResults[0].success)
-    }
-
-    @Test
-    fun `completeOnboarding succeeds with required fields only`() {
-        setupHappyPath()
-
-        val request = defaultRequest()
-        val response = onboardingService.completeOnboarding(request)
-
-        assertEquals(testWorkspaceId, response.workspace.id)
-        assertTrue(response.templateResults.isEmpty())
-        assertTrue(response.inviteResults.isEmpty())
-    }
-
-    // ------ Eligibility Tests ------
-
-    @Test
-    fun `completeOnboarding throws ConflictException when already onboarded`() {
-        val userEntity = mockUserEntity(onboardingCompletedAt = ZonedDateTime.now())
-        whenever(userService.getUserById(userId)).thenReturn(userEntity)
-
-        whenever(transactionTemplate.execute<Any>(any())).thenAnswer { invocation ->
-            @Suppress("UNCHECKED_CAST")
-            val callback = invocation.getArgument<TransactionCallback<Any>>(0)
-            callback.doInTransaction(mock<TransactionStatus>())
+            assertEquals(1, response.inviteResults.size)
+            assertFalse(response.inviteResults[0].success)
+            assertEquals("Cannot invite yourself to your own workspace", response.inviteResults[0].error)
+            verify(workspaceInviteService, never()).createWorkspaceInvitationInternal(any(), any(), any(), any())
         }
 
-        val request = defaultRequest()
+        @Test
+        fun `owner role invite returns failure result without throwing`() {
+            val request = defaultRequest(
+                invites = listOf(OnboardingInvite(email = "other@example.com", role = WorkspaceRoles.OWNER))
+            )
 
-        assertThrows<ConflictException> {
+            val response = onboardingService.completeOnboarding(request)
+
+            assertEquals(1, response.inviteResults.size)
+            assertFalse(response.inviteResults[0].success)
+            assertEquals("Cannot invite with OWNER role", response.inviteResults[0].error)
+        }
+
+        @Test
+        fun `valid invite calls internal method and returns success`() {
+            val request = defaultRequest(
+                invites = listOf(OnboardingInvite(email = "colleague@example.com", role = WorkspaceRoles.MEMBER))
+            )
+
+            whenever(workspaceInviteService.createWorkspaceInvitationInternal(any(), any(), any(), any()))
+                .thenReturn(mock())
+
+            val response = onboardingService.completeOnboarding(request)
+
+            assertEquals(1, response.inviteResults.size)
+            assertTrue(response.inviteResults[0].success)
+            verify(workspaceInviteService).createWorkspaceInvitationInternal(
+                eq(newWorkspaceId), eq("colleague@example.com"), eq(WorkspaceRoles.MEMBER), eq(userId)
+            )
+        }
+
+        @Test
+        fun `invite service failure returns error result without failing onboarding`() {
+            val request = defaultRequest(
+                invites = listOf(OnboardingInvite(email = "colleague@example.com", role = WorkspaceRoles.MEMBER))
+            )
+
+            whenever(workspaceInviteService.createWorkspaceInvitationInternal(any(), any(), any(), any()))
+                .thenThrow(ConflictException("Invitation already exists"))
+
+            val response = onboardingService.completeOnboarding(request)
+
+            assertEquals(1, response.inviteResults.size)
+            assertFalse(response.inviteResults[0].success)
+            assertEquals("invite_conflict", response.inviteResults[0].error)
+            // Onboarding still completes — workspace and template are intact
+            assertNotNull(response.workspace)
+        }
+    }
+
+    @Nested
+    @WithUserPersona(
+        userId = "f8b1c2d3-4e5f-6789-abcd-ef0123456789",
+        email = "test@example.com",
+        displayName = "Test User",
+        roles = [WorkspaceRole(workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210", role = WorkspaceRoles.OWNER)]
+    )
+    inner class BusinessDefinitions {
+
+        @Test
+        fun `valid definitions call internal method and return success`() {
+            val request = defaultRequest(
+                businessDefinitions = listOf(
+                    OnboardingBusinessDefinition(term = "MRR", definition = "Monthly Recurring Revenue", category = DefinitionCategory.METRIC),
+                )
+            )
+
+            whenever(businessDefinitionService.createDefinitionInternal(any(), any(), any<CreateBusinessDefinitionRequest>()))
+                .thenReturn(mock())
+
+            val response = onboardingService.completeOnboarding(request)
+
+            assertEquals(1, response.definitionResults.size)
+            assertTrue(response.definitionResults[0].success)
+            assertEquals("MRR", response.definitionResults[0].term)
+            verify(businessDefinitionService).createDefinitionInternal(eq(newWorkspaceId), eq(userId), any())
+        }
+
+        @Test
+        fun `passes isCustomized flag to definition service`() {
+            val request = defaultRequest(
+                businessDefinitions = listOf(
+                    OnboardingBusinessDefinition(term = "Churn", definition = "Custom churn def", category = DefinitionCategory.METRIC, isCustomized = true),
+                )
+            )
+
+            whenever(businessDefinitionService.createDefinitionInternal(any(), any(), any<CreateBusinessDefinitionRequest>()))
+                .thenReturn(mock())
+
             onboardingService.completeOnboarding(request)
+
+            verify(businessDefinitionService).createDefinitionInternal(
+                eq(newWorkspaceId),
+                eq(userId),
+                argThat<CreateBusinessDefinitionRequest> { isCustomized }
+            )
         }
 
-        verify(workspaceService, never()).saveWorkspace(any(), anyOrNull())
-    }
+        @Test
+        fun `definition service failure returns error result without failing onboarding`() {
+            val request = defaultRequest(
+                businessDefinitions = listOf(
+                    OnboardingBusinessDefinition(term = "MRR", definition = "Monthly Recurring Revenue", category = DefinitionCategory.METRIC),
+                )
+            )
 
-    // ------ Template Partial Failure Tests ------
+            whenever(businessDefinitionService.createDefinitionInternal(any(), any(), any<CreateBusinessDefinitionRequest>()))
+                .thenThrow(ConflictException("Duplicate term"))
 
-    @Test
-    fun `completeOnboarding returns mixed template results on partial failure`() {
-        setupHappyPath()
+            val response = onboardingService.completeOnboarding(request)
 
-        val successResponse = TemplateInstallationResponse(
-            templateKey = "crm",
-            templateName = "CRM",
-            entityTypesCreated = 2,
-            relationshipsCreated = 0,
-            entityTypes = emptyList(),
-        )
-        whenever(templateInstallationService.installTemplateInternal(testWorkspaceId, "crm"))
-            .thenReturn(successResponse)
-        whenever(templateInstallationService.installTemplateInternal(testWorkspaceId, "bad-template"))
-            .thenThrow(RuntimeException("Template not found"))
-
-        val request = defaultRequest(templateKeys = listOf("crm", "bad-template"))
-        val response = onboardingService.completeOnboarding(request)
-
-        assertEquals(testWorkspaceId, response.workspace.id)
-        assertEquals(2, response.templateResults.size)
-        assertTrue(response.templateResults[0].success)
-        assertFalse(response.templateResults[1].success)
-        assertEquals("Template not found", response.templateResults[1].error)
-    }
-
-    @Test
-    fun `completeOnboarding still returns workspace when all templates fail`() {
-        setupHappyPath()
-
-        whenever(templateInstallationService.installTemplateInternal(eq(testWorkspaceId), any()))
-            .thenThrow(RuntimeException("Install failed"))
-
-        val request = defaultRequest(templateKeys = listOf("bad1", "bad2"))
-        val response = onboardingService.completeOnboarding(request)
-
-        assertEquals(testWorkspaceId, response.workspace.id)
-        assertEquals(2, response.templateResults.size)
-        assertTrue(response.templateResults.all { !it.success })
-    }
-
-    // ------ Invite Tests ------
-
-    @Test
-    fun `completeOnboarding returns mixed invite results on partial failure`() {
-        setupHappyPath()
-
-        val invite = mock<WorkspaceInvite>()
-        whenever(workspaceInviteService.createWorkspaceInvitationInternal(eq(testWorkspaceId), eq("good@example.com"), eq(WorkspaceRoles.MEMBER), eq(userId)))
-            .thenReturn(invite)
-        whenever(workspaceInviteService.createWorkspaceInvitationInternal(eq(testWorkspaceId), eq("bad@example.com"), eq(WorkspaceRoles.ADMIN), eq(userId)))
-            .thenThrow(RuntimeException("Invite failed"))
-
-        val request = defaultRequest(
-            invites = listOf(
-                OnboardingInvite(email = "good@example.com", role = WorkspaceRoles.MEMBER),
-                OnboardingInvite(email = "bad@example.com", role = WorkspaceRoles.ADMIN),
-            ),
-        )
-        val response = onboardingService.completeOnboarding(request)
-
-        assertEquals(2, response.inviteResults.size)
-        assertTrue(response.inviteResults[0].success)
-        assertFalse(response.inviteResults[1].success)
-    }
-
-    @Test
-    fun `completeOnboarding still returns workspace when all invites fail`() {
-        setupHappyPath()
-
-        whenever(workspaceInviteService.createWorkspaceInvitationInternal(eq(testWorkspaceId), any(), any(), eq(userId)))
-            .thenThrow(RuntimeException("All invites fail"))
-
-        val request = defaultRequest(
-            invites = listOf(
-                OnboardingInvite(email = "a@example.com", role = WorkspaceRoles.MEMBER),
-            ),
-        )
-        val response = onboardingService.completeOnboarding(request)
-
-        assertEquals(testWorkspaceId, response.workspace.id)
-        assertEquals(1, response.inviteResults.size)
-        assertFalse(response.inviteResults[0].success)
-    }
-
-    @Test
-    fun `completeOnboarding filters self-invite`() {
-        setupHappyPath()
-
-        val request = defaultRequest(
-            invites = listOf(
-                OnboardingInvite(email = "test@example.com", role = WorkspaceRoles.MEMBER),
-            ),
-        )
-        val response = onboardingService.completeOnboarding(request)
-
-        assertEquals(1, response.inviteResults.size)
-        assertFalse(response.inviteResults[0].success)
-        assertEquals("Cannot invite yourself to your own workspace", response.inviteResults[0].error)
-
-        verify(workspaceInviteService, never()).createWorkspaceInvitationInternal(any(), any(), any(), any())
-    }
-
-    @Test
-    fun `completeOnboarding rejects invite with OWNER role`() {
-        setupHappyPath()
-
-        val request = defaultRequest(
-            invites = listOf(
-                OnboardingInvite(email = "other@example.com", role = WorkspaceRoles.OWNER),
-            ),
-        )
-        val response = onboardingService.completeOnboarding(request)
-
-        assertEquals(1, response.inviteResults.size)
-        assertFalse(response.inviteResults[0].success)
-        assertEquals("Cannot invite with OWNER role", response.inviteResults[0].error)
-
-        verify(workspaceInviteService, never()).createWorkspaceInvitationInternal(any(), any(), any(), any())
-    }
-
-    // ------ Avatar Tests ------
-
-    @Test
-    fun `completeOnboarding passes workspace avatar to saveWorkspace`() {
-        setupHappyPath()
-        val avatarFile = mock<MultipartFile>()
-
-        val request = defaultRequest()
-        onboardingService.completeOnboarding(request, workspaceAvatar = avatarFile)
-
-        // Verify the transaction was executed and workspace service was called
-        verify(transactionTemplate).execute<Any>(any())
-        verify(workspaceService).saveWorkspace(any(), eq(avatarFile))
-    }
-
-    @Test
-    fun `completeOnboarding passes profile avatar through`() {
-        setupHappyPath()
-        val avatarFile = mock<MultipartFile>()
-
-        val request = defaultRequest()
-        onboardingService.completeOnboarding(request, profileAvatar = avatarFile)
-
-        verify(transactionTemplate).execute<Any>(any())
-        verify(userService).updateUserDetails(any<SaveUserRequest>(), eq(avatarFile))
-    }
-
-    // ------ Bundle Keys Test ------
-
-    @Test
-    fun `completeOnboarding calls installBundleInternal for bundle keys`() {
-        setupHappyPath()
-
-        val bundleResponse = BundleInstallationResponse(
-            bundleKey = "starter-bundle",
-            bundleName = "Starter",
-            templatesInstalled = listOf("crm"),
-            templatesSkipped = emptyList(),
-            entityTypesCreated = 5,
-            relationshipsCreated = 2,
-            entityTypes = emptyList(),
-        )
-        whenever(templateInstallationService.installBundleInternal(testWorkspaceId, "starter-bundle"))
-            .thenReturn(bundleResponse)
-
-        val request = defaultRequest(bundleKeys = listOf("starter-bundle"))
-        val response = onboardingService.completeOnboarding(request)
-
-        assertEquals(1, response.templateResults.size)
-        assertTrue(response.templateResults[0].success)
-        assertEquals("starter-bundle", response.templateResults[0].key)
-        assertEquals(5, response.templateResults[0].entityTypesCreated)
-    }
-
-    // ------ Workspace Creation Failure Test ------
-
-    @Test
-    fun `completeOnboarding propagates workspace creation failure`() {
-        val userEntity = mockUserEntity()
-        whenever(userService.getUserById(userId)).thenReturn(userEntity)
-        whenever(transactionTemplate.execute<Any>(any()))
-            .thenThrow(RuntimeException("Workspace creation failed"))
-
-        val request = defaultRequest()
-
-        assertThrows<RuntimeException> {
-            onboardingService.completeOnboarding(request)
+            assertEquals(1, response.definitionResults.size)
+            assertFalse(response.definitionResults[0].success)
+            assertEquals("definition_conflict", response.definitionResults[0].error)
+            assertNotNull(response.workspace)
         }
-
-        verify(templateInstallationService, never()).installTemplateInternal(any(), any())
-        verify(workspaceInviteService, never()).createWorkspaceInvitationInternal(any(), any(), any(), any())
     }
 }

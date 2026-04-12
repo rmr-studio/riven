@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { OnboardingBusinessDefinition } from './OnboardingBusinessDefinition';
+import {
+    OnboardingBusinessDefinitionFromJSON,
+    OnboardingBusinessDefinitionFromJSONTyped,
+    OnboardingBusinessDefinitionToJSON,
+    OnboardingBusinessDefinitionToJSONTyped,
+} from './OnboardingBusinessDefinition';
 import type { OnboardingInvite } from './OnboardingInvite';
 import {
     OnboardingInviteFromJSON,
@@ -20,6 +27,13 @@ import {
     OnboardingInviteToJSON,
     OnboardingInviteToJSONTyped,
 } from './OnboardingInvite';
+import type { BusinessType } from './BusinessType';
+import {
+    BusinessTypeFromJSON,
+    BusinessTypeFromJSONTyped,
+    BusinessTypeToJSON,
+    BusinessTypeToJSONTyped,
+} from './BusinessType';
 import type { OnboardingWorkspace } from './OnboardingWorkspace';
 import {
     OnboardingWorkspaceFromJSON,
@@ -27,6 +41,13 @@ import {
     OnboardingWorkspaceToJSON,
     OnboardingWorkspaceToJSONTyped,
 } from './OnboardingWorkspace';
+import type { AcquisitionChannel } from './AcquisitionChannel';
+import {
+    AcquisitionChannelFromJSON,
+    AcquisitionChannelFromJSONTyped,
+    AcquisitionChannelToJSON,
+    AcquisitionChannelToJSONTyped,
+} from './AcquisitionChannel';
 import type { OnboardingProfile } from './OnboardingProfile';
 import {
     OnboardingProfileFromJSON,
@@ -55,23 +76,31 @@ export interface CompleteOnboardingRequest {
     profile: OnboardingProfile;
     /**
      * 
-     * @type {Array<string>}
+     * @type {BusinessType}
      * @memberof CompleteOnboardingRequest
      */
-    templateKeys?: Array<string>;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof CompleteOnboardingRequest
-     */
-    bundleKeys?: Array<string>;
+    businessType: BusinessType;
     /**
      * 
      * @type {Array<OnboardingInvite>}
      * @memberof CompleteOnboardingRequest
      */
     invites?: Array<OnboardingInvite>;
+    /**
+     * 
+     * @type {Array<OnboardingBusinessDefinition>}
+     * @memberof CompleteOnboardingRequest
+     */
+    businessDefinitions?: Array<OnboardingBusinessDefinition>;
+    /**
+     * 
+     * @type {Array<AcquisitionChannel>}
+     * @memberof CompleteOnboardingRequest
+     */
+    acquisitionChannels?: Array<AcquisitionChannel>;
 }
+
+
 
 /**
  * Check if a given object implements the CompleteOnboardingRequest interface.
@@ -79,6 +108,7 @@ export interface CompleteOnboardingRequest {
 export function instanceOfCompleteOnboardingRequest(value: object): value is CompleteOnboardingRequest {
     if (!('workspace' in value) || value['workspace'] === undefined) return false;
     if (!('profile' in value) || value['profile'] === undefined) return false;
+    if (!('businessType' in value) || value['businessType'] === undefined) return false;
     return true;
 }
 
@@ -94,9 +124,10 @@ export function CompleteOnboardingRequestFromJSONTyped(json: any, ignoreDiscrimi
         
         'workspace': OnboardingWorkspaceFromJSON(json['workspace']),
         'profile': OnboardingProfileFromJSON(json['profile']),
-        'templateKeys': json['templateKeys'] == null ? undefined : json['templateKeys'],
-        'bundleKeys': json['bundleKeys'] == null ? undefined : json['bundleKeys'],
+        'businessType': BusinessTypeFromJSON(json['businessType']),
         'invites': json['invites'] == null ? undefined : ((json['invites'] as Array<any>).map(OnboardingInviteFromJSON)),
+        'businessDefinitions': json['businessDefinitions'] == null ? undefined : ((json['businessDefinitions'] as Array<any>).map(OnboardingBusinessDefinitionFromJSON)),
+        'acquisitionChannels': json['acquisitionChannels'] == null ? undefined : ((json['acquisitionChannels'] as Array<any>).map(AcquisitionChannelFromJSON)),
     };
 }
 
@@ -113,9 +144,10 @@ export function CompleteOnboardingRequestToJSONTyped(value?: CompleteOnboardingR
         
         'workspace': OnboardingWorkspaceToJSON(value['workspace']),
         'profile': OnboardingProfileToJSON(value['profile']),
-        'templateKeys': value['templateKeys'],
-        'bundleKeys': value['bundleKeys'],
+        'businessType': BusinessTypeToJSON(value['businessType']),
         'invites': value['invites'] == null ? undefined : ((value['invites'] as Array<any>).map(OnboardingInviteToJSON)),
+        'businessDefinitions': value['businessDefinitions'] == null ? undefined : ((value['businessDefinitions'] as Array<any>).map(OnboardingBusinessDefinitionToJSON)),
+        'acquisitionChannels': value['acquisitionChannels'] == null ? undefined : ((value['acquisitionChannels'] as Array<any>).map(AcquisitionChannelToJSON)),
     };
 }
 

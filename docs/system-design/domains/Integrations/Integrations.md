@@ -4,7 +4,7 @@ tags:
   - domain/integration
   - tools/nango
 Created: 2025-05-01
-Updated: 2026-03-18
+Updated: 2026-03-27
 ---
 # Domain: Integrations
 
@@ -12,7 +12,7 @@ Updated: 2026-03-18
 
 ## Overview
 
-The Integrations domain manages the full lifecycle of third-party integrations within workspaces — enabling, disabling, tracking connection state via Nango for OAuth-based integrations, and tracking per-entity-type sync progress. Integration enablement is **webhook-driven**: when a user completes OAuth in the Nango Connect UI, Nango sends a signed webhook that triggers connection creation, installation tracking, and template materialization. The domain materializes catalog-defined entity type templates into workspace-scoped entity types with deterministic UUID mapping, creating a readonly data layer that external sync processes can populate. Connection state is governed by an 8-state state machine enforced by [[IntegrationConnectionService]], while [[NangoWebhookService]] handles the auth webhook flow and [[IntegrationEnablementService]] orchestrates the disable workflow including soft-delete, Nango disconnect, and gap recovery. Sync progress per connection per entity type is tracked by [[IntegrationSyncStateEntity]] with cursor-based incremental sync support.
+The Integrations domain manages the full lifecycle of third-party integrations within workspaces — enabling, disabling, tracking connection state via Nango for OAuth-based integrations, and tracking per-entity-type sync progress. Integration enablement is **webhook-driven**: when a user completes OAuth in the Nango Connect UI, Nango sends a signed webhook that triggers connection creation, installation tracking, and template materialization. The domain materializes catalog-defined entity type templates into workspace-scoped entity types with deterministic UUID mapping, creating a readonly data layer that external sync processes can populate. Connection state is governed by an 8-state state machine enforced by [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Connection Management/IntegrationConnectionService]], while [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Webhook Authentication/NangoWebhookService]] handles the auth webhook flow and [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Enablement/IntegrationEnablementService]] orchestrates the disable workflow including soft-delete, Nango disconnect, and gap recovery. Sync progress per connection per entity type is tracked by [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Data Sync/IntegrationSyncStateEntity]] with cursor-based incremental sync support.
 
 ---
 
@@ -30,9 +30,8 @@ The Integrations domain manages the full lifecycle of third-party integrations w
 
 ### This Domain Does NOT Own
 
-- Catalog definitions (manifest scanning, resolution, persistence) — owned by [[Catalog]] domain
-- Entity type schema management and user-defined attributes — owned by [[Entities]] domain
-- Sync execution and data ingestion — future, will be orchestrated by Temporal workflows
+- Catalog definitions (manifest scanning, resolution, persistence) — owned by [[riven/docs/system-design/domains/Catalog/Catalog]] domain
+- Entity type schema management and user-defined attributes — owned by [[riven/docs/system-design/domains/Entities/Entities]] domain
 - OAuth flow UI — frontend responsibility; backend receives completion notification via Nango webhook
 
 ---
@@ -41,10 +40,11 @@ The Integrations domain manages the full lifecycle of third-party integrations w
 
 | Sub-Domain | Purpose |
 |---|---|
-| [[Enablement]] | Orchestrates the disable lifecycle — soft-deletes entity types, disconnects Nango, snapshots sync state. Template materialization and installation tracking live here but are now invoked by [[Webhook Authentication]] |
-| [[Connection Management]] | Manages Nango connection lifecycle and the 8-state connection state machine |
-| [[Data Sync]] | Tracks per-connection per-entity-type sync progress — status, cursor position, failure counts, and record metrics |
-| [[Webhook Authentication]] | Handles inbound Nango webhook events — HMAC signature validation, auth event processing (connection creation + materialization), sync event routing |
+| [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Enablement/Enablement]] | Orchestrates the disable lifecycle — soft-deletes entity types, disconnects Nango, snapshots sync state. Template materialization and installation tracking live here but are now invoked by [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Webhook Authentication/Webhook Authentication]] |
+| [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Connection Management/Connection Management]] | Manages Nango connection lifecycle and the 8-state connection state machine |
+| [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Data Sync/Data Sync]] | Tracks per-connection per-entity-type sync progress — status, cursor position, failure counts, and record metrics |
+| [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Webhook Authentication/Webhook Authentication]] | Handles inbound Nango webhook events — HMAC signature validation, auth event processing (connection creation + materialization), sync event routing |
+| [[Entity Projection]] | Projection pipeline (Pass 3) — transforms synced integration entities into core lifecycle entities via projection rules, identity resolution, and attribute mapping |
 
 ---
 
@@ -52,8 +52,9 @@ The Integrations domain manages the full lifecycle of third-party integrations w
 
 | Flow | Type | Description |
 |---|---|---|
-| [[Flow - Auth Webhook]] | Background | Nango sends auth webhook after OAuth → HMAC validation → connection creation → installation tracking → materialization |
-| [[Flow - Integration Disable]] | User-facing | Workspace admin disables an integration — soft-deletes entity types, disconnects Nango, snapshots sync state |
+| [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Webhook Authentication/Flow - Auth Webhook]] | Background | Nango sends auth webhook after OAuth → HMAC validation → connection creation → installation tracking → materialization |
+| [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Enablement/Flow - Integration Disable]] | User-facing | Workspace admin disables an integration — soft-deletes entity types, disconnects Nango, snapshots sync state |
+| [[Flow - Entity Projection Pipeline]] | Background | Temporal activity projects integration entities into core lifecycle entities — identity resolution, attribute transfer, relationship linking |
 
 ---
 
@@ -67,6 +68,7 @@ The Integrations domain manages the full lifecycle of third-party integrations w
 | IntegrationConnectionEntity | Per-workspace Nango connection with state machine | id, workspace_id, integration_id, nango_connection_id, status |
 | WorkspaceIntegrationInstallationEntity | Tracks enabled integrations per workspace with sync config and installation status | id, workspace_id, integration_definition_id, manifest_key, sync_config, status, last_synced_at, deleted |
 | IntegrationSyncStateEntity | Per-connection per-entity-type sync progress | id, integration_connection_id, entity_type_id, status, last_cursor, consecutive_failure_count |
+| ProjectionRuleEntity | Maps source integration entity types to target core lifecycle entity types | id, workspace_id, source_entity_type_id, target_entity_type_id, relationship_def_id, auto_create |
 
 ### Database Tables
 
@@ -76,6 +78,7 @@ The Integrations domain manages the full lifecycle of third-party integrations w
 | integration_connections | IntegrationConnectionEntity | One per workspace per integration, state machine enforced |
 | workspace_integration_installations | WorkspaceIntegrationInstallationEntity | Soft-deletable, unique on (workspace_id, integration_definition_id), `status` column tracks installation lifecycle |
 | integration_sync_state | IntegrationSyncStateEntity | System-managed, CASCADE deletes on connection/entity-type removal, unique on (integration_connection_id, entity_type_id) |
+| entity_type_projection_rules | ProjectionRuleEntity | System-managed, CASCADE deletes on entity type removal, unique on (workspace_id, source_entity_type_id, target_entity_type_id) |
 
 ---
 
@@ -93,17 +96,18 @@ The Integrations domain manages the full lifecycle of third-party integrations w
 
 | Domain | What We Consume | Via Component | Related Flow |
 |--------|----------------|---------------|--------------|
-| [[Entities]] | Creates and soft-deletes workspace-scoped entity types and relationships | [[EntityTypeService]], [[EntityTypeRelationshipService]], [[EntityTypeSemanticMetadataService]], [[EntityTypeSequenceService]] | [[Flow - Auth Webhook]] |
-| [[Catalog]] | Reads manifest catalog entries, catalog entity types, catalog relationships, and target rules | [[ManifestCatalogRepository]], [[CatalogEntityTypeRepository]], [[CatalogRelationshipRepository]] | [[Flow - Auth Webhook]] |
-| [[Activity]] | Logs enable/disable and connection operations | [[ActivityService]] | All mutation flows |
+| [[riven/docs/system-design/domains/Entities/Entities]] | Creates and soft-deletes workspace-scoped entity types and relationships | [[riven/docs/system-design/domains/Entities/Type Definitions/EntityTypeService]], [[riven/docs/system-design/domains/Entities/Relationships/EntityTypeRelationshipService]], [[riven/docs/system-design/domains/Entities/Entity Semantics/EntityTypeSemanticMetadataService]], [[EntityTypeSequenceService]] | [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Webhook Authentication/Flow - Auth Webhook]] |
+| [[riven/docs/system-design/domains/Catalog/Catalog]] | Reads manifest catalog entries, catalog entity types, catalog relationships, and target rules | [[ManifestCatalogRepository]], [[CatalogEntityTypeRepository]], [[CatalogRelationshipRepository]] | [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Webhook Authentication/Flow - Auth Webhook]] |
+| [[Activity]] | Logs enable/disable and connection operations | [[riven/docs/system-design/domains/Workspaces & Users/User Management/ActivityService]] | All mutation flows |
+| [[riven/docs/system-design/domains/Identity Resolution/Identity Resolution]] | Best-effort cluster assignment for projected entity pairs | [[IdentityClusterService]] | [[Flow - Entity Projection Pipeline]] |
 
 ### Consumed By
 
 | Consumer | What They Consume | Via Component | Related Flow |
 |----------|------------------|---------------|--------------|
-| [[Catalog]] | Stale flag propagation from catalog to integration_definitions after manifest loads | [[IntegrationDefinitionStaleSyncService]] | [[Flow - Manifest Loading Pipeline]] |
-| [[Entities]] | Readonly guard — checks `sourceType` on entity types to prevent modification of integration-sourced types | EntityTypeEntity.sourceType field | Entity update/delete flows |
-| [[Entities]] | Integration dedup index — looks up entities by `(workspace_id, source_integration_id, source_external_id)` for deduplication during sync | [[EntityRepository]] | Integration data sync |
+| [[riven/docs/system-design/domains/Catalog/Catalog]] | Stale flag propagation from catalog to integration_definitions after manifest loads | [[riven/docs/system-design/domains/Catalog/Manifest Pipeline/IntegrationDefinitionStaleSyncService]] | [[riven/docs/system-design/domains/Catalog/Manifest Pipeline/Flow - Manifest Loading Pipeline]] |
+| [[riven/docs/system-design/domains/Entities/Entities]] | Readonly guard — checks `sourceType` on entity types to prevent modification of integration-sourced types | EntityTypeEntity.sourceType field | Entity update/delete flows |
+| [[riven/docs/system-design/domains/Entities/Entities]] | Integration dedup index — looks up entities by `(workspace_id, source_integration_id, source_external_id)` for deduplication during sync | [[riven/docs/system-design/domains/Entities/Entity Management/EntityRepository]] | Integration data sync |
 
 ---
 
@@ -137,3 +141,41 @@ The Integrations domain manages the full lifecycle of third-party integrations w
 | 2025-07-17 | Integration enablement lifecycle: enable/disable endpoints, template materialization, connection management, workspace installations | Integration Enablement |
 | 2026-03-17 | Sync persistence foundation: IntegrationSyncStateEntity + repository, InstallationStatus enum on installations, SyncStatus enum, new Data Sync subdomain | Integration Sync Persistence Foundation |
 | 2026-03-18 | Connection model simplification (10→8 states), Nango client extensions (fetchRecords, triggerSync), webhook endpoint with HMAC verification, auth webhook handler that creates connections and triggers materialization, schema mapping engine | Integration Sync Phase 2 |
+| 2026-03-27 | Entity ingestion pipeline — Temporal-orchestrated sync workflows, field mapping, identity resolution, entity projection | Entity Ingestion Pipeline |
+
+---
+
+## Entity Ingestion Pipeline
+
+NangoWebhookService is being extended to dispatch Temporal workflows on sync events (currently a stub). When a sync completes, the webhook handler triggers the ingestion pipeline as a Temporal workflow.
+
+### Pipeline Steps
+
+The ingestion pipeline is a 4-step process:
+
+1. **Classify** — Determine the integration entity type from the incoming records
+2. **Route** — Match the integration entity type to the target core entity type via catalog definitions
+3. **Map** — Transform integration fields to core schema using `FieldMappingService` and `CatalogFieldMappingEntity`
+4. **Resolve** — Run identity resolution to match or create core entities via `IdentityResolutionService`
+
+> [!info] Temporal orchestration
+> The pipeline runs as Temporal workflows (`IntegrationSyncWorkflow`) with activity-level retry and cursor pagination. `IntegrationSyncStateEntity` tracks sync state (cursors, failure counts) per connection per entity type.
+
+### New Components
+
+| Component | Purpose |
+|---|---|
+| `FieldMappingService` | Applies catalog field mappings to transform integration schema → core schema |
+| `IdentityResolutionService` | Ingestion-time identity matching — resolves incoming data against existing entities |
+| `EntityProjectionService` | Creates projected core entity rows from mapped integration data |
+| `ProjectionRuleEntity` | Routes integration entity types to core lifecycle types |
+| `IntegrationSyncWorkflow` | Temporal workflow orchestrating the 4-step pipeline |
+
+### Data Flow
+
+Integration entity rows are created (hidden, readonly) alongside projected core entity rows (visible, hub). Field mapping uses `CatalogFieldMappingEntity` to transform integration source fields into the core entity type schema, handling type coercion, value mapping, and JSONPath extraction.
+
+### References
+
+- [[2. Areas/2.1 Startup & Content/Riven/7. Todo/Entity Ingestion Pipeline]]
+- [[riven/docs/system-design/feature-design/1. Planning/Smart Projection Architecture]]

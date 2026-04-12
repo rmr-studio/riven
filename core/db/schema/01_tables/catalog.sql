@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS manifest_catalog (
     key VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    manifest_type VARCHAR(50) NOT NULL CHECK (manifest_type IN ('MODEL', 'TEMPLATE', 'INTEGRATION', 'BUNDLE')),
+    manifest_type VARCHAR(50) NOT NULL CHECK (manifest_type IN ('MODEL', 'TEMPLATE', 'INTEGRATION')),
     manifest_version VARCHAR(50),
     last_loaded_at TIMESTAMPTZ,
     stale BOOLEAN NOT NULL DEFAULT false,
@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS catalog_entity_types (
     icon_type TEXT NOT NULL DEFAULT 'CIRCLE_DASHED',
     icon_colour TEXT NOT NULL DEFAULT 'NEUTRAL',
     semantic_group TEXT NOT NULL DEFAULT 'UNCATEGORIZED',
+    lifecycle_domain TEXT NOT NULL DEFAULT 'UNCATEGORIZED',
     identifier_key VARCHAR(255),
     readonly BOOLEAN NOT NULL DEFAULT FALSE,
     schema JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -100,6 +101,7 @@ CREATE TABLE IF NOT EXISTS catalog_field_mappings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     manifest_id UUID NOT NULL REFERENCES manifest_catalog(id) ON DELETE CASCADE,
     entity_type_key VARCHAR(255) NOT NULL,
+    nango_model TEXT,
     mappings JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -137,7 +139,7 @@ CREATE TABLE IF NOT EXISTS catalog_semantic_metadata (
 
 CREATE TABLE IF NOT EXISTS workspace_template_installations (
     id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    workspace_id       UUID NOT NULL REFERENCES workspaces(id),
+    workspace_id       UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     manifest_key       VARCHAR(255) NOT NULL,
     installed_by       UUID NOT NULL REFERENCES users(id),
     installed_at       TIMESTAMPTZ NOT NULL DEFAULT now(),

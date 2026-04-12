@@ -18,7 +18,9 @@ CREATE TABLE IF NOT EXISTS public.entity_types
     "protected"             BOOLEAN     NOT NULL     DEFAULT FALSE,
     "schema"                JSONB       NOT NULL,
     "column_configuration"  JSONB,
+    "attribute_key_mapping"  JSONB,
     "semantic_group"        TEXT        NOT NULL     DEFAULT 'UNCATEGORIZED',
+    "lifecycle_domain"      TEXT        NOT NULL     DEFAULT 'UNCATEGORIZED',
     -- Source discriminator fields for integration entity types
     "source_type"           VARCHAR(50) NOT NULL     DEFAULT 'USER_CREATED',
     "source_integration_id" UUID        REFERENCES integration_definitions (id) ON DELETE SET NULL,
@@ -67,7 +69,10 @@ CREATE TABLE IF NOT EXISTS public.entities
     "source_url"            TEXT,
     "first_synced_at"       TIMESTAMPTZ,
     "last_synced_at"        TIMESTAMPTZ,
-    "sync_version"          BIGINT      NOT NULL     DEFAULT 0
+    "sync_version"          BIGINT      NOT NULL     DEFAULT 0,
+
+    -- Denormalized count of notes for faster access (trigger-maintained)
+    "note_count"            INTEGER     NOT NULL     DEFAULT 0
 );
 
 -- =====================================================
@@ -205,6 +210,7 @@ CREATE TABLE IF NOT EXISTS public.entity_type_semantic_metadata
                                                                               'TEMPORAL', 'FREETEXT',
                                                                               'RELATIONAL_REFERENCE'
         )),
+    "signal_type"    TEXT CHECK (signal_type IS NULL OR signal_type IN ('NAME', 'COMPANY', 'PHONE', 'EMAIL', 'CUSTOM')),
     "tags"           JSONB   NOT NULL         DEFAULT '[]'::jsonb,
     "deleted"        BOOLEAN NOT NULL         DEFAULT FALSE,
     "deleted_at"     TIMESTAMP WITH TIME ZONE DEFAULT NULL,

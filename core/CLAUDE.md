@@ -36,6 +36,7 @@ Multi-tenant workspace-scoped backend API for a configurable data platform with 
 - **Error handling:** Throw domain-specific exceptions (`NotFoundException`, `ConflictException`, `SchemaValidationException`, `UniqueConstraintViolationException`, `WorkflowValidationException`). These are mapped to HTTP status codes by `ExceptionHandler` in `riven.core.exceptions`. Do not catch-and-swallow — let exceptions propagate to the advice.
 - **Swagger annotations:** Add `@Operation`, `@ApiResponses` to all controller endpoints. Use `@Tag(name = "domain")` at class level.
 - **UUID everywhere:** All primary keys are `UUID` with `@GeneratedValue(strategy = GenerationType.UUID)`. Use `UUID` for path variables and request fields.
+- **Never manually generate UUIDs for JPA-managed entities.** When an entity uses `@GeneratedValue(strategy = GenerationType.UUID)` with `id: UUID? = null`, always leave the `id` as `null` (or omit it) when constructing new entities. Setting `id = UUID.randomUUID()` causes Spring Data's `save()` to call `merge()` instead of `persist()`, resulting in `StaleObjectStateException` because Hibernate tries to find a non-existent row. Let JPA generate the ID — that's what `@GeneratedValue` is for.
 - **Never use `!!` for nullable ID assertions.** In `toModel()` methods and anywhere else a nullable `id` must be non-null, always use `requireNotNull(id) { "descriptive message" }` instead of `id!!`. The `!!` operator produces an unhelpful `NullPointerException`; `requireNotNull` produces a clear `IllegalArgumentException` with context. This applies to all entities, not just new ones.
 - **JSONB columns:** Use Hypersistence `@Type(JsonBinaryType::class)` with `columnDefinition = "jsonb"` for dynamic payload columns.
 - **Enums over string literals:** Always use enums for fixed sets of values (types, statuses, categories). Never use raw strings in `when` branches, model fields, or API contracts when the set of valid values is known and finite. Use `@JsonProperty` on enum values for JSON serialization. This ensures compile-time exhaustiveness checks, IDE discoverability, and catches invalid values at deserialization rather than deep in business logic.
@@ -265,3 +266,21 @@ Format:
 
 If you are unsure whether a change warrants a changelog entry or suggestion, include it. False positives are low cost.
 Missed architectural drift is high cost.
+
+## Skill routing
+
+When the user's request matches an available skill, ALWAYS invoke it using the Skill
+tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
+The skill has specialized workflows that produce better results than ad-hoc answers.
+
+Key routing rules:
+- Product ideas, "is this worth building", brainstorming → invoke office-hours
+- Bugs, errors, "why is this broken", 500 errors → invoke investigate
+- Ship, deploy, push, create PR → invoke ship
+- QA, test the site, find bugs → invoke qa
+- Code review, check my diff → invoke review
+- Update docs after shipping → invoke document-release
+- Weekly retro → invoke retro
+- Design system, brand → invoke design-consultation
+- Visual audit, design polish → invoke design-review
+- Architecture review → invoke plan-eng-review

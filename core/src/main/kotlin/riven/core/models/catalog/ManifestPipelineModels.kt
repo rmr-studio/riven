@@ -3,6 +3,7 @@ package riven.core.models.catalog
 import com.fasterxml.jackson.databind.JsonNode
 import riven.core.enums.catalog.ManifestType
 import riven.core.enums.entity.EntityRelationshipCardinality
+import riven.core.enums.entity.LifecycleDomain
 
 /** Output of ManifestScannerService -- parsed and schema-validated JSON. */
 data class ScannedManifest(
@@ -21,6 +22,7 @@ data class ResolvedManifest(
     val entityTypes: List<ResolvedEntityType>,
     val relationships: List<NormalizedRelationship>,
     val fieldMappings: List<ResolvedFieldMapping>,
+    val syncModels: Map<String, String> = emptyMap(),
     val stale: Boolean = false
 )
 
@@ -31,6 +33,7 @@ data class ResolvedEntityType(
     val iconType: String,
     val iconColour: String,
     val semanticGroup: String,
+    val lifecycleDomain: LifecycleDomain? = null,
     val identifierKey: String?,
     val readonly: Boolean,
     val schema: Map<String, Any>,
@@ -72,12 +75,3 @@ data class ResolvedFieldMapping(
     val mappings: Map<String, Any>
 )
 
-/** Output of ManifestResolverService for bundles -- template key list, ready for catalog persistence. */
-data class ResolvedBundle(
-    val key: String,
-    val name: String,
-    val description: String?,
-    val manifestVersion: String?,
-    val templateKeys: List<String>,
-    val stale: Boolean = false
-)

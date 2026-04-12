@@ -7,12 +7,10 @@ import riven.core.enums.common.validation.SchemaType
 import riven.core.enums.common.validation.ValidationScope
 import riven.core.enums.entity.validation.EntityTypeChangeType
 import riven.core.models.entity.EntityTypeSchema
-import riven.core.models.entity.RelationshipDefinition
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
 import riven.core.models.entity.validation.EntityTypeSchemaChange
 import riven.core.models.entity.validation.EntityTypeValidationSummary
 import riven.core.models.entity.validation.EntityValidationError
-import riven.core.repository.entity.EntityRelationshipRepository
 import riven.core.service.schema.SchemaService
 import java.util.*
 
@@ -21,8 +19,7 @@ import java.util.*
  */
 @Service
 class EntityValidationService(
-    private val schemaService: SchemaService,
-    private val entityRelationshipRepository: EntityRelationshipRepository
+    private val schemaService: SchemaService
 ) {
 
     /**
@@ -51,65 +48,18 @@ class EntityValidationService(
             }
         }
 
-        // Filter out NOTE attributes — notes are freeform content and bypass schema validation
-        val filteredSchema = entityType.schema.copy(
-            properties = entityType.schema.properties?.filterValues { it.key != SchemaType.NOTE }
-        )
         val payloadForValidation: Map<String, Any?> =
             attributes
-                .filterKeys { key -> filteredSchema.properties?.containsKey(key) != false }
+                .filterKeys { key -> entityType.schema.properties?.containsKey(key) != false }
                 .map { (key, value) -> key.toString() to value.value }.toMap()
 
         errors += schemaService.validate(
-            schema = filteredSchema,
+            schema = entityType.schema,
             payload = payloadForValidation,
             scope = ValidationScope.STRICT
         )
 
         return errors
-    }
-
-    /**
-     * Validate relationship entity constraints.
-     * Ensures RELATIONSHIP entities have all required relationships with correct types.
-     */
-    fun validateRelationshipEntity(
-        entityId: UUID,
-        definitions: List<RelationshipDefinition>
-    ): List<String> {
-        TODO()
-//        val errors = mutableListOf<String>()
-//        val relatedEntities: List<EntityRelationshipEntity> =
-//            entityRelationshipRepository.findByRelationshipEntityId(entityId)
-//
-//        // Validate each defined relationship
-//        relationships.forEach { definition ->
-//            val matchingRels = relatedEntities.filter { rel ->
-//                rel.relationshipType == defin
-//            }
-//
-//            // Check required relationships are present
-//            if (definition.required && matchingRels.isEmpty()) {
-//                errors.add(
-//                    "Relationship entity missing required '${definition.role}' relationship"
-//                )
-//            }
-//
-//            // Validate entity type matches requirement (for both required and optional)
-//            matchingRels.forEach { rel ->
-//                if (!definition.allowPolymorphic && definition.entityTypeKeys != null) {
-//                    val targetType = rel.targetEntity.type.key
-//                    if (targetType !in definition.entityTypeKeys) {
-//                        errors.add(
-//                            "Relationship '${definition.role}' requires entity type to be one of " +
-//                                    "${definition.entityTypeKeys}, but found '$targetType'"
-//                        )
-//                    }
-//                }
-//            }
-//        }
-//
-//        return errors
     }
 
     /**
@@ -218,21 +168,16 @@ class EntityValidationService(
         var invalidCount = 0
         val sampleErrors = mutableListOf<EntityValidationError>()
 
-        // Filter out NOTE attributes — notes are freeform content and bypass schema validation
-        val filteredNewSchema = newSchema.copy(
-            properties = newSchema.properties?.filterValues { it.key != SchemaType.NOTE }
-        )
-
         entities.forEach { entity ->
             val entityId = requireNotNull(entity.id)
             val attrs = attributesByEntityId[entityId] ?: emptyMap()
             val payloadForValidation: Map<String, Any?> =
                 attrs
-                    .filterKeys { key -> filteredNewSchema.properties?.containsKey(key) != false }
+                    .filterKeys { key -> newSchema.properties?.containsKey(key) != false }
                     .map { (key, value) -> key.toString() to value.value }.toMap()
 
             val errors = schemaService.validate(
-                schema = filteredNewSchema,
+                schema = newSchema,
                 payload = payloadForValidation,
                 scope = ValidationScope.STRICT
             )
@@ -245,7 +190,7 @@ class EntityValidationService(
                 if (sampleErrors.size < 10) {
                     sampleErrors.add(
                         EntityValidationError(
-                            entityId = entity.id!!,
+                            entityId = requireNotNull(entity.id) { "Entity must have a non-null id" },
                             // todo. Use Entity type identifier
                             entityName = "",
                             errors = errors

@@ -3,11 +3,11 @@ package riven.core.service.catalog
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.ObjectNode
 import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Service
 import riven.core.enums.catalog.ManifestType
 import riven.core.enums.entity.EntityRelationshipCardinality
+import riven.core.enums.entity.LifecycleDomain
 import riven.core.models.catalog.*
 
 /**
@@ -25,34 +25,27 @@ class ManifestResolverService(
     // ------ Public API ------
 
     /**
-     * Resolves a single scanned manifest into a fully resolved manifest.
-     * Returns a manifest with stale=true if resolution fails (missing $ref, invalid relationships, etc.).
+     * Resolves a single scanned integration manifest into a fully resolved manifest.
+     * Returns a manifest with stale=true if resolution fails (invalid relationships, etc.).
      */
-    fun resolveManifest(scanned: ScannedManifest, modelIndex: Map<String, JsonNode>): ResolvedManifest {
+    fun resolveManifest(scanned: ScannedManifest): ResolvedManifest {
         val json = scanned.json
 
-        val (entityTypes, refFailed) = resolveEntityTypes(json, scanned.type, modelIndex)
-        if (refFailed) {
-            return buildStaleManifest(scanned)
-        }
+        val entityTypes = resolveIntegrationEntityTypes(json)
 
         val relationships = normalizeRelationships(json, scanned.type)
         if (relationships == null) {
             return buildStaleManifest(scanned)
         }
 
-        val localEntityTypeKeys = entityTypes.map { it.key }.toSet()
-        val validEntityTypeKeys = if (scanned.type == ManifestType.TEMPLATE) {
-            localEntityTypeKeys + modelIndex.keys
-        } else {
-            localEntityTypeKeys
-        }
-        if (relationships.isNotEmpty() && !validateRelationships(relationships, validEntityTypeKeys)) {
+        val entityTypeKeys = entityTypes.map { it.key }.toSet()
+        if (relationships.isNotEmpty() && !validateRelationships(relationships, entityTypeKeys)) {
             return buildStaleManifest(scanned)
         }
 
         val entityTypeAttributeIndex = entityTypes.associate { it.key to it.schema.keys }
         val fieldMappings = resolveFieldMappings(json, entityTypeAttributeIndex)
+        val syncModels = resolveSyncModels(json)
 
         return ResolvedManifest(
             key = scanned.key,
@@ -63,137 +56,16 @@ class ManifestResolverService(
             entityTypes = entityTypes,
             relationships = relationships,
             fieldMappings = fieldMappings,
+            syncModels = syncModels,
             stale = false
-        )
-    }
-
-    /**
-     * Resolves a bundle manifest into a ResolvedBundle.
-     * Bundles are lightweight — they only store a list of template keys.
-     * No entity type resolution needed; that happens at installation time.
-     */
-    fun resolveBundle(scanned: ScannedManifest): ResolvedBundle {
-        require(scanned.type == ManifestType.BUNDLE) { "Expected BUNDLE manifest, got ${scanned.type}" }
-        val json = scanned.json
-
-        return ResolvedBundle(
-            key = json.get("key").asText(),
-            name = json.get("name").asText(),
-            description = json.get("description")?.asText(),
-            manifestVersion = json.get("manifestVersion")?.asText(),
-            templateKeys = json.get("templates").map { it.asText() },
         )
     }
 
     // ------ Entity Type Resolution ------
 
-    /**
-     * Resolves entity types from the manifest JSON.
-     * Returns the list of resolved entity types and whether any $ref failed.
-     */
-    private fun resolveEntityTypes(
-        json: JsonNode,
-        type: ManifestType,
-        modelIndex: Map<String, JsonNode>
-    ): Pair<List<ResolvedEntityType>, Boolean> {
-        return when (type) {
-            ManifestType.MODEL -> {
-                val entityType = parseEntityType(json, readonlyDefault = false)
-                listOf(entityType) to false
-            }
-            ManifestType.TEMPLATE -> resolveTemplateEntityTypes(json, modelIndex)
-            ManifestType.INTEGRATION -> resolveIntegrationEntityTypes(json)
-            ManifestType.BUNDLE -> emptyList<ResolvedEntityType>() to false
-        }
-    }
-
-    private fun resolveTemplateEntityTypes(
-        json: JsonNode,
-        modelIndex: Map<String, JsonNode>
-    ): Pair<List<ResolvedEntityType>, Boolean> {
-        val entityTypesArray = json.get("entityTypes") ?: return emptyList<ResolvedEntityType>() to false
-        val resolved = mutableListOf<ResolvedEntityType>()
-
-        for (entry in entityTypesArray) {
-            val ref = entry.get("\$ref")?.asText()
-            if (ref != null) {
-                val entityType = resolveRefEntityType(entry, modelIndex)
-                if (entityType == null) {
-                    logger.warn { "Unresolved \$ref '$ref' in template" }
-                    return emptyList<ResolvedEntityType>() to true
-                }
-                resolved.add(entityType)
-            } else {
-                resolved.add(parseEntityType(entry, readonlyDefault = false))
-            }
-        }
-        return resolved to false
-    }
-
-    private fun resolveIntegrationEntityTypes(json: JsonNode): Pair<List<ResolvedEntityType>, Boolean> {
-        val entityTypesArray = json.get("entityTypes") ?: return emptyList<ResolvedEntityType>() to false
-        val resolved = entityTypesArray.map { parseEntityType(it, readonlyDefault = true) }
-        return resolved to false
-    }
-
-    /** Looks up $ref in model index. Applies extend if present. Returns null if model missing. */
-    private fun resolveRefEntityType(entry: JsonNode, modelIndex: Map<String, JsonNode>): ResolvedEntityType? {
-        val ref = entry.get("\$ref")?.asText() ?: return null
-        val modelKey = ref.removePrefix("models/")
-        val model = modelIndex[modelKey] ?: return null
-
-        val extend = entry.get("extend")
-        return if (extend != null) {
-            val merged = applyExtend(model, extend)
-            parseEntityType(merged, readonlyDefault = false)
-        } else {
-            parseEntityType(model, readonlyDefault = false)
-        }
-    }
-
-    /**
-     * Shallow additive merge of extend onto base model.
-     * Scalar overrides: description, icon, semanticGroup, identifierKey.
-     * Attributes: new keys added, existing keys preserved (base wins on conflict).
-     * Semantic tags: appended from extend to base.
-     */
-    private fun applyExtend(base: JsonNode, extend: JsonNode): JsonNode {
-        val merged = base.deepCopy<ObjectNode>()
-
-        // Scalar overrides
-        extend.get("description")?.let { merged.set<JsonNode>("description", it) }
-        extend.get("icon")?.let { merged.set<JsonNode>("icon", it) }
-        extend.get("semanticGroup")?.let { merged.set<JsonNode>("semanticGroup", it) }
-        extend.get("identifierKey")?.let { merged.set<JsonNode>("identifierKey", it) }
-
-        // Additive attributes (base wins on conflict)
-        val extendAttrs = extend.get("attributes")
-        if (extendAttrs != null) {
-            val baseAttrs = merged.get("attributes") as? ObjectNode
-                ?: objectMapper.createObjectNode().also { merged.set<JsonNode>("attributes", it) }
-            extendAttrs.properties().forEach { (key, value) ->
-                if (!baseAttrs.has(key)) {
-                    baseAttrs.set<JsonNode>(key, value)
-                }
-            }
-        }
-
-        // Append semantic tags
-        val extendTags = extend.at("/semantics/tags")
-        if (extendTags.isArray) {
-            val baseTags = base.at("/semantics/tags")
-            val mergedSemantics = (merged.get("semantics")?.deepCopy() as? ObjectNode)
-                ?: objectMapper.createObjectNode()
-            val tagArray = objectMapper.createArrayNode()
-            if (baseTags.isArray) {
-                baseTags.forEach { tagArray.add(it) }
-            }
-            extendTags.forEach { tagArray.add(it) }
-            mergedSemantics.set<JsonNode>("tags", tagArray)
-            merged.set<JsonNode>("semantics", mergedSemantics)
-        }
-
-        return merged
+    private fun resolveIntegrationEntityTypes(json: JsonNode): List<ResolvedEntityType> {
+        val entityTypesArray = json.get("entityTypes") ?: return emptyList()
+        return entityTypesArray.map { parseEntityType(it, readonlyDefault = true) }
     }
 
     /** Extracts all fields from a JsonNode into a ResolvedEntityType. */
@@ -223,6 +95,9 @@ class ManifestResolverService(
             iconType = icon?.get("type")?.asText() ?: "BOX",
             iconColour = icon?.get("colour")?.asText() ?: "NEUTRAL",
             semanticGroup = json.get("semanticGroup")?.asText() ?: "UNCATEGORIZED",
+            lifecycleDomain = json.get("lifecycleDomain")?.asText()?.let { value ->
+                enumValues<LifecycleDomain>().firstOrNull { it.name == value }
+            },
             identifierKey = json.get("identifierKey")?.asText(),
             readonly = json.get("readonly")?.asBoolean() ?: readonlyDefault,
             schema = attributesMap,
@@ -264,7 +139,11 @@ class ManifestResolverService(
         }
 
         if (!hasShorthand && !hasFullFormat) {
-            logger.warn { "Relationship '${rel.get("key")?.asText()}' has neither shorthand nor full format — skipping" }
+            logger.warn {
+                "Relationship '${
+                    rel.get("key")?.asText()
+                }' has neither shorthand nor full format — skipping"
+            }
             return null
         }
 
@@ -336,7 +215,11 @@ class ManifestResolverService(
             NormalizedTargetRule(
                 targetEntityTypeKey = rule.get("targetEntityTypeKey").asText(),
                 cardinalityOverride = cardinalityOverrideStr?.let {
-                    try { EntityRelationshipCardinality.valueOf(it) } catch (_: IllegalArgumentException) { null }
+                    try {
+                        EntityRelationshipCardinality.valueOf(it)
+                    } catch (_: IllegalArgumentException) {
+                        null
+                    }
                 },
                 inverseVisible = rule.get("inverseVisible")?.asBoolean(),
                 inverseName = rule.get("inverseName")?.asText()
@@ -427,6 +310,18 @@ class ManifestResolverService(
             }
         }
         return result
+    }
+
+    // ------ Sync Model Resolution ------
+
+    /** Extracts the syncModels map (Nango model name -> entity type key) from the manifest JSON. */
+    private fun resolveSyncModels(json: JsonNode): Map<String, String> {
+        val node = json.get("syncModels") ?: return emptyMap()
+        val map = mutableMapOf<String, String>()
+        node.fields().forEach { (nangoModel, entityTypeKeyNode) ->
+            map[nangoModel] = entityTypeKeyNode.asText()
+        }
+        return map.toMap()
     }
 
     // ------ Helpers ------

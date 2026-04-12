@@ -4,7 +4,7 @@ tags:
   - domain/entity
 Created: 2026-02-08
 Domains:
-  - "[[Entities]]"
+  - "[[riven/docs/system-design/domains/Entities/Entities]]"
 ---
 # Subdomain: Type Definitions
 
@@ -16,10 +16,10 @@ Manages entity type schemas — creating types, defining attributes (with proper
 
 | Component | Purpose | Type |
 | --------- | ------- | ---- |
-| [[EntityTypeService]] | Type CRUD, attribute management, definition publishing | Service |
-| [[EntityTypeAttributeService]] | Attribute schema utilities (column extraction, validation) | Service |
-| [[EntityTypeController]] | REST API for entity type operations | Controller |
-| [[EntityTypeRepository]] | JPA repository for entity type persistence | Repository |
+| [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Entities/Type Definitions/EntityTypeService]] | Type CRUD, attribute management, definition publishing | Service |
+| [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Entities/Type Definitions/EntityTypeAttributeService]] | Attribute schema utilities (column extraction, validation) | Service |
+| [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Entities/Type Definitions/EntityTypeController]] | REST API for entity type operations | Controller |
+| [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Entities/Type Definitions/EntityTypeRepository]] | JPA repository for entity type persistence | Repository |
 
 ## Technical Debt
 
@@ -37,3 +37,4 @@ Manages entity type schemas — creating types, defining attributes (with proper
 | 2026-02-21 | EntityTypeService updated — removed DiffService and ImpactAnalysisService dependencies, added direct repository access for relationship definition management | Entity Relationships |
 | 2026-03-01 | EntityTypeService and EntityTypeController updated — `description` replaced with `semanticGroup`, `?include=semantics` removed (always loaded), EntityTypeRepository documented with semantic group projection query | Semantic Entity Groups |
 | 2025-07-17 | Integration enablement: readonly guards on schema mutations, batch soft-delete/restore by integration ID, integration-scoped repository queries | Integration Enablement |
+| 2026-03-26 | lifecycle_domain (LifecycleDomain enum) added to EntityTypeEntity — lifecycle stage classification for entity types | Lifecycle Spine |
