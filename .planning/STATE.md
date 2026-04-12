@@ -2,34 +2,35 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-last_updated: "2026-04-12T07:40:20.080Z"
+status: Plan 01-02 executed; IngestionAdapter interface + sealed AdapterCallContext + @SourceTypeAdapter qualifier + sealed AdapterException hierarchy landed
+stopped_at: Completed 01-adapter-foundation/01-02-PLAN.md
+last_updated: "2026-04-12T07:44:56.740Z"
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
-  percent: 33
+  completed_plans: 2
+  percent: 67
 ---
 
 # STATE
 
-**Last updated:** 2026-04-12 (Plan 01-01 complete)
+**Last updated:** 2026-04-12 (Plan 01-02 complete)
 
 ## Project Reference
 
 - **Name:** Unified Data Ecosystem — Postgres Adapter
 - **Core Value:** Any data source → unified entity model → trigger → action → measurement loop
-- **Current Focus:** Phase 1 — Adapter Foundation (Plan 02 next)
+- **Current Focus:** Phase 1 — Adapter Foundation (Plan 03 next)
 - **Branch:** postgres-ingestion
 - **Worktree:** /home/jared/dev/worktrees/postgres-ingestion
 
 ## Current Position
 
 - **Phase:** 1 — Adapter Foundation
-- **Plan:** 01-01 complete; 01-02 (interface) next
-- **Status:** Plan 01-01 executed; adapter contract data types landed
-- **Progress:** [███░░░░░░░] 33% (1/3 plans in Phase 01)
+- **Plan:** 01-02 complete; 01-03 (NangoAdapter) next
+- **Status:** Plan 01-02 executed; IngestionAdapter interface, sealed AdapterCallContext, @SourceTypeAdapter qualifier, and sealed AdapterException hierarchy landed
+- **Progress:** [███████░░░] 67%
 
 ```
 [........] 0% (0/8 phases)
@@ -45,6 +46,7 @@ progress:
 | Granularity | standard |
 | Parallelization | enabled |
 | Phase 01-adapter-foundation P01 | 15min | 3 tasks | 8 files |
+| Phase 01-adapter-foundation P02 | 5min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -53,6 +55,9 @@ progress:
 - **Plan 01-01:** SyncMode lives under `models/ingestion/adapter/` (adapter capability, not persisted)
 - **Plan 01-01:** Testcontainers Postgres used for `EntityTypeEntity` round-trip tests — H2 rejects jsonb, pgvector, and reserved column names (`key`, `value`) in the entity schema
 - **Plan 01-01:** `SchemaIntrospectionResult` kept minimal; Phase 3 (PG-07) extends with PK/FK metadata
+- [Phase 01-adapter-foundation]: Plan 01-02: NangoCallContext.workspaceId defaults to empty in Phase 1; Phase 4 orchestrator supplies real value
+- [Phase 01-adapter-foundation]: Plan 01-02: @SourceTypeAdapter ships annotation-only; @Configuration registry factory lands in Plan 03 with NangoAdapter
+- [Phase 01-adapter-foundation]: Plan 01-02: Sealed AdapterException hierarchy — Temporal do-not-retry uses FatalAdapterException::class.sealedSubclasses, not boolean flags
 
 ### Key Decisions (from PROJECT.md)
 
@@ -82,14 +87,14 @@ progress:
 ## Session Continuity
 
 ### Last Action
-Completed Plan 01-01 (adapter foundation data types). Added `RecordBatch`, `SourceRecord`, `SyncMode`, `SchemaIntrospectionResult`, and `SourceType.CUSTOM_SOURCE` with Testcontainers-verified JPA round-trip.
+Completed Plan 01-02 (IngestionAdapter interface). Added `IngestionAdapter`, sealed `AdapterCallContext` + `NangoCallContext`, `@SourceTypeAdapter` qualifier, and the sealed `AdapterException` hierarchy (Transient + Fatal with 5 fatal leaves). Contract test green.
 
 ### Next Action
-Execute Plan 01-02 (`IngestionAdapter` interface) using the neutral data types landed in 01-01.
+Execute Plan 01-03 (NangoAdapter) — first concrete `IngestionAdapter` impl plus `@Configuration` registry factory assembling `Map<SourceType, IngestionAdapter>`.
 
 ### Last session
-- **Stopped at:** Completed 01-adapter-foundation plan 01 (adapter foundation data types)
-- **Timestamp:** 2026-04-12T17:40:00Z
+- **Stopped at:** Completed 01-adapter-foundation/01-02-PLAN.md
+- **Timestamp:** 2026-04-12T07:43:39Z
 
 ### Files of Record
 - `.planning/PROJECT.md`

@@ -7,7 +7,7 @@
 
 ### Adapter Foundation (ADPT)
 
-- [ ] **ADPT-01**: `IngestionAdapter` interface defines `introspectSchema()`, `fetchRecords(cursor, limit)`, `syncMode()`
+- [x] **ADPT-01**: `IngestionAdapter` interface defines `introspectSchema()`, `fetchRecords(cursor, limit)`, `syncMode()`
 - [x] **ADPT-02**: `RecordBatch` data class with `records`, `nextCursor`, `hasMore`
 - [x] **ADPT-03**: `SyncMode` enum: POLL, CDC, PUSH, ONE_SHOT
 - [x] **ADPT-04**: `SourceType` enum extended with `CUSTOM_SOURCE` value
@@ -170,7 +170,7 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ADPT-01 | Phase 1 | Pending |
+| ADPT-01 | Phase 1 | Complete |
 | ADPT-02 | Phase 1 | Complete |
 | ADPT-03 | Phase 1 | Complete |
 | ADPT-04 | Phase 1 | Complete |
