@@ -31,7 +31,10 @@ Brownfield additive milestone: introduce the IngestionAdapter abstraction, build
   2. `RecordBatch(records, nextCursor, hasMore)` and `SyncMode` enum (POLL, CDC, PUSH, ONE_SHOT) are callable from any service.
   3. `SourceType.CUSTOM_SOURCE` is a valid value on `EntityTypeEntity` and persisted through the JPA layer.
   4. `NangoAdapter` exists and delegates to existing Nango fetch path; the live `IntegrationSyncWorkflowImpl` is unchanged and all existing integration syncs continue to work.
-**Plans**: TBD
+**Plans**: 3 plans
+  - [ ] 01-01-PLAN.md — Contract data types (RecordBatch, SourceRecord, SyncMode, SchemaIntrospectionResult) + SourceType.CUSTOM_SOURCE
+  - [ ] 01-02-PLAN.md — IngestionAdapter interface + AdapterCallContext sealed hierarchy + sealed AdapterException tree
+  - [ ] 01-03-PLAN.md — NangoAdapter delegate + SourceTypeAdapterRegistry bean map
 
 ### Phase 2: Secure Connection Management
 **Goal**: A workspace owner can create, view, update, and soft-delete a Postgres connection with encrypted credentials, SSRF-safe hostnames, and a verified read-only role — with shipping-blocker security gates enforced.
@@ -117,7 +120,7 @@ Brownfield additive milestone: introduce the IngestionAdapter abstraction, build
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Adapter Foundation | 0/? | Not started | - |
+| 1. Adapter Foundation | 0/3 | Planned | - |
 | 2. Secure Connection Management | 0/? | Not started | - |
 | 3. Postgres Adapter & Schema Mapping | 0/? | Not started | - |
 | 4. Ingestion Orchestration & Sync Workflow | 0/? | Not started | - |
