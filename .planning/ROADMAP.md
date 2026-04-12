@@ -47,7 +47,7 @@ Brownfield additive milestone: introduce the IngestionAdapter abstraction, build
   4. No connection string ever appears in logs (regex redaction for `postgresql://` and `jdbc:postgresql://`), and credential decryption/corruption failures surface as `ConnectionStatus=FAILED` with user-safe messages.
   5. All connection operations are workspace-scoped via `@PreAuthorize` and support soft-delete.
 **Plans**: 5 plans
-  - [ ] 02-00-PLAN.md — Wave 0 test scaffolding + CustomSourceConnectionEntityFactory stub
+  - [x] 02-00-PLAN.md — Wave 0 test scaffolding + CustomSourceConnectionEntityFactory stub
   - [ ] 02-01-PLAN.md — Entity + repository + SQL DDL + sealed ConnectionException hierarchy + response model
   - [ ] 02-02-PLAN.md — CredentialEncryptionService (AES-256-GCM) + Logback redaction (PatternConverter)
   - [ ] 02-03-PLAN.md — SsrfValidatorService (resolve-once, pin-IP) + ReadOnlyRoleVerifierService (SAVEPOINT probe + privilege sweep)
