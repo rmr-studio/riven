@@ -11,7 +11,7 @@
 - [x] **ADPT-02**: `RecordBatch` data class with `records`, `nextCursor`, `hasMore`
 - [x] **ADPT-03**: `SyncMode` enum: POLL, CDC, PUSH, ONE_SHOT
 - [x] **ADPT-04**: `SourceType` enum extended with `CUSTOM_SOURCE` value
-- [ ] **ADPT-05**: `NangoAdapter` thin wrapper delegates to existing Nango fetch path (not wired into live sync)
+- [x] **ADPT-05**: `NangoAdapter` thin wrapper delegates to existing Nango fetch path (not wired into live sync)
 
 ### Custom Source Connection (CONN)
 
@@ -174,7 +174,7 @@
 | ADPT-02 | Phase 1 | Complete |
 | ADPT-03 | Phase 1 | Complete |
 | ADPT-04 | Phase 1 | Complete |
-| ADPT-05 | Phase 1 | Pending |
+| ADPT-05 | Phase 1 | Complete |
 | CONN-01 | Phase 2 | Pending |
 | CONN-02 | Phase 2 | Pending |
 | CONN-03 | Phase 2 | Pending |

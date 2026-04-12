@@ -2,35 +2,35 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Plan 01-02 executed; IngestionAdapter interface + sealed AdapterCallContext + @SourceTypeAdapter qualifier + sealed AdapterException hierarchy landed
-stopped_at: Completed 01-adapter-foundation/01-02-PLAN.md
-last_updated: "2026-04-12T07:44:56.740Z"
+status: Phase 01 complete (all 3 plans shipped); NangoAdapter + SourceTypeAdapterRegistry land. Phase 02 next.
+stopped_at: Completed 01-adapter-foundation/01-03-PLAN.md
+last_updated: "2026-04-12T07:54:23.372Z"
 progress:
   total_phases: 8
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 67
+  completed_plans: 3
+  percent: 100
 ---
 
 # STATE
 
-**Last updated:** 2026-04-12 (Plan 01-02 complete)
+**Last updated:** 2026-04-12 (Phase 01 complete)
 
 ## Project Reference
 
 - **Name:** Unified Data Ecosystem — Postgres Adapter
 - **Core Value:** Any data source → unified entity model → trigger → action → measurement loop
-- **Current Focus:** Phase 1 — Adapter Foundation (Plan 03 next)
+- **Current Focus:** Phase 1 — Adapter Foundation (COMPLETE); Phase 2 next
 - **Branch:** postgres-ingestion
 - **Worktree:** /home/jared/dev/worktrees/postgres-ingestion
 
 ## Current Position
 
-- **Phase:** 1 — Adapter Foundation
-- **Plan:** 01-02 complete; 01-03 (NangoAdapter) next
-- **Status:** Plan 01-02 executed; IngestionAdapter interface, sealed AdapterCallContext, @SourceTypeAdapter qualifier, and sealed AdapterException hierarchy landed
-- **Progress:** [███████░░░] 67%
+- **Phase:** 1 — Adapter Foundation (COMPLETE 3/3 plans)
+- **Plan:** 01-03 complete; ready to plan Phase 2
+- **Status:** NangoAdapter + SourceTypeAdapterRegistry land. Live Nango sync path byte-identical. Registry bean ready for Phase 4 orchestrator.
+- **Progress:** [██████████] 100%
 
 ```
 [........] 0% (0/8 phases)
@@ -47,6 +47,7 @@ progress:
 | Parallelization | enabled |
 | Phase 01-adapter-foundation P01 | 15min | 3 tasks | 8 files |
 | Phase 01-adapter-foundation P02 | 5min | 3 tasks | 12 files |
+| Phase 01-adapter-foundation P03 | 10min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -58,6 +59,9 @@ progress:
 - [Phase 01-adapter-foundation]: Plan 01-02: NangoCallContext.workspaceId defaults to empty in Phase 1; Phase 4 orchestrator supplies real value
 - [Phase 01-adapter-foundation]: Plan 01-02: @SourceTypeAdapter ships annotation-only; @Configuration registry factory lands in Plan 03 with NangoAdapter
 - [Phase 01-adapter-foundation]: Plan 01-02: Sealed AdapterException hierarchy — Temporal do-not-retry uses FatalAdapterException::class.sealedSubclasses, not boolean flags
+- [Phase 01-adapter-foundation]: Plan 01-03: Use positional any()/anyOrNull() Mockito matchers when stubbing Kotlin functions with default-value parameters — named-arg matchers misalign with synthetic overloads
+- [Phase 01-adapter-foundation]: Plan 01-03: NangoAdapter registered but dormant — IntegrationSyncWorkflowImpl/ActivitiesImpl byte-identical, live sync path untouched until Phase 4 unification
+- [Phase 01-adapter-foundation]: Plan 01-03: ProjectionPipelineIntegrationTestConfig excludes NangoAdapter from its ComponentScan because the Nango HTTP layer is intentionally omitted (same pattern as queue service excludes)
 
 ### Key Decisions (from PROJECT.md)
 
@@ -87,13 +91,13 @@ progress:
 ## Session Continuity
 
 ### Last Action
-Completed Plan 01-02 (IngestionAdapter interface). Added `IngestionAdapter`, sealed `AdapterCallContext` + `NangoCallContext`, `@SourceTypeAdapter` qualifier, and the sealed `AdapterException` hierarchy (Transient + Fatal with 5 fatal leaves). Contract test green.
+Completed Plan 01-03 (NangoAdapter + Registry). Phase 01 closes with: NangoAdapter @Component + @SourceTypeAdapter(INTEGRATION), SourceTypeAdapterRegistry @Configuration assembling Map<SourceType, IngestionAdapter>, full Nango→Adapter exception translation, 13 new tests + full build green (1,735 tests). Live Nango sync path untouched.
 
 ### Next Action
-Execute Plan 01-03 (NangoAdapter) — first concrete `IngestionAdapter` impl plus `@Configuration` registry factory assembling `Map<SourceType, IngestionAdapter>`.
+Begin Phase 02 planning (per ROADMAP.md).
 
 ### Last session
-- **Stopped at:** Completed 01-adapter-foundation/01-02-PLAN.md
+- **Stopped at:** Completed 01-adapter-foundation/01-03-PLAN.md
 - **Timestamp:** 2026-04-12T07:43:39Z
 
 ### Files of Record
