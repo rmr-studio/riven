@@ -26,4 +26,5 @@ enum class ApplicationEntityType {
     @JsonProperty("IDENTITY_CLUSTER") IDENTITY_CLUSTER,
     @JsonProperty("NOTE") NOTE,
     @JsonProperty("BUSINESS_DEFINITION") BUSINESS_DEFINITION,
+    @JsonProperty("CUSTOM_SOURCE_CONNECTION") CUSTOM_SOURCE_CONNECTION,
 }
