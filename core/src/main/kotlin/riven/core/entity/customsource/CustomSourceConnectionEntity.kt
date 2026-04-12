@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import org.hibernate.annotations.SQLRestriction
 import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.enums.integration.ConnectionStatus
 import riven.core.models.customsource.CustomSourceConnectionModel
@@ -28,6 +29,7 @@ import java.util.UUID
  */
 @Entity
 @Table(name = "custom_source_connections")
+@SQLRestriction("deleted = false")
 class CustomSourceConnectionEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

@@ -1,15 +1,41 @@
 package riven.core.service.util.factory.customsource
 
+import riven.core.entity.customsource.CustomSourceConnectionEntity
+import riven.core.enums.integration.ConnectionStatus
+import java.time.ZonedDateTime
+import java.util.UUID
+
 /**
- * Test factory for CustomSourceConnectionEntity.
+ * Test factory for [CustomSourceConnectionEntity] (Phase 2 CONN-01).
  *
- * Phase 2 Wave 0 scaffold — populated by plan 02-01 once
- * CustomSourceConnectionEntity (CONN-01) lands. Required by
- * core/CLAUDE.md rule: never construct JPA entities inline in tests;
- * always route construction through a factory.
+ * Required by core/CLAUDE.md: never construct JPA entities inline in tests —
+ * always route construction through a factory. Downstream plans (02-02..04)
+ * rely on this factory's defaults so they don't need to know the entity's
+ * column layout.
  *
- * TODO(plan 02-01): add `fun create(...): CustomSourceConnectionEntity`
- * with sensible defaults (workspaceId, name, connectionStatus,
- * encryptedCredentials, iv, keyVersion).
+ * `id` is intentionally left unset so `save()` calls `persist()` not
+ * `merge()` (see core/CLAUDE.md "Never manually generate UUIDs for
+ * JPA-managed entities").
  */
-object CustomSourceConnectionEntityFactory
+object CustomSourceConnectionEntityFactory {
+
+    fun create(
+        workspaceId: UUID = UUID.randomUUID(),
+        name: String = "test-postgres-${UUID.randomUUID().toString().take(8)}",
+        connectionStatus: ConnectionStatus = ConnectionStatus.CONNECTED,
+        encryptedCredentials: ByteArray = ByteArray(48) { it.toByte() },
+        iv: ByteArray = ByteArray(12) { it.toByte() },
+        keyVersion: Int = 1,
+        lastVerifiedAt: ZonedDateTime? = null,
+        lastFailureReason: String? = null,
+    ): CustomSourceConnectionEntity = CustomSourceConnectionEntity(
+        workspaceId = workspaceId,
+        name = name,
+        connectionStatus = connectionStatus,
+        encryptedCredentials = encryptedCredentials,
+        iv = iv,
+        keyVersion = keyVersion,
+        lastVerifiedAt = lastVerifiedAt,
+        lastFailureReason = lastFailureReason,
+    )
+}
