@@ -33,6 +33,7 @@ import riven.core.repository.entity.RelationshipDefinitionRepository
 import riven.core.repository.entity.RelationshipTargetRuleRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.catalog.SchemaReconciliationService
 import riven.core.service.entity.EntityTypeSemanticMetadataService
 import riven.core.service.util.BaseServiceTest
 import riven.core.service.util.WithUserPersona
@@ -92,6 +93,9 @@ class EntityTypeServiceTest : BaseServiceTest() {
 
     @MockitoBean
     private lateinit var semanticMetadataService: EntityTypeSemanticMetadataService
+
+    @MockitoBean
+    private lateinit var schemaReconciliationService: SchemaReconciliationService
 
     @Autowired
     private lateinit var service: EntityTypeService
