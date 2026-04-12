@@ -4,6 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
@@ -86,12 +87,8 @@ class NangoAdapterTest {
     fun `fetchRecords delegates to NangoClientWrapper with context fields`() {
         whenever(
             nangoClientWrapper.fetchRecords(
-                providerConfigKey = eq("hubspot"),
-                connectionId = eq("conn-1"),
-                model = eq("Contact"),
-                cursor = eq("t-1"),
-                modifiedAfter = any(),
-                limit = eq(50),
+                any<String>(), any<String>(), any<String>(),
+                anyOrNull<String>(), anyOrNull<String>(), anyOrNull<Int>(),
             )
         ).thenReturn(NangoRecordsPage(records = emptyList(), nextCursor = null))
 
@@ -106,7 +103,7 @@ class NangoAdapterTest {
             connectionId = eq("conn-1"),
             model = eq("Contact"),
             cursor = eq("t-1"),
-            modifiedAfter = any(),
+            modifiedAfter = anyOrNull(),
             limit = eq(50),
         )
     }
@@ -115,12 +112,8 @@ class NangoAdapterTest {
     fun `fetchRecords translates NangoRecord into SourceRecord with externalId + payload + metadata`() {
         whenever(
             nangoClientWrapper.fetchRecords(
-                providerConfigKey = any(),
-                connectionId = any(),
-                model = any(),
-                cursor = any(),
-                modifiedAfter = any(),
-                limit = any(),
+                any<String>(), any<String>(), any<String>(),
+                anyOrNull<String>(), anyOrNull<String>(), anyOrNull<Int>(),
             )
         ).thenReturn(
             NangoRecordsPage(
@@ -149,8 +142,8 @@ class NangoAdapterTest {
         val underlying = RateLimitException("rate limited, retry after 60s")
         whenever(
             nangoClientWrapper.fetchRecords(
-                providerConfigKey = any(), connectionId = any(), model = any(),
-                cursor = any(), modifiedAfter = any(), limit = any(),
+                any<String>(), any<String>(), any<String>(),
+                anyOrNull<String>(), anyOrNull<String>(), anyOrNull<Int>(),
             )
         ).thenThrow(underlying)
 
@@ -164,8 +157,8 @@ class NangoAdapterTest {
         val underlying = TransientNangoException("Nango 503", 503)
         whenever(
             nangoClientWrapper.fetchRecords(
-                providerConfigKey = any(), connectionId = any(), model = any(),
-                cursor = any(), modifiedAfter = any(), limit = any(),
+                any<String>(), any<String>(), any<String>(),
+                anyOrNull<String>(), anyOrNull<String>(), anyOrNull<Int>(),
             )
         ).thenThrow(underlying)
 
@@ -179,8 +172,8 @@ class NangoAdapterTest {
         val underlying = NangoApiException("unauthorized", 401)
         whenever(
             nangoClientWrapper.fetchRecords(
-                providerConfigKey = any(), connectionId = any(), model = any(),
-                cursor = any(), modifiedAfter = any(), limit = any(),
+                any<String>(), any<String>(), any<String>(),
+                anyOrNull<String>(), anyOrNull<String>(), anyOrNull<Int>(),
             )
         ).thenThrow(underlying)
 
@@ -194,8 +187,8 @@ class NangoAdapterTest {
         val underlying = NangoApiException("forbidden", 403)
         whenever(
             nangoClientWrapper.fetchRecords(
-                providerConfigKey = any(), connectionId = any(), model = any(),
-                cursor = any(), modifiedAfter = any(), limit = any(),
+                any<String>(), any<String>(), any<String>(),
+                anyOrNull<String>(), anyOrNull<String>(), anyOrNull<Int>(),
             )
         ).thenThrow(underlying)
 
@@ -209,8 +202,8 @@ class NangoAdapterTest {
         val underlying = NangoApiException("not found", 404)
         whenever(
             nangoClientWrapper.fetchRecords(
-                providerConfigKey = any(), connectionId = any(), model = any(),
-                cursor = any(), modifiedAfter = any(), limit = any(),
+                any<String>(), any<String>(), any<String>(),
+                anyOrNull<String>(), anyOrNull<String>(), anyOrNull<Int>(),
             )
         ).thenThrow(underlying)
 
@@ -224,8 +217,8 @@ class NangoAdapterTest {
         val underlying = NangoApiException("server error", 500)
         whenever(
             nangoClientWrapper.fetchRecords(
-                providerConfigKey = any(), connectionId = any(), model = any(),
-                cursor = any(), modifiedAfter = any(), limit = any(),
+                any<String>(), any<String>(), any<String>(),
+                anyOrNull<String>(), anyOrNull<String>(), anyOrNull<Int>(),
             )
         ).thenThrow(underlying)
 
