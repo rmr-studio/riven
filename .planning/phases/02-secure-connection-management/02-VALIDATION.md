@@ -3,7 +3,7 @@ phase: 2
 slug: secure-connection-management
 status: draft
 nyquist_compliant: false
-wave_0_complete: false
+wave_0_complete: true
 created: 2026-04-12
 ---
 
