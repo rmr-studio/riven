@@ -114,10 +114,10 @@ class SourceTypeJpaRoundTripTest {
 
     @Test
     @Transactional
-    fun `EntityTypeEntity with CUSTOM_SOURCE round-trips through JPA`() {
+    fun `EntityTypeEntity with CONNECTOR round-trips through JPA`() {
         val unique = UUID.randomUUID().toString().take(8)
         val entity = EntityFactory.createEntityType(
-            key = "custom_source_roundtrip_$unique",
+            key = "connector_roundtrip_$unique",
             sourceType = SourceType.CONNECTOR,
         ).copy(id = null) // strip factory-generated id so JPA calls persist() not merge()
 

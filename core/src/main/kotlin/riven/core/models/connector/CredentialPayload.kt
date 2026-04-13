@@ -1,6 +1,6 @@
 package riven.core.models.connector
 
-import riven.core.enums.customsource.SslMode
+import riven.core.enums.connector.SslMode
 
 /**
  * Internal JSON shape for the AES-GCM-encrypted credential blob.

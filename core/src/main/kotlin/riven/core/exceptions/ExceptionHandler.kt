@@ -12,8 +12,8 @@ import org.springframework.web.context.request.ServletRequestAttributes
 import riven.core.configuration.properties.ApplicationConfigurationProperties
 import com.fasterxml.jackson.core.JsonProcessingException
 import riven.core.enums.common.ApiError
-import riven.core.exceptions.customsource.ReadOnlyVerificationException
-import riven.core.exceptions.customsource.SsrfRejectedException
+import riven.core.exceptions.connector.ReadOnlyVerificationException
+import riven.core.exceptions.connector.SsrfRejectedException
 import riven.core.exceptions.query.QueryExecutionException
 import riven.core.exceptions.query.QueryFilterException
 import riven.core.models.response.common.ErrorResponse

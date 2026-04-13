@@ -1,4 +1,4 @@
-package riven.core.exceptions.customsource
+package riven.core.exceptions.connector
 
 /**
  * Sealed hierarchy for custom-source connection failures (Phase 2).

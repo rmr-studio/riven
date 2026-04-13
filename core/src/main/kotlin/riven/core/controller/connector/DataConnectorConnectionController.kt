@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -31,6 +32,7 @@ import java.util.UUID
  * business logic live in the service layer per core/CLAUDE.md.
  */
 @RestController
+@ConditionalOnProperty(prefix = "riven.connector", name = ["enabled"], havingValue = "true")
 @RequestMapping("/api/v1/connector/connections")
 @Tag(name = "data-connector", description = "Manage connections to custom data sources for use in data connector syncs and queries")
 class DataConnectorConnectionController(

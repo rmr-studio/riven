@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
-import riven.core.enums.customsource.SslMode
+import riven.core.enums.connector.SslMode
 import java.util.UUID
 
 /**

@@ -3,13 +3,19 @@ package riven.core.models.connector.request
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
-import riven.core.enums.customsource.SslMode
+import jakarta.validation.constraints.NotNull
+import riven.core.enums.connector.SslMode
+import java.util.UUID
 
 /**
  * Dry-run request: exercises SSRF + read-only gates without persisting anything.
- * Intentionally has no `workspaceId` — this endpoint does not create an entity.
+ * [workspaceId] scopes the probe so the service-layer workspace gate can reject
+ * probes from users without access to the workspace.
  */
 data class DataConnectorConnectionTestRequest(
+    @field:NotNull
+    val workspaceId: UUID,
+
     @field:NotBlank
     val host: String,
 
@@ -28,6 +34,6 @@ data class DataConnectorConnectionTestRequest(
     val sslMode: SslMode = SslMode.REQUIRE,
 ) {
     override fun toString(): String =
-        "TestCustomSourceConnectionRequest(host=$host,port=$port,database=$database," +
-            "user=$user,password=***,sslMode=$sslMode)"
+        "TestCustomSourceConnectionRequest(workspaceId=$workspaceId,host=$host,port=$port," +
+            "database=$database,user=$user,password=***,sslMode=$sslMode)"
 }

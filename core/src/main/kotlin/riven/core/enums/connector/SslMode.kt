@@ -1,10 +1,10 @@
-package riven.core.enums.customsource
+package riven.core.enums.connector
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonValue
 
 /**
- * Postgres SSL mode for a custom source connection.
+ * Postgres SSL mode for a data connector connection.
  *
  * Values are the canonical libpq `sslmode` parameter strings so the wire
  * representation matches what the JDBC driver consumes directly. Jackson

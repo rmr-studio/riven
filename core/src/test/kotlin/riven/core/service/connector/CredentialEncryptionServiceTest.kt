@@ -9,8 +9,8 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import riven.core.configuration.properties.DataConnectorConfigurationProperties
-import riven.core.exceptions.customsource.CryptoException
-import riven.core.exceptions.customsource.DataCorruptionException
+import riven.core.exceptions.connector.CryptoException
+import riven.core.exceptions.connector.DataCorruptionException
 import java.util.Base64
 
 /**

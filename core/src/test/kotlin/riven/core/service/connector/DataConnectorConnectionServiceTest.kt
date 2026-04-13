@@ -22,20 +22,21 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.access.AccessDeniedException
+import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import riven.core.configuration.auth.WorkspaceSecurity
-import riven.core.entity.customsource.CustomSourceConnectionEntity
+import riven.core.entity.connector.DataConnectorConnectionEntity
 import riven.core.enums.activity.Activity
 import riven.core.enums.core.ApplicationEntityType
-import riven.core.enums.customsource.SslMode
+import riven.core.enums.connector.SslMode
 import riven.core.enums.integration.ConnectionStatus
 import riven.core.enums.util.OperationType
 import riven.core.enums.workspace.WorkspaceRoles
 import riven.core.exceptions.NotFoundException
-import riven.core.exceptions.customsource.CryptoException
-import riven.core.exceptions.customsource.DataCorruptionException
-import riven.core.exceptions.customsource.ReadOnlyVerificationException
-import riven.core.exceptions.customsource.SsrfRejectedException
+import riven.core.exceptions.connector.CryptoException
+import riven.core.exceptions.connector.DataCorruptionException
+import riven.core.exceptions.connector.ReadOnlyVerificationException
+import riven.core.exceptions.connector.SsrfRejectedException
 import riven.core.models.connector.CredentialPayload
 import riven.core.models.connector.request.CreateDataConnectorConnectionRequest
 import riven.core.models.connector.request.UpdateDataConnectorConnectionRequest
@@ -45,7 +46,7 @@ import riven.core.service.auth.AuthTokenService
 import riven.core.service.util.SecurityTestConfig
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
-import riven.core.service.util.factory.customsource.CustomSourceConnectionEntityFactory
+import riven.core.service.util.factory.customsource.DataConnectorConnectionEntityFactory
 import java.net.InetAddress
 import java.util.Optional
 import java.util.UUID
@@ -66,6 +67,7 @@ import java.util.UUID
         DataConnectorConnectionService::class,
     ],
 )
+@TestPropertySource(properties = ["riven.connector.enabled=true"])
 @WithUserPersona(
     userId = "11111111-1111-1111-1111-111111111111",
     email = "test@test.com",
@@ -123,8 +125,8 @@ class DataConnectorConnectionServiceTest {
         ciphertext: ByteArray = ByteArray(48) { it.toByte() },
         iv: ByteArray = ByteArray(12) { it.toByte() },
         status: ConnectionStatus = ConnectionStatus.CONNECTED,
-    ): CustomSourceConnectionEntity {
-        val e = CustomSourceConnectionEntityFactory.create(
+    ): DataConnectorConnectionEntity {
+        val e = DataConnectorConnectionEntityFactory.create(
             workspaceId = wsId,
             encryptedCredentials = ciphertext,
             iv = iv,
@@ -133,7 +135,7 @@ class DataConnectorConnectionServiceTest {
         // Reflection to set the generated id — the factory deliberately leaves it null
         // to preserve persist() semantics in integration tests; for unit tests we need
         // the post-save state where id is non-null.
-        val idField = CustomSourceConnectionEntity::class.java.getDeclaredField("id")
+        val idField = DataConnectorConnectionEntity::class.java.getDeclaredField("id")
         idField.isAccessible = true
         idField.set(e, id)
         return e
@@ -148,7 +150,7 @@ class DataConnectorConnectionServiceTest {
 
         assertThrows<SsrfRejectedException> { service.create(validRequest()) }
 
-        verify(repository, never()).save(any<CustomSourceConnectionEntity>())
+        verify(repository, never()).save(any<DataConnectorConnectionEntity>())
         verify(encryptionService, never()).encrypt(any())
         verify(roVerifier, never()).verify(any(), any(), any(), any(), any(), any(), any())
     }
@@ -162,7 +164,7 @@ class DataConnectorConnectionServiceTest {
 
         assertThrows<ReadOnlyVerificationException> { service.create(validRequest()) }
 
-        verify(repository, never()).save(any<CustomSourceConnectionEntity>())
+        verify(repository, never()).save(any<DataConnectorConnectionEntity>())
         verify(encryptionService, never()).encrypt(any())
     }
 
@@ -172,10 +174,10 @@ class DataConnectorConnectionServiceTest {
             .thenReturn(listOf(InetAddress.getByName("8.8.8.8")))
         whenever(encryptionService.encrypt(any()))
             .thenReturn(EncryptedCredentials(ByteArray(64) { 1 }, ByteArray(12) { 2 }, 1))
-        whenever(repository.save(any<CustomSourceConnectionEntity>()))
+        whenever(repository.save(any<DataConnectorConnectionEntity>()))
             .thenAnswer { inv ->
-                val e = inv.arguments[0] as CustomSourceConnectionEntity
-                val idField = CustomSourceConnectionEntity::class.java.getDeclaredField("id")
+                val e = inv.arguments[0] as DataConnectorConnectionEntity
+                val idField = DataConnectorConnectionEntity::class.java.getDeclaredField("id")
                 idField.isAccessible = true
                 idField.set(e, UUID.randomUUID())
                 e
@@ -185,15 +187,15 @@ class DataConnectorConnectionServiceTest {
 
         assertEquals(ConnectionStatus.CONNECTED, result.connectionStatus)
         assertEquals("db.example.com", result.host)
-        verify(repository).save(argThat<CustomSourceConnectionEntity> { e ->
+        verify(repository).save(argThat<DataConnectorConnectionEntity> { e ->
             e.encryptedCredentials.isNotEmpty() && e.iv.isNotEmpty() && e.keyVersion == 1
         })
         verify(activityService).logActivity(
-            activity = eq(Activity.CUSTOM_SOURCE_CONNECTION),
+            activity = eq(Activity.DATA_CONNECTOR_CONNECTION),
             operation = eq(OperationType.CREATE),
             userId = eq(userId),
             workspaceId = eq(workspaceId),
-            entityType = eq(ApplicationEntityType.CUSTOM_SOURCE_CONNECTION),
+            entityType = eq(ApplicationEntityType.DATA_CONNECTOR_CONNECTION),
             entityId = anyOrNull(),
             timestamp = any(),
             details = any(),
@@ -204,7 +206,7 @@ class DataConnectorConnectionServiceTest {
     fun `create blocks cross-workspace access via @PreAuthorize`() {
         val foreign = validRequest().copy(workspaceId = otherWorkspaceId)
         assertThrows<AccessDeniedException> { service.create(foreign) }
-        verify(repository, never()).save(any<CustomSourceConnectionEntity>())
+        verify(repository, never()).save(any<DataConnectorConnectionEntity>())
     }
 
     // ------ getById / decrypt failure modes ------
@@ -215,12 +217,12 @@ class DataConnectorConnectionServiceTest {
         val entity = entityWithId(id = id)
         whenever(repository.findByIdAndWorkspaceId(id, workspaceId)).thenReturn(Optional.of(entity))
         whenever(encryptionService.decrypt(any())).thenThrow(CryptoException("bad key"))
-        whenever(repository.save(any<CustomSourceConnectionEntity>())).thenAnswer { it.arguments[0] }
+        whenever(repository.save(any<DataConnectorConnectionEntity>())).thenAnswer { it.arguments[0] }
 
         val model = service.getById(workspaceId, id)
 
         assertEquals(ConnectionStatus.FAILED, model.connectionStatus)
-        verify(repository).save(argThat<CustomSourceConnectionEntity> { e ->
+        verify(repository).save(argThat<DataConnectorConnectionEntity> { e ->
             e.connectionStatus == ConnectionStatus.FAILED &&
                 (e.lastFailureReason?.contains("Configuration error") == true)
         })
@@ -232,12 +234,12 @@ class DataConnectorConnectionServiceTest {
         val entity = entityWithId(id = id)
         whenever(repository.findByIdAndWorkspaceId(id, workspaceId)).thenReturn(Optional.of(entity))
         whenever(encryptionService.decrypt(any())).thenThrow(DataCorruptionException("tag mismatch"))
-        whenever(repository.save(any<CustomSourceConnectionEntity>())).thenAnswer { it.arguments[0] }
+        whenever(repository.save(any<DataConnectorConnectionEntity>())).thenAnswer { it.arguments[0] }
 
         val model = service.getById(workspaceId, id)
 
         assertEquals(ConnectionStatus.FAILED, model.connectionStatus)
-        verify(repository).save(argThat<CustomSourceConnectionEntity> { e ->
+        verify(repository).save(argThat<DataConnectorConnectionEntity> { e ->
             (e.lastFailureReason?.contains("re-enter the password") == true)
         })
     }
@@ -264,7 +266,7 @@ class DataConnectorConnectionServiceTest {
                 else -> throw DataCorruptionException("corrupt")
             }
         }
-        whenever(repository.save(any<CustomSourceConnectionEntity>())).thenAnswer { it.arguments[0] }
+        whenever(repository.save(any<DataConnectorConnectionEntity>())).thenAnswer { it.arguments[0] }
 
         val result = service.listByWorkspace(workspaceId)
 
@@ -281,7 +283,7 @@ class DataConnectorConnectionServiceTest {
         val id = UUID.randomUUID()
         val entity = entityWithId(id = id)
         whenever(repository.findByIdAndWorkspaceId(id, workspaceId)).thenReturn(Optional.of(entity))
-        whenever(repository.save(any<CustomSourceConnectionEntity>())).thenAnswer { it.arguments[0] }
+        whenever(repository.save(any<DataConnectorConnectionEntity>())).thenAnswer { it.arguments[0] }
         val goodPayload = CredentialPayload(
             "db.example.com", 5432, "d", "u", "pw", SslMode.REQUIRE,
         )
@@ -292,7 +294,7 @@ class DataConnectorConnectionServiceTest {
         verify(ssrfValidator, never()).validateAndResolve(any())
         verify(roVerifier, never()).verify(any(), any(), any(), any(), any(), any(), any())
         verify(encryptionService, never()).encrypt(any())
-        verify(repository).save(argThat<CustomSourceConnectionEntity> { e -> e.name == "renamed" })
+        verify(repository).save(argThat<DataConnectorConnectionEntity> { e -> e.name == "renamed" })
     }
 
     @Test
@@ -314,7 +316,7 @@ class DataConnectorConnectionServiceTest {
             capturedPlaintext = inv.arguments[0] as String
             EncryptedCredentials(ByteArray(64) { 5 }, ByteArray(12) { 6 }, 1)
         }
-        whenever(repository.save(any<CustomSourceConnectionEntity>())).thenAnswer { it.arguments[0] }
+        whenever(repository.save(any<DataConnectorConnectionEntity>())).thenAnswer { it.arguments[0] }
 
         service.update(
             workspaceId, id,
@@ -344,7 +346,7 @@ class DataConnectorConnectionServiceTest {
         val newCiphertext = ByteArray(64) { 7 }
         whenever(encryptionService.encrypt(any()))
             .thenReturn(EncryptedCredentials(newCiphertext, ByteArray(12) { 8 }, 1))
-        whenever(repository.save(any<CustomSourceConnectionEntity>())).thenAnswer { it.arguments[0] }
+        whenever(repository.save(any<DataConnectorConnectionEntity>())).thenAnswer { it.arguments[0] }
 
         service.update(
             workspaceId, id,
@@ -353,7 +355,7 @@ class DataConnectorConnectionServiceTest {
 
         verify(ssrfValidator).validateAndResolve(any())
         verify(roVerifier).verify(any(), any(), any(), any(), any(), any(), any())
-        verify(repository).save(argThat<CustomSourceConnectionEntity> { e ->
+        verify(repository).save(argThat<DataConnectorConnectionEntity> { e ->
             e.encryptedCredentials.contentEquals(newCiphertext) &&
                 !e.encryptedCredentials.contentEquals(oldCiphertext)
         })
@@ -376,17 +378,17 @@ class DataConnectorConnectionServiceTest {
         val id = UUID.randomUUID()
         val entity = entityWithId(id = id)
         whenever(repository.findByIdAndWorkspaceId(id, workspaceId)).thenReturn(Optional.of(entity))
-        whenever(repository.save(any<CustomSourceConnectionEntity>())).thenAnswer { it.arguments[0] }
+        whenever(repository.save(any<DataConnectorConnectionEntity>())).thenAnswer { it.arguments[0] }
 
         service.softDelete(workspaceId, id)
 
-        verify(repository).save(argThat<CustomSourceConnectionEntity> { e -> e.deleted && e.deletedAt != null })
+        verify(repository).save(argThat<DataConnectorConnectionEntity> { e -> e.deleted && e.deletedAt != null })
         verify(activityService).logActivity(
-            activity = eq(Activity.CUSTOM_SOURCE_CONNECTION),
+            activity = eq(Activity.DATA_CONNECTOR_CONNECTION),
             operation = eq(OperationType.DELETE),
             userId = eq(userId),
             workspaceId = eq(workspaceId),
-            entityType = eq(ApplicationEntityType.CUSTOM_SOURCE_CONNECTION),
+            entityType = eq(ApplicationEntityType.DATA_CONNECTOR_CONNECTION),
             entityId = eq(id),
             timestamp = any(),
             details = any(),

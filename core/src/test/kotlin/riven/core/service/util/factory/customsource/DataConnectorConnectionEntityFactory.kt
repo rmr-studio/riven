@@ -1,12 +1,12 @@
 package riven.core.service.util.factory.customsource
 
-import riven.core.entity.customsource.CustomSourceConnectionEntity
+import riven.core.entity.connector.DataConnectorConnectionEntity
 import riven.core.enums.integration.ConnectionStatus
 import java.time.ZonedDateTime
 import java.util.UUID
 
 /**
- * Test factory for [CustomSourceConnectionEntity] (Phase 2 CONN-01).
+ * Test factory for [DataConnectorConnectionEntity] (Phase 2 CONN-01).
  *
  * Required by core/CLAUDE.md: never construct JPA entities inline in tests —
  * always route construction through a factory. Downstream plans (02-02..04)
@@ -17,7 +17,7 @@ import java.util.UUID
  * `merge()` (see core/CLAUDE.md "Never manually generate UUIDs for
  * JPA-managed entities").
  */
-object CustomSourceConnectionEntityFactory {
+object DataConnectorConnectionEntityFactory {
 
     fun create(
         workspaceId: UUID = UUID.randomUUID(),
@@ -28,7 +28,7 @@ object CustomSourceConnectionEntityFactory {
         keyVersion: Int = 1,
         lastVerifiedAt: ZonedDateTime? = null,
         lastFailureReason: String? = null,
-    ): CustomSourceConnectionEntity = CustomSourceConnectionEntity(
+    ): DataConnectorConnectionEntity = DataConnectorConnectionEntity(
         workspaceId = workspaceId,
         name = name,
         connectionStatus = connectionStatus,

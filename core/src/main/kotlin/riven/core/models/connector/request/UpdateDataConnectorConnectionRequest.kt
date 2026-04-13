@@ -2,7 +2,7 @@ package riven.core.models.connector.request
 
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
-import riven.core.enums.customsource.SslMode
+import riven.core.enums.connector.SslMode
 
 /**
  * PATCH request for a custom source connection. All fields optional; setting any

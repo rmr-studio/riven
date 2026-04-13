@@ -3,7 +3,7 @@ package riven.core.service.connector
 import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
-import riven.core.exceptions.customsource.SsrfRejectedException
+import riven.core.exceptions.connector.SsrfRejectedException
 import java.math.BigInteger
 import java.net.Inet4Address
 import java.net.Inet6Address

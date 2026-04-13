@@ -1,15 +1,14 @@
 -- =====================================================
--- CUSTOM SOURCE CONNECTIONS TABLE
+-- DATA CONNECTOR CONNECTION TABLE
 -- =====================================================
--- Workspace-scoped connections to user-defined external data sources
+-- Workspace-scoped connections to user-defined external data sources via connectors
 -- (e.g. Postgres read-replicas). Credentials are AES-256-GCM encrypted
 -- and stored as raw bytea alongside their IV + key version.
 --
--- Phase 2 CONN-01. Sibling to integration_connections (Nango-backed),
 -- distinct because custom sources carry encrypted credentials + readonly
 -- verification metadata rather than a Nango connection id.
 
-CREATE TABLE IF NOT EXISTS custom_source_connections (
+CREATE TABLE IF NOT EXISTS data_connector_connection (
     id                    UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
     workspace_id          UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     name                  VARCHAR(255) NOT NULL,
@@ -31,5 +30,5 @@ CREATE TABLE IF NOT EXISTS custom_source_connections (
     deleted_at            TIMESTAMPTZ
 );
 
-CREATE INDEX IF NOT EXISTS idx_custom_source_connections_workspace_id
-    ON custom_source_connections(workspace_id) WHERE deleted = FALSE;
+CREATE INDEX IF NOT EXISTS idx_data_connector_connection_workspace_id
+    ON data_connector_connection(workspace_id) WHERE deleted = FALSE;

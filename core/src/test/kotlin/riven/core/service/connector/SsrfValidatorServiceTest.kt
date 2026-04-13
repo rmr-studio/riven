@@ -8,7 +8,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import riven.core.exceptions.customsource.SsrfRejectedException
+import riven.core.exceptions.connector.SsrfRejectedException
 import java.net.InetAddress
 import java.net.UnknownHostException
 

@@ -2,7 +2,7 @@ package riven.core.service.connector
 
 import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.stereotype.Service
-import riven.core.exceptions.customsource.ReadOnlyVerificationException
+import riven.core.exceptions.connector.ReadOnlyVerificationException
 import java.net.Inet6Address
 import java.net.InetAddress
 import java.sql.Connection

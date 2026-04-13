@@ -1,4 +1,4 @@
-package riven.core.entity.customsource
+package riven.core.entity.connector
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -28,9 +28,9 @@ import java.util.UUID
  * `@SQLRestriction("deleted = false")` automatically filters deleted rows.
  */
 @Entity
-@Table(name = "custom_source_connections")
+@Table(name = "data_connector_connections")
 @SQLRestriction("deleted = false")
-class CustomSourceConnectionEntity(
+class DataConnectorConnectionEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", columnDefinition = "uuid")

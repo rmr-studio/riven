@@ -1,4 +1,4 @@
-package riven.core.entity.customsource
+package riven.core.entity.connector
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -28,14 +28,14 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 import riven.core.repository.connector.CustomSourceConnectionRepository
-import riven.core.service.util.factory.customsource.CustomSourceConnectionEntityFactory
+import riven.core.service.util.factory.customsource.DataConnectorConnectionEntityFactory
 import java.time.ZonedDateTime
 import java.time.temporal.TemporalAccessor
 import java.util.Optional
 import java.util.UUID
 
 /**
- * Verifies [CustomSourceConnectionEntity] round-trips through JPA against real
+ * Verifies [DataConnectorConnectionEntity] round-trips through JPA against real
  * Postgres (Phase 2 CONN-01).
  *
  * Uses Testcontainers `pgvector/pgvector:pg16` + `@ActiveProfiles("integration")`
@@ -66,7 +66,7 @@ import java.util.UUID
     ],
 )
 @EnableJpaRepositories(basePackages = ["riven.core.repository.connector"])
-@EntityScan("riven.core.entity.customsource")
+@EntityScan("riven.core.entity.connector")
 @EnableJpaAuditing(
     auditorAwareRef = "customSourceConnectionRoundTripAuditorProvider",
     dateTimeProviderRef = "customSourceConnectionRoundTripDateTimeProvider",
@@ -89,7 +89,7 @@ class CustomSourceConnectionEntityTestConfig {
 @ActiveProfiles("integration")
 @Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class CustomSourceConnectionEntityTest {
+class DataConnectorConnectionEntityTest {
 
     companion object {
         @JvmStatic
@@ -127,7 +127,7 @@ class CustomSourceConnectionEntityTest {
      * entities. We deliberately scan only `riven.core.entity.customsource`
      * to avoid dragging in the full entity graph (WorkspaceInviteEntity ->
      * UserEntity etc.), so we hand-create the minimal `workspaces` table
-     * that the custom_source_connections FK targets.
+     * that the dats_connector_connection FK targets.
      */
     @BeforeAll
     fun createWorkspacesTable() {
@@ -160,7 +160,7 @@ class CustomSourceConnectionEntityTest {
         val credentials = ByteArray(64) { (it * 7 + 13).toByte() }
         val iv = ByteArray(12) { (255 - it).toByte() }
 
-        val entity = CustomSourceConnectionEntityFactory.create(
+        val entity = DataConnectorConnectionEntityFactory.create(
             workspaceId = workspaceId,
             encryptedCredentials = credentials,
             iv = iv,
@@ -184,7 +184,7 @@ class CustomSourceConnectionEntityTest {
     fun `soft-deleted entity is invisible to findById`() {
         val workspaceId = insertWorkspace()
 
-        val entity = CustomSourceConnectionEntityFactory.create(workspaceId = workspaceId)
+        val entity = DataConnectorConnectionEntityFactory.create(workspaceId = workspaceId)
         val saved = connectionRepository.saveAndFlush(entity)
         val persistedId = requireNotNull(saved.id) { "id should be assigned after saveAndFlush" }
 
@@ -192,7 +192,7 @@ class CustomSourceConnectionEntityTest {
         // otherwise reject the UPDATE round-trip via saveAndFlush in the same
         // session, and we want to test the query-side filter, not the write path.
         jdbcTemplate.update(
-            "UPDATE custom_source_connections SET deleted = TRUE, deleted_at = NOW() WHERE id = ?",
+            "UPDATE data_connector_connections SET deleted = TRUE, deleted_at = NOW() WHERE id = ?",
             persistedId,
         )
 
@@ -201,7 +201,7 @@ class CustomSourceConnectionEntityTest {
         entityManager.clear()
 
         val deletedFlag = jdbcTemplate.queryForObject(
-            "SELECT deleted FROM custom_source_connections WHERE id = ?",
+            "SELECT deleted FROM data_connector_connections WHERE id = ?",
             Boolean::class.java,
             persistedId,
         )
@@ -218,7 +218,7 @@ class CustomSourceConnectionEntityTest {
 
         // Sanity: the row still exists physically (soft-delete, not hard-delete).
         val physicalCount = jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM custom_source_connections WHERE id = ?",
+            "SELECT COUNT(*) FROM data_connector_connections WHERE id = ?",
             Long::class.java,
             persistedId,
         )
@@ -232,13 +232,13 @@ class CustomSourceConnectionEntityTest {
         val wsBId = insertWorkspace()
 
         val a1 = connectionRepository.saveAndFlush(
-            CustomSourceConnectionEntityFactory.create(workspaceId = wsAId, name = "a1")
+            DataConnectorConnectionEntityFactory.create(workspaceId = wsAId, name = "a1")
         )
         val a2 = connectionRepository.saveAndFlush(
-            CustomSourceConnectionEntityFactory.create(workspaceId = wsAId, name = "a2")
+            DataConnectorConnectionEntityFactory.create(workspaceId = wsAId, name = "a2")
         )
         val b1 = connectionRepository.saveAndFlush(
-            CustomSourceConnectionEntityFactory.create(workspaceId = wsBId, name = "b1")
+            DataConnectorConnectionEntityFactory.create(workspaceId = wsBId, name = "b1")
         )
 
         val inA = connectionRepository.findByWorkspaceId(wsAId)

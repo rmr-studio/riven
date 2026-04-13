@@ -10,7 +10,7 @@ import org.mockito.kotlin.mock
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
-import riven.core.exceptions.customsource.ReadOnlyVerificationException
+import riven.core.exceptions.connector.ReadOnlyVerificationException
 import java.net.InetAddress
 import java.sql.DriverManager
 import java.util.Properties

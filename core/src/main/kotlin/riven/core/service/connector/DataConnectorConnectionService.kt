@@ -3,19 +3,20 @@ package riven.core.service.connector
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.github.oshai.kotlinlogging.KLogger
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import riven.core.entity.customsource.CustomSourceConnectionEntity
+import riven.core.entity.connector.DataConnectorConnectionEntity
 import riven.core.enums.activity.Activity
 import riven.core.enums.core.ApplicationEntityType
-import riven.core.enums.customsource.SslMode
+import riven.core.enums.connector.SslMode
 import riven.core.enums.integration.ConnectionStatus
 import riven.core.enums.util.OperationType
-import riven.core.exceptions.customsource.CryptoException
-import riven.core.exceptions.customsource.DataCorruptionException
-import riven.core.exceptions.customsource.ReadOnlyVerificationException
-import riven.core.exceptions.customsource.SsrfRejectedException
+import riven.core.exceptions.connector.CryptoException
+import riven.core.exceptions.connector.DataCorruptionException
+import riven.core.exceptions.connector.ReadOnlyVerificationException
+import riven.core.exceptions.connector.SsrfRejectedException
 import riven.core.models.connector.ConnectorTestResult
 import riven.core.models.connector.CredentialPayload
 import riven.core.models.connector.CustomSourceConnectionModel
@@ -44,6 +45,7 @@ import java.util.UUID
  * thrown to the HTTP layer (per locked Phase-2 decision).
  */
 @Service
+@ConditionalOnProperty(prefix = "riven.connector", name = ["enabled"], havingValue = "true")
 class DataConnectorConnectionService(
     private val logger: KLogger,
     private val repository: CustomSourceConnectionRepository,
@@ -70,7 +72,7 @@ class DataConnectorConnectionService(
             request.user, request.password, request.sslMode,
         )
         val encrypted = encryptPayload(toPayload(request))
-        val entity = CustomSourceConnectionEntity(
+        val entity = DataConnectorConnectionEntity(
             workspaceId = request.workspaceId,
             name = request.name,
             connectionStatus = ConnectionStatus.CONNECTED,
@@ -98,6 +100,7 @@ class DataConnectorConnectionService(
      * with a category indicator for the caller to render.
      */
     @Transactional(readOnly = true)
+    @PreAuthorize("@workspaceSecurity.hasWorkspace(#request.workspaceId)")
     fun test(request: DataConnectorConnectionTestRequest): ConnectorTestResult {
         return try {
             runGateChain(
@@ -204,7 +207,7 @@ class DataConnectorConnectionService(
      * [CryptoException] and [DataCorruptionException] transition the status
      * to FAILED with a user-safe message — they NEVER propagate to HTTP.
      */
-    private fun decryptToModel(entity: CustomSourceConnectionEntity): CustomSourceConnectionModel {
+    private fun decryptToModel(entity: DataConnectorConnectionEntity): CustomSourceConnectionModel {
         return try {
             val json = encryptionService.decrypt(
                 EncryptedCredentials(entity.encryptedCredentials, entity.iv, entity.keyVersion),
@@ -223,7 +226,7 @@ class DataConnectorConnectionService(
     }
 
     private fun applyCredentialUpdate(
-        entity: CustomSourceConnectionEntity,
+        entity: DataConnectorConnectionEntity,
         request: UpdateDataConnectorConnectionRequest,
     ): CustomSourceConnectionModel {
         val currentJson = encryptionService.decrypt(
@@ -258,7 +261,7 @@ class DataConnectorConnectionService(
     }
 
     private fun applyCosmeticUpdate(
-        entity: CustomSourceConnectionEntity,
+        entity: DataConnectorConnectionEntity,
         request: UpdateDataConnectorConnectionRequest,
     ): CustomSourceConnectionModel {
         request.name?.let { entity.name = it }
@@ -266,7 +269,7 @@ class DataConnectorConnectionService(
         return decryptToModel(saved)
     }
 
-    private fun transitionToFailed(entity: CustomSourceConnectionEntity, reason: String) {
+    private fun transitionToFailed(entity: DataConnectorConnectionEntity, reason: String) {
         if (entity.connectionStatus.canTransitionTo(ConnectionStatus.FAILED)) {
             entity.connectionStatus = ConnectionStatus.FAILED
             entity.lastFailureReason = reason
@@ -276,7 +279,7 @@ class DataConnectorConnectionService(
     }
 
     private fun buildFailedModel(
-        entity: CustomSourceConnectionEntity,
+        entity: DataConnectorConnectionEntity,
         reason: String,
     ): CustomSourceConnectionModel = CustomSourceConnectionModel(
         id = requireNotNull(entity.id) { "entity.id must not be null for persisted row" },
@@ -310,11 +313,11 @@ class DataConnectorConnectionService(
         details: Map<String, Any>,
     ) {
         activityService.logActivity(
-            activity = Activity.CUSTOM_SOURCE_CONNECTION,
+            activity = Activity.DATA_CONNECTOR_CONNECTION,
             operation = operation,
             userId = userId,
             workspaceId = workspaceId,
-            entityType = ApplicationEntityType.CUSTOM_SOURCE_CONNECTION,
+            entityType = ApplicationEntityType.DATA_CONNECTOR_CONNECTION,
             entityId = entityId,
             details = details,
         )
