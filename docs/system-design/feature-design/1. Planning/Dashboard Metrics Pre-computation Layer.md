@@ -8,10 +8,10 @@ tags:
 Created: 2026-03-18
 Updated:
 Domains:
-  - "[[Knowledge]]"
-  - "[[Entities]]"
+  - "[[riven/docs/system-design/domains/Knowledge/Knowledge]]"
+  - "[[riven/docs/system-design/domains/Entities/Entities]]"
 blocked by:
-  - "[[Lifecycle Operations Dashboard]]"
+  - "[[riven/docs/system-design/feature-design/1. Planning/Lifecycle Operations Dashboard]]"
 ---
 # Feature: Dashboard Metrics Pre-computation Layer (DEFERRED — Performance Optimization)
 
@@ -52,8 +52,8 @@ Premature optimization at this stage. The dashboard should ship with live querie
 
 ## Related Documents
 
-- [[Lifecycle Operations Dashboard]] — the consumer of pre-computed metrics
-- [[Lifecycle Domain Model]] — metrics grouped by lifecycle domain
+- [[riven/docs/system-design/feature-design/1. Planning/Lifecycle Operations Dashboard]] — the consumer of pre-computed metrics
+- [[riven/docs/system-design/feature-design/4. Completed/Lifecycle Domain Model]] — metrics grouped by lifecycle domain
 - CEO Plan: Lifecycle Vertical Scoping (2026-03-18)
 
 ---

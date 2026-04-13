@@ -6,11 +6,11 @@ tags:
 Created: 2025-07-17
 Updated: 2026-03-18
 Domains:
-  - "[[Integrations]]"
+  - "[[riven/docs/system-design/domains/Integrations/Integrations]]"
 ---
 # TemplateMaterializationService
 
-Part of [[Enablement]]
+Part of [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Enablement/Enablement]]
 
 ## Purpose
 
@@ -29,6 +29,7 @@ Creates workspace-scoped entity types and relationships from global catalog defi
 - Deduplicate relationships on reconnect (skip existing, restore soft-deleted)
 - Initialize semantic metadata for newly created entity types
 - Create fallback CONNECTED_ENTITIES relationship definitions for each materialized entity type
+- Persist `attributeKeyMapping` (string key → UUID) on materialized entity types for downstream sync pipeline consumption
 - Initialize ID sequences for attributes with `SchemaType.ID`
 - Build column configurations from catalog column definitions or schema property ordering
 - Resolve catalog identifier keys to deterministic UUIDs
@@ -46,8 +47,8 @@ Creates workspace-scoped entity types and relationships from global catalog defi
 - `CatalogRelationshipRepository` — Reads catalog relationship definitions by manifest ID
 - `CatalogRelationshipTargetRuleRepository` — Reads catalog target rules by relationship IDs
 - `ManifestCatalogRepository` — Resolves integration slug to manifest entry
-- [[EntityTypeSemanticMetadataService]] — Initializes semantic metadata records for materialized entity types and their attributes
-- [[EntityTypeRelationshipService]] — Creates fallback CONNECTED_ENTITIES relationship definitions
+- [[riven/docs/system-design/domains/Entities/Entity Semantics/EntityTypeSemanticMetadataService]] — Initializes semantic metadata records for materialized entity types and their attributes
+- [[riven/docs/system-design/domains/Entities/Relationships/EntityTypeRelationshipService]] — Creates fallback CONNECTED_ENTITIES relationship definitions
 - [[EntityTypeSequenceService]] — Initializes ID sequences for `SchemaType.ID` attributes
 - `ObjectMapper` — JSON processing (injected but used for potential schema transformations)
 - `KLogger` — Structured logging
@@ -56,8 +57,8 @@ Creates workspace-scoped entity types and relationships from global catalog defi
 
 ## Used By
 
-- [[NangoWebhookService]] — Calls `materializeIntegrationTemplates()` during auth webhook processing
-- [[IntegrationConnectionService]] — Calls `materializeIntegrationTemplates()` when `updateConnectionStatus` transitions to CONNECTED
+- [[riven/docs/system-design/domains/Integrations/Webhook Authentication/NangoWebhookService]] — Calls `materializeIntegrationTemplates()` during auth webhook processing
+- [[riven/docs/system-design/domains/Integrations/Connection Management/IntegrationConnectionService]] — Calls `materializeIntegrationTemplates()` when `updateConnectionStatus` transitions to CONNECTED
 
 ---
 
@@ -82,7 +83,8 @@ Catalog schemas are stored as `Map<String, Any>` with string attribute keys and 
 2. Generates a deterministic UUID v3 for the attribute key (see below)
 3. Parses the attribute definition map to extract `SchemaType`, `DataType`, `DataFormat`, label, required/unique/protected flags
 4. Builds a `Schema<UUID>` for each attribute
-5. Wraps all attributes in an `EntityTypeSchema` (a `Schema<UUID>` with `key = SchemaType.OBJECT`)
+5. Builds an `attributeKeyMapping: Map<String, String>` recording the string→UUID mapping for every attribute, and persists it on the `EntityTypeEntity`. This allows the sync pipeline to resolve Nango field names to attribute UUIDs without re-deriving deterministic UUIDs at runtime.
+6. Wraps all attributes in an `EntityTypeSchema` (a `Schema<UUID>` with `key = SchemaType.OBJECT`)
 
 Unknown or null schema types fall back to `SchemaType.TEXT` / `DataType.STRING`. Data format is nullable and returns null if unrecognized.
 
@@ -192,13 +194,13 @@ Materializes all entity types and relationships for an integration into a worksp
 
 ## Related
 
-- [[NangoWebhookService]] — Calls this service during auth webhook processing
-- [[IntegrationConnectionService]] — Calls this service when connections transition to CONNECTED
-- [[EntityTypeService]] — Standard entity type management; materialized types appear alongside user-created types
-- [[EntityTypeSemanticMetadataService]] — Semantic metadata initialization
-- [[EntityTypeRelationshipService]] — Fallback relationship creation
+- [[riven/docs/system-design/domains/Integrations/Webhook Authentication/NangoWebhookService]] — Calls this service during auth webhook processing
+- [[riven/docs/system-design/domains/Integrations/Connection Management/IntegrationConnectionService]] — Calls this service when connections transition to CONNECTED
+- [[riven/docs/system-design/domains/Entities/Type Definitions/EntityTypeService]] — Standard entity type management; materialized types appear alongside user-created types
+- [[riven/docs/system-design/domains/Entities/Entity Semantics/EntityTypeSemanticMetadataService]] — Semantic metadata initialization
+- [[riven/docs/system-design/domains/Entities/Relationships/EntityTypeRelationshipService]] — Fallback relationship creation
 - [[EntityTypeSequenceService]] — ID sequence initialization
-- [[Enablement]] — Parent subdomain
+- [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Enablement/Enablement]] — Parent subdomain
 
 ---
 
@@ -212,10 +214,14 @@ Materializes all entity types and relationships for an integration into a worksp
 ### 2026-03-18
 
 - Added `integrationDefinitionId` parameter to `materializeIntegrationTemplates()` — sets `sourceIntegrationId` on materialized entity types for the integration dedup index
-- Updated callers: now called by [[NangoWebhookService]] (auth webhook) and [[IntegrationConnectionService]] (status transition) instead of [[IntegrationEnablementService]]
+- Updated callers: now called by [[riven/docs/system-design/domains/Integrations/Webhook Authentication/NangoWebhookService]] (auth webhook) and [[riven/docs/system-design/domains/Integrations/Connection Management/IntegrationConnectionService]] (status transition) instead of [[2. Areas/2.1 Startup & Content/Riven/2. System Design/domains/Integrations/Enablement/IntegrationEnablementService]]
 
 ### 2026-03-29
 
 - Added projection rule installation during materialization — installs `ProjectionRuleEntity` rows linking integration entity types to core lifecycle types based on `CoreModelRegistry.findModelsAccepting()` routing
 - New dependency on `ProjectionRuleRepository` and `CoreModelRegistry`
 - Creates "source-data" relationship definitions (MANY_TO_ONE, protected) for each projection link
+
+### 2026-04-11
+
+- Materialization now persists `attributeKeyMapping` JSONB on `EntityTypeEntity` — maps string attribute keys to their deterministic UUID attribute IDs. Consumed by the sync pipeline (`IntegrationSyncActivitiesImpl`) to resolve Nango field names to entity attribute UUIDs without re-derivation.

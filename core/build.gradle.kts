@@ -90,6 +90,7 @@ dependencies {
 
     // Postgres/JPA
     implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.9.2")
+    implementation("org.hibernate.orm:hibernate-vector:6.6.18.Final")
     runtimeOnly("org.postgresql:postgresql")
 
     // Flyway Database Migrations
@@ -98,6 +99,9 @@ dependencies {
 
     // Schema Validation
     implementation("com.networknt:json-schema-validator:1.0.83")
+
+    // HTML Parsing
+    implementation("org.jsoup:jsoup:1.18.3")
 
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     // Testing
