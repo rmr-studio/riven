@@ -1,7 +1,7 @@
 plugins {
     kotlin("jvm") version "2.1.21"
     kotlin("plugin.spring") version "2.1.21"
-    id("org.springframework.boot") version "3.5.3"
+    id("org.springframework.boot") version "4.0.5"
     id("io.spring.dependency-management") version "1.1.7"
     kotlin("plugin.jpa") version "2.1.21"
 }
@@ -36,19 +36,22 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
+    // Boot 3 → Boot 4 property key migrator (Phase 03.1 only — Plan 04 removes this before closure)
+    runtimeOnly("org.springframework.boot:spring-boot-properties-migrator")
+
     // Workflow Execution
-    implementation("io.temporal:temporal-kotlin:1.32.1")
-    implementation("io.temporal:temporal-sdk:1.24.1")
-    implementation("io.temporal:temporal-spring-boot-starter:1.31.0")
+    implementation("io.temporal:temporal-kotlin:1.34.0")
+    implementation("io.temporal:temporal-sdk:1.34.0")
+    implementation("io.temporal:temporal-spring-boot-starter:1.34.0")
 
     // Distributed Locking (ShedLock)
-    implementation("net.javacrumbs.shedlock:shedlock-spring:7.5.0")
-    implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.5.0")
+    implementation("net.javacrumbs.shedlock:shedlock-spring:7.7.0")
+    implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.7.0")
 
     // Security/JWT
     implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server:3.5.0")
-    implementation("org.springframework.security:spring-security-oauth2-jose:6.5.0")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+    implementation("org.springframework.security:spring-security-oauth2-jose")
 
     // Supabase
     implementation(platform("io.github.jan-tennert.supabase:bom:3.1.4"))
@@ -68,7 +71,7 @@ dependencies {
     implementation("com.github.librepdf:openpdf:1.3.30")
 
     // Swagger/OpenAPI
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
 
     // Logging
     implementation("org.slf4j:slf4j-api:2.0.16")
@@ -81,8 +84,11 @@ dependencies {
     implementation("com.bucket4j:bucket4j-core:8.10.1")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.0")
 
-    // Resilience4j Circuit Breaker
-    implementation("io.github.resilience4j:resilience4j-spring-boot3:2.3.0")
+    // Resilience4j Circuit Breaker (direct coordinates — no resilience4j-spring-boot4 starter exists yet;
+    // wire annotations via Spring AOP. See Phase 03.1 CONTEXT.md.)
+    implementation("io.github.resilience4j:resilience4j-core:2.3.0")
+    implementation("io.github.resilience4j:resilience4j-annotations:2.3.0")
+    implementation("io.github.resilience4j:resilience4j-spring:2.3.0")
     implementation("org.springframework.boot:spring-boot-starter-aop")
 
     // Object Mapping
