@@ -95,8 +95,8 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
     // Postgres/JPA
-    implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.9.2")
-    implementation("org.hibernate.orm:hibernate-vector:6.6.18.Final")
+    implementation("io.hypersistence:hypersistence-utils-hibernate-70:3.15.2")
+    implementation("org.hibernate.orm:hibernate-vector:7.2.7.Final")
     runtimeOnly("org.postgresql:postgresql")
 
     // Flyway Database Migrations
