@@ -104,6 +104,9 @@ class IntegrationSyncActivitiesImplTest {
             entityTypeRepository: EntityTypeRepository,
             integrationHealthService: IntegrationHealthService,
             entityProjectionService: riven.core.service.ingestion.EntityProjectionService,
+            noteEmbeddingService: riven.core.service.note.NoteEmbeddingService,
+            objectMapper: com.fasterxml.jackson.databind.ObjectMapper,
+            resourceLoader: org.springframework.core.io.ResourceLoader,
             transactionTemplate: TransactionTemplate,
             logger: KLogger,
         ): IntegrationSyncActivitiesImpl {
@@ -123,6 +126,9 @@ class IntegrationSyncActivitiesImplTest {
                 entityTypeRepository = entityTypeRepository,
                 integrationHealthService = integrationHealthService,
                 entityProjectionService = entityProjectionService,
+                noteEmbeddingService = noteEmbeddingService,
+                objectMapper = objectMapper,
+                resourceLoader = resourceLoader,
                 transactionTemplate = transactionTemplate,
                 logger = logger,
             ) {
@@ -180,6 +186,15 @@ class IntegrationSyncActivitiesImplTest {
     private lateinit var entityProjectionService: riven.core.service.ingestion.EntityProjectionService
 
     @MockitoBean
+    private lateinit var noteEmbeddingService: riven.core.service.note.NoteEmbeddingService
+
+    @MockitoBean
+    private lateinit var objectMapper: com.fasterxml.jackson.databind.ObjectMapper
+
+    @MockitoBean
+    private lateinit var resourceLoader: org.springframework.core.io.ResourceLoader
+
+    @MockitoBean
     private lateinit var transactionTemplate: TransactionTemplate
 
     @MockitoBean
@@ -234,6 +249,7 @@ class IntegrationSyncActivitiesImplTest {
             )
         ),
         columnConfiguration = ColumnConfiguration(order = listOf(attributeId)),
+        attributeKeyMapping = mapOf("email" to attributeId.toString()),
     )
 
     private fun buildDefinition() = IntegrationFactory.createIntegrationDefinition(
@@ -276,10 +292,11 @@ class IntegrationSyncActivitiesImplTest {
                 key = "hubspot",
                 name = "HubSpot",
             )))
-        whenever(catalogFieldMappingRepository.findByManifestIdAndEntityTypeKey(manifestId, model))
+        whenever(catalogFieldMappingRepository.findByManifestIdAndNangoModel(manifestId, model))
             .thenReturn(CatalogFactory.createFieldMappingEntity(
                 manifestId = manifestId,
                 entityTypeKey = model,
+                nangoModel = model,
                 mappings = mapOf(
                     "email" to mapOf<String, Any>("source" to "email", "transform" to mapOf("type" to "direct"))
                 ),
