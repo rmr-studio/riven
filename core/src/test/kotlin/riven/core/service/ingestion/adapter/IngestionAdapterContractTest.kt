@@ -8,6 +8,7 @@ import riven.core.models.ingestion.adapter.SchemaIntrospectionResult
 import riven.core.models.ingestion.adapter.SourceRecord
 import riven.core.models.ingestion.adapter.SyncMode
 import riven.core.models.ingestion.adapter.TableSchema
+import java.util.UUID
 
 /**
  * Contract-level test for [IngestionAdapter]. A private [FakeAdapter] inline
@@ -27,6 +28,7 @@ class IngestionAdapterContractTest {
     }
 
     private fun nangoContext(): NangoCallContext = NangoCallContext(
+        workspaceId = UUID.randomUUID(),
         providerConfigKey = "shopify",
         connectionId = "conn-1",
         model = "Customer",
@@ -104,6 +106,7 @@ class IngestionAdapterContractTest {
     @Test
     fun `NangoCallContext is a valid AdapterCallContext`() {
         val ctx: AdapterCallContext = NangoCallContext(
+            workspaceId = UUID.randomUUID(),
             providerConfigKey = "shopify",
             connectionId = "conn-1",
             model = "Customer",

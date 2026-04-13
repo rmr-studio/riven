@@ -32,7 +32,7 @@ import java.util.Optional
 import java.util.UUID
 
 /**
- * Verifies [SourceType.CUSTOM_SOURCE] round-trips through JPA on
+ * Verifies [SourceType.CONNECTOR] round-trips through JPA on
  * [EntityTypeEntity.sourceType] without loss.
  *
  * Uses the `integration` profile + Testcontainers PostgreSQL, mirroring the
@@ -118,7 +118,7 @@ class SourceTypeJpaRoundTripTest {
         val unique = UUID.randomUUID().toString().take(8)
         val entity = EntityFactory.createEntityType(
             key = "custom_source_roundtrip_$unique",
-            sourceType = SourceType.CUSTOM_SOURCE,
+            sourceType = SourceType.CONNECTOR,
         ).copy(id = null) // strip factory-generated id so JPA calls persist() not merge()
 
         val saved = entityTypeRepository.saveAndFlush(entity)
@@ -128,6 +128,6 @@ class SourceTypeJpaRoundTripTest {
 
         val reloaded = entityTypeRepository.findById(persistedId).orElseThrow()
 
-        assertThat(reloaded.sourceType).isEqualTo(SourceType.CUSTOM_SOURCE)
+        assertThat(reloaded.sourceType).isEqualTo(SourceType.CONNECTOR)
     }
 }

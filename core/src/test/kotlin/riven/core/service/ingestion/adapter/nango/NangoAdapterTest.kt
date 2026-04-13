@@ -18,6 +18,7 @@ import riven.core.exceptions.TransientNangoException
 import riven.core.models.integration.NangoRecord
 import riven.core.models.integration.NangoRecordAction
 import riven.core.models.integration.NangoRecordMetadata
+import java.util.UUID
 import riven.core.models.integration.NangoRecordsPage
 import riven.core.models.ingestion.adapter.SyncMode
 import riven.core.service.ingestion.adapter.NangoCallContext
@@ -48,7 +49,7 @@ class NangoAdapterTest {
     private lateinit var adapter: NangoAdapter
 
     private fun ctx(model: String = "Contact") = NangoCallContext(
-        workspaceId = "",
+        workspaceId = UUID.randomUUID(),
         providerConfigKey = "hubspot",
         connectionId = "conn-1",
         model = model,

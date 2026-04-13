@@ -1,6 +1,7 @@
 package riven.core.service.ingestion.adapter
 
 import java.time.Instant
+import java.util.UUID
 
 /**
  * Per-call context carrying connection identity and any per-call parameters.
@@ -10,18 +11,18 @@ import java.time.Instant
  */
 sealed class AdapterCallContext {
     /** Workspace this adapter call is executing on behalf of. */
-    abstract val workspaceId: String
+    abstract val workspaceId: UUID
 }
 
 /**
  * Call context for Nango-backed adapters.
  *
- * TODO Phase 4: [workspaceId] defaults to `""` because NangoAdapter is
- * registered but not runtime-wired in Phase 1. The Phase 4
- * `IngestionOrchestrator` will populate it from the triggering workflow.
+ * [workspaceId] is required — the Phase 4 `IngestionOrchestrator` must
+ * populate it from the triggering workflow so workspace attribution is
+ * never silently dropped.
  */
 data class NangoCallContext(
-    override val workspaceId: String = "",
+    override val workspaceId: UUID,
     val providerConfigKey: String,
     val connectionId: String,
     val model: String,

@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
-import riven.core.repository.customsource.CustomSourceConnectionRepository
+import riven.core.repository.connector.CustomSourceConnectionRepository
 import riven.core.service.util.factory.customsource.CustomSourceConnectionEntityFactory
 import java.time.ZonedDateTime
 import java.time.temporal.TemporalAccessor
@@ -65,7 +65,7 @@ import java.util.UUID
         "io.temporal.spring.boot.autoconfigure.TestServerAutoConfiguration",
     ],
 )
-@EnableJpaRepositories(basePackages = ["riven.core.repository.customsource"])
+@EnableJpaRepositories(basePackages = ["riven.core.repository.connector"])
 @EntityScan("riven.core.entity.customsource")
 @EnableJpaAuditing(
     auditorAwareRef = "customSourceConnectionRoundTripAuditorProvider",

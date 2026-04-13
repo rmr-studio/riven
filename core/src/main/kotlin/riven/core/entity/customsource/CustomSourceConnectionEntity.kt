@@ -11,7 +11,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.SQLRestriction
 import riven.core.entity.util.AuditableSoftDeletableEntity
 import riven.core.enums.integration.ConnectionStatus
-import riven.core.models.customsource.CustomSourceConnectionModel
+import riven.core.models.connector.CustomSourceConnectionModel
 import java.time.ZonedDateTime
 import java.util.UUID
 

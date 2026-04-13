@@ -9,7 +9,5 @@ enum class SourceType {
     IDENTITY_MATCH,
     TEMPLATE,
     PROJECTED,
-
-    /** Custom data source (Postgres, CSV, etc.) introspected at runtime. Phase 1 foundation. */
-    CUSTOM_SOURCE,
+    CONNECTOR,
 }
