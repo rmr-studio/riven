@@ -44,9 +44,9 @@
 
 - [x] **MAP-01**: `CustomSourceSchemaInferenceService` exposes introspection results via `/api/v1/custom-sources/connections/{id}/schema`
 - [x] **MAP-02**: `CustomSourceFieldMappingService` persists user column → attribute mappings
-- [ ] **MAP-03**: Mapping UI allows assigning LifecycleDomain (or UNCATEGORIZED) per table
-- [ ] **MAP-04**: Mapping UI allows assigning SemanticGroup (or CUSTOM) per table
-- [ ] **MAP-05**: Mapping UI allows selecting identifier column (email, ID, etc.)
+- [x] **MAP-03**: Mapping UI allows assigning LifecycleDomain (or UNCATEGORIZED) per table
+- [x] **MAP-04**: Mapping UI allows assigning SemanticGroup (or CUSTOM) per table
+- [x] **MAP-05**: Mapping UI allows selecting identifier column (email, ID, etc.)
 - [x] **MAP-06**: Mapping step shows warning if chosen sync-cursor column has no `pg_indexes` entry
 - [ ] **MAP-07**: NL-assisted mapping: LLM suggests domain, semantic group, identifier from column names + sample data
 - [x] **MAP-08**: Saving mappings creates entity types with `sourceType=CUSTOM_SOURCE`, `readonly=true`
@@ -195,9 +195,9 @@
 | PG-07 | Phase 3 | Complete |
 | MAP-01 | Phase 3 | Complete |
 | MAP-02 | Phase 3 | Complete |
-| MAP-03 | Phase 3 | Pending |
-| MAP-04 | Phase 3 | Pending |
-| MAP-05 | Phase 3 | Pending |
+| MAP-03 | Phase 3 | Complete |
+| MAP-04 | Phase 3 | Complete |
+| MAP-05 | Phase 3 | Complete |
 | MAP-06 | Phase 3 | Complete |
 | MAP-07 | Phase 3 | Pending |
 | MAP-08 | Phase 3 | Complete |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-04-13T03:56:41.736Z"
+stopped_at: Completed 03-03-PLAN.md
+last_updated: "2026-04-13T04:13:19.891Z"
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 13
-  completed_plans: 11
-  percent: 85
+  completed_plans: 12
+  percent: 92
 ---
 
 # STATE
@@ -28,9 +28,9 @@ progress:
 ## Current Position
 
 - **Phase:** 3 — Postgres Adapter & Schema Mapping (IN PROGRESS 3/5 plans)
-- **Plan:** 03-02 complete (PostgresAdapter + WorkspaceConnectionPoolManager + Introspector + Fetcher + ForeignKeyMetadata landed; 11 adapter tests + 6 pool tests + 3 new eviction-wiring tests + 13 previously-failing service tests all green against Testcontainers pgvector/pg16); 03-03..04 can proceed in parallel per ROADMAP
-- **Status:** Ready to execute 03-03
-- **Progress:** [█████████░] 85%
+- **Plan:** 03-03 complete (CustomSourceSchemaInferenceService + CustomSourceFieldMappingService + CustomSourceMappingController + CursorIndexProbe + MappingValidationException + request/response DTOs; 22 tests green — 7 inference + 10 field-mapping + 5 controller; 8 requirements closed: MAP-01..06, MAP-08, PG-07); 03-04 remaining per ROADMAP
+- **Status:** Ready to execute 03-04
+- **Progress:** [█████████░] 92%
 
 ```
 [........] 0% (0/8 phases)
@@ -56,6 +56,7 @@ progress:
 | Phase 03-postgres-adapter-schema-mapping P00 | 8min | 2 tasks | 14 files |
 | Phase 03-postgres-adapter-schema-mapping P01 | 9 min | 2 tasks | 16 files |
 | Phase 03-postgres-adapter-schema-mapping P02 | 11min | 3 tasks | 12 files |
+| Phase 03-postgres-adapter-schema-mapping P03 | 10min | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,12 @@ progress:
 - [Phase 03-postgres-adapter-schema-mapping]: Plan 03-02: Pool eviction via direct service call (DataConnectorConnectionService.update credential branch + softDelete → poolManager.evict), not events. Cosmetic updates skip eviction
 - [Phase 03-postgres-adapter-schema-mapping]: Plan 03-02 Rule-1 auto-fix: added initializationFailTimeout=-1 to HikariConfig so 6 pool unit tests can build against fake credentials without triggering PoolInitializationException
 - [Phase 03-postgres-adapter-schema-mapping]: Plan 03-02 Rule-1 auto-fix: PK-fallback SQL omits WHERE when cursor is null and casts column with ::text when cursor is non-null — avoids 'operator does not exist: uuid > character varying' against UUID PKs
+- [Phase 03-postgres-adapter-schema-mapping]: Plan 03-03: Save order validate -> persist-fields -> persist-table -> create/update EntityType -> create relationships -> mark published -> log activity; single @Transactional scope so any failure rolls back completely
+- [Phase 03-postgres-adapter-schema-mapping]: Plan 03-03: Pending-relationship mechanism — FK metadata persists on the field row when target table unpublished; recipient's future Save materialises the relationship. No separate retry queue needed.
+- [Phase 03-postgres-adapter-schema-mapping]: Plan 03-03: EntityTypeService not extended — direct EntityTypeRepository.save with sourceType=CONNECTOR + readonly=true. EntityTypeService.publishEntityType is tuned for user-driven CRUD with auto-Name attribute; CONNECTOR types are readonly with attributes driven from mapping columns
+- [Phase 03-postgres-adapter-schema-mapping]: Plan 03-03: Cursor-index warning surfaced from BOTH GET /schema and POST /mapping (belt + suspenders per plan output spec) — GET probes chosen-or-auto-detected cursor column; Save probes request's isSyncCursor column
+- [Phase 03-postgres-adapter-schema-mapping]: Plan 03-03: Workspace-mismatch 403 assertion at service-layer SpringBootTest, not MockMvc — standalone MockMvc does not load @PreAuthorize. Phase 2 02-04 lesson carried forward; controller test documents placement explicitly
+- [Phase 03-postgres-adapter-schema-mapping]: Plan 03-03: Activity.DATA_CONNECTOR_CONNECTION reused for mapping Saves (already exists since Phase 2) — no new enum variant. details map carries connectionId + tableName
 
 ### Key Decisions (from PROJECT.md)
 
@@ -143,7 +150,7 @@ Completed Plan 03-02 (PostgresAdapter + WorkspaceConnectionPoolManager). Workspa
 Execute plans 03-03, 03-04 (parallel per Phase 3 ROADMAP wave plan). PostgresAdapter.introspectWithFkMetadata + ForeignKeyMetadata + WorkspaceConnectionPoolManager.getPool are available. Plan 03-00 deferred-items.md still references 13 DataConnectorConnectionServiceTest failures — these are now green (root cause was missing @MockitoBean poolManager, unblocked by Task 3), can be removed from deferred-items in a housekeeping pass.
 
 ### Last session
-- **Stopped at:** Completed 03-02-PLAN.md
+- **Stopped at:** Completed 03-03-PLAN.md
 - **Timestamp:** 2026-04-13T03:55:00Z
 
 ### Files of Record
