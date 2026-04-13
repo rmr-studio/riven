@@ -70,6 +70,19 @@ Brownfield additive milestone: introduce the IngestionAdapter abstraction, build
   - [ ] 03-03-PLAN.md — CustomSourceSchemaInferenceService + CustomSourceFieldMappingService + Controller + ExceptionHandler wiring
   - [~] 03-04-PLAN.md — **DEFERRED** (2026-04-13, R1 decision): NL-assisted mapping suggestions require Spring AI 2.x multi-provider `ChatModel` (Anthropic default + OpenAI reasoning fallback), which only targets Spring Boot 4.x. Blocked on new phase **03.5-boot4-upgrade**. MAP-03/04/05 remain Complete via 03-03 manual selection; only MAP-07 (LLM pre-fill) is deferred. See `03-04-SUMMARY.md` for the full deferral record and reopening conditions.
 
+### Phase 03.1: Boot 3.5.3 → 4.0.x upgrade with transitive dep bumps (INSERTED)
+
+**Goal:** Spring Boot 3.5.3 → 4.0.x upgrade with minimum-necessary transitive dep bumps (Hibernate 7, Spring Security 7, Temporal Boot-4 starter, SpringDoc 3.x, Resilience4j direct-wiring), green test suite, and a manually-smoked Nango integration sync proving `IntegrationSyncWorkflowImpl` continues to work unchanged — unblocking Phase 03-04 (Spring AI 2.x for MAP-07).
+**Requirements**: none (upgrade-only phase; DoD derived from CONTEXT.md, not roadmap requirement IDs)
+**Depends on:** Phase 3
+**Plans:** 4 plans
+
+Plans:
+- [ ] 03.1-01-PLAN.md — Core Boot/Gradle upgrade: build.gradle.kts dep bumps (Boot 4, Hibernate 7, Temporal starter, SpringDoc 3.x, Resilience4j direct-wiring, Spring Security unpins) + spring-boot-properties-migrator sweep across all application*.yml
+- [ ] 03.1-02-PLAN.md — Spring Security 7 migration: SecurityFilterChain lambda DSL + current authorization API, auth test slice green
+- [ ] 03.1-03-PLAN.md — Test harness sweep (deprecated Boot 3 test APIs) + Hibernate 7 pgvector round-trip test + Resilience4j direct-wiring annotation-activation test
+- [ ] 03.1-04-PLAN.md — Closure gate: full test suite green + manual Nango integration sync smoke + properties-migrator removal + half-upgrade tripwire scan + STATE.md/ROADMAP.md closure record
+
 ### Phase 4: Ingestion Orchestration & Sync Workflow
 **Goal**: A Postgres connection syncs on a Temporal schedule (and on manual trigger) through an idempotent orchestrator, producing populated readonly entities with per-record error isolation — without touching the existing Nango workflow.
 **Depends on**: Phase 3 (adapter + entity types)
