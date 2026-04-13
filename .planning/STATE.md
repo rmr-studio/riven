@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
+status: planning
 stopped_at: Deferred 03-04-PLAN.md (pending phase 03.5 Boot 4 upgrade)
-last_updated: "2026-04-13T12:00:00Z"
+last_updated: "2026-04-13T04:37:11.546Z"
 progress:
   total_phases: 8
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 13
-  completed_plans: 12
+  completed_plans: 13
   percent: 92
 ---
 
@@ -29,7 +29,7 @@ progress:
 
 - **Phase:** 3 — Postgres Adapter & Schema Mapping (functionally complete; 03-04 deferred)
 - **Plan:** 03-03 complete; **03-04 deferred** pending phase 03.5 (Boot 4 upgrade). Phase 3 ingestion path (adapter + schema inference + mapping save + readonly EntityType creation + FK inference) ships without NL assist. MAP-03/04/05 remain Complete (manual selection via 03-03 Save path); MAP-07 remains Pending (LLM-assisted pre-fill deferred to post-03.5).
-- **Status:** Phase 3 closed for Phase 4 handoff. New phase 03.5-boot4-upgrade to be scoped separately.
+- **Status:** Ready to plan
 - **Progress:** [█████████░] 92%
 
 ```
