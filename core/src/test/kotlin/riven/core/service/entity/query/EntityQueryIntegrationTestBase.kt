@@ -11,6 +11,8 @@ import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoCon
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Import
+import riven.core.configuration.util.ObjectMapperConfig
 import org.springframework.data.auditing.DateTimeProvider
 import org.springframework.data.domain.AuditorAware
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing
@@ -74,6 +76,7 @@ import javax.sql.DataSource
 @EnableJpaRepositories(basePackages = ["riven.core.repository.entity"])
 @EntityScan("riven.core.entity")
 @EnableJpaAuditing(auditorAwareRef = "auditorProvider", dateTimeProviderRef = "dateTimeProvider")
+@Import(ObjectMapperConfig::class) // Boot 4 JacksonAutoConfiguration is @ConditionalOnClass(tools.jackson...) — gated on Jackson 3; app uses Jackson 2, so the ObjectMapper bean must be imported explicitly
 class EntityQueryIntegrationTestConfig {
 
     @Bean

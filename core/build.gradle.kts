@@ -36,9 +36,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
-    // Boot 3 → Boot 4 property key migrator (Phase 03.1 only — Plan 04 removes this before closure)
-    runtimeOnly("org.springframework.boot:spring-boot-properties-migrator")
-
     // Workflow Execution
     implementation("io.temporal:temporal-kotlin:1.34.0")
     implementation("io.temporal:temporal-sdk:1.34.0")
