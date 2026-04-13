@@ -9,7 +9,6 @@ spring:
     url: ${POSTGRES_DB_JDBC}
     driver-class-name: org.postgresql.Driver
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: none
     show-sql: ${riven.include-stack-trace}

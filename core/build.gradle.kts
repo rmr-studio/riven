@@ -95,7 +95,9 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
     // Postgres/JPA
-    implementation("io.hypersistence:hypersistence-utils-hibernate-70:3.15.2")
+    // NOTE: hibernate-71 artifact is compiled against Hibernate 7.2.x, which matches Boot 4.0.5's BOM.
+    // The -70 artifact targets Hibernate 7.0.x and hits IncompatibleClassChangeError against 7.2's final getJavaTypeClass.
+    implementation("io.hypersistence:hypersistence-utils-hibernate-71:3.15.2")
     implementation("org.hibernate.orm:hibernate-vector:7.2.7.Final")
     runtimeOnly("org.postgresql:postgresql")
 
