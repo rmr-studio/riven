@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-04-13T04:13:19.891Z"
+stopped_at: Deferred 03-04-PLAN.md (pending phase 03.5 Boot 4 upgrade)
+last_updated: "2026-04-13T12:00:00Z"
 progress:
   total_phases: 8
   completed_phases: 2
@@ -27,9 +27,9 @@ progress:
 
 ## Current Position
 
-- **Phase:** 3 — Postgres Adapter & Schema Mapping (IN PROGRESS 3/5 plans)
-- **Plan:** 03-03 complete (CustomSourceSchemaInferenceService + CustomSourceFieldMappingService + CustomSourceMappingController + CursorIndexProbe + MappingValidationException + request/response DTOs; 22 tests green — 7 inference + 10 field-mapping + 5 controller; 8 requirements closed: MAP-01..06, MAP-08, PG-07); 03-04 remaining per ROADMAP
-- **Status:** Ready to execute 03-04
+- **Phase:** 3 — Postgres Adapter & Schema Mapping (functionally complete; 03-04 deferred)
+- **Plan:** 03-03 complete; **03-04 deferred** pending phase 03.5 (Boot 4 upgrade). Phase 3 ingestion path (adapter + schema inference + mapping save + readonly EntityType creation + FK inference) ships without NL assist. MAP-03/04/05 remain Complete (manual selection via 03-03 Save path); MAP-07 remains Pending (LLM-assisted pre-fill deferred to post-03.5).
+- **Status:** Phase 3 closed for Phase 4 handoff. New phase 03.5-boot4-upgrade to be scoped separately.
 - **Progress:** [█████████░] 92%
 
 ```
@@ -115,6 +115,7 @@ progress:
 - [Phase 03-postgres-adapter-schema-mapping]: Plan 03-03: Cursor-index warning surfaced from BOTH GET /schema and POST /mapping (belt + suspenders per plan output spec) — GET probes chosen-or-auto-detected cursor column; Save probes request's isSyncCursor column
 - [Phase 03-postgres-adapter-schema-mapping]: Plan 03-03: Workspace-mismatch 403 assertion at service-layer SpringBootTest, not MockMvc — standalone MockMvc does not load @PreAuthorize. Phase 2 02-04 lesson carried forward; controller test documents placement explicitly
 - [Phase 03-postgres-adapter-schema-mapping]: Plan 03-03: Activity.DATA_CONNECTOR_CONNECTION reused for mapping Saves (already exists since Phase 2) — no new enum variant. details map carries connectionId + tableName
+- [Phase 03-postgres-adapter-schema-mapping]: Plan 03-04 DEFERRED (2026-04-13, R1 decision): MAP-07 (LLM-assisted mapping suggestions) requires Spring AI 2.x multi-provider ChatModel abstraction (Anthropic default + OpenAI reasoning fallback), which only targets Spring Boot 4.x. Boot 4 upgrade scoped to new phase 03.5-boot4-upgrade. No code/build/dependency changes made; bookkeeping only. MAP-03/04/05 remain Complete via 03-03 manual selection — only the LLM pre-fill UX is deferred. Distinct env vars locked: ANTHROPIC_API_KEY (default) + OPENAI_REASONING_API_KEY (separate from embeddings' OPENAI_API_KEY) for independent rotation.
 
 ### Key Decisions (from PROJECT.md)
 
@@ -144,14 +145,17 @@ progress:
 ## Session Continuity
 
 ### Last Action
+Deferred Plan 03-04 (NL-Assisted Mapping Suggestions) via R1 decision on 2026-04-13. No code, no build.gradle.kts edit, no Spring AI dependency. Bookkeeping artifacts only: 03-04-SUMMARY.md (status=deferred), STATE.md updated, ROADMAP.md updated. MAP-07 remains Pending in REQUIREMENTS.md; MAP-03/04/05 unchanged (Complete via 03-03). Reopen condition: phase 03.5-boot4-upgrade lands Boot 4.x, at which point 03-04-PLAN.md is rewritten against Spring AI 2.x ChatModel multi-provider coordinates (Anthropic default + OpenAI reasoning fallback).
+
+### Previous Action
 Completed Plan 03-02 (PostgresAdapter + WorkspaceConnectionPoolManager). WorkspaceConnectionPoolManager caches one HikariDataSource per connectionId via ConcurrentHashMap.computeIfAbsent; HikariConfig uses initializationFailTimeout=-1 so pool construction never eagerly connects. PostgresAdapter @SourceTypeAdapter(SourceType.CONNECTOR) implements IngestionAdapter — syncMode=POLL, introspectSchema + introspectWithFkMetadata sibling method for plan 03-03 to consume ForeignKeyMetadata. PostgresFetcher builds server-side-cursor SQL (autoCommit=false + fetchSize) with cursor-or-PK-fallback variants; casts comparison column with ::text for cross-type UUID/bigint/text compatibility; null-cursor first fetch omits WHERE entirely. JDBC SQLState translator: 28xxx→AdapterAuthException, 57014→AdapterUnavailableException (timeout), 08xxx→AdapterConnectionRefusedException, else→AdapterUnavailableException. Pool eviction wired into DataConnectorConnectionService credential-update + softDelete branches (not cosmetic). 20 tests green (6 pool + 11 adapter against Testcontainers pgvector/pg16 + 3 new eviction tests + 13 previously-failing service tests unblocked by the added @MockitoBean poolManager).
 
 ### Next Action
-Execute plans 03-03, 03-04 (parallel per Phase 3 ROADMAP wave plan). PostgresAdapter.introspectWithFkMetadata + ForeignKeyMetadata + WorkspaceConnectionPoolManager.getPool are available. Plan 03-00 deferred-items.md still references 13 DataConnectorConnectionServiceTest failures — these are now green (root cause was missing @MockitoBean poolManager, unblocked by Task 3), can be removed from deferred-items in a housekeeping pass.
+Scope + stand up new phase **03.5-boot4-upgrade** (Spring Boot 4 migration) as prerequisite to reopening 03-04. After 03.5 lands, rewrite 03-04-PLAN.md against Spring AI 2.x multi-provider (Anthropic default + OpenAI reasoning) + new env vars (ANTHROPIC_API_KEY + OPENAI_REASONING_API_KEY). In parallel, Phase 4 (IngestionOrchestrator + CustomSourceSyncWorkflow) is unblocked and is the natural next workstream — MAP-07 is not on its input contract.
 
 ### Last session
-- **Stopped at:** Completed 03-03-PLAN.md
-- **Timestamp:** 2026-04-13T03:55:00Z
+- **Stopped at:** Deferred 03-04-PLAN.md (pending phase 03.5 Boot 4 upgrade)
+- **Timestamp:** 2026-04-13T12:00:00Z
 
 ### Files of Record
 - `.planning/PROJECT.md`

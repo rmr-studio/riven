@@ -68,7 +68,7 @@ Brownfield additive milestone: introduce the IngestionAdapter abstraction, build
   - [ ] 03-01-PLAN.md — SQL DDL + mapping entities + repositories + PgTypeMapper + SchemaHasher
   - [ ] 03-02-PLAN.md — WorkspaceConnectionPoolManager + PostgresAdapter + PostgresCallContext + @SourceTypeAdapter(CONNECTOR)
   - [ ] 03-03-PLAN.md — CustomSourceSchemaInferenceService + CustomSourceFieldMappingService + Controller + ExceptionHandler wiring
-  - [ ] 03-04-PLAN.md — Spring AI dependency approval + NlMappingSuggestionService (hash-cached, silent-degrade)
+  - [~] 03-04-PLAN.md — **DEFERRED** (2026-04-13, R1 decision): NL-assisted mapping suggestions require Spring AI 2.x multi-provider `ChatModel` (Anthropic default + OpenAI reasoning fallback), which only targets Spring Boot 4.x. Blocked on new phase **03.5-boot4-upgrade**. MAP-03/04/05 remain Complete via 03-03 manual selection; only MAP-07 (LLM pre-fill) is deferred. See `03-04-SUMMARY.md` for the full deferral record and reopening conditions.
 
 ### Phase 4: Ingestion Orchestration & Sync Workflow
 **Goal**: A Postgres connection syncs on a Temporal schedule (and on manual trigger) through an idempotent orchestrator, producing populated readonly entities with per-record error isolation — without touching the existing Nango workflow.
@@ -132,7 +132,7 @@ Brownfield additive milestone: introduce the IngestionAdapter abstraction, build
 |-------|----------------|--------|-----------|
 | 1. Adapter Foundation | 0/3 | Planned | - |
 | 2. Secure Connection Management | 0/5 | Planned | - |
-| 3. Postgres Adapter & Schema Mapping | 0/5 | Planned | - |
+| 3. Postgres Adapter & Schema Mapping | 4/5 (1 deferred) | In progress (03-04 deferred pending 03.5 Boot 4 upgrade) | - |
 | 4. Ingestion Orchestration & Sync Workflow | 0/? | Not started | - |
 | 5. Projection & Identity Generalization | 0/? | Not started | - |
 | 6. Health Monitoring | 0/? | Not started | - |
