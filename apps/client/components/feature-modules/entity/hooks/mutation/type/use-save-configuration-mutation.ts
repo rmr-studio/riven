@@ -9,6 +9,7 @@ import { entityKeys } from '../../query/entity-query-keys';
 export function useSaveEntityTypeConfiguration(
   workspaceId: string,
   options?: UseMutationOptions<EntityType, Error, UpdateEntityTypeConfigurationRequest>,
+  { silent = false }: { silent?: boolean } = {},
 ) {
   const queryClient = useQueryClient();
   const { session } = useAuth();
@@ -19,18 +20,26 @@ export function useSaveEntityTypeConfiguration(
       EntityTypeService.saveEntityTypeConfiguration(session, workspaceId, request),
     onMutate: (data: UpdateEntityTypeConfigurationRequest, context: MutationFunctionContext) => {
       options?.onMutate?.(data, context);
-      submissionToastRef.current = toast.loading('Updating entity type...');
+      if (!silent) {
+        submissionToastRef.current = toast.loading('Updating entity type...');
+      }
     },
     onError: (error: Error, variables: UpdateEntityTypeConfigurationRequest, onMutateResult: unknown, context: MutationFunctionContext) => {
       options?.onError?.(error, variables, onMutateResult, context);
       toast.dismiss(submissionToastRef.current);
       submissionToastRef.current = undefined;
-      toast.error(`Failed to update entity type: ${error.message}`);
+      toast.error(
+        silent
+          ? 'Failed to save column layout'
+          : `Failed to update entity type: ${error.message}`,
+      );
     },
     onSuccess: (response: EntityType, variables: UpdateEntityTypeConfigurationRequest, onMutateResult: unknown, context: MutationFunctionContext) => {
       options?.onSuccess?.(response, variables, onMutateResult, context);
-      toast.dismiss(submissionToastRef.current);
-      toast.success(`Entity type updated successfully!`);
+      if (!silent) {
+        toast.dismiss(submissionToastRef.current);
+        toast.success(`Entity type updated successfully!`);
+      }
 
       // Invalidate entity type queries (partial match handles varying `include` param)
       queryClient.invalidateQueries({ queryKey: entityKeys.entityTypes.byKey(response.key, workspaceId) });

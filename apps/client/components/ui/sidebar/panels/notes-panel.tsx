@@ -26,15 +26,9 @@ export function NotesPanel() {
     return () => clearTimeout(debounceRef.current);
   }, [search]);
 
-  const { data, isLoading } = useWorkspaceNotes(
-    selectedWorkspaceId,
-    debouncedSearch || undefined,
-  );
+  const { data, isLoading } = useWorkspaceNotes(selectedWorkspaceId, debouncedSearch || undefined);
 
-  const groups = useMemo(
-    () => groupNotesByDate(data?.items ?? []),
-    [data?.items],
-  );
+  const groups = useMemo(() => groupNotesByDate(data?.items ?? []), [data?.items]);
 
   const basePath = `/dashboard/workspace/${selectedWorkspaceId}/notes`;
 
@@ -44,7 +38,7 @@ export function NotesPanel() {
     <div className="flex flex-col gap-3">
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+        <Search className="absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
         <Input
           placeholder="Search notes..."
           value={search}
@@ -84,9 +78,7 @@ export function NotesPanel() {
       ) : groups.length === 0 ? (
         search ? (
           <div className="flex flex-col items-center gap-2 py-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              No notes matching &apos;{search}&apos;
-            </p>
+            <p className="text-sm text-muted-foreground">No notes matching &apos;{search}&apos;</p>
             <button
               onClick={() => {
                 setSearch('');
@@ -101,8 +93,8 @@ export function NotesPanel() {
           <div className="flex flex-col items-center gap-3 py-8 text-center">
             <StickyNote className="size-8 text-muted-foreground/40" />
             <p className="text-sm text-muted-foreground">
-              No notes yet. Create your first note to keep track of important
-              details about your records.
+              No notes yet. Create your first note to keep track of important details about your
+              records.
             </p>
             <Button variant="default" size="sm" asChild>
               <Link href={basePath}>
@@ -119,20 +111,15 @@ export function NotesPanel() {
               <p
                 role="heading"
                 aria-level={3}
-                className="mb-1 px-3 pt-2 font-mono text-xs font-bold uppercase tracking-wide text-muted-foreground"
+                className="mb-1 px-3 pt-2 font-mono text-xs font-bold tracking-wide text-muted-foreground uppercase"
               >
                 {group.label}
               </p>
               {group.notes.map((note) => (
-                <PanelNoteCard
-                  key={note.id}
-                  note={note}
-                  workspaceId={selectedWorkspaceId}
-                />
+                <PanelNoteCard key={note.id} note={note} workspaceId={selectedWorkspaceId} />
               ))}
             </div>
           ))}
-
         </div>
       )}
     </div>
@@ -163,9 +150,7 @@ function PanelNoteCard({ note, workspaceId }: PanelNoteCardProps) {
             colour={note.entityTypeColour as IconColour}
             className="size-3"
           />
-          <span className="truncate">
-            {note.entityDisplayName ?? 'Unknown'}
-          </span>
+          <span className="truncate">{note.entityDisplayName ?? 'Unknown'}</span>
           <span>·</span>
           <span className="shrink-0 tabular-nums">
             {formatNoteTimestamp(note.updatedAt ?? note.createdAt)}

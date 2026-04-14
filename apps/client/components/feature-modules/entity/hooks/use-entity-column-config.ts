@@ -1,12 +1,38 @@
-import { EntityType } from '@/lib/types/entity';
+import {
+  ColumnConfiguration,
+  EntityType,
+  UpdateEntityTypeConfigurationRequest,
+} from '@/lib/types/entity';
 import { useCallback } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { EntityTypeFormValues } from '@/components/feature-modules/entity/context/configuration-provider';
+import { useSaveEntityTypeConfiguration } from '@/components/feature-modules/entity/hooks/mutation/type/use-save-configuration-mutation';
 
 export function useEntityColumnConfig(
   form: UseFormReturn<EntityTypeFormValues>,
   entityType: EntityType,
+  workspaceId: string,
 ) {
+  const { mutate: persistConfig } = useSaveEntityTypeConfiguration(
+    workspaceId,
+    undefined,
+    { silent: true },
+  );
+
+  const persist = useCallback(
+    (columnConfiguration: ColumnConfiguration) => {
+      const request: UpdateEntityTypeConfigurationRequest = {
+        id: entityType.id,
+        name: entityType.name,
+        icon: entityType.icon,
+        semanticGroup: entityType.semanticGroup,
+        columnConfiguration,
+      };
+      persistConfig(request);
+    },
+    [entityType.id, entityType.name, entityType.icon, entityType.semanticGroup, persistConfig],
+  );
+
   const handleColumnResize = useCallback(
     (columnSizing: Record<string, number>) => {
       const current = form.getValues('columnConfiguration');
@@ -14,24 +40,24 @@ export function useEntityColumnConfig(
       Object.entries(columnSizing).forEach(([key, width]) => {
         updatedOverrides[key] = { ...updatedOverrides[key], width };
       });
+      const next = { ...current, overrides: updatedOverrides };
       form.setValue('columnConfiguration.overrides', updatedOverrides, { shouldDirty: true });
+      persist(next);
     },
-    [form],
+    [form, persist],
   );
 
   const handleHideColumn = useCallback(
     (columnId: string) => {
       const current = form.getValues('columnConfiguration');
-      form.setValue(
-        'columnConfiguration.overrides',
-        {
-          ...current.overrides,
-          [columnId]: { ...current.overrides[columnId], visible: false },
-        },
-        { shouldDirty: true },
-      );
+      const updatedOverrides = {
+        ...current.overrides,
+        [columnId]: { ...current.overrides[columnId], visible: false },
+      };
+      form.setValue('columnConfiguration.overrides', updatedOverrides, { shouldDirty: true });
+      persist({ ...current, overrides: updatedOverrides });
     },
-    [form],
+    [form, persist],
   );
 
   const handleToggleVisibility = useCallback(
@@ -39,23 +65,23 @@ export function useEntityColumnConfig(
       if (columnId === entityType.identifierKey) return;
       const current = form.getValues('columnConfiguration');
       const currentVisible = current.overrides[columnId]?.visible !== false;
-      form.setValue(
-        'columnConfiguration.overrides',
-        {
-          ...current.overrides,
-          [columnId]: { ...current.overrides[columnId], visible: !currentVisible },
-        },
-        { shouldDirty: true },
-      );
+      const updatedOverrides = {
+        ...current.overrides,
+        [columnId]: { ...current.overrides[columnId], visible: !currentVisible },
+      };
+      form.setValue('columnConfiguration.overrides', updatedOverrides, { shouldDirty: true });
+      persist({ ...current, overrides: updatedOverrides });
     },
-    [form, entityType.identifierKey],
+    [form, entityType.identifierKey, persist],
   );
 
   const handleReorder = useCallback(
     (newOrder: string[]) => {
+      const current = form.getValues('columnConfiguration');
       form.setValue('columnConfiguration.order', newOrder, { shouldDirty: true });
+      persist({ ...current, order: newOrder });
     },
-    [form],
+    [form, persist],
   );
 
   const handleShowAll = useCallback(() => {
@@ -65,7 +91,8 @@ export function useEntityColumnConfig(
       updatedOverrides[key] = { ...updatedOverrides[key], visible: true };
     });
     form.setValue('columnConfiguration.overrides', updatedOverrides, { shouldDirty: true });
-  }, [form]);
+    persist({ ...current, overrides: updatedOverrides });
+  }, [form, persist]);
 
   const handleHideAll = useCallback(() => {
     const current = form.getValues('columnConfiguration');
@@ -78,7 +105,8 @@ export function useEntityColumnConfig(
       updatedOverrides[key] = { ...updatedOverrides[key], visible: false };
     });
     form.setValue('columnConfiguration.overrides', updatedOverrides, { shouldDirty: true });
-  }, [form, entityType.identifierKey, entityType.columns]);
+    persist({ ...current, overrides: updatedOverrides });
+  }, [form, entityType.identifierKey, entityType.columns, persist]);
 
   return {
     handleColumnResize,

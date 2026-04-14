@@ -157,7 +157,7 @@ export const EntityDataTable: FC<Props> = ({ entityType, className, workspaceId 
     handleReorder,
     handleShowAll,
     handleHideAll,
-  } = useEntityColumnConfig(form, entityType);
+  } = useEntityColumnConfig(form, entityType, workspaceId);
 
   // Column header popover state
   const [activePopoverColumnId, setActivePopoverColumnId] = useState<string | null>(null);
