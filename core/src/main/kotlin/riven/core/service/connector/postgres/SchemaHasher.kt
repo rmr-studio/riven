@@ -1,8 +1,9 @@
 package riven.core.service.connector.postgres
 
-import com.fasterxml.jackson.databind.MapperFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import tools.jackson.databind.MapperFeature
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.KotlinModule
 import riven.core.models.ingestion.adapter.ColumnSchema
 import java.security.MessageDigest
 
@@ -21,8 +22,10 @@ import java.security.MessageDigest
  */
 object SchemaHasher {
 
-    private val mapper: ObjectMapper = jacksonObjectMapper()
-        .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
+    private val mapper: ObjectMapper = JsonMapper.builder()
+        .addModule(KotlinModule.Builder().build())
+        .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
+        .build()
 
     fun compute(tableName: String, columns: List<ColumnSchema>): String {
         // Sort columns alphabetically by name so declaration-order changes

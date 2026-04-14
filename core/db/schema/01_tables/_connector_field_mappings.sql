@@ -47,3 +47,10 @@ CREATE TABLE IF NOT EXISTS connector_field_mappings (
     CONSTRAINT uq_connector_field_mappings_ws_conn_table_col
         UNIQUE (workspace_id, connection_id, table_name, column_name)
 );
+
+-- Enforce a single active sync cursor per (workspace, connection, table).
+-- Read path (DataConnectorSchemaInferenceService) uses firstOrNull and assumes
+-- singularity. Partial unique index prevents concurrent-save nondeterminism.
+CREATE UNIQUE INDEX IF NOT EXISTS ux_connector_field_mappings_one_cursor
+    ON connector_field_mappings (workspace_id, connection_id, table_name)
+    WHERE is_sync_cursor = TRUE;

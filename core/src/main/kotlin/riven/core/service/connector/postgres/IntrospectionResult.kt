@@ -7,7 +7,7 @@ import riven.core.models.ingestion.adapter.SchemaIntrospectionResult
  * metadata. Exposed via [PostgresAdapter.introspectWithFkMetadata] so plan 03-03
  * can materialise relationships without extending the Phase 1 adapter contract.
  */
-data class IntrospectionResult(
+internal data class IntrospectionResult(
     val schema: SchemaIntrospectionResult,
     val foreignKeys: List<ForeignKeyMetadata>,
 )

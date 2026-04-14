@@ -1,6 +1,6 @@
 package riven.core.service.entity.query
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
@@ -124,9 +124,7 @@ class EntityQueryIntegrationTestConfig {
         entityAttributeRepository: riven.core.repository.entity.EntityAttributeRepository,
     ) = riven.core.service.entity.EntityAttributeService(
         entityAttributeRepository,
-        com.fasterxml.jackson.databind.ObjectMapper().apply {
-            findAndRegisterModules()
-        },
+        tools.jackson.databind.json.JsonMapper.builder().build(),
         org.mockito.Mockito.mock(io.github.oshai.kotlinlogging.KLogger::class.java),
     )
 

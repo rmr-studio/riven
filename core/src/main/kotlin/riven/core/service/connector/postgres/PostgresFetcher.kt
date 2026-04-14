@@ -1,7 +1,8 @@
 package riven.core.service.connector.postgres
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import io.github.oshai.kotlinlogging.KLogger
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import riven.core.configuration.properties.ConnectorPoolProperties
 import riven.core.enums.common.validation.SchemaType
@@ -26,10 +27,11 @@ import javax.sql.DataSource
  * large result sets don't OOM the worker.
  */
 @Component
+@ConditionalOnProperty(prefix = "riven.connector", name = ["enabled"], havingValue = "true")
 class PostgresFetcher(
     private val props: ConnectorPoolProperties,
     private val objectMapper: ObjectMapper,
-    @Suppress("unused") private val logger: KLogger,
+    private val logger: KLogger,
 ) {
 
     fun fetch(
@@ -42,6 +44,9 @@ class PostgresFetcher(
             "PostgresCallContext.tableName must be set for fetch"
         }
         val effectiveLimit = minOf(limit, props.defaultBatchSize).coerceAtLeast(1)
+        logger.debug {
+            "PostgresFetcher.fetch schema=${ctx.schema} table=$tableName effectiveLimit=$effectiveLimit"
+        }
 
         val (sql, cursorBinder, cursorExtractorColumn) = buildQuery(ctx, tableName, cursor)
 
@@ -52,7 +57,9 @@ class PostgresFetcher(
                     stmt.fetchSize = props.defaultBatchSize
                     cursorBinder(stmt, cursor)
                     // The LIMIT placeholder is always the LAST parameter.
-                    stmt.setInt(stmt.parameterMetaData.parameterCount, effectiveLimit)
+                    // Fetch one extra row so we can derive `hasMore` without a
+                    // separate COUNT query: size > effectiveLimit ⇒ more rows exist.
+                    stmt.setInt(stmt.parameterMetaData.parameterCount, effectiveLimit + 1)
 
                     stmt.executeQuery().use { rs ->
                         val meta = rs.metaData
@@ -61,8 +68,8 @@ class PostgresFetcher(
                         val columnTypeLiterals = (1..columnCount).map { meta.getColumnTypeName(it) }
                         val pkColumn = ctx.primaryKeyColumn
 
-                        val records = mutableListOf<SourceRecord>()
-                        var lastRowCursorValue: String? = null
+                        val buffer = mutableListOf<SourceRecord>()
+                        val cursorBuffer = mutableListOf<String?>()
                         while (rs.next()) {
                             val payload = linkedMapOf<String, EntityAttributePrimitivePayload>()
                             for (i in 1..columnCount) {
@@ -86,11 +93,11 @@ class PostgresFetcher(
                             val externalIdRaw = if (externalIdColumn != null) {
                                 rs.getObject(externalIdColumn)
                             } else null
-                            val externalId = externalIdRaw?.toString() ?: records.size.toString()
+                            val externalId = externalIdRaw?.toString() ?: buffer.size.toString()
 
                             @Suppress("UNCHECKED_CAST")
                             val payloadAsAny = payload.toMap() as Map<String, Any?>
-                            records.add(
+                            buffer.add(
                                 SourceRecord(
                                     externalId = externalId,
                                     payload = payloadAsAny,
@@ -101,13 +108,16 @@ class PostgresFetcher(
                                 ),
                             )
 
-                            if (cursorExtractorColumn != null) {
-                                val next = rs.getObject(cursorExtractorColumn)
-                                lastRowCursorValue = next?.toString()
-                            }
+                            cursorBuffer.add(
+                                cursorExtractorColumn?.let { rs.getObject(it)?.toString() },
+                            )
                         }
 
-                        val hasMore = records.size >= effectiveLimit
+                        val hasMore = buffer.size > effectiveLimit
+                        val records = if (hasMore) buffer.take(effectiveLimit) else buffer.toList()
+                        val lastRowCursorValue = cursorBuffer
+                            .take(records.size)
+                            .lastOrNull { it != null }
                         return RecordBatch(
                             records = records,
                             nextCursor = lastRowCursorValue,
@@ -135,16 +145,18 @@ class PostgresFetcher(
         tableName: String,
         cursor: String?,
     ): Triple<String, (PreparedStatement, String?) -> Unit, String?> {
-        val schema = ctx.schema
+        val schemaQ = PgIdent.quote(ctx.schema)
+        val tableQ = PgIdent.quote(tableName)
         val cursorColumn = ctx.cursorColumn
         val pkColumn = ctx.primaryKeyColumn
 
         return when {
             cursorColumn != null && ctx.cursorColumnIsTimestamp -> {
+                val cursorQ = PgIdent.quote(cursorColumn)
                 val sql = """
-                    SELECT * FROM "$schema"."$tableName"
-                    WHERE "$cursorColumn" > ?::timestamptz
-                    ORDER BY "$cursorColumn" ASC
+                    SELECT * FROM $schemaQ.$tableQ
+                    WHERE $cursorQ > ?::timestamptz
+                    ORDER BY $cursorQ ASC
                     LIMIT ?
                 """.trimIndent()
                 val binder: (PreparedStatement, String?) -> Unit = { stmt, c ->
@@ -154,17 +166,18 @@ class PostgresFetcher(
                 Triple(sql, binder, cursorColumn)
             }
             cursorColumn != null -> {
+                val cursorQ = PgIdent.quote(cursorColumn)
                 val sql = if (cursor != null) {
                     """
-                    SELECT * FROM "$schema"."$tableName"
-                    WHERE "$cursorColumn"::text > ?
-                    ORDER BY "$cursorColumn" ASC
+                    SELECT * FROM $schemaQ.$tableQ
+                    WHERE $cursorQ::text > ?
+                    ORDER BY $cursorQ ASC
                     LIMIT ?
                     """.trimIndent()
                 } else {
                     """
-                    SELECT * FROM "$schema"."$tableName"
-                    ORDER BY "$cursorColumn" ASC
+                    SELECT * FROM $schemaQ.$tableQ
+                    ORDER BY $cursorQ ASC
                     LIMIT ?
                     """.trimIndent()
                 }
@@ -174,17 +187,18 @@ class PostgresFetcher(
                 Triple(sql, binder, cursorColumn)
             }
             pkColumn != null -> {
+                val pkQ = PgIdent.quote(pkColumn)
                 val sql = if (cursor != null) {
                     """
-                    SELECT * FROM "$schema"."$tableName"
-                    WHERE "$pkColumn"::text > ?
-                    ORDER BY "$pkColumn" ASC
+                    SELECT * FROM $schemaQ.$tableQ
+                    WHERE $pkQ::text > ?
+                    ORDER BY $pkQ ASC
                     LIMIT ?
                     """.trimIndent()
                 } else {
                     """
-                    SELECT * FROM "$schema"."$tableName"
-                    ORDER BY "$pkColumn" ASC
+                    SELECT * FROM $schemaQ.$tableQ
+                    ORDER BY $pkQ ASC
                     LIMIT ?
                     """.trimIndent()
                 }

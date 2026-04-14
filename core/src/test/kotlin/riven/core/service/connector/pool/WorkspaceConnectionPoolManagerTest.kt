@@ -124,7 +124,7 @@ class WorkspaceConnectionPoolManagerTest {
     }
 
     @Test
-    fun poolConfiguresMaxPoolSize2_idleTimeout10m_maxLifetime30m_statementTimeout() {
+    fun poolConfiguresMaxPoolSize2IdleTimeout10mMaxLifetime30mStatementTimeout() {
         val mgr = manager()
         val id = UUID.randomUUID()
         val pool = mgr.getPool(id, credentials())

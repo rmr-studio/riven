@@ -1,7 +1,7 @@
 package riven.core.service.connector.mapping
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import io.github.oshai.kotlinlogging.KLogger
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -60,6 +60,7 @@ import riven.core.service.util.WorkspaceRole
 import riven.core.service.util.factory.DataConnectorFieldMappingEntityFactory
 import riven.core.service.util.factory.DataConnectorTableMappingEntityFactory
 import riven.core.service.util.factory.dataconnector.DataConnectorConnectionEntityFactory
+import riven.core.service.util.factory.entity.EntityFactory
 import java.time.ZonedDateTime
 import java.util.Optional
 import java.util.UUID
@@ -188,7 +189,7 @@ class DataConnectorFieldMappingServiceTest {
             workspaceId, connectionId, "customers",
             baseRequest().copy(
                 columns = listOf(
-                    col("id", SchemaType.ID, isMapped = true, attributeName = "id"),
+                    col("id", SchemaType.ID, isMapped = true, attributeName = "id", isIdentifier = true),
                     col("email", SchemaType.EMAIL, isMapped = true, attributeName = "email"),
                     col("internal_flag", SchemaType.TEXT, isMapped = false),
                 ),
@@ -230,7 +231,7 @@ class DataConnectorFieldMappingServiceTest {
             workspaceId, connectionId, "orders",
             baseRequest().copy(
                 columns = listOf(
-                    col("id", SchemaType.ID, isMapped = true, attributeName = "id"),
+                    col("id", SchemaType.ID, isMapped = true, attributeName = "id", isIdentifier = true),
                     col("customer_id", SchemaType.TEXT, isMapped = true, attributeName = "customerId"),
                 ),
             ),
@@ -263,7 +264,7 @@ class DataConnectorFieldMappingServiceTest {
             workspaceId, connectionId, "orders",
             baseRequest().copy(
                 columns = listOf(
-                    col("id", SchemaType.ID, isMapped = true, attributeName = "id"),
+                    col("id", SchemaType.ID, isMapped = true, attributeName = "id", isIdentifier = true),
                     col("customer_id", SchemaType.TEXT, isMapped = true, attributeName = "customerId"),
                 ),
             ),
@@ -303,7 +304,7 @@ class DataConnectorFieldMappingServiceTest {
             workspaceId, connectionId, "orders",
             baseRequest().copy(
                 columns = listOf(
-                    col("id", SchemaType.ID, isMapped = true, attributeName = "id"),
+                    col("id", SchemaType.ID, isMapped = true, attributeName = "id", isIdentifier = true),
                     col("customer_id", SchemaType.TEXT, isMapped = true, attributeName = "customerId"),
                 ),
             ),
@@ -348,7 +349,7 @@ class DataConnectorFieldMappingServiceTest {
             workspaceId, connectionId, "customers",
             baseRequest().copy(
                 columns = listOf(
-                    col("id", SchemaType.ID, isMapped = true, attributeName = "id"),
+                    col("id", SchemaType.ID, isMapped = true, attributeName = "id", isIdentifier = true),
                     col("updated_at", SchemaType.DATETIME, isMapped = true, isSyncCursor = true, attributeName = "updatedAt"),
                 ),
             ),
@@ -390,15 +391,15 @@ class DataConnectorFieldMappingServiceTest {
             ),
         )
 
-        val existingEntityType = EntityTypeEntity(
+        val existingEntityType = EntityFactory.createEntityType(
             id = existingEntityTypeId,
             key = "connector_existing",
             displayNameSingular = "customers",
             displayNamePlural = "customers",
             sourceType = SourceType.CONNECTOR,
             readonly = true,
-            identifierKey = UUID.randomUUID(),
             workspaceId = workspaceId,
+            identifierKey = UUID.randomUUID(),
             schema = riven.core.models.common.validation.Schema(
                 type = riven.core.enums.core.DataType.OBJECT,
                 key = SchemaType.OBJECT,
@@ -411,7 +412,7 @@ class DataConnectorFieldMappingServiceTest {
             workspaceId, connectionId, "customers",
             baseRequest().copy(
                 columns = listOf(
-                    col("id", SchemaType.ID, isMapped = true, attributeName = "id"),
+                    col("id", SchemaType.ID, isMapped = true, attributeName = "id", isIdentifier = true),
                     col("email", SchemaType.EMAIL, isMapped = true, attributeName = "email"),
                     col("new_col", SchemaType.TEXT, isMapped = true, attributeName = "newCol"),
                 ),
@@ -446,7 +447,7 @@ class DataConnectorFieldMappingServiceTest {
         service.saveMapping(
             workspaceId, connectionId, "customers",
             baseRequest().copy(
-                columns = listOf(col("id", SchemaType.ID, isMapped = true, attributeName = "id")),
+                columns = listOf(col("id", SchemaType.ID, isMapped = true, attributeName = "id", isIdentifier = true)),
             ),
         )
 
@@ -489,7 +490,7 @@ class DataConnectorFieldMappingServiceTest {
         lifecycleDomain = LifecycleDomain.UNCATEGORIZED,
         semanticGroup = SemanticGroup.UNCATEGORIZED,
         columns = listOf(
-            col("id", SchemaType.ID, isMapped = true, attributeName = "id"),
+            col("id", SchemaType.ID, isMapped = true, attributeName = "id", isIdentifier = true),
             col("email", SchemaType.EMAIL, isMapped = true, attributeName = "email"),
             col("internal_flag", SchemaType.TEXT, isMapped = false),
         ),

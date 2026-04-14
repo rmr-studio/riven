@@ -1,6 +1,7 @@
 package riven.core.service.connector.postgres
 
 import io.github.oshai.kotlinlogging.KLogger
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import riven.core.models.ingestion.adapter.ColumnSchema
 import riven.core.models.ingestion.adapter.SchemaIntrospectionResult
@@ -16,11 +17,12 @@ import javax.sql.DataSource
  * logged; plan 03-03 skips them when materialising relationships.
  */
 @Component
+@ConditionalOnProperty(prefix = "riven.connector", name = ["enabled"], havingValue = "true")
 class PostgresIntrospector(
     private val logger: KLogger,
 ) {
 
-    fun introspect(dataSource: DataSource, schema: String): IntrospectionResult {
+    internal fun introspect(dataSource: DataSource, schema: String): IntrospectionResult {
         dataSource.connection.use { conn ->
             val tables = loadTables(conn, schema)
             val columnsByTable = loadColumns(conn, schema)
@@ -127,8 +129,9 @@ class PostgresIntrospector(
 
                     if (isComposite) {
                         logger.info {
-                            "Skipping composite FK on $sourceTable($sourceColumnName,...) -> " +
-                                "$targetTable($targetColumnName,...) — plan 03-03 does not map composite keys."
+                            "Retaining composite FK on $sourceTable($sourceColumnName,...) -> " +
+                                "$targetTable($targetColumnName,...) — metadata kept, " +
+                                "relationship materialisation (plan 03-03) unsupported for composite keys."
                         }
                     }
 
@@ -158,7 +161,11 @@ class PostgresIntrospector(
             stmt.setLong(1, relOid)
             stmt.setInt(2, attNum)
             stmt.executeQuery().use { rs ->
-                return if (rs.next()) rs.getString(1) else "?"
+                if (rs.next()) return rs.getString(1)
+                throw IllegalStateException(
+                    "Failed to resolve column name from pg_attribute: relOid=$relOid attNum=$attNum. " +
+                        "FK metadata would carry a placeholder — refusing to propagate.",
+                )
             }
         }
     }

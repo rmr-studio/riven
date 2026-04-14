@@ -1,7 +1,7 @@
 package riven.core.service.connector.postgres
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.readValue
 import io.github.oshai.kotlinlogging.KLogger
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
@@ -48,7 +48,7 @@ class PostgresAdapter(
     private val introspector: PostgresIntrospector,
     private val fetcher: PostgresFetcher,
     private val objectMapper: ObjectMapper,
-    @Suppress("unused") private val logger: KLogger,
+    private val logger: KLogger,
 ) : IngestionAdapter {
 
     override fun syncMode(): SyncMode = SyncMode.POLL
@@ -64,7 +64,7 @@ class PostgresAdapter(
      * consumed by plan 03-03's relationship materialiser. Keeps the Phase 1
      * [IngestionAdapter] contract unchanged.
      */
-    fun introspectWithFkMetadata(context: AdapterCallContext): IntrospectionResult {
+    internal fun introspectWithFkMetadata(context: AdapterCallContext): IntrospectionResult {
         val ctx = requirePostgresContext(context)
         val dataSource = resolveDataSource(ctx)
         return runCatchingJdbc { introspector.introspect(dataSource, ctx.schema) }
@@ -136,10 +136,22 @@ class PostgresAdapter(
         val state = sql.sqlState ?: ""
         val message = sql.message ?: "JDBC error"
         return when {
-            state.startsWith("28") -> AdapterAuthException("Postgres auth failed: $message", original)
-            state == "57014" -> AdapterUnavailableException("Postgres query cancelled (timeout): $message", original)
-            state.startsWith("08") -> AdapterConnectionRefusedException("Postgres connection refused: $message", original)
-            else -> AdapterUnavailableException("Postgres error (SQLState=$state): $message", original)
+            state.startsWith("28") -> {
+                logger.debug { "Postgres auth failure sqlState=$state errorCode=${sql.errorCode} message=$message" }
+                AdapterAuthException("Postgres auth failed: $message", original)
+            }
+            state == "57014" -> {
+                logger.debug { "Postgres query cancelled sqlState=$state errorCode=${sql.errorCode} message=$message" }
+                AdapterUnavailableException("Postgres query cancelled (timeout): $message", original)
+            }
+            state.startsWith("08") -> {
+                logger.debug { "Postgres connection refused sqlState=$state errorCode=${sql.errorCode} message=$message" }
+                AdapterConnectionRefusedException("Postgres connection refused: $message", original)
+            }
+            else -> {
+                logger.warn { "Postgres unmapped SQLState=$state errorCode=${sql.errorCode} message=$message" }
+                AdapterUnavailableException("Postgres error (SQLState=$state): $message", original)
+            }
         }
     }
 }

@@ -1,7 +1,7 @@
 package riven.core.service.connector.mapping
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import io.github.oshai.kotlinlogging.KLogger
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -49,7 +49,6 @@ import riven.core.service.util.WorkspaceRole
 import riven.core.service.util.factory.DataConnectorFieldMappingEntityFactory
 import riven.core.service.util.factory.DataConnectorTableMappingEntityFactory
 import riven.core.service.util.factory.dataconnector.DataConnectorConnectionEntityFactory
-import java.time.ZonedDateTime
 import java.util.Optional
 import java.util.UUID
 
@@ -62,7 +61,6 @@ import java.util.UUID
  */
 @SpringBootTest(
     classes = [
-        AuthTokenService::class,
         WorkspaceSecurity::class,
         SecurityTestConfig::class,
         DataConnectorSchemaInferenceServiceTest.TestConfig::class,
@@ -334,6 +332,4 @@ class DataConnectorSchemaInferenceServiceTest {
         ).thenReturn(result)
     }
 
-    @Suppress("unused")
-    private fun nowish(): ZonedDateTime = ZonedDateTime.now()
 }

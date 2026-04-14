@@ -1,7 +1,9 @@
 package riven.core.service.connector.mapping
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+import io.github.oshai.kotlinlogging.KLogger
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.readValue
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -20,7 +22,6 @@ import riven.core.exceptions.connector.MappingValidationException
 import riven.core.models.common.validation.Schema
 import riven.core.models.connector.CredentialPayload
 import riven.core.models.connector.CursorIndexWarning
-import riven.core.models.connector.request.SaveDataConnectorFieldMappingRequest
 import riven.core.models.connector.request.SaveDataConnectorMappingRequest
 import riven.core.models.connector.response.DataConnectorMappingSaveResponse
 import riven.core.models.connector.response.PendingRelationship
@@ -57,6 +58,7 @@ import java.util.UUID
  * 6. mark published → 7. log activity → 8. build response.
  */
 @Service
+@ConditionalOnProperty(prefix = "riven.connector", name = ["enabled"], havingValue = "true")
 class DataConnectorFieldMappingService(
     private val postgresAdapter: PostgresAdapter,
     private val encryptionService: CredentialEncryptionService,
@@ -69,6 +71,7 @@ class DataConnectorFieldMappingService(
     private val activityService: ActivityService,
     private val authTokenService: AuthTokenService,
     private val objectMapper: ObjectMapper,
+    private val logger: KLogger,
 ) {
 
     @Transactional
@@ -80,6 +83,9 @@ class DataConnectorFieldMappingService(
         request: SaveDataConnectorMappingRequest,
     ): DataConnectorMappingSaveResponse {
         val userId = authTokenService.getUserId()
+        logger.debug {
+            "saveMapping start workspaceId=$workspaceId connectionId=$connectionId table=$tableName"
+        }
         val credentials = resolveCredentials(workspaceId, connectionId)
 
         // Re-introspect at save-time so FK metadata + column shape are fresh.
@@ -268,8 +274,12 @@ class DataConnectorFieldMappingService(
         val mappedFields = fieldMappings.filter { it.isMapped && !it.stale }
         val identifierColumn = mappedFields.firstOrNull { it.isIdentifier }
             ?: fieldMappings.firstOrNull { it.isPrimaryKey }
-        val identifierKey = identifierColumn?.let { requireNotNull(it.id) { "field mapping id must be set after save" } }
-            ?: UUID.randomUUID()
+            ?: throw MappingValidationException(
+                "Cannot derive identifierKey for table '${tableMapping.tableName}': " +
+                    "no column flagged as identifier and no primary-key column present. " +
+                    "Flag a mapped column as identifier, or ensure the source table has a primary key.",
+            )
+        val identifierKey = requireNotNull(identifierColumn.id) { "field mapping id must be set after save" }
 
         val properties: Map<UUID, Schema<UUID>> = mappedFields.associate { field ->
             val attrId = requireNotNull(field.id) { "field mapping id must be set after save" }
@@ -353,7 +363,7 @@ class DataConnectorFieldMappingService(
             val cardinality = if (fkField?.nullable == true) {
                 EntityRelationshipCardinality.ONE_TO_MANY
             } else {
-                EntityRelationshipCardinality.ONE_TO_MANY
+                EntityRelationshipCardinality.MANY_TO_ONE
             }
 
             val rel = RelationshipDefinitionEntity(
@@ -396,7 +406,4 @@ class DataConnectorFieldMappingService(
         SchemaType.MULTI_SELECT -> DataType.ARRAY
         else -> DataType.STRING
     }
-
-    @Suppress("unused")
-    private fun stubSaveRequestRef(req: SaveDataConnectorFieldMappingRequest): SaveDataConnectorFieldMappingRequest = req
 }

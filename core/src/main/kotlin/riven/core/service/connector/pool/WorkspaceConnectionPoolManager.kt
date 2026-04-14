@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.github.oshai.kotlinlogging.KLogger
 import jakarta.annotation.PreDestroy
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 import riven.core.configuration.properties.ConnectorPoolProperties
 import riven.core.models.connector.CredentialPayload
@@ -32,6 +33,7 @@ import kotlin.time.Duration.Companion.seconds
  * Covers PG-02. Configuration is sourced from [ConnectorPoolProperties].
  */
 @Service
+@ConditionalOnProperty(prefix = "riven.connector", name = ["enabled"], havingValue = "true")
 class WorkspaceConnectionPoolManager(
     private val props: ConnectorPoolProperties,
     private val logger: KLogger,
@@ -85,6 +87,7 @@ class WorkspaceConnectionPoolManager(
             username = credentials.user
             password = credentials.password
             maximumPoolSize = props.maxPoolSize
+            minimumIdle = props.minimumIdle
             idleTimeout = props.idleTimeoutMinutes.minutes.inWholeMilliseconds
             maxLifetime = props.maxLifetimeMinutes.minutes.inWholeMilliseconds
             connectionTimeout = props.connectionTimeoutSeconds.seconds.inWholeMilliseconds

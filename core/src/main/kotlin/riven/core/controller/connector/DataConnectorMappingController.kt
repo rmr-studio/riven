@@ -23,12 +23,6 @@ import riven.core.service.connector.mapping.DataConnectorFieldMappingService
 import riven.core.service.connector.mapping.DataConnectorSchemaInferenceService
 import java.util.UUID
 
-/**
- * REST surface for custom-source Postgres schema inference + mapping Save
- * (Phase 3 plan 03-03). Thin — delegates to the two mapping services;
- * workspace scoping + business logic live in the service layer per
- * core/CLAUDE.md.
- */
 @RestController
 @ConditionalOnProperty(prefix = "riven.connector", name = ["enabled"], havingValue = "true")
 @RequestMapping("/api/v1/custom-sources/connections/{connectionId}")

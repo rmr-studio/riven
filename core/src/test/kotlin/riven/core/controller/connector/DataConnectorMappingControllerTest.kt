@@ -1,8 +1,7 @@
 package riven.core.controller.connector
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import io.github.oshai.kotlinlogging.KLogger
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -51,7 +50,7 @@ class DataConnectorMappingControllerTest {
 
     private val controller = DataConnectorMappingController(inferenceService, fieldMappingService)
 
-    private val objectMapper: ObjectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
+    private val objectMapper: ObjectMapper = jacksonObjectMapper()
 
     private val config = ApplicationConfigurationProperties(
         includeStackTrace = false,
@@ -148,21 +147,12 @@ class DataConnectorMappingControllerTest {
             .andExpect(jsonPath("$.cursorIndexWarning.suggestedDdl").value(org.hamcrest.Matchers.containsString("CREATE INDEX")))
     }
 
-    /**
-     * Phase 2 02-04 lesson: MockMvc standalone does not load @PreAuthorize.
-     * Workspace-mismatch scoping is verified at the service layer via
-     * @SpringBootTest (DataConnectorSchemaInferenceServiceTest.getSchemaScopedToWorkspaceViaPreAuthorize
-     * + DataConnectorFieldMappingServiceTest.saveScopedToWorkspaceViaPreAuthorize).
-     * This test documents the placement decision with a trivial assertion
-     * against the service-layer path so the rename rule is greppable.
-     */
-    @Test
-    fun getSchemaReturns403WhenWorkspaceMismatch() {
-        // Intentionally a no-op at the controller layer — see KDoc.
-        // The real 403 assertion is in the service-layer test. We keep this
-        // test green and named so the plan 03-00 assertion inventory matches.
-        org.junit.jupiter.api.Assertions.assertTrue(true)
-    }
+    // 403 workspace-mismatch assertion is exercised at the service layer via
+    // @SpringBootTest + @PreAuthorize: see
+    // DataConnectorSchemaInferenceServiceTest.getSchemaScopedToWorkspaceViaPreAuthorize
+    // and DataConnectorFieldMappingServiceTest.saveScopedToWorkspaceViaPreAuthorize.
+    // A standalone MockMvc setup (used here) does not load method security, so
+    // a controller-layer "403" test would be a no-op — removed per PR review.
 
     @Test
     fun saveMappingValidatesRequestBody() {

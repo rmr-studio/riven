@@ -1,6 +1,8 @@
 package riven.core.repository.connector
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import riven.core.entity.connector.DataConnectorTableMappingEntity
 import java.util.UUID
@@ -14,12 +16,18 @@ import java.util.UUID
 @Repository
 interface DataConnectorTableMappingRepository : JpaRepository<DataConnectorTableMappingEntity, UUID> {
 
-    fun findByConnectionId(connectionId: UUID): List<DataConnectorTableMappingEntity>
+    @Query("SELECT t FROM DataConnectorTableMappingEntity t WHERE t.connectionId = :connectionId")
+    fun findByConnectionId(@Param("connectionId") connectionId: UUID): List<DataConnectorTableMappingEntity>
 
+    @Query(
+        "SELECT t FROM DataConnectorTableMappingEntity t " +
+            "WHERE t.connectionId = :connectionId AND t.tableName = :tableName"
+    )
     fun findByConnectionIdAndTableName(
-        connectionId: UUID,
-        tableName: String,
+        @Param("connectionId") connectionId: UUID,
+        @Param("tableName") tableName: String,
     ): DataConnectorTableMappingEntity?
 
-    fun findByEntityTypeId(entityTypeId: UUID): DataConnectorTableMappingEntity?
+    @Query("SELECT t FROM DataConnectorTableMappingEntity t WHERE t.entityTypeId = :entityTypeId")
+    fun findByEntityTypeId(@Param("entityTypeId") entityTypeId: UUID): DataConnectorTableMappingEntity?
 }

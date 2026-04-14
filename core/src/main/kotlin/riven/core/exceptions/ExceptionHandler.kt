@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.request.ServletRequestAttributes
 import riven.core.configuration.properties.ApplicationConfigurationProperties
-import com.fasterxml.jackson.core.JsonProcessingException
+import tools.jackson.core.JacksonException
 import riven.core.enums.common.ApiError
 import riven.core.exceptions.connector.MappingValidationException
 import riven.core.exceptions.connector.ReadOnlyVerificationException
@@ -126,8 +126,8 @@ class ExceptionHandler(private val logger: KLogger, private val config: Applicat
         }
     }
 
-    @ExceptionHandler(JsonProcessingException::class)
-    fun handleJsonProcessingException(ex: JsonProcessingException): ResponseEntity<ErrorResponse> {
+    @ExceptionHandler(JacksonException::class)
+    fun handleJacksonException(ex: JacksonException): ResponseEntity<ErrorResponse> {
         storeExceptionForAnalytics(ex)
         return ErrorResponse(
             statusCode = HttpStatus.BAD_REQUEST,

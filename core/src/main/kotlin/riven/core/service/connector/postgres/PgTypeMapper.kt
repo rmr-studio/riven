@@ -36,18 +36,20 @@ object PgTypeMapper {
         // pg_enum rows, so the presence of `enumOptions` is the signal.
         if (enumOptions != null) return SchemaType.SELECT
 
-        val normalized = pgType.lowercase().substringBefore("(").trim()
+        val lowered = pgType.lowercase().trim()
 
-        // Array detection runs before the exhaustive `when` so any underlying
-        // element type (including recognized scalar types) becomes OBJECT when
-        // presented as an array.
-        if (normalized.startsWith("_") || normalized.endsWith("[]")) {
+        // Array detection runs on the raw-lowered literal BEFORE stripping
+        // typmods so `varchar(255)[]` and `_int4` are both classified as array.
+        if (lowered.startsWith("_") || lowered.endsWith("[]")) {
             return SchemaType.OBJECT
         }
 
+        val normalized = lowered.substringBefore("(").trim()
+
         return when (normalized) {
             // TEXT family
-            "text", "varchar", "char", "citext" -> SchemaType.TEXT
+            "text", "varchar", "char", "citext",
+            "character varying", "character" -> SchemaType.TEXT
 
             // NUMBER family
             "int2", "int4", "int8", "int", "integer", "bigint", "smallint",
@@ -60,10 +62,11 @@ object PgTypeMapper {
             // DATE
             "date" -> SchemaType.DATE
 
-            // DATETIME family
+            // DATETIME family — includes format_type() full names
             "timestamp", "timestamptz",
             "timestamp with time zone", "timestamp without time zone",
-            "time", "timetz" -> SchemaType.DATETIME
+            "time", "timetz",
+            "time without time zone", "time with time zone" -> SchemaType.DATETIME
 
             // UUID — PK becomes ID, non-PK demotes to TEXT
             "uuid" -> if (isPrimaryKey) SchemaType.ID else SchemaType.TEXT

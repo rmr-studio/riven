@@ -1,8 +1,9 @@
 package riven.core.service.connector.mapping
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.readValue
 import io.github.oshai.kotlinlogging.KLogger
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -45,6 +46,7 @@ import java.util.UUID
  * each table mapping's `schemaHash` + `lastIntrospectedAt` are also updated.
  */
 @Service
+@ConditionalOnProperty(prefix = "riven.connector", name = ["enabled"], havingValue = "true")
 class DataConnectorSchemaInferenceService(
     private val postgresAdapter: PostgresAdapter,
     private val encryptionService: CredentialEncryptionService,
@@ -56,6 +58,14 @@ class DataConnectorSchemaInferenceService(
     @Suppress("unused") private val logger: KLogger,
 ) {
 
+    /**
+     * Introspect the live source schema, merge with stored mappings, and return
+     * per-table drift + FK + cursor-index warnings. Marks stale (a) columns no
+     * longer present in the live table and (b) field mappings whose parent
+     * table has been dropped upstream. Dropped tables are surfaced via
+     * [DataConnectorSchemaResponse.staleDroppedTables]. Called by the schema
+     * inference endpoint prior to mapping Save.
+     */
     @Transactional
     @PreAuthorize("@workspaceSecurity.hasWorkspace(#workspaceId)")
     fun getSchema(workspaceId: UUID, connectionId: UUID): DataConnectorSchemaResponse {
@@ -72,6 +82,10 @@ class DataConnectorSchemaInferenceService(
         val storedFields = fieldMappingRepository.findByConnectionId(connectionId)
             .groupBy { it.tableName }
 
+        val liveTableNames = introspection.schema.tables.map { it.name }.toSet()
+        val droppedTables = (storedTables.keys - liveTableNames).toList().sorted()
+        markDroppedTableFieldsStale(droppedTables, storedFields)
+
         val tableResponses = introspection.schema.tables.map { liveTable ->
             buildTableResponse(
                 workspaceId = workspaceId,
@@ -85,7 +99,24 @@ class DataConnectorSchemaInferenceService(
             )
         }
 
-        return DataConnectorSchemaResponse(tables = tableResponses)
+        return DataConnectorSchemaResponse(
+            tables = tableResponses,
+            staleDroppedTables = droppedTables,
+        )
+    }
+
+    private fun markDroppedTableFieldsStale(
+        droppedTables: List<String>,
+        storedFields: Map<String, List<DataConnectorFieldMappingEntity>>,
+    ) {
+        droppedTables.forEach { tableName ->
+            storedFields[tableName].orEmpty()
+                .filter { !it.stale }
+                .forEach { field ->
+                    field.stale = true
+                    fieldMappingRepository.save(field)
+                }
+        }
     }
 
     // ------ Private helpers ------

@@ -17,6 +17,11 @@ import java.util.UUID
  */
 data class DataConnectorSchemaResponse(
     val tables: List<TableSchemaResponse>,
+    /**
+     * Table names that had a stored mapping but are no longer present in the
+     * live source schema. Their field mappings are marked stale as a side effect.
+     */
+    val staleDroppedTables: List<String> = emptyList(),
 )
 
 data class TableSchemaResponse(

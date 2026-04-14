@@ -1,6 +1,6 @@
 package riven.core.service.ingestion
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import io.github.oshai.kotlinlogging.KLogger
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
@@ -182,6 +182,7 @@ class ProjectionPipelineIntegrationTestConfig {
         "spring.jpa.hibernate.ddl-auto=none",
         "spring.main.allow-bean-definition-overriding=true",
         "riven.manifests.auto-load=false",
+        "riven.connector.enabled=false",
     ]
 )
 @Testcontainers

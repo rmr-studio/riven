@@ -34,5 +34,19 @@ CREATE TABLE IF NOT EXISTS connector_table_mappings (
     deleted_at            TIMESTAMPTZ,
 
     CONSTRAINT uq_connector_table_mappings_ws_conn_table
-        UNIQUE (workspace_id, connection_id, table_name)
+        UNIQUE (workspace_id, connection_id, table_name),
+
+    -- Keep enum values in sync with Kotlin LifecycleDomain (enums/entity/LifecycleDomain.kt)
+    CONSTRAINT ck_connector_table_mappings_lifecycle_domain
+        CHECK (lifecycle_domain IN (
+            'ACQUISITION', 'ONBOARDING', 'USAGE', 'SUPPORT',
+            'BILLING', 'RETENTION', 'UNCATEGORIZED'
+        )),
+
+    -- Keep enum values in sync with Kotlin SemanticGroup (enums/entity/semantics/SemanticGroup.kt)
+    CONSTRAINT ck_connector_table_mappings_semantic_group
+        CHECK (semantic_group IN (
+            'CUSTOMER', 'PRODUCT', 'TRANSACTION', 'COMMUNICATION',
+            'SUPPORT', 'FINANCIAL', 'OPERATIONAL', 'CUSTOM', 'UNCATEGORIZED'
+        ))
 );

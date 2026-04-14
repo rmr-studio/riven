@@ -25,6 +25,10 @@ repositories {
     mavenCentral()
 }
 
+// Override Boot 4.0.5's managed Hibernate 7.2.x with 7.3 — required by
+// hypersistence-utils-hibernate-73 (the Jackson 3 variant).
+extra["hibernate.version"] = "7.3.1.Final"
+
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -56,7 +60,6 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:auth-kt")
     implementation("io.github.jan-tennert.supabase:storage-kt")
     implementation("io.ktor:ktor-client-cio:3.0.0")
-    implementation("io.github.jan-tennert.supabase:serializer-jackson:3.1.4")
 
     // Storage: S3-compatible providers (AWS S3, MinIO, R2, Spaces)
     implementation("aws.sdk.kotlin:s3:1.3.112")
@@ -89,14 +92,15 @@ dependencies {
     implementation("io.github.resilience4j:resilience4j-spring:2.3.0")
     implementation("org.springframework.boot:spring-boot-starter-aop")
 
-    // Object Mapping
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    // Object Mapping (Jackson 3)
+    implementation(platform("tools.jackson:jackson-bom:3.1.0"))
+    implementation("tools.jackson.module:jackson-module-kotlin")
 
-    // Postgres/JPA
-    // NOTE: hibernate-71 artifact is compiled against Hibernate 7.2.x, which matches Boot 4.0.5's BOM.
-    // The -70 artifact targets Hibernate 7.0.x and hits IncompatibleClassChangeError against 7.2's final getJavaTypeClass.
-    implementation("io.hypersistence:hypersistence-utils-hibernate-71:3.15.2")
-    implementation("org.hibernate.orm:hibernate-vector:7.2.7.Final")
+    // Postgres/JPA — hypersistence-utils-hibernate-73 is the first artifact to ship Jackson 3 support
+    // (tools.jackson.module:*). Requires Hibernate 7.3+, which we pin explicitly since Boot 4.0.5's BOM
+    // resolves to 7.2.x.
+    implementation("io.hypersistence:hypersistence-utils-hibernate-73:3.15.2")
+    implementation("org.hibernate.orm:hibernate-vector:7.3.1.Final")
     runtimeOnly("org.postgresql:postgresql")
 
     // Flyway Database Migrations
@@ -104,7 +108,7 @@ dependencies {
     implementation("org.flywaydb:flyway-database-postgresql")
 
     // Schema Validation
-    implementation("com.networknt:json-schema-validator:1.0.83")
+    implementation("com.networknt:json-schema-validator:3.0.1")
 
     // HTML Parsing
     implementation("org.jsoup:jsoup:1.18.3")
@@ -119,9 +123,9 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("io.temporal:temporal-testing:1.24.1")
-    testImplementation("org.testcontainers:testcontainers:2.0.3")
-    testImplementation("org.testcontainers:testcontainers-postgresql:2.0.3")
-    testImplementation("org.testcontainers:testcontainers-junit-jupiter:2.0.3")
+    testImplementation("org.testcontainers:testcontainers:2.0.4")
+    testImplementation("org.testcontainers:testcontainers-postgresql:2.0.4")
+    testImplementation("org.testcontainers:testcontainers-junit-jupiter:2.0.4")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
     testRuntimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")

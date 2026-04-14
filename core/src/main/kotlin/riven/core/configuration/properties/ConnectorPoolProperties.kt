@@ -19,6 +19,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties
  *   (applied via `options=-c statement_timeout=...`).
  * @property defaultBatchSize Adapter fetchSize + per-call hard cap on requested
  *   `limit`; callers cannot over-request beyond this ceiling.
+ * @property minimumIdle Minimum idle connections HikariCP keeps warm. Zero
+ *   means idle connections may retire fully when the pool is quiet — safest
+ *   default for per-tenant pools where most connections are cold.
  */
 @ConfigurationProperties(prefix = "riven.connector.pool")
 data class ConnectorPoolProperties(
@@ -28,4 +31,5 @@ data class ConnectorPoolProperties(
     val connectionTimeoutSeconds: Long = 10,
     val statementTimeoutMillis: Long = 300_000,
     val defaultBatchSize: Int = 5_000,
+    val minimumIdle: Int = 0,
 )

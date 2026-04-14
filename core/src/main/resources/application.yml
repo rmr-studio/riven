@@ -114,5 +114,6 @@ storage:
 springdoc:
   api-docs:
     path: /docs/v3/api-docs
+    version: openapi_3_0
   swagger-ui:
     path: /docs/swagger-ui.html

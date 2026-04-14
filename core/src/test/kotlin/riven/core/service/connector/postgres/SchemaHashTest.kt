@@ -2,7 +2,7 @@ package riven.core.service.connector.postgres
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import riven.core.models.ingestion.adapter.ColumnSchema
+import riven.core.service.util.factory.PostgresIntrospectionFactory.column
 
 /**
  * Phase 3 plan 03-01 PG-06 coverage for [SchemaHasher]. Test names inherit
@@ -13,9 +13,9 @@ class SchemaHashTest {
     private val tableName = "customers"
 
     private val baseColumns = listOf(
-        ColumnSchema(name = "id", typeLiteral = "uuid", nullable = false),
-        ColumnSchema(name = "email", typeLiteral = "text", nullable = false),
-        ColumnSchema(name = "updated_at", typeLiteral = "timestamptz", nullable = true),
+        column(name = "id", type = "uuid", nullable = false),
+        column(name = "email", type = "text", nullable = false),
+        column(name = "updated_at", type = "timestamptz", nullable = true),
     )
 
     @Test
@@ -37,7 +37,7 @@ class SchemaHashTest {
 
     @Test
     fun producesDifferentHashOnColumnAdd() {
-        val added = baseColumns + ColumnSchema(name = "name", typeLiteral = "text", nullable = true)
+        val added = baseColumns + column(name = "name", type = "text", nullable = true)
         assertThat(SchemaHasher.compute(tableName, baseColumns))
             .isNotEqualTo(SchemaHasher.compute(tableName, added))
     }
