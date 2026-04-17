@@ -11,10 +11,10 @@ Name | Type
 `entityTypeId` | string
 `payload` | { [key: string]: string; }
 `timeoutSeconds` | number
-`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
-`config` | { [key: string]: object; }
-`subType` | [WorkflowActionType](WorkflowActionType.md)
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
+`subType` | [WorkflowActionType](WorkflowActionType.md)
+`config` | { [key: string]: object; }
+`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
 
 ## Example
 
@@ -24,13 +24,13 @@ import type { WorkflowCreateEntityActionConfig } from ''
 // TODO: Update the object below with actual values
 const example = {
   "version": null,
-  "entityTypeId": null,
-  "payload": null,
-  "timeoutSeconds": null,
-  "configSchema": null,
-  "config": null,
-  "subType": null,
+  "entityTypeId": 550e8400-e29b-41d4-a716-446655440000,
+  "payload": {"name":"{{ steps.fetch.output.name }}","email":"user@example.com"},
+  "timeoutSeconds": 30,
   "type": null,
+  "subType": null,
+  "config": null,
+  "configSchema": null,
 } satisfies WorkflowCreateEntityActionConfig
 
 console.log(example)

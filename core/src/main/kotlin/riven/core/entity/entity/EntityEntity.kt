@@ -84,6 +84,9 @@ data class EntityEntity(
 
     @Column(name = "note_count", nullable = false)
     val noteCount: Int = 0,
+
+    @Column(name = "demo_session_id", columnDefinition = "uuid")
+    var demoSessionId: UUID? = null,
 ) : AuditableSoftDeletableEntity() {
     
     /**

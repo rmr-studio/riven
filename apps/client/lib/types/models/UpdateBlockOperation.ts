@@ -13,13 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
-import type { UpdateBlockOperationAllOfUpdatedContent } from './UpdateBlockOperationAllOfUpdatedContent';
+import type { Node } from './Node';
 import {
-    UpdateBlockOperationAllOfUpdatedContentFromJSON,
-    UpdateBlockOperationAllOfUpdatedContentFromJSONTyped,
-    UpdateBlockOperationAllOfUpdatedContentToJSON,
-    UpdateBlockOperationAllOfUpdatedContentToJSONTyped,
-} from './UpdateBlockOperationAllOfUpdatedContent';
+    NodeFromJSON,
+    NodeFromJSONTyped,
+    NodeToJSON,
+    NodeToJSONTyped,
+} from './Node';
 import type { BlockOperationType } from './BlockOperationType';
 import {
     BlockOperationTypeFromJSON,
@@ -36,22 +36,70 @@ import {
 export interface UpdateBlockOperation {
     /**
      * 
-     * @type {string}
-     * @memberof UpdateBlockOperation
-     */
-    blockId: string;
-    /**
-     * 
      * @type {BlockOperationType}
      * @memberof UpdateBlockOperation
      */
     type: BlockOperationType;
     /**
      * 
-     * @type {UpdateBlockOperationAllOfUpdatedContent}
+     * @type {string}
      * @memberof UpdateBlockOperation
      */
-    updatedContent: UpdateBlockOperationAllOfUpdatedContent;
+    blockId: string;
+    /**
+     * 
+     * @type {Node}
+     * @memberof UpdateBlockOperation
+     */
+    block: Node;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateBlockOperation
+     */
+    parentId: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof UpdateBlockOperation
+     */
+    index?: number | null;
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof UpdateBlockOperation
+     */
+    childrenIds: { [key: string]: string; };
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateBlockOperation
+     */
+    fromParentId?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof UpdateBlockOperation
+     */
+    toParentId?: string | null;
+    /**
+     * 
+     * @type {Node}
+     * @memberof UpdateBlockOperation
+     */
+    updatedContent: Node;
+    /**
+     * 
+     * @type {number}
+     * @memberof UpdateBlockOperation
+     */
+    fromIndex: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof UpdateBlockOperation
+     */
+    toIndex: number;
 }
 
 
@@ -60,9 +108,14 @@ export interface UpdateBlockOperation {
  * Check if a given object implements the UpdateBlockOperation interface.
  */
 export function instanceOfUpdateBlockOperation(value: object): value is UpdateBlockOperation {
-    if (!('blockId' in value) || value['blockId'] === undefined) return false;
     if (!('type' in value) || value['type'] === undefined) return false;
+    if (!('blockId' in value) || value['blockId'] === undefined) return false;
+    if (!('block' in value) || value['block'] === undefined) return false;
+    if (!('parentId' in value) || value['parentId'] === undefined) return false;
+    if (!('childrenIds' in value) || value['childrenIds'] === undefined) return false;
     if (!('updatedContent' in value) || value['updatedContent'] === undefined) return false;
+    if (!('fromIndex' in value) || value['fromIndex'] === undefined) return false;
+    if (!('toIndex' in value) || value['toIndex'] === undefined) return false;
     return true;
 }
 
@@ -76,9 +129,17 @@ export function UpdateBlockOperationFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'blockId': json['blockId'],
         'type': BlockOperationTypeFromJSON(json['type']),
-        'updatedContent': UpdateBlockOperationAllOfUpdatedContentFromJSON(json['updatedContent']),
+        'blockId': json['blockId'],
+        'block': NodeFromJSON(json['block']),
+        'parentId': json['parentId'],
+        'index': json['index'] == null ? undefined : json['index'],
+        'childrenIds': json['childrenIds'],
+        'fromParentId': json['fromParentId'] == null ? undefined : json['fromParentId'],
+        'toParentId': json['toParentId'] == null ? undefined : json['toParentId'],
+        'updatedContent': NodeFromJSON(json['updatedContent']),
+        'fromIndex': json['fromIndex'],
+        'toIndex': json['toIndex'],
     };
 }
 
@@ -93,9 +154,17 @@ export function UpdateBlockOperationToJSONTyped(value?: UpdateBlockOperation | n
 
     return {
         
-        'blockId': value['blockId'],
         'type': BlockOperationTypeToJSON(value['type']),
-        'updatedContent': UpdateBlockOperationAllOfUpdatedContentToJSON(value['updatedContent']),
+        'blockId': value['blockId'],
+        'block': NodeToJSON(value['block']),
+        'parentId': value['parentId'],
+        'index': value['index'],
+        'childrenIds': value['childrenIds'],
+        'fromParentId': value['fromParentId'],
+        'toParentId': value['toParentId'],
+        'updatedContent': NodeToJSON(value['updatedContent']),
+        'fromIndex': value['fromIndex'],
+        'toIndex': value['toIndex'],
     };
 }
 

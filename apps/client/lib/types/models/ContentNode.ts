@@ -13,13 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
-import type { Node } from './Node';
+import type { ReferencePayload } from './ReferencePayload';
 import {
-    NodeFromJSON,
-    NodeFromJSONTyped,
-    NodeToJSON,
-    NodeToJSONTyped,
-} from './Node';
+    ReferencePayloadFromJSON,
+    ReferencePayloadFromJSONTyped,
+    ReferencePayloadToJSON,
+    ReferencePayloadToJSONTyped,
+} from './ReferencePayload';
 import type { NodeType } from './NodeType';
 import {
     NodeTypeFromJSON,
@@ -43,12 +43,6 @@ import {
 export interface ContentNode {
     /**
      * 
-     * @type {Block}
-     * @memberof ContentNode
-     */
-    block: Block;
-    /**
-     * 
      * @type {Array<string>}
      * @memberof ContentNode
      */
@@ -61,10 +55,22 @@ export interface ContentNode {
     type: NodeType;
     /**
      * 
-     * @type {Array<Node>}
+     * @type {Block}
      * @memberof ContentNode
      */
-    children?: Array<Node>;
+    block: Block;
+    /**
+     * 
+     * @type {Array<object>}
+     * @memberof ContentNode
+     */
+    children?: Array<object> | null;
+    /**
+     * 
+     * @type {ReferencePayload}
+     * @memberof ContentNode
+     */
+    reference: ReferencePayload;
 }
 
 
@@ -73,9 +79,10 @@ export interface ContentNode {
  * Check if a given object implements the ContentNode interface.
  */
 export function instanceOfContentNode(value: object): value is ContentNode {
-    if (!('block' in value) || value['block'] === undefined) return false;
     if (!('warnings' in value) || value['warnings'] === undefined) return false;
     if (!('type' in value) || value['type'] === undefined) return false;
+    if (!('block' in value) || value['block'] === undefined) return false;
+    if (!('reference' in value) || value['reference'] === undefined) return false;
     return true;
 }
 
@@ -89,10 +96,11 @@ export function ContentNodeFromJSONTyped(json: any, ignoreDiscriminator: boolean
     }
     return {
         
-        'block': BlockFromJSON(json['block']),
         'warnings': json['warnings'],
         'type': NodeTypeFromJSON(json['type']),
-        'children': json['children'] == null ? undefined : ((json['children'] as Array<any>).map(NodeFromJSON)),
+        'block': BlockFromJSON(json['block']),
+        'children': json['children'] == null ? undefined : json['children'],
+        'reference': ReferencePayloadFromJSON(json['reference']),
     };
 }
 
@@ -107,10 +115,11 @@ export function ContentNodeToJSONTyped(value?: ContentNode | null, ignoreDiscrim
 
     return {
         
-        'block': BlockToJSON(value['block']),
         'warnings': value['warnings'],
         'type': NodeTypeToJSON(value['type']),
-        'children': value['children'] == null ? undefined : ((value['children'] as Array<any>).map(NodeToJSON)),
+        'block': BlockToJSON(value['block']),
+        'children': value['children'],
+        'reference': ReferencePayloadToJSON(value['reference']),
     };
 }
 

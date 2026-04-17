@@ -8,9 +8,9 @@ Configuration for FUNCTION category nodes.
 Name | Type
 ------------ | -------------
 `version` | number
-`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
-`config` | { [key: string]: object; }
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
+`config` | { [key: string]: object; }
+`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
 
 ## Example
 
@@ -20,9 +20,9 @@ import type { WorkflowFunctionConfig } from ''
 // TODO: Update the object below with actual values
 const example = {
   "version": null,
-  "configSchema": null,
-  "config": null,
   "type": null,
+  "config": null,
+  "configSchema": null,
 } satisfies WorkflowFunctionConfig
 
 console.log(example)

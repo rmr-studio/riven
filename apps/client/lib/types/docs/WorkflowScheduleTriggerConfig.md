@@ -9,12 +9,12 @@ Name | Type
 ------------ | -------------
 `version` | number
 `cronExpression` | string
-`interval` | [WorkflowScheduleTriggerConfigInterval](WorkflowScheduleTriggerConfigInterval.md)
-`timeZone` | [WorkflowScheduleTriggerConfigTimeZone](WorkflowScheduleTriggerConfigTimeZone.md)
-`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
-`config` | { [key: string]: object; }
-`subType` | [WorkflowTriggerType](WorkflowTriggerType.md)
+`interval` | string
+`timeZone` | string
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
+`subType` | [WorkflowTriggerType](WorkflowTriggerType.md)
+`config` | { [key: string]: object; }
+`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
 
 ## Example
 
@@ -27,10 +27,10 @@ const example = {
   "cronExpression": null,
   "interval": null,
   "timeZone": null,
-  "configSchema": null,
-  "config": null,
-  "subType": null,
   "type": null,
+  "subType": null,
+  "config": null,
+  "configSchema": null,
 } satisfies WorkflowScheduleTriggerConfig
 
 console.log(example)

@@ -10,10 +10,10 @@ Name | Type
 `version` | number
 `entityId` | string
 `timeoutSeconds` | number
-`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
-`config` | { [key: string]: object; }
-`subType` | [WorkflowActionType](WorkflowActionType.md)
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
+`subType` | [WorkflowActionType](WorkflowActionType.md)
+`config` | { [key: string]: object; }
+`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
 
 ## Example
 
@@ -23,12 +23,12 @@ import type { WorkflowDeleteEntityActionConfig } from ''
 // TODO: Update the object below with actual values
 const example = {
   "version": null,
-  "entityId": null,
+  "entityId": 550e8400-e29b-41d4-a716-446655440000,
   "timeoutSeconds": null,
-  "configSchema": null,
-  "config": null,
-  "subType": null,
   "type": null,
+  "subType": null,
+  "config": null,
+  "configSchema": null,
 } satisfies WorkflowDeleteEntityActionConfig
 
 console.log(example)

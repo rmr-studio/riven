@@ -39,6 +39,7 @@ psql -d your_database -f 01_tables/entities.sql
 psql -d your_database -f 01_tables/integrations.sql
 psql -d your_database -f 01_tables/catalog.sql
 psql -d your_database -f 01_tables/integrations_stale_migration.sql
+psql -d your_database -f 01_tables/insights.sql
 ```
 
 **Dependencies:**
@@ -58,6 +59,7 @@ psql -d your_database -f 02_indexes/block_indexes.sql
 psql -d your_database -f 02_indexes/entity_indexes.sql
 psql -d your_database -f 02_indexes/integration_indexes.sql
 psql -d your_database -f 02_indexes/catalog_indexes.sql
+psql -d your_database -f 02_indexes/insights_indexes.sql
 ```
 
 ### 4. Functions (03_functions/)

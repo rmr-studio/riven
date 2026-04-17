@@ -94,4 +94,11 @@ interface EntityRepository : JpaRepository<EntityEntity, UUID> {
         sourceExternalIds: Collection<String>,
     ): List<EntityEntity>
 
+    /**
+     * Find all entities tagged with a given demo session id (used by the Insights demo seeder
+     * to soft-delete seeded entities when a chat session is removed).
+     */
+    @Query("SELECT e FROM EntityEntity e WHERE e.demoSessionId = :demoSessionId")
+    fun findByDemoSessionId(demoSessionId: UUID): List<EntityEntity>
+
 }

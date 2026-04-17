@@ -53,37 +53,37 @@ export interface WorkflowFunctionTriggerConfig {
      * @type {number}
      * @memberof WorkflowFunctionTriggerConfig
      */
-    version?: number;
+    version: number;
     /**
      * 
      * @type {SchemaString}
      * @memberof WorkflowFunctionTriggerConfig
      */
-    schema?: SchemaString;
-    /**
-     * 
-     * @type {Array<WorkflowNodeConfigField>}
-     * @memberof WorkflowFunctionTriggerConfig
-     */
-    configSchema?: Array<WorkflowNodeConfigField>;
-    /**
-     * 
-     * @type {{ [key: string]: object; }}
-     * @memberof WorkflowFunctionTriggerConfig
-     */
-    config?: { [key: string]: object; };
-    /**
-     * 
-     * @type {WorkflowTriggerType}
-     * @memberof WorkflowFunctionTriggerConfig
-     */
-    subType?: WorkflowTriggerType;
+    schema: SchemaString;
     /**
      * 
      * @type {WorkflowNodeType}
      * @memberof WorkflowFunctionTriggerConfig
      */
     type?: WorkflowNodeType;
+    /**
+     * 
+     * @type {WorkflowTriggerType}
+     * @memberof WorkflowFunctionTriggerConfig
+     */
+    subType: WorkflowTriggerType;
+    /**
+     * 
+     * @type {{ [key: string]: object; }}
+     * @memberof WorkflowFunctionTriggerConfig
+     */
+    config: { [key: string]: object; };
+    /**
+     * 
+     * @type {Array<WorkflowNodeConfigField>}
+     * @memberof WorkflowFunctionTriggerConfig
+     */
+    configSchema: Array<WorkflowNodeConfigField>;
 }
 
 
@@ -92,6 +92,11 @@ export interface WorkflowFunctionTriggerConfig {
  * Check if a given object implements the WorkflowFunctionTriggerConfig interface.
  */
 export function instanceOfWorkflowFunctionTriggerConfig(value: object): value is WorkflowFunctionTriggerConfig {
+    if (!('version' in value) || value['version'] === undefined) return false;
+    if (!('schema' in value) || value['schema'] === undefined) return false;
+    if (!('subType' in value) || value['subType'] === undefined) return false;
+    if (!('config' in value) || value['config'] === undefined) return false;
+    if (!('configSchema' in value) || value['configSchema'] === undefined) return false;
     return true;
 }
 
@@ -105,12 +110,12 @@ export function WorkflowFunctionTriggerConfigFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
-        'version': json['version'] == null ? undefined : json['version'],
-        'schema': json['schema'] == null ? undefined : SchemaStringFromJSON(json['schema']),
-        'configSchema': json['configSchema'] == null ? undefined : ((json['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldFromJSON)),
-        'config': json['config'] == null ? undefined : json['config'],
-        'subType': json['subType'] == null ? undefined : WorkflowTriggerTypeFromJSON(json['subType']),
+        'version': json['version'],
+        'schema': SchemaStringFromJSON(json['schema']),
         'type': json['type'] == null ? undefined : WorkflowNodeTypeFromJSON(json['type']),
+        'subType': WorkflowTriggerTypeFromJSON(json['subType']),
+        'config': json['config'],
+        'configSchema': ((json['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldFromJSON)),
     };
 }
 
@@ -127,10 +132,10 @@ export function WorkflowFunctionTriggerConfigToJSONTyped(value?: WorkflowFunctio
         
         'version': value['version'],
         'schema': SchemaStringToJSON(value['schema']),
-        'configSchema': value['configSchema'] == null ? undefined : ((value['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldToJSON)),
-        'config': value['config'],
-        'subType': WorkflowTriggerTypeToJSON(value['subType']),
         'type': WorkflowNodeTypeToJSON(value['type']),
+        'subType': WorkflowTriggerTypeToJSON(value['subType']),
+        'config': value['config'],
+        'configSchema': ((value['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldToJSON)),
     };
 }
 

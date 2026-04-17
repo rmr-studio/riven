@@ -114,3 +114,95 @@
 **New components introduced:**
 
 - Feature design document only — no code components introduced in this change. The document specifies components to be built across 5 implementation phases.
+
+## 2026-04-15 — Insights Chat Demo Domain
+
+**Domains affected:** Insights (new), Entities, Identity
+
+**What changed:**
+
+- Introduced a new `insights` domain providing a workspace-scoped, multi-turn AI chat demo (Anthropic Messages API) that cites real entities and identity clusters
+- Added `insights_chat_sessions` and `insights_messages` tables; both are user-facing soft-deletable
+- Added a `demo_session_id` column to `entities` and `identity_clusters` so demo-seeded rows can be cleaned up when a session is deleted (intentionally demo-scoped tech debt)
+- Added the `INSIGHTS_CHAT_SESSION` and `INSIGHTS_MESSAGE` values to `Activity` and `ApplicationEntityType` enums for audit logging
+- Added `LlmCallException` and `LlmResponseParseException` mapped to HTTP 502 in `ExceptionHandler`
+
+**New cross-domain dependencies:** Yes — Insights → Entities: `DemoSeederService` and `CitationValidator` use `EntityRepository` and `EntityTypeRepository`. Insights → Identity: `DemoSeederService` writes `IdentityClusterEntity`/`IdentityClusterMemberEntity`. Insights → external LLM provider: `AnthropicChatClient` calls the Anthropic Messages API.
+
+**New components introduced:**
+
+- `InsightsService` — orchestrates session lifecycle, demo-pool seeding, LLM dispatch, citation validation, and message persistence
+- `DemoSeederService` — idempotent ephemeral demo entity/cluster seeder keyed by `demo_session_id`
+- `AnthropicChatClient` — thin Anthropic Messages API client with system-prompt caching and JSON assistant prefill
+- `PromptBuilder` — assembles the cached system prompt + chat history
+- `InsightsResponseParser` — parses the LLM `{answer, citations}` envelope, tolerant to assistant prefill quirks
+- `CitationValidator` — drops citations whose entity ids aren't in the seeded pool, are soft-deleted, or belong to a different workspace
+- `InsightsController` — REST endpoints under `/api/v1/insights/workspace/{workspaceId}/sessions`
+- `InsightsChatSessionEntity`, `InsightsMessageEntity`, `InsightsChatSessionRepository`, `InsightsMessageRepository`
+- `AnthropicConfigurationProperties` (`riven.insights.anthropic.*`) and `InsightsWebClientConfig` for the WebClient bean
+
+## [2026-04-15] — Insights demo seeder enrichment (attributes + relationships)
+
+**Domains affected:** Insights, Entity
+
+**What changed:**
+
+- `DemoSeederService` now populates `EntityAttributeEntity` rows for seeded customer and feature-usage-event entities, matching attribute ids from the existing workspace `EntityTypeSchema` via semantic label/key matches. Tolerant of missing attributes — skips gracefully.
+- `DemoSeederService` now creates `EntityRelationshipEntity` rows linking each seeded event → its owning customer, using the first `RelationshipDefinitionEntity` with the event entity type as source (preferring definitions whose name contains "source" or "customer"). Skips silently if no definition exists.
+- `cleanupPoolForSession` now explicitly soft-deletes attributes and relationships for demo-tagged entities (neither cascades via JPA).
+- `buildPoolSummary` now embeds key attribute values (name, plan, LTV, feature, action, count, date) and the event → customer linkage in the per-line summary. Caps customers and events-per-customer in the summary to keep the cached system prompt compact.
+
+**New cross-domain dependencies:** No new directions — tightens the existing Insights → Entity dependency to also include `EntityAttributeRepository`, `EntityRelationshipRepository`, and `RelationshipDefinitionRepository`.
+
+**New components introduced:** None — `DemoSeederService` constructor grew three new repository dependencies and an `ObjectMapper` for JSONB value construction.
+
+## [2026-04-15] — Insights chat now consumes workspace business definitions
+
+**Domains affected:** insights, knowledge
+**What changed:**
+- InsightsService reads active WorkspaceBusinessDefinitions per request and passes them to PromptBuilder, which renders them inside the cached system prefix so the LLM frames answers using workspace-specific terminology.
+
+**New cross-domain dependencies:** yes — insights → knowledge via WorkspaceBusinessDefinitionService.
+**New components introduced:** none (existing service reused).
+
+## [2026-04-15] — Insights suggested-prompts endpoint
+
+**Domains affected:** insights
+**What changed:**
+- New GET /api/v1/insights/workspace/{id}/demo/suggested-prompts endpoint returns a curated, data-signal-aware list of demo-ready prompts.
+- New InsightsDemoService probes workspace for entity-type, cluster, and active-business-definition signals and scores/filters a prompt catalog accordingly.
+
+**New cross-domain dependencies:** no (reuses existing knowledge + identity + entity services).
+**New components introduced:** InsightsDemoService (prompt-catalog scorer).
+
+## [2026-04-15] — Insights demo ensure-ready seeding
+
+**Domains affected:** insights, knowledge
+**What changed:**
+- New POST /api/v1/insights/workspace/{id}/demo/ensure-ready endpoint idempotently seeds 5 curated business definitions (valuable customer, active customer, power user, at risk, retention) via WorkspaceBusinessDefinitionService.createDefinitionInternal.
+- Definitions are categorised as METRIC/LIFECYCLE_STAGE/SEGMENT/STATUS/METRIC respectively. Idempotency is enforced by normalized-term lookup.
+
+**New cross-domain dependencies:** no (insights→knowledge already exists).
+**New components introduced:** none (extends InsightsDemoService).
+
+## [2026-04-15] — Insights chat switches to inline entity citations
+
+**Domains affected:** insights
+**What changed:**
+- System prompt now instructs the LLM to emit entity citations as inline markdown links `[label](entity:<uuid>)` and to avoid all other markdown.
+- Server derives `citations[]` by parsing those markers from the answer, validating UUIDs against the seeded pool (entities + identity clusters), and populating `entityType` from pool metadata. Invalid/missing citations are stripped (label text preserved). Non-link markdown is defensively stripped.
+- New `InlineCitationExtractor` + `AnswerSanitizer` path; `InsightsResponseParser` no longer trusts model-emitted citation arrays (parses `{answer}` only, tolerates a stray `citations` field for backward compat). `CitationValidator` removed (replaced by sanitizer).
+
+**New cross-domain dependencies:** no.
+**New components introduced:** InlineCitationExtractor (Spring component, regex-based marker parser); AnswerSanitizer (Spring component, strips stray markdown and derives validated citations).
+
+## [2026-04-15] — Insights per-message demo augmentation
+
+**Domains affected:** insights
+**What changed:**
+- Every user message now triggers a short LLM planner call (DemoAugmentationPlanner) that proposes small additions to the demo pool tailored to the question — new customers, new events, cluster memberships.
+- Additions are applied via DemoSeederService.applyAugmentationPlan under hard caps (<=8 customers, <=30 events per turn) and tagged with demo_session_id so session-delete still cleans them up.
+- Planner or applier failures degrade gracefully: log WARN and proceed with the existing pool.
+
+**New cross-domain dependencies:** no.
+**New components introduced:** DemoAugmentationPlanner (Spring component; question-aware pool growth via a compact secondary LLM call).

@@ -32,6 +32,9 @@ data class IdentityClusterEntity(
 
     @Column(name = "member_count", nullable = false)
     var memberCount: Int = 0,
+
+    @Column(name = "demo_session_id", columnDefinition = "uuid")
+    var demoSessionId: UUID? = null,
 ) : AuditableSoftDeletableEntity() {
 
     /** Convert this entity to the domain model. */

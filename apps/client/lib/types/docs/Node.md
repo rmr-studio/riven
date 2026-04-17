@@ -6,9 +6,11 @@
 
 Name | Type
 ------------ | -------------
-`block` | [Block](Block.md)
 `warnings` | Array&lt;string&gt;
 `type` | [NodeType](NodeType.md)
+`block` | [Block](Block.md)
+`reference` | [ReferencePayload](ReferencePayload.md)
+`children` | Array&lt;object&gt;
 
 ## Example
 
@@ -17,9 +19,11 @@ import type { Node } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "block": null,
   "warnings": null,
   "type": null,
+  "block": null,
+  "reference": null,
+  "children": null,
 } satisfies Node
 
 console.log(example)

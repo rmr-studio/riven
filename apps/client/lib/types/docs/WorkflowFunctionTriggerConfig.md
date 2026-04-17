@@ -9,10 +9,10 @@ Name | Type
 ------------ | -------------
 `version` | number
 `schema` | [SchemaString](SchemaString.md)
-`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
-`config` | { [key: string]: object; }
-`subType` | [WorkflowTriggerType](WorkflowTriggerType.md)
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
+`subType` | [WorkflowTriggerType](WorkflowTriggerType.md)
+`config` | { [key: string]: object; }
+`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
 
 ## Example
 
@@ -23,10 +23,10 @@ import type { WorkflowFunctionTriggerConfig } from ''
 const example = {
   "version": null,
   "schema": null,
-  "configSchema": null,
-  "config": null,
-  "subType": null,
   "type": null,
+  "subType": null,
+  "config": null,
+  "configSchema": null,
 } satisfies WorkflowFunctionTriggerConfig
 
 console.log(example)

@@ -74,55 +74,55 @@ export interface WorkflowWebhookTriggerConfig {
      * @type {number}
      * @memberof WorkflowWebhookTriggerConfig
      */
-    version?: number;
+    version: number;
     /**
      * 
      * @type {RequestMethodType}
      * @memberof WorkflowWebhookTriggerConfig
      */
-    method?: RequestMethodType;
+    method: RequestMethodType;
     /**
      * 
      * @type {AuthenticationType}
      * @memberof WorkflowWebhookTriggerConfig
      */
-    authentication?: AuthenticationType;
+    authentication: AuthenticationType;
     /**
      * 
      * @type {Signature}
      * @memberof WorkflowWebhookTriggerConfig
      */
-    signature?: Signature;
+    signature: Signature;
     /**
      * 
      * @type {SchemaString}
      * @memberof WorkflowWebhookTriggerConfig
      */
-    payloadSchema?: SchemaString;
-    /**
-     * 
-     * @type {Array<WorkflowNodeConfigField>}
-     * @memberof WorkflowWebhookTriggerConfig
-     */
-    configSchema?: Array<WorkflowNodeConfigField>;
-    /**
-     * 
-     * @type {{ [key: string]: object; }}
-     * @memberof WorkflowWebhookTriggerConfig
-     */
-    config?: { [key: string]: object; };
-    /**
-     * 
-     * @type {WorkflowTriggerType}
-     * @memberof WorkflowWebhookTriggerConfig
-     */
-    subType?: WorkflowTriggerType;
+    payloadSchema: SchemaString;
     /**
      * 
      * @type {WorkflowNodeType}
      * @memberof WorkflowWebhookTriggerConfig
      */
     type?: WorkflowNodeType;
+    /**
+     * 
+     * @type {WorkflowTriggerType}
+     * @memberof WorkflowWebhookTriggerConfig
+     */
+    subType: WorkflowTriggerType;
+    /**
+     * 
+     * @type {{ [key: string]: object; }}
+     * @memberof WorkflowWebhookTriggerConfig
+     */
+    config: { [key: string]: object; };
+    /**
+     * 
+     * @type {Array<WorkflowNodeConfigField>}
+     * @memberof WorkflowWebhookTriggerConfig
+     */
+    configSchema: Array<WorkflowNodeConfigField>;
 }
 
 
@@ -131,6 +131,14 @@ export interface WorkflowWebhookTriggerConfig {
  * Check if a given object implements the WorkflowWebhookTriggerConfig interface.
  */
 export function instanceOfWorkflowWebhookTriggerConfig(value: object): value is WorkflowWebhookTriggerConfig {
+    if (!('version' in value) || value['version'] === undefined) return false;
+    if (!('method' in value) || value['method'] === undefined) return false;
+    if (!('authentication' in value) || value['authentication'] === undefined) return false;
+    if (!('signature' in value) || value['signature'] === undefined) return false;
+    if (!('payloadSchema' in value) || value['payloadSchema'] === undefined) return false;
+    if (!('subType' in value) || value['subType'] === undefined) return false;
+    if (!('config' in value) || value['config'] === undefined) return false;
+    if (!('configSchema' in value) || value['configSchema'] === undefined) return false;
     return true;
 }
 
@@ -144,15 +152,15 @@ export function WorkflowWebhookTriggerConfigFromJSONTyped(json: any, ignoreDiscr
     }
     return {
         
-        'version': json['version'] == null ? undefined : json['version'],
-        'method': json['method'] == null ? undefined : RequestMethodTypeFromJSON(json['method']),
-        'authentication': json['authentication'] == null ? undefined : AuthenticationTypeFromJSON(json['authentication']),
-        'signature': json['signature'] == null ? undefined : SignatureFromJSON(json['signature']),
-        'payloadSchema': json['payloadSchema'] == null ? undefined : SchemaStringFromJSON(json['payloadSchema']),
-        'configSchema': json['configSchema'] == null ? undefined : ((json['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldFromJSON)),
-        'config': json['config'] == null ? undefined : json['config'],
-        'subType': json['subType'] == null ? undefined : WorkflowTriggerTypeFromJSON(json['subType']),
+        'version': json['version'],
+        'method': RequestMethodTypeFromJSON(json['method']),
+        'authentication': AuthenticationTypeFromJSON(json['authentication']),
+        'signature': SignatureFromJSON(json['signature']),
+        'payloadSchema': SchemaStringFromJSON(json['payloadSchema']),
         'type': json['type'] == null ? undefined : WorkflowNodeTypeFromJSON(json['type']),
+        'subType': WorkflowTriggerTypeFromJSON(json['subType']),
+        'config': json['config'],
+        'configSchema': ((json['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldFromJSON)),
     };
 }
 
@@ -172,10 +180,10 @@ export function WorkflowWebhookTriggerConfigToJSONTyped(value?: WorkflowWebhookT
         'authentication': AuthenticationTypeToJSON(value['authentication']),
         'signature': SignatureToJSON(value['signature']),
         'payloadSchema': SchemaStringToJSON(value['payloadSchema']),
-        'configSchema': value['configSchema'] == null ? undefined : ((value['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldToJSON)),
-        'config': value['config'],
-        'subType': WorkflowTriggerTypeToJSON(value['subType']),
         'type': WorkflowNodeTypeToJSON(value['type']),
+        'subType': WorkflowTriggerTypeToJSON(value['subType']),
+        'config': value['config'],
+        'configSchema': ((value['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldToJSON)),
     };
 }
 

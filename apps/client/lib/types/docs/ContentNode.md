@@ -7,10 +7,11 @@ Content node containing a block with optional children
 
 Name | Type
 ------------ | -------------
-`block` | [Block](Block.md)
 `warnings` | Array&lt;string&gt;
 `type` | [NodeType](NodeType.md)
-`children` | [Array&lt;Node&gt;](Node.md)
+`block` | [Block](Block.md)
+`children` | Array&lt;object&gt;
+`reference` | [ReferencePayload](ReferencePayload.md)
 
 ## Example
 
@@ -19,10 +20,11 @@ import type { ContentNode } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "block": null,
   "warnings": null,
   "type": null,
+  "block": null,
   "children": null,
+  "reference": null,
 } satisfies ContentNode
 
 console.log(example)

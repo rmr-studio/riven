@@ -40,6 +40,8 @@ CREATE TABLE IF NOT EXISTS public.identity_clusters (
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by   UUID,
     updated_by   UUID,
+    -- Demo-only: tags clusters seeded by the Insights chat demo seeder for cleanup. NULL for production data.
+    demo_session_id UUID,
 
     CONSTRAINT pk_identity_clusters           PRIMARY KEY (id),
     CONSTRAINT fk_identity_clusters_workspace FOREIGN KEY (workspace_id) REFERENCES public.workspaces(id) ON DELETE CASCADE

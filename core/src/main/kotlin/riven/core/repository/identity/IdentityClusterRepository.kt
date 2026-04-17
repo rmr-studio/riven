@@ -21,4 +21,10 @@ interface IdentityClusterRepository : JpaRepository<IdentityClusterEntity, UUID>
      * Used to enforce workspace isolation when loading cluster detail.
      */
     fun findByIdAndWorkspaceId(id: UUID, workspaceId: UUID): Optional<IdentityClusterEntity>
+
+    /**
+     * Find all clusters tagged with a given demo session id (used by the Insights demo seeder
+     * to soft-delete seeded clusters when a chat session is removed).
+     */
+    fun findByDemoSessionId(demoSessionId: UUID): List<IdentityClusterEntity>
 }

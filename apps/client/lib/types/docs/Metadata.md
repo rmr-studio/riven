@@ -6,10 +6,23 @@
 
 Name | Type
 ------------ | -------------
-`deletable` | boolean
+`type` | [BlockMetadataType](BlockMetadataType.md)
 `meta` | [BlockMeta](BlockMeta.md)
 `readonly` | boolean
-`type` | [BlockMetadataType](BlockMetadataType.md)
+`deletable` | boolean
+`expandDepth` | number
+`item` | [ReferenceItem](ReferenceItem.md)
+`data` | object
+`listConfig` | [BlockListConfiguration](BlockListConfiguration.md)
+`path` | string
+`fetchPolicy` | [BlockReferenceFetchPolicy](BlockReferenceFetchPolicy.md)
+`presentation` | [Presentation](Presentation.md)
+`items` | [Array&lt;ReferenceItem&gt;](ReferenceItem.md)
+`projection` | [Projection](Projection.md)
+`listType` | [Entity](Entity.md)
+`display` | [ListDisplayConfig](ListDisplayConfig.md)
+`config` | [ListConfig](ListConfig.md)
+`allowDuplicates` | boolean
 
 ## Example
 
@@ -18,10 +31,23 @@ import type { Metadata } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "deletable": null,
+  "type": null,
   "meta": null,
   "readonly": null,
-  "type": null,
+  "deletable": null,
+  "expandDepth": null,
+  "item": null,
+  "data": null,
+  "listConfig": null,
+  "path": null,
+  "fetchPolicy": null,
+  "presentation": null,
+  "items": null,
+  "projection": null,
+  "listType": null,
+  "display": null,
+  "config": null,
+  "allowDuplicates": null,
 } satisfies Metadata
 
 console.log(example)

@@ -247,6 +247,34 @@ class ExceptionHandler(private val logger: KLogger, private val config: Applicat
         }
     }
 
+    // ------ LLM Exception Handlers ------
+
+    @ExceptionHandler(LlmCallException::class)
+    fun handleLlmCallException(ex: LlmCallException): ResponseEntity<ErrorResponse> {
+        storeExceptionForAnalytics(ex)
+        return ErrorResponse(
+            statusCode = HttpStatus.BAD_GATEWAY,
+            error = ApiError.INTERNAL_ERROR,
+            message = ex.message ?: "Upstream LLM call failed",
+            stackTrace = config.includeStackTrace.takeIf { it }?.let { ex.stackTraceToString() }
+        ).also { logger.error { it } }.let {
+            ResponseEntity(it, it.statusCode)
+        }
+    }
+
+    @ExceptionHandler(LlmResponseParseException::class)
+    fun handleLlmResponseParseException(ex: LlmResponseParseException): ResponseEntity<ErrorResponse> {
+        storeExceptionForAnalytics(ex)
+        return ErrorResponse(
+            statusCode = HttpStatus.BAD_GATEWAY,
+            error = ApiError.INTERNAL_ERROR,
+            message = ex.message ?: "Failed to parse LLM response",
+            stackTrace = config.includeStackTrace.takeIf { it }?.let { ex.stackTraceToString() }
+        ).also { logger.error { it } }.let {
+            ResponseEntity(it, it.statusCode)
+        }
+    }
+
     // ------ Data Connector Connection Exception Handlers ------
 
     @ExceptionHandler(SsrfRejectedException::class)

@@ -10,13 +10,13 @@ Name | Type
 `version` | number
 `url` | string
 `method` | string
-`headers` | { [key: string]: string; }
-`body` | { [key: string]: string; }
+`headers` | { [key: string]: string | null; }
+`body` | { [key: string]: string | null; }
 `timeoutSeconds` | number
-`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
-`config` | { [key: string]: object; }
-`subType` | [WorkflowActionType](WorkflowActionType.md)
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
+`subType` | [WorkflowActionType](WorkflowActionType.md)
+`config` | { [key: string]: object; }
+`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
 
 ## Example
 
@@ -26,15 +26,15 @@ import type { WorkflowHttpRequestActionConfig } from ''
 // TODO: Update the object below with actual values
 const example = {
   "version": null,
-  "url": null,
-  "method": null,
-  "headers": null,
-  "body": null,
-  "timeoutSeconds": null,
-  "configSchema": null,
-  "config": null,
-  "subType": null,
+  "url": https://api.example.com/users,
+  "method": POST,
+  "headers": {"Content-Type":"application/json","Authorization":"Bearer {{ steps.auth.output.token }}"},
+  "body": {"name":"{{ steps.user.output.name }}","email":"user@example.com"},
+  "timeoutSeconds": 30,
   "type": null,
+  "subType": null,
+  "config": null,
+  "configSchema": null,
 } satisfies WorkflowHttpRequestActionConfig
 
 console.log(example)

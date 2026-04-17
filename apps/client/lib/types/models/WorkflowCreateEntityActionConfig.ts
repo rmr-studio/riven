@@ -46,49 +46,49 @@ export interface WorkflowCreateEntityActionConfig {
      * @type {number}
      * @memberof WorkflowCreateEntityActionConfig
      */
-    version?: number;
+    version: number;
     /**
-     * 
+     * UUID of the entity type to create. Can be a static UUID or template like {{ steps.x.output.typeId }}
      * @type {string}
      * @memberof WorkflowCreateEntityActionConfig
      */
-    entityTypeId?: string;
+    entityTypeId: string;
     /**
-     * 
+     * Map of attribute key to value. Values can be templates like {{ steps.x.output.field }}
      * @type {{ [key: string]: string; }}
      * @memberof WorkflowCreateEntityActionConfig
      */
-    payload?: { [key: string]: string; };
+    payload: { [key: string]: string; };
     /**
-     * 
+     * Optional timeout override in seconds
      * @type {number}
      * @memberof WorkflowCreateEntityActionConfig
      */
-    timeoutSeconds?: number;
-    /**
-     * 
-     * @type {Array<WorkflowNodeConfigField>}
-     * @memberof WorkflowCreateEntityActionConfig
-     */
-    configSchema?: Array<WorkflowNodeConfigField>;
-    /**
-     * 
-     * @type {{ [key: string]: object; }}
-     * @memberof WorkflowCreateEntityActionConfig
-     */
-    config?: { [key: string]: object; };
-    /**
-     * 
-     * @type {WorkflowActionType}
-     * @memberof WorkflowCreateEntityActionConfig
-     */
-    subType?: WorkflowActionType;
+    timeoutSeconds?: number | null;
     /**
      * 
      * @type {WorkflowNodeType}
      * @memberof WorkflowCreateEntityActionConfig
      */
-    type?: WorkflowNodeType;
+    type: WorkflowNodeType;
+    /**
+     * 
+     * @type {WorkflowActionType}
+     * @memberof WorkflowCreateEntityActionConfig
+     */
+    subType: WorkflowActionType;
+    /**
+     * 
+     * @type {{ [key: string]: object; }}
+     * @memberof WorkflowCreateEntityActionConfig
+     */
+    config: { [key: string]: object; };
+    /**
+     * 
+     * @type {Array<WorkflowNodeConfigField>}
+     * @memberof WorkflowCreateEntityActionConfig
+     */
+    configSchema: Array<WorkflowNodeConfigField>;
 }
 
 
@@ -97,6 +97,13 @@ export interface WorkflowCreateEntityActionConfig {
  * Check if a given object implements the WorkflowCreateEntityActionConfig interface.
  */
 export function instanceOfWorkflowCreateEntityActionConfig(value: object): value is WorkflowCreateEntityActionConfig {
+    if (!('version' in value) || value['version'] === undefined) return false;
+    if (!('entityTypeId' in value) || value['entityTypeId'] === undefined) return false;
+    if (!('payload' in value) || value['payload'] === undefined) return false;
+    if (!('type' in value) || value['type'] === undefined) return false;
+    if (!('subType' in value) || value['subType'] === undefined) return false;
+    if (!('config' in value) || value['config'] === undefined) return false;
+    if (!('configSchema' in value) || value['configSchema'] === undefined) return false;
     return true;
 }
 
@@ -110,14 +117,14 @@ export function WorkflowCreateEntityActionConfigFromJSONTyped(json: any, ignoreD
     }
     return {
         
-        'version': json['version'] == null ? undefined : json['version'],
-        'entityTypeId': json['entityTypeId'] == null ? undefined : json['entityTypeId'],
-        'payload': json['payload'] == null ? undefined : json['payload'],
+        'version': json['version'],
+        'entityTypeId': json['entityTypeId'],
+        'payload': json['payload'],
         'timeoutSeconds': json['timeoutSeconds'] == null ? undefined : json['timeoutSeconds'],
-        'configSchema': json['configSchema'] == null ? undefined : ((json['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldFromJSON)),
-        'config': json['config'] == null ? undefined : json['config'],
-        'subType': json['subType'] == null ? undefined : WorkflowActionTypeFromJSON(json['subType']),
-        'type': json['type'] == null ? undefined : WorkflowNodeTypeFromJSON(json['type']),
+        'type': WorkflowNodeTypeFromJSON(json['type']),
+        'subType': WorkflowActionTypeFromJSON(json['subType']),
+        'config': json['config'],
+        'configSchema': ((json['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldFromJSON)),
     };
 }
 
@@ -136,10 +143,10 @@ export function WorkflowCreateEntityActionConfigToJSONTyped(value?: WorkflowCrea
         'entityTypeId': value['entityTypeId'],
         'payload': value['payload'],
         'timeoutSeconds': value['timeoutSeconds'],
-        'configSchema': value['configSchema'] == null ? undefined : ((value['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldToJSON)),
-        'config': value['config'],
-        'subType': WorkflowActionTypeToJSON(value['subType']),
         'type': WorkflowNodeTypeToJSON(value['type']),
+        'subType': WorkflowActionTypeToJSON(value['subType']),
+        'config': value['config'],
+        'configSchema': ((value['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldToJSON)),
     };
 }
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { KnowledgeBaseChat } from '@/components/feature-modules/knowledge-base/chat/components/knowledge-base-chat';
 import { BreadCrumbGroup, BreadCrumbTrail } from '@/components/ui/breadcrumb-group';
 import { isResponseError } from '@/lib/util/error/error.util';
 import { useRouter } from 'next/navigation';
@@ -55,6 +56,8 @@ export const WorkspaceDashboard = () => {
       <div className="mb-8 flex items-center justify-between">
         <BreadCrumbGroup items={trail} />
       </div>
+
+      <KnowledgeBaseChat workspaceId={workspace.id} />
     </>
   );
 };

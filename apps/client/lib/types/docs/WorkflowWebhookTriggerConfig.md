@@ -12,10 +12,10 @@ Name | Type
 `authentication` | [AuthenticationType](AuthenticationType.md)
 `signature` | [Signature](Signature.md)
 `payloadSchema` | [SchemaString](SchemaString.md)
-`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
-`config` | { [key: string]: object; }
-`subType` | [WorkflowTriggerType](WorkflowTriggerType.md)
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
+`subType` | [WorkflowTriggerType](WorkflowTriggerType.md)
+`config` | { [key: string]: object; }
+`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
 
 ## Example
 
@@ -29,10 +29,10 @@ const example = {
   "authentication": null,
   "signature": null,
   "payloadSchema": null,
-  "configSchema": null,
-  "config": null,
-  "subType": null,
   "type": null,
+  "subType": null,
+  "config": null,
+  "configSchema": null,
 } satisfies WorkflowWebhookTriggerConfig
 
 console.log(example)

@@ -67,55 +67,55 @@ export interface WorkflowQueryEntityActionConfig {
      * @type {number}
      * @memberof WorkflowQueryEntityActionConfig
      */
-    version?: number;
+    version: number;
     /**
      * 
      * @type {EntityQuery}
      * @memberof WorkflowQueryEntityActionConfig
      */
-    query?: EntityQuery;
+    query: EntityQuery;
     /**
      * 
      * @type {QueryPagination}
      * @memberof WorkflowQueryEntityActionConfig
      */
-    pagination?: QueryPagination;
+    pagination?: QueryPagination | null;
     /**
      * 
      * @type {QueryProjection}
      * @memberof WorkflowQueryEntityActionConfig
      */
-    projection?: QueryProjection;
+    projection?: QueryProjection | null;
     /**
-     * 
+     * Optional timeout override in seconds.
      * @type {number}
      * @memberof WorkflowQueryEntityActionConfig
      */
-    timeoutSeconds?: number;
-    /**
-     * 
-     * @type {Array<WorkflowNodeConfigField>}
-     * @memberof WorkflowQueryEntityActionConfig
-     */
-    configSchema?: Array<WorkflowNodeConfigField>;
-    /**
-     * 
-     * @type {{ [key: string]: object; }}
-     * @memberof WorkflowQueryEntityActionConfig
-     */
-    config?: { [key: string]: object; };
-    /**
-     * 
-     * @type {WorkflowActionType}
-     * @memberof WorkflowQueryEntityActionConfig
-     */
-    subType?: WorkflowActionType;
+    timeoutSeconds?: number | null;
     /**
      * 
      * @type {WorkflowNodeType}
      * @memberof WorkflowQueryEntityActionConfig
      */
-    type?: WorkflowNodeType;
+    type: WorkflowNodeType;
+    /**
+     * 
+     * @type {WorkflowActionType}
+     * @memberof WorkflowQueryEntityActionConfig
+     */
+    subType: WorkflowActionType;
+    /**
+     * 
+     * @type {{ [key: string]: object; }}
+     * @memberof WorkflowQueryEntityActionConfig
+     */
+    config: { [key: string]: object; };
+    /**
+     * 
+     * @type {Array<WorkflowNodeConfigField>}
+     * @memberof WorkflowQueryEntityActionConfig
+     */
+    configSchema: Array<WorkflowNodeConfigField>;
 }
 
 
@@ -124,6 +124,12 @@ export interface WorkflowQueryEntityActionConfig {
  * Check if a given object implements the WorkflowQueryEntityActionConfig interface.
  */
 export function instanceOfWorkflowQueryEntityActionConfig(value: object): value is WorkflowQueryEntityActionConfig {
+    if (!('version' in value) || value['version'] === undefined) return false;
+    if (!('query' in value) || value['query'] === undefined) return false;
+    if (!('type' in value) || value['type'] === undefined) return false;
+    if (!('subType' in value) || value['subType'] === undefined) return false;
+    if (!('config' in value) || value['config'] === undefined) return false;
+    if (!('configSchema' in value) || value['configSchema'] === undefined) return false;
     return true;
 }
 
@@ -137,15 +143,15 @@ export function WorkflowQueryEntityActionConfigFromJSONTyped(json: any, ignoreDi
     }
     return {
         
-        'version': json['version'] == null ? undefined : json['version'],
-        'query': json['query'] == null ? undefined : EntityQueryFromJSON(json['query']),
+        'version': json['version'],
+        'query': EntityQueryFromJSON(json['query']),
         'pagination': json['pagination'] == null ? undefined : QueryPaginationFromJSON(json['pagination']),
         'projection': json['projection'] == null ? undefined : QueryProjectionFromJSON(json['projection']),
         'timeoutSeconds': json['timeoutSeconds'] == null ? undefined : json['timeoutSeconds'],
-        'configSchema': json['configSchema'] == null ? undefined : ((json['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldFromJSON)),
-        'config': json['config'] == null ? undefined : json['config'],
-        'subType': json['subType'] == null ? undefined : WorkflowActionTypeFromJSON(json['subType']),
-        'type': json['type'] == null ? undefined : WorkflowNodeTypeFromJSON(json['type']),
+        'type': WorkflowNodeTypeFromJSON(json['type']),
+        'subType': WorkflowActionTypeFromJSON(json['subType']),
+        'config': json['config'],
+        'configSchema': ((json['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldFromJSON)),
     };
 }
 
@@ -165,10 +171,10 @@ export function WorkflowQueryEntityActionConfigToJSONTyped(value?: WorkflowQuery
         'pagination': QueryPaginationToJSON(value['pagination']),
         'projection': QueryProjectionToJSON(value['projection']),
         'timeoutSeconds': value['timeoutSeconds'],
-        'configSchema': value['configSchema'] == null ? undefined : ((value['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldToJSON)),
-        'config': value['config'],
-        'subType': WorkflowActionTypeToJSON(value['subType']),
         'type': WorkflowNodeTypeToJSON(value['type']),
+        'subType': WorkflowActionTypeToJSON(value['subType']),
+        'config': value['config'],
+        'configSchema': ((value['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldToJSON)),
     };
 }
 

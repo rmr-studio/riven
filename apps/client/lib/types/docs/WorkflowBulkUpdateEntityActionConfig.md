@@ -13,10 +13,10 @@ Name | Type
 `errorHandling` | [BulkUpdateErrorHandling](BulkUpdateErrorHandling.md)
 `pagination` | [QueryPagination](QueryPagination.md)
 `timeoutSeconds` | number
-`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
-`config` | { [key: string]: object; }
-`subType` | [WorkflowActionType](WorkflowActionType.md)
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
+`subType` | [WorkflowActionType](WorkflowActionType.md)
+`config` | { [key: string]: object; }
+`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
 
 ## Example
 
@@ -27,14 +27,14 @@ import type { WorkflowBulkUpdateEntityActionConfig } from ''
 const example = {
   "version": null,
   "query": null,
-  "payload": null,
+  "payload": {"attr-uuid":"New Value","status-uuid":"{{ steps.x.output.status }}"},
   "errorHandling": null,
   "pagination": null,
   "timeoutSeconds": null,
-  "configSchema": null,
-  "config": null,
-  "subType": null,
   "type": null,
+  "subType": null,
+  "config": null,
+  "configSchema": null,
 } satisfies WorkflowBulkUpdateEntityActionConfig
 
 console.log(example)

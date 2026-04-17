@@ -6,12 +6,10 @@
 
 Name | Type
 ------------ | -------------
-`deletable` | boolean
+`type` | [BlockMetadataType](BlockMetadataType.md)
 `meta` | [BlockMeta](BlockMeta.md)
 `readonly` | boolean
-`type` | [BlockMetadataType](BlockMetadataType.md)
-`fetchPolicy` | [BlockReferenceFetchPolicy](BlockReferenceFetchPolicy.md)
-`path` | string
+`deletable` | boolean
 `presentation` | [Presentation](Presentation.md)
 `items` | [Array&lt;ReferenceItem&gt;](ReferenceItem.md)
 `projection` | [Projection](Projection.md)
@@ -19,6 +17,12 @@ Name | Type
 `display` | [ListDisplayConfig](ListDisplayConfig.md)
 `config` | [ListConfig](ListConfig.md)
 `allowDuplicates` | boolean
+`expandDepth` | number
+`item` | [ReferenceItem](ReferenceItem.md)
+`data` | object
+`listConfig` | [BlockListConfiguration](BlockListConfiguration.md)
+`path` | string
+`fetchPolicy` | [BlockReferenceFetchPolicy](BlockReferenceFetchPolicy.md)
 
 ## Example
 
@@ -27,12 +31,10 @@ import type { EntityReferenceMetadata } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "deletable": null,
+  "type": null,
   "meta": null,
   "readonly": null,
-  "type": null,
-  "fetchPolicy": null,
-  "path": null,
+  "deletable": null,
   "presentation": null,
   "items": null,
   "projection": null,
@@ -40,6 +42,12 @@ const example = {
   "display": null,
   "config": null,
   "allowDuplicates": null,
+  "expandDepth": null,
+  "item": null,
+  "data": null,
+  "listConfig": null,
+  "path": null,
+  "fetchPolicy": null,
 } satisfies EntityReferenceMetadata
 
 console.log(example)

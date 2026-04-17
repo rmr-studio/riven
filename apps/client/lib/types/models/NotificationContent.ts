@@ -27,13 +27,13 @@ export interface NotificationContent {
      * @type {string}
      * @memberof NotificationContent
      */
-    title: string;
+    message: string;
     /**
      * 
      * @type {string}
      * @memberof NotificationContent
      */
-    message: string;
+    title: string;
     /**
      * 
      * @type {string}
@@ -46,8 +46,8 @@ export interface NotificationContent {
  * Check if a given object implements the NotificationContent interface.
  */
 export function instanceOfNotificationContent(value: object): value is NotificationContent {
-    if (!('title' in value) || value['title'] === undefined) return false;
     if (!('message' in value) || value['message'] === undefined) return false;
+    if (!('title' in value) || value['title'] === undefined) return false;
     if (!('type' in value) || value['type'] === undefined) return false;
     return true;
 }
@@ -74,8 +74,8 @@ export function NotificationContentFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'title': json['title'],
         'message': json['message'],
+        'title': json['title'],
         'type': json['type'],
     };
 }
@@ -104,8 +104,8 @@ export function NotificationContentToJSONTyped(value?: NotificationContent | nul
 
     return {
         
-        'title': value['title'],
         'message': value['message'],
+        'title': value['title'],
         'type': value['type'],
     };
 }

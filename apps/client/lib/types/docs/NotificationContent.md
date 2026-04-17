@@ -6,8 +6,8 @@
 
 Name | Type
 ------------ | -------------
-`title` | string
 `message` | string
+`title` | string
 `type` | string
 
 ## Example
@@ -17,8 +17,8 @@ import type { NotificationContent } from ''
 
 // TODO: Update the object below with actual values
 const example = {
-  "title": null,
   "message": null,
+  "title": null,
   "type": null,
 } satisfies NotificationContent
 

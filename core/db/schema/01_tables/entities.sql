@@ -72,7 +72,11 @@ CREATE TABLE IF NOT EXISTS public.entities
     "sync_version"          BIGINT      NOT NULL     DEFAULT 0,
 
     -- Denormalized count of notes for faster access (trigger-maintained)
-    "note_count"            INTEGER     NOT NULL     DEFAULT 0
+    "note_count"            INTEGER     NOT NULL     DEFAULT 0,
+
+    -- Demo-only: tags entities seeded by the Insights chat demo seeder so they can be cleaned
+    -- up when the corresponding insights_chat_sessions row is soft-deleted. NULL for production data.
+    "demo_session_id"       UUID                     DEFAULT NULL
 );
 
 -- =====================================================

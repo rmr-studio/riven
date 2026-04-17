@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { ReferencePayload } from './ReferencePayload';
+import {
+    ReferencePayloadFromJSON,
+    ReferencePayloadFromJSONTyped,
+    ReferencePayloadToJSON,
+    ReferencePayloadToJSONTyped,
+} from './ReferencePayload';
 import type { NodeType } from './NodeType';
 import {
     NodeTypeFromJSON,
@@ -27,13 +34,6 @@ import {
     BlockToJSON,
     BlockToJSONTyped,
 } from './Block';
-import type { ReferenceNodeAllOfReference1 } from './ReferenceNodeAllOfReference1';
-import {
-    ReferenceNodeAllOfReference1FromJSON,
-    ReferenceNodeAllOfReference1FromJSONTyped,
-    ReferenceNodeAllOfReference1ToJSON,
-    ReferenceNodeAllOfReference1ToJSONTyped,
-} from './ReferenceNodeAllOfReference1';
 
 /**
  * Reference node containing a block with entity or block tree references
@@ -41,12 +41,6 @@ import {
  * @interface ReferenceNode
  */
 export interface ReferenceNode {
-    /**
-     * 
-     * @type {Block}
-     * @memberof ReferenceNode
-     */
-    block: Block;
     /**
      * 
      * @type {Array<string>}
@@ -61,10 +55,22 @@ export interface ReferenceNode {
     type: NodeType;
     /**
      * 
-     * @type {ReferenceNodeAllOfReference1}
+     * @type {Block}
      * @memberof ReferenceNode
      */
-    reference: ReferenceNodeAllOfReference1;
+    block: Block;
+    /**
+     * 
+     * @type {Array<object>}
+     * @memberof ReferenceNode
+     */
+    children?: Array<object> | null;
+    /**
+     * 
+     * @type {ReferencePayload}
+     * @memberof ReferenceNode
+     */
+    reference: ReferencePayload;
 }
 
 
@@ -73,9 +79,9 @@ export interface ReferenceNode {
  * Check if a given object implements the ReferenceNode interface.
  */
 export function instanceOfReferenceNode(value: object): value is ReferenceNode {
-    if (!('block' in value) || value['block'] === undefined) return false;
     if (!('warnings' in value) || value['warnings'] === undefined) return false;
     if (!('type' in value) || value['type'] === undefined) return false;
+    if (!('block' in value) || value['block'] === undefined) return false;
     if (!('reference' in value) || value['reference'] === undefined) return false;
     return true;
 }
@@ -90,10 +96,11 @@ export function ReferenceNodeFromJSONTyped(json: any, ignoreDiscriminator: boole
     }
     return {
         
-        'block': BlockFromJSON(json['block']),
         'warnings': json['warnings'],
         'type': NodeTypeFromJSON(json['type']),
-        'reference': ReferenceNodeAllOfReference1FromJSON(json['reference']),
+        'block': BlockFromJSON(json['block']),
+        'children': json['children'] == null ? undefined : json['children'],
+        'reference': ReferencePayloadFromJSON(json['reference']),
     };
 }
 
@@ -108,10 +115,11 @@ export function ReferenceNodeToJSONTyped(value?: ReferenceNode | null, ignoreDis
 
     return {
         
-        'block': BlockToJSON(value['block']),
         'warnings': value['warnings'],
         'type': NodeTypeToJSON(value['type']),
-        'reference': ReferenceNodeAllOfReference1ToJSON(value['reference']),
+        'block': BlockToJSON(value['block']),
+        'children': value['children'],
+        'reference': ReferencePayloadToJSON(value['reference']),
     };
 }
 

@@ -53,55 +53,55 @@ export interface WorkflowEntityEventTriggerConfig {
      * @type {number}
      * @memberof WorkflowEntityEventTriggerConfig
      */
-    version?: number;
+    version: number;
     /**
      * 
      * @type {string}
      * @memberof WorkflowEntityEventTriggerConfig
      */
-    key?: string;
+    key: string;
     /**
      * 
      * @type {OperationType}
      * @memberof WorkflowEntityEventTriggerConfig
      */
-    operation?: OperationType;
+    operation: OperationType;
     /**
      * 
      * @type {Array<string>}
      * @memberof WorkflowEntityEventTriggerConfig
      */
-    field?: Array<string>;
+    field: Array<string>;
     /**
      * 
      * @type {object}
      * @memberof WorkflowEntityEventTriggerConfig
      */
-    expressions?: object;
+    expressions: object;
     /**
      * 
      * @type {{ [key: string]: object; }}
      * @memberof WorkflowEntityEventTriggerConfig
      */
-    config?: { [key: string]: object; };
-    /**
-     * 
-     * @type {Array<WorkflowNodeConfigField>}
-     * @memberof WorkflowEntityEventTriggerConfig
-     */
-    configSchema?: Array<WorkflowNodeConfigField>;
-    /**
-     * 
-     * @type {WorkflowTriggerType}
-     * @memberof WorkflowEntityEventTriggerConfig
-     */
-    subType?: WorkflowTriggerType;
+    config: { [key: string]: object; };
     /**
      * 
      * @type {WorkflowNodeType}
      * @memberof WorkflowEntityEventTriggerConfig
      */
     type?: WorkflowNodeType;
+    /**
+     * 
+     * @type {WorkflowTriggerType}
+     * @memberof WorkflowEntityEventTriggerConfig
+     */
+    subType: WorkflowTriggerType;
+    /**
+     * 
+     * @type {Array<WorkflowNodeConfigField>}
+     * @memberof WorkflowEntityEventTriggerConfig
+     */
+    configSchema: Array<WorkflowNodeConfigField>;
 }
 
 
@@ -110,6 +110,14 @@ export interface WorkflowEntityEventTriggerConfig {
  * Check if a given object implements the WorkflowEntityEventTriggerConfig interface.
  */
 export function instanceOfWorkflowEntityEventTriggerConfig(value: object): value is WorkflowEntityEventTriggerConfig {
+    if (!('version' in value) || value['version'] === undefined) return false;
+    if (!('key' in value) || value['key'] === undefined) return false;
+    if (!('operation' in value) || value['operation'] === undefined) return false;
+    if (!('field' in value) || value['field'] === undefined) return false;
+    if (!('expressions' in value) || value['expressions'] === undefined) return false;
+    if (!('config' in value) || value['config'] === undefined) return false;
+    if (!('subType' in value) || value['subType'] === undefined) return false;
+    if (!('configSchema' in value) || value['configSchema'] === undefined) return false;
     return true;
 }
 
@@ -123,15 +131,15 @@ export function WorkflowEntityEventTriggerConfigFromJSONTyped(json: any, ignoreD
     }
     return {
         
-        'version': json['version'] == null ? undefined : json['version'],
-        'key': json['key'] == null ? undefined : json['key'],
-        'operation': json['operation'] == null ? undefined : OperationTypeFromJSON(json['operation']),
-        'field': json['field'] == null ? undefined : json['field'],
-        'expressions': json['expressions'] == null ? undefined : json['expressions'],
-        'config': json['config'] == null ? undefined : json['config'],
-        'configSchema': json['configSchema'] == null ? undefined : ((json['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldFromJSON)),
-        'subType': json['subType'] == null ? undefined : WorkflowTriggerTypeFromJSON(json['subType']),
+        'version': json['version'],
+        'key': json['key'],
+        'operation': OperationTypeFromJSON(json['operation']),
+        'field': json['field'],
+        'expressions': json['expressions'],
+        'config': json['config'],
         'type': json['type'] == null ? undefined : WorkflowNodeTypeFromJSON(json['type']),
+        'subType': WorkflowTriggerTypeFromJSON(json['subType']),
+        'configSchema': ((json['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldFromJSON)),
     };
 }
 
@@ -152,9 +160,9 @@ export function WorkflowEntityEventTriggerConfigToJSONTyped(value?: WorkflowEnti
         'field': value['field'],
         'expressions': value['expressions'],
         'config': value['config'],
-        'configSchema': value['configSchema'] == null ? undefined : ((value['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldToJSON)),
-        'subType': WorkflowTriggerTypeToJSON(value['subType']),
         'type': WorkflowNodeTypeToJSON(value['type']),
+        'subType': WorkflowTriggerTypeToJSON(value['subType']),
+        'configSchema': ((value['configSchema'] as Array<any>).map(WorkflowNodeConfigFieldToJSON)),
     };
 }
 

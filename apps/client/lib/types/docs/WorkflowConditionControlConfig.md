@@ -11,10 +11,10 @@ Name | Type
 `expression` | string
 `contextEntityId` | string
 `timeoutSeconds` | number
-`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
-`config` | { [key: string]: object; }
-`subType` | [WorkflowControlType](WorkflowControlType.md)
 `type` | [WorkflowNodeType](WorkflowNodeType.md)
+`subType` | [WorkflowControlType](WorkflowControlType.md)
+`config` | { [key: string]: object; }
+`configSchema` | [Array&lt;WorkflowNodeConfigField&gt;](WorkflowNodeConfigField.md)
 
 ## Example
 
@@ -24,13 +24,13 @@ import type { WorkflowConditionControlConfig } from ''
 // TODO: Update the object below with actual values
 const example = {
   "version": null,
-  "expression": null,
-  "contextEntityId": null,
+  "expression": entity.status == 'active' && entity.balance > 0,
+  "contextEntityId": {{ steps.fetch_account.output.entityId }},
   "timeoutSeconds": null,
-  "configSchema": null,
-  "config": null,
-  "subType": null,
   "type": null,
+  "subType": null,
+  "config": null,
+  "configSchema": null,
 } satisfies WorkflowConditionControlConfig
 
 console.log(example)
