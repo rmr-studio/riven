@@ -1,20 +1,18 @@
 'use client';
 
 import { useProfile } from '@/components/feature-modules/user/hooks/use-profile';
-import { WorkspaceIcon } from '@/components/feature-modules/workspace/components/workspace-icon';
-import { useCurrentWorkspace } from '@/components/feature-modules/workspace/provider/workspace-provider';
+import { useWorkspaceStore } from '@/components/feature-modules/workspace/provider/workspace-provider';
 import { Kbd, KbdGroup } from '@/components/ui/kbd';
+import { SelectedWorkspaceIcon } from '@/components/ui/sidebar/selected-workspace-icon';
 import {
   useSelectedPanel,
   useSidePanelActions,
 } from '@/components/ui/sidebar/context/side-panel-provider';
 import type { PanelId } from '@/components/ui/sidebar/types/side-panel.types';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useIsMobile } from '@riven/hooks';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@riven/ui/tooltip';
 import { cn } from '@riven/utils';
 import { BookOpen, SquareDashedMousePointer, StickyNote, TrendingUpDown } from 'lucide-react';
-import { type FC } from 'react';
 
 interface RailButton {
   id: PanelId;
@@ -29,25 +27,11 @@ const navItems: RailButton[] = [
   { id: 'billing', icon: <TrendingUpDown className="size-5" />, label: 'Billing' },
 ];
 
-interface SelectedWorkspaceIconProps {
-  avatarUrl?: string;
-  name?: string;
-  loading: boolean;
-}
-
-const SelectedWorkspaceIcon: FC<SelectedWorkspaceIconProps> = ({ name, avatarUrl, loading }) => {
-  if (loading) {
-    return <Skeleton className="size-8 rounded-md" />;
-  }
-
-  return <WorkspaceIcon name={name} avatarUrl={avatarUrl} />;
-};
-
 export function IconRail() {
   const selectedPanel = useSelectedPanel();
   const { togglePanel } = useSidePanelActions();
-  const { selectedWorkspaceId } = useCurrentWorkspace();
-  const { data: profile, isLoadingAuth: loading } = useProfile();
+  const selectedWorkspaceId = useWorkspaceStore((s) => s.selectedWorkspaceId);
+  const { data: profile } = useProfile();
 
   const isMobile = useIsMobile();
 
@@ -77,7 +61,6 @@ export function IconRail() {
                 <SelectedWorkspaceIcon
                   avatarUrl={workspace.avatarUrl}
                   name={workspace.name}
-                  loading={loading}
                 />
               </button>
             </TooltipTrigger>

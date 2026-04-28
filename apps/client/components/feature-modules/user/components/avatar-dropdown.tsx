@@ -65,21 +65,16 @@ export const UserProfileDropdown: FC<Props> = ({ user, workspaceId }) => {
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="mx-4 mt-1 px-2">
-        <DropdownMenuItem className="pointer-events-none">
+        <DropdownMenuLabel>
           <UserIcon />
           <span className="ml-2 text-xs font-semibold">{user.email}</span>
-        </DropdownMenuItem>
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuLabel className="text-xs text-content/70">Account</DropdownMenuLabel>
-          <DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => router.push('/dashboard/settings')}>
             <SlidersHorizontal />
-            <span
-              className="ml-2 text-xs text-content"
-              onClick={() => router.push('/dashboard/settings')}
-            >
-              Preferences
-            </span>
+            <span className="ml-2 text-xs text-content">Preferences</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
@@ -89,42 +84,30 @@ export const UserProfileDropdown: FC<Props> = ({ user, workspaceId }) => {
               <DropdownMenuLabel className="text-xs text-content/70">
                 Workspace ({workspace.name})
               </DropdownMenuLabel>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => router.push(`/dashboard/workspace/${workspace.id}`)}
+              >
                 <AppWindowMac />
-                <span
-                  className="ml-2 text-xs text-content"
-                  onClick={() => router.push(`/dashboard/workspace/${workspace.id}`)}
-                >
-                  Dashboard
-                </span>
+                <span className="ml-2 text-xs text-content">Dashboard</span>
               </DropdownMenuItem>
 
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => router.push(`/dashboard/workspace/${workspace.id}/invoices`)}
+              >
                 <ReceiptText />
-                <span
-                  className="ml-2 text-xs text-content"
-                  onClick={() => router.push(`/dashboard/workspace/${workspace.id}/invoices`)}
-                >
-                  Invoices
-                </span>
+                <span className="ml-2 text-xs text-content">Invoices</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => router.push(`/dashboard/workspace/${workspace.id}/settings`)}
+              >
                 <Cog />
-                <span
-                  className="ml-2 text-xs text-content"
-                  onClick={() => router.push(`/dashboard/workspace/${workspace.id}/settings`)}
-                >
-                  Settings
-                </span>
+                <span className="ml-2 text-xs text-content">Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => router.push(`/dashboard/workspace/${workspace.id}/integrations`)}
+              >
                 <Plug />
-                <span
-                  className="ml-2 text-xs text-content"
-                  onClick={() => router.push(`/dashboard/workspace/${workspace.id}/integrations`)}
-                >
-                  Connections
-                </span>
+                <span className="ml-2 text-xs text-content">Connections</span>
               </DropdownMenuItem>
             </DropdownMenuGroup>
 
@@ -132,11 +115,9 @@ export const UserProfileDropdown: FC<Props> = ({ user, workspaceId }) => {
           </>
         )}
         <DropdownMenuGroup>
-          <DropdownMenuItem>
+          <DropdownMenuItem onSelect={async () => handleLogout()}>
             <ArrowLeftToLine />
-            <span className="ml-2 text-xs text-content" onClick={async () => handleLogout()}>
-              Logout
-            </span>
+            <span className="ml-2 text-xs text-content">Logout</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

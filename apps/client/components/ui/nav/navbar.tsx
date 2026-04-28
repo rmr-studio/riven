@@ -3,7 +3,7 @@
 import { UserProfileDropdown } from '@/components/feature-modules/user/components/avatar-dropdown';
 import { useProfile } from '@/components/feature-modules/user/hooks/use-profile';
 import { ConnectionStatus } from '@/components/feature-modules/workspace/components/connection-status';
-import { useCurrentWorkspace } from '@/components/feature-modules/workspace/provider/workspace-provider';
+import { useWorkspaceStore } from '@/components/feature-modules/workspace/provider/workspace-provider';
 import {
   usePanelOpen,
   useSidePanelActions,
@@ -56,7 +56,7 @@ export const Navbar = () => {
 
 export const NavbarUserProfile: FC = () => {
   const { isLoadingAuth, isLoading, data: user } = useProfile();
-  const { selectedWorkspaceId } = useCurrentWorkspace();
+  const selectedWorkspaceId = useWorkspaceStore((s) => s.selectedWorkspaceId);
   if (isLoadingAuth || isLoading) return <Skeleton className="size-9 rounded-sm" />;
   if (!user)
     return (

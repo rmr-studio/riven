@@ -48,10 +48,10 @@ export interface WorkflowExecutionSummaryResponse {
     nodes: Array<WorkflowExecutionNodeRecord>;
     /**
      * 
-     * @type {Array<WorkflowExecutionNodeRecord>}
+     * @type {boolean}
      * @memberof WorkflowExecutionSummaryResponse
      */
-    failedNodes: Array<WorkflowExecutionNodeRecord>;
+    hasErrors: boolean;
     /**
      * 
      * @type {WorkflowExecutionNodeRecord}
@@ -60,10 +60,10 @@ export interface WorkflowExecutionSummaryResponse {
     failedNode?: WorkflowExecutionNodeRecord | null;
     /**
      * 
-     * @type {boolean}
+     * @type {Array<WorkflowExecutionNodeRecord>}
      * @memberof WorkflowExecutionSummaryResponse
      */
-    hasErrors: boolean;
+    failedNodes: Array<WorkflowExecutionNodeRecord>;
 }
 
 /**
@@ -72,8 +72,8 @@ export interface WorkflowExecutionSummaryResponse {
 export function instanceOfWorkflowExecutionSummaryResponse(value: object): value is WorkflowExecutionSummaryResponse {
     if (!('execution' in value) || value['execution'] === undefined) return false;
     if (!('nodes' in value) || value['nodes'] === undefined) return false;
-    if (!('failedNodes' in value) || value['failedNodes'] === undefined) return false;
     if (!('hasErrors' in value) || value['hasErrors'] === undefined) return false;
+    if (!('failedNodes' in value) || value['failedNodes'] === undefined) return false;
     return true;
 }
 
@@ -89,9 +89,9 @@ export function WorkflowExecutionSummaryResponseFromJSONTyped(json: any, ignoreD
         
         'execution': WorkflowExecutionRecordFromJSON(json['execution']),
         'nodes': ((json['nodes'] as Array<any>).map(WorkflowExecutionNodeRecordFromJSON)),
-        'failedNodes': ((json['failedNodes'] as Array<any>).map(WorkflowExecutionNodeRecordFromJSON)),
-        'failedNode': json['failedNode'] == null ? undefined : WorkflowExecutionNodeRecordFromJSON(json['failedNode']),
         'hasErrors': json['hasErrors'],
+        'failedNode': json['failedNode'] == null ? undefined : WorkflowExecutionNodeRecordFromJSON(json['failedNode']),
+        'failedNodes': ((json['failedNodes'] as Array<any>).map(WorkflowExecutionNodeRecordFromJSON)),
     };
 }
 
@@ -108,9 +108,9 @@ export function WorkflowExecutionSummaryResponseToJSONTyped(value?: WorkflowExec
         
         'execution': WorkflowExecutionRecordToJSON(value['execution']),
         'nodes': ((value['nodes'] as Array<any>).map(WorkflowExecutionNodeRecordToJSON)),
-        'failedNodes': ((value['failedNodes'] as Array<any>).map(WorkflowExecutionNodeRecordToJSON)),
-        'failedNode': WorkflowExecutionNodeRecordToJSON(value['failedNode']),
         'hasErrors': value['hasErrors'],
+        'failedNode': WorkflowExecutionNodeRecordToJSON(value['failedNode']),
+        'failedNodes': ((value['failedNodes'] as Array<any>).map(WorkflowExecutionNodeRecordToJSON)),
     };
 }
 

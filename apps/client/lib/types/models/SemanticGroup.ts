@@ -30,6 +30,7 @@ export enum SemanticGroup {
     Operational = 'OPERATIONAL',
     Campaign = 'CAMPAIGN',
     Creative = 'CREATIVE',
+    Promotion = 'PROMOTION',
     SocialPost = 'SOCIAL_POST',
     SocialMention = 'SOCIAL_MENTION',
     Shipment = 'SHIPMENT',

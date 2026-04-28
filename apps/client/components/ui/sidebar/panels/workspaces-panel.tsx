@@ -13,16 +13,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@riven/ui/dropdown-menu';
+import { Button } from '@riven/ui/button';
 import { cn } from '@riven/utils';
 import {
   Check,
   ChevronsUpDown,
-  ClipboardCheck,
   CogIcon,
   PanelLeftClose,
   Plug,
   PlusCircle,
-  ScrollText,
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -34,7 +33,7 @@ const linkClass =
 export function WorkspacesPanel() {
   const router = useRouter();
   const pathname = usePathname();
-  const { data, isPending, isLoadingAuth } = useProfile();
+  const { data, isPending, isError, isLoadingAuth } = useProfile();
   const { closePanel } = useSidePanelActions();
   const selectedWorkspaceId = useWorkspaceStore((s) => s.selectedWorkspaceId);
   const setSelectedWorkspace = useWorkspaceStore((s) => s.setSelectedWorkspace);
@@ -54,8 +53,12 @@ export function WorkspacesPanel() {
     <>
       {/* Header — workspace picker + close */}
       <div className="flex min-h-(--header-height) shrink-0 items-center justify-between gap-2 border-b px-3">
-        {loading || !currentWorkspace ? (
+        {loading ? (
           <Skeleton className="h-9 flex-1 rounded-md" />
+        ) : isError || !currentWorkspace ? (
+          <span className="flex-1 truncate text-sm text-sidebar-foreground/60">
+            {isError ? 'Failed to load workspaces' : 'No workspace selected'}
+          </span>
         ) : (
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -102,13 +105,15 @@ export function WorkspacesPanel() {
             </DropdownMenuContent>
           </DropdownMenu>
         )}
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={closePanel}
           aria-label="Close panel"
-          className="flex size-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          className="size-7 shrink-0 text-sidebar-foreground/70 hover:text-sidebar-foreground"
         >
           <PanelLeftClose className="size-4" />
-        </button>
+        </Button>
       </div>
 
       {/* Content — workspace settings */}
@@ -116,10 +121,10 @@ export function WorkspacesPanel() {
         {selectedWorkspaceId && (
           <>
             <Link
-              href={`/dashboard/workspace/${selectedWorkspaceId}/settings`}
+              href={`/dashboard/workspace/${selectedWorkspaceId}/members`}
               className={cn(
                 linkClass,
-                pathname.startsWith(`/dashboard/workspace/${selectedWorkspaceId}/settings`) &&
+                pathname.startsWith(`/dashboard/workspace/${selectedWorkspaceId}/members`) &&
                   'bg-sidebar-accent text-sidebar-foreground',
               )}
             >
@@ -136,28 +141,6 @@ export function WorkspacesPanel() {
             >
               <Plug className="size-4" />
               Connections
-            </Link>
-            <Link
-              href={`/dashboard/workspace/${selectedWorkspaceId}/settings`}
-              className={cn(
-                linkClass,
-                pathname.startsWith(`/dashboard/workspace/${selectedWorkspaceId}/settings`) &&
-                  'bg-sidebar-accent text-sidebar-foreground',
-              )}
-            >
-              <ClipboardCheck className="size-4" />
-              Import/Export
-            </Link>
-            <Link
-              href={`/dashboard/workspace/${selectedWorkspaceId}/settings`}
-              className={cn(
-                linkClass,
-                pathname.startsWith(`/dashboard/workspace/${selectedWorkspaceId}/settings`) &&
-                  'bg-sidebar-accent text-sidebar-foreground',
-              )}
-            >
-              <ScrollText className="size-4" />
-              Invoices
             </Link>
             <Link
               href={`/dashboard/workspace/${selectedWorkspaceId}/settings`}
