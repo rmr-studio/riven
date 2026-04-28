@@ -12,8 +12,9 @@ import org.springframework.test.context.ActiveProfiles
 import org.testcontainers.junit.jupiter.Testcontainers
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.enums.integration.SourceType
-import riven.core.service.util.factory.entity.EntityFactory
+import riven.core.models.core.DTC_ECOMMERCE_MODELS
 import riven.core.models.entity.payload.EntityAttributePrimitivePayload
+import riven.core.service.util.factory.entity.EntityFactory
 import java.util.*
 
 /**
@@ -49,7 +50,7 @@ class SingleIntegrationProjectionTest : ProjectionPipelineIntegrationTestBase() 
     fun setup() {
         loadIntegrationManifests()
         createWorkspaceAndUser()
-        installCoreModelTemplate("dtc-ecommerce")
+        installCoreModelTemplate(DTC_ECOMMERCE_MODELS.manifestKey)
         hubspotDefId = createIntegrationDefinition("hubspot")
         materializeIntegration("hubspot", hubspotDefId)
 

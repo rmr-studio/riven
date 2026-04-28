@@ -23,7 +23,7 @@ object AdSpendEventModel : riven.core.models.core.CoreModelDefinition(
     iconColour = IconColour.YELLOW,
     semanticGroup = SemanticGroup.FINANCIAL,
     lifecycleDomain = LifecycleDomain.MARKETING,
-    identifierKey = "date",
+    identifierKey = "external-id",
     semanticDefinition = "A daily spend event for a specific ad creative. Captures spend, impressions, clicks, and conversions at the lowest meaningful attribution grain.",
     semanticTags = listOf("marketing", "spend", "performance", "daily"),
     projectionAccepts = listOf(
@@ -34,6 +34,15 @@ object AdSpendEventModel : riven.core.models.core.CoreModelDefinition(
         ),
     ),
     attributes = mapOf(
+        "external-id" to CoreModelAttribute(
+            schemaType = SchemaType.TEXT, label = "External ID", dataType = DataType.STRING,
+            required = true, unique = true,
+            semantics = AttributeSemantics(
+                definition = "Platform-native ad spend event identifier.",
+                classification = SemanticAttributeClassification.IDENTIFIER,
+                tags = listOf("unique-key", "external"),
+            ),
+        ),
         "date" to CoreModelAttribute(
             schemaType = SchemaType.DATE, label = "Date", dataType = DataType.STRING,
             required = true, format = "date",

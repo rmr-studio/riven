@@ -9,12 +9,13 @@ import riven.core.enums.entity.semantics.SemanticAttributeClassification
 import riven.core.enums.entity.semantics.SemanticGroup
 import riven.core.models.core.AttributeSemantics
 import riven.core.models.core.CoreModelAttribute
+import riven.core.models.core.CoreModelDefinition
 import riven.core.models.core.ProjectionAcceptRule
 
 /**
  * Carrier — a shipping carrier (USPS, UPS, FedEx, DHL, etc.) used by one or more shipments.
  */
-object CarrierModel : riven.core.models.core.CoreModelDefinition(
+object CarrierModel : CoreModelDefinition(
     key = "carrier",
     displayNameSingular = "Carrier",
     displayNamePlural = "Carriers",
@@ -55,7 +56,7 @@ object CarrierModel : riven.core.models.core.CoreModelDefinition(
             format = "uri",
             semantics = AttributeSemantics(
                 definition = "Template for building public tracking URLs (with a placeholder for the tracking number).",
-                classification = SemanticAttributeClassification.IDENTIFIER,
+                classification = SemanticAttributeClassification.FREETEXT,
                 tags = listOf("tracking", "url"),
             ),
         ),

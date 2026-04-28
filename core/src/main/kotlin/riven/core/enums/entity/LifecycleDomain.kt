@@ -31,5 +31,6 @@ enum class LifecycleDomain {
     @JsonProperty("SUPPORT") SUPPORT,
     @JsonProperty("BILLING") BILLING,
     @JsonProperty("RETENTION") RETENTION,
-    @JsonProperty("UNCATEGORIZED") UNCATEGORIZED
+    @JsonProperty("UNCATEGORIZED") UNCATEGORIZED,
+    @JsonProperty(value = "USAGE") USAGE
 }

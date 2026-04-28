@@ -50,7 +50,7 @@ object ProductVariantModel : riven.core.models.core.CoreModelDefinition(
                 tags = listOf("display-name"),
             ),
         ),
-        "option1" to CoreModelAttribute(
+        "option-1" to CoreModelAttribute(
             schemaType = SchemaType.TEXT, label = "Option 1", dataType = DataType.STRING,
             semantics = AttributeSemantics(
                 definition = "First option value (e.g. size).",
@@ -58,7 +58,7 @@ object ProductVariantModel : riven.core.models.core.CoreModelDefinition(
                 tags = listOf("option", "variant"),
             ),
         ),
-        "option2" to CoreModelAttribute(
+        "option-2" to CoreModelAttribute(
             schemaType = SchemaType.TEXT, label = "Option 2", dataType = DataType.STRING,
             semantics = AttributeSemantics(
                 definition = "Second option value (e.g. colour).",
@@ -66,7 +66,7 @@ object ProductVariantModel : riven.core.models.core.CoreModelDefinition(
                 tags = listOf("option", "variant"),
             ),
         ),
-        "option3" to CoreModelAttribute(
+        "option-3" to CoreModelAttribute(
             schemaType = SchemaType.TEXT, label = "Option 3", dataType = DataType.STRING,
             semantics = AttributeSemantics(
                 definition = "Third option value.",

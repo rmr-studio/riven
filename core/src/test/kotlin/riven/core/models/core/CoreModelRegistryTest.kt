@@ -262,19 +262,16 @@ class CoreModelRegistryTest {
      */
     @Test
     fun `no two core models accept the same domain-group tuple`() {
-        val tuples = CoreModelRegistry.allModels
+        val colliders = CoreModelRegistry.allModels
             .flatMap { model ->
-                model.projectionAccepts.map { rule -> Triple(rule.domain, rule.semanticGroup, model.key) }
+                model.projectionAccepts.map { rule -> (rule.domain to rule.semanticGroup) to model.key }
             }
+            .groupBy({ it.first }, { it.second })
+            .filterValues { it.size > 1 }
 
-        for ((domain, group, key) in tuples) {
-            val matches = CoreModelRegistry.findModelsAccepting(domain, group)
-            assertEquals(
-                1,
-                matches.size,
-                "Projection rule collision: ($domain, $group) declared by '$key' resolves to " +
-                    "${matches.size} models: ${matches.map { it.first.key }}",
-            )
+        assertTrue(colliders.isEmpty()) {
+            "Projection rule collisions:\n" +
+                colliders.entries.joinToString("\n") { (tuple, keys) -> "  $tuple -> $keys" }
         }
     }
 

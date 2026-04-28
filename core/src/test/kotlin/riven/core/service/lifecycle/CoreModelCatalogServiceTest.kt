@@ -33,7 +33,7 @@ class CoreModelCatalogServiceTest {
     }
 
     @Test
-    fun `onApplicationReady upserts all core model sets to catalog`() {
+    fun `onApplicationReady upserts the dtc-ecommerce core model set to catalog`() {
         service.onApplicationReady()
 
         // Only dtc-ecommerce ships; b2c-saas was ripped.

@@ -1,4 +1,4 @@
-import { DefinitionCategory } from '@/lib/types/models';
+import { DefinitionCategory } from '@/lib/types/workspace';
 
 export interface DefaultDefinition {
   term: string;

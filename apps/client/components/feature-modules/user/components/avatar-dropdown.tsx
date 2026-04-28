@@ -9,6 +9,7 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@riven/ui/dropdown-menu';
@@ -17,26 +18,28 @@ import { getInitials } from '@riven/utils';
 import {
   AppWindowMac,
   ArrowLeftToLine,
-  Building2,
+  Cog,
+  Plug,
   ReceiptText,
-  Settings,
+  SlidersHorizontal,
   User as UserIcon,
 } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FC } from 'react';
-import { FaGithub } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { useAuth } from '../../../provider/auth-context';
 
 interface Props {
   user: User;
+  workspaceId?: string;
 }
 
-export const UserProfileDropdown: FC<Props> = ({ user }) => {
+export const UserProfileDropdown: FC<Props> = ({ user, workspaceId }) => {
   const { name } = user;
   const { signOut } = useAuth();
   const router = useRouter();
+
+  const workspace = user.memberships.find((m) => m.workspace?.id === workspaceId)?.workspace;
 
   const handleLogout = async () => {
     try {
@@ -62,58 +65,72 @@ export const UserProfileDropdown: FC<Props> = ({ user }) => {
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="mx-4 mt-1 px-2">
+        <DropdownMenuItem className="pointer-events-none">
+          <UserIcon />
+          <span className="ml-2 text-xs font-semibold">{user.email}</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem className="pointer-events-none">
-            <UserIcon />
-            <span className="ml-2 text-xs font-semibold">{user.email}</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="text-xs text-content/70">Account</DropdownMenuLabel>
           <DropdownMenuItem>
-            <AppWindowMac />
-            <span className="ml-2 text-xs text-content" onClick={() => router.push('/dashboard')}>
-              My Dashboard
-            </span>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Building2 />
-            <span
-              className="ml-2 text-xs text-content"
-              onClick={() => router.push('/dashboard/workspace')}
-            >
-              My Workspaces
-            </span>
-          </DropdownMenuItem>
-
-          <DropdownMenuItem>
-            <ReceiptText />
-            <span
-              className="ml-2 text-xs text-content"
-              onClick={() => router.push('/dashboard/invoices')}
-            >
-              All Invoices
-            </span>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Settings />
+            <SlidersHorizontal />
             <span
               className="ml-2 text-xs text-content"
               onClick={() => router.push('/dashboard/settings')}
             >
-              Account Preferences
+              Preferences
             </span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <Link href={'https://www.github.com/usepaladin'} target="_blank">
-            <DropdownMenuItem>
-              <FaGithub />
+        {workspace && (
+          <>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="text-xs text-content/70">
+                Workspace ({workspace.name})
+              </DropdownMenuLabel>
+              <DropdownMenuItem>
+                <AppWindowMac />
+                <span
+                  className="ml-2 text-xs text-content"
+                  onClick={() => router.push(`/dashboard/workspace/${workspace.id}`)}
+                >
+                  Dashboard
+                </span>
+              </DropdownMenuItem>
 
-              <span className="ml-2 text-xs text-content">Source Code</span>
-            </DropdownMenuItem>
-          </Link>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <ReceiptText />
+                <span
+                  className="ml-2 text-xs text-content"
+                  onClick={() => router.push(`/dashboard/workspace/${workspace.id}/invoices`)}
+                >
+                  Invoices
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Cog />
+                <span
+                  className="ml-2 text-xs text-content"
+                  onClick={() => router.push(`/dashboard/workspace/${workspace.id}/settings`)}
+                >
+                  Settings
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Plug />
+                <span
+                  className="ml-2 text-xs text-content"
+                  onClick={() => router.push(`/dashboard/workspace/${workspace.id}/integrations`)}
+                >
+                  Connections
+                </span>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuGroup>
           <DropdownMenuItem>
             <ArrowLeftToLine />

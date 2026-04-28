@@ -42,7 +42,7 @@ data class CoreModelSet(
     val additionalRelationships: List<riven.core.models.core.CoreModelRelationship> = emptyList(),
 )
 
-// ------ Business Type Model Sets ------
+// ------ Model Set ------
 
 val DTC_ECOMMERCE_MODELS = CoreModelSet(
     manifestKey = "dtc-ecommerce",

@@ -20,11 +20,21 @@
 export enum SemanticGroup {
     Customer = 'CUSTOMER',
     Product = 'PRODUCT',
+    ProductVariant = 'PRODUCT_VARIANT',
+    Collection = 'COLLECTION',
     Transaction = 'TRANSACTION',
+    LineItem = 'LINE_ITEM',
     Communication = 'COMMUNICATION',
     Support = 'SUPPORT',
     Financial = 'FINANCIAL',
     Operational = 'OPERATIONAL',
+    Campaign = 'CAMPAIGN',
+    Creative = 'CREATIVE',
+    SocialPost = 'SOCIAL_POST',
+    SocialMention = 'SOCIAL_MENTION',
+    Shipment = 'SHIPMENT',
+    ShipmentEvent = 'SHIPMENT_EVENT',
+    Review = 'REVIEW',
     Custom = 'CUSTOM',
     Uncategorized = 'UNCATEGORIZED'
 }

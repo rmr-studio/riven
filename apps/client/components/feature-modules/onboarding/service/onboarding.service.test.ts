@@ -1,6 +1,5 @@
 import { assemblePayload, OnboardingService } from '@/components/feature-modules/onboarding/service/onboarding.service';
-import { WorkspacePlan, WorkspaceRoles } from '@/lib/types/workspace';
-import { DefinitionCategory, AcquisitionChannel } from '@/lib/types/workspace';
+import { WorkspacePlan, WorkspaceRoles, DefinitionCategory, AcquisitionChannel } from '@/lib/types/workspace';
 
 describe('assemblePayload', () => {
   const baseProfile = { displayName: 'Jane Smith', phone: '+1234567890' };

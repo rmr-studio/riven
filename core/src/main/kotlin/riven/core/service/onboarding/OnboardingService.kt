@@ -120,6 +120,19 @@ class OnboardingService(
         return workspaceService.saveWorkspace(saveRequest, avatar)
     }
 
+    private fun populateWorkspace(
+        id: UUID,
+        userId: UUID,
+    ): TemplateInstallResult {
+        val templateKey = DTC_ECOMMERCE_MODELS.manifestKey
+        val response = templateInstallationService.installTemplateInternal(id, templateKey, userId)
+        return TemplateInstallResult(
+            key = templateKey,
+            entityTypesCreated = response.entityTypesCreated,
+            relationshipsCreated = response.relationshipsCreated,
+        )
+    }
+
     private fun updateUserProfile(
         userId: UUID,
         request: CompleteOnboardingRequest,
@@ -154,19 +167,6 @@ class OnboardingService(
     }
 
     // ------ Phase 2: Best-Effort Operations ------
-
-    private fun populateWorkspace(
-        id: UUID,
-        userId: UUID,
-    ): TemplateInstallResult {
-        val templateKey = DTC_ECOMMERCE_MODELS.manifestKey
-        val response = templateInstallationService.installTemplateInternal(id, templateKey, userId)
-        return TemplateInstallResult(
-            key = templateKey,
-            entityTypesCreated = response.entityTypesCreated,
-            relationshipsCreated = response.relationshipsCreated,
-        )
-    }
 
     private fun sendWorkspaceInvites(id: UUID, userId: UUID, invites: List<OnboardingInvite>): List<InviteResult> {
         val userEmail = authTokenService.getUserEmail()

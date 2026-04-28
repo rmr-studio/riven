@@ -16,6 +16,7 @@ package riven.core.enums.entity.semantics
  * - OPERATIONAL: task, project, process, carrier, or workflow entities
  * - CAMPAIGN: paid marketing campaigns across ad platforms
  * - CREATIVE: ad creative assets (image, video, copy)
+ * - PROMOTION: discount codes, promotional offers, vouchers, and other marketing-incentive entities
  * - SOCIAL_POST: owned-account social content
  * - SOCIAL_MENTION: brand mentions from non-owned accounts
  * - SHIPMENT: a package in transit
@@ -37,6 +38,7 @@ enum class SemanticGroup {
     OPERATIONAL,
     CAMPAIGN,
     CREATIVE,
+    PROMOTION,
     SOCIAL_POST,
     SOCIAL_MENTION,
     SHIPMENT,

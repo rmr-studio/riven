@@ -23,7 +23,7 @@ object ShipmentEventModel : riven.core.models.core.CoreModelDefinition(
     iconColour = IconColour.BLUE,
     semanticGroup = SemanticGroup.SHIPMENT_EVENT,
     lifecycleDomain = LifecycleDomain.FULFILLMENT,
-    identifierKey = "occurred-at",
+    identifierKey = "external-id",
     semanticDefinition = "A status update on a shipment — captures the event stream from carrier scans.",
     semanticTags = listOf("fulfillment", "tracking", "event"),
     projectionAccepts = listOf(
@@ -34,6 +34,15 @@ object ShipmentEventModel : riven.core.models.core.CoreModelDefinition(
         ),
     ),
     attributes = mapOf(
+        "external-id" to CoreModelAttribute(
+            schemaType = SchemaType.TEXT, label = "External ID", dataType = DataType.STRING,
+            required = true, unique = true,
+            semantics = AttributeSemantics(
+                definition = "Platform-native shipment event identifier.",
+                classification = SemanticAttributeClassification.IDENTIFIER,
+                tags = listOf("unique-key", "external"),
+            ),
+        ),
         "event-type" to CoreModelAttribute(
             schemaType = SchemaType.SELECT, label = "Event Type", dataType = DataType.STRING,
             required = true,
@@ -45,7 +54,7 @@ object ShipmentEventModel : riven.core.models.core.CoreModelDefinition(
                     "out_for_delivery",
                     "delivered",
                     "exception",
-                    "returned_to_sender"
+                    "returned"
                 )
             ),
             semantics = AttributeSemantics(

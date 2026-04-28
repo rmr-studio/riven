@@ -21,7 +21,7 @@ object DiscountModel : riven.core.models.core.CoreModelDefinition(
     displayNamePlural = "Discounts",
     iconType = IconType.PERCENT,
     iconColour = IconColour.ORANGE,
-    semanticGroup = SemanticGroup.TRANSACTION,
+    semanticGroup = SemanticGroup.PROMOTION,
     lifecycleDomain = LifecycleDomain.MARKETING,
     identifierKey = "code",
     semanticDefinition = "A promotional discount code or automatic discount applied at checkout. Source for discount-dependency signals and promo performance.",
@@ -29,7 +29,7 @@ object DiscountModel : riven.core.models.core.CoreModelDefinition(
     projectionAccepts = listOf(
         ProjectionAcceptRule(
             domain = LifecycleDomain.MARKETING,
-            semanticGroup = SemanticGroup.TRANSACTION,
+            semanticGroup = SemanticGroup.PROMOTION,
             relationshipName = ProjectionAcceptRule.SOURCE_DATA_RELATIONSHIP,
         ),
     ),

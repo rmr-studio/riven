@@ -48,13 +48,13 @@ object ReturnModel : riven.core.models.core.CoreModelDefinition(
             schemaType = SchemaType.SELECT, label = "Reason", dataType = DataType.STRING,
             options = SchemaOptions(
                 enum = listOf(
-                    "DAMAGE",
-                    "WRONG_SIZE",
-                    "QUALITY",
-                    "EXPECTATION_MISMATCH",
-                    "SHIPPING_DELAY",
-                    "CHANGED_MIND",
-                    "OTHER"
+                    "damage",
+                    "wrong_size",
+                    "quality",
+                    "expectation_mismatch",
+                    "shipping_delay",
+                    "changed_mind",
+                    "other"
                 )
             ),
             semantics = AttributeSemantics(
