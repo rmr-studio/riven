@@ -1,5 +1,13 @@
 # TODOS
 
+## P2 — Connotation Backfill Observability Metric
+**What:** Add Micrometer metric `riven.connotation.entities_pending_backfill_count` per workspace per entity type. Counts entities with no `entity_connotation` row (or stale `envelopeVersion`) so operators can monitor lazy-backfill progress.
+**Why:** When the connotation envelope ships (Phase A of `2026-04-18-entity-connotation-pipeline.md`), existing entities have no `entity_connotation` row. They populate lazily on next enrichment. Layer 4 predicate queries (e.g. `WHERE axes.SENTIMENT.sentiment < -0.5`) silently exclude pre-deploy entities until they re-enrich. Without this metric, query coverage gaps are invisible.
+**Pros:** Operator-facing visibility into lazy-backfill progress; alertable; dashboard signal for Layer 4 query coverage gaps.
+**Cons:** Adds Micrometer instrumentation surface (~30 min CC); minor.
+**Context:** Phase A of the entity connotation pipeline introduces a sibling system-managed `entity_connotation` table that holds the per-entity semantic envelope (SENTIMENT + RELATIONAL + STRUCTURAL axes). Layer 4 Milestone C reads `axes.SENTIMENT.sentiment` via BTREE-indexed JSONB path expressions. Backfill is lazy by design — no proactive enqueue at Phase A deploy. This metric tells operators when backfill has plateaued so they can confirm Layer 4 query coverage is stable.
+**Depends on:** Phase A of entity-connotation-pipeline plan merged.
+
 ## P2 — Frontend: Source Attribution UI
 **What:** Integration-sourced notes should show a source badge (e.g., HubSpot icon), lock icon for readonly, and disabled edit/delete buttons.
 **Why:** Users currently can't distinguish integration notes from user-created notes. Without visual cues, they'll try to edit readonly notes and hit a 403.
