@@ -21,6 +21,9 @@ import riven.core.service.workflow.enrichment.EnrichmentWorkflowImpl
 import riven.core.service.workflow.identity.IdentityMatchActivitiesImpl
 import riven.core.service.workflow.identity.IdentityMatchWorkflow
 import riven.core.service.workflow.identity.IdentityMatchWorkflowImpl
+import riven.core.workflow.migration.NoteBackfillActivitiesImpl
+import riven.core.workflow.migration.NoteBackfillWorkflow
+import riven.core.workflow.migration.NoteBackfillWorkflowImpl
 import java.util.*
 
 /**
@@ -57,6 +60,7 @@ class TemporalWorkerConfiguration(
     private val logger: KLogger,
     private val integrationSyncActivities: IntegrationSyncActivities,
     private val enrichmentActivities: EnrichmentActivitiesImpl,
+    private val noteBackfillActivities: NoteBackfillActivitiesImpl,
 ) {
 
     companion object {
@@ -101,6 +105,14 @@ class TemporalWorkerConfiguration(
          * workflow or identity matching workloads.
          */
         const val ENRICHMENT_EMBED_QUEUE = "enrichment.embed"
+
+        /**
+         * Dedicated task queue for one-shot migration / backfill workflows.
+         *
+         * Isolated from steady-state queues so a long-running maintenance backfill cannot
+         * starve interactive workloads.
+         */
+        const val MIGRATION_QUEUE = "migration"
 
         /**
          * Generate task queue name for a workspace.
@@ -184,9 +196,17 @@ class TemporalWorkerConfiguration(
         enrichmentWorker.registerActivitiesImplementations(enrichmentActivities)
         logger.info { "Registered enrichment workflow and activities on task queue: $ENRICHMENT_EMBED_QUEUE" }
 
+        // Create worker for the migration queue (Phase B note backfill, future glossary backfill)
+        val migrationWorker = factory.newWorker(MIGRATION_QUEUE)
+        migrationWorker.registerWorkflowImplementationFactory(NoteBackfillWorkflow::class.java) {
+            NoteBackfillWorkflowImpl()
+        }
+        migrationWorker.registerActivitiesImplementations(noteBackfillActivities)
+        logger.info { "Registered note backfill workflow + activities on task queue: $MIGRATION_QUEUE" }
+
         // Start workers (non-blocking - workers poll Temporal Service in background)
         factory.start()
-        logger.info { "Temporal WorkerFactory started, listening on task queues: $WORKFLOWS_DEFAULT_QUEUE, $IDENTITY_MATCH_QUEUE, $INTEGRATION_SYNC_QUEUE, $ENRICHMENT_EMBED_QUEUE" }
+        logger.info { "Temporal WorkerFactory started, listening on task queues: $WORKFLOWS_DEFAULT_QUEUE, $IDENTITY_MATCH_QUEUE, $INTEGRATION_SYNC_QUEUE, $ENRICHMENT_EMBED_QUEUE, $MIGRATION_QUEUE" }
 
         // Store instance for shutdown
         workerFactoryInstance = factory
