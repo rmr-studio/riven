@@ -10,8 +10,13 @@ CREATE INDEX IF NOT EXISTS entity_connotation_sentiment_idx
     ON entity_connotation (((connotation_metadata -> 'metadata' -> 'SENTIMENT' ->> 'sentiment')::float))
     WHERE connotation_metadata IS NOT NULL;
 
+-- Indexes the raw ISO 8601 text rather than casting to timestamp/timestamptz
+-- because both timestamp casts from text are STABLE (depend on DateStyle /
+-- TimeZone GUCs) and Postgres rejects non-IMMUTABLE expressions in index
+-- definitions. The enrichment pipeline writes a fixed ISO 8601 UTC format, so
+-- lexical ordering on the text matches chronological ordering for range scans.
 CREATE INDEX IF NOT EXISTS entity_connotation_analyzed_at_idx
-    ON entity_connotation (((connotation_metadata -> 'metadata' -> 'SENTIMENT' ->> 'analyzedAt')::timestamptz))
+    ON entity_connotation ((connotation_metadata -> 'metadata' -> 'SENTIMENT' ->> 'analyzedAt'))
     WHERE connotation_metadata IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS entity_connotation_workspace_idx
