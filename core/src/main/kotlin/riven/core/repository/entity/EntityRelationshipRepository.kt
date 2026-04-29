@@ -104,6 +104,54 @@ interface EntityRelationshipRepository : JpaRepository<EntityRelationshipEntity,
     fun findByIdAndWorkspaceId(id: UUID, workspaceId: UUID): Optional<EntityRelationshipEntity>
 
     /**
+     * Find relationships for a source entity filtered by the system type on the
+     * relationship definition. Used by knowledge projectors to enumerate
+     * `ATTACHMENT` / `MENTION` / `DEFINES` rows without loading every definition.
+     */
+    @Query("""
+        SELECT r FROM EntityRelationshipEntity r
+        JOIN RelationshipDefinitionEntity d ON r.definitionId = d.id
+        WHERE r.sourceId = :sourceId
+          AND d.systemType = :systemType
+    """)
+    fun findBySourceIdAndDefinitionSystemType(
+        sourceId: UUID,
+        systemType: riven.core.enums.entity.SystemRelationshipType,
+    ): List<EntityRelationshipEntity>
+
+    /**
+     * Batch variant: find relationships for multiple source entities filtered by
+     * definition system type. Used by knowledge projectors when materialising
+     * collections (e.g. listing notes for a workspace).
+     */
+    @Query("""
+        SELECT r FROM EntityRelationshipEntity r
+        JOIN RelationshipDefinitionEntity d ON r.definitionId = d.id
+        WHERE r.sourceId IN :sourceIds
+          AND d.systemType = :systemType
+    """)
+    fun findAllBySourceIdInAndDefinitionSystemType(
+        sourceIds: Collection<UUID>,
+        systemType: riven.core.enums.entity.SystemRelationshipType,
+    ): List<EntityRelationshipEntity>
+
+    /**
+     * Inverse lookup: find relationships pointing AT a target entity, filtered by
+     * the system type on the relationship definition. Used to answer
+     * "which notes reference this entity".
+     */
+    @Query("""
+        SELECT r FROM EntityRelationshipEntity r
+        JOIN RelationshipDefinitionEntity d ON r.definitionId = d.id
+        WHERE r.targetId = :targetId
+          AND d.systemType = :systemType
+    """)
+    fun findByTargetIdAndDefinitionSystemType(
+        targetId: UUID,
+        systemType: riven.core.enums.entity.SystemRelationshipType,
+    ): List<EntityRelationshipEntity>
+
+    /**
      * Count relationship links for a definition where the target entity belongs to a specific entity type.
      */
     @Query("""
