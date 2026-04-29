@@ -5,9 +5,10 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.atLeastOnce
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
@@ -95,6 +96,32 @@ class ManifestResolverServiceConnotationTest {
             )
         )
 
+    /**
+     * Capture every warn lambda the resolver invoked, evaluate them, and assert
+     * at least one message contains the expected substring. This guards against
+     * a connotation warn being silently dropped while an unrelated warn fires.
+     */
+    private fun assertWarnedWith(substring: String) {
+        val captor = argumentCaptor<() -> Any>()
+        verify(logger, atLeastOnce()).warn(captor.capture())
+        val messages = captor.allValues.map { it.invoke().toString() }
+        assertTrue(
+            messages.any { it.contains(substring) },
+            "Expected a warn message containing '$substring' but got: $messages"
+        )
+    }
+
+    /** As [assertWarnedWith] but accepts any of several candidate substrings. */
+    private fun assertWarnedWithAny(vararg substrings: String) {
+        val captor = argumentCaptor<() -> Any>()
+        verify(logger, atLeastOnce()).warn(captor.capture())
+        val messages = captor.allValues.map { it.invoke().toString() }
+        assertTrue(
+            messages.any { msg -> substrings.any { msg.contains(it) } },
+            "Expected a warn message containing any of ${substrings.toList()} but got: $messages"
+        )
+    }
+
     // ------ Cases ------
 
     @Test
@@ -139,7 +166,7 @@ class ManifestResolverServiceConnotationTest {
 
         assertFalse(result.stale)
         assertNull(result.entityTypes.single().connotationSignals)
-        verify(logger, atLeastOnce()).warn(any<() -> Any>())
+        assertWarnedWith("sentimentAttribute")
     }
 
     @Test
@@ -157,7 +184,7 @@ class ManifestResolverServiceConnotationTest {
 
         assertFalse(result.stale)
         assertNull(result.entityTypes.single().connotationSignals)
-        verify(logger, atLeastOnce()).warn(any<() -> Any>())
+        assertWarnedWith("themeAttributes")
     }
 
     @Test
@@ -175,7 +202,25 @@ class ManifestResolverServiceConnotationTest {
 
         assertFalse(result.stale)
         assertNull(result.entityTypes.single().connotationSignals)
-        verify(logger, atLeastOnce()).warn(any<() -> Any>())
+        assertWarnedWithAny("sourceMin", "sourceMax")
+    }
+
+    @Test
+    fun `skips connotation signals when targetMin is greater than or equal to targetMax`() {
+        val entityType = buildEntityType(
+            connotationSignals = mapOf(
+                "tier" to "TIER_1",
+                "sentimentAttribute" to "rating",
+                "sentimentScale" to linearSentimentScale(targetMin = 1.0, targetMax = -1.0),
+                "themeAttributes" to emptyList<String>()
+            )
+        )
+
+        val result = resolveSingle(entityType)
+
+        assertFalse(result.stale)
+        assertNull(result.entityTypes.single().connotationSignals)
+        assertWarnedWithAny("targetMin", "targetMax")
     }
 
     @Test
