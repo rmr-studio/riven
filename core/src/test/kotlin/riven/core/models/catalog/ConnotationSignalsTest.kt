@@ -2,6 +2,7 @@ package riven.core.models.catalog
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import riven.core.models.connotation.AnalysisTier
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.KotlinModule
 
@@ -14,7 +15,7 @@ class ConnotationSignalsTest {
     @Test
     fun `LINEAR sentiment scale round-trips through Jackson`() {
         val signals = ConnotationSignals(
-            tier = "ACCURATE",
+            tier = AnalysisTier.TIER_1,
             sentimentAttribute = "rating",
             sentimentScale = SentimentScale(
                 sourceMin = 1.0,
@@ -39,7 +40,7 @@ class ConnotationSignalsTest {
     fun `THRESHOLD mapping type deserializes from JSON`() {
         val json = """
             {
-                "tier": "FAST",
+                "tier": "TIER_1",
                 "sentimentAttribute": "score",
                 "sentimentScale": {
                     "sourceMin": 0.0,
@@ -54,7 +55,7 @@ class ConnotationSignalsTest {
 
         val parsed = mapper.readValue(json, ConnotationSignals::class.java)
 
-        assertEquals("FAST", parsed.tier)
+        assertEquals(AnalysisTier.TIER_1, parsed.tier)
         assertEquals("score", parsed.sentimentAttribute)
         assertEquals(ScaleMappingType.THRESHOLD, parsed.sentimentScale.mappingType)
         assertEquals(0.0, parsed.sentimentScale.sourceMin)

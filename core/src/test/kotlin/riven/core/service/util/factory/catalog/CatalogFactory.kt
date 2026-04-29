@@ -11,6 +11,7 @@ import riven.core.enums.entity.semantics.SemanticMetadataTargetType
 import riven.core.models.catalog.ConnotationSignals
 import riven.core.models.catalog.ScaleMappingType
 import riven.core.models.catalog.SentimentScale
+import riven.core.models.connotation.AnalysisTier
 import java.util.*
 
 object CatalogFactory {
@@ -77,7 +78,7 @@ object CatalogFactory {
 
     /** Realistic default ConnotationSignals payload for tests. */
     fun connotationSignals(
-        tier: String = "ACCURATE",
+        tier: AnalysisTier = AnalysisTier.TIER_1,
         sentimentAttribute: String = "rating",
         sentimentScale: SentimentScale = sentimentScale(),
         themeAttributes: List<String> = listOf("review_text"),

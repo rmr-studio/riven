@@ -1,9 +1,11 @@
 package riven.core.models.catalog
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import tools.jackson.databind.JsonNode
 import riven.core.enums.catalog.ManifestType
 import riven.core.enums.entity.EntityRelationshipCardinality
 import riven.core.enums.entity.LifecycleDomain
+import riven.core.models.connotation.AnalysisTier
 
 /** Output of ManifestScannerService -- parsed and schema-validated JSON. */
 data class ScannedManifest(
@@ -50,7 +52,7 @@ data class ResolvedEntityType(
  * [riven.core.models.connotation.SentimentAxis] of the connotation envelope.
  */
 data class ConnotationSignals(
-    val tier: String,
+    val tier: AnalysisTier,
     val sentimentAttribute: String,
     val sentimentScale: SentimentScale,
     val themeAttributes: List<String> = emptyList(),
@@ -65,10 +67,10 @@ data class SentimentScale(
 )
 
 enum class ScaleMappingType {
-    @com.fasterxml.jackson.annotation.JsonProperty("LINEAR")
+    @JsonProperty("LINEAR")
     LINEAR,
 
-    @com.fasterxml.jackson.annotation.JsonProperty("THRESHOLD")
+    @JsonProperty("THRESHOLD")
     THRESHOLD,
 }
 
