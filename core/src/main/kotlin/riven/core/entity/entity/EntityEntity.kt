@@ -81,9 +81,6 @@ data class EntityEntity(
 
     @Column(name = "sync_version", nullable = false)
     var syncVersion: Long = 0,
-
-    @Column(name = "note_count", nullable = false)
-    val noteCount: Int = 0,
 ) : AuditableSoftDeletableEntity() {
     
     /**
@@ -131,7 +128,6 @@ data class EntityEntity(
             firstSyncedAt = this.firstSyncedAt,
             lastSyncedAt = this.lastSyncedAt,
             syncVersion = this.syncVersion,
-            noteCount = this.noteCount,
         )
     }
 }
