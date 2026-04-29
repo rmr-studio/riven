@@ -161,6 +161,16 @@ class ProjectionPipelineIntegrationTestConfig {
         activityLogRepository: riven.core.repository.activity.ActivityLogRepository
     ): riven.core.service.activity.ActivityService =
         riven.core.service.activity.ActivityService(logger, activityLogRepository)
+
+    /**
+     * Mock EnrichmentService bean — SchemaReconciliationService depends on it for the
+     * connotation envelope invalidation hook, but the projection pipeline tests do not
+     * exercise enrichment. The full EnrichmentService graph (Temporal client, embedding
+     * provider, etc.) is intentionally not wired into this config.
+     */
+    @Bean
+    fun enrichmentService(): riven.core.service.enrichment.EnrichmentService =
+        org.mockito.Mockito.mock(riven.core.service.enrichment.EnrichmentService::class.java)
 }
 
 /**

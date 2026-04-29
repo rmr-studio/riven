@@ -1,6 +1,7 @@
 package riven.core.repository.workflow
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
@@ -101,4 +102,33 @@ interface ExecutionQueueRepository : JpaRepository<ExecutionQueueEntity, UUID> {
      * @return Queue item if found, null otherwise
      */
     fun findByExecutionId(executionId: UUID): ExecutionQueueEntity?
+
+    /**
+     * Bulk-enqueue ENRICHMENT items for every non-INTEGRATION, non-deleted entity of a given type
+     * in a workspace. Used by manifest reconciliation to invalidate envelopes after a schema change.
+     *
+     * Single `INSERT ... SELECT` to avoid N+1 at high entity-type cardinality. The partial unique
+     * index `uq_execution_queue_pending_identity_match` deduplicates against existing PENDING rows
+     * via `ON CONFLICT DO NOTHING`, so reissuing the call on an already-queued workspace is a no-op.
+     *
+     * @return Count of rows actually inserted (excludes skipped duplicates).
+     */
+    @Modifying
+    @Query(
+        """
+        INSERT INTO execution_queue (workspace_id, entity_id, job_type, status)
+        SELECT e.workspace_id, e.id, 'ENRICHMENT', 'PENDING'
+        FROM entities e
+        WHERE e.type_id = :entityTypeId
+          AND e.workspace_id = :workspaceId
+          AND e.deleted = false
+          AND e.source_type <> 'INTEGRATION'
+        ON CONFLICT DO NOTHING
+        """,
+        nativeQuery = true,
+    )
+    fun enqueueEnrichmentByEntityType(
+        @Param("entityTypeId") entityTypeId: UUID,
+        @Param("workspaceId") workspaceId: UUID,
+    ): Int
 }
