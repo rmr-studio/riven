@@ -42,10 +42,18 @@ import riven.core.repository.entity.EntityTypeSemanticMetadataRepository
 import riven.core.repository.entity.RelationshipDefinitionRepository
 import riven.core.repository.entity.RelationshipTargetRuleRepository
 import riven.core.repository.identity.IdentityClusterMemberRepository
+import riven.core.models.catalog.ConnotationSignals
+import riven.core.models.catalog.ScaleMappingType
+import riven.core.models.catalog.SentimentScale
+import riven.core.models.connotation.AnalysisTier
+import riven.core.models.connotation.SentimentAxis
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.catalog.ManifestCatalogService
+import riven.core.service.connotation.ConnotationAnalysisService
 import riven.core.service.entity.EntityAttributeService
 import riven.core.configuration.properties.EnrichmentConfigurationProperties
 import riven.core.service.enrichment.provider.EmbeddingProvider
+import riven.core.service.workspace.WorkspaceService
 import riven.core.service.util.BaseServiceTest
 import riven.core.service.workflow.enrichment.EnrichmentWorkflow
 import riven.core.service.util.SecurityTestConfig
@@ -109,12 +117,24 @@ class EnrichmentServiceTest : BaseServiceTest() {
     @MockitoBean
     private lateinit var workflowClient: WorkflowClient
 
+    @MockitoBean
+    private lateinit var workspaceService: WorkspaceService
+
+    @MockitoBean
+    private lateinit var manifestCatalogService: ManifestCatalogService
+
+    @MockitoBean
+    private lateinit var connotationAnalysisService: ConnotationAnalysisService
+
     @Autowired
     private lateinit var enrichmentService: EnrichmentService
 
     @BeforeEach
     fun setUp() {
         whenever(enrichmentProperties.vectorDimensions).thenReturn(1536)
+        // Default: SENTIMENT axis remains NOT_APPLICABLE for tests that don't care about
+        // connotation. Individual tests override `isConnotationEnabled` / signals as needed.
+        whenever(workspaceService.isConnotationEnabled(any())).thenReturn(false)
     }
 
     // ------------------------------------------------------------------
@@ -1042,6 +1062,174 @@ class EnrichmentServiceTest : BaseServiceTest() {
         assertEquals("Email", attrSnapshot.semanticLabel)
         assertEquals("IDENTIFIER", attrSnapshot.classification)
         assertEquals("TEXT", attrSnapshot.schemaType)
+    }
+
+    // ------------------------------------------------------------------
+    // analyzeSemantics: SENTIMENT axis wiring (Phase B Task 12)
+    // ------------------------------------------------------------------
+
+    /**
+     * When the workspace flag is enabled and the entity type has manifest connotation signals,
+     * the SENTIMENT axis is delegated to ConnotationAnalysisService and its result persisted
+     * verbatim (ANALYZED in this case) onto the connotation envelope.
+     */
+    @Test
+    fun `persistConnotationEnvelope populates SENTIMENT axis when workspace flag is on and signals exist`() {
+        val queueItemId = UUID.randomUUID()
+        val entityId = UUID.randomUUID()
+        val typeId = UUID.randomUUID()
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val entityEntity = buildEntityEntity(entityId, typeId = typeId)
+        val entityType = buildEntityTypeEntity(typeId)
+
+        whenever(executionQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
+        whenever(executionQueueRepository.save(any())).thenReturn(queueItem)
+        whenever(entityRepository.findById(entityId)).thenReturn(Optional.of(entityEntity))
+        whenever(entityTypeRepository.findById(typeId)).thenReturn(Optional.of(entityType))
+        whenever(semanticMetadataRepository.findByEntityTypeId(typeId)).thenReturn(emptyList())
+        whenever(entityAttributeService.getAttributes(entityId)).thenReturn(emptyMap())
+        whenever(entityRelationshipRepository.findAllRelationshipsForEntity(entityId, workspaceId)).thenReturn(emptyList())
+        whenever(relationshipDefinitionRepository.findByWorkspaceIdAndSourceEntityTypeId(workspaceId, typeId)).thenReturn(emptyList())
+
+        val signals = ConnotationSignals(
+            tier = AnalysisTier.TIER_1,
+            sentimentAttribute = "rating",
+            sentimentScale = SentimentScale(
+                sourceMin = 1.0,
+                sourceMax = 5.0,
+                targetMin = -1.0,
+                targetMax = 1.0,
+                mappingType = ScaleMappingType.LINEAR,
+            ),
+            themeAttributes = emptyList(),
+        )
+        val analyzedAxis = SentimentAxis(
+            sentiment = 0.75,
+            analysisVersion = "tier1-v1",
+            analysisTier = AnalysisTier.TIER_1,
+            status = ConnotationStatus.ANALYZED,
+            analyzedAt = ZonedDateTime.now(),
+        )
+        whenever(workspaceService.isConnotationEnabled(workspaceId)).thenReturn(true)
+        whenever(manifestCatalogService.getConnotationSignalsForEntityType(typeId)).thenReturn(signals)
+        whenever(
+            connotationAnalysisService.analyze(
+                eq(entityId),
+                eq(workspaceId),
+                eq(signals),
+                anyOrNull(),
+                any(),
+            )
+        ).thenReturn(analyzedAxis)
+
+        enrichmentService.analyzeSemantics(queueItemId)
+
+        val captor = ArgumentCaptor.forClass(EntityConnotationEntity::class.java)
+        verify(entityConnotationRepository).save(captor.capture())
+        val sentiment = requireNotNull(captor.value.connotationMetadata.axes.sentiment)
+        assertEquals(ConnotationStatus.ANALYZED, sentiment.status)
+        assertEquals(0.75, sentiment.sentiment)
+        assertEquals(AnalysisTier.TIER_1, sentiment.analysisTier)
+    }
+
+    /**
+     * When the workspace flag is off, the SENTIMENT axis must remain NOT_APPLICABLE
+     * and ConnotationAnalysisService must NOT be invoked at all.
+     */
+    @Test
+    fun `persistConnotationEnvelope leaves SENTIMENT axis at NOT_APPLICABLE when workspace flag is off`() {
+        val queueItemId = UUID.randomUUID()
+        val entityId = UUID.randomUUID()
+        val typeId = UUID.randomUUID()
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val entityEntity = buildEntityEntity(entityId, typeId = typeId)
+        val entityType = buildEntityTypeEntity(typeId)
+
+        whenever(executionQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
+        whenever(executionQueueRepository.save(any())).thenReturn(queueItem)
+        whenever(entityRepository.findById(entityId)).thenReturn(Optional.of(entityEntity))
+        whenever(entityTypeRepository.findById(typeId)).thenReturn(Optional.of(entityType))
+        whenever(semanticMetadataRepository.findByEntityTypeId(typeId)).thenReturn(emptyList())
+        whenever(entityAttributeService.getAttributes(entityId)).thenReturn(emptyMap())
+        whenever(entityRelationshipRepository.findAllRelationshipsForEntity(entityId, workspaceId)).thenReturn(emptyList())
+        whenever(relationshipDefinitionRepository.findByWorkspaceIdAndSourceEntityTypeId(workspaceId, typeId)).thenReturn(emptyList())
+        whenever(workspaceService.isConnotationEnabled(workspaceId)).thenReturn(false)
+
+        enrichmentService.analyzeSemantics(queueItemId)
+
+        val captor = ArgumentCaptor.forClass(EntityConnotationEntity::class.java)
+        verify(entityConnotationRepository).save(captor.capture())
+        val sentiment = requireNotNull(captor.value.connotationMetadata.axes.sentiment)
+        assertEquals(ConnotationStatus.NOT_APPLICABLE, sentiment.status)
+
+        verify(connotationAnalysisService, never()).analyze(any(), any(), any(), anyOrNull(), any())
+    }
+
+    /**
+     * Workspace flag is on but the manifest doesn't declare connotation signals for this
+     * entity type (e.g. a custom user-defined type). The SENTIMENT axis must remain
+     * NOT_APPLICABLE, and ConnotationAnalysisService must not be invoked.
+     */
+    @Test
+    fun `persistConnotationEnvelope leaves SENTIMENT axis at NOT_APPLICABLE when manifest has no signals`() {
+        val queueItemId = UUID.randomUUID()
+        val entityId = UUID.randomUUID()
+        val typeId = UUID.randomUUID()
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val entityEntity = buildEntityEntity(entityId, typeId = typeId)
+        val entityType = buildEntityTypeEntity(typeId)
+
+        whenever(executionQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
+        whenever(executionQueueRepository.save(any())).thenReturn(queueItem)
+        whenever(entityRepository.findById(entityId)).thenReturn(Optional.of(entityEntity))
+        whenever(entityTypeRepository.findById(typeId)).thenReturn(Optional.of(entityType))
+        whenever(semanticMetadataRepository.findByEntityTypeId(typeId)).thenReturn(emptyList())
+        whenever(entityAttributeService.getAttributes(entityId)).thenReturn(emptyMap())
+        whenever(entityRelationshipRepository.findAllRelationshipsForEntity(entityId, workspaceId)).thenReturn(emptyList())
+        whenever(relationshipDefinitionRepository.findByWorkspaceIdAndSourceEntityTypeId(workspaceId, typeId)).thenReturn(emptyList())
+        whenever(workspaceService.isConnotationEnabled(workspaceId)).thenReturn(true)
+        whenever(manifestCatalogService.getConnotationSignalsForEntityType(typeId)).thenReturn(null)
+
+        enrichmentService.analyzeSemantics(queueItemId)
+
+        val captor = ArgumentCaptor.forClass(EntityConnotationEntity::class.java)
+        verify(entityConnotationRepository).save(captor.capture())
+        val sentiment = requireNotNull(captor.value.connotationMetadata.axes.sentiment)
+        assertEquals(ConnotationStatus.NOT_APPLICABLE, sentiment.status)
+
+        verify(connotationAnalysisService, never()).analyze(any(), any(), any(), anyOrNull(), any())
+    }
+
+    /**
+     * When SENTIMENT is gated off, RELATIONAL and STRUCTURAL axes must still be populated
+     * — gating the sentiment computation must not regress the deterministic axes.
+     */
+    @Test
+    fun `persistConnotationEnvelope still writes RELATIONAL and STRUCTURAL axes when SENTIMENT is gated off`() {
+        val queueItemId = UUID.randomUUID()
+        val entityId = UUID.randomUUID()
+        val typeId = UUID.randomUUID()
+        val queueItem = ExecutionQueueFactory.createEnrichmentJob(id = queueItemId, entityId = entityId, workspaceId = workspaceId)
+        val entityEntity = buildEntityEntity(entityId, typeId = typeId)
+        val entityType = buildEntityTypeEntity(typeId)
+
+        whenever(executionQueueRepository.findById(queueItemId)).thenReturn(Optional.of(queueItem))
+        whenever(executionQueueRepository.save(any())).thenReturn(queueItem)
+        whenever(entityRepository.findById(entityId)).thenReturn(Optional.of(entityEntity))
+        whenever(entityTypeRepository.findById(typeId)).thenReturn(Optional.of(entityType))
+        whenever(semanticMetadataRepository.findByEntityTypeId(typeId)).thenReturn(emptyList())
+        whenever(entityAttributeService.getAttributes(entityId)).thenReturn(emptyMap())
+        whenever(entityRelationshipRepository.findAllRelationshipsForEntity(entityId, workspaceId)).thenReturn(emptyList())
+        whenever(relationshipDefinitionRepository.findByWorkspaceIdAndSourceEntityTypeId(workspaceId, typeId)).thenReturn(emptyList())
+        whenever(workspaceService.isConnotationEnabled(workspaceId)).thenReturn(false)
+
+        enrichmentService.analyzeSemantics(queueItemId)
+
+        val captor = ArgumentCaptor.forClass(EntityConnotationEntity::class.java)
+        verify(entityConnotationRepository).save(captor.capture())
+        val envelope = captor.value.connotationMetadata
+        assertNotNull(envelope.axes.relational)
+        assertNotNull(envelope.axes.structural)
     }
 
     // ------------------------------------------------------------------

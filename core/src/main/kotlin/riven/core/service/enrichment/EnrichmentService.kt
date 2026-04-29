@@ -22,6 +22,7 @@ import riven.core.enums.workflow.ExecutionQueueStatus
 import riven.core.enums.entity.semantics.SemanticMetadataTargetType
 import riven.core.enums.integration.SourceType
 import riven.core.exceptions.NotFoundException
+import riven.core.models.catalog.ConnotationSignals
 import riven.core.models.connotation.AttributeClassificationSnapshot
 import riven.core.models.connotation.ClusterMemberSnapshot
 import riven.core.models.connotation.ConnotationAxes
@@ -48,9 +49,12 @@ import riven.core.repository.entity.EntityTypeSemanticMetadataRepository
 import riven.core.repository.entity.RelationshipDefinitionRepository
 import riven.core.repository.entity.RelationshipTargetRuleRepository
 import riven.core.repository.identity.IdentityClusterMemberRepository
+import riven.core.service.catalog.ManifestCatalogService
+import riven.core.service.connotation.ConnotationAnalysisService
 import riven.core.service.enrichment.provider.EmbeddingProvider
 import riven.core.service.entity.EntityAttributeService
 import riven.core.service.workflow.enrichment.EnrichmentWorkflow
+import riven.core.service.workspace.WorkspaceService
 import riven.core.util.ServiceUtil
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -92,6 +96,9 @@ class EnrichmentService(
     private val embeddingProvider: EmbeddingProvider,
     private val enrichmentProperties: EnrichmentConfigurationProperties,
     private val workflowClient: WorkflowClient,
+    private val workspaceService: WorkspaceService,
+    private val manifestCatalogService: ManifestCatalogService,
+    private val connotationAnalysisService: ConnotationAnalysisService,
     private val logger: KLogger,
 ) {
 
@@ -589,7 +596,7 @@ class EnrichmentService(
         val envelope = ConnotationMetadataEnvelope(
             envelopeVersion = "v1",
             axes = ConnotationAxes(
-                sentiment = SentimentAxis(),
+                sentiment = resolveSentimentAxis(entityId, workspaceId, entityType),
                 relational = buildRelationalAxis(context, now),
                 structural = buildStructuralAxis(context, entityType, now),
             ),
@@ -608,6 +615,70 @@ class EnrichmentService(
         )
 
         logger.debug { "Persisted connotation envelope for entity $entityId" }
+    }
+
+    /**
+     * Resolves the SENTIMENT axis for this enrichment cycle, gated on the workspace flag
+     * and the entity type's manifest connotation signals.
+     *
+     * Returns a [SentimentAxis] with [riven.core.models.connotation.ConnotationStatus.NOT_APPLICABLE]
+     * (default) when:
+     * - the workspace has not opted in (`connotation_enabled = false`),
+     * - the entity type has no manifest connotation signals (custom user-defined type or
+     *   manifest entry omits the block),
+     *
+     * Otherwise delegates to [ConnotationAnalysisService] which returns either an ANALYZED
+     * axis or a FAILED sentinel — both are persisted as-is so consumers can distinguish
+     * "we tried and failed" from "we never tried".
+     */
+    private fun resolveSentimentAxis(
+        entityId: UUID,
+        workspaceId: UUID,
+        entityType: EntityTypeEntity,
+    ): SentimentAxis {
+        if (!workspaceService.isConnotationEnabled(workspaceId)) {
+            return SentimentAxis()
+        }
+        val entityTypeId = requireNotNull(entityType.id) { "EntityTypeEntity must have an ID at enrichment time" }
+        val signals = manifestCatalogService.getConnotationSignalsForEntityType(entityTypeId)
+            ?: return SentimentAxis()
+
+        val (sourceValue, themeValues) = resolveAttributeValues(entityId, entityType, signals)
+        return connotationAnalysisService.analyze(
+            entityId = entityId,
+            workspaceId = workspaceId,
+            signals = signals,
+            sourceValue = sourceValue,
+            themeValues = themeValues,
+        )
+    }
+
+    /**
+     * Resolves the manifest-keyed `sentimentAttribute` and `themeAttributes` to their
+     * entity-level values via `entityType.attributeKeyMapping` + `entityAttributeService`.
+     *
+     * Returns null sourceValue when the manifest key isn't in `attributeKeyMapping` or the
+     * mapped attribute has no stored value — both surface as MISSING_SOURCE_ATTRIBUTE downstream.
+     */
+    private fun resolveAttributeValues(
+        entityId: UUID,
+        entityType: EntityTypeEntity,
+        signals: ConnotationSignals,
+    ): Pair<Any?, Map<String, String?>> {
+        val keyMapping = entityType.attributeKeyMapping ?: emptyMap()
+        val attributesByUuid = entityAttributeService.getAttributes(entityId)
+
+        fun valueForManifestKey(manifestKey: String): Any? {
+            val attrUuidString = keyMapping[manifestKey] ?: return null
+            val attrUuid = runCatching { UUID.fromString(attrUuidString) }.getOrNull() ?: return null
+            return attributesByUuid[attrUuid]?.value
+        }
+
+        val sourceValue = valueForManifestKey(signals.sentimentAttribute)
+        val themeValues = signals.themeAttributes.associateWith {
+            valueForManifestKey(it)?.toString()
+        }
+        return sourceValue to themeValues
     }
 
     /**
