@@ -34,6 +34,7 @@ import riven.core.repository.entity.EntityAttributeRepository
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.enrichment.EnrichmentService
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -54,6 +55,7 @@ class SchemaReconciliationService(
     private val activityService: ActivityService,
     private val authTokenService: AuthTokenService,
     private val transactionManager: PlatformTransactionManager,
+    private val enrichmentService: EnrichmentService,
 ) {
 
     /** Process-local concurrency guard keyed by entity type ID. */
@@ -178,8 +180,27 @@ class SchemaReconciliationService(
                     entityType, catalogEntry, nonBreakingChanges, userId, workspaceId,
                 )
             }
+
+            if (nonBreakingChanges.isNotEmpty()) {
+                invalidateConnotationSnapshots(entityTypeId, workspaceId, "non-breaking auto-apply")
+            }
         } finally {
             reconciliationLocks.remove(entityTypeId)
+        }
+    }
+
+    /**
+     * Triggers re-enrichment for every entity of [entityTypeId] in [workspaceId] after a manifest
+     * schema change has been applied. The STRUCTURAL metadata snapshots in `entity_connotation`
+     * are now stale and need refreshing. Delegates to [EnrichmentService.enqueueByEntityType]
+     * which dedupes via the partial unique index on `execution_queue`.
+     *
+     * @param reason Free-form descriptor logged alongside the enqueue count for traceability.
+     */
+    private fun invalidateConnotationSnapshots(entityTypeId: UUID, workspaceId: UUID, reason: String) {
+        val inserted = enrichmentService.enqueueByEntityType(entityTypeId, workspaceId)
+        logger.info {
+            "Reconciliation enqueued $inserted ENRICHMENT items for entity type $entityTypeId ($reason)"
         }
     }
 
@@ -630,6 +651,8 @@ class SchemaReconciliationService(
                         "breakingChangesApplied" to result.breakingChangesApplied,
                     ),
                 )
+
+                invalidateConnotationSnapshots(result.entityTypeId, workspaceId, "breaking confirmed")
             } catch (e: Exception) {
                 val entityTypeId = entityType.id?.toString() ?: "unknown"
                 logger.error(e) { "Failed to apply breaking changes for entity type $entityTypeId" }

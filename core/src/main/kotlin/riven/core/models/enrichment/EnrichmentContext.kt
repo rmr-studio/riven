@@ -7,11 +7,21 @@ import riven.core.enums.common.validation.SchemaType
 import java.util.*
 
 /**
- * Snapshot of entity state at fetch time, bundling everything the SemanticTextBuilderService
- * needs to construct enriched text.
+ * Transient merge view assembled by
+ * [riven.core.service.enrichment.EnrichmentService.analyzeSemantics] and consumed by
+ * [riven.core.service.enrichment.SemanticTextBuilderService] and downstream activities.
+ *
+ * Combines the persisted polymorphic snapshot metadata (RELATIONAL summaries / cluster /
+ * STRUCTURAL type metadata, also written to `entity_connotation`) with live entity payload
+ * values (FREETEXT, CATEGORICAL, TEMPORAL attribute values) read fresh from `entities` each
+ * enrichment cycle. Conceptually:
+ * - Section 1 (Type) / Section 2 (Identity) / Section 6 (Relationship Definitions) → STRUCTURAL metadata.
+ * - Section 4 (Relationship Summaries) / Section 5 (Cluster) → RELATIONAL metadata.
+ * - Section 3 (Attributes) — semantic labels + classifications come from the STRUCTURAL metadata;
+ *   attribute *values* are live from `entities.payload`, NOT from the snapshot.
  *
  * All fields use Temporal-serializable types (no Any?, no JsonNode, no raw object types).
- * Attribute values are pre-converted to String? before snapshot creation.
+ * Attribute values are pre-converted to String? before context creation.
  *
  * This is a purpose-built data class, not a reuse of the full Entity domain model.
  */

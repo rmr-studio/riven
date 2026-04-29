@@ -35,6 +35,7 @@ import riven.core.repository.entity.EntityAttributeRepository
 import riven.core.repository.entity.EntityTypeRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.enrichment.EnrichmentService
 import riven.core.service.util.BaseServiceTest
 import riven.core.service.util.SecurityTestConfig
 import riven.core.service.util.WithUserPersona
@@ -95,6 +96,9 @@ class SchemaReconciliationServiceTest : BaseServiceTest() {
     @MockitoBean
     private lateinit var activityService: ActivityService
 
+    @MockitoBean
+    private lateinit var enrichmentService: EnrichmentService
+
     @Autowired
     private lateinit var service: SchemaReconciliationService
 
@@ -107,6 +111,7 @@ class SchemaReconciliationServiceTest : BaseServiceTest() {
             entityTypeRepository,
             entityAttributeRepository,
             activityService,
+            enrichmentService,
         )
     }
 
@@ -1893,6 +1898,192 @@ class SchemaReconciliationServiceTest : BaseServiceTest() {
             val emailUuid = UUID.fromString(mapping["email"])
             val updatedAttr = captor.firstValue.schema.properties?.get(emailUuid)
             assertEquals(DataFormat.EMAIL, updatedAttr?.format)
+        }
+    }
+
+    // ------ Connotation snapshot invalidation hook ------
+
+    @Nested
+    @WithUserPersona(
+        userId = "f8b1c2d3-4e5f-6789-abcd-ef0123456789",
+        email = "test@test.com",
+        displayName = "Test User",
+        roles = [
+            WorkspaceRole(
+                workspaceId = "f8b1c2d3-4e5f-6789-abcd-ef9876543210",
+                role = WorkspaceRoles.OWNER
+            )
+        ]
+    )
+    inner class ConnotationInvalidationHook {
+
+        @Test
+        fun `enqueues re-enrichment when non-breaking changes are auto-applied`() {
+            val (workspaceSchema, mapping) = buildWorkspaceSchema(
+                mapOf("email" to SchemaAttrDef(label = "Old Label"))
+            )
+            val catalogSchema = buildCatalogSchema(
+                mapOf("email" to CatalogAttrDef(label = "New Label"))
+            )
+            val entityType = EntityFactory.createEntityType(
+                workspaceId = workspaceId,
+                sourceManifestId = manifestId,
+                attributeKeyMapping = mapping,
+                schema = workspaceSchema,
+                sourceSchemaHash = "old-hash",
+            )
+            val catalogEntry = CatalogFactory.createEntityTypeEntity(
+                manifestId = manifestId,
+                key = entityType.key,
+                schema = catalogSchema,
+                schemaHash = "new-hash",
+            )
+
+            whenever(catalogEntityTypeRepository.findByManifestIdAndKey(manifestId, entityType.key))
+                .thenReturn(catalogEntry)
+            whenever(entityTypeRepository.save(any())).thenAnswer { it.arguments[0] }
+
+            service.reconcileIfNeeded(workspaceId, listOf(entityType))
+
+            verify(enrichmentService).enqueueByEntityType(
+                requireNotNull(entityType.id),
+                workspaceId,
+            )
+        }
+
+        @Test
+        fun `does NOT enqueue when entity type is up to date`() {
+            val (workspaceSchema, mapping) = buildWorkspaceSchema(
+                mapOf("email" to SchemaAttrDef(label = "Email"))
+            )
+            val entityType = EntityFactory.createEntityType(
+                workspaceId = workspaceId,
+                sourceManifestId = manifestId,
+                attributeKeyMapping = mapping,
+                schema = workspaceSchema,
+                sourceSchemaHash = "matching-hash",
+            )
+            val catalogEntry = CatalogFactory.createEntityTypeEntity(
+                manifestId = manifestId,
+                key = entityType.key,
+                schemaHash = "matching-hash",
+            )
+
+            whenever(catalogEntityTypeRepository.findByManifestIdAndKey(manifestId, entityType.key))
+                .thenReturn(catalogEntry)
+
+            service.reconcileIfNeeded(workspaceId, listOf(entityType))
+
+            verify(enrichmentService, never()).enqueueByEntityType(any(), any())
+        }
+
+        @Test
+        fun `does NOT enqueue when only breaking changes were detected and stayed pending`() {
+            val (workspaceSchema, mapping) = buildWorkspaceSchema(
+                mapOf("email" to SchemaAttrDef(required = false))
+            )
+            val catalogSchema = buildCatalogSchema(
+                mapOf("email" to CatalogAttrDef(required = true))
+            )
+            val entityType = EntityFactory.createEntityType(
+                workspaceId = workspaceId,
+                sourceManifestId = manifestId,
+                attributeKeyMapping = mapping,
+                schema = workspaceSchema,
+                sourceSchemaHash = "old-hash",
+            )
+            val catalogEntry = CatalogFactory.createEntityTypeEntity(
+                manifestId = manifestId,
+                key = entityType.key,
+                schema = catalogSchema,
+                schemaHash = "new-hash",
+            )
+
+            whenever(catalogEntityTypeRepository.findByManifestIdAndKey(manifestId, entityType.key))
+                .thenReturn(catalogEntry)
+            whenever(entityTypeRepository.save(any())).thenAnswer { it.arguments[0] }
+
+            service.reconcileIfNeeded(workspaceId, listOf(entityType))
+
+            verify(enrichmentService, never()).enqueueByEntityType(any(), any())
+        }
+
+        @Test
+        fun `enqueues re-enrichment after applyBreakingChanges with confirmation`() {
+            val (workspaceSchema, mapping) = buildWorkspaceSchema(
+                mapOf("email" to SchemaAttrDef(required = false))
+            )
+            val catalogSchema = buildCatalogSchema(
+                mapOf("email" to CatalogAttrDef(required = true))
+            )
+            val entityType = EntityFactory.createEntityType(
+                workspaceId = workspaceId,
+                sourceManifestId = manifestId,
+                attributeKeyMapping = mapping,
+                schema = workspaceSchema,
+                sourceSchemaHash = "old-hash",
+                pendingSchemaUpdate = true,
+            )
+            val catalogEntry = CatalogFactory.createEntityTypeEntity(
+                manifestId = manifestId,
+                key = entityType.key,
+                schema = catalogSchema,
+                schemaHash = "new-hash",
+            )
+
+            whenever(entityTypeRepository.findAllById(listOf(requireNotNull(entityType.id))))
+                .thenReturn(listOf(entityType))
+            whenever(catalogEntityTypeRepository.findByManifestIdAndKey(manifestId, entityType.key))
+                .thenReturn(catalogEntry)
+            whenever(entityTypeRepository.save(any())).thenAnswer { it.arguments[0] }
+
+            service.applyBreakingChanges(
+                workspaceId = workspaceId,
+                entityTypeIds = listOf(requireNotNull(entityType.id)),
+                impactConfirmed = true,
+            )
+
+            verify(enrichmentService).enqueueByEntityType(
+                requireNotNull(entityType.id),
+                workspaceId,
+            )
+        }
+
+        @Test
+        fun `does NOT enqueue when applyBreakingChanges is called without confirmation`() {
+            val (workspaceSchema, mapping) = buildWorkspaceSchema(
+                mapOf("email" to SchemaAttrDef(required = false))
+            )
+            val catalogSchema = buildCatalogSchema(
+                mapOf("email" to CatalogAttrDef(required = true))
+            )
+            val entityType = EntityFactory.createEntityType(
+                workspaceId = workspaceId,
+                sourceManifestId = manifestId,
+                attributeKeyMapping = mapping,
+                schema = workspaceSchema,
+                sourceSchemaHash = "old-hash",
+                pendingSchemaUpdate = true,
+            )
+            val catalogEntry = CatalogFactory.createEntityTypeEntity(
+                manifestId = manifestId,
+                key = entityType.key,
+                schema = catalogSchema,
+                schemaHash = "new-hash",
+            )
+
+            whenever(entityTypeRepository.findAllById(listOf(requireNotNull(entityType.id))))
+                .thenReturn(listOf(entityType))
+            whenever(catalogEntityTypeRepository.findByManifestIdAndKey(manifestId, entityType.key))
+                .thenReturn(catalogEntry)
+
+            service.applyBreakingChanges(
+                workspaceId = workspaceId,
+                entityTypeIds = listOf(requireNotNull(entityType.id)),
+                impactConfirmed = false,
+            )
+
+            verify(enrichmentService, never()).enqueueByEntityType(any(), any())
         }
     }
 }
