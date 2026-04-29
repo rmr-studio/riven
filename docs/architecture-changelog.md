@@ -1,5 +1,29 @@
 # Architecture Changelog
 
+## 2026-04-29 — Note Graduation (Phase B)
+
+**Domains affected:** Note, Entity, Knowledge, Workflow (migration)
+
+**What changed:**
+
+- Introduced `AbstractKnowledgeEntityIngestionService` — extensible base for every knowledge-domain entity (Note, Glossary, future Memo / SOP / Policy / Decision / Meeting / Incident). Subclasses provide an entity-type key, an attribute-payload mapper, and the relationship batches; the base owns workspace lookup, idempotent upsert by `(workspaceId, sourceIntegrationId, sourceExternalId)`, and relationship reconciliation.
+- Introduced `NoteEntityIngestionService` (subclass of the abstract base) as the single emission point for note ingestion, used by `NoteService` (user-authored) and earmarked for the integration sync path in Phase D.
+- Cut over `NoteService` to entity-backed reads + writes. New `NoteEntityProjector` reshapes entity rows + `ATTACHMENT` relationship rows back into the existing `Note` / `WorkspaceNote` DTO contract; `NoteController` JSON wire format is unchanged. Legacy `NoteRepository` / `NoteEntityAttachmentRepository` JPA scaffolding stays live (Phase F deletes it) but is no longer referenced from `NoteService`.
+- Added system-driven entry points on `EntityService` (`saveEntityInternal`, `softDeleteEntityInternal`, `replaceRelationshipsInternal`, `findByIdInternal`, `findByTypeKeyInternal`) and a corresponding `EntityRelationshipService.replaceForDefinition` that bypass the JWT-bound auth path so background contexts (Temporal activities, ingestion services) can drive entity mutations.
+- Introduced `RelationshipTargetKind` enum (`ENTITY` / `ENTITY_TYPE` / `ATTRIBUTE`) and threaded it through the abstract base + `replaceRelationshipsInternal` for forward-compat with Phase C glossary `DEFINES` edges. Phase C (Task 16) materialises the corresponding `entity_relationships.target_kind` column.
+- Added `NoteBackfillWorkflow` + `NoteBackfillActivities[Impl]` — paginated, idempotent Temporal workflow that walks the legacy `notes` table for a workspace and upserts each row into the entity layer. Registered on a new `migration` task queue in `TemporalWorkerConfiguration`. Idempotency contract: `sourceExternalId = "legacy:{noteId}"` for user-authored rows; duplicate-key violations from the ingestion path report `skipped`, not `failed`.
+
+**New cross-domain dependencies:** Yes — Note → Entity (new): `NoteService` and `NoteEntityIngestionService` now persist note state through `EntityService` rather than `NoteRepository`. Note → Knowledge (new): `NoteEntityIngestionService` extends `AbstractKnowledgeEntityIngestionService` in `riven.core.service.knowledge`. Workflow.migration → Note (new): `NoteBackfillActivitiesImpl` reads from the legacy `NoteRepository` and writes through `NoteEntityIngestionService`.
+
+**New components introduced:**
+
+- `AbstractKnowledgeEntityIngestionService` (Spring abstract base) — extensible ingestion seam for every knowledge-domain entity type.
+- `KnowledgeIngestionInput` interface + `KnowledgeRelationshipBatch` data class — the cross-cutting input + relationship-batch contract subclasses bind to.
+- `NoteEntityIngestionService` (Spring service) — concrete subclass for notes; single emission point used by user-facing and integration paths.
+- `NoteEntityProjector` (Spring service) — read-only translator from entity rows + `ATTACHMENT` relationships into `Note` / `WorkspaceNote` DTOs.
+- `NoteBackfillWorkflow` + `NoteBackfillActivitiesImpl` (Temporal workflow + Spring activity bean) — one-shot maintenance backfill from legacy `notes` to entity-backed notes.
+- `RelationshipTargetKind` enum — declares `ENTITY` / `ENTITY_TYPE` / `ATTRIBUTE` for forward-compat with Phase C glossary `DEFINES` edges.
+
 ## 2026-04-28 — Schema Hash Numeric Canonicalization Format Change
 
 **Domains affected:** Catalog (schema reconciliation)
