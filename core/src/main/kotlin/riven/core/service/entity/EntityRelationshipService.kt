@@ -8,7 +8,9 @@ import riven.core.entity.entity.EntityRelationshipEntity
 import riven.core.enums.activity.Activity
 import riven.core.enums.core.ApplicationEntityType
 import riven.core.enums.entity.EntityRelationshipCardinality
+import riven.core.enums.entity.RelationshipTargetKind
 import riven.core.enums.entity.SystemRelationshipType
+import riven.core.enums.integration.SourceType
 import riven.core.enums.util.OperationType
 import riven.core.exceptions.ConflictException
 import riven.core.exceptions.InvalidRelationshipException
@@ -109,6 +111,51 @@ class EntityRelationshipService(
             )
         }
 
+        entityRelationshipRepository.saveAll(newRelationships)
+    }
+
+    /**
+     * System-side replace: drives all rows for `(sourceId, definitionId)` toward the desired
+     * `targetEntityIds` set, hard-deleting absent targets and inserting new ones.
+     *
+     * Used by the knowledge ingestion layer ([riven.core.service.knowledge.AbstractKnowledgeEntityIngestionService])
+     * to reconcile system relationships (`ATTACHMENT`, `MENTION`, `DEFINES`) without going
+     * through the JWT-bound CRUD path. New rows carry the supplied [linkSource] so downstream
+     * consumers can distinguish user-authored vs integration-sourced edges.
+     *
+     * `targetKind` is informational on this branch — Phase C (Task 16) materialises the
+     * `target_kind` column on `entity_relationships`. Until then, non-ENTITY targets are
+     * still persisted but undistinguished at the schema level.
+     */
+    @Transactional
+    fun replaceForDefinition(
+        workspaceId: UUID,
+        sourceId: UUID,
+        definitionId: UUID,
+        targetEntityIds: Set<UUID>,
+        linkSource: SourceType,
+        @Suppress("UNUSED_PARAMETER") targetKind: RelationshipTargetKind = RelationshipTargetKind.ENTITY,
+    ) {
+        val existing = entityRelationshipRepository.findAllBySourceIdAndDefinitionIdForUpdate(sourceId, definitionId)
+        val existingTargetIds = existing.map { it.targetId }.toSet()
+
+        val toRemove = existingTargetIds - targetEntityIds
+        if (toRemove.isNotEmpty()) {
+            entityRelationshipRepository.deleteAllBySourceIdAndDefinitionIdAndTargetIdIn(sourceId, definitionId, toRemove)
+        }
+
+        val toAdd = targetEntityIds - existingTargetIds
+        if (toAdd.isEmpty()) return
+
+        val newRelationships = toAdd.map { targetId ->
+            EntityRelationshipEntity(
+                workspaceId = workspaceId,
+                sourceId = sourceId,
+                targetId = targetId,
+                definitionId = definitionId,
+                linkSource = linkSource,
+            )
+        }
         entityRelationshipRepository.saveAll(newRelationships)
     }
 
