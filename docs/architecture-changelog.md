@@ -1,5 +1,28 @@
 # Architecture Changelog
 
+## 2026-04-29 — Glossary Graduation (Phase C)
+
+**Domains affected:** Knowledge, Entity, Workflow (migration)
+
+**What changed:**
+
+- Materialised the `RelationshipTargetKind` enum on a new `entity_relationships.target_kind` column (declarative schema edit on `db/schema/01_tables/entities.sql`). The FK on `target_entity_id → entities(id)` was relaxed because non-`ENTITY` targets reference `entity_types` rows or attribute UUIDs — referential integrity is now enforced at the service layer.
+- `EntityRelationshipService.replaceForDefinition` is now kind-aware: reconciliation only sweeps existing rows whose `target_kind` matches the supplied value, and a new repo method `deleteAllBySourceIdAndDefinitionIdAndTargetKindAndTargetIdIn` keeps glossary `DEFINES` batches at different kinds on the same definition row from clobbering each other.
+- `AbstractKnowledgeEntityIngestionService.idempotentLookup` extended to support workspace-internal inputs: when `sourceIntegrationId` is null, the base falls back to `(workspaceId, sourceExternalId)` keyed against `entityRepository.findByWorkspaceIdAndSourceExternalId`. This makes the abstract base usable for the glossary backfill (which has no integration) without forcing every subclass to override the lookup.
+- Introduced `GlossaryEntityIngestionService` (subclass of the abstract base) as the single emission point for glossary ingestion — used by both the cutover service and the legacy backfill workflow. Maps the six glossary attributes (term / normalized_term / definition / category / source / is_customised) and emits three relationship batches per upsert: `DEFINES/ENTITY_TYPE`, `DEFINES/ATTRIBUTE`, `MENTION/ENTITY`.
+- Cut over `WorkspaceBusinessDefinitionService` to entity-backed reads + writes. Service body fully rewritten — `WorkspaceBusinessDefinitionRepository` is no longer a constructor dependency. New `GlossaryEntityProjector` reshapes glossary entity rows + DEFINES relationship rows (split by `target_kind`) back into the existing `WorkspaceBusinessDefinition` DTO. `KnowledgeController` and `OnboardingService.createDefinitionInternal` call sites are unchanged. Legacy JPA scaffolding stays live (Phase F deletes it).
+- Added `GlossaryBackfillWorkflow` + `GlossaryBackfillActivities[Impl]` — paginated, idempotent Temporal workflow that walks `workspace_business_definitions` and upserts each row through `GlossaryEntityIngestionService`. Registered on the same `migration` task queue as the note backfill. Idempotency rides on `sourceExternalId = "legacy:{definitionId}"`.
+- Fields with no direct entity-layer storage (`compiledParams`, `status`, `version`) project to fixed defaults (`null` / `ACTIVE` / `0`); the optimistic-locking `version` field on update is silently ignored, and a non-null `status` filter requesting `SUGGESTED` returns empty.
+
+**New cross-domain dependencies:** Yes — Knowledge → Entity (new): `WorkspaceBusinessDefinitionService` and `GlossaryEntityIngestionService` now persist glossary state through `EntityService` rather than `WorkspaceBusinessDefinitionRepository`. Workflow.migration → Knowledge (new): `GlossaryBackfillActivitiesImpl` reads from the legacy `WorkspaceBusinessDefinitionRepository` and writes through `GlossaryEntityIngestionService`.
+
+**New components introduced:**
+
+- `GlossaryEntityIngestionService` (Spring service) — concrete `AbstractKnowledgeEntityIngestionService` subclass for glossary terms; single emission point shared by the user-facing service and the backfill workflow.
+- `GlossaryEntityProjector` (Spring service) — read-only translator from glossary entity rows + DEFINES/MENTION relationships into `WorkspaceBusinessDefinition` DTOs.
+- `GlossaryBackfillWorkflow` + `GlossaryBackfillActivitiesImpl` (Temporal workflow + Spring activity bean) — one-shot maintenance backfill from legacy `workspace_business_definitions` to entity-backed glossary terms.
+- `entity_relationships.target_kind` column + supporting `EntityRelationshipEntity.targetKind` field — promoted from the Phase B forward-compat enum into a persisted, kind-aware reconciliation column.
+
 ## 2026-04-29 — Note Graduation (Phase B)
 
 **Domains affected:** Note, Entity, Knowledge, Workflow (migration)
