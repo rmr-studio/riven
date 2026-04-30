@@ -75,7 +75,13 @@ CREATE TABLE IF NOT EXISTS public.entities
     "source_url"            TEXT,
     "first_synced_at"       TIMESTAMPTZ,
     "last_synced_at"        TIMESTAMPTZ,
-    "sync_version"          BIGINT      NOT NULL     DEFAULT 0
+    "sync_version"          BIGINT      NOT NULL     DEFAULT 0,
+
+    -- Composite uniqueness so sibling tables (e.g. entity_connotation) can declare a
+    -- composite FK on (id, workspace_id) and enforce that the workspace_id of any
+    -- referencing row matches the entity it points at. id alone is already PK; this
+    -- adds the (id, workspace_id) pair as a unique key for FK targets.
+    UNIQUE (id, workspace_id)
 );
 
 -- =====================================================

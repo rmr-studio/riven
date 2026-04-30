@@ -1,5 +1,33 @@
 # Architecture Changelog
 
+## [2026-04-29] — Entity Connotation Pipeline Phase A (Polymorphic Semantic Snapshot)
+
+**Domains affected:** Knowledge (Enrichment Pipeline extended with snapshot persistence), Catalog (manifest reconciliation hook), Workflows (Temporal activity rename), Connotation (new sibling subdomain populated)
+
+**What changed:**
+
+- Added `entity_connotation` sibling table (system-managed — no audit, no soft-delete) with `(entity_id UNIQUE, workspace_id FK, connotation_metadata JSONB NOT NULL, created_at, updated_at)` for one-snapshot-per-entity upsert. Lives on a sibling table per CLAUDE.md system-vs-user pattern; avoids polluting `entities.last_modified_at` / `entities.last_modified_by` on enrichment writes.
+- Added `entity_connotation_indexes.sql` — functional BTREE on `((connotation_metadata->'metadata'->'SENTIMENT'->>'sentiment')::float)` and on `((connotation_metadata->'metadata'->'SENTIMENT'->>'analyzedAt')::timestamptz)` for Layer 4 Milestone C predicate query performance, plus a workspace_id index.
+- Added `entity_connotation_rls.sql` with workspace-scoped SELECT/ALL policies mirroring `entity_embeddings`.
+- Added `EntityConnotationEntity` (JPA, system-managed) and `EntityConnotationRepository` in `entity.connotation` / `repository.connotation`.
+- Added polymorphic `ConnotationMetadataSnapshot` model with `snapshotVersion: "v1"` and three orthogonal metadata categories: `SentimentMetadata` (placeholder in Phase A — `ConnotationStatus.NOT_APPLICABLE`), `RelationalMetadata` (relationship summaries + cluster + RELATIONAL_REFERENCE resolutions), `StructuralMetadata` (entity-type metadata + attribute classifications + relationship semantic definitions). All in `models.connotation`.
+- Added `MetadataStalenessModel` enum (documentation-only — `ON_SOURCE_TEXT_CHANGE`, `ON_NEIGHBOR_CHANGE`, `ON_TYPE_METADATA_CHANGE`, `PERIODIC_REBUILD`), `ConnotationStatus`, `SentimentLabel`, `AnalysisTier` enums.
+- Renamed `EnrichmentService.fetchContext()` → `analyzeSemantics()`. Now persists the full snapshot (RELATIONAL + STRUCTURAL populated, SENTIMENT placeholder) to `entity_connotation` after assembly via delete-then-insert upsert. Returns transient `EnrichmentContext` for downstream activities (the merge view of persisted metadata + live entity payload values).
+- Added `EnrichmentService.enqueueByEntityType(entityTypeId, workspaceId)` — bulk re-enrichment via single batched `INSERT...SELECT` into `execution_queue` (filters by `source_type <> 'INTEGRATION' AND deleted = false`, dedupes via existing `uq_execution_queue_pending_identity_match` partial unique index with `ON CONFLICT DO NOTHING`).
+- Renamed Temporal activity `EnrichmentActivities.fetchEntityContext` → `analyzeSemantics` across interface, impl, and `EnrichmentWorkflowImpl`. No shim — no in-flight workflows.
+- Added `CONNOTATION_SOURCE` to `SemanticAttributeClassification` enum (Phase B Tier 1 mapper input attribute marker).
+- Hooked `EnrichmentService.enqueueByEntityType` into `SchemaReconciliationService.reconcileSingle()` (when non-breaking changes were auto-applied) and `applyConfirmedBreakingChanges()` (per successfully reconciled entity type) so manifest schema changes invalidate the STRUCTURAL metadata snapshots.
+
+**New cross-domain dependencies:** yes — Catalog domain → Enrichment domain via `EnrichmentService.enqueueByEntityType` (manifest reconciliation hook). Direct service injection.
+
+**New components introduced:**
+
+- `EntityConnotationEntity` (JPA) — system-managed snapshot row keyed by entity_id.
+- `EntityConnotationRepository` — `findByEntityId`, `deleteByEntityId`, JpaRepository basics.
+- `ConnotationMetadataSnapshot` + `ConnotationMetadata` + `SentimentMetadata` + `RelationalMetadata` + `StructuralMetadata` (single file) — polymorphic semantic snapshot.
+- `ConnotationStatus`, `SentimentLabel`, `AnalysisTier`, `MetadataStalenessModel` — supporting enums.
+- `ExecutionQueueRepository.enqueueEnrichmentByEntityType` — batched `INSERT...SELECT` native query for bulk re-enrichment.
+
 ## [2026-04-10] — Enrichment Pipeline (Knowledge Subdomain Activation)
 
 **Domains affected:** Knowledge (new subdomain populated: Enrichment Pipeline), Workflows (TemporalWorkerConfiguration extended), Entities (read-only consumer of Entity-domain repositories)

@@ -85,6 +85,7 @@ class CoreModelRegistryTest {
         assertEquals(SemanticGroup.LINE_ITEM, rule.semanticGroup)
     }
 
+
     // ------ DTC set sanity ------
 
     @Test
