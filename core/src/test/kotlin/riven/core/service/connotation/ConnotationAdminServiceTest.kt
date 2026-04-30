@@ -28,14 +28,17 @@ import riven.core.models.connotation.AnalysisTier
 import riven.core.repository.workflow.ExecutionQueueRepository
 import riven.core.service.activity.ActivityService
 import riven.core.service.auth.AuthTokenService
+import riven.core.service.util.SecurityTestConfig
 import riven.core.service.util.WithUserPersona
 import riven.core.service.util.WorkspaceRole
+import org.springframework.security.access.AccessDeniedException
 import java.util.UUID
 
 @SpringBootTest(
     classes = [
         AuthTokenService::class,
         WorkspaceSecurity::class,
+        SecurityTestConfig::class,
         ConnotationAdminService::class,
         ConnotationAdminServiceTest.TestConfig::class,
     ]
@@ -117,9 +120,9 @@ class ConnotationAdminServiceTest {
         assertEquals(42, details["enqueued"])
     }
 
-    @Test
-    fun `CLASSIFIER reanalyze throws NotImplementedError`() {
-        assertThrows<NotImplementedError> {
+
+    fun `CLASSIFIER reanalyze throws IllegalArgumentException`() {
+        assertThrows<IllegalArgumentException> {
             service.reanalyzeWhereMetadataVersionMismatch(
                 metadataType = ConnotationMetadataType.SENTIMENT,
                 tier = AnalysisTier.CLASSIFIER,
@@ -146,6 +149,25 @@ class ConnotationAdminServiceTest {
                 metadataType = ConnotationMetadataType.STRUCTURAL,
                 tier = AnalysisTier.DETERMINISTIC,
                 workspaceId = workspaceId,
+            )
+        }
+    }
+
+    /**
+     * Caller without a workspace role for the target workspaceId must be rejected by the
+     * @PreAuthorize guard. The class-level persona owns one workspace; calling with a
+     * different (unauthorized) workspaceId proves the @PreAuthorize check fires before
+     * any business logic runs.
+     */
+    @Test
+    fun `reanalyzeWhereVersionMismatch throws AccessDeniedException for unauthorized workspace`() {
+        val unauthorizedWorkspaceId = UUID.randomUUID()
+
+        assertThrows<AccessDeniedException> {
+            service.reanalyzeWhereMetadataVersionMismatch(
+                metadataType = ConnotationMetadataType.SENTIMENT,
+                tier = AnalysisTier.DETERMINISTIC,
+                workspaceId = unauthorizedWorkspaceId,
             )
         }
     }

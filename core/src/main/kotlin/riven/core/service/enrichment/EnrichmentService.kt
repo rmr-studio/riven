@@ -50,12 +50,12 @@ import riven.core.repository.entity.EntityTypeSemanticMetadataRepository
 import riven.core.repository.entity.RelationshipDefinitionRepository
 import riven.core.repository.entity.RelationshipTargetRuleRepository
 import riven.core.repository.identity.IdentityClusterMemberRepository
+import riven.core.repository.workspace.WorkspaceRepository
 import riven.core.service.catalog.ManifestCatalogService
 import riven.core.service.connotation.ConnotationAnalysisService
 import riven.core.service.enrichment.provider.EmbeddingProvider
 import riven.core.service.entity.EntityAttributeService
 import riven.core.service.workflow.enrichment.EnrichmentWorkflow
-import riven.core.service.workspace.WorkspaceService
 import riven.core.util.ServiceUtil
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -100,7 +100,7 @@ class EnrichmentService(
     private val enrichmentProperties: EnrichmentConfigurationProperties,
     private val workflowClient: WorkflowClient,
     private val objectMapper: ObjectMapper,
-    private val workspaceService: WorkspaceService,
+    private val workspaceRepository: WorkspaceRepository,
     private val manifestCatalogService: ManifestCatalogService,
     private val connotationAnalysisService: ConnotationAnalysisService,
     private val logger: KLogger,
@@ -636,12 +636,21 @@ class EnrichmentService(
         workspaceId: UUID,
         entityType: EntityTypeEntity,
     ): SentimentMetadata {
-        if (!workspaceService.isConnotationEnabled(workspaceId)) {
+        val workspace = ServiceUtil.findOrThrow { workspaceRepository.findById(workspaceId) }
+        if (!workspace.connotationEnabled) {
             return SentimentMetadata()
         }
         val entityTypeId = requireNotNull(entityType.id) { "EntityTypeEntity must have an ID at enrichment time" }
         val signals = manifestCatalogService.getConnotationSignalsForEntityType(entityTypeId)
             ?: return SentimentMetadata()
+
+        // Short-circuit when the manifest sentiment key has no mapping on this entity type:
+        // there is nothing the analyzer could compute, so the correct status is NOT_APPLICABLE
+        // (no mapping configured) rather than FAILED+MISSING_SOURCE_ATTRIBUTE (mapping exists
+        // but value is null), which is what analyze() emits when the mapped attribute is empty.
+        if (entityType.attributeKeyMapping?.containsKey(signals.sentimentAttribute) != true) {
+            return SentimentMetadata()
+        }
 
         val (sourceValue, themeValues) = resolveAttributeValues(entityId, entityType, signals)
         return connotationAnalysisService.analyze(
@@ -657,8 +666,10 @@ class EnrichmentService(
      * Resolves the manifest-keyed `sentimentAttribute` and `themeAttributes` to their
      * entity-level values via `entityType.attributeKeyMapping` + `entityAttributeService`.
      *
-     * Returns null sourceValue when the manifest key isn't in `attributeKeyMapping` or the
-     * mapped attribute has no stored value — both surface as MISSING_SOURCE_ATTRIBUTE downstream.
+     * Caller [resolveSentimentMetadata] already short-circuits on a missing sentiment-key
+     * mapping, so a null sourceValue here means the mapping exists but the underlying
+     * attribute has no stored value — surfaced as MISSING_SOURCE_ATTRIBUTE downstream.
+     * Theme attributes still tolerate missing keys (each is independently optional).
      */
     private fun resolveAttributeValues(
         entityId: UUID,

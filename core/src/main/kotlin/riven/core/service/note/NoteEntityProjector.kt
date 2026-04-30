@@ -255,7 +255,7 @@ class NoteEntityProjector(
             val type = typesById[entity.typeId]
             val displayNode = attrRows[Pair(requireNotNull(entity.id) { "entity.id" }, entity.identifierKey)]?.value
             val displayName = displayNode?.let { node ->
-                if (node.isTextual) node.textValue() else node.toString()
+                if (node.isString) node.stringValue() else node.toString()
             }
             requireNotNull(entity.id) to NoteEntityContext(
                 entityId = requireNotNull(entity.id),

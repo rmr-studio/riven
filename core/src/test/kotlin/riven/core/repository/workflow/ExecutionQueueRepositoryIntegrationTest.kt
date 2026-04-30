@@ -36,6 +36,7 @@ import riven.core.enums.workflow.ExecutionQueueStatus
 import riven.core.models.connotation.EntityMetadata
 import riven.core.models.connotation.EntityMetadataSnapshot
 import riven.core.models.connotation.SentimentMetadata
+import riven.core.service.util.factory.enrichment.EnrichmentFactory
 import riven.core.repository.connotation.EntityConnotationRepository
 import riven.core.service.util.SchemaInitializer
 import java.time.ZonedDateTime
@@ -244,10 +245,10 @@ class ExecutionQueueRepositoryIntegrationTest {
             embeddedAt = ZonedDateTime.now(),
         )
         entityConnotationRepository.saveAndFlush(
-            EntityConnotationEntity(
+            EnrichmentFactory.entityConnotationEntity(
                 entityId = entityId,
                 workspaceId = workspaceId,
-                connotationMetadata = snapshot,
+                metadata = snapshot
             )
         )
     }
@@ -424,11 +425,12 @@ class ExecutionQueueRepositoryIntegrationTest {
             ),
             embeddedAt = ZonedDateTime.now(),
         )
+
         entityConnotationRepository.saveAndFlush(
-            EntityConnotationEntity(
+            EnrichmentFactory.entityConnotationEntity(
                 entityId = otherEntityId,
                 workspaceId = otherWorkspaceId,
-                connotationMetadata = snapshot2,
+                metadata = snapshot2
             )
         )
 

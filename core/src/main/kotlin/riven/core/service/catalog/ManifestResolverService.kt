@@ -1,5 +1,6 @@
 package riven.core.service.catalog
 
+import tools.jackson.core.JacksonException
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
 import tools.jackson.databind.node.ArrayNode
@@ -125,7 +126,7 @@ class ManifestResolverService(
     ): ConnotationSignals? {
         val signals = try {
             objectMapper.treeToValue(node, ConnotationSignals::class.java)
-        } catch (e: Exception) {
+        } catch (e: JacksonException) {
             logger.warn { "Entity type '$entityTypeKey' has malformed connotationSignals: ${e.message} — skipping" }
             return null
         }

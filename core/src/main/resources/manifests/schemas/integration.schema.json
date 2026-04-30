@@ -158,7 +158,7 @@
       "properties": {
         "tier": {
           "type": "string",
-          "enum": ["TIER_1", "TIER_2", "TIER_3"]
+          "enum": ["DETERMINISTIC", "CLASSIFIER", "INFERENCE"]
         },
         "sentimentAttribute": {
           "type": "string",

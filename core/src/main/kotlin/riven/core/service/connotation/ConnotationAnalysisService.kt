@@ -21,12 +21,15 @@ import java.util.UUID
  * Workspace-scoped sentiment analysis dispatcher.
  *
  * Routes a single-entity analysis request to the tier declared in [ConnotationSignals.tier].
- * DETERMINISTIC delegates to [DeterministicConnotationMapper]. CLASSIFIER / INFERENCE throw
- * `NotImplementedError` until those tiers are implemented in later phases.
+ * DETERMINISTIC delegates to [DeterministicConnotationMapper]. CLASSIFIER / INFERENCE return
+ * a FAILED sentinel until those tiers are implemented in later phases — the worker path needs
+ * an observable outcome (logged + persisted) rather than a thrown error that aborts the
+ * workflow before activity logging fires.
  *
  * Always returns a [riven.core.models.connotation.SentimentMetadata] — DETERMINISTIC mapping
- * failures are encoded as `status = FAILED` rather than thrown, so the enrichment pipeline can
- * persist the sentinel without aborting RELATIONAL/STRUCTURAL metadata writes.
+ * failures and unsupported tiers are both encoded as `status = FAILED` rather than thrown, so
+ * the enrichment pipeline can persist the sentinel without aborting RELATIONAL/STRUCTURAL
+ * metadata writes.
  *
  * Caller is responsible for resolving attribute values from manifest keys to entity-level
  * values before calling. This keeps the service free of repository injections and allows
@@ -58,7 +61,7 @@ class ConnotationAnalysisService(
      * @param signals Manifest-declared connotation signals (tier + scale + theme keys).
      * @param sourceValue Pre-resolved value for `signals.sentimentAttribute` (caller does the manifest-key -> attribute UUID lookup).
      * @param themeValues Pre-resolved values for `signals.themeAttributes` (manifest key -> string value or null).
-     * @return Populated [SentimentMetadata]; status `ANALYZED` on success, `FAILED` on DETERMINISTIC mapping failure.
+     * @return Populated [SentimentMetadata]; status `ANALYZED` on success, `FAILED` on DETERMINISTIC mapping failure or unsupported tier.
      */
     fun analyze(
         entityId: UUID,
@@ -72,8 +75,7 @@ class ConnotationAnalysisService(
         return when (signals.tier) {
             AnalysisTier.DETERMINISTIC -> runDeterministicAnalysis(entityId, workspaceId, signals, sourceValue, themeValues)
             //TODO: Implement CLASSIFIER/INFERENCE mappers and update this when we have real implementations to call
-            AnalysisTier.CLASSIFIER, AnalysisTier.INFERENCE ->
-                throw NotImplementedError("Tier ${signals.tier.name} not implemented in Phase B")
+            AnalysisTier.CLASSIFIER, AnalysisTier.INFERENCE -> unsupportedTierSentinel(entityId, workspaceId, signals.tier)
         }.also {
             activityService.log(
                 activity = Activity.ENTITY_CONNOTATION,
@@ -90,6 +92,30 @@ class ConnotationAnalysisService(
         }
 
 
+    }
+
+    /**
+     * Builds a FAILED sentinel for a tier the dispatcher cannot service yet (CLASSIFIER /
+     * INFERENCE). Returning instead of throwing keeps the worker path observable: the caller's
+     * `.also` activity-logger fires with status=FAILED and the snapshot upsert proceeds, so
+     * RELATIONAL/STRUCTURAL metadata still lands and the unsupported-tier rejection appears
+     * in the audit trail rather than crashing the workflow.
+     */
+    private fun unsupportedTierSentinel(
+        entityId: UUID,
+        workspaceId: UUID,
+        tier: AnalysisTier,
+    ): SentimentMetadata {
+        logger.warn {
+            "Connotation analysis tier $tier not implemented; emitting FAILED sentinel " +
+                "for entity=$entityId workspace=$workspaceId"
+        }
+        return SentimentMetadata(
+            status = ConnotationStatus.FAILED,
+            analysisTier = tier,
+            analysisVersion = properties.deterministicCurrentVersion,
+            analyzedAt = ZonedDateTime.now(),
+        )
     }
 
     private fun runDeterministicAnalysis(

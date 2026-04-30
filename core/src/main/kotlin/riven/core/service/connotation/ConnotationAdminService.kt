@@ -53,8 +53,8 @@ class ConnotationAdminService(
         require(metadataType == ConnotationMetadataType.SENTIMENT) {
             "Phase B only supports SENTIMENT reanalyze (got $metadataType)"
         }
-        if (tier != AnalysisTier.DETERMINISTIC) {
-            throw NotImplementedError("Phase B only supports DETERMINISTIC reanalyze (got $tier)")
+        require(tier == AnalysisTier.DETERMINISTIC) {
+            "Phase B only supports DETERMINISTIC reanalyze (got $tier)"
         }
 
         val userId = authTokenService.getUserId()

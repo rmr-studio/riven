@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.argumentCaptor
@@ -217,28 +216,71 @@ class ConnotationAnalysisServiceTest {
     }
 
     @Test
-    fun `CLASSIFIER throws NotImplementedError`() {
-        assertThrows<NotImplementedError> {
-            service.analyze(
-                entityId = UUID.randomUUID(),
-                workspaceId = workspaceId,
-                signals = signals(tier = AnalysisTier.CLASSIFIER),
-                sourceValue = 4.0,
-                themeValues = emptyMap(),
+    fun `CLASSIFIER returns FAILED sentinel and still logs activity`() {
+        val entityId = UUID.randomUUID()
+        whenever(
+            activityService.logActivity(
+                any(), any(), any(), any(), any(), anyOrNull(), any(), any()
             )
-        }
+        ).thenReturn(mock())
+
+        val metadata = service.analyze(
+            entityId = entityId,
+            workspaceId = workspaceId,
+            signals = signals(tier = AnalysisTier.CLASSIFIER),
+            sourceValue = 4.0,
+            themeValues = emptyMap(),
+        )
+
+        assertEquals(ConnotationStatus.FAILED, metadata.status)
+        assertEquals(AnalysisTier.CLASSIFIER, metadata.analysisTier)
+        assertNull(metadata.sentiment)
+
+        val detailsCaptor = argumentCaptor<JsonObject>()
+        verify(activityService).logActivity(
+            eq(Activity.ENTITY_CONNOTATION),
+            eq(OperationType.ANALYZE),
+            eq(userId),
+            eq(workspaceId),
+            eq(ApplicationEntityType.ENTITY_CONNOTATION),
+            eq(entityId),
+            any(),
+            detailsCaptor.capture(),
+        )
+        val details = detailsCaptor.firstValue
+        assertEquals("CLASSIFIER", details["tier"])
+        assertEquals("FAILED", details["status"])
     }
 
     @Test
-    fun `INFERENCE throws NotImplementedError`() {
-        assertThrows<NotImplementedError> {
-            service.analyze(
-                entityId = UUID.randomUUID(),
-                workspaceId = workspaceId,
-                signals = signals(tier = AnalysisTier.INFERENCE),
-                sourceValue = 4.0,
-                themeValues = emptyMap(),
+    fun `INFERENCE returns FAILED sentinel and still logs activity`() {
+        val entityId = UUID.randomUUID()
+        whenever(
+            activityService.logActivity(
+                any(), any(), any(), any(), any(), anyOrNull(), any(), any()
             )
-        }
+        ).thenReturn(mock())
+
+        val metadata = service.analyze(
+            entityId = entityId,
+            workspaceId = workspaceId,
+            signals = signals(tier = AnalysisTier.INFERENCE),
+            sourceValue = 4.0,
+            themeValues = emptyMap(),
+        )
+
+        assertEquals(ConnotationStatus.FAILED, metadata.status)
+        assertEquals(AnalysisTier.INFERENCE, metadata.analysisTier)
+
+        verify(activityService).logActivity(
+            eq(Activity.ENTITY_CONNOTATION),
+            eq(OperationType.ANALYZE),
+            eq(userId),
+            eq(workspaceId),
+            eq(ApplicationEntityType.ENTITY_CONNOTATION),
+            eq(entityId),
+            any(),
+            any(),
+        )
     }
 }
