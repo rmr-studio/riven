@@ -905,5 +905,34 @@ class SemanticTextBuilderServiceTest {
             assertTrue(result.text.length <= 27_000,
                 "Final text should not exceed 27,000 chars, was ${result.text.length}")
         }
+
+        /**
+         * Connotation section is bounded at 300 chars and survives every truncation step
+         * so long entities don't lose sentiment context. Verifies the section is still
+         * present at the deepest truncation step (Step 4 — reduced attributes).
+         */
+        @Test
+        fun `buildText preserves Connotation Context through all truncation steps`() {
+            val sentiment = SentimentMetadata(
+                sentiment = 0.8,
+                sentimentLabel = SentimentLabel.VERY_POSITIVE,
+                analysisVersion = "v1",
+                analysisTier = AnalysisTier.DETERMINISTIC,
+                status = ConnotationStatus.ANALYZED,
+            )
+            val base = massiveContext()
+            val context = EnrichmentFactory.enrichmentContext(
+                attributes = base.attributes,
+                relationshipSummaries = base.relationshipSummaries,
+                clusterMembers = base.clusterMembers,
+                relationshipDefinitions = base.relationshipDefinitions,
+                sentiment = sentiment,
+            )
+
+            val result = service.buildText(context)
+
+            assertTrue(result.truncated, "Massive context should trigger truncation")
+            assertContains(result.text, "## Connotation Context")
+        }
     }
 }

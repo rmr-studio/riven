@@ -29,15 +29,11 @@ import org.springframework.transaction.annotation.Transactional
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
-import riven.core.entity.connotation.EntityConnotationEntity
-import riven.core.enums.connotation.ConnotationStatus
 import riven.core.enums.workflow.ExecutionJobType
 import riven.core.enums.workflow.ExecutionQueueStatus
-import riven.core.models.connotation.ConnotationMetadata
-import riven.core.models.connotation.ConnotationMetadataSnapshot
-import riven.core.models.connotation.SentimentMetadata
 import riven.core.repository.connotation.EntityConnotationRepository
 import riven.core.service.util.SchemaInitializer
+import riven.core.service.util.factory.enrichment.EnrichmentFactory
 import java.time.ZonedDateTime
 import java.time.temporal.TemporalAccessor
 import java.util.Optional
@@ -233,21 +229,11 @@ class ExecutionQueueRepositoryIntegrationTest {
     }
 
     private fun saveMetadata(entityId: UUID, sentimentVersion: String?) {
-        val snapshot = ConnotationMetadataSnapshot(
-            snapshotVersion = "v1",
-            metadata = ConnotationMetadata(
-                sentiment = SentimentMetadata(
-                    analysisVersion = sentimentVersion,
-                    status = ConnotationStatus.NOT_APPLICABLE,
-                ),
-            ),
-            embeddedAt = ZonedDateTime.now(),
-        )
         entityConnotationRepository.saveAndFlush(
-            EntityConnotationEntity(
+            EnrichmentFactory.entityConnotationEntity(
                 entityId = entityId,
                 workspaceId = workspaceId,
-                connotationMetadata = snapshot,
+                sentimentVersion = sentimentVersion,
             )
         )
     }
@@ -415,20 +401,11 @@ class ExecutionQueueRepositoryIntegrationTest {
             otherEntityId, otherWorkspaceId, otherEntityTypeId,
             "queue_repo_other_type", identifierKey,
         )
-        val snapshot2 = ConnotationMetadataSnapshot(
-            metadata = ConnotationMetadata(
-                sentiment = SentimentMetadata(
-                    analysisVersion = "v0",
-                    status = ConnotationStatus.NOT_APPLICABLE,
-                ),
-            ),
-            embeddedAt = ZonedDateTime.now(),
-        )
         entityConnotationRepository.saveAndFlush(
-            EntityConnotationEntity(
+            EnrichmentFactory.entityConnotationEntity(
                 entityId = otherEntityId,
                 workspaceId = otherWorkspaceId,
-                connotationMetadata = snapshot2,
+                sentimentVersion = "v0",
             )
         )
 

@@ -33,7 +33,8 @@ import kotlin.math.abs
  * When the combined text would exceed the 27,000-character budget, sections are progressively
  * removed or compacted in priority order: remove Section 6, compact Section 5, compact Section 4,
  * then drop FREETEXT and RELATIONAL_REFERENCE attributes from Section 3.
- * Sections 1 and 2 are never truncated.
+ * Sections 1 and 2 are never truncated. The Connotation Context section is bounded at
+ * [MAX_CONNOTATION_SECTION_CHARS] and is preserved through every truncation step.
  */
 @Service
 class SemanticTextBuilderService(
@@ -84,29 +85,34 @@ class SemanticTextBuilderService(
             // Progressive truncation — apply each step and check budget
             truncated = true
 
+            // Connotation is bounded at MAX_CONNOTATION_SECTION_CHARS so it's safe to retain
+            // through every truncation step — long entities are precisely the ones most likely
+            // to need sentiment context preserved. Place last so the assembled order matches
+            // the full-quality path (definitions/connotation tail).
+
             // Step 1: Try without Section 6
-            val withoutDefs = listOfNotNull(fullAttributes, fullRelationships, fullCluster)
+            val withoutDefs = listOfNotNull(fullAttributes, fullRelationships, fullCluster, fullConnotation)
             val totalStep1 = mandatoryLength + withoutDefs.sumOf { it.length } + withoutDefs.size * 2
             if (totalStep1 <= CHAR_BUDGET) {
                 sections.addAll(withoutDefs)
             } else {
                 // Step 2: Compact Section 5 (cluster → source names only)
                 val compactCluster = buildClusterContextCompact(context)
-                val step2Sections = listOfNotNull(fullAttributes, fullRelationships, compactCluster)
+                val step2Sections = listOfNotNull(fullAttributes, fullRelationships, compactCluster, fullConnotation)
                 val totalStep2 = mandatoryLength + step2Sections.sumOf { it.length } + step2Sections.size * 2
                 if (totalStep2 <= CHAR_BUDGET) {
                     sections.addAll(step2Sections)
                 } else {
                     // Step 3: Compact Section 4 (relationship summaries → count + last activity only)
                     val compactRelationships = buildRelationshipSummariesCompact(context)
-                    val step3Sections = listOfNotNull(fullAttributes, compactRelationships, compactCluster)
+                    val step3Sections = listOfNotNull(fullAttributes, compactRelationships, compactCluster, fullConnotation)
                     val totalStep3 = mandatoryLength + step3Sections.sumOf { it.length } + step3Sections.size * 2
                     if (totalStep3 <= CHAR_BUDGET) {
                         sections.addAll(step3Sections)
                     } else {
                         // Step 4: Drop FREETEXT and RELATIONAL_REFERENCE from Section 3
                         val reducedAttributes = buildAttributesSectionReduced(context)
-                        val step4Sections = listOfNotNull(reducedAttributes, compactRelationships, compactCluster)
+                        val step4Sections = listOfNotNull(reducedAttributes, compactRelationships, compactCluster, fullConnotation)
                         sections.addAll(step4Sections)
                     }
                 }

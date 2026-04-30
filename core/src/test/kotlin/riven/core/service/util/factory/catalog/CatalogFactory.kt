@@ -5,6 +5,7 @@ import riven.core.enums.catalog.ManifestType
 import riven.core.enums.common.icon.IconColour
 import riven.core.enums.common.icon.IconType
 import riven.core.enums.entity.EntityRelationshipCardinality
+import riven.core.enums.entity.LifecycleDomain
 import riven.core.enums.entity.semantics.SemanticAttributeClassification
 import riven.core.enums.entity.semantics.SemanticGroup
 import riven.core.enums.entity.semantics.SemanticMetadataTargetType
@@ -18,7 +19,7 @@ object CatalogFactory {
 
     fun createManifestEntity(
         type: ManifestType,
-        id: UUID = UUID.randomUUID(),
+        id: UUID? = UUID.randomUUID(),
         key: String = "test-manifest",
         name: String = "Test Manifest",
         description: String = "A test manifest",
@@ -38,13 +39,16 @@ object CatalogFactory {
 
     fun createEntityTypeEntity(
         manifestId: UUID,
-        id: UUID = UUID.randomUUID(),
+        id: UUID? = UUID.randomUUID(),
         key: String = "test-entity-type",
         displayNameSingular: String = "Test Entity",
         displayNamePlural: String = "Test Entities",
         iconType: IconType = IconType.CIRCLE_DASHED,
         iconColour: IconColour = IconColour.NEUTRAL,
         semanticGroup: SemanticGroup = SemanticGroup.UNCATEGORIZED,
+        lifecycleDomain: LifecycleDomain = LifecycleDomain.UNCATEGORIZED,
+        identifierKey: String? = null,
+        readonly: Boolean = false,
         schema: Map<String, Any> = mapOf("type" to "object"),
         columns: List<Map<String, Any>> = listOf(mapOf("key" to "name", "label" to "Name")),
         connotationSignals: ConnotationSignals? = null,
@@ -58,6 +62,9 @@ object CatalogFactory {
         iconType = iconType,
         iconColour = iconColour,
         semanticGroup = semanticGroup,
+        lifecycleDomain = lifecycleDomain,
+        identifierKey = identifierKey,
+        readonly = readonly,
         schema = schema,
         columns = columns,
         connotationSignals = connotationSignals,

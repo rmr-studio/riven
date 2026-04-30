@@ -31,9 +31,6 @@ import org.springframework.test.context.TestPropertySource
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
-import riven.core.entity.catalog.CatalogEntityTypeEntity
-import riven.core.entity.catalog.ManifestCatalogEntity
-import riven.core.entity.entity.EntityAttributeEntity
 import riven.core.entity.entity.EntityEntity
 import riven.core.entity.entity.EntityTypeEntity
 import riven.core.entity.workflow.ExecutionQueueEntity
@@ -62,6 +59,8 @@ import riven.core.repository.workflow.ExecutionQueueRepository
 import riven.core.service.auth.AuthTokenService
 import riven.core.service.enrichment.EnrichmentService
 import riven.core.service.util.SchemaInitializer
+import riven.core.service.util.factory.catalog.CatalogFactory
+import riven.core.service.util.factory.entity.EntityFactory
 import tools.jackson.databind.node.JsonNodeFactory
 import java.time.ZonedDateTime
 import java.time.temporal.TemporalAccessor
@@ -439,20 +438,21 @@ class ConnotationPipelineIntegrationTest {
      */
     private fun seedCatalogManifestWithConnotationSignals(): UUID {
         val manifest = manifestCatalogRepository.saveAndFlush(
-            ManifestCatalogEntity(
+            CatalogFactory.createManifestEntity(
+                type = ManifestType.INTEGRATION,
+                id = null,
                 key = "zendesk-fixture",
                 name = "Zendesk Fixture",
                 description = "Fixture manifest for ConnotationPipelineIntegrationTest.",
-                manifestType = ManifestType.INTEGRATION,
                 manifestVersion = "1.0",
-                stale = false,
             )
         )
         val manifestId = requireNotNull(manifest.id)
 
         catalogEntityTypeRepository.saveAndFlush(
-            CatalogEntityTypeEntity(
+            CatalogFactory.createEntityTypeEntity(
                 manifestId = manifestId,
+                id = null,
                 key = "zendesk-review",
                 displayNameSingular = "Review",
                 displayNamePlural = "Reviews",
@@ -510,7 +510,8 @@ class ConnotationPipelineIntegrationTest {
         )
 
         return entityTypeRepository.saveAndFlush(
-            EntityTypeEntity(
+            EntityFactory.createEntityType(
+                id = null,
                 key = "zendesk-review",
                 displayNameSingular = "Review",
                 displayNamePlural = "Reviews",
@@ -531,16 +532,17 @@ class ConnotationPipelineIntegrationTest {
     }
 
     private fun seedEntity(typeId: UUID, typeKey: String, identifierKey: UUID): EntityEntity {
+        val now = ZonedDateTime.now()
         return entityRepository.saveAndFlush(
-            EntityEntity(
+            EntityFactory.createEntityEntity(
                 workspaceId = workspaceId,
                 typeId = typeId,
                 typeKey = typeKey,
                 identifierKey = identifierKey,
                 sourceType = SourceType.INTEGRATION,
                 sourceExternalId = "zendesk-review-1",
-                firstSyncedAt = ZonedDateTime.now(),
-                lastSyncedAt = ZonedDateTime.now(),
+                firstSyncedAt = now,
+                lastSyncedAt = now,
             )
         )
     }
@@ -553,7 +555,8 @@ class ConnotationPipelineIntegrationTest {
         value: tools.jackson.databind.JsonNode,
     ) {
         entityAttributeRepository.saveAndFlush(
-            EntityAttributeEntity(
+            EntityFactory.createEntityAttributeEntity(
+                id = null,
                 entityId = entityId,
                 workspaceId = workspaceId,
                 typeId = typeId,
